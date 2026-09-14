@@ -1,0 +1,50 @@
+.queue-depth {
+    padding: 0 0.4rem;
+    border-radius: 0.35rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+
+    /* Tint follows whichever semantic state class the template applied, so no colour is named here. */
+    background: color-mix(in srgb, currentcolor 12%, transparent);
+}
+
+.queue-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    max-height: 18rem;
+    overflow-y: auto;
+}
+
+.queue-row {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr) auto auto auto;
+    gap: 0.6rem;
+    align-items: center;
+    padding: 0.3rem 0.4rem;
+    border-radius: 0.35rem;
+    font-size: 0.8125rem;
+
+    /* A finished row fades as it leaves, so a fast drain reads as movement rather than rows blinking out. */
+    transition: opacity 0.4s ease;
+}
+
+.queue-row[data-status='done'] {
+    opacity: 0.55;
+}
+
+.queue-status {
+    padding: 0 0.4rem;
+    border-radius: 0.35rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-align: center;
+    background: color-mix(in srgb, currentcolor 14%, transparent);
+}
+
+.queue-operation,
+.queue-origin,
+.queue-attempts {
+    font-size: 0.6875rem;
+    white-space: nowrap;
+}

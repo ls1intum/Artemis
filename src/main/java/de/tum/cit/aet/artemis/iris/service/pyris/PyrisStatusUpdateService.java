@@ -126,12 +126,19 @@ public class PyrisStatusUpdateService {
         boolean isThinking = runState == PyrisRunState.RUNNING;
 
         if (isThinking) {
-            irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC, new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), true, null, null));
+            if (statusUpdate.partialResult() != null) {
+                // Streamed draft of the answer while the LLM generates; the terminal update carries the authoritative answer.
+                irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC,
+                        new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), true, null, null, statusUpdate.partialResult(), statusUpdate.partialSeq()));
+            }
+            else {
+                irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC, new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), true, null, null));
+            }
             pyrisJobService.updateJob(job);
         }
         else if (isTerminal) {
             irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC,
-                    new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), false, statusUpdate.answer(), statusUpdate.sources()));
+                    new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), false, statusUpdate.answer(), statusUpdate.sources(), null, null, statusUpdate.entitySources()));
             pyrisJobService.removeJob(job);
         }
         else {
@@ -192,8 +199,11 @@ public class PyrisStatusUpdateService {
         else {
             pyrisJobService.updateJob(job);
             // Update lastUpdated on every non-terminal callback so stuck detection
-            // can use "time since last callback" instead of "time since phase started"
-            processingStateCallbackApi.ifPresent(api -> api.handleHeartbeat(job.lectureUnitId(), job.jobId()));
+            // can use "time since last callback" instead of "time since phase started".
+            // The optional stage fields feed the stage ledger, which distinguishes a
+            // stalled run (heartbeats without progress) from a merely slow one.
+            processingStateCallbackApi
+                    .ifPresent(api -> api.handleHeartbeat(job.lectureUnitId(), job.jobId(), statusUpdate.stageName(), statusUpdate.stageProgress(), statusUpdate.stageTotal()));
         }
     }
 

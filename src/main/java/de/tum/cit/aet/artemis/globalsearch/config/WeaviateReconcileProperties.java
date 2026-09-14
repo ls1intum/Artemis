@@ -1,0 +1,71 @@
+package de.tum.cit.aet.artemis.globalsearch.config;
+
+import java.util.List;
+
+import jakarta.validation.constraints.Positive;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
+import org.springframework.validation.annotation.Validated;
+
+/**
+ * Configuration properties for the reconcile passes that keep the {@code SearchableEntities} index in step with
+ * the database. Uses a Java record for immutable configuration.
+ * <p>
+ * All passes are disabled by default upstream: the missing pass queues the entire corpus the first time it runs,
+ * and the orphan pass deletes, so enabling them is an operational decision rather than a deployment side effect.
+ * <p>
+ * DEMO BRANCH: all three passes default to ON here. A test server has nobody to make that operational
+ * decision, and an index that only ever receives live changes stays empty, which makes the whole feature look
+ * broken rather than switched off. The orphan pass was switched on last, after the missing pass had filled the
+ * index: it is the one that deletes, and its delete cap and abort ratio bound what a single tick may remove.
+ * Upstream keeps all three false.
+ * <p>
+ * The two throttles protect different resources. {@code maxOutboxDepth} limits work handed to Weaviate; the
+ * per-pass budgets limit queries against the database. A healthy system queues nothing, so the depth limit never
+ * engages and the budgets are the only active protection.
+ *
+ * @param missingSweepEnabled    whether the pass that finds never-indexed entities runs
+ * @param driftSweepEnabled      whether the pass that re-derives entities and compares content runs
+ * @param orphanSweepEnabled     whether the pass that scans the index runs; the only one that deletes
+ * @param entityTypes            the entity types all three passes manage; posts and answer posts are excluded because they
+ *                                   dominate the corpus and would stretch every other type's revisit period. A type left out
+ *                                   here is never repaired and never deleted
+ * @param maxOutboxDepth         how much queued work is allowed before the passes stop adding more; the only bound on how
+ *                                   long a live metadata write can wait behind reconcile work
+ * @param missingBatchSize       entity ids examined per tick by the missing pass (identity only, no entity is loaded)
+ * @param driftBatchSize         entities re-derived per tick by the drift pass; far smaller, since each check loads an entity
+ * @param orphanPageSize         index rows read per page by the orphan pass
+ * @param orphanPagesPerTick     pages read per tick by the orphan pass
+ * @param orphanDeleteCapPerTick the most rows a single tick may queue for deletion
+ * @param orphanAbortRatio       the share of scanned rows looking orphaned that aborts the pass instead; a high proportion
+ *                                   indicates a bug or a stale read rather than real orphans
+ */
+@Validated
+@ConfigurationProperties(prefix = "artemis.weaviate.reconcile", ignoreUnknownFields = false)
+public record WeaviateReconcileProperties(@DefaultValue("true") boolean missingSweepEnabled, @DefaultValue("true") boolean driftSweepEnabled,
+        @DefaultValue("true") boolean orphanSweepEnabled, @DefaultValue( {
+                "course", "lecture", "lecture_unit", "exam", "exercise", "faq", "channel" }) List<String> entityTypes,
+        @DefaultValue("500") @Positive int maxOutboxDepth, @DefaultValue("5000") @Positive int missingBatchSize, @DefaultValue("200") @Positive int driftBatchSize,
+        @DefaultValue("1000") @Positive int orphanPageSize, @DefaultValue("5") @Positive int orphanPagesPerTick, @DefaultValue("100") @Positive int orphanDeleteCapPerTick,
+        @DefaultValue("0.25") @Positive double orphanAbortRatio){
+
+    /**
+     * Returns whether a type is managed by the reconcile passes.
+     *
+     * @param entityType the {@code SearchableEntitySchema.TypeValues} discriminator
+     * @return true if the passes may repair and remove rows of this type
+     */
+    public boolean managesEntityType(String entityType) {
+        return entityTypes.contains(entityType);
+    }
+
+    /**
+     * Returns whether at least one pass is enabled.
+     *
+     * @return true if any pass runs
+     */
+    public boolean anyPassEnabled() {
+        return missingSweepEnabled || driftSweepEnabled || orphanSweepEnabled;
+    }
+}

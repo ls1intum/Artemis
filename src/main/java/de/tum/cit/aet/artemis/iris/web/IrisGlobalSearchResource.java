@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.web;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.validation.Valid;
 
@@ -15,17 +16,22 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.globalsearch.api.SearchableEntityPrefetchApi;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.IrisAccessContextService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchAskRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchLectureRequestDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisEntityCandidateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
 /**
  * REST controller for Iris global search.
@@ -42,6 +48,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRe
 @RequestMapping("api/iris/")
 public class IrisGlobalSearchResource {
 
+    private static final String ENTITY_NAME = "iris";
+
     private final PyrisConnectorService pyrisConnectorService;
 
     private final PyrisJobService pyrisJobService;
@@ -52,17 +60,30 @@ public class IrisGlobalSearchResource {
 
     private final IrisAccessContextService irisAccessContextService;
 
+    private final IrisSettingsService irisSettingsService;
+
+    private final Optional<SearchableEntityPrefetchApi> searchableEntityPrefetchApi;
+
+    /** Entity candidates handed to the answer pipeline; recall is deliberately deep, the reranker judges. */
+    private static final int ENTITY_CANDIDATE_LIMIT = 25;
+
     public IrisGlobalSearchResource(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, UserRepository userRepository,
-            UserAiPreferenceService userAiPreferenceService, IrisAccessContextService irisAccessContextService) {
+            UserAiPreferenceService userAiPreferenceService, IrisAccessContextService irisAccessContextService, IrisSettingsService irisSettingsService,
+            Optional<SearchableEntityPrefetchApi> searchableEntityPrefetchApi) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.userAiPreferenceService = userAiPreferenceService;
         this.pyrisJobService = pyrisJobService;
         this.userRepository = userRepository;
         this.irisAccessContextService = irisAccessContextService;
+        this.irisSettingsService = irisSettingsService;
+        this.searchableEntityPrefetchApi = searchableEntityPrefetchApi;
     }
 
     /**
      * POST api/iris/lecture-search: Search for lecture units using Pyris.
+     * <p>
+     * Courses with Iris switched off in the course settings are dropped from the requested scope, so content search respects the same toggle as every other Iris feature.
+     * Disabling a course does not remove what was already ingested, which is why the scope has to be narrowed here rather than relying on an empty index.
      *
      * @param requestDTO the search request containing query, limit, and optional courseIds filter
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of search results
@@ -70,9 +91,17 @@ public class IrisGlobalSearchResource {
     @PostMapping("lecture-search")
     @EnforceAtLeastStudent
     public ResponseEntity<List<PyrisLectureSearchResultDTO>> search(@RequestBody @Valid GlobalSearchLectureRequestDTO requestDTO) {
+        var courseIds = requestDTO.courseIds();
+        if (courseIds != null && !courseIds.isEmpty()) {
+            courseIds = irisSettingsService.filterCourseIdsWithIrisEnabled(courseIds);
+            if (courseIds.isEmpty()) {
+                // suppress the error alert with skipAlert: true so that the client can fall back to its standard metadata search
+                throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "Iris is disabled for the requested courses", ENTITY_NAME, "iris.course_disabled", true);
+            }
+        }
         var user = userRepository.getUserWithCourseRolesAndAuthorities();
         var accessContext = irisAccessContextService.resolveAccessContext(user);
-        return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit(), requestDTO.courseIds(), accessContext));
+        return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit(), courseIds, accessContext));
     }
 
     /**
@@ -96,7 +125,14 @@ public class IrisGlobalSearchResource {
         // Pyris may have received the request and already started the pipeline. Removing the token
         // would break WebSocket routing for any callbacks that arrive later.
         // Jobs expire automatically via the Hazelcast TTL (default 5 minutes).
-        pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), selectedLlmUsage, accessContext);
+        // Entity candidates are pre-fetched with the palette's access filtering, because channel
+        // membership, exam registrations and role-dependent release rules only exist in the Artemis
+        // database; Pyris renders them into cards and reranks them against the lecture content.
+        List<PyrisEntityCandidateDTO> entityCandidates = searchableEntityPrefetchApi
+                .map(api -> api.prefetchCandidates(user, requestDTO.query(), ENTITY_CANDIDATE_LIMIT, requestDTO.courseId()).stream().map(PyrisEntityCandidateDTO::of).toList())
+                .orElse(List.of());
+        pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), selectedLlmUsage, accessContext,
+                entityCandidates, requestDTO.courseId());
         return ResponseEntity.accepted().build();
     }
 }

@@ -346,6 +346,37 @@ public class WeaviateService {
     }
 
     /**
+     * Gets a handle for a collection owned by another service (e.g. the Iris ingestion pipeline's
+     * {@code Lectures} / {@code LectureTranscriptions} collections), addressed by its EXACT name WITHOUT the
+     * Artemis collection prefix. Use this only to READ external collections; Artemis's own collections must go
+     * through {@link #getCollection(String)} so the prefix is applied.
+     *
+     * @param exactCollectionName the exact, unprefixed collection name
+     * @return the collection handle (returned even if the collection does not exist; the failure surfaces on the
+     *         first read)
+     */
+    public CollectionHandle<Map<String, Object>> getExternalCollection(String exactCollectionName) {
+        return client.collections.use(exactCollectionName);
+    }
+
+    /**
+     * Returns whether a collection with the given EXACT (unprefixed) name exists. Used to short-circuit reads of
+     * external collections (e.g. the Iris ingestion collections) that may not exist on this instance, so callers can
+     * treat an absent collection as empty rather than erroring per read.
+     *
+     * @param exactCollectionName the exact, unprefixed collection name
+     * @return {@code true} if the collection exists
+     */
+    public boolean externalCollectionExists(String exactCollectionName) {
+        try {
+            return client.collections.exists(exactCollectionName);
+        }
+        catch (IOException exception) {
+            throw new WeaviateException("Failed to check whether external collection '" + exactCollectionName + "' exists: " + exception.getMessage(), exception);
+        }
+    }
+
+    /**
      * Returns whether a text vectorizer is configured that can automatically
      * create embeddings from text. When this returns {@code false}, only keyword
      * (BM25) search should be used instead of hybrid search because hybrid search

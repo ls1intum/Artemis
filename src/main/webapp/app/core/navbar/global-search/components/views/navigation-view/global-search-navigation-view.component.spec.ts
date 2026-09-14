@@ -2,12 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { type Mock, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { GlobalSearchNavigationViewComponent } from './global-search-navigation-view.component';
-import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
-import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
@@ -15,8 +13,6 @@ import { Router } from '@angular/router';
 import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { SearchResultItemComponent } from 'app/core/navbar/global-search/components/modal/search-result-item/search-result-item.component';
-import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/components/views/iris-answer/global-search-iris-answer.component';
 import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
 import {
@@ -45,18 +41,26 @@ describe('GlobalSearchNavigationViewComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 GlobalSearchNavigationViewComponent,
-                MockComponent(GlobalSearchActionItemComponent),
                 MockComponent(GlobalSearchIrisAnswerComponent),
                 MockComponent(SearchResultItemComponent),
-                MockComponent(SearchableEntityItemComponent),
-                MockComponent(FaIconComponent),
                 MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(irisEnabled) } },
                 { provide: AccountService, useValue: { userIdentity: signal({ selectedLLMUsage: llmDecision }) } },
-                { provide: Router, useValue: { navigate: vi.fn() } },
+                // createUrlTree / serializeUrl / url back the "already on this page" check. The serialized target
+                // differs from the current url by default, so these tests assert where a result leads; the one test
+                // that cares makes them match.
+                {
+                    provide: Router,
+                    useValue: {
+                        navigate: vi.fn(),
+                        createUrlTree: vi.fn((commands: unknown[]) => commands),
+                        serializeUrl: vi.fn(() => '/some/target'),
+                        url: '/somewhere/else',
+                    },
+                },
                 { provide: SearchOverlayService, useValue: { close: vi.fn(), isOpen: signal(false) } },
                 { provide: IrisSearchAnswerService, useValue: { ask: vi.fn() } },
             ],
@@ -82,34 +86,16 @@ describe('GlobalSearchNavigationViewComponent', () => {
         });
 
         describe('itemCount', () => {
-            it('should equal action button count plus searchable entities when not searching', () => {
-                // actionButtonCount = 1 (lecture button; iris is inline), searchableEntities.length = 6
-                expect(component.itemCount()).toBe(7);
-            });
-
-            it('should equal action button count plus results when searching', () => {
+            it('should equal the result count when searching', () => {
                 fixture.componentRef.setInput('showResults', true);
                 fixture.componentRef.setInput('results', [{ id: '1' }, { id: '2' }] as GlobalSearchResult[]);
                 fixture.detectChanges();
-                expect(component.itemCount()).toBe(3); // 1 button + 2 results
+                expect(component.itemCount()).toBe(2);
             });
         });
 
         describe('Keyboard navigation', () => {
-            it('should emit SearchView.Lecture when Enter is pressed at index 0', () => {
-                const spy = vi.fn();
-                component.viewSelected.subscribe(spy);
-
-                fixture.componentRef.setInput('selectedIndex', 0);
-                fixture.detectChanges();
-
-                const event = new KeyboardEvent('keydown', { key: 'Enter' });
-                component.handleKeydown(event);
-
-                expect(spy).toHaveBeenCalledWith(SearchView.Lecture);
-            });
-
-            it('should call preventDefault when Enter is pressed at index 0', () => {
+            it('should call preventDefault on Enter', () => {
                 fixture.componentRef.setInput('selectedIndex', 0);
                 fixture.detectChanges();
 
@@ -121,63 +107,30 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 expect(preventDefaultSpy).toHaveBeenCalled();
             });
 
-            it('should not emit when Enter is pressed at index -1', () => {
-                const spy = vi.fn();
-                component.viewSelected.subscribe(spy);
-
+            it('should do nothing when Enter is pressed at index -1', () => {
                 fixture.componentRef.setInput('selectedIndex', -1);
                 fixture.detectChanges();
 
                 const event = new KeyboardEvent('keydown', { key: 'Enter' });
                 component.handleKeydown(event);
 
-                expect(spy).not.toHaveBeenCalled();
+                expect(router.navigate).not.toHaveBeenCalled();
             });
 
-            it('should not emit for non-Enter keys', () => {
-                const spy = vi.fn();
-                component.viewSelected.subscribe(spy);
-
+            it('should ignore non-Enter keys', () => {
                 fixture.componentRef.setInput('selectedIndex', 0);
                 fixture.detectChanges();
 
                 const event = new KeyboardEvent('keydown', { key: 'ArrowDown' });
                 component.handleKeydown(event);
 
-                expect(spy).not.toHaveBeenCalled();
+                expect(router.navigate).not.toHaveBeenCalled();
             });
 
-            it('should handle Enter on first entity at index 1', () => {
-                // Lecture button is at index 0; first entity starts at index 1 (Lecture(0), Entity(1))
-                const spy = vi.fn();
-                component.entityClick.subscribe(spy);
-
-                fixture.componentRef.setInput('selectedIndex', 1);
-                fixture.detectChanges();
-
-                const event = new KeyboardEvent('keydown', { key: 'Enter' });
-                component.handleKeydown(event);
-
-                expect(spy).toHaveBeenCalledWith(component['searchableEntities'][0]);
-            });
-
-            it('should handle Enter on entities', () => {
-                const spy = vi.fn();
-                component.entityClick.subscribe(spy);
-
-                fixture.componentRef.setInput('selectedIndex', 2); // Lecture(0), Entity(1), Entity(2)
-                fixture.detectChanges();
-
-                const event = new KeyboardEvent('keydown', { key: 'Enter' });
-                component.handleKeydown(event);
-
-                expect(spy).toHaveBeenCalledWith(component['searchableEntities'][1]);
-            });
-
-            it('should handle Enter on results', () => {
+            it('should navigate to the result at the selected index on Enter when showing results', () => {
                 fixture.componentRef.setInput('showResults', true);
                 fixture.componentRef.setInput('results', [{ id: '123', type: 'exercise', metadata: { courseId: 1 } }] as GlobalSearchResult[]);
-                fixture.componentRef.setInput('selectedIndex', 1); // Lecture(0), Result(1)
+                fixture.componentRef.setInput('selectedIndex', 0);
                 fixture.detectChanges();
 
                 const event = new KeyboardEvent('keydown', { key: 'Enter' });
@@ -192,7 +145,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 expect(component['getIconForType']('exercise', 'programming')).toBe(faKeyboard);
                 expect(component['getIconForType']('exercise', 'modeling')).toBe(faProjectDiagram);
                 expect(component['getIconForType']('exercise', 'text')).toBe(faFont);
-                expect(component['getIconForType']('exercise', 'File Upload')).toBe(faFileUpload);
+                expect(component['getIconForType']('exercise', 'file-upload')).toBe(faFileUpload);
                 expect(component['getIconForType']('exercise', 'quiz')).toBe(faCheckDouble);
                 expect(component['getIconForType']('exercise', 'unknown')).toBe(faQuestion);
             });
@@ -200,6 +153,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
             it('should return correct icons for other types', () => {
                 expect(component['getIconForType']('lecture')).toBe(faBook);
                 expect(component['getIconForType']('lecture_unit')).toBe(faBook);
+                expect(component['getIconForType']('lecture_content')).toBe(faBook);
                 expect(component['getIconForType']('channel')).toBe(faHashtag);
                 expect(component['getIconForType']('faq')).toBe(faQuestionCircle);
                 expect(component['getIconForType']('exam')).toBe(faCalendarCheck);
@@ -223,7 +177,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 component['navigateToResult']({
                     type: 'exercise',
                     id: '42',
-                    badge: 'Programming',
+                    badge: 'programming',
                     metadata: { courseId: 10, examId: 5, exerciseGroupId: 3, isAtLeastEditor: true },
                 } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/course-management', 10, 'exams', 5, 'exercise-groups', 3, 'programming-exercises', '42']);
@@ -233,7 +187,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 component['navigateToResult']({
                     type: 'exercise',
                     id: '42',
-                    badge: 'Programming',
+                    badge: 'programming',
                     metadata: { courseId: 10, examId: 5, isAtLeastTutor: true },
                 } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/course-management', 10, 'exams', 5, 'assessment-dashboard', '42']);
@@ -286,16 +240,80 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'faq']);
             });
 
+            it('should open a course without naming a tab, leaving its default to the route table', () => {
+                // The same link form the navbar uses. Naming a tab here would make search the one place that has to
+                // be updated by hand the day the course default changes.
+                component['navigateToResult']({ type: 'course', metadata: { courseId: 10 } } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10]);
+            });
+
+            it('should not navigate to a course the user is already somewhere inside', () => {
+                // `/courses/:id` redirects to the default tab after any comparison could run, so a course is matched
+                // by its subtree: from anywhere within it the click has nowhere to go.
+                (router.serializeUrl as unknown as Mock).mockReturnValue('/courses/10');
+                (router as { url: string }).url = '/courses/10/lectures/5';
+
+                component['navigateToResult']({ type: 'course', metadata: { courseId: 10 } } as GlobalSearchResult);
+
+                expect(router.navigate).not.toHaveBeenCalled();
+                // The click is still consumed: the palette closes even though there was nowhere to go.
+                expect(overlay.close).toHaveBeenCalled();
+            });
+
+            it('should still open a different course from inside one', () => {
+                (router.serializeUrl as unknown as Mock).mockReturnValue('/courses/20');
+                (router as { url: string }).url = '/courses/10/lectures/5';
+
+                component['navigateToResult']({ type: 'course', metadata: { courseId: 20 } } as GlobalSearchResult);
+
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 20]);
+            });
+
+            it('should not confuse a course whose id is a prefix of the current one', () => {
+                (router.serializeUrl as unknown as Mock).mockReturnValue('/courses/1');
+                (router as { url: string }).url = '/courses/10/lectures/5';
+
+                component['navigateToResult']({ type: 'course', metadata: { courseId: 1 } } as GlobalSearchResult);
+
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 1]);
+            });
+
+            it('should not re-run a navigation to the page already open', () => {
+                // The app runs the router with onSameUrlNavigation: 'reload', so navigating to the current URL
+                // rebuilds the page in place, which reads as a dead click rather than as a navigation.
+                (router.serializeUrl as unknown as Mock).mockReturnValue(router.url);
+
+                component['navigateToResult']({ type: 'faq', metadata: { courseId: 10 } } as GlobalSearchResult);
+
+                expect(router.navigate).not.toHaveBeenCalled();
+                expect(overlay.close).toHaveBeenCalled();
+            });
+
             it('should navigate to channel', () => {
                 component['navigateToResult']({ type: 'channel', id: '5', metadata: { courseId: 10 } } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'communication'], { queryParams: { conversationId: '5' } });
             });
+
+            it('should navigate to the exact link with queryParams for a lecture_content hit', () => {
+                component['navigateToResult']({
+                    type: 'lecture_content',
+                    id: 'lecture-content-30-4',
+                    metadata: { link: '/courses/10/lectures/20/units/30', queryParams: { unit: 30, page: 4 } },
+                } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/courses/10/lectures/20/units/30'], { queryParams: { unit: 30, page: 4 } });
+                expect(overlay.close).toHaveBeenCalled();
+            });
+
+            it('should close the overlay without navigating when a lecture_content hit has no link', () => {
+                component['navigateToResult']({ type: 'lecture_content', id: 'x', metadata: {} } as GlobalSearchResult);
+                expect(router.navigate).not.toHaveBeenCalled();
+                expect(overlay.close).toHaveBeenCalled();
+            });
         });
 
         describe('template', () => {
-            it('should render the lecture content action button', () => {
-                const button = fixture.nativeElement.querySelector('jhi-global-search-action-item');
-                expect(button).toBeTruthy();
+            it('should not render an action button', () => {
+                expect(fixture.nativeElement.querySelector('jhi-global-search-action-item')).toBeNull();
             });
 
             it('should render results when showResults is true', () => {
@@ -368,27 +386,8 @@ describe('GlobalSearchNavigationViewComponent', () => {
             expect(component).toBeTruthy();
         });
 
-        it('itemCount should equal searchableEntities count when iris is disabled', () => {
-            // actionButtonCount = 0 (iris disabled), searchableEntities.length = 6
-            expect(component.itemCount()).toBe(6);
-        });
-
-        it('should not emit when Enter is pressed at index 0', () => {
-            const spy = vi.fn();
-            component.viewSelected.subscribe(spy);
-
-            fixture.componentRef.setInput('selectedIndex', 0);
-            fixture.detectChanges();
-
-            const event = new KeyboardEvent('keydown', { key: 'Enter' });
-            component.handleKeydown(event);
-
-            expect(spy).not.toHaveBeenCalled();
-        });
-
-        it('should not render the lecture content action button', () => {
-            const button = fixture.nativeElement.querySelector('jhi-global-search-action-item');
-            expect(button).toBeNull();
+        it('itemCount should be zero when there are no results', () => {
+            expect(component.itemCount()).toBe(0);
         });
     });
 
@@ -402,13 +401,8 @@ describe('GlobalSearchNavigationViewComponent', () => {
             expect(fixture.nativeElement.querySelector('jhi-global-search-iris-answer')).toBeNull();
         });
 
-        it('should not render the lecture search button', () => {
-            expect(fixture.nativeElement.querySelector('jhi-global-search-action-item')).toBeNull();
-        });
-
-        it('itemCount should equal searchableEntities count only', () => {
-            // actionButtonCount = 0 (user opted out), searchableEntities.length = 6
-            expect(component.itemCount()).toBe(6);
+        it('itemCount should be zero when there are no results', () => {
+            expect(component.itemCount()).toBe(0);
         });
     });
 });

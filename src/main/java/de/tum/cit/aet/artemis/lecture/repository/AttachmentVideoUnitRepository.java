@@ -1,8 +1,10 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
@@ -142,4 +144,56 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
             ORDER BY avu.id
             """)
     List<AttachmentVideoUnit> findUnitsMissingIrisSyncStateFromActiveCourses(@Param("now") ZonedDateTime now, Pageable pageable);
+
+    /**
+     * Find the next course ids that hold attachment video units, ordered by id, starting after the given cursor.
+     * Drives the ingestion reconciler's round-robin walk over all courses, including inactive and archived ones.
+     *
+     * @param courseId the course id to continue after (exclusive); pass 0 to start from the beginning
+     * @param pageable pagination to limit the number of courses per walk
+     * @return the next course ids after the cursor
+     */
+    @Query("""
+            SELECT DISTINCT c.id FROM AttachmentVideoUnit avu
+            JOIN avu.lecture l
+            JOIN l.course c
+            WHERE c.id > :courseId
+                AND c.testCourse = FALSE
+                AND l.isTutorialLecture = FALSE
+            ORDER BY c.id
+            """)
+    List<Long> findCourseIdsWithAttachmentVideoUnitsAfter(@Param("courseId") long courseId, Pageable pageable);
+
+    /**
+     * Find every attachment video unit of a course with its attachment, lecture, and course fetched.
+     * Used by the ingestion reconciler, which computes content fingerprints (attachment link, video source)
+     * for all units of the walked course.
+     *
+     * @param courseId the ID of the course
+     * @return all attachment video units of the course
+     */
+    @Query("""
+            SELECT avu FROM AttachmentVideoUnit avu
+                LEFT JOIN FETCH avu.attachment
+                JOIN FETCH avu.lecture l
+                JOIN FETCH l.course c
+            WHERE c.id = :courseId
+                AND l.isTutorialLecture = FALSE
+            ORDER BY avu.id
+            """)
+    List<AttachmentVideoUnit> findAllWithAttachmentByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * From the given ids, return those that still correspond to an existing attachment video unit.
+     * Used by the ingestion reconciler to batch its orphan check into a single query instead of one
+     * {@code existsById} per census row.
+     *
+     * @param ids candidate lecture unit ids
+     * @return the subset of ids that exist as attachment video units
+     */
+    @Query("""
+            SELECT avu.id FROM AttachmentVideoUnit avu
+            WHERE avu.id IN :ids
+            """)
+    Set<Long> findExistingIds(@Param("ids") Collection<Long> ids);
 }

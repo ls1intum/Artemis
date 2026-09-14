@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,6 +17,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
+import de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO;
 
 /**
  * Spring Data JPA repository for the LectureUnitProcessingState entity.
@@ -35,24 +37,86 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     Optional<LectureUnitProcessingState> findByLectureUnit_Id(Long lectureUnitId);
 
     /**
-     * Find processing states that are stuck (no callback received recently).
+     * Find processing states that are stuck (no callback received recently) or past the absolute deadline.
      * Uses {@code lastUpdated} instead of {@code startedAt} so that heartbeat callbacks
      * from Iris keep resetting the clock — a healthy job is never considered stuck.
+     * <p>
+     * A leased run ({@code lastHeartbeatAt} set) that has reported a stage ({@code lastProgressAt} set) is
+     * excluded from the no-callback arm: its liveness is judged by the stall detector and the much tighter
+     * lease expiry in {@link #findRunsWithLapsedLease}. A leased run that has NOT reported a stage — the
+     * whole transcription phase, which sends no stage name — stays in the no-callback arm, because
+     * {@code lastUpdated} (bumped by every raw transcription checkpoint) is its only liveness signal, just
+     * as in push mode; otherwise a silently wedged transcription would hide behind its fresh lease until
+     * the absolute deadline. The absolute deadline on {@code startedAt} is the backstop for jobs that keep
+     * sending heartbeats without ever terminating: no single ingestion run may exceed it.
      * <p>
      * Only finds states that are NOT already scheduled for retry (retryEligibleAt IS NULL).
      * This prevents stuck detection from interfering with states waiting for their backoff period.
      *
-     * @param phases     the phases to check
-     * @param cutoffTime the time before which states are considered stuck (no callback since)
+     * @param phases             the phases to check
+     * @param cutoffTime         the time before which states are considered stuck (no callback since)
+     * @param absoluteCutoffTime the time before which a started job is considered stuck regardless of heartbeats
      * @return list of stuck processing states
      */
     @Query("""
             SELECT ps FROM LectureUnitProcessingState ps
             WHERE ps.phase IN :phases
-            AND ps.lastUpdated < :cutoffTime
+            AND (((ps.lastHeartbeatAt IS NULL OR ps.lastProgressAt IS NULL) AND ps.lastUpdated < :cutoffTime) OR ps.startedAt < :absoluteCutoffTime)
             AND ps.retryEligibleAt IS NULL
             """)
-    List<LectureUnitProcessingState> findStuckStates(@Param("phases") List<ProcessingPhase> phases, @Param("cutoffTime") ZonedDateTime cutoffTime);
+    List<LectureUnitProcessingState> findStuckStates(@Param("phases") List<ProcessingPhase> phases, @Param("cutoffTime") ZonedDateTime cutoffTime,
+            @Param("absoluteCutoffTime") ZonedDateTime absoluteCutoffTime);
+
+    /**
+     * Find in-flight runs whose worker lease has lapsed: the run was claimed by a Pyris worker
+     * (proven by at least one recorded heartbeat) and that worker has not renewed the lease since
+     * the cutoff. A lapsed lease is a strong infrastructure signal — the fixed-interval heartbeat is
+     * a timer, not the pipeline's work, so its silence means the worker process is gone, not that a
+     * stage is slow. Recovery therefore preserves the retry budget, unlike {@link #findStuckStates}.
+     * <p>
+     * Runs without any recorded heartbeat (legacy push dispatch, or an Iris without worker support)
+     * never match here and stay under the timeout-based stuck detection.
+     *
+     * @param phases      the in-flight phases to check
+     * @param leaseCutoff the time before which an unrenewed lease counts as lapsed
+     * @return runs whose lease has lapsed
+     */
+    @Query("""
+            SELECT ps FROM LectureUnitProcessingState ps
+            WHERE ps.phase IN :phases
+            AND ps.lastHeartbeatAt IS NOT NULL
+            AND ps.lastHeartbeatAt < :leaseCutoff
+            AND ps.retryEligibleAt IS NULL
+            """)
+    List<LectureUnitProcessingState> findRunsWithLapsedLease(@Param("phases") List<ProcessingPhase> phases, @Param("leaseCutoff") ZonedDateTime leaseCutoff);
+
+    /**
+     * Find the processing state currently carrying the given ingestion job token. Backs worker lease
+     * renewal: each heartbeat lists the tokens of the runs the worker is executing.
+     *
+     * @param token the ingestion job token
+     * @return the state currently associated with this token, if any
+     */
+    Optional<LectureUnitProcessingState> findByIngestionJobToken(String token);
+
+    /**
+     * Resolve the identity of the ingestion job currently associated with the given token.
+     * <p>
+     * Backs the database fallback for authenticating Iris ingestion callbacks: the distributed job map
+     * entry expires after a TTL, but the token stays valid in the processing state row for as long as
+     * the job is in flight, so a late terminal callback is never rejected for a job Artemis still tracks.
+     *
+     * @param token the ingestion job token from the callback's Authorization header
+     * @return the job identity if a processing state currently carries this token
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO(l.course.id, l.id, lu.id)
+            FROM LectureUnitProcessingState ps
+            JOIN ps.lectureUnit lu
+            JOIN lu.lecture l
+            WHERE ps.ingestionJobToken = :token
+            """)
+    Optional<IngestionJobIdentityDTO> findIngestionJobIdentityByToken(@Param("token") String token);
 
     /**
      * Find processing states that are ready for retry (backoff period has passed).
@@ -64,7 +128,7 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * This query is mutually exclusive with findStuckStates (which requires retryEligibleAt IS NULL).
      * <p>
      * This is a plain read that takes no row locks: it lists candidates, and the caller then competes for each one
-     * through {@link #claimRetryEligible}. Locking here would only be meaningful while a transaction spans the read
+     * through {@link #claimJobsForDispatch}. Locking here would only be meaningful while a transaction spans the read
      * and the later write, and declaring that boundary in a service is not allowed.
      *
      * @param phase the processing phase to check (enum name as string, e.g. "FAILED")
@@ -96,6 +160,42 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             WHERE l.course.id = :courseId
             """)
     List<LectureUnitProcessingState> findByCourseId(@Param("courseId") Long courseId);
+
+    /**
+     * Atomically clear the ingestion job token of a state, but only when it still carries the expected token.
+     * <p>
+     * This is the claim step for terminal callbacks: exactly one caller wins the update, so two concurrent
+     * callbacks for the same run (for example a success and a failure racing each other) cannot both write
+     * a terminal state. A return value of 0 means another callback already claimed the token.
+     *
+     * @param id    the id of the processing state row
+     * @param token the job token the callback carried
+     * @return the number of updated rows: 1 if this call claimed the token, 0 if it was already claimed or changed
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.ingestionJobToken = NULL
+            WHERE ps.id = :id AND ps.ingestionJobToken = :token
+            """)
+    int clearIngestionJobTokenIfMatches(@Param("id") long id, @Param("token") String token);
+
+    /**
+     * Find all processing states for a course with their lecture units fetched.
+     * Used by the ingestion reconciler, which touches every unit of the course and
+     * would otherwise lazy-load them one by one.
+     *
+     * @param courseId the ID of the course
+     * @return list of processing states with initialized lecture units
+     */
+    @Query("""
+            SELECT ps FROM LectureUnitProcessingState ps
+            JOIN FETCH ps.lectureUnit lu
+            JOIN lu.lecture l
+            WHERE l.course.id = :courseId
+            """)
+    List<LectureUnitProcessingState> findWithLectureUnitByCourseId(@Param("courseId") long courseId);
 
     /**
      * Find all processing states for a lecture.
@@ -138,121 +238,99 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     long countByPhaseIn(@Param("phases") List<ProcessingPhase> phases);
 
     /**
-     * List IDLE jobs that are ready for dispatch.
-     * <p>
-     * A plain read that takes no row locks; the caller competes for each candidate through
-     * {@link #claimIdleForDispatch}, which is what actually prevents double-dispatch in a cluster.
-     * <p>
-     * Only returns jobs where:
-     * <ul>
-     * <li>{@code phase = 'IDLE'} — waiting in the queue</li>
-     * <li>{@code started_at IS NULL} — not yet dispatched to Iris</li>
-     * <li>{@code retry_eligible_at IS NULL OR retry_eligible_at <= now} — not in backoff period</li>
-     * </ul>
+     * Select claimable IDLE jobs of the fresh priority class (user- and content-triggered work).
+     * Only used inside {@link #claimJobsForDispatch}; {@code FOR UPDATE SKIP LOCKED} prevents two
+     * nodes from claiming the same row while the claim transaction runs.
      *
      * @param now   the current time for backoff comparison
-     * @param limit maximum number of candidates to list
-     * @return list of candidate IDLE states; a caller must claim one before dispatching it
+     * @param limit maximum number of jobs to select
+     * @return fresh IDLE states ready for dispatch, locked for the claiming transaction
      */
     @Query(value = """
             SELECT * FROM lecture_unit_processing_state
             WHERE phase = 'IDLE'
             AND started_at IS NULL
             AND (retry_eligible_at IS NULL OR retry_eligible_at <= :now)
+            AND COALESCE(dispatch_priority, 0) = 0
             ORDER BY id ASC
             LIMIT :limit
             """, nativeQuery = true)
-    List<LectureUnitProcessingState> findIdleForDispatch(@Param("now") ZonedDateTime now, @Param("limit") int limit);
+    List<LectureUnitProcessingState> findFreshIdleForDispatch(@Param("now") ZonedDateTime now, @Param("limit") int limit);
 
     /**
-     * Claim one IDLE job for dispatch, so that exactly one node acts on it.
-     * <p>
-     * The claim is the {@code started_at} write itself: the predicate requires it to still be null, and
-     * {@link #findIdleForDispatch} only lists rows where it is null, so the winner's update immediately removes the row
-     * from every other node's candidate list. A single conditional statement replaces the previous
-     * {@code SELECT ... FOR UPDATE SKIP LOCKED} followed by a much later save, which only excluded other nodes while a
-     * transaction spanned both — a boundary that had to be declared in a service, and which was silently absent
-     * whenever the dispatch was reached by a self-invoking call.
+     * Select claimable IDLE jobs of the backlog priority classes (backfill and reconcile requeues).
+     * Only used inside {@link #claimJobsForDispatch}.
      *
-     * @param id  the id of the state to claim
-     * @param now the timestamp to record as the dispatch start
-     * @return 1 if this caller claimed the job, 0 if another caller already had it
+     * @param now   the current time for backoff comparison
+     * @param limit maximum number of jobs to select
+     * @return backlog IDLE states ready for dispatch, locked for the claiming transaction
      */
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE LectureUnitProcessingState ps
-            SET ps.startedAt = :now, ps.lastUpdated = :now
-            WHERE ps.id = :id
-            AND ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE
-            AND ps.startedAt IS NULL
-            """)
-    int claimIdleForDispatch(@Param("id") long id, @Param("now") ZonedDateTime now);
+    @Query(value = """
+            SELECT * FROM lecture_unit_processing_state
+            WHERE phase = 'IDLE'
+            AND started_at IS NULL
+            AND (retry_eligible_at IS NULL OR retry_eligible_at <= :now)
+            AND COALESCE(dispatch_priority, 0) > 0
+            ORDER BY COALESCE(dispatch_priority, 0) ASC, id ASC
+            LIMIT :limit
+            FOR UPDATE SKIP LOCKED
+            """, nativeQuery = true)
+    List<LectureUnitProcessingState> findBacklogIdleForDispatch(@Param("now") ZonedDateTime now, @Param("limit") int limit);
 
     /**
-     * Claim one retry-eligible job, so that exactly one node retries it.
+     * Atomically claim jobs for dispatch: fresh work first, expired retries second, backlog last.
      * <p>
-     * The claim is a lease rather than a clear: it pushes {@code retryEligibleAt} into the future, and
-     * {@link #findStatesReadyForRetry} only lists rows whose value has passed, so the row is invisible to every other
-     * caller for the length of the lease. Two callers racing on the same row both pass the {@code <= :now} guard, but
-     * the update is one statement, so the second one matches nothing and is told it lost.
-     * <p>
-     * Leasing rather than clearing is what makes an abandoned claim recover itself. A node killed between the claim
-     * and the phase write leaves the row exactly as the lease left it, and once the lease expires the row is eligible
-     * again with no recovery query involved. That matters because a cleared {@code retryEligibleAt} is
-     * indistinguishable from the deliberate representation of a permanently failed unit — {@code handleProcessingFailure}
-     * leaves a YOUTUBE_PRIVATE failure FAILED with no scheduled retry and attempts still on the clock — so any
-     * sweep that resurrected such rows would keep sending private videos back to Iris. With a lease there is
-     * nothing to sweep: a permanent failure is null forever and is never eligible.
-     * <p>
-     * A successful dispatch clears the lease on its own, because the phase transition out of FAILED sets
-     * {@code retryEligibleAt} to null.
+     * Claiming marks {@code startedAt} (and moves retry rows back to IDLE) inside ONE committed
+     * transaction, so by the time the dispatcher sends the first HTTP request to Pyris the claim is
+     * durable: a crash mid-dispatch can never lead a re-dispatching node to spawn a duplicate
+     * pipeline, and no row locks are held across external calls. A claim whose send never happened
+     * (crash, node death) is released by {@link #releaseExpiredDispatchClaims}.
      *
-     * @param id          the id of the state to claim
-     * @param now         the current time, which the backoff must already have passed
-     * @param leaseExpiry when the claim lapses and the row becomes eligible again
-     * @return 1 if this caller claimed the retry, 0 if another caller already had it
+     * @param now   the current time
+     * @param limit maximum number of jobs to claim (free capacity slots)
+     * @return the claimed states, in dispatch order
      */
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE LectureUnitProcessingState ps
-            SET ps.retryEligibleAt = :leaseExpiry, ps.lastUpdated = :now
-            WHERE ps.id = :id
-            AND ps.retryEligibleAt IS NOT NULL
-            AND ps.retryEligibleAt <= :now
-            """)
-    int claimRetryEligible(@Param("id") long id, @Param("now") ZonedDateTime now, @Param("leaseExpiry") ZonedDateTime leaseExpiry);
+    @Transactional // ok: the claim must commit before dispatch sends HTTP requests
+    default List<LectureUnitProcessingState> claimJobsForDispatch(ZonedDateTime now, int limit) {
+        ArrayList<LectureUnitProcessingState> claimed = new ArrayList<>(findFreshIdleForDispatch(now, limit));
+        int remaining = limit - claimed.size();
+        if (remaining > 0) {
+            List<LectureUnitProcessingState> retries = findStatesReadyForRetry(ProcessingPhase.FAILED.name(), now, remaining);
+            for (LectureUnitProcessingState retry : retries) {
+                // Back to IDLE while claimed: an abandoned claim is then released by expiry
+                // instead of being misread as a terminal failure.
+                retry.clearRetryEligibility();
+                retry.setPhase(ProcessingPhase.IDLE);
+            }
+            claimed.addAll(retries);
+            remaining = limit - claimed.size();
+        }
+        if (remaining > 0) {
+            claimed.addAll(findBacklogIdleForDispatch(now, remaining));
+        }
+        for (LectureUnitProcessingState state : claimed) {
+            state.setStartedAt(now);
+        }
+        saveAll(claimed);
+        return claimed;
+    }
 
     /**
-     * Release IDLE claims whose owner never got as far as dispatching them.
-     * <p>
-     * {@link #claimIdleForDispatch} commits {@code startedAt} before the dispatch itself commits a phase, so a node
-     * killed in between — a rolling deploy landing during the call to Iris — leaves a row that is IDLE with
-     * {@code startedAt} set. No query selects that: {@link #findIdleForDispatch} wants a null {@code startedAt},
-     * {@link #findStuckStates} is only asked about the active phases, and {@link #findStatesReadyForRetry} wants
-     * FAILED. The unit would wait forever. Clearing the timestamp puts it back in the queue.
-     * <p>
-     * The previous {@code SELECT ... FOR UPDATE SKIP LOCKED} could not produce this state, because the claim was not
-     * visible to anyone until the dispatch committed alongside it. Trading that for a released row is the cost of
-     * keeping the boundary out of the service, and this is what pays it.
-     * <p>
-     * {@link #claimRetryEligible} needs no counterpart to this, because it leases rather than clears and therefore
-     * recovers on its own.
+     * Release dispatch claims whose send never completed: IDLE rows whose {@code startedAt} was set by
+     * a claim but never advanced to an in-flight phase within the given cutoff. Clearing
+     * {@code startedAt} puts them back into the claimable queue.
      *
-     * @param cutoffTime rows claimed before this are considered abandoned
-     * @param now        the timestamp to record as the last update
-     * @return how many claims were released
+     * @param cutoff claims older than this are considered abandoned
+     * @return the number of released claims
      */
-    @Modifying
     @Transactional // ok because of modifying query
+    @Modifying
     @Query("""
             UPDATE LectureUnitProcessingState ps
-            SET ps.startedAt = NULL, ps.lastUpdated = :now
+            SET ps.startedAt = NULL
             WHERE ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE
             AND ps.startedAt IS NOT NULL
-            AND ps.startedAt < :cutoffTime
+            AND ps.startedAt < :cutoff
             """)
-    int releaseAbandonedIdleClaims(@Param("cutoffTime") ZonedDateTime cutoffTime, @Param("now") ZonedDateTime now);
-
+    int releaseExpiredDispatchClaims(@Param("cutoff") ZonedDateTime cutoff);
 }

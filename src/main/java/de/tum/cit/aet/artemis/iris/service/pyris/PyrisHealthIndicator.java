@@ -15,6 +15,9 @@ import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.boot.health.contributor.Status;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
@@ -60,6 +63,18 @@ public class PyrisHealthIndicator implements HealthIndicator {
     @Value("${artemis.iris.url}")
     private URI irisUrl;
 
+    /**
+     * Header on the outgoing health request announcing this Artemis installation's base URL to
+     * Pyris. Pyris's pull-based ingestion worker discovers its upstreams from these authenticated
+     * announcements instead of from static configuration: any Artemis that health-checks it is a
+     * queue to claim from, and an installation that stops announcing expires out of the registry.
+     * An older Pyris simply ignores the header.
+     */
+    public static final String ARTEMIS_BASE_URL_HEADER = "X-Artemis-Base-Url";
+
+    @Value("${server.url}")
+    private String artemisBaseUrl;
+
     private long lastUpdated = 0;
 
     private Health cachedHealth = null;
@@ -73,9 +88,13 @@ public class PyrisHealthIndicator implements HealthIndicator {
      */
     private final AtomicBoolean previouslyUp = new AtomicBoolean(true);
 
-    public PyrisHealthIndicator(@Qualifier("shortTimeoutPyrisRestTemplate") RestTemplate restTemplate, Optional<ProcessingStateRecoveryApi> processingStateRecoveryApi) {
+    private final PyrisRestartWatchService restartWatchService;
+
+    public PyrisHealthIndicator(@Qualifier("shortTimeoutPyrisRestTemplate") RestTemplate restTemplate, Optional<ProcessingStateRecoveryApi> processingStateRecoveryApi,
+            PyrisRestartWatchService restartWatchService) {
         this.restTemplate = restTemplate;
         this.processingStateRecoveryApi = processingStateRecoveryApi;
+        this.restartWatchService = restartWatchService;
     }
 
     /**
@@ -108,7 +127,9 @@ public class PyrisHealthIndicator implements HealthIndicator {
         additionalInfo.put(IRIS_URL_KEY, irisUrl);
 
         try {
-            ResponseEntity<String> response = restTemplate.getForEntity(healthUri, String.class);
+            HttpHeaders headers = new HttpHeaders();
+            headers.set(ARTEMIS_BASE_URL_HEADER, artemisBaseUrl);
+            ResponseEntity<String> response = restTemplate.exchange(healthUri, HttpMethod.GET, new HttpEntity<>(headers), String.class);
             String json = response.getBody();
 
             if (json == null || json.isBlank() || "null".equalsIgnoreCase(json.trim())) {
@@ -118,6 +139,7 @@ public class PyrisHealthIndicator implements HealthIndicator {
                 try {
                     PyrisHealthStatusDTO body = objectMapper.readValue(json, PyrisHealthStatusDTO.class);
                     flattenModulesInto(additionalInfo, body.modules());
+                    restartWatchService.observeBootId(body.bootId());
                     connectorHealth = new ConnectorHealth(body.isHealthy(), additionalInfo, null);
                 }
                 catch (JacksonException e) {

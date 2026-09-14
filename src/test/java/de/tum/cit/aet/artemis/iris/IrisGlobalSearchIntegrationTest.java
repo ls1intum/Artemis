@@ -76,6 +76,49 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(response).isEmpty();
     }
 
+    /**
+     * Instructors can switch Iris off per course, and content search has to honor that toggle like every other Iris feature. Disabling a course does not remove what was already
+     * ingested, so the scope has to be narrowed on the way out rather than relying on the index being empty.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void search_whenIrisIsDisabledForTheOnlyRequestedCourse_shouldNotReachPyris() throws Exception {
+        var course = courseUtilService.createCourse();
+        disableIrisFor(course);
+
+        var requestDTO = new GlobalSearchLectureRequestDTO("machine learning", 5, List.of(course.getId()));
+        request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void search_whenIrisIsDisabledForOneOfTheRequestedCourses_shouldForwardOnlyTheEnabledCourse() throws Exception {
+        var enabledCourse = courseUtilService.createCourse();
+        var disabledCourse = courseUtilService.createCourse();
+        enableIrisFor(enabledCourse);
+        disableIrisFor(disabledCourse);
+        irisRequestMockProvider.mockSearchLectures(List.of(), List.of(enabledCourse.getId()));
+
+        var requestDTO = new GlobalSearchLectureRequestDTO("machine learning", 5, List.of(enabledCourse.getId(), disabledCourse.getId()));
+        List<PyrisLectureSearchResultDTO> response = request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
+
+        assertThat(response).isEmpty();
+    }
+
+    /**
+     * A course that never saved Iris settings has no row at all, and the default settings enable Iris. Narrowing must therefore drop only the courses that were explicitly
+     * switched off, otherwise content search would silently stop working for every course that never opened the Iris settings page.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void search_whenTheCourseHasNoIrisSettingsRow_shouldForwardTheCourse() throws Exception {
+        var course = courseUtilService.createCourse();
+        irisRequestMockProvider.mockSearchLectures(List.of(), List.of(course.getId()));
+
+        var requestDTO = new GlobalSearchLectureRequestDTO("machine learning", 5, List.of(course.getId()));
+        request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void search_whenPyrisFails_shouldReturnInternalServerError() throws Exception {
