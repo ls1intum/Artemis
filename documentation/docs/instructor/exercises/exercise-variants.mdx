@@ -67,7 +67,7 @@ The group owns the timeline of all its variants. Open **Edit group** on a group 
 
 Two rules follow from this:
 
-- **Group dates override individual exercise dates.** When an exercise joins a group, or when you change the group's timeline, the group's dates are written onto every member exercise — including empty ones, which clear the exercise's own date.
+- **Group dates override individual exercise dates.** When an exercise joins a group, or when you change the group's timeline, the group's dates are written onto every member exercise — including empty ones, which clear the exercise's own date. The exception is the first exercise to join an empty group: every date the group does not have yet is first taken from that exercise, so a group with a blank **Release Date** adopts its first member's release date instead of making that exercise unreleased.
 - **Member exercises show a timeline lock.** In the edit form of an exercise that belongs to a group, the date fields are read-only and display the group's dates. Edit the group to change them.
 
 Artemis validates a new timeline against **all** member exercises before saving anything, so an invalid change (for example a due date before the release date, or a date that conflicts with an exercise that has already started) is rejected without leaving the group half-updated.
