@@ -86,21 +86,25 @@ public interface QuizSubmissionRepository extends ArtemisJpaRepository<QuizSubmi
     Optional<QuizSubmission> findByExerciseIdAndStudentLogin(@Param("exerciseId") Long exerciseId, @Param("studentLogin") String studentLogin);
 
     /**
-     * Check whether the submission with the given id belongs to the given student. Used by the test-exam quiz
-     * submission endpoint to validate that a client-supplied submission id actually belongs to the requesting
-     * user before letting it drive an UPDATE on the row (test exams skip {@code preventMultipleSubmissions},
-     * so the otherwise-implicit ownership guarantee from that helper does not apply).
+     * Check whether the submission with the given id belongs to the given student in the given exercise. Used by the
+     * exam quiz submission endpoint to validate that a client-supplied submission id actually belongs to the requesting
+     * user before letting it drive an UPDATE on the row: test exams skip {@code preventMultipleSubmissions} entirely,
+     * and for regular exams it only replaces the id once a submission of the student exists, so the otherwise-implicit
+     * ownership guarantee from that helper does not cover every case. The join is on a student participation, so a
+     * submission that hangs off no student participation at all matches nothing.
      *
      * @param submissionId the id of the submission to validate
+     * @param exerciseId   the exercise the submission must belong to
      * @param studentId    the id of the student that must own the submission
-     * @return {@code true} if a submission with that id exists and is owned by the given student
+     * @return {@code true} if a submission with that id exists in that exercise and is owned by the given student
      */
     @Query("""
             SELECT COUNT(submission) > 0
             FROM QuizSubmission submission
                 JOIN TREAT(submission.participation AS StudentParticipation) participation
             WHERE submission.id = :submissionId
+                AND participation.exercise.id = :exerciseId
                 AND participation.student.id = :studentId
             """)
-    boolean existsByIdAndStudentId(@Param("submissionId") Long submissionId, @Param("studentId") Long studentId);
+    boolean existsByIdAndExerciseIdAndStudentId(@Param("submissionId") Long submissionId, @Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 }

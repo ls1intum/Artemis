@@ -171,17 +171,16 @@ public class ExamSubmissionService {
             return submission;
         }
 
+        // The rows are ordered graded first, then newest first, so a test run added alongside the graded participation
+        // cannot decide which submission is overwritten, and among several test runs the newest is the one that is written.
         List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithEagerSubmissions(exercise, user.getId());
-        if (!participations.isEmpty()) {
-            Set<Submission> submissions = participations.getFirst().getSubmissions();
-            if (!submissions.isEmpty()) {
-                Submission existingSubmission = submissions.iterator().next();
-                // Instead of creating a new submission, we want to overwrite the already existing submission. Therefore
-                // we set the id of the received submission to the id of the existing submission. When repository.save()
-                // is invoked the existing submission will be updated.
-                submission.setId(existingSubmission.getId());
-            }
-        }
+        // Instead of creating a new submission, we want to overwrite the already existing submission. Therefore we set
+        // the id of the received submission to the id of the existing submission. When repository.save() is invoked the
+        // existing submission will be updated. Without one, the id is cleared, so a client id that names another
+        // participation's submission cannot decide which row is written.
+        Long existingSubmissionId = participations.stream().findFirst().flatMap(participation -> participation.getSubmissions().stream().findFirst()).map(Submission::getId)
+                .orElse(null);
+        submission.setId(existingSubmissionId);
 
         return submission;
     }

@@ -641,12 +641,22 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     Optional<StudentParticipation> findByIdWithManualResultAndFeedbacks(@Param("participationId") long participationId);
 
+    /**
+     * Get the participations of a student in an exercise, graded before test run and newest first. The order decides
+     * which participation an exam save resolves for the student, so it has to be deterministic: a test run added
+     * alongside the graded participation must not be able to decide which submission is overwritten.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @return the participations of that student in that exercise, graded before test run and newest first
+     */
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
+            ORDER BY p.testRun ASC, p.initializationDate DESC, p.id DESC
             """)
     List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerSubmissions(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 

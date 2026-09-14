@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionPatchPayload;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionSyncPayload;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.modeling.api.ModelingSubmissionApi;
 import de.tum.cit.aet.artemis.modeling.config.ModelingApiNotPresentException;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -76,6 +77,8 @@ public class ParticipationTeamWebsocketService {
 
     private final Optional<ModelingSubmissionApi> modelingSubmissionApi;
 
+    private final SubmissionService submissionService;
+
     private final HazelcastInstance hazelcastInstance;
 
     // TODO: Follow-Up: move this into a separate service that contains all Hazelcast related data structures
@@ -94,7 +97,7 @@ public class ParticipationTeamWebsocketService {
 
     public ParticipationTeamWebsocketService(WebsocketMessagingService websocketMessagingService, SimpUserRegistry simpUserRegistry, UserRepository userRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, Optional<TextSubmissionApi> textSubmissionApi,
-            Optional<ModelingSubmissionApi> modelingSubmissionApi, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+            Optional<ModelingSubmissionApi> modelingSubmissionApi, SubmissionService submissionService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.websocketMessagingService = websocketMessagingService;
         this.simpUserRegistry = simpUserRegistry;
         this.userRepository = userRepository;
@@ -102,6 +105,7 @@ public class ParticipationTeamWebsocketService {
         this.exerciseRepository = exerciseRepository;
         this.textSubmissionApi = textSubmissionApi;
         this.modelingSubmissionApi = modelingSubmissionApi;
+        this.submissionService = submissionService;
         this.hazelcastInstance = hazelcastInstance;
     }
 
@@ -252,6 +256,17 @@ public class ParticipationTeamWebsocketService {
 
         final User user = userRepository.getUserWithAuthorities(principal.getName());
         final Exercise exercise = exerciseRepository.findByIdElseThrow(participation.getExercise().getId());
+
+        // Only team exercises sync through this endpoint. It applies none of the exam gates the REST save applies, so an
+        // individual or exam participation must not be saved here.
+        if (!exercise.isTeamMode() || exercise.isExamExercise()) {
+            return;
+        }
+
+        // The submission id in the payload decides which row the save writes, and this path reaches the submission
+        // services directly rather than through the REST resources that check it. Without this the id can name any
+        // submission in the database.
+        submissionService.checkSubmissionAllowanceElseThrow(exercise, submission, user);
 
         if (submission instanceof ModelingSubmission modelingSubmission && exercise instanceof ModelingExercise modelingExercise) {
             ModelingSubmissionApi api = modelingSubmissionApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingSubmissionApi.class));

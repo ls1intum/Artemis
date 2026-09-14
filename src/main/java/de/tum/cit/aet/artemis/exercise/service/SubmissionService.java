@@ -131,26 +131,34 @@ public class SubmissionService {
             throw new AccessForbiddenException();
         }
 
-        // Fetch the submission with the corresponding participation if the id is set (on update) and check that the
-        // user of the participation is the same as the user who executes this call (or student in the team).
-        // This prevents injecting submissions to other users.
+        // Fetch the submission with the corresponding participation if the id is set (on update) and check that it
+        // belongs to a participation of this very exercise that the caller owns (themselves or through their team).
+        // The id decides which row the save writes, so anything it may name has to be checked here: without the
+        // exercise predicate it can name a submission of another exercise, and a submission that hangs off no student
+        // participation at all - an example submission - must never be writable through a student save.
         if (submission.getId() != null) {
-            Optional<Submission> existingSubmission = submissionRepository.findById(submission.getId());
-            if (existingSubmission.isEmpty()) {
+            Submission existingSubmission = submissionRepository.findById(submission.getId()).orElseThrow(AccessForbiddenException::new);
+
+            if (!(existingSubmission.getParticipation() instanceof StudentParticipation participation)) {
+                throw new AccessForbiddenException();
+            }
+            if (participation.getExercise() == null || !exercise.getId().equals(participation.getExercise().getId())) {
                 throw new AccessForbiddenException();
             }
 
-            StudentParticipation participation = (StudentParticipation) existingSubmission.get().getParticipation();
-            if (participation != null) {
-                Optional<User> user = participation.getStudent();
-                if (user.isPresent() && !user.get().equals(currentUser)) {
-                    throw new AccessForbiddenException();
-                }
+            Optional<User> user = participation.getStudent();
+            if (user.isPresent() && !user.get().equals(currentUser)) {
+                throw new AccessForbiddenException();
+            }
 
-                Optional<Team> team = participation.getTeam();
-                if (team.isPresent() && !authCheckService.isStudentInTeam(course, team.get().getShortName(), currentUser)) {
-                    throw new AccessForbiddenException();
-                }
+            Optional<Team> team = participation.getTeam();
+            if (team.isPresent() && !authCheckService.isStudentInTeam(course, team.get().getShortName(), currentUser)) {
+                throw new AccessForbiddenException();
+            }
+            // A participation carries either a student or a team. One that carries neither cannot be shown to belong to
+            // the caller, so it is refused rather than waved through.
+            if (user.isEmpty() && team.isEmpty()) {
+                throw new AccessForbiddenException();
             }
         }
     }

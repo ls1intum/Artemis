@@ -562,13 +562,17 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
                 FileUploadSubmissionDTO.class, HttpStatus.BAD_REQUEST);
     }
 
+    /**
+     * The shared submission allowance check refuses a submission id that belongs to another exercise, so this is
+     * answered with 403 before the file upload specific exercise validation below it can report a 400.
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
-    void submitExercise_existingSubmissionIdFromDifferentExercise_badRequest() throws Exception {
+    void submitExercise_existingSubmissionIdFromDifferentExercise_forbidden() throws Exception {
         FileUploadSubmissionDTO submission = performInitialSubmission(releasedFileUploadExercise.getId(), submittedFileUploadSubmission, validFile.getOriginalFilename());
         FileUploadSubmissionInputDTO input = new FileUploadSubmissionInputDTO(submission.id(), submission.submitted(), finishedFileUploadExercise.getId());
         request.postWithMultipartFile("/api/fileupload/exercises/" + finishedFileUploadExercise.getId() + "/file-upload-submissions", input, "submission", validFile,
-                FileUploadSubmissionDTO.class, HttpStatus.BAD_REQUEST);
+                FileUploadSubmissionDTO.class, HttpStatus.FORBIDDEN);
 
         assertThat(fileUploadSubmissionRepository.findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseId(submission.id(), releasedFileUploadExercise.getId()))
                 .isPresent();
