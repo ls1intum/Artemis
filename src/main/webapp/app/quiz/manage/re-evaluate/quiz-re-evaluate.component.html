@@ -17,15 +17,25 @@
             <div class="quiz-options">
                 <div class="row form-group" style="width: 100%">
                     <div class="row">
-                        <label for="quiz-title" jhiTranslate="artemisApp.exercise.title"></label>
+                        <!--
+                            The marker the shared title field carries on every other exercise form, which this page
+                            hand-rolls its own title input instead of using. Hidden from assistive technology because
+                            `required` on the input already conveys it.
+
+                            Label and marker share one child of the row: Bootstrap gives every direct child of a `.row`
+                            `width: 100%`, so as two children they took a line each and the star sat under the label.
+                        -->
+                        <div><label for="quiz-title" jhiTranslate="artemisApp.exercise.title"></label><span class="text-state-danger" aria-hidden="true">*</span></div>
                     </div>
                     <div class="row">
                         <div class="col-11">
                             <input
+                                required
                                 id="quiz-title"
                                 type="text"
                                 class="form-control"
                                 [(ngModel)]="quizExercise().title"
+                                (ngModelChange)="cacheValidation()"
                                 placeholder="{{ 'artemisApp.quizExercise.placeholder.title' | artemisTranslate }}"
                             />
                         </div>
@@ -87,7 +97,13 @@
                         </div>
                         <div class="row">
                             <div class="form-group custom-control custom-checkbox">
-                                <input type="checkbox" id="cbRandomizeOrder" class="form-check-input custom-control-input" [(ngModel)]="quizExercise().randomizeQuestionOrder" />
+                                <input
+                                    type="checkbox"
+                                    id="cbRandomizeOrder"
+                                    class="form-check-input custom-control-input"
+                                    [(ngModel)]="quizExercise().randomizeQuestionOrder"
+                                    (ngModelChange)="cacheValidation()"
+                                />
                                 <label class="form-check-label custom-control-label" for="cbRandomizeOrder" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"></label>
                             </div>
                         </div>
@@ -154,21 +170,6 @@
                         @if (isSaving()) {
                             <span jhiTranslate="artemisApp.quizExercise.edit.saving" class="badge bg-primary"></span>
                         }
-                        <ng-template #tooltipTranslate>
-                            @for (reason of invalidReasons(); track reason) {
-                                <div>
-                                    @if ((reason.translateValues | json) !== '{}') {
-                                        <p
-                                            jhiTranslate="{{ reason.translateKey }}"
-                                            [translateValues]="{ index: reason.translateValues.index, threshold: reason.translateValues.threshold }"
-                                        ></p>
-                                    }
-                                    @if ((reason.translateValues | json) === '{}') {
-                                        <p jhiTranslate="{{ reason.translateKey }}"></p>
-                                    }
-                                </div>
-                            }
-                        </ng-template>
                         <ng-template #warningTranslate>
                             @for (warning of invalidWarnings(); track warning) {
                                 <div>
@@ -181,13 +182,6 @@
                                 </div>
                             }
                         </ng-template>
-                        @if (!quizIsValid()) {
-                            <span class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right auto">
-                                <fa-icon [icon]="faExclamationCircle" />
-                                <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
-                                <span>({{ invalidReasons().length }})</span>
-                            </span>
-                        }
                         @if (warningQuizCache()) {
                             <span class="badge bg-warning" [ngbTooltip]="warningTranslate" tooltip-placement="top-right auto">
                                 <span jhiTranslate="artemisApp.quizExercise.edit.warning"></span>
@@ -201,7 +195,29 @@
                             jhiTranslate="artemisApp.quizExercise.re-evaluate.resetQuiz"
                         ></button>
                         <button class="btn btn-secondary" (click)="back()" jhiTranslate="{{ pendingChanges() ? 'entity.action.cancel' : 'entity.action.back' }}"></button>
-                        <button class="btn btn-success" (click)="save()" [disabled]="!pendingChanges() || !isValidQuiz() || isSaving()" jhiTranslate="entity.action.save"></button>
+                        <!-- The tooltip would only describe its host while open, so it leaves aria-describedby to this permanent list. -->
+                        @if (!quizIsValid()) {
+                            <ul [id]="saveReasonsId" class="sr-only">
+                                @for (reason of invalidReasons(); track $index) {
+                                    <li [jhiTranslate]="reason.translateKey" [translateValues]="reason.translateValues"></li>
+                                }
+                            </ul>
+                        }
+                        <!-- aria-disabled rather than disabled, so the button stays focusable and can explain itself. Pointer
+                             events stay on for the same reason: a blocked button still has to be able to show its tooltip. -->
+                        <button
+                            tumUiButton
+                            type="button"
+                            severity="success"
+                            size="small"
+                            class="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
+                            (click)="onSaveClick()"
+                            [tumUiTooltip]="invalidReasonTexts()"
+                            [tumUiTooltipDescribesHost]="false"
+                            [attr.aria-disabled]="isSaveDisabled()"
+                            [attr.aria-describedby]="quizIsValid() ? null : saveReasonsId"
+                            jhiTranslate="entity.action.save"
+                        ></button>
                     </div>
                 </div>
             </div>
