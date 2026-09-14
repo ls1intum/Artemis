@@ -29,6 +29,10 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.authentication.AuthenticationFactory;
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.account.util.PasskeyCredentialUtilService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.util.CookieParserTestUtil;
@@ -65,9 +69,21 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @Autowired
     private TokenProvider tokenProvider;
 
+    @Autowired
+    private PasskeyCredentialUtilService passkeyCredentialUtilService;
+
+    @Autowired
+    private UserTestRepository userTestRepository;
+
+    @Autowired
+    private PasskeyCredentialsRepository passkeyCredentialsRepository;
+
     @BeforeEach
     void setup() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        // A passkey session is only extended while the account still holds a passkey, so the fixture has to give the
+        // test user one: without it the rotation tests below would assert against a session that is correctly refused.
+        passkeyCredentialUtilService.createAndSavePasskeyCredential(userUtilService.getUserByLogin(USER_NAME));
     }
 
     @ParameterizedTest
@@ -179,6 +195,46 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
 
         @Nested
         class ShouldNotRotateTests {
+
+            /**
+             * Builds a passkey token that is due for rotation, so that only the account check below decides the outcome.
+             */
+            private String tokenDueForRotation() {
+                Authentication authentication = AuthenticationFactory.createWebAuthnAuthentication(USER_NAME);
+                long moreThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.6 * 1000);
+                Date issuedAt = new Date(System.currentTimeMillis() - moreThanHalfOfTokenValidityPassed);
+                Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
+                return tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
+            }
+
+            /**
+             * Deleting a passkey has to end the sessions it produced. Without the account check the session would keep
+             * renewing itself for the remainder of the passkey token lifetime.
+             */
+            @Test
+            void testPasskeyOfAccountWasDeleted() throws Exception {
+                String jwt = tokenDueForRotation();
+                passkeyCredentialsRepository.deleteAll(passkeyCredentialsRepository.findByUser(userUtilService.getUserByLogin(USER_NAME).getId()));
+
+                MockHttpServletResponse response = performRequest(jwt, false);
+
+                assertThat(response.getHeader(HttpHeaders.SET_COOKIE)).isNull();
+            }
+
+            /**
+             * Same for a deactivation: it must not wait for the token to expire.
+             */
+            @Test
+            void testAccountWasDeactivated() throws Exception {
+                String jwt = tokenDueForRotation();
+                User user = userUtilService.getUserByLogin(USER_NAME);
+                user.setActivated(false);
+                userTestRepository.save(user);
+
+                MockHttpServletResponse response = performRequest(jwt, false);
+
+                assertThat(response.getHeader(HttpHeaders.SET_COOKIE)).isNull();
+            }
 
             @Test
             void testExpiredToken() throws Exception {

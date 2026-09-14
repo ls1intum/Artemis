@@ -336,6 +336,11 @@ public class UserCreationService {
         String newPassword = RandomUtil.generatePassword();
         user.setPassword(passwordService.hashPassword(newPassword));
         user.setActivated(true);
+        // Cleared alongside the flag, like every other write that activates an account. An activated account that kept a
+        // redeemable-looking key would be indistinguishable from one that was never activated, which is the distinction
+        // LdapAuthenticationProvider relies on to tell an administrator's deactivation from an account the import left
+        // unactivated.
+        user.setActivationKey(null);
         userRepository.save(user);
         return newPassword;
     }

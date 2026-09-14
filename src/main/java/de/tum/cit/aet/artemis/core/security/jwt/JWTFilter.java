@@ -32,6 +32,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
 import org.springframework.web.util.WebUtils;
 
+import de.tum.cit.aet.artemis.core.service.PasskeyTokenRenewalService;
+
 /**
  * Filters incoming requests and installs a Spring Security principal if a header corresponding to a valid user is found.
  */
@@ -45,10 +47,13 @@ public class JWTFilter extends GenericFilterBean {
 
     private final long tokenValidityInSecondsForPasskey;
 
-    public JWTFilter(TokenProvider tokenProvider, JWTCookieService jwtCookieService, long tokenValidityInSecondsForPasskey) {
+    private final PasskeyTokenRenewalService passkeyTokenRenewalService;
+
+    public JWTFilter(TokenProvider tokenProvider, JWTCookieService jwtCookieService, long tokenValidityInSecondsForPasskey, PasskeyTokenRenewalService passkeyTokenRenewalService) {
         this.tokenProvider = tokenProvider;
         this.jwtCookieService = jwtCookieService;
         this.tokenValidityInSecondsForPasskey = tokenValidityInSecondsForPasskey;
+        this.passkeyTokenRenewalService = passkeyTokenRenewalService;
     }
 
     /**
@@ -97,6 +102,12 @@ public class JWTFilter extends GenericFilterBean {
         // Trigger rotation if token has less than half of its validity period remaining
         boolean isRemainingLifetimeBelowHalf = remainingLifetime < tokenValidityInMs / 2;
         if (isRemainingLifetimeBelowHalf) {
+            // Re-check the account before extending the session. Rotation used to depend only on the token, so a session
+            // outlived the passkey that created it and survived a deactivation until the passkey lifetime elapsed. Placed
+            // inside the rotation branch so it costs one lookup per rotation interval, not one per request.
+            if (!passkeyTokenRenewalService.mayExtendPasskeySession(authentication.getName())) {
+                return;
+            }
             // Compute the new expiration time, respecting the original token's max lifetime
             long newTokenExpirationTimeInMs = Math.min(nowInMs + tokenValidityInMs, issuedAt.getTime() + Math.multiplyExact(this.tokenValidityInSecondsForPasskey, 1000));
             // Determine the lifetime of the rotated token

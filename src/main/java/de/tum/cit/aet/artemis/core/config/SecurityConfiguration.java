@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
+import de.tum.cit.aet.artemis.core.service.PasskeyTokenRenewalService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 
 /**
@@ -72,6 +73,8 @@ public class SecurityConfiguration {
     private final Optional<ArtemisPasskeyWebAuthnConfigurer> passkeyWebAuthnConfigurer;
 
     private final JWTCookieService jwtCookieService;
+
+    private final PasskeyTokenRenewalService passkeyTokenRenewalService;
 
     private final PasswordService passwordService;
 
@@ -100,7 +103,9 @@ public class SecurityConfiguration {
     }
 
     public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, Optional<ArtemisPasskeyWebAuthnConfigurer> passkeyWebAuthnConfigurer,
-            PasswordService passwordService, TokenProvider tokenProvider, JWTCookieService jwtCookieService, ModuleFeatureService moduleFeatureService) {
+            PasswordService passwordService, TokenProvider tokenProvider, JWTCookieService jwtCookieService, ModuleFeatureService moduleFeatureService,
+            PasskeyTokenRenewalService passkeyTokenRenewalService) {
+        this.passkeyTokenRenewalService = passkeyTokenRenewalService;
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
         this.passkeyWebAuthnConfigurer = passkeyWebAuthnConfigurer;
@@ -366,7 +371,7 @@ public class SecurityConfiguration {
      * @return JWTConfigurer configured with a token provider that generates and validates JWT tokens.
      */
     private JWTConfigurer securityConfigurerAdapter() {
-        return new JWTConfigurer(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey);
+        return new JWTConfigurer(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey, passkeyTokenRenewalService);
     }
 
 }

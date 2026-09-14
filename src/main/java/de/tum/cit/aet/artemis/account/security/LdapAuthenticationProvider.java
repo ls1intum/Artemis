@@ -19,6 +19,7 @@ import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.account.config.LdapEnabled;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.exception.UserNotActivatedException;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
@@ -105,8 +106,22 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
 
         // update the user details from ldapUserDto (because they might have changed, e.g. when the user changes the name)
         if (optionalUser.isPresent()) {
-            // TODO: make sure the user is not deactivated in the meantime
-            return saveUserIfNeeded(optionalUser.get(), ldapUserDto);
+            User existingUser = optionalUser.get();
+            // Checked after the LDAP credentials have been verified, so an unauthenticated caller cannot use the outcome to
+            // learn anything about an account. This provider was the only authentication path that did not consult account
+            // state, so an administrator's deactivation did not take effect here while being enforced everywhere else.
+            //
+            // A missing activation key is what separates the two reasons an account can be unactivated. Activating always
+            // clears the key, so an account an administrator switched off carries none. An account the course member
+            // import, exam registration or admin import created has never been activated and still holds the key it was
+            // given - and, being externally managed, has no way to redeem it. Refusing those as well would lock out
+            // accounts that can sign in today, so only a deactivation that an administrator actually performed is refused.
+            boolean deactivatedByAdministrator = !existingUser.getActivated() && existingUser.getActivationKey() == null;
+            if (existingUser.isDeleted() || deactivatedByAdministrator) {
+                log.warn("Login attempt for user {} whose account is deactivated or deleted", existingUser.getLogin());
+                throw new UserNotActivatedException("User " + existingUser.getLogin() + " was not activated");
+            }
+            return saveUserIfNeeded(existingUser, ldapUserDto);
         }
         else {
             // this handles the case that the user does not exist in the Artemis database yet (i.e. first time user login)

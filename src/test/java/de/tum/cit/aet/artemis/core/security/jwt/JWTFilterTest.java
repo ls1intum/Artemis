@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.core.security.jwt;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 
@@ -23,6 +25,7 @@ import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.PasskeyTokenRenewalService;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -34,6 +37,8 @@ class JWTFilterTest {
     private TokenProvider tokenProvider;
 
     private JWTFilter jwtFilter;
+
+    private PasskeyTokenRenewalService passkeyTokenRenewalService;
 
     @BeforeEach
     void setup() {
@@ -49,7 +54,10 @@ class JWTFilterTest {
 
         JWTCookieService jwtCookieService = mock(JWTCookieService.class);
 
-        jwtFilter = new JWTFilter(tokenProvider, jwtCookieService, 15552000);
+        passkeyTokenRenewalService = mock(PasskeyTokenRenewalService.class);
+        when(passkeyTokenRenewalService.mayExtendPasskeySession(any())).thenReturn(true);
+
+        jwtFilter = new JWTFilter(tokenProvider, jwtCookieService, 15552000, passkeyTokenRenewalService);
         SecurityContextHolder.getContext().setAuthentication(null);
     }
 

@@ -4,10 +4,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-/**
- * A custom SecurityConfigurer that integrates JWT authentication into Spring Security's filter chain.
- * This configurer is attached to HttpSecurity to apply JWT token verification before processing authentication.
- */
+import de.tum.cit.aet.artemis.core.service.PasskeyTokenRenewalService;
+
 public class JWTConfigurer extends AbstractHttpConfigurer<JWTConfigurer, HttpSecurity> {
 
     private final TokenProvider tokenProvider;
@@ -16,6 +14,8 @@ public class JWTConfigurer extends AbstractHttpConfigurer<JWTConfigurer, HttpSec
 
     private final long tokenValidityInSecondsForPasskey;
 
+    private final PasskeyTokenRenewalService passkeyTokenRenewalService;
+
     /**
      * Constructs a JWTConfigurer with a specified token provider.
      *
@@ -23,10 +23,12 @@ public class JWTConfigurer extends AbstractHttpConfigurer<JWTConfigurer, HttpSec
      * @param jwtCookieService                 the service for JWT cookie management.
      * @param tokenValidityInSecondsForPasskey the passkey token validity in seconds.
      */
-    public JWTConfigurer(TokenProvider tokenProvider, JWTCookieService jwtCookieService, long tokenValidityInSecondsForPasskey) {
+    public JWTConfigurer(TokenProvider tokenProvider, JWTCookieService jwtCookieService, long tokenValidityInSecondsForPasskey,
+            PasskeyTokenRenewalService passkeyTokenRenewalService) {
         this.tokenProvider = tokenProvider;
         this.jwtCookieService = jwtCookieService;
         this.tokenValidityInSecondsForPasskey = tokenValidityInSecondsForPasskey;
+        this.passkeyTokenRenewalService = passkeyTokenRenewalService;
     }
 
     /**
@@ -38,7 +40,7 @@ public class JWTConfigurer extends AbstractHttpConfigurer<JWTConfigurer, HttpSec
      */
     @Override
     public void configure(HttpSecurity http) {
-        JWTFilter customFilter = new JWTFilter(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey);
+        JWTFilter customFilter = new JWTFilter(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey, passkeyTokenRenewalService);
         // Adds the JWTFilter to the security chain before the UsernamePasswordAuthenticationFilter.
         // This ensures that the JWTFilter processes the request first to extract and validate JWTs.
         http.addFilterBefore(customFilter, UsernamePasswordAuthenticationFilter.class);

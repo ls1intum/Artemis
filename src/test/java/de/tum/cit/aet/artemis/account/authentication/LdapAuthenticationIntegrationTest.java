@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.account.authentication;
 
 import static de.tum.cit.aet.artemis.account.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.doReturn;
 
 import java.util.List;
@@ -22,6 +23,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.exception.UserNotActivatedException;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.security.LdapAuthenticationProvider;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
@@ -178,6 +180,42 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         // Should return null for internal user (skip LDAP, let internal provider handle it)
         assertThat(result).isNull();
+    }
+
+    /**
+     * An administrator's deactivation has to take effect here too. This provider was the only authentication path that
+     * did not consult account state, so correct directory credentials alone were enough for a deactivated account.
+     */
+    @Test
+    void testAuthenticateRefusesAccountDeactivatedByAdministrator() {
+        var authentication = new UsernamePasswordAuthenticationToken(LOGIN, USER_PASSWORD);
+        assertThat(ldapAuthenticationProvider.authenticate(authentication)).isNotNull();
+
+        User user = userRepository.findOneByLogin(LOGIN).orElseThrow();
+        // What an administrator's deactivation leaves behind: the flag cleared and no activation key, because activating
+        // an account always clears the key.
+        user.setActivated(false);
+        user.setActivationKey(null);
+        userRepository.save(user);
+
+        assertThatExceptionOfType(UserNotActivatedException.class).isThrownBy(() -> ldapAuthenticationProvider.authenticate(authentication));
+    }
+
+    /**
+     * The counterpart: an account the import created and never activated still holds its activation key, cannot redeem it
+     * because it is externally managed, and can sign in today. Refusing it would lock those accounts out.
+     */
+    @Test
+    void testAuthenticateAllowsAccountLeftUnactivatedByImport() {
+        var authentication = new UsernamePasswordAuthenticationToken(LOGIN, USER_PASSWORD);
+        assertThat(ldapAuthenticationProvider.authenticate(authentication)).isNotNull();
+
+        User user = userRepository.findOneByLogin(LOGIN).orElseThrow();
+        user.setActivated(false);
+        user.setActivationKey("an-unredeemable-key");
+        userRepository.save(user);
+
+        assertThat(ldapAuthenticationProvider.authenticate(authentication)).isNotNull();
     }
 
     @Test
