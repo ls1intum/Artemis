@@ -17,6 +17,40 @@ class ApprovedStructuralContractTest {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @ParameterizedTest
+    @ValueSource(strings = { "", "public Document() {}" })
+    void explicitAndImplicitPublicDefaultConstructorsAreEquivalent(String constructor) {
+        var parsed = ApprovedStructuralContract.parse("## Public API\n```java\npublic class Document { " + constructor + " }\n```", Set.of("Document"));
+        assertThat(parsed.errors()).isEmpty();
+        assertThat(parsed.contract().solutionSurfaceReasons(Map.of("Document.java", "public class Document {}"))).isEmpty();
+        assertThat(parsed.contract().solutionSurfaceReasons(Map.of("Document.java", "public class Document { public Document() {} }"))).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "private", "protected", "" })
+    void nonPublicConstructorCannotSatisfyPublicDefaultConstructor(String visibility) {
+        var parsed = ApprovedStructuralContract.parse("## Public API\n```java\npublic class Document {}\n```", Set.of("Document"));
+        assertThat(parsed.contract().solutionSurfaceReasons(Map.of("Document.java", "public class Document { " + visibility + " Document() {} }")))
+                .anyMatch(reason -> reason.contains("public API"));
+    }
+
+    @Test
+    void studentOwnedConstructorIsOmittedOnlyFromTemplateContract() {
+        var parsed = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                public class Document {
+                    /** @studentCreates */
+                    public Document(int value);
+                }
+                ```
+                """, Set.of("Document"));
+        assertThat(parsed.errors()).isEmpty();
+        assertThat(parsed.contract().templateSurfaceReasons(Map.of("Document.java", "public class Document {}"), Set.of("Document"))).isEmpty();
+        assertThat(parsed.contract().solutionSurfaceReasons(Map.of("Document.java", "public class Document {}"))).isNotEmpty();
+        assertThat(parsed.contract().solutionSurfaceReasons(Map.of("Document.java", "public class Document { public Document(int value) {} }"))).isEmpty();
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = { "public void update(); // /** @studentCreates */ add the throws clause later", "/* @studentCreates */ public void update() throws ChangeException;",
             "public void update() throws ChangeException; // @studentCreates", "/** @studentCreates */ public int count;", "/** @studentCreates */ public class Nested {}" })
     void misplacedOwnershipMarkersCannotSilentlyChangeTheApprovedContract(String member) {

@@ -913,33 +913,12 @@ class GenerationAttemptLoop {
                                             evidence.message()))
                                     .toList())
                     : specFidelityCritic.critiqueAdaptation(reviewBrief, problemStatement, testNames, adaptationChanges, producedFilesByType, usageSink, cancelled, previousReport);
-            if (adaptationChanges != null && adaptationChanges.contains(GenerationOrchestrationService.CHANGE_SUMMARY_TRUNCATED)) {
-                List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());
-                combined.addAll(SpecFidelityReport.adaptationScopeUnavailable("The bounded change summary was truncated, so not every changed line could be reviewed.").findings());
-                report = new SpecFidelityReport(List.copyOf(combined));
-            }
-            // Messageless assertions remain advisory and share the same retry/review channel.
-            List<SpecFidelityReport.Finding> messageless = specFidelityCritic.detectMessagelessAssertions(producedFilesByType.getOrDefault(RepositoryRole.TESTS, Map.of()));
-            if (!messageless.isEmpty()) {
-                List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());
-                combined.addAll(messageless);
-                report = new SpecFidelityReport(combined);
-            }
-            report = GenerationReviewSupport.reclassifyUngradeableTechniqueFindings(report, specSnapshotForReview);
-            // Same channel, same advisory weight: a technique the exercise requires but cannot grade is something the instructor must know before releasing it.
-            List<SpecFidelityReport.Finding> techniqueRules = specFidelityCritic.detectUnenforceableTechniqueRules(specSnapshotForReview);
-            if (!techniqueRules.isEmpty()) {
-                List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());
-                combined.addAll(techniqueRules);
-                report = new SpecFidelityReport(combined);
-            }
+            report = GenerationReviewSupport.completeReview(report,
+                    adaptationChanges != null && adaptationChanges.contains(GenerationOrchestrationService.CHANGE_SUMMARY_TRUNCATED),
+                    specFidelityCritic.detectMessagelessAssertions(producedFilesByType.getOrDefault(RepositoryRole.TESTS, Map.of())),
+                    specFidelityCritic.detectUnenforceableTechniqueRules(specSnapshotForReview), specSnapshotForReview);
             if (report.hasFindings()) {
-                long blockingCount = report.findings().stream().filter(SpecFidelityReport.Finding::isBlocking).count();
-                long advisoryCount = report.findings().size() - blockingCount;
-                String counts = blockingCount > 0 && advisoryCount > 0 ? blockingCount + " blocking and " + advisoryCount + " advisory"
-                        : blockingCount > 0 ? blockingCount + " blocking" : advisoryCount + " advisory";
-                String gaps = report.findings().size() == 1 ? " exercise-quality gap" : " exercise-quality gaps";
-                emit("The review found " + counts + gaps + (blockingCount > 0 ? " that require instructor attention." : "."));
+                emit(GenerationReviewSupport.reviewSummary(report));
             }
             return report;
         }

@@ -326,16 +326,15 @@ final class ApprovedStructuralContract {
                 .map(field -> "field:" + relevantModifiers(field.getModifiers(), field.getDeclaringClass().isInterface(), false, field.isStatic()) + ":"
                         + canonicalType(field.getType(), exerciseTypes, exercisePackage) + ":" + field.getName())
                 .forEach(surface::add);
-        List<JavaConstructor> visibleConstructors = type.getConstructors().stream().filter(ApprovedStructuralContract::isContractVisible)
-                .filter(constructor -> !template || !studentCreates(constructor)).toList();
-        visibleConstructors.stream()
+        List<JavaConstructor> declaredConstructors = type.getConstructors().stream().filter(constructor -> !template || !studentCreates(constructor)).toList();
+        declaredConstructors.stream().filter(ApprovedStructuralContract::isContractVisible)
                 .map(constructor -> "constructor:" + relevantModifiers(constructor.getModifiers(), false, false, false)
                         + constructor.getTypeParameters().stream().map(parameter -> canonicalTypeName(parameter.getGenericValue(), exerciseTypes, exercisePackage)).toList()
                         + exactParameterTypes(constructor.getParameters(), exerciseTypes, exercisePackage) + ":throws="
                         + constructor.getExceptionTypes().stream().map(exception -> canonicalType(exception, exerciseTypes, exercisePackage)).sorted().toList())
                 .forEach(surface::add);
-        if (visibleConstructors.isEmpty() && !type.isInterface() && !type.isEnum()) {
-            surface.add("constructor:[public][]");
+        if (declaredConstructors.isEmpty() && !type.isInterface() && !type.isEnum() && !type.isRecord() && (type.isPublic() || type.isProtected())) {
+            surface.add("constructor:" + (type.isPublic() ? "[public]" : "[protected]") + "[][]:throws=[]");
         }
         type.getFields().stream().filter(JavaField::isEnumConstant).map(field -> "enum:" + field.getName()).forEach(surface::add);
         return Set.copyOf(surface);

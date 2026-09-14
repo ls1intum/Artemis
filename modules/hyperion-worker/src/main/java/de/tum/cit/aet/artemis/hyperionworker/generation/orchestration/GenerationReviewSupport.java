@@ -18,6 +18,29 @@ import de.tum.cit.aet.artemis.hyperionworker.generation.verification.SemanticMut
 /** Pure rendering and classification rules shared by the generation review loop. */
 final class GenerationReviewSupport {
 
+    /** Combines review evidence without allowing incomplete adaptation scope or ungradable techniques to disappear. */
+    static SpecFidelityReport completeReview(SpecFidelityReport report, boolean adaptationTruncated, List<SpecFidelityReport.Finding> messageless,
+            List<SpecFidelityReport.Finding> techniqueRules, @Nullable String specification) {
+        List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());
+        if (adaptationTruncated) {
+            combined.addAll(SpecFidelityReport.adaptationScopeUnavailable("The bounded change summary was truncated, so not every changed line could be reviewed.").findings());
+        }
+        combined.addAll(messageless);
+        SpecFidelityReport classified = reclassifyUngradeableTechniqueFindings(new SpecFidelityReport(combined), specification);
+        combined = new ArrayList<>(classified.findings());
+        combined.addAll(techniqueRules);
+        return new SpecFidelityReport(combined);
+    }
+
+    static String reviewSummary(SpecFidelityReport report) {
+        long blockingCount = report.findings().stream().filter(SpecFidelityReport.Finding::isBlocking).count();
+        long advisoryCount = report.findings().size() - blockingCount;
+        String counts = blockingCount > 0 && advisoryCount > 0 ? blockingCount + " blocking and " + advisoryCount + " advisory"
+                : blockingCount > 0 ? blockingCount + " blocking" : advisoryCount + " advisory";
+        String gaps = report.findings().size() == 1 ? " exercise-quality gap" : " exercise-quality gaps";
+        return "The review found " + counts + gaps + (blockingCount > 0 ? " that require instructor attention." : ".");
+    }
+
     private static final int MAX_EXECUTED_MUTANT_HISTORY = 12;
 
     record SemanticMutantRecheck(List<SemanticMutant> unresolvedMutants, List<String> failureReasons) {
