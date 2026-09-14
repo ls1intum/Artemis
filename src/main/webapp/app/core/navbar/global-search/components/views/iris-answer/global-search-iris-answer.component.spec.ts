@@ -547,7 +547,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             // @ts-expect-error — protected computed
             const view = component.citationView();
             expect(view.html).toContain('<sup class="iris-cite" data-n="1">1</sup>');
-            expect(view.html).toContain('<sup class="iris-cite" data-n="2 3">2,3</sup>');
+            expect(view.html).toContain('<sup class="iris-cite" data-n="2">2</sup><sup class="iris-cite" data-n="3">3</sup>');
             expect([...view.citedNumbers].sort()).toEqual([1, 2, 3]);
         });
 

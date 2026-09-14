@@ -51,7 +51,8 @@ export function renderCitationMarkers(answer: string | undefined, sourceCount: n
             return '';
         }
         numbers.forEach((n) => cited.add(n));
-        return `<sup class="iris-cite" data-n="${numbers.join(' ')}">${numbers.join(',')}</sup>`;
+        // One chip per source, so each is separately hoverable and previewable.
+        return numbers.map((n) => `<sup class="iris-cite" data-n="${n}">${n}</sup>`).join('');
     });
     return { html, citedNumbers: cited };
 }

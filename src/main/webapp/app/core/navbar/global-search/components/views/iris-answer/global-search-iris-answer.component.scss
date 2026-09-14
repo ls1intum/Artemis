@@ -207,6 +207,17 @@
     transition: background 120ms ease;
 }
 
+/* Chips of one run read as a group: a comma between neighbours, and only the first is spaced off the text. */
+:host ::ng-deep .iris-cite + .iris-cite {
+    margin-left: 0;
+}
+
+:host ::ng-deep .iris-cite + .iris-cite::before {
+    content: ',';
+    margin-right: 0.1rem;
+    color: var(--bs-primary);
+}
+
 :host ::ng-deep .iris-cite.iris-cite-lit {
     background: color-mix(in srgb, var(--bs-primary) 24%, transparent);
 }
