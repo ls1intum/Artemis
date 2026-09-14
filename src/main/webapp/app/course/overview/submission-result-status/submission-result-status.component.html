@@ -1,5 +1,23 @@
 <div>
-    @if (shouldShowResult()) {
+    @if (result() && studentParticipation()) {
+        <!-- A specific previous result selected in the history dropdown: shown statically, without live updates. -->
+        <span>
+            <jhi-result
+                id="submission-result-selected"
+                [exercise]="exercise()"
+                [result]="result()"
+                [participation]="studentParticipation()!"
+                [class]="updatingResultClass()"
+                [showUngradedResults]="showUngradedResults()"
+                [showBadge]="showBadge()"
+                [showIcon]="showIcon()"
+                [isInSidebarCard]="isInSidebarCard()"
+                [showCompletion]="showCompletion()"
+                [short]="short()"
+                [showProgressBar]="showProgressBar()"
+            />
+        </span>
+    } @else if (shouldShowResult()) {
         <!-- Updating result -->
         <span>
             <jhi-updating-result

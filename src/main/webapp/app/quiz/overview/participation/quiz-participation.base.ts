@@ -18,6 +18,8 @@ export abstract class QuizParticipationBase {
     abstract readonly submitTitleKey: Signal<string>;
     abstract readonly liveHeaderInfo: Signal<QuizLiveHeaderInfo | undefined>;
     abstract readonly mode: Signal<string>;
+    /** Whether the current attempt counts as submitted for the UI, including a timed-out attempt that has answers. */
+    abstract readonly shouldTreatAsSubmittedForUi: Signal<boolean>;
     abstract restartPractice(): void;
     abstract readonly quizStartedEvent: OutputRef<void>;
     abstract readonly quizSubmittedEvent: OutputRef<QuizSubmission>;

@@ -457,6 +457,28 @@ describe('CourseExerciseDetailsComponent', () => {
         participationWebsocketBehaviorSubject.next({ ...newParticipation, exercise: programmingExercise });
     });
 
+    it('should keep earlier practice submissions when a new practice attempt is emitted', () => {
+        const practiceParticipation = { id: 7, testRun: true, submissions: [{ id: 1 }, { id: 2 }] } as StudentParticipation;
+        comp.studentParticipations = [practiceParticipation];
+
+        // A freshly submitted practice attempt is emitted carrying only the latest submission.
+        comp.onNewParticipation({ id: 7, testRun: true, submissions: [{ id: 3 }] } as StudentParticipation);
+
+        expect(comp.studentParticipations[0].submissions?.map((submission) => submission.id)).toEqual([1, 2, 3]);
+        expect(comp.participationMode()).toBe('practice');
+    });
+
+    it('should replace, not duplicate, a re-emitted submission of an existing participation', () => {
+        const participation = { id: 8, testRun: false, submissions: [{ id: 1 }, { id: 2 }] } as StudentParticipation;
+        comp.studentParticipations = [participation];
+
+        comp.onNewParticipation({ id: 8, testRun: false, submissions: [{ id: 2, submitted: true } as Submission] } as StudentParticipation);
+
+        const submissions = comp.studentParticipations[0].submissions!;
+        expect(submissions.map((submission) => submission.id)).toEqual([1, 2]);
+        expect(submissions[1].submitted).toBe(true);
+    });
+
     it.each<[string[]]>([[[]], [[MODULE_FEATURE_IRIS]]])('should load iris settings only if module feature iris is active', async (activeModuleFeatures: string[]) => {
         vi.useFakeTimers();
         // Setup

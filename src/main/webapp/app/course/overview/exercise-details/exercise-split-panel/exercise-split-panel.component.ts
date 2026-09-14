@@ -87,6 +87,13 @@ export class ExerciseSplitPanelComponent {
     readonly liveQuizStatusChange = output<LiveQuizParticipationStatus | undefined>();
 
     readonly quizSubmitDisabled = computed(() => this._quizComponent()?.isSubmitDisabled() ?? false);
+    // Exposes the active quiz component's mode as a reactive signal so parent templates
+    // can guard against stale submit-disabled state during the live→practice transition.
+    readonly quizComponentMode = computed(() => this._quizComponent()?.mode());
+    readonly quizPracticeAttemptFinished = computed(() => {
+        const component = this._quizComponent();
+        return component?.mode() === 'practice' && component.shouldTreatAsSubmittedForUi();
+    });
     readonly quizSubmitTitle = computed(() => this._quizComponent()?.submitTitleKey() ?? 'entity.action.submit');
     readonly quizLiveHeaderInfo = computed(() => this._quizComponent()?.liveHeaderInfo());
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -244,10 +251,23 @@ export class ExerciseSplitPanelComponent {
 
                 const type = exercise.type;
                 if (type === ExerciseType.QUIZ) {
-                    const targetSegment = mode === 'practice' ? 'practice' : 'live';
                     const currentSegment = this.route.firstChild?.snapshot.url[0]?.path;
-                    if (currentSegment !== targetSegment) {
-                        void this.router.navigate(['quiz-exercises', exercise.id, targetSegment], { relativeTo: this.route.parent });
+                    if (mode === 'practice') {
+                        // Already on a practice route — either viewing a result or a fresh attempt is in progress.
+                        // Do not re-navigate, so an in-progress attempt is never disrupted.
+                        if (currentSegment === 'practice') {
+                            return;
+                        }
+                        // Entering practice from another mode: show the latest practice result if a practice attempt exists,
+                        // otherwise start the first attempt. Gate on testRun so we never navigate with a graded participation id.
+                        const practiceParticipationId = participation?.testRun ? participation.id : undefined;
+                        if (practiceParticipationId) {
+                            void this.router.navigate(['quiz-exercises', exercise.id, 'practice', practiceParticipationId], { relativeTo: this.route.parent });
+                        } else {
+                            void this.router.navigate(['quiz-exercises', exercise.id, 'practice'], { relativeTo: this.route.parent });
+                        }
+                    } else if (currentSegment !== 'live') {
+                        void this.router.navigate(['quiz-exercises', exercise.id, 'live'], { relativeTo: this.route.parent });
                     }
                     return;
                 }

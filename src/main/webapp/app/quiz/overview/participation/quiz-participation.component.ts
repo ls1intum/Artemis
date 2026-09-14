@@ -126,6 +126,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
     readonly unsavedChanges = signal(false);
 
     readonly showingResult = signal(false);
+    readonly viewingExistingPracticeResult = signal(false);
     readonly userScore = signal<number>(0);
 
     readonly mode = signal<string>('');
@@ -338,8 +339,11 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      */
     initPracticeMode(participationId?: number, submissionId?: number) {
         if (participationId) {
+            this.viewingExistingPracticeResult.set(true);
+            this.syncSubmitState();
             this.loadExistingPracticeResult(participationId, submissionId);
         } else {
+            this.viewingExistingPracticeResult.set(false);
             this.quizExerciseService.findForStudent(this.quizId).subscribe({
                 next: (res: HttpResponse<QuizExercise>) => {
                     if (res.body && hasDueDatePassed(res.body)) {
@@ -1079,6 +1083,10 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
         }
         this.applySubmission();
         this.showResult(result);
+        // Re-sync after the (submitted) submission and result are applied, so the surrounding exercise header
+        // immediately reflects the finished attempt (submit button -> "Start Practice Mode") without waiting for
+        // the next UI interval tick.
+        this.syncSubmitState();
 
         if (this.mode() === 'practice' && participation) {
             // Surface the practice participation (with its result) to the surrounding exercise page so the status badge
@@ -1208,6 +1216,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      *
      * This is the case if either:
      * <ul>
+     *   <li>a result is being shown — the attempt is over (e.g. just submitted, or viewing an existing practice result), or</li>
      *   <li>the submission has already been marked as submitted by the server, or</li>
      *   <li>the quiz working time has expired and the submission shows evidence of user interaction
      *       (e.g. at least one answer was given, or the submission has already been saved or created)</li>
@@ -1218,7 +1227,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      */
     private computeShouldTreatAsSubmittedForUi(hasAnyAnswer: boolean): boolean {
         const hasSavedOrAnswered = hasAnyAnswer || !!this.submission()?.submissionDate || !!this.submission()?.id;
-        return this.submission().submitted || (this.remainingTimeSeconds() < 0 && hasSavedOrAnswered);
+        return this.viewingExistingPracticeResult() || this.showingResult() || !!this.submission().submitted || (this.remainingTimeSeconds() < 0 && hasSavedOrAnswered);
     }
 
     /**
