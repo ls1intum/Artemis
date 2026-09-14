@@ -274,6 +274,60 @@ describe('ReviewAdaptExerciseDialogComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="adapt-no-match"]')).not.toBeNull();
     });
 
+    it('caps bulk selection at 25 while allowing deselection and replacement without losing instructions', async () => {
+        const { component, fixture, confirmed } = await setup(Array.from({ length: 26 }, (_, i) => comment(i + 1, 'Comment ' + (i + 1))));
+        fixture.componentRef.setInput('selectedFeedbackThreadIds', []);
+        component.instructions.set('Keep my instructions');
+        fixture.detectChanges();
+        (fixture.nativeElement.querySelector('[data-testid="adapt-select-visible"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        expect(component.selectedIds()).toHaveLength(25);
+        const extra = fixture.nativeElement.querySelector('#adapt-feedback-26') as HTMLInputElement;
+        expect(extra.disabled).toBe(true);
+        (fixture.nativeElement.querySelector('#adapt-feedback-1') as HTMLInputElement).click();
+        fixture.detectChanges();
+        expect(extra.disabled).toBe(false);
+        extra.click();
+        fixture.detectChanges();
+        actionButtons(fixture)[1].click();
+        expect(confirmed).toHaveBeenCalledOnce();
+        expect(confirmed.mock.calls[0][0].selectedFeedbackThreadIds).toHaveLength(25);
+        expect(confirmed.mock.calls[0][0].selectedFeedbackThreadIds).toContain(26);
+        expect(confirmed.mock.calls[0][0].selectedFeedbackThreadIds).not.toContain(1);
+        expect(confirmed.mock.calls[0][0].instructions).toBe('Keep my instructions');
+    });
+
+    it('counts selections outside the current search toward the same limit', async () => {
+        const { component, fixture } = await setup(Array.from({ length: 30 }, (_, i) => comment(i + 1, i < 24 ? 'Selected' : 'Visible')));
+        fixture.componentRef.setInput(
+            'selectedFeedbackThreadIds',
+            Array.from({ length: 24 }, (_, i) => i + 1),
+        );
+        component['query'].set('Visible');
+        fixture.detectChanges();
+        (fixture.nativeElement.querySelector('[data-testid="adapt-select-visible"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        expect(component.selectedIds()).toEqual(Array.from({ length: 25 }, (_, i) => i + 1));
+        expect(fixture.nativeElement.querySelector('[data-testid="adapt-feedback-limit"]')).not.toBeNull();
+    });
+
+    it('explains oversized incoming selections instead of silently dropping comments or submitting an invalid request', async () => {
+        const { component, fixture, confirmed } = await setup(Array.from({ length: 26 }, (_, i) => comment(i + 1, 'Comment ' + i)));
+        fixture.componentRef.setInput(
+            'selectedFeedbackThreadIds',
+            Array.from({ length: 26 }, (_, i) => i + 1),
+        );
+        fixture.detectChanges();
+        expect(component.selectedIds()).toHaveLength(26);
+        expect(actionButtons(fixture)[1].disabled).toBe(true);
+        component['confirm']();
+        expect(confirmed).not.toHaveBeenCalled();
+        expect(fixture.nativeElement.textContent).toContain('adaptExercise.selectionOverLimit');
+        (fixture.nativeElement.querySelector('#adapt-feedback-1') as HTMLInputElement).click();
+        fixture.detectChanges();
+        expect(actionButtons(fixture)[1].disabled).toBe(false);
+    });
+
     it('clamps a long description until it is expanded', async () => {
         const long = 'line\n'.repeat(12);
         const { fixture } = await setup([comment(1, long), comment(2, 'short')]);

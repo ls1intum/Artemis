@@ -96,7 +96,10 @@
                 "searchPlaceholder": "Kommentare durchsuchen…",
                 "showMore": "Mehr anzeigen",
                 "showLess": "Weniger anzeigen",
-                "noMatch": "Kein Kommentar passt zum aktuellen Filter."
+                "noMatch": "Kein Kommentar passt zum aktuellen Filter.",
+                "selectionLimit": "Wähle bis zu {{max}} Kommentare pro Durchlauf. Die Sammelauswahl endet bei dieser Grenze.",
+                "selectionLimitReached": "{{max}} Kommentare ausgewählt. Wähle einen Kommentar ab, um einen anderen auszuwählen. Weitere Kommentare können in einem späteren Durchlauf bearbeitet werden.",
+                "selectionOverLimit": "Mehr als {{max}} Kommentare sind ausgewählt. Wähle vor dem Start Kommentare ab. Deine Auswahl und Anweisungen bleiben erhalten."
             }
         }
     }

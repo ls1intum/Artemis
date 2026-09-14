@@ -23,7 +23,7 @@
                     severity="secondary"
                     variant="text"
                     size="small"
-                    [disabled]="submitting() || visibleCount() === 0"
+                    [disabled]="submitting() || visibleCount() === 0 || selectionLimitReached()"
                     (click)="selectVisible()"
                     data-testid="adapt-select-visible"
                 >
@@ -43,6 +43,22 @@
                 </button>
             </div>
         </div>
+        @if (selectedFeedbackThreadIds() !== undefined) {
+            <p
+                id="adapt-feedback-limit"
+                data-testid="adapt-feedback-limit"
+                class="m-0 text-sm"
+                [class.text-state-danger]="selectionOverLimit()"
+                [jhiTranslate]="
+                    selectionOverLimit()
+                        ? 'artemisApp.review.adaptExercise.selectionOverLimit'
+                        : selectionLimitReached()
+                          ? 'artemisApp.review.adaptExercise.selectionLimitReached'
+                          : 'artemisApp.review.adaptExercise.selectionLimit'
+                "
+                [translateValues]="{ max: maxSelectedFeedbackThreads }"
+            ></p>
+        }
         @if (showTriageTools()) {
             <!-- Only worth its space once the list stops fitting on one screen; the selection is never filtered, only the view. -->
             <div class="flex flex-wrap items-center gap-2" data-testid="adapt-triage-tools">
@@ -81,7 +97,7 @@
                                 [inputId]="'adapt-group-' + (group.targetType ?? 'other')"
                                 [checked]="group.selectedCount === group.selectableCount"
                                 [indeterminate]="group.selectedCount > 0 && group.selectedCount < group.selectableCount"
-                                [disabled]="submitting()"
+                                [disabled]="submitting() || (selectionLimitReached() && group.selectedCount === 0)"
                                 (checkedChange)="toggleGroup(group, $event)"
                                 [ariaLabel]="group.label"
                                 data-testid="adapt-group-selection"
@@ -100,7 +116,7 @@
                                     <tum-ui-checkbox
                                         [inputId]="'adapt-feedback-' + finding.threadId"
                                         [checked]="row.selected"
-                                        [disabled]="submitting()"
+                                        [disabled]="submitting() || (!row.selected && selectionLimitReached())"
                                         (checkedChange)="toggleFinding(finding.threadId, $event)"
                                         [ariaLabel]="finding.description"
                                         data-testid="adapt-feedback-selection"

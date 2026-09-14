@@ -96,7 +96,10 @@
                 "searchPlaceholder": "Search comments…",
                 "showMore": "Show more",
                 "showLess": "Show less",
-                "noMatch": "No comment matches the current filter."
+                "noMatch": "No comment matches the current filter.",
+                "selectionLimit": "Choose up to {{max}} comments per run. Bulk selection stops at this limit.",
+                "selectionLimitReached": "{{max}} comments selected. Deselect a comment to choose another; the remaining comments can be addressed in a later run.",
+                "selectionOverLimit": "More than {{max}} comments are selected. Deselect comments before starting. Your selection and instructions have been preserved."
             }
         }
     }

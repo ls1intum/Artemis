@@ -71,6 +71,8 @@ const GROUP_ORDER: (CommentThreadLocationType | undefined)[] = [
 ];
 
 const MAX_INSTRUCTIONS_LENGTH = 8000;
+/** Matches ExerciseGenerationRequestDTO.selectedFeedbackThreadIds. Never silently discard an incoming selection. */
+const MAX_SELECTED_FEEDBACK_THREADS = 25;
 /** Above this many findings the list gains a filter and a search field; below it, scanning is quicker than filtering. */
 const TRIAGE_TOOLS_THRESHOLD = 4;
 /** Descriptions longer than this are clamped to a few lines until expanded, so one verbose finding cannot push the rest out of view. */
@@ -115,7 +117,7 @@ export class ReviewAdaptExerciseDialogComponent {
     readonly cancelled = output<void>();
 
     readonly instructions = signal('');
-    readonly selectedIds = linkedSignal(() => this.selectedFeedbackThreadIds() ?? []);
+    readonly selectedIds = linkedSignal(() => [...new Set(this.selectedFeedbackThreadIds() ?? [])]);
     protected readonly filter = signal<AdaptFindingFilter>('all');
     protected readonly query = signal('');
     private readonly expandedKeys = signal<ReadonlySet<string>>(new Set());
@@ -123,6 +125,9 @@ export class ReviewAdaptExerciseDialogComponent {
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
     protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
     protected readonly maxInstructionsLength = MAX_INSTRUCTIONS_LENGTH;
+    protected readonly maxSelectedFeedbackThreads = MAX_SELECTED_FEEDBACK_THREADS;
+    protected readonly selectionLimitReached = computed(() => this.selectedIds().length >= MAX_SELECTED_FEEDBACK_THREADS);
+    protected readonly selectionOverLimit = computed(() => this.selectedIds().length > MAX_SELECTED_FEEDBACK_THREADS);
 
     private readonly languageChange = toSignal(this.translateService.onLangChange, { initialValue: undefined });
 
@@ -185,17 +190,28 @@ export class ReviewAdaptExerciseDialogComponent {
     protected readonly remainingCharacters = computed(() => MAX_INSTRUCTIONS_LENGTH - this.instructions().length);
     /** Without findings there is nothing to act on, so free-form instructions become mandatory. */
     protected readonly confirmDisabled = computed(
-        () => !!this.blockedReason() || this.submitting() || this.instructions().length > MAX_INSTRUCTIONS_LENGTH || (this.isFreeMode() && this.instructions().trim().length === 0),
+        () =>
+            !!this.blockedReason() ||
+            this.submitting() ||
+            this.selectionOverLimit() ||
+            this.instructions().length > MAX_INSTRUCTIONS_LENGTH ||
+            (this.isFreeMode() && this.instructions().trim().length === 0),
     );
 
     protected toggleFinding(threadId: number, selected: boolean): void {
-        this.selectedIds.update((ids) => (selected ? (ids.includes(threadId) ? ids : [...ids, threadId]) : ids.filter((id) => id !== threadId)));
+        this.selectedIds.update((ids) =>
+            selected ? (ids.includes(threadId) || ids.length >= MAX_SELECTED_FEEDBACK_THREADS ? ids : [...ids, threadId]) : ids.filter((id) => id !== threadId),
+        );
     }
 
     /** Selects or clears every selectable finding of a group at once; the group checkbox shows a dash while a group is partly selected. */
     protected toggleGroup(group: AdaptFindingGroup, selected: boolean): void {
         const threadIds = group.rows.map((row) => row.finding.threadId).filter((id): id is number => id !== undefined);
-        this.selectedIds.update((ids) => (selected ? [...ids, ...threadIds.filter((id) => !ids.includes(id))] : ids.filter((id) => !threadIds.includes(id))));
+        this.selectedIds.update((ids) =>
+            selected
+                ? [...ids, ...[...new Set(threadIds)].filter((id) => !ids.includes(id)).slice(0, Math.max(0, MAX_SELECTED_FEEDBACK_THREADS - ids.length))]
+                : ids.filter((id) => !threadIds.includes(id)),
+        );
     }
 
     /** Selects what the list currently shows, so "select all" under a filter or a search means exactly what is on screen. */
@@ -229,10 +245,14 @@ export class ReviewAdaptExerciseDialogComponent {
         }
         const result: ReviewAdaptExerciseDialogResult = { instructions: this.instructions().trim() || undefined };
         if (this.selectedFeedbackThreadIds() !== undefined) {
-            result.selectedFeedbackThreadIds = this.rows()
-                .filter((row) => row.selected)
-                .map((row) => row.finding.threadId!)
-                .filter((id) => id !== undefined);
+            result.selectedFeedbackThreadIds = [
+                ...new Set(
+                    this.rows()
+                        .filter((row) => row.selected)
+                        .map((row) => row.finding.threadId)
+                        .filter((id): id is number => id !== undefined),
+                ),
+            ];
         }
         this.confirmed.emit(result);
     }
