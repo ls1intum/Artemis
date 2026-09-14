@@ -11,7 +11,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
-import java.util.Set;
+import java.nio.file.attribute.PosixFilePermissions;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -59,12 +59,13 @@ class DirectoryRepositoryContentSinkTest {
     }
 
     /**
-     * A materialized repository is student code waiting to be picked up by the personal data export, so it must not be
-     * readable by other accounts on the host. Git only ever supplies {@code 100644} or {@code 100755}, so the group and
-     * world bits of the mode say nothing about the file and are dropped; the executable bit is the one that is kept.
+     * The directory this writes is archived from disk further up, so these permissions are the ones the student
+     * extracts - {@code 0644} for a regular file and {@code 0755} for an executable one, exactly what git recorded.
+     * Losing the executable bit would make git report a modification in a working tree nobody has touched, which is
+     * the defect the export E2E tests guard.
      */
     @Test
-    void shouldWriteFilesReadableOnlyByTheirOwnerAndKeepTheExecutableBit() throws IOException {
+    void shouldWriteFilesWithTheModeGitRecorded() throws IOException {
         assumeTrue(FileSystems.getDefault().supportedFileAttributeViews().contains("posix"), "POSIX permissions are not supported on this file system");
 
         Path root = tempDir.resolve("repository");
@@ -77,15 +78,32 @@ class DirectoryRepositoryContentSinkTest {
             }
         }
 
-        assertThat(Files.getPosixFilePermissions(root.resolve("README.md"))).containsExactlyInAnyOrder(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE);
-        assertThat(Files.getPosixFilePermissions(root.resolve("gradlew"))).containsExactlyInAnyOrder(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
-                PosixFilePermission.OWNER_EXECUTE);
+        assertThat(Files.getPosixFilePermissions(root.resolve("README.md"))).as("a regular file").isEqualTo(PosixFilePermissions.fromString("rw-r--r--"));
+        assertThat(Files.getPosixFilePermissions(root.resolve("gradlew"))).as("an executable file").isEqualTo(PosixFilePermissions.fromString("rwxr-xr-x"));
     }
 
     /**
-     * Tightening the permissions on close is not enough on its own: between creation and close the file holds real
-     * repository content, and a permissive umask would let any other local account read it for the whole of that
-     * window. Assert the permissions while the stream is still open, which is the only moment that can catch it.
+     * Git stores only {@code 100644} and {@code 100755}, so nothing can ask for a group- or world-writable file, and
+     * the sink must not produce one whatever it is handed.
+     */
+    @Test
+    void shouldNeverGrantWriteAccessBeyondTheOwner() throws IOException {
+        assumeTrue(FileSystems.getDefault().supportedFileAttributeViews().contains("posix"), "POSIX permissions are not supported on this file system");
+
+        Path root = tempDir.resolve("repository");
+        try (DirectoryRepositoryContentSink sink = new DirectoryRepositoryContentSink(root)) {
+            try (OutputStream outputStream = sink.openFile("wide.txt", 0100777)) {
+                outputStream.write("content".getBytes(StandardCharsets.UTF_8));
+            }
+        }
+
+        assertThat(Files.getPosixFilePermissions(root.resolve("wide.txt"))).doesNotContain(PosixFilePermission.GROUP_WRITE, PosixFilePermission.OTHERS_WRITE);
+    }
+
+    /**
+     * The final mode is applied on close, so between creation and close the file already holds real repository content
+     * under whatever the umask happens to be. Creating it owner-only closes that window. Assert it while the stream is
+     * still open, which is the only moment that can catch it.
      */
     @Test
     void shouldCreateFilesOwnerOnlyBeforeAnythingIsWrittenToThem() throws IOException {
@@ -101,28 +119,6 @@ class DirectoryRepositoryContentSinkTest {
                         .containsExactlyInAnyOrder(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE);
             }
         }
-    }
-
-    /**
-     * Owner-only file contents do not help if the tree around them is world-traversable: the file names alone spell out
-     * the structure of a student's repository. The directories the sink creates have to be owner-only too.
-     */
-    @Test
-    void shouldCreateDirectoriesOwnerOnly() throws IOException {
-        assumeTrue(FileSystems.getDefault().supportedFileAttributeViews().contains("posix"), "POSIX permissions are not supported on this file system");
-
-        Path root = tempDir.resolve("repository");
-        try (DirectoryRepositoryContentSink sink = new DirectoryRepositoryContentSink(root)) {
-            sink.createDirectory(".git/objects/pack/");
-            try (OutputStream outputStream = sink.openFile("src/main/java/Main.java", 0100644)) {
-                outputStream.write("public class Main {}".getBytes(StandardCharsets.UTF_8));
-            }
-        }
-
-        Set<PosixFilePermission> ownerOnly = Set.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE);
-        assertThat(Files.getPosixFilePermissions(root)).as("the export root").isEqualTo(ownerOnly);
-        assertThat(Files.getPosixFilePermissions(root.resolve(".git/objects/pack"))).as("an explicitly created directory").isEqualTo(ownerOnly);
-        assertThat(Files.getPosixFilePermissions(root.resolve("src/main/java"))).as("a parent created on the way to a file").isEqualTo(ownerOnly);
     }
 
     /**

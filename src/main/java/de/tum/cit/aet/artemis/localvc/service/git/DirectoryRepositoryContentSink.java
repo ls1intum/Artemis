@@ -28,21 +28,19 @@ class DirectoryRepositoryContentSink implements RepositoryContentSink {
 
     private static final Set<PosixFilePermission> OWNER_READ_WRITE = EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE);
 
-    private static final Set<PosixFilePermission> OWNER_ALL = EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE);
-
     private static final Set<StandardOpenOption> WRITE_OPTIONS = EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
 
     private final Path root;
 
     DirectoryRepositoryContentSink(Path root) throws IOException {
         this.root = root.toAbsolutePath().normalize();
-        createOwnerOnlyDirectories(this.root);
+        Files.createDirectories(this.root);
     }
 
     @Override
     public OutputStream openFile(String relativePath, int unixMode) throws IOException {
         Path target = resolveSafely(relativePath);
-        createOwnerOnlyDirectories(target.getParent());
+        Files.createDirectories(target.getParent());
         OutputStream outputStream = openOwnerOnly(target);
         return new OutputStream() {
 
@@ -73,37 +71,7 @@ class DirectoryRepositoryContentSink implements RepositoryContentSink {
 
     @Override
     public void createDirectory(String relativePath) throws IOException {
-        createOwnerOnlyDirectories(resolveSafely(relativePath));
-    }
-
-    /**
-     * Creates the directory and any missing parent, readable only by the owner.
-     *
-     * <p>
-     * Giving the files owner-only content is not enough on its own: {@link Files#createDirectories} applies the process
-     * umask, so with the usual {@code 022} the export tree stays {@code rwxr-xr-x} and every other local account can
-     * still walk it and read the file names - which spell out the structure of a student's repository. Directories that
-     * already exist are tightened as well, because the attribute below only applies to the ones actually created.
-     *
-     * @param directory the directory to create
-     * @throws IOException if the directory cannot be created
-     */
-    private static void createOwnerOnlyDirectories(Path directory) throws IOException {
-        // createDirectories returns quietly for a directory that is already there, and the attribute below only applies
-        // to the ones it actually creates - so an existing directory keeps whatever mode it was made with.
-        boolean existed = Files.isDirectory(directory);
-        try {
-            Files.createDirectories(directory, PosixFilePermissions.asFileAttribute(OWNER_ALL));
-        }
-        catch (UnsupportedOperationException e) {
-            // Windows has no POSIX view, so the creation attribute cannot be requested.
-            log.debug("Could not create {} with owner-only permissions: {}", directory, e.getMessage());
-            Files.createDirectories(directory);
-            return;
-        }
-        if (existed) {
-            setPermissionsQuietly(directory, OWNER_ALL);
-        }
+        Files.createDirectories(resolveSafely(relativePath));
     }
 
     /**
@@ -116,8 +84,9 @@ class DirectoryRepositoryContentSink implements RepositoryContentSink {
      * window, because the file never exists in a wider mode.
      *
      * <p>
-     * A creation attribute only applies when the file is created, so {@link #applyPermissions} still runs on close -
-     * both to add the executable bit and to cover a target that already existed.
+     * The file does not stay owner-only: {@link #applyPermissions} widens it to the mode git recorded once the content
+     * is there, because that mode is what the archive built from this directory hands to the student. The point of
+     * creating it narrow is only that nothing can read it in the meantime.
      *
      * @param target the file to open
      * @return the stream to write the file content to
@@ -147,23 +116,27 @@ class DirectoryRepositoryContentSink implements RepositoryContentSink {
     }
 
     /**
-     * Gives the file to its owner alone, carrying over the executable bit.
+     * Applies the mode git recorded for the file: {@code 0644}, or {@code 0755} when the executable bit is set.
      *
      * <p>
-     * Git stores exactly two blob modes, {@code 100644} and {@code 100755}, and those are the only two values the
-     * builder passes in. The group and world bits of a mode are therefore a constant rather than something the
-     * repository expressed, and expanding them here would publish student code to every other account on the host for
-     * no gain - a materialized repository is read back by this process alone, on its way into the personal data
-     * export. The executable bit is the one bit that does carry information, so it is the one that is kept.
+     * These permissions are not an internal detail of a scratch directory. The caller archives this directory from
+     * disk, so whatever is set here is what the ZIP records and what the student ends up with after extracting. Losing
+     * the executable bit is a real defect rather than a cosmetic one: git tracks it, so a {@code gradlew} that arrives
+     * without it makes git report a modification in a working tree nobody has touched. Narrowing these to owner-only
+     * to satisfy a static-analysis finding changed the delivered artifact and was caught by the export E2E tests.
      *
      * <p>
-     * This governs the export directory on disk only. {@link ZipRepositoryContentSink} records the original mode on
-     * its ZIP entries, so what a student downloads is unchanged.
+     * What is deliberately not derived from the mode is the group and world <em>write</em> bit. Git stores only
+     * {@code 100644} and {@code 100755}, so no input can ask for it, and writing it out is what the finding was really
+     * about. The exposure while the file is being written is handled separately, by {@link #openOwnerOnly}.
      */
     private static void applyPermissions(Path path, int unixMode) {
-        Set<PosixFilePermission> permissions = EnumSet.copyOf(OWNER_READ_WRITE);
+        Set<PosixFilePermission> permissions = EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.GROUP_READ,
+                PosixFilePermission.OTHERS_READ);
         if ((unixMode & 0100) != 0) {
             permissions.add(PosixFilePermission.OWNER_EXECUTE);
+            permissions.add(PosixFilePermission.GROUP_EXECUTE);
+            permissions.add(PosixFilePermission.OTHERS_EXECUTE);
         }
         setPermissionsQuietly(path, permissions);
     }
