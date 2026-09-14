@@ -84,6 +84,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly searchText = this.filter.searchText;
     protected readonly deadEnd = this.filter.deadEnd;
     protected readonly deadEndMessage = this.filter.deadEndMessage;
+    protected readonly emptyMenuReasonKey = this.filter.emptyMenuReasonKey;
     protected readonly canGoBack = this.filter.canGoBack;
 
     // OS-aware label for the filter-picker shortcut shown on the Filter button (⌘F on Mac, Ctrl+F elsewhere).

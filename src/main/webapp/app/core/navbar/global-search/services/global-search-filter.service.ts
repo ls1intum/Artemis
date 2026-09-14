@@ -5,7 +5,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { FilterChipView, FilterMenuOption } from '../models/search-menu.model';
-import { buildFilterMenuOptions, toChipView } from '../models/search-menu.util';
+import { MenuCourse, buildFilterMenuOptions, toChipView } from '../models/search-menu.util';
+import { SearchCourseOptionsService } from './search-course-options.service';
 import { SearchEntityType } from '../models/searchable-entity.model';
 import { FilterToken, TypeFacetValue } from '../models/search-token.model';
 import { TYPE_FACETS, TYPE_FACET_ORDER } from '../models/facet-catalog';
@@ -44,9 +45,16 @@ export interface FilterSideEffects {
 @Injectable()
 export class GlobalSearchFilterService {
     private readonly courseStorageService = inject(CourseStorageService);
+    private readonly courseOptionsService = inject(SearchCourseOptionsService);
     private readonly translateService = inject(TranslateService);
     private readonly entityTitleService = inject(EntityTitleService);
     private readonly destroyRef = inject(DestroyRef);
+
+    /** The courses the server says this user can filter by, once read. Empty until a course menu is first opened. */
+    private readonly fetchedCourses: WritableSignal<MenuCourse[]> = signal([]);
+    /** Whether that read is in flight, so an empty menu can say "loading" rather than "you have no courses". */
+    private readonly coursesLoading: WritableSignal<boolean> = signal(false);
+    private courseFetchStarted = false;
 
     /**
      * Titles for course chips whose course is not in the client course store. That store is filled by the
@@ -127,10 +135,31 @@ export class GlobalSearchFilterService {
             searchQuery: this.searchQuery(),
             tokens: this.tokens(),
             editingChip: this.editingChip(),
-            courses: () => this.courseStorageService.getCourses(),
+            courses: () => this.availableCourses(),
             translate: (key, params) => this.translateService.instant(key, params),
         }),
     );
+    /**
+     * Why the menu is empty, when it is, or undefined when it has something to show.
+     * <p>
+     * An empty list is only ever reached through a case the menu decided on purpose: nothing left to offer, or a
+     * refusal. Rendering all of them as a bare "No matches" made a deliberate decision indistinguishable from a
+     * failure, which is exactly how the missing course list read.
+     */
+    readonly emptyMenuReasonKey: Signal<string | undefined> = computed(() => {
+        const op = this.operator();
+        if (!op || this.menuOptions().length > 0) {
+            return undefined;
+        }
+        if (op.facet === 'course') {
+            if (this.coursesLoading()) {
+                return 'global.search.loadingCourses';
+            }
+            return this.availableCourses().length === 0 ? 'global.search.noCoursesToFilter' : 'global.search.allCoursesFiltered';
+        }
+        // Excluding the last remaining type is refused rather than offered, so that empty list has its own reason.
+        return op.negate ? 'global.search.cannotExcludeEveryType' : 'global.search.allTypesFiltered';
+    });
     // True when the typed operator value exactly matches a known type / course, so the value text is
     // coloured as a confirmed filter (e.g. `type:course` turns blue once "course" is complete).
     readonly operatorValueValid: Signal<boolean> = computed(() => {
@@ -193,6 +222,44 @@ export class GlobalSearchFilterService {
                     });
             }
         });
+
+        // Read the course list the first time a course value menu is actually opened, rather than when the palette is
+        // constructed: a session that never filters by course never pays for the request.
+        effect(() => {
+            if (this.operator()?.facet === 'course') {
+                this.loadCoursesOnce();
+            }
+        });
+    }
+
+    /**
+     * The courses the value menu offers: the server's list once it has arrived, otherwise whatever the client course
+     * store already holds. Falling back rather than waiting keeps the menu no emptier than it was before, so the first
+     * open on the student dashboard is served from the store while the request is still in flight.
+     */
+    private availableCourses(): MenuCourse[] {
+        const fetched = this.fetchedCourses();
+        return fetched.length > 0 ? fetched : this.courseStorageService.getCourses();
+    }
+
+    /** Issues the course read at most once per palette; the service behind it shares one request per session. */
+    private loadCoursesOnce(): void {
+        if (this.courseFetchStarted) {
+            return;
+        }
+        this.courseFetchStarted = true;
+        this.coursesLoading.set(true);
+        this.courseOptionsService
+            .getCourses()
+            .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                // The service degrades a failed read to an empty list, so both arms only have to release the flag.
+                next: (courses) => {
+                    this.fetchedCourses.set(courses);
+                    this.coursesLoading.set(false);
+                },
+                error: () => this.coursesLoading.set(false),
+            });
     }
 
     /**

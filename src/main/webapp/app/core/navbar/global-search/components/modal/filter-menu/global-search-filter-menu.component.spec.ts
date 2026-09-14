@@ -34,6 +34,23 @@ describe('GlobalSearchFilterMenuComponent', () => {
         expect(fixture.nativeElement.querySelector('[id="gs-filter-option-type:lecture"]')).toBeTruthy();
     });
 
+    it('names why the list is empty instead of showing a bare no-matches row', () => {
+        // Also pins the pipe/?? precedence in the template: the fallback has to be resolved before translating,
+        // not after, or the row renders the raw key.
+        fixture.componentRef.setInput('options', []);
+        fixture.componentRef.setInput('emptyReasonKey', 'global.search.noCoursesToFilter');
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="filter-menu-empty"]').textContent.trim()).toBe('global.search.noCoursesToFilter');
+    });
+
+    it('falls back to the generic empty row when there is no reason to give', () => {
+        fixture.componentRef.setInput('options', []);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="filter-menu-empty"]').textContent.trim()).toBe('global.search.noFilterMatches');
+    });
+
     it('marks the active option as selected', () => {
         const options = fixture.nativeElement.querySelectorAll('li[role="option"]');
         expect(options[1].classList).toContain('is-active');

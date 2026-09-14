@@ -32,6 +32,12 @@ export class GlobalSearchFilterMenuComponent {
      * Nothing has gone wrong, so it is phrased and styled as a statement rather than as an error.
      */
     message = input<{ key: string; value: string } | undefined>(undefined);
+    /**
+     * i18n key explaining why the list is empty, when it is. The menu only empties through cases it decided on
+     * purpose, so naming the case keeps a deliberate decision from reading as a failure; without it every one of
+     * them rendered as the same bare "No matches".
+     */
+    emptyReasonKey = input<string | undefined>(undefined);
 
     /** Emitted with the option index when a row is chosen (clicked). */
     optionSelected = output<number>();
