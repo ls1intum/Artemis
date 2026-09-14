@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -347,7 +346,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             FROM Course c
             WHERE c.id = :courseId
             """)
-    @Cacheable(cacheNames = "courseTitle", key = "#courseId", unless = "#result == null")
     String getCourseTitle(@Param("courseId") long courseId);
 
     /**

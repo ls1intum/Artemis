@@ -186,15 +186,13 @@ public class ExamSubmissionService {
         if (participations.isEmpty()) {
             return null;
         }
-        // The rows are ordered graded first, then oldest first, so the one an instructor's test run added alongside the
-        // graded participation cannot decide which submission is overwritten.
+        // The rows are ordered graded first, then newest first. A test run added alongside the graded participation cannot
+        // decide which submission is overwritten, and among several test runs the newest is the one the save writes.
         ExamSubmissionGateDTO existing = participations.getFirst();
-        if (existing.existingSubmissionId() != null) {
-            // Instead of creating a new submission, we want to overwrite the already existing submission. Therefore
-            // we set the id of the received submission to the id of the existing submission. When repository.save()
-            // is invoked the existing submission will be updated.
-            submission.setId(existing.existingSubmissionId());
-        }
+        // Instead of creating a new submission, we want to overwrite the already existing submission. Therefore we set the
+        // id of the received submission to the id of the existing submission. Without one, the id is cleared, so a client
+        // id that names another participation's submission cannot decide which row is written.
+        submission.setId(existing.existingSubmissionId());
         // Team participations are owned by a Team, not by a User, so they cannot be rebuilt from these fields. A file
         // upload needs the participation's existing submissions as well - FileUploadSubmissionService reads the previous
         // file off them to delete it when the name changed and to evict the cache when it did not, and the projection

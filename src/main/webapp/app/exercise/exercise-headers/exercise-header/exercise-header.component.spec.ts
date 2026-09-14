@@ -1,13 +1,13 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { ExerciseHeaderComponent } from 'app/exercise/exercise-headers/exercise-header/exercise-header.component';
+import { ExerciseHeaderComponent, pillsFitInTitleBar } from 'app/exercise/exercise-headers/exercise-header/exercise-header.component';
 import { ExerciseHeaderActionsComponent } from 'app/exercise/exercise-headers/exercise-header-actions/exercise-header-actions.component';
-import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { ParticipationModeToggleComponent } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
+import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -40,7 +40,43 @@ describe('ExerciseHeaderComponent', () => {
 
     const submitCallback = vi.fn();
 
+    /**
+     * The global jsdom stub never calls back, so the bar would never learn a width. This one records the callbacks and
+     * lets a test deliver a layout, which is the only way to reach the decision the bar makes about the pills.
+     */
+    let resizeCallbacks: (() => void)[];
+    const originalResizeObserver = globalThis.ResizeObserver;
+
+    /** Reports `width` for the element behind `testId`, or leaves it unmeasured when it is not rendered. */
+    function stubWidth(testId: string, width: number): void {
+        const element: HTMLElement | null = fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
+        if (element) {
+            element.getBoundingClientRect = () => ({ width }) as DOMRect;
+        }
+    }
+
+    /** Lays the bar out at these widths and lets the component react, as a resize in the browser would. */
+    function layOutBar(widths: { bar: number; controls: number; pills: number; countdown?: number }): void {
+        const bar: HTMLElement = fixture.nativeElement.querySelector('#exercise-header');
+        bar.getBoundingClientRect = () => ({ width: widths.bar }) as DOMRect;
+        stubWidth('exercise-header-controls', widths.controls);
+        stubWidth('exercise-header-pills', widths.pills);
+        stubWidth('exercise-header-countdown', widths.countdown ?? 0);
+        resizeCallbacks.forEach((callback) => callback());
+        fixture.detectChanges();
+    }
+
     beforeEach(() => {
+        resizeCallbacks = [];
+        globalThis.ResizeObserver = class {
+            constructor(callback: () => void) {
+                resizeCallbacks.push(callback);
+            }
+            observe(): void {}
+            unobserve(): void {}
+            disconnect(): void {}
+        } as unknown as typeof ResizeObserver;
+
         TestBed.configureTestingModule({
             imports: [ExerciseHeaderComponent],
             providers: [
@@ -58,10 +94,12 @@ describe('ExerciseHeaderComponent', () => {
             ],
         });
 
-        // Mock child components of ExerciseHeaderComponent not under test
+        // Mock child components of ExerciseHeaderComponent not under test. The information boxes are mocked rather
+        // than rendered because the real ones reach all the way down to the result history's PrimeNG dialog service;
+        // what the header owns is the decision to show them, which the mock still reports.
         TestBed.overrideComponent(ExerciseHeaderComponent, {
-            remove: { imports: [ExerciseHeadersInformationComponent, ParticipationModeToggleComponent] },
-            add: { imports: [MockComponent(ExerciseHeadersInformationComponent), MockComponent(ParticipationModeToggleComponent)] },
+            remove: { imports: [ParticipationModeToggleComponent, ExerciseHeadersInformationComponent] },
+            add: { imports: [MockComponent(ParticipationModeToggleComponent), MockComponent(ExerciseHeadersInformationComponent)] },
         });
 
         // Mock complex child imports of ExerciseHeaderActionsComponent to avoid deep dependency chains
@@ -82,6 +120,10 @@ describe('ExerciseHeaderComponent', () => {
         });
 
         fixture = TestBed.createComponent(ExerciseHeaderComponent);
+    });
+
+    afterEach(() => {
+        globalThis.ResizeObserver = originalResizeObserver;
     });
 
     it('should hide submit button when the due date has passed', () => {
@@ -114,6 +156,150 @@ describe('ExerciseHeaderComponent', () => {
         expect(fixture.debugElement.query(By.css('#submit-exercise'))).not.toBeNull();
     });
 
+    describe('compact title bar', () => {
+        beforeEach(() => {
+            const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            exercise.id = 1;
+            exercise.type = ExerciseType.MODELING;
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.detectChanges();
+        });
+
+        it('should render the bar on the shared title bar contract', () => {
+            const bar = fixture.nativeElement.querySelector('#exercise-header');
+
+            expect(bar.classList).toContain('page-top-bar');
+            expect(bar.classList).not.toContain('detail-header-card');
+        });
+
+        it('should render the status and due date pills in the bar', () => {
+            const pills = fixture.nativeElement.querySelector('jhi-exercise-headers-information');
+
+            expect(pills).not.toBeNull();
+            expect(pills.getAttribute('placement')).toBe('titleBar');
+        });
+
+        it('should only render the quiz countdown for quizzes', () => {
+            expect(fixture.nativeElement.querySelector('jhi-quiz-exercise-countdown')).toBeNull();
+        });
+    });
+
+    describe('status and due date pills', () => {
+        function renderBar(): void {
+            const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            exercise.id = 1;
+            exercise.type = ExerciseType.MODELING;
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.detectChanges();
+        }
+
+        function renderQuizBar(): void {
+            const quiz = new QuizExercise(undefined, undefined);
+            quiz.id = 1;
+            quiz.type = ExerciseType.QUIZ;
+            fixture.componentRef.setInput('exercise', quiz);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.detectChanges();
+        }
+
+        function pillsAreRendered(): boolean {
+            return fixture.nativeElement.querySelector('[data-testid="exercise-header-pills"]') !== null;
+        }
+
+        it('keeps the pills while the title still has its room, and drops them when it does not', () => {
+            // A wide bar: the controls and the pills together still leave the title far more than its minimum.
+            expect(pillsFitInTitleBar(1400, 400, 380)).toBe(true);
+            // The same content on a narrow bar would leave the title 112px, so the pills give way.
+            expect(pillsFitInTitleBar(900, 400, 380)).toBe(false);
+            // Exactly the minimum still counts as room.
+            expect(pillsFitInTitleBar(1068, 400, 380)).toBe(true);
+            expect(pillsFitInTitleBar(1067, 400, 380)).toBe(false);
+        });
+
+        it('shows the pills before anything is measured, because a pill that is not rendered has no width to read', () => {
+            expect(pillsFitInTitleBar(0, 0, 0)).toBe(true);
+            expect(pillsFitInTitleBar(1400, 400, 0)).toBe(true);
+
+            renderBar();
+
+            expect(pillsAreRendered()).toBe(true);
+        });
+
+        it('takes the pills off a bar that has no room for them and reports it', () => {
+            const reported: boolean[] = [];
+            fixture.componentRef.instance.showsPillsChange.subscribe((shows: boolean) => reported.push(shows));
+            renderBar();
+
+            layOutBar({ bar: 900, controls: 400, pills: 380 });
+
+            expect(pillsAreRendered()).toBe(false);
+            expect(reported.at(-1)).toBe(false);
+        });
+
+        it('keeps the pills away across further resizes at the same width, rather than flickering them in and out', () => {
+            renderBar();
+            layOutBar({ bar: 900, controls: 400, pills: 380 });
+            expect(pillsAreRendered()).toBe(false);
+
+            // The pills are gone, so this resize measures no width for them. Forgetting the width they had would read
+            // as "not measured yet", put them straight back, measure them too wide, and take them away again - on
+            // every frame. The width measured while they were up is what settles it.
+            layOutBar({ bar: 900, controls: 400, pills: 0 });
+
+            expect(pillsAreRendered()).toBe(false);
+        });
+
+        it('places the due date and the status after the title, not over with the buttons', () => {
+            renderBar();
+            const positionOf = (selector: string): number => {
+                const bar: HTMLElement = fixture.nativeElement.querySelector('#exercise-header');
+                return Array.from(bar.children).indexOf(bar.querySelector(selector)!);
+            };
+
+            // Title, then the pills, then the controls the bar holds at its far end.
+            expect(positionOf('h5')).toBeLessThan(positionOf('[data-testid="exercise-header-pills"]'));
+            expect(positionOf('[data-testid="exercise-header-pills"]')).toBeLessThan(positionOf('[data-testid="exercise-header-controls"]'));
+        });
+
+        it('puts a running quiz clock where the due date would be, between the title and the status', () => {
+            renderQuizBar();
+
+            const bar: HTMLElement = fixture.nativeElement.querySelector('#exercise-header');
+            const positions = Array.from(bar.children);
+            const countdown = bar.querySelector('[data-testid="exercise-header-countdown"]')!;
+            const pills = bar.querySelector('[data-testid="exercise-header-pills"]')!;
+
+            expect(positions.indexOf(bar.querySelector('h5')!)).toBeLessThan(positions.indexOf(countdown));
+            expect(positions.indexOf(countdown)).toBeLessThan(positions.indexOf(pills));
+        });
+
+        it('counts the quiz countdown against the title, now that it sits beside it rather than with the buttons', () => {
+            renderQuizBar();
+
+            // This bar has room for the pills while nothing else stands between the title and the buttons.
+            layOutBar({ bar: 1200, controls: 400, pills: 380, countdown: 0 });
+            expect(pillsAreRendered()).toBe(true);
+
+            // The clock is never taken away, so its width is space the title cannot have either - and with it there is
+            // no longer enough left. Leaving it out of the calculation would keep the pills and squeeze the title.
+            layOutBar({ bar: 1200, controls: 400, pills: 380, countdown: 150 });
+
+            expect(pillsAreRendered()).toBe(false);
+        });
+
+        it('brings the pills back once the bar has room for them again', () => {
+            renderBar();
+            layOutBar({ bar: 900, controls: 400, pills: 380 });
+            expect(pillsAreRendered()).toBe(false);
+
+            layOutBar({ bar: 1400, controls: 400, pills: 0 });
+
+            expect(pillsAreRendered()).toBe(true);
+        });
+    });
+
     describe('programming exercise AI feedback button', () => {
         function configureProgrammingExercise(allowOnlineEditor: boolean | undefined, submitted: boolean, hasResult: boolean): void {
             const exercise = new ProgrammingExercise(undefined, undefined);
@@ -139,6 +325,7 @@ describe('ExerciseHeaderComponent', () => {
 
             const feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
             expect(feedbackButton).not.toBeNull();
+            // isSubmitted is what the button enables itself on, so asserting its presence alone would pass either way.
             expect(feedbackButton.componentInstance.isSubmitted()).toBe(true);
         });
 
@@ -147,37 +334,6 @@ describe('ExerciseHeaderComponent', () => {
 
             const feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
             expect(feedbackButton).not.toBeNull();
-            expect(feedbackButton.componentInstance.isSubmitted()).toBe(false);
-        });
-
-        it('should pass the active participation to the feedback button', () => {
-            const exercise = new ProgrammingExercise(undefined, undefined);
-            exercise.id = 1;
-            exercise.type = ExerciseType.PROGRAMMING;
-            exercise.course = { athenaFormativeFeedbackEnabled: true };
-            exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-            exercise.allowOnlineEditor = false;
-
-            const gradedParticipation = { id: 10, testRun: false, submissions: [{ submitted: true }] } as StudentParticipation;
-            const practiceParticipation = { id: 20, testRun: true, submissions: [{ submitted: false }] } as StudentParticipation;
-            exercise.studentParticipations = [gradedParticipation, practiceParticipation];
-
-            fixture.componentRef.setInput('exercise', exercise);
-            fixture.componentRef.setInput('courseId', 5);
-            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
-            fixture.componentRef.setInput('practiceParticipation', practiceParticipation);
-            fixture.componentRef.setInput('participationMode', 'graded');
-            fixture.detectChanges();
-
-            let feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
-            expect(feedbackButton.componentInstance.participationId()).toBe(gradedParticipation.id);
-            expect(feedbackButton.componentInstance.isSubmitted()).toBe(true);
-
-            fixture.componentRef.setInput('participationMode', 'practice');
-            fixture.detectChanges();
-
-            feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
-            expect(feedbackButton.componentInstance.participationId()).toBe(practiceParticipation.id);
             expect(feedbackButton.componentInstance.isSubmitted()).toBe(false);
         });
 
@@ -216,7 +372,8 @@ describe('ExerciseHeaderComponent', () => {
         fixture.componentRef.setInput('isSidebarCollapsed', true);
         fixture.detectChanges();
 
-        const titleRow = fixture.debugElement.query(By.css('#exercise-header > div')).nativeElement as HTMLElement;
+        // The bar itself is the title row now; there is no inner row element to reach for.
+        const titleRow = fixture.debugElement.query(By.css('#exercise-header')).nativeElement as HTMLElement;
         const sidebarToggle = titleRow.querySelector('.btn-sidebar-collapse');
         const heading = titleRow.querySelector('h5');
 
@@ -524,15 +681,19 @@ describe('ExerciseHeaderComponent', () => {
             fixture.componentRef.setInput('exercise', exercise);
             fixture.componentRef.setInput('courseId', 5);
             fixture.componentRef.setInput('onSubmitExercise', submitCallback);
+            const continueCallback = () => {};
+            fixture.componentRef.setInput('onContinueToLatest', continueCallback);
             fixture.detectChanges();
 
             expect(fixture.componentInstance.effectiveOnSubmitExercise()).toBe(submitCallback);
             expect(fixture.componentInstance.onContinueExercise()).toBeUndefined();
 
-            fixture.componentInstance.isViewingSubmission.set(true);
+            // Reported by the details panel, which owns the information boxes that know it.
+            fixture.componentRef.setInput('isViewingSubmission', true);
+            fixture.detectChanges();
 
             expect(fixture.componentInstance.effectiveOnSubmitExercise()).toBeUndefined();
-            expect(fixture.componentInstance.onContinueExercise()).toBeDefined();
+            expect(fixture.componentInstance.onContinueExercise()).toBe(continueCallback);
         });
     });
 

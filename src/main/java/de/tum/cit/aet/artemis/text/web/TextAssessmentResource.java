@@ -524,7 +524,8 @@ public class TextAssessmentResource extends AssessmentResource {
             final List<FeedbackDTO> maskedFeedbacks = result.getFeedbacks() == null ? List.of()
                     : result.getFeedbacks().stream()
                             .filter(feedback -> !FeedbackType.MANUAL_UNREFERENCED.equals(feedback.getType()) && StringUtils.hasText(feedback.getReference()))
-                            .map(feedback -> new FeedbackDTO(feedback.getId(), null, null, false, feedback.getReference(), null, null, feedback.getType(), null, null)).toList();
+                            .map(feedback -> new FeedbackDTO(feedback.getId(), null, null, false, feedback.getReference(), null, null, feedback.getType(), null, null, null))
+                            .toList();
             return ResponseEntity.ok().body(new TextExampleResultDTO(null, maskedFeedbacks, submissionDTO));
         }
 

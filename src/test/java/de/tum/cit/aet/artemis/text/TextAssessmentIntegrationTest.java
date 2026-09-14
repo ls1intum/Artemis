@@ -38,13 +38,13 @@ import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
+import de.tum.cit.aet.artemis.assessment.service.AssessmentUpdate;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -227,7 +227,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         FeedbackDTO feedbackDTO = FeedbackDTO.of(longFeedback);
         final String editedLongText = "Edited long feedback ".repeat(100);
         FeedbackDTO editedFeedbackDTO = new FeedbackDTO(feedbackDTO.id(), feedbackDTO.text(), editedLongText, feedbackDTO.hasLongFeedbackText(), feedbackDTO.reference(),
-                feedbackDTO.credits(), feedbackDTO.positive(), feedbackDTO.type(), feedbackDTO.visibility(), feedbackDTO.gradingInstruction());
+                feedbackDTO.credits(), feedbackDTO.positive(), feedbackDTO.type(), feedbackDTO.visibility(), feedbackDTO.gradingInstruction(), feedbackDTO.testCase());
         TextAssessmentDTO body = new TextAssessmentDTO(List.of(editedFeedbackDTO), null, null);
         request.putWithResponseBodyAndParams("/api/text/participations/" + textSubmission.getParticipation().getId() + "/results/" + result.getId() + "/text-assessment", body,
                 ResultDTO.class, HttpStatus.OK, new LinkedMultiValueMap<>());
@@ -253,7 +253,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         FeedbackDTO feedbackDTO = FeedbackDTO.of(longFeedback);
         final String editedShortText = "Short edited feedback";
         FeedbackDTO editedFeedbackDTO = new FeedbackDTO(feedbackDTO.id(), feedbackDTO.text(), editedShortText, feedbackDTO.hasLongFeedbackText(), feedbackDTO.reference(),
-                feedbackDTO.credits(), feedbackDTO.positive(), feedbackDTO.type(), feedbackDTO.visibility(), feedbackDTO.gradingInstruction());
+                feedbackDTO.credits(), feedbackDTO.positive(), feedbackDTO.type(), feedbackDTO.visibility(), feedbackDTO.gradingInstruction(), feedbackDTO.testCase());
         TextAssessmentDTO body = new TextAssessmentDTO(List.of(editedFeedbackDTO), null, null);
         request.putWithResponseBodyAndParams("/api/text/participations/" + textSubmission.getParticipation().getId() + "/results/" + result.getId() + "/text-assessment", body,
                 ResultDTO.class, HttpStatus.OK, new LinkedMultiValueMap<>());
@@ -400,7 +400,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void updateTextAssessmentAfterComplaint_wrongParticipationId() throws Exception {
         TextSubmission textSubmission = textExerciseUtilService.createTextSubmissionWithResultAndAssessor(textExercise, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        AssessmentUpdateDTO assessmentUpdate = complaintUtilService.createComplaintAndResponse(textSubmission.getLatestResult(), TEST_PREFIX + "tutor2");
+        AssessmentUpdate assessmentUpdate = complaintUtilService.createComplaintAndResponse(textSubmission.getLatestResult(), TEST_PREFIX + "tutor2");
         TextAssessmentUpdateDTO textAssessmentUpdate = new TextAssessmentUpdateDTO(new ArrayList<>(), toComplaintResponseRequestDTO(assessmentUpdate.complaintResponse()), null,
                 new HashSet<>());
 
@@ -416,7 +416,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void updateTextAssessmentAfterComplaint_studentHidden() throws Exception {
         TextSubmission textSubmission = textExerciseUtilService.createTextSubmissionWithResultAndAssessor(textExercise, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        AssessmentUpdateDTO assessmentUpdate = complaintUtilService.createComplaintAndResponse(textSubmission.getLatestResult(), TEST_PREFIX + "tutor2");
+        AssessmentUpdate assessmentUpdate = complaintUtilService.createComplaintAndResponse(textSubmission.getLatestResult(), TEST_PREFIX + "tutor2");
         TextAssessmentUpdateDTO textAssessmentUpdate = new TextAssessmentUpdateDTO(new ArrayList<>(), toComplaintResponseRequestDTO(assessmentUpdate.complaintResponse()), null,
                 new HashSet<>());
 

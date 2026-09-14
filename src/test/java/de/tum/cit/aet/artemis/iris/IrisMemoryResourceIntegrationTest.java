@@ -2,13 +2,17 @@ package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.web.util.UriUtils;
 
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
@@ -115,6 +119,31 @@ class IrisMemoryResourceIntegrationTest extends AbstractIrisIntegrationTest {
         var memoryId = "missing";
         irisRequestMockProvider.mockGetMemoryWithRelationsError(user.getId(), memoryId, HttpStatus.NOT_FOUND);
         request.get("/api/iris/user/memories/" + memoryId, HttpStatus.NOT_FOUND, MemirisMemoryWithRelationsDTO.class);
+    }
+
+    /**
+     * The user id in the Pyris URL is the only thing scoping a request to the caller's own memories, and the memory id
+     * is appended straight after it, so an id that is not one opaque segment has to be refused before the request is
+     * built - with no call to Pyris at all.
+     *
+     * <p>
+     * The obvious attacks - {@code ../../99/stolen}, a bare {@code ..}, an encoded separator, a {@code ;} - never reach
+     * the controller at all, because Spring Security's StrictHttpFirewall rejects them first and also answers 400. That
+     * is welcome defence in depth, but it means those inputs prove nothing about this validation: the test would stay
+     * green with the validation deleted. The ids below are the ones that pass the firewall and must be stopped here.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = { "with space", "memory.id", "memory~id", "M1+2", "memory@id", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getMemoryWithRelations_shouldRejectAMemoryIdThatIsNotASinglePathSegment(String memoryId) throws Exception {
+        request.get("/api/iris/user/memories/" + UriUtils.encodePathSegment(memoryId, StandardCharsets.UTF_8), HttpStatus.BAD_REQUEST, MemirisMemoryWithRelationsDTO.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "with space", "memory.id", "memory~id" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void deleteMemory_shouldRejectAMemoryIdThatIsNotASinglePathSegment(String memoryId) throws Exception {
+        request.delete("/api/iris/user/memories/" + UriUtils.encodePathSegment(memoryId, StandardCharsets.UTF_8), HttpStatus.BAD_REQUEST);
     }
 
     @Test
