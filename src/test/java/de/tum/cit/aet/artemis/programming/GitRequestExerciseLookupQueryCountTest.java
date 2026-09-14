@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.programming;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,5 +48,37 @@ class GitRequestExerciseLookupQueryCountTest extends AbstractSpringIntegrationIn
     void testExamExerciseIsResolvedInOneQuery() {
         assertThatDb(() -> programmingExerciseTestRepository.findOneByProjectKeyOrThrow(examProgrammingExercise.getProjectKey(), true))
                 .hasBeenCalledAtMostTimes(EXERCISE_LOOKUP_QUERY_COUNT);
+    }
+
+    /**
+     * The projection the authorization path actually reads. It joins the same associations but selects scalars from
+     * them, so it stays one query and, unlike the entity, hydrates nothing.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExamExerciseAccessProjectionIsResolvedInOneQuery() {
+        assertThatDb(() -> programmingExerciseTestRepository.findAccessProjectionByProjectKey(examProgrammingExercise.getProjectKey()))
+                .hasBeenCalledAtMostTimes(EXERCISE_LOOKUP_QUERY_COUNT);
+    }
+
+    /**
+     * A course exercise leaves the whole exam side of the join empty. Every value taken from it has to survive that,
+     * which a primitive component would not: the projection failed to instantiate for every course exercise until
+     * {@code testExam} became nullable.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCourseExerciseAccessProjectionResolvesWithoutAnExam() {
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise courseExercise = (ProgrammingExercise) course.getExercises().iterator().next();
+
+        var projection = programmingExerciseTestRepository.findAccessProjectionByProjectKey(courseExercise.getProjectKey());
+
+        assertThat(projection).singleElement().satisfies(access -> {
+            assertThat(access.isExamExercise()).isFalse();
+            assertThat(access.examId()).isNull();
+            assertThat(access.isTestExamExercise()).isFalse();
+            assertThat(access.courseId()).isEqualTo(courseExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        });
     }
 }
