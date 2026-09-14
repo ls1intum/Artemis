@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.notification.service;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
@@ -51,8 +52,7 @@ class SystemNotificationServiceTest {
     }
 
     @Test
-    @SuppressWarnings({ "deprecation", "removal" })
-    void shouldSendSystemNotificationDtosToCurrentAndLegacyTopics() {
+    void shouldSendSystemNotificationDtosToTheNotificationTopicOnly() {
         ZonedDateTime notificationDate = ZonedDateTime.now();
         SystemNotification notification = new SystemNotification();
         notification.setId(1L);
@@ -67,6 +67,7 @@ class SystemNotificationServiceTest {
 
         List<SystemNotificationDTO> expectedNotifications = List.of(SystemNotificationDTO.from(notification));
         verify(websocketMessagingService).sendMessage(SystemNotificationService.SYSTEM_NOTIFICATION_TOPIC, expectedNotifications);
-        verify(websocketMessagingService).sendMessage(SystemNotificationService.LEGACY_SYSTEM_NOTIFICATION_TOPIC, expectedNotifications);
+        // The retired /topic/system-notification mirror must not come back: one send, not two.
+        verifyNoMoreInteractions(websocketMessagingService);
     }
 }

@@ -78,6 +78,14 @@ management:
             roles: 'ROLE_ADMIN,ROLE_SUPER_ADMIN'
             probes:
                 enabled: true
+            cache:
+                # The health endpoint is public, so every liveness probe runs every indicator. One of them, Weaviate,
+                # asks a remote server whether it is ready and took 1.7 s per call on a 2000 student benchmark - 272 s
+                # of request time on a single node in ten minutes, for an answer that had not changed. Serving repeated
+                # probes from this cache leaves detection well inside a minute, which is shorter than the consecutive
+                # failures an alert waits for anyway. Note this covers unauthenticated callers, which is what probes
+                # and the status page are; a signed-in admin opening the health page always gets a fresh answer.
+                time-to-live: 30s
         artemismetrics:
             access: read_only
     metrics:

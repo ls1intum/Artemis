@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -128,8 +129,8 @@ class ExamImportWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
         Exam sourceExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course);
         List<ExerciseGroup> exerciseGroupsToImport = sourceExam.getExerciseGroups();
 
-        var importResult = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group", exerciseGroupsToImport,
-                ExerciseGroupImportResultDTO.class, HttpStatus.OK);
+        var importResult = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
+                exerciseGroupsToImport.stream().map(ExerciseGroupImportDTO::of).toList(), ExerciseGroupImportResultDTO.class, HttpStatus.OK);
 
         // The target exam originally had no exercise groups, so all returned groups are newly imported. Filter to only the
         // groups that actually carry exercise summaries (the empty group from source is skipped).

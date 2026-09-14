@@ -75,6 +75,26 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
     Optional<Team> findOneByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
 
     /**
+     * The student's team for an exercise, with its members.
+     * <p>
+     * Joined twice on purpose: the first join finds the team the student belongs to, the second fetches all of its members.
+     * Filtering on the fetched alias would return the team carrying only the student that matched.
+     *
+     * @param exerciseId the id of the exercise
+     * @param userId     the id of the student
+     * @return the team with its students, or empty when the student is in none
+     */
+    @Query("""
+            SELECT team
+            FROM Team team
+                JOIN team.students teamMember
+                LEFT JOIN FETCH team.students
+            WHERE team.exercise.id = :exerciseId
+                AND teamMember.id = :userId
+            """)
+    Optional<Team> findOneWithStudentsByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
+
+    /**
      * Finds the requesting student's team for every given team exercise in one projection query.
      *
      * @param exerciseIds the team exercises shown in the course overview
