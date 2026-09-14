@@ -23,6 +23,8 @@ public class HarmonyScrubbingChatModel implements ChatModel {
     /** Matches a harmony / channel control token such as {@code <|channel|>} or {@code <|end|>}. The {@code >} exclusion keeps one token from spanning into the next. */
     static final Pattern HARMONY_CONTROL_TOKEN = Pattern.compile("<\\|[^|>]*\\|>");
 
+    private static final Pattern INCOMPLETE_CONTROL_TOKEN = Pattern.compile("<\\|[^|>]*\\|?");
+
     private final ChatModel delegate;
 
     public HarmonyScrubbingChatModel(ChatModel delegate) {
@@ -84,7 +86,7 @@ public class HarmonyScrubbingChatModel implements ChatModel {
                 AssistantMessage output = generation.getOutput();
                 String text = sanitizeHarmonyTokens(pending.get(i) + (output.getText() == null ? "" : output.getText()));
                 int suffix = text.lastIndexOf('<');
-                boolean incomplete = suffix >= 0 && (text.substring(suffix).equals("<") || text.substring(suffix).matches("<\\|[^|>]*\\|?"));
+                boolean incomplete = suffix >= 0 && (text.substring(suffix).equals("<") || INCOMPLETE_CONTROL_TOKEN.matcher(text.substring(suffix)).matches());
                 pending.set(i, incomplete ? text.substring(suffix) : "");
                 String clean = incomplete ? text.substring(0, suffix) : text;
                 results.add(
