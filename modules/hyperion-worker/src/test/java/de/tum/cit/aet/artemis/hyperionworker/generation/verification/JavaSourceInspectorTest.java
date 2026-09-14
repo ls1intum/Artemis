@@ -172,6 +172,67 @@ class JavaSourceInspectorTest {
     }
 
     @Test
+    void sameLineTestMethodStillRequiresRestrictionsAndTimeout() {
+        var summary = JavaSourceInspector.javaTestAnnotationSummary("class TestCase { @org.junit.jupiter.api.Test void checks() {} }");
+        assertThat(summary.hasTestMethods()).isTrue();
+        assertThat(summary.classWithMissingAresAnnotations()).isTrue();
+        assertThat(summary.testMethodWithoutStrictTimeout()).isTrue();
+    }
+
+    @Test
+    void inlineTrustedAnnotationsAreAcceptedWithoutDependingOnLineBreaks() {
+        String source = """
+                @de.tum.in.test.api.jupiter.Public @de.tum.in.test.api.WhitelistPath("build")
+                @de.tum.in.test.api.BlacklistPath("build/classes/java/test") class TestCase {
+                  @org.junit.jupiter.api.Test @de.tum.in.test.api.StrictTimeout(1) void checks() {}
+                }
+                """;
+        var summary = JavaSourceInspector.javaTestAnnotationSummary(source);
+        assertThat(summary.hasTestMethods()).isTrue();
+        assertThat(summary.classWithMissingAresAnnotations()).isFalse();
+        assertThat(summary.testMethodWithoutStrictTimeout()).isFalse();
+    }
+
+    @Test
+    void annotationTextBlockCannotSupplyClassRestrictionsOrTimeout() {
+        String source = "@SuppressWarnings(" + "\"\"\"\n" + """
+                @de.tum.in.test.api.jupiter.Public
+                @de.tum.in.test.api.WhitelistPath("build")
+                @de.tum.in.test.api.BlacklistPath("build/classes/java/test")
+                @de.tum.in.test.api.StrictTimeout(1)
+                """ + "\"\"\")\n" + """
+                class TestCase {
+                    @org.junit.jupiter.api.Test
+                    void checks() {}
+                }
+                """;
+        var summary = JavaSourceInspector.javaTestAnnotationSummary(source);
+        assertThat(summary.hasTestMethods()).isTrue();
+        assertThat(summary.classWithMissingAresAnnotations()).isTrue();
+        assertThat(summary.testMethodWithoutStrictTimeout()).isTrue();
+    }
+
+    @Test
+    void annotationStringCannotInventATestMethod() {
+        var summary = JavaSourceInspector.javaTestAnnotationSummary("""
+                class TestCase {
+                    @SuppressWarnings("@org.junit.jupiter.api.Test")
+                    void helper() {}
+                }
+                """);
+        assertThat(summary.hasTestMethods()).isFalse();
+    }
+
+    @Test
+    void encodedCommentTerminatorCannotHideATestFromInspection() {
+        String source = "class TestCase { // comment" + "\\" + "u000a @org.junit.jupiter.api.Test void checks() {} }";
+        var summary = JavaSourceInspector.javaTestAnnotationSummary(source);
+        assertThat(summary.hasTestMethods()).isTrue();
+        assertThat(summary.classWithMissingAresAnnotations()).isTrue();
+        assertThat(summary.testMethodWithoutStrictTimeout()).isTrue();
+    }
+
+    @Test
     void declaresPackageMatchingPath_ignoresACommentedOutPackageAndTheOnesThatFollow() {
         String source = """
                 // package de.tum.wrong;

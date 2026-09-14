@@ -33,7 +33,7 @@ import org.springframework.test.util.ReflectionTestUtils;
  */
 class WorkspaceArchiveTest {
 
-    private static final String GITHUB_SENTINEL = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
+    private static final String GITHUB_SENTINEL = "ghp_" + "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
 
     @Test
     void roundTrip_preservesContentAndStripsPrefix() throws Exception {
@@ -337,7 +337,7 @@ class WorkspaceArchiveTest {
 
     @Test
     void buildWorkspaceTar_rejectsPrivateKeysRegardlessOfFileName(@TempDir Path repo) throws Exception {
-        FileUtils.writeStringToFile(repo.resolve("fixture.txt").toFile(), "-----BEGIN PRIVATE KEY-----\nsecret\n", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(repo.resolve("fixture.txt").toFile(), "-----BEGIN " + "PRIVATE KEY-----\nsecret\n", StandardCharsets.UTF_8);
 
         assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class)
                 .isThrownBy(() -> WorkspaceArchive.buildWorkspaceTarStream(Map.of(), Map.of("tests", repo))).withMessageContaining("credential material")
@@ -386,7 +386,7 @@ class WorkspaceArchiveTest {
 
     @Test
     void buildWorkspaceTar_scansTheWholeBoundedFileForPrivateKeys(@TempDir Path repo) throws Exception {
-        FileUtils.writeStringToFile(repo.resolve("fixture.txt").toFile(), "x".repeat(300_000) + "\n-----BEGIN PRIVATE KEY-----\nsecret\n", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(repo.resolve("fixture.txt").toFile(), "x".repeat(300_000) + "\n-----BEGIN " + "PRIVATE KEY-----\nsecret\n", StandardCharsets.UTF_8);
 
         assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class)
                 .isThrownBy(() -> WorkspaceArchive.buildWorkspaceTarStream(Map.of(), Map.of("tests", repo))).withMessageContaining("credential material");

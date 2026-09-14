@@ -710,7 +710,7 @@ class DifferentialVerificationServiceTest {
                 import de.tum.in.test.api.StrictTimeout;
                 import de.tum.in.test.api.WhitelistPath;
                 import de.tum.in.test.api.jupiter.Public;
-                @Public @WhitelistPath("target") @BlacklistPath("target/test-classes")
+                @Public @WhitelistPath("build") @BlacklistPath("build/classes/java/test")
                 class GeneratedTest {
                     @Test @StrictTimeout(1) void adaptedBehaviour() {}
                 }
@@ -739,7 +739,7 @@ class DifferentialVerificationServiceTest {
                 import de.tum.in.test.api.StrictTimeout;
                 import de.tum.in.test.api.WhitelistPath;
                 import de.tum.in.test.api.jupiter.Public;
-                @Public @WhitelistPath("target") @BlacklistPath("target/test-classes")
+                @Public @WhitelistPath("build") @BlacklistPath("build/classes/java/test")
                 class SortTest {
                     @Test @StrictTimeout(1) void sortsUnsortedArray() {}
                     @Test @StrictTimeout(1) void sortsArrayWithDuplicates() {}
@@ -1343,7 +1343,7 @@ class DifferentialVerificationServiceTest {
                     import de.tum.in.test.api.StrictTimeout;
                     import de.tum.in.test.api.WhitelistPath;
                     import de.tum.in.test.api.jupiter.Public;
-                    @Public @WhitelistPath("target") @BlacklistPath("target/test-classes")
+                    @Public @WhitelistPath("build") @BlacklistPath("build/classes/java/test")
                     class SpellTest {
                         @Test @StrictTimeout(1) void sortsUnsortedArray() {}
                         @Test @StrictTimeout(1) void sortsArrayWithDuplicates() {}

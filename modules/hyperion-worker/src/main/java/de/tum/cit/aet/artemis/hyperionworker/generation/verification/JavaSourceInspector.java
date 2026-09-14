@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.hyperionworker.generation.verification;
 
-import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -8,19 +8,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Text-level inspection of Java sources: questions about <em>the Java language</em>, as opposed to {@link ExerciseIntegrityGate}'s questions about what makes
- * a generated exercise trustworthy.
- * <p>
- * There is no parser: a candidate under inspection is often broken source that never has to compile for the gates to run, so every function here is total and yields a
- * conservative answer rather than an exception on malformed input.
- * <p>
- * Two invariants the callers depend on, which a "simplification" into regexes would silently break:
- * <ul>
- * <li>{@link #stripJavaComments} preserves the line structure exactly (a removed character becomes a space, a newline stays a newline), because
- * {@link #javaTestAnnotationSummary} matches methods to their enclosing class by line index.</li>
- * <li>{@link #xmlBlocks} is non-greedy per element, so a {@code groupId} from one dependency can never pair with an {@code artifactId} from the next to fake a dependency nobody
- * declared.</li>
- * </ul>
+ * Lexical Java inspection for the generated-test safety gates. Candidates may be incomplete, so malformed annotations fail closed rather than requiring a compiler parser.
+ * Comments and literals never supply annotation or class-scope evidence; masking preserves offsets into the original source for trusted literal arguments.
  */
 final class JavaSourceInspector {
 
@@ -35,16 +24,22 @@ final class JavaSourceInspector {
 
     private static final Pattern JAVA_PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+([A-Za-z_$][\\w$]*(?:\\.[A-Za-z_$][\\w$]*)*)\\s*;");
 
-    private static final Pattern JAVA_CLASS_DECLARATION = Pattern.compile("\\b(?:public\\s+)?(?:abstract\\s+)?class\\s+\\w+");
+    private static final Pattern JAVA_CLASS_DECLARATION = Pattern.compile("\\b(?:class|interface|enum|record)\\s+[\\w$]+");
 
-    private static final Pattern JAVA_METHOD_DECLARATION = Pattern
-            .compile("\\b(?:public|protected|private)?\\s*(?:static\\s+)?[\\w<>\\[\\], ?]+\\s+\\w+\\s*\\([^;{}]*\\)\\s*(?:throws\\s+[^{}]+)?\\{");
+    private static final Pattern ANNOTATION_NAME = Pattern
+            .compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(?:\\s*\\.\\s*\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*");
+
+    private static final Pattern JAVA_UNICODE_ESCAPE = Pattern.compile("\\\\u+[0-9a-fA-F]{4}");
+
+    private static final Pattern SIMPLE_ANNOTATION_ARGUMENT = Pattern.compile("[0-9]+|\"(?:build|build/classes/java/test)\"");
 
     private JavaSourceInspector() {
     }
 
-    /** One class declaration's annotation block, keyed by the line the declaration starts on so a method can be attributed to the class that encloses it. */
-    private record JavaClassAnnotation(int start, int end, String annotations) {
+    private record JavaClassAnnotation(int depth, String annotations) {
+    }
+
+    private record JavaAnnotation(String text, int end) {
     }
 
     /**
@@ -61,122 +56,112 @@ final class JavaSourceInspector {
      * Resolves simple annotation names against the file's imports, so a package-local look-alike (a self-declared {@code Public}) cannot pass for the trusted annotation.
      */
     static JavaTestAnnotationSummary javaTestAnnotationSummary(String content) {
+        // Java expands Unicode escapes before recognizing even comments. Encoded source cannot provide lexical safety evidence.
+        if (JAVA_UNICODE_ESCAPE.matcher(content).find()) {
+            return new JavaTestAnnotationSummary(true, true, true);
+        }
         String withoutComments = stripJavaComments(content);
+        String structural = stripJavaTrivia(content, true);
         Set<String> imports = new HashSet<>();
-        Matcher importMatcher = Pattern.compile("(?m)^\\s*import\\s+([\\w.]+)\\s*;").matcher(withoutComments);
+        Matcher importMatcher = Pattern.compile("(?m)^\\s*import\\s+([\\w.]+)\\s*;").matcher(structural);
         while (importMatcher.find()) {
             imports.add(importMatcher.group(1));
         }
-        Matcher localTypeMatcher = Pattern.compile("\\b(?:class|interface|enum|record|@interface)\\s+([A-Za-z_$][\\w$]*)").matcher(withoutComments);
+        Matcher localTypeMatcher = Pattern.compile("\\b(?:class|interface|enum|record|@interface)\\s+([A-Za-z_$][\\w$]*)").matcher(structural);
         while (localTypeMatcher.find()) {
             String localType = localTypeMatcher.group(1);
             imports.removeIf(importedType -> importedType.endsWith("." + localType));
         }
-        String[] lines = withoutComments.split("\\R", -1);
-        String[] structuralLines = stripJavaTrivia(content, true).split("\\R", -1);
-        List<JavaClassAnnotation> classes = new ArrayList<>();
+        var classes = new ArrayDeque<JavaClassAnnotation>();
         boolean hasTestMethods = false;
         boolean missingClassAnnotations = false;
         boolean missingTimeouts = false;
+        int depth = 0;
         StringBuilder annotations = new StringBuilder();
-        for (int lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-            String line = lines[lineIndex].trim();
-            if (line.isEmpty()) {
-                continue;
-            }
-            if (line.startsWith("@")) {
-                annotations.append(line).append('\n');
-                lineIndex = appendAnnotationContinuation(lines, lineIndex, annotations);
-                continue;
-            }
-            if (annotations.isEmpty() && !JAVA_CLASS_DECLARATION.matcher(structuralLines[lineIndex]).find()) {
-                continue;
-            }
-            int declarationLine = lineIndex;
-            String declaration = structuralLines[lineIndex].trim();
-            while (!declaration.contains("{") && !declaration.contains(";") && lineIndex + 1 < lines.length) {
-                String nextLine = lines[lineIndex + 1].trim();
-                if (nextLine.startsWith("@")) {
-                    break;
+        StringBuilder declaration = new StringBuilder();
+        for (int offset = 0; offset < structural.length(); offset++) {
+            char current = structural.charAt(offset);
+            if (current == '@') {
+                JavaAnnotation annotation = readAnnotation(withoutComments, structural, offset);
+                if (annotation == null) {
+                    return new JavaTestAnnotationSummary(true, true, true);
                 }
-                declaration += " " + structuralLines[lineIndex + 1].trim();
-                lineIndex++;
-            }
-            String annotationBlock = annotations.toString();
-            if (JAVA_CLASS_DECLARATION.matcher(declaration).find()) {
-                classes.add(new JavaClassAnnotation(declarationLine, classEndLine(structuralLines, declarationLine), annotationBlock));
-            }
-            else if (JAVA_METHOD_DECLARATION.matcher(declaration).find() && hasJUnitTestAnnotation(annotationBlock)) {
-                hasTestMethods = true;
-                String classAnnotations = enclosingClassAnnotations(classes, declarationLine);
-                if (!hasAresClassAnnotations(classAnnotations, imports)) {
-                    missingClassAnnotations = true;
+                if (annotation.text().equals("@interface")) {
+                    declaration.append(" interface ");
                 }
-                if (!hasStrictTimeout(annotationBlock, imports) && !hasStrictTimeout(classAnnotations, imports)) {
-                    missingTimeouts = true;
+                else {
+                    annotations.append(annotation.text()).append('\n');
                 }
+                offset = annotation.end() - 1;
             }
-            annotations.setLength(0);
+            else if (current == '{' || current == ';') {
+                String annotationBlock = annotations.toString();
+                if (current == '{' && JAVA_CLASS_DECLARATION.matcher(declaration).find()) {
+                    classes.push(new JavaClassAnnotation(depth + 1, annotationBlock));
+                }
+                else if (hasJUnitTestAnnotation(annotationBlock)) {
+                    hasTestMethods = true;
+                    String classAnnotations = classes.isEmpty() ? "" : classes.peek().annotations();
+                    missingClassAnnotations |= !hasAresClassAnnotations(classAnnotations, imports);
+                    missingTimeouts |= !hasStrictTimeout(annotationBlock, imports) && !hasStrictTimeout(classAnnotations, imports);
+                }
+                if (current == '{') {
+                    depth++;
+                }
+                annotations.setLength(0);
+                declaration.setLength(0);
+            }
+            else if (current == '}') {
+                if (!classes.isEmpty() && classes.peek().depth() == depth) {
+                    classes.pop();
+                }
+                depth--;
+                annotations.setLength(0);
+                declaration.setLength(0);
+            }
+            else {
+                declaration.append(current);
+            }
         }
         return new JavaTestAnnotationSummary(hasTestMethods, missingClassAnnotations, missingTimeouts);
     }
 
-    /** Reads on while the argument list is still open, so a multi-line {@code @StrictTimeout(\n 1)} is one annotation instead of two halves. */
-    private static int appendAnnotationContinuation(String[] lines, int startLine, StringBuilder annotations) {
-        int parenthesisBalance = parenthesisBalance(lines[startLine]);
-        int lineIndex = startLine;
-        while (parenthesisBalance > 0 && lineIndex + 1 < lines.length) {
-            lineIndex++;
-            String line = lines[lineIndex].trim();
-            annotations.append(line).append('\n');
-            parenthesisBalance += parenthesisBalance(line);
+    /** Reads actual annotation tokens from masked source, never annotation-shaped text from their literal arguments. */
+    private static JavaAnnotation readAnnotation(String source, String structural, int start) {
+        int offset = start + 1;
+        while (offset < structural.length() && Character.isWhitespace(structural.charAt(offset))) {
+            offset++;
         }
-        return lineIndex;
-    }
-
-    private static int parenthesisBalance(String line) {
-        int balance = 0;
-        for (int i = 0; i < line.length(); i++) {
-            char character = line.charAt(i);
-            if (character == '(') {
-                balance++;
-            }
-            else if (character == ')') {
-                balance--;
-            }
+        Matcher name = ANNOTATION_NAME.matcher(structural).region(offset, structural.length());
+        if (!name.lookingAt()) {
+            return null;
         }
-        return balance;
-    }
-
-    private static int classEndLine(String[] lines, int start) {
-        int depth = 0;
-        boolean opened = false;
-        for (int line = start; line < lines.length; line++) {
-            for (char character : lines[line].toCharArray()) {
-                if (character == '{') {
-                    opened = true;
-                    depth++;
-                }
-                else if (character == '}' && opened && --depth == 0) {
-                    return line;
-                }
+        String annotation = "@" + name.group().replace(" ", "").replace("\n", "").replace("\r", "").replace("\t", "");
+        offset = name.end();
+        while (offset < structural.length() && Character.isWhitespace(structural.charAt(offset))) {
+            offset++;
+        }
+        if (offset >= structural.length() || structural.charAt(offset) != '(') {
+            return new JavaAnnotation(annotation, offset);
+        }
+        int argumentStart = ++offset;
+        int parentheses = 1;
+        while (offset < structural.length() && parentheses > 0) {
+            char current = structural.charAt(offset++);
+            if (current == '(') {
+                parentheses++;
+            }
+            else if (current == ')') {
+                parentheses--;
             }
         }
-        // An unclosed declaration cannot supply trusted class annotations to a later method.
-        return start;
-    }
-
-    private static String enclosingClassAnnotations(List<JavaClassAnnotation> classes, int line) {
-        String annotations = "";
-        for (JavaClassAnnotation javaClass : classes) {
-            if (javaClass.start() > line) {
-                break;
-            }
-            if (line <= javaClass.end()) {
-                annotations = javaClass.annotations();
-            }
+        if (parentheses != 0) {
+            return null;
         }
-        return annotations;
+        String argument = source.substring(argumentStart, offset - 1).trim();
+        // Only the literal path and integer arguments used by the safety contract can supply evidence.
+        String trustedArgument = SIMPLE_ANNOTATION_ARGUMENT.matcher(argument).matches() ? argument : "?";
+        return new JavaAnnotation(annotation + "(" + trustedArgument + ")", offset);
     }
 
     private static boolean hasAresClassAnnotations(String annotations, Set<String> imports) {

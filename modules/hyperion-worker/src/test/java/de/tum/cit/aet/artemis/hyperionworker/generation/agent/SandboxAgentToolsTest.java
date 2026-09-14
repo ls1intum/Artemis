@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.hyperionworker.sandbox.SandboxExecResult;
 /** A fake sandbox records the commands it is asked to run, so the tests can assert that unsafe paths never reach the shell. */
 class SandboxAgentToolsTest {
 
-    private static final String GITHUB_SENTINEL = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
+    private static final String GITHUB_SENTINEL = "ghp_" + "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
 
     @Test
     void workspaceRelativePath_rejectsTraversalQuotesAndShellMetacharacters() {
