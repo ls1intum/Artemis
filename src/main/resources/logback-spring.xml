@@ -12,6 +12,17 @@
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     <include resource="org/springframework/boot/logging/logback/console-appender.xml" />
 
+    <!--
+        Render log messages with their line breaks escaped, so that user-supplied data cannot forge a log record.
+        These conversion words are the ones Spring Boot's console and file patterns are built from, and a rule declared
+        here takes precedence over Logback's built-in converter, so this applies to every appender without restating
+        (and having to keep up with) Boot's pattern strings. Only the message is affected; the throwable is rendered by
+        %wEx and keeps its line structure.
+    -->
+    <conversionRule conversionWord="m" class="de.tum.cit.aet.artemis.core.config.CrlfEscapingMessageConverter"/>
+    <conversionRule conversionWord="msg" class="de.tum.cit.aet.artemis.core.config.CrlfEscapingMessageConverter"/>
+    <conversionRule conversionWord="message" class="de.tum.cit.aet.artemis.core.config.CrlfEscapingMessageConverter"/>
+
     <!-- Add the custom filter -->
     <turboFilter class="de.tum.cit.aet.artemis.core.config.StompErrorLogFilter" />
 

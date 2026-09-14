@@ -1,0 +1,17 @@
+<div class="athena-controls">
+    @for (feature of features; track feature.key) {
+        @let labelKey = 'artemisApp.course.athenaConfig.' + feature.key + '.label';
+        <div>
+            <div class="athena-setting-label">
+                <span [jhiTranslate]="labelKey"></span>
+                <fa-icon [icon]="faQuestionCircle" [tumUiTooltip]="'artemisApp.course.athenaConfig.' + feature.key + '.tooltip' | artemisTranslate" />
+            </div>
+            <jhi-enabled-toggle
+                [enabled]="feature.enabled()"
+                [ariaLabel]="labelKey | artemisTranslate"
+                [testId]="feature.testId"
+                (enabledChange)="setEnabled(feature.key, $event)"
+            />
+        </div>
+    }
+</div>

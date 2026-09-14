@@ -35,7 +35,7 @@ export class ProgrammingExerciseEditSelectedComponent {
     newProgrammingExercise: ProgrammingExercise = new ProgrammingExercise(undefined, undefined);
 
     readonly isSaving = signal(false);
-    readonly timelineStatus = signal<TimelineStatus>({ valid: true, empty: false });
+    readonly timelineStatus = signal<TimelineStatus>({ valid: true, empty: false, invalidItems: [] });
     savedExercises = 0;
     readonly failedExercises = signal<string[]>([]);
     readonly failureOccurred = signal(false);
@@ -56,7 +56,7 @@ export class ProgrammingExerciseEditSelectedComponent {
                     this.failedExercises.set([]);
                     this.failureOccurred.set(false);
                     this.isSaving.set(false);
-                    this.timelineStatus.set({ valid: true, empty: false });
+                    this.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
                 });
             }
         });
