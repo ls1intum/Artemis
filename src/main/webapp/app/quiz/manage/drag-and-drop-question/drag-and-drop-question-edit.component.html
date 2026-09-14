@@ -60,6 +60,7 @@
                 <input
                     pInputText
                     [(ngModel)]="question().title"
+                    (ngModelChange)="questionUpdated.emit()"
                     placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
                     attr.aria-label="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
                 />
