@@ -458,6 +458,49 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             expect(component['irisResult']()?.answer).toBe('Signals are reactive primitives.');
         });
 
+        it('shows the whole draft while it streams, with no show-more control to fight', () => {
+            startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'A long streaming draft.', partialSeq: 1 });
+            fixture.detectChanges();
+            // A draft long enough to clamp once it is final. While streaming it must stay open regardless.
+            component['isOverflowing'].set(true);
+            fixture.detectChanges();
+
+            expect(component['shouldClamp']()).toBe(false);
+            expect(component['isAnswerExpanded']()).toBe(true);
+            const body = fixture.nativeElement.querySelector('.iris-answer-text');
+            expect(body.classList.contains('is-clamped')).toBe(false);
+            expect(fixture.nativeElement.textContent).not.toContain('irisAnswerShowMore');
+            expect(component['canCollapse']()).toBe(false);
+        });
+
+        it('clamps and offers show-more once the terminal answer lands', () => {
+            startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'A long streaming draft.', partialSeq: 1 });
+            fixture.detectChanges();
+
+            askSubject.next({ runId: 'run-1', isThinking: false, answer: 'A long final answer.', sources: [] });
+            fixture.detectChanges();
+            // The effect re-measured on the terminal result; stand in for a tall element.
+            component['isOverflowing'].set(true);
+            fixture.detectChanges();
+
+            expect(component['isPartialAnswer']()).toBe(false);
+            expect(component['shouldClamp']()).toBe(true);
+            expect(component['isAnswerExpanded']()).toBe(false);
+            expect(fixture.nativeElement.querySelector('.iris-answer-text').classList.contains('is-clamped')).toBe(true);
+        });
+
+        it('keeps show-more away from an answer that fits', () => {
+            startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: false, answer: 'Short.', sources: [] });
+            fixture.detectChanges();
+
+            expect(component['isOverflowing']()).toBe(false);
+            expect(component['shouldClamp']()).toBe(false);
+            expect(component['canCollapse']()).toBe(false);
+        });
+
         it('ignores an out-of-order partial snapshot', () => {
             startQuery();
             askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'Longer draft text.', partialSeq: 3 });

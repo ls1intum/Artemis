@@ -28,7 +28,7 @@
                     #answerBody
                     class="iris-answer-text markdown-preview"
                     [class.is-clamped]="shouldClamp()"
-                    [class.is-expanded]="isOverflowing() && isExpanded()"
+                    [class.is-expanded]="isAnswerExpanded()"
                     [jhiMarkdown]="citationView().html"
                     (markdownRendered)="onMarkdownRendered()"
                 ></div>
@@ -53,7 +53,7 @@
                     {{ 'global.search.irisAnswerShowMore' | artemisTranslate }} ↓
                 </button>
             }
-            @if (isOverflowing() && isExpanded()) {
+            @if (canCollapse()) {
                 <button class="iris-toggle-btn bg-transparent border-0 fw-medium" type="button" (click)="collapse()">
                     {{ 'global.search.irisAnswerShowLess' | artemisTranslate }} ↑
                 </button>

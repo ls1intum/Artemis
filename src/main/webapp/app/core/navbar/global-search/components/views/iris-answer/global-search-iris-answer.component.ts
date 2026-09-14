@@ -70,7 +70,16 @@ export class GlobalSearchIrisAnswerComponent {
     protected readonly isExpanded = signal(false);
     protected readonly isOverflowing = signal(false);
     protected readonly moreOpen = signal(false);
-    protected readonly shouldClamp = computed(() => this.isOverflowing() && !this.isExpanded());
+    /**
+     * A streaming draft is never clamped: the answer grows line by line, and the whole point of streaming is
+     * watching it arrive. Clamping it hides the very text being generated behind a control that cannot be used
+     * either, because every delta replaces the result and resets the expansion below.
+     */
+    protected readonly shouldClamp = computed(() => !this.isPartialAnswer() && this.isOverflowing() && !this.isExpanded());
+    /** Whether the answer body is showing in full: while streaming, or after the reader opened a clamped answer. */
+    protected readonly isAnswerExpanded = computed(() => this.isPartialAnswer() || (this.isOverflowing() && this.isExpanded()));
+    /** The show-less control belongs to the reader's own expansion, never to a streaming draft. */
+    protected readonly canCollapse = computed(() => !this.isPartialAnswer() && this.isOverflowing() && this.isExpanded());
     protected readonly sources = computed(() => this.irisResult()?.sources ?? []);
     /** Entity sources (course information); their citation numbers continue after the lecture sources. */
     protected readonly entitySources = computed(() => this.irisResult()?.entitySources ?? []);
