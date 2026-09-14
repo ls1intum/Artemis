@@ -20,10 +20,11 @@ import reactor.core.publisher.Flux;
  */
 public class HarmonyScrubbingChatModel implements ChatModel {
 
-    /** Matches a harmony / channel control token such as {@code <|channel|>} or {@code <|end|>}. The {@code >} exclusion keeps one token from spanning into the next. */
-    static final Pattern HARMONY_CONTROL_TOKEN = Pattern.compile("<\\|[^|>]*\\|>");
+    /** Text conversation delimiters accepted by the Harmony chat template; ordinary token-shaped prose is preserved. */
+    static final List<String> CONTROL_TOKENS = List.of("<|start|>", "<|end|>", "<|channel|>", "<|message|>", "<|im_start|>", "<|im_end|>", "<|im_sep|>", "<|meta_sep|>",
+            "<|meta_start|>", "<|ghissue|>", "<|ghreview|>", "<|fim_prefix|>", "<|fim_middle|>", "<|fim_suffix|>", "<|endoftext|>", "<|disc_score|>");
 
-    private static final Pattern INCOMPLETE_CONTROL_TOKEN = Pattern.compile("<\\|[^|>]*\\|?");
+    static final Pattern HARMONY_CONTROL_TOKEN = Pattern.compile(String.join("|", CONTROL_TOKENS.stream().map(Pattern::quote).toList()));
 
     private final ChatModel delegate;
 
@@ -87,7 +88,7 @@ public class HarmonyScrubbingChatModel implements ChatModel {
                 AssistantMessage output = generation.getOutput();
                 String text = sanitizeHarmonyTokens(pending.get(i) + (output.getText() == null ? "" : output.getText()));
                 int suffix = text.lastIndexOf('<');
-                boolean incomplete = suffix >= 0 && (text.substring(suffix).equals("<") || INCOMPLETE_CONTROL_TOKEN.matcher(text.substring(suffix)).matches());
+                boolean incomplete = suffix >= 0 && CONTROL_TOKENS.stream().anyMatch(token -> token.startsWith(text.substring(suffix)));
                 pending.set(i, incomplete ? text.substring(suffix) : "");
                 String clean = incomplete ? text.substring(0, suffix) : text;
                 results.add(

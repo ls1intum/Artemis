@@ -105,14 +105,16 @@ class HarmonyScrubbingChatModelTest {
 
     @Test
     void streamHandlesEveryTokenSplitAndIsolatesSubscriptions() {
-        String raw = "before<|end|>after";
-        for (int split = 1; split < raw.length(); split++) {
-            ChatModel delegate = mock(ChatModel.class);
-            Prompt prompt = new Prompt("hi");
-            when(delegate.stream(prompt)).thenReturn(Flux.just(chunk(raw.substring(0, split)), chunk(raw.substring(split))));
-            Flux<ChatResponse> stream = new HarmonyScrubbingChatModel(delegate).stream(prompt);
-            assertThat(join(stream)).isEqualTo("beforeafter");
-            assertThat(join(stream)).isEqualTo("beforeafter");
+        for (String token : HarmonyScrubbingChatModel.CONTROL_TOKENS) {
+            String raw = "before" + token + "after";
+            for (int split = 1; split < raw.length(); split++) {
+                ChatModel delegate = mock(ChatModel.class);
+                Prompt prompt = new Prompt("hi");
+                when(delegate.stream(prompt)).thenReturn(Flux.just(chunk(raw.substring(0, split)), chunk(raw.substring(split))));
+                Flux<ChatResponse> stream = new HarmonyScrubbingChatModel(delegate).stream(prompt);
+                assertThat(join(stream)).isEqualTo("beforeafter");
+                assertThat(join(stream)).isEqualTo("beforeafter");
+            }
         }
     }
 
@@ -138,6 +140,26 @@ class HarmonyScrubbingChatModelTest {
                     .collect(java.util.stream.Collectors.joining());
             assertThat(content).isEqualTo(text.equals("text<|end|>") ? "text" : text);
             assertThat(signals.getLast().getThrowable()).isSameAs(failure);
+        }
+    }
+
+    @Test
+    void ordinaryTokenLikeTextIsForwardedBeforeCompletion() {
+        ChatModel delegate = mock(ChatModel.class);
+        Prompt prompt = new Prompt("hi");
+        var input = reactor.core.publisher.Sinks.many().unicast().<ChatResponse>onBackpressureBuffer();
+        when(delegate.stream(prompt)).thenReturn(input.asFlux());
+        var chunks = new java.util.ArrayList<String>();
+        var subscription = new HarmonyScrubbingChatModel(delegate).stream(prompt).subscribe(response -> chunks.add(response.getResult().getOutput().getText()));
+        try {
+            input.tryEmitNext(chunk("<|"));
+            input.tryEmitNext(chunk("ordinary prose"));
+            assertThat(String.join("", chunks)).isEqualTo("<|ordinary prose");
+            input.tryEmitNext(chunk("x".repeat(100_000)));
+            assertThat(String.join("", chunks)).endsWith("x".repeat(100_000));
+        }
+        finally {
+            subscription.dispose();
         }
     }
 
