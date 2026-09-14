@@ -8,6 +8,8 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import jakarta.persistence.EntityManager;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -30,6 +32,9 @@ class FeedbackMessageServiceTest extends AbstractSpringIntegrationIndependentBat
 
     @Autowired
     private PlatformTransactionManager transactionManager;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @Test
     void getOrCreateDeduplicatesByText() {
@@ -75,6 +80,21 @@ class FeedbackMessageServiceTest extends AbstractSpringIntegrationIndependentBat
 
         assertThat(resolved.getId()).isEqualTo(winner.getId());
         assertThat(feedbackMessageRepository.findAll()).filteredOn(message -> "concurrently inserted message in a transaction".equals(message.getText())).hasSize(1);
+    }
+
+    @Test
+    void getOrCreateInsideATransactionReturnsTheInstanceThatTransactionManages() {
+        // The insert of a new message runs in its own transaction. The instance handed back must nevertheless belong to
+        // the caller's persistence context: the merge of a multi-container build stores the feedback rows referencing it
+        // and later merges the result, and Hibernate replaces a reference to an entity its context does not manage with
+        // an uninitialized proxy. The result is reported to the client after the transaction, and reading such a proxy
+        // then fails with no session, so the report never reaches the student.
+        var managed = new TransactionTemplate(transactionManager).execute(status -> {
+            var message = feedbackMessageService.getOrCreate("message created inside the caller's transaction");
+            return entityManager.contains(message);
+        });
+
+        assertThat(managed).isTrue();
     }
 
     @Test

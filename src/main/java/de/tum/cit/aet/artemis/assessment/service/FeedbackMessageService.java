@@ -11,6 +11,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackMessage;
@@ -74,11 +75,33 @@ public class FeedbackMessageService {
         message.setHash(hash);
         message.setText(text);
         try {
-            return insertTransaction.execute(status -> feedbackMessageRepository.saveAndFlush(message));
+            insertTransaction.execute(status -> feedbackMessageRepository.saveAndFlush(message));
         }
         catch (DataIntegrityViolationException e) {
-            // another transaction inserted the same hash concurrently - use its row
-            return feedbackMessageRepository.findByHash(hash).orElseThrow(() -> e);
+            // another transaction inserted the same hash concurrently - its row is the one read back below
+            return readBack(hash).orElseThrow(() -> e);
         }
+        // The insert ran in its own transaction, so its instance belongs to that transaction's persistence context, not
+        // to the caller's. Handing it to a caller inside a transaction would leave the caller's context without the
+        // row: Hibernate then resolves the feedback's reference to it as an uninitialized proxy when it merges the
+        // result, and reading the message after the transaction has ended fails with no session to load it in. Reading
+        // the row back returns the instance the caller's own context manages.
+        return readBack(hash).orElseThrow(() -> new IllegalStateException("feedback message vanished right after its insert"));
+    }
+
+    /**
+     * Reads the message with the given hash after another transaction has committed it. Inside a transaction this has
+     * to be a locking read: under MySQL's REPEATABLE READ a plain read answers from the transaction's snapshot, which
+     * predates that commit whenever the caller has read anything before, and would not find the row. Outside a
+     * transaction every read sees the committed state, and a locking read would not be allowed anyway.
+     *
+     * @param hash the hash of the message text
+     * @return the committed row, if it exists
+     */
+    private Optional<FeedbackMessage> readBack(byte[] hash) {
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            return feedbackMessageRepository.findByHashForShare(hash);
+        }
+        return feedbackMessageRepository.findByHash(hash);
     }
 }
