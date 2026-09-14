@@ -439,13 +439,13 @@ The Artemis server should startup by running the main class `de.tum.cit.aet.arte
 
 If you use IntelliJ (Community or Ultimate) you can set the active profiles by:
 
-- Choosing `Run | Edit Configurations...`
-- Going to the `Configuration Tab`
-- Expanding the `Environment` section to reveal `VM Options` and setting them to `-Dspring.profiles.active=dev,jenkins,localvc,artemis,scheduling`
+- Choosing **Run | Edit Configurations...**
+- Going to the **Configuration** tab
+- Expanding the **Environment** section to reveal **VM Options** and setting them to `-Dspring.profiles.active=dev,jenkins,localvc,artemis,scheduling`
 
 #### Set Spring profiles with IntelliJ Ultimate
 
-If you use IntelliJ Ultimate, add the following entry to the section `Active Profiles` (within `Spring Boot`) in the server run configuration:
+If you use IntelliJ Ultimate, add the following entry to the **Active Profiles** field (within **Spring Boot**) in the server run configuration:
 
 ```
 dev,jenkins,localvc,artemis,scheduling
@@ -475,10 +475,10 @@ You need Node.js on your local machine, plus pnpm activated via Corepack (`corep
 
 ### Using IntelliJ
 
-If you are using [IntelliJ](https://www.jetbrains.com/idea/download/) you can use the pre-configured `Artemis (Client)` run configuration that will be delivered with this repository:
+If you are using [IntelliJ](https://www.jetbrains.com/idea/download/) you can use the pre-configured **Artemis (Client)** run configuration that will be delivered with this repository:
 
-- Choose `Run | Edit Configurations...`
-- Select the `Artemis (Client)` configuration from the `npm section` (IntelliJ groups `package.json` scripts under "npm" even though we run pnpm)
+- Choose **Run | Edit Configurations...**
+- Select the **Artemis (Client)** configuration from the **npm** section (IntelliJ groups `package.json` scripts under "npm" even though we run pnpm)
 - Now you can run the configuration in the upper right corner of IntelliJ
 
 ### Using the command line

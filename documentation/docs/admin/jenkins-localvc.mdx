@@ -488,7 +488,7 @@ You can either run the builds locally (that means on the machine that hosts Jenk
 
 ### Configuring Local Build Agents
 
-Go to `Manage Jenkins` → `Nodes` → `Built-In Node` → `Configure`
+Go to **Manage Jenkins** → **Nodes** → **Built-In Node** → **Configure**
 
 Configure your master node like this (adjust the number of executors, if needed). Make sure to add the docker label.
 
@@ -628,7 +628,7 @@ This guide explains setting up a remote agent on an Ubuntu virtual machine that 
     caption="Jenkins SSH credentials configuration"
 />
 
-8. Add a new node (select a name and select `Permanent Agent`):
+8. Add a new node (select a name and select **Permanent Agent**):
    Set the number of executors so that it matches your machine's specs: This is the number of concurrent builds this agent can handle. It is recommended to match the number of cores of the machine, but you might want to adjust this later if needed.
 
    Set the remote root directory to `/home/jenkins/remote_agent`.
