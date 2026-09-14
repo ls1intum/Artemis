@@ -108,6 +108,27 @@ class WorkerMessageCodecTest {
         assertThatThrownBy(() -> codec.decodeCommand(mapper.writeValueAsString(command))).isInstanceOf(RuntimeException.class);
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void rejectsMissingOrNullFindingKindBeforeReviewEvaluation(boolean omitted) {
+        var id = identity();
+        var output = new GenerationOutput(new WorkspaceSnapshot(List.of()), new VerificationResult(false, false, false, 0, List.of()), null,
+                new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, "", ""))), "RUN_FAILED", null,
+                GenerationOutput.AccountingState.INCOMPLETE, "standard");
+        var event = new WorkerEvent(WorkerCommand.PROTOCOL_VERSION, id.workerId(), id.workerIncarnation(), 1, Instant.now(), WorkerEvent.Type.FINISHED, id, false, IMAGE, null,
+                null, output);
+        var mapper = new JsonMapper();
+        var json = mapper.readTree(codec.encode(event));
+        var finding = (ObjectNode) json.at("/output/review/findings/0");
+        if (omitted) {
+            finding.remove("kind");
+        }
+        else {
+            finding.putNull("kind");
+        }
+        assertThatThrownBy(() -> codec.decodeEvent(mapper.writeValueAsString(json))).isInstanceOf(RuntimeException.class).hasMessageContaining("kind");
+    }
+
     private static ExecutionIdentity identity() {
         return new ExecutionIdentity("job", 1, UUID.randomUUID(), "worker-1", UUID.randomUUID());
     }

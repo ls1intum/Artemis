@@ -97,6 +97,12 @@ public record SpecFidelityReport(@JsonInclude List<Finding> findings) {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record Finding(Kind kind, @JsonInclude String requirement, @JsonInclude String detail) {
 
+        public Finding {
+            if (kind == null) {
+                throw new IllegalArgumentException("Finding kind is required");
+            }
+        }
+
         @JsonIgnore
         public boolean isBlocking() {
             return switch (kind) {
