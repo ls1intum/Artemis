@@ -142,7 +142,7 @@
                 "reconcile": {
                     "neverRan": "No reconcile pass has run yet: the index is only updated by live changes.",
                     "progress": "{{ checked }} checked, {{ queued }} queued, {{ removed }} removed",
-                    "ledger": "The sync ledger holds {{ count }} entities. The missing and drift passes only examine what is in it."
+                    "ledger": "The sync ledger holds {{ count }} entities. The drift pass re-checks what is in it; the missing pass walks the database and uses it to skip what it has already written."
                 }
             }
         }

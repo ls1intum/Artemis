@@ -142,7 +142,7 @@
                 "reconcile": {
                     "neverRan": "Es wurde noch kein Abgleichdurchlauf ausgeführt: Der Index wird nur durch Live-Änderungen aktualisiert.",
                     "progress": "{{ checked }} geprüft, {{ queued }} eingereiht, {{ removed }} entfernt",
-                    "ledger": "Das Synchronisierungsregister enthält {{ count }} Einträge. Die Durchläufe für Fehlendes und Abweichungen prüfen nur, was darin steht."
+                    "ledger": "Das Synchronisierungsregister enthält {{ count }} Einträge. Der Abweichungsdurchlauf prüft, was darin steht; der Durchlauf für Fehlendes geht die Datenbank durch und überspringt damit bereits Geschriebenes."
                 }
             }
         }
