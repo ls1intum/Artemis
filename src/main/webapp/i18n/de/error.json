@@ -204,6 +204,7 @@
         "participationExerciseMismatch": "Die Feedback-Anfrage konnte nicht verarbeitet werden, da die Teilnahme nicht zur Aufgabe passt.",
         "submissionExerciseMismatch": "Die Abgabe gehört nicht zur angegebenen Aufgabe.",
         "maxAthenaResultsReached": "Maximale Anzahl an KI-Feedback-Anfragen erreicht.",
+        "otherTestRunNotSubmitted": "Reiche deine anderen Testläufe dieser Klausur ab, bevor du KI-Feedback anfragst.",
         "submissionAlreadyHasAthenaResult": "Die Abgabe hat bereits ein Athena-Ergebnis.",
         "examExerciseNoAccessToAthena": "Klausuraufgaben haben keinen Zugriff auf Athena.",
         "noAccessToAthenaModule": "Die Aufgabe hat keinen Zugriff auf das ausgewählte Athena-Modul.",

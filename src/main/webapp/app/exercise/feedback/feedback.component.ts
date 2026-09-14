@@ -180,6 +180,7 @@ export class FeedbackComponent implements OnInit {
                 this.result(),
                 this.participation(),
                 evaluateTemplateStatus(this.resolvedExercise(), this.result().submission?.participation, this.result(), false),
+                this.resolvedExercise(),
             ),
         );
     }
