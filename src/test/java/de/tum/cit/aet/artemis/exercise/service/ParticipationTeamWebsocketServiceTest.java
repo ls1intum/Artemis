@@ -78,8 +78,6 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
 
     private StudentParticipation participation;
 
-    private StudentParticipation textParticipation;
-
     private StudentParticipation teamModelingParticipation;
 
     private StudentParticipation teamTextParticipation;
@@ -98,8 +96,6 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
 
         Course textCourse = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
-        TextExercise textExercise = ExerciseUtilService.findTextExerciseWithTitle(textCourse.getExercises(), "Text");
-        textParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
 
         ModelingExercise teamModelingExercise = modelingExerciseUtilService.addModelingExerciseToCourse(course);
         teamModelingParticipation = teamParticipationOfStudent1(teamModelingExercise);
@@ -222,10 +218,10 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     void testUpdateTextSubmissionBroadcastsWhatTheReceivingEditorSavesBack() {
         TeamTextSubmissionUpdateDTO update = new TeamTextSubmissionUpdateDTO(null, "Hello team", Language.ENGLISH, true, null);
 
-        participationTeamWebsocketService.updateTextSubmission(textParticipation.getId(), update, getPrincipalMock("student1"));
+        participationTeamWebsocketService.updateTextSubmission(teamTextParticipation.getId(), update, getPrincipalMock("student1"));
 
         ArgumentCaptor<Object> payloadCaptor = ArgumentCaptor.forClass(Object.class);
-        verify(websocketMessagingService, timeout(2000)).sendMessage(eq(websocketTopic(textParticipation) + "/text-submissions"), payloadCaptor.capture());
+        verify(websocketMessagingService, timeout(2000)).sendMessage(eq(websocketTopic(teamTextParticipation) + "/text-submissions"), payloadCaptor.capture());
         assertThat(payloadCaptor.getValue()).isInstanceOf(SubmissionSyncPayloadDTO.class);
         SubmissionSyncPayloadDTO payload = (SubmissionSyncPayloadDTO) payloadCaptor.getValue();
 
@@ -236,26 +232,26 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         assertThat(payload.submission().language()).as("The receiving editor saves the language back").isEqualTo(Language.ENGLISH);
         assertThat(payload.submission().submitted()).as("The receiving editor saves the submitted flag back").isTrue();
         assertThat(payload.submission().participation()).as("The receiving editor rebuilds its participation from the payload").isNotNull();
-        assertThat(payload.submission().participation().id()).isEqualTo(textParticipation.getId());
+        assertThat(payload.submission().participation().id()).isEqualTo(teamTextParticipation.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateTextSubmissionWithResultsStartsANewSubmission() {
-        participationTeamWebsocketService.updateTextSubmission(textParticipation.getId(), new TeamTextSubmissionUpdateDTO(null, "First", Language.ENGLISH, true, null),
+        participationTeamWebsocketService.updateTextSubmission(teamTextParticipation.getId(), new TeamTextSubmissionUpdateDTO(null, "First", Language.ENGLISH, true, null),
                 getPrincipalMock("student1"));
 
         ArgumentCaptor<Object> payloadCaptor = ArgumentCaptor.forClass(Object.class);
-        verify(websocketMessagingService, timeout(2000)).sendMessage(eq(websocketTopic(textParticipation) + "/text-submissions"), payloadCaptor.capture());
+        verify(websocketMessagingService, timeout(2000)).sendMessage(eq(websocketTopic(teamTextParticipation) + "/text-submissions"), payloadCaptor.capture());
         Long assessedSubmissionId = ((SubmissionSyncPayloadDTO) payloadCaptor.getValue()).submission().id();
         assertThat(assessedSubmissionId).isNotNull();
 
         // The editor holds a result for that submission, so the next update must not overwrite the assessed one.
         TeamTextSubmissionUpdateDTO update = new TeamTextSubmissionUpdateDTO(assessedSubmissionId, "Second", Language.ENGLISH, true,
                 List.of(new TeamTextSubmissionUpdateDTO.ResultIdDTO(1L)));
-        participationTeamWebsocketService.updateTextSubmission(textParticipation.getId(), update, getPrincipalMock("student1"));
+        participationTeamWebsocketService.updateTextSubmission(teamTextParticipation.getId(), update, getPrincipalMock("student1"));
 
-        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(eq(websocketTopic(textParticipation) + "/text-submissions"), payloadCaptor.capture());
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(eq(websocketTopic(teamTextParticipation) + "/text-submissions"), payloadCaptor.capture());
         SubmissionSyncPayloadDTO payload = (SubmissionSyncPayloadDTO) payloadCaptor.getAllValues().getLast();
         assertThat(payload.submission().id()).as("A submission the client holds a result for is not overwritten").isNotEqualTo(assessedSubmissionId);
         assertThat(payload.submission().text()).isEqualTo("Second");
