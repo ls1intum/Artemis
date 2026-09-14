@@ -102,7 +102,7 @@
                     <hr />
                 }
 
-                @if (!loadingFailed() && resultIsPreliminary(result(), participation())) {
+                @if (!loadingFailed() && resultIsPreliminary(result(), participation(), resolvedExercise())) {
                     <div>
                         <div class="flex justify-end m-1">
                             <p-tag severity="warn" [value]="'artemisApp.result.preliminary' | artemisTranslate | uppercase" />

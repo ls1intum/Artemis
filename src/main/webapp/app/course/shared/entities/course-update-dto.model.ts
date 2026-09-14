@@ -47,8 +47,6 @@ export interface CourseCreateDTO {
     presentationScore?: number;
     maxPoints?: number;
     accuracyOfScores?: number;
-    athenaGradingFeedbackEnabled: boolean;
-    athenaFormativeFeedbackEnabled: boolean;
     timeZone?: string;
     courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
 
@@ -107,8 +105,6 @@ export function toCourseCreateDTO(course: Course): CourseCreateDTO {
         presentationScore: course.presentationScore,
         maxPoints: course.maxPoints,
         accuracyOfScores: course.accuracyOfScores,
-        athenaGradingFeedbackEnabled: course.athenaGradingFeedbackEnabled ?? false,
-        athenaFormativeFeedbackEnabled: course.athenaFormativeFeedbackEnabled ?? false,
         timeZone: course.timeZone,
         courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
 
@@ -170,8 +166,6 @@ export interface CourseUpdateDTO {
     presentationScore?: number;
     maxPoints?: number;
     accuracyOfScores?: number;
-    athenaGradingFeedbackEnabled: boolean;
-    athenaFormativeFeedbackEnabled: boolean;
     timeZone?: string;
     courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
     onboardingDone: boolean;
@@ -274,8 +268,6 @@ export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
         presentationScore: course.presentationScore,
         maxPoints: course.maxPoints,
         accuracyOfScores: course.accuracyOfScores,
-        athenaGradingFeedbackEnabled: course.athenaGradingFeedbackEnabled ?? false,
-        athenaFormativeFeedbackEnabled: course.athenaFormativeFeedbackEnabled ?? false,
         timeZone: course.timeZone,
         courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
         onboardingDone: course.onboardingDone ?? false,
