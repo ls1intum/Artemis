@@ -126,6 +126,21 @@ class HarmonyScrubbingChatModelTest {
         }
     }
 
+    @Test
+    void streamFlushesPendingTextBeforePropagatingFailure() {
+        for (String text : List.of("text<", "text<|unfinished", "text<|end|>")) {
+            ChatModel delegate = mock(ChatModel.class);
+            Prompt prompt = new Prompt("hi");
+            RuntimeException failure = new IllegalStateException("provider disconnected");
+            when(delegate.stream(prompt)).thenReturn(Flux.concat(Flux.just(chunk(text)), Flux.error(failure)));
+            var signals = new HarmonyScrubbingChatModel(delegate).stream(prompt).materialize().collectList().block();
+            String content = signals.stream().filter(signal -> signal.isOnNext()).map(signal -> signal.get().getResult().getOutput().getText())
+                    .collect(java.util.stream.Collectors.joining());
+            assertThat(content).isEqualTo(text.equals("text<|end|>") ? "text" : text);
+            assertThat(signals.getLast().getThrowable()).isSameAs(failure);
+        }
+    }
+
     private static ChatResponse chunk(String text) {
         return new ChatResponse(List.of(new Generation(new AssistantMessage(text))));
     }

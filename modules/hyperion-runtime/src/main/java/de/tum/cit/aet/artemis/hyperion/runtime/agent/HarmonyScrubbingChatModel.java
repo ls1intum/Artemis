@@ -40,7 +40,8 @@ public class HarmonyScrubbingChatModel implements ChatModel {
     public Flux<ChatResponse> stream(Prompt prompt) {
         return Flux.defer(() -> {
             StreamScrubber scrubber = new StreamScrubber();
-            return delegate.stream(prompt).map(scrubber::scrubChunk).concatWith(Flux.defer(scrubber::flush));
+            return delegate.stream(prompt).map(scrubber::scrubChunk).onErrorResume(failure -> scrubber.flush().concatWith(Flux.error(failure)))
+                    .concatWith(Flux.defer(scrubber::flush));
         });
     }
 

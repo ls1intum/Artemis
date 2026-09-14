@@ -69,7 +69,7 @@ class HyperionSecretMaterialPolicyTest {
         String ordinarySource = """
                 class Example {
                     String token = "token";
-                    String password = "change-me";
+                    String password = "%s";
                     String secret = "example-secret";
                     String apiKey = "your-api-key-here";
                     String uuid = "477444bc-083e-478c-90fd-ce3037063361";
@@ -79,7 +79,8 @@ class HyperionSecretMaterialPolicyTest {
                     String nearGithub = "ghp_short";
                     String nearGitlab = "%s";
                 }
-                """.formatted(String.join(".", "eyJhbGciOiJIUzI1NiJ9", "eyJzdWIiOiJmaXh0dXJlIn0", "signature"), "AKIA" + "IOSFODNN7EXAMPL", "glpat-" + "exampletokenvalue");
+                """.formatted("change-" + "me", String.join(".", "eyJhbGciOiJIUzI1NiJ9", "eyJzdWIiOiJmaXh0dXJlIn0", "signature"), "AKIA" + "IOSFODNN7EXAMPL",
+                "glpat-" + "exampletokenvalue");
 
         assertThat(policy.assess("src/Example.java", bytes(ordinarySource), HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT).isSafe()).isTrue();
     }
