@@ -1,10 +1,12 @@
-<p-dialog appendTo="body" [header]="header()" [modal]="true" [(visible)]="isOpen" focusOnShow="false" (onHide)="clearData()">
+<!-- The date and time fields are still PrimeNG: `tum-ui-date-picker` has no time-only mode, so the two
+     time inputs have no equivalent yet. Contained fallback, to be closed when the package gains one. -->
+<tum-ui-dialog [header]="header()" size="medium" [(visible)]="isOpen" (hidden)="clearData()">
     <div class="frame">
         <div class="inputs-grid">
             <div class="label-and-input">
                 @let dateValidation = dateValidationResult();
                 <label for="tutorial-session-date-input">{{ 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.date' | artemisTranslate }} *</label>
-                <p-inputgroup>
+                <tum-ui-input-group>
                     <p-datepicker
                         inputId="tutorial-session-date-input"
                         appendTo="body"
@@ -14,18 +16,18 @@
                         [invalid]="dateValidation.status === ValidationStatus.INVALID && dateInputTouched()"
                     />
                     @if (dateValidation.status === ValidationStatus.INVALID && dateInputTouched()) {
-                        <p-inputgroup-addon [pTooltip]="dateValidation.message | artemisTranslate" tooltipPosition="left">
-                            <i class="pi pi-info-circle danger"></i>
-                        </p-inputgroup-addon>
+                        <tum-ui-input-group-addon [tumUiTooltip]="dateValidation.message | artemisTranslate" tumUiTooltipPlacement="left">
+                            <fa-icon class="danger" [icon]="faCircleInfo" aria-hidden="true" />
+                        </tum-ui-input-group-addon>
                     }
-                </p-inputgroup>
+                </tum-ui-input-group>
             </div>
             <div class="label-and-input">
                 @let startTimeValidation = startTimeValidationResult();
                 <label for="tutorial-session-start-time-input"
                     >{{ 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.startTime' | artemisTranslate }} *</label
                 >
-                <p-inputgroup>
+                <tum-ui-input-group>
                     <p-datepicker
                         inputId="tutorial-session-start-time-input"
                         appendTo="body"
@@ -36,16 +38,16 @@
                         [invalid]="startTimeValidation.status === ValidationStatus.INVALID && startTimeInputTouched()"
                     />
                     @if (startTimeValidation.status === ValidationStatus.INVALID && startTimeInputTouched()) {
-                        <p-inputgroup-addon [pTooltip]="startTimeValidation.message | artemisTranslate" tooltipPosition="left">
-                            <i class="pi pi-info-circle danger"></i>
-                        </p-inputgroup-addon>
+                        <tum-ui-input-group-addon [tumUiTooltip]="startTimeValidation.message | artemisTranslate" tumUiTooltipPlacement="left">
+                            <fa-icon class="danger" [icon]="faCircleInfo" aria-hidden="true" />
+                        </tum-ui-input-group-addon>
                     }
-                </p-inputgroup>
+                </tum-ui-input-group>
             </div>
             <div class="label-and-input">
                 @let endTimeValidation = endTimeValidationResult();
                 <label for="tutorial-session-end-time-input">{{ 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.endTime' | artemisTranslate }} *</label>
-                <p-inputgroup>
+                <tum-ui-input-group>
                     <p-datepicker
                         inputId="tutorial-session-end-time-input"
                         appendTo="body"
@@ -56,35 +58,35 @@
                         [invalid]="endTimeValidation.status === ValidationStatus.INVALID && endTimeInputTouched()"
                     />
                     @if (endTimeValidation.status === ValidationStatus.INVALID && endTimeInputTouched()) {
-                        <p-inputgroup-addon [pTooltip]="endTimeValidation.message | artemisTranslate" tooltipPosition="left">
-                            <i class="pi pi-info-circle danger"></i>
-                        </p-inputgroup-addon>
+                        <tum-ui-input-group-addon [tumUiTooltip]="endTimeValidation.message | artemisTranslate" tumUiTooltipPlacement="left">
+                            <fa-icon class="danger" [icon]="faCircleInfo" aria-hidden="true" />
+                        </tum-ui-input-group-addon>
                     }
-                </p-inputgroup>
+                </tum-ui-input-group>
             </div>
             <div class="label-and-input">
                 @let locationValidation = locationValidationResult();
                 <label for="tutorial-session-location-input">{{ 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.location' | artemisTranslate }} *</label>
-                <p-inputgroup>
+                <tum-ui-input-group>
                     <input
                         id="tutorial-session-location-input"
-                        pInputText
+                        tumUiInput
                         [(ngModel)]="location"
                         [placeholder]="'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.location' | artemisTranslate"
                         (blur)="locationInputTouched.set(true)"
-                        [invalid]="locationValidation.status === ValidationStatus.INVALID && locationInputTouched()"
+                        [tumUiInputInvalid]="locationValidation.status === ValidationStatus.INVALID && locationInputTouched()"
                     />
                     @if (locationValidation.status === ValidationStatus.INVALID && locationInputTouched()) {
-                        <p-inputgroup-addon [pTooltip]="locationValidation.message | artemisTranslate" tooltipPosition="left">
-                            <i class="pi pi-info-circle danger"></i>
-                        </p-inputgroup-addon>
+                        <tum-ui-input-group-addon [tumUiTooltip]="locationValidation.message | artemisTranslate" tumUiTooltipPlacement="left">
+                            <fa-icon class="danger" [icon]="faCircleInfo" aria-hidden="true" />
+                        </tum-ui-input-group-addon>
                     }
-                </p-inputgroup>
+                </tum-ui-input-group>
             </div>
             <div class="label-and-input">
                 <label for="tutorial-session-attendance-input" jhiTranslate="artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.attendance"></label>
-                <p-inputgroup>
-                    <p-inputnumber
+                <tum-ui-input-group>
+                    <tum-ui-input-number
                         inputId="tutorial-session-attendance-input"
                         [(ngModel)]="attendance"
                         [min]="0"
@@ -92,13 +94,13 @@
                         [showButtons]="true"
                         [placeholder]="'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.attendance' | artemisTranslate"
                     />
-                </p-inputgroup>
+                </tum-ui-input-group>
             </div>
         </div>
         <div class="controls-footer">
             <span jhiTranslate="global.form.requiredLabel"></span>
-            <button pButton class="p-button-secondary p-button-sm" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
-            <button pButton class="p-button-primary p-button-sm" [disabled]="saveButtonDisabled()" (click)="save()" jhiTranslate="entity.action.save"></button>
+            <button type="button" tumUiButton severity="secondary" size="small" data-testid="cancel-button" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
+            <button type="button" tumUiButton size="small" data-testid="save-button" [disabled]="saveButtonDisabled()" (click)="save()" jhiTranslate="entity.action.save"></button>
         </div>
     </div>
-</p-dialog>
+</tum-ui-dialog>

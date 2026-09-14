@@ -1,5 +1,9 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 /**
  * Describes the state of a participation.
  */
@@ -46,5 +50,16 @@ public enum InitializationState {
 
     public boolean hasCompletedState(InitializationState state) {
         return this.stateNumber >= state.stateNumber;
+    }
+
+    /**
+     * All states for which {@link #hasCompletedState} returns true for the given state. Lets a query filter on
+     * completion without spelling the states out, so it cannot drift apart from the check above when a state is added.
+     *
+     * @param state the state that must have been completed
+     * @return the states that have completed it, including the state itself
+     */
+    public static Set<InitializationState> statesThatCompleted(InitializationState state) {
+        return Arrays.stream(values()).filter(candidate -> candidate.hasCompletedState(state)).collect(Collectors.toUnmodifiableSet());
     }
 }

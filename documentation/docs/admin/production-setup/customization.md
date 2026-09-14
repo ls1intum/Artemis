@@ -1,4 +1,8 @@
-# Customization
+---
+id: customization
+title: Customization
+sidebar_label: Customization
+---
 
 You can define the following custom assets for Artemis to be used
 instead of the TUM defaults:

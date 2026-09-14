@@ -8,6 +8,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.SliceUtil;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
@@ -49,6 +51,7 @@ import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
 @Profile(PROFILE_LOCALCI)
 @EnforceAdmin
 @Lazy
+@FeatureUsage("build-system/build-queue-administration")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/admin/", LegacyAdminRestPaths.CORE_ADMIN_PREFIX })
@@ -61,6 +64,9 @@ public class AdminBuildJobQueueResource {
     private final BuildJobRepository buildJobRepository;
 
     private static final Logger log = LoggerFactory.getLogger(AdminBuildJobQueueResource.class);
+
+    /** The Hazelcast address format, {@code [host]:port}. */
+    private static final Pattern HAZELCAST_ADDRESS = Pattern.compile("^\\[(.+)]:\\d+$");
 
     private final BuildAgentNetworkPolicy buildAgentNetworkPolicy;
 
@@ -227,7 +233,7 @@ public class AdminBuildJobQueueResource {
             return "";
         }
         // Match Hazelcast address format: [host]:port
-        var matcher = java.util.regex.Pattern.compile("^\\[(.+)]:\\d+$").matcher(address);
+        var matcher = HAZELCAST_ADDRESS.matcher(address);
         if (matcher.matches()) {
             return matcher.group(1);
         }

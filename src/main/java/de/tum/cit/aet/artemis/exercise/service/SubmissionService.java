@@ -7,7 +7,6 @@ import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -240,22 +239,6 @@ public class SubmissionService {
         }
 
         return submissionsWithoutResult;
-    }
-
-    /**
-     * Returns the next submission without result and with individual due date,
-     * in the ordering of their individual due dates.
-     *
-     * @param exercise        the exercise for which we want to retrieve a submission
-     * @param examMode        flag to determine if test runs should be removed. This should be set to true for exam exercises
-     * @param correctionRound the correction round we want our submission to have results for
-     * @return the next submission, ordered by individual due date (the earliest first), without any manual result
-     */
-    public Optional<Submission> getNextAssessableSubmission(Exercise exercise, boolean examMode, int correctionRound) {
-        var assessableSubmissions = getAssessableSubmissions(exercise, examMode, correctionRound);
-
-        return assessableSubmissions.stream().filter(a -> a.getParticipation().getIndividualDueDate() != null)
-                .min(Comparator.comparing(a -> a.getParticipation().getIndividualDueDate()));
     }
 
     /**
@@ -665,12 +648,31 @@ public class SubmissionService {
     }
 
     /**
+     * Defence in depth for {@link #checkCorrectionRoundIsValidElseThrow(Exercise, int)}: the endpoints validate the round against
+     * the exercise before they lock, this only makes sure that no path which skips that validation can persist a result for a
+     * negative round. The upper bound is not checked here because the exercise reachable from a submission does not
+     * necessarily have its exam loaded.
+     *
+     * @param correctionRound the correction round to check
+     * @throws BadRequestAlertException if the correction round is negative
+     */
+    protected static void checkCorrectionRoundIsNotNegativeElseThrow(int correctionRound) {
+        if (correctionRound < 0) {
+            throw new BadRequestAlertException("The correction round must not be negative", ENTITY_NAME, "invalidCorrectionRound");
+        }
+    }
+
+    /**
      * Soft locks the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e.
      * the client will not allow tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first.
      *
-     * @param submission the submission to lock
+     * @param submission      the submission to lock
+     * @param correctionRound the correction round to lock the submission for, must not be negative
+     * @return the locked result
+     * @throws BadRequestAlertException if the correction round is negative
      */
     protected Result lockSubmission(Submission submission, int correctionRound) {
+        checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
         Result result = submission.getResultForCorrectionRound(correctionRound);
         if (result == null && correctionRound > 0) {
             // copy the result of the previous correction round
@@ -685,8 +687,8 @@ public class SubmissionService {
         }
 
         // The round this result belongs to is stored on the result itself. This is the one place where a manual result
-        // for a correction round is created or claimed, so it is also where a result that predates the column gets its
-        // round the first time a tutor opens it.
+        // for a correction round is created or claimed, and the round the tutor asked for takes precedence over the one
+        // Submission.addResult would derive.
         result.setCorrectionRound(correctionRound);
         result.setAssessmentType(AssessmentType.MANUAL);
         // Deliberately keep (and return) the object the submission's result set already holds instead of the
@@ -758,7 +760,7 @@ public class SubmissionService {
         }
         else {
             // special check for programming exercises as they use buildAndTestStudentSubmissionAfterDueDate instead of dueDate
-            if (exercise instanceof ProgrammingExercise programmingExercise && !exercise.getAllowFeedbackRequests()) {
+            if (exercise instanceof ProgrammingExercise programmingExercise) {
                 if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
                         && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
                     log.debug("The due date to build and test of exercise '{}' has not been reached yet.", exercise.getTitle());
@@ -770,6 +772,22 @@ public class SubmissionService {
                 log.debug("The due date of exercise '{}' has not been reached yet.", exercise.getTitle());
                 throw new AccessForbiddenException("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
             }
+        }
+    }
+
+    /**
+     * The correction round is a request parameter, so a caller can send any int. A round outside {@code [0, numberOfCorrectionRounds)}
+     * would otherwise be stored on a new manual result that no dashboard, lookup or score calculation ever reaches again.
+     * Call this before locking a submission, at a point where the exercise (and its exam, for exam exercises) is loaded.
+     *
+     * @param exercise        the exercise the submission belongs to
+     * @param correctionRound the requested correction round
+     * @throws BadRequestAlertException if the round is negative or not below the exercise's number of correction rounds
+     */
+    public void checkCorrectionRoundIsValidElseThrow(Exercise exercise, int correctionRound) {
+        if (correctionRound < 0 || correctionRound >= exercise.getNumberOfCorrectionRounds()) {
+            throw new BadRequestAlertException("The correction round " + correctionRound + " does not exist for exercise " + exercise.getId(), ENTITY_NAME,
+                    "invalidCorrectionRound");
         }
     }
 

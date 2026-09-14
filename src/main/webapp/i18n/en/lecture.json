@@ -33,28 +33,6 @@
                     "general": "General Information"
                 }
             },
-            "attachments": {
-                "title": "Attachments",
-                "name": "Name",
-                "type": "Type",
-                "link": "Link",
-                "file": "File",
-                "releaseDate": "Release date",
-                "uploadDate": "Upload date",
-                "version": "Version",
-                "uploading": "Uploading...",
-                "isBeingEdited": "Is currently being edited...",
-                "isDownloading": "Is downloading...",
-                "attachments": "Attachments",
-                "newAttachment": "New Attachment",
-                "editAttachment": "Edit Attachment",
-                "notificationText": "Notification Text",
-                "notificationPlaceholder": "What did you change?",
-                "chooseFile": "Choose File",
-                "error": "The file {{ fileName }} is too large. The maximum file size is 20MB.",
-                "fileLimitation": "(max. size 20 MB)",
-                "fileLimitationTooltip": "Supported types: {{ extensions }}"
-            },
             "import": {
                 "table": {
                     "TITLE": "Title",
@@ -71,8 +49,6 @@
                 "titleDescription": "Add a title and meaningful description to the lecture.",
                 "period": "Period",
                 "periodDescription": "Specify begin and end date of the lecture.",
-                "attachments": "Attachments",
-                "attachmentsDescription": "Upload attachments to this lecture.",
                 "units": "Content",
                 "unitsDescription": "Add content to the lecture by creating different kinds of lecture content."
             },
@@ -129,14 +105,8 @@
             }
         },
         "attachment": {
-            "deleteQuestion": "Do you really want to delete the attachment?",
-            "created": "Created new attachment with identifier {{ param }}",
-            "updated": "Updated attachment with identifier {{ param }}",
-            "deleted": "Deleted attachment with identifier {{ param }}",
             "pdfPreview": {
                 "title": "Attachment",
-                "attachmentIDError": "Invalid Attachment or Attachment ID.",
-                "attachmentVideoUnitIDError": "Invalid Attachment Content or Attachment Content ID.",
                 "noPDFAvailable": "No PDF available",
                 "cancelButton": "Cancel",
                 "removePageButton": "Remove Pages",

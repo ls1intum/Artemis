@@ -438,7 +438,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             return;
         }
         request.delete("/api/communication/courses/" + courseId + "/postings/reactions/" + reactionToBeDeleted.id(), HttpStatus.OK);
-        assertThat(answerPostReactedOn.getReactions()).hasSameSizeAs(reactionRepository.findReactionsByPostId(answerPostReactedOn.getId()));
+        assertThat(answerPostReactedOn.getReactions()).hasSameSizeAs(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()));
         assertThat(reactionRepository.findById(reactionToBeDeleted.id())).isEmpty();
     }
 

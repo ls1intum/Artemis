@@ -802,20 +802,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 expect(comp.programmingExercise).toBe(programmingExercise);
                 expect(courseService.find).toHaveBeenCalledWith(courseId);
 
-                // Only available for Maven
-                if (projectType === ProjectType.PLAIN_MAVEN) {
-                    // Needed to trigger setting of update template since we can't use UI components.
-                    comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
-                    comp.onStaticCodeAnalysisChanged();
-                    fixture.changeDetectorRef.detectChanges();
-
-                    expect(comp.importOptions.updateTemplate).toBe(true);
-
-                    comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
-                    comp.onStaticCodeAnalysisChanged();
-                    fixture.changeDetectorRef.detectChanges();
-                }
-
                 comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
                 comp.onStaticCodeAnalysisChanged();
                 fixture.changeDetectorRef.detectChanges();
@@ -824,14 +810,13 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                     comp.programmingExercise.maxStaticCodeAnalysisPenalty = newMaxPenalty;
                 }
 
-                // Recreate build plan and template update should be automatically selected
+                // Recreating the build plans should be automatically selected
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(!scaActivatedOriginal);
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(scaActivatedOriginal ? undefined : newMaxPenalty);
                 expect(comp.importOptions.recreateBuildPlans).toBe(true);
-                expect(comp.importOptions.updateTemplate).toBe(true);
 
                 comp.importOptions.recreateBuildPlans = !comp.importOptions.recreateBuildPlans;
-                comp.onRecreateBuildPlanOrUpdateTemplateChange();
+                comp.onRecreateBuildPlanChange();
 
                 // SCA should revert to the state of the original exercise, maxPenalty will revert to undefined
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(comp.originalStaticCodeAnalysisEnabled);
@@ -1263,8 +1248,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             });
         });
 
-        // UI: the build config size reason produced by getInvalidReasons() must disable saving in the rendered form footer.
-        it('disables saving in the form footer when the build plan configuration is too long', () => {
+        // UI: the build config size reason produced by getInvalidReasons() must block saving in the rendered form footer.
+        it('blocks saving in the form footer when the build plan configuration is too long', () => {
             setupCustomizeBuildPlan('a'.repeat(BUILD_PLAN_CONFIGURATION_MAX_LENGTH + 1), undefined);
             const reasons = comp.getInvalidReasons().filter((reason) => reason.translateKey === 'artemisApp.programmingExercise.buildConfig.buildPlanConfigurationTooLong');
             expect(reasons).toHaveLength(1);
@@ -1275,11 +1260,13 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             footer.detectChanges();
 
             const saveButton = footer.nativeElement.querySelector('#save-entity') as HTMLButtonElement;
-            expect(saveButton.disabled).toBe(true);
-            expect(footer.nativeElement.querySelector('.badge.bg-danger')).toBeTruthy();
+            // aria-disabled rather than disabled, so the blocked button keeps its place in the tab order
+            expect(saveButton.getAttribute('aria-disabled')).toBe('true');
+            expect(saveButton.disabled).toBeFalsy();
+            expect(saveButton.getAttribute('aria-describedby')).toBe('form-footer-invalid-reasons');
         });
 
-        it('disables saving in the form footer when the docker flags are too long', () => {
+        it('blocks saving in the form footer when the docker flags are too long', () => {
             setupCustomizeBuildPlan(undefined, 'a'.repeat(DOCKER_FLAGS_MAX_LENGTH + 1));
             const reasons = comp.getInvalidReasons().filter((reason) => reason.translateKey === 'artemisApp.programmingExercise.buildConfig.dockerFlagsTooLong');
             expect(reasons).toHaveLength(1);
@@ -1290,8 +1277,10 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             footer.detectChanges();
 
             const saveButton = footer.nativeElement.querySelector('#save-entity') as HTMLButtonElement;
-            expect(saveButton.disabled).toBe(true);
-            expect(footer.nativeElement.querySelector('.badge.bg-danger')).toBeTruthy();
+            // aria-disabled rather than disabled, so the blocked button keeps its place in the tab order
+            expect(saveButton.getAttribute('aria-disabled')).toBe('true');
+            expect(saveButton.disabled).toBeFalsy();
+            expect(saveButton.getAttribute('aria-describedby')).toBe('form-footer-invalid-reasons');
         });
 
         it('enables saving in the form footer when there are no invalid reasons', () => {
@@ -1301,8 +1290,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             footer.detectChanges();
 
             const saveButton = footer.nativeElement.querySelector('#save-entity') as HTMLButtonElement;
-            expect(saveButton.disabled).toBe(false);
-            expect(footer.nativeElement.querySelector('.badge.bg-danger')).toBeFalsy();
+            expect(saveButton.getAttribute('aria-disabled')).toBe('false');
+            expect(saveButton.getAttribute('aria-describedby')).toBeNull();
         });
 
         it('validateExercisePoints', () => {
@@ -1311,6 +1300,53 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 translateKey: 'artemisApp.exercise.form.points.customMax',
                 translateValues: {},
             });
+        });
+
+        const gradingReason = { translateKey: 'artemisApp.programmingExercise.gradingSection.invalidReason', translateValues: {} };
+        const withInvalidGradingForm = (isTimelineValid = true) => {
+            internals(comp).exerciseGradingComponent = signal({
+                formValid: false,
+                // The grading component carries the timeline's status itself now, rather than a child lifecycle component.
+                timelineStatus: signal({ valid: isTimelineValid, empty: false, invalidItems: [] }),
+            } as unknown as ProgrammingExerciseGradingComponent).asReadonly();
+        };
+
+        // The timeline lives in the grading form and has no validator of its own, so the generic message
+        // is the only thing that can report it.
+        it('should report the generic grading reason when no grading field explains it', () => {
+            withInvalidGradingForm();
+            comp.programmingExercise.maxPoints = 100;
+            comp.programmingExercise.bonusPoints = 0;
+
+            expect(comp.getInvalidReasons()).toContainEqual(gradingReason);
+        });
+
+        it('should not add the generic grading reason on top of a grading field reason', () => {
+            withInvalidGradingForm();
+            comp.programmingExercise.maxPoints = undefined;
+            comp.programmingExercise.bonusPoints = 0;
+
+            const reasons = comp.getInvalidReasons();
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.undefined',
+                translateValues: {},
+            });
+            expect(reasons).not.toContainEqual(gradingReason);
+        });
+
+        // An invalid timeline is a separate cause that only the generic message names, so deduplicating it against
+        // a field error would hide it until that field is fixed.
+        it('should keep the generic grading reason alongside a field reason when the timeline is also invalid', () => {
+            withInvalidGradingForm(false);
+            comp.programmingExercise.maxPoints = undefined;
+            comp.programmingExercise.bonusPoints = 0;
+
+            const reasons = comp.getInvalidReasons();
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.undefined',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual(gradingReason);
         });
 
         it('should not require points when exercise is not included in the course score', () => {
@@ -1865,6 +1901,30 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         }
     });
 
+    it('should propagate customizeBuildPlan changes from custom build plan component through language component to update component', () => {
+        vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile) => profile === PROFILE_LOCALCI);
+        comp.ngOnInit();
+        fixture.detectChanges();
+
+        const languageComp = comp.exerciseLanguageComponent();
+        expect(languageComp).toBeDefined();
+
+        const customBuildPlanComp = languageComp?.programmingExerciseCustomBuildPlanComponent();
+        expect(customBuildPlanComp).toBeDefined();
+
+        expect(comp.programmingExercise.customizeBuildPlan).toBeFalsy();
+
+        customBuildPlanComp!.onCustomizeBuildPlanChange(true);
+        fixture.detectChanges();
+
+        expect(comp.programmingExercise.customizeBuildPlan).toBe(true);
+
+        customBuildPlanComp!.onCustomizeBuildPlanChange(false);
+        fixture.detectChanges();
+
+        expect(comp.programmingExercise.customizeBuildPlan).toBe(false);
+    });
+
     function verifyImport(importedProgrammingExercise: ProgrammingExercise) {
         expect(comp.programmingExercise.projectKey).toBeUndefined();
         expect(comp.programmingExercise.id).toBeUndefined();
@@ -1879,8 +1939,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         expect(comp.programmingExercise.allowOnlineEditor).toBe(true);
         expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.JAVA);
         expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_MAVEN);
-        // allow manual feedback requests and complaints for automatic assessments should be set to false because we reset all dates and hence they can only be false
-        expect(comp.programmingExercise.allowFeedbackRequests).toBe(false);
+        // complaints for automatic assessments should be set to false because we reset all dates and hence they can only be false
         expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBe(false);
         // name and short name should also be imported
         expect(comp.programmingExercise.title).toEqual(importedProgrammingExercise.title);
@@ -1904,7 +1963,6 @@ const getProgrammingExerciseForImport = () => {
     programmingExercise.allowOfflineIde = true;
     programmingExercise.allowOnlineEditor = true;
     programmingExercise.allowComplaintsForAutomaticAssessments = true;
-    programmingExercise.allowFeedbackRequests = true;
 
     history.pushState({ programmingExerciseForImportFromFile: programmingExercise }, '');
 

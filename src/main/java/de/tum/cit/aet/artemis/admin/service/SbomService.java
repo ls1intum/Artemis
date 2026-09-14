@@ -18,8 +18,9 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.admin.dto.CombinedSbomDTO;
 import de.tum.cit.aet.artemis.admin.dto.SbomComponentDTO;
@@ -41,9 +42,9 @@ public class SbomService {
 
     private static final String CLIENT_SBOM_PATH = "sbom/client-sbom.json";
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
-    public SbomService(ObjectMapper objectMapper) {
+    public SbomService(JsonMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
@@ -104,7 +105,9 @@ public class SbomService {
             JsonNode root = objectMapper.readTree(inputStream);
             return parseCycloneDxSbom(root);
         }
-        catch (IOException e) {
+        // Jackson 3 exceptions are unchecked and no longer extend IOException, so a malformed payload no longer
+        // arrives here on its own — JacksonException has to be named explicitly.
+        catch (IOException | JacksonException e) {
             log.error("Failed to read SBOM file: {}", path, e);
             return null;
         }
@@ -131,7 +134,7 @@ public class SbomService {
         Instant timestamp = null;
         if (metadataNode.has("timestamp")) {
             try {
-                timestamp = Instant.parse(metadataNode.get("timestamp").asText());
+                timestamp = Instant.parse(metadataNode.get("timestamp").asString());
             }
             catch (Exception e) {
                 log.debug("Failed to parse SBOM timestamp", e);
@@ -208,6 +211,6 @@ public class SbomService {
 
     @Nullable
     private String getTextValue(JsonNode node, String fieldName) {
-        return Optional.ofNullable(node.get(fieldName)).filter(JsonNode::isTextual).map(JsonNode::asText).orElse(null);
+        return Optional.ofNullable(node.get(fieldName)).filter(JsonNode::isString).map(JsonNode::asString).orElse(null);
     }
 }

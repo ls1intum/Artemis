@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
@@ -45,6 +46,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("grading/grading-scale")
 @RestController
 @RequestMapping("api/assessment/")
 public class GradeStepResource {

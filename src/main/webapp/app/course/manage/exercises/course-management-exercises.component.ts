@@ -302,7 +302,13 @@ export class CourseManagementExercisesComponent implements OnInit {
         if (courseId !== undefined && exercise.id !== undefined) {
             this.exerciseVariantGroupService.setExerciseVariantGroup(courseId, exercise.id, newGroup?.id).subscribe({
                 next: () => this.loadGroupsFromServer(courseId),
-                error: (errorRes: HttpErrorResponse) => this.alertService.addErrorAlert(errorRes.error?.title ?? errorRes.message, errorRes.error?.message, errorRes.error?.params),
+                error: (errorRes: HttpErrorResponse) => {
+                    if (errorRes.error?.errorKey === 'automaticTestRunAfterAssessmentDueDate') {
+                        this.alertService.addErrorAlert('artemisApp.exerciseManagement.error.automaticTestRunAfterAssessmentDueDate');
+                    } else {
+                        this.alertService.addErrorAlert(errorRes.error?.title ?? errorRes.message, errorRes.error?.message, errorRes.error?.params);
+                    }
+                },
             });
         }
     }

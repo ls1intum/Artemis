@@ -26,7 +26,6 @@ import { CustomNotIncludedInValidatorDirective } from 'app/foundation/validators
 import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name/title-channel-name.component';
 import { LectureTimelineComponent } from 'app/lecture/manage/lecture-period/lecture-timeline.component';
 import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/management/lecture-unit-management.component';
-import { LectureAttachmentsComponent } from 'app/lecture/manage/lecture-attachments/lecture-attachments.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { signal } from '@angular/core';
@@ -69,7 +68,6 @@ describe('LectureUpdateComponent', () => {
                 MockComponent(LectureTitleChannelNameComponent),
                 MockComponent(TitleChannelNameComponent),
                 MockComponent(FormDateTimePickerComponent),
-                MockComponent(LectureAttachmentsComponent),
                 MockComponent(LectureUpdateUnitsComponent),
                 MockComponent(LectureTimelineComponent),
                 MockComponent(LectureUnitManagementComponent),
@@ -151,7 +149,7 @@ describe('LectureUpdateComponent', () => {
         lectureUpdateComponentFixture.detectChanges();
         await lectureUpdateComponentFixture.whenStable();
 
-        lectureUpdateComponent.timelineStatus.set({ valid: true, empty: false });
+        lectureUpdateComponent.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
         lectureUpdateComponentFixture.detectChanges();
     }
 
@@ -293,7 +291,7 @@ describe('LectureUpdateComponent', () => {
         const processContentButton = lectureUpdateComponentFixture.debugElement.query(By.css('#process-units-entity')).nativeElement as HTMLButtonElement;
         expect(processContentButton.disabled).toBe(false);
 
-        lectureUpdateComponent.timelineStatus.set({ valid: false, empty: false });
+        lectureUpdateComponent.timelineStatus.set({ valid: false, empty: false, invalidItems: [] });
         lectureUpdateComponentFixture.detectChanges();
 
         expect(processContentButton.disabled).toBe(true);
@@ -309,7 +307,7 @@ describe('LectureUpdateComponent', () => {
         const saveButton = lectureUpdateComponentFixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
         expect(saveButton.disabled).toBe(false);
 
-        lectureUpdateComponent.timelineStatus.set({ valid: false, empty: false });
+        lectureUpdateComponent.timelineStatus.set({ valid: false, empty: false, invalidItems: [] });
         lectureUpdateComponentFixture.detectChanges();
 
         expect(saveButton.disabled).toBe(true);
@@ -370,7 +368,7 @@ describe('LectureUpdateComponent', () => {
             await configureActiveRouteMockAndCompileComponents();
             lectureUpdateComponent.lectureOnInit = { startDate: dayjs(), endDate: dayjs().add(1, 'day') } as Lecture;
             lectureUpdateComponent.lecture.set({ startDate: dayjs().add(2, 'days'), endDate: dayjs().add(3, 'days') } as Lecture);
-            const status = { valid: false, empty: false };
+            const status = { valid: false, empty: false, invalidItems: [] };
             lectureUpdateComponentFixture.detectChanges();
             const timeline = lectureUpdateComponentFixture.debugElement.query(By.directive(LectureTimelineComponent)).componentInstance as LectureTimelineComponent;
 
@@ -417,7 +415,7 @@ describe('LectureUpdateComponent', () => {
                     isValid: () => true,
                 }),
             } as any);
-            lectureUpdateComponent.timelineStatus.set({ valid: true, empty: false });
+            lectureUpdateComponent.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
             lectureUpdateComponent.unitSection = signal({
                 isUnitConfigurationValid: () => true,
             } as any);
@@ -439,7 +437,7 @@ describe('LectureUpdateComponent', () => {
                     isValid: () => false,
                 }),
             } as any);
-            lectureUpdateComponent.timelineStatus.set({ valid: true, empty: false });
+            lectureUpdateComponent.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
 
             lectureUpdateComponent.updateFormStatusBar();
 
@@ -457,7 +455,7 @@ describe('LectureUpdateComponent', () => {
                     isValid: () => false,
                 }),
             } as any);
-            lectureUpdateComponent.timelineStatus.set({ valid: false, empty: false });
+            lectureUpdateComponent.timelineStatus.set({ valid: false, empty: false, invalidItems: [] });
             lectureUpdateComponent.unitSection = signal({
                 isUnitConfigurationValid: () => false,
             } as any);

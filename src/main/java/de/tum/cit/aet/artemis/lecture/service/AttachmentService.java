@@ -15,10 +15,8 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
@@ -45,50 +43,6 @@ public class AttachmentService {
         this.attachmentRepository = attachmentRepository;
         this.slideRepository = slideRepository;
         this.fileService = fileService;
-    }
-
-    /**
-     * Updates a lecture attachment while deriving its cache-busting version from the persisted state instead of trusting the client payload. Metadata-only updates preserve the
-     * stored version, while file replacements increment it.
-     *
-     * @param attachmentId     the attachment to update
-     * @param attachmentUpdate client-provided metadata
-     * @param file             replacement file, or {@code null} for a metadata-only update
-     * @return the updated attachment
-     */
-    public Attachment updateLectureAttachment(Long attachmentId, Attachment attachmentUpdate, MultipartFile file) {
-        Attachment existingAttachment = attachmentRepository.findByIdOrElseThrow(attachmentId);
-
-        existingAttachment.setName(attachmentUpdate.getName());
-        existingAttachment.setReleaseDate(attachmentUpdate.getReleaseDate());
-        existingAttachment.setUploadDate(attachmentUpdate.getUploadDate());
-        existingAttachment.setAttachmentType(attachmentUpdate.getAttachmentType());
-
-        if (file != null) {
-            if (existingAttachment.getLecture() == null || existingAttachment.getLecture().getId() == null || existingAttachment.getLink() == null
-                    || existingAttachment.getLink().isBlank()) {
-                throw new BadRequestAlertException("The attachment must belong to a persisted lecture and have an existing file", "attachment", "invalidLectureAttachment");
-            }
-
-            Path oldFilePath;
-            try {
-                URI oldPath = URI.create(existingAttachment.getLink());
-                oldFilePath = FilePathConverter.fileSystemPathForExternalUri(oldPath, FilePathType.LECTURE_ATTACHMENT);
-            }
-            catch (IllegalArgumentException exception) {
-                throw new BadRequestAlertException("The attachment has an invalid file link", "attachment", "invalidLectureAttachment");
-            }
-
-            Path basePath = FilePathConverter.getLectureAttachmentFileSystemPath().resolve(existingAttachment.getLecture().getId().toString());
-            Path savePath = FileUtil.saveFile(file, basePath, FilePathType.LECTURE_ATTACHMENT, true);
-            fileService.schedulePathForDeletion(oldFilePath, 0);
-            fileService.evictCacheForPath(oldFilePath);
-            existingAttachment
-                    .setLink(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.LECTURE_ATTACHMENT, existingAttachment.getLecture().getId()).toString());
-            existingAttachment.setVersion(existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1);
-        }
-
-        return attachmentRepository.save(existingAttachment);
     }
 
     /**

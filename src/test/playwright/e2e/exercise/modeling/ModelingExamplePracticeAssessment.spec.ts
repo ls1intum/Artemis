@@ -78,12 +78,12 @@ test.describe('Modeling example submission practice assessment', { tag: '@slow' 
         await expect(submit).toBeEnabled();
 
         await submit.click();
-        await expect(page.locator('.alert-inner').filter({ hasText: 'mistake' })).toBeVisible();
+        await expect(page.locator('[data-testid="alert"]').filter({ hasText: 'mistake' })).toBeVisible();
         await expect(feedbackCard).toContainText('score');
 
         await score.fill('5');
         await feedbackCard.locator('textarea').fill('Sample solution feedback');
         await submit.click();
-        await expect(page.locator('.alert-inner').filter({ hasText: 'good assessment' })).toBeVisible();
+        await expect(page.locator('[data-testid="alert"]').filter({ hasText: 'good assessment' })).toBeVisible();
     });
 });

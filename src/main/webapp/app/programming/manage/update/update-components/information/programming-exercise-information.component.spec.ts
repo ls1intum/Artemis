@@ -33,7 +33,6 @@ import { provideHttpClient } from '@angular/common/http';
 type InformationInternals = ProgrammingExerciseInformationComponent & {
     checkoutSolutionRepositoryField: Signal<NgModel | undefined>;
     recreateBuildPlansField: Signal<NgModel | undefined>;
-    updateTemplateFilesField: Signal<NgModel | undefined>;
     tableEditableFields: Signal<readonly TableEditableFieldComponent[]>;
     programmingExerciseEditCheckoutDirectories: Signal<ProgrammingExerciseEditCheckoutDirectoriesComponent | undefined>;
 };
@@ -89,7 +88,6 @@ describe('ProgrammingExerciseInformationComponent', () => {
         } as unknown as TableEditableFieldComponent;
         const checkoutSolutionRepositoryField = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
         const recreateBuildPlansField = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
-        const updateTemplateFilesField = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
         const programmingExerciseEditCheckoutDirectories = {
             formValidChanges: new Subject(),
             formValid: signal(true),
@@ -99,17 +97,15 @@ describe('ProgrammingExerciseInformationComponent', () => {
         // Stub the view-query signals so registerInputFields() wires up the valueChanges subscriptions.
         internals(comp).checkoutSolutionRepositoryField = signal(checkoutSolutionRepositoryField);
         internals(comp).recreateBuildPlansField = signal(recreateBuildPlansField);
-        internals(comp).updateTemplateFilesField = signal(updateTemplateFilesField);
         internals(comp).tableEditableFields = signal([editableField]);
         internals(comp).programmingExerciseEditCheckoutDirectories = signal(programmingExerciseEditCheckoutDirectories);
 
         comp.ngAfterViewInit();
         (checkoutSolutionRepositoryField.valueChanges as Subject<boolean>).next(false);
         (recreateBuildPlansField.valueChanges as Subject<boolean>).next(false);
-        (updateTemplateFilesField.valueChanges as Subject<boolean>).next(false);
         (editableField.editingInput.valueChanges as Subject<boolean>).next(false);
         programmingExerciseEditCheckoutDirectories.formValidChanges.next(false);
-        expect(calculateFormValidSpy).toHaveBeenCalledTimes(5);
+        expect(calculateFormValidSpy).toHaveBeenCalledTimes(4);
     });
 
     it('should update checkout directories', () => {

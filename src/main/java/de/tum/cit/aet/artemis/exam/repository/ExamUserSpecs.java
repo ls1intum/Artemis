@@ -53,7 +53,7 @@ public final class ExamUserSpecs {
      * Recognised values: {@code "ExamMissing"}, {@code "NotStarted"}, {@code "Started"}, {@code "Submitted"},
      * {@code "AttendanceChecked"}, {@code "AttendanceNotChecked"}, {@code "DidNotAttend"}. Blank or {@code null} values return a no-op.
      *
-     * @param filter the filter value from the frontend; unrecognised values are treated as no-op
+     * @param filter the filter value from the client; unrecognised values are treated as no-op
      * @return specification applying the requested filter predicate
      */
     @NonNull
@@ -203,7 +203,7 @@ public final class ExamUserSpecs {
      * as a stable tiebreaker. Sorting by {@code workingTime} uses a correlated subquery against the matching
      * non-test-run {@link StudentExam}.
      *
-     * @param sortedColumn the column key from the frontend; unrecognised keys fall through to the default (by name)
+     * @param sortedColumn the column key from the client; unrecognised keys fall through to the default (by name)
      * @param sortOrder    ascending or descending; null is treated as ascending
      * @return specification that sets the query's ORDER BY, or a no-op on count queries
      */

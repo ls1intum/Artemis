@@ -62,6 +62,7 @@ export interface OldFeedbackCleanupCountDTO extends CleanupCount {
 
 export interface NotEnrolledUsersCleanupCountDTO extends CleanupCount {
     users: number;
+    blockedUsers: number;
 }
 
 export interface PlagiarismCasesCleanupCountDTO extends CleanupCount {
@@ -175,7 +176,7 @@ export class DataCleanupService {
     }
 
     /**
-     * Send DELETE request to soft-delete warned users who are enrolled in no course and past the deletion grace period.
+     * Send DELETE request to permanently delete warned users who are enrolled in no course, past the deletion grace period, and have no remaining domain references.
      */
     deleteNotEnrolledUsers(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
         return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/not-enrolled-users`, { observe: 'response' });
@@ -304,7 +305,7 @@ export class DataCleanupService {
     }
 
     /**
-     * Send GET request to count the warned users that would be soft-deleted by the not-enrolled-user cleanup.
+     * Send GET request to count the warned users that would be permanently deleted or blocked by remaining references.
      */
     countNotEnrolledUsers(): Observable<HttpResponse<NotEnrolledUsersCleanupCountDTO>> {
         return this.http.get<NotEnrolledUsersCleanupCountDTO>(`${this.adminResourceUrl}/not-enrolled-users/count`, { observe: 'response' });

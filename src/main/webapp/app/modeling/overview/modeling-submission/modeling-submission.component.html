@@ -91,7 +91,7 @@
                                                                     <span jhiTranslate="artemisApp.modelingSubmission.assessment.onDiagram"></span>
                                                                     <span class="feedback-group__count">{{ referencedFeedback?.length }}</span>
                                                                 </h4>
-                                                                <ul class="feedback-list" id="component-feedback-table">
+                                                                <ul class="feedback-list" data-testid="component-feedback-table">
                                                                     @for (feedback of referencedFeedback; track feedback.id) {
                                                                         <li
                                                                             class="feedback-row"

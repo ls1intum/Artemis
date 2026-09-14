@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCBatchTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTemplateTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCBatchTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTest;
 
@@ -38,6 +39,7 @@ public final class TestBucketTiming {
 
     private static final List<BucketDefinition> BUCKET_DEFINITIONS = List.of(new BucketDefinition("BucketIndependent", List.of(AbstractSpringIntegrationIndependentTest.class)),
             new BucketDefinition("BucketLocalCILocalVC", List.of(AbstractSpringIntegrationLocalCILocalVCTest.class)),
+            new BucketDefinition("BucketLocalCILocalVCBatch", List.of(AbstractSpringIntegrationLocalCILocalVCBatchTest.class)),
             new BucketDefinition("BucketJenkinsLocalVC", List.of(AbstractSpringIntegrationJenkinsLocalVCTest.class)),
             new BucketDefinition("BucketJenkinsLocalVCBatch", List.of(AbstractSpringIntegrationJenkinsLocalVCBatchTest.class)),
             new BucketDefinition("BucketIndependentBatch", List.of(AbstractSpringIntegrationIndependentBatchTest.class)),

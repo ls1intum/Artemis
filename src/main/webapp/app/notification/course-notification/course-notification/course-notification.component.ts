@@ -79,10 +79,12 @@ export class CourseNotificationComponent {
         this.faIcon.set(this.courseNotificationService.getIconFromType(notification.notificationType));
         // For translations, we pass all parameters and the course name and id so they can automatically be used.
         const notificationParameters: { [key: string]: unknown } = {
-            courseName: notification.courseName,
+            courseName: notification.courseTitle,
             courseId: notification.courseId,
         };
-        for (const [key, value] of Object.entries(notification.parameters ?? {})) {
+        // Interpolation is by name, so every value of the payload is offered to the translation. The payload is a
+        // record of the notification type, so the names are the ones that type declares rather than whatever a map held.
+        for (const [key, value] of Object.entries(notification.payload ?? {})) {
             if (!value || !CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
                 notificationParameters[key] = value;
             } else {

@@ -10,7 +10,6 @@
  */
 import { defineConfig } from 'vitest/config';
 import angular from '@analogjs/vite-plugin-angular';
-import tsconfigPaths from 'vite-tsconfig-paths';
 import path from 'node:path';
 
 export default defineConfig({
@@ -21,6 +20,10 @@ export default defineConfig({
             'monaco-editor': path.resolve(__dirname, 'node_modules/monaco-editor/esm/vs/editor/editor.api.js'),
             app: path.resolve(__dirname, 'src/main/webapp/app'),
             test: path.resolve(__dirname, 'src/test/javascript/spec'),
+            src: path.resolve(__dirname, 'src'),
+            // Mirrors the tsconfig `paths` entry: the package's own `exports` map only exposes
+            // `./styles.css`, so the bare specifier resolves through the built library instead.
+            '@tumaet/ui-angular': path.resolve(__dirname, 'packages/tum-ui/dist'),
         },
     },
     css: {
@@ -31,7 +34,7 @@ export default defineConfig({
             },
         },
     },
-    plugins: [angular({ jit: true, fastCompile: true }), tsconfigPaths({ projects: ['tsconfig.app.json', 'tsconfig.spec.json'] })],
+    plugins: [angular({ jit: true, fastCompile: true })],
     test: {
         name: 'monaco-integration',
         globals: true,

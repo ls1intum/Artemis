@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.web.cors.CorsConfiguration;
 
@@ -20,8 +21,6 @@ public class ArtemisProperties {
 
     private final Security security = new Security();
 
-    private final Logging logging = new Logging();
-
     private final Cache cache = new Cache();
 
     private final ClientApp clientApp = new ClientApp();
@@ -40,10 +39,6 @@ public class ArtemisProperties {
 
     public Security getSecurity() {
         return security;
-    }
-
-    public Logging getLogging() {
-        return logging;
     }
 
     public Cache getCache() {
@@ -170,6 +165,9 @@ public class ArtemisProperties {
 
                 private long tokenValidityInSecondsForRememberMe = 2592000; // 30 days
 
+                @Nullable
+                private Boolean cookieSecure;
+
                 public String getSecret() {
                     return secret;
                 }
@@ -201,68 +199,15 @@ public class ArtemisProperties {
                 public void setTokenValidityInSecondsForRememberMe(long tokenValidityInSecondsForRememberMe) {
                     this.tokenValidityInSecondsForRememberMe = tokenValidityInSecondsForRememberMe;
                 }
-            }
-        }
-    }
 
-    public static class Logging {
+                @Nullable
+                public Boolean getCookieSecure() {
+                    return cookieSecure;
+                }
 
-        private boolean useJsonFormat = false;
-
-        private final Logstash logstash = new Logstash();
-
-        public boolean isUseJsonFormat() {
-            return useJsonFormat;
-        }
-
-        public void setUseJsonFormat(boolean useJsonFormat) {
-            this.useJsonFormat = useJsonFormat;
-        }
-
-        public Logstash getLogstash() {
-            return logstash;
-        }
-
-        public static class Logstash {
-
-            private boolean enabled = false;
-
-            private String host = "localhost";
-
-            private int port = 5000;
-
-            private int ringBufferSize = 512;
-
-            public boolean isEnabled() {
-                return enabled;
-            }
-
-            public void setEnabled(boolean enabled) {
-                this.enabled = enabled;
-            }
-
-            public String getHost() {
-                return host;
-            }
-
-            public void setHost(String host) {
-                this.host = host;
-            }
-
-            public int getPort() {
-                return port;
-            }
-
-            public void setPort(int port) {
-                this.port = port;
-            }
-
-            public int getRingBufferSize() {
-                return ringBufferSize;
-            }
-
-            public void setRingBufferSize(int ringBufferSize) {
-                this.ringBufferSize = ringBufferSize;
+                public void setCookieSecure(@Nullable Boolean cookieSecure) {
+                    this.cookieSecure = cookieSecure;
+                }
             }
         }
     }

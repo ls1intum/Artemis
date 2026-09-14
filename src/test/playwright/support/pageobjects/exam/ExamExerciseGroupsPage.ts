@@ -65,7 +65,7 @@ export class ExamExerciseGroupsPage {
 
     async shouldShowNumberOfExerciseGroups(numberOfGroups: number) {
         // The count is now part of the page's title-bar heading ("Exercise Groups (N)") rather than a separate line.
-        const titleLocator = this.page.locator('#exercise-groups-title');
+        const titleLocator = this.page.locator('[data-testid="exercise-groups-title"]');
         await titleLocator.waitFor({ state: 'visible', timeout: 30000 });
         await expect(titleLocator).toContainText(`(${numberOfGroups})`, { timeout: 30000 });
     }
@@ -97,11 +97,11 @@ export class ExamExerciseGroupsPage {
     }
 
     async visitPageViaUrl(courseId: number, examId: number) {
-        // Reload once if the exercise-groups lazy chunk fails to render `#exercise-groups-title`
+        // Reload once if the exercise-groups lazy chunk fails to render `[data-testid="exercise-groups-title"]`
         // within 30s under multi-node CI load (same pattern as other navigateToXxxPage
         // helpers in this codebase).
         const url = `/course-management/${courseId}/exams/${examId}/exercise-groups`;
-        const marker = this.page.locator('#exercise-groups-title');
+        const marker = this.page.locator('[data-testid="exercise-groups-title"]');
         await this.page.goto(url);
         const visible = await marker
             .waitFor({ state: 'visible', timeout: 30000 })

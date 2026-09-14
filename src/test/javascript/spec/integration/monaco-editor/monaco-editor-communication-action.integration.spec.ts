@@ -25,7 +25,6 @@ import { LectureAttachmentReferenceAction } from 'app/editor/monaco-editor/model
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { ReferenceType } from 'app/communication/metis.util';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
-import dayjs from 'dayjs/esm';
 import { FaqReferenceAction } from 'app/editor/monaco-editor/model/actions/communication/faq-reference.action';
 import { Faq } from 'app/communication/shared/entities/faq.model';
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
@@ -315,14 +314,6 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 id: lecture.id!,
                 title: lecture.title!,
                 attachmentVideoUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO),
-                attachments: lecture.attachments?.map((attachment) => ({
-                    ...attachment,
-                    link: attachment.link && attachment.name ? fileService.createAttachmentFileUrl(attachment.link, attachment.name, false, attachment.version) : attachment.link,
-                    linkUrl:
-                        attachment.link && attachment.name
-                            ? 'api/core/files/' + fileService.createAttachmentFileUrl(attachment.link, attachment.name, false, attachment.version)
-                            : attachment.link,
-                })),
             }));
 
             expect(lectureAttachmentReferenceAction.lecturesWithDetails).toEqual(lecturesWithDetails);
@@ -342,28 +333,6 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[0];
             lectureAttachmentReferenceAction.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture });
             expect(comp.getText()).toBe(`[lecture]${lecture.title}(${metisService.getLinkForLecture(lecture.id.toString())})[/lecture]`);
-        });
-
-        it('should reference an attachment without brackets', () => {
-            fixture.detectChanges();
-
-            const attachmentNameWithBrackets = 'Test (File) With [Brackets] And (More) [Bracket(s)]';
-            const attachmentNameWithoutBrackets = 'Test File With Brackets And More Brackets';
-
-            const newAttachment = {
-                id: 53,
-                name: attachmentNameWithBrackets,
-                link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
-                version: 1,
-                uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
-                attachmentType: 'FILE',
-            } as Attachment;
-
-            comp.registerAction(lectureAttachmentReferenceAction);
-            const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[0];
-            const shortLink = newAttachment.link?.split('attachments/')[1];
-            lectureAttachmentReferenceAction.executeInCurrentEditor({ reference: ReferenceType.ATTACHMENT, lecture: lecture, attachment: newAttachment });
-            expect(comp.getText()).toBe(`[attachment]${attachmentNameWithoutBrackets}(${shortLink})[/attachment]`);
         });
 
         it('should reference a lecture without brackets', () => {
@@ -410,33 +379,6 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
 
             attachmentVideoUnit.name = previousName;
             expect(comp.getText()).toBe(`[lecture-unit]${attachmentVideoUnitNameWithoutBrackets}(${attachmentVideoUnitFileName})[/lecture-unit]`);
-        });
-
-        it('should reference an attachment', () => {
-            fixture.detectChanges();
-            comp.registerAction(lectureAttachmentReferenceAction);
-            const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[0];
-            const attachment = lecture.attachments![0];
-            const attachmentFileName = 'Metis-Attachment.pdf';
-            lectureAttachmentReferenceAction.executeInCurrentEditor({
-                reference: ReferenceType.ATTACHMENT,
-                lecture,
-                attachment,
-            });
-            expect(comp.getText()).toBe(`[attachment]${attachment.name}(${attachmentFileName})[/attachment]`);
-        });
-
-        it('should error when trying to reference a nonexistent attachment', () => {
-            fixture.detectChanges();
-            comp.registerAction(lectureAttachmentReferenceAction);
-            const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[0];
-            const executeAction = () =>
-                lectureAttachmentReferenceAction.executeInCurrentEditor({
-                    reference: ReferenceType.ATTACHMENT,
-                    lecture,
-                    attachment: undefined,
-                });
-            expect(executeAction).toThrow(Error);
         });
 
         it('should reference an attachment video unit', () => {

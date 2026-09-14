@@ -56,6 +56,8 @@ class LectureContentProcessingServiceTest {
 
     private static final String TEST_JOB_TOKEN = "test-ingestion-token-123";
 
+    private static final long PROCESSING_STATE_ID = 4242L;
+
     private LectureContentProcessingService service;
 
     private ProcessingStateCallbackService callbackService;
@@ -195,11 +197,22 @@ class LectureContentProcessingServiceTest {
     @Nested
     class DispatchPendingJobs {
 
+        /**
+         * findIdleForDispatch returns persisted rows and the dispatcher claims each one by id, so these fixtures need
+         * one. It is set here rather than in the outer setup because a persisted state changes how
+         * handleContentChanges classifies the unit, which the trigger tests above depend on.
+         */
+        @BeforeEach
+        void assignPersistedId() {
+            testState.setId(PROCESSING_STATE_ID);
+        }
+
         @Test
         void shouldDispatchIdleJobWithVideoAsTranscribing() {
             // Given: One IDLE job, one slot available, unit has video, no existing transcription
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(1L); // 1 slot available (MAX_CONCURRENT_PROCESSING - 1)
             when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(testState));
+            when(processingStateRepository.claimIdleForDispatch(eq(PROCESSING_STATE_ID), any())).thenReturn(1);
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
             when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn(TEST_JOB_TOKEN);
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -221,6 +234,7 @@ class LectureContentProcessingServiceTest {
 
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(0L);
             when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(testState));
+            when(processingStateRepository.claimIdleForDispatch(eq(PROCESSING_STATE_ID), any())).thenReturn(1);
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(completedTranscription));
             when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn(TEST_JOB_TOKEN);
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -242,6 +256,7 @@ class LectureContentProcessingServiceTest {
 
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(0L);
             when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(testState));
+            when(processingStateRepository.claimIdleForDispatch(eq(PROCESSING_STATE_ID), any())).thenReturn(1);
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
             when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn(TEST_JOB_TOKEN);
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -267,6 +282,7 @@ class LectureContentProcessingServiceTest {
             // Given: Iris returns null (not applicable for course)
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(0L);
             when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(testState));
+            when(processingStateRepository.claimIdleForDispatch(eq(PROCESSING_STATE_ID), any())).thenReturn(1);
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
             when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn(null);
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -281,6 +297,7 @@ class LectureContentProcessingServiceTest {
             // Given: Iris throws exception during dispatch
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(0L);
             when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(testState));
+            when(processingStateRepository.claimIdleForDispatch(eq(PROCESSING_STATE_ID), any())).thenReturn(1);
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
             when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenThrow(new RuntimeException("Iris unavailable"));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));

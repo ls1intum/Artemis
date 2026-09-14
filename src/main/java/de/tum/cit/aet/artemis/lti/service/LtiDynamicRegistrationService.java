@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lti.service;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.util.Locale;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -197,7 +198,7 @@ public class LtiDynamicRegistrationService {
     }
 
     private boolean isLocalDevelopmentHost(String host) {
-        String normalizedHost = host.toLowerCase();
+        String normalizedHost = host.toLowerCase(Locale.ROOT);
         return "localhost".equals(normalizedHost) || normalizedHost.endsWith(".localhost");
     }
 

@@ -1,0 +1,38 @@
+{{- /*
+Member StatefulSet: the additional core nodes (replicaCount - 1). Rendered only
+when replicaCount > 1. Same pod spec as the leader but WITHOUT `scheduling`, and
+with an extra init container that waits for the leader to be ready.
+*/ -}}
+{{- if gt (int .Values.artemis.replicaCount) 1 }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "artemis.memberName" . }}
+  labels:
+    {{- include "artemis.labels" . | nindent 4 }}
+    artemis.role: member
+spec:
+  serviceName: {{ include "artemis.headlessName" . }}
+  replicas: {{ sub (int .Values.artemis.replicaCount) 1 }}
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      {{- include "artemis.coreSelectorLabels" . | nindent 6 }}
+      artemis.role: member
+  template:
+    metadata:
+      labels:
+        {{- include "artemis.coreSelectorLabels" . | nindent 8 }}
+        artemis.role: member
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap-artemis.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret-artemis.yaml") . | sha256sum }}
+        {{- with .Values.image.rolloutId }}
+        artemis.cit.tum.de/image-id: {{ . | quote }}
+        {{- end }}
+        {{- with .Values.artemis.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- include "artemis.podSpec" (dict "root" . "extraProfiles" "" "waitForLeader" true) | nindent 6 }}
+{{- end }}

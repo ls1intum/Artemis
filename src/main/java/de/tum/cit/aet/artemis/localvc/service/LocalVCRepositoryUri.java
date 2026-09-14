@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.localvc.service;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 import org.springframework.web.util.UriComponentsBuilder;
@@ -16,6 +17,14 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
  * It constructs URIs using a base URI, typically provided by an environment variable, combined with a standardized repository path format.
  */
 public class LocalVCRepositoryUri extends VcsRepositoryUri {
+
+    /**
+     * The shape a repository name has to have: a project key, a hyphen, and the rest.
+     * <p>
+     * Compiled once. A {@code LocalVCRepositoryUri} is constructed on every git request, and {@code String#matches}
+     * compiles its pattern on every call.
+     */
+    private static final Pattern REPOSITORY_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9]+-[a-zA-Z0-9-]+");
 
     /** The project key under which the repository is categorized in the local VC system. */
     private final String projectKey;
@@ -63,10 +72,10 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
     }
 
     private static String extractProjectKey(String repositoryName) {
-        if (!repositoryName.matches("[a-zA-Z0-9]+-[a-zA-Z0-9-]+")) {
+        if (!REPOSITORY_NAME_PATTERN.matcher(repositoryName).matches()) {
             throw new IllegalArgumentException("Repository name must be in the format <projectKey>-<repoType>");
         }
-        return repositoryName.split("-")[0].toUpperCase();
+        return repositoryName.split("-")[0].toUpperCase(Locale.ROOT);
     }
 
     /**
@@ -218,9 +227,22 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      * @return The normalized repository type or username, free of the project key prefix and "practice-" designation.
      */
     private String getRepositoryTypeOrUserName(String repositorySlug, String projectKey) {
-        String pattern = Pattern.quote(projectKey.toLowerCase()) + "\\d*-";
-        String repositoryTypeOrUserNameWithPracticePrefix = repositorySlug.toLowerCase().replaceAll(pattern, "");
-        return repositoryTypeOrUserNameWithPracticePrefix.replace("practice-", "");
+        String slug = repositorySlug.toLowerCase(Locale.ROOT);
+        String lowerCaseProjectKey = projectKey.toLowerCase(Locale.ROOT);
+        // A slug is the project key, an optional run of digits and a hyphen, followed by the repository type or the
+        // login. Spelled out rather than expressed as a regular expression: the project key is only known at runtime,
+        // so an expression built here would be compiled again on every git request. Stripping the prefix rather than
+        // every occurrence of it also leaves a login that happens to repeat the project key intact.
+        if (slug.startsWith(lowerCaseProjectKey)) {
+            int afterProjectKey = lowerCaseProjectKey.length();
+            while (afterProjectKey < slug.length() && Character.isDigit(slug.charAt(afterProjectKey))) {
+                afterProjectKey++;
+            }
+            if (afterProjectKey < slug.length() && slug.charAt(afterProjectKey) == '-') {
+                slug = slug.substring(afterProjectKey + 1);
+            }
+        }
+        return slug.replace("practice-", "");
     }
 
     /**
@@ -232,7 +254,7 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      * @return true if the repository is a practice repository, false otherwise.
      */
     private boolean isPracticeRepository(String repositorySlug, String projectKey) {
-        return repositorySlug.toLowerCase().startsWith(projectKey.toLowerCase() + "-practice-");
+        return repositorySlug.toLowerCase(Locale.ROOT).startsWith(projectKey.toLowerCase(Locale.ROOT) + "-practice-");
     }
 
     /**
@@ -244,7 +266,7 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      * @throws LocalVCInternalException If the repository slug does not start with the project key, indicating an incorrect or malformed slug.
      */
     private void validateProjectKeyAndRepositorySlug(String projectKey, String repositorySlug) {
-        if (!repositorySlug.toLowerCase().startsWith(projectKey.toLowerCase())) {
+        if (!repositorySlug.toLowerCase(Locale.ROOT).startsWith(projectKey.toLowerCase(Locale.ROOT))) {
             throw new LocalVCInternalException("Invalid project key and repository slug: " + projectKey + ", " + repositorySlug);
         }
     }
