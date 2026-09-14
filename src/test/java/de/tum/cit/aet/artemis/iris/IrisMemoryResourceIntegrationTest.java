@@ -2,13 +2,17 @@ package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.web.util.UriUtils;
 
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
@@ -115,6 +119,25 @@ class IrisMemoryResourceIntegrationTest extends AbstractIrisIntegrationTest {
         var memoryId = "missing";
         irisRequestMockProvider.mockGetMemoryWithRelationsError(user.getId(), memoryId, HttpStatus.NOT_FOUND);
         request.get("/api/iris/user/memories/" + memoryId, HttpStatus.NOT_FOUND, MemirisMemoryWithRelationsDTO.class);
+    }
+
+    /**
+     * The user id in the Pyris URL is the only thing scoping a request to the caller's own memories, and the memory id
+     * is appended straight after it. An id carrying path separators or dot segments would walk past that scope once the
+     * URL is normalized, so it has to be refused before the request is built - with no call to Pyris at all.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = { "../../99/stolen", "..", "nested/segment", "with space", "M-1;drop" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getMemoryWithRelations_shouldRejectAMemoryIdThatIsNotASinglePathSegment(String memoryId) throws Exception {
+        request.get("/api/iris/user/memories/" + UriUtils.encodePathSegment(memoryId, StandardCharsets.UTF_8), HttpStatus.BAD_REQUEST, MemirisMemoryWithRelationsDTO.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "../../99/stolen", "..", "nested/segment" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void deleteMemory_shouldRejectAMemoryIdThatIsNotASinglePathSegment(String memoryId) throws Exception {
+        request.delete("/api/iris/user/memories/" + UriUtils.encodePathSegment(memoryId, StandardCharsets.UTF_8), HttpStatus.BAD_REQUEST);
     }
 
     @Test

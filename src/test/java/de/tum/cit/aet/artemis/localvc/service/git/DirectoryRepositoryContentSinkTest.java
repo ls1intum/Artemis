@@ -2,12 +2,15 @@ package de.tum.cit.aet.artemis.localvc.service.git;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -52,6 +55,30 @@ class DirectoryRepositoryContentSinkTest {
         }
 
         assertThat(root.resolve("src/main/java/Main.java")).content(StandardCharsets.UTF_8).isEqualTo("public class Main {}");
+    }
+
+    /**
+     * A materialized repository is student code waiting to be picked up by the personal data export, so it must not be
+     * readable by other accounts on the host. Git only ever supplies {@code 100644} or {@code 100755}, so the group and
+     * world bits of the mode say nothing about the file and are dropped; the executable bit is the one that is kept.
+     */
+    @Test
+    void shouldWriteFilesReadableOnlyByTheirOwnerAndKeepTheExecutableBit() throws IOException {
+        assumeTrue(FileSystems.getDefault().supportedFileAttributeViews().contains("posix"), "POSIX permissions are not supported on this file system");
+
+        Path root = tempDir.resolve("repository");
+        try (DirectoryRepositoryContentSink sink = new DirectoryRepositoryContentSink(root)) {
+            try (OutputStream outputStream = sink.openFile("README.md", 0100644)) {
+                outputStream.write("readme".getBytes(StandardCharsets.UTF_8));
+            }
+            try (OutputStream outputStream = sink.openFile("gradlew", 0100755)) {
+                outputStream.write("#!/bin/sh".getBytes(StandardCharsets.UTF_8));
+            }
+        }
+
+        assertThat(Files.getPosixFilePermissions(root.resolve("README.md"))).containsExactlyInAnyOrder(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE);
+        assertThat(Files.getPosixFilePermissions(root.resolve("gradlew"))).containsExactlyInAnyOrder(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
+                PosixFilePermission.OWNER_EXECUTE);
     }
 
     /**

@@ -79,29 +79,31 @@ class DirectoryRepositoryContentSink implements RepositoryContentSink {
         return resolved;
     }
 
+    /**
+     * Gives the file to its owner alone, carrying over the executable bit.
+     *
+     * <p>
+     * Git stores exactly two blob modes, {@code 100644} and {@code 100755}, and those are the only two values the
+     * builder passes in. The group and world bits of a mode are therefore a constant rather than something the
+     * repository expressed, and expanding them here would publish student code to every other account on the host for
+     * no gain - a materialized repository is read back by this process alone, on its way into the personal data
+     * export. The executable bit is the one bit that does carry information, so it is the one that is kept.
+     *
+     * <p>
+     * This governs the export directory on disk only. {@link ZipRepositoryContentSink} records the original mode on
+     * its ZIP entries, so what a student downloads is unchanged.
+     */
     private static void applyPermissions(Path path, int unixMode) {
-        Set<PosixFilePermission> permissions = EnumSet.noneOf(PosixFilePermission.class);
-        addIfSet(permissions, unixMode, 0400, PosixFilePermission.OWNER_READ);
-        addIfSet(permissions, unixMode, 0200, PosixFilePermission.OWNER_WRITE);
-        addIfSet(permissions, unixMode, 0100, PosixFilePermission.OWNER_EXECUTE);
-        addIfSet(permissions, unixMode, 0040, PosixFilePermission.GROUP_READ);
-        addIfSet(permissions, unixMode, 0020, PosixFilePermission.GROUP_WRITE);
-        addIfSet(permissions, unixMode, 0010, PosixFilePermission.GROUP_EXECUTE);
-        addIfSet(permissions, unixMode, 0004, PosixFilePermission.OTHERS_READ);
-        addIfSet(permissions, unixMode, 0002, PosixFilePermission.OTHERS_WRITE);
-        addIfSet(permissions, unixMode, 0001, PosixFilePermission.OTHERS_EXECUTE);
+        Set<PosixFilePermission> permissions = EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE);
+        if ((unixMode & 0100) != 0) {
+            permissions.add(PosixFilePermission.OWNER_EXECUTE);
+        }
         try {
             Files.setPosixFilePermissions(path, permissions);
         }
         catch (IOException | UnsupportedOperationException e) {
             // Windows has no POSIX view. The content is written either way, and only the executable bit is lost.
             log.debug("Could not set the permissions of {}: {}", path, e.getMessage());
-        }
-    }
-
-    private static void addIfSet(Set<PosixFilePermission> permissions, int unixMode, int bit, PosixFilePermission permission) {
-        if ((unixMode & bit) != 0) {
-            permissions.add(permission);
         }
     }
 

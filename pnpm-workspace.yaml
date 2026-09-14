@@ -7,21 +7,21 @@ packages:
   - 'packages/*'
 
 catalog:
-  '@analogjs/vite-plugin-angular': 2.7.1
-  '@analogjs/vitest-angular': 2.7.1
+  '@analogjs/vite-plugin-angular': 2.7.2
+  '@analogjs/vitest-angular': 2.7.2
   '@arethetypeswrong/cli': 0.18.5
-  '@angular-devkit/architect': 0.2201.7
-  '@angular-devkit/core': 22.1.7
-  '@angular/build': 22.1.7
-  '@angular/cdk': 22.1.5
-  '@angular/cli': 22.1.7
-  '@angular/common': 22.1.5
-  '@angular/compiler': 22.1.5
-  '@angular/compiler-cli': 22.1.5
-  '@angular/core': 22.1.5
-  '@angular/forms': 22.1.5
-  '@angular/localize': 22.1.5
-  '@angular/platform-browser': 22.1.5
+  '@angular-devkit/architect': 0.2201.8
+  '@angular-devkit/core': 22.1.8
+  '@angular/build': 22.1.8
+  '@angular/cdk': 22.1.6
+  '@angular/cli': 22.1.8
+  '@angular/common': 22.1.6
+  '@angular/compiler': 22.1.6
+  '@angular/compiler-cli': 22.1.6
+  '@angular/core': 22.1.6
+  '@angular/forms': 22.1.6
+  '@angular/localize': 22.1.6
+  '@angular/platform-browser': 22.1.6
   '@fortawesome/angular-fontawesome': 5.1.0
   '@fortawesome/fontawesome-svg-core': 7.3.1
   '@fortawesome/free-solid-svg-icons': 7.3.1
@@ -33,8 +33,8 @@ catalog:
   '@storybook/addon-vitest': 10.6.0
   '@storybook/angular-vite': 10.6.0
   '@tailwindcss/postcss': 4.3.3
-  '@types/node': 24.13.3
-  '@types/react': 19.2.18
+  '@types/node': 24.13.4
+  '@types/react': 19.3.0
   '@vitest/browser': 4.1.11
   '@vitest/browser-playwright': 4.1.11
   '@vitest/coverage-istanbul': 4.1.11
@@ -51,9 +51,9 @@ catalog:
   postcss: 8.5.28
   publint: 0.3.24
   playwright: 1.63.0
-  react: 19.2.8
+  react: 19.3.0
   rxjs: 7.8.2
-  sass: 1.104.0
+  sass: 1.104.1
   semver: 7.8.5
   storybook: 10.6.0
   stylelint: 17.15.0
@@ -62,7 +62,7 @@ catalog:
   typescript: 6.0.3
   vite: 8.1.5
   vitest: 4.1.11
-  yaml: 2.9.0
+  yaml: 2.9.1
   zone.js: 0.16.3
 
 # No hoist shim: rely on pnpm's default isolated layout. Every package the
@@ -127,7 +127,7 @@ overrides:
   # @angular/localize is only pulled in transitively (e.g. via @ng-bootstrap/ng-bootstrap,
   # whose peer range requires the current Angular major). Without this pin it resolves to a
   # straggler from an older major that violates that peer range; keep it equal to @angular/core.
-  '@angular/localize': '22.1.5'
+  '@angular/localize': '22.1.6'
   'babel-plugin-istanbul>test-exclude': '8.0.0'
   '@babel/core': '7.29.7'
   '@babel/runtime': '7.29.7'
@@ -165,7 +165,7 @@ overrides:
   minimatch: '10.2.6'
   # Reached dev-side via postcss, whose range allows the patched release pinned here
   # (GHSA: custom generators can loop indefinitely when size is zero).
-  nanoid: '3.3.18'
+  nanoid: '3.3.19'
   piscina: '5.3.2'
   postcss: '8.5.28'
   punycode: '2.3.1'
@@ -180,7 +180,7 @@ overrides:
   tar: '7.5.22'
   tmp: '0.2.7'
   tough-cookie: '6.0.2'
-  undici: '7.29.0'
+  undici: '7.29.1'
   uuid: '14.0.2'
   # Vite 8 leaves decorators in external spec helpers untransformed. Keep the Vitest toolchain on
   # Vite 7 until @analogjs/vite-plugin-angular handles those helpers; Angular and Storybook use Vite 8.
@@ -225,16 +225,3 @@ allowBuilds:
 auditConfig:
   ignoreGhsas:
     - 'GHSA-8988-4f7v-96qf'
-
-minimumReleaseAgeExclude:
-  - '@angular-eslint/builder@22.3.0'
-  - '@angular-eslint/bundled-angular-compiler@22.3.0'
-  - '@angular-eslint/eslint-plugin-template@22.3.0'
-  - '@angular-eslint/eslint-plugin@22.3.0'
-  - '@angular-eslint/schematics@22.3.0'
-  - '@angular-eslint/template-parser@22.3.0'
-  - '@angular-eslint/utils@22.3.0'
-  - angular-eslint@22.3.0
-  - dompurify@3.4.15
-  - katex@0.18.7
-  - ng-mocks@14.17.5
