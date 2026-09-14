@@ -103,19 +103,20 @@ The result step summarizes what the AI did per phase, how many tokens the run us
 
 ## What Artemis Checks
 
-Before a variant is accepted, it has to pass objective gates. They run cheapest first, and every finding goes back into the next repair round:
+Before a variant is accepted, it has to pass objective gates. They run cheapest first, and every finding goes back into the next repair round. The first four are hard gates: a variant is never accepted while one of them reports a problem. The AI-backed checks that follow are best-effort — when the model is unavailable, fails or exceeds its time budget, the check contributes no finding for that round and the run continues without it:
 
 - The **solution** builds and passes all tests.
 - The **template** still fails, so students actually have work to do.
 - Every **task-to-test reference** in the problem statement resolves to an active test case, so grading stays wired up.
 - **Quiz validity**: questions, answer options and points are consistent.
-- A **semantic consistency check** compares problem statement, template, solution and tests against each other (the same check described under [Consistency Check](/instructor/exercises/consistency-check)).
+- A **semantic consistency check** (best-effort) compares problem statement, template, solution and tests against each other (the same check described under [Consistency Check](/instructor/exercises/consistency-check)).
+- A **quiz critique** (best-effort) reviews the generated questions for wording and answer quality.
 
 ## Outcomes
 
 | Outcome | Meaning |
 |---|---|
-| **Completed** | Every check passed. The variant is placed as configured and ready for review |
+| **Completed** | Every hard gate passed, and every best-effort check that ran reported nothing. The variant is placed as configured and ready for review. A best-effort check that could not run is skipped silently, so review the variant yourself rather than reading **Completed** as a full semantic sign-off |
 | **Draft with warnings** | Some check did not pass within the attempt budget, or the placement failed. The exercise is created all the same, with a short note on what is wrong — open it in the editor and fix that. A warning about the placement means the variant is not in the group you chose, so move it there yourself |
 | **Failed** | The run could not produce a variant. The result step explains the phase it failed in and how to continue, and the half-provisioned exercise is deleted |
 | **Cancelled** | You stopped the run, and the half-provisioned exercise is deleted |
