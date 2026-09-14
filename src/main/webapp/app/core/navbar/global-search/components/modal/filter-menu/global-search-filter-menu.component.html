@@ -59,7 +59,7 @@
                 </div>
             </li>
         } @empty {
-            <li class="filter-menu-empty">{{ 'global.search.noFilterMatches' | artemisTranslate }}</li>
+            <li class="filter-menu-empty" data-testid="filter-menu-empty">{{ emptyReasonKey() ?? 'global.search.noFilterMatches' | artemisTranslate }}</li>
         }
     </ul>
 </div>

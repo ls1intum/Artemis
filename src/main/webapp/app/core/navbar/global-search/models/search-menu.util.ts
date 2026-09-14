@@ -187,13 +187,19 @@ function typeOptions(operator: ParsedOperator, applied: Set<string>, query: stri
 }
 
 function courseOptions(courses: MenuCourse[], applied: Set<string>, query: string, translate: Translate): FilterMenuOption[] {
-    return courses
-        .filter((course) => course.id !== undefined && !applied.has(String(course.id)) && (!query || (course.title ?? '').toLowerCase().includes(query)))
-        .slice(0, MAX_COURSE_OPTIONS)
-        .map((course): FilterMenuOption => ({
-            id: String(course.id),
-            label: course.title ?? translate('global.search.courseFallbackLabel', { id: course.id }),
-            icon: faGraduationCap,
-            action: { kind: 'value', value: String(course.id) },
-        }));
+    return (
+        courses
+            .filter((course) => course.id !== undefined && !applied.has(String(course.id)) && (!query || (course.title ?? '').toLowerCase().includes(query)))
+            // Sorted before the cap, so the visible rows are the first N by title rather than an arbitrary N: the server
+            // returns an unordered set, and the fallback store's order is whatever the pages visited happened to produce.
+            // Untitled courses sort last, being the least useful thing to spend one of the rows on.
+            .sort((a, b) => (a.title ?? '').localeCompare(b.title ?? '') || Number(a.id) - Number(b.id))
+            .slice(0, MAX_COURSE_OPTIONS)
+            .map((course): FilterMenuOption => ({
+                id: String(course.id),
+                label: course.title ?? translate('global.search.courseFallbackLabel', { id: course.id }),
+                icon: faGraduationCap,
+                action: { kind: 'value', value: String(course.id) },
+            }))
+    );
 }

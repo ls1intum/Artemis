@@ -39,6 +39,7 @@
                 [activeIndex]="menuActiveIndex()"
                 [headerKey]="menuHeaderKey()"
                 [message]="deadEndMessage()"
+                [emptyReasonKey]="emptyMenuReasonKey()"
                 [exclude]="operator()?.negate ?? false"
                 [showBack]="!!backDestination()"
                 (optionSelected)="onOptionSelected($event)"

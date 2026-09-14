@@ -5,6 +5,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { GlobalSearchFilterService } from './global-search-filter.service';
+import { SearchCourseOptionsService } from './search-course-options.service';
+import { MenuCourse } from '../models/search-menu.util';
 import { FilterToken } from '../models/search-token.model';
 
 describe('GlobalSearchFilterService', () => {
@@ -19,14 +21,20 @@ describe('GlobalSearchFilterService', () => {
         getCourses: vi.fn<() => Course[]>().mockReturnValue([]),
     };
 
+    const mockCourseOptionsService = {
+        getCourses: vi.fn<() => Observable<MenuCourse[]>>().mockReturnValue(of([])),
+    };
+
     beforeEach(() => {
         vi.clearAllMocks();
         mockCourseStorageService.getCourses.mockReturnValue([]);
+        mockCourseOptionsService.getCourses.mockReturnValue(of([]));
         TestBed.configureTestingModule({
             providers: [
                 GlobalSearchFilterService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: CourseStorageService, useValue: mockCourseStorageService },
+                { provide: SearchCourseOptionsService, useValue: mockCourseOptionsService },
             ],
         });
         service = TestBed.inject(GlobalSearchFilterService);
@@ -35,6 +43,112 @@ describe('GlobalSearchFilterService', () => {
         exitFilterMenu = vi.fn<() => void>();
         refreshSearch = vi.fn<() => void>();
         service.configure({ applyTokens, requestFocus, exitFilterMenu, refreshSearch });
+    });
+
+    describe('course value menu', () => {
+        it('offers the courses the server knows, not just the ones the current page loaded', () => {
+            // The whole bug: off the student dashboard the course store holds at most the course the page opened,
+            // so the menu showed a subset of the user's courses or nothing at all.
+            mockCourseStorageService.getCourses.mockReturnValue([]);
+            mockCourseOptionsService.getCourses.mockReturnValue(of([{ id: 7, title: 'Databases' }]));
+
+            service.searchQuery.set('course:');
+            TestBed.tick();
+
+            expect(mockCourseOptionsService.getCourses).toHaveBeenCalled();
+            expect(service.menuOptions().map((option) => option.label)).toEqual(['Databases']);
+        });
+
+        it('does not read the course list until a course menu is opened', () => {
+            service.searchQuery.set('type:');
+            TestBed.tick();
+
+            expect(mockCourseOptionsService.getCourses).not.toHaveBeenCalled();
+        });
+
+        it('reads the course list once, however often the menu is reopened', () => {
+            mockCourseOptionsService.getCourses.mockReturnValue(of([{ id: 7, title: 'Databases' }]));
+
+            service.searchQuery.set('course:');
+            TestBed.tick();
+            service.searchQuery.set('');
+            TestBed.tick();
+            service.searchQuery.set('course:');
+            TestBed.tick();
+
+            expect(mockCourseOptionsService.getCourses).toHaveBeenCalledOnce();
+        });
+
+        it('lists the courses by title, so the capped menu is not an arbitrary slice', () => {
+            mockCourseOptionsService.getCourses.mockReturnValue(
+                of([
+                    { id: 3, title: 'Zoology' },
+                    { id: 1, title: 'Algorithms' },
+                    { id: 2, title: 'Machine Learning' },
+                ]),
+            );
+
+            service.searchQuery.set('course:');
+            TestBed.tick();
+
+            expect(service.menuOptions().map((option) => option.label)).toEqual(['Algorithms', 'Machine Learning', 'Zoology']);
+        });
+
+        it('falls back to the loaded courses while the read is still in flight', () => {
+            // An empty response must not make the menu emptier than it was before the request was made.
+            mockCourseStorageService.getCourses.mockReturnValue([{ id: 4, title: 'Stored Course' } as Course]);
+            mockCourseOptionsService.getCourses.mockReturnValue(of([]));
+
+            service.searchQuery.set('course:');
+            TestBed.tick();
+
+            expect(service.menuOptions().map((option) => option.label)).toEqual(['Stored Course']);
+        });
+    });
+
+    describe('empty menu reasons', () => {
+        it('says the user has no courses rather than showing a bare no-matches row', () => {
+            service.searchQuery.set('course:');
+            TestBed.tick();
+
+            expect(service.menuOptions()).toHaveLength(0);
+            expect(service.emptyMenuReasonKey()).toBe('global.search.noCoursesToFilter');
+        });
+
+        it('distinguishes "already filtered" from "you have none"', () => {
+            // The default state on a course page: the one course the store holds is the one already filtered to,
+            // so it is hidden as applied and the menu empties for a completely different reason.
+            mockCourseOptionsService.getCourses.mockReturnValue(of([{ id: 7, title: 'Databases' }]));
+            service.tokens.set([{ facet: 'course', value: '7' }]);
+            service.searchQuery.set('course:');
+            TestBed.tick();
+
+            expect(service.menuOptions()).toHaveLength(0);
+            expect(service.emptyMenuReasonKey()).toBe('global.search.allCoursesFiltered');
+        });
+
+        it('explains the refusal to exclude the last remaining type', () => {
+            service.tokens.set([
+                { facet: 'type', value: 'course', negate: true },
+                { facet: 'type', value: 'exercise', negate: true },
+                { facet: 'type', value: 'lecture', negate: true },
+                { facet: 'type', value: 'communication', negate: true },
+                { facet: 'type', value: 'faq', negate: true },
+            ]);
+            service.searchQuery.set('-type:');
+            TestBed.tick();
+
+            expect(service.menuOptions()).toHaveLength(0);
+            expect(service.emptyMenuReasonKey()).toBe('global.search.cannotExcludeEveryType');
+        });
+
+        it('has no reason to give while the menu still has options', () => {
+            service.searchQuery.set('type:');
+            TestBed.tick();
+
+            expect(service.menuOptions().length).toBeGreaterThan(0);
+            expect(service.emptyMenuReasonKey()).toBeUndefined();
+        });
     });
 
     describe('derived query params', () => {
