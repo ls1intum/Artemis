@@ -3,10 +3,14 @@ package de.tum.cit.aet.artemis.hyperion.web;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
@@ -15,8 +19,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.hyperion.domain.GenerationWorkerState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.dto.GenerationWorkerStatusDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -76,6 +82,28 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
         exercise.setStartDate(java.time.ZonedDateTime.now().plusDays(2));
         programmingExerciseRepository.saveAndFlush(exercise);
         org.assertj.core.api.Assertions.assertThat(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exerciseId)).isFalse();
+    }
+
+    @Test
+    @WithAnonymousUser
+    void generationWorkers_anonymous_isUnauthorized() throws Exception {
+        request.performMvcRequest(get("/api/hyperion/admin/workers")).andExpect(status().isUnauthorized());
+        Mockito.verify(workerRegistry, Mockito.never()).workerStatuses();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void generationWorkers_instructor_isForbidden() throws Exception {
+        request.performMvcRequest(get("/api/hyperion/admin/workers")).andExpect(status().isForbidden());
+        Mockito.verify(workerRegistry, Mockito.never()).workerStatuses();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void generationWorkers_admin_returnsDiagnosticSnapshot() throws Exception {
+        Mockito.when(workerRegistry.workerStatuses()).thenReturn(List.of(new GenerationWorkerStatusDTO("worker-1", GenerationWorkerState.OFFLINE, null, null, null, null, false)));
+        request.performMvcRequest(get("/api/hyperion/admin/workers")).andExpect(status().isOk()).andExpect(jsonPath("$[0].workerId").value("worker-1"))
+                .andExpect(jsonPath("$[0].state").value("OFFLINE")).andExpect(jsonPath("$[0].lastHeartbeat").doesNotExist());
     }
 
     @Test

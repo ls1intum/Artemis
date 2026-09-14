@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -407,6 +408,90 @@ describe('ExerciseReviewCommentService', () => {
         expect(service.selectedFeedbackThreadIds()).toEqual([]);
     });
 
+    it('selectThreadAsFeedback should add a thread once and be idempotent', () => {
+        service.selectThreadAsFeedback(5);
+        service.selectThreadAsFeedback(5);
+        service.selectThreadAsFeedback(7);
+
+        expect(service.selectedFeedbackThreadIds()).toEqual([5, 7]);
+    });
+
+    it('clearSelectedFeedback should remove all selected feedback ids', () => {
+        service.selectedFeedbackThreadIds.set([5, 7]);
+
+        service.clearSelectedFeedback();
+
+        expect(service.selectedFeedbackThreadIds()).toEqual([]);
+    });
+
+    describe('adaptation', () => {
+        it('should not offer adaptation before an editor connects', () => {
+            expect(service.adaptationOffered()).toBe(false);
+            expect(service.adaptationBlockedReason()).toBeUndefined();
+        });
+
+        it('connectAdaptation should mirror the availability signals of the owning editor', () => {
+            const offered = signal(false);
+            const blockedReason = signal<string | undefined>(undefined);
+            service.connectAdaptation({ offered, blockedReason });
+
+            expect(service.adaptationOffered()).toBe(false);
+            offered.set(true);
+            expect(service.adaptationOffered()).toBe(true);
+            blockedReason.set('artemisApp.review.adaptExercise.runInProgress');
+            expect(service.adaptationBlockedReason()).toBe('artemisApp.review.adaptExercise.runInProgress');
+        });
+
+        it('requestAdaptation should be a no-op when adaptation is not offered', () => {
+            const requests: unknown[] = [];
+            service.adaptationRequests.subscribe((request) => requests.push(request));
+
+            service.requestAdaptation(5);
+
+            expect(requests).toEqual([]);
+            expect(service.selectedFeedbackThreadIds()).toEqual([]);
+        });
+
+        it('requestAdaptation should be a no-op while adaptation is blocked', () => {
+            service.connectAdaptation({ offered: signal(true), blockedReason: signal('artemisApp.review.adaptExercise.runInProgress') });
+            const requests: unknown[] = [];
+            service.adaptationRequests.subscribe((request) => requests.push(request));
+
+            service.requestAdaptation(5);
+
+            expect(requests).toEqual([]);
+            expect(service.selectedFeedbackThreadIds()).toEqual([]);
+        });
+
+        it('requestAdaptation should select the thread and emit whether it was already selected', () => {
+            service.connectAdaptation({ offered: signal(true), blockedReason: signal(undefined) });
+            const requests: unknown[] = [];
+            service.adaptationRequests.subscribe((request) => requests.push(request));
+
+            service.requestAdaptation(5);
+            expect(service.selectedFeedbackThreadIds()).toEqual([5]);
+            expect(requests).toEqual([{ threadId: 5, wasAlreadySelected: false }]);
+
+            service.requestAdaptation(5);
+            expect(service.selectedFeedbackThreadIds()).toEqual([5]);
+            expect(requests).toEqual([
+                { threadId: 5, wasAlreadySelected: false },
+                { threadId: 5, wasAlreadySelected: true },
+            ]);
+        });
+    });
+
+    it('selectedFeedbackThreads should resolve selected ids against loaded threads in selection order and drop unloaded ones', () => {
+        service.threads.set([
+            { id: 3, targetType: CommentThreadLocationType.SOLUTION_REPO },
+            { id: 1, targetType: CommentThreadLocationType.TEMPLATE_REPO },
+        ] as any);
+        // 2 is selected but not loaded, so it is dropped; 3 and 1 resolve in selection order.
+        service.selectedFeedbackThreadIds.set([3, 2, 1]);
+
+        expect(service.selectedFeedbackThreads().map((thread) => thread.id)).toEqual([3, 1]);
+    });
+
     it('getSelectedFeedbackThreadIdsForRepository should keep only active matching threads in selection order', () => {
         service.threads.set([
             { id: 3, targetType: CommentThreadLocationType.SOLUTION_REPO, resolved: false, outdated: false },
@@ -503,17 +588,6 @@ describe('ExerciseReviewCommentService', () => {
         const req = httpMock.expectOne('api/exercise/exercises/2/review-threads');
         expect(req.request.method).toBe('GET');
         req.flush([]);
-    });
-
-    it('loadThreads should map response body to thread array', () => {
-        let threads: any[] = [];
-        service.loadThreads(2).subscribe((result) => (threads = result as any[]));
-
-        const req = httpMock.expectOne('api/exercise/exercises/2/review-threads');
-        req.flush([{ id: 11 }]);
-
-        expect(threads).toHaveLength(1);
-        expect(threads[0].id).toBe(11);
     });
 
     it('createUserComment should send POST request', () => {

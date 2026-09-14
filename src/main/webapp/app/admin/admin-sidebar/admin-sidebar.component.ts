@@ -69,6 +69,7 @@ export class AdminSidebarComponent {
     passkeyEnabled = input<boolean>(false);
     isSuperAdmin = input<boolean>(false);
     irisEnabled = input<boolean>(false);
+    hyperionGenerationEnabled = input(false);
 
     toggleCollapseState = output<void>();
 
@@ -232,6 +233,16 @@ export class AdminSidebarComponent {
                 testId: 'admin-websocket',
             },
         ];
+
+        if (this.hyperionGenerationEnabled()) {
+            monitoringItems.push({
+                routerLink: '/admin/hyperion-workers',
+                icon: faRobot,
+                title: 'Hyperion Workers',
+                translation: 'artemisApp.hyperion.workers.title',
+                testId: 'admin-hyperion-workers',
+            });
+        }
 
         if (this.irisEnabled()) {
             monitoringItems.push({

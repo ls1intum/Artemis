@@ -1,3 +1,4 @@
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Routes } from '@angular/router';
 import { userManagementRoute } from 'app/admin/user-management/user-management.route';
 import { systemNotificationManagementRoute } from 'app/admin/system-notification-management/system-notification-management.route';
@@ -185,6 +186,15 @@ const childRoutes: Routes = [
         data: {
             authorities: IS_AT_LEAST_SUPER_ADMIN,
             pageTitle: 'artemisApp.adminPasskeyManagement.title',
+        },
+    },
+    {
+        path: 'hyperion-workers',
+        canActivate: [UserRouteAccessService],
+        loadComponent: () => import('app/hyperion/admin/hyperion-workers.component').then((m) => m.HyperionWorkersComponent),
+        data: {
+            pageTitle: 'artemisApp.hyperion.workers.title',
+            authorities: IS_AT_LEAST_ADMIN,
         },
     },
     {

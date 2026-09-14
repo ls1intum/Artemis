@@ -2,13 +2,14 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input, 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { TumUiDisabledReasonDirective } from '../disabled-reason/tum-ui-disabled-reason.directive';
 import { TumUiButtonSeverity, TumUiButtonSize, TumUiButtonVariant, tumUiButtonClasses } from './tum-ui-button.variants';
 
 @Component({
     selector: 'tum-ui-button',
     templateUrl: './tum-ui-button.component.html',
     styleUrl: './tum-ui-button.component.scss',
-    imports: [FaIconComponent],
+    imports: [FaIconComponent, TumUiDisabledReasonDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiButtonComponent {
@@ -17,6 +18,11 @@ export class TumUiButtonComponent {
 
     readonly variant = input<TumUiButtonVariant>('solid');
     readonly disabled = input(false, { transform: booleanAttribute });
+    /**
+     * Why the button cannot be used right now. Unlike `disabled`, the button stays hoverable and focusable so the reason
+     * can be shown as a tooltip; see {@link TumUiDisabledReasonDirective}. Empty or undefined leaves the button enabled.
+     */
+    readonly disabledReason = input<string | undefined>(undefined);
 
     readonly rounded = input(false, { transform: booleanAttribute });
 

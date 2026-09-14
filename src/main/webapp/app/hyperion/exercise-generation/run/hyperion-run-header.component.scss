@@ -1,0 +1,44 @@
+/*
+ * The page's L1 heading, sized by this component rather than by a stack of `!` utilities.
+ *
+ * Bootstrap ships `h1 { margin-bottom: .5rem; font-weight: 500; line-height: 1.2; color: var(--bs-heading-color) }`
+ * and a `calc(1.35rem + 1.2vw)` font size, both unlayered, and `global.scss` adds `h1..h4 { font-weight: 400 }`. All of
+ * them beat Tailwind's `@layer utilities`, so `class="m-0 text-xl font-semibold"` on this element set *nothing*: not
+ * the size, not the weight, and not even the margin. A class selector inside an Angular component carries the
+ * encapsulation attribute, so it outranks a bare element selector on specificity and needs no `!important` at all —
+ * which is the same mechanism `tum-ui-card-title` uses, applied here because the card title is fixed at the L2 size
+ * and this is the page's L1.
+ *
+ * The values are named from the Tailwind type scale (`--text-xl`, `--font-weight-semibold`), which is emitted at
+ * `:root` by the app's own `tailwind.css`, so the heading and a `text-xl` utility elsewhere cannot drift apart.
+ */
+.hyperion-run-title {
+    margin: 0;
+    font-size: var(--text-xl);
+    line-height: var(--text-xl--line-height);
+    font-weight: var(--font-weight-semibold);
+
+    /* Not `--bs-heading-color`: the title takes the colour of the card it sits on, as every other heading here does. */
+    color: inherit;
+    text-wrap: balance;
+}
+
+/*
+ * The facts rail's qualifiers.
+ *
+ * Colour is named through the TUM UI semantic layer rather than through a `text-state-*` utility on purpose. Artemis'
+ * `text-state-warning` aliases the raw Bootstrap fill (#ffc107), which measures 1.63:1 on a light card — below the
+ * 3:1 WCAG 2.2 SC 1.4.11 asks of a non-text graphic, let alone the 4.5:1 this is as text. The `-foreground` token is
+ * the value the design system already corrected for both themes (#604c0c light, #f39c12 dark), and both pass.
+ *
+ * The colour is never the only signal: the qualifier is a sentence ("longer than usual — still working"), so the state
+ * survives greyscale, Windows High Contrast and a screen reader unchanged.
+ */
+.hyperion-fact-qualifier {
+    color: var(--tumaet-ui-muted-color);
+}
+
+.hyperion-fact-qualifier[data-band='over'] {
+    color: var(--tumaet-ui-state-warning-foreground);
+    font-weight: 500;
+}

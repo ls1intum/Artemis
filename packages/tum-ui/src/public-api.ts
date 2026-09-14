@@ -25,6 +25,7 @@ export { TumUiConfirmDialogComponent } from './lib/confirm-dialog/tum-ui-confirm
 export { TumUiConfirmationService, type TumUiConfirmationRequest } from './lib/confirm-dialog/tum-ui-confirmation.service';
 export { TumUiDatePickerComponent } from './lib/date-picker/tum-ui-date-picker.component';
 export { TumUiDialogComponent, type TumUiDialogSize } from './lib/dialog/tum-ui-dialog.component';
+export { TumUiDisabledReasonDirective } from './lib/disabled-reason/tum-ui-disabled-reason.directive';
 export { TumUiFormFieldComponent } from './lib/form-field/tum-ui-form-field.component';
 export { TUM_UI_FORM_FIELD, type TumUiFormFieldContext } from './lib/form-field/tum-ui-form-field.token';
 export { TUM_UI_TRANSLATOR, provideTumUiTranslator, type TumUiTranslationKey, type TumUiTranslationParams, type TumUiTranslator } from './lib/i18n/tum-ui-translations';
@@ -66,3 +67,18 @@ export { TumUiTagComponent, type TumUiTagSeverity } from './lib/tag/tum-ui-tag.c
 export { TumUiToggleSwitchComponent } from './lib/toggle-switch/tum-ui-toggle-switch.component';
 export { TumUiTooltipDirective } from './lib/tooltip/tum-ui-tooltip.directive';
 export type { TumUiOverlayPlacement } from './lib/overlay/tum-ui-overlay.service';
+
+export {
+    TumUiEmptyContentComponent,
+    TumUiEmptyDescriptionComponent,
+    TumUiEmptyHeaderComponent,
+    TumUiEmptyMediaComponent,
+    type TumUiEmptyMediaVariant,
+    TumUiEmptyTitleComponent,
+} from './lib/empty/tum-ui-empty-parts.component';
+export { TumUiEmptyComponent, type TumUiEmptySize } from './lib/empty/tum-ui-empty.component';
+export { TumUiProseComponent, type TumUiProseDensity } from './lib/prose/tum-ui-prose.component';
+export { TumUiSkeletonComponent } from './lib/skeleton/tum-ui-skeleton.component';
+export { TumUiStatusDotComponent, type TumUiStatusDotState } from './lib/status-dot/tum-ui-status-dot.component';
+export { TumUiStepComponent, type TumUiStepState } from './lib/stepper/tum-ui-step.component';
+export { TumUiStepperComponent, type TumUiStepperOrientation } from './lib/stepper/tum-ui-stepper.component';

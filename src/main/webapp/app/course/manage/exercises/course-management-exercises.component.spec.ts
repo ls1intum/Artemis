@@ -602,10 +602,20 @@ describe('Course Management Exercises Component', () => {
             expect(comp.groups()[0].exercises?.[0].title).toBe('Renamed');
         });
 
-        it('removes a deleted exercise from the list, its group and the selection', () => {
+        it.each(['row', 'generated draft'])('removes a deleted %s from the list, cards, group and selection', (source) => {
             comp.toggleSelection(1);
 
-            comp.onExerciseDeleted(comp.exercises()[0]);
+            if (source === 'row') {
+                comp.onExerciseDeleted(comp.exercises()[0]);
+            } else {
+                comp.onGeneratedExerciseDeleted(1);
+            }
+            expect(
+                comp
+                    .cards()
+                    .flatMap((card) => card.exercises)
+                    .some((exercise) => exercise.id === 1),
+            ).toBe(false);
 
             expect(comp.exercises().map((e) => e.id)).toEqual([2]);
             expect(comp.groups()[0].exercises).toHaveLength(0);

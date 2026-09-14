@@ -23,6 +23,8 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvid
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionWorkerProperties;
+import de.tum.cit.aet.artemis.hyperion.domain.GenerationWorkerState;
+import de.tum.cit.aet.artemis.hyperion.dto.GenerationWorkerStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExecutionIdentity;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkerEvent;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkerMessageCodec;
@@ -194,6 +196,39 @@ public class GenerationWorkerRegistryService {
 
     public int availableWorkers() {
         return (int) properties.ids().stream().filter(worker -> availableSlots(worker, presence.get(worker)) > 0).count();
+    }
+
+    /**
+     * Returns a bounded diagnostic snapshot; it is not a reservation and must never be used for admission.
+     *
+     * @return one entry per configured worker, including workers whose heartbeat expired
+     */
+    public List<GenerationWorkerStatusDTO> workerStatuses() {
+        Instant now = Instant.now();
+        return properties.ids().stream().map(worker -> {
+            Presence live = presence.get(worker);
+            boolean leaseHeld = java.util.stream.IntStream.range(0, 16).anyMatch(slot -> leases.get(slotKey(worker, slot)) != null);
+            if (live == null || !live.receivedAt().plus(properties.presenceTtl()).isAfter(now)) {
+                return new GenerationWorkerStatusDTO(worker, GenerationWorkerState.OFFLINE, null, null, null, null, leaseHeld, 0, 0, List.of());
+            }
+            GenerationWorkerState state;
+            if (availableSlots(worker, live) > 0) {
+                state = GenerationWorkerState.AVAILABLE;
+            }
+            else if (!live.executions().isEmpty()) {
+                state = GenerationWorkerState.BUSY;
+            }
+            else if (leaseHeld) {
+                state = GenerationWorkerState.RESERVED;
+            }
+            else {
+                state = live.ready() ? GenerationWorkerState.AVAILABLE : GenerationWorkerState.NOT_READY;
+            }
+            return new GenerationWorkerStatusDTO(worker, state, live.receivedAt(), live.imageDigest(), live.incarnation(),
+                    live.executions().isEmpty() ? null : live.executions().getFirst().executionId(), leaseHeld, live.slots(), availableSlots(worker, live),
+                    live.executions().stream().map(execution -> new de.tum.cit.aet.artemis.hyperion.dto.GenerationWorkerExecutionDTO(execution.slot(), execution.executionId(),
+                            execution.jobId(), execution.exerciseId())).toList());
+        }).toList();
     }
 
     private boolean available(@Nullable Presence value) {
