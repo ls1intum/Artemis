@@ -8,11 +8,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.athena.config.AthenaEnabled;
-import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
 import de.tum.cit.aet.artemis.athena.service.AthenaScheduleService;
 import de.tum.cit.aet.artemis.athena.service.AthenaSubmissionSelectionService;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Conditional(AthenaEnabled.class)
@@ -20,15 +17,11 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 @Lazy
 public class AthenaApi extends AbstractAthenaApi {
 
-    private final AthenaModuleService athenaModuleService;
-
     private final Optional<AthenaScheduleService> athenaScheduleService;
 
     private final AthenaSubmissionSelectionService athenaSubmissionSelectionService;
 
-    public AthenaApi(AthenaModuleService athenaModuleService, Optional<AthenaScheduleService> athenaScheduleService,
-            AthenaSubmissionSelectionService athenaSubmissionSelectionService) {
-        this.athenaModuleService = athenaModuleService;
+    public AthenaApi(Optional<AthenaScheduleService> athenaScheduleService, AthenaSubmissionSelectionService athenaSubmissionSelectionService) {
         this.athenaScheduleService = athenaScheduleService;
         this.athenaSubmissionSelectionService = athenaSubmissionSelectionService;
     }
@@ -45,15 +38,4 @@ public class AthenaApi extends AbstractAthenaApi {
         return athenaSubmissionSelectionService.getProposedSubmissionId(exercise, submissionIds);
     }
 
-    public void checkHasAccessToAthenaModule(Exercise exercise, Course course, String entityName) throws BadRequestAlertException {
-        athenaModuleService.checkHasAccessToAthenaModule(exercise, course, entityName);
-    }
-
-    public void checkValidAthenaModuleChange(Exercise originalExercise, Exercise updatedExercise, String entityName) throws BadRequestAlertException {
-        athenaModuleService.checkValidAthenaModuleChange(originalExercise, updatedExercise, entityName);
-    }
-
-    public void revokeAccessToRestrictedFeedbackSuggestionModules(Course course) {
-        athenaModuleService.revokeAccessToRestrictedFeedbackSuggestionModules(course);
-    }
 }

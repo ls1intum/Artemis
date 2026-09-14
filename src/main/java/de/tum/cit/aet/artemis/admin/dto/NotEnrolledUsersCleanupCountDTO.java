@@ -3,11 +3,15 @@ package de.tum.cit.aet.artemis.admin.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * DTO previewing the number of users that would be soft-deleted (and anonymized) by the not-enrolled-user cleanup, i.e.
- * users who are enrolled in no course and have been inactive beyond the configured guard period.
+ * DTO previewing the not-enrolled-user cleanup. A candidate is eligible only if no business-domain reference remains.
  *
- * @param users the number of affected users
+ * @param users        number of eligible users
+ * @param blockedUsers number of candidates blocked by remaining references
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record NotEnrolledUsersCleanupCountDTO(int users) {
+public record NotEnrolledUsersCleanupCountDTO(int users, int blockedUsers) {
+
+    public NotEnrolledUsersCleanupCountDTO(int users) {
+        this(users, 0);
+    }
 }

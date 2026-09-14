@@ -21,13 +21,11 @@
     </div>
     <div class="flex items-center flex-wrap gap-3">
         <div class="chart-container">
-            <p-chart
-                type="doughnut"
-                [data]="chartData()"
-                [options]="chartOptions()"
-                [responsive]="false"
-                width="80px"
-                height="80px"
+            <tum-ui-doughnut-chart
+                class="h-20 w-20"
+                [labels]="chartData().labels"
+                [series]="chartData().series"
+                [config]="chartConfig"
                 [ariaLabel]="'artemisApp.buildQueue.statistics.title' | artemisTranslate"
             />
         </div>

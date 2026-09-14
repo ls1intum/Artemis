@@ -22,7 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.model.ToolContext;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
@@ -67,7 +67,7 @@ class EditorToolsServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new EditorToolsService(new ObjectMapper(), courseCompetencyRepository, courseCompetencyService, competencyValidator, atlasMLNotificationService);
+        service = new EditorToolsService(new JsonMapper(), courseCompetencyRepository, courseCompetencyService, competencyValidator, atlasMLNotificationService);
         appliedActions = Collections.synchronizedList(new ArrayList<>());
         appliedActionsBuffer = new AppliedActionsBuffer(appliedActions);
         Map<String, Object> ctx = new HashMap<>();

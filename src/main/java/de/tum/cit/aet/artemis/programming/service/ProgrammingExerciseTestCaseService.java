@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -184,7 +185,7 @@ public class ProgrammingExerciseTestCaseService {
         return updatedTestCases;
     }
 
-    public void logTestCaseReset(User user, ProgrammingExercise exercise, Course course) {
+    public void logTestCaseReset(@NonNull User user, @NonNull ProgrammingExercise exercise, @NonNull Course course) {
         var auditEvent = new AuditEvent(user.getLogin(), Constants.RESET_GRADING, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} requested to reset the grading configuration for exercise {} with id {}", user.getLogin(), exercise.getTitle(), exercise.getId());

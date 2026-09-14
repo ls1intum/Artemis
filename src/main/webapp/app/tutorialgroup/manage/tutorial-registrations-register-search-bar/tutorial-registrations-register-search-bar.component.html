@@ -1,20 +1,22 @@
-<p-iconfield class="search-field">
-    <p-inputicon class="pi pi-search" />
+<tum-ui-icon-field class="search-field" [icon]="faMagnifyingGlass">
     <input
         #searchInput
-        pInputText
-        class="search-input p-inputtext-sm"
+        tumUiInput
+        tumUiInputSize="small"
+        class="search-input"
         type="text"
         [placeholder]="searchBarPlaceholder()"
+        [attr.aria-label]="searchBarPlaceholder()"
         [(ngModel)]="searchString"
         (keydown)="onKeyDown($event)"
         (focusout)="onInputFocusOut()"
         (focusin)="onInputFocusIn()"
     />
     @if (firstSuggestedStudentsPageLoading()) {
-        <p-inputicon class="pi pi-spin pi-spinner" />
+        <!-- The field owns one icon slot, so the busy indicator sits on the trailing edge on its own. -->
+        <fa-icon class="search-busy" [icon]="faSpinner" animation="spin" aria-hidden="true" />
     }
-</p-iconfield>
+</tum-ui-icon-field>
 
 <ng-template #panelTemplate>
     <div class="search-panel">
@@ -23,7 +25,7 @@
         @let noSuggestionsFound = suggestedStudents().length === 0;
         @if (somethingWasSearchedFor && initialSearchComplete && noSuggestionsFound) {
             <div class="no-results">
-                <i class="pi pi-exclamation-circle"></i>
+                <fa-icon [icon]="faCircleExclamation" aria-hidden="true" />
                 <span jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.registerSearchBar.noResultsText"></span>
             </div>
         } @else {
@@ -41,7 +43,7 @@
                 </button>
                 @if (nextSuggestedStudentsPageLoading()) {
                     <div class="loading-row">
-                        <span class="pi pi-spin pi-spinner"></span>
+                        <fa-icon [icon]="faSpinner" animation="spin" aria-hidden="true" />
                     </div>
                 }
             </cdk-virtual-scroll-viewport>

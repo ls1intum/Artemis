@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -1329,8 +1330,8 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     private ExerciseSnapshotDTO buildExerciseSnapshot(long exerciseId, String problemStatement, ProgrammingExerciseSnapshotDTO programmingData) {
-        return new ExerciseSnapshotDTO(exerciseId, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, problemStatement, null,
-                null, null, null, null, null, null, null, programmingData, null, null, null, null);
+        return new ExerciseSnapshotDTO(exerciseId, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, problemStatement, null, null,
+                null, null, null, null, null, programmingData, null, null, null, null);
     }
 
     private ProgrammingExerciseSnapshotDTO buildProgrammingSnapshot(String testRepositoryUri, String testsCommitId,
@@ -1390,7 +1391,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     private LocalRepoWithGit createLocalRepositoryWithGit(String suffix) throws Exception {
-        String repositorySlug = programmingExercise.getProjectKey().toLowerCase() + "-" + suffix;
+        String repositorySlug = programmingExercise.getProjectKey().toLowerCase(Locale.ROOT) + "-" + suffix;
         localVCService.createProjectForExercise(programmingExercise);
         localVCService.createRepository(programmingExercise.getProjectKey(), repositorySlug);
         LocalVCRepositoryUri repositoryUri = new LocalVCRepositoryUri(localVCBaseUri, programmingExercise.getProjectKey(), repositorySlug);

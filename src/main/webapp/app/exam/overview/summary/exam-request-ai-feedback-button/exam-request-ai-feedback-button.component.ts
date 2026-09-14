@@ -58,25 +58,34 @@ export class ExamRequestAiFeedbackButtonComponent {
 
     readonly receivedAthenaResultExerciseIds = signal<ReadonlySet<number>>(new Set());
 
-    readonly hasExerciseWithFeedbackSuggestionModule = computed(() => {
-        return (this.studentExam()?.exercises ?? []).some(
-            (exercise) => (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING) && !!exercise.feedbackSuggestionModule,
-        );
+    readonly hasAthenaFeedbackSupportedExercise = computed(() => {
+        const exam = this.studentExam();
+        if (!exam?.exam?.course?.athenaFormativeFeedbackEnabled) {
+            return false;
+        }
+        return (exam?.exercises ?? []).some((exercise) => exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING);
     });
 
+    // Test runs are the instructor's own rehearsal of a real exam and get the same formative feedback as a student's
+    // test exam attempt, so both kinds of attempt show the button. A test run summary is also reachable for the test
+    // runs of other instructors, where the server rejects the request, so those do not show the button.
     readonly isVisible = computed(() => {
         const exam = this.studentExam();
-        return !!exam?.exam?.testExam && this.athenaEnabled() && !!exam.submitted && !this.testExamConduction() && this.hasExerciseWithFeedbackSuggestionModule();
+        const isTestRun = !!exam?.testRun;
+        if (isTestRun && exam?.user?.id !== this.accountService.userIdentity()?.id) {
+            return false;
+        }
+        const isTestExamOrTestRun = !!exam?.exam?.testExam || isTestRun;
+        return isTestExamOrTestRun && this.athenaEnabled() && !!exam.submitted && !this.testExamConduction() && this.hasAthenaFeedbackSupportedExercise();
     });
 
     private readonly eligibleExerciseIds = computed(() => {
-        return (this.studentExam()?.exercises ?? [])
-            .filter(
-                (exercise) =>
-                    (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING) &&
-                    !!exercise.feedbackSuggestionModule &&
-                    this.hasNonEmptyLatestSubmission(exercise),
-            )
+        const exam = this.studentExam();
+        if (!exam?.exam?.course?.athenaFormativeFeedbackEnabled) {
+            return [];
+        }
+        return (exam?.exercises ?? [])
+            .filter((exercise) => (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING) && this.hasNonEmptyLatestSubmission(exercise))
             .map((exercise) => exercise.id)
             .filter((id): id is number => id !== undefined);
     });
@@ -132,7 +141,6 @@ export class ExamRequestAiFeedbackButtonComponent {
     }
 
     private athenaResultSubscriptions: Subscription[] = [];
-    private currentAttemptCounted = false;
 
     constructor() {
         let initialized = false;
@@ -220,6 +228,9 @@ export class ExamRequestAiFeedbackButtonComponent {
                     this.isRequestingFeedback.set(false);
                     this.localStorageService.store(this.getFeedbackRequestedStorageKey(), true);
                     this.alertService.success('artemisApp.exam.examSummary.feedbackRequestSent');
+                    // The server reserves this attempt's cap slot synchronously with accepting the request (before
+                    // generation completes), so refresh usage now rather than waiting for a result to arrive.
+                    this.refreshAthenaFeedbackUsage();
                 },
                 error: (error: HttpErrorResponse) => {
                     this.isRequestingFeedback.set(false);
@@ -233,6 +244,15 @@ export class ExamRequestAiFeedbackButtonComponent {
         if (!this.isVisible()) {
             return;
         }
+        this.refreshAthenaFeedbackUsage(() => this.alertService.error('artemisApp.exam.examSummary.feedbackUsageLoadFailed'));
+        this.subscribeToAthenaResultsForCurrentAttempt();
+    }
+
+    // The server's usage count is reservation-based: it counts an attempt as soon as a request for it is accepted,
+    // not once generation completes (see StudentExamAthenaFeedbackService#requestAthenaFeedback). Always
+    // re-fetching it here - rather than inferring "already counted" from completed results and bumping locally -
+    // keeps the badge correct even if the page is reloaded while a request for this attempt is still pending.
+    private refreshAthenaFeedbackUsage(onError?: () => void): void {
         const ids = this.getExamRequestIds();
         if (!ids) {
             return;
@@ -244,15 +264,8 @@ export class ExamRequestAiFeedbackButtonComponent {
                 next: (usage) => {
                     this.athenaFeedbackUsed.set(usage.used);
                     this.athenaFeedbackLimit.set(usage.limit);
-                    // If the server already counts this attempt as consumed, don't bump again on incoming websocket results.
-                    this.currentAttemptCounted = this.hasAnyAthenaResultForCurrentAttempt();
-                    this.subscribeToAthenaResultsForCurrentAttempt();
                 },
-                error: () => {
-                    this.alertService.error('artemisApp.exam.examSummary.feedbackUsageLoadFailed');
-                    this.currentAttemptCounted = this.hasAnyAthenaResultForCurrentAttempt();
-                    this.subscribeToAthenaResultsForCurrentAttempt();
-                },
+                error: () => onError?.(),
             });
     }
 
@@ -305,27 +318,17 @@ export class ExamRequestAiFeedbackButtonComponent {
 
     private handleAthenaResult(result: Result, exerciseId?: number): void {
         const isFinalResult = result.successful === true || result.successful === false;
-        if (!isFinalResult) {
+        if (!isFinalResult || exerciseId === undefined) {
             return;
         }
-        if (exerciseId !== undefined) {
-            this.receivedAthenaResultExerciseIds.update((set) => {
-                if (set.has(exerciseId)) {
-                    return set;
-                }
-                const next = new Set(set);
-                next.add(exerciseId);
-                return next;
-            });
-        }
-        if (result.successful !== true || !result.completionDate) {
-            return;
-        }
-        if (this.currentAttemptCounted) {
-            return;
-        }
-        this.athenaFeedbackUsed.update((used) => used + 1);
-        this.currentAttemptCounted = true;
+        this.receivedAthenaResultExerciseIds.update((set) => {
+            if (set.has(exerciseId)) {
+                return set;
+            }
+            const next = new Set(set);
+            next.add(exerciseId);
+            return next;
+        });
     }
 
     private getFeedbackRequestedStorageKey(): string {
@@ -333,7 +336,7 @@ export class ExamRequestAiFeedbackButtonComponent {
     }
 
     private translationKeyForErrorKey(errorKey: string): string {
-        if (errorKey === 'noFeedbackSuggestionModuleConfigured') {
+        if (errorKey === 'noCourseLevelAthenaFormativeEnabled') {
             return `artemisApp.exam.examSummary.${errorKey}`;
         }
         return `artemisApp.exercise.${errorKey}`;

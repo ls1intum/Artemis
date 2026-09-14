@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
@@ -463,7 +464,7 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         var configuration = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(tutorialGroup.getCourse().getId()).getTutorialGroupsConfiguration();
 
         Function<TutorialGroup, String> expectedTutorialGroupName = (TutorialGroup tg) -> {
-            var cleanedTitle = tg.getTitle().replaceAll("\\s", "-").toLowerCase();
+            var cleanedTitle = tg.getTitle().replaceAll("\\s", "-").toLowerCase(Locale.ROOT);
             return "tutorgroup-" + cleanedTitle.substring(0, Math.min(cleanedTitle.length(), 18));
         };
         var tutorialGroupFromDb = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroup.getId());

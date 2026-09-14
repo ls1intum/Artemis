@@ -1,25 +1,25 @@
 <h2 jhiTranslate="artemisApp.userSettings.vcsAccessTokenSettings"></h2>
 @if (currentUser(); as currentUser) {
-    <div class="list-group d-block">
-        <div class="list-group-item">
+    <tum-ui-list [ariaLabel]="'artemisApp.userSettings.vcsAccessTokenSettings' | artemisTranslate">
+        <li tumUiListItem>
             <dt>
                 <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.infoText"></span>
             </dt>
-        </div>
+        </li>
         @if (!edit()) {
-            <div class="list-group-item">
+            <li tumUiListItem>
                 @if (currentUser.vcsAccessToken) {
-                    <table class="table table-striped">
-                        <thead class="thead-dark">
+                    <table tumUiTable [striped]="true" class="w-full">
+                        <thead>
                             <tr>
-                                <th class="col-2">
+                                <th>
                                     <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.vcsAccessToken"></span>
                                 </th>
-                                <th class="col-1"></th>
-                                <th class="col-4">
+                                <th></th>
+                                <th>
                                     <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.expiryDate"></span>
                                 </th>
-                                <th class="col-4">
+                                <th>
                                     <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.actions"></span>
                                 </th>
                             </tr>
@@ -34,16 +34,20 @@
                                 <td>{{ currentUser.vcsAccessTokenExpiryDate | artemisDate }}</td>
                                 <td>
                                     <button
-                                        class="btn btn-md flex-grow-1 d-flex align-items-center"
+                                        type="button"
+                                        tumUiButton
+                                        severity="danger"
+                                        size="small"
                                         id="delete-vcs-token-button"
                                         jhiDeleteButton
+                                        [renderButtonStyle]="false"
                                         [renderButtonText]="false"
                                         (delete)="deleteVcsAccessToken()"
                                         deleteQuestion="artemisApp.userSettings.vcsAccessTokensSettingsPage.deleteVcsAccessTokenQuestion"
                                         [dialogError]="dialogError$"
                                     >
                                         <fa-icon [icon]="faTrash" />
-                                        <div jhiTranslate="entity.action.delete" class="ms-2"></div>
+                                        <span jhiTranslate="entity.action.delete"></span>
                                     </button>
                                 </td>
                             </tr>
@@ -52,61 +56,39 @@
                 } @else {
                     <div jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.noTokenSet"></div>
                 }
-            </div>
+            </li>
             @if (!currentUser.vcsAccessToken) {
-                <div class="list-group-item">
-                    <div class="btn-group" role="group" aria-label="Actions">
-                        <jhi-button
-                            class="d-flex"
-                            id="add-new-token-button"
-                            [btnType]="ButtonType.PRIMARY"
-                            [btnSize]="ButtonSize.SMALL"
-                            [icon]="faPlus"
-                            [title]="'artemisApp.userSettings.vcsAccessTokensSettingsPage.addToken'"
-                            (onClick)="addNewVcsAccessToken()"
-                        />
-                    </div>
-                </div>
+                <li tumUiListItem>
+                    <tum-ui-button class="self-start" id="add-new-token-button" size="small" [icon]="faPlus" (clicked)="addNewVcsAccessToken()">
+                        <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.addToken"></span>
+                    </tum-ui-button>
+                </li>
             }
         } @else {
-            <div class="list-group-item">
+            <li tumUiListItem>
                 <h4 jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.addTokenTitle"></h4>
 
-                <div class="row mb-3">
-                    <div class="col-sm-6">
-                        <jhi-date-time-picker
-                            [shouldDisplayTimeZoneWarning]="false"
-                            labelName="{{ 'artemisApp.userSettings.vcsAccessTokensSettingsPage.expiryDate' | artemisTranslate }}"
-                            [(ngModel)]="expiryDate"
-                            (valueChange)="validateDate()"
-                            [error]="!!expiryDate && !validExpiryDate()"
-                            name="expiryDate"
-                            id="expiryDate"
-                        />
-                    </div>
+                <div class="mb-3 sm:w-1/2">
+                    <jhi-date-time-picker
+                        [shouldDisplayTimeZoneWarning]="false"
+                        labelName="{{ 'artemisApp.userSettings.vcsAccessTokensSettingsPage.expiryDate' | artemisTranslate }}"
+                        [(ngModel)]="expiryDate"
+                        (valueChange)="validateDate()"
+                        [error]="!!expiryDate && !validExpiryDate()"
+                        name="expiryDate"
+                        id="expiryDate"
+                    />
                 </div>
 
-                <div class="btn-group" role="group" aria-label="Actions">
-                    <jhi-button
-                        class="me-1"
-                        id="create-vcs-token-button"
-                        [btnType]="ButtonType.PRIMARY"
-                        [btnSize]="ButtonSize.SMALL"
-                        [disabled]="!validExpiryDate()"
-                        [icon]="faSave"
-                        [title]="'artemisApp.userSettings.vcsAccessTokensSettingsPage.createAccessToken'"
-                        (onClick)="sendTokenCreationRequest()"
-                    />
-                    <jhi-button
-                        id="cancel-vcs-token-creation-button"
-                        [btnType]="ButtonType.SECONDARY"
-                        [btnSize]="ButtonSize.SMALL"
-                        [icon]="faBan"
-                        [title]="'entity.action.cancel'"
-                        (onClick)="cancelTokenCreation()"
-                    />
+                <div class="flex gap-2">
+                    <tum-ui-button id="create-vcs-token-button" size="small" [disabled]="!validExpiryDate()" [icon]="faSave" (clicked)="sendTokenCreationRequest()">
+                        <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.createAccessToken"></span>
+                    </tum-ui-button>
+                    <tum-ui-button id="cancel-vcs-token-creation-button" severity="secondary" size="small" [icon]="faBan" (clicked)="cancelTokenCreation()">
+                        <span jhiTranslate="entity.action.cancel"></span>
+                    </tum-ui-button>
                 </div>
-            </div>
+            </li>
         }
-    </div>
+    </tum-ui-list>
 }

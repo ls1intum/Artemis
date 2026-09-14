@@ -124,7 +124,7 @@
             @if (attendancePercentage) {
                 <div class="attendance-card-content">
                     <span class="doughnut-chart-text">{{ attendancePercentage }}</span>
-                    <p-chart type="doughnut" [data]="chartData()" [options]="chartOptions()" [responsive]="false" width="122px" height="122px" aria-hidden="true" />
+                    <tum-ui-doughnut-chart class="h-[122px] w-[122px]" [labels]="chartData().labels" [series]="chartData().series" [config]="chartConfig" aria-hidden="true" />
                 </div>
             } @else {
                 <div class="disclaimer" data-testid="no-attendance-data-available-disclaimer">

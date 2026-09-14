@@ -7,9 +7,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
@@ -42,6 +45,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.Enf
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
@@ -69,6 +73,7 @@ import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
 
 @Conditional(LectureEnabled.class)
 @Lazy
+@FeatureUsage("units/attachment-video-units")
 @RestController
 @RequestMapping("api/lecture/")
 public class AttachmentVideoUnitResource {
@@ -76,6 +81,18 @@ public class AttachmentVideoUnitResource {
     private static final Logger log = LoggerFactory.getLogger(AttachmentVideoUnitResource.class);
 
     private static final String ENTITY_NAME = "attachmentVideoUnit";
+
+    /**
+     * Schemes a videoSource may carry. The value ends up in an {@code <iframe src>} in the client, so this is the same
+     * set the client's safeResourceUrl pipe accepts; keep the two in step.
+     */
+    private static final Set<String> EMBEDDABLE_VIDEO_SOURCE_SCHEMES = Set.of("http", "https");
+
+    /** The scheme production from RFC 3986, anchored: a match means the value opens with a scheme. */
+    private static final Pattern URL_SCHEME = Pattern.compile("^([A-Za-z][A-Za-z0-9+.\\-]*):");
+
+    /** C0 controls and DEL. A browser drops some of these before parsing a URL, which can reveal a hidden scheme. */
+    private static final Pattern URL_CONTROL_CHARACTERS = Pattern.compile("[\\u0000-\\u001F\\u007F]");
 
     private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
 
@@ -166,7 +183,7 @@ public class AttachmentVideoUnitResource {
             throw new BadRequestAlertException("Hidden slide dates cannot be in the past", ENTITY_NAME, "invalidHiddenDates");
         }
 
-        validateYouTubeVideoSource(attachmentVideoUnitDTO.videoSource());
+        validateVideoSource(attachmentVideoUnitDTO.videoSource());
         AttachmentUpdateIntent updateIntent = attachmentVideoUnitDTO.attachmentUpdateIntent();
         validateAttachmentUpdateIntent(updateIntent, file, existingAttachmentVideoUnit, attachment);
 
@@ -183,11 +200,8 @@ public class AttachmentVideoUnitResource {
                 file, keepFilename, hiddenPages, pageOrder, originalCompetencyIds);
 
         if (notificationText != null && attachment != null) {
-            Attachment changedAttachment = savedAttachmentVideoUnit.getAttachment();
-            // notifyStudentGroupAboutAttachmentChange derives the course via attachment.getLecture(); a unit attachment does not carry its lecture,
-            // so set it from the (already course-loaded) unit lecture to avoid a NullPointerException.
-            changedAttachment.setLecture(savedAttachmentVideoUnit.getLecture());
-            groupNotificationService.notifyStudentGroupAboutAttachmentChange(changedAttachment);
+            // The unit lecture is already loaded with its course, which is what the notification resolves the recipients from.
+            groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentVideoUnit.getAttachment(), savedAttachmentVideoUnit.getLecture());
         }
 
         searchableEntityWeaviateService.ifPresent(service -> {
@@ -261,9 +275,9 @@ public class AttachmentVideoUnitResource {
             throw new BadRequestAlertException("A fileless attachment must include a link", ENTITY_NAME, "attachmentLinkRequired");
         }
 
-        validateYouTubeVideoSource(attachmentVideoUnitDTO.videoSource());
+        validateVideoSource(attachmentVideoUnitDTO.videoSource());
 
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
         }
@@ -349,7 +363,7 @@ public class AttachmentVideoUnitResource {
 
         try {
             byte[] fileBytes = fileService.getFileForPath(filePath);
-            var lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
+            var lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
             var savedUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitSplitInformationDTO, fileBytes, lecture);
             savedUnits.forEach(attachmentVideoUnitService::prepareAttachmentVideoUnitForClient);
 
@@ -492,7 +506,7 @@ public class AttachmentVideoUnitResource {
      * @param lectureId The id of the lecture
      */
     private void checkLectureElseThrow(Long lectureId) {
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
         }
@@ -514,15 +528,56 @@ public class AttachmentVideoUnitResource {
     }
 
     /**
-     * Rejects URLs that look like YouTube links (recognized host) but cannot be parsed to a valid 11-character video id.
-     * Non-YouTube URLs are accepted unchanged; blank or {@code null} sources also pass.
+     * Validates the videoSource of a request payload.
+     * <p>
+     * Two checks, in order:
+     * <ol>
+     * <li>the scheme must be http or https. A videoSource is rendered into an {@code <iframe src>} in the client, so a
+     * scheme such as {@code javascript:} would execute there. The client pipe that marks the URL as safe rejects the
+     * same set, but the value is persisted and served to every viewer of the lecture, so it is refused on the way in
+     * rather than only on the way out.</li>
+     * <li>a URL on a recognized YouTube host must parse to a valid 11-character video id.</li>
+     * </ol>
+     * A blank or {@code null} source passes: the field is optional.
      *
      * @param videoSource the videoSource URL from the request payload
      */
-    private void validateYouTubeVideoSource(String videoSource) {
-        if (videoSource != null && !videoSource.isBlank() && youTubeUrlService.hasYouTubeHost(videoSource) && youTubeUrlService.extractYouTubeVideoId(videoSource).isEmpty()) {
+    private void validateVideoSource(String videoSource) {
+        if (videoSource == null || videoSource.isBlank()) {
+            return;
+        }
+        if (!hasEmbeddableScheme(videoSource)) {
+            throw new BadRequestAlertException("The video source must be an http or https URL", ENTITY_NAME, "invalidVideoSourceScheme");
+        }
+        if (youTubeUrlService.hasYouTubeHost(videoSource) && youTubeUrlService.extractYouTubeVideoId(videoSource).isEmpty()) {
             throw new BadRequestAlertException("Invalid YouTube URL format", ENTITY_NAME, "invalidYouTubeUrl");
         }
+    }
+
+    /**
+     * Whether the given source carries a scheme that is safe to load into an embedding context.
+     * <p>
+     * Deliberately not implemented with {@code new URI(...)}. That parser rejects any URL containing a character which
+     * would need percent-encoding, so a perfectly ordinary lecture recording link with a space or an umlaut in its path
+     * came back as "not an http or https URL" — a rejection for the wrong reason, and one that had never been made
+     * before. Only the scheme is of interest here, so only the scheme is read.
+     *
+     * @param videoSource a non-blank videoSource URL
+     * @return true if the URL carries no scheme, or one that may be embedded
+     */
+    private static boolean hasEmbeddableScheme(String videoSource) {
+        String candidate = videoSource.strip();
+        // Browsers strip tabs and line breaks out of a URL before parsing it, so "java\nscript:alert(1)" reaches the
+        // page as "javascript:alert(1)". Reject rather than normalise: normalising for the check while persisting the
+        // original would just move the mismatch to the client. Nothing legitimate carries a control character.
+        if (URL_CONTROL_CHARACTERS.matcher(candidate).find()) {
+            return false;
+        }
+        Matcher scheme = URL_SCHEME.matcher(candidate);
+        // A value with no scheme is accepted. "google.com" is a shape instances already store, so rejecting it would
+        // refuse existing data, and it cannot execute: the client resolves it against the Artemis origin, where it is
+        // at worst a broken frame. What this check exists to stop is a scheme that runs.
+        return !scheme.find() || EMBEDDABLE_VIDEO_SOURCE_SCHEMES.contains(scheme.group(1).toLowerCase(Locale.ROOT));
     }
 
     /**

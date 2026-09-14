@@ -156,15 +156,6 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
 
     // TODO: enable or remove the test
     @Disabled
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createAndImportJavaProgrammingExercise(boolean staticCodeAnalysisEnabled) throws Exception {
-        programmingExerciseTestService.createAndImportJavaProgrammingExercise(staticCodeAnalysisEnabled);
-    }
-
-    // TODO: enable or remove the test
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExercise_enablePlanFails() throws Exception {
@@ -618,18 +609,6 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_setValidExampleSolutionPublicationDate() throws Exception {
         programmingExerciseTestService.createProgrammingExercise_setValidExampleSolutionPublicationDate();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetProgrammingExercise_asStudent_exampleSolutionVisibility() throws Exception {
-        programmingExerciseTestService.testGetProgrammingExercise_exampleSolutionVisibility(true, TEST_PREFIX + "student1");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetProgrammingExercise_asInstructor_exampleSolutionVisibility() throws Exception {
-        programmingExerciseTestService.testGetProgrammingExercise_exampleSolutionVisibility(false, TEST_PREFIX + "instructor1");
     }
 
     @Test

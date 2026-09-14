@@ -7,6 +7,8 @@ import { take } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { provideHttpClient } from '@angular/common/http';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+import dayjs from 'dayjs/esm';
 
 describe('ModelingSubmission Service', () => {
     let service: ModelingSubmissionService;
@@ -135,6 +137,26 @@ describe('ModelingSubmission Service', () => {
             url: `api/modeling/participations/${participationId}/submissions-with-results`,
         });
         req.flush(submissions);
+    });
+
+    it('should keep every result of a submission when the server lists the newest result first', () => {
+        // The history endpoint sorts results by completion date, newest first, so the older result sits behind the newer one.
+        const newerResult = { id: 25, completionDate: dayjs('2026-08-30T10:00:00Z'), feedbacks: [{ id: 3, text: 'newer' }] };
+        const olderResult = { id: 24, completionDate: dayjs('2026-08-29T10:00:00Z'), feedbacks: [{ id: 2, text: 'older' }] };
+        const submissionFromServer = deepClone(elemDefault);
+        submissionFromServer.results = [newerResult, olderResult];
+
+        let converted: ModelingSubmission[] = [];
+        service
+            .getSubmissionsWithResultsForParticipation(4)
+            .pipe(take(1))
+            .subscribe((resp) => (converted = resp));
+        httpMock.expectOne({ method: 'GET', url: 'api/modeling/participations/4/submissions-with-results' }).flush([submissionFromServer]);
+
+        const results = converted[0].results!;
+        expect(results.map((result) => result.id)).toEqual([25, 24]);
+        expect(converted[0].latestResult?.id).toBe(25);
+        expect(results.find((result) => result.id === 24)?.feedbacks?.[0]?.text).toBe('older');
     });
 
     it('should get submission without lock', () => {

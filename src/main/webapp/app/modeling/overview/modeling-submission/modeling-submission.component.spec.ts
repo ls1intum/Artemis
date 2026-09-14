@@ -2,7 +2,7 @@ import { Component, EventEmitter, input, output } from '@angular/core';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Params, RouterModule } from '@angular/router';
@@ -171,8 +171,8 @@ describe('ModelingSubmissionComponent', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 ResultService,
-                provideHttpClientTesting(),
                 provideHttpClient(),
+                provideHttpClientTesting(),
                 {
                     provide: AccountService,
                     useClass: MockAccountService,
@@ -315,6 +315,39 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.submission()?.results).toHaveLength(2);
         expect(comp.result()?.id).toBe(99);
         expect(comp.result()?.assessmentType).toBe(AssessmentType.MANUAL);
+    });
+
+    it('should show an older result by id after the real service conversion of a newest-first response', () => {
+        const route = {
+            params: of({ courseId: 5, exerciseId: 22, participationId: 1, submissionId: 20, resultId: 24 }),
+        } as any as ActivatedRoute;
+
+        createModelingSubmissionComponent(route);
+
+        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        modelingExercise.dueDate = dayjs().subtract(2, 'days');
+        modelingExercise.assessmentDueDate = dayjs().subtract(1, 'days');
+        modelingExercise.maxPoints = 20;
+        modelingExercise.teamMode = false;
+        const participation = new StudentParticipation();
+        participation.exercise = modelingExercise;
+        participation.id = 1;
+
+        // The history endpoint lists results newest first, so the older result is the last element.
+        const olderFeedback = { id: 2, text: 'older', credits: 5, type: FeedbackType.MANUAL } as Feedback;
+        const newerResult = { id: 25, completionDate: dayjs().subtract(1, 'hour'), assessmentType: AssessmentType.MANUAL, score: 90, feedbacks: [] } as Result;
+        const olderResult = { id: 24, completionDate: dayjs().subtract(2, 'hours'), assessmentType: AssessmentType.MANUAL, score: 50, feedbacks: [olderFeedback] } as Result;
+        const serverSubmission = { id: 20, submitted: true, participation, results: [newerResult, olderResult] } as ModelingSubmission;
+
+        // Answer the HTTP requests, not the service, so the real ModelingSubmissionService conversion runs on the server payload.
+        const httpMock = TestBed.inject(HttpTestingController);
+        comp.ngOnInit();
+        httpMock.expectOne({ method: 'GET', url: 'api/modeling/participations/1/submissions-with-results' }).flush([serverSubmission]);
+        httpMock.expectOne({ method: 'GET', url: 'api/modeling/participations/1/latest-modeling-submission' }).flush(serverSubmission);
+
+        expect(comp.submission()?.results?.map((result) => result.id)).toEqual([25, 24]);
+        expect(comp.result()?.id).toBe(24);
+        expect(comp.assessmentResult()?.feedbacks).toEqual([olderFeedback]);
     });
 
     it('should get inactive as soon as the due date passes the current date', async () => {

@@ -41,6 +41,8 @@ import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -71,6 +73,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("participation/participations")
 @RestController
 @RequestMapping("api/exercise/")
 public class ParticipationResource {
@@ -93,6 +96,8 @@ public class ParticipationResource {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final UserRepository userRepository;
@@ -113,7 +118,9 @@ public class ParticipationResource {
             AuthorizationCheckService authCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, TeamRepository teamRepository,
             FeatureToggleService featureToggleService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             SubmissionRepository submissionRepository, ExerciseDateService exerciseDateService, ParticipationAuthorizationService participationAuthorizationService,
-            Optional<StudentExamApi> studentExamApi, ModuleFeatureService moduleFeatureService, FeedbackRequestService feedbackRequestService) {
+            Optional<StudentExamApi> studentExamApi, ModuleFeatureService moduleFeatureService, FeedbackRequestService feedbackRequestService,
+            CourseAthenaConfigRepository courseAthenaConfigRepository) {
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.participationService = participationService;
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -309,18 +316,24 @@ public class ParticipationResource {
             throw new ServiceUnavailableAlertException("The feature for programming exercises is disabled", ENTITY_NAME, "feedbackRequest.programmingExercisesDisabled");
         }
 
-        if ((exercise instanceof TextExercise || exercise instanceof ModelingExercise) && !moduleFeatureService.isAthenaEnabled()) {
-            throw new ServiceUnavailableAlertException("Feedback requests for text and modeling exercises require Athena to be enabled (artemis.athena.enabled=true)", ENTITY_NAME,
+        if (exercise instanceof ProgrammingExercise && exercise.getAssessmentType() != AssessmentType.SEMI_AUTOMATIC) {
+            throw new BadRequestAlertException("Feedback requests for programming exercises require manual assessment to be enabled", ENTITY_NAME,
+                    "feedbackRequest.manualAssessmentRequired");
+        }
+
+        if ((exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof ProgrammingExercise) && !moduleFeatureService.isAthenaEnabled()) {
+            throw new ServiceUnavailableAlertException("Feedback requests require Athena to be enabled (artemis.athena.enabled=true)", ENTITY_NAME,
                     "feedbackRequest.athenaNotEnabled");
+        }
+
+        courseAthenaConfigRepository.attachToCourseOf(exercise);
+        if (!exercise.getAllowFeedbackRequests()) {
+            throw new BadRequestAlertException("Feedback requests are not enabled for this course", ENTITY_NAME, "feedbackRequest.notEnabled");
         }
 
         if (exercise.getDueDate() != null && now().isAfter(exercise.getDueDate()) && !participation.isPracticeMode()) {
             throw new BadRequestAlertException("Feedback requests are not allowed after the due date for graded participations", ENTITY_NAME,
                     "dueDateOver.feedbackRequestAfterDueDate");
-        }
-
-        if (exercise instanceof ProgrammingExercise) {
-            ((ProgrammingExercise) exercise).validateSettingsForFeedbackRequest();
         }
 
         if (exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof ProgrammingExercise) {

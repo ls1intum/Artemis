@@ -1,16 +1,23 @@
+<!--
+    The layout lives on the inner span rather than on the tag host: PrimeNG styles `.p-tag` as a centred inline-flex and
+    its stylesheet is injected after ours, so a `flex`/`justify-start` on the host would lose to it. The host only takes
+    the width, and the span it now wraps lays the icon and the label out from the left.
+-->
 <p-tag
-    class="d-flex gap-2 align-items-center"
+    class="w-full"
     [severity]="isTestExam() ? 'info' : hasStudentsWithoutExam() ? 'warn' : 'success'"
     [title]="!isTestExam() && hasStudentsWithoutExam() ? ('artemisApp.studentExams.studentExamStatusWarningTooltip' | artemisTranslate) : ''"
 >
-    @if (isTestExam()) {
-        <i class="pi pi-info-circle"></i>
-        <span jhiTranslate="artemisApp.studentExams.studentExamStatusTestExam"></span>
-    } @else if (hasStudentsWithoutExam()) {
-        <i class="pi pi-exclamation-triangle"></i>
-        <span jhiTranslate="artemisApp.studentExams.studentExamStatusWarning"></span>
-    } @else {
-        <i class="pi pi-check"></i>
-        <span jhiTranslate="artemisApp.studentExams.studentExamStatusSuccess"></span>
-    }
+    <span class="flex w-full items-center gap-2">
+        @if (isTestExam()) {
+            <i class="pi pi-info-circle px-1"></i>
+            <span jhiTranslate="artemisApp.studentExams.studentExamStatusTestExam"></span>
+        } @else if (hasStudentsWithoutExam()) {
+            <i class="pi pi-exclamation-triangle px-1"></i>
+            <span jhiTranslate="artemisApp.studentExams.studentExamStatusWarning"></span>
+        } @else {
+            <i class="pi pi-check px-1"></i>
+            <span jhiTranslate="artemisApp.studentExams.studentExamStatusSuccess"></span>
+        }
+    </span>
 </p-tag>

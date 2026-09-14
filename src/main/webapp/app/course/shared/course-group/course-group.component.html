@@ -30,6 +30,7 @@
     <!-- Combined search/add autocomplete: filters the loaded member list and adds new members -->
     <ng-template #tableActionsRef>
         <p-autocomplete
+            [pt]="{ option: { 'data-testid': 'user-autocomplete-option' } }"
             size="small"
             [suggestions]="userSuggestions()"
             [placeholder]="'artemisApp.course.courseGroup.searchForUsers' | artemisTranslate"

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.account.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
@@ -96,11 +97,6 @@ public class AccountService {
         }
 
         final String userLogin = currentUser.getLogin();
-        Optional<User> existingUser = userRepository.findOneByEmailIgnoreCase(userDTO.getEmail());
-        if (existingUser.isPresent() && (!existingUser.get().getLogin().equalsIgnoreCase(userLogin))) {
-            throw new EmailAlreadyUsedException();
-        }
-
         // Captured before the update: once the address has been replaced there is no longer any way to reach the
         // previous one, and that is where the change notice has to go.
         final String previousEmail = currentUser.getEmail();
@@ -108,10 +104,7 @@ public class AccountService {
 
         userCreationService.updateBasicInformationOfCurrentUser(userDTO.getFirstName(), userDTO.getLastName(), userDTO.getEmail(), userDTO.getLangKey(), userDTO.getImageUrl());
 
-        // The service lower-cases the address before storing it, so compare case-insensitively to avoid reporting a
-        // change when the user only altered their name and the address round-tripped with different casing.
-        // StringUtils.equalsIgnoreCase is null-safe on both arguments, so a null previous or new e-mail cannot NPE here.
-        boolean emailChanged = !StringUtils.equalsIgnoreCase(previousEmail, userDTO.getEmail());
+        boolean emailChanged = !Objects.equals(User.canonicalEmail(previousEmail), User.canonicalEmail(userDTO.getEmail()));
         if (emailChanged) {
             User updatedUser = userRepository.getUserByLoginElseThrow(userLogin);
             accountSecurityEventService.recordEmailChanged(updatedUser, previousEmail, previousLangKey);

@@ -20,7 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.model.ToolContext;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -68,8 +68,7 @@ class AssignerToolsServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new AssignerToolsService(new ObjectMapper(), courseCompetencyRepository, exerciseRepository, competencyExerciseLinkRepository,
-                Optional.of(competencyProgressApi));
+        service = new AssignerToolsService(new JsonMapper(), courseCompetencyRepository, exerciseRepository, competencyExerciseLinkRepository, Optional.of(competencyProgressApi));
         appliedActions = Collections.synchronizedList(new ArrayList<>());
         appliedActionsBuffer = new AppliedActionsBuffer(appliedActions);
         Map<String, Object> ctx = new HashMap<>();

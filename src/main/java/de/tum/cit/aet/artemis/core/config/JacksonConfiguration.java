@@ -2,31 +2,22 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer;
+import org.springframework.boot.jackson.autoconfigure.XmlMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.hibernate7.Hibernate7Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.datatype.hibernate7.Hibernate7Module;
 
 @Profile(PROFILE_CORE)
 @Configuration
 // NOTE: Do NOT add @Lazy to this class. The Jackson modules must be
-// available when Spring Boot's JacksonAutoConfiguration creates the ObjectMapper. With @Lazy, the modules
+// available when Spring Boot's JacksonAutoConfiguration creates the JsonMapper. With @Lazy, the modules
 // are not registered, causing "No _valueDeserializer assigned" errors when deserializing nested entities.
 public class JacksonConfiguration {
-
-    /**
-     * Support for Java date and time API.
-     *
-     * @return the corresponding Jackson module.
-     */
-    @Bean
-    public JavaTimeModule javaTimeModule() {
-        return new JavaTimeModule();
-    }
 
     /**
      * Support for Hibernate types in Jackson.
@@ -41,11 +32,14 @@ public class JacksonConfiguration {
      * </ul>
      * This is required because {@code spring.jpa.open-in-view} is {@code false}, meaning
      * the Hibernate session is closed before Jackson serializes the response.
+     * <p>
+     * Spring Boot picks up every {@link tools.jackson.databind.JacksonModule} bean and registers it on both the
+     * {@code JsonMapper} and the {@code XmlMapper} it builds.
      *
      * @return the configured Hibernate7Module
      */
     @Bean
-    public Hibernate7Module hibernateModule() {
+    public Hibernate7Module hibernateJacksonModule() {
         Hibernate7Module module = new Hibernate7Module();
         module.enable(Hibernate7Module.Feature.REPLACE_PERSISTENT_COLLECTIONS);
         module.enable(Hibernate7Module.Feature.WRITE_MISSING_ENTITIES_AS_NULL);
@@ -53,15 +47,31 @@ public class JacksonConfiguration {
     }
 
     /**
-     * Exposes a MappingJackson2HttpMessageConverter bean using the auto-configured ObjectMapper.
-     * In Spring Boot 4, this converter is no longer directly injectable as a named bean — it's only registered
-     * in the converter list. Several Artemis services inject it directly, so we provide it here.
+     * Applies {@link ArtemisJacksonDefaults} to the auto-configured {@code JsonMapper}.
+     * <p>
+     * The order is load-bearing: Spring's own property-driven customizer runs at order 0, and these defaults have to
+     * win over it, so this is pinned to the lowest precedence rather than relying on the unordered default.
      *
-     * @param objectMapper the auto-configured Jackson ObjectMapper
-     * @return the HTTP message converter
+     * @return the customizer applied to the auto-configured JsonMapper builder
      */
     @Bean
-    public MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter(ObjectMapper objectMapper) {
-        return new MappingJackson2HttpMessageConverter(objectMapper);
+    @Order(Ordered.LOWEST_PRECEDENCE)
+    public JsonMapperBuilderCustomizer artemisJacksonDefaultsCustomizer() {
+        return ArtemisJacksonDefaults::apply;
+    }
+
+    /**
+     * Applies the same defaults to the auto-configured {@code XmlMapper}.
+     * <p>
+     * Spring Boot builds one as soon as {@code jackson-dataformat-xml} is on the classpath and registers an XML
+     * message converter from it, so without this an {@code Accept: application/xml} request would render enums
+     * through {@code toString()} while the JSON of the same object renders them through {@code name()}.
+     *
+     * @return the customizer applied to the auto-configured XmlMapper builder
+     */
+    @Bean
+    @Order(Ordered.LOWEST_PRECEDENCE)
+    public XmlMapperBuilderCustomizer artemisXmlJacksonDefaultsCustomizer() {
+        return ArtemisJacksonDefaults::apply;
     }
 }

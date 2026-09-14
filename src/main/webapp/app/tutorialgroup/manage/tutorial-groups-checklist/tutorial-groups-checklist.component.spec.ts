@@ -66,6 +66,20 @@ describe('TutorialGroupsChecklistComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('should keep the configuration action out of reach until the time zone is set', () => {
+        fixture.detectChanges();
+
+        // The example course carries no time zone, so the prerequisite is unmet.
+        expect(component.isTimeZoneConfigured()).toBe(false);
+
+        const action: HTMLButtonElement | null = fixture.nativeElement.querySelector('[data-testid="configuration-action"]');
+        expect(action).not.toBeNull();
+        // A disabled button, not a styled anchor: pointer-events-none and aria-disabled leave a link focusable,
+        // so a keyboard user could still activate it and skip the time zone.
+        expect(action!.tagName).toBe('BUTTON');
+        expect(action!.disabled).toBe(true);
+    });
+
     it('should initialize', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();

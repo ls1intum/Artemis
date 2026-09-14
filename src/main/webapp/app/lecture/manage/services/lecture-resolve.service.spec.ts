@@ -3,11 +3,9 @@ import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRouteSnapshot } from '@angular/router';
-import { AttachmentResolve, LectureResolve } from 'app/lecture/manage/services/lecture-resolve.service';
+import { LectureResolve } from 'app/lecture/manage/services/lecture-resolve.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 
 describe('Resolvers', () => {
     describe('LectureResolve', () => {
@@ -44,44 +42,6 @@ describe('Resolvers', () => {
             resolver.resolve(route).subscribe((res) => (result = res));
 
             expect(result).toBeInstanceOf(Lecture);
-            expect(service.find).not.toHaveBeenCalled();
-        });
-    });
-
-    describe('AttachmentResolve', () => {
-        let resolver: AttachmentResolve;
-        let service: AttachmentService;
-        let route: ActivatedRouteSnapshot;
-
-        beforeEach(() => {
-            TestBed.configureTestingModule({
-                providers: [AttachmentResolve, { provide: AttachmentService, useValue: { find: vi.fn() } }],
-            });
-            resolver = TestBed.inject(AttachmentResolve);
-            service = TestBed.inject(AttachmentService);
-            route = new ActivatedRouteSnapshot();
-        });
-
-        it('should return attachment when attachmentId param is present', () => {
-            const mockAttachment = new Attachment();
-            vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: mockAttachment, status: 200 })));
-
-            route.params = { attachmentId: 99 };
-            let result: Attachment | undefined;
-
-            resolver.resolve(route).subscribe((res) => (result = res));
-
-            expect(service.find).toHaveBeenCalledWith(99);
-            expect(result).toBe(mockAttachment);
-        });
-
-        it('should return new Attachment when no attachmentId param is provided', () => {
-            route.params = {};
-            let result: Attachment | undefined;
-
-            resolver.resolve(route).subscribe((res) => (result = res));
-
-            expect(result).toBeInstanceOf(Attachment);
             expect(service.find).not.toHaveBeenCalled();
         });
     });

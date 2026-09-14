@@ -13,8 +13,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -88,7 +89,7 @@ public class ModelingSubmission extends Submission {
      * @param jacksonObjectMapper a predefined jackson object mapper
      * @return true if the submission is empty, false otherwise
      */
-    public boolean isEmpty(ObjectMapper jacksonObjectMapper) {
+    public boolean isEmpty(JsonMapper jacksonObjectMapper) {
         try {
             // in case there is an explanation, we should
             if (StringUtils.hasText(explanationText)) {
@@ -109,7 +110,7 @@ public class ModelingSubmission extends Submission {
             var nodes = jsonNode.get("nodes");
             return nodes == null || nodes.isEmpty();
         }
-        catch (JsonProcessingException ex) {
+        catch (JacksonException ex) {
             log.warn("Failed to parse model JSON", ex);
             return false;
         }

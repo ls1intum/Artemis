@@ -1292,7 +1292,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         Teams(ProgrammingExercise_.TEAMS),
         TutorParticipations(ProgrammingExercise_.TUTOR_PARTICIPATIONS),
         ExampleSubmissions(ProgrammingExercise_.EXAMPLE_SUBMISSIONS),
-        Attachments(ProgrammingExercise_.ATTACHMENTS),
         PlagiarismCases(ProgrammingExercise_.PLAGIARISM_CASES),
         PlagiarismDetectionConfig(ProgrammingExercise_.PLAGIARISM_DETECTION_CONFIG);
         // @formatter:on

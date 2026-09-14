@@ -60,7 +60,6 @@ class AtlasAgentDelegationServiceTest {
     @BeforeEach
     void setUp() {
         // Since Spring AI 2.0.0-M6 the ChatClient merges request options into the model's default options, which must be non-null.
-        lenient().when(chatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
     }
 

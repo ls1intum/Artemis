@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 // add JsonTypeInfo and JsonSubTypes annotation to help Jackson decide which class the JSON should be deserialized to
 // depending on the value of the "type" property.
-// Note: The "type" property has to be added on the front-end when making a request that includes a SubmittedAnswer Object
+// Note: The "type" property has to be added by the client when making a request that includes a SubmittedAnswer Object
 // However, the "type" property will be automatically added by Jackson when an object is serialized
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // @formatter:off

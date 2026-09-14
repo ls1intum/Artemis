@@ -4,7 +4,6 @@
             "detail": {
                 "variants": "Varianten",
                 "pointsTooltip": "Die Varianten dieser Gruppe ergeben zusammen {{ total }} Pkt., aber nur {{ cap }} Pkt. zählen zur Kursnote.",
-                "noProblemStatement": "Keine Aufgabenstellung konfiguriert.",
                 "callout": {
                     "heading": "Wähle eine Variante zum Bearbeiten",
                     "body": "Diese Gruppe hat {{ count }} Varianten. Du kannst beliebig viele davon bearbeiten.",
@@ -12,9 +11,11 @@
                 }
             },
             "edit": "Gruppe bearbeiten",
+            "editGroupDates": "die Gruppentermine bearbeiten",
             "delete": "Gruppe löschen",
             "timelineLocked": {
-                "tooltip": "Diese Termine werden von der Aufgabengruppe verwaltet. Zum Bearbeiten der Termine der Gruppe hier klicken."
+                "tooltip": "Diese Termine werden von der Aufgabengruppe verwaltet. Zum Bearbeiten der Termine der Gruppe hier klicken.",
+                "message": "Da diese Aufgabe Teil einer Aufgabengruppe ist, können einige ihrer Termine nicht einzeln geändert werden. Stattdessen kannst du"
             },
             "deleted": "Gruppe gelöscht mit ID {{ param }}",
             "deleteDialog": {

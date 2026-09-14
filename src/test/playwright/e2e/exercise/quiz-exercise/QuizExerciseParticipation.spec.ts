@@ -1,4 +1,5 @@
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import multipleChoiceQuizTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
 import { admin, instructor, studentOne } from '../../../support/users';
@@ -10,6 +11,14 @@ import { SEED_COURSES } from '../../../support/seedData';
 import { generateUUID, readResponseJson } from '../../../support/utils';
 
 const course = { id: SEED_COURSES.quizParticipation.id } as any;
+
+/**
+ * The answer options of a multiple choice question. `QuizExercise.quizQuestions` is typed as the abstract question,
+ * so the options only become visible once the concrete type is named - which the multiple choice fixtures always are.
+ */
+function answerOptionsOf(quiz: QuizExercise, questionIndex = 0) {
+    return (quiz.quizQuestions![questionIndex] as MultipleChoiceQuestion).answerOptions!;
+}
 
 test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
     test.describe('Quiz exercise participation', () => {
@@ -45,7 +54,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             // Pin the submit contract end-to-end: the live endpoint must accept the DTO-shaped payload, mark the submission
             // as submitted, and return exactly the answer the student ticked (one MC entry with the right selected ids).
             expect(submitResponse.status()).toBe(200);
-            const submittedExpectedIds = tickedOptionIndices.map((index) => quizExercise.quizQuestions![0].answerOptions![index].id);
+            const submittedExpectedIds = tickedOptionIndices.map((index) => answerOptionsOf(quizExercise)[index].id!);
             const responseBody = await readResponseJson(submitResponse);
             expect(responseBody.submitted, 'server must flip the submitted flag after final submit').toBe(true);
             expect(responseBody.submittedAnswers, 'server must persist exactly one submitted answer for the MC question').toHaveLength(1);
@@ -94,7 +103,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             await quizExerciseMultipleChoice.submit();
 
             const mcQuestionId = shortQuiz.quizQuestions![0].id!;
-            const expectedTickedOptionIds = tickedOptionIndices.map((index) => shortQuiz.quizQuestions![0].answerOptions![index].id);
+            const expectedTickedOptionIds = tickedOptionIndices.map((index) => answerOptionsOf(shortQuiz)[index].id!);
             expect(expectedTickedOptionIds).toHaveLength(tickedOptionIndices.length);
 
             /**
@@ -105,7 +114,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
                 // Bound the response wait to 45s so a single hung request (the multi-node
                 // observation under load) does not consume the entire test budget. On
                 // timeout we re-issue the navigation up to two more times before giving up
-                // — a hung start-participation POST is a backend race that consistently
+                // — a hung start-participation POST is a server-side race that consistently
                 // recovers on subsequent retries within 1-2 attempts.
                 for (let attempt = 0; attempt < 3; attempt++) {
                     const responsePromise = page.waitForResponse(
@@ -175,7 +184,9 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             });
 
             // Capture the IDs that the client will send back on submit.
-            const initialOptionIds = (createdQuiz.quizQuestions![0] as any).answerOptions!.map((opt: any) => opt.id).sort((a: number, b: number) => a - b);
+            const initialOptionIds = answerOptionsOf(createdQuiz)
+                .map((option) => option.id!)
+                .sort((a: number, b: number) => a - b);
             expect(initialOptionIds.length).toBeGreaterThan(0);
 
             const readOptionIdsFromServer = async (): Promise<number[]> => {
@@ -220,16 +231,18 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
         });
 
         test('Student cannot participate in scheduled quiz before start of working time', async ({ page, login, courseOverview, quizExerciseParticipation }) => {
-            // Wait for the page's initial GET /courses/.../for-dashboard to settle before
-            // looking for the overlay — the overlay is gated on that fetch returning the
-            // quiz's startOfWorkingTime. Without the explicit wait the default 10s expect
-            // timeout can fire under multi-node CI load while the request is still in flight,
-            // even though the overlay would render seconds later.
-            const dashboardResponse = page
-                .waitForResponse((resp) => resp.url().includes(`api/course/courses/${course.id}/for-dashboard`) && resp.ok(), { timeout: 30_000 })
-                .catch(() => undefined);
+            // The overlay is gated on the quiz load: initLiveMode POSTs start-participation on page load regardless of
+            // whether the quiz has started, and the batch it returns is what flips waitingForQuizStart. Wait for that
+            // response before looking for the overlay, because under multi-node CI load the default 10s expect timeout
+            // can otherwise fire while the request is still in flight. Registered before the navigation so the response
+            // cannot be missed, and deliberately not swallowed: if the page stops issuing it, this must fail pointing
+            // at the cause rather than wait out the budget.
+            const startParticipation = page.waitForResponse(
+                (response) => response.url().includes(`api/quiz/quiz-exercises/${quizExercise.id}/start-participation`) && response.request().method() === 'POST' && response.ok(),
+                { timeout: 30_000 },
+            );
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
-            await dashboardResponse;
+            await startParticipation;
             await expect(quizExerciseParticipation.getWaitingForStartAlert()).toBeVisible();
         });
 

@@ -14,7 +14,14 @@
         <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-muted-color" />
     </fa-stack>
 }
-<div class="flex relative" data-testid="date-picker-wrapper" [class.invalid-date-input]="showErrorBorder()" (keydown)="onPickerKeydown($event)" (paste)="onPickerPaste($event)">
+<div
+    class="flex relative"
+    data-testid="date-picker-wrapper"
+    [attr.data-invalid]="showErrorBorder()"
+    [class.invalid-date-input]="showErrorBorder()"
+    (keydown)="onPickerKeydown($event)"
+    (paste)="onPickerPaste($event)"
+>
     @if (lockedToGroup()) {
         <div
             class="date-lock-overlay"
@@ -33,6 +40,7 @@
         #datePicker
         styleClass="w-full"
         panelStyleClass="jhi-date-time-picker-panel"
+        [pt]="passThrough"
         [inputId]="inputId()"
         [fluid]="fluid()"
         [inputStyleClass]="warning() ? 'date-time-picker-warning-border' : ''"

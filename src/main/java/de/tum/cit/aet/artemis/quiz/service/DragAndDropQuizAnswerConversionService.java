@@ -67,18 +67,23 @@ public class DragAndDropQuizAnswerConversionService {
     }
 
     private void storeSubmissionAsPdf(BufferedImage backgroundImage, Path dndSubmissionPathPdf) throws IOException {
-        PDDocument doc = new PDDocument();
-        // creates a page in landscape mode, makes the image fit better
-        PDPage page = new PDPage(new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth()));
-        doc.addPage(page);
-        PDPageContentStream contentStream = new PDPageContentStream(doc, page, PDPageContentStream.AppendMode.OVERWRITE, false);
-        Dimension scaledDim = getScaledDimension(new Dimension(backgroundImage.getWidth(), backgroundImage.getHeight()),
-                new Dimension((int) page.getMediaBox().getWidth(), (int) page.getMediaBox().getHeight()));
-        PDImageXObject imageForPdf = LosslessFactory.createFromImage(doc, backgroundImage);
-        contentStream.drawImage(imageForPdf, PDRectangle.A4.getLowerLeftX(), PDRectangle.A4.getLowerLeftY(), scaledDim.width, scaledDim.height);
-        contentStream.close();
-        doc.save(dndSubmissionPathPdf.toFile());
-        doc.close();
+        // Both resources were previously closed only on the happy path, so a failure in createFromImage, drawImage or
+        // save leaked them. A PDDocument holds the whole rendered page in memory, and this runs once per drag and drop
+        // submission when a course is exported.
+        try (PDDocument doc = new PDDocument()) {
+            // creates a page in landscape mode, makes the image fit better
+            PDPage page = new PDPage(new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth()));
+            doc.addPage(page);
+            // The content stream is closed before the document is saved, because PDFBox only writes the page content
+            // when the stream is closed.
+            try (PDPageContentStream contentStream = new PDPageContentStream(doc, page, PDPageContentStream.AppendMode.OVERWRITE, false)) {
+                Dimension scaledDim = getScaledDimension(new Dimension(backgroundImage.getWidth(), backgroundImage.getHeight()),
+                        new Dimension((int) page.getMediaBox().getWidth(), (int) page.getMediaBox().getHeight()));
+                PDImageXObject imageForPdf = LosslessFactory.createFromImage(doc, backgroundImage);
+                contentStream.drawImage(imageForPdf, PDRectangle.A4.getLowerLeftX(), PDRectangle.A4.getLowerLeftY(), scaledDim.width, scaledDim.height);
+            }
+            doc.save(dndSubmissionPathPdf.toFile());
+        }
     }
 
     private void generateDragAndDropSubmittedAnswerImage(BufferedImage backgroundImage, DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer, boolean showResult)

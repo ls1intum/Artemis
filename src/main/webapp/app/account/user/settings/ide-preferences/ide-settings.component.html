@@ -1,63 +1,71 @@
 <h2 jhiTranslate="artemisApp.userSettings.categories.IDE_PREFERENCES"></h2>
 @if (isLoading()) {
-    <div class="d-flex">
+    <div class="flex">
         <fa-icon [icon]="faSpinner" animation="spin" />
     </div>
 } @else {
-    <div class="list-group d-block">
-        <div class="list-group-item pb-3">
-            <dt>
+    <tum-ui-list [ariaLabel]="'artemisApp.userSettings.categories.IDE_PREFERENCES' | artemisTranslate">
+        <li tumUiListItem>
+            <p class="ide-preferences-description">
                 <span jhiTranslate="artemisApp.userSettings.idePreferencesPage.description"></span>
                 <jhi-help-icon placement="right auto" text="artemisApp.userSettings.idePreferencesPage.jetbrainsHelp" />
-            </dt>
-            <h5 class="py-2" jhiTranslate="artemisApp.userSettings.idePreferencesPage.default"></h5>
-            <ng-container *ngTemplateOutlet="ideButtonRow; context: { language: ProgrammingLanguage.EMPTY }" />
-        </div>
+            </p>
+            <h5 id="ide-preference-label-default" class="py-2" jhiTranslate="artemisApp.userSettings.idePreferencesPage.default"></h5>
+            <ng-container *ngTemplateOutlet="ideButtonRow; context: { language: ProgrammingLanguage.EMPTY, labelId: 'ide-preference-label-default' }" />
+        </li>
         <!-- Display each customized Programming Language -->
         @for (programmingLanguage of assignedProgrammingLanguages(); track programmingLanguage) {
-            <div class="list-group-item pb-3">
-                <div class="item-container d-flex flex-row justify-content-between align-items-center pb-2">
-                    <h5>
+            <li tumUiListItem>
+                <div class="item-container flex flex-row items-center justify-between pb-2">
+                    <h5 [id]="'ide-preference-label-' + programmingLanguage">
                         {{ programmingLanguage }}
                     </h5>
-                    <button class="btn btn-sm btn-outline-danger" (click)="removeProgrammingLanguage(programmingLanguage)">
-                        <fa-icon [icon]="faTrash" />
-                    </button>
+                    <tum-ui-button
+                        severity="danger"
+                        variant="outlined"
+                        size="small"
+                        [icon]="faTrash"
+                        [ariaLabel]="'entity.action.delete' | artemisTranslate"
+                        (clicked)="removeProgrammingLanguage(programmingLanguage)"
+                    />
                 </div>
-                <ng-container *ngTemplateOutlet="ideButtonRow; context: { language: programmingLanguage }" />
-            </div>
+                <ng-container *ngTemplateOutlet="ideButtonRow; context: { language: programmingLanguage, labelId: 'ide-preference-label-' + programmingLanguage }" />
+            </li>
         }
         <!-- Display plus button to add Programming Language with drop down menu -->
         @if (remainingProgrammingLanguages().length) {
-            <div class="list-group-item">
-                <div ngbDropdown class="d-inline-block">
-                    <button type="button" class="btn btn-primary btn-sm" id="dropdown" ngbDropdownToggle>
-                        <fa-icon [icon]="faPlus" />
-                        <span class="ms-1" jhiTranslate="artemisApp.userSettings.idePreferencesPage.addNewLanguage"></span>
-                    </button>
-                    <div ngbDropdownMenu aria-labelledby="dropdown">
+            <li tumUiListItem>
+                <!-- self-start: a stacked list row stretches its children, which would blow this up into a
+                     full-width primary bar. -->
+                <button type="button" tumUiButton size="small" class="self-start" id="dropdown" [tumUiMenuTrigger]="languageMenu">
+                    <fa-icon [icon]="faPlus" />
+                    <span jhiTranslate="artemisApp.userSettings.idePreferencesPage.addNewLanguage"></span>
+                </button>
+                <ng-template #languageMenu>
+                    <tum-ui-menu aria-labelledby="dropdown">
                         @for (programmingLanguage of remainingProgrammingLanguages(); track programmingLanguage) {
-                            <button ngbDropdownItem (click)="addProgrammingLanguage(programmingLanguage)">
+                            <button tumUiMenuItem (triggered)="addProgrammingLanguage(programmingLanguage)">
                                 {{ programmingLanguage }}
                             </button>
                         }
-                    </div>
-                </div>
-            </div>
+                    </tum-ui-menu>
+                </ng-template>
+            </li>
         }
-    </div>
+    </tum-ui-list>
 }
 
-<ng-template #ideButtonRow let-programmingLanguage="language">
-    <div class="btn-group">
-        @for (ide of PREDEFINED_IDE(); track ide) {
-            <div
-                class="btn"
-                [ngClass]="isIdeOfProgrammingLanguage(programmingLanguage, ide) ? 'btn-primary selected' : 'btn-default'"
-                (click)="changeIde(programmingLanguage, ide)"
-            >
-                {{ ide.name }}
-            </div>
-        }
-    </div>
+<!-- The row heading names the group: without it a screen reader reaches six IDE buttons with no idea which
+     language they belong to, and the rows are otherwise indistinguishable from one another. -->
+<ng-template #ideButtonRow let-programmingLanguage="language" let-labelId="labelId">
+    <tum-ui-select-button
+        [attr.aria-labelledby]="labelId"
+        [options]="PREDEFINED_IDE()"
+        optionLabel="name"
+        optionValue="deepLink"
+        [allowEmpty]="false"
+        [ngModel]="programmingLanguageToIde().get(programmingLanguage)?.deepLink"
+        [ngModelOptions]="{ standalone: true }"
+        (changed)="changeIdeByDeepLink(programmingLanguage, $event)"
+    />
 </ng-template>

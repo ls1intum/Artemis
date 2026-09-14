@@ -7,6 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
+import de.tum.cit.aet.artemis.notification.dto.payload.NewAnswerPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user there was a new thread reply in a channel of any type.
@@ -14,32 +16,9 @@ import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 @CourseNotificationType(2)
 public class NewAnswerNotification extends CourseNotification {
 
+    private final NewAnswerPayloadDTO payload;
+
     // "Post" = parent post, "Reply" = answer post
-    protected String postMarkdownContent;
-
-    protected String postCreationDate;
-
-    protected String postAuthorName;
-
-    protected Long postId;
-
-    protected String replyMarkdownContent;
-
-    protected String replyCreationDate;
-
-    protected String replyAuthorName;
-
-    protected Long replyAuthorId;
-
-    protected String replyImageUrl;
-
-    protected Long replyId;
-
-    protected String channelName;
-
-    protected Long channelId;
-
-    protected boolean replyIsBot;
 
     /**
      * Default constructor used when creating a new post notification.
@@ -48,19 +27,8 @@ public class NewAnswerNotification extends CourseNotification {
             String replyMarkdownContent, String replyCreationDate, String replyAuthorName, Long replyAuthorId, String replyImageUrl, Long replyId, String channelName,
             Long channelId, boolean replyIsBot) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.postMarkdownContent = postMarkdownContent;
-        this.postCreationDate = postCreationDate;
-        this.postAuthorName = postAuthorName;
-        this.postId = postId;
-        this.replyMarkdownContent = replyMarkdownContent;
-        this.replyCreationDate = replyCreationDate;
-        this.replyAuthorName = replyAuthorName;
-        this.replyAuthorId = replyAuthorId;
-        this.replyImageUrl = replyImageUrl;
-        this.replyId = replyId;
-        this.channelName = channelName;
-        this.channelId = channelId;
-        this.replyIsBot = replyIsBot;
+        this.payload = new NewAnswerPayloadDTO(postMarkdownContent, postCreationDate, postAuthorName, postId, replyMarkdownContent, replyCreationDate, replyAuthorName,
+                replyAuthorId, replyImageUrl, replyId, channelName, channelId, replyIsBot);
     }
 
     /**
@@ -68,6 +36,7 @@ public class NewAnswerNotification extends CourseNotification {
      */
     public NewAnswerNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
+        this.payload = CourseNotificationPayloads.parse(parameters, NewAnswerPayloadDTO.class);
     }
 
     @Override
@@ -87,6 +56,12 @@ public class NewAnswerNotification extends CourseNotification {
 
     @Override
     public String getRelativeWebAppUrl() {
-        return "/courses/" + courseId + "/communication?conversationId=" + channelId + "&focusPostId=" + postId + "&openThreadOnFocus=1&postInThread=" + replyId;
+        return "/courses/" + courseId + "/communication?conversationId=" + payload.channelId() + "&focusPostId=" + payload.postId() + "&openThreadOnFocus=1&postInThread="
+                + payload.replyId();
+    }
+
+    @Override
+    public NewAnswerPayloadDTO payload() {
+        return payload;
     }
 }

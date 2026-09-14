@@ -150,6 +150,18 @@ public class ProgrammingExerciseTaskService {
     }
 
     /**
+     * Gets all tasks of an exercise together with their test cases, active and inactive alike, leaving the loaded
+     * collections untouched. Callers that only want the active test cases filter while mapping to their response
+     * shape; filtering the loaded collection in place would write to the task/test-case join table.
+     *
+     * @param exerciseId of the programming exercise
+     * @return List of all tasks with their test cases
+     */
+    public List<ProgrammingExerciseTask> getTasksWithTestCases(long exerciseId) {
+        return programmingExerciseTaskRepository.findByExerciseIdWithTestCaseElseThrow(exerciseId);
+    }
+
+    /**
      * Gets all tasks of an exercise excluding inactive test cases
      *
      * @param exerciseId of the programming exercise
@@ -216,6 +228,48 @@ public class ProgrammingExerciseTaskService {
             tasks.add(task);
         }
         return tasks;
+    }
+
+    /**
+     * Finds every test reference in the problem statement's task markers that does NOT resolve to an ACTIVE test
+     * case of the exercise (by exact name or {@code <testid>} id) — e.g. a typo, a stale name left over from
+     * before a rename, or a test the transformation removed without updating the marker. Unlike
+     * {@link #extractTasks}, which silently drops unresolved references when building tasks, this reports them so
+     * callers can surface a precise error instead of a silently-broken task-test link.
+     * <p>
+     * Only ACTIVE test cases count. Artemis never deletes a test case row when the test disappears from the test
+     * repository; it just flags it inactive, and grading reads active test cases only. Matching against inactive
+     * rows too would report "resolved" for a task that can never be fulfilled — which is exactly what happened
+     * for generated exercise variants: provisioning clones the source exercise WITH its test cases, so after the
+     * agent renamed the tests, every stale reference to a source test name still found its (now inactive) row and
+     * the variant-generation verify gate passed while every task in the problem statement was unlinked.
+     *
+     * @param exercise the exercise whose problem statement is checked
+     * @return the raw, unresolved references exactly as written in the problem statement (e.g. {@code "testFoo()"},
+     *         {@code "testClass[Bar]"}), in the order they appear; empty when every reference resolves
+     */
+    public List<String> findUnresolvedTaskTestReferences(ProgrammingExercise exercise) {
+        var problemStatement = exercise.getProblemStatement();
+        if (problemStatement == null || problemStatement.isEmpty()) {
+            return List.of();
+        }
+        var testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
+        var matcher = TASK_PATTERN.matcher(problemStatement);
+        List<String> unresolved = new ArrayList<>();
+        while (matcher.find()) {
+            var capturedTestCaseNames = matcher.group("tests");
+            for (String testName : extractTestCaseNames(capturedTestCaseNames)) {
+                // A whitespace-only reference list, e.g. "[task][Foo]( )", yields one empty name — reporting it
+                // would send the agent after a blank test name.
+                if (testName.isBlank()) {
+                    continue;
+                }
+                if (findTestCaseFromProblemStatement(testName, testCases).isEmpty()) {
+                    unresolved.add(testName);
+                }
+            }
+        }
+        return unresolved;
     }
 
     private Optional<ProgrammingExerciseTestCase> findTestCaseFromProblemStatement(String testName, Set<ProgrammingExerciseTestCase> testCases) {
