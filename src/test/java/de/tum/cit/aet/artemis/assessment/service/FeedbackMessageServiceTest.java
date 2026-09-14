@@ -10,6 +10,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackMessageRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.FeedbackMessageCleanupRepository;
@@ -25,6 +27,9 @@ class FeedbackMessageServiceTest extends AbstractSpringIntegrationIndependentBat
 
     @Autowired
     private FeedbackMessageCleanupRepository feedbackMessageCleanupRepository;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     @Test
     void getOrCreateDeduplicatesByText() {
@@ -47,10 +52,29 @@ class FeedbackMessageServiceTest extends AbstractSpringIntegrationIndependentBat
         // made blind exactly once, which is what a writer sees whose competitor commits right after it looked.
         var winner = feedbackMessageService.getOrCreate("concurrently inserted message");
 
-        var loser = new FeedbackMessageService(blindOnFirstLookup(feedbackMessageRepository)).getOrCreate("concurrently inserted message");
+        var loser = new FeedbackMessageService(blindOnFirstLookup(feedbackMessageRepository), transactionManager).getOrCreate("concurrently inserted message");
 
         assertThat(loser.getId()).isEqualTo(winner.getId());
         assertThat(feedbackMessageRepository.findAll()).filteredOn(message -> "concurrently inserted message".equals(message.getText())).hasSize(1);
+    }
+
+    @Test
+    void getOrCreateLosingTheHashRaceInsideATransactionLeavesThatTransactionUsable() {
+        // The merge of a multi-container build resolves its messages inside a transaction. Losing the race there must
+        // not poison that transaction: the failed insert has to be rolled back on its own, so the winner's row can be
+        // re-read and the surrounding transaction can go on to commit.
+        var winner = feedbackMessageService.getOrCreate("concurrently inserted message in a transaction");
+        var loser = new FeedbackMessageService(blindOnFirstLookup(feedbackMessageRepository), transactionManager);
+
+        var resolved = new TransactionTemplate(transactionManager).execute(status -> {
+            var message = loser.getOrCreate("concurrently inserted message in a transaction");
+            // the surrounding transaction keeps working after the lost race
+            assertThat(feedbackMessageRepository.findByHash(message.getHash())).isPresent();
+            return message;
+        });
+
+        assertThat(resolved.getId()).isEqualTo(winner.getId());
+        assertThat(feedbackMessageRepository.findAll()).filteredOn(message -> "concurrently inserted message in a transaction".equals(message.getText())).hasSize(1);
     }
 
     @Test
