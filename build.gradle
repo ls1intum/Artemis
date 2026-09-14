@@ -83,11 +83,17 @@ plugins {
     id "org.sonarqube" version "${sonarqube_plugin_version}"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
-    // Pinned deliberately: the custom "angular22" generator on the buildscript classpath above is built against a
-    // specific openapi-generator core and is discovered through ServiceLoader, so the two have to move together.
-    // Nothing here would catch a mismatch - the generated client is committed and CI never runs openApiGenerate -
-    // so bump this only alongside a de.tum.cit.aet:openapi-generator-angular22 release built for the new core.
-    id "org.openapi.generator" version "7.21.0"
+    // Bump this one by hand, never on the strength of a green build. The custom "angular22" generator on the
+    // buildscript classpath above declares openapi-generator 7.21.0 and is discovered through ServiceLoader, so
+    // raising the plugin runs that generator against a core it was not compiled against - and nothing in CI would
+    // notice, because the generated client is committed and CI never runs openApiGenerate. Verify a candidate by
+    // regenerating on the old and the new version and diffing the two outputs against each other (not against the
+    // committed client, which has drifted from the spec): `./gradlew openApiGenerate`, copy
+    // src/main/webapp/app/openapi aside, `git checkout` it, switch version, regenerate, diff.
+    // 7.21.0 -> 7.25.0 was checked that way: the generator loads and emits a complete client, and the only
+    // difference is `{ [key: string]: any }` becoming `{ [key: string]: any | null }` for free-form maps, which is
+    // the same type in TypeScript.
+    id "org.openapi.generator" version "7.25.0"
     id "com.google.osdetector" version "1.7.3"
     id "org.cyclonedx.bom" version "3.4.1"
 }
