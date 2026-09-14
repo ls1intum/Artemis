@@ -50,13 +50,16 @@ public class SearchableEntityReconcileScheduler {
     }
 
     /**
-     * Records the effective configuration once, so what a node was doing is answerable from its log alone. Silent
-     * while every pass is disabled, which is the default.
+     * Records the effective configuration once, so what a node was doing is answerable from its log alone.
+     * <p>
+     * The disabled case is logged at info rather than debug on purpose. A node whose reconcile is off looks
+     * identical to one where reconcile is broken, and at a normal log level both are silence; the one state an
+     * operator most needs to read off the log was the one it did not report.
      */
     @PostConstruct
     public void logEffectiveConfiguration() {
         if (!reconcileProperties.anyPassEnabled()) {
-            log.debug("Global search reconcile is disabled");
+            log.info("Global search reconcile is disabled: no pass will run and the index is only updated by live changes");
             return;
         }
         log.info(
