@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
@@ -55,6 +56,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("repositories/test-repository")
 @RestController
 @RequestMapping("api/programming/")
 // Every editor endpoint here checks out and pulls the working copy on the server, so a cheap request turns into a

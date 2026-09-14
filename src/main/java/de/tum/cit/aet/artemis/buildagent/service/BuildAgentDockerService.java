@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -28,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
@@ -81,6 +83,7 @@ import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 @Lazy(false)
 @Service
 @Profile(PROFILE_BUILDAGENT)
+@ConditionalOnProperty(prefix = "artemis.continuous-integration", name = "build-runner", havingValue = "docker", matchIfMissing = true)
 public class BuildAgentDockerService {
 
     /**
@@ -456,6 +459,10 @@ public class BuildAgentDockerService {
                     checkImageArchitecture(imageName, inspectImageResponse, buildJob, buildLogsMap);
                 }
                 catch (InterruptedException ie) {
+                    // Wrapping in another exception type loses the interruption, so restore it for whoever catches
+                    // LocalCIException: a build agent thread that keeps running after a shutdown request is the failure
+                    // this guards against.
+                    Thread.currentThread().interrupt();
                     throw new LocalCIException("Interrupted while pulling docker image " + imageName, ie);
                 }
                 catch (Exception ex) {
@@ -475,6 +482,8 @@ public class BuildAgentDockerService {
                             checkImageArchitecture(imageName, inspectImageResponse, buildJob, buildLogsMap);
                         }
                         catch (InterruptedException ie) {
+                            // See the primary pull above: the wrapper does not carry the interrupt status.
+                            Thread.currentThread().interrupt();
                             throw new LocalCIException("Interrupted while pulling docker image " + imageName + " with amd64 fallback", ie);
                         }
                         catch (Exception fallbackEx) {
@@ -794,7 +803,7 @@ public class BuildAgentDockerService {
      */
     private boolean isMacOS() {
         String osName = System.getProperty("os.name");
-        return osName != null && osName.toLowerCase().contains("mac");
+        return osName != null && osName.toLowerCase(Locale.ROOT).contains("mac");
     }
 
     /**

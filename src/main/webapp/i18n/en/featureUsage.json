@@ -1,0 +1,64 @@
+{
+    "artemisApp": {
+        "featureUsage": {
+            "title": "Feature usage",
+            "description": "How often each part of Artemis was actually used in the selected period. Counts come from the server itself, are aggregated per day and contain nothing about individual users. Features with no usage at all are listed too, because those are the ones worth a decision. Features this version no longer offers are counted separately, so they do not dilute that list.",
+            "window": {
+                "label": "Period",
+                "days7": "7 days",
+                "days30": "30 days",
+                "days90": "90 days",
+                "days180": "180 days"
+            },
+            "kpi": {
+                "trackedFeatures": "Tracked features",
+                "unusedFeatures": "Unused in this period",
+                "totalCalls": "Total calls",
+                "retiredFeatures": "No longer offered",
+                "recordingSince": "Recording since",
+                "endpointDetail": "{{ count }} endpoints"
+            },
+            "tab": {
+                "tree": "Explore",
+                "allFeatures": "All features",
+                "unused": "Unused",
+                "adoption": "Adoption"
+            },
+            "column": {
+                "module": "Module",
+                "feature": "Feature",
+                "calls": "Calls",
+                "activeDays": "Active days",
+                "errorRate": "Errors",
+                "meanDuration": "Mean (ms)",
+                "maxDuration": "Max (ms)",
+                "lastUsed": "Last used",
+                "trend": "Show trend",
+                "enabledOn": "Enabled on",
+                "share": "Share",
+                "unusedBelow": "Unused"
+            },
+            "search": "Filter by feature or module",
+            "moduleFilter": "Module",
+            "allModules": "All modules",
+            "endpointCount": "{{ count }} endpoints",
+            "unusedTag": "unused",
+            "roleDistribution": "Calls by role of the caller. This is the caller's global role, not their role in a particular course. Git and background features have no caller and count as anonymous.",
+            "noUsageYet": "No usage has been recorded for this period yet. Counters are written every few minutes, so a freshly started server needs a moment before the first numbers appear.",
+            "noMatches": "No feature matches the current filter.",
+            "noAdoptionData": "No module reported any adoption data.",
+            "trendTitle": "Daily calls",
+            "closeTrend": "Close",
+            "limitations": "Two things this cannot see. WebSocket traffic is not counted, so features that mostly communicate over the websocket (live quizzes, messaging, exam synchronisation) are under-reported. Requests rejected by authentication never reach a handler and are not counted at all.",
+            "allRoles": "All roles",
+            "roleFilter": "Caller role",
+            "retiredTag": "no longer offered",
+            "sendDigest": "Send weekly email now",
+            "digestSent": "The feature usage digest email was sent.",
+            "digestFailed": "The digest email could not be sent. Check that a recipient is configured and that the digest is enabled.",
+            "expandAll": "Expand all",
+            "collapseAll": "Collapse all",
+            "featureCount": "{{ count }} features"
+        }
+    }
+}

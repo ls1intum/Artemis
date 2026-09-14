@@ -9,8 +9,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 /**
  * Verifies that git authentication honours the account state, for credentials that do not go through the
@@ -33,11 +33,11 @@ class LocalVCAccountStateIntegrationTest extends AbstractProgrammingIntegrationL
 
     private static final String PERSONAL_TOKEN = "vcs-access-token-for-account-state-test";
 
-    private LocalRepository assignmentRepository;
+    private LocalVCTestRepository assignmentRepository;
 
     @BeforeEach
     void initRepository() throws Exception {
-        assignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, assignmentRepositorySlug);
+        assignmentRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, assignmentRepositorySlug);
         // The student needs a participation for the repository, otherwise the request fails on authorization before the
         // account-state check under test is reached.
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -54,7 +54,7 @@ class LocalVCAccountStateIntegrationTest extends AbstractProgrammingIntegrationL
         // Guarded, because a failure inside initRepository leaves the field unassigned and the resulting
         // NullPointerException here would replace the real cause in the report.
         if (assignmentRepository != null) {
-            assignmentRepository.resetLocalRepo();
+            assignmentRepository.deleteWorkingCopy();
         }
     }
 
@@ -75,7 +75,7 @@ class LocalVCAccountStateIntegrationTest extends AbstractProgrammingIntegrationL
 
     @Test
     void aValidPersonalTokenWorksWhileTheAccountIsActive() {
-        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, PERSONAL_TOKEN, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopy(), student1Login, PERSONAL_TOKEN, projectKey1, assignmentRepositorySlug);
     }
 
     @Test
@@ -83,13 +83,12 @@ class LocalVCAccountStateIntegrationTest extends AbstractProgrammingIntegrationL
         student1.setActivated(false);
         userTestRepository.save(student1);
 
-        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, PERSONAL_TOKEN, projectKey1, assignmentRepositorySlug,
-                NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopy(), student1Login, PERSONAL_TOKEN, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
 
         // Reactivating restores access, which shows the rejection came from the account state and not from the token.
         student1.setActivated(true);
         userTestRepository.save(student1);
-        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, PERSONAL_TOKEN, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopy(), student1Login, PERSONAL_TOKEN, projectKey1, assignmentRepositorySlug);
     }
 
     @Test
@@ -97,12 +96,11 @@ class LocalVCAccountStateIntegrationTest extends AbstractProgrammingIntegrationL
         student1.setDeleted(true);
         userTestRepository.save(student1);
 
-        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, PERSONAL_TOKEN, projectKey1, assignmentRepositorySlug,
-                NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopy(), student1Login, PERSONAL_TOKEN, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
 
         student1.setDeleted(false);
         userTestRepository.save(student1);
-        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, PERSONAL_TOKEN, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopy(), student1Login, PERSONAL_TOKEN, projectKey1, assignmentRepositorySlug);
     }
 
     /**
@@ -115,8 +113,7 @@ class LocalVCAccountStateIntegrationTest extends AbstractProgrammingIntegrationL
         student1.setActivated(false);
         userTestRepository.save(student1);
 
-        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, USER_PASSWORD, projectKey1, assignmentRepositorySlug,
-                NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopy(), student1Login, USER_PASSWORD, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
     }
 
     /**
@@ -130,11 +127,10 @@ class LocalVCAccountStateIntegrationTest extends AbstractProgrammingIntegrationL
         student1.setDeleted(true);
         userTestRepository.save(student1);
 
-        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, USER_PASSWORD, projectKey1, assignmentRepositorySlug,
-                NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopy(), student1Login, USER_PASSWORD, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
 
         student1.setDeleted(false);
         userTestRepository.save(student1);
-        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, USER_PASSWORD, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopy(), student1Login, USER_PASSWORD, projectKey1, assignmentRepositorySlug);
     }
 }

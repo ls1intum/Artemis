@@ -16,19 +16,20 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
@@ -45,12 +46,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
@@ -60,6 +62,7 @@ import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.core.util.SecureXmlFactory;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -91,6 +94,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExportService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseExportService.class);
+
+    /** A space in a Maven artifact id, which has to be a hyphen. */
+    private static final Pattern SPACE = Pattern.compile(" ");
 
     // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
     @Value("${artemis.repo-download-clone-path}")
@@ -128,12 +134,20 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      */
     private static final long CHECKOUT_DIRECTORY_BACKSTOP_DELETION_DELAY_IN_MINUTES = 60;
 
+    /**
+     * The widest a repository export runs, reached only when there are at least that many repositories to export.
+     * <p>
+     * A course archive has hundreds and wants the width. A data export has one repository per exercise, and sizing the
+     * pool to the work keeps it from starting a thread to hand a single git operation to.
+     */
+    private static final int MAX_CONCURRENT_REPOSITORY_EXPORTS = 10;
+
     public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             StudentParticipationRepository studentParticipationRepository, FileService fileService, GitService gitService, GitRepositoryExportService gitRepositoryExportService,
-            RepositoryExportGitService repositoryExportGitService, ZipFileService zipFileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
+            RepositoryExportGitService repositoryExportGitService, ZipFileService zipFileService, JsonMapper objectMapper,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, BuildPlanRepository buildPlanRepository) {
         // Programming exercises do not have a submission export service
-        super(fileService, springMvcJacksonConverter, null);
+        super(objectMapper, null);
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -496,10 +510,12 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @param outputDir                 The directory the exported repositories are placed in
      * @param exportErrors              A list of errors that occurred during export (populated by this function)
      * @param repositoryExportOptions   the options that should be used for the export (e.g. anonymization)
-     * @param content                   whether the caller needs the history of the repositories. Only a caller that does
-     *                                      not can be served from the bare repository; everyone else keeps the checkout,
-     *                                      which is what produces the directory-with-{@code .git} layout they expect.
-     * @return List of paths to the exported repositories, either zip files or, for the rewriting options, directories
+     * @param content                   whether the caller needs the history of the repositories. Both answers are served
+     *                                      from the bare repository: a caller that wants a snapshot gets one ZIP per
+     *                                      repository, a caller that wants the history gets a directory holding the
+     *                                      repository, which is the layout those callers expect.
+     * @return List of paths to the exported repositories, either zip files or directories, depending on {@code content}
+     *         and the export options
      */
     public List<Path> exportStudentRepositories(ProgrammingExercise programmingExercise, @NonNull Collection<ProgrammingExerciseStudentParticipation> participations,
             Map<Long, String> participationCommitHashes, Path outputDir, List<String> exportErrors, RepositoryExportOptionsDTO repositoryExportOptions,
@@ -522,7 +538,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         // halfway, and its delay has to outlast the whole checkout phase, which for an anonymising export of a large
         // exercise runs for many minutes.
         final Path checkoutDir;
-        if (requiresCheckout(repositoryExportOptions, content)) {
+        if (requiresCheckout(repositoryExportOptions)) {
             try {
                 checkoutDir = fileService.createTemporaryDirectory(repoDownloadClonePath, "repo-checkout-", CHECKOUT_DIRECTORY_BACKSTOP_DELETION_DELAY_IN_MINUTES);
             }
@@ -540,33 +556,49 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
         List<Path> exportedStudentRepositoriesPaths = Collections.synchronizedList(new ArrayList<>());
         AtomicBoolean anonymizationFailed = new AtomicBoolean(false);
+        // The tasks below collect their errors here rather than into the caller's list, because that list is not
+        // required to be thread safe and exportStudentRepositoriesToZipFile passes a plain ArrayList. They are handed
+        // over once the tasks have finished, on the thread that called this.
+        List<String> collectedExportErrors = Collections.synchronizedList(new ArrayList<>());
 
-        log.info("export student repositories for programming exercise {} in parallel", programmingExercise.getId());
-        try (var threadPool = Executors.newFixedThreadPool(10)) {
-            var futures = participations.stream().map(participation -> CompletableFuture.runAsync(() -> {
-                try {
-                    var relevantCommitHash = participationCommitHashes.get(participation.getId());
-                    log.debug("invoke exportStudentRepository for participation {}", participation.getId());
-                    Path repoOutputPath = exportStudentRepository(programmingExercise, participation, repositoryExportOptions, relevantCommitHash, checkoutDir, outputDir, content);
-                    if (repoOutputPath != null) {
-                        exportedStudentRepositoriesPaths.add(repoOutputPath);
-                    }
+        List<Runnable> exports = participations.stream().map(participation -> (Runnable) () -> {
+            try {
+                var relevantCommitHash = participationCommitHashes.get(participation.getId());
+                log.debug("invoke exportStudentRepository for participation {}", participation.getId());
+                Path repoOutputPath = exportStudentRepository(programmingExercise, participation, repositoryExportOptions, relevantCommitHash, checkoutDir, outputDir, content);
+                if (repoOutputPath != null) {
+                    exportedStudentRepositoriesPaths.add(repoOutputPath);
                 }
-                catch (Exception exception) {
-                    var error = "Failed to export the student repository with participation: " + participation.getId() + " for programming exercise '"
-                            + programmingExercise.getTitle() + "' (id: " + programmingExercise.getId() + ") because the repository couldn't be downloaded. ";
-                    exportErrors.add(error);
-                    if (repositoryExportOptions.anonymizeRepository() && exception instanceof GitException) {
-                        anonymizationFailed.set(true);
-                    }
-                }
-            }, threadPool).toCompletableFuture()).toArray(CompletableFuture[]::new);
-            // wait until all operations finish
-            CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).join();
-            deleteCheckoutDirectory(checkoutDir);
-            if (anonymizationFailed.get()) {
-                throw new GitException("Anonymization failed for one or more repositories");
             }
+            catch (Exception exception) {
+                var error = "Failed to export the student repository with participation: " + participation.getId() + " for programming exercise '" + programmingExercise.getTitle()
+                        + "' (id: " + programmingExercise.getId() + ") because the repository couldn't be downloaded. ";
+                collectedExportErrors.add(error);
+                if (repositoryExportOptions.anonymizeRepository() && exception instanceof GitException) {
+                    anonymizationFailed.set(true);
+                }
+            }
+        }).toList();
+
+        if (exports.size() <= 1) {
+            // A single repository, which is what a data export asks for, runs here rather than on a thread of its own.
+            log.info("export the student repositories of programming exercise {} on the calling thread", programmingExerciseId);
+            exports.forEach(Runnable::run);
+        }
+        else {
+            int concurrency = Math.min(exports.size(), MAX_CONCURRENT_REPOSITORY_EXPORTS);
+            log.info("export {} student repositories for programming exercise {} on {} threads", exports.size(), programmingExerciseId, concurrency);
+            try (var threadPool = Executors.newFixedThreadPool(concurrency)) {
+                // wait until all operations finish
+                CompletableFuture.allOf(exports.stream().map(export -> CompletableFuture.runAsync(export, threadPool)).toArray(CompletableFuture[]::new)).join();
+            }
+        }
+        // Before the anonymization check below, so that a caller still learns which repositories failed even when the
+        // export ends in that exception.
+        exportErrors.addAll(collectedExportErrors);
+        deleteCheckoutDirectory(checkoutDir);
+        if (anonymizationFailed.get()) {
+            throw new GitException("Anonymization failed for one or more repositories");
         }
         return exportedStudentRepositoriesPaths;
     }
@@ -617,26 +649,25 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * instead, which is the case for course and exam archiving and for the data export.
      *
      * <p>
-     * A caller that needs the history keeps the checkout as well. Streaming a student repository with its history would
-     * change the layout the manual export and the data export have always produced, and deriving the answer from the
-     * options alone would silently drop the history of an instructor who simply unticked both rewriting checkboxes.
+     * Asking for the history does not require one: a repository can be materialized with its full history straight from
+     * the bare repository, into a ZIP or into a directory. Only the options that rewrite what is exported need a working
+     * copy to rewrite.
      *
      * @param repositoryExportOptions the options the export runs with
-     * @param content                 how much of the repository the caller asked for
      * @return true if the repository has to be checked out before it can be exported
      */
-    private static boolean requiresCheckout(RepositoryExportOptionsDTO repositoryExportOptions, RepositoryExportContent content) {
-        return content == RepositoryExportContent.WITH_HISTORY || repositoryExportOptions.filterLateSubmissions() || repositoryExportOptions.addParticipantName()
-                || repositoryExportOptions.combineStudentCommits() || repositoryExportOptions.anonymizeRepository() || repositoryExportOptions.normalizeCodeStyle();
+    private static boolean requiresCheckout(RepositoryExportOptionsDTO repositoryExportOptions) {
+        return repositoryExportOptions.filterLateSubmissions() || repositoryExportOptions.addParticipantName() || repositoryExportOptions.combineStudentCommits()
+                || repositoryExportOptions.anonymizeRepository() || repositoryExportOptions.normalizeCodeStyle();
     }
 
     /**
      * Exports the repository of the given participation into the output directory and returns the path it was written to.
      *
      * <p>
-     * Unless the export options require a checkout, the repository is streamed straight from its bare repository into a
-     * zip in the output directory: no clone, no working copy and no temporary directory. Student repositories are
-     * exported without their history in that case, matching what the single-repository student download already does.
+     * Unless the export options require a checkout, the repository is streamed straight from its bare repository into
+     * the output directory - as a ZIP for a snapshot, as a directory when the history is wanted: no clone, no working
+     * copy and no temporary directory.
      *
      * @param programmingExercise     The programming exercise for the participation
      * @param participation           The participation, for which the repository should get zipped
@@ -645,8 +676,8 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @param checkoutDir             The directory used to clone the repository, only needed for the rewriting options
      * @param outputDir               The directory where the exported repository is stored
      * @param content                 how much of the repository the caller asked for
-     * @return The exported repository as a zip file, or as a directory for the rewriting options, or null if the
-     *         participation was skipped
+     * @return The exported repository as a zip file, or as a directory when the history is wanted or an option rewrites
+     *         the repository, or null if the participation was skipped
      * @throws IOException if zip file creation failed
      */
     @Nullable
@@ -663,14 +694,18 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             return null;
         }
 
-        if (!requiresCheckout(repositoryExportOptions, content)) {
-            String zippedRepoName = gitRepositoryExportService.getStudentRepositoryName(programmingExercise, participation, false);
-            return gitRepositoryExportService.exportRepositoryToZipFile(participation.getVcsRepositoryUri(), outputDir, zippedRepoName, content);
+        if (!requiresCheckout(repositoryExportOptions)) {
+            String repositoryName = gitRepositoryExportService.getStudentRepositoryName(programmingExercise, participation, false);
+            // Callers asking for the history get a directory, which is the layout they have always produced; callers
+            // asking for a snapshot get one ZIP per repository. Neither needs a working copy on the way.
+            if (content == RepositoryExportContent.WITH_HISTORY) {
+                return gitRepositoryExportService.exportRepositoryToDirectory(participation.getVcsRepositoryUri(), outputDir, repositoryName);
+            }
+            return gitRepositoryExportService.exportRepositoryToZipFile(participation.getVcsRepositoryUri(), outputDir, repositoryName, content);
         }
 
         try {
-            var tempRepositoryPath = Objects.requireNonNull(checkoutDir, "A checkout directory is required for the selected export options")
-                    .resolve(String.valueOf(participation.getId()));
+            var tempRepositoryPath = checkoutDir.resolve(String.valueOf(participation.getId()));
             // Checkout the repository
             Repository repository = gitService.getOrCheckoutRepository(participation, tempRepositoryPath, false);
             if (repository == null) {
@@ -839,12 +874,12 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                 nameNode.setTextContent(nameNode.getTextContent() + " " + participantIdentifier);
             }
             if (artifactIdNode != null) {
-                String artifactId = (artifactIdNode.getTextContent() + "-" + participantIdentifier).replaceAll(" ", "-").toLowerCase();
+                String artifactId = SPACE.matcher(artifactIdNode.getTextContent() + "-" + participantIdentifier).replaceAll("-").toLowerCase(Locale.ROOT);
                 artifactIdNode.setTextContent(artifactId);
             }
 
             // 4- Save the result to a new XML doc
-            Transformer xformer = TransformerFactory.newInstance().newTransformer();
+            Transformer xformer = SecureXmlFactory.transformer();
             xformer.transform(new DOMSource(doc), new StreamResult(pomFile));
 
         }
@@ -875,7 +910,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             }
 
             // 4- Save the result to a new XML doc
-            Transformer xformer = TransformerFactory.newInstance().newTransformer();
+            Transformer xformer = SecureXmlFactory.transformer();
             xformer.transform(new DOMSource(doc), new StreamResult(eclipseProjectFile));
 
         }

@@ -14,7 +14,7 @@
             "lastBuildDate": "Letztes Build Datum",
             "averageBuildDuration": "Durchschnittliche Build-Dauer (in Sekunden)",
             "gitRevision": "Git Revision",
-            "dockerVersion": "Docker Version",
+            "buildRunner": "Build-Runner",
             "running": "Laufend",
             "idle": "Inaktiv",
             "paused": "Angehalten",

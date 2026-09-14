@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
@@ -58,6 +59,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.dto.BuildLogEntryDTO;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -74,6 +76,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("participation/online-editor")
 @RestController
 @RequestMapping("api/programming/")
 // Every editor endpoint here checks out and pulls the working copy on the server, so a cheap request turns into a
@@ -445,7 +448,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @GetMapping(value = "participations/{participationId}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<List<BuildLogEntry>> getBuildLogs(@PathVariable Long participationId, @RequestParam(name = "resultId") Optional<Long> resultId) {
+    public ResponseEntity<List<BuildLogEntryDTO>> getBuildLogs(@PathVariable Long participationId, @RequestParam(name = "resultId") Optional<Long> resultId) {
         log.debug("REST request to get build logs for participation {}", participationId);
 
         ProgrammingExerciseParticipation participation = participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participationId);
@@ -475,6 +478,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
         // Load the logs from the database
         List<BuildLogEntry> buildLogs = buildLogService.getLatestBuildLogs(programmingSubmission);
-        return ResponseEntity.ok(buildLogs);
+        return ResponseEntity.ok(buildLogs.stream().map(BuildLogEntryDTO::of).toList());
     }
 }

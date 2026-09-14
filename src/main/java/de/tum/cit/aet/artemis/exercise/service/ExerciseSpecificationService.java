@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.regex.Pattern;
+
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
@@ -37,6 +39,9 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 @Service
 public class ExerciseSpecificationService {
 
+    /** A search term that consists of digits only, and can therefore be compared against an id. */
+    private static final Pattern NUMERIC_SEARCH_TERM = Pattern.compile("\\d+");
+
     private final AuthorizationCheckService authCheckService;
 
     public ExerciseSpecificationService(AuthorizationCheckService authCheckService) {
@@ -65,7 +70,7 @@ public class ExerciseSpecificationService {
             Join<Exam, Course> joinExamCourse = joinExam.join(Exam_.COURSE, JoinType.LEFT);
 
             Predicate idMatchesSearch;
-            if (searchTerm.matches("\\d+")) {
+            if (NUMERIC_SEARCH_TERM.matcher(searchTerm).matches()) {
                 // Ensure the search term is numeric to avoid SQL issues
                 idMatchesSearch = criteriaBuilder.equal(root.get(Exercise_.ID), Long.valueOf(searchTerm));
             }
@@ -82,7 +87,7 @@ public class ExerciseSpecificationService {
 
             Predicate filter;
 
-            if (!authCheckService.isAdmin(user)) {
+            if (!authCheckService.isCurrentUserAdminAccessEnabled()) {
                 Subquery<CourseRole> ucrSubqueryCourse = query.subquery(CourseRole.class);
                 var ucrRootCourse = ucrSubqueryCourse.from(UserCourseRole.class);
                 ucrSubqueryCourse.select(ucrRootCourse.get("role"))

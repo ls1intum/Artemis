@@ -1,42 +1,78 @@
 <!-- Header section with title -->
-<div class="d-flex justify-content-between">
+<div class="flex justify-between">
     <h2 jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.title"></h2>
 </div>
 <hr />
 
 <!-- Course selection section -->
-<div class="row align-items-center">
-    <div class="col"><span jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.description"></span><br /></div>
-    <select class="form-select col-auto w-auto" (change)="courseChanged($event)">
-        <option value="-1" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.selectCourse" selected></option>
-        @for (courseLearnerProfile of courseLearnerProfiles(); track courseLearnerProfile.courseId) {
-            <option value="{{ courseLearnerProfile.courseId }}">{{ courseLearnerProfile.courseTitle }}</option>
-        }
-    </select>
+<div class="flex flex-wrap items-center gap-4">
+    <span class="flex-1" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.description"></span>
+    <tum-ui-select
+        class="w-auto min-w-56"
+        [options]="courseOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [showClear]="true"
+        [ngModel]="activeCourseId()"
+        [ngModelOptions]="{ standalone: true }"
+        (selectionChange)="courseChanged($event)"
+        [placeholder]="'artemisApp.learnerProfile.courseLearnerProfile.selectCourse' | artemisTranslate"
+        [ariaLabel]="'artemisApp.learnerProfile.courseLearnerProfile.selectCourse' | artemisTranslate"
+    />
 </div>
 
 <!-- Profile settings section - only visible when a course is selected -->
-<div [ngClass]="{ 'd-none': disabled() }">
-    <div class="row row-cols-1 row-cols-xl-2 gx-5 align-items-end">
+@if (!disabled()) {
+    <div class="grid grid-cols-1 items-end gap-x-12 gap-y-4 xl:grid-cols-2">
         <!-- Aim for Grade/Bonus setting -->
-        <div class="col">
-            <div class="title" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.aimForGradeOrBonus.label"></div>
+        <div>
+            <div id="aim-for-grade-or-bonus-label" class="title" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.aimForGradeOrBonus.label"></div>
             <div class="description" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.aimForGradeOrBonus.description"></div>
-            <jhi-segmented-toggle [options]="aimForGradeOrBonusOptions" [(selected)]="aimForGradeOrBonus" (selectedChange)="onToggleChange()" />
+            <tum-ui-select-button
+                class="w-full"
+                aria-labelledby="aim-for-grade-or-bonus-label"
+                [options]="aimForGradeOrBonusOptions"
+                optionLabel="label"
+                optionValue="value"
+                [allowEmpty]="false"
+                [ngModel]="aimForGradeOrBonus()"
+                [ngModelOptions]="{ standalone: true }"
+                (changed)="onSelectionChange(aimForGradeOrBonus, $event)"
+            />
         </div>
 
         <!-- Time Investment setting -->
-        <div class="col">
-            <div class="title" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.timeInvestment.label"></div>
+        <div>
+            <div id="time-investment-label" class="title" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.timeInvestment.label"></div>
             <div class="description" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.timeInvestment.description"></div>
-            <jhi-segmented-toggle [options]="timeInvestmentOptions" [(selected)]="timeInvestment" (selectedChange)="onToggleChange()" />
+            <tum-ui-select-button
+                class="w-full"
+                aria-labelledby="time-investment-label"
+                [options]="timeInvestmentOptions"
+                optionLabel="label"
+                optionValue="value"
+                [allowEmpty]="false"
+                [ngModel]="timeInvestment()"
+                [ngModelOptions]="{ standalone: true }"
+                (changed)="onSelectionChange(timeInvestment, $event)"
+            />
         </div>
 
         <!-- Repetition Intensity setting -->
-        <div class="col">
-            <div class="title" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity.label"></div>
+        <div>
+            <div id="repetition-intensity-label" class="title" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity.label"></div>
             <div class="description" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity.description"></div>
-            <jhi-segmented-toggle [options]="repetitionIntensityOptions" [(selected)]="repetitionIntensity" (selectedChange)="onToggleChange()" />
+            <tum-ui-select-button
+                class="w-full"
+                aria-labelledby="repetition-intensity-label"
+                [options]="repetitionIntensityOptions"
+                optionLabel="label"
+                optionValue="value"
+                [allowEmpty]="false"
+                [ngModel]="repetitionIntensity()"
+                [ngModelOptions]="{ standalone: true }"
+                (changed)="onSelectionChange(repetitionIntensity, $event)"
+            />
         </div>
     </div>
-</div>
+}

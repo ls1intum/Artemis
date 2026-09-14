@@ -1,4 +1,6 @@
-<h4 class="mb-4" jhiTranslate="artemisApp.examTimeline.title" [translateValues]="{ username: studentExam().user!.login! }"></h4>
+<div *titleBarTitle class="flex items-center">
+    <h5 class="mb-0" jhiTranslate="artemisApp.examTimeline.title" [translateValues]="{ username: studentExam()?.user?.login }"></h5>
+</div>
 @if (studentExam()) {
     <div>
         <div class="custom-slider">

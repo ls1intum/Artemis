@@ -4,7 +4,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, tap } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { faBan, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { TumUiButtonComponent, TumUiButtonDirective, TumUiListComponent, TumUiListItemDirective, TumUiTableDirective } from '@tumaet/ui-angular';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -23,7 +23,11 @@ import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons
         TranslateDirective,
         FaIconComponent,
         DeleteButtonDirective,
-        ButtonComponent,
+        TumUiButtonComponent,
+        TumUiButtonDirective,
+        TumUiListComponent,
+        TumUiListItemDirective,
+        TumUiTableDirective,
         FormDateTimePickerComponent,
         FormsModule,
         ArtemisDatePipe,
@@ -36,8 +40,6 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     protected readonly faSave = faSave;
     protected readonly faTrash = faTrash;
     protected readonly faBan = faBan;
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
 
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);

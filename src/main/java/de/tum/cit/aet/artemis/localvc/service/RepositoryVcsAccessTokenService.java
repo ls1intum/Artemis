@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -372,7 +373,7 @@ public class RepositoryVcsAccessTokenService {
         return new BaseRepository(repositoryType, null, repositoryUri);
     }
 
-    private Set<User> staffUsersOf(Course course) {
+    private Set<User> staffUsersOf(@NonNull Course course) {
         return userCourseRoleRepository.findUsersByCourse_IdAndRoleIn(course.getId(), CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
     }
 }

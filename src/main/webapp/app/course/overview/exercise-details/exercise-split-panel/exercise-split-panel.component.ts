@@ -6,7 +6,7 @@ import { participationChildRouteSegments } from 'app/course/overview/exercise-de
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { faAlignLeft, faComment, faGear, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { ProblemStatementComponent } from 'app/course/overview/exercise-details/problem-statement/problem-statement.component';
-import { isExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
+import { ExerciseSubmission, isExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { LiveQuizParticipationStatus, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { QuizParticipationBase } from 'app/quiz/overview/participation/quiz-participation.base';
@@ -73,6 +73,8 @@ export class ExerciseSplitPanelComponent {
     private readonly _quizEnded = signal(false);
     private readonly _quizHasStarted = signal(false);
     private readonly _quizComponent = signal<QuizParticipationBase | undefined>(undefined);
+    /** The routed participation component, so `canSubmit` can ask a read-only surface to withdraw the Submit action. */
+    private readonly _submissionComponent = signal<ExerciseSubmission | undefined>(undefined);
     private quizStartedSubscription: { unsubscribe(): void } | undefined;
     private quizSubmittedSubscription: { unsubscribe(): void } | undefined;
     private liveQuizStatusSubscription: { unsubscribe(): void } | undefined;
@@ -284,6 +286,10 @@ export class ExerciseSplitPanelComponent {
             return quizBatchStarted || quizHasStarted;
         }
         if (!studentParticipation) return false;
+        const canSubmitExercise = this._submissionComponent()?.canSubmitExercise;
+        if (canSubmitExercise && !canSubmitExercise()) {
+            return false;
+        }
         if (type === ExerciseType.PROGRAMMING) {
             return (this.exercise() as ProgrammingExercise).allowOnlineEditor ?? false;
         }
@@ -312,6 +318,9 @@ export class ExerciseSplitPanelComponent {
     }
 
     onOutletActivate(component: unknown): void {
+        if (isExerciseSubmission(component)) {
+            this._submissionComponent.set(component);
+        }
         if (component instanceof QuizParticipationBase) {
             this._quizComponent.set(component);
             this.quizStartedSubscription = component.quizStartedEvent.subscribe(() => {
@@ -333,6 +342,7 @@ export class ExerciseSplitPanelComponent {
     }
 
     onOutletDeactivate(): void {
+        this._submissionComponent.set(undefined);
         this._quizComponent.set(undefined);
         this.quizStartedSubscription?.unsubscribe();
         this.quizStartedSubscription = undefined;

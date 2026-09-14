@@ -8,16 +8,14 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { sortBy } from 'lodash-es';
-import { ChartModule } from 'primeng/chart';
 import { round } from 'app/foundation/util/utils';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ChartExerciseTypeFilter } from 'app/exercise/chart/chart-exercise-type-filter';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { ChartMultiSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
-import { multiSeriesToLineData } from 'app/shared-ui/chart/chart-adapters';
-import { lineChartOptions, toChartSelectEvent } from 'app/shared-ui/chart/chart-options';
+import { ChartMultiSeriesEntry, ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { multiSeriesLineChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
+import { TumUiChartSelectEvent, TumUiLineChartComponent, TumUiLineChartConfig } from '@tumaet/ui-angular';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
@@ -32,7 +30,7 @@ const PIXELS_PER_EXERCISE = 100;
     selector: 'jhi-exercise-scores-chart',
     templateUrl: './exercise-scores-chart.component.html',
     styleUrls: ['./exercise-scores-chart.component.scss'],
-    imports: [TranslateDirective, NgbDropdown, NgbDropdownToggle, FaIconComponent, NgbDropdownMenu, ChartModule, ArtemisTranslatePipe],
+    imports: [TranslateDirective, NgbDropdown, NgbDropdownToggle, FaIconComponent, NgbDropdownMenu, TumUiLineChartComponent, ArtemisTranslatePipe],
 })
 export class ExerciseScoresChartComponent implements AfterViewInit {
     private navigationUtilService = inject(ArtemisNavigationUtilService);
@@ -66,38 +64,34 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
     maximumScoreLabel = '';
     readonly maxScale = signal(101);
 
-    private readonly chartColors = inject(ChartColorService).resolvedColors(() => [GraphColors.BLUE, GraphColors.YELLOW, GraphColors.GREEN]);
-
-    readonly chartData = computed(() => multiSeriesToLineData(this.chartEntries(), this.chartColors()));
+    readonly chartData = computed(() => multiSeriesLineChart(this.chartEntries(), [GraphColors.BLUE, GraphColors.YELLOW, GraphColors.GREEN]));
     // dynamic width so that the chart grows with the number of exercises and can be scrolled horizontally (CSS enforces the container width as minimum)
     readonly chartWidth = computed(() => (this.chartEntries()[0]?.series.length ?? 0) * PIXELS_PER_EXERCISE);
-    readonly chartOptions = computed(() =>
-        lineChartOptions({
-            legend: { position: 'right' },
-            xAxis: {
-                label: this.xAxisLabel(),
-                tickFormatter: (value) => {
-                    const label = `${value}`;
-                    return label.length > MAX_TICK_LENGTH ? label.slice(0, MAX_TICK_LENGTH) + '...' : label;
-                },
+    readonly chartConfig = computed<TumUiLineChartConfig>(() => ({
+        legend: { position: 'right' },
+        xAxis: {
+            label: this.xAxisLabel(),
+            tickFormatter: (value) => {
+                const label = `${value}`;
+                return label.length > MAX_TICK_LENGTH ? label.slice(0, MAX_TICK_LENGTH) + '...' : label;
             },
-            yAxis: { label: this.yAxisLabel(), min: 1, max: this.maxScale() },
-            tooltip: {
-                label: (item) => `${item.dataset.label}: ${Math.max(item.parsed.y ?? 0, 0)}%`,
-                afterBody: (items) => {
-                    const exerciseType = items[0]?.dataset.meta?.[items[0].dataIndex]?.['exerciseType'] as string | undefined;
-                    if (!exerciseType) {
-                        return '';
-                    }
-                    return (
-                        this.translateService.instant('artemisApp.exercise-scores-chart.exerciseType') +
-                        ' ' +
-                        this.translateService.instant('artemisApp.exercise-scores-chart.' + exerciseType.toLowerCase().replace('-', '_'))
-                    );
-                },
+        },
+        yAxis: { label: this.yAxisLabel(), min: 1, max: this.maxScale() },
+        tooltip: {
+            label: (item) => `${item.seriesLabel}: ${Math.max(item.value, 0)}%`,
+            afterBody: (items) => {
+                const exerciseType = (items[0]?.meta as ChartSeriesEntry | undefined)?.['exerciseType'] as string | undefined;
+                if (!exerciseType) {
+                    return '';
+                }
+                return (
+                    this.translateService.instant('artemisApp.exercise-scores-chart.exerciseType') +
+                    ' ' +
+                    this.translateService.instant('artemisApp.exercise-scores-chart.' + exerciseType.toLowerCase().replace('-', '_'))
+                );
             },
-        }),
-    );
+        },
+    }));
 
     constructor() {
         this.translateService.onLangChange.pipe(takeUntilDestroyed()).subscribe(() => {
@@ -183,12 +177,11 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
     /**
      * Provides the functionality when the user clicks on a data point of the chart:
      * the user gets delegated to the corresponding exercise detail page.
-     * Toggling the visibility of a line is handled by the built-in chart.js legend.
-     * @param event the event sent by p-chart
+     * Toggling the visibility of a line is handled by the chart legend itself.
+     * @param event the selection event emitted by the chart
      */
-    onSelect(event: Parameters<typeof toChartSelectEvent>[0]): void {
-        const selected = toChartSelectEvent(event, this.chartData());
-        const exerciseId = selected?.meta?.['exerciseId'];
+    onSelect(event: TumUiChartSelectEvent): void {
+        const exerciseId = (event.meta as ChartSeriesEntry | undefined)?.['exerciseId'];
         if (exerciseId !== undefined) {
             this.navigateToExercise(exerciseId as number);
         }

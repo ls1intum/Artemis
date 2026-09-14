@@ -53,6 +53,7 @@ import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/featur
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { CreateVariantWithAiButtonComponent } from 'app/course/manage/exercises/create-variant-modal/create-variant-with-ai-button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
@@ -96,6 +97,7 @@ import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan
         DeimosDateRangeModalComponent,
         AtlasOrchestrationTriggerComponent,
         ConsistencyCheckComponent,
+        CreateVariantWithAiButtonComponent,
     ],
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
@@ -195,7 +197,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * - Course exercises: Teaching assistants (tutors) and above can access
      * - Exam exercises: Only instructors and above can access (more restrictive for exam confidentiality)
      *
-     * This aligns with the access rights documented in docs/admin/access-rights.mdx
+     * This aligns with the access rights documented in documentation/docs/admin/access-rights.mdx
      */
     readonly canAccessParticipationsAndScores = signal(false);
 
@@ -725,14 +727,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     title: 'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment',
                     data: { boolean: exercise.allowComplaintsForAutomaticAssessments },
                 },
-                { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.timeline.manualFeedbackRequests', data: { boolean: exercise.allowFeedbackRequests } },
                 { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.showTestNamesToStudents', data: { boolean: exercise.showTestNamesToStudents } },
                 {
                     type: DetailType.Boolean,
                     title: 'artemisApp.programmingExercise.timeline.includeTestsIntoExampleSolution',
                     data: { boolean: exercise.releaseTestsWithExampleSolution },
                 },
-                { type: DetailType.Boolean, title: 'artemisApp.exercise.feedbackSuggestionsEnabled', data: { boolean: !!exercise.feedbackSuggestionModule } },
+
                 { type: DetailType.Markdown, title: 'artemisApp.exercise.assessmentInstructions', data: { innerHtml: this.formattedGradingInstructions } },
                 exercise.gradingCriteria && {
                     type: DetailType.GradingCriteria,

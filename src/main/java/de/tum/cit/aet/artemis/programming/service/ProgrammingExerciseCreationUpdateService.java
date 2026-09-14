@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -111,6 +111,28 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private static final int MAX_PROBLEM_STATEMENT_LENGTH = 100_000;
 
+    /**
+     * Computes the automatic build-and-test date without persisting or scheduling anything. Timeline owners use this
+     * before saving related entities so their validation agrees with the subsequent programming-exercise update.
+     *
+     * @param programmingExercise the exercise with the proposed timeline and its build configuration
+     * @param buildAndTestOffset  the offset captured before changing the due date, or {@code null} to use LocalCI's default
+     * @return the computed date, or {@code null} when no automatic after-due-date phase is configured
+     */
+    public @Nullable ZonedDateTime computeBuildAndTestDateForTimelineValidation(ProgrammingExercise programmingExercise, @Nullable Duration buildAndTestOffset) {
+        if (automaticAfterDueDateService.isEmpty()) {
+            return programmingExercise.getDueDate() == null || buildAndTestOffset == null ? null : programmingExercise.getDueDate().plus(buildAndTestOffset);
+        }
+        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(programmingExercise);
+        try {
+            return automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, buildAndTestOffset);
+        }
+        catch (JacksonException e) {
+            throw new BadRequestAlertException("The build plan configuration is invalid for exercise " + programmingExercise.getId(), "programmingExercise",
+                    "invalidBuildPlanConfiguration");
+        }
+    }
+
     public ProgrammingExerciseCreationUpdateService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ProgrammingSubmissionService programmingSubmissionService,
             UserRepository userRepository, ExerciseService exerciseService, ProgrammingExerciseRepository programmingExerciseRepository, ChannelService channelService,
@@ -187,6 +209,14 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExercise.setTemplateParticipation(null);
         programmingExercise.getBuildConfig().setId(null);
 
+        programmingExerciseBuildPlanService.addDefaultBuildPlanConfigForLocalCI(programmingExercise);
+        if (programmingExercise.isCourseExercise()) {
+            prepareAndValidateTimelineForUpdate(programmingExercise, null);
+        }
+        else {
+            programmingExercise.validateDates();
+        }
+
         // Extract competency links before first save - they require the exercise ID which doesn't exist yet
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(programmingExercise);
 
@@ -216,8 +246,6 @@ public class ProgrammingExerciseCreationUpdateService {
         // Make sure that plagiarism detection config does not use existing id
         Optional.ofNullable(savedProgrammingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
 
-        programmingExerciseBuildPlanService.addDefaultBuildPlanConfigForLocalCI(savedProgrammingExercise);
-
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
         if (!skipRepositoryAndBuildTrigger) {
@@ -231,8 +259,8 @@ public class ProgrammingExerciseCreationUpdateService {
         if (automaticAfterDueDateService.isPresent()) {
             final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(savedProgrammingExercise);
             final boolean buildAndTestDateChanged = !Objects.equals(savedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate);
-            final boolean feedbackRequestsChanged = setBuildAndTestDateAndEnforceFeedbackRequestInvariant(savedProgrammingExercise, computedBuildAndTestDate);
-            if (buildAndTestDateChanged || feedbackRequestsChanged) {
+            setBuildAndTestDate(savedProgrammingExercise, computedBuildAndTestDate);
+            if (buildAndTestDateChanged) {
                 savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
             }
         }
@@ -339,16 +367,13 @@ public class ProgrammingExerciseCreationUpdateService {
      */
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText, Set<Long> originalCompetencyIds,
             @Nullable String originalBuildPlanConfiguration, @Nullable ZonedDateTime originalReleaseDate, @Nullable ZonedDateTime originalAssessmentDueDate,
-            @Nullable Duration buildAndTestOffset, @Nullable String originalProblemStatement) throws JsonProcessingException {
+            @Nullable Duration buildAndTestOffset, @Nullable String originalProblemStatement) {
         validateProblemStatementLength(updatedProgrammingExercise.getProblemStatement());
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
+        prepareAndValidateTimelineForUpdate(updatedProgrammingExercise, buildAndTestOffset);
         programmingExerciseBuildPlanService.updateBuildPlanForExercise(originalBuildPlanConfiguration, updatedProgrammingExercise);
-        if (automaticAfterDueDateService.isPresent()) {
-            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(updatedProgrammingExercise, buildAndTestOffset);
-            setBuildAndTestDateAndEnforceFeedbackRequestInvariant(updatedProgrammingExercise, computedBuildAndTestDate);
-        }
 
         channelService.updateExerciseChannel(updatedProgrammingExercise, updatedProgrammingExercise);
 
@@ -376,6 +401,20 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseAtlasIrisService.updateCompetencyProgressOnExerciseUpdate(originalCompetencyIds, savedProgrammingExercise);
 
         return savedProgrammingExercise;
+    }
+
+    /**
+     * Computes the effective build and test date and validates the resulting timeline.
+     *
+     * @param programmingExercise the exercise to prepare
+     * @param buildAndTestOffset  the original offset from the due date, or {@code null} when no offset should be preserved
+     */
+    public void prepareAndValidateTimelineForUpdate(ProgrammingExercise programmingExercise, @Nullable Duration buildAndTestOffset) {
+        if (automaticAfterDueDateService.isPresent()) {
+            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, buildAndTestOffset);
+            setBuildAndTestDate(programmingExercise, computedBuildAndTestDate);
+        }
+        programmingExercise.validateDates();
     }
 
     /**
@@ -412,28 +451,47 @@ public class ProgrammingExerciseCreationUpdateService {
      */
     public ProgrammingExercise updateTimeline(ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO, @Nullable String notificationText) {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithBuildConfigElseThrow(timelineUpdateDTO.id());
+        final Duration originalBuildAndTestOffset = automaticAfterDueDateService.map(service -> service.getOriginalBuildAndTestOffset(programmingExercise)).orElse(null);
+        return updateTimeline(timelineUpdateDTO, notificationText, originalBuildAndTestOffset, programmingExercise);
+    }
+
+    /**
+     * Updates the timeline attributes while preserving a build-and-test offset captured before an owning variant group
+     * changed the exercise's due date.
+     *
+     * @param timelineUpdateDTO          containing the timeline changes that have to be saved
+     * @param notificationText           optional text for a notification to all students about the update
+     * @param originalBuildAndTestOffset the build-and-test offset from the exercise's previous due date
+     * @return the updated programming exercise
+     */
+    public ProgrammingExercise updateTimeline(ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO, @Nullable String notificationText,
+            @Nullable Duration originalBuildAndTestOffset) {
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithBuildConfigElseThrow(timelineUpdateDTO.id());
+        return updateTimeline(timelineUpdateDTO, notificationText, originalBuildAndTestOffset, programmingExercise);
+    }
+
+    private ProgrammingExercise updateTimeline(ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO, @Nullable String notificationText,
+            @Nullable Duration originalBuildAndTestOffset, ProgrammingExercise programmingExercise) {
 
         // create slim copy of programmingExercise before the update - needed for notifications (only release date needed)
         ProgrammingExercise programmingExerciseBeforeUpdate = new ProgrammingExercise();
         programmingExerciseBeforeUpdate.setReleaseDate(programmingExercise.getReleaseDate());
         programmingExerciseBeforeUpdate.setStartDate(programmingExercise.getStartDate());
         programmingExerciseBeforeUpdate.setAssessmentDueDate(programmingExercise.getAssessmentDueDate());
-        final Duration originalBuildAndTestOffset = automaticAfterDueDateService.map(service -> service.getOriginalBuildAndTestOffset(programmingExercise)).orElse(null);
-
         // Apply the DTO values to the existing exercise
         timelineUpdateDTO.applyTo(programmingExercise);
 
-        programmingExercise.validateDates();
         if (automaticAfterDueDateService.isPresent()) {
             try {
                 final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, originalBuildAndTestOffset);
-                setBuildAndTestDateAndEnforceFeedbackRequestInvariant(programmingExercise, computedBuildAndTestDate);
+                setBuildAndTestDate(programmingExercise, computedBuildAndTestDate);
             }
-            catch (JsonProcessingException e) {
+            catch (JacksonException e) {
                 throw new BadRequestAlertException("The build plan configuration is invalid for exercise " + programmingExercise.getId(), "programmingExercise",
                         "invalidBuildPlanConfiguration");
             }
         }
+        programmingExercise.validateDates();
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExerciseCreationScheduleService.scheduleOperations(savedProgrammingExercise.getId());
@@ -551,21 +609,7 @@ public class ProgrammingExerciseCreationUpdateService {
         }
     }
 
-    /**
-     * Sets computed build and test date and adjusts the feedback request to false if necessary
-     *
-     * @param programmingExercise      the exercise to potentially adjust
-     * @param computedBuildAndTestDate the newly computed build and test date for the exercise
-     *
-     * @return true if the allow feedback requests changed else false
-     */
-    private boolean setBuildAndTestDateAndEnforceFeedbackRequestInvariant(ProgrammingExercise programmingExercise, @Nullable ZonedDateTime computedBuildAndTestDate) {
+    private void setBuildAndTestDate(ProgrammingExercise programmingExercise, @Nullable ZonedDateTime computedBuildAndTestDate) {
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
-        if (computedBuildAndTestDate == null || !programmingExercise.getAllowFeedbackRequests()) {
-            return false;
-        }
-
-        programmingExercise.setAllowFeedbackRequests(false);
-        return true;
     }
 }

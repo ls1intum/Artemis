@@ -1,43 +1,45 @@
 <div>
-    <div class="d-flex">
-        <div class="mb-3">
-            <h2><span jhiTranslate="artemisApp.examManagement.testRun.title"></span>{{ exam()?.title }}</h2>
-        </div>
-        <div class="ms-auto">
-            <div class="d-flex mb-1">
-                <div [ngbTooltip]="'artemisApp.examManagement.testRun.createTestRunDisabled' | artemisTranslate" [disableTooltip]="examContainsExercises()">
-                    @if (course()?.isAtLeastInstructor) {
-                        <button
-                            id="createTestRunButton"
-                            class="btn btn-primary btn-sm me-1 mb-1"
-                            style="height: 40px"
-                            (click)="openCreateTestRunModal()"
-                            [disabled]="isLoading() || !examContainsExercises()"
-                        >
-                            @if (isLoading()) {
-                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                            }
-                            <span jhiTranslate="artemisApp.examManagement.testRun.setup"></span>
-                        </button>
+    <div *titleBarTitle class="flex items-center">
+        <h5 class="mb-0">
+            <span jhiTranslate="artemisApp.examManagement.testRun.title"></span>
+        </h5>
+    </div>
+    <ng-template titleBarActions>
+        <div [ngbTooltip]="'artemisApp.examManagement.testRun.createTestRunDisabled' | artemisTranslate" [disableTooltip]="examContainsExercises()">
+            @if (course()?.isAtLeastInstructor) {
+                <button
+                    id="createTestRunButton"
+                    tumUiButton
+                    size="small"
+                    (click)="openCreateTestRunModal()"
+                    [disabled]="isLoading() || !examContainsExercises()"
+                    [title]="'artemisApp.examManagement.testRun.setup' | artemisTranslate"
+                >
+                    @if (isLoading()) {
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                     }
-                </div>
-                @if (exam() && !exam()?.testExam) {
-                    <div [ngbTooltip]="'artemisApp.examManagement.testRun.assessTestRunDisabled' | artemisTranslate" [disableTooltip]="testRunCanBeAssessed()">
-                        @if (course()?.isAtLeastInstructor) {
-                            <a
-                                class="btn btn-primary btn-sm me-1 mb-1"
-                                style="height: 40px; display: inline-flex; align-items: center"
-                                [routerLink]="['/course-management', course()?.id, 'exams', exam()?.id, 'test-runs', 'assess']"
-                                [class.disabled]="isLoading() || !testRunCanBeAssessed()"
-                            >
-                                <span jhiTranslate="artemisApp.examManagement.testRun.assess"></span>
-                            </a>
-                        }
-                    </div>
+                    <fa-icon [icon]="faPlus" />
+                    <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.testRun.setup"></span>
+                </button>
+            }
+        </div>
+        @if (exam() && !exam()?.testExam) {
+            <div [ngbTooltip]="'artemisApp.examManagement.testRun.assessTestRunDisabled' | artemisTranslate" [disableTooltip]="testRunCanBeAssessed()">
+                @if (course()?.isAtLeastInstructor) {
+                    <a
+                        [title]="'artemisApp.examManagement.testRun.assess' | artemisTranslate"
+                        tumUiButton
+                        size="small"
+                        [routerLink]="['/course-management', course()?.id, 'exams', exam()?.id, 'test-runs', 'assess']"
+                        [class.disabled]="isLoading() || !testRunCanBeAssessed()"
+                    >
+                        <fa-icon [icon]="faCheck" />
+                        <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.testRun.assess"></span>
+                    </a>
                 }
             </div>
-        </div>
-    </div>
+        }
+    </ng-template>
     <div style="padding-bottom: 10px">
         <span jhiTranslate="artemisApp.examManagement.testRun.text"></span>
     </div>

@@ -2,13 +2,12 @@ package de.tum.cit.aet.artemis.admin.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -52,6 +51,14 @@ public class DataExportScheduleService {
 
     private static final Logger log = LoggerFactory.getLogger(DataExportScheduleService.class);
 
+    /**
+     * How long the nightly run keeps starting exports.
+     * <p>
+     * The job runs at 4 am by default and the next one at 5 am, so it stops in time for that. A request it did not
+     * reach stays pending and is picked up by the following run.
+     */
+    private static final Duration CREATION_BUDGET = Duration.ofMinutes(60);
+
     public DataExportScheduleService(DataExportRepository dataExportRepository, DataExportCreationService dataExportCreationService, DataExportService dataExportService,
             ProfileService profileService, MailService mailService, UserService userService) {
         this.dataExportRepository = dataExportRepository;
@@ -68,7 +75,7 @@ public class DataExportScheduleService {
      * Deleted will be all data exports that have a creation date older than seven days
      */
     @Scheduled(cron = "${artemis.scheduling.data-export-creation-time: 0 0 4 * * *}")
-    public void createDataExportsAndDeleteOldOnes() throws InterruptedException {
+    public void createDataExportsAndDeleteOldOnes() {
         if (profileService.isDevActive()) {
             // do not execute this in a development environment
             // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
@@ -76,29 +83,36 @@ public class DataExportScheduleService {
         }
         SecurityUtils.setSystemAuthorizationObject();
         log.info("Creating data exports and deleting old ones");
-        Set<DataExport> successfulDataExports = Collections.synchronizedSet(new HashSet<>());
+        Set<DataExport> successfulDataExports = new HashSet<>();
         var dataExportsToBeCreated = dataExportRepository.findAllToBeCreated();
-        try (ExecutorService executor = Executors.newFixedThreadPool(10)) {
-            dataExportsToBeCreated.forEach(dataExport -> executor.execute(() -> createDataExport(dataExport, successfulDataExports)));
-            executor.shutdown();
-            ZonedDateTime thresholdDate = ZonedDateTime.now().minusDays(7);
-            var dataExportsToBeDeleted = dataExportRepository.findAllToBeDeleted(thresholdDate);
-            dataExportsToBeDeleted.forEach(this::deleteDataExport);
-            Optional<User> admin = userService.findInternalAdminUser();
-            if (admin.isEmpty()) {
-                log.warn("No internal admin user found. Cannot send email to admin about successful creation of data exports.");
-                return;
+        // One export at a time. What an export spends its time on is git operations on one student's repositories, so
+        // ten at once multiplied the load on the version control server without making any single one of them finish
+        // sooner. The place for that concurrency is inside an export, across the exercises it has to read.
+        Instant startedAt = Instant.now();
+        Instant budgetExhaustedAt = startedAt.plus(CREATION_BUDGET);
+        int attempted = 0;
+        for (var dataExport : dataExportsToBeCreated) {
+            if (Instant.now().isAfter(budgetExhaustedAt)) {
+                // The elapsed time, not the budget: the check runs after an export has finished, so the run is past
+                // the budget by however long that last export took.
+                log.info("Stopping after {} minutes, past the {} minute budget, having attempted {} of {} pending data exports. The rest are picked up by the next run.",
+                        Duration.between(startedAt, Instant.now()).toMinutes(), CREATION_BUDGET.toMinutes(), attempted, dataExportsToBeCreated.size());
+                break;
             }
-            // This job runs at 4 am by default and the next scheduled job runs at 5 am, so we should allow 60 minutes for the creation.
-            // If the creation doesn't finish within 60 minutes, all pending exports will be picked up when the job runs the next time.
-            if (!executor.awaitTermination(60, java.util.concurrent.TimeUnit.MINUTES)) {
-                log.info("Not all pending data exports could be created within 60 minutes.");
-                executor.shutdownNow();
-            }
-            if (!successfulDataExports.isEmpty()) {
-                Set<DataExportEmailDTO> dataExportDtos = successfulDataExports.stream().map(DataExportEmailDTO::from).collect(Collectors.toSet());
-                mailService.sendSuccessfulDataExportsEmailToAdmin(MailRecipientDTO.from(admin.get()), dataExportDtos);
-            }
+            createDataExport(dataExport, successfulDataExports);
+            attempted++;
+        }
+        ZonedDateTime thresholdDate = ZonedDateTime.now().minusDays(7);
+        var dataExportsToBeDeleted = dataExportRepository.findAllToBeDeleted(thresholdDate);
+        dataExportsToBeDeleted.forEach(this::deleteDataExport);
+        Optional<User> admin = userService.findInternalAdminUser();
+        if (admin.isEmpty()) {
+            log.warn("No internal admin user found. Cannot send email to admin about successful creation of data exports.");
+            return;
+        }
+        if (!successfulDataExports.isEmpty()) {
+            Set<DataExportEmailDTO> dataExportDtos = successfulDataExports.stream().map(DataExportEmailDTO::from).collect(Collectors.toSet());
+            mailService.sendSuccessfulDataExportsEmailToAdmin(MailRecipientDTO.from(admin.get()), dataExportDtos);
         }
     }
 

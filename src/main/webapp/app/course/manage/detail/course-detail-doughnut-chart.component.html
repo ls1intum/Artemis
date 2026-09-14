@@ -26,13 +26,11 @@
                 </div>
             }
         </div>
-        <p-chart
-            type="doughnut"
-            [data]="chartData()"
-            [options]="chartOptions()"
-            [responsive]="false"
-            width="160px"
-            height="160px"
+        <tum-ui-doughnut-chart
+            class="h-40 w-40"
+            [labels]="chartData().labels"
+            [series]="chartData().series"
+            [config]="chartConfig()"
             [ariaLabel]="'artemisApp.course.detail.' + doughnutChartTitle() + 'Title' | artemisTranslate"
         />
     </div>

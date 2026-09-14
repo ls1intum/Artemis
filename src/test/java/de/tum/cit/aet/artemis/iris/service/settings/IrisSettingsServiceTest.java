@@ -57,9 +57,14 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
         assertThat(settings.rateLimit()).isEqualTo(customRateLimit);
     }
 
+    /**
+     * The null-ness of the parameter is a static contract now, expressed with {@code @NonNull} rather than a
+     * {@code requireNonNull} call, so there is no message of ours to assert. What is still worth pinning is that the
+     * method fails rather than quietly answering with the default settings for no course at all.
+     */
     @Test
     void getSettingsForCourse_throwsOnNullCourse() {
-        assertThatThrownBy(() -> irisSettingsService.getSettingsForCourse((Course) null)).isInstanceOf(NullPointerException.class).hasMessageContaining("course must not be null");
+        assertThatThrownBy(() -> irisSettingsService.getSettingsForCourse((Course) null)).isInstanceOf(NullPointerException.class);
     }
 
     @Test
@@ -77,7 +82,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
 
     @Test
     void isEnabledForCourse_throwsOnNullCourse() {
-        assertThatThrownBy(() -> irisSettingsService.isEnabledForCourse((Course) null)).isInstanceOf(NullPointerException.class).hasMessageContaining("course must not be null");
+        assertThatThrownBy(() -> irisSettingsService.isEnabledForCourse((Course) null)).isInstanceOf(NullPointerException.class);
     }
 
     @Test

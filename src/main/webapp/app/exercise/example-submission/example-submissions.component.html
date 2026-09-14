@@ -15,7 +15,7 @@
                     </a>
                 }
                 @if (exercise().course!.isAtLeastEditor) {
-                    <a id="import-example-submission" class="btn btn-primary me-1 mb-1" (click)="openImportModal()">
+                    <a data-testid="import-example-submission" class="btn btn-primary me-1 mb-1" (click)="openImportModal()">
                         <fa-icon [icon]="faPlus" />
                         <fa-icon class="d-xl-none" [icon]="faFont" />
                         <span class="d-none d-xl-inline" jhiTranslate="artemisApp.exampleSubmission.useAsExampleSubmission"></span>
@@ -27,7 +27,7 @@
     <br />
     <div class="table-responsive">
         @if (exercise() && exercise().id && exercise().course && exercise().course!.id) {
-            <table class="table table-striped">
+            <table class="table table-striped align-middle">
                 <thead>
                     <tr>
                         <th><span jhiTranslate="global.field.id"></span></th>
@@ -53,12 +53,12 @@
                         <th><span jhiTranslate="artemisApp.exampleSubmission.assessmentTraining"></span></th>
                         <th><span jhiTranslate="artemisApp.exampleSubmission.exampleAssessmentCreated"></span></th>
                         @if (exercise().course!.isAtLeastEditor) {
-                            <th></th>
+                            <th class="sticky end-0 z-10"></th>
                         }
                     </tr>
                 </thead>
                 <tbody class="markdown-preview">
-                    @for (exampleSubmission of exercise().exampleSubmissions; track exampleSubmission; let i = $index) {
+                    @for (exampleSubmission of exercise().exampleSubmissions; track exampleSubmission.id; let i = $index) {
                         <tr>
                             <td>
                                 <a [routerLink]="getLinkToExampleSubmission(exampleSubmission.id!)" class="btn-link">
@@ -97,10 +97,19 @@
                                 }
                             </td>
                             @if (exercise().course!.isAtLeastEditor) {
-                                <td>
-                                    <button (click)="deleteExampleSubmission(i)" class="btn btn-danger col-auto">
-                                        <fa-icon [icon]="faTimes" />
-                                        {{ 'entity.action.delete' | artemisTranslate }}
+                                <td class="sticky end-0 z-10 text-end">
+                                    <button
+                                        tumUiButton
+                                        severity="danger"
+                                        size="small"
+                                        [renderButtonStyle]="false"
+                                        jhiDeleteButton
+                                        [entityTitle]="('artemisApp.exampleSubmission.exampleSubmission' | artemisTranslate) + ' ' + (i + 1)"
+                                        (delete)="deleteExampleSubmission(i)"
+                                        data-testid="delete-example-submission-button"
+                                    >
+                                        <fa-icon [icon]="faTrash" />
+                                        <span jhiTranslate="entity.action.delete"></span>
                                     </button>
                                 </td>
                             }

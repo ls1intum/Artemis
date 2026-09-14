@@ -5,7 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doCallRealMethod;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -21,10 +21,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
@@ -60,7 +60,7 @@ class IrisLectureUnitSyncServiceTest {
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         var snapshot = snapshot();
 
-        service.markMetadataDirtyAfterCommit(snapshot);
+        service.markMetadataDirty(snapshot);
 
         var stateCaptor = ArgumentCaptor.forClass(IrisLectureUnitSyncState.class);
         verify(repository).save(stateCaptor.capture());
@@ -81,7 +81,7 @@ class IrisLectureUnitSyncServiceTest {
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         var snapshot = snapshot(slideHiddenMap(2, HIDDEN_UNTIL, 1, HIDDEN_UNTIL.plusDays(1)));
 
-        service.markVisibilityDirtyAfterCommit(snapshot);
+        service.markVisibilityDirty(snapshot);
 
         var stateCaptor = ArgumentCaptor.forClass(IrisLectureUnitSyncState.class);
         verify(repository).save(stateCaptor.capture());
@@ -99,27 +99,21 @@ class IrisLectureUnitSyncServiceTest {
         });
     }
 
+    /**
+     * The event used to be deferred to a transaction commit callback. It is published straight after the repository
+     * call now, because the repository declares the only transaction and has therefore already committed; what this
+     * test pins is that a listener never sees the event before the row is written.
+     */
     @Test
-    void markMetadataDirtyPublishesEventOnlyAfterActiveTransactionCommits() {
+    void markMetadataDirtyPersistsBeforePublishingTheEvent() {
         when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.empty());
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        TransactionSynchronizationManager.initSynchronization();
-        try {
-            service.markMetadataDirtyAfterCommit(snapshot());
+        InOrder inOrder = inOrder(repository, eventPublisher);
 
-            verify(repository).save(any());
-            verify(eventPublisher, never()).publishEvent(any(Object.class));
+        service.markMetadataDirty(snapshot());
 
-            TransactionSynchronizationManager.getSynchronizations().forEach(synchronization -> synchronization.afterCommit());
-
-            var eventCaptor = ArgumentCaptor.forClass(Object.class);
-            verify(eventPublisher).publishEvent(eventCaptor.capture());
-            assertThat(eventCaptor.getValue()).isInstanceOf(IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent.class).extracting("lectureUnitId")
-                    .isEqualTo(LECTURE_UNIT_ID);
-        }
-        finally {
-            TransactionSynchronizationManager.clearSynchronization();
-        }
+        inOrder.verify(repository).save(any());
+        inOrder.verify(eventPublisher).publishEvent(any(Object.class));
     }
 
     @Test
@@ -133,8 +127,8 @@ class IrisLectureUnitSyncServiceTest {
         });
         var snapshot = snapshot();
 
-        service.markMetadataDirtyAfterCommit(snapshot);
-        service.markMetadataDirtyAfterCommit(snapshot);
+        service.markMetadataDirty(snapshot);
+        service.markMetadataDirty(snapshot);
 
         var stateCaptor = ArgumentCaptor.forClass(IrisLectureUnitSyncState.class);
         verify(repository, times(2)).save(stateCaptor.capture());
@@ -151,7 +145,7 @@ class IrisLectureUnitSyncServiceTest {
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         ZonedDateTime before = ZonedDateTime.now();
 
-        service.markMetadataDirtyAfterCommit(snapshot());
+        service.markMetadataDirty(snapshot());
 
         assertThat(state.getNextRetryAt().toInstant()).isBetween(before.toInstant(), ZonedDateTime.now().toInstant());
     }
@@ -166,8 +160,8 @@ class IrisLectureUnitSyncServiceTest {
         when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(state));
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        service.markMetadataDirtyAfterCommit(snapshot());
-        service.markMetadataDirtyAfterCommit(snapshot());
+        service.markMetadataDirty(snapshot());
+        service.markMetadataDirty(snapshot());
 
         assertThat(state.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_IN_PROGRESS);
         assertThat(state.getNextRetryAt().toInstant()).isEqualTo(leaseUntil.toInstant());
@@ -180,8 +174,8 @@ class IrisLectureUnitSyncServiceTest {
         var firstSnapshot = snapshot();
         var secondSnapshot = snapshot();
 
-        service.markMetadataDirtyAfterCommit(firstSnapshot);
-        service.markMetadataDirtyAfterCommit(secondSnapshot);
+        service.markMetadataDirty(firstSnapshot);
+        service.markMetadataDirty(secondSnapshot);
 
         var stateCaptor = ArgumentCaptor.forClass(IrisLectureUnitSyncState.class);
         verify(repository, times(2)).save(stateCaptor.capture());
@@ -196,9 +190,9 @@ class IrisLectureUnitSyncServiceTest {
         var equivalentSnapshotWithDifferentInsertionOrder = snapshot(slideHiddenMap(1, HIDDEN_UNTIL, 2, HIDDEN_UNTIL.plusDays(1)));
         var changedSnapshot = snapshot(slideHiddenMap(1, HIDDEN_UNTIL.plusHours(1), 2, HIDDEN_UNTIL.plusDays(1)));
 
-        service.markVisibilityDirtyAfterCommit(firstSnapshot);
-        service.markVisibilityDirtyAfterCommit(equivalentSnapshotWithDifferentInsertionOrder);
-        service.markVisibilityDirtyAfterCommit(changedSnapshot);
+        service.markVisibilityDirty(firstSnapshot);
+        service.markVisibilityDirty(equivalentSnapshotWithDifferentInsertionOrder);
+        service.markVisibilityDirty(changedSnapshot);
 
         var stateCaptor = ArgumentCaptor.forClass(IrisLectureUnitSyncState.class);
         verify(repository, times(3)).save(stateCaptor.capture());
@@ -217,8 +211,8 @@ class IrisLectureUnitSyncServiceTest {
             return state;
         });
 
-        service.markVisibilityDirtyAfterCommit(snapshot());
-        service.markMetadataDirtyAfterCommit(snapshot());
+        service.markVisibilityDirty(snapshot());
+        service.markMetadataDirty(snapshot());
 
         assertThat(persistedState.get().getVisibilityHash()).hasSize(64);
         assertThat(persistedState.get().getMetadataHash()).hasSize(64);

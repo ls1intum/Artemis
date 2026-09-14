@@ -30,7 +30,17 @@ public interface CourseTestRepository extends CourseRepository {
     @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
     Optional<Course> findWithEagerLearningPathsById(@Param("courseId") long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "lectures.attachments", "competencies", "prerequisites" })
+    // Only tests read a course together with its variant groups: production attaches a group by writing its own
+    // course_id (see ExerciseVariantGroupRepository.attachToCourse) instead of merging this orphanRemoval collection.
+    @EntityGraph(type = LOAD, attributePaths = "exerciseVariantGroups")
+    Optional<Course> findWithEagerExerciseVariantGroupsById(long courseId);
+
+    @NonNull
+    default Course findWithEagerExerciseVariantGroupsByIdElseThrow(long courseId) {
+        return getValueElseThrow(findWithEagerExerciseVariantGroupsById(courseId), courseId);
+    }
+
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "competencies", "prerequisites" })
     Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(long courseId);
 
     @NonNull
@@ -51,11 +61,11 @@ public interface CourseTestRepository extends CourseRepository {
         return getValueElseThrow(findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(courseId), courseId);
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits", "lectures.attachments" })
-    Optional<Course> findWithLecturesAndLectureUnitsAndAttachmentsById(long courseId);
+    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits" })
+    Optional<Course> findWithLecturesAndLectureUnitsById(long courseId);
 
     @NonNull
-    default Course findWithLecturesAndLectureUnitsAndAttachmentsByIdElseThrow(long courseId) {
-        return getValueElseThrow(findWithLecturesAndLectureUnitsAndAttachmentsById(courseId), courseId);
+    default Course findWithLecturesAndLectureUnitsByIdElseThrow(long courseId) {
+        return getValueElseThrow(findWithLecturesAndLectureUnitsById(courseId), courseId);
     }
 }

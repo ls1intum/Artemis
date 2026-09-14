@@ -1,5 +1,7 @@
 ---
+id: index
 title: Production Setup
+sidebar_label: Production Setup
 ---
 
 The general setup steps are described in the [development setup steps](/developer/setup).

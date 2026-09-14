@@ -26,6 +26,7 @@ import { ExerciseDeletionSummaryDTO } from 'app/exercise/shared/entities/exercis
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { UMLModel } from '@tumaet/apollon';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { validateStrictDateSequence } from 'app/exercise/util/exercise.utils';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -90,59 +91,28 @@ export class ExerciseService {
      * Validates if the dates are correct
      */
     validateDate(exercise: Exercise) {
-        exercise.dueDateError = this.hasDueDateError(exercise);
         exercise.startDateError = this.hasStartDateError(exercise);
+        exercise.dueDateError = this.hasDueDateError(exercise);
         exercise.assessmentDueDateError = this.hasAssessmentDueDateError(exercise);
-
         exercise.exampleSolutionPublicationDateError = this.hasExampleSolutionPublicationDateError(exercise);
-        exercise.exampleSolutionPublicationDateWarning = this.hasExampleSolutionPublicationDateWarning(exercise);
     }
 
     hasStartDateError(exercise: Exercise) {
-        return exercise.startDate && exercise.releaseDate && dayjs(exercise.startDate).isBefore(exercise.releaseDate);
+        return !validateStrictDateSequence([exercise.releaseDate], exercise.startDate, [exercise.dueDate, exercise.assessmentDueDate, exercise.exampleSolutionPublicationDate]);
     }
 
     hasDueDateError(exercise: Exercise) {
-        const relevantDateBefore = exercise.startDate ?? exercise.releaseDate;
-        return relevantDateBefore && exercise.dueDate && dayjs(exercise.dueDate).isBefore(relevantDateBefore);
+        return !validateStrictDateSequence([exercise.releaseDate, exercise.startDate], exercise.dueDate, [exercise.assessmentDueDate, exercise.exampleSolutionPublicationDate]);
     }
 
-    private hasAssessmentDueDateError(exercise: Exercise) {
-        if (exercise.releaseDate && exercise.assessmentDueDate) {
-            if (exercise.dueDate) {
-                return dayjs(exercise.assessmentDueDate).isBefore(exercise.dueDate) || dayjs(exercise.assessmentDueDate).isBefore(exercise.releaseDate);
-            } else {
-                return true;
-            }
-        }
-
-        if (exercise.assessmentDueDate) {
-            if (exercise.dueDate) {
-                return dayjs(exercise.assessmentDueDate).isBefore(exercise.dueDate);
-            } else {
-                return true;
-            }
-        }
-        return false;
+    hasAssessmentDueDateError(exercise: Exercise) {
+        if (!exercise.assessmentDueDate) return false;
+        if (!exercise.dueDate) return true;
+        return !validateStrictDateSequence([exercise.releaseDate, exercise.startDate, exercise.dueDate], exercise.assessmentDueDate, [exercise.exampleSolutionPublicationDate]);
     }
 
     hasExampleSolutionPublicationDateError(exercise: Exercise) {
-        if (exercise.exampleSolutionPublicationDate) {
-            return (
-                dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.startDate ?? exercise.releaseDate) ||
-                (dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.dueDate) && exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED)
-            );
-        }
-        return false;
-    }
-
-    hasExampleSolutionPublicationDateWarning(exercise: Exercise) {
-        if (exercise.exampleSolutionPublicationDate && !dayjs(exercise.exampleSolutionPublicationDate).isSameOrAfter(exercise.dueDate || null)) {
-            if (!exercise.dueDate || exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
-                return true;
-            }
-        }
-        return false;
+        return !validateStrictDateSequence([exercise.releaseDate, exercise.startDate, exercise.dueDate, exercise.assessmentDueDate], exercise.exampleSolutionPublicationDate, []);
     }
 
     /**

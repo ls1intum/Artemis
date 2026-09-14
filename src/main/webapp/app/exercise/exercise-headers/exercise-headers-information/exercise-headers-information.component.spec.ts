@@ -9,6 +9,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { DifficultyLevel, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
@@ -21,6 +22,7 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { ActivatedRoute } from '@angular/router';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 describe('ExerciseHeadersInformationComponent', () => {
     let component: ExerciseHeadersInformationComponent;
@@ -268,5 +270,130 @@ describe('ExerciseHeadersInformationComponent', () => {
 
         titles = component.informationBoxItems().map((item) => item.title);
         expect(titles).toContain('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
+    });
+
+    describe('showSharedTimelineDates', () => {
+        // A variant group overwrites its members' start, due and assessment-due dates with its own, so the group
+        // header states them once and the cards must not repeat them. The complaint due date is per student.
+        it('should drop the start, submission-due and assessment-due boxes while keeping the complaint due date', () => {
+            const assessmentDueDate = dayjs().subtract(1, 'day');
+            const lastResult = { id: 1, completionDate: assessmentDueDate, rated: true };
+            fixture.componentRef.setInput(
+                'exercise',
+                cloneWith(baseExercise, {
+                    startDate: dayjs().add(2, 'days'),
+                    assessmentDueDate,
+                    course: { maxComplaintTimeDays: 7 },
+                }),
+            );
+            // The complaint due date is derived from the participation's own last result, not from the exercise.
+            fixture.componentRef.setInput('studentParticipation', { id: 1, submissions: [{ id: 1, results: [lastResult] }] });
+            fixture.detectChanges();
+
+            const shown = component.informationBoxItems().map((item) => item.title);
+            expect(shown).toContain('artemisApp.courseOverview.exerciseDetails.complaintDue');
+
+            fixture.componentRef.setInput('showSharedTimelineDates', false);
+            fixture.detectChanges();
+
+            const hidden = component.informationBoxItems().map((item) => item.title);
+            expect(hidden).not.toContain('artemisApp.courseOverview.exerciseDetails.startDate');
+            expect(hidden).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDue');
+            expect(hidden).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
+            expect(hidden).not.toContain('artemisApp.courseOverview.exerciseDetails.assessmentDue');
+            // Derived per student from that student's own last result, so it is not the group's to state.
+            expect(hidden).toContain('artemisApp.courseOverview.exerciseDetails.complaintDue');
+        });
+
+        it('should keep the per-variant boxes', () => {
+            fixture.componentRef.setInput('exercise', cloneWith(baseExercise, { difficulty: DifficultyLevel.EASY, maxPoints: 10 }));
+            fixture.componentRef.setInput('showSharedTimelineDates', false);
+            fixture.detectChanges();
+
+            const titles = component.informationBoxItems().map((item) => item.title);
+            expect(titles).toContain('artemisApp.courseOverview.exerciseDetails.points');
+            expect(titles).toContain('artemisApp.courseOverview.exerciseDetails.difficulty');
+        });
+
+        it('should keep a participation-specific individual due date', () => {
+            // An extension is granted per student, so the group header cannot state it and the card has to.
+            const individualDueDate = dayjs().add(3, 'days');
+            fixture.componentRef.setInput('studentParticipation', { id: 1, individualDueDate });
+            fixture.componentRef.setInput('showSharedTimelineDates', false);
+            fixture.detectChanges();
+
+            const dueDateItem = component.informationBoxItems().find((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.submissionDue');
+            expect(dueDateItem?.content.value).toBe(individualDueDate);
+        });
+
+        it('should not show an individual due date for an exercise without a due date', () => {
+            // getExerciseDueDate ignores the individual date in that case, so there is nothing to state.
+            fixture.componentRef.setInput('exercise', cloneWith(baseExercise, { dueDate: undefined }));
+            fixture.componentRef.setInput('studentParticipation', { id: 1, individualDueDate: dayjs().add(3, 'days') });
+            fixture.componentRef.setInput('showSharedTimelineDates', false);
+            fixture.detectChanges();
+
+            const titles = component.informationBoxItems().map((item) => item.title);
+            expect(titles).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDue');
+            expect(titles).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
+        });
+
+        it('should drop the live quiz countdown that stands in for the due date', () => {
+            fixture.componentRef.setInput('exercise', cloneWith(baseExercise, { type: ExerciseType.QUIZ }));
+            fixture.componentRef.setInput('quizLiveHeaderInfo', { showRemainingTime: true, remainingTimeText: '5 min', showResultsAvailable: false });
+            fixture.componentRef.setInput('showSharedTimelineDates', false);
+            fixture.detectChanges();
+
+            expect(component.informationBoxItems().map((item) => item.title)).not.toContain('artemisApp.quizExercise.remainingTime');
+        });
+    });
+
+    describe('AI feedback quota box', () => {
+        const athenaCourse = { athenaFormativeFeedbackEnabled: true } as Course;
+
+        it('should show the AI feedback item for a text exercise when Athena and the course flag are enabled', () => {
+            fixture.componentRef.setInput('athenaEnabled', true);
+            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.TEXT });
+            fixture.componentRef.setInput('course', athenaCourse);
+            fixture.detectChanges();
+
+            expect(component.informationBoxItems().some((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests')).toBe(true);
+        });
+
+        it('should show the AI feedback item for a programming exercise with semi-automatic assessment', () => {
+            fixture.componentRef.setInput('athenaEnabled', true);
+            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.SEMI_AUTOMATIC });
+            fixture.componentRef.setInput('course', athenaCourse);
+            fixture.detectChanges();
+
+            expect(component.informationBoxItems().some((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests')).toBe(true);
+        });
+
+        it('should not show the AI feedback item for a programming exercise without semi-automatic assessment', () => {
+            fixture.componentRef.setInput('athenaEnabled', true);
+            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.AUTOMATIC });
+            fixture.componentRef.setInput('course', athenaCourse);
+            fixture.detectChanges();
+
+            expect(component.informationBoxItems().some((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests')).toBe(false);
+        });
+
+        it('should not show the AI feedback item for a file-upload exercise even when Athena is enabled course-wide', () => {
+            fixture.componentRef.setInput('athenaEnabled', true);
+            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.FILE_UPLOAD });
+            fixture.componentRef.setInput('course', athenaCourse);
+            fixture.detectChanges();
+
+            expect(component.informationBoxItems().some((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests')).toBe(false);
+        });
+
+        it('should not show the AI feedback item for a quiz exercise even when Athena is enabled course-wide', () => {
+            fixture.componentRef.setInput('athenaEnabled', true);
+            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.QUIZ });
+            fixture.componentRef.setInput('course', athenaCourse);
+            fixture.detectChanges();
+
+            expect(component.informationBoxItems().some((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests')).toBe(false);
+        });
     });
 });

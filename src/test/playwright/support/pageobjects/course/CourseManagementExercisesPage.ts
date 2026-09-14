@@ -1,4 +1,4 @@
-import { Page } from 'playwright';
+import { Page } from '@playwright/test';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MODELING_EXERCISE_BASE, PROGRAMMING_EXERCISE_BASE, QUIZ_EXERCISE_BASE, TEXT_EXERCISE_BASE, UPLOAD_EXERCISE_BASE } from '../../constants';
 import { expect } from '@playwright/test';
@@ -42,15 +42,34 @@ export class CourseManagementExercisesPage {
      */
     private async selectExerciseTypeCard(mode: 'create' | 'import', type: string) {
         await this.page.getByTestId(`${mode}-exercise-button`).click();
+        const urlBeforeSelection = this.page.url();
         await this.page.getByTestId(`${mode}-${type}-exercise`).click();
+        if (mode === 'create') {
+            // Selecting a create card closes the dialog and navigates. Closing the dialog is not evidence that the
+            // navigation happened: a route whose lazily loaded chunk fails to fetch used to leave the page exactly
+            // here, with the click delivered, the dialog closed and nothing else. Assert the navigation started, so
+            // that case reports itself instead of surfacing as an unexplained waitForURL timeout in the caller.
+            await expect(this.page, `selecting the ${type} card closed the dialog but the page never left ${urlBeforeSelection}`).not.toHaveURL(urlBeforeSelection, {
+                timeout: 30000,
+            });
+        }
     }
 
     async clickDeleteExercise(exerciseID: number) {
         await this.clickRowAction(exerciseID, 'delete');
     }
 
+    /**
+     * Opens the "Create Variant with AI" wizard for the given exercise (the `create-variant-ai` row action,
+     * shown to at-least-editors). Resolves the action whether it is inline or collapsed into the overflow menu.
+     */
+    async openCreateVariantWithAi(exerciseID: number) {
+        await this.waitForExerciseCardAttached(exerciseID);
+        await this.clickRowAction(exerciseID, 'create-variant-ai');
+    }
+
     async clickExampleSubmissionsButton() {
-        await this.page.locator('#example-submissions-button').click();
+        await this.page.locator('[data-testid="example-submissions-button"]').click();
     }
 
     getExerciseTitle(exerciseTitle: string) {
@@ -216,15 +235,18 @@ export class CourseManagementExercisesPage {
     }
 
     async openQuizExerciseDetailsPage(exerciseId: number) {
-        await Promise.all([this.page.waitForURL(`/course-management/*/quiz-exercises/${exerciseId}`), this.getExercise(exerciseId).locator('.col-title a').click()]);
+        await Promise.all([
+            this.page.waitForURL(`/course-management/*/quiz-exercises/${exerciseId}`),
+            this.getExercise(exerciseId).getByTestId('exercise-row-title').getByRole('link').click(),
+        ]);
     }
 
     getModelingExerciseTitle(exerciseID: number) {
-        return this.getExercise(exerciseID).locator('.col-title');
+        return this.getExercise(exerciseID).getByTestId('exercise-row-title');
     }
 
     getModelingExerciseMaxPoints(exerciseID: number) {
-        return this.getExercise(exerciseID).locator('.col-points');
+        return this.getExercise(exerciseID).getByTestId('exercise-row-points');
     }
 
     async openExerciseTeams(exerciseId: number) {

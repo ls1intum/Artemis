@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -53,6 +54,7 @@ import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateServi
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("content/faq")
 @RestController
 @RequestMapping("api/communication/")
 public class FaqResource {

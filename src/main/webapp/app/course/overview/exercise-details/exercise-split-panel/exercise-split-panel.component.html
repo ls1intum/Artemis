@@ -1,4 +1,11 @@
-<jhi-resizable-panels class="flex-fill h-100 overflow-hidden" [useViewportWidthForCollapse]="true" storageKey="exercise-details-split">
+<!-- Only the modeling editor may sit flush, because it draws its own frame. Before the participation starts there is
+     no editor panel, so the problem statement takes the left panel, and flush would put its text on the panel edge. -->
+<jhi-resizable-panels
+    class="flex-fill h-100 overflow-hidden"
+    [useViewportWidthForCollapse]="true"
+    [flushLeftPanel]="exercise().type === ExerciseType.MODELING && showEditorPanel()"
+    storageKey="exercise-details-split"
+>
     @if (showEditorPanel()) {
         <ng-template jhiPanel [label]="editorLabelKey()" [icon]="getIcon(exercise().type)">
             @if (usesRouterOutlet()) {
@@ -14,7 +21,12 @@
                 <jhi-reset-repo-button [exercise]="exercise()" [participations]="exercise().studentParticipations!" [smallButtons]="false" />
             }
             @if (exampleSolutionInfo()?.exampleSolutionPublished) {
-                <p-panel [header]="'artemisApp.exercise.exampleSolution' | artemisTranslate" [toggleable]="true" [collapsed]="true">
+                <p-panel
+                    [pt]="{ pcToggleButton: { root: { 'data-testid': 'example-solution-toggle' } } }"
+                    [header]="'artemisApp.exercise.exampleSolution' | artemisTranslate"
+                    [toggleable]="true"
+                    [collapsed]="true"
+                >
                     <dl class="row-md jh-entity-details markdown-preview">
                         @if (exampleSolutionInfo()?.exampleSolutionUML && exampleSolutionInfo()?.modelingExercise) {
                             <dd>

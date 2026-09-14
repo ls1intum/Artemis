@@ -492,7 +492,7 @@ public class RepositoryService {
             else {
                 File templateFile = templateRepoFiles.get(fileName);
                 try {
-                    if (FileUtils.contentEquals(file, templateFile)) {
+                    if (Files.mismatch(file.toPath(), templateFile.toPath()) == -1) {
                         filesWithInformationAboutChange.put(fileName, false);
                     }
                     else {
@@ -557,7 +557,7 @@ public class RepositoryService {
      *
      * @throws IllegalArgumentException if the resolved path escapes the repository root or is otherwise unsafe
      */
-    private Path checkIfPathIsValidAndReturnSafePath(Repository repository, String path) {
+    private Path checkIfPathIsValidAndReturnSafePath(@NonNull Repository repository, String path) {
 
         String unescapedPath = StringEscapeUtils.unescapeJava(path);
         Path normalizedInputPath = Path.of(unescapedPath).normalize();

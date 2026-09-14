@@ -4,6 +4,7 @@
             "home": {
                 "title": "Apollon-Diagramme",
                 "createLabel": "Apollon-Diagramm erstellen",
+                "empty": "Für diesen Kurs wurde noch kein Apollon-Diagramm erstellt.",
                 "error": {
                     "loading": "Es ist ein Fehler beim Laden der Diagramme aufgetreten"
                 }
@@ -27,6 +28,8 @@
                 "save": "Diagramm speichern",
                 "crop": "Bild auf Auswahl zuschneiden",
                 "help": "Lade deine aktuelle Auswahl als PNG-Bild herunter.",
+                "downloadHint": "Wähle Diagrammelemente aus, um sie als PNG-Bild herunterzuladen",
+                "editorActions": "Diagrammaktionen",
                 "createLabel": "Erstelle eine Quizaufgabe",
                 "generate": "Erstellen",
                 "error": {

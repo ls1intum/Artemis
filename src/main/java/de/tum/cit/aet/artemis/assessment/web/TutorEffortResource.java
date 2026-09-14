@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.assessment.service.TutorEffortService;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("tutor-training/tutor-effort")
 @RestController
 @RequestMapping("api/assessment/")
 public class TutorEffortResource {

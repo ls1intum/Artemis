@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.admin.dto.ImprintDTO;
 import de.tum.cit.aet.artemis.admin.service.LegalDocumentService;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 
 /**
  * REST controller for editing the imprint as an admin.
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
+@FeatureUsage("legal/imprint")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/admin/", LegacyAdminRestPaths.CORE_ADMIN_PREFIX })

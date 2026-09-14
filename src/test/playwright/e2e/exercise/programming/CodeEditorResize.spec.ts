@@ -8,7 +8,7 @@ const course = { id: SEED_COURSES.exerciseParticipation.id } as any;
 /**
  * End-to-end coverage for the interact.js -> jhiResizable migration in the code editor grid.
  * The file-browser sidebar (`.editor-sidebar-left`) is resized by dragging its right-edge handle
- * (`#draggableIconForFileBrowser`, class `.rg-sidebar-left`).
+ * (`[data-testid="draggableIconForFileBrowser"]`, class `.rg-sidebar-left`).
  */
 test.describe('Resizable code editor sidebar', { tag: '@fast' }, () => {
     let programmingExercise: any;
@@ -23,7 +23,7 @@ test.describe('Resizable code editor sidebar', { tag: '@fast' }, () => {
         await courseOverview.startExercise(programmingExercise.id!);
 
         const sidebar = page.locator('.editor-sidebar-left').first();
-        const handle = page.locator('#draggableIconForFileBrowser');
+        const handle = page.locator('[data-testid="draggableIconForFileBrowser"]');
 
         // The editor (and its file-browser handle) appear once the participation + repository are ready.
         await expect(handle).toBeVisible({ timeout: 120_000 });

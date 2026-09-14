@@ -262,6 +262,9 @@ export class QuizQuestionListEditComponent {
                 '1200px': '85vw',
                 '992px': '95vw',
             },
+            // Auto height: this dialog hosts a short list and a full diagram
+            // editor, so the view decides its own size rather than the dialog.
+            contentStyle: { padding: '0', display: 'flex', 'flex-direction': 'column', 'min-height': '0', overflow: 'hidden' },
             modal: true,
             closable: true,
             closeOnEscape: true,

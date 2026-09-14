@@ -1,7 +1,7 @@
 @let gradingCriteriaValue = this.gradingCriteria();
 @let gradingInstructionsValue = this.gradingInstructions();
 @if (showAssessmentInstructions() && (gradingInstructionsValue || (gradingCriteriaValue && gradingCriteriaValue.length > 0))) {
-    <div class="border p-2">
+    <div [class]="embeddedInEditorChrome() ? '' : 'border p-2'">
         @if (gradingInstructionsValue) {
             <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.assessmentInstructions">
                 <p class="markdown-preview" [innerHTML]="gradingInstructionsValue"></p>
@@ -24,7 +24,9 @@
     </div>
 }
 
-<h3>{{ exercise().title }}</h3>
+@if (!embeddedInEditorChrome()) {
+    <h3>{{ exercise().title }}</h3>
+}
 <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.problemStatement">
     @switch (exercise().type) {
         @case (ExerciseType.PROGRAMMING) {
