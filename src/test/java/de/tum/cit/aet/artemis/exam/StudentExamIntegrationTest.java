@@ -776,12 +776,19 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         exam2 = examUtilService.addExam(course2, examVisibleDate, examStartDate, examEndDate);
         var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, false, false);
         var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
-        List<SubmissionResponseDTO> response = request.getList("/api/exercise/exercises/" + testRun.getExercises().getFirst().getId() + "/test-run-submissions", HttpStatus.OK,
-                SubmissionResponseDTO.class);
+        JsonNode response = request.get("/api/exercise/exercises/" + testRun.getExercises().getFirst().getId() + "/test-run-submissions", HttpStatus.OK, JsonNode.class);
+        assertThat(response.isArray()).isTrue();
         assertThat(response).isNotEmpty();
-        assertThat(response.getFirst().participation().testRun()).isTrue();
+        JsonNode listed = response.get(0);
+        assertThat(listed.path("participation").path("testRun").asBoolean()).isTrue();
         // Submission is polymorphic; the client switches on the discriminator, so it has to survive the DTO
-        assertThat(response.getFirst().submissionExerciseType()).isNotBlank();
+        assertThat(listed.path("submissionExerciseType").asText()).isNotBlank();
+        // the assessment link needs the participation id, and the client restores the participation subclass from its type
+        assertThat(listed.path("participation").path("id").isNumber()).isTrue();
+        assertThat(listed.path("participation").path("type").asText()).isEqualTo("student");
+        // the exam assessment dashboard picks the result of the displayed round by correctionRound and silently drops the row without it
+        assertThat(listed.path("results")).isNotEmpty().allSatisfy(result -> assertThat(result.path("correctionRound").isInt()).isTrue());
+        assertThat(listed.path("results")).anySatisfy(result -> assertThat(result.path("correctionRound").asInt()).isZero());
     }
 
     @Test
@@ -808,10 +815,16 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "testRunTest");
         participationUtilService.addTestCaseFeedbackToResult(automaticResult, testCase, false, "test-run failure message");
 
-        List<SubmissionResponseDTO> response = request.getList("/api/exercise/exercises/" + programmingExercise.getId() + "/test-run-submissions", HttpStatus.OK,
-                SubmissionResponseDTO.class);
+        JsonNode wire = request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/test-run-submissions", HttpStatus.OK, JsonNode.class);
+        List<SubmissionResponseDTO> response = objectMapper.readerForListOf(SubmissionResponseDTO.class).readValue(wire);
 
         assertThat(response).hasSize(1);
+        // the result badge reads "x of y passed tests" off these two counters of the listed draft
+        assertThat(wire.get(0).path("results")).anySatisfy(result -> {
+            assertThat(result.path("assessmentType").asText()).isEqualTo(AssessmentType.SEMI_AUTOMATIC.name());
+            assertThat(result.path("testCaseCount").isInt()).isTrue();
+            assertThat(result.path("passedTestCaseCount").isInt()).isTrue();
+        });
         var draft = response.getFirst().results().stream().filter(result -> result.assessmentType() == AssessmentType.SEMI_AUTOMATIC).findFirst().orElseThrow();
         // the automatic feedback was copied into the draft as typed rows and is exposed as synthesized views
         assertThat(draft.feedbacks()).anySatisfy(feedback -> {

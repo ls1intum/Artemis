@@ -16,6 +16,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import tools.jackson.databind.JsonNode;
+
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Complaint;
@@ -686,13 +688,24 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
-        final var json = request.get("/api/exercise/exercises/" + modelingExercise.getId() + "/submissions-with-complaints", HttpStatus.OK, String.class, params);
+        final var json = request.get("/api/exercise/exercises/" + modelingExercise.getId() + "/submissions-with-complaints", HttpStatus.OK, JsonNode.class, params);
 
+        assertThat(json).hasSize(1);
+        final var listed = json.get(0);
         // the dashboard prints "rejected" for false and "no reply" for absent, so a dropped false would silently
         // reopen every rejected complaint on the tutor dashboard
-        assertThat(json).contains("\"complaintIsAccepted\":false");
-        // the dashboard filters the listed results by assessment type before it links into the assessment editor
-        assertThat(json).contains("\"assessmentType\":");
+        assertThat(listed.path("complaint").path("complaintIsAccepted").isBoolean()).isTrue();
+        assertThat(listed.path("complaint").path("complaintIsAccepted").asBoolean()).isFalse();
+        // the evaluate link opens the assessment of the listed submission's participation
+        assertThat(listed.path("submission").path("participation").path("id").asLong()).isEqualTo(modelingSubmission.getParticipation().getId());
+        // completeComplainedResult matches the complained result in the listed results by id, and the dashboard filters those
+        // listed results by assessment type before it links into the assessment editor
+        final long complainedResultId = listed.path("complaint").path("result").path("id").asLong();
+        assertThat(complainedResultId).isEqualTo(complaint.getResult().getId());
+        assertThat(listed.path("submission").path("results")).anySatisfy(result -> {
+            assertThat(result.path("id").asLong()).isEqualTo(complainedResultId);
+            assertThat(result.path("assessmentType").asText()).isEqualTo(complaint.getResult().getAssessmentType().name());
+        });
     }
 
     @Test
