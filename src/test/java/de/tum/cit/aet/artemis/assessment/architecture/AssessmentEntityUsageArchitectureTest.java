@@ -5,8 +5,6 @@ import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleEntityUsa
 /**
  * Architecture test to verify that REST controllers in the Assessment module
  * do not use @Entity types directly. Controllers should use DTOs instead.
- * <p>
- * TODO: Reduce violation counts to 0 by introducing DTOs for all endpoints.
  */
 class AssessmentEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitectureTest {
 
@@ -15,22 +13,18 @@ class AssessmentEntityUsageArchitectureTest extends AbstractModuleEntityUsageArc
         return ARTEMIS_PACKAGE + ".assessment";
     }
 
-    // TODO: Reduce this to 0 by returning DTOs instead of entities. Bonus endpoints migrated; remaining: ExampleSubmission and Result endpoints.
     @Override
     protected int getExpectedEntityReturnViolations() {
-        return 6;
+        return 0;
     }
 
-    // TODO: Reduce this to 0 by accepting DTOs instead of entities in @RequestBody/@RequestPart. Bonus endpoints migrated; remaining: ExampleSubmission, Result,
-    // TutorParticipation.
     @Override
     protected int getExpectedEntityInputViolations() {
-        return 4;
+        return 0;
     }
 
-    // TODO: Reduce this to 0 by removing entity references from DTOs (ResultWithPointsPerGradingCriterionDTO, AssessmentUpdateDTO).
     @Override
     protected int getExpectedDtoEntityFieldViolations() {
-        return 3;
+        return 0;
     }
 }
