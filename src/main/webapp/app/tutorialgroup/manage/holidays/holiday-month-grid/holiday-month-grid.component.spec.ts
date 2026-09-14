@@ -1,0 +1,446 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { provideArtemisTumUiTranslator } from 'app/shared-ui/tum-ui-integration/artemis-tum-ui-translator';
+import dayjs from 'dayjs/esm';
+import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
+import { Holiday, toHolidays } from 'app/tutorialgroup/manage/holidays/holiday.model';
+import { HolidayMonthGridComponent } from 'app/tutorialgroup/manage/holidays/holiday-month-grid/holiday-month-grid.component';
+
+const TIME_ZONE = 'Europe/Berlin';
+
+function period(id: number, start: string, end: string, reason = 'Christmas holidays'): TutorialGroupFreePeriod {
+    const freePeriod = new TutorialGroupFreePeriod();
+    freePeriod.id = id;
+    freePeriod.start = dayjs.utc(start);
+    freePeriod.end = dayjs.utc(end);
+    freePeriod.reason = reason;
+    return freePeriod;
+}
+
+describe('HolidayMonthGridComponent', () => {
+    let fixture: ComponentFixture<HolidayMonthGridComponent>;
+
+    /** December 2025 starts on a Monday and ends on a Wednesday, so the grid spills into both neighbouring months. */
+    const december = dayjs('2025-12-01').startOf('month');
+
+    const queryAll = (testId: string) => fixture.debugElement.queryAll(By.css(`[data-testid="${testId}"]`));
+    const query = (testId: string) => fixture.debugElement.query(By.css(`[data-testid="${testId}"]`));
+
+    function setHolidays(...periods: TutorialGroupFreePeriod[]): void {
+        fixture.componentRef.setInput('holidays', toHolidays(periods, TIME_ZONE));
+        fixture.detectChanges();
+    }
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [HolidayMonthGridComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideArtemisTumUiTranslator()],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(HolidayMonthGridComponent);
+        fixture.componentRef.setInput('displayedMonth', december);
+        fixture.componentRef.setInput('holidays', []);
+        fixture.componentRef.setInput('sessionCountsByDay', new Map());
+        fixture.componentRef.setInput('today', dayjs('2025-12-10').startOf('day'));
+        fixture.detectChanges();
+    });
+
+    describe('dragging across days', () => {
+        const dayButton = (dayKey: string) => fixture.debugElement.query(By.css(`[data-day="${dayKey}"]`)).nativeElement as HTMLButtonElement;
+
+        /** The primary button; a drag must not start on any other, so the tests say which one they press. */
+        function pressOn(dayKey: string, pointerType = 'mouse'): void {
+            dayButton(dayKey).dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true, pointerType }));
+            fixture.detectChanges();
+        }
+
+        function moveOver(dayKey: string): void {
+            dayButton(dayKey).dispatchEvent(new PointerEvent('pointerenter', { bubbles: true }));
+            fixture.detectChanges();
+        }
+
+        function release(): void {
+            window.dispatchEvent(new PointerEvent('pointerup'));
+            fixture.detectChanges();
+        }
+
+        it('should report the run a drag covered, first day to last', () => {
+            let range: { start: dayjs.Dayjs; end: dayjs.Dayjs } | undefined;
+            fixture.componentRef.instance.rangeSelected.subscribe((emitted) => (range = emitted));
+
+            pressOn('2025-12-22');
+            moveOver('2025-12-24');
+            moveOver('2025-12-26');
+            release();
+
+            expect(range?.start.format('YYYY-MM-DD')).toBe('2025-12-22');
+            expect(range?.end.format('YYYY-MM-DD')).toBe('2025-12-26');
+        });
+
+        it('should order a backwards drag the same as a forwards one', () => {
+            let range: { start: dayjs.Dayjs; end: dayjs.Dayjs } | undefined;
+            fixture.componentRef.instance.rangeSelected.subscribe((emitted) => (range = emitted));
+
+            pressOn('2025-12-26');
+            moveOver('2025-12-22');
+            release();
+
+            expect(range?.start.format('YYYY-MM-DD')).toBe('2025-12-22');
+            expect(range?.end.format('YYYY-MM-DD')).toBe('2025-12-26');
+        });
+
+        it('should leave a press that never left its day to the click that opens one day', () => {
+            let range: { start: dayjs.Dayjs; end: dayjs.Dayjs } | undefined;
+            fixture.componentRef.instance.rangeSelected.subscribe((emitted) => (range = emitted));
+
+            pressOn('2025-12-22');
+            release();
+
+            expect(range).toBeUndefined();
+        });
+
+        it('should mark the days the drag would take while it is still running', () => {
+            pressOn('2025-12-22');
+            moveOver('2025-12-24');
+
+            const marked = fixture.debugElement.queryAll(By.css('[data-in-pending-range]')).map((day) => day.attributes['data-day']);
+            expect(marked).toEqual(['2025-12-22', '2025-12-23', '2025-12-24']);
+
+            release();
+            expect(fixture.debugElement.queryAll(By.css('[data-in-pending-range]'))).toHaveLength(0);
+        });
+
+        it('should leave a touch to the tap that opens one day, rather than starting a drag it cannot follow', () => {
+            // A touch is captured to the button it went down on, so the enter events a drag follows never reach the
+            // other days. Rather than take the pan gesture off the browser to fix that, a touch does not start a drag
+            // at all - which is also what keeps the calendar scrollable on a phone.
+            let range: { start: dayjs.Dayjs; end: dayjs.Dayjs } | undefined;
+            fixture.componentRef.instance.rangeSelected.subscribe((emitted) => (range = emitted));
+
+            pressOn('2025-12-22', 'touch');
+            moveOver('2025-12-26');
+            release();
+
+            expect(range).toBeUndefined();
+            expect(fixture.debugElement.queryAll(By.css('[data-in-pending-range]'))).toHaveLength(0);
+        });
+
+        it('should hand back the capture a pen takes, so the drag can follow it onto other days', () => {
+            const button = dayButton('2025-12-22');
+            // jsdom implements neither implicit capture nor the release, so both are stood in for: the element reports
+            // itself captured, and the call that gives it back is recorded.
+            button.hasPointerCapture = () => true;
+            const released: number[] = [];
+            button.releasePointerCapture = (pointerId: number) => released.push(pointerId);
+            let range: { start: dayjs.Dayjs; end: dayjs.Dayjs } | undefined;
+            fixture.componentRef.instance.rangeSelected.subscribe((emitted) => (range = emitted));
+
+            button.dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true, pointerType: 'pen', pointerId: 7 }));
+            fixture.detectChanges();
+            moveOver('2025-12-24');
+            release();
+
+            expect(released).toEqual([7]);
+            expect(range?.start.format('YYYY-MM-DD')).toBe('2025-12-22');
+            expect(range?.end.format('YYYY-MM-DD')).toBe('2025-12-24');
+        });
+
+        it('should forget a drag the pointer cancelled rather than reporting it', () => {
+            let range: { start: dayjs.Dayjs; end: dayjs.Dayjs } | undefined;
+            fixture.componentRef.instance.rangeSelected.subscribe((emitted) => (range = emitted));
+
+            pressOn('2025-12-22');
+            moveOver('2025-12-24');
+            window.dispatchEvent(new PointerEvent('pointercancel'));
+            fixture.detectChanges();
+
+            expect(range).toBeUndefined();
+            expect(fixture.debugElement.queryAll(By.css('[data-in-pending-range]'))).toHaveLength(0);
+        });
+    });
+
+    describe('previewing the holiday that is not there yet', () => {
+        const dayButton = (dayKey: string) => fixture.debugElement.query(By.css(`[data-day="${dayKey}"]`)).nativeElement as HTMLButtonElement;
+
+        function hoverOver(dayKey: string): void {
+            dayButton(dayKey).dispatchEvent(new PointerEvent('pointerenter', { bubbles: true }));
+            fixture.detectChanges();
+        }
+
+        function previews(): { span: number; left: string }[] {
+            return queryAll('holiday-calendar-preview').map((bar) => ({
+                span: Number(bar.attributes['data-span']),
+                left: (bar.nativeElement as HTMLElement).style.left,
+            }));
+        }
+
+        it('should show nothing for a pointer merely passing over the calendar', () => {
+            // Previewing every day the pointer crossed put a holiday under the cursor constantly; only choosing days
+            // shows one now.
+            hoverOver('2025-12-10');
+
+            expect(previews()).toHaveLength(0);
+        });
+
+        it('should show the day a press starts on, before it has been dragged anywhere', () => {
+            dayButton('2025-12-10').dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true, pointerType: 'mouse' }));
+            fixture.detectChanges();
+
+            expect(previews()).toEqual([{ span: 1, left: expect.any(String) }]);
+        });
+
+        it('should stretch across the days a drag covers', () => {
+            dayButton('2025-12-22').dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true, pointerType: 'mouse' }));
+            fixture.detectChanges();
+            hoverOver('2025-12-26');
+
+            expect(previews()).toEqual([{ span: 5, left: expect.any(String) }]);
+        });
+
+        it('should break across a week boundary the way a saved holiday does', () => {
+            // The 22nd is a Monday and the 29th the Monday after, so this run covers one whole week and one day.
+            dayButton('2025-12-22').dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true, pointerType: 'mouse' }));
+            fixture.detectChanges();
+            hoverOver('2025-12-29');
+
+            expect(previews().map((preview) => preview.span)).toEqual([7, 1]);
+        });
+
+        it('should sit beside a holiday on the same day rather than on top of it', () => {
+            setHolidays(period(1, '2025-12-09T23:00:00', '2025-12-10T22:59:00'));
+
+            dayButton('2025-12-10').dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true, pointerType: 'mouse' }));
+            fixture.detectChanges();
+
+            const bar = query('holiday-calendar-event').parent!.nativeElement as HTMLElement;
+            const preview = query('holiday-calendar-preview').nativeElement as HTMLElement;
+            expect(preview.style.top).not.toBe(bar.style.top);
+        });
+
+        it('should keep previewing the run a form is open for, after the drag that chose it has ended', () => {
+            // The form is anchored to this bar, so it has to outlive the drag: without it the form would point at
+            // something that vanished the moment it appeared.
+            fixture.componentRef.setInput('selectedRange', { start: dayjs('2025-12-22'), end: dayjs('2025-12-24') });
+            fixture.detectChanges();
+
+            expect(previews()).toEqual([{ span: 3, left: expect.any(String) }]);
+        });
+
+        it('should let a drag in progress win over the run a form is open for', () => {
+            fixture.componentRef.setInput('selectedRange', { start: dayjs('2025-12-22'), end: dayjs('2025-12-24') });
+            fixture.detectChanges();
+
+            dayButton('2025-12-08').dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true, pointerType: 'mouse' }));
+            fixture.detectChanges();
+            hoverOver('2025-12-09');
+
+            expect(previews()).toEqual([{ span: 2, left: expect.any(String) }]);
+        });
+
+        it('should take the preview away once the drag is released', () => {
+            dayButton('2025-12-22').dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true, pointerType: 'mouse' }));
+            fixture.detectChanges();
+            hoverOver('2025-12-24');
+            expect(previews()).toHaveLength(1);
+
+            window.dispatchEvent(new PointerEvent('pointerup'));
+            fixture.detectChanges();
+
+            expect(previews()).toHaveLength(0);
+        });
+
+        it('should not preview a day of a neighbouring month, which cannot be chosen anyway', () => {
+            // December 2025 starts on a Monday, so the grid's last row spills into January.
+            dayButton('2026-01-01').dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true, pointerType: 'mouse' }));
+            fixture.detectChanges();
+
+            expect(previews()).toHaveLength(0);
+        });
+    });
+
+    it('should render whole weeks, so the grid is always a multiple of seven days', () => {
+        const days = fixture.debugElement.queryAll(By.css('[data-day]'));
+
+        expect(days.length % 7).toBe(0);
+        expect(days.length).toBeGreaterThanOrEqual(28);
+    });
+
+    it('should mark the days that belong to the neighbouring months', () => {
+        const outsideDays = fixture.debugElement.queryAll(By.css('[data-outside-month]'));
+
+        // 1 December is a Monday, so only the days after 31 December fall outside.
+        expect(outsideDays.length).toBeGreaterThan(0);
+        expect(fixture.debugElement.query(By.css('[data-day="2025-12-15"]')).attributes['data-outside-month']).toBeUndefined();
+    });
+
+    it('should render a holiday as one bar and mark the day it covers', () => {
+        setHolidays(period(1, '2025-12-16T23:00:00', '2025-12-17T22:59:00'));
+
+        expect(fixture.debugElement.query(By.css('[data-day="2025-12-17"]')).attributes['data-has-holiday']).toBe('true');
+        const bars = queryAll('holiday-calendar-event');
+        expect(bars).toHaveLength(1);
+        expect(bars[0].nativeElement.textContent).toContain('Christmas holidays');
+        expect(bars[0].attributes['data-span']).toBe('1');
+    });
+
+    it('should draw a run of days as a single bar rather than one per day', () => {
+        setHolidays(period(1, '2025-12-16T23:00:00', '2025-12-19T22:59:00'));
+
+        const bars = queryAll('holiday-calendar-event');
+
+        // Three days, one bar: the reason is written once, at the width of the whole run.
+        expect(bars).toHaveLength(1);
+        expect(bars[0].attributes['data-span']).toBe('3');
+        expect(bars[0].nativeElement.textContent).toContain('Christmas holidays');
+    });
+
+    it('should split a run at the week boundary and mark both halves as continuing', () => {
+        // 19 to 23 December 2025 crosses from a Friday into the following Tuesday.
+        setHolidays(period(1, '2025-12-18T23:00:00', '2025-12-23T22:59:00'));
+
+        const bars = queryAll('holiday-calendar-event');
+
+        expect(bars).toHaveLength(2);
+        expect(bars[0].attributes['data-continues-after']).toBe('true');
+        expect(bars[0].attributes['data-continues-before']).toBeUndefined();
+        expect(bars[1].attributes['data-continues-before']).toBe('true');
+        expect(bars[1].attributes['data-continues-after']).toBeUndefined();
+    });
+
+    it('should name a time only on the stretch that carries that end of the span', () => {
+        // 25 December 00:00 to 29 December 04:59, which crosses from Thursday into the following Monday.
+        setHolidays(period(1, '2025-12-24T23:00:00', '2025-12-29T03:59:00'));
+
+        const bars = queryAll('holiday-calendar-event');
+        expect(bars).toHaveLength(2);
+
+        // The first stretch is cancelled outright and says nothing; only the one holding the end names a time.
+        expect(bars[0].query(By.css('[data-testid="holiday-calendar-event-time"]'))).toBeNull();
+        expect(bars[1].query(By.css('[data-testid="holiday-calendar-event-time"]'))).not.toBeNull();
+    });
+
+    it('should say nothing about times for a day held to an exclusive midnight', () => {
+        // 16 December 00:00 to 17 December 00:00: the 16th is covered outright, so no time belongs on it.
+        setHolidays(period(1, '2025-12-15T23:00:00', '2025-12-16T23:00:00'));
+
+        expect(queryAll('holiday-calendar-event')).toHaveLength(1);
+        expect(queryAll('holiday-calendar-event-time')).toHaveLength(0);
+    });
+
+    it('should print both times for a holiday confined to part of one day', () => {
+        setHolidays(period(1, '2025-12-04T08:15:00', '2025-12-04T12:45:00', 'Dies Academicus'));
+
+        // Both ends fall on this day, so the bar prints them rather than describing one of them.
+        expect(query('holiday-calendar-event-time').nativeElement.textContent.trim()).toBe('09:15–13:45');
+    });
+
+    it('should say nothing about times when the run covers its days outright', () => {
+        setHolidays(period(1, '2025-12-16T23:00:00', '2025-12-19T22:59:00'));
+
+        expect(queryAll('holiday-calendar-event-time')).toHaveLength(0);
+    });
+
+    it('should stack two holidays that share a day rather than drawing them over each other', () => {
+        setHolidays(period(1, '2025-12-17T08:00:00', '2025-12-17T09:00:00', 'Morning'), period(2, '2025-12-17T13:00:00', '2025-12-17T14:00:00', 'Afternoon'));
+
+        const bars = queryAll('holiday-calendar-event');
+
+        expect(bars).toHaveLength(2);
+        // Different lanes means different vertical offsets, which is what keeps both readable.
+        const tops = bars.map((bar) => (bar.nativeElement.parentElement as HTMLElement).style.top);
+        expect(new Set(tops).size).toBe(2);
+    });
+
+    it('should show the session count only on days without a holiday, so the holiday is what the day reads as', () => {
+        setHolidays(period(1, '2025-12-16T23:00:00', '2025-12-17T22:59:00'));
+        fixture.componentRef.setInput(
+            'sessionCountsByDay',
+            new Map([
+                ['2025-12-17', 7],
+                ['2025-12-18', 7],
+            ]),
+        );
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('[data-day="2025-12-17"] [data-testid="holiday-calendar-sessions"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-day="2025-12-18"] [data-testid="holiday-calendar-sessions"]'))).not.toBeNull();
+    });
+
+    it('should emit the next month when the forward control is used', () => {
+        let emitted: dayjs.Dayjs | undefined;
+        fixture.componentInstance.monthChange.subscribe((month) => (emitted = month));
+
+        fixture.debugElement.query(By.css('[data-testid="holiday-calendar-next"]')).nativeElement.click();
+
+        expect(emitted?.format('YYYY-MM')).toBe('2026-01');
+    });
+
+    it('should jump to the month of today rather than to the current month of the reader', () => {
+        let emitted: dayjs.Dayjs | undefined;
+        fixture.componentInstance.monthChange.subscribe((month) => (emitted = month));
+
+        fixture.debugElement.query(By.css('[data-testid="holiday-calendar-today"]')).nativeElement.click();
+
+        expect(emitted?.format('YYYY-MM')).toBe('2025-12');
+    });
+
+    it('should offer to create a holiday when an empty day is clicked', () => {
+        let emitted: { day: dayjs.Dayjs; origin: HTMLElement } | undefined;
+        fixture.componentInstance.daySelected.subscribe((selection) => (emitted = selection));
+        const cell = fixture.debugElement.query(By.css('[data-day="2025-12-09"]')).nativeElement;
+
+        cell.click();
+
+        expect(emitted?.day.format('YYYY-MM-DD')).toBe('2025-12-09');
+        // The form is anchored, so the day itself has to come with it.
+        expect(emitted?.origin).toBe(cell);
+    });
+
+    it('should open the holiday when its bar is clicked', () => {
+        setHolidays(period(4, '2025-12-16T23:00:00', '2025-12-17T22:59:00'));
+        let selected: { holiday: Holiday; origin: HTMLElement } | undefined;
+        fixture.componentInstance.holidaySelected.subscribe((selection) => (selected = selection));
+        const bar = query('holiday-calendar-event').nativeElement;
+
+        bar.click();
+
+        expect(selected?.holiday.period.id).toBe(4);
+        expect(selected?.origin).toBe(bar);
+    });
+
+    it('should still offer to create on a day that already carries a holiday, so a second one is reachable', () => {
+        setHolidays(period(4, '2025-12-16T23:00:00', '2025-12-17T22:59:00'));
+        let created: dayjs.Dayjs | undefined;
+        let edited = false;
+        fixture.componentInstance.daySelected.subscribe((selection) => (created = selection.day));
+        fixture.componentInstance.holidaySelected.subscribe(() => (edited = true));
+
+        // The cell, not the bar: the bar stops the click so the two actions stay separate.
+        fixture.debugElement.query(By.css('[data-day="2025-12-17"]')).nativeElement.click();
+
+        expect(created?.format('YYYY-MM-DD')).toBe('2025-12-17');
+        expect(edited).toBe(false);
+    });
+
+    it('should leave the day out when a holiday ends exactly at its midnight', () => {
+        // The end is exclusive, so 17 December 00:00 cancels nothing on the 17th and the day keeps its own count.
+        setHolidays(period(1, '2025-12-15T23:00:00', '2025-12-16T23:00:00'));
+
+        expect(fixture.debugElement.query(By.css('[data-day="2025-12-17"]')).attributes['data-has-holiday']).toBeUndefined();
+        expect(fixture.debugElement.query(By.css('[data-day="2025-12-16"]')).attributes['data-has-holiday']).toBe('true');
+        expect(queryAll('holiday-calendar-event')[0].attributes['data-span']).toBe('1');
+    });
+
+    it('should ignore a click on a day of a neighbouring month', () => {
+        let daySelected = false;
+        fixture.componentInstance.daySelected.subscribe(() => (daySelected = true));
+
+        // 1 January 2026 completes the last week of the December grid.
+        fixture.debugElement.query(By.css('[data-day="2026-01-01"]')).nativeElement.click();
+
+        expect(daySelected).toBe(false);
+    });
+});

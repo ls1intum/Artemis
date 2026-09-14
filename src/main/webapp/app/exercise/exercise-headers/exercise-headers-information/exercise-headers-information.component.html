@@ -1,5 +1,18 @@
 @if (exercise()) {
-    <div data-testid="exercise-headers-information" class="align-self-stretch d-flex flex-row flex-wrap align-items-stretch gap-2 overflow-auto">
+    <!--
+        In the panel the boxes wrap onto as many rows as they need and scroll if they still do not fit. In the title
+        bar they are a single row that must stay on the bar's one line, so nothing there wraps or scrolls - the bar
+        only renders them at all at a width where they fit (see ExerciseHeaderComponent.showsPills).
+    -->
+    <div
+        [attr.data-testid]="rootTestId()"
+        class="d-flex flex-row gap-2"
+        [class.align-self-stretch]="placement() === 'panel'"
+        [class.flex-wrap]="placement() === 'panel'"
+        [class.align-items-stretch]="placement() === 'panel'"
+        [class.overflow-auto]="placement() === 'panel'"
+        [class.align-items-center]="placement() === 'titleBar'"
+    >
         @for (informationBoxItem of informationBoxItems(); track $index) {
             @if (informationBoxItem.content.type === 'submissionStatus') {
                 @let historyClickable = interactive() && sortedHistoryResults().length;
@@ -14,9 +27,14 @@
                     (keydown.enter)="historyClickable ? resultHistoryDropdown()?.toggleResultsPopover($event) : undefined"
                     (keydown.space)="historyClickable ? resultHistoryDropdown()?.toggleResultsPopover($event) : undefined"
                 >
-                    <jhi-information-box [informationBoxData]="informationBoxItem">
+                    <jhi-information-box data-testid="exercise-status" [informationBoxData]="informationBoxItem" [layout]="boxLayout()">
                         <span contentComponent class="d-flex align-items-center gap-1">
                             <span (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()" (keydown.space)="$event.stopPropagation()">
+                                <!--
+                                    The build progress bar is two rows tall and needs ~230px of width. That fits the
+                                    panel but not a one-line pill, so in the title bar the status falls back to the
+                                    "building" text line the same component renders without it.
+                                -->
                                 <jhi-submission-result-status
                                     class="text-truncate result"
                                     [exercise]="informationBoxItem.content.value"
@@ -27,7 +45,7 @@
                                     [showUngradedResults]="isPractice()"
                                     [showCompletion]="false"
                                     [showBadge]="false"
-                                    [showProgressBar]="true"
+                                    [showProgressBar]="placement() === 'panel'"
                                     [isInSidebarCard]="false"
                                 />
                             </span>
@@ -42,7 +60,7 @@
                     </jhi-information-box>
                 </div>
             } @else {
-                <jhi-information-box [informationBoxData]="informationBoxItem">
+                <jhi-information-box [informationBoxData]="informationBoxItem" [layout]="boxLayout()">
                     @switch (informationBoxItem.content.type) {
                         @case ('difficultyLevel') {
                             <jhi-difficulty-level contentComponent [difficultyLevel]="informationBoxItem.content.value" />
