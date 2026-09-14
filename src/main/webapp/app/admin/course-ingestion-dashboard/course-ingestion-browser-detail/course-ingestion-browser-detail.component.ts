@@ -32,6 +32,8 @@ interface Crumb {
 
 /** One stored content object prepared for display, with the label the design record specifies. */
 interface LabelledContentObject {
+    /** Unique per entry, for row tracking and expansion. Labels repeat (one page is several chunks), so they cannot key. */
+    key: string;
     label: string;
     object: IndexedContentObject;
 }
@@ -82,8 +84,14 @@ export class CourseIngestionBrowserDetailComponent {
     readonly contentPage = signal(0);
     readonly pageSize = signal(DEFAULT_PAGE_SIZE);
 
+    /**
+     * The stored records in display order. Weaviate returns them in storage order, which reads as random, so they are
+     * sorted by their displayed name here, the same way the tree sorts its nodes.
+     */
+    readonly sortedRecords = computed<IndexedEntityRecord[]>(() => [...this.records()].sort((a, b) => (a.title || `#${a.entityId}`).localeCompare(b.title || `#${b.entityId}`)));
+
     /** The visible slice of the stored records. */
-    readonly pagedRecords = computed(() => slice(this.records(), this.recordsPage(), this.pageSize()));
+    readonly pagedRecords = computed(() => slice(this.sortedRecords(), this.recordsPage(), this.pageSize()));
 
     /** The counts behind the type detail's tiles, taken from the coverage row the matrix already has. */
     readonly typeCount = computed<IngestionTypeCount | undefined>(() => {
@@ -120,7 +128,27 @@ export class CourseIngestionBrowserDetailComponent {
                   .map((presence) => presence.key);
     });
 
-    readonly labelledContent = computed<LabelledContentObject[]>(() => this.contentObjects().map((object, index) => ({ label: label(object, index), object })));
+    /**
+     * The content objects in reading order, labelled. Weaviate returns them in storage order, so they are sorted by
+     * their position in the unit (page number, else segment start time). A page is stored as several chunks that all
+     * carry its number, so repeated labels are numbered to tell the chunks apart.
+     */
+    readonly labelledContent = computed<LabelledContentObject[]>(() => {
+        const sorted = [...this.contentObjects()].sort((a, b) => (positionOf(a) ?? Number.MAX_VALUE) - (positionOf(b) ?? Number.MAX_VALUE));
+        const labels = sorted.map((object, index) => label(object, index));
+        const totals = new Map<string, number>();
+        for (const text of labels) {
+            totals.set(text, (totals.get(text) ?? 0) + 1);
+        }
+        const seen = new Map<string, number>();
+        return sorted.map((object, index) => {
+            const base = labels[index];
+            const occurrence = (seen.get(base) ?? 0) + 1;
+            seen.set(base, occurrence);
+            const total = totals.get(base) ?? 1;
+            return { key: `${index}`, label: total > 1 ? `${base} (${occurrence}/${total})` : base, object };
+        });
+    });
 
     /** The visible slice of the stored content objects. */
     readonly pagedContent = computed(() => slice(this.labelledContent(), this.contentPage(), this.pageSize()));
@@ -315,6 +343,19 @@ export class CourseIngestionBrowserDetailComponent {
 function slice<T>(items: T[], page: number, pageSize: number): T[] {
     const start = page * pageSize;
     return items.slice(start, start + pageSize);
+}
+
+/**
+ * Where a content object sits within its unit: its page number, else its segment start time. The two never mix within
+ * one collection, so comparing the raw values orders each collection correctly. Objects without either sort last.
+ */
+function positionOf(object: IndexedContentObject): number | undefined {
+    const page = object.properties['page_number'] ?? object.properties['display_page_number'];
+    if (typeof page === 'number') {
+        return page;
+    }
+    const segmentStart = object.properties['segment_start_time'];
+    return typeof segmentStart === 'number' ? segmentStart : undefined;
 }
 
 /**

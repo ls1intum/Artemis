@@ -181,6 +181,58 @@ describe('CourseIngestionBrowserDetailComponent', () => {
         expect(component.labelledContent()[0].label).toBe('Page 3');
     });
 
+    it('should order content by page number rather than by storage order', async () => {
+        // Weaviate returns objects in storage order, which is effectively random; the pane must read like the deck.
+        vi.spyOn(service, 'getUnitContent').mockReturnValue(of([{ properties: { page_number: 2 } }, { properties: { page_number: 3 } }, { properties: { page_number: 1 } }]));
+        component.selection.set({ kind: 'collection', unitId: 11, key: 'slides' });
+        await settle();
+
+        expect(component.labelledContent().map((entry) => entry.label)).toEqual(['Page 1', 'Page 2', 'Page 3']);
+    });
+
+    it('should order segments by start time when there is no page number', async () => {
+        vi.spyOn(service, 'getUnitContent').mockReturnValue(of([{ properties: { segment_start_time: 90 } }, { properties: { segment_start_time: 15 } }]));
+        component.selection.set({ kind: 'collection', unitId: 11, key: 'segments' });
+        await settle();
+
+        expect(component.labelledContent().map((entry) => entry.label)).toEqual(['Segment @ 15s', 'Segment @ 90s']);
+    });
+
+    it('should number the chunks of one page and expand them independently', async () => {
+        // One page is stored as several chunks that all carry its number: without numbering they read as duplicates,
+        // and keyed by label alone, expanding one expanded them all.
+        vi.spyOn(service, 'getUnitContent').mockReturnValue(
+            of([
+                { properties: { page_number: 2, page_text_content: 'late chunk' } },
+                { properties: { page_number: 1 } },
+                { properties: { page_number: 2, page_text_content: 'early chunk' } },
+            ]),
+        );
+        component.selection.set({ kind: 'collection', unitId: 11, key: 'slides' });
+        await settle();
+
+        expect(component.labelledContent().map((entry) => entry.label)).toEqual(['Page 1', 'Page 2 (1/2)', 'Page 2 (2/2)']);
+
+        const rows = fixture.nativeElement.querySelectorAll('[data-testid="detail-content-row"]');
+        (rows[1] as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="stored-fields"]')).toHaveLength(1);
+    });
+
+    it('should list the stored records alphabetically, the way the tree does', async () => {
+        vi.spyOn(service, 'getIndexedEntityRecords').mockReturnValue(
+            of([
+                { type: 'lecture', entityId: 21, title: 'Week 2', properties: { title: 'Week 2' } },
+                { type: 'lecture', entityId: 20, title: 'Week 1', properties: { title: 'Week 1' } },
+            ]),
+        );
+        component.selection.set({ kind: 'type', type: 'lecture' });
+        await settle();
+
+        expect(component.pagedRecords().map((record) => record.title)).toEqual(['Week 1', 'Week 2']);
+    });
+
     it('should fall back to a position label when an object has neither page nor segment time', async () => {
         vi.spyOn(service, 'getUnitContent').mockReturnValue(of([{ properties: { text: 'no position markers' } }]));
         component.selection.set({ kind: 'collection', unitId: 11, key: 'slides' });
