@@ -26,6 +26,16 @@
         [correctionRound]="correctionRound()"
         (useAsExampleSubmission)="useStudentSubmissionAsExampleSubmission()"
     >
+        <jhi-feedback-suggestions-banner
+            jhiBannerSlot
+            [isLoading]="loadingFeedbackSuggestions()"
+            [hasAutomaticFeedback]="hasAutomaticFeedback()"
+            [isAssessor]="isAssessor()"
+            [resultCompletionDate]="result()?.completionDate"
+            [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled()"
+            [requiresAiExperienceOptIn]="requiresAiExperienceOptIn()"
+            (optIn)="onOptInToAiFeedbackSuggestions()"
+        />
         @if (submission()) {
             <jhi-assessment-workspace
                 class="modeling-assessment-page__workspace"
@@ -44,18 +54,6 @@
                         [highlightDifferences]="highlightDifferences"
                         [elementCounts]="submission()?.similarElements"
                     >
-                        <jhi-feedback-suggestions-banner
-                            [modelingAssessmentTopLeft]="feedbackSuggestionsNotice() === 'loading' || feedbackSuggestionsNotice() === 'optInRequired'"
-                            appearance="chrome"
-                            [isLoading]="loadingFeedbackSuggestions()"
-                            [hasAutomaticFeedback]="hasAutomaticFeedback()"
-                            [isAssessor]="isAssessor()"
-                            [resultCompletionDate]="result()?.completionDate"
-                            [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled()"
-                            [requiresAiExperienceOptIn]="requiresAiExperienceOptIn()"
-                            (optIn)="onOptInToAiFeedbackSuggestions()"
-                        />
-
                         <jhi-modeling-assessment-legend [modelingAssessmentTopRight]="true" [highlights]="legendHighlights()" />
                     </jhi-modeling-assessment>
                     @if (complaint(); as complaint) {

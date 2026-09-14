@@ -41,8 +41,6 @@ import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util
 import { ApollonEditor, UMLDiagramType } from '@tumaet/apollon';
 import { By } from '@angular/platform-browser';
 import { Location } from '@angular/common';
-import { ModelingAssessmentTopLeftDirective } from 'app/modeling/manage/assess/modeling-assessment-top-left.directive';
-import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -887,7 +885,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         expect(component.isFeedbackSuggestionsEnabled()).toBe(false);
     });
 
-    describe('feedback suggestions chrome', () => {
+    describe('feedback suggestions notice', () => {
         beforeEach(() => {
             // These tests cover notice resolution once the assessor has already opted into AI usage; the opt-in gating itself is covered separately below.
             vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
@@ -903,42 +901,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             component.isAssessor.set(overrides.assessor ?? false);
         };
 
-        it.each([
-            { name: 'nothing before anything is known', overrides: {}, expected: undefined },
-            { name: 'loading while Athena is queried', overrides: { loading: true, enabled: true }, expected: 'loading' },
-            { name: 'the suggestion notice once Athena answered', overrides: { automatic: true, assessor: true, enabled: true }, expected: 'suggestions' },
-            { name: 'the automatic notice without Athena', overrides: { automatic: true, assessor: true }, expected: 'automaticAssessment' },
-            { name: 'nothing for a tutor who is not the assessor', overrides: { automatic: true, enabled: true }, expected: undefined },
-        ])('should resolve $name', ({ overrides, expected }) => {
-            setNoticeInputs(overrides);
-
-            expect(component.feedbackSuggestionsNotice()).toBe(expected);
-        });
-
-        it('should stop offering a notice once the assessment has been submitted', () => {
-            setNoticeInputs({ automatic: true, assessor: true, enabled: true });
-            expect(component.feedbackSuggestionsNotice()).toBe('suggestions');
-
-            component.result.set({ id: 1, completionDate: dayjs() } as Result);
-
-            expect(component.feedbackSuggestionsNotice()).toBeUndefined();
-        });
-
-        it('should mount the banner as canvas chrome rather than a band above the workspace, but only while loading', async () => {
-            const submission = getSubmissionWithData();
-            component.submission.set(submission);
-            setNoticeInputs({ loading: true, enabled: true });
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            const banner = fixture.debugElement.query(By.directive(FeedbackSuggestionsBannerComponent));
-            expect(banner).not.toBeNull();
-            expect(banner.componentInstance.appearance()).toBe('chrome');
-            expect(fixture.debugElement.query(By.directive(ModelingAssessmentComponent)).query(By.directive(FeedbackSuggestionsBannerComponent))).not.toBeNull();
-            expect(banner.injector.get(ModelingAssessmentTopLeftDirective).occupied()).toBe(true);
-        });
-
-        it('should let the legend, not a second island, say that suggestions are available', async () => {
+        it('should let the legend say that suggestions are available', async () => {
             const submission = getSubmissionWithData();
             component.submission.set(submission);
             setNoticeInputs({ automatic: true, assessor: true, enabled: true });
@@ -946,8 +909,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const banner = fixture.debugElement.query(By.directive(FeedbackSuggestionsBannerComponent));
-            expect(banner.injector.get(ModelingAssessmentTopLeftDirective).occupied()).toBe(false);
             expect(component.legendHighlights()).toEqual([
                 {
                     color: FeedbackHighlightColor.CYAN,
@@ -977,17 +938,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             const canvas = fixture.debugElement.query(By.directive(ModelingAssessmentComponent));
             expect(canvas.componentInstance.resultFeedbacks()).toContain(referencedSuggestion);
             expect(component.highlightedElements().get('node-1')).toBeDefined();
-        });
-
-        it('should leave the region unoccupied, and the island unrendered, when there is no notice', async () => {
-            component.submission.set(getSubmissionWithData());
-            setNoticeInputs();
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            const banner = fixture.debugElement.query(By.directive(FeedbackSuggestionsBannerComponent));
-            expect(banner.injector.get(ModelingAssessmentTopLeftDirective).occupied()).toBe(false);
-            expect(banner.query(By.css('.feedback-suggestions-chrome'))).toBeNull();
         });
     });
 

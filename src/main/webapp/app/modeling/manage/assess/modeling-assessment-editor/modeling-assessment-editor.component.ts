@@ -40,11 +40,7 @@ import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layo
 import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ModelingAssessmentComponent } from '../modeling-assessment.component';
-import {
-    FeedbackSuggestionsBannerComponent,
-    feedbackSuggestionsNotice as resolveFeedbackSuggestionsNotice,
-} from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
-import { ModelingAssessmentTopLeftDirective } from 'app/modeling/manage/assess/modeling-assessment-top-left.directive';
+import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
 import { ModelingAssessmentTopRightDirective } from 'app/modeling/manage/assess/modeling-assessment-top-right.directive';
 import { ModelingAssessmentLegendComponent, ModelingAssessmentLegendHighlight } from 'app/modeling/manage/assess/modeling-assessment-legend/modeling-assessment-legend.component';
 import { AssessmentWorkspaceComponent } from 'app/assessment/manage/assessment-workspace/assessment-workspace.component';
@@ -71,7 +67,6 @@ import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
         UnreferencedFeedbackComponent,
         RouterLink,
         FeedbackSuggestionsBannerComponent,
-        ModelingAssessmentTopLeftDirective,
         ModelingAssessmentTopRightDirective,
         ModelingAssessmentLegendComponent,
         AssessmentNotPossibleYetComponent,
@@ -192,17 +187,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     onOptInToAiFeedbackSuggestions(): void {
         this.aiExperienceOptInService.promptForAiUsage(() => void this.fetchAndApplyFeedbackSuggestions());
     }
-
-    readonly feedbackSuggestionsNotice = computed(() =>
-        resolveFeedbackSuggestionsNotice({
-            isLoading: this.loadingFeedbackSuggestions(),
-            hasAutomaticFeedback: this.hasAutomaticFeedback(),
-            isAssessor: this.isAssessor(),
-            resultCompletionDate: this.result()?.completionDate,
-            isFeedbackSuggestionsEnabled: this.isFeedbackSuggestionsEnabled(),
-            requiresAiExperienceOptIn: this.requiresAiExperienceOptIn(),
-        }),
-    );
 
     ngOnInit() {
         void this.accountService.identity().then((user) => {
