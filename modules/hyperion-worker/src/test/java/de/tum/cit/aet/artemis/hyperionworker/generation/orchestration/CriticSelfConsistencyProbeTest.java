@@ -25,7 +25,7 @@ import org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfigurat
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureCooldown;
@@ -82,7 +82,7 @@ class CriticSelfConsistencyProbeTest {
         Files.createDirectories(outputDir);
         attachConsoleLogging();
 
-        ObjectMapper mapper = new ObjectMapper();
+        JsonMapper mapper = JsonMapper.builder().build();
         Map<String, Object> candidate = mapper.readValue(Files.readString(candidateDir.resolve("summary.json")), Map.class);
         @SuppressWarnings("unchecked")
         String brief = (String) ((Map<String, Object>) candidate.get("scenario")).get("requirements");

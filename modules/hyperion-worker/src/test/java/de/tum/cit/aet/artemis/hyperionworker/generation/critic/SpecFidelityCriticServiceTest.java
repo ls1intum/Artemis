@@ -37,10 +37,11 @@ import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatOptions;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openai.core.http.Headers;
 import com.openai.errors.InternalServerException;
 import com.openai.errors.RateLimitException;
+
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport.Kind;
@@ -57,7 +58,7 @@ class SpecFidelityCriticServiceTest {
 
     private static final String GITHUB_SENTINEL = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final JsonMapper objectMapper = JsonMapper.builder().build();
 
     private static final String UNICODE_BRIEF = "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark "
             + "sequence, CJK characters, and at least one emoji.";

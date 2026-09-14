@@ -42,7 +42,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -138,8 +138,8 @@ class GenerationOrchestrationServiceTest {
         when(structuralOracleSeeder.seedIfStructuralDiff(any(), anyString(), any())).thenReturn(SeededStructuralTests.EMPTY);
         when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty());
         when(specFidelityCritic.critiqueAdaptation(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty());
-        SpecFidelityCriticService renderingDelegate = new SpecFidelityCriticService(null, new ObjectMapper(), null, "test-model", java.time.Duration.ofMinutes(5), null, 128_000,
-                List.of());
+        SpecFidelityCriticService renderingDelegate = new SpecFidelityCriticService(null, JsonMapper.builder().build(), null, "test-model", java.time.Duration.ofMinutes(5), null,
+                128_000, List.of());
         when(specFidelityCritic.renderForRetryPrompt(any())).thenAnswer(invocation -> renderingDelegate.renderForRetryPrompt(invocation.getArgument(0)));
 
         service = newService();

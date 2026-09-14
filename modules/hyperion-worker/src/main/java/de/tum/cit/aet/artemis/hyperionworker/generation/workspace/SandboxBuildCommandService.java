@@ -10,8 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import de.tum.cit.aet.artemis.hyperionworker.generation.GenerationInput;
 import de.tum.cit.aet.artemis.hyperionworker.generation.GenerationResources;
@@ -55,7 +54,7 @@ public class SandboxBuildCommandService {
 
     public SandboxBuildCommandService(GenerationResources resources) {
         try (var input = resources.getResource(Path.of("templates/phases/java/plain_gradle.yaml")).getInputStream()) {
-            var phases = new ObjectMapper(new YAMLFactory()).readTree(input);
+            var phases = YAMLMapper.builder().build().readTree(input);
             List<String> scripts = new ArrayList<>();
             List<String> reports = new ArrayList<>();
             for (var phase : phases) {

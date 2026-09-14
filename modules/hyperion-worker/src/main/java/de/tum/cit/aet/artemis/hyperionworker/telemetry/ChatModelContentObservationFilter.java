@@ -20,8 +20,8 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.observation.Observation;
@@ -61,13 +61,13 @@ public class ChatModelContentObservationFilter implements ObservationFilter {
     /** Spring AI's provider-neutral metadata key for reasoning content explicitly returned by an OpenAI-compatible provider. */
     private static final String REASONING_CONTENT = "reasoningContent";
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final boolean captureContent;
 
     private final int maxAttributeBytes;
 
-    public ChatModelContentObservationFilter(ObjectMapper objectMapper, boolean captureContent, int maxAttributeBytes) {
+    public ChatModelContentObservationFilter(JsonMapper objectMapper, boolean captureContent, int maxAttributeBytes) {
         this.objectMapper = objectMapper;
         this.captureContent = captureContent;
         if (maxAttributeBytes <= 0) {
@@ -132,7 +132,7 @@ public class ChatModelContentObservationFilter implements ObservationFilter {
             try {
                 result.put("parameters", objectMapper.readTree(definition.inputSchema()));
             }
-            catch (JsonProcessingException e) {
+            catch (JacksonException e) {
                 result.put("parameters", definition.inputSchema());
             }
         }
@@ -187,7 +187,7 @@ public class ChatModelContentObservationFilter implements ObservationFilter {
             try {
                 part.put("arguments", objectMapper.readTree(toolCall.arguments()));
             }
-            catch (JsonProcessingException e) {
+            catch (JacksonException e) {
                 part.put("arguments", toolCall.arguments());
             }
         }
@@ -215,7 +215,7 @@ public class ChatModelContentObservationFilter implements ObservationFilter {
             context.addHighCardinalityKeyValue(KeyValue.of(key, value));
             return true;
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.error("Could not serialize Spring AI message content for OpenTelemetry", e);
             return false;
         }

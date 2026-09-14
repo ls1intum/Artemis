@@ -19,7 +19,7 @@ import org.springframework.boot.convert.ApplicationConversionService;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationParameters;
 import de.tum.cit.aet.artemis.hyperionworker.generation.critic.SpecFidelityCriticService;
@@ -62,7 +62,7 @@ class WorkerChatConfigurationTest {
             assertThat(actualTimeout.get()).isEqualTo(Duration.ofMinutes(chatOverride ? 2 : 10));
 
             actualTimeout.set(null);
-            var critic = new SpecFidelityCriticService(ChatClient.create(context.getBean(OpenAiChatModel.class)), new ObjectMapper()).forSettings(settings);
+            var critic = new SpecFidelityCriticService(ChatClient.create(context.getBean(OpenAiChatModel.class)), JsonMapper.builder().build()).forSettings(settings);
             critic.reviewSpecification("A bounded stack exercise", "A bounded stack with push and pop", null, () -> false);
             assertThat(actualTimeout.get()).isEqualTo(Duration.ofMinutes(chatOverride ? 2 : 10));
         });

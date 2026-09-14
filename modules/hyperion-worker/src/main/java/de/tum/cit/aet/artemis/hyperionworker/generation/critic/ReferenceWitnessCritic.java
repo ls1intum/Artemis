@@ -19,7 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatResponse;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperionworker.generation.verification.ContractWitnessOutcome;
@@ -49,9 +49,9 @@ class ReferenceWitnessCritic {
 
     private final ReviewerClient reviewer;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
-    ReferenceWitnessCritic(ReviewerClient reviewer, ObjectMapper objectMapper) {
+    ReferenceWitnessCritic(ReviewerClient reviewer, JsonMapper objectMapper) {
         this.reviewer = reviewer;
         this.objectMapper = objectMapper;
     }

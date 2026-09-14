@@ -19,7 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatResponse;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * The contract-witness authoring pass: it proposes a few executable test methods that pin rules of the approved specification, so rule coverage becomes something the server can
@@ -52,9 +52,9 @@ class ContractWitnessAuthor {
 
     private final ReviewerClient reviewer;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
-    ContractWitnessAuthor(ReviewerClient reviewer, ObjectMapper objectMapper) {
+    ContractWitnessAuthor(ReviewerClient reviewer, JsonMapper objectMapper) {
         this.reviewer = reviewer;
         this.objectMapper = objectMapper;
     }

@@ -23,12 +23,12 @@ import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.ApplicationContext;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 class ChatModelContentObservationFilterTest {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final JsonMapper objectMapper = JsonMapper.builder().build();
 
     private final ChatModelContentObservationFilter filter = new ChatModelContentObservationFilter(objectMapper, true,
             ChatModelContentObservationFilter.DEFAULT_MAX_ATTRIBUTE_BYTES);

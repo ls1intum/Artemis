@@ -16,7 +16,7 @@ import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.ExecutionIdentity;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationActivity;
@@ -129,7 +129,7 @@ public class GradleGenerationEngine implements GenerationEngine {
         var prompt = new AgentSystemPromptService(commands);
         var runner = new AgentLoopRunner(models, parameters.contextWindowTokens(), Duration.ofMinutes(5), cooldown);
         var model = models.getFirst();
-        var critic = new SpecFidelityCriticService(ChatClient.create(new HarmonyScrubbingChatModel(model)), new ObjectMapper(), new PromptTemplates(),
+        var critic = new SpecFidelityCriticService(ChatClient.create(new HarmonyScrubbingChatModel(model)), JsonMapper.builder().build(), new PromptTemplates(),
                 model.getOptions().getModel(), Duration.ofMinutes(5), cooldown, parameters.contextWindowTokens(), models);
         var stages = new StagedGenerationRunner(runner, prompt, stageChecks, transcripts, approvedSpecs, critic, new ExerciseConceptSelector(runner, critic),
                 parameters.stagedContext(), parameters.maxDuration());

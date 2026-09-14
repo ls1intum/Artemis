@@ -7,13 +7,13 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
 
 class CriticVerdictParserTest {
 
-    private final CriticVerdictParser parser = new CriticVerdictParser(new ObjectMapper());
+    private final CriticVerdictParser parser = new CriticVerdictParser(JsonMapper.builder().build());
 
     @Test
     void intendedIncompleteStubReportedAsUnreachableRequiresCorrection() {

@@ -34,7 +34,7 @@ import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.springframework.ai.chat.model.ChatResponse;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief.Mode;
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
@@ -133,7 +133,7 @@ class GenerationAttemptLoopTest {
         when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty());
         when(specFidelityCritic.detectMessagelessAssertions(any())).thenReturn(List.of());
         when(specFidelityCritic.detectUnenforceableTechniqueRules(any())).thenReturn(List.of());
-        SpecFidelityCriticService renderingDelegate = new SpecFidelityCriticService(null, new ObjectMapper());
+        SpecFidelityCriticService renderingDelegate = new SpecFidelityCriticService(null, JsonMapper.builder().build());
         when(specFidelityCritic.renderForRetryPrompt(any())).thenAnswer(invocation -> renderingDelegate.renderForRetryPrompt(invocation.getArgument(0)));
     }
 

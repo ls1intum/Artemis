@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.hyperionworker.generation.GenerationInput;
 import de.tum.cit.aet.artemis.hyperionworker.generation.RepositoryRole;
@@ -495,7 +495,7 @@ class StructuralOracleSeedingServiceTest {
                 ```
                 """, Set.of("Sorter", "Order", "MergeSort"));
         assertThat(parsed.errors()).isEmpty();
-        String oracle = parsed.contract().toOracle("sorting", new ObjectMapper());
+        String oracle = parsed.contract().toOracle("sorting", JsonMapper.builder().build());
         assertThat(oracle).contains("\"isInterface\"", "\"isEnum\"", "\"isAbstract\"");
 
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);

@@ -20,9 +20,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.dockerjava.api.DockerClient;
+
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief.Mode;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
@@ -212,7 +212,7 @@ class DockerGradleBuildTest {
         sandbox.copyIn(session, "/tmp/ordinary-ci", WorkspaceArchive.buildFilesTarStream(Map.of(), files, executable));
         List<String> phases = new ArrayList<>();
         try (var input = resources.getResource(Path.of("templates/phases/java/plain_gradle.yaml")).getInputStream()) {
-            for (var phase : new ObjectMapper(new YAMLFactory()).readTree(input)) {
+            for (var phase : YAMLMapper.builder().build().readTree(input)) {
                 phases.add(phase.required("script").asText());
             }
         }

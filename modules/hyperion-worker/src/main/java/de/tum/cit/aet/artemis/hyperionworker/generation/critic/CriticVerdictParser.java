@@ -16,8 +16,8 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
 
@@ -86,9 +86,9 @@ class CriticVerdictParser {
     private record AdaptationChangeItem(@Nullable String change, @Nullable String reason) {
     }
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
-    CriticVerdictParser(ObjectMapper objectMapper) {
+    CriticVerdictParser(JsonMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 

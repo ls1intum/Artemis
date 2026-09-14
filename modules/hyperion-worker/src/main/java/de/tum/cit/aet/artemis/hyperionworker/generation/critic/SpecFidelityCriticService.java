@@ -30,7 +30,7 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.ChatOptions;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
@@ -199,7 +199,7 @@ public class SpecFidelityCriticService {
     @Nullable
     private final ChatClient chatClient;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final PromptTemplates templateService;
 
@@ -221,12 +221,12 @@ public class SpecFidelityCriticService {
 
     private final ReferenceWitnessCritic referenceWitnessCritic;
 
-    public SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper, PromptTemplates templateService, String configuredModel,
+    public SpecFidelityCriticService(@Nullable ChatClient chatClient, JsonMapper objectMapper, PromptTemplates templateService, String configuredModel,
             Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown, int contextWindowTokens, Collection<ChatModel> chatModels) {
         this(chatClient, objectMapper, templateService, configuredModel, providerHardFailureCooldown, providerFailureCooldown, contextWindowTokens, configuredOptions(chatModels));
     }
 
-    SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper, PromptTemplates templateService, String configuredModel,
+    SpecFidelityCriticService(@Nullable ChatClient chatClient, JsonMapper objectMapper, PromptTemplates templateService, String configuredModel,
             Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown, int contextWindowTokens, @Nullable ChatOptions configuredOptions) {
         this.chatClient = chatClient;
         this.objectMapper = objectMapper;
@@ -267,7 +267,7 @@ public class SpecFidelityCriticService {
         return options == null || options.getModel() == null ? "" : options.getModel();
     }
 
-    public SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper) {
+    public SpecFidelityCriticService(@Nullable ChatClient chatClient, JsonMapper objectMapper) {
         this(chatClient, objectMapper, new PromptTemplates(), "", Duration.ZERO, ProviderFailureCooldown.disabled(), 128_000, (ChatOptions) null);
     }
 

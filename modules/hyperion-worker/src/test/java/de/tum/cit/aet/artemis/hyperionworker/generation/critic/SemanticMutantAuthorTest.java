@@ -8,7 +8,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
 
@@ -18,7 +18,7 @@ class SemanticMutantAuthorTest {
 
     private static final String SOURCE = "package example; public class Scheduler { public int choose() { return 1; } }";
 
-    private final SemanticMutantAuthor author = new SemanticMutantAuthor(mock(ReviewerClient.class), new ObjectMapper());
+    private final SemanticMutantAuthor author = new SemanticMutantAuthor(mock(ReviewerClient.class), JsonMapper.builder().build());
 
     @Test
     void parsesACompleteOneFileMutantAndCounterexample() {

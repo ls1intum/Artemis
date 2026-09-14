@@ -10,9 +10,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.JavaAnnotatedElement;
 import com.thoughtworks.qdox.model.JavaClass;
@@ -21,6 +18,10 @@ import com.thoughtworks.qdox.model.JavaField;
 import com.thoughtworks.qdox.model.JavaMethod;
 import com.thoughtworks.qdox.model.JavaParameter;
 import com.thoughtworks.qdox.model.JavaType;
+
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Typed structural contract parsed and validated at the SPEC gate.
@@ -129,7 +130,7 @@ final class ApprovedStructuralContract {
         return new ParseResult(new ApprovedStructuralContract(parsed), List.copyOf(errors));
     }
 
-    String toOracle(String packageName, ObjectMapper mapper, Set<String> includedTypes) {
+    String toOracle(String packageName, JsonMapper mapper, Set<String> includedTypes) {
         ArrayNode oracle = mapper.createArrayNode();
         types.values().stream().filter(type -> includedTypes.contains(type.getSimpleName())).sorted((left, right) -> left.getSimpleName().compareTo(right.getSimpleName()))
                 .forEach(type -> oracle.add(toJson(type, packageName, mapper, types.keySet())));
@@ -141,7 +142,7 @@ final class ApprovedStructuralContract {
         }
     }
 
-    String toOracle(String packageName, ObjectMapper mapper) {
+    String toOracle(String packageName, JsonMapper mapper) {
         return toOracle(packageName, mapper, types.keySet());
     }
 
@@ -229,7 +230,7 @@ final class ApprovedStructuralContract {
         return List.copyOf(reasons);
     }
 
-    private static ObjectNode toJson(JavaClass type, String packageName, ObjectMapper mapper, Set<String> exerciseTypes) {
+    private static ObjectNode toJson(JavaClass type, String packageName, JsonMapper mapper, Set<String> exerciseTypes) {
         ObjectNode entry = mapper.createObjectNode();
         ObjectNode classNode = mapper.createObjectNode();
         classNode.put("name", type.getSimpleName());
@@ -270,7 +271,7 @@ final class ApprovedStructuralContract {
         return entry;
     }
 
-    private static ObjectNode genericApi(JavaClass type, Set<String> exerciseTypes, ObjectMapper mapper) {
+    private static ObjectNode genericApi(JavaClass type, Set<String> exerciseTypes, JsonMapper mapper) {
         ObjectNode contract = mapper.createObjectNode();
         contract.put("parameterCount", type.getTypeParameters().size());
         contract.set("exerciseTypes", mapper.valueToTree(exerciseTypes.stream().sorted().toList()));
@@ -403,7 +404,7 @@ final class ApprovedStructuralContract {
         return canonical;
     }
 
-    private static ObjectNode methodJson(JavaMethod method, ObjectMapper mapper) {
+    private static ObjectNode methodJson(JavaMethod method, JsonMapper mapper) {
         ObjectNode node = mapper.createObjectNode();
         node.put("name", method.getName());
         node.set("modifiers", mapper.valueToTree(effectiveModifiers(method.getModifiers(), method.getDeclaringClass().isInterface(), method.isDefault(), method.isStatic())));
@@ -412,7 +413,7 @@ final class ApprovedStructuralContract {
         return node;
     }
 
-    private static ObjectNode fieldJson(JavaField field, ObjectMapper mapper) {
+    private static ObjectNode fieldJson(JavaField field, JsonMapper mapper) {
         ObjectNode node = mapper.createObjectNode();
         node.put("name", field.getName());
         node.set("modifiers", mapper.valueToTree(effectiveFieldModifiers(field)));
@@ -420,14 +421,14 @@ final class ApprovedStructuralContract {
         return node;
     }
 
-    private static ObjectNode constructorJson(JavaConstructor constructor, ObjectMapper mapper) {
+    private static ObjectNode constructorJson(JavaConstructor constructor, JsonMapper mapper) {
         ObjectNode node = mapper.createObjectNode();
         node.set("modifiers", mapper.valueToTree(new ArrayList<>(constructor.getModifiers())));
         putParameters(node, constructor.getParameters(), constructor.getDeclaringClass(), mapper);
         return node;
     }
 
-    private static void putParameters(ObjectNode node, List<JavaParameter> parameters, JavaClass owner, ObjectMapper mapper) {
+    private static void putParameters(ObjectNode node, List<JavaParameter> parameters, JavaClass owner, JsonMapper mapper) {
         if (!parameters.isEmpty()) {
             node.set("parameters", mapper.valueToTree(parameters.stream().map(parameter -> simpleErasedType(parameter.getType(), owner)).toList()));
         }

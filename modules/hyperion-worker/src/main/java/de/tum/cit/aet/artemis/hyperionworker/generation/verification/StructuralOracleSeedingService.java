@@ -17,10 +17,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.hyperionworker.generation.GenerationInput;
 import de.tum.cit.aet.artemis.hyperionworker.generation.GenerationResources;
@@ -52,7 +52,7 @@ public class StructuralOracleSeedingService {
 
     private static final Pattern PACKAGE_DECLARATION = Pattern.compile("(?m)^\\s*package\\s+([\\w.]+)\\s*;");
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final JsonMapper MAPPER = JsonMapper.builder().build();
 
     /** Captures the optional {@code public} modifier, because only a public solution type may be seeded. */
     private static final Pattern TYPE_DECLARATION = Pattern
@@ -401,7 +401,7 @@ public class StructuralOracleSeedingService {
             }
             return true;
         }
-        catch (IOException | RuntimeException exception) {
+        catch (RuntimeException exception) {
             return false;
         }
     }
