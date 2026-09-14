@@ -934,7 +934,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
             assertThat(studentRepository.workingCopyCommits().getFirst()).isNotEqualTo(studentRepository.bareRepositoryCommits().getFirst());
 
             // Execute the Rest call
-            request.get(participationsBaseUrl + participation.getId() + "/repository/pull", HttpStatus.OK, Void.class);
+            request.postWithoutLocation(participationsBaseUrl + participation.getId() + "/repository/pull", null, HttpStatus.OK, null);
 
             // Check if the current commit is the same on the local and the remote repository and if the file exists on the local repository
             assertThat(studentRepository.workingCopyCommits().getFirst()).isEqualTo(studentRepository.bareRepositoryCommits().getFirst());
