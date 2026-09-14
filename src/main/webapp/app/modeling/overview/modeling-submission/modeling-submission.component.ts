@@ -4,11 +4,10 @@ import { NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faCheck, faDownLeftAndUpRightToCenter, faExclamationTriangle, faTriangleExclamation, faUpRightAndDownLeftFromCenter, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faDownLeftAndUpRightToCenter, faExclamationTriangle, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { captureException } from '@sentry/angular';
-import { type CollaborationUser, UMLDiagramType, UMLModel, collabColorFromName, importDiagram } from '@tumaet/apollon';
+import { type CollaborationUser, DEFAULT_LABELS, UMLDiagramType, UMLModel, collabColorFromName, importDiagram } from '@tumaet/apollon';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
@@ -38,9 +37,9 @@ import { ModelingAssessmentPanelDirective } from 'app/modeling/manage/assess/mod
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
+import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { parseJson } from 'app/foundation/util/json.util';
@@ -51,7 +50,7 @@ import { Subject, Subscription, TeardownLogic, of } from 'rxjs';
 import { catchError, filter, skip, switchMap, tap } from 'rxjs/operators';
 import { ModelingAssessmentComponent } from '../../manage/assess/modeling-assessment.component';
 import { AssessmentNamesForModelId, getNamesForAssessments } from '../../manage/assess/modeling-assessment.util';
-import { ApollonModelData, countModelElements, hasModelElements, isModelEmpty as isApollonModelEmpty } from '../../shared/apollon-model.util';
+import { ApollonModelData, countModelElements, getModelElementDisplayOrder, hasModelElements, isModelEmpty as isApollonModelEmpty } from '../../shared/apollon-model.util';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -74,6 +73,7 @@ const FEEDBACK_PREVIEW_HIGHLIGHT = 'var(--apollon-interactive-selection)';
         ArtemisTranslatePipe,
         ModelingAssessmentPanelDirective,
         NgTemplateOutlet,
+        UnifiedFeedbackComponent,
     ],
     host: { '(window:beforeunload)': 'unloadNotification($event)' },
 })
@@ -86,7 +86,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private accountService = inject(AccountService);
     private translateService = inject(TranslateService);
-    private localeConversionService = inject(LocaleConversionService);
 
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
 
@@ -95,40 +94,22 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     protected readonly faEnterFullscreen = faUpRightAndDownLeftFromCenter;
     protected readonly faExitFullscreen = faDownLeftAndUpRightToCenter;
 
-    protected feedbackTone(feedback: Feedback): 'positive' | 'negative' | 'zero' {
-        const credits = feedback.credits ?? 0;
-        if (credits > 0) {
-            return 'positive';
-        }
-        return credits < 0 ? 'negative' : 'zero';
-    }
-
-    protected feedbackToneIcon(feedback: Feedback): IconDefinition {
-        const tone = this.feedbackTone(feedback);
-        if (tone === 'positive') {
-            return faCheck;
-        }
-        return tone === 'negative' ? faXmark : faTriangleExclamation;
-    }
-
-    protected feedbackPoints(feedback: Feedback): string {
-        const credits = feedback.credits ?? 0;
-        const formatted = this.localeConversionService.toLocaleString(credits, this.course()?.accuracyOfScores);
-        const label = this.translateService.instant(`artemisApp.assessment.detail.points.${Math.abs(credits) === 1 ? 'one' : 'many'}`, {
-            points: formatted,
-        });
-        return credits > 0 ? `+${label}` : label;
-    }
-
     protected feedbackElementName(feedback: Feedback): string | undefined {
+        const assessment = this.assessmentFor(feedback);
+        return assessment?.name ? assessment.name.replace('::', ' › ') : undefined;
+    }
+
+    // Reuses Apollon's own type-label wording (e.g. "attribute" -> "Attribute") so the type shown
+    // here next to a feedback item reads the same as the type shown in Apollon's own feedback popup.
+    protected feedbackElementType(feedback: Feedback): string | undefined {
+        const assessment = this.assessmentFor(feedback);
+        return assessment?.type ? DEFAULT_LABELS.nodeTypeLabel(assessment.type) : undefined;
+    }
+
+    private assessmentFor(feedback: Feedback) {
         const names = this.assessmentsNames();
         const referenceId = feedback.referenceId;
-        const assessment = names && referenceId ? names[referenceId] : undefined;
-        if (!assessment?.name) {
-            return undefined;
-        }
-        const name = assessment.name.replace('::', ' › ');
-        return assessment.type ? `${assessment.type} ${name}` : name;
+        return names && referenceId ? names[referenceId] : undefined;
     }
 
     participationId = input<number>();
@@ -759,7 +740,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         const feedbacks = this.assessmentResult()?.feedbacks;
         if (feedbacks) {
             checkSubsequentFeedbackInAssessment(feedbacks);
-            return feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined);
+            const referenced = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined);
+            // Group by the diagram's own layout (a class's attributes and methods one under another) instead
+            // of the arbitrary order feedback happens to be stored in.
+            const displayOrder = new Map(getModelElementDisplayOrder(this.umlModel()).map((id, index) => [id, index]));
+            return [...referenced].sort((a, b) => (displayOrder.get(a.referenceId!) ?? Number.MAX_SAFE_INTEGER) - (displayOrder.get(b.referenceId!) ?? Number.MAX_SAFE_INTEGER));
         }
         return undefined;
     }

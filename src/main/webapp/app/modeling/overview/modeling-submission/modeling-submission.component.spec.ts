@@ -39,7 +39,6 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { faCheck, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { captureException } from '@sentry/angular';
 import { User } from 'app/account/user/user.model';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
@@ -914,40 +913,32 @@ describe('ModelingSubmissionComponent', () => {
         });
     });
     describe('feedback presentation', () => {
-        it.each([
-            { credits: 5, tone: 'positive', signed: true, pluralKey: 'many', icon: faCheck },
-            { credits: 1, tone: 'positive', signed: true, pluralKey: 'one', icon: faCheck },
-            { credits: -2.5, tone: 'negative', signed: false, pluralKey: 'many', icon: faXmark },
-            { credits: -1, tone: 'negative', signed: false, pluralKey: 'one', icon: faXmark },
-            { credits: 0, tone: 'zero', signed: false, pluralKey: 'many', icon: faTriangleExclamation },
-            { credits: undefined, tone: 'zero', signed: false, pluralKey: 'many', icon: faTriangleExclamation },
-        ])('describes feedback worth $credits credits as $tone', ({ credits, tone, signed, pluralKey, icon }) => {
-            createModelingSubmissionComponent();
-            const translate = vi.spyOn(TestBed.inject(TranslateService), 'instant');
-            const feedback = { credits } as Feedback;
-
-            expect(comp['feedbackTone'](feedback)).toBe(tone);
-            expect(comp['feedbackToneIcon'](feedback)).toBe(icon);
-
-            const rendered = comp['feedbackPoints'](feedback);
-            expect(translate).toHaveBeenCalledWith(`artemisApp.assessment.detail.points.${pluralKey}`, { points: (credits ?? 0).toLocaleString('en') });
-            expect(rendered.startsWith('+')).toBe(signed);
-        });
-
-        it('should name the element by its type, soften the Apollon owner separator, and stay silent without one', () => {
+        it('should name the element, soften the Apollon owner separator, and stay silent without one', () => {
             createModelingSubmissionComponent();
             comp.assessmentsNames.set({ ref1: { name: 'Course::+ title: String', type: 'attribute' } });
 
-            expect(comp['feedbackElementName']({ referenceId: 'ref1' } as Feedback)).toBe('attribute Course › + title: String');
+            expect(comp['feedbackElementName']({ referenceId: 'ref1' } as Feedback)).toBe('Course › + title: String');
             comp.assessmentsNames.set({ ref1: { name: 'TestClass', type: 'class' } });
-            expect(comp['feedbackElementName']({ referenceId: 'ref1' } as Feedback)).toBe('class TestClass');
-            comp.assessmentsNames.set({ ref1: { name: 'TestClass', type: '' } });
             expect(comp['feedbackElementName']({ referenceId: 'ref1' } as Feedback)).toBe('TestClass');
             comp.assessmentsNames.set({ ref1: { name: 'Course::+ title: String', type: 'attribute' } });
             expect(comp['feedbackElementName']({} as Feedback)).toBeUndefined();
             expect(comp['feedbackElementName']({ referenceId: 'unknown' } as Feedback)).toBeUndefined();
             comp.assessmentsNames.set({ ref1: { name: '', type: 'attribute' } });
             expect(comp['feedbackElementName']({ referenceId: 'ref1' } as Feedback)).toBeUndefined();
+        });
+
+        it('should label the element type the same way Apollon does, and stay silent without one', () => {
+            createModelingSubmissionComponent();
+            comp.assessmentsNames.set({ ref1: { name: 'Course::+ title: String', type: 'attribute' } });
+
+            expect(comp['feedbackElementType']({ referenceId: 'ref1' } as Feedback)).toBe('Attribute');
+            comp.assessmentsNames.set({ ref1: { name: 'Course::+ getTitle()', type: 'method' } });
+            expect(comp['feedbackElementType']({ referenceId: 'ref1' } as Feedback)).toBe('Method');
+            comp.assessmentsNames.set({ ref1: { name: 'TestClass', type: 'Class' } });
+            expect(comp['feedbackElementType']({ referenceId: 'ref1' } as Feedback)).toBe('Class');
+            comp.assessmentsNames.set({ ref1: { name: 'TestClass', type: '' } });
+            expect(comp['feedbackElementType']({ referenceId: 'ref1' } as Feedback)).toBeUndefined();
+            expect(comp['feedbackElementType']({ referenceId: 'unknown' } as Feedback)).toBeUndefined();
         });
     });
 
