@@ -206,6 +206,7 @@ overrides:
 # (the pnpm-native replacement for the old patch-package/postinstall flow).
 patchedDependencies:
   'eslint@10.10.0': 'patches/eslint+10.10.0.patch'
+  katex: patches/katex.patch
   y-monaco@0.1.6: patches/y-monaco@0.1.6.patch
 
 # Allowlist of dependencies permitted to run install-time build / lifecycle scripts.
