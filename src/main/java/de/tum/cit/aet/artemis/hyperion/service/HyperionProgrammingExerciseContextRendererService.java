@@ -91,8 +91,11 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
  *  3 | public class Stack { // Full reference implementation }
  * </pre>
  *
- * Lines are always numbered and separated per file with a fixed-width horizontal rule; trees appear only for
- * repositories (not the problem statement pseudo file).
+ * Lines are numbered by default and separated per file with a fixed-width horizontal rule; trees appear only
+ * for repositories (not the problem statement pseudo file). Numbering can be switched off per call — see
+ * {@link #renderContext(ProgrammingExercise, boolean)} — for consumers that neither report nor consume line
+ * numbers. Callers that do, such as the consistency check (whose verification stage re-opens files at the
+ * reported line numbers to discard hallucinated issues), must keep it on.
  */
 @Service
 @Lazy
@@ -128,6 +131,25 @@ public class HyperionProgrammingExerciseContextRendererService {
      * @return textual snapshot
      */
     public String renderContext(ProgrammingExercise exercise) {
+        return renderContext(exercise, true);
+    }
+
+    /**
+     * Renders the exercise snapshot, optionally without the per-line number gutters.
+     * <p>
+     * The gutters (" 12 | code") help a consumer that reports locations back, such as the consistency check.
+     * They are noise for a consumer that edits by unique text match and never cites a line number: they cost
+     * tokens on every file, and a model shown a gutter may reproduce it as content — exercise-variant
+     * generation was writing " 1 | " prefixes into every generated problem statement because of exactly this.
+     * <p>
+     * Defaults to {@code true} so existing callers, and the consistency-check benchmark's reference scores,
+     * are unaffected.
+     *
+     * @param exercise        exercise reference
+     * @param withLineNumbers whether to prefix each rendered line with its number
+     * @return textual snapshot
+     */
+    public String renderContext(ProgrammingExercise exercise, boolean withLineNumbers) {
         if (exercise == null) {
             return "";
         }
@@ -142,9 +164,9 @@ public class HyperionProgrammingExerciseContextRendererService {
         solutionRepoFiles = languageFilter.filter(solutionRepoFiles, language);
 
         List<String> parts = new ArrayList<>(3);
-        parts.add(renderRepository(Map.of("problem_statement.md", problemStatement), "Problem Statement"));
-        parts.add(renderRepository(templateRepoFiles, "Template Repository"));
-        parts.add(renderRepository(solutionRepoFiles, "Solution Repository"));
+        parts.add(renderRepository(Map.of("problem_statement.md", problemStatement), "Problem Statement", withLineNumbers));
+        parts.add(renderRepository(templateRepoFiles, "Template Repository", withLineNumbers));
+        parts.add(renderRepository(solutionRepoFiles, "Solution Repository", withLineNumbers));
         return String.join("\n\n", parts);
     }
 
@@ -161,7 +183,7 @@ public class HyperionProgrammingExerciseContextRendererService {
         }
     }
 
-    private static String renderRepository(Map<String, String> files, String repoName) {
+    private static String renderRepository(Map<String, String> files, String repoName, boolean withLineNumbers) {
         final boolean isProblemStatement = Objects.equals(repoName, "Problem Statement");
         final String root = isProblemStatement ? null : (repoName == null ? "repository" : repoName.replace(" ", "_").toLowerCase(Locale.ROOT));
         String treePart = "";
@@ -169,7 +191,7 @@ public class HyperionProgrammingExerciseContextRendererService {
             treePart = renderFileStructure(root, files.keySet());
         }
         List<String> fileParts = new ArrayList<>(files.size());
-        files.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e -> fileParts.add(renderFileString(root, e.getKey(), e.getValue())));
+        files.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e -> fileParts.add(renderFileString(root, e.getKey(), e.getValue(), withLineNumbers)));
         String body = String.join("\n\n", fileParts);
         String headline = "\n===== " + repoName + " =====\n";
         if (!treePart.isEmpty()) {
@@ -233,11 +255,14 @@ public class HyperionProgrammingExerciseContextRendererService {
 
     private static final int HR_WIDTH = 80;
 
-    private static String renderFileString(String root, String path, String content) {
+    private static String renderFileString(String root, String path, String content, boolean withLineNumbers) {
         String horizonalLine = "-".repeat(HR_WIDTH);
         String header = (root != null && !root.isBlank() ? horizonalLine + "\n" + root + "/" + path + ":\n" + horizonalLine : horizonalLine + "\n" + path + ":\n" + horizonalLine);
         if (content == null) {
             content = "";
+        }
+        if (!withLineNumbers) {
+            return header + "\n" + content;
         }
         List<String> lines = Arrays.asList(content.split("\n", -1));
         int w = Integer.toString(lines.size()).length();
@@ -303,7 +328,7 @@ public class HyperionProgrammingExerciseContextRendererService {
             if (buildFiles.isEmpty()) {
                 return "No build environment files found.";
             }
-            return renderRepository(buildFiles, "Build Environment Files");
+            return renderRepository(buildFiles, "Build Environment Files", true);
         }
         catch (IOException | UncheckedIOException e) {
             log.warn("Failed to render build environment context for repository {}: {}", repositoryPath, e.getMessage());

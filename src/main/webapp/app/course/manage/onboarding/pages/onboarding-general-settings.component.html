@@ -95,23 +95,42 @@
                 } @else {
                     <p class="text-muted small mb-2" jhiTranslate="artemisApp.course.onboarding.generalSettings.irisDisabledHint"></p>
                 }
-                <div class="feature-toggle">
-                    <button type="button" class="toggle-btn" [ngClass]="{ 'active-enabled': isIrisEnabled() }" [attr.aria-pressed]="isIrisEnabled()" (click)="setIrisEnabled(true)">
-                        <fa-icon [icon]="faCheck" />
-                        <span jhiTranslate="artemisApp.iris.settings.enabled"></span>
-                    </button>
-                    <button
-                        type="button"
-                        class="toggle-btn"
-                        [ngClass]="{ 'active-disabled': !isIrisEnabled() }"
-                        [attr.aria-pressed]="!isIrisEnabled()"
-                        (click)="setIrisEnabled(false)"
-                    >
-                        <fa-icon [icon]="faTimes" />
-                        <span jhiTranslate="artemisApp.iris.settings.disabled"></span>
-                    </button>
-                </div>
+                <jhi-enabled-toggle
+                    class="max-w-fit"
+                    [enabled]="isIrisEnabled()"
+                    [ariaLabel]="'artemisApp.course.onboarding.generalSettings.irisTitle' | artemisTranslate"
+                    testId="onboarding-iris"
+                    (enabledChange)="setIrisEnabled($event)"
+                />
                 <p class="text-muted small mt-2" [innerHTML]="'artemisApp.course.onboarding.generalSettings.irisPrivacyNote' | artemisTranslate"></p>
+            </div>
+        }
+
+        @if (athenaEnabled) {
+            <hr />
+            <div class="mb-3">
+                <h5 class="flex items-center gap-2">
+                    <jhi-athena-logo />
+                    <span jhiTranslate="artemisApp.course.athenaConfig.title"></span>
+                </h5>
+                @for (feature of athenaFeatures; track feature.key) {
+                    @let labelKey = 'artemisApp.course.athenaConfig.' + feature.key;
+                    <div class="mb-3">
+                        <strong [jhiTranslate]="labelKey + '.label'"></strong>
+                        @if (feature.enabled()) {
+                            <p class="text-muted-color text-sm mb-2" [jhiTranslate]="labelKey + '.enabledHint'"></p>
+                        } @else {
+                            <p class="text-muted-color text-sm mb-2" [jhiTranslate]="labelKey + '.disabledHint'"></p>
+                        }
+                        <jhi-enabled-toggle
+                            class="max-w-fit"
+                            [enabled]="feature.enabled()"
+                            [ariaLabel]="labelKey + '.label' | artemisTranslate"
+                            [testId]="feature.testId"
+                            (enabledChange)="setAthenaFeatureEnabled(feature.key, $event)"
+                        />
+                    </div>
+                }
             </div>
         }
     </div>
