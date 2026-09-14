@@ -22,8 +22,6 @@ Artemis is based on [JHipster](https://jhipster.github.io), combining:
 
 To get an overview of the technology stack, visit the [JHipster Technology Stack](https://jhipster.github.io/tech-stack) and refer to other tutorials on the JHipster homepage.
 
----
-
 ## Development Environment Setup
 
 Before installing Artemis, install and configure the following dependencies:
@@ -80,8 +78,6 @@ Before installing Artemis, install and configure the following dependencies:
     Missing Graphviz in production may cause rendering errors for exercise descriptions.
 </Callout>
 
----
-
 ### IDE Setup
 
 We recommend using [IntelliJ IDEA Ultimate](https://www.jetbrains.com/idea) for development.
@@ -91,15 +87,11 @@ Refer to JHipster's guide on configuring an IDE: [JHipster IDE Setup](https://jh
     The Community Edition of IntelliJ IDEA lacks Spring Boot support. See the [comparison matrix](https://www.jetbrains.com/idea/features/editions_comparison_matrix.html) for details.
 </Callout>
 
----
-
 ## Set up Artemis
 
 Once the development environment is set up, the next step is to configure the Artemis server. This includes optional features such as programming exercises, which require a version control and build system.
 
 Start by following the [Database Setup](#database-setup) guide, then proceed with [Server Setup](#server-setup) and [Client Setup](#client-setup).
-
----
 
 ## Database Setup
 
@@ -183,8 +175,6 @@ spring:
 <Callout variant={CalloutVariant.info}>
     This example assumes that you use the mentioned Docker Compose file on your localhost, leading to a database called `Artemis` that runs on port `5432` and where no password is necessary. You might have to update `spring.datasource.url` if you use another configuration and set the password in `spring.datasource.password`.
 </Callout>
-
----
 
 ## Server Setup
 
@@ -479,8 +469,6 @@ Hyperion provides AI-assisted exercise creation features via Spring AI. No exter
 
 For production setup, see [Hyperion Service](/admin/hyperion) in the Administration Guide for instructions on enabling the module in production and configuring LLM credentials.
 
----
-
 ## Client Setup
 
 You need Node.js on your local machine, plus pnpm activated via Corepack (`corepack enable`). The pnpm version is pinned in `package.json` via the `packageManager` field. If you haven't activated pnpm yet, see [step 4 of Required Dependencies](#required-dependencies) above for the full first-time setup and troubleshooting tips.
@@ -529,8 +517,6 @@ If you have configured `application-artemis.yml` correctly, then you should be a
 For more information, review [Working with Angular](https://angular.dev/tutorials).
 For further instructions on how to develop with JHipster, have a look at [Using JHipster in development](http://www.jhipster.tech/development).
 
----
-
 ## Common Setup Problems
 
 ### General Setup Problems
@@ -557,8 +543,6 @@ For further instructions on how to develop with JHipster, have a look at [Using 
 - **Accidentally ran `npm install` and got a `package-lock.json`:** delete `package-lock.json` and `node_modules`, then run `pnpm install`. The repository's `.gitignore` blocks `package-lock.json` from being committed, but a stray copy still confuses tooling.
 - **`pnpm install` complains the lockfile is out of date:** the lockfile is authoritative; running `pnpm install` locally without `--frozen-lockfile` updates it. If your edit was intentional (e.g. you bumped a dependency in `package.json`), commit the updated `pnpm-lock.yaml`. If not, run `git checkout pnpm-lock.yaml` and rerun `pnpm install --frozen-lockfile`.
 
----
-
 ## Production Setup and Extension Services
 
 ### Production Setup
@@ -576,8 +560,6 @@ Artemis allows extension with several additional services, such as:
 
 The setup for these additional services is described as part of the [Extension Service Setup](/admin/extensions-setup).
 
----
-
 ## Setup with Helios
 
 [Helios](https://helios.aet.cit.tum.de/) is an application that provides a well-designed UI for deploying various services the AET is building using GitHub Actions.
@@ -593,8 +575,6 @@ For detailed instructions on setting up Artemis with Helios, refer to the offici
 <Callout variant={CalloutVariant.info}>
     If the above link is unavailable, go to the [Helios documentation homepage](https://ls1intum.github.io/Helios/) and navigate to **User Guide → Helios User Guide**.
 </Callout>
-
----
 
 ## Additional Setup Guides
 

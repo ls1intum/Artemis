@@ -15,13 +15,9 @@ Mailpit captures all outgoing emails from Artemis and displays them in a web UI,
     If you don't need email functionality, you can skip this setup.
 </Callout>
 
----
-
 ## Prerequisites
 
 - **Docker** and **Docker Compose** installed on your machine
-
----
 
 ## Quick Start
 
@@ -53,8 +49,6 @@ You should see an empty inbox. Any emails sent by Artemis will appear here.
 ```bash
 docker compose --env-file .env -f docker/mailpit.yml down
 ```
-
----
 
 ## Configuring Artemis (Non-Containerized)
 
@@ -98,16 +92,12 @@ artemis-app:
     because the Artemis container communicates with the Mailpit container over the shared Docker network.
 </Callout>
 
----
-
 ## Testing
 
 1. Start Mailpit: `docker compose --env-file .env -f docker/mailpit.yml up -d`
 2. Start Artemis with the mail configuration above
 3. Trigger an email (e.g., request a password reset)
 4. Open `http://localhost:8025` — the email should appear in the inbox
-
----
 
 ## Troubleshooting
 

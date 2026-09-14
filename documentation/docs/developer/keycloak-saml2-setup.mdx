@@ -15,14 +15,10 @@ The provided Keycloak configuration includes a preconfigured `artemis` realm wit
     If you don't need SAML2 functionality, you can skip this setup.
 </Callout>
 
----
-
 ## Prerequisites
 
 - **Docker** and **Docker Compose** installed on your machine
 - **OpenSSL** installed (for generating signing credentials)
-
----
 
 ## Step 1: Start Keycloak
 
@@ -44,8 +40,6 @@ http://localhost:9080
 ```
 
 Login with `admin` / `admin`.
-
----
 
 ## Step 2: Generate SAML2 Signing Credentials
 
@@ -76,8 +70,6 @@ realpath saml-key-pkcs8.pem saml-cert.crt
     generating them inside the working tree puts a private key one `git add .` away from being committed. The generated
     key and certificate are for local development only.
 </Callout>
-
----
 
 ## Step 3: Configure Artemis
 
@@ -164,8 +156,6 @@ The Keycloak realm also needs `http://localhost:9000/login/saml2/sso/keycloak` a
     dev server on port 9000 simply proxies requests to it.
 </Callout>
 
----
-
 ## Containerized Artemis Setup
 
 When running Artemis as a Docker container, combine the SAML2 compose file with your Artemis compose file:
@@ -195,8 +185,6 @@ You also need to set `ARTEMIS_USER_MANAGEMENT_SAML2_ENABLED=true` (or the equiva
     This is already configured in `docker/saml-test/application-saml2.yml`.
 </Callout>
 
----
-
 ## Step 4: Test the SAML2 Login
 
 1. Start Keycloak: `docker compose --env-file .env -f docker/saml-test.yml up -d`
@@ -207,8 +195,6 @@ You also need to set `ARTEMIS_USER_MANAGEMENT_SAML2_ENABLED=true` (or the equiva
     - `saml2user1` / `password`
     - `saml2user2` / `password`
 6. You should be redirected back to Artemis and logged in
-
----
 
 ## Keycloak Admin Console
 
@@ -222,8 +208,6 @@ The preconfigured `artemis` realm includes:
 | Test Users        | `saml2user1` / `password`, `saml2user2` / `password`       |
 | Attribute Mappers | `first_name`, `last_name`, `email`, `uid`                  |
 | Allowed Redirects | `http://localhost:8080/...` and `http://localhost:9000/...` |
-
----
 
 ## Troubleshooting
 
