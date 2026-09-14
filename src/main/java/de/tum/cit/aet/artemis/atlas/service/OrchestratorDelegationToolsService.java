@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.isWorkerCompletionTerminal;
-import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.markDelegation;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.tryReserveDelegationSlot;
 
 import java.util.HashMap;
@@ -118,6 +117,10 @@ public class OrchestratorDelegationToolsService {
         if (courseId == null || buffer == null) {
             return new WorkerResultDTO(false, "Worker delegation context is incomplete.", List.of());
         }
+        AtlasToolCallBudget budget = parentContext == null ? null : AtlasToolCallBudget.existingBudget(parentContext.getContext());
+        if (budget == null) {
+            return new WorkerResultDTO(false, "Worker delegation requires the parent tool-call budget.", List.of());
+        }
         if (!tryReserveDelegationSlot(parentContext)) {
             return new WorkerResultDTO(false, "Worker delegation cap (" + OrchestratorToolContextKeys.MAX_DELEGATION_CALLS + ") reached for this run; verify and terminate.",
                     List.of());
@@ -126,6 +129,8 @@ public class OrchestratorDelegationToolsService {
         int actionStart = buffer.actions().size();
         AtomicReference<WorkerCompletionDTO> completionHolder = OrchestratorToolContextKeys.newWorkerCompletionHolder();
         Map<String, Object> workerContext = new HashMap<>();
+        workerContext.put(AtlasToolCallBudget.CONTEXT_KEY, budget);
+        workerContext.put(AtlasToolCallBudget.WORKER_CONTEXT_KEY, true);
         workerContext.put(OrchestratorToolContextKeys.COURSE_ID_KEY, courseId);
         workerContext.put(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY, buffer);
         workerContext.put(OrchestratorToolContextKeys.WORKER_COMPLETION_KEY, completionHolder);
@@ -141,6 +146,11 @@ public class OrchestratorDelegationToolsService {
             ChatResponse response = delegationService.delegateOrchestratorRound(systemPrompt,
                     task + "\n\nExecute this batch, then call completeWorkerTask exactly once with the outcome.", options, workerContext, readTools, roleTools, terminalTools);
             trackUsage(response, courseId, workerContext);
+            AtlasToolCallBudget.checkResponse(response, workerContext);
+            if (response == null || response.getResult() == null || java.util.Set.of("failed", "incomplete", "cancelled", "queued", "in_progress", "missing_status")
+                    .contains(java.util.Objects.requireNonNullElse(response.getResult().getMetadata().getFinishReason(), ""))) {
+                return new WorkerResultDTO(false, role.displayName + " worker provider response did not complete.", actionSlice(buffer, actionStart));
+            }
             WorkerCompletionDTO completion = completionHolder.get();
             if (completion == null) {
                 return new WorkerResultDTO(false, role.displayName + " worker returned without calling completeWorkerTask.", actionSlice(buffer, actionStart));
@@ -154,9 +164,6 @@ public class OrchestratorDelegationToolsService {
         catch (Exception ex) {
             log.warn("Atlas {} worker failed after applying {} action(s): {}", role.displayName, actionSlice(buffer, actionStart).size(), ex.getMessage(), ex);
             return new WorkerResultDTO(false, role.displayName + " worker failed while executing its batch.", actionSlice(buffer, actionStart));
-        }
-        finally {
-            markDelegation(parentContext);
         }
     }
 

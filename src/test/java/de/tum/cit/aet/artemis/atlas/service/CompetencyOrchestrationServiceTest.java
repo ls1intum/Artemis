@@ -47,9 +47,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.metadata.ChatResponseMetadata;
+import org.springframework.ai.chat.metadata.DefaultUsage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
-import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 
@@ -62,7 +63,6 @@ import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
-import de.tum.cit.aet.artemis.atlas.dto.OrchestrationCompletionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyDTO;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService.RunInfo;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
@@ -109,7 +109,7 @@ class CompetencyOrchestrationServiceTest {
     private ToolCallbackProvider orchestratorDelegationToolCallbackProvider;
 
     @Mock
-    private ToolCallbackProvider orchestratorTerminalToolCallbackProvider;
+    private ToolCallbackProvider terminalToolCallbackProvider;
 
     @Mock
     private DistributedDataProvider distributedDataProvider;
@@ -135,7 +135,7 @@ class CompetencyOrchestrationServiceTest {
 
     @BeforeEach
     void setUp() {
-        properties = new AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", "gpt-5.6-luna", "high", 300, 10, 30000L, 10);
+        properties = new AtlasOrchestratorProperties("gpt-test-orchestrator", 1.0, "", "gpt-5.6-luna", "high", false, 300, 10, 30000L, 10);
         runMap = spy(new LocalMap<>());
         // The shortlist never returns null in production; stub it leniently so render-reaching tests that do
         // not care about the shortlist still get a non-null prompt variable (Map.of rejects null values). The
@@ -287,6 +287,37 @@ class CompetencyOrchestrationServiceTest {
     }
 
     @Test
+    void run_toolLimitPreservesUsageAndPartialActions() {
+        ProgrammingExercise exercise = courseExercise(15L);
+        when(exerciseRepository.findByIdElseThrow(15L)).thenReturn(exercise);
+        stubRunMap();
+        when(contentExtractionService.extractContent(exercise)).thenReturn(new ExtractedContentDTO("Test Exercise", "Learn loops", Map.of()));
+        when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        when(templateService.render(anyString(), anyMap())).thenReturn("system prompt");
+
+        // The native advisor returns a limit finish reason after a committed action.
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> ctx = invocation.getArgument(3);
+                    OrchestratorToolContextKeys.AppliedActionsBuffer buffer = (OrchestratorToolContextKeys.AppliedActionsBuffer) ctx
+                            .get(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY);
+                    buffer.actions().add(AppliedActionDTO.create(1L, "Loops", "Created competency", "Exercise teaches loops"));
+                    return new ChatResponse(List.of(new Generation(new AssistantMessage("Shared tool limit reached"),
+                            org.springframework.ai.chat.metadata.ChatGenerationMetadata.builder().finishReason("toolCallLimitExceeded").build())));
+                });
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).run(15L);
+
+        assertThat(result.status()).isEqualTo(PARTIAL);
+        assertThat(result.failureReason()).isEqualTo(CompetencyOrchestrationResultDTO.FailureReason.TOOL_CALL_LIMIT_EXCEEDED);
+        assertThat(result.appliedActions()).hasSize(1);
+        assertThat(result.appliedActions().getFirst().type()).isEqualTo(AppliedActionDTO.ActionType.CREATE);
+        verify(llmTokenUsageService).trackChatResponseTokenUsage(any(ChatResponse.class), eq(LLMServiceType.ATLAS), eq("ATLAS_ORCHESTRATION"), any());
+        verify(runMap).remove(COURSE_ID);
+    }
+
+    @Test
     void runBatch_noChatClient_returnsFailedNoChatClient() {
         CompetencyOrchestrationResultDTO result = createService(null).runBatch(COURSE_ID, Set.of(10L, 11L));
 
@@ -356,127 +387,45 @@ class CompetencyOrchestrationServiceTest {
         ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("Run summary"))));
         when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
                 any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class)))
-                .thenAnswer(invocation -> completeVerified(invocation.getArgument(3), chatResponse));
+                .thenAnswer(invocation -> completeRound(invocation.getArgument(3), chatResponse));
 
         CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).run(16L);
 
         assertThat(result.status()).isEqualTo(SUCCESS);
-        assertThat(result.summary()).isEqualTo("Verified final state");
+        assertThat(result.summary()).isEqualTo("Run summary");
         verify(llmTokenUsageService).trackChatResponseTokenUsage(eq(chatResponse), eq(LLMServiceType.ATLAS), eq("ATLAS_ORCHESTRATION"), any());
         verify(runMap).remove(COURSE_ID);
 
-        // Regression guard: the main orchestrator sees read/planning, delegation, and terminal surfaces only.
-        // The role mutation providers must remain isolated inside the delegation service.
-        ArgumentCaptor<OpenAiChatOptions.Builder> optionsCaptor = ArgumentCaptor.forClass(OpenAiChatOptions.Builder.class);
+        // The main orchestrator delegates mutations; only workers receive role-specific write tools.
         ArgumentCaptor<ToolCallbackProvider> providerCaptor = ArgumentCaptor.forClass(ToolCallbackProvider.class);
-        verify(delegationService).delegateOrchestratorRound(anyString(), anyString(), optionsCaptor.capture(), anyMap(), providerCaptor.capture(), providerCaptor.capture(),
-                providerCaptor.capture(), providerCaptor.capture());
-        OpenAiChatOptions options = optionsCaptor.getValue().build();
-        assertThat(options.getDeploymentName()).isEqualTo("gpt-5.6-luna");
-        assertThat(options.getReasoningEffort()).isEqualTo("xhigh");
-        assertThat(options.getTemperature()).isNull();
+        verify(delegationService).delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), providerCaptor.capture(),
+                providerCaptor.capture(), providerCaptor.capture(), providerCaptor.capture());
         assertThat(providerCaptor.getAllValues()).containsExactly(orchestratorReadToolCallbackProvider, orchestratorPlanningToolCallbackProvider,
-                orchestratorDelegationToolCallbackProvider, orchestratorTerminalToolCallbackProvider);
+                orchestratorDelegationToolCallbackProvider, terminalToolCallbackProvider);
+
     }
 
     @Test
-    void run_verifiedWithoutActions_returnsNoOp() {
-        prepareLlmRun(22L);
-        ChatResponse response = new ChatResponse(List.of(new Generation(new AssistantMessage("ignored assistant text"))));
+    void run_mixedMissingAndReportedUsage_tracksKnownAggregate() {
+        ProgrammingExercise exercise = courseExercise(17L);
+        when(exerciseRepository.findByIdElseThrow(17L)).thenReturn(exercise);
+        stubRunMap();
+        when(contentExtractionService.extractContent(exercise)).thenReturn(new ExtractedContentDTO("Test Exercise", "Learn loops", Map.of()));
+        when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        when(templateService.render(anyString(), anyMap())).thenReturn("system prompt");
+
+        ChatResponseMetadata metadata = ChatResponseMetadata.builder().model("gpt-test").usage(new DefaultUsage(20, 3, 23))
+                .keyValue(AtlasResponsesChatModel.USAGE_COMPLETE_METADATA_KEY, false).build();
+        ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("Run summary"))), metadata);
         when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
                 any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class)))
-                .thenAnswer(invocation -> complete(invocation.getArgument(3), response, true, "No changes were needed", null));
+                .thenAnswer(invocation -> completeRound(invocation.getArgument(3), chatResponse));
 
-        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).run(22L);
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).run(17L);
 
-        assertThat(result.status()).isEqualTo(NO_OP);
-        assertThat(result.summary()).isEqualTo("No changes were needed");
-        assertThat(result.appliedActions()).isEmpty();
-    }
-
-    @Test
-    void run_verifiedCompletionFollowedByDelegation_returnsPartial() {
-        prepareLlmRun(27L);
-        ChatResponse response = new ChatResponse(List.of(new Generation(new AssistantMessage("ignored assistant text"))));
-        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
-                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
-                    Map<String, Object> context = invocation.getArgument(3);
-                    ChatResponse completedResponse = completeVerified(context, response);
-                    OrchestratorToolHelpers.markDelegation(new ToolContext(context));
-                    return completedResponse;
-                });
-
-        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).run(27L);
-
-        assertThat(result.status()).isEqualTo(PARTIAL);
-        assertThat(result.failureReason()).isEqualTo(LLM_ERROR);
-        assertThat(result.appliedActions()).hasSize(1);
-    }
-
-    @Test
-    void run_unverifiedWithoutActions_returnsFailed() {
-        prepareLlmRun(23L);
-        ChatResponse response = new ChatResponse(List.of(new Generation(new AssistantMessage("ignored assistant text"))));
-        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
-                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class)))
-                .thenAnswer(invocation -> complete(invocation.getArgument(3), response, false, "Worker failed before mutation", null));
-
-        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).run(23L);
-
-        assertThat(result.status()).isEqualTo(FAILED);
-        assertThat(result.failureReason()).isEqualTo(LLM_ERROR);
-        assertThat(result.appliedActions()).isEmpty();
-    }
-
-    @Test
-    void run_unverifiedWithActions_returnsPartial() {
-        prepareLlmRun(24L);
-        ChatResponse response = new ChatResponse(List.of(new Generation(new AssistantMessage("ignored assistant text"))));
-        AppliedActionDTO action = AppliedActionDTO.create(4L, "Partial", "Created before verification failed", "Exercise evidence required it");
-        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
-                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class)))
-                .thenAnswer(invocation -> complete(invocation.getArgument(3), response, false, "Final verification failed", action));
-
-        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).run(24L);
-
-        assertThat(result.status()).isEqualTo(PARTIAL);
-        assertThat(result.failureReason()).isEqualTo(LLM_ERROR);
-        assertThat(result.appliedActions()).containsExactly(action);
-    }
-
-    @Test
-    void run_missingMainTerminalWithoutActions_returnsFailed() {
-        prepareLlmRun(25L);
-        ChatResponse response = new ChatResponse(List.of(new Generation(new AssistantMessage("forgot terminal"))));
-        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
-                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenReturn(response);
-
-        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).run(25L);
-
-        assertThat(result.status()).isEqualTo(FAILED);
-        assertThat(result.failureReason()).isEqualTo(LLM_ERROR);
-    }
-
-    @Test
-    void run_missingMainTerminalAfterActions_returnsPartial() {
-        prepareLlmRun(26L);
-        ChatResponse response = new ChatResponse(List.of(new Generation(new AssistantMessage("forgot terminal"))));
-        AppliedActionDTO action = AppliedActionDTO.create(5L, "Applied", "Created before terminal was omitted", "Exercise evidence required it");
-        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
-                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> context = invocation.getArgument(3);
-                    OrchestratorToolContextKeys.AppliedActionsBuffer buffer = (OrchestratorToolContextKeys.AppliedActionsBuffer) context
-                            .get(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY);
-                    buffer.actions().add(action);
-                    return response;
-                });
-
-        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).run(26L);
-
-        assertThat(result.status()).isEqualTo(PARTIAL);
-        assertThat(result.failureReason()).isEqualTo(LLM_ERROR);
-        assertThat(result.appliedActions()).containsExactly(action);
+        assertThat(result.status()).isEqualTo(SUCCESS);
+        verify(llmTokenUsageService).trackChatResponseTokenUsage(eq(chatResponse), eq(LLMServiceType.ATLAS), eq("ATLAS_ORCHESTRATION"), any());
+        verify(runMap).remove(COURSE_ID);
     }
 
     @Test
@@ -587,13 +536,49 @@ class CompetencyOrchestrationServiceTest {
         ChatClient mockChatClient = mock(ChatClient.class);
         when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
                 any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class)))
-                .thenAnswer(invocation -> completeVerified(invocation.getArgument(3), chatResponse));
+                .thenAnswer(invocation -> completeRound(invocation.getArgument(3), chatResponse));
 
         CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mockChatClient).runBatch(COURSE_ID, Set.of(10L, 12L));
 
         assertThat(result.status()).isEqualTo(SUCCESS);
         // Only the extraction-failed quiz (12) is requeued — the healthy exercise was orchestrated, not requeued.
         verify(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(12L));
+        verify(runMap).remove(COURSE_ID);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({ "true, false", "false, false", "true, true", "false, true" })
+    void terminalFailure_requeuesOnlySkippedExercise(boolean toolLimitReached, boolean manualFlush) {
+        ProgrammingExercise healthy = courseExercise(10L);
+        QuizExercise doomedQuiz = quizExercise(12L);
+        when(exerciseRepository.findAllById(any())).thenReturn(List.<Exercise>of(healthy, doomedQuiz));
+        stubRunMap();
+        if (manualFlush) {
+            when(exerciseRepository.findByIdElseThrow(10L)).thenReturn(healthy);
+            when(contentChangeAccumulatorService.claimBatchNow(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(12L))));
+        }
+        when(contentExtractionService.extractContent(healthy)).thenReturn(new ExtractedContentDTO("Survivor", "Survivor body", Map.of()));
+        when(contentExtractionService.extractContent(doomedQuiz)).thenThrow(new RuntimeException("quiz deleted mid-run"));
+        when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        when(templateService.render(anyString(), anyMap())).thenReturn("system prompt");
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                    if (toolLimitReached) {
+                        throw new AtlasToolCallBudget.LimitReachedException("Tool budget exhausted.");
+                    }
+                    Map<String, Object> context = invocation.getArgument(3);
+                    AtlasToolCallBudget.budgetForContext(context).complete(false, "Completion could not be verified.");
+                    return new ChatResponse(List.of(new Generation(new AssistantMessage("Incomplete"))));
+                });
+
+        var service = createServiceWithRunMap(mock(ChatClient.class));
+        CompetencyOrchestrationResultDTO result = manualFlush ? service.runWithQueuedFlush(10L) : service.runBatch(COURSE_ID, Set.of(10L, 12L));
+
+        assertThat(result.status()).isEqualTo(FAILED);
+        assertThat(result.failureReason()).isEqualTo(toolLimitReached ? CompetencyOrchestrationResultDTO.FailureReason.TOOL_CALL_LIMIT_EXCEEDED
+                : CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION);
+        verify(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(12L));
+        verify(contentChangeAccumulatorService, never()).requeueAfterFailedRun(eq(COURSE_ID), argThat(ids -> ids.contains(10L)));
         verify(runMap).remove(COURSE_ID);
     }
 
@@ -618,7 +603,7 @@ class CompetencyOrchestrationServiceTest {
         ChatClient mockChatClient = mock(ChatClient.class);
         when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
                 any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class)))
-                .thenAnswer(invocation -> completeVerified(invocation.getArgument(3), chatResponse));
+                .thenAnswer(invocation -> completeRound(invocation.getArgument(3), chatResponse));
 
         CompetencyOrchestrationService service = createServiceWithRunMap(mockChatClient);
         // The requeue exception must not escape runBatch after committed actions; capture the result to assert on it.
@@ -697,46 +682,56 @@ class CompetencyOrchestrationServiceTest {
         assertThat(captor.getValue()).containsEntry("atlasMLShortlist", "SHORTLIST_BLOCK");
     }
 
-    private CompetencyOrchestrationService createService(@Nullable ChatClient chatClient) {
-        return new CompetencyOrchestrationService(exerciseRepository, contentExtractionService, orchestratorPlanningToolsService, templateService, delegationService, chatClient,
-                new AtlasToolSurface(orchestratorReadToolCallbackProvider), new AtlasToolSurface(orchestratorPlanningToolCallbackProvider),
-                new AtlasToolSurface(orchestratorDelegationToolCallbackProvider), new AtlasToolSurface(orchestratorTerminalToolCallbackProvider),
-                Optional.of(distributedDataProvider), properties, contentChangeAccumulatorService, llmTokenUsageService, userRepository, shortlistService);
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({ "false,false", "true,false", "false,true", "true,true" })
+    void incompleteCompletionNeverBecomesSuccess(boolean applied, boolean missingCompletion) {
+        var exercise = courseExercise(16L);
+        when(exerciseRepository.findByIdElseThrow(16L)).thenReturn(exercise);
+        stubRunMap();
+        when(contentExtractionService.extractContent(exercise)).thenReturn(new ExtractedContentDTO("Title", "Body", Map.of()));
+        when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        when(templateService.render(anyString(), anyMap())).thenReturn("system");
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                    Map<String, Object> context = invocation.getArgument(3);
+                    if (applied) {
+                        ((OrchestratorToolContextKeys.AppliedActionsBuffer) context.get(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY)).actions()
+                                .add(AppliedActionDTO.create(1L, "Loops", "Created competency", "Exercise teaches loops"));
+                    }
+                    if (!missingCompletion) {
+                        AtlasToolCallBudget.budgetForContext(context).complete(false, "One mapping remains unverified.");
+                    }
+                    return new ChatResponse(List.of(new Generation(new AssistantMessage("Everything is done!"))));
+                });
+        var result = createServiceWithRunMap(mock(ChatClient.class)).run(16L);
+        assertThat(result.status()).isEqualTo(applied ? PARTIAL : FAILED);
+        assertThat(result.failureReason()).isEqualTo(CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION);
+        assertThat(result.appliedActions()).hasSize(applied ? 1 : 0);
+        assertThat(result.summary()).doesNotContain("Everything is done");
+        if (!missingCompletion) {
+            assertThat(result.summary()).isEqualTo("One mapping remains unverified.");
+        }
     }
 
-    private static ChatResponse completeVerified(Map<String, Object> context, ChatResponse response) {
-        AppliedActionDTO action = AppliedActionDTO.create(99L, "Verified competency", "Created during the worker round", "Exercise evidence required it");
-        return complete(context, response, true, "Verified final state", action);
-    }
-
-    private static ChatResponse complete(Map<String, Object> context, ChatResponse response, boolean verified, String message, @Nullable AppliedActionDTO action) {
-        if (action != null) {
-            OrchestratorToolContextKeys.AppliedActionsBuffer buffer = (OrchestratorToolContextKeys.AppliedActionsBuffer) context
-                    .get(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY);
-            buffer.actions().add(action);
-        }
-        if (verified) {
-            OrchestratorToolHelpers.markIndexRead(new ToolContext(context));
-        }
-        @SuppressWarnings("unchecked")
-        AtomicReference<OrchestrationCompletionDTO> completionHolder = (AtomicReference<OrchestrationCompletionDTO>) context
-                .get(OrchestratorToolContextKeys.ORCHESTRATION_COMPLETION_KEY);
-        completionHolder.set(new OrchestrationCompletionDTO(verified, message));
+    private ChatResponse completeRound(Map<String, Object> context, ChatResponse response) {
+        AtlasToolCallBudget budget = AtlasToolCallBudget.budgetForContext(context);
+        org.springframework.ai.tool.ToolCallback read = org.springframework.ai.tool.function.FunctionToolCallback
+                .<Map<String, Object>, String>builder("listCompetencyIndex", input -> "{}").inputType(Map.class).build();
+        AtlasToolCallBudget.decorate(ToolCallbackProvider.from(read), budget).getToolCallbacks()[0].call("{}");
+        budget.complete(true, response.getResult().getOutput().getText());
         return response;
+    }
+
+    private CompetencyOrchestrationService createService(@Nullable ChatClient chatClient) {
+        lenient().when(delegationService.isOrchestratorAvailable()).thenReturn(chatClient != null);
+        return new CompetencyOrchestrationService(exerciseRepository, contentExtractionService, orchestratorPlanningToolsService, templateService, delegationService,
+                new AtlasToolSurface(terminalToolCallbackProvider), new AtlasToolSurface(orchestratorReadToolCallbackProvider),
+                new AtlasToolSurface(orchestratorPlanningToolCallbackProvider), new AtlasToolSurface(orchestratorDelegationToolCallbackProvider),
+                Optional.of(distributedDataProvider), properties, contentChangeAccumulatorService, llmTokenUsageService, userRepository, shortlistService);
     }
 
     private CompetencyOrchestrationService createServiceWithRunMap(@Nullable ChatClient chatClient) {
         return createService(chatClient);
-    }
-
-    private ProgrammingExercise prepareLlmRun(long exerciseId) {
-        ProgrammingExercise exercise = courseExercise(exerciseId);
-        when(exerciseRepository.findByIdElseThrow(exerciseId)).thenReturn(exercise);
-        stubRunMap();
-        when(contentExtractionService.extractContent(exercise)).thenReturn(new ExtractedContentDTO("Test Exercise", "Learning evidence", Map.of()));
-        when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
-        when(templateService.render(anyString(), anyMap())).thenReturn("system prompt");
-        return exercise;
     }
 
     private void stubRunMap() {

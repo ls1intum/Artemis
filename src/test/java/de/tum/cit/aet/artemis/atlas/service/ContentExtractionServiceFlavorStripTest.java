@@ -49,6 +49,34 @@ class ContentExtractionServiceFlavorStripTest {
         service = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, "gpt-5.6-luna", "high", 1.0);
     }
 
+    @Test
+    void responsesEnabledUsesLunaHighAndNeverFallsBackToSharedChat() {
+        var responseClient = org.mockito.Mockito.mock(ChatClient.class, Answers.RETURNS_DEEP_STUBS);
+        var properties = new de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", "gpt-5.6-luna", "high", true, 300, 10, 30000L, 10);
+        var selected = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, "gpt-5.6-luna", "high", 1.0, properties,
+                new de.tum.cit.aet.artemis.atlas.config.AtlasResponsesApiConfiguration.AtlasResponsesChatClient(responseClient));
+        when(templateService.render(anyString(), any())).thenReturn("system");
+        var options = org.mockito.ArgumentCaptor.forClass(OpenAiChatOptions.Builder.class);
+        when(responseClient.prompt().system(anyString()).user(anyString()).options(options.capture()).call().entity(eq(FlavorStripEditsDTO.class)))
+                .thenReturn(new FlavorStripEditsDTO(List.of(new FlavorStripEditsDTO.EditDTO("flavor", "Alice. ", ""))));
+        assertThat(selected.stripFlavorText("Alice. Calculate 2 + 3.")).isEqualTo("Calculate 2 + 3.");
+        assertThat(options.getValue().build().getDeploymentName()).isEqualTo("gpt-5.6-luna");
+        assertThat(options.getValue().build().getReasoningEffort()).isEqualTo("high");
+        assertThat(options.getValue().build().getTemperature()).isNull();
+        verifyNoInteractions(chatClient);
+        var missing = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, "gpt-5.6-luna", "high", 1.0, properties, null);
+        assertThat(missing.stripFlavorText("Keep this.")).isEqualTo("Keep this.");
+        verifyNoInteractions(chatClient);
+    }
+
+    @Test
+    void responsesDisabledUsesSharedChatAndPreservesRawFallback() {
+        var properties = new de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", "gpt-5.6-luna", "high", false, 300, 10, 30000L, 10);
+        service = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, "gpt-5.6-luna", "high", 1.0, properties, null);
+        stubLlm(new FlavorStripEditsDTO(List.of()));
+        assertThat(service.stripFlavorText("Keep this.")).isEqualTo("Keep this.");
+    }
+
     private void stubLlm(FlavorStripEditsDTO edits) {
         when(templateService.render(anyString(), any())).thenReturn("system prompt");
         when(chatClient.prompt().system(anyString()).user(anyString()).options(any(OpenAiChatOptions.Builder.class)).call().entity(eq(FlavorStripEditsDTO.class)))
@@ -70,7 +98,7 @@ class ContentExtractionServiceFlavorStripTest {
 
     @Test
     void stripFlavorText_blankModel_returnsRawAndNeverCallsClient() {
-        ContentExtractionService blankModelService = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, "", "high", 1.0);
+        ContentExtractionService blankModelService = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, "", "low", 1.0);
 
         assertThat(blankModelService.stripFlavorText("Keep this text.")).isEqualTo("Keep this text.");
         verifyNoInteractions(chatClient);
@@ -173,16 +201,16 @@ class ContentExtractionServiceFlavorStripTest {
     @Test
     void buildChatOptions_withReasoningEffort_setsReasoningEffortNotTemperature() {
         // GPT-5 reasoning deployments reject temperature + reasoningEffort together; only reasoningEffort is set.
-        OpenAiChatOptions options = ContentExtractionService.buildChatOptions("gpt-5.6-luna", "high", 1.0).build();
+        OpenAiChatOptions options = ContentExtractionService.buildChatOptions("gpt-5.4-mini", "medium", 1.0).build();
 
-        assertThat(options.getReasoningEffort()).isEqualTo("high");
+        assertThat(options.getReasoningEffort()).isEqualTo("medium");
         assertThat(options.getTemperature()).isNull();
-        assertThat(options.getDeploymentName()).isEqualTo("gpt-5.6-luna");
+        assertThat(options.getDeploymentName()).isEqualTo("gpt-5.4-mini");
     }
 
     @Test
     void buildChatOptions_blankReasoningEffort_setsTemperatureNotReasoningEffort() {
-        OpenAiChatOptions options = ContentExtractionService.buildChatOptions("gpt-5.6-luna", "  ", 1.0).build();
+        OpenAiChatOptions options = ContentExtractionService.buildChatOptions("gpt-5.4-mini", "  ", 1.0).build();
 
         assertThat(options.getTemperature()).isEqualTo(1.0);
         assertThat(options.getReasoningEffort()).isNull();

@@ -17,48 +17,16 @@ import org.springframework.ai.chat.model.ToolContext;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
-import de.tum.cit.aet.artemis.atlas.dto.OrchestrationCompletionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.WorkerCompletionDTO;
 
 class AtlasTerminalToolServicesTest {
-
-    private AtlasOrchestratorTerminalToolService orchestratorTerminal;
 
     private AtlasWorkerTerminalToolService workerTerminal;
 
     @BeforeEach
     void setUp() {
         JsonMapper objectMapper = new JsonMapper();
-        orchestratorTerminal = new AtlasOrchestratorTerminalToolService(objectMapper);
         workerTerminal = new AtlasWorkerTerminalToolService(objectMapper);
-    }
-
-    @Test
-    void completeOrchestration_verifiedRequiresIndexReadAfterLatestDelegation() {
-        Map<String, Object> context = mainContext();
-        ToolContext toolContext = new ToolContext(context);
-
-        OrchestratorToolHelpers.markDelegation(toolContext);
-        String premature = orchestratorTerminal.completeOrchestration(true, "Looks complete", toolContext);
-
-        assertThat(premature).contains("requires a competency-index read");
-        assertThat(orchestrationHolder(context)).hasValue(null);
-
-        OrchestratorToolHelpers.markIndexRead(toolContext);
-        String accepted = orchestratorTerminal.completeOrchestration(true, "Verified final state", toolContext);
-
-        assertThat(accepted).contains("\"completed\":true").contains("\"verified\":true");
-        assertThat(orchestrationHolder(context)).hasValue(new OrchestrationCompletionDTO(true, "Verified final state"));
-    }
-
-    @Test
-    void completeOrchestration_isOneShot() {
-        Map<String, Object> context = mainContext();
-        ToolContext toolContext = new ToolContext(context);
-
-        assertThat(orchestratorTerminal.completeOrchestration(false, "Worker failed", toolContext)).contains("\"completed\":true");
-        assertThat(orchestratorTerminal.completeOrchestration(false, "Different result", toolContext)).contains("already completed");
-        assertThat(orchestrationHolder(context)).hasValue(new OrchestrationCompletionDTO(false, "Worker failed"));
     }
 
     @Test
@@ -89,22 +57,13 @@ class AtlasTerminalToolServicesTest {
     }
 
     @Test
-    void attemptedWriteCapIsThirtyTwo() {
-        assertThat(OrchestratorToolContextKeys.MAX_WRITE_CALLS).isEqualTo(32);
+    void attemptedWriteCapIsTwoHundredFiftySix() {
+        assertThat(OrchestratorToolContextKeys.MAX_WRITE_CALLS).isEqualTo(256);
         OrchestratorToolContextKeys.AppliedActionsBuffer buffer = new OrchestratorToolContextKeys.AppliedActionsBuffer(Collections.synchronizedList(new ArrayList<>()));
-        for (int i = 0; i < 32; i++) {
+        for (int i = 0; i < 256; i++) {
             assertThat(buffer.tryReserveSlot(OrchestratorToolContextKeys.MAX_WRITE_CALLS)).isTrue();
         }
         assertThat(buffer.tryReserveSlot(OrchestratorToolContextKeys.MAX_WRITE_CALLS)).isFalse();
-    }
-
-    private static Map<String, Object> mainContext() {
-        Map<String, Object> context = new HashMap<>();
-        context.put(OrchestratorToolContextKeys.ORCHESTRATION_COMPLETION_KEY, new AtomicReference<OrchestrationCompletionDTO>());
-        context.put(OrchestratorToolContextKeys.TOOL_SEQUENCE_KEY, new AtomicLong());
-        context.put(OrchestratorToolContextKeys.LAST_INDEX_READ_SEQUENCE_KEY, new AtomicLong());
-        context.put(OrchestratorToolContextKeys.LAST_DELEGATION_SEQUENCE_KEY, new AtomicLong());
-        return context;
     }
 
     private static Map<String, Object> workerContext() {
@@ -116,11 +75,6 @@ class AtlasTerminalToolServicesTest {
         context.put(OrchestratorToolContextKeys.WORKER_ACTION_START_KEY, 0);
         context.put(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY, new OrchestratorToolContextKeys.AppliedActionsBuffer(Collections.synchronizedList(new ArrayList<>())));
         return context;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static AtomicReference<OrchestrationCompletionDTO> orchestrationHolder(Map<String, Object> context) {
-        return (AtomicReference<OrchestrationCompletionDTO>) context.get(OrchestratorToolContextKeys.ORCHESTRATION_COMPLETION_KEY);
     }
 
     @SuppressWarnings("unchecked")

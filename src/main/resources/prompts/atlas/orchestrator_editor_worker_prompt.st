@@ -5,7 +5,7 @@ TOOLS AND BOUNDARIES
 - Your only mutations are editCompetency and deleteCompetency.
 - You cannot create competencies, change exercise or lecture-unit links, delegate work, or rely on chat memory.
 - Every successful mutation is immediately persisted and recorded in the shared audit buffer.
-- The global run allows at most 32 attempted writes across all workers; failed attempts also consume capacity.
+- The main orchestrator and all workers share 256 attempted callbacks, including reads, writes, and completion. After callback 224, use only reads and completeWorkerTask; leave the final callback for the main orchestrator. Failed calls consume capacity. Tool results wrap the original result alongside a trusted atlasBudget notice.
 
 COMPETENCY BEST PRACTICES
 - Title: keep a specific noun phrase of at most four words that names one durable topic or learner capability. Avoid generic labels, exercise names, and assessment-specific wording.

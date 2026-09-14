@@ -173,31 +173,6 @@ public final class OrchestratorToolHelpers {
         return sequence != null && completion != null && completion.get() > 0L && completion.get() == sequence.get();
     }
 
-    /** Records a successful main-orchestrator competency-index verification read. */
-    static void markIndexRead(@Nullable ToolContext toolContext) {
-        AtomicLong sequence = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.TOOL_SEQUENCE_KEY);
-        AtomicLong lastRead = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.LAST_INDEX_READ_SEQUENCE_KEY);
-        if (sequence != null && lastRead != null) {
-            lastRead.set(sequence.incrementAndGet());
-        }
-    }
-
-    /** Records that a synchronous worker delegation has completed. */
-    static void markDelegation(@Nullable ToolContext toolContext) {
-        AtomicLong sequence = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.TOOL_SEQUENCE_KEY);
-        AtomicLong lastDelegation = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.LAST_DELEGATION_SEQUENCE_KEY);
-        if (sequence != null && lastDelegation != null) {
-            lastDelegation.set(sequence.incrementAndGet());
-        }
-    }
-
-    /** Returns whether a successful competency-index read happened after the latest delegation. */
-    static boolean hasFreshVerificationRead(@Nullable ToolContext toolContext) {
-        AtomicLong lastRead = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.LAST_INDEX_READ_SEQUENCE_KEY);
-        AtomicLong lastDelegation = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.LAST_DELEGATION_SEQUENCE_KEY);
-        return lastRead != null && lastDelegation != null && lastRead.get() > lastDelegation.get();
-    }
-
     @Nullable
     private static Object contextValue(@Nullable ToolContext toolContext, String key) {
         if (toolContext == null || toolContext.getContext() == null) {

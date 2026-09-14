@@ -1,14 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
-import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.errorJson;
-import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.hasFreshVerificationRead;
-import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.isBlank;
-import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.toJson;
-
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
@@ -16,59 +7,30 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import tools.jackson.databind.json.JsonMapper;
-
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
-import de.tum.cit.aet.artemis.atlas.dto.OrchestrationCompletionDTO;
 
-/** One-shot terminal tool for the main Atlas orchestration request. */
+/** Records the main orchestrator's verified decision and instructor-facing summary for this run. */
 @Lazy
 @Service
 @Conditional(AtlasEnabled.class)
 public class AtlasOrchestratorTerminalToolService {
 
-    private final JsonMapper objectMapper;
-
-    public AtlasOrchestratorTerminalToolService(JsonMapper objectMapper) {
-        this.objectMapper = objectMapper;
-    }
-
     /**
-     * Completes the orchestration request. Verified completion requires a competency-index read newer
-     * than the latest completed worker delegation.
+     * Completes the run after verification. Returning directly prevents a second model-generated summary.
      *
-     * @param verified    whether the refreshed course state satisfies the plan
-     * @param message     concise overall outcome or unresolved failure reason
-     * @param toolContext request-scoped verification markers and completion holder
-     * @return acknowledgement JSON, or an error when the terminal contract is violated
+     * @param verified    whether all requested work was verified against the final index
+     * @param message     concise instructor-facing summary, including unresolved work
+     * @param toolContext course-scoped invocation context
+     * @return the recorded summary
      */
-    @Tool(description = "Finish the orchestration exactly once. verified=true is accepted only after listCompetencyIndex was called after the latest worker delegation.")
-    public String completeOrchestration(@ToolParam(description = "true only when a post-delegation competency-index refresh verifies the final state") boolean verified,
-            @ToolParam(description = "concise final outcome or unresolved failure reason") String message, ToolContext toolContext) {
-        if (isBlank(message)) {
-            return errorJson(objectMapper, "message is required.");
+    @Tool(description = "Required final step. After refreshing listCompetencyIndex, call verified=true only when all requested work is complete. Use verified=false and explain unresolved work otherwise. No tools may be called afterwards.", returnDirect = true)
+    public String completeOrchestration(@ToolParam(description = "true only after the final index verification passes") boolean verified,
+            @ToolParam(description = "concise instructor-facing result and any unresolved work") String message, ToolContext toolContext) {
+        AtlasToolCallBudget budget = toolContext == null ? null : AtlasToolCallBudget.existingBudget(toolContext.getContext());
+        if (budget == null) {
+            throw new IllegalStateException("Orchestration context is missing; completion cannot be recorded.");
         }
-        AtomicReference<OrchestrationCompletionDTO> holder = completionHolder(toolContext);
-        if (holder == null) {
-            return errorJson(objectMapper, "No orchestration completion context available.");
-        }
-        if (verified && !hasFreshVerificationRead(toolContext)) {
-            return errorJson(objectMapper, "Verified completion requires a competency-index read after the latest delegation.");
-        }
-        OrchestrationCompletionDTO completion = new OrchestrationCompletionDTO(verified, message);
-        if (!holder.compareAndSet(null, completion)) {
-            return errorJson(objectMapper, "Orchestration was already completed.");
-        }
-        return toJson(objectMapper, Map.of("completed", true, "verified", verified));
-    }
-
-    @Nullable
-    @SuppressWarnings("unchecked")
-    private static AtomicReference<OrchestrationCompletionDTO> completionHolder(@Nullable ToolContext toolContext) {
-        if (toolContext == null || toolContext.getContext() == null) {
-            return null;
-        }
-        Object value = toolContext.getContext().get(OrchestratorToolContextKeys.ORCHESTRATION_COMPLETION_KEY);
-        return value instanceof AtomicReference<?> ? (AtomicReference<OrchestrationCompletionDTO>) value : null;
+        budget.complete(verified, message);
+        return message;
     }
 }

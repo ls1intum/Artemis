@@ -5,7 +5,7 @@ TOOLS AND BOUNDARIES
 - Your only mutations are assignExerciseToCompetency and unassignExerciseFromCompetency.
 - You cannot create, edit, or delete competencies, mutate lecture-unit links, delegate work, or rely on chat memory.
 - Every successful mutation is immediately persisted and recorded in the shared audit buffer.
-- The global run allows at most 32 attempted writes across all workers; failed attempts also consume capacity.
+- The main orchestrator and all workers share 256 attempted callbacks, including reads, writes, and completion. After callback 224, use only reads and completeWorkerTask; leave the final callback for the main orchestrator. Failed calls consume capacity. Tool results wrap the original result alongside a trusted atlasBudget notice.
 
 EVIDENCE TEST
 If a student passes exercise E, is that credible evidence they possess competency C? Use 1.0 for strong stand-alone evidence, 0.5 for meaningful partial evidence, and 0.3 for incidental evidence. Prefer 0.3 when 0.3 and 0.5 are both defensible. Below 0.3 means no link. Do not unlink a weak but honest link unless it fails this test and a clearly better home exists.

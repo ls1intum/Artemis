@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.atlas.service;
 
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.courseIdFromContext;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.exerciseType;
-import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.markIndexRead;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.missingCourseContextError;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.toJson;
 
@@ -73,16 +72,14 @@ public class OrchestratorPlanningToolsService {
      */
     @Tool(description = "List the competency index for the current course. Returns two sections: (1) competencies — id, title, taxonomy, type (competency or prerequisite), "
             + "linked exercises (with title, exercise type, and the current link weight — 1.0 / 0.5 / 0.3) and linked lecture units (with name and lecture-unit type); "
-            + "(2) unassignedExercises — exercises in the course that are currently not linked to any competency (id, title, type), which are prime candidates for closing coverage gaps. "
+            + "(2) unassignedExercises — exercises in the course that are currently not linked to any competency (id, title, type), provided as background only; act on the changed batch, not unrelated coverage gaps. "
             + "The initial index is already provided in the system prompt; call this again after any CREATE / DELETE so subsequent actions reference up-to-date ids.")
     public String listCompetencyIndex(ToolContext toolContext) {
         Long courseId = courseIdFromContext(toolContext);
         if (courseId == null) {
             return missingCourseContextError(objectMapper);
         }
-        CompetencyIndexResponseDTO index = listCompetencyIndex(courseId);
-        markIndexRead(toolContext);
-        return toJson(objectMapper, index);
+        return toJson(objectMapper, listCompetencyIndex(courseId));
     }
 
     /**

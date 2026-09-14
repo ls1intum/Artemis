@@ -8,7 +8,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
-import de.tum.cit.aet.artemis.atlas.dto.OrchestrationCompletionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.WorkerCompletionDTO;
 
 /**
@@ -41,23 +40,14 @@ public final class OrchestratorToolContextKeys {
     /** Tool-context key carrying the exercise that anchored the current orchestration request. */
     public static final String LEARNING_OBJECT_ID_KEY = "learningObjectId";
 
-    /** Request-scoped one-shot holder populated by {@code completeOrchestration}. */
-    public static final String ORCHESTRATION_COMPLETION_KEY = "orchestrationCompletion";
-
     /** Worker-scoped one-shot holder populated by {@code completeWorkerTask}. */
     public static final String WORKER_COMPLETION_KEY = "workerCompletion";
 
     /** Sequence position at which the current worker accepted {@code completeWorkerTask}. */
     public static final String WORKER_COMPLETION_SEQUENCE_KEY = "workerCompletionSequence";
 
-    /** Monotonic request sequence shared by orchestration and worker ordering markers. */
+    /** Worker-local sequence used to detect calls after worker completion. */
     public static final String TOOL_SEQUENCE_KEY = "toolSequence";
-
-    /** Sequence of the most recent successful tool-driven competency-index read. */
-    public static final String LAST_INDEX_READ_SEQUENCE_KEY = "lastIndexReadSequence";
-
-    /** Sequence of the most recently completed worker delegation. */
-    public static final String LAST_DELEGATION_SEQUENCE_KEY = "lastDelegationSequence";
 
     /** Request-scoped counter reserving one slot per nested worker model round. */
     public static final String DELEGATION_COUNT_KEY = "delegationCount";
@@ -75,16 +65,12 @@ public final class OrchestratorToolContextKeys {
      * in the system prompt; enforced through {@link AppliedActionsBuffer#tryReserveSlot(int)} so a
      * hallucinating model cannot spend more than this many writes regardless of what the prompt says.
      */
-    public static final int MAX_WRITE_CALLS = 32;
+    public static final int MAX_WRITE_CALLS = AtlasToolCallBudget.LIMIT;
 
     /** Hard cap on nested worker model rounds per orchestrator run. */
-    public static final int MAX_DELEGATION_CALLS = 8;
+    public static final int MAX_DELEGATION_CALLS = 16;
 
     private OrchestratorToolContextKeys() {
-    }
-
-    static AtomicReference<OrchestrationCompletionDTO> newOrchestrationCompletionHolder() {
-        return new AtomicReference<>();
     }
 
     static AtomicReference<WorkerCompletionDTO> newWorkerCompletionHolder() {

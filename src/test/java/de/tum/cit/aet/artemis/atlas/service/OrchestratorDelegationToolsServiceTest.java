@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -79,7 +78,7 @@ class OrchestratorDelegationToolsServiceTest {
 
     @BeforeEach
     void setUp() {
-        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", "gpt-5.6-luna", "high", 300, 10, 30000L, 10);
+        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", "gpt-5.6-luna", "high", true, 300, 10, 30000L, 10);
         service = new OrchestratorDelegationToolsService(templateService, delegationService, new AtlasToolSurface(readTools), new AtlasToolSurface(creatorTools),
                 new AtlasToolSurface(assignerTools), new AtlasToolSurface(editorTools), new AtlasToolSurface(terminalTools), properties, llmTokenUsageService, userRepository);
         workerTerminal = new AtlasWorkerTerminalToolService(new JsonMapper());
@@ -95,6 +94,8 @@ class OrchestratorDelegationToolsServiceTest {
         when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
                 any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
                     Map<String, Object> workerContext = invocation.getArgument(3);
+                    assertThat(AtlasToolCallBudget.existingBudget(workerContext)).isSameAs(AtlasToolCallBudget.existingBudget(parent));
+                    assertThat(workerContext).containsEntry(AtlasToolCallBudget.WORKER_CONTEXT_KEY, true);
                     buffer(workerContext).actions().add(AppliedActionDTO.create(2L, "Loops", "Created competency", "Exercise teaches loops"));
                     workerTerminal.completeWorkerTask(true, "Created the requested competency", new ToolContext(workerContext));
                     return response;
@@ -105,7 +106,6 @@ class OrchestratorDelegationToolsServiceTest {
         assertThat(result.success()).isTrue();
         assertThat(result.message()).isEqualTo("Created the requested competency");
         assertThat(result.appliedActions()).singleElement().extracting(AppliedActionDTO::type).isEqualTo(AppliedActionDTO.ActionType.CREATE);
-        assertThat(((AtomicLong) parent.get(OrchestratorToolContextKeys.LAST_DELEGATION_SEQUENCE_KEY)).get()).isPositive();
         verify(llmTokenUsageService).trackChatResponseTokenUsage(eq(response), eq(LLMServiceType.ATLAS), eq("ATLAS_ORCHESTRATION"), any());
 
         ArgumentCaptor<OpenAiChatOptions.Builder> optionsCaptor = ArgumentCaptor.forClass(OpenAiChatOptions.Builder.class);
@@ -126,6 +126,8 @@ class OrchestratorDelegationToolsServiceTest {
         when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
                 any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
                     Map<String, Object> workerContext = invocation.getArgument(3);
+                    assertThat(AtlasToolCallBudget.existingBudget(workerContext)).isSameAs(AtlasToolCallBudget.existingBudget(parent));
+                    assertThat(workerContext).containsEntry(AtlasToolCallBudget.WORKER_CONTEXT_KEY, true);
                     buffer(workerContext).actions().add(AppliedActionDTO.create(2L, "Loops", "Created competency", "Exercise teaches loops"));
                     ToolContext workerToolContext = new ToolContext(workerContext);
                     workerTerminal.completeWorkerTask(true, "Created the requested competency", workerToolContext);
@@ -160,6 +162,8 @@ class OrchestratorDelegationToolsServiceTest {
         when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
                 any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
                     Map<String, Object> workerContext = invocation.getArgument(3);
+                    assertThat(AtlasToolCallBudget.existingBudget(workerContext)).isSameAs(AtlasToolCallBudget.existingBudget(parent));
+                    assertThat(workerContext).containsEntry(AtlasToolCallBudget.WORKER_CONTEXT_KEY, true);
                     buffer(workerContext).actions().add(AppliedActionDTO.delete(8L, "Obsolete", "Deleted competency", "No remaining evidence"));
                     throw new IllegalStateException("nested tool loop failed");
                 });
@@ -169,7 +173,6 @@ class OrchestratorDelegationToolsServiceTest {
         assertThat(result.success()).isFalse();
         assertThat(result.message()).isEqualTo("Editor worker failed while executing its batch.");
         assertThat(result.appliedActions()).singleElement().extracting(AppliedActionDTO::type).isEqualTo(AppliedActionDTO.ActionType.DELETE);
-        assertThat(((AtomicLong) parent.get(OrchestratorToolContextKeys.LAST_DELEGATION_SEQUENCE_KEY)).get()).isPositive();
     }
 
     @Test
@@ -189,13 +192,16 @@ class OrchestratorDelegationToolsServiceTest {
         when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
                 any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
                     Map<String, Object> workerContext = invocation.getArgument(3);
+                    assertThat(AtlasToolCallBudget.existingBudget(workerContext)).isSameAs(AtlasToolCallBudget.existingBudget(parent));
+                    assertThat(workerContext).containsEntry(AtlasToolCallBudget.WORKER_CONTEXT_KEY, true);
                     ToolContext workerToolContext = new ToolContext(workerContext);
                     OrchestratorToolHelpers.markWorkerRead(workerToolContext);
                     workerTerminal.completeWorkerTask(true, "Course state already satisfies the task", workerToolContext);
                     return response;
                 });
 
-        for (int i = 0; i < OrchestratorToolContextKeys.MAX_DELEGATION_CALLS; i++) {
+        assertThat(OrchestratorToolContextKeys.MAX_DELEGATION_CALLS).isEqualTo(16);
+        for (int i = 0; i < 16; i++) {
             WorkerResultDTO result = service.delegateToCreator("Inspect whether creation is needed", new ToolContext(parent));
             assertThat(result.success()).isTrue();
             assertThat(result.appliedActions()).isEmpty();
@@ -210,14 +216,57 @@ class OrchestratorDelegationToolsServiceTest {
                 anyMap(), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class));
     }
 
+    @Test
+    void missingParentBudgetDoesNotDispatchOrCreateWorkerBudget() {
+        Map<String, Object> context = parentContext();
+        context.remove(AtlasToolCallBudget.CONTEXT_KEY);
+        WorkerResultDTO result = service.delegateToCreator("Inspect course", new ToolContext(context));
+        assertThat(result.success()).isFalse();
+        assertThat(result.message()).contains("parent tool-call budget");
+        assertThat(context).doesNotContainKey(AtlasToolCallBudget.CONTEXT_KEY);
+        org.mockito.Mockito.verifyNoInteractions(delegationService);
+    }
+
+    @Test
+    void failedDispatchesConsumeAllSixteenDelegationSlots() {
+        Map<String, Object> parent = parentContext();
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenThrow(new IllegalStateException("provider unavailable"));
+        for (int i = 0; i < 16; i++) {
+            assertThat(service.delegateToCreator("Create loops", new ToolContext(parent)).message()).contains("failed while executing");
+        }
+        assertThat(service.delegateToCreator("Create loops", new ToolContext(parent)).message()).contains("cap (16)");
+        verify(delegationService, times(16)).delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = { "failed", "incomplete", "cancelled", "missing_status" })
+    void unsuccessfulProviderStatusCannotBecomeWorkerSuccess(String finishReason) {
+        Map<String, Object> parent = parentContext();
+        ChatResponse response = new ChatResponse(List.of(new Generation(new AssistantMessage("Unverified provider output"),
+                org.springframework.ai.chat.metadata.ChatGenerationMetadata.builder().finishReason(finishReason).build())));
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                    Map<String, Object> worker = invocation.getArgument(3);
+                    buffer(worker).actions().add(AppliedActionDTO.create(2L, "Loops", "Created competency", "Exercise evidence"));
+                    workerTerminal.completeWorkerTask(true, "Done", new ToolContext(worker));
+                    return response;
+                });
+        WorkerResultDTO result = service.delegateToCreator("Create loops", new ToolContext(parent));
+        assertThat(result.success()).isFalse();
+        assertThat(result.message()).contains("provider response did not complete");
+        assertThat(result.appliedActions()).hasSize(1);
+        verify(llmTokenUsageService).trackChatResponseTokenUsage(eq(response), eq(LLMServiceType.ATLAS), eq("ATLAS_ORCHESTRATION"), any());
+    }
+
     private static Map<String, Object> parentContext() {
         Map<String, Object> context = new HashMap<>();
         context.put(OrchestratorToolContextKeys.COURSE_ID_KEY, COURSE_ID);
         context.put(OrchestratorToolContextKeys.LEARNING_OBJECT_ID_KEY, 7L);
         context.put(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY, new OrchestratorToolContextKeys.AppliedActionsBuffer(Collections.synchronizedList(new ArrayList<>())));
-        context.put(OrchestratorToolContextKeys.TOOL_SEQUENCE_KEY, new AtomicLong());
-        context.put(OrchestratorToolContextKeys.LAST_DELEGATION_SEQUENCE_KEY, new AtomicLong());
         context.put(OrchestratorToolContextKeys.DELEGATION_COUNT_KEY, new AtomicInteger());
+        AtlasToolCallBudget.budgetForContext(context);
         return context;
     }
 
