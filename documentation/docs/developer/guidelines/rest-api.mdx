@@ -19,31 +19,31 @@ This document covers best practices for designing and implementing REST APIs in 
 
 Using JPA entities directly in REST controllers creates severe problems that compromise security, performance, and maintainability:
 
-#### 1. Security Vulnerabilities
+#### Security Vulnerabilities
 
 - **Mass Assignment Attacks:** When entities are deserialized from JSON, attackers can inject values for fields they should not control (e.g., `isAdmin`, `password`, internal IDs)
 - **Data Leakage:** Entities may contain sensitive fields (passwords, internal flags, audit data) that get accidentally exposed in API responses
 - **Circular Reference Exploitation:** Bidirectional relationships can be manipulated to cause infinite loops or expose related data
 
-#### 2. API Instability
+#### API Instability
 
 - **Breaking Changes:** Any change to the database schema (renaming a column, adding a field) automatically changes the API contract, breaking clients
 - **No Versioning Control:** Without DTOs, you cannot maintain multiple API versions or deprecate fields gracefully
 - **Tight Coupling:** Client and server become tightly coupled to the database schema
 
-#### 3. Performance Problems
+#### Performance Problems
 
 - **N+1 Query Issues:** Lazy-loaded relationships get triggered during JSON serialization, causing unexpected database queries
 - **Over-fetching:** Entire entity graphs are loaded when only a few fields are needed
 - **Serialization Overhead:** Large entity hierarchies with bidirectional relationships are expensive to serialize
 
-#### 4. Hibernate Session Issues
+#### Hibernate Session Issues
 
 - **LazyInitializationException:** Accessing lazy relationships outside the Hibernate session causes runtime exceptions
 - **Detached Entity Problems:** Merging detached entities can overwrite data unexpectedly
 - **Proxy Object Serialization:** Hibernate proxies don't serialize correctly, causing `ClassCastException` or incomplete data
 
-#### 5. Circular References and JsonIgnore Problems
+#### Circular References and JsonIgnore Problems
 
 Entities often have bidirectional relationships that create circular references during JSON serialization. While annotations like `@JsonIgnore` and `@JsonIgnoreProperties` can help, they introduce significant problems:
 
@@ -60,7 +60,7 @@ Entities often have bidirectional relationships that create circular references 
   <strong>Note:</strong> Entity classes still require <code>@JsonIgnoreProperties</code> annotations on bidirectional relationships to prevent infinite loops during internal operations (e.g., logging, caching). However, this is not a reason to expose entities via REST APIs. The annotations are a necessary safeguard for entities, but DTOs remain the correct approach for API responses.
 </Callout>
 
-#### 6. OpenAPI and API-Driven Development
+#### OpenAPI and API-Driven Development
 
 API-driven development using OpenAPI (Swagger) is only possible when using DTOs:
 
@@ -69,7 +69,7 @@ API-driven development using OpenAPI (Swagger) is only possible when using DTOs:
 - **Code Generation:** Client code generation from OpenAPI specs works reliably only with DTOs; entities produce broken or unusable generated code
 - **API-First Design:** DTOs enable true API-first development where the API contract is designed before implementation
 
-#### 7. Validation Complexity
+#### Validation Complexity
 
 - **Mixed Concerns:** Entity validation rules (for persistence) differ from API validation rules (for input)
 - **Conditional Validation:** Different endpoints may require different validation rules for the same data

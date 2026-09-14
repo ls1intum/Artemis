@@ -14,18 +14,18 @@ import uiuxWorkflow from './assets/development-process/uiux_workflow.png';
 
 <Image src={artemisProcessModel} alt="Artemis Process Model - Activity Diagram" size={ImageSize.large} caption="Artemis Process Model - Activity Diagram"></Image>
 
-## 1. Submit a Feature Request
+## Submit a Feature Request
 
 The initial step in our development process involves the creation of a feature request, which is accomplished through the submission of a GitHub Issue.
 This action can be performed by any stakeholder, including developers, users, or maintainers.
 The feature request should include a detailed description of the desired functionality, as well as any relevant information that may be useful to the development team.
 This information should include the rationale for the feature, the expected benefits, and any potential risks or challenges that may be associated with the implementation of the feature.
 
-## 2. Evaluate Feature Request
+## Evaluate Feature Request
 
 Once a feature request has been submitted, the maintainers will evaluate the request together with the development team to determine its feasibility and potential impact on the system.
 
-## 3. Create a Feature Proposal
+## Create a Feature Proposal
 
 If the feature request is deemed feasible, the development team will create a feature proposal that extensively describes the proposed feature. This step will consist of the artifacts mentioned in the model "Create Feature Proposal" below:
 
@@ -76,7 +76,7 @@ Furthermore it is important to include a description of the user flow that refer
 
 <TumLiveVideo src="46233" title="UI/UX Design Process Video Tutorial on TUM-Live" />
 
-## 4. Create a local Branch
+## Create a local Branch
 
 We use the following structure for branch names: `<type>/<area>/<short-description>`
 
@@ -87,7 +87,7 @@ We use the following structure for branch names: `<type>/<area>/<short-descripti
 Branches that do not follow this structure will get rejected automatically!
 </Callout>
 
-## 5. Implement the Feature
+## Implement the Feature
 
 In this step, the development team converts the detailed plans and designs outlined in the functional proposal into working code.
 This step requires careful adherence to the previously defined requirements and system architecture to ensure that the function fits seamlessly into the existing system and fulfills the specified functional and performance criteria.
@@ -96,7 +96,7 @@ This step requires careful adherence to the previously defined requirements and 
 Make sure to follow the [Artemis Code and Design Guidelines](https://docs.artemis.tum.de/developer/guidelines/).
 </Callout>
 
-## 6. Create a Pull Request
+## Create a Pull Request
 
 After the feature implementation is complete, the developer is required to create a pull request for integrating the feature into the develop branch.
 The subsequent sections provide guidance on the naming conventions and outline the necessary steps for creating and merging a pull request.
@@ -125,18 +125,18 @@ The subsequent sections provide guidance on the naming conventions and outline t
 
 ### Steps to Create and Merge a Pull Request
 
-#### 0. Preconditions (For Developers Only)
+#### Preconditions (For Developers Only)
 
 - **Merge fast**: PRs should only be open for a couple of days.
 - Limit yourself to one functionality per pull request.
 - Split up your task in multiple branches & pull requests if necessary.
 - [Commit Early, Commit Often, Perfect Later, Publish Once.](https://speakerdeck.com/lemiorhan/10-git-anti-patterns-you-should-be-aware-of)
 
-#### 1. Begin Implementation (For Developers Only)
+#### Begin Implementation (For Developers Only)
 
 - [Open a draft pull request.](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request) This allows for code related questions and discussions.
 
-#### 2. Complete Implementation (For Developers Only)
+#### Complete Implementation (For Developers Only)
 
 - Make sure all steps in the [Checklist](https://github.com/ls1intum/Artemis/blob/develop/.github/PULL_REQUEST_TEMPLATE.md) are completed.
 - Add or update the "Steps for Testing" in the description of your pull request.
@@ -145,7 +145,7 @@ The subsequent sections provide guidance on the naming conventions and outline t
 - Make sure at least all required checks pass.
 - Mark the pull request as [ready for review.](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request)
 
-#### 3. Review Process
+#### Review Process
 
 **For Developers:**
 
@@ -166,7 +166,7 @@ The subsequent sections provide guidance on the naming conventions and outline t
 - Submit your comments and status (✅ Approve or ❌ Request Changes) using GitHub.
   - Explain what you did (test, review code) and on which test server in the review comment.
 
-#### 4. Address Review Comments
+#### Address Review Comments
 
 **For Developers:**
 
@@ -187,10 +187,10 @@ The subsequent sections provide guidance on the naming conventions and outline t
 - Artemis Maintainers conduct the final review before merging.
 
 <Callout variant={CalloutVariant.info}>
-Repeat steps 3 & 4 until the pull request is approved by all designated reviewers. It's only ready to merge when it has approvals from at least four reviewers.
+Repeat [Review Process](#review-process) and [Address Review Comments](#address-review-comments) until the pull request is approved by all designated reviewers. It's only ready to merge when it has approvals from at least four reviewers.
 </Callout>
 
-#### 5. Merge Changes
+#### Merge Changes
 
 A project maintainer merges your changes into the `develop` branch.
 
