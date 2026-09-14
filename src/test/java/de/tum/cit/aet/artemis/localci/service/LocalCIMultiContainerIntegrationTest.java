@@ -49,7 +49,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
 import com.github.dockerjava.api.command.ExecCreateCmd;
@@ -58,6 +57,8 @@ import com.github.dockerjava.api.command.ExecStartCmd;
 import com.github.dockerjava.api.command.InspectExecCmd;
 import com.github.dockerjava.api.command.InspectExecResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
+
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -663,7 +664,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
      * Configures the exercise with a plan of two containers: the instructor container additionally checks out the test
      * repository, the student container is scoped to the assignment repository only.
      */
-    private void configureTwoContainerPlan(String instructorImage, String studentImage) throws JsonProcessingException {
+    private void configureTwoContainerPlan(String instructorImage, String studentImage) throws JacksonException {
         BuildPhaseDTO instructorPhase = new BuildPhaseDTO("instructor_phase", "gradle test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"));
         BuildPhaseDTO studentPhase = new BuildPhaseDTO("student_phase", "gradle test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"));
         BuildContainerDTO instructorContainer = new BuildContainerDTO(INSTRUCTOR_CONTAINER, instructorImage, List.of(new BuildContainerRepositoryDTO(RepositoryType.TESTS)),

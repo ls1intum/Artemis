@@ -24,6 +24,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Pattern;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -93,6 +94,9 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 public class SharedQueueProcessingService {
 
     private static final Logger log = LoggerFactory.getLogger(SharedQueueProcessingService.class);
+
+    /** The shape a build agent short name has to have. */
+    private static final Pattern BUILD_AGENT_SHORT_NAME = Pattern.compile("^[a-z0-9-]+$");
 
     private static final Duration BUILD_CHECK_AVAILABILITY_INTERVAL = Duration.ofSeconds(5);
 
@@ -255,7 +259,7 @@ public class SharedQueueProcessingService {
     @PostConstruct
     public void init() {
         // Validate build agent short name - this doesn't require cluster connection
-        if (!buildAgentShortName.matches("^[a-z0-9-]+$")) {
+        if (!BUILD_AGENT_SHORT_NAME.matcher(buildAgentShortName).matches()) {
             String errorMessage = "Build agent short name must not be empty and only contain lowercase letters, numbers and hyphens."
                     + " Build agent short name should be changed in the application properties under 'artemis.continuous-integration.build-agent.short-name'.";
             log.error(errorMessage);
@@ -1468,7 +1472,7 @@ public class SharedQueueProcessingService {
 
         BuildJobQueueItem requeuedBuildJob() {
             synchronized (lifecycleMonitor) {
-                return Objects.requireNonNull(requeuedBuildJob);
+                return requeuedBuildJob;
             }
         }
 

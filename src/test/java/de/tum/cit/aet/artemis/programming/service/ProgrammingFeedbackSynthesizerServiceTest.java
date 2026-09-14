@@ -11,7 +11,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackMessage;
@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
 @ExtendWith(MockitoExtension.class)
 class ProgrammingFeedbackSynthesizerServiceTest {
 
-    private static final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private static final JsonMapper objectMapper = JsonObjectMapper.get();
 
     @Mock
     private TestCaseFeedbackRepository testCaseFeedbackRepository;

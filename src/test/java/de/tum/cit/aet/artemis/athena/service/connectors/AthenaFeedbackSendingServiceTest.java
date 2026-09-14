@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.athena.AbstractAthenaTest;
 import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSendingService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -82,6 +83,8 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
     @Autowired
     private AthenaFeedbackSendingService athenaFeedbackSendingService;
 
+    private Course course;
+
     private TextExercise textExercise;
 
     private TextSubmission textSubmission;
@@ -104,12 +107,15 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
 
-        var course = courseUtilService.createCourse();
+        course = courseUtilService.createCourse();
         var athenaConfig = new CourseAthenaConfig();
         athenaConfig.setCourse(course);
         athenaConfig.setGradingFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
         course = courseRepository.save(course);
+        // Course.athenaConfig is lazy, so an exercise that comes back from a save carries a course without it. In
+        // production the entry point resolves it with CourseAthenaConfigRepository before anything asks the exercise;
+        // here the course that already holds it is put back, which leaves the service under test the same input.
 
         textExercise = textExerciseUtilService.createSampleTextExercise(course);
 
@@ -137,6 +143,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         // assessed ones rely on unit-test feedback.
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExercise.setCourse(course);
 
         var programmingParticipation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student2");
 
@@ -198,6 +205,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         GradingCriterion gradingCriterion = createExampleGradingCriterion();
         textExercise.setGradingCriteria(Set.of(gradingCriterion));
         textExercise = textExerciseRepository.save(textExercise);
+        textExercise.setCourse(course);
 
         final GradingInstruction instruction = GradingCriterionUtil.findAnyInstructionWhere(textExercise.getGradingCriteria(),
                 gradingInstruction -> "Give this feedback if xyz".equals(gradingInstruction.getInstructionDescription())).orElseThrow();

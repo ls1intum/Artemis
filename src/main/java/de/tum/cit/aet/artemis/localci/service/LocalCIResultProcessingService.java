@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -378,7 +377,10 @@ public class LocalCIResultProcessingService {
         // expected container count.
         // The caller only routes jobs with a membership here; the check makes a future edit of that routing fail loudly
         // instead of locking on a null key.
-        final BuildJobQueueItem.BuildGroupMembership buildGroup = Objects.requireNonNull(buildJob.buildGroup(), "a container job must carry its build group");
+        final BuildJobQueueItem.BuildGroupMembership buildGroup = buildJob.buildGroup();
+        if (buildGroup == null) {
+            throw new IllegalStateException("a container job must carry its build group");
+        }
         final String buildGroupId = buildGroup.buildGroupId();
         // The count this build waits for was fixed by the trigger when the build started and is read from the job, not
         // from the build plan, which may have been edited since.

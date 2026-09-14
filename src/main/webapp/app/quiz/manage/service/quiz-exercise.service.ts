@@ -15,10 +15,14 @@ import { toQuizExerciseUpdateDTO } from 'app/quiz/shared/entities/quiz-exercise-
 import { convertQuizExerciseToCreationDTO } from 'app/quiz/shared/entities/quiz-exercise-creation/quiz-exercise-creation-dto.model';
 import { QuizExerciseDates } from 'app/quiz/shared/entities/quiz-exercise-dates.model';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { QuizPointStatisticsResponse, QuizQuestionStatisticResponse, QuizStatisticsOverviewResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
 export type EntityExerciseDateResponseType = HttpResponse<QuizExerciseDates>;
+export type StatisticsOverviewResponseType = HttpResponse<QuizStatisticsOverviewResponse>;
+export type PointStatisticsResponseType = HttpResponse<QuizPointStatisticsResponse>;
+export type QuestionStatisticResponseType = HttpResponse<QuizQuestionStatisticResponse>;
 
 @Injectable({ providedIn: 'root' })
 export class QuizExerciseService {
@@ -119,13 +123,50 @@ export class QuizExerciseService {
     }
 
     /**
-     * Recalculate the statistics for a given quiz exercise
-     * @param quizExerciseId the id of the quiz exercise for which the statistics should be recalculated
+     * Loads the calculated overview statistics for a quiz exercise.
+     *
+     * @param quizExerciseId the ID of the quiz exercise
+     * @return the quiz exercise overview and its calculated statistics
      */
-    recalculate(quizExerciseId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/recalculate-statistics`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
+    findStatisticsOverview(quizExerciseId: number): Observable<StatisticsOverviewResponseType> {
+        return this.getStatistics<QuizStatisticsOverviewResponse>(quizExerciseId, 'overview');
+    }
+
+    /**
+     * Loads the calculated point distribution for a quiz exercise.
+     *
+     * @param quizExerciseId the ID of the quiz exercise
+     * @return the quiz exercise and its calculated point distribution
+     */
+    findPointStatistic(quizExerciseId: number): Observable<PointStatisticsResponseType> {
+        return this.getStatistics<QuizPointStatisticsResponse>(quizExerciseId, 'points');
+    }
+
+    /**
+     * Loads the calculated statistic for one question in a quiz exercise.
+     *
+     * @param quizExerciseId the ID of the quiz exercise
+     * @param questionId the ID of the quiz question
+     * @return the quiz exercise, question, and calculated question statistic
+     */
+    findQuestionStatistic(quizExerciseId: number, questionId: number): Observable<QuestionStatisticResponseType> {
+        return this.getStatistics<QuizQuestionStatisticResponse>(quizExerciseId, `questions/${questionId}`);
+    }
+
+    /**
+     * Loads a page-specific statistics response and converts its quiz exercise dates.
+     *
+     * @param quizExerciseId the ID of the quiz exercise
+     * @param path the statistics endpoint path relative to the quiz exercise
+     * @return the converted statistics response
+     */
+    private getStatistics<T extends QuizExercise>(quizExerciseId: number, path: string): Observable<HttpResponse<T>> {
+        return this.http.get<T>(`${this.resourceUrl}/${quizExerciseId}/statistics/${path}`, { observe: 'response' }).pipe(
+            map((res) => {
+                this.exerciseService.processExerciseEntityResponse(res);
+                return res;
+            }),
+        );
     }
 
     /**
@@ -241,7 +282,6 @@ export class QuizExerciseService {
 
         quizQuestions!.forEach((question) => {
             if (exportAll === true || question.exportQuiz) {
-                question.quizQuestionStatistic = undefined;
                 question.exercise = undefined;
                 questions.push(question);
             }

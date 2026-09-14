@@ -7,7 +7,7 @@ import { AccountService } from 'app/core/auth/account.service';
 
 /**
  * This service is used to store course scores and participation results (the relevant result used for the score calculation for each participation) for the currently logged-in user.
- * The methods {@link CourseManagementService#findAllForDashboard} and {@link CourseManagementService#findOneForDashboard} retrieve the scores and participation results in addition to one or multiple {@link Course} objects and save the scores and participation results in this service.
+ * The method {@link CourseManagementService#findAllForDashboard} retrieves the scores and participation results in addition to the {@link Course} objects and saves the scores and participation results in this service.
  * This way, multiple components that need the scores and participation results can access them without having to retrieve them again from the server.
  */
 @Injectable({ providedIn: 'root' })

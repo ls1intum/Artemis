@@ -75,23 +75,27 @@
         <h3 jhiTranslate="artemisApp.exercise.sections.grading" id="artemisApp.exercise.sections.grading"></h3>
         <div class="grading-layout">
             @if (!isExamMode()) {
-                <jhi-file-upload-exercise-timeline
+                <jhi-exercise-timeline
                     class="exercise-timeline"
-                    [hasExampleSolution]="!!fileUploadExercise().exampleSolution"
-                    [isImport]="isImport()"
-                    [includedInOverallScore]="fileUploadExercise().includedInOverallScore"
                     [(releaseDate)]="fileUploadExercise().releaseDate"
                     [(startDate)]="fileUploadExercise().startDate"
                     [(dueDate)]="fileUploadExercise().dueDate"
                     [(assessmentDueDate)]="fileUploadExercise().assessmentDueDate"
-                    [exampleSolutionPublicationDate]="fileUploadExercise().exampleSolutionPublicationDate"
-                    (exampleSolutionPublicationDateChange)="fileUploadExercise().exampleSolutionPublicationDate = $event; validateDate()"
-                    [lockedToGroup]="variantLock.locked()"
-                    (lockedClick)="variantLock.openModal()"
+                    [(exampleSolutionPublicationDate)]="fileUploadExercise().exampleSolutionPublicationDate"
+                    [exampleSolutionPublicationDateErrorStringKey]="
+                        fileUploadExercise().exampleSolutionPublicationDate && !fileUploadExercise().exampleSolution
+                            ? 'artemisApp.exercise.exampleSolutionPublicationDateRequiresExampleSolution'
+                            : undefined
+                    "
+                    [exercisePartOfExerciseGroup]="variantLock.locked()"
+                    [isImport]="isImport()"
                     (timelineStatus)="timelineStatus.set($event)"
                 />
             }
             <div class="grading-options">
+                @if (variantLock.locked()) {
+                    <jhi-exercise-group-date-notice class="mb-3" (editGroupDates)="variantLock.openModal()" />
+                }
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ fileUploadExercise().course ? 'Course' : 'Exam' }}Label"></label>
                     <div>
@@ -166,7 +170,7 @@
         [isImport]="isImport()"
         [isCreation]="!fileUploadExercise().id"
         [isSaving]="isSaving()"
-        [isDisabled]="!!(editForm.form.invalid || !timelineStatus().valid || fileUploadExercise().exampleSolutionPublicationDateError)"
+        [isDisabled]="!!(editForm.form.invalid || !timelineStatus().valid)"
         (onCancel)="previousState()"
         (save)="save()"
         [notificationText]="notificationText()"

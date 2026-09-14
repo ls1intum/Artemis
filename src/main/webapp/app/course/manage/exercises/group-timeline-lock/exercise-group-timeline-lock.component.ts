@@ -1,16 +1,16 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Exercise, ExerciseVariantGroupReference } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, ExerciseVariantGroupReference } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { ExerciseVariantGroupDTO, ExerciseVariantGroupService, isPersistableGroup, toUpdateGroupPayload } from 'app/course/manage/exercises/exercise-variant-group.service';
 import { ExerciseGroupEditModalComponent } from 'app/course/manage/exercises/group-edit-modal/exercise-group-edit-modal.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 /**
- * Renders a grouped exercise's timeline pickers as read-only "locked-to-group" fields; clicking one opens
- * {@link ExerciseGroupEditModalComponent}. Saving persists the group timeline and re-emits the exercise with the
- * shared dates applied.
+ * Owns the group timeline edit modal for an exercise update form. The host shows an explicit edit control and calls
+ * {@link openModal}. Saving persists the group timeline and re-emits the exercise with the shared dates applied.
  */
 @Component({
     selector: 'jhi-exercise-group-timeline-lock',
@@ -86,13 +86,18 @@ function referenceToGroup(reference: ExerciseVariantGroupReference | undefined):
 function withGroupTimeline(exercise: Exercise, dto: ExerciseVariantGroupDTO): Exercise {
     // deepClone keeps the prototype, so the fresh reference still satisfies the host's signal comparison
     const updated = deepClone(exercise);
+    if (updated.type === ExerciseType.PROGRAMMING) {
+        const programmingExercise = updated as ProgrammingExercise;
+        const oldDueDate = programmingExercise.dueDate;
+        const oldBuildAndTestDate = programmingExercise.buildAndTestStudentSubmissionsAfterDueDate;
+        programmingExercise.buildAndTestStudentSubmissionsAfterDueDate =
+            oldDueDate && oldBuildAndTestDate && dto.dueDate ? dto.dueDate.add(oldBuildAndTestDate.diff(oldDueDate)) : undefined;
+    }
     updated.releaseDate = dto.releaseDate;
     updated.startDate = dto.startDate;
     updated.dueDate = dto.dueDate;
     updated.assessmentDueDate = dto.assessmentDueDate;
     updated.exampleSolutionPublicationDate = dto.exampleSolutionPublicationDate;
-    // The build-and-test date is not part of the shared timeline: the server re-derives it per programming exercise
-    // from the new due date, so it is left untouched here.
     updated.exerciseVariantGroup = {
         id: dto.id,
         title: dto.title,

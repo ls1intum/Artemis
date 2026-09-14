@@ -51,10 +51,14 @@ export class PdfPreviewDateBoxComponent implements OnInit {
             return `${pages[0].order}`;
         }
 
-        return pages
-            .map((p) => p.order)
-            .sort()
-            .join(', ');
+        return (
+            pages
+                .map((p) => p.order)
+                // Page orders are numbers, so they need a numeric comparator: the default sort compares them as
+                // strings, which listed page 10 before page 2.
+                .sort((a, b) => a - b)
+                .join(', ')
+        );
     });
     isMultiplePages = computed(() => this.selectedPages().length > 1);
     isSubmitDisabled = computed(() => {

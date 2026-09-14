@@ -1,7 +1,11 @@
+---
+id: caching
+title: Caching
+sidebar_label: Caching
+---
+
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
-
-# Caching
 
 This page documents the project policy for caching in Artemis: what is allowed, what is forbidden, why, and the canonical patterns to follow when caching is genuinely needed.
 
@@ -13,7 +17,7 @@ This page documents the project policy for caching in Artemis: what is allowed, 
 
 Artemis runs in a multi-node cluster (3 production nodes behind nginx with round-robin load balancing and no sticky sessions), serving thousands of concurrent users. The two caching layers in use are:
 
-* **Spring `@Cacheable`**, resolved against the `RoutingCacheManager` in `CacheManagerConfiguration`. **Allowed**, but only with explicit eviction logic. Caches whose values are large blobs are per-node; all others are shared across nodes through the distributed data provider, so they work on Hazelcast and on Redis alike. See [Distributed Data](/developer/guidelines/distributed-data) for the split and for why no code may name a backend.
+* **Spring `@Cacheable`**, resolved against the `RoutingCacheManager` in `CacheManagerConfiguration`. **Allowed**, but only with explicit eviction logic. Caches whose values are large blobs are per-node; all others are shared across nodes through the distributed data provider, so they work on Hazelcast and on Redis alike. See [Distributed Data](/developer/guidelines/distributed-data) for the split and for why no code may name a provider.
 * **Hibernate L2 (second-level) entity cache.** **Disabled cluster-wide.** No `@Cache` annotation on any entity or association.
 
 The default answer when you think you need a cache is: do not add one. Ask whether the problem can be solved by a fetch join, an `@EntityGraph`, a DTO projection, or an index — those address the root cause; caches paper over it and introduce coherence problems.

@@ -183,6 +183,6 @@ public class ContentChangeScheduler {
     private void broadcastSummary(long courseId, String runId, int exerciseCount, boolean success) {
         AutoOrchestrationSummaryDTO summary = new AutoOrchestrationSummaryDTO(courseId, runId, exerciseCount, success ? exerciseCount : 0, success ? 0 : exerciseCount,
                 Instant.now(clock));
-        websocketMessagingService.sendMessage(String.format(TOPIC_TEMPLATE, courseId), summary);
+        websocketMessagingService.sendMessage(TOPIC_TEMPLATE.formatted(courseId), summary);
     }
 }

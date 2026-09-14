@@ -277,7 +277,7 @@ export class CourseExercisesComponent implements SidebarView {
     processExercises(exercises: Exercise[]): void {
         const sortedExercises = this.courseOverviewService.sortExercises(this.preserveSidebarParticipationSnapshots(exercises));
         this._sortedExercises.set(sortedExercises);
-        const { groupedData, ungroupedData } = this.courseOverviewService.buildGroupedExerciseData(sortedExercises, this._courseId());
+        const { groupedData, ungroupedData } = this.courseOverviewService.buildGroupedExerciseData(sortedExercises);
         this._sidebarExercises.set(ungroupedData);
         this._accordionExerciseGroups.set(groupedData);
         this.updateSidebarData();

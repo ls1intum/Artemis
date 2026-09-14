@@ -1,11 +1,16 @@
+---
+id: development-process
+title: Development Process
+sidebar_label: Development Process
+---
+
 import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../src/components/Image/Image";
+import TumLiveVideo from "../../src/components/TumLiveVideo/TumLiveVideo";
 import artemisProcessModel from './assets/development-process/artemis-process-model.png';
 import artemisFeatureProposalFlow from './assets/development-process/artemis-feature-proposal-flow.png';
 import uiuxWorkflow from './assets/development-process/uiux_workflow.png';
-
-# Development Process
 
 <Image src={artemisProcessModel} alt="Artemis Process Model - Activity Diagram" size={ImageSize.large} caption="Artemis Process Model - Activity Diagram"></Image>
 
@@ -69,18 +74,7 @@ Furthermore it is important to include a description of the user flow that refer
 
 <Image src={uiuxWorkflow} alt="UI/UX Design Workflow - Activity Diagram" size={ImageSize.large} caption="UI/UX Design Workflow - Activity Diagram"></Image>
 
-<iframe
-    src="https://live.rbg.tum.de/w/artemisintro/46233?video_only=1&t=0"
-    title="UI/UX Design Process Video Tutorial on TUM-Live"
-    width="600"
-    height="350"
-    allowFullScreen
-    loading="lazy"
-    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-    referrerPolicy="no-referrer-when-downgrade"
-    style={{border: 0}}>
-    Watch this video on TUM-Live.
-</iframe>
+<TumLiveVideo src="46233" title="UI/UX Design Process Video Tutorial on TUM-Live" />
 
 ## 4. Create a local Branch
 

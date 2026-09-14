@@ -27,9 +27,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -53,7 +53,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     private CommentThreadRepository commentThreadRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     private static final String TEST_PREFIX = "hyperionproblemstatementresource";
 
@@ -503,7 +503,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     // Targeted refinement endpoint tests
 
     private String buildTargetedRefinementBody(String problemStatement, int startLine, int endLine, Integer startColumn, Integer endColumn, String instruction)
-            throws JsonProcessingException {
+            throws JacksonException {
         ObjectNode node = objectMapper.createObjectNode();
         node.put("problemStatementText", problemStatement);
         node.put("startLine", startLine);

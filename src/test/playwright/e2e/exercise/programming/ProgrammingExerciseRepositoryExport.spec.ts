@@ -347,6 +347,9 @@ test.describe('Programming exercise example solution export', { tag: '@slow' }, 
             projectType: ProjectType.GRADLE_GRADLE,
             releaseDate: dayjs().subtract(2, 'hours'),
             dueDate: dayjs().subtract(1, 'hour'),
+            // The server requires the example solution to be published after the assessment is due, so both dates are
+            // set here rather than leaving the assessment due date at its default a day after the due date
+            assessmentDate: dayjs().subtract(45, 'minutes'),
             exampleSolutionPublicationDate: dayjs().subtract(30, 'minutes'),
         });
     });

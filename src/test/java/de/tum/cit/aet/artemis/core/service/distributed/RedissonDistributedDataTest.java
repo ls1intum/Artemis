@@ -12,10 +12,11 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.DockerClientFactory;
 
-import com.redis.testcontainers.RedisStackContainer;
+import com.redis.testcontainers.RedisContainer;
 
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistributedDataProviderService;
+import de.tum.cit.aet.artemis.shared.ValkeyTestContainerFactory;
 
 @SpringBootTest
 @ActiveProfiles({ PROFILE_BUILDAGENT, PROFILE_TEST_BUILDAGENT })
@@ -27,7 +28,7 @@ class RedissonDistributedDataTest extends AbstractDistributedDataTest {
     @Autowired
     protected RedissonDistributedDataProviderService redissonDistributedDataProvider;
 
-    private static RedisStackContainer redis;
+    private static RedisContainer valkey;
 
     static boolean isDockerAvailable() {
         try {
@@ -40,15 +41,19 @@ class RedissonDistributedDataTest extends AbstractDistributedDataTest {
 
     @BeforeAll
     static void beforeAll() {
-        redis = new RedisStackContainer(RedisStackContainer.DEFAULT_IMAGE_NAME.withTag("7.4.0-v8"));
-        redis.start();
-        System.setProperty("spring.data.redis.host", redis.getHost());
-        System.setProperty("spring.data.redis.port", redis.getMappedPort(6379).toString());
+        valkey = ValkeyTestContainerFactory.create();
+        valkey.start();
+        System.setProperty("spring.data.redis.host", valkey.getHost());
+        System.setProperty("spring.data.redis.port", valkey.getMappedPort(6379).toString());
     }
 
     @AfterAll
     static void afterAll() {
-        redis.stop();
+        // JUnit runs @AfterAll even when @BeforeAll threw, and create() throws when the version property is missing.
+        // Without the guard that failure would surface as a NullPointerException here instead.
+        if (valkey != null) {
+            valkey.stop();
+        }
     }
 
     @Override

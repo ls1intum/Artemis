@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
 
@@ -109,7 +108,8 @@ class BuildPlanConfigurationValidatorTest {
                 new BuildContainerDTO("instructor_tests", DOCKER_IMAGE, List.of(phase("test"), phase("test"))));
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> BuildPlanConfigurationValidator.validate(plan)).satisfies(exception -> {
-            var properties = Objects.requireNonNull(exception.getBody().getProperties());
+            var properties = exception.getBody().getProperties();
+            assertThat(properties).isNotNull();
             // the client resolves the alert text from "message" and interpolates "params" into it, so both are required
             assertThat(properties).containsEntry("message", "error.duplicateBuildPhaseName");
             assertThat(properties.get("params")).isEqualTo(Map.of("container", "instructor_tests", "phase", "test"));
