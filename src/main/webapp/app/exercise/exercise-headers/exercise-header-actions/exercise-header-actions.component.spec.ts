@@ -147,7 +147,7 @@ describe('ExerciseHeaderActionsComponent', () => {
     });
 
     describe('showQuizStartPracticeButton', () => {
-        function quizOpenForPractice(options: { withPracticeParticipation?: boolean; dueDatePassed?: boolean } = {}): QuizExercise {
+        const quizOpenForPractice = (options: { withPracticeParticipation?: boolean; dueDatePassed?: boolean } = {}): QuizExercise => {
             const { withPracticeParticipation = false, dueDatePassed = true } = options;
             const quiz = new QuizExercise(undefined, undefined);
             quiz.id = 42;
@@ -157,9 +157,9 @@ describe('ExerciseHeaderActionsComponent', () => {
                 quiz.studentParticipations.push({ id: 2, testRun: true } as StudentParticipation);
             }
             return quiz;
-        }
+        };
 
-        function setQuizInputs(inputs: { participationMode?: ParticipationMode; quizPracticeAttemptFinished?: boolean; onContinueExercise?: () => void }) {
+        const setQuizInputs = (inputs: { participationMode?: ParticipationMode; quizPracticeAttemptFinished?: boolean; onContinueExercise?: () => void }) => {
             if (inputs.participationMode) {
                 fixture.componentRef.setInput('participationMode', inputs.participationMode);
             }
@@ -169,7 +169,7 @@ describe('ExerciseHeaderActionsComponent', () => {
             if (inputs.onContinueExercise) {
                 fixture.componentRef.setInput('onContinueExercise', inputs.onContinueExercise);
             }
-        }
+        };
 
         it('should not show the button when practice is not available yet', () => {
             createComponent(quizOpenForPractice({ dueDatePassed: false }));

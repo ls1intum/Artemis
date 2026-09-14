@@ -304,7 +304,7 @@ describe('SubmissionResultStatusComponent', () => {
             submissions: [{ submitted: true, results: [selectedResult, { id: 2 }] }],
         } as StudentParticipation;
 
-        async function render(inputs: { result?: Result; quizPracticeInProgress?: boolean }) {
+        const render = async (inputs: { result?: Result; quizPracticeInProgress?: boolean }) => {
             fixture.componentRef.setInput('exercise', quizExercise);
             fixture.componentRef.setInput('studentParticipation', participationWithResults);
             fixture.componentRef.setInput('result', inputs.result);
@@ -312,7 +312,7 @@ describe('SubmissionResultStatusComponent', () => {
             TestBed.tick();
             fixture.detectChanges();
             await fixture.whenStable();
-        }
+        };
 
         it('should render the selected result statically instead of the updating result', async () => {
             await render({ result: selectedResult });

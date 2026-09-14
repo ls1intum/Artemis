@@ -537,7 +537,7 @@ describe('ExerciseHeaderComponent', () => {
     });
 
     describe('quiz practice attempt state', () => {
-        function configureQuizPractice(exercise: QuizExercise | ModelingExercise, participationMode: 'graded' | 'practice', quizPracticeAttemptFinished: boolean) {
+        const configureQuizPractice = (exercise: QuizExercise | ModelingExercise, participationMode: 'graded' | 'practice', quizPracticeAttemptFinished: boolean) => {
             exercise.dueDate = dayjs().subtract(1, 'hours');
             fixture.componentRef.setInput('exercise', exercise);
             fixture.componentRef.setInput('courseId', 5);
@@ -545,7 +545,7 @@ describe('ExerciseHeaderComponent', () => {
             fixture.componentRef.setInput('quizPracticeAttemptFinished', quizPracticeAttemptFinished);
             fixture.componentRef.setInput('onSubmitExercise', submitCallback);
             fixture.detectChanges();
-        }
+        };
 
         it('should mark a quiz practice attempt as in progress until it is finished', () => {
             configureQuizPractice(new QuizExercise(undefined, undefined), 'practice', false);
