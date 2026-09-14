@@ -22,8 +22,16 @@ public class DockerConfiguration {
     @Bean(destroyMethod = "close")
     public DockerClient dockerClient() {
         var config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
+        requireSecureTransport(config);
         var transport = new ZerodepDockerHttpClient.Builder().dockerHost(config.getDockerHost()).sslConfig(config.getSSLConfig()).maxConnections(8)
                 .connectionTimeout(Duration.ofSeconds(10)).responseTimeout(Duration.ofMinutes(3)).build();
         return DockerClientImpl.getInstance(config, transport);
+    }
+
+    static void requireSecureTransport(DefaultDockerClientConfig config) {
+        String scheme = config.getDockerHost().getScheme();
+        if (!"unix".equals(scheme) && !"npipe".equals(scheme) && config.getSSLConfig() == null) {
+            throw new IllegalArgumentException("Remote Docker connections require TLS; use a local socket or configure Docker TLS verification");
+        }
     }
 }

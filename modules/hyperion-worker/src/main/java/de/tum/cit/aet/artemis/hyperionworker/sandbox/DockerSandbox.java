@@ -370,7 +370,15 @@ public class DockerSandbox implements InteractiveSandbox {
                 return false;
             }
             try {
-                UUID.fromString(name.substring(prefix.length()));
+                String suffix = name.substring(prefix.length());
+                if (suffix.length() == 73 && suffix.charAt(36) == '-') {
+                    UUID.fromString(suffix.substring(0, 36));
+                    suffix = suffix.substring(37);
+                }
+                if (suffix.length() != 36) {
+                    return false;
+                }
+                UUID.fromString(suffix);
                 return true;
             }
             catch (IllegalArgumentException ignored) {
@@ -435,8 +443,8 @@ public class DockerSandbox implements InteractiveSandbox {
                     }
 
                     if (!completed) {
-                        destroySession(sessionId);
                         closeQuietly(callback);
+                        destroySession(sessionId);
                         return new SandboxExecResult(-1, stdout.snapshot(), stderr.snapshot(), true);
                     }
 

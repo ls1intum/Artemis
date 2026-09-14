@@ -369,4 +369,63 @@ class DockerSandboxTest {
         verify(removeContainerCmd).exec();
         assertThat(service.lastActivity("container-1")).isEmpty();
     }
+
+    @Test
+    void reconciliationMatchesExecutionContainersWithoutMatchingAnotherWorker() {
+        String worker = DockerSandbox.containerNamePrefix("worker-1");
+        String execution = java.util.UUID.randomUUID().toString();
+        String containerId = java.util.UUID.randomUUID().toString();
+        var container = mock(com.github.dockerjava.api.model.Container.class);
+        when(container.getNames()).thenReturn(new String[] { "/" + worker + execution + "-" + containerId });
+        assertThat(DockerSandbox.hasSandboxContainerName(container, worker)).isTrue();
+        assertThat(DockerSandbox.hasSandboxContainerName(container, worker + execution + "-")).isTrue();
+        assertThat(DockerSandbox.hasSandboxContainerName(container, DockerSandbox.containerNamePrefix("worker-2"))).isFalse();
+        assertThat(DockerSandbox.hasSandboxContainerName(container, worker + java.util.UUID.randomUUID() + "-")).isFalse();
+        when(container.getNames()).thenReturn(new String[] { "/" + worker + "not-an-execution-" + containerId });
+        assertThat(DockerSandbox.hasSandboxContainerName(container, worker)).isFalse();
+    }
+
+    @Test
+    void simultaneousTimeoutsReleaseAllStreamConnectionsBeforeRemoval() throws Exception {
+        int connections = 8;
+        var pool = new java.util.concurrent.Semaphore(connections);
+        var allStarted = new java.util.concurrent.CountDownLatch(connections);
+        ExecCreateCmd create = mock(ExecCreateCmd.class, org.mockito.Mockito.RETURNS_SELF);
+        ExecCreateCmdResponse created = mock(ExecCreateCmdResponse.class);
+        ExecStartCmd start = mock(ExecStartCmd.class, org.mockito.Mockito.RETURNS_SELF);
+        RemoveContainerCmd remove = mock(RemoveContainerCmd.class, org.mockito.Mockito.RETURNS_SELF);
+        when(dockerClient.execCreateCmd(anyString())).thenReturn(create);
+        when(create.exec()).thenReturn(created);
+        when(created.getId()).thenReturn("exec");
+        when(dockerClient.execStartCmd("exec")).thenReturn(start);
+        doAnswer(invocation -> {
+            assertThat(pool.tryAcquire()).isTrue();
+            ResultCallback<Frame> callback = invocation.getArgument(0);
+            callback.onStart(pool::release);
+            allStarted.countDown();
+            assertThat(allStarted.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+            return callback;
+        }).when(start).exec(any());
+        when(dockerClient.removeContainerCmd(anyString())).thenReturn(remove);
+        doAnswer(invocation -> {
+            // A real exhausted HTTP pool blocks here. Fail immediately instead of hanging the regression test.
+            assertThat(pool.tryAcquire()).as("stream connection released before container removal").isTrue();
+            pool.release();
+            return null;
+        }).when(remove).exec();
+        DockerSandbox service = new DockerSandbox(dockerClient,
+                new WorkerSettings("worker-1", IMAGE_ID, "runc", 1024 * 1024 * 1024, 100_000, 128, Duration.ofSeconds(10), Duration.ofSeconds(45), Duration.ofSeconds(5)));
+        try (var executor = java.util.concurrent.Executors.newFixedThreadPool(connections)) {
+            var futures = new java.util.ArrayList<java.util.concurrent.Future<SandboxExecResult>>();
+            for (int i = 0; i < connections; i++) {
+                String session = "container-" + i;
+                service.markActive(session);
+                futures.add(executor.submit(() -> service.exec(session, Duration.ZERO, "sleep", "10")));
+            }
+            for (var future : futures) {
+                assertThat(future.get(10, java.util.concurrent.TimeUnit.SECONDS).timedOut()).isTrue();
+            }
+        }
+        assertThat(pool.availablePermits()).isEqualTo(connections);
+    }
 }

@@ -97,4 +97,20 @@ class WorkerMessageCodecTest {
     private static ExecutionIdentity identity() {
         return new ExecutionIdentity("job", 1, UUID.randomUUID(), "worker-1", UUID.randomUUID());
     }
+
+    @Test
+    void emptyBriefValuesRoundTripWithoutChangingMeaning() {
+        var mapper = new JsonMapper();
+        var brief = new ExerciseBrief("", "", "de.example", "", "", ExerciseBrief.Mode.ADAPT);
+        assertThat(mapper.readValue(mapper.writeValueAsString(brief), ExerciseBrief.class)).isEqualTo(brief);
+        var output = new GenerationOutput(new WorkspaceSnapshot(List.of()), new VerificationResult(false, false, false, 0, List.of()), null, new SpecFidelityReport(List.of()), "",
+                null, GenerationOutput.AccountingState.INCOMPLETE, "");
+        assertThat(mapper.readValue(mapper.writeValueAsString(output), GenerationOutput.class)).isEqualTo(output);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "class", "de.class", "int.example", "de._", "de..example" })
+    void rejectsInvalidJavaPackageNames(String name) {
+        assertThatThrownBy(() -> new ExerciseBrief("Title", "short", name, null, "prompt", ExerciseBrief.Mode.GENERATE)).isInstanceOf(IllegalArgumentException.class);
+    }
 }
