@@ -513,11 +513,12 @@ public class ProgrammingExerciseUpdateResource {
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate ProgrammingExercise with id: {}", updateDTO.id());
 
+        var authorizationExercise = programmingExerciseRepository.findForUpdateByIdElseThrow(exerciseId);
+
         if (updateDTO.id() == null || exerciseId != updateDTO.id()) {
             throw new ConflictException("Exercise id in path does not match id in request body", ENTITY_NAME, "idMismatch");
         }
 
-        var authorizationExercise = programmingExerciseRepository.findForUpdateByIdElseThrow(exerciseId);
         var user = userRepository.getUserWithAuthorities();
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(authorizationExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
