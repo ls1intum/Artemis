@@ -28,19 +28,21 @@ class DirectoryRepositoryContentSink implements RepositoryContentSink {
 
     private static final Set<PosixFilePermission> OWNER_READ_WRITE = EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE);
 
+    private static final Set<PosixFilePermission> OWNER_ALL = EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE);
+
     private static final Set<StandardOpenOption> WRITE_OPTIONS = EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
 
     private final Path root;
 
     DirectoryRepositoryContentSink(Path root) throws IOException {
         this.root = root.toAbsolutePath().normalize();
-        Files.createDirectories(this.root);
+        createOwnerOnlyDirectories(this.root);
     }
 
     @Override
     public OutputStream openFile(String relativePath, int unixMode) throws IOException {
         Path target = resolveSafely(relativePath);
-        Files.createDirectories(target.getParent());
+        createOwnerOnlyDirectories(target.getParent());
         OutputStream outputStream = openOwnerOnly(target);
         return new OutputStream() {
 
@@ -71,7 +73,37 @@ class DirectoryRepositoryContentSink implements RepositoryContentSink {
 
     @Override
     public void createDirectory(String relativePath) throws IOException {
-        Files.createDirectories(resolveSafely(relativePath));
+        createOwnerOnlyDirectories(resolveSafely(relativePath));
+    }
+
+    /**
+     * Creates the directory and any missing parent, readable only by the owner.
+     *
+     * <p>
+     * Giving the files owner-only content is not enough on its own: {@link Files#createDirectories} applies the process
+     * umask, so with the usual {@code 022} the export tree stays {@code rwxr-xr-x} and every other local account can
+     * still walk it and read the file names - which spell out the structure of a student's repository. Directories that
+     * already exist are tightened as well, because the attribute below only applies to the ones actually created.
+     *
+     * @param directory the directory to create
+     * @throws IOException if the directory cannot be created
+     */
+    private static void createOwnerOnlyDirectories(Path directory) throws IOException {
+        // createDirectories returns quietly for a directory that is already there, and the attribute below only applies
+        // to the ones it actually creates - so an existing directory keeps whatever mode it was made with.
+        boolean existed = Files.isDirectory(directory);
+        try {
+            Files.createDirectories(directory, PosixFilePermissions.asFileAttribute(OWNER_ALL));
+        }
+        catch (UnsupportedOperationException e) {
+            // Windows has no POSIX view, so the creation attribute cannot be requested.
+            log.debug("Could not create {} with owner-only permissions: {}", directory, e.getMessage());
+            Files.createDirectories(directory);
+            return;
+        }
+        if (existed) {
+            setPermissionsQuietly(directory, OWNER_ALL);
+        }
     }
 
     /**
@@ -133,6 +165,16 @@ class DirectoryRepositoryContentSink implements RepositoryContentSink {
         if ((unixMode & 0100) != 0) {
             permissions.add(PosixFilePermission.OWNER_EXECUTE);
         }
+        setPermissionsQuietly(path, permissions);
+    }
+
+    /**
+     * Applies the permissions, tolerating a file system that has no POSIX view.
+     *
+     * @param path        the file or directory to change
+     * @param permissions the permissions to set
+     */
+    private static void setPermissionsQuietly(Path path, Set<PosixFilePermission> permissions) {
         try {
             Files.setPosixFilePermissions(path, permissions);
         }

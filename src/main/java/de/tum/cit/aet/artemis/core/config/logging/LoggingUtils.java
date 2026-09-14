@@ -57,6 +57,10 @@ public final class LoggingUtils {
 
         PatternLayout layout = new PatternLayout();
         layout.setContext(context);
+        // This assembles JSON by hand, so it only escapes what the pattern's converters escape. CrlfEscapingMessageConverter
+        // takes the line breaks out of %msg, which is what would otherwise forge a whole record, but a quote or a backslash
+        // in a logged value still terminates the JSON string and lets an attacker add fields to this one. Closing that needs
+        // a real JSON encoder rather than a pattern; logstash-logback-encoder is excluded in build.gradle today.
         layout.setPattern("{\"timestamp\":\"%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ}\",\"level\":\"%level\",\"logger\":\"%logger\",\"thread\":\"%thread\",\"message\":\"%msg\"}%n");
         layout.start();
 

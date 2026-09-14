@@ -15,6 +15,10 @@ import java.io.OutputStream;
  */
 public interface RepositoryContentSink extends Closeable {
 
+    // How far an implementation honours unixMode is its own decision. ZipRepositoryContentSink records it on the entry
+    // verbatim, because that is what a student extracts. DirectoryRepositoryContentSink keeps only the executable bit
+    // and writes owner-only, because the directory it produces is server-side and holds student code.
+
     /**
      * Opens the file at {@code relativePath} for writing. The caller writes the content and closes the stream; closing
      * the stream must not close the sink.

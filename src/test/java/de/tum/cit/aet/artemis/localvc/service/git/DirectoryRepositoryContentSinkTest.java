@@ -11,6 +11,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -100,6 +101,28 @@ class DirectoryRepositoryContentSinkTest {
                         .containsExactlyInAnyOrder(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE);
             }
         }
+    }
+
+    /**
+     * Owner-only file contents do not help if the tree around them is world-traversable: the file names alone spell out
+     * the structure of a student's repository. The directories the sink creates have to be owner-only too.
+     */
+    @Test
+    void shouldCreateDirectoriesOwnerOnly() throws IOException {
+        assumeTrue(FileSystems.getDefault().supportedFileAttributeViews().contains("posix"), "POSIX permissions are not supported on this file system");
+
+        Path root = tempDir.resolve("repository");
+        try (DirectoryRepositoryContentSink sink = new DirectoryRepositoryContentSink(root)) {
+            sink.createDirectory(".git/objects/pack/");
+            try (OutputStream outputStream = sink.openFile("src/main/java/Main.java", 0100644)) {
+                outputStream.write("public class Main {}".getBytes(StandardCharsets.UTF_8));
+            }
+        }
+
+        Set<PosixFilePermission> ownerOnly = Set.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE);
+        assertThat(Files.getPosixFilePermissions(root)).as("the export root").isEqualTo(ownerOnly);
+        assertThat(Files.getPosixFilePermissions(root.resolve(".git/objects/pack"))).as("an explicitly created directory").isEqualTo(ownerOnly);
+        assertThat(Files.getPosixFilePermissions(root.resolve("src/main/java"))).as("a parent created on the way to a file").isEqualTo(ownerOnly);
     }
 
     /**

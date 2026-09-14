@@ -6,6 +6,7 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -49,6 +50,39 @@ class CrlfEscapingMessageConverterTest {
         assertThat(convert(message.strip())).isEqualTo(expected.strip());
     }
 
+    /**
+     * A multi-line format string is written by a developer, not by a user, and several of them exist for a reason: the
+     * startup banner, the report printed when a bean fails to initialize, and Spring Boot's own
+     * {@code APPLICATION FAILED TO START} analysis. Collapsing those into one line of escapes would ruin exactly the
+     * output an operator reads during an incident, so line breaks the format string itself carries have to survive.
+     */
+    @Test
+    void shouldKeepTheLineBreaksAFormatStringCarriesItself() {
+        String banner = "\n----------------------------------------\n\tArtemis is running!\n----------------------------------------";
+
+        assertThat(convert(banner)).isEqualTo(banner);
+    }
+
+    /**
+     * SLF4J renders an array or a collection as {@code [a, b]}. The escaping has to go through that same rendering, or
+     * a log line changes shape as a side effect of this converter.
+     */
+    @Test
+    void shouldRenderNonStringArgumentsTheWaySlf4jDoes() {
+        assertThat(convert("ids {} and {}", new int[] { 1, 2, 3 }, "a\nb")).isEqualTo("ids [1, 2, 3] and a\\nb");
+        assertThat(convert("values {} and {}", List.of("a", "b"), "c\nd")).isEqualTo("values [a, b] and c\\nd");
+        assertThat(convert("missing {} and {}", null, "e\nf")).isEqualTo("missing null and e\\nf");
+    }
+
+    /**
+     * A trailing throwable is the event's throwable rather than a value to substitute, and {@code %wEx} renders it
+     * separately. Handing it back untouched keeps SLF4J's own handling of that case intact.
+     */
+    @Test
+    void shouldLeaveATrailingThrowableToTheThrowableConverter() {
+        assertThat(convert("failed for {}", "victim\nforged", new IllegalStateException("boom"))).isEqualTo("failed for victim\\nforged");
+    }
+
     @Test
     void shouldEscapeLineBreaksComingFromAnInterpolatedArgument() {
         // the shape of a log-forging attempt: the value carries a line break plus a plausible-looking record
@@ -62,8 +96,8 @@ class CrlfEscapingMessageConverterTest {
 
     @Test
     void shouldEscapeCarriageReturnsAndCarriageReturnLineFeeds() {
-        assertThat(convert("a\rb")).isEqualTo("a\\rb");
-        assertThat(convert("a\r\nb")).isEqualTo("a\\r\\nb");
+        assertThat(convert("value {}", "a\rb")).isEqualTo("value a\\rb");
+        assertThat(convert("value {}", "a\r\nb")).isEqualTo("value a\\r\\nb");
     }
 
     /**
@@ -91,7 +125,7 @@ class CrlfEscapingMessageConverterTest {
         layout.start();
 
         assertThat(layout.isStarted()).as("pattern layout failed to start, see the Logback status messages").isTrue();
-        assertThat(layout.doLayout(event(context, "before\nafter"))).isEqualTo("before\\nafter");
+        assertThat(layout.doLayout(event(context, "value {}", "before\nafter"))).isEqualTo("value before\\nafter");
     }
 
     /**
