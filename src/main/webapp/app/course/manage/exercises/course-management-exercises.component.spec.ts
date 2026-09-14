@@ -265,6 +265,17 @@ describe('Course Management Exercises Component', () => {
             expect(alertSpy).toHaveBeenCalled();
         });
 
+        it('explains an automatic LocalCI test run after the assessment due date', () => {
+            vi.spyOn(variantGroupService, 'setExerciseVariantGroup').mockReturnValue(
+                throwError(() => new HttpErrorResponse({ error: { errorKey: 'automaticTestRunAfterAssessmentDueDate' } })),
+            );
+            const alertSpy = vi.spyOn(alertService, 'addErrorAlert');
+
+            comp.changeExerciseGroup(comp.exercises()[0], { id: 7, exercises: [] });
+
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.exerciseManagement.error.automaticTestRunAfterAssessmentDueDate');
+        });
+
         it('relays table group changes to changeExerciseGroup', () => {
             const setSpy = vi.spyOn(variantGroupService, 'setExerciseVariantGroup').mockReturnValue(of(undefined));
             comp.onTableGroupChange({ exercise: comp.exercises()[0], group: undefined });

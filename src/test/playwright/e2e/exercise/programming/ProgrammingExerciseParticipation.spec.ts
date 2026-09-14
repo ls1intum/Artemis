@@ -112,7 +112,7 @@ test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => 
             // load: a single notification can be missed when the trigger-build request is processed on a different node
             // than the student's websocket session. The build (and its eventual result) always run; only the transient
             // building push may be lost. Re-trigger a fresh build until the card shows the live indicator — mirroring how
-            // other tests here re-issue best-effort async backend actions (e.g. the message-search retry) — so this
+            // other tests here re-issue best-effort async server actions (e.g. the message-search retry) — so this
             // assertion reliably observes the websocket-driven re-render instead of depending on a single push.
             let buildingObserved = false;
             for (let attempt = 0; attempt < 6 && !buildingObserved; attempt++) {

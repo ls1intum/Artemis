@@ -7,7 +7,8 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
+
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
@@ -17,7 +18,7 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
  * NotificationTargets are intended to have different attributes, i.e. many will be null
  * TODO: Delete when deleting {@link de.tum.cit.aet.artemis.communication.service.CourseNotificationPushProxyService}
  */
-@JsonInclude(NON_EMPTY) // needed for ObjectMapper to ignore null values
+@JsonInclude(NON_EMPTY) // needed for JsonMapper to ignore null values
 public class NotificationTarget {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationTarget.class);
@@ -160,7 +161,7 @@ public class NotificationTarget {
         try {
             result = JsonObjectMapper.get().writeValueAsString(this);
         }
-        catch (JsonProcessingException exception) {
+        catch (JacksonException exception) {
             log.error(exception.getMessage(), exception);
         }
         return result;

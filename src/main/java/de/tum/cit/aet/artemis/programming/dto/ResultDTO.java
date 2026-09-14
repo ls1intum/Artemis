@@ -63,12 +63,49 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
      */
     public static ResultDTO of(Result result, Collection<Feedback> filteredFeedback) {
         SubmissionDTO submissionDTO = null;
-        if (Hibernate.isInitialized(result.getSubmission()) && result.getSubmission() != null) {
+        // Hibernate.isInitialized(null) is true, so the null check has to stand next to it.
+        if (result.getSubmission() != null && Hibernate.isInitialized(result.getSubmission())) {
             submissionDTO = SubmissionDTO.of(result.getSubmission(), false, null, null);
         }
         var feedbackDTOs = filteredFeedback.stream().map(FeedbackDTO::of).toList();
         return new ResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(), submissionDTO,
                 ParticipationDTO.of(result.getSubmission().getParticipation()), feedbackDTOs, result.getAssessmentType(), result.getCorrectionRound(), result.hasComplaint(),
                 result.isExampleResult(), result.getTestCaseCount(), result.getPassedTestCaseCount(), result.getCodeIssueCount());
+    }
+
+    /**
+     * Converts a Result that is serialized <em>nested under its own submission</em> into a ResultDTO.
+     * <p>
+     * Both {@code submission} and {@code participation} are left {@code null}: the entity wire suppresses them via
+     * {@code @JsonIgnoreProperties({"submission", "participation"})} on {@code Submission.results}, and re-emitting
+     * them would repeat the whole submission/participation/exercise/course subtree once per result. Unlike
+     * {@link #of(Result, Collection)} this never dereferences {@code result.getSubmission()}, so a result with a
+     * {@code null} submission maps without a {@link NullPointerException}.
+     * <p>
+     * The feedback collection is only mapped when it is already initialized, so this never triggers a lazy load.
+     *
+     * @param result the result to convert
+     * @return the converted DTO
+     */
+    public static ResultDTO ofNested(Result result) {
+        var feedbacks = result.getFeedbacks();
+        return ofNested(result, feedbacks != null && Hibernate.isInitialized(feedbacks) ? feedbacks : null);
+    }
+
+    /**
+     * Converts a Result that is serialized <em>nested under its own submission</em> into a ResultDTO, with an
+     * explicit feedback list. Callers that filter feedback (sensitive-information filtering) use this overload so
+     * they never have to mutate the managed result to shape the JSON; callers that just want whatever is loaded use
+     * {@link #ofNested(Result)}.
+     *
+     * @param result           the result to convert
+     * @param filteredFeedback the feedback that should be sent to the client; {@code null} maps to no feedback list
+     * @return the converted DTO
+     */
+    public static ResultDTO ofNested(Result result, Collection<Feedback> filteredFeedback) {
+        List<FeedbackDTO> feedbackDTOs = filteredFeedback == null ? null : filteredFeedback.stream().map(FeedbackDTO::of).toList();
+        return new ResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(), null, null, feedbackDTOs,
+                result.getAssessmentType(), result.getCorrectionRound(), result.hasComplaint(), result.isExampleResult(), result.getTestCaseCount(),
+                result.getPassedTestCaseCount(), result.getCodeIssueCount());
     }
 }

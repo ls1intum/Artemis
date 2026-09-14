@@ -19,7 +19,7 @@ import org.springframework.test.web.client.match.MockRestRequestMatchers;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasMLEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasMLRestTemplateConfiguration;
@@ -52,7 +52,7 @@ public class AtlasMLRequestMockProvider {
     private MockRestServiceServer shortTimeoutMockServer;
 
     @Autowired
-    private ObjectMapper mapper;
+    private JsonMapper mapper;
 
     public AtlasMLRequestMockProvider(@Qualifier("atlasmlRestTemplate") RestTemplate atlasmlRestTemplate,
             @Qualifier("shortTimeoutAtlasmlRestTemplate") RestTemplate shortTimeoutAtlasmlRestTemplate, AtlasMLRestTemplateConfiguration config) {

@@ -2,11 +2,13 @@ package de.tum.cit.aet.artemis.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Optional;
@@ -200,6 +202,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
 
             studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(studentExam, student);
 
+            await().atMost(Duration.ofSeconds(5)).untilAsserted(athenaRequestMockProvider::verify);
             verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(textParticipation), any(Result.class));
         }
 
@@ -234,6 +237,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
 
             studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(studentExam, student);
 
+            await().atMost(Duration.ofSeconds(5)).untilAsserted(athenaRequestMockProvider::verify);
             verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(modelingParticipation), any(Result.class));
         }
 
@@ -278,6 +282,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
 
             studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(studentExam, student);
 
+            await().atMost(Duration.ofSeconds(5)).untilAsserted(athenaRequestMockProvider::verify);
             verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(modelingParticipation), any(Result.class));
         }
     }
@@ -713,6 +718,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             String url = "/api/exam/courses/" + course.getId() + "/exams/" + testExam.getId() + "/student-exams/" + studentExam.getId() + "/request-feedback";
             request.postWithoutResponseBody(url, null, HttpStatus.OK);
 
+            await().atMost(Duration.ofSeconds(5)).untilAsserted(athenaRequestMockProvider::verify);
             verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(textParticipation), any(Result.class));
         }
 

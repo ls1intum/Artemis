@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.util;
 
 import java.text.Normalizer;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -8,6 +9,15 @@ import org.apache.commons.lang3.StringUtils;
  * Utility class for String manipulation
  */
 public class StringUtil {
+
+    /** Everything outside ASCII, dropped after the input was decomposed. */
+    private static final Pattern NON_ASCII = Pattern.compile("[^\\x00-\\x7F]");
+
+    /** A run of whitespace, which a file name spells as an underscore. */
+    private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
+
+    /** The remaining characters a file name may not contain. */
+    private static final Pattern UNSAFE_FILENAME_CHARACTER = Pattern.compile("[\\\\/:*?#+%$§\"<>|]");
 
     public static final String ILLEGAL_CHARACTERS = "#%&{}\\<>*?/$!'\":@+`|=.";
 
@@ -41,7 +51,8 @@ public class StringUtil {
         if (input == null) {
             return "";
         }
-        String asciiReduced = Normalizer.normalize(input, Normalizer.Form.NFD).replaceAll("[^\\x00-\\x7F]", "");
-        return asciiReduced.replaceAll("\\s+", "_").replaceAll("[\\\\/:*?#+%$§\"<>|]", "");
+        String asciiReduced = NON_ASCII.matcher(Normalizer.normalize(input, Normalizer.Form.NFD)).replaceAll("");
+        String underscored = WHITESPACE_RUN.matcher(asciiReduced).replaceAll("_");
+        return UNSAFE_FILENAME_CHARACTER.matcher(underscored).replaceAll("");
     }
 }

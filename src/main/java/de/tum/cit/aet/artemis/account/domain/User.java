@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -31,6 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.BatchSize;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.webauthn.api.Bytes;
 
@@ -307,16 +310,29 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     /**
-     * @return name as a concatenation of first name and last name
+     * The display name: first and last name joined by a space, skipping whichever is blank. Falls back to the login when neither is
+     * set, which happens for accounts an LTI platform provisions without name claims (Open edX sends none by default). The result is
+     * also used as the git committer identity, and JGit rejects a null name there.
+     *
+     * @return the display name, never null for a persisted user
      */
     @Override
     public String getName() {
-        if (lastName != null && !lastName.isEmpty()) {
-            return firstName + " " + lastName;
-        }
-        else {
-            return firstName;
-        }
+        return displayName(firstName, lastName, login);
+    }
+
+    /**
+     * The single owner of the display-name rule, shared with the DTOs that carry a user's name fields without the entity (mail
+     * recipients, student lists, plagiarism cases). Keep every copy on this method so the fallback cannot drift.
+     *
+     * @param firstName the first name, may be null or blank
+     * @param lastName  the last name, may be null or blank
+     * @param login     the login to fall back to when both names are blank
+     * @return the non-blank name parts joined by a space, or the login when there are none
+     */
+    public static @Nullable String displayName(@Nullable String firstName, @Nullable String lastName, @Nullable String login) {
+        String name = Stream.of(firstName, lastName).filter(StringUtils::isNotBlank).collect(Collectors.joining(" "));
+        return name.isEmpty() ? login : name;
     }
 
     public String getEmail() {

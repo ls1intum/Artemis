@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
@@ -92,7 +92,7 @@ public class ProgrammingExercisePartialUpdateResource {
     @PutMapping("programming-exercises/timeline")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExercise> updateProgrammingExerciseTimeline(@RequestBody ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO,
+    public ResponseEntity<ProgrammingExerciseResponseDTO> updateProgrammingExerciseTimeline(@RequestBody ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update the timeline of ProgrammingExercise : {}", timelineUpdateDTO.id());
         var existingProgrammingExercise = programmingExerciseRepository.findByIdElseThrow(timelineUpdateDTO.id());
@@ -110,7 +110,7 @@ public class ProgrammingExercisePartialUpdateResource {
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
-                .body(updatedProgrammingExercise);
+                .body(ProgrammingExerciseResponseDTO.of(updatedProgrammingExercise));
     }
 
     /**
@@ -124,7 +124,7 @@ public class ProgrammingExercisePartialUpdateResource {
      */
     @PatchMapping("programming-exercises/{exerciseId}/problem-statement")
     @EnforceAtLeastEditor
-    public ResponseEntity<ProgrammingExercise> updateProblemStatement(@PathVariable long exerciseId, @RequestBody String updatedProblemStatement,
+    public ResponseEntity<ProgrammingExerciseResponseDTO> updateProblemStatement(@PathVariable long exerciseId, @RequestBody String updatedProblemStatement,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ProgrammingExercise with new problem statement: {}", updatedProblemStatement);
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exerciseId)
@@ -137,7 +137,7 @@ public class ProgrammingExercisePartialUpdateResource {
         // we saved a problem statement with test ids instead of test names. For easier editing we send a problem statement with test names to the client:
         programmingExerciseTaskService.replaceTestIdsWithNames(updatedProgrammingExercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
-                .body(updatedProgrammingExercise);
+                .body(ProgrammingExerciseResponseDTO.of(updatedProgrammingExercise));
     }
 
 }

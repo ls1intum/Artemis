@@ -40,13 +40,14 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
 
@@ -72,6 +73,15 @@ public class ExerciseSharingService {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseSharingService.class);
 
+    /** The basket entry that holds the exercise details. */
+    private static final Pattern EXERCISE_DETAILS_ENTRY = Pattern.compile("^Exercise-Details", Pattern.CASE_INSENSITIVE);
+
+    /** The characters an export token may consist of. */
+    private static final Pattern VALID_EXPORT_TOKEN = Pattern.compile("^[a-zA-Z0-9_-]+$");
+
+    /** Everything a basket token may not contain, removed before it becomes part of a file name. */
+    private static final Pattern UNSAFE_TOKEN_CHARACTER = Pattern.compile("[^a-zA-Z0-9_-]");
+
     private static final int COPY_BUFFER_SIZE = 102400;
 
     @Value("${artemis.repo-download-clone-path}")
@@ -89,12 +99,12 @@ public class ExerciseSharingService {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     /**
-     * Local {@link ObjectMapper} instance that ignores unknown JSON fields.
+     * Local {@link JsonMapper} instance that ignores unknown JSON fields.
      * <p>
      * Allows the Sharing Platform to evolve its metadata format without breaking imports.
      * </p>
      */
-    private final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     public ExerciseSharingService(ProgrammingExerciseExportService programmingExerciseExportService, SharingConnectorService sharingConnectorService,
             ProgrammingExerciseRepository programmingExerciseRepository, @Qualifier("sharingRestTemplate") RestTemplate restTemplate) {
@@ -103,9 +113,9 @@ public class ExerciseSharingService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.restTemplate = restTemplate;
 
-        // Configure ObjectMapper to ignore unknown properties
-        this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        this.objectMapper.findAndRegisterModules();
+        // The two lines that used to sit here reconfigured the shared mapper in place, which was never safe.
+        // Neither is needed: JsonObjectMapper already disables FAIL_ON_UNKNOWN_PROPERTIES, and the modules
+        // findAndRegisterModules() used to pick up (java.time, JDK 8) are built into jackson-databind 3.
     }
 
     /**
@@ -164,24 +174,27 @@ public class ExerciseSharingService {
     }
 
     /**
-     * Parses the {@code Exercise-Details*} entry from a basket ZIP and returns it as a {@link ProgrammingExercise}.
+     * Parses the {@code Exercise-Details*} entry from a basket ZIP and returns it as an
+     * {@link ImportProgrammingExerciseRequestDTO}.
      * <p>
-     * Unknown JSON properties are ignored; the returned entity has {@code id = null}.
+     * The details object backs the whole create form in the client and is posted straight back to
+     * {@code sharing/setup-import}, which is why the request record is also the response shape here. Unknown JSON
+     * properties are ignored — exported archives carry fields the current model no longer has. The {@code id} is
+     * stripped, because the exercise is created anew in this Artemis instance.
      * </p>
      *
      * @param sharingInfo basket reference
      * @return the parsed exercise details
      * @throws EntityNotFoundException if the details entry is missing or cannot be parsed
      */
-    public ProgrammingExercise getExerciseDetailsFromBasket(SharingInfoDTO sharingInfo) {
-        Pattern pattern = Pattern.compile("^Exercise-Details", Pattern.CASE_INSENSITIVE);
-
+    public ImportProgrammingExerciseRequestDTO getExerciseDetailsFromBasket(SharingInfoDTO sharingInfo) {
         try {
-            String exerciseDetailString = getEntryFromBasket(pattern, sharingInfo)
+            String exerciseDetailString = getEntryFromBasket(EXERCISE_DETAILS_ENTRY, sharingInfo)
                     .orElseThrow(() -> new EntityNotFoundException("Could not retrieve exercise details from imported exercise"));
-            ProgrammingExercise exerciseDetails = objectMapper.readValue(exerciseDetailString, ProgrammingExercise.class);
-            exerciseDetails.setId(null);
-            return exerciseDetails;
+            // Remove the id on the JSON tree: the record is immutable, and the exported id belongs to the source instance.
+            ObjectNode exerciseDetailNode = (ObjectNode) objectMapper.readTree(exerciseDetailString);
+            exerciseDetailNode.remove("id");
+            return objectMapper.treeToValue(exerciseDetailNode, ImportProgrammingExerciseRequestDTO.class);
         }
         catch (Exception e) {
             String errorMessage = e.getMessage();
@@ -370,7 +383,7 @@ public class ExerciseSharingService {
      * @return {@code true} if the token is blank, too long, or contains characters other than {@code [a-zA-Z0-9_-]}
      */
     private boolean isInvalidToken(String token) {
-        return StringUtils.isBlank(token) || token.length() >= MAX_EXPORT_TOKEN_LENGTH || !token.matches("^[a-zA-Z0-9_-]+$");
+        return StringUtils.isBlank(token) || token.length() >= MAX_EXPORT_TOKEN_LENGTH || !VALID_EXPORT_TOKEN.matcher(token).matches();
     }
 
     /**
@@ -381,7 +394,7 @@ public class ExerciseSharingService {
      * @return sanitized filename for the cached ZIP
      */
     private String getBasketFileName(String basketToken, int itemPosition) {
-        String safeToken = basketToken.replaceAll("[^a-zA-Z0-9_-]", "");
+        String safeToken = UNSAFE_TOKEN_CHARACTER.matcher(basketToken).replaceAll("");
         return "sharingBasket" + safeToken + "-" + itemPosition + ".zip";
     }
 

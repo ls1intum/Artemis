@@ -19,9 +19,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.CollectionType;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.type.CollectionType;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
@@ -52,7 +52,7 @@ public class BuildPhasesTemplateService {
 
     private final BuildScriptProviderService buildScriptProviderService;
 
-    private static final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+    private static final YAMLMapper yamlMapper = new YAMLMapper();
 
     public BuildPhasesTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService,
             BuildScriptProviderService buildScriptProviderService) {
@@ -96,11 +96,21 @@ public class BuildPhasesTemplateService {
      *
      * @param yaml the YAML string that represents a list of BuildPhaseDTOs
      * @return a list of {@link BuildPhaseDTO} objects deserialized from the provided YAML string
-     * @throws IOException If there is an error reading the YAML content
+     * @throws IOException if the YAML content is malformed and cannot be deserialized
      */
     private static List<BuildPhaseDTO> readBuildPhases(String yaml) throws IOException {
         CollectionType listOfBuildPhaseDTOType = yamlMapper.getTypeFactory().constructCollectionType(List.class, BuildPhaseDTO.class);
-        return yamlMapper.readValue(yaml, listOfBuildPhaseDTOType);
+        try {
+            return yamlMapper.readValue(yaml, listOfBuildPhaseDTOType);
+        }
+        // Jackson 3 exceptions are unchecked and no longer extend IOException, while every caller here recovers from an
+        // unreadable template by catching IOException: cacheOnBoot logs it and keeps loading the remaining templates,
+        // getDefaultBuildPlanPhasesFor returns null, and BuildPhasesTemplateResource answers 404. Translating at this
+        // seam keeps those paths working instead of letting a malformed template - one supplied through
+        // artemis.template-path, say - abort bean initialization or leave the endpoint answering 500.
+        catch (JacksonException e) {
+            throw new IOException("Failed to parse the build phases template", e);
+        }
     }
 
     /**

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { Signal } from '@angular/core';
 import { MockDirective } from 'ng-mocks';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
@@ -12,7 +13,6 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ProgrammingExerciseUpdateTimelineComponent } from '../../../../shared/programming-exercise-update-timeline/programming-exercise-update-timeline.component';
 import { SubmissionPolicyUpdateComponent } from 'app/exercise/submission-policy/submission-policy-update.component';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
@@ -24,6 +24,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 
 /**
  * Typed view onto the `viewChild` signals so the spec can stub them without a blanket
@@ -31,7 +32,6 @@ import { BuildPhasesTemplateService } from 'app/programming/shared/services/buil
  */
 type GradingInternals = ProgrammingExerciseGradingComponent & {
     submissionPolicyUpdateComponent: Signal<SubmissionPolicyUpdateComponent | undefined>;
-    lifecycleComponent: Signal<ProgrammingExerciseUpdateTimelineComponent | undefined>;
     maxScoreField: Signal<NgModel | undefined>;
 };
 const internals = (c: ProgrammingExerciseGradingComponent): GradingInternals => c as GradingInternals;
@@ -95,6 +95,21 @@ describe('ProgrammingExerciseGradingComponent', () => {
     it('should initialize', () => {
         fixture.detectChanges();
         expect(comp).not.toBeNull();
+    });
+
+    it('should render the group date notice first in the controls next to the timeline', () => {
+        fixture.componentRef.setInput('exercisePartOfExerciseGroup', true);
+        const editGroupDatesSpy = vi.spyOn(comp.editGroupDates, 'emit');
+        fixture.detectChanges();
+
+        const timelineControls = fixture.debugElement.query(By.css('jhi-programming-exercise-timeline [data-testid="assessment-layout"]'));
+        const notice = timelineControls.query(By.directive(ExerciseGroupDateNoticeComponent));
+
+        expect(timelineControls.nativeElement.firstElementChild).toBe(notice.nativeElement);
+
+        (notice.componentInstance as ExerciseGroupDateNoticeComponent).editGroupDates.emit();
+
+        expect(editGroupDatesSpy).toHaveBeenCalledOnce();
     });
 
     it('should create a grading summary', () => {
@@ -176,16 +191,18 @@ describe('ProgrammingExerciseGradingComponent', () => {
         const calculateFormStatusSpy = vi.spyOn(comp, 'calculateFormStatus');
 
         const submissionPolicyUpdateComponent = { form: { valueChanges: new Subject() } } as unknown as SubmissionPolicyUpdateComponent;
-        const lifecycleComponent = { formValidChanges: new Subject() } as unknown as ProgrammingExerciseUpdateTimelineComponent;
         vi.spyOn(internals(comp), 'submissionPolicyUpdateComponent').mockReturnValue(submissionPolicyUpdateComponent);
-        vi.spyOn(internals(comp), 'lifecycleComponent').mockReturnValue(lifecycleComponent);
 
         comp.ngAfterViewInit();
 
         (submissionPolicyUpdateComponent.form.valueChanges as Subject<boolean>).next(false);
-        lifecycleComponent.formValidChanges.next(false);
+
+        expect(calculateFormStatusSpy).toHaveBeenCalledOnce();
+
+        comp.onTimelineStatusChange({ valid: false, empty: true });
 
         expect(calculateFormStatusSpy).toHaveBeenCalledTimes(2);
+        expect(comp.timelineStatus()).toEqual({ valid: false, empty: true });
     });
 
     it('should not require points when exercise is not included in the course score', () => {
@@ -204,7 +221,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
 
         vi.spyOn(internals(comp), 'maxScoreField').mockReturnValue({ valid: false } as NgModel);
         vi.spyOn(internals(comp), 'submissionPolicyUpdateComponent').mockReturnValue({ invalid: false } as SubmissionPolicyUpdateComponent);
-        vi.spyOn(internals(comp), 'lifecycleComponent').mockReturnValue({ formValid: true, formEmpty: false } as ProgrammingExerciseUpdateTimelineComponent);
+        comp.timelineStatus.set({ valid: true, empty: false });
 
         comp.calculateFormStatus();
 
@@ -220,7 +237,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
 
         vi.spyOn(internals(comp), 'maxScoreField').mockReturnValue({ valid: false } as NgModel);
         vi.spyOn(internals(comp), 'submissionPolicyUpdateComponent').mockReturnValue({ invalid: false } as SubmissionPolicyUpdateComponent);
-        vi.spyOn(internals(comp), 'lifecycleComponent').mockReturnValue({ formValid: true, formEmpty: false } as ProgrammingExerciseUpdateTimelineComponent);
+        comp.timelineStatus.set({ valid: true, empty: false });
 
         comp.calculateFormStatus();
 
@@ -344,7 +361,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
             },
             {
                 name: 'timeline',
-                selector: 'jhi-programming-exercise-update-timeline',
+                selector: 'jhi-programming-exercise-timeline',
                 field: ProgrammingExerciseInputField.TIMELINE,
             },
             {

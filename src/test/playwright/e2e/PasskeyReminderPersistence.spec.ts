@@ -33,22 +33,12 @@ test.afterEach(async ({ page }) => {
 
 test('Passkey reminder modal is not displayed on re-login after remind me in 30 days was chosen', async ({ page, loginPage, navigationBar }) => {
     // Ensure the passkey setup modal is shown on every page load.
-    // The autoTestFixture init script suppresses the modal globally via localStorage AND CSS;
-    // this overrides both by removing the suppression key and re-enabling the dialog.
+    // The shared init script suppresses the modal by storing a far-future reminder date, so removing
+    // that key is all it takes to get the modal back.
     // Logout in Artemis is SPA navigation (no page reload), so this init script fires only once
     // during page.goto('/sign-in'), and the key set by "Remind me in 30 days" persists afterward.
     await page.addInitScript(() => {
         localStorage.removeItem('earliestSetupPasskeyReminderDate');
-        const injectOverride = () => {
-            const style = document.createElement('style');
-            style.textContent = '.p-dialog-mask:has(.passkey-setup-dialog) { display: flex !important; }';
-            document.head.appendChild(style);
-        };
-        if (document.head) {
-            injectOverride();
-        }
-        // Also register for DOMContentLoaded to override any deferred CSS from the context init script
-        document.addEventListener('DOMContentLoaded', injectOverride);
     });
 
     // First login — clear the admin session from beforeEach

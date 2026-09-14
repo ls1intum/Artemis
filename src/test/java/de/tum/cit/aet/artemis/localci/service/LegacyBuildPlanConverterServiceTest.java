@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.hibernate7.Hibernate7Module;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.datatype.hibernate7.Hibernate7Module;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -17,7 +17,7 @@ class LegacyBuildPlanConverterServiceTest {
 
     @Test
     void deserializeBuildConfig_shouldKeepLegacyBuildScriptWithHibernateModule() throws Exception {
-        final ObjectMapper objectMapper = new ObjectMapper().registerModule(new Hibernate7Module());
+        final JsonMapper objectMapper = JsonMapper.builder().addModule(new Hibernate7Module()).build();
 
         final ProgrammingExerciseBuildConfig buildConfig = objectMapper.readValue("""
                 {

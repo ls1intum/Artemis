@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPoli
  * {@code StudentExamResource.prepareStudentExamForConduction} attaches the policy to every programming exercise of the
  * student exam, and {@code ProgrammingSubmissionPolicyStatusComponent} renders the student's remaining submission
  * allowance from {@code active}, {@code submissionLimit}, {@code type} and (for a penalty policy)
- * {@code exceedingPenalty}. Without these the backend still enforces the lock / penalty while the student cannot see
+ * {@code exceedingPenalty}. Without these the server still enforces the lock / penalty while the student cannot see
  * the allowance, so the fields must stay on the wire.
  * <p>
  * {@code type} reproduces the entity's {@code @JsonTypeInfo} discriminator ({@code lock_repository} /

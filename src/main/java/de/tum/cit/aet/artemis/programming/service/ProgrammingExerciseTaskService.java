@@ -150,6 +150,18 @@ public class ProgrammingExerciseTaskService {
     }
 
     /**
+     * Gets all tasks of an exercise together with their test cases, active and inactive alike, leaving the loaded
+     * collections untouched. Callers that only want the active test cases filter while mapping to their response
+     * shape; filtering the loaded collection in place would write to the task/test-case join table.
+     *
+     * @param exerciseId of the programming exercise
+     * @return List of all tasks with their test cases
+     */
+    public List<ProgrammingExerciseTask> getTasksWithTestCases(long exerciseId) {
+        return programmingExerciseTaskRepository.findByExerciseIdWithTestCaseElseThrow(exerciseId);
+    }
+
+    /**
      * Gets all tasks of an exercise excluding inactive test cases
      *
      * @param exerciseId of the programming exercise

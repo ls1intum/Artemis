@@ -32,10 +32,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.service.sharing.ExerciseSharingService;
 import de.tum.cit.aet.artemis.programming.service.sharing.ProgrammingExerciseImportFromSharingService;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorService;
@@ -59,6 +62,8 @@ import de.tum.cit.aet.artemis.programming.service.sharing.SharingSetupInfoDTO;
 public class ExerciseSharingResource {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseSharingResource.class);
+
+    private static final String ENTITY_NAME = "programmingExercise";
 
     /**
      * FileInputStream wrapper that deletes the underlying temporary file on close.
@@ -146,15 +151,19 @@ public class ExerciseSharingResource {
      * </p>
      *
      * @param sharingSetupInfo details required to import (exercise metadata, templates, etc.)
-     * @return {@code 200 OK} with the created {@link ProgrammingExercise}; {@code 500 Internal Server Error}
-     *         on import failures (e.g., VCS operations, invalid payload, IO/URI issues)
+     * @return {@code 200 OK} with the created exercise; {@code 400 Bad Request} when the basket reference is
+     *         missing; {@code 500 Internal Server Error} on import failures (e.g., VCS operations, IO/URI issues)
      */
     @PostMapping("setup-import")
     @EnforceAtLeastEditor
-    public ResponseEntity<ProgrammingExercise> setUpFromSharingImport(@RequestBody SharingSetupInfoDTO sharingSetupInfo) {
+    public ResponseEntity<ProgrammingExerciseResponseDTO> setUpFromSharingImport(@RequestBody SharingSetupInfoDTO sharingSetupInfo) {
+        // The whole import is driven by the basket reference; without it the service would dereference null.
+        if (sharingSetupInfo.sharingInfo() == null) {
+            throw new BadRequestAlertException("The sharing information is missing", ENTITY_NAME, "sharingInfoMissing");
+        }
         try {
             ProgrammingExercise exercise = programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(sharingSetupInfo);
-            return ResponseEntity.ok().body(exercise);
+            return ResponseEntity.ok().body(ProgrammingExerciseResponseDTO.of(exercise));
         }
         catch (GitAPIException | SharingException | IOException | URISyntaxException e) {
             log.error("Error importing exercise from sharing platform", e);
@@ -170,17 +179,19 @@ public class ExerciseSharingResource {
      * </p>
      *
      * @param sharingInfo basket-scoped reference to an exercise; also carries a checksum for validation
-     * @return {@code 200 OK} with the {@link ProgrammingExercise} details; {@code 400 Bad Request}
+     * @return {@code 200 OK} with the exercise details; {@code 400 Bad Request}
      *         on checksum failure; {@code 404 Not Found} if the exercise cannot be resolved
      */
     // TODO: we should NOT use a POST request for a GET Operation
     @PostMapping("import/basket/exercise-details")
     @EnforceAtLeastEditor
-    public ResponseEntity<ProgrammingExercise> getExerciseDetails(@RequestBody SharingInfoDTO sharingInfo) {
+    public ResponseEntity<ImportProgrammingExerciseRequestDTO> getExerciseDetails(@RequestBody SharingInfoDTO sharingInfo) {
         if (!sharingInfo.checkChecksum(sharingConnectorService.getSharingApiKey())) {
             return ResponseEntity.badRequest().build();
         }
-        ProgrammingExercise exerciseDetails = this.exerciseSharingService.getExerciseDetailsFromBasket(sharingInfo);
+        // The details object backs the whole create form and is posted straight back to setup-import, so the response
+        // deliberately uses the very same record as that request.
+        ImportProgrammingExerciseRequestDTO exerciseDetails = this.exerciseSharingService.getExerciseDetailsFromBasket(sharingInfo);
         return ResponseEntity.ok().body(exerciseDetails);
     }
 

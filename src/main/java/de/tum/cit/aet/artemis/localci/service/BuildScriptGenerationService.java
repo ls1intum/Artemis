@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.localci.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -26,5 +24,5 @@ public abstract class BuildScriptGenerationService {
      * @param programmingExercise the programming exercise for which the build script should be generated
      * @return the script for the given programming exercise
      */
-    public abstract String getScript(ProgrammingExercise programmingExercise) throws JsonProcessingException;
+    public abstract String getScript(ProgrammingExercise programmingExercise);
 }
