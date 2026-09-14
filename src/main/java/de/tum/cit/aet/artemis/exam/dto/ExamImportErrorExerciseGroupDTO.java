@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exam.dto;
 
 import java.util.List;
 
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
  * @param isMandatory whether the exercise group must be included when generating student exams
  * @param exercises   the exercises of the group, with the rejected titles / short names blanked
  */
+@NullMarked
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamImportErrorExerciseGroupDTO(@Nullable String title, @Nullable Boolean isMandatory, List<ExerciseForExamImportErrorDTO> exercises) {
 
