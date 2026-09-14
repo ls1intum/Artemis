@@ -27,19 +27,24 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 @Repository
 public interface ModelingSubmissionRepository extends ArtemisJpaRepository<ModelingSubmission, Long> {
 
+    boolean existsByIdAndParticipationId(long submissionId, long participationId);
+
     /**
-     * Writes the client-editable fields of an existing modeling submission by id.
+     * Writes the client-editable fields of an existing modeling submission by id, provided it belongs to the given participation.
+     * The id comes from the client, so the participation predicate keeps the update scoped to the caller's own participation.
      * <p>
      * Prefer this over {@code save} on the autosave path: the submission is detached there (no transaction spans the load
      * and the save), so Spring Data routes it through {@code merge}, which reads the row back - along with its
      * participation, exercise, exercise group, exam and course through eager associations - before writing it.
      *
      * @param submissionId    the id of the submission to update
+     * @param participationId the participation the submission must belong to
      * @param model           the submitted model
      * @param explanationText the submitted explanation
      * @param submitted       whether the submission counts as submitted
      * @param submissionDate  when the submission was saved
      * @param type            how the submission was created
+     * @return the number of updated submissions
      */
     @Modifying
     @Transactional // ok because of modifying query
@@ -51,9 +56,11 @@ public interface ModelingSubmissionRepository extends ArtemisJpaRepository<Model
                 submission.submissionDate = :submissionDate,
                 submission.type = :type
             WHERE submission.id = :submissionId
+                AND submission.participation.id = :participationId
             """)
-    void updateExistingSubmission(@Param("submissionId") long submissionId, @Param("model") String model, @Param("explanationText") String explanationText,
-            @Param("submitted") boolean submitted, @Param("submissionDate") ZonedDateTime submissionDate, @Param("type") SubmissionType type);
+    int updateExistingSubmission(@Param("submissionId") long submissionId, @Param("participationId") long participationId, @Param("model") String model,
+            @Param("explanationText") String explanationText, @Param("submitted") boolean submitted, @Param("submissionDate") ZonedDateTime submissionDate,
+            @Param("type") SubmissionType type);
 
     @Query("""
             SELECT DISTINCT submission
