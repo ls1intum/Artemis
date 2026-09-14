@@ -10,18 +10,18 @@ catalog:
   '@analogjs/vite-plugin-angular': 2.6.4
   '@analogjs/vitest-angular': 2.6.4
   '@arethetypeswrong/cli': 0.18.5
-  '@angular-devkit/architect': 0.2201.7
-  '@angular-devkit/core': 22.1.7
-  '@angular/build': 22.1.7
-  '@angular/cdk': 22.1.5
-  '@angular/cli': 22.1.7
-  '@angular/common': 22.1.5
-  '@angular/compiler': 22.1.5
-  '@angular/compiler-cli': 22.1.5
-  '@angular/core': 22.1.5
-  '@angular/forms': 22.1.5
-  '@angular/localize': 22.1.5
-  '@angular/platform-browser': 22.1.5
+  '@angular-devkit/architect': 0.2201.8
+  '@angular-devkit/core': 22.1.8
+  '@angular/build': 22.1.8
+  '@angular/cdk': 22.1.6
+  '@angular/cli': 22.1.8
+  '@angular/common': 22.1.6
+  '@angular/compiler': 22.1.6
+  '@angular/compiler-cli': 22.1.6
+  '@angular/core': 22.1.6
+  '@angular/forms': 22.1.6
+  '@angular/localize': 22.1.6
+  '@angular/platform-browser': 22.1.6
   '@fortawesome/angular-fontawesome': 5.1.0
   '@fortawesome/fontawesome-svg-core': 7.3.1
   '@fortawesome/free-solid-svg-icons': 7.3.1
@@ -48,12 +48,12 @@ catalog:
   jsdom: 30.0.1
   lodash-es: 4.18.1
   ng-packagr: 22.1.1
-  postcss: 8.5.25
+  postcss: 8.5.28
   publint: 0.3.22
   playwright: 1.62.1
   react: 19.2.8
   rxjs: 7.8.2
-  sass: 1.102.0
+  sass: 1.104.1
   semver: 7.8.5
   storybook: 10.5.5
   stylelint: 17.14.1
@@ -62,7 +62,7 @@ catalog:
   typescript: 6.0.3
   vite: 8.1.5
   vitest: 4.1.10
-  yaml: 2.9.0
+  yaml: 2.9.1
   zone.js: 0.16.3
 # No hoist shim: rely on pnpm's default isolated layout. Every package the
 # project imports is declared as a direct dependency in package.json; patches
@@ -126,7 +126,7 @@ overrides:
   # @angular/localize is only pulled in transitively (e.g. via @ng-bootstrap/ng-bootstrap,
   # whose peer range requires ^22.0.0). Without this pin it resolves to an older 21.x
   # straggler that violates that peer range; force it to match the @angular/core version.
-  '@angular/localize': '22.1.5'
+  '@angular/localize': '22.1.6'
   'babel-plugin-istanbul>test-exclude': '8.0.0'
   '@babel/core': '7.29.7'
   '@babel/runtime': '7.29.7'
@@ -155,9 +155,9 @@ overrides:
   katex: '0.18.1'
   minimatch: '10.2.6'
   # Reached dev-side via postcss, whose range allows the patched 3.3.17.
-  nanoid: '3.3.17'
-  piscina: '5.3.0'
-  postcss: '8.5.25'
+  nanoid: '3.3.19'
+  piscina: '5.3.2'
+  postcss: '8.5.28'
   punycode: '2.3.1'
   # @tumaet/apollon's react/react-dom peer requires react 19. Artemis embeds
   # Apollon but has no direct React code, so force the whole React subtree to 19
@@ -170,8 +170,8 @@ overrides:
   tar: '7.5.22'
   tmp: '0.2.7'
   tough-cookie: '6.0.2'
-  undici: '7.29.0'
-  uuid: '14.0.1'
+  undici: '7.29.1'
+  uuid: '14.0.2'
   # Vite 8 leaves decorators in external spec helpers untransformed. Keep the Vitest toolchain on
   # Vite 7 until @analogjs/vite-plugin-angular handles those helpers; Angular and Storybook use Vite 8.
   'vitest>vite': '7.3.6'
