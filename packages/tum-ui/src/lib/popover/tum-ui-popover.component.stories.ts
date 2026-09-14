@@ -1,6 +1,6 @@
 import { argsToTemplate, moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { expect, fn, screen, waitForElementToBeRemoved, within } from 'storybook/test';
+import { expect, fn, screen, waitFor, waitForElementToBeRemoved, within } from 'storybook/test';
 import { TumUiButtonDirective } from '../button/tum-ui-button.directive';
 import type { TumUiOverlayPlacement } from '../overlay/tum-ui-overlay.service';
 import { TumUiPopoverTriggerDirective } from './tum-ui-popover-trigger.directive';
@@ -67,7 +67,8 @@ export const OpensAndTrapsFocus: Story = {
         const panel = await screen.findByRole('dialog', { name: 'Exercise actions' });
         await expect(trigger).toHaveAttribute('aria-expanded', 'true');
         await expect(panel).toContainElement(document.activeElement as HTMLElement);
-        await expect(within(panel).getByRole('button', { name: 'Delete' })).toBeVisible();
+        // Waited for: the panel grows into place from transparent, so it is not yet visible on the frame it opens.
+        await waitFor(() => expect(within(panel).getByRole('button', { name: 'Delete' })).toBeVisible());
         await expect(args.openChange).toHaveBeenCalledWith(true);
     },
 };

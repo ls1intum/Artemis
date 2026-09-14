@@ -10,6 +10,8 @@ import { IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-co
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { EnabledToggleComponent } from 'app/shared-ui/enabled-toggle/enabled-toggle.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
  * Simple toggle component for enabling/disabling Iris at the course level.
@@ -18,7 +20,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-iris-enabled',
     templateUrl: './iris-enabled.component.html',
-    imports: [TranslateDirective, RouterLink, FaIconComponent],
+    imports: [EnabledToggleComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     styles: [
         `
@@ -31,41 +33,6 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
                 display: flex;
                 flex-direction: column;
                 gap: 0.75rem;
-            }
-
-            .iris-toggle-group {
-                display: flex;
-                border: 1px solid var(--p-content-border-color);
-                border-radius: 0.625rem;
-                overflow: hidden;
-            }
-
-            .iris-toggle-btn {
-                flex: 1;
-                padding: 0.5rem 1rem;
-                border: none;
-                background: var(--overview-card-nested-bg, var(--p-content-background));
-                color: var(--p-text-muted-color);
-                font-weight: 500;
-                font-size: 0.88rem;
-                cursor: pointer;
-                transition: all 0.2s ease;
-
-                &:first-child {
-                    border-right: 1px solid var(--p-content-border-color);
-                }
-            }
-
-            .iris-toggle-btn--active-on {
-                background: var(--success);
-                color: white;
-                font-weight: 600;
-            }
-
-            .iris-toggle-btn--active-off {
-                background: var(--danger);
-                color: white;
-                font-weight: 600;
             }
 
             .iris-configure-link {
