@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.service.websocket;
 
-import java.util.concurrent.ExecutionException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -28,6 +26,16 @@ public class HyperionWebsocketService {
 
     /**
      * Sends a websocket message to a specific user under the Hyperion namespace.
+     * <p>
+     * The message is handed off and this method returns right away; a delivery failure is only logged. It must not wait for
+     * the send to finish: {@link WebsocketMessagingService} runs every send on the shared {@code taskExecutor}, and that is
+     * also the pool the {@code @Async} code generation jobs calling this method run on. A job thread waiting for a send that
+     * is queued behind the running jobs only gets it once another pool thread frees up, and once every pool thread waits
+     * like that the pool is deadlocked until the server restarts. {@code IrisWebsocketService#send} hands off the same way.
+     * <p>
+     * Each message is its own task, so this method makes no promise about the order in which the messages of one job
+     * reach the client. Both Hyperion clients finish on the terminal event and refresh their state from the server then,
+     * so an event that overtakes a neighbour costs at most a stale label.
      *
      * @param userLogin   the receiver's login
      * @param topicSuffix suffix appended to "/topic/hyperion/"
@@ -35,17 +43,13 @@ public class HyperionWebsocketService {
      */
     public void send(String userLogin, String topicSuffix, Object payload) {
         String topic = TOPIC_PREFIX + topicSuffix;
-        try {
-            websocketMessagingService.sendMessageToUser(userLogin, topic, payload).get();
-            log.debug("Sent Hyperion message to {} on topic {}: {}", userLogin, topic, payload);
-        }
-        catch (InterruptedException | ExecutionException e) {
-            // The interrupt status is deliberately not restored, which is what java:S2142 would ask for. A code
-            // generation job sends many messages through this method on one thread and finishes with a terminal done
-            // or error event. CompletableFuture.get() throws as soon as the flag is set, so restoring it would fail
-            // every later send of that job, including the terminal one, and the client's job view would stay "in
-            // progress" until the page is reloaded.
-            log.error("Error sending Hyperion message to {} on topic {}: {}", userLogin, topic, payload, e);
-        }
+        websocketMessagingService.sendMessageToUser(userLogin, topic, payload).whenComplete((ignored, throwable) -> {
+            if (throwable != null) {
+                log.error("Error sending Hyperion message to {} on topic {}: {}", userLogin, topic, payload, throwable);
+            }
+            else {
+                log.debug("Sent Hyperion message to {} on topic {}: {}", userLogin, topic, payload);
+            }
+        });
     }
 }
