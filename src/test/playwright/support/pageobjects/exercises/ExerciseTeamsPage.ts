@@ -259,16 +259,20 @@ export class ExerciseTeamsPage {
                 await this.page.waitForTimeout(500);
             }
 
-            await inputLocator.click();
-            await inputLocator.fill('');
-            await this.page.waitForTimeout(300);
-            await inputLocator.pressSequentially(username, { delay: 100 });
-
             try {
+                // Typing into the field belongs inside the retry, and every step is bounded. Without a timeout these
+                // actions inherit the test's whole budget, so an input that never becomes actionable - the dialog
+                // re-renders under load and detaches it - hung the entire test instead of failing this attempt, and
+                // the run reported a 10 minute timeout rather than the clear message below.
+                await inputLocator.click({ timeout: 10_000 });
+                await inputLocator.fill('', { timeout: 10_000 });
+                await this.page.waitForTimeout(300);
+                await inputLocator.pressSequentially(username, { delay: 100, timeout: 20_000 });
+
                 await listbox.waitFor({ state: 'visible', timeout: 15000 });
                 const option = listbox.getByText(new RegExp(escapeRegExp(username), 'i')).first();
                 await option.waitFor({ state: 'visible', timeout: 5000 });
-                await option.click();
+                await option.click({ timeout: 10_000 });
                 return;
             } catch {
                 if (attempt === 3) throw new Error(`Student search autocomplete did not appear after 4 attempts for '${username}'`);

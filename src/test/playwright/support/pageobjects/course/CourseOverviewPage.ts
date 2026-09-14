@@ -36,13 +36,6 @@ export class CourseOverviewPage {
     }
 
     /**
-     * Initiates the practice of an exercise.
-     */
-    async practiceExercise() {
-        await this.page.locator('button', { hasText: 'Practice' }).click();
-    }
-
-    /**
      * Starts a practice attempt for an ended quiz via the dedicated "Start practice" action button in the exercise
      * header. Works for both the first attempt and subsequent attempts (the button reappears after each submit).
      * @param exerciseId The id of the quiz exercise to practice.
@@ -51,6 +44,36 @@ export class CourseOverviewPage {
         const button = this.page.locator(`#quiz-start-practice-${exerciseId}`);
         await button.waitFor({ state: 'visible', timeout: 30_000 });
         await button.click();
+    }
+
+    /**
+     * Starts a practice attempt and waits until the quiz has actually been loaded for the student.
+     *
+     * For a caller that arrives on a page which is still settling - navigating straight to the exercise right after an
+     * instructor ended the quiz - the exercise header re-renders while the details load, and a click lost to that
+     * re-render leaves the caller waiting for a question that was never requested. Waiting for the load request is what
+     * proves an attempt started, so the click can be retried until it does.
+     *
+     * Prefer {@link startQuizPractice} where the page is already settled: this one clicks more than once when the first
+     * click is lost, which would start more attempts than a test counting them expects.
+     *
+     * @param exerciseId The id of the quiz exercise to practice.
+     */
+    async startQuizPracticeWaitingForLoad(exerciseId: number) {
+        const button = this.page.locator(`#quiz-start-practice-${exerciseId}`);
+        await button.waitFor({ state: 'visible', timeout: 30_000 });
+
+        for (let attempt = 0; attempt < 3; attempt++) {
+            const quizLoaded = this.page
+                .waitForResponse((response) => response.url().includes(`/quiz-exercises/${exerciseId}/for-student`) && response.ok(), { timeout: 15_000 })
+                .catch(() => undefined);
+            await button.click({ timeout: 10_000 });
+            if (await quizLoaded) {
+                return;
+            }
+            await button.waitFor({ state: 'visible', timeout: 10_000 });
+        }
+        throw new Error(`Could not start a practice attempt for quiz ${exerciseId}: the quiz was never loaded for the student after clicking start practice.`);
     }
 
     /**
@@ -172,12 +195,51 @@ export class CourseOverviewPage {
     }
 
     /**
+     * Opens an exercise by id and waits for its detail page.
+     * <p>
+     * Preferred over {@link openExercise} whenever the caller knows the id and the point of the test lies on the
+     * exercise page rather than in the sidebar: the sidebar list re-renders as the exercise data, the grouping and
+     * the page's auto-navigation settle, so its card detaches under a click that has already passed the actionability
+     * check. Addressing the exercise directly takes that churn out of the test.
+     *
+     * @param courseId The id of the course the exercise belongs to.
+     * @param exerciseId The id of the exercise to open.
+     */
+    async openExerciseById(courseId: number, exerciseId: number) {
+        await this.page.goto(`/courses/${courseId}/exercises/${exerciseId}`);
+        await this.page.locator('jhi-course-exercise-details').waitFor({ state: 'visible', timeout: 30000 });
+    }
+
+    /**
      * Opens an exercise given its name.
      * @param exerciseName The title of the exercise to open.
      */
     async openExercise(exerciseName: string) {
-        await this.page.locator('jhi-course-exercise-details').waitFor({ state: 'visible' });
-        await this.getExercise(exerciseName).click();
+        // Wait for the sidebar entry we are about to click, not for the detail pane. The exercises page only
+        // renders `jhi-course-exercise-details` once an exercise is selected, and selection before the click
+        // is up to the page's auto-navigation, which picks the upcoming or last-visited exercise and does
+        // nothing at all when it finds neither. Waiting for the detail pane first therefore waited for a
+        // component that only this click can bring up, and the test hung until its timeout with the exercise
+        // list fully rendered in front of it.
+        // The click is retried because the sidebar re-renders while the exercise list and the auto-navigation settle,
+        // which swallows a click that landed on the outgoing card without ever opening the exercise.
+        const card = this.getExercise(exerciseName);
+        await card.waitFor({ state: 'visible', timeout: 30000 });
+        // What is waited for is the requested exercise's own title in the detail pane, not merely a detail pane: the
+        // page may already be showing an auto-selected different exercise, and waiting for the pane alone would accept
+        // that one and let a swallowed click pass as success.
+        const requestedExerciseIsOpen = this.page.locator('jhi-course-exercise-details').getByText(exerciseName).first();
+        for (let attempt = 0; attempt < 3; attempt++) {
+            try {
+                await card.click({ timeout: 10000 });
+                await requestedExerciseIsOpen.waitFor({ state: 'visible', timeout: 15000 });
+                return;
+            } catch (error) {
+                if (attempt === 2) {
+                    throw error;
+                }
+            }
+        }
     }
 
     /**
