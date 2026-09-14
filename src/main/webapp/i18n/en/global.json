@@ -17,7 +17,9 @@
             "copied": "Copied",
             "new": "New",
             "expand": "Expand",
-            "collapse": "Collapse"
+            "collapse": "Collapse",
+            "enabled": "Enabled",
+            "disabled": "Disabled"
         },
         "weekdays": {
             "monday": "Monday",
