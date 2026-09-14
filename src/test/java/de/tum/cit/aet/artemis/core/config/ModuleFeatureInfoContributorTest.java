@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ACTIVE_MODULE_FEATURES;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -10,6 +11,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 
 /**
  * Test for {@link ModuleFeatureInfoContributor}.
@@ -48,6 +50,7 @@ class ModuleFeatureInfoContributorTest {
         Constants.MODULE_FEATURE_ATLAS,
         Constants.MODULE_FEATURE_ATLASML,
         Constants.MODULE_FEATURE_HYPERION,
+        Constants.MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
         Constants.MODULE_FEATURE_DEIMOS,
         Constants.MODULE_FEATURE_EXAM,
         Constants.MODULE_FEATURE_PLAGIARISM,
@@ -84,6 +87,8 @@ class ModuleFeatureInfoContributorTest {
             mockProperty(key, true);
         }
         mockProperty(Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME, true);
+        mockProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, true);
+        when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(true);
 
         ModuleFeatureInfoContributor contributor = new ModuleFeatureInfoContributor(mockEnv);
 
@@ -108,6 +113,8 @@ class ModuleFeatureInfoContributorTest {
             mockProperty(key, propertyEnabled);
         }
         mockProperty(Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME, passkeyAdminRequired);
+        mockProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, propertyEnabled);
+        when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(propertyEnabled);
 
         ModuleFeatureInfoContributor contributor = new ModuleFeatureInfoContributor(mockEnv);
 

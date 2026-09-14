@@ -8,4 +8,3 @@ export interface QuizQuestionRefinementResponse {
     /** Error message describing why the refinement failed */
     error: string;
 }
-

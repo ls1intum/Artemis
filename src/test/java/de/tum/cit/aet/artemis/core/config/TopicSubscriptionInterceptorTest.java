@@ -105,7 +105,7 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationIndepend
             for (String destination : List.of("/topic/courses/" + course.getId() + "/queued-jobs", "/topic/courses/" + course.getId() + "/running-jobs",
                     "/topic/courses/" + course.getId() + "/build-job/test-job", "/topic/exercise/" + exercise.getId() + "/newResults",
                     "/topic/exercise/" + examExercise.getId() + "/newResults", "/topic/exams/" + exam.getId() + "/exercise-start-status",
-                    "/topic/exercises/" + exercise.getId() + "/synchronization")) {
+                    "/topic/exercises/" + exercise.getId() + "/synchronization", "/topic/hyperion/exercise-generation/exercises/" + exercise.getId() + "/state")) {
                 SecurityContextHolder.clearContext();
                 var headers = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
                 headers.setLeaveMutable(true);
@@ -135,6 +135,46 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationIndepend
             headers.setUser(authenticationFor(adminLogin, Role.ADMIN));
             var message = MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
             assertThat(interceptor.preSend(message, channel)).as("administrator override must not bypass ownership").isNull();
+        }
+        finally {
+            SecurityContextHolder.setContext(previousContext);
+        }
+    }
+
+    @Test
+    void testSynchronizationSendUsesWebsocketAuthentication() {
+        userUtilService.addAdmin(TEST_PREFIX);
+        String adminLogin = TEST_PREFIX + "admin";
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        var course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);
+        var exercise = course.getExercises().stream().findFirst().orElseThrow();
+        var interceptor = websocketConfiguration.new TopicSubscriptionInterceptor();
+        var channel = mock(MessageChannel.class);
+        var previousContext = SecurityContextHolder.getContext();
+        SecurityContextHolder.clearContext();
+        try {
+            var headers = StompHeaderAccessor.create(StompCommand.SEND);
+            headers.setLeaveMutable(true);
+            headers.setDestination("/topic/exercises/" + exercise.getId() + "/synchronization");
+            headers.setUser(authenticationFor(adminLogin, Role.ADMIN));
+            var message = MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
+            assertThat(interceptor.preSend(message, channel)).as("elevated session without thread authentication").isSameAs(message);
+
+            SecurityContextHolder.getContext().setAuthentication(authenticationFor(adminLogin, Role.ADMIN));
+            headers.setUser(authenticationFor(adminLogin, Role.STUDENT));
+            message = MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
+            assertThat(interceptor.preSend(message, channel)).as("thread elevation must not authorize a different session").isNull();
+
+            headers.setUser(authenticationFor(TEST_PREFIX + "instructor1", Role.INSTRUCTOR));
+            message = MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
+            assertThat(interceptor.preSend(message, channel)).as("course instructor can synchronize").isSameAs(message);
+
+            headers.setUser(authenticationFor(adminLogin, Role.ADMIN));
+            for (String destination : List.of("/topic/admin/queued-jobs", "/topic/hyperion/exercise-generation/exercises/" + exercise.getId() + "/state")) {
+                headers.setDestination(destination);
+                message = MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
+                assertThat(interceptor.preSend(message, channel)).as("even an administrator cannot publish server events: %s", destination).isNull();
+            }
         }
         finally {
             SecurityContextHolder.setContext(previousContext);

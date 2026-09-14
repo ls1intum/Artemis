@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -48,6 +49,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
 @Profile(PROFILE_CORE)
@@ -142,6 +144,38 @@ public class ExerciseReviewService {
      * @return the persisted consistency-check threads created from the given issues
      */
     public List<CommentThread> createConsistencyCheckThreads(long exerciseId, List<ConsistencyIssueDTO> issues) {
+        return createConsistencyCheckThreads(exerciseId, issues, userRepository.getUser());
+    }
+
+    /**
+     * Persists consistency-check issues with an explicit author for callers that run outside a request security context.
+     *
+     * @param exerciseId the programming exercise id
+     * @param issues     the consistency issues to persist
+     * @param author     the review-comment author
+     * @return the persisted consistency-check threads
+     */
+    public List<CommentThread> createConsistencyCheckThreads(long exerciseId, List<ConsistencyIssueDTO> issues, User author) {
+        return createConsistencyCheckThreadsInternal(exerciseId, issues, author, null, Map.of());
+    }
+
+    /**
+     * Persists consistency-check issues against an exact exercise version and caller-captured repository commits.
+     *
+     * @param exerciseId          the programming exercise id
+     * @param issues              the consistency issues to persist
+     * @param author              the review-comment author
+     * @param initialVersionId    exact version for problem-statement locations
+     * @param repositoryCommitIds exact commits for repository-backed locations; missing entries are resolved from the current repositories
+     * @return the persisted consistency-check threads
+     */
+    public List<CommentThread> createConsistencyCheckThreads(long exerciseId, List<ConsistencyIssueDTO> issues, User author, long initialVersionId,
+            Map<RepositoryType, String> repositoryCommitIds) {
+        return createConsistencyCheckThreadsInternal(exerciseId, issues, author, initialVersionId, repositoryCommitIds);
+    }
+
+    private List<CommentThread> createConsistencyCheckThreadsInternal(long exerciseId, List<ConsistencyIssueDTO> issues, User author, @Nullable Long initialVersionId,
+            Map<RepositoryType, String> repositoryCommitIds) {
         Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
         if (!(exercise instanceof ProgrammingExercise)) {
             throw new BadRequestAlertException("Exercise is not a programming exercise", THREAD_ENTITY_NAME, "exerciseNotProgramming");
@@ -152,8 +186,14 @@ public class ExerciseReviewService {
         }
 
         ConsistencyTargetRepositoryUris repositoryUrisByTarget = exerciseReviewRepositoryService.resolveTargetRepositoryUris(exerciseId);
-        Map<CommentThreadLocationType, String> initialCommitShasByTarget = exerciseReviewRepositoryService.resolveTargetCommitShas(repositoryUrisByTarget);
-        ExerciseVersion latestProblemStatementVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId).orElse(null);
+        Map<CommentThreadLocationType, String> capturedCommitShasByTarget = new EnumMap<>(CommentThreadLocationType.class);
+        repositoryCommitIds.forEach((repositoryType, commitId) -> capturedCommitShasByTarget.put(toLocationType(repositoryType), commitId));
+        Map<CommentThreadLocationType, String> initialCommitShasByTarget = new EnumMap<>(CommentThreadLocationType.class);
+        initialCommitShasByTarget.putAll(exerciseReviewRepositoryService.resolveTargetCommitShas(repositoryUrisByTarget));
+        initialCommitShasByTarget.putAll(capturedCommitShasByTarget);
+        ExerciseVersion problemStatementVersion = initialVersionId == null ? exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId).orElse(null)
+                : exerciseVersionRepository.findById(initialVersionId).filter(version -> version.getExerciseId() == exerciseId)
+                        .orElseThrow(() -> new EntityNotFoundException("ExerciseVersion", initialVersionId));
 
         List<CommentThread> threadsToPersist = new ArrayList<>();
         List<CommentThreadGroup> groupsToPersist = new ArrayList<>();
@@ -165,7 +205,7 @@ public class ExerciseReviewService {
                 continue;
             }
 
-            List<ConsistencyThreadLocation> locations = mapConsistencyIssueLocations(issue, exerciseId, repositoryUrisByTarget);
+            List<ConsistencyThreadLocation> locations = mapConsistencyIssueLocations(issue, exerciseId, repositoryUrisByTarget, capturedCommitShasByTarget);
             if (locations.isEmpty()) {
                 log.warn("Skipping consistency issue for exercise {} because no related repository location exists", exerciseId);
                 continue;
@@ -175,9 +215,9 @@ public class ExerciseReviewService {
                 CommentThreadGroup group = createConsistencyCheckGroup(exercise);
                 Set<CommentThread> groupedThreads = new HashSet<>();
                 for (ConsistencyThreadLocation location : locations) {
-                    CommentThread thread = buildConsistencyCheckThread(exercise, location, initialCommitShasByTarget, latestProblemStatementVersion);
+                    CommentThread thread = buildConsistencyCheckThread(exercise, location, initialCommitShasByTarget, problemStatementVersion);
                     thread.setGroup(group);
-                    Comment comment = buildConsistencyCheckComment(thread, issue, location, exercise, repositoryUrisByTarget, exerciseId);
+                    Comment comment = buildConsistencyCheckComment(thread, issue, location, exercise, repositoryUrisByTarget, exerciseId, author);
                     thread.getComments().add(comment);
                     groupedThreads.add(thread);
                 }
@@ -188,8 +228,8 @@ public class ExerciseReviewService {
             }
 
             for (ConsistencyThreadLocation location : locations) {
-                CommentThread thread = buildConsistencyCheckThread(exercise, location, initialCommitShasByTarget, latestProblemStatementVersion);
-                Comment comment = buildConsistencyCheckComment(thread, issue, location, exercise, repositoryUrisByTarget, exerciseId);
+                CommentThread thread = buildConsistencyCheckThread(exercise, location, initialCommitShasByTarget, problemStatementVersion);
+                Comment comment = buildConsistencyCheckComment(thread, issue, location, exercise, repositoryUrisByTarget, exerciseId, author);
                 thread.getComments().add(comment);
                 threadsToPersist.add(thread);
                 createdThreads.add(thread);
@@ -210,6 +250,16 @@ public class ExerciseReviewService {
             log.warn("Skipping {} consistency-check threads without ids after persistence for exercise {}", createdThreads.size() - persistedThreads.size(), exerciseId);
         }
         return persistedThreads;
+    }
+
+    private static CommentThreadLocationType toLocationType(RepositoryType repositoryType) {
+        return switch (repositoryType) {
+            case TEMPLATE -> CommentThreadLocationType.TEMPLATE_REPO;
+            case SOLUTION -> CommentThreadLocationType.SOLUTION_REPO;
+            case TESTS -> CommentThreadLocationType.TEST_REPO;
+            case AUXILIARY -> CommentThreadLocationType.AUXILIARY_REPO;
+            case USER -> throw new IllegalArgumentException("Student repository commits cannot anchor exercise review threads");
+        };
     }
 
     /**
@@ -542,12 +592,11 @@ public class ExerciseReviewService {
      * @param exercise               the owning exercise
      * @param repositoryUrisByTarget pre-resolved repository URIs by target
      * @param exerciseId             exercise id used for logging context
+     * @param author                 the comment author
      * @return the initialized consistency-check comment
      */
     private Comment buildConsistencyCheckComment(CommentThread thread, ConsistencyIssueDTO issue, ConsistencyThreadLocation location, Exercise exercise,
-            ConsistencyTargetRepositoryUris repositoryUrisByTarget, long exerciseId) {
-        User author = userRepository.getUser();
-
+            ConsistencyTargetRepositoryUris repositoryUrisByTarget, long exerciseId, User author) {
         Comment comment = new Comment();
         comment.setType(CommentType.CONSISTENCY_CHECK);
         comment.setContent(new ConsistencyIssueCommentContentDTO(issue.severity(), issue.category(), buildConsistencyIssueText(issue),
@@ -672,52 +721,59 @@ public class ExerciseReviewService {
      * Maps a consistency issue to one or more review-thread locations.
      * Assumes the issue and all locations were validated beforehand.
      *
-     * @param issue                  the consistency issue
-     * @param exerciseId             exercise id used for logging context
-     * @param repositoryUrisByTarget repository URI lookups for consistency-check targets
+     * @param issue                      the consistency issue
+     * @param exerciseId                 exercise id used for logging context
+     * @param repositoryUrisByTarget     repository URI lookups for consistency-check targets
+     * @param capturedCommitShasByTarget caller-captured commits used for exact-revision validation
      * @return normalized list of thread locations
      */
-    private List<ConsistencyThreadLocation> mapConsistencyIssueLocations(ConsistencyIssueDTO issue, long exerciseId, ConsistencyTargetRepositoryUris repositoryUrisByTarget) {
-        return issue.relatedLocations().stream().map(location -> mapConsistencyIssueLocation(location, exerciseId, repositoryUrisByTarget)).flatMap(Optional::stream).distinct()
-                .toList();
+    private List<ConsistencyThreadLocation> mapConsistencyIssueLocations(ConsistencyIssueDTO issue, long exerciseId, ConsistencyTargetRepositoryUris repositoryUrisByTarget,
+            Map<CommentThreadLocationType, String> capturedCommitShasByTarget) {
+        return issue.relatedLocations().stream().map(location -> mapConsistencyIssueLocation(location, exerciseId, repositoryUrisByTarget, capturedCommitShasByTarget))
+                .flatMap(Optional::stream).distinct().toList();
     }
 
     /**
      * Maps a single artifact location to an internal thread location.
      *
-     * @param location               the artifact location from Hyperion output
-     * @param exerciseId             exercise id used for logging context
-     * @param repositoryUrisByTarget repository URI lookups for consistency-check targets
+     * @param location                   the artifact location from Hyperion output
+     * @param exerciseId                 exercise id used for logging context
+     * @param repositoryUrisByTarget     repository URI lookups for consistency-check targets
+     * @param capturedCommitShasByTarget caller-captured commits used for exact-revision validation
      * @return normalized thread location
      */
-    private Optional<ConsistencyThreadLocation> mapConsistencyIssueLocation(ArtifactLocationDTO location, long exerciseId, ConsistencyTargetRepositoryUris repositoryUrisByTarget) {
+    private Optional<ConsistencyThreadLocation> mapConsistencyIssueLocation(ArtifactLocationDTO location, long exerciseId, ConsistencyTargetRepositoryUris repositoryUrisByTarget,
+            Map<CommentThreadLocationType, String> capturedCommitShasByTarget) {
         int lineNumber = location.endLine();
         return switch (location.type()) {
             case PROBLEM_STATEMENT -> Optional.of(new ConsistencyThreadLocation(CommentThreadLocationType.PROBLEM_STATEMENT, null, lineNumber, location.startLine(),
                     location.endLine(), location.suggestedInlineFix()));
             case TEMPLATE_REPOSITORY -> mapRepositoryConsistencyIssueLocation(CommentThreadLocationType.TEMPLATE_REPO, null, location.filePath(), lineNumber, location.startLine(),
-                    location.endLine(), location.suggestedInlineFix(), exerciseId, repositoryUrisByTarget);
+                    location.endLine(), location.suggestedInlineFix(), exerciseId, repositoryUrisByTarget, capturedCommitShasByTarget);
             case SOLUTION_REPOSITORY -> mapRepositoryConsistencyIssueLocation(CommentThreadLocationType.SOLUTION_REPO, null, location.filePath(), lineNumber, location.startLine(),
-                    location.endLine(), location.suggestedInlineFix(), exerciseId, repositoryUrisByTarget);
+                    location.endLine(), location.suggestedInlineFix(), exerciseId, repositoryUrisByTarget, capturedCommitShasByTarget);
             case TESTS_REPOSITORY -> mapRepositoryConsistencyIssueLocation(CommentThreadLocationType.TEST_REPO, null, location.filePath(), lineNumber, location.startLine(),
-                    location.endLine(), location.suggestedInlineFix(), exerciseId, repositoryUrisByTarget);
+                    location.endLine(), location.suggestedInlineFix(), exerciseId, repositoryUrisByTarget, capturedCommitShasByTarget);
         };
     }
 
     /**
      * Maps one repository-based consistency location if the referenced file exists in the target repository.
      *
-     * @param targetType             repository-backed thread target type
-     * @param auxiliaryRepositoryId  auxiliary repository id when {@code targetType} is {@code AUXILIARY_REPO}
-     * @param filePath               repository-relative file path
-     * @param lineNumber             1-based line number
-     * @param exerciseId             exercise id for logging context
-     * @param repositoryUrisByTarget repository URI lookups for consistency-check targets
+     * @param targetType                 repository-backed thread target type
+     * @param auxiliaryRepositoryId      auxiliary repository id when {@code targetType} is {@code AUXILIARY_REPO}
+     * @param filePath                   repository-relative file path
+     * @param lineNumber                 1-based line number
+     * @param exerciseId                 exercise id for logging context
+     * @param repositoryUrisByTarget     repository URI lookups for consistency-check targets
+     * @param capturedCommitShasByTarget caller-captured commits used for exact-revision validation
      * @return mapped location, or empty if the file does not exist in the repository
      */
     private Optional<ConsistencyThreadLocation> mapRepositoryConsistencyIssueLocation(CommentThreadLocationType targetType, @Nullable Long auxiliaryRepositoryId, String filePath,
-            int lineNumber, int startLine, int endLine, @Nullable String suggestedInlineFix, long exerciseId, ConsistencyTargetRepositoryUris repositoryUrisByTarget) {
-        Optional<String> validationError = exerciseReviewRepositoryService.validateFileExists(targetType, auxiliaryRepositoryId, filePath, repositoryUrisByTarget);
+            int lineNumber, int startLine, int endLine, @Nullable String suggestedInlineFix, long exerciseId, ConsistencyTargetRepositoryUris repositoryUrisByTarget,
+            Map<CommentThreadLocationType, String> capturedCommitShasByTarget) {
+        Optional<String> validationError = exerciseReviewRepositoryService.validateFileExists(targetType, auxiliaryRepositoryId, filePath, repositoryUrisByTarget,
+                capturedCommitShasByTarget.get(targetType));
         if (validationError.isPresent()) {
             log.warn("Skipping consistency issue location for exercise {} because {}", exerciseId, validationError.get());
             return Optional.empty();

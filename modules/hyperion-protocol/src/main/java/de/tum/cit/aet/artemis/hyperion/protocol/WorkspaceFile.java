@@ -12,6 +12,17 @@ public record WorkspaceFile(String path, @JsonInclude byte[] content, boolean ex
     public static final int MAX_FILE_BYTES = 8 * 1024 * 1024;
 
     public WorkspaceFile {
+        validatePath(path);
+        if (content == null) {
+            throw new IllegalArgumentException("Snapshot file content is required");
+        }
+        if (content.length > MAX_FILE_BYTES) {
+            throw new IllegalArgumentException("Snapshot file exceeds the byte limit");
+        }
+        content = content.clone();
+    }
+
+    static void validatePath(String path) {
         if (path == null || path.isBlank() || path.length() > 512 || path.startsWith("/") || path.contains("\\") || path.contains(":")
                 || path.chars().anyMatch(Character::isISOControl)) {
             throw new IllegalArgumentException("Snapshot paths must be bounded relative paths");
@@ -21,13 +32,6 @@ public record WorkspaceFile(String path, @JsonInclude byte[] content, boolean ex
                 throw new IllegalArgumentException("Snapshot path contains a forbidden segment");
             }
         }
-        if (content == null) {
-            throw new IllegalArgumentException("Snapshot file content is required");
-        }
-        if (content.length > MAX_FILE_BYTES) {
-            throw new IllegalArgumentException("Snapshot file exceeds the byte limit");
-        }
-        content = content.clone();
     }
 
     @Override

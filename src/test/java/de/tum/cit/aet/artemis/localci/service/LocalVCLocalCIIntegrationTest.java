@@ -34,6 +34,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +55,7 @@ import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCIL
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
@@ -514,6 +517,36 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             assertThat(buildJobQueueItem).isNotNull();
             assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().network()).isEqualTo("none");
             assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().env()).containsExactlyInAnyOrder("key=value", "key1=value1");
+        }
+
+        @ParameterizedTest
+        @ValueSource(booleans = { true, false })
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void retryPreservesPersistedNetworkRestriction(boolean restricted) {
+            createBuildConfig("");
+            var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+            if (restricted) {
+                localCITriggerService.triggerRestrictedBuild(participation, null, RepositoryType.TESTS);
+            }
+            else {
+                localCITriggerService.triggerBuild(participation, null, RepositoryType.TESTS);
+            }
+            var initial = queuedJobs.poll();
+            assertThat(initial).isNotNull();
+            assertThat(initial.id().startsWith(LocalCITriggerService.RESTRICTED_BUILD_PREFIX)).isEqualTo(restricted);
+            var persisted = buildJobRepository.findByBuildJobIdElseThrow(initial.id());
+            localCITriggerService.retryBuildJob(persisted, participation);
+            var retry = queuedJobs.poll();
+            assertThat(retry).isNotNull();
+            assertThat(retry.retryCount()).isEqualTo(1);
+            assertThat(retry.id().startsWith(LocalCITriggerService.RESTRICTED_BUILD_PREFIX)).isEqualTo(restricted);
+            assertThat(retry.buildConfig().dockerRunConfig().network()).isEqualTo(restricted ? "none" : null);
+            if (restricted) {
+                assertThat(retry.buildConfig().dockerRunConfig().env()).isEmpty();
+            }
+            else {
+                assertThat(retry.buildConfig().dockerRunConfig().env()).containsExactlyInAnyOrder("key=value", "key1=value1");
+            }
         }
 
         private ProgrammingExerciseBuildConfig createBuildConfig(String networkName) {
