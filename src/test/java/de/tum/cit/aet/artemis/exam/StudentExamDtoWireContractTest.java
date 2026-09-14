@@ -183,8 +183,8 @@ class StudentExamDtoWireContractTest extends AbstractSpringIntegrationIndependen
      * FINDING 4: a test exam's summary wire must carry the course's {@code athenaFormativeFeedbackEnabled} flag; the AI
      * feedback button ({@code exam-request-ai-feedback-button.component}) reads {@code exam.course.athenaFormativeFeedbackEnabled}
      * to decide whether to show itself, and with a bare {@code CourseForStudentExamDTO} projection the field was always absent,
-     * hiding the button even when formative feedback was enabled for the course. The button gates on
-     * {@code exam.testExam} as well, which is why only a test exam summary resolves the (lazy) configuration.
+     * hiding the button even when formative feedback was enabled for the course. The button gates on the attempt kind as
+     * well, which is why only a test exam or test run summary resolves the (lazy) configuration.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -207,6 +207,35 @@ class StudentExamDtoWireContractTest extends AbstractSpringIntegrationIndependen
         JsonNode courseNode = summaryWire.get("exam").get("course");
         assertThat(courseNode).as("summary wire must carry the nested course").isNotNull();
         assertThat(courseNode.path("athenaFormativeFeedbackEnabled").asBoolean()).as("athenaFormativeFeedbackEnabled must be on the summary wire").isTrue();
+    }
+
+    /**
+     * The same flag has to reach the summary wire of a test run, which the instructor sees after handing in a run from the
+     * conduction screen ({@code exam-participation.component} loads the summary through this endpoint). A test run is an
+     * attempt on a real exam, so gating the (lazy) configuration on {@code exam.testExam} alone leaves the flag false and
+     * hides the AI feedback button on exactly the screen this feature adds it to.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRunSummaryWireCarriesAthenaFormativeFeedbackEnabled() throws Exception {
+        CourseAthenaConfig athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
+
+        // deliberately not a test exam: the point of this test is that a test run lives on a real exam
+        StudentExam testRun = examUtilService.addStudentExamWithUser(exam, instructor);
+        testRun.setTestRun(true);
+        testRun.setSubmitted(true);
+        testRun.addExercise(textExercise);
+        testRun = studentExamRepository.save(testRun);
+
+        JsonNode summaryWire = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/" + testRun.getId() + "/summary", HttpStatus.OK,
+                JsonNode.class);
+
+        JsonNode courseNode = summaryWire.get("exam").get("course");
+        assertThat(courseNode).as("test run summary wire must carry the nested course").isNotNull();
+        assertThat(courseNode.path("athenaFormativeFeedbackEnabled").asBoolean()).as("athenaFormativeFeedbackEnabled must be on the test run summary wire").isTrue();
     }
 
     /**

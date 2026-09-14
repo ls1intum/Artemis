@@ -560,9 +560,10 @@ public class StudentExamResource {
         examService.fetchParticipationsSubmissionsAndResultsForExam(studentExam, user);
 
         log.info("getStudentExamForSummary done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
-        // Only a test exam summary offers the AI feedback request - the client hides the button for anything else and
-        // StudentExamAthenaFeedbackService rejects it - so a real exam does not read the (lazy) Athena configuration.
-        if (studentExam.getExam().isTestExam()) {
+        // Only a test exam or test run summary offers the AI feedback request - the client hides the button for anything else and
+        // StudentExamAthenaFeedbackService rejects it - so a real exam attempt does not read the (lazy) Athena configuration.
+        // A test run is an attempt on a real exam, so it has to be named here separately rather than covered by isTestExam().
+        if (studentExam.getExam().isTestExam() || studentExam.isTestRun()) {
             courseAthenaConfigRepository.attachTo(studentExam.getExam().getCourse());
         }
         return ResponseEntity.ok(StudentExamForSummaryDTO.of(studentExam));
