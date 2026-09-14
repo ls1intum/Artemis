@@ -16,6 +16,7 @@ import java.util.function.Consumer;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
+import org.jspecify.annotations.NonNull;
 import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -235,6 +236,22 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
     public Set<String> getConnectedClientNames() {
         var snapshot = redisClientListResolver.resolveClients();
         return snapshot.complete() ? snapshot.clientNames() : Set.of();
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Redis answers both views from the same {@code CLIENT LIST}, so this resolves it once instead of issuing the
+     * query twice. {@code CLIENT LIST} is O(connections) on the server and returns a line per connection that the
+     * client then parses, which made it the second most expensive command this deployment ran.
+     */
+    @Override
+    @NonNull
+    public ClusterMembership getClusterMembership() {
+        var snapshot = redisClientListResolver.resolveClients();
+        Set<String> names = snapshot.complete() ? snapshot.clientNames() : Set.of();
+        return new ClusterMembership(names, names);
     }
 
     /**
