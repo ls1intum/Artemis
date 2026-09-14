@@ -341,3 +341,22 @@ activation. Disabling Hyperion must not remove guards that protect an exercise
 another eligible core is authoring. Replay and ownership state are bounded
 operational state, not a durable SQL job journal. A full deployment restart does
 not promise automatic continuation or resampling of interrupted runs.
+
+### Build-agent and worker deployment boundaries
+
+| Process | Application contents | Activation and exclusions |
+| --- | --- | --- |
+| Standalone LocalCI build agent | Artemis server artifact | `buildagent` disables feature modules and excludes database auto-configuration. Hyperion server services require `core` even if an external setting enables their flag. |
+| Combined core and LocalCI build agent | Artemis server artifact | Place `buildagent` before `core`; the core profile restores database configuration. Hyperion generation still needs both opt-ins and `localci,localvc`. |
+| Hyperion generation worker | Separate worker artifact | No Artemis server modules, database, distributed-data provider, or incoming web server. Adding server profile names does not turn it into a core or LocalCI build agent. |
+
+The generation worker uses chat models only; its bundled configuration excludes
+OpenAI embedding, image, speech, transcription, and moderation auto-configuration.
+Keep those exclusions when supplying external Spring configuration. Use the core
+artifact for core services rather than widening the worker's component scan.
+
+A single-host installation still runs core and the generation worker as separate
+processes. The worker requires its own isolated Docker execution environment;
+sharing a host does not authorize sharing core credentials, repository mounts,
+or a privileged Docker daemon. LocalCI and generation capacity are managed
+separately, even when core also runs the `buildagent` profile.

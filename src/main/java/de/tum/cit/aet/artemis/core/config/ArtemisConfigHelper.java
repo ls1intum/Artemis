@@ -82,13 +82,14 @@ public class ArtemisConfigHelper {
     }
 
     /**
-     * Check if the Hyperion module is enabled.
+     * Check if the Hyperion module is enabled on a core node. Worker-only nodes cannot load its server services.
      *
      * @param environment the Spring environment
      * @return true if the Hyperion module is enabled, false otherwise
      */
     public boolean isHyperionEnabled(Environment environment) {
-        return getPropertyOrExitArtemis(HYPERION_ENABLED_PROPERTY_NAME, environment);
+        return environment.acceptsProfiles(org.springframework.core.env.Profiles.of(Constants.PROFILE_CORE))
+                && getPropertyOrExitArtemis(HYPERION_ENABLED_PROPERTY_NAME, environment);
     }
 
     /**
