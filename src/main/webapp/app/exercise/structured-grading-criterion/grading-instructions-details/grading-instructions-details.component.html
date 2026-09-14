@@ -11,6 +11,7 @@
             optionValue="value"
             [ngModel]="editModeValue()"
             [ngModelOptions]="{ standalone: true }"
+            (ngModelChange)="editModeValue.set($event === 'structured' ? 'structured' : 'text')"
             (changed)="setEditMode($event)"
             [disabled]="!editable()"
             [allowEmpty]="false"

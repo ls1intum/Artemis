@@ -1,4 +1,4 @@
-import { Component, DestroyRef, DoCheck, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, DoCheck, OnInit, computed, inject, input, linkedSignal, output, signal, viewChild } from '@angular/core';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { Exercise, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -174,8 +174,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         { value: 'text', labelKey: 'artemisApp.exercise.editText' },
     ] as const;
 
-    /** Current mode value for the Edit / Edit as Text toggle. */
-    readonly editModeValue = computed(() => (this.showEditMode() ? 'structured' : 'text'));
+    /** Select model; writable so a rejected switch can push 'text' back after the CVA committed 'structured'. */
+    readonly editModeValue = linkedSignal<'structured' | 'text'>(() => (this.showEditMode() ? 'structured' : 'text'));
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
@@ -866,6 +866,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         // A rejected parse keeps the user in text mode: the structured view would show the previous
         // criteria and regenerating the markdown from them would discard what they typed.
         if (next && !this.prepareForSave()) {
+            this.editModeValue.set('text');
             return;
         }
         this.showEditMode.set(next);

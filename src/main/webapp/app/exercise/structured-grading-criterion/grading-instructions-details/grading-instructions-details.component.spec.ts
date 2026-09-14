@@ -650,10 +650,12 @@ describe('GradingInstructionsDetailsComponent', () => {
                 }),
             });
 
+            component.editModeValue.set('structured');
             component.setEditMode('structured');
 
             // Switching would regenerate the markdown from the previous criteria and discard the text.
             expect(component.showEditMode()).toBe(false);
+            expect(component.editModeValue()).toBe('text');
             expect(exercise.gradingCriteria).toEqual([gradingCriterion]);
         });
 
