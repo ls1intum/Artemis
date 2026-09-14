@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.AutoConfigurationImportFilter;
 import org.springframework.boot.autoconfigure.AutoConfigurationMetadata;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 
 /**
  * {@code SpringAIAutoConfigurationFilter} is a custom {@link AutoConfigurationImportFilter}
@@ -36,7 +37,9 @@ public class SpringAIAutoConfigurationFilter implements AutoConfigurationImportF
 
     @Override
     public boolean[] match(String[] autoConfigurationClasses, AutoConfigurationMetadata metadata) {
-        boolean hyperionEnabled = env.getProperty(Constants.HYPERION_ENABLED_PROPERTY_NAME, Boolean.class, false);
+        // Same condition as ArtemisConfigHelper#isHyperionEnabled: a standalone build agent inherits the core node's flags, and Hyperion is a core-only module, so its flag
+        // must not pull the Spring AI auto-configurations onto a node that has no core services to use them.
+        boolean hyperionEnabled = env.acceptsProfiles(Profiles.of(Constants.PROFILE_CORE)) && env.getProperty(Constants.HYPERION_ENABLED_PROPERTY_NAME, Boolean.class, false);
         boolean atlasEnabled = env.getProperty(Constants.ATLAS_ENABLED_PROPERTY_NAME, Boolean.class, false);
         boolean springAIEnabled = hyperionEnabled || atlasEnabled;
 
