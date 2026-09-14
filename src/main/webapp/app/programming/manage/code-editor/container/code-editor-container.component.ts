@@ -77,6 +77,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     // - monacoEditor is always in the DOM but is read defensively (`?.`) everywhere, so optional keeps
     //   pre-view-init access from throwing.
     readonly fileBrowser = viewChild(CodeEditorFileBrowserComponent);
+    readonly repositoryLoading = computed(() => this.fileBrowser()?.isLoadingFiles() ?? true);
     readonly actions = viewChild(CodeEditorActionsComponent);
     readonly buildOutput = viewChild(CodeEditorBuildOutputComponent);
     readonly monacoEditor = viewChild(CodeEditorMonacoComponent);

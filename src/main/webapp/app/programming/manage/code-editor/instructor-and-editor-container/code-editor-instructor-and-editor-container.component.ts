@@ -497,6 +497,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (this.generationRefreshPending() || this.generationRefreshFailed()) {
             return this.adaptDialogVisible() ? 'artemisApp.review.adaptExercise.reloadDraftRequired' : 'artemisApp.review.adaptExercise.reloadRequired';
         }
+        if (this.codeEditorContainer()?.repositoryLoading() ?? true) {
+            return HYPERION_GENERATION_BLOCKER_KEY + 'repositorySetupBusy';
+        }
         return undefined;
     });
 

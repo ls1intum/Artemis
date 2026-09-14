@@ -78,6 +78,7 @@ interface CodeEditorContainerStub {
     allowNextUnloadWithoutConfirmation?: ReturnType<typeof vi.fn>;
     canDeactivate?: () => boolean;
     hasCleanRepositoryState?: () => boolean;
+    repositoryLoading?: () => boolean;
     hasReviewCommentDrafts?: () => boolean;
     selectedFile?: string;
     selectedRepository?: ReturnType<typeof vi.fn>;
@@ -95,6 +96,7 @@ function setCodeEditorContainer(comp: CodeEditorInstructorAndEditorContainerComp
               openEditorBottomPanel: vi.fn(),
               canDeactivate: () => true,
               hasCleanRepositoryState: () => true,
+              repositoryLoading: () => false,
               hasReviewCommentDrafts: () => false,
               ...stub,
           }
@@ -117,6 +119,7 @@ function createDefaultContainerStub(): CodeEditorContainerStub {
         actions: () => actions,
         canDeactivate: () => true,
         hasCleanRepositoryState: () => true,
+        repositoryLoading: () => false,
         hasReviewCommentDrafts: () => false,
         selectedFile: undefined as string | undefined,
         selectedRepository: vi.fn().mockReturnValue('SOLUTION'),
@@ -1449,6 +1452,18 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         comp.adaptDialogVisible.set(false);
         (comp as any).onAdaptDialogHidden();
     };
+
+    it('keeps adaptation unavailable until the repository has loaded, without reporting unsaved edits', () => {
+        const loading = signal(true);
+        setCodeEditorContainer(comp, { repositoryLoading: loading });
+        expect((comp as any).adaptBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.repositorySetupBusy');
+        (comp as any).openAdaptDialog();
+        expect(comp.adaptDialogVisible()).toBe(false);
+        loading.set(false);
+        expect((comp as any).adaptBlockedReason()).toBeUndefined();
+        (comp as any).openAdaptDialog();
+        expect(comp.adaptDialogVisible()).toBe(true);
+    });
 
     it('connects the adaptation availability to the review threads', () => {
         expect(reviewCommentService.connectAdaptation).toHaveBeenCalledOnce();
