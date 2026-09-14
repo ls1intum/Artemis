@@ -64,7 +64,11 @@ public interface ProviderFailureCooldown {
         if (status == null) {
             status = firstHttpStatusInMessage(error);
         }
-        return isQuotaOrConfigurationFailure(error) || isProviderConfigurationFailure(error) || status != null && (status == 401 || status == 403);
+        if (status == null) {
+            return false;
+        }
+        return status == 401 || status == 403 || (status == 400 || status == 402 || status == 429) && isQuotaOrConfigurationFailure(error)
+                || (status == 400 || status == 404) && isProviderConfigurationFailure(error);
     }
 
     @Nullable

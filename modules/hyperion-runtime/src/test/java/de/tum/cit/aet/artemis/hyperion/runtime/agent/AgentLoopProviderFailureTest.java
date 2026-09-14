@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.runtime.agent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -227,6 +228,32 @@ class AgentLoopProviderFailureTest {
         finally {
             Thread.interrupted();
         }
+    }
+
+    @Test
+    void accountingFailureAfterCompletionCannotReplayTheProviderRequest() {
+        ChatModel model = mock(ChatModel.class);
+        when(model.call(any(Prompt.class))).thenReturn(response("done"));
+        ProviderUsageSink usage = mock(ProviderUsageSink.class);
+        doThrow(new OpenAIIoException("sink offline", new java.net.ConnectException("refused"))).when(usage).accept(any(ChatResponse.class));
+
+        var result = runner(model).run("system", "brief", new AgentLoopRunnerTest.RecordingTools(), 4, () -> false, usage, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        verify(model).call(any(Prompt.class));
+    }
+
+    @Test
+    void uncertainAccountingFailureCannotReplaceAnIndeterminateProviderOutcomeWithARetry() {
+        ChatModel model = mock(ChatModel.class);
+        when(model.call(any(Prompt.class))).thenThrow(new OpenAIIoException("read", new java.net.http.HttpTimeoutException("read")));
+        ProviderUsageSink usage = mock(ProviderUsageSink.class);
+        doThrow(new OpenAIIoException("sink offline", new java.net.ConnectException("refused"))).when(usage).markUncertain();
+
+        var result = runner(model).run("system", "brief", new AgentLoopRunnerTest.RecordingTools(), 4, () -> false, usage, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        verify(model).call(any(Prompt.class));
     }
 
     private static AgentLoopRunner runner(ChatModel model) {

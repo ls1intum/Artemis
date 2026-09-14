@@ -602,26 +602,26 @@ public class AgentLoopRunner {
     @Nullable
     private ChatResponse callProviderWithRetries(Prompt prompt, String providerFailureKey, @Nullable Consumer<ChatResponse> usageSink, @Nullable GenerationActivityTracker activity,
             int turn, BooleanSupplier cancelled, @Nullable Consumer<String> stepListener) {
-        return providerRetries.execute(() -> callProvider(prompt, providerFailureKey, usageSink, activity), cancelled, stepListener, "turn " + turn);
-    }
-
-    /**
-     * Executes one admitted provider request and preserves the distinction between a local cooldown rejection and an indeterminate provider outcome. Once the supplier starts, an
-     * exception marks usage uncertain unless it proves the provider produced no completion ({@link ProviderFailureClass#provesNoUsage()}).
-     */
-    @Nullable
-    private ChatResponse callProvider(Prompt prompt, String providerFailureKey, @Nullable Consumer<ChatResponse> usageSink, @Nullable GenerationActivityTracker activity) {
+        // Only provider invocation belongs inside the retry boundary. Accounting failures must never replay a completed or indeterminate request.
         AtomicBoolean attempted = new AtomicBoolean();
         ChatResponse response;
         try {
-            response = providerFailureCooldown.execute(providerFailureKey, providerHardFailureCooldown, () -> {
-                attempted.set(true);
-                return chatModel.call(prompt);
-            });
+            response = providerRetries.execute(() -> {
+                attempted.set(false);
+                return providerFailureCooldown.execute(providerFailureKey, providerHardFailureCooldown, () -> {
+                    attempted.set(true);
+                    return chatModel.call(prompt);
+                });
+            }, cancelled, stepListener, "turn " + turn);
         }
         catch (RuntimeException error) {
             if (attempted.get() && !ProviderFailureClass.of(error).provesNoUsage()) {
-                markUsageUncertain(usageSink);
+                try {
+                    markUsageUncertain(usageSink);
+                }
+                catch (RuntimeException accountingFailure) {
+                    error.addSuppressed(accountingFailure);
+                }
             }
             throw error;
         }

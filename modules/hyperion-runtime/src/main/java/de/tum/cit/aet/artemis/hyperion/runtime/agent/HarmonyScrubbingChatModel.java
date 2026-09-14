@@ -22,7 +22,8 @@ public class HarmonyScrubbingChatModel implements ChatModel {
 
     /** Text conversation delimiters accepted by the Harmony chat template; ordinary token-shaped prose is preserved. */
     static final List<String> CONTROL_TOKENS = List.of("<|start|>", "<|end|>", "<|channel|>", "<|message|>", "<|im_start|>", "<|im_end|>", "<|im_sep|>", "<|meta_sep|>",
-            "<|meta_start|>", "<|ghissue|>", "<|ghreview|>", "<|fim_prefix|>", "<|fim_middle|>", "<|fim_suffix|>", "<|endoftext|>", "<|disc_score|>");
+            "<|meta_start|>", "<|ghissue|>", "<|ghreview|>", "<|fim_prefix|>", "<|fim_middle|>", "<|fim_suffix|>", "<|endoftext|>", "<|disc_score|>", "<|constrain|>", "<|return|>",
+            "<|call|>");
 
     static final Pattern HARMONY_CONTROL_TOKEN = Pattern.compile(String.join("|", CONTROL_TOKENS.stream().map(Pattern::quote).toList()));
 
