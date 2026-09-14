@@ -1,4 +1,5 @@
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import multipleChoiceQuizTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
@@ -284,58 +285,103 @@ test.describe('Quiz Exercise Submission Paths', { tag: '@fast' }, () => {
         });
     });
 
-    test.describe('Exam mode (course quiz inside an exam exercise group)', () => {
+    test.describe('Exam mode', () => {
+        let exam: Exam;
         let quizExercise: QuizExercise;
 
-        test.beforeEach('Create a course quiz that the existing live-mode endpoint can save against', async ({ login, exerciseAPIRequests }) => {
+        test.beforeEach('Create and prepare an exam with a quiz exercise', async ({ login, examAPIRequests, exerciseAPIRequests }) => {
             await login(admin);
-            quizExercise = await exerciseAPIRequests.createQuizExercise({
-                body: { course },
-                quizQuestions: [multipleChoiceQuizTemplate],
-                releaseDate: dayjs().subtract(1, 'minutes'),
-                duration: 600,
-                quizMode: QuizMode.SYNCHRONIZED,
+            exam = await examAPIRequests.createExam({
+                course,
+                visibleDate: dayjs().subtract(3, 'minutes'),
+                startDate: dayjs().subtract(2, 'minutes'),
+                endDate: dayjs().add(1, 'hour'),
+                workingTime: 3600,
+                numberOfExercisesInExam: 1,
             });
-            await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
-            await exerciseAPIRequests.startQuizNow(quizExercise.id!);
+            const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
+            quizExercise = await exerciseAPIRequests.createQuizExercise({
+                body: { exerciseGroup },
+                quizQuestions: [multipleChoiceQuizTemplate],
+            });
+            expect(quizExercise.exerciseGroup?.id, 'quiz must belong to the exam exercise group').toBe(exerciseGroup.id);
+            await examAPIRequests.registerStudentForExam(exam, studentOne);
+            await examAPIRequests.generateMissingIndividualExams(exam);
+            await examAPIRequests.prepareExerciseStartForExam(exam);
         });
 
-        /**
-         * The {@code submissions/exam} endpoint is the PUT counterpart of {@code submissions/live} for quiz exercises
-         * inside an exam. For a course-mode quiz exercise (the fixture used by these E2E tests), the resource code
-         * path falls through {@code if (quizExercise.isExamExercise())} and the endpoint behaves like a save-only
-         * upsert that persists exactly what the student sent. This test pins that the DTO-bound endpoint still accepts
-         * the rich entity-shaped JSON the exam client posts and persists the answer with the right discriminator.
-         */
-        test('Student exam-mode PUT persists a multiple-choice submission with the right discriminator', async ({ login, page }) => {
-            await login(studentOne);
-            await page.request.post(`/api/quiz/quiz-exercises/${quizExercise.id}/start-participation`);
+        test('Student exam-mode PUT persists a multiple-choice submission with the right discriminator', async ({ page, examParticipation }) => {
+            const conductionResponsePromise = page.waitForResponse(
+                (response) => response.url().includes(`/api/exam/courses/${course.id}/exams/${exam.id}/student-exams/`) && response.url().endsWith('/conduction'),
+            );
+            await examParticipation.startParticipation(studentOne, course, exam);
+            const conductionResponse = await conductionResponsePromise;
+            expect(conductionResponse.status(), 'student must start the prepared exam').toBe(200);
 
-            const options = answerOptionsOf(quizExercise);
-            const tickedOptionIds = options.filter((option) => option.isCorrect).map((option) => option.id!);
-            // Mirror the rich entity-shaped JSON the exam client serializes (full nested AnswerOption objects).
+            const selectedOptions = answerOptionsOf(quizExercise).filter((option) => option.isCorrect);
+            expect(selectedOptions.length, 'fixture must define at least one correct option').toBeGreaterThan(0);
             const examPayload = {
                 submissionExerciseType: 'quiz',
                 submitted: true,
                 submittedAnswers: [
                     {
                         type: 'multiple-choice',
-                        quizQuestion: quizExercise.quizQuestions![0],
-                        selectedOptions: options.filter((option) => tickedOptionIds.includes(option.id!)),
+                        quizQuestion: quizExercise.quizQuestions?.[0],
+                        selectedOptions,
                     },
                 ],
             };
             const submitResponse = await page.request.put(`/api/quiz/exercises/${quizExercise.id}/submissions/exam`, { data: examPayload });
-            expect(submitResponse.status(), 'exam-mode PUT must return 200 even for non-exam quiz exercises (the resource gracefully skips the exam-API guard)').toBe(200);
+            expect(submitResponse.status(), 'exam submission must pass input validation for the prepared student exam').toBe(200);
 
-            const responseBody = await submitResponse.json();
-            expect(responseBody.submitted, 'server must keep the submitted flag on the persisted submission').toBe(true);
-            expect(responseBody.submittedAnswers, 'exam PUT must persist exactly one submitted answer for the single question').toHaveLength(1);
-            const persistedAnswer = responseBody.submittedAnswers[0];
-            expect(persistedAnswer.type, 'persisted answer must keep the multiple-choice discriminator').toBe('multiple-choice');
-            const persistedSelectedIds = (persistedAnswer.selectedOptions ?? []).map((option: any) => option.id).sort((a: number, b: number) => a - b);
-            expect(persistedSelectedIds, 'exam PUT must persist exactly the option ids the student ticked').toEqual([...tickedOptionIds].sort((a, b) => a - b));
+            const expectedSubmission = {
+                id: expect.any(Number),
+                submissionExerciseType: 'quiz',
+                submitted: true,
+                submittedAnswers: [
+                    expect.objectContaining({
+                        type: 'multiple-choice',
+                        selectedOptions: expect.arrayContaining(selectedOptions.map((option) => expect.objectContaining({ id: option.id }))),
+                    }),
+                ],
+            };
+            const responseBody: unknown = await submitResponse.json();
+            expect(responseBody, 'exam submission must retain its answers and discriminator').toMatchObject(expectedSubmission);
+            expect(responseBody, 'exam submission must contain exactly the selected options').toHaveProperty('submittedAnswers.0.selectedOptions.length', selectedOptions.length);
+
+            const reloadResponse = await page.request.get(conductionResponse.url());
+            expect(reloadResponse.status(), 'student must be able to reload the exam').toBe(200);
+            const reloadedExam: unknown = await reloadResponse.json();
+            expect(reloadedExam, 'reloaded exam must contain the saved quiz submission').toMatchObject({
+                exercises: [{ id: quizExercise.id, studentParticipations: [{ submissions: [expectedSubmission] }] }],
+            });
+            expect(reloadedExam, 'reloaded submission must contain exactly the selected options').toHaveProperty(
+                'exercises.0.studentParticipations.0.submissions.0.submittedAnswers.0.selectedOptions.length',
+                selectedOptions.length,
+            );
         });
+
+        test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
+            await login(admin);
+            await examAPIRequests.deleteExam(exam);
+        });
+    });
+
+    test('Exam submission input validation returns 400 for a course quiz', async ({ login, page, exerciseAPIRequests }) => {
+        await login(admin);
+        const quizExercise = await exerciseAPIRequests.createQuizExercise({
+            body: { course },
+            quizQuestions: [multipleChoiceQuizTemplate],
+            releaseDate: dayjs().subtract(1, 'minutes'),
+        });
+        await login(studentOne);
+
+        const submitResponse = await page.request.put(`/api/quiz/exercises/${quizExercise.id}/submissions/exam`, {
+            data: { submissionExerciseType: 'quiz', submitted: true, submittedAnswers: [] },
+        });
+        expect(submitResponse.status(), 'exam submission input validation requires an exam quiz').toBe(400);
+        const responseBody: unknown = await submitResponse.json();
+        expect(responseBody).toMatchObject({ errorKey: 'notExamExercise' });
     });
 
     // Seed courses are persistent; per-test quiz exercises are scoped to each test and cleaned up by the seed reset between runs.

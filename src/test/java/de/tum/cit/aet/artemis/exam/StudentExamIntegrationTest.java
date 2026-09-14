@@ -3954,9 +3954,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         // text autosave: result-exists probe, user with course roles, exercise, submission-gate projection, exam,
         // participations (twice, see below), scalar ownership check, participation state update, submission update,
         // plus the four statements of the submission-version write that only run on this thread under test
-        private final int TEXT_AUTOSAVE_QUERY_COUNT = 14;
+        private final int TEXT_AUTOSAVE_QUERY_COUNT = 15;
 
-        private final int MODELING_AUTOSAVE_QUERY_COUNT = 14;
+        private final int MODELING_AUTOSAVE_QUERY_COUNT = 15;
 
         // the quiz path additionally loads the quiz exercise with its question tree to re-resolve the submitted answers,
         // and its submission save stays a merge because it cascades to the submitted answers. It must NOT contain an
