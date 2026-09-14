@@ -1,8 +1,8 @@
 @let currentExercise = exercise();
 @let generationUnavailableReason = generationDisabledReason();
 <tum-ui-confirm-dialog key="assessment-criteria-generation-confirmation" />
-<div class="edit-sqi">
-    <div class="assessment-criteria-generation__header flex w-full flex-wrap items-start justify-between gap-3">
+<div>
+    <div class="mb-1 flex w-full flex-wrap items-start justify-between gap-3" data-testid="assessment-criteria-header">
         <tum-ui-select-button
             id="edit-mode"
             size="small"
@@ -22,9 +22,9 @@
         </ng-template>
         @if (canShowGenerationButton()) {
             <div class="min-w-fit flex-1">
-                <div class="assessment-criteria-generation__controls">
+                <div class="mb-1 flex w-full flex-col items-end gap-1">
                     <span
-                        class="assessment-criteria-generation__tooltip-trigger"
+                        class="inline-flex"
                         [attr.tabindex]="generationUnavailableReason ? 0 : null"
                         [tumUiTooltip]="generationUnavailableReason ? (generationUnavailableReason | artemisTranslate) : ''"
                     >
@@ -50,17 +50,23 @@
         }
     </div>
     @if (showEditMode()) {
-        <div class="grading-instructions-update-border">
+        <div class="h-auto rounded-[0.625rem] border border-[var(--border-color)] p-4">
             <!--- Edit Mode --->
             <div class="flex flex-col gap-4">
                 @for (criterion of currentExercise.gradingCriteria; track criterion; let criterionIndex = $index) {
-                    <div class="sqi-criterion">
-                        <div class="sqi-criterion__header">
-                            <div class="sqi-criterion__title-block">
-                                <label class="sqi-field-label" jhiTranslate="artemisApp.exercise.assessmentCriterion" [attr.for]="'criterionTitle-' + criterionIndex"></label>
+                    <div
+                        class="@container relative overflow-hidden rounded-xl border border-[var(--border-color)] bg-[var(--surface-ground)] before:absolute before:inset-y-0 before:start-0 before:w-1 before:bg-[var(--primary)] before:content-['']"
+                    >
+                        <div class="mb-0 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--border-color)] px-6 py-4 ps-[1.625rem]">
+                            <div class="min-w-0 flex-1">
+                                <label
+                                    class="mb-1.5 flex items-center gap-1 text-xs font-medium tracking-wider text-muted-color uppercase"
+                                    jhiTranslate="artemisApp.exercise.assessmentCriterion"
+                                    [attr.for]="'criterionTitle-' + criterionIndex"
+                                ></label>
                                 <input
                                     tumUiInput
-                                    class="sqi-criterion__title-input"
+                                    class="w-full max-w-[22.5rem]"
                                     type="text"
                                     [id]="'criterionTitle-' + criterionIndex"
                                     [name]="'criterionTitle-' + criterionIndex"
@@ -73,7 +79,7 @@
                             </div>
                             <tum-ui-button
                                 type="button"
-                                class="sqi-criterion__delete"
+                                class="shrink-0"
                                 severity="danger"
                                 variant="outlined"
                                 size="small"
@@ -84,29 +90,39 @@
                                 <span jhiTranslate="artemisApp.exercise.deleteAssessmentCriterion"></span>
                             </tum-ui-button>
                         </div>
-                        <div class="sqi-criterion__body">
-                            <div class="sqi-criterion__instructions">
+                        <div class="flex flex-col gap-3 px-6 pt-3 pb-5 ps-[1.625rem]">
+                            <div class="grid grid-cols-1 gap-4 @[58rem]:grid-cols-2">
                                 @for (instruction of criterion.structuredGradingInstructions; track instruction; let instructionIndex = $index) {
-                                    <div class="sqi-instruction">
-                                        <div class="sqi-instruction__fields-row">
-                                            <div class="sqi-instruction__field sqi-instruction__field--credits">
-                                                <label class="sqi-field-label" [attr.for]="'instruction-credits-' + criterionIndex + '-' + instructionIndex">
+                                    <div
+                                        class="@container [overflow-wrap:anywhere] rounded-lg border border-[var(--border-color)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--primary)_7%,var(--module-bg)),var(--module-bg))] px-[1.125rem] py-4"
+                                    >
+                                        <div class="grid grid-cols-1 items-end gap-3 @[22rem]:grid-cols-[6.25rem_minmax(0,1fr)_6.25rem_2.5rem]">
+                                            <div class="flex min-w-0 flex-col [&_input]:w-full">
+                                                <label
+                                                    class="mb-1.5 flex items-center gap-1 text-xs font-medium tracking-wider text-muted-color uppercase"
+                                                    [attr.for]="'instruction-credits-' + criterionIndex + '-' + instructionIndex"
+                                                >
                                                     <span jhiTranslate="artemisApp.exercise.credits"></span>
                                                     <jhi-help-icon text="artemisApp.exercise.creditsHint" />
                                                 </label>
                                                 <input
                                                     tumUiInput
+                                                    data-testid="instruction-credits"
                                                     [id]="'instruction-credits-' + criterionIndex + '-' + instructionIndex"
                                                     [(ngModel)]="instruction.credits"
                                                     [ngModelOptions]="{ standalone: true }"
                                                     [disabled]="!editable()"
                                                     type="number"
                                                     step="0.5"
+                                                    placeholder="0"
                                                     (change)="updateGradingInstruction(instruction, criterion)"
                                                 />
                                             </div>
-                                            <div class="sqi-instruction__field sqi-instruction__field--scale">
-                                                <label class="sqi-field-label" [attr.for]="'instruction-grading-scale-' + criterionIndex + '-' + instructionIndex">
+                                            <div class="flex min-w-0 flex-col [&_input]:w-full">
+                                                <label
+                                                    class="mb-1.5 flex items-center gap-1 text-xs font-medium tracking-wider text-muted-color uppercase"
+                                                    [attr.for]="'instruction-grading-scale-' + criterionIndex + '-' + instructionIndex"
+                                                >
                                                     <span jhiTranslate="artemisApp.exercise.gradingScale"></span>
                                                     <jhi-help-icon text="artemisApp.exercise.gradingScaleHint" />
                                                 </label>
@@ -121,13 +137,17 @@
                                                     (change)="updateGradingInstruction(instruction, criterion)"
                                                 />
                                             </div>
-                                            <div class="sqi-instruction__field sqi-instruction__field--limit">
-                                                <label class="sqi-field-label" [attr.for]="'instruction-usage-count-' + criterionIndex + '-' + instructionIndex">
+                                            <div class="flex min-w-0 flex-col [&_input]:w-full">
+                                                <label
+                                                    class="mb-1.5 flex items-center gap-1 text-xs font-medium tracking-wider text-muted-color uppercase"
+                                                    [attr.for]="'instruction-usage-count-' + criterionIndex + '-' + instructionIndex"
+                                                >
                                                     <span jhiTranslate="artemisApp.exercise.limit"></span>
                                                     <jhi-help-icon text="artemisApp.exercise.usageCountHint" />
                                                 </label>
                                                 <input
                                                     tumUiInput
+                                                    data-testid="instruction-usage-count"
                                                     [id]="'instruction-usage-count-' + criterionIndex + '-' + instructionIndex"
                                                     [(ngModel)]="instruction.usageCount"
                                                     [ngModelOptions]="{ standalone: true }"
@@ -135,31 +155,35 @@
                                                     type="number"
                                                     step="1"
                                                     min="0"
+                                                    placeholder="0"
                                                     (change)="updateGradingInstruction(instruction, criterion)"
                                                 />
                                             </div>
                                             <button
                                                 type="button"
-                                                class="instruction-delete-button sqi-instruction__delete"
+                                                class="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center justify-self-end self-end border-0 bg-transparent p-0 text-state-danger disabled:cursor-not-allowed disabled:opacity-40"
                                                 [id]="'delete-instruction-row-' + criterionIndex + '-' + instructionIndex"
                                                 [disabled]="!editable()"
                                                 [attr.aria-label]="'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate"
+                                                [tumUiTooltip]="'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate"
                                                 (click)="deleteInstruction(instruction, criterion)"
-                                                [ngbTooltip]="'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate"
                                             >
-                                                <fa-icon [icon]="faTrash" />
+                                                <fa-icon class="text-lg" [icon]="faTrash" />
                                             </button>
                                         </div>
-                                        <hr class="sqi-instruction__divider" />
-                                        <div class="sqi-instruction__textareas">
-                                            <div class="sqi-instruction__textarea-field">
-                                                <label class="sqi-field-label" [attr.for]="'instruction-description-' + criterionIndex + '-' + instructionIndex">
+                                        <hr class="my-4 h-0 border-0 border-t border-[var(--border-color)]" />
+                                        <div class="grid grid-cols-1 gap-4 @[26rem]:grid-cols-2 @[26rem]:gap-0">
+                                            <div class="flex min-w-0 flex-col @[26rem]:pr-4">
+                                                <label
+                                                    class="mb-1.5 flex items-center gap-1 text-xs font-medium tracking-wider text-muted-color uppercase"
+                                                    [attr.for]="'instruction-description-' + criterionIndex + '-' + instructionIndex"
+                                                >
                                                     <span jhiTranslate="artemisApp.exercise.instructionDescription"></span>
                                                     <jhi-help-icon text="artemisApp.exercise.descriptionHint" />
                                                 </label>
                                                 <textarea
                                                     tumUiTextarea
-                                                    class="sqi-instruction__textarea"
+                                                    class="box-border max-w-full w-full resize-y"
                                                     [id]="'instruction-description-' + criterionIndex + '-' + instructionIndex"
                                                     [(ngModel)]="instruction.instructionDescription"
                                                     [ngModelOptions]="{ standalone: true }"
@@ -169,14 +193,17 @@
                                                     (change)="updateGradingInstruction(instruction, criterion)"
                                                 ></textarea>
                                             </div>
-                                            <div class="sqi-instruction__textarea-field">
-                                                <label class="sqi-field-label" [attr.for]="'instruction-feedback-' + criterionIndex + '-' + instructionIndex">
+                                            <div class="flex min-w-0 flex-col @[26rem]:border-l @[26rem]:border-[var(--border-color)] @[26rem]:pl-4">
+                                                <label
+                                                    class="mb-1.5 flex items-center gap-1 text-xs font-medium tracking-wider text-muted-color uppercase"
+                                                    [attr.for]="'instruction-feedback-' + criterionIndex + '-' + instructionIndex"
+                                                >
                                                     <span jhiTranslate="artemisApp.exercise.feedback"></span>
                                                     <jhi-help-icon text="artemisApp.exercise.feedbackHint" />
                                                 </label>
                                                 <textarea
                                                     tumUiTextarea
-                                                    class="sqi-instruction__textarea"
+                                                    class="box-border max-w-full w-full resize-y"
                                                     [id]="'instruction-feedback-' + criterionIndex + '-' + instructionIndex"
                                                     [(ngModel)]="instruction.feedback"
                                                     [ngModelOptions]="{ standalone: true }"

@@ -184,7 +184,7 @@ describe('GradingInstructionsDetailsComponent', () => {
         it('should render the edit controls and generation button in the same header', () => {
             fixture.detectChanges();
 
-            const header = fixture.nativeElement.querySelector('.assessment-criteria-generation__header') as HTMLElement;
+            const header = fixture.nativeElement.querySelector('[data-testid="assessment-criteria-header"]') as HTMLElement;
 
             expect(header).not.toBeNull();
             expect(header.querySelector('#edit-mode')).not.toBeNull();
@@ -230,8 +230,9 @@ describe('GradingInstructionsDetailsComponent', () => {
             exercise.gradingCriteria = [gradingCriterion];
             fixture.detectChanges();
 
-            expect(fixture.nativeElement.querySelector('.sqi-instruction__fields-row')).not.toBeNull();
-            expect(fixture.nativeElement.querySelector('.sqi-instruction--markdown')).toBeNull();
+            expect(fixture.nativeElement.querySelector('[data-testid="instruction-credits"]')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('[data-testid="instruction-usage-count"]')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('jhi-markdown-editor-monaco')).toBeNull();
             expect(component.showEditMode()).toBe(true);
         });
 
@@ -243,8 +244,8 @@ describe('GradingInstructionsDetailsComponent', () => {
 
             expect(component.showEditMode()).toBe(false);
             expect(fixture.nativeElement.querySelector('jhi-markdown-editor-monaco')).not.toBeNull();
-            expect(fixture.nativeElement.querySelector('.sqi-criterion')).toBeNull();
-            expect(fixture.nativeElement.querySelector('.grading-instructions-update-border')).toBeNull();
+            expect(fixture.nativeElement.querySelector('#criterionTitle-0')).toBeNull();
+            expect(fixture.nativeElement.querySelector('#add-criterion-button')).toBeNull();
         });
 
         it('should use the current user permissions for a new exam exercise without populated permission flags', () => {
