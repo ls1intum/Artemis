@@ -4,6 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { Course } from 'app/course/shared/entities/course.model';
+import { Observable, of } from 'rxjs';
 import { GlobalSearchFilterService } from './global-search-filter.service';
 import { SearchCourseOptionsService } from './search-course-options.service';
 import { MenuCourse } from '../models/search-menu.util';

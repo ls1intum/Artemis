@@ -377,7 +377,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     /** Removes the chip at the given index (its remove button was clicked). */
     protected onChipRemoved(index: number) {
         this.filter.onChipRemoved(index);
-        this.returnHomeIfEmpty();
+        this.returnHomeIfNothingLeft();
     }
 
     /** Taps a chip to re-pick its value: reopens that facet's menu; choosing a value replaces the chip. */
@@ -445,6 +445,21 @@ export class GlobalSearchModalComponent implements OnDestroy {
      */
     private returnHomeIfEmpty() {
         if (this.currentView() === SearchView.Navigation && this.tokens().length === 0 && !this.searchQuery().trim()) {
+            this.filter.openFilterPicker();
+        }
+    }
+
+    /**
+     * The same, for the gestures that remove a filter rather than edit the text.
+     * <p>
+     * Removal asks the question of the search text rather than of the raw input, because a trailing `facet:` means
+     * opposite things in the two gestures. While the user is typing it is an operator they are composing and its
+     * value menu has to stay open, so the raw input counts as content. Left behind after the last chip is removed it
+     * is an unfinished operator in front of nothing, and reading it as content is what pinned the palette on an empty
+     * value menu with the results pane unreachable behind it and no way out but closing the overlay.
+     */
+    private returnHomeIfNothingLeft() {
+        if (this.currentView() === SearchView.Navigation && this.tokens().length === 0 && !this.searchText()) {
             this.filter.openFilterPicker();
         }
     }
@@ -627,7 +642,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
         const remaining = this.tokens().length;
         if (remaining === 0) {
             this.exitChips();
-            this.returnHomeIfEmpty();
+            this.returnHomeIfNothingLeft();
         } else {
             this.selectedChip.set(Math.min(index, remaining - 1));
         }
