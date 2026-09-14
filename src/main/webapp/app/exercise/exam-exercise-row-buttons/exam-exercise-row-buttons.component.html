@@ -14,3 +14,12 @@
         }
     </ng-container>
 </jhi-exercise-action-bar>
+
+<!-- Outside the action bar so it never becomes one of its items; tum-ui-dialog portals the panel to body anyway. -->
+<jhi-exercise-variant-ai-modal-wizard
+    [visible]="aiVariantModalVisible()"
+    (visibleChange)="aiVariantModalVisible.set($event)"
+    [sourceExercise]="exercise()"
+    [courseId]="course().id"
+    [examExercise]="true"
+/>

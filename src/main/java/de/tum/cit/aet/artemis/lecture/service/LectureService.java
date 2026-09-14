@@ -41,7 +41,9 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO;
@@ -61,6 +63,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.web.LectureResource;
@@ -106,11 +109,16 @@ public class LectureService {
 
     private final SlideRepository slideRepository;
 
+    private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
+
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
             Optional<LectureContentProcessingApi> contentProcessingApi, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyApi> competencyApi, ExerciseService exerciseService,
             LectureUnitRepository lectureUnitRepository, Optional<IrisChatSessionApi> irisChatSessionApi,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService, SlideRepository slideRepository) {
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService, SlideRepository slideRepository,
+            LectureUnitCompletionRepository lectureUnitCompletionRepository, CourseAthenaConfigRepository courseAthenaConfigRepository) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
@@ -125,6 +133,8 @@ public class LectureService {
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
         this.youTubeUrlService = youTubeUrlService;
         this.slideRepository = slideRepository;
+        this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
     }
 
     /**
@@ -285,13 +295,18 @@ public class LectureService {
 
     private LectureDetailsDTO convertToLectureDetailsDTO(Lecture lecture) {
         LectureDetailsDTO.CourseDTO courseDTO = Optional.ofNullable(lecture.getCourse()).map(this::mapCourse).orElse(null);
-        List<LectureDetailsDTO.LectureUnitDetailsDTO> lectureUnits = lecture.getLectureUnits().stream().filter(Objects::nonNull).map(this::mapLectureUnit).toList();
+        LectureDetailsDTO.LectureReferenceDTO lectureReference = new LectureDetailsDTO.LectureReferenceDTO(lecture.getId(), lecture.isTutorialLecture(), null);
+        List<LectureDetailsDTO.LectureUnitDetailsDTO> lectureUnits = lecture.getLectureUnits().stream().filter(Objects::nonNull)
+                .map(lectureUnit -> mapLectureUnit(lectureUnit, lectureReference)).toList();
         return new LectureDetailsDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lecture.isTutorialLecture(),
                 courseDTO, lectureUnits);
     }
 
     private LectureDetailsDTO.CourseDTO mapCourse(Course course) {
-        return new LectureDetailsDTO.CourseDTO(course.getId(), course.getTitle(), course.getShortName());
+        // the discussion section reads this switch, and neither details query fetches the lazy configuration
+        courseAthenaConfigRepository.attachTo(course);
+        return new LectureDetailsDTO.CourseDTO(course.getId(), course.getTitle(), course.getShortName(), course.getCourseInformationSharingConfiguration(),
+                course.isAthenaFormativeFeedbackEnabled());
     }
 
     private LectureDetailsDTO.AttachmentDTO mapAttachment(Attachment attachment) {
@@ -335,13 +350,33 @@ public class LectureService {
         return visibleDisplayPageNumbers;
     }
 
-    private LectureDetailsDTO.LectureUnitDetailsDTO mapLectureUnit(LectureUnit lectureUnit) {
+    /**
+     * Loads a single lecture unit the way the lecture details page projects it, for the user requesting it.
+     * <p>
+     * The unit's lecture reference carries the course, since this response has no lecture envelope around it. Exercise
+     * units carry the exercise as the course overview projects it, including the user's participations.
+     *
+     * @param lectureUnitId the id of the lecture unit
+     * @param user          the user requesting the unit; decides the completion flag and the participations
+     * @return the projected lecture unit
+     */
+    public LectureDetailsDTO.LectureUnitDetailsDTO getUnitForDetails(long lectureUnitId, User user) {
+        LectureUnit lectureUnit = lectureUnitRepository.findWithCompetencyLinksAndLectureAndCourseByIdElseThrow(lectureUnitId);
+        lectureUnit.setCompleted(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnitId, user.getId()).isPresent());
+        if (lectureUnit instanceof ExerciseUnit exerciseUnit && exerciseUnit.getExercise() != null) {
+            exerciseService.loadExercisesWithInformationForDashboard(Set.of(exerciseUnit.getExercise().getId()), user).stream().findFirst().ifPresent(exerciseUnit::setExercise);
+        }
+        Lecture lecture = lectureUnit.getLecture();
+        LectureDetailsDTO.LectureReferenceDTO lectureReference = new LectureDetailsDTO.LectureReferenceDTO(lecture.getId(), lecture.isTutorialLecture(),
+                mapCourse(lecture.getCourse()));
+        return mapLectureUnit(lectureUnit, lectureReference);
+    }
+
+    private LectureDetailsDTO.LectureUnitDetailsDTO mapLectureUnit(LectureUnit lectureUnit, LectureDetailsDTO.LectureReferenceDTO lectureReference) {
         List<LectureDetailsDTO.CompetencyLinkDTO> competencyLinks = lectureUnit.getCompetencyLinks() == null ? List.of()
                 : lectureUnit.getCompetencyLinks().stream().filter(Objects::nonNull).map(this::mapCompetencyLink).toList();
         boolean completed = lectureUnit.isCompleted();
         boolean visibleToStudents = lectureUnit.isVisibleToStudents();
-        LectureDetailsDTO.LectureReferenceDTO lectureReference = new LectureDetailsDTO.LectureReferenceDTO(
-                lectureUnit.getLecture() != null ? lectureUnit.getLecture().getId() : null);
 
         switch (lectureUnit) {
             case AttachmentVideoUnit attachmentVideoUnit -> {
@@ -356,8 +391,9 @@ public class LectureService {
                         attachmentVideoUnit.getVideoSource(), videoSourceType, youtubeVideoId, null);
             }
             case ExerciseUnit exerciseUnit -> {
+                ExerciseOverviewDTO exerciseOverview = Optional.ofNullable(exerciseUnit.getExercise()).map(ExerciseOverviewDTO::of).orElse(null);
                 return new LectureDetailsDTO.ExerciseUnitDTO(exerciseUnit.getId(), lectureReference, exerciseUnit.getName(), exerciseUnit.getReleaseDate(), completed,
-                        visibleToStudents, competencyLinks, exerciseUnit.getExercise(), null);
+                        visibleToStudents, competencyLinks, exerciseOverview, null);
             }
             case TextUnit textUnit -> {
                 return new LectureDetailsDTO.TextUnitDTO(textUnit.getId(), lectureReference, textUnit.getName(), textUnit.getReleaseDate(), completed, visibleToStudents,
