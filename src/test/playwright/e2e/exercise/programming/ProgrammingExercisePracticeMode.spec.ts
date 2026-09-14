@@ -7,6 +7,7 @@ import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/
 import { admin, studentOne } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 import { SEED_COURSES } from '../../../support/seedData';
+import { getExercise } from '../../../support/utils';
 import { BUILD_RESULT_TIMEOUT } from '../../../support/timeouts';
 
 const course = { id: SEED_COURSES.programmingParticipation.id } as any;
@@ -73,6 +74,11 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
 
             // Submitting in practice mode must process the submission and update the shown result
             await modeButton(page, 'practice').click();
+            // Selecting a mode re-routes the embedded editor to that mode's participation, and the file tree must not be
+            // touched before that swap: the graded repository is read-only after the due date, so a file action aimed at
+            // it is dropped and the editor never sends the request the submission helper waits for. Its create controls
+            // being enabled is what says the writable practice repository is the one on screen.
+            await expect(getExercise(page, exercise.id!).locator('#file-browser-folder-create-file').first()).toBeEnabled({ timeout: 30000 });
             await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaAllSuccessfulSubmission, async () => {
                 await expect(page.locator('#exercise-headers-information')).toContainText('100%', { timeout: BUILD_RESULT_TIMEOUT });
             });
@@ -143,10 +149,31 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
 async function startPracticeFromExercisePage(page: Page, exerciseId: number, optionLabel: string): Promise<void> {
     const startPracticeButton = page.locator(`#start-practice-${exerciseId} button`);
     await startPracticeButton.waitFor({ state: 'visible', timeout: 15000 });
-    await startPracticeButton.click();
     const popover = page.locator('.start-practice-popover');
-    await popover.waitFor({ state: 'visible' });
-    const responsePromise = page.waitForResponse((response) => response.url().includes(`/exercises/${exerciseId}/participations/practice`) && response.status() === 201);
-    await popover.locator('button', { hasText: optionLabel }).first().click();
+    // The deadline has to outlast the retry loop below, which may spend three attempts of up to 30 s before the click
+    // that finally starts the practice mode. Playwright's 30 s default would expire during those retries and report a
+    // missing response for a request that was still to come.
+    const responsePromise = page.waitForResponse((response) => response.url().includes(`/exercises/${exerciseId}/participations/practice`) && response.status() === 201, {
+        timeout: 150000,
+    });
+
+    // Opening the popover and picking an option are retried as a pair, because an exercise page that already has a
+    // participation routes itself to that participation's editor a moment after the details arrive. That navigation
+    // re-renders the header and closes the popover, and a click that lost the race spins forever: the option passes
+    // the actionability check and is gone by the time the click lands ("element is not visible", retried until the
+    // test dies). Reopening after the one-shot navigation settles is what makes this deterministic.
+    for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+            await startPracticeButton.click({ timeout: 10000 });
+            await popover.waitFor({ state: 'visible', timeout: 10000 });
+            await popover.locator('button', { hasText: optionLabel }).first().click({ timeout: 10000 });
+            break;
+        } catch (error) {
+            if (attempt === 2) {
+                throw error;
+            }
+        }
+    }
+
     await responsePromise;
 }
