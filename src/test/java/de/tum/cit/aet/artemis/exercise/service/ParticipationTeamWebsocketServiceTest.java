@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +27,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionPatchDTO;
@@ -33,6 +37,8 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionSyncPayloadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamModelingSubmissionUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamTextSubmissionUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.web.ParticipationTeamWebsocketService;
@@ -64,9 +70,19 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     @Autowired
     private SubmissionTestRepository submissionTestRepository;
 
+    @Autowired
+    private TeamUtilService teamUtilService;
+
+    @Autowired
+    private ExerciseTestRepository exerciseRepository;
+
     private StudentParticipation participation;
 
     private StudentParticipation textParticipation;
+
+    private StudentParticipation teamModelingParticipation;
+
+    private StudentParticipation teamTextParticipation;
 
     private static String websocketTopic(Participation participation) {
         return "/topic/participations/" + participation.getId() + "/team";
@@ -85,8 +101,21 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         TextExercise textExercise = ExerciseUtilService.findTextExerciseWithTitle(textCourse.getExercises(), "Text");
         textParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
 
+        ModelingExercise teamModelingExercise = modelingExerciseUtilService.addModelingExerciseToCourse(course);
+        teamModelingParticipation = teamParticipationOfStudent1(teamModelingExercise);
+        TextExercise teamTextExercise = textExerciseUtilService.createTeamTextExercise(textCourse, null, null, null);
+        teamTextParticipation = teamParticipationOfStudent1(teamTextExercise);
+
         closeable = MockitoAnnotations.openMocks(this);
         participationTeamWebsocketService.clearDestinationTracker();
+    }
+
+    private StudentParticipation teamParticipationOfStudent1(Exercise exercise) {
+        exercise.setMode(ExerciseMode.TEAM);
+        exerciseRepository.save(exercise);
+        Team team = teamUtilService.createTeam(Set.of(userUtilService.getUserByLogin(TEST_PREFIX + "student1")), userUtilService.getUserByLogin(TEST_PREFIX + "student3"), exercise,
+                "team" + exercise.getId());
+        return participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
     }
 
     @AfterEach
@@ -155,11 +184,11 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         TeamModelingSubmissionUpdateDTO submission = new TeamModelingSubmissionUpdateDTO(null, null, null, null);
 
         // when we submit a new modeling submission ...
-        participationTeamWebsocketService.updateModelingSubmission(participation.getId(), submission, getPrincipalMock("student1"));
+        participationTeamWebsocketService.updateModelingSubmission(teamModelingParticipation.getId(), submission, getPrincipalMock("student1"));
         // the submission should be handled by the service (i.e. saved), ...
         verify(modelingSubmissionService, timeout(2000).times(1)).handleModelingSubmission(any(), any(), any(), isNull());
         // but it should NOT be broadcast (sync is handled with patches only).
-        verify(websocketMessagingService, after(1000).never()).sendMessage(websocketTopic(participation), List.of());
+        verify(websocketMessagingService, after(1000).never()).sendMessage(websocketTopic(teamModelingParticipation), List.of());
     }
 
     @Test
@@ -168,11 +197,11 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         TeamModelingSubmissionUpdateDTO submission = new TeamModelingSubmissionUpdateDTO(null, null, null, null);
 
         // when we submit a new modeling submission with the wrong user ...
-        participationTeamWebsocketService.updateModelingSubmission(participation.getId(), submission, getPrincipalMock("student2"));
+        participationTeamWebsocketService.updateModelingSubmission(teamModelingParticipation.getId(), submission, getPrincipalMock("student2"));
         // the submission is NOT saved ...
         verify(modelingSubmissionService, after(1000).never()).handleModelingSubmission(any(), any(), any(), isNull());
         // it is also not broadcast.
-        verify(websocketMessagingService, after(1000).never()).sendMessage(websocketTopic(participation), List.of());
+        verify(websocketMessagingService, after(1000).never()).sendMessage(websocketTopic(teamModelingParticipation), List.of());
     }
 
     @Test
@@ -181,11 +210,11 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         TeamTextSubmissionUpdateDTO submission = new TeamTextSubmissionUpdateDTO(null, null, null, null, null);
 
         // when we submit a new text submission ...
-        participationTeamWebsocketService.updateTextSubmission(textParticipation.getId(), submission, getPrincipalMock("student1"));
+        participationTeamWebsocketService.updateTextSubmission(teamTextParticipation.getId(), submission, getPrincipalMock("student1"));
         // the submission should be handled by the service (i.e. saved), ...
         verify(textSubmissionService, timeout(2000).times(1)).handleTextSubmission(any(), any(), any(), isNull());
         // and it should be broadcast (unlike modeling exercises).
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(websocketTopic(textParticipation), List.of());
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(websocketTopic(teamTextParticipation), List.of());
     }
 
     @Test
