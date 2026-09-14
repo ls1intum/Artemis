@@ -160,6 +160,7 @@ artemis:
     data-export-creation-time: 0 0 4 * * * # every day at 4am
     programming-exercises-retrigger-submission-without-result-time: 0 0 2 * * * # every day at 2am
     continuous-plagiarism-control-trigger-time: 0 0 5 * * * # every day at 5am
+    weaviate-reconcile-orphan-time: 0 */10 * * * * # demo override: every 10 minutes instead of the nightly 3am default, so lost deletes visibly heal
     vulnerability-scan-time: 0 0 8 * * MON # every Monday at 8am
     feature-usage-digest-time: 0 0 9 * * MON # every Monday at 9am, an hour after the vulnerability report so both do not arrive at once
     # Data-privacy cleanup jobs (only run when the matching artemis.cleanup.*-schedule-enabled flag is true).
@@ -258,6 +259,14 @@ artemis:
 
   weaviate:
     enabled: false
+    # Demo deployment: all three reconcile passes are on so the index provably converges against the database.
+    # The defaults ship disabled because enabling them is an operational decision; this branch IS that decision
+    # for the test server it is deployed to. Orphan is the only pass that deletes and is bounded by the delete
+    # cap and abort ratio defaults.
+    reconcile:
+      missing-sweep-enabled: true
+      drift-sweep-enabled: true
+      orphan-sweep-enabled: true
 
 # Configure Spring AI, if you want to use Hyperion or Atlas
 spring:
