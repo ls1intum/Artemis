@@ -312,3 +312,32 @@ and receives no exercise-configured environment variables. Its persisted build
 job ID carries the `hyperion-sync-` prefix so retries retain the same restrictions.
 Provision the matching offline Gradle toolchain and dependencies on those build
 agents; retries do not fall back to a network-enabled build.
+
+### Module flags, profiles, and process boundaries
+
+Hyperion uses the same startup module condition as Iris and Athena, not an
+administrator-switchable runtime feature toggle. Core configuration and the
+`activeModuleFeatures` reported to the client use the same condition:
+
+| Control | Effect |
+| --- | --- |
+| `artemis.hyperion.enabled=false` | Disables Hyperion, including generation. |
+| Hyperion enabled; `artemis.hyperion.exercise-generation.enabled` false or absent | Other Hyperion tools remain available; no generation transport beans or worker credentials are required. |
+| Both properties true and profiles `core,localci,localvc` | Enables generation coordination and advertises its module feature. Valid worker broker configuration is required. |
+| Missing any required profile | Generation remains disabled even when both properties are true. |
+| No ready worker or no free slot | Enabled but unavailable; capacity errors do not turn off the module flag. |
+
+The standalone worker is a separate application artifact, not an additional core
+profile. Its component scan contains only worker code, and it starts without an
+HTTP server. Provision its `spring.artemis` connection with verified TLS and scoped
+credentials, an immutable sandbox image and positive resource limits. An
+unconfigured worker fails startup; a transport-only worker without a generation
+engine does not advertise usable capacity. Core module flags do not stop a
+worker process. Drain active runs before changing profiles, disabling
+coordination, or replacing either artifact.
+
+Mutation protection on writer nodes is intentionally separate from generation
+activation. Disabling Hyperion must not remove guards that protect an exercise
+another eligible core is authoring. Replay and ownership state are bounded
+operational state, not a durable SQL job journal. A full deployment restart does
+not promise automatic continuation or resampling of interrupted runs.
