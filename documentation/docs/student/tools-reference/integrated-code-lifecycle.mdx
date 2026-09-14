@@ -197,18 +197,17 @@ laptop costs you one key, not all of them. Remove a key with the **…** menu be
 <Callout variant={CalloutVariant.info}>
 
   Pick SSH in the clone dialog without a key on your account and Artemis says so, with a link to this settings page.
-  It warns you the same way when the keys you do have have expired.
+  It warns you the same way when any key on your account has expired.
 
 </Callout>
 
 ### Checking the Server Fingerprint
 
 The first time you connect over SSH, your Git client shows the server's fingerprint and asks whether to trust it.
-Answering yes without checking is the one step of SSH that can be attacked.
+That is the one moment in SSH where you are trusting something you have not checked, so check it.
 
-**Show SSH fingerprints**, on the SSH settings page, lists what Artemis's own fingerprints are. Compare the one your
-client shows against the list; if they match, you are talking to Artemis. If they do not, stop, and tell your
-instructor.
+**Show SSH fingerprints** on the SSH settings page lists Artemis's own. Compare the one your client shows against
+that list; if they match, you are talking to Artemis. If they do not, stop, and tell your instructor.
 
 <Image src={sshFingerprints} alt="The SSH Fingerprints page, listing the fingerprint of the server's host key" size={ImageSize.large} caption="Artemis's fingerprints, to check against what your client shows you" />
 
