@@ -31,13 +31,39 @@ public class HyperionExerciseMutationApi implements AbstractApi {
     }
 
     /**
-     * Read-only check whether Hyperion (a generation run, a revert, or an external mutation) currently owns the exercise. Unlike {@link #claimExternalMutationSlot(long)} this
-     * never takes the slot, so it is safe for high-frequency callers such as student participation starts that must not serialize each other.
+     * Claims a shared template-copy reservation that excludes generation and external writers.
      *
-     * @param exerciseId the programming exercise
-     * @return whether a run or mutation holds the exercise
+     * @param exerciseId exercise to reserve
+     * @return exact reservation token
      */
+    public String claimParticipationSlot(long exerciseId) {
+        return mutationService.claimParticipationSlot(exerciseId);
+    }
+
+    /**
+     * Releases only the matching template-copy reservation.
+     *
+     * @param exerciseId protected exercise
+     * @param token      exact reservation token
+     */
+    public void clearParticipationSlot(long exerciseId, String token) {
+        mutationService.clearParticipationSlot(exerciseId, token);
+    }
+
     public boolean isGenerationActive(long exerciseId) {
         return mutationService.isGenerationActive(exerciseId);
+    }
+
+    public ParticipationReservation reserveParticipation(long exerciseId) {
+        String token = claimParticipationSlot(exerciseId);
+        return new ParticipationReservation(() -> clearParticipationSlot(exerciseId, token));
+    }
+
+    public record ParticipationReservation(Runnable release) implements AutoCloseable {
+
+        @Override
+        public void close() {
+            release.run();
+        }
     }
 }

@@ -77,11 +77,8 @@ final class GenerationJobReaper {
 
     /** Whether the node that claimed this slot is still a member of the cluster. Unknown ownership and lookup failures both count as present, so the slot is retained. */
     boolean ownerMemberIsPresent(GenerationJobService.JobInfo job) {
-        if (job.ownerNodeId() == null) {
-            return true;
-        }
         try {
-            return distributedDataProvider.getDataNodeIds().map(nodeIds -> nodeIds.contains(job.ownerNodeId())).orElse(true);
+            return distributedDataProvider.getDataNodeIds().map(nodeIds -> !job.ownersAbsentFrom(nodeIds)).orElse(true);
         }
         catch (RuntimeException e) {
             log.warn("Could not determine whether the owner of stale generation job {} is still a cluster member; retaining its slot", job.jobId(), e);

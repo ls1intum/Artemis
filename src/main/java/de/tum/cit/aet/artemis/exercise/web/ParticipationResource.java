@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.NotImplementedAlertException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
@@ -164,7 +163,6 @@ public class ParticipationResource {
                     "assignmentRepositoryNotAllowed");
         }
         checkIfParticipationCanBeStartedElseThrow(exercise, user);
-        checkNoGenerationOwnsExerciseElseThrow(exercise);
 
         // if this is a team-based exercise, set the participant to the team that the user belongs to
         Participant participant = user;
@@ -173,7 +171,8 @@ public class ParticipationResource {
                     .orElseThrow(() -> new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "teamExercise.cannotStart"));
         }
         StudentParticipation participation;
-        try {
+        var reservation = claimParticipationReservation(exercise);
+        try (reservation) {
             participation = participationService.startExercise(exercise, participant, true);
         }
         catch (Exception e) {
@@ -239,9 +238,11 @@ public class ParticipationResource {
             throw new BadRequestAlertException("Tried to start the practice mode based on the graded participation, but there is no graded participation", ENTITY_NAME,
                     "practiceModeNoGradedParticipation");
         }
-        checkNoGenerationOwnsExerciseElseThrow(exercise);
 
-        StudentParticipation participation = participationService.startPracticeMode(exercise, user, optionalGradedStudentParticipation, useGradedParticipation);
+        StudentParticipation participation;
+        try (var reservation = claimParticipationReservation(exercise)) {
+            participation = participationService.startPracticeMode(exercise, user, optionalGradedStudentParticipation, useGradedParticipation);
+        }
 
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();
@@ -363,6 +364,16 @@ public class ParticipationResource {
         return ResponseEntity.ok().body(updatedParticipation);
     }
 
+    /** Holds a shared template-copy reservation without serializing concurrent student starts. */
+    private HyperionExerciseMutationApi.ParticipationReservation claimParticipationReservation(Exercise exercise) {
+        if (exercise instanceof ProgrammingExercise && hyperionExerciseMutationApi.isPresent()) {
+            var api = hyperionExerciseMutationApi.get();
+            return api.reserveParticipation(exercise.getId());
+        }
+        return new HyperionExerciseMutationApi.ParticipationReservation(() -> {
+        });
+    }
+
     /**
      * <p>
      * Checks if a participation can be started for the given exercise and user.
@@ -377,19 +388,6 @@ public class ParticipationResource {
      * @param user     attempting to start the participation
      * @throws AccessForbiddenAlertException if the participation cannot be started due to feature restrictions or due date constraints
      */
-    /**
-     * A Hyperion run (generation, adaptation, or revert) rewrites the template, solution and tests of a programming exercise in place. A participation started meanwhile
-     * would copy a template that is about to change, so the start is refused before any repository is created. This is a read-only check: claiming the mutation slot here
-     * would serialize every student of the exercise behind one another.
-     *
-     * @param exercise the exercise the participation is started for
-     */
-    private void checkNoGenerationOwnsExerciseElseThrow(Exercise exercise) {
-        if (exercise instanceof ProgrammingExercise && hyperionExerciseMutationApi.isPresent() && hyperionExerciseMutationApi.get().isGenerationActive(exercise.getId())) {
-            throw new ConflictException("Exercise generation is running; wait for it to finish before starting the exercise.", ENTITY_NAME, "exerciseGenerationRunning");
-        }
-    }
-
     private void checkIfParticipationCanBeStartedElseThrow(Exercise exercise, User user) {
         // 1) Don't allow student to start before the start and release date
         ZonedDateTime releaseOrStartDate = exercise.getParticipationStartDate();

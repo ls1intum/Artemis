@@ -90,7 +90,7 @@ class ParticipationResourceGenerationGuardTest {
     @Test
     void startParticipation_whileGenerationOwnsExercise_returnsConflictBeforeCreatingAnything() {
         exercise.setDueDate(ZonedDateTime.now().plusDays(1));
-        when(hyperionExerciseMutationApi.isGenerationActive(EXERCISE_ID)).thenReturn(true);
+        when(hyperionExerciseMutationApi.reserveParticipation(EXERCISE_ID)).thenThrow(new ConflictException("running", "participation", "exerciseGenerationRunning"));
 
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> resource.startParticipation(EXERCISE_ID))
                 .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("exerciseGenerationRunning"));
@@ -101,13 +101,18 @@ class ParticipationResourceGenerationGuardTest {
     @Test
     void startParticipation_withoutActiveGeneration_startsTheExercise() throws Exception {
         exercise.setDueDate(ZonedDateTime.now().plusDays(1));
-        when(hyperionExerciseMutationApi.isGenerationActive(EXERCISE_ID)).thenReturn(false);
+        var released = new java.util.concurrent.atomic.AtomicBoolean();
+        when(hyperionExerciseMutationApi.reserveParticipation(EXERCISE_ID)).thenReturn(new HyperionExerciseMutationApi.ParticipationReservation(() -> released.set(true)));
         StudentParticipation participation = participationWithExercise();
-        when(participationService.startExercise(exercise, student, true)).thenReturn(participation);
+        when(participationService.startExercise(exercise, student, true)).thenAnswer(invocation -> {
+            assertThat(released).isFalse();
+            return participation;
+        });
 
         var response = resource.startParticipation(EXERCISE_ID);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(released).isTrue();
         assertThat(response.getBody()).isSameAs(participation);
         // The guard is read-only: a student start must never take the mutation slot and serialize the other students behind it.
         verify(hyperionExerciseMutationApi, never()).claimExternalMutationSlot(EXERCISE_ID);
@@ -116,7 +121,7 @@ class ParticipationResourceGenerationGuardTest {
     @Test
     void startPracticeParticipation_whileGenerationOwnsExercise_returnsConflictBeforeCreatingAnything() {
         when(participationService.findOneGradedByExerciseAndParticipant(exercise, student)).thenReturn(Optional.empty());
-        when(hyperionExerciseMutationApi.isGenerationActive(EXERCISE_ID)).thenReturn(true);
+        when(hyperionExerciseMutationApi.reserveParticipation(EXERCISE_ID)).thenThrow(new ConflictException("running", "participation", "exerciseGenerationRunning"));
 
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> resource.startPracticeParticipation(EXERCISE_ID, false))
                 .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("exerciseGenerationRunning"));
@@ -127,13 +132,18 @@ class ParticipationResourceGenerationGuardTest {
     @Test
     void startPracticeParticipation_withoutActiveGeneration_startsPracticeMode() throws Exception {
         when(participationService.findOneGradedByExerciseAndParticipant(exercise, student)).thenReturn(Optional.empty());
-        when(hyperionExerciseMutationApi.isGenerationActive(EXERCISE_ID)).thenReturn(false);
+        var released = new java.util.concurrent.atomic.AtomicBoolean();
+        when(hyperionExerciseMutationApi.reserveParticipation(EXERCISE_ID)).thenReturn(new HyperionExerciseMutationApi.ParticipationReservation(() -> released.set(true)));
         StudentParticipation participation = participationWithExercise();
-        when(participationService.startPracticeMode(exercise, student, Optional.empty(), false)).thenReturn(participation);
+        when(participationService.startPracticeMode(exercise, student, Optional.empty(), false)).thenAnswer(invocation -> {
+            assertThat(released).isFalse();
+            return participation;
+        });
 
         var response = resource.startPracticeParticipation(EXERCISE_ID, false);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(released).isTrue();
         assertThat(response.getBody()).isSameAs(participation);
         verify(hyperionExerciseMutationApi, never()).claimExternalMutationSlot(EXERCISE_ID);
     }

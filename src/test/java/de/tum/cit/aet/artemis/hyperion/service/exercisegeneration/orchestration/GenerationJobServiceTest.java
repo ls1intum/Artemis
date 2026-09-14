@@ -288,6 +288,64 @@ class GenerationJobServiceTest {
     }
 
     @Test
+    void concurrentTemplateCopiesExcludeGenerationUntilBothReservationsClose() throws Exception {
+        var copies = new GenerationExternalMutationService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), 1, "Hazelcast");
+        String first = copies.claimParticipationSlot(43);
+        var entered = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        try (var executor = java.util.concurrent.Executors.newSingleThreadExecutor()) {
+            var second = executor.submit(() -> {
+                String token = copies.claimParticipationSlot(43);
+                entered.countDown();
+                try {
+                    if (!release.await(10, java.util.concurrent.TimeUnit.SECONDS)) {
+                        throw new IllegalStateException("test release timeout");
+                    }
+                }
+                finally {
+                    copies.clearParticipationSlot(43, token);
+                }
+                return true;
+            });
+            try {
+                assertThat(entered.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+                assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.startJob(user("owner"), exercise(43), "generate", GenerationMode.GENERATE));
+                copies.clearParticipationSlot(43, first);
+                assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.startJob(user("owner"), exercise(43), "generate", GenerationMode.GENERATE));
+            }
+            finally {
+                release.countDown();
+            }
+            assertThat(second.get(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+        }
+        assertThat(HyperionDistributedDataTestProvider.provider(hazelcastInstance).getMap(GenerationJobService.JOB_MAP_NAME).get("43")).isNull();
+        String generation = jobService.startJob(user("owner"), exercise(43), "generate", GenerationMode.GENERATE);
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> copies.claimParticipationSlot(43));
+        copies.clearParticipationSlot(43, first);
+        assertThat(jobService.isOwnedActiveJob(43, generation)).isTrue();
+    }
+
+    @Test
+    void partialUndoKeepsEveryWriterExcludedUntilAuthorizedRetryCompletes() {
+        var copies = new GenerationExternalMutationService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), 1, "Hazelcast");
+        String original = jobService.claimRevertSlot(user("owner"), 43);
+        jobService.retainRevertRecoverySlot(43, original);
+        assertThat(jobService.isRevertRecoveryPending(43)).isTrue();
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.startJob(user("owner"), exercise(43), "generate", GenerationMode.GENERATE));
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> copies.claimParticipationSlot(43));
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> copies.claimExternalMutationSlot(43));
+
+        String retry = jobService.claimRevertSlot(user("another-editor"), 43);
+        assertThat(jobService.isRevertRecoveryRetry(retry)).isTrue();
+        jobService.clearRevertSlot(43, original);
+        jobService.retainRevertRecoverySlot(43, original);
+        assertThat(jobService.isOwnedActiveJob(43, retry)).isTrue();
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.claimRevertSlot(user("owner"), 43));
+        jobService.clearRevertSlot(43, retry);
+        assertThat(jobService.startJob(user("owner"), exercise(43), "generate", GenerationMode.GENERATE)).isNotBlank();
+    }
+
+    @Test
     void claimRevertSlot_blocksGenerationUntilCleared() {
         ProgrammingExercise exercise = exercise(43L);
         User owner = user("owner");

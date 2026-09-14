@@ -313,18 +313,28 @@ public class HyperionExerciseGenerationResource {
         User user = userRepository.getUserWithAuthorities();
         Optional<String> revertibleJobId = generationRevertService.findRevertibleJobId(exerciseId);
         String revertSlot = jobService.claimRevertSlot(user, exerciseId);
+        var consistent = new java.util.concurrent.atomic.AtomicBoolean();
         try {
             return generationRevertService.revert(exercise, user, () -> jobService.isOwnedActiveJob(exerciseId, revertSlot)).map(result -> {
                 if (result.fullyReverted()) {
+                    consistent.set(true);
                     revertibleJobId.ifPresent(jobId -> jobService.discardRetainedRun(exerciseId, jobId));
                 }
                 ExerciseGenerationRevertResultDTO body = new ExerciseGenerationRevertResultDTO(result.fullyReverted(),
                         result.revertedRepositories().stream().map(HyperionExerciseGenerationResource::repositoryLabel).toList(), Instant.now());
                 return result.fullyReverted() ? ResponseEntity.ok(body) : ResponseEntity.status(HttpStatus.CONFLICT).body(body);
-            }).orElseGet(() -> ResponseEntity.notFound().build());
+            }).orElseGet(() -> {
+                consistent.set(!jobService.isRevertRecoveryRetry(revertSlot));
+                return ResponseEntity.notFound().build();
+            });
         }
         finally {
-            jobService.clearRevertSlot(exerciseId, revertSlot);
+            if (consistent.get()) {
+                jobService.clearRevertSlot(exerciseId, revertSlot);
+            }
+            else {
+                jobService.retainRevertRecoverySlot(exerciseId, revertSlot);
+            }
         }
     }
 
@@ -378,7 +388,8 @@ public class HyperionExerciseGenerationResource {
     }
 
     private boolean canOfferRevert(ProgrammingExercise exercise) {
-        return !GenerationRequestService.hasReleaseDateInThePast(exercise) && !hasStudentParticipations(exercise) && !jobService.hasActiveJob(exercise.getId());
+        return !GenerationRequestService.hasReleaseDateInThePast(exercise) && !hasStudentParticipations(exercise)
+                && (!jobService.hasActiveJob(exercise.getId()) || jobService.isRevertRecoveryPending(exercise.getId()));
     }
 
     private static boolean hasStudentParticipations(ProgrammingExercise exercise) {

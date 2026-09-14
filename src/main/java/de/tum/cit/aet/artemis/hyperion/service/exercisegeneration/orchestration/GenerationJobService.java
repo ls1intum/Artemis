@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -397,7 +398,6 @@ public class GenerationJobService {
                 }
             }
             if (jobMap.putIfAbsent(key, newJob) != null) {
-                // Only reachable if the lease expired mid-section and another node claimed the slot; losing the race is correct, overwriting its claim would not be.
                 throw new ConflictException(conflictMessage, ENTITY_NAME, errorKey);
             }
         }
@@ -689,7 +689,6 @@ public class GenerationJobService {
             if (generationBudgetService != null && !generationBudgetService.refreshReservation(job.budgetReservationId())) {
                 return false;
             }
-            // Reports the heartbeat as lost if the slot changed under an expired lease, rather than overwriting whichever job now owns it.
             return jobMap.replace(key, job, job.withHeartbeat(Instant.now()));
         }
         finally {
@@ -706,12 +705,20 @@ public class GenerationJobService {
      * @return an opaque slot token that must be passed to {@link #clearRevertSlot(long, String)}
      */
     public String claimRevertSlot(User user, long exerciseId) {
-        String token = REVERT_JOB_PREFIX + UUID.randomUUID();
-        Instant startedAt = Instant.now();
-        JobInfo newJob = new JobInfo(token, user.getLogin(), exerciseId, startedAt, null, localNodeId, startedAt, false, null);
-        claimSlot(key(exerciseId), newJob, "Exercise generation is already running for this exercise; wait for it to finish before reverting an adaptation.",
-                "exerciseGenerationRunning");
-        return token;
+        return GenerationRevertSlots.claim(jobMap, user, exerciseId, localNodeId, this::verifyExpectedDataMemberTopology,
+                job -> claimSlot(key(exerciseId), job, "Exercise authoring or another mutation is running; wait before reverting.", "exerciseGenerationRunning"));
+    }
+
+    public void retainRevertRecoverySlot(long exerciseId, String token) {
+        GenerationRevertSlots.retain(jobMap, exerciseId, token);
+    }
+
+    public boolean isRevertRecoveryPending(long exerciseId) {
+        return GenerationRevertSlots.isPending(jobMap.get(key(exerciseId)));
+    }
+
+    public boolean isRevertRecoveryRetry(String token) {
+        return token.startsWith(GenerationRevertSlots.RETRY_PREFIX);
     }
 
     /**
@@ -737,14 +744,10 @@ public class GenerationJobService {
     }
 
     /**
-     * Returns the slot currently blocking an exercise when it is one {@link #reclaimStaleJob} refuses to release on its own, so an operator can read the exact token that
-     * {@link #recoverWedgedSlot(long, String)} requires.
-     * <p>
-     * That is every non-cancellable slot: an external REST mutation, an adaptation revert, and a generation past its point of no return. All three block generation, revert
-     * <em>and</em> ordinary REST edits of the exercise, the map has no TTL, and nothing else ever clears them.
+     * Returns a non-cancellable slot for exact-token, audited operator recovery.
      *
-     * @param exerciseId the exercise id
-     * @return the blocking slot, if the exercise currently has one that cannot be reclaimed automatically
+     * @param exerciseId exercise to inspect
+     * @return blocking slot, if present
      */
     public Optional<WedgedSlotInfo> getWedgedSlotInfo(long exerciseId) {
         String key = key(exerciseId);
@@ -762,15 +765,11 @@ public class GenerationJobService {
     }
 
     /**
-     * Value-guarded recovery for a non-cancellable slot whose owning JVM has been confirmed terminated. Cluster departure alone is insufficient because a partitioned request may
-     * still be writing, so this is an audited operator action rather than something the stale-job scan does.
-     * <p>
-     * Accepts a generation, revert, or external-mutation token. A recovered generation slot is terminalized like a stale one, so the instructor is told the run stopped and is
-     * warned to review the repositories rather than left with a job that reports as running forever.
+     * Recovers an exact non-cancellable token after its owner departs.
      *
-     * @param exerciseId the exercise id
-     * @param token      the exact slot token to recover, as reported by {@link #getWedgedSlotInfo(long)}
-     * @return whether a departed owner's matching slot was recovered
+     * @param exerciseId exercise to recover
+     * @param token      exact ownership token
+     * @return whether recovery succeeded
      */
     public boolean recoverWedgedSlot(long exerciseId, String token) {
         if (token == null || token.isBlank()) {
@@ -894,11 +893,7 @@ public class GenerationJobService {
         return String.valueOf(exerciseId);
     }
 
-    /**
-     * Acquires the per-exercise coordination lock without a lease. Cancellation and the transition into durable
-     * persistence must remain mutually exclusive even when a provider call stalls for longer than expected; expiring
-     * this lock would let an old cancellation resume after a newer caller entered the non-cancellable phase.
-     */
+    /** Non-expiring: cancellation and durable persistence must never overlap after a stalled caller resumes. */
     void lockJobSlot(String key) {
         jobMap.lock(key);
     }
@@ -925,10 +920,27 @@ public class GenerationJobService {
      */
     public record JobInfo(String jobId, String userLogin, long exerciseId, Instant startedAt, @Nullable Instant deadlineAt, @Nullable String ownerNodeId,
             @Nullable Instant lastHeartbeatAt, boolean cancellable, @Nullable String budgetReservationId, @Nullable GenerationMode mode, @Nullable String exerciseTitle,
-            @Nullable Long courseId) implements Serializable {
+            @Nullable Long courseId, @Nullable Map<String, String> participationOwners) implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 1L;
+
+        public JobInfo(String jobId, String userLogin, long exerciseId, Instant startedAt, @Nullable Instant deadlineAt, @Nullable String ownerNodeId,
+                @Nullable Instant lastHeartbeatAt, boolean cancellable, @Nullable String budgetReservationId, @Nullable GenerationMode mode, @Nullable String exerciseTitle,
+                @Nullable Long courseId) {
+            this(jobId, userLogin, exerciseId, startedAt, deadlineAt, ownerNodeId, lastHeartbeatAt, cancellable, budgetReservationId, mode, exerciseTitle, courseId, null);
+        }
+
+        JobInfo withParticipationOwners(Map<String, String> owners) {
+            // Stable serialization is required for Hazelcast binary compare-and-set across JVMs.
+            return new JobInfo(jobId, userLogin, exerciseId, startedAt, deadlineAt, ownerNodeId, lastHeartbeatAt, cancellable, budgetReservationId, mode, exerciseTitle, courseId,
+                    java.util.Collections.unmodifiableSortedMap(new java.util.TreeMap<>(owners)));
+        }
+
+        boolean ownersAbsentFrom(java.util.Set<String> nodes) {
+            return participationOwners != null ? !participationOwners.isEmpty() && participationOwners.values().stream().noneMatch(nodes::contains)
+                    : ownerNodeId != null && !nodes.contains(ownerNodeId);
+        }
 
         /** A slot without display context: reverts and external mutations, which the administrator overview does not list. */
         public JobInfo(String jobId, String userLogin, long exerciseId, Instant startedAt, @Nullable Instant deadlineAt, @Nullable String ownerNodeId,
@@ -941,12 +953,13 @@ public class GenerationJobService {
         }
 
         JobInfo withHeartbeat(Instant heartbeatAt) {
-            return new JobInfo(jobId, userLogin, exerciseId, startedAt, deadlineAt, ownerNodeId, heartbeatAt, cancellable, budgetReservationId, mode, exerciseTitle, courseId);
+            return new JobInfo(jobId, userLogin, exerciseId, startedAt, deadlineAt, ownerNodeId, heartbeatAt, cancellable, budgetReservationId, mode, exerciseTitle, courseId,
+                    participationOwners);
         }
 
         JobInfo withCancellable(boolean newCancellable) {
             return new JobInfo(jobId, userLogin, exerciseId, startedAt, deadlineAt, ownerNodeId, lastHeartbeatAt, newCancellable, budgetReservationId, mode, exerciseTitle,
-                    courseId);
+                    courseId, participationOwners);
         }
     }
 

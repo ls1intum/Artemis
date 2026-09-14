@@ -283,20 +283,29 @@ class HyperionExerciseGenerationResourceTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().fullyReverted()).isFalse();
         verify(jobService, never()).discardRetainedRun(1L, "adapt-job");
-        verify(jobService).clearRevertSlot(1L, "revert-slot");
+        verify(jobService, never()).clearRevertSlot(1L, "revert-slot");
+        verify(jobService).retainRevertRecoverySlot(1L, "revert-slot");
     }
 
-    @Test
-    void revertExerciseGeneration_whenNothingToRevert_returns404() {
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void revertExerciseGeneration_whenNothingToRevert_preservesAnExistingRecoveryGuard(boolean recovering) {
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
         when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
+        when(jobService.isRevertRecoveryRetry("revert-slot")).thenReturn(recovering);
         when(generationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class))).thenReturn(Optional.empty());
 
         ResponseEntity<ExerciseGenerationRevertResultDTO> response = resource.revertExerciseGeneration(1L);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-        verify(jobService).clearRevertSlot(1L, "revert-slot");
+        if (recovering) {
+            verify(jobService, never()).clearRevertSlot(1L, "revert-slot");
+            verify(jobService).retainRevertRecoverySlot(1L, "revert-slot");
+        }
+        else {
+            verify(jobService).clearRevertSlot(1L, "revert-slot");
+        }
     }
 
     @Test

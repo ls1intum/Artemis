@@ -108,7 +108,7 @@ For example, the [OpenRouter model catalogue](https://openrouter.ai/api/v1/model
 artemis:
     llm:
         model-costs:
-            "[Qwen/Qwen3.8-27B]":
+            '[Qwen/Qwen3.8-27B]':
                 input-cost-per-million-eur: 0.361570248
                 cached-input-cost-per-million-eur: 0.073174931
                 output-cost-per-million-eur: 2.582644628
@@ -319,13 +319,13 @@ Hyperion uses the same startup module condition as Iris and Athena, not an
 administrator-switchable runtime feature toggle. Core configuration and the
 `activeModuleFeatures` reported to the client use the same condition:
 
-| Control | Effect |
-| --- | --- |
-| `artemis.hyperion.enabled=false` | Disables Hyperion, including generation. |
-| Hyperion enabled; `artemis.hyperion.exercise-generation.enabled` false or absent | Other Hyperion tools remain available; no generation transport beans or worker credentials are required. |
-| Both properties true and profiles `core,localci,localvc` | Enables generation coordination and advertises its module feature. Valid worker broker configuration is required. |
-| Missing any required profile | Generation remains disabled even when both properties are true. |
-| No ready worker or no free slot | Enabled but unavailable; capacity errors do not turn off the module flag. |
+| Control                                                                          | Effect                                                                                                            |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `artemis.hyperion.enabled=false`                                                 | Disables Hyperion, including generation.                                                                          |
+| Hyperion enabled; `artemis.hyperion.exercise-generation.enabled` false or absent | Other Hyperion tools remain available; no generation transport beans or worker credentials are required.          |
+| Both properties true and profiles `core,localci,localvc`                         | Enables generation coordination and advertises its module feature. Valid worker broker configuration is required. |
+| Missing any required profile                                                     | Generation remains disabled even when both properties are true.                                                   |
+| No ready worker or no free slot                                                  | Enabled but unavailable; capacity errors do not turn off the module flag.                                         |
 
 The standalone worker is a separate application artifact, not an additional core
 profile. Its component scan contains only worker code, and it starts without an
@@ -344,11 +344,11 @@ not promise automatic continuation or resampling of interrupted runs.
 
 ### Build-agent and worker deployment boundaries
 
-| Process | Application contents | Activation and exclusions |
-| --- | --- | --- |
-| Standalone LocalCI build agent | Artemis server artifact | `buildagent` disables feature modules and excludes database auto-configuration. Hyperion server services require `core` even if an external setting enables their flag. |
-| Combined core and LocalCI build agent | Artemis server artifact | Place `buildagent` before `core`; the core profile restores database configuration. Hyperion generation still needs both opt-ins and `localci,localvc`. |
-| Hyperion generation worker | Separate worker artifact | No Artemis server modules, database, distributed-data provider, or incoming web server. Adding server profile names does not turn it into a core or LocalCI build agent. |
+| Process                               | Application contents     | Activation and exclusions                                                                                                                                                |
+| ------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Standalone LocalCI build agent        | Artemis server artifact  | `buildagent` disables feature modules and excludes database auto-configuration. Hyperion server services require `core` even if an external setting enables their flag.  |
+| Combined core and LocalCI build agent | Artemis server artifact  | Place `buildagent` before `core`; the core profile restores database configuration. Hyperion generation still needs both opt-ins and `localci,localvc`.                  |
+| Hyperion generation worker            | Separate worker artifact | No Artemis server modules, database, distributed-data provider, or incoming web server. Adding server profile names does not turn it into a core or LocalCI build agent. |
 
 The generation worker uses chat models only; its bundled configuration excludes
 OpenAI embedding, image, speech, transcription, and moderation auto-configuration.
@@ -360,3 +360,18 @@ processes. The worker requires its own isolated Docker execution environment;
 sharing a host does not authorize sharing core credentials, repository mounts,
 or a privileged Docker daemon. LocalCI and generation capacity are managed
 separately, even when core also runs the `buildagent` profile.
+
+### Participation copies and interrupted undo
+
+A programming participation reserves the exercise until its repository copy completes.
+Several student copies may run concurrently, but generation, adaptation, undo, and ordinary
+exercise mutations cannot overlap any of them. Reservations do not expire while a copy is
+running. After a writer node crashes, recover the shared reservation only after confirming
+that **all** recorded copy owners and their repository operations have stopped; the exact-token
+recovery endpoint also requires all those owners to be absent and a data-member majority.
+
+An undo that restores only some repositories keeps the exercise guarded. The instructor can
+retry **Undo** against the retained baseline; another undo, generation, or ordinary edit cannot
+run concurrently. A missing or expired baseline during this recovery does not unlock an
+inconsistent exercise. If a retry cannot finish, reconcile the repositories before using the
+audited operator recovery path.

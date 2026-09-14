@@ -23,6 +23,23 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.
 class GenerationExternalMutationServiceTest {
 
     @Test
+    void sharedCopyRecoveryRequiresEveryRecordedOwnerToBeAbsent() {
+        var provider = new LocalDataProviderService();
+        var service = new GenerationExternalMutationService(provider, 1, "Local");
+        String first = service.claimParticipationSlot(42);
+        String second = service.claimParticipationSlot(42);
+        DistributedMap<String, JobInfo> jobs = provider.getMap(GenerationJobService.JOB_MAP_NAME);
+        JobInfo group = jobs.get("42");
+        assertThat(group.participationOwners()).hasSize(2);
+        assertThat(group.ownersAbsentFrom(Set.of(provider.getLocalNodeId()))).isFalse();
+        assertThat(service.recoverWedgedSlot(42, group.jobId())).isFalse();
+        jobs.put("42", group.withParticipationOwners(java.util.Map.of(first, "departed-one", second, provider.getLocalNodeId())));
+        assertThat(service.recoverWedgedSlot(42, group.jobId())).isFalse();
+        jobs.put("42", group.withParticipationOwners(java.util.Map.of(first, "departed-one", second, "departed-two")));
+        assertThat(service.recoverWedgedSlot(42, group.jobId())).isTrue();
+    }
+
+    @Test
     void disabledWriterNodeStillProtectsGenerationWithoutInstantiatingEngine() {
         try (var context = new AnnotationConfigApplicationContext()) {
             context.getEnvironment().setActiveProfiles("localvc");

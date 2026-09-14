@@ -77,6 +77,7 @@ public class WorkerSupervisor implements AutoCloseable {
     private final Map<UUID, WorkerEvent> pendingCheckpoints = new java.util.LinkedHashMap<>();
 
     private final Map<UUID, WorkerEvent> pendingRejections = new java.util.LinkedHashMap<>();
+
     private final java.util.Deque<WorkerEvent> pendingAccounting = new java.util.ArrayDeque<>();
 
     private boolean draining;

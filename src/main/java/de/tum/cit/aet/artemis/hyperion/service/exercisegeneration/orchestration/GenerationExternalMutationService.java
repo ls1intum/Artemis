@@ -25,6 +25,8 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.
 @Profile(PROFILE_CORE + " | " + PROFILE_LOCALVC)
 public class GenerationExternalMutationService {
 
+    private static final String PARTICIPATION_PREFIX = GenerationJobService.EXTERNAL_MUTATION_JOB_PREFIX + "participation:";
+
     private final DistributedDataProvider distributedDataProvider;
 
     private final int expectedDataMemberCount;
@@ -50,12 +52,88 @@ public class GenerationExternalMutationService {
         if (!coordinationSupported) {
             return "unsupported-provider";
         }
+        return claim(distributedDataProvider.getMap(GenerationJobService.JOB_MAP_NAME), requireWriterNode(), exerciseId);
+    }
+
+    private String requireWriterNode() {
         String owner = distributedDataProvider.getLocalNodeId();
         if (!distributedDataProvider.getDataNodeIds().map(nodes -> nodes.contains(owner)).orElse(false)) {
             throw new ServiceUnavailableAlertException("Exercise writers must be connected data members for generation coordination.", "hyperionExerciseGeneration",
                     "hyperionDataMemberTopologyUnavailable");
         }
-        return claim(distributedDataProvider.getMap(GenerationJobService.JOB_MAP_NAME), owner, exerciseId);
+        return owner;
+    }
+
+    /**
+     * Reserves a template copy. Readers may coexist; the shared non-expiring slot excludes every writer until the last copy finishes.
+     *
+     * @param exerciseId exercise to reserve
+     * @return exact reservation token
+     */
+    public String claimParticipationSlot(long exerciseId) {
+        if (!coordinationSupported) {
+            return "unsupported-provider";
+        }
+        String owner = requireWriterNode();
+        String token = UUID.randomUUID().toString();
+        String key = String.valueOf(exerciseId);
+        DistributedMap<String, JobInfo> jobs = distributedDataProvider.getMap(GenerationJobService.JOB_MAP_NAME);
+        jobs.lock(key);
+        try {
+            JobInfo current = jobs.get(key);
+            if (current != null && (!current.jobId().startsWith(PARTICIPATION_PREFIX) || current.participationOwners() == null)) {
+                throw new ConflictException("Exercise authoring or recovery is running; wait before starting the exercise.", "hyperionExerciseGeneration",
+                        "exerciseGenerationRunning");
+            }
+            var owners = new java.util.HashMap<String, String>();
+            if (current != null) {
+                owners.putAll(current.participationOwners());
+            }
+            owners.put(token, owner);
+            JobInfo updated = current == null
+                    ? new JobInfo(PARTICIPATION_PREFIX + UUID.randomUUID(), "participations", exerciseId, Instant.now(), null, null, Instant.now(), false, null)
+                            .withParticipationOwners(owners)
+                    : current.withParticipationOwners(owners);
+            if (current == null ? jobs.putIfAbsent(key, updated) != null : !jobs.replace(key, current, updated)) {
+                throw new ConflictException("The exercise reservation changed; retry starting the exercise.", "hyperionExerciseGeneration", "exerciseGenerationRunning");
+            }
+            return token;
+        }
+        finally {
+            jobs.unlock(key);
+        }
+    }
+
+    /**
+     * Releases exactly one copy reservation; a stale close cannot release another reader or a writer.
+     *
+     * @param exerciseId protected exercise
+     * @param token      exact reservation token
+     */
+    public void clearParticipationSlot(long exerciseId, String token) {
+        if (!coordinationSupported) {
+            return;
+        }
+        DistributedMap<String, JobInfo> jobs = distributedDataProvider.getMap(GenerationJobService.JOB_MAP_NAME);
+        String key = String.valueOf(exerciseId);
+        jobs.lock(key);
+        try {
+            JobInfo current = jobs.get(key);
+            if (current == null || current.participationOwners() == null || !current.participationOwners().containsKey(token)) {
+                return;
+            }
+            var owners = new java.util.HashMap<>(current.participationOwners());
+            owners.remove(token);
+            if (owners.isEmpty()) {
+                jobs.remove(key, current);
+            }
+            else {
+                jobs.replace(key, current, current.withParticipationOwners(owners));
+            }
+        }
+        finally {
+            jobs.unlock(key);
+        }
     }
 
     /**
@@ -93,7 +171,7 @@ public class GenerationExternalMutationService {
         if (job == null || job.cancellable() || !GenerationJobService.isExternalMutationJob(job)) {
             return Optional.empty();
         }
-        boolean ownerAbsent = job.ownerNodeId() != null && distributedDataProvider.getDataNodeIds().map(nodes -> !nodes.contains(job.ownerNodeId())).orElse(false);
+        boolean ownerAbsent = distributedDataProvider.getDataNodeIds().map(job::ownersAbsentFrom).orElse(false);
         return Optional.of(new GenerationJobService.WedgedSlotInfo(exerciseId, job.jobId(), GenerationJobService.WedgedSlotKind.EXTERNAL_MUTATION, job.ownerNodeId(),
                 job.startedAt(), ownerAbsent));
     }
@@ -119,7 +197,7 @@ public class GenerationExternalMutationService {
             }
             JobInfo current = jobs.get(key);
             return current != null && !current.cancellable() && GenerationJobService.isExternalMutationJob(current) && current.jobId().equals(token)
-                    && current.ownerNodeId() != null && !nodes.contains(current.ownerNodeId()) && jobs.remove(key, current);
+                    && current.ownersAbsentFrom(nodes) && jobs.remove(key, current);
         }
         finally {
             jobs.unlock(key);
