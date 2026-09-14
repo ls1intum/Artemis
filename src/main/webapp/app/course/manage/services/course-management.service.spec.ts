@@ -12,7 +12,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
@@ -30,7 +30,7 @@ import { CoursesForDashboardDTO } from 'app/course/shared/entities/courses-for-d
 import { provideHttpClient } from '@angular/common/http';
 import { createSampleCourse } from 'test/helpers/sample/course-sample-data';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
-import { BehaviorSubject, distinctUntilChanged } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, firstValueFrom } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
@@ -39,6 +39,7 @@ import { CourseAvailableTabs } from 'app/course/shared/entities/course-available
 import { toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
 import { CourseDashboardDTO, CourseWithContentDTO, courseFromDashboardDTO, courseFromWithContentDTO } from 'app/course/shared/entities/course-content-response.dto';
 import { CourseForQuizSelectionDTO, courseFromQuizSelectionDTO } from 'app/course/shared/entities/course-management-response.dto';
+import type { LockedCourseSubmissionDTO } from 'app/course/shared/entities/locked-course-submission.dto';
 
 const courseDateFields = ['startDate', 'endDate', 'enrollmentStartDate', 'enrollmentEndDate', 'unenrollmentEndDate'] as const satisfies readonly (keyof Course)[];
 type CourseDateField = (typeof courseDateFields)[number];
@@ -449,13 +450,34 @@ describe('Course Management Service', () => {
         req.flush(returnedFromService);
     });
 
-    it('should find all locked submissions of course', () => {
-        const submission = new ModelingSubmission();
-        const submissions = [submission];
-        returnedFromService = [...submissions];
-        courseManagementService.findAllLockedSubmissionsOfCourse(course.id!).subscribe((res) => expect(res.body).toEqual(submissions));
+    it('should find all locked submissions of course', async () => {
+        const submission: LockedCourseSubmissionDTO = {
+            id: 42,
+            submissionExerciseType: SubmissionExerciseType.MODELING,
+            participation: {
+                id: 43,
+                submissionCount: 1,
+                exercise: { id: 44, type: ExerciseType.MODELING, title: 'Modeling exercise' },
+            },
+            latestResult: { score: 80 },
+        };
+        returnedFromService = [submission];
+        const responsePromise = firstValueFrom(courseManagementService.findAllLockedSubmissionsOfCourse(course.id!));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/locked-submissions` });
         req.flush(returnedFromService);
+        const response = await responsePromise;
+        expect(response.body).toEqual([
+            expect.objectContaining({
+                id: 42,
+                submissionExerciseType: SubmissionExerciseType.MODELING,
+                participation: expect.objectContaining({
+                    id: 43,
+                    submissionCount: 1,
+                    exercise: expect.objectContaining({ id: 44, type: ExerciseType.MODELING, title: 'Modeling exercise' }),
+                }),
+                latestResult: expect.objectContaining({ score: 80 }),
+            }),
+        ]);
     });
 
     it('should add user to course group', () => {
