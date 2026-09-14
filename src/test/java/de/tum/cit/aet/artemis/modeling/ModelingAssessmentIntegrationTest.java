@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRe
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseAssessmentDashboardDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -394,10 +395,11 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         checkAssessmentFinished(storedResult, assessor);
         assertThat(storedResult.getSubmission().getParticipation()).isNotNull();
 
-        Course course = request.get("/api/course/courses/" + this.course.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
-        Exercise exercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
-        assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()).hasSize(1);
-        assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(1L);
+        CourseAssessmentDashboardDTO dashboard = request.get("/api/course/courses/" + this.course.getId() + "/for-assessment-dashboard", HttpStatus.OK,
+                CourseAssessmentDashboardDTO.class);
+        CourseAssessmentDashboardDTO.AssessmentExerciseDTO exercise = dashboard.exercises().stream().filter(e -> "ClassDiagram".equals(e.title())).findFirst().orElseThrow();
+        assertThat(exercise.numberOfAssessmentsOfCorrectionRounds()).hasSize(1);
+        assertThat(exercise.numberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(1L);
     }
 
     @Test

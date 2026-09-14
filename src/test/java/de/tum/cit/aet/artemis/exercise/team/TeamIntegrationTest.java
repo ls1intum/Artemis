@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseDashboardExerciseDTO;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -464,15 +466,15 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
 
         // Check for endpoint: @GetMapping("courses/for-dashboard")
         var courses = request.get("/api/course/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
-        Exercise serverExercise = courses.courses().stream().filter(c -> c.course().getId().equals(course.getId())).findAny()
-                .flatMap(c -> c.course().getExercises().stream().filter(e -> e.getId().equals(exercise.getId())).findAny()).orElseThrow();
-        assertThat(serverExercise.getStudentAssignedTeamId()).as("Assigned team id on exercise from dashboard is correct for student.").isEqualTo(team.getId());
-        assertThat(serverExercise.isStudentAssignedTeamIdComputed()).as("Assigned team id on exercise was computed.").isTrue();
+        CourseDashboardExerciseDTO serverExercise = courses.courses().stream().filter(c -> c.course().id() == course.getId()).findAny()
+                .flatMap(c -> c.course().exercises().stream().filter(e -> Objects.equals(e.id(), exercise.getId())).findAny()).orElseThrow();
+        assertThat(serverExercise.overview().studentAssignedTeamId()).as("Assigned team id on exercise from dashboard is correct for student.").isEqualTo(team.getId());
+        assertThat(serverExercise.overview().studentAssignedTeamIdComputed()).as("Assigned team id on exercise was computed.").isTrue();
 
         // Check for endpoint: @GetMapping("exercises/{exerciseId}/details")
         ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
         assertThat(exerciseWithDetails.exercise().getStudentAssignedTeamId()).as("Assigned team id on exercise from details is correct for student.").isEqualTo(team.getId());
-        assertThat(serverExercise.isStudentAssignedTeamIdComputed()).as("Assigned team id on exercise was computed.").isTrue();
+        assertThat(serverExercise.overview().studentAssignedTeamIdComputed()).as("Assigned team id on exercise was computed.").isTrue();
     }
 
     /**

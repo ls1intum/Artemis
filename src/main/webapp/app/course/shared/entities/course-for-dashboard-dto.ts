@@ -1,21 +1,26 @@
-import { Course } from 'app/course/shared/entities/course.model';
-import { CourseScores } from 'app/course/manage/course-scores/course-scores';
+import type { Course } from 'app/course/shared/entities/course.model';
+import type { CourseScores } from 'app/course/manage/course-scores/course-scores';
+import { courseFromDashboardDTO } from 'app/course/shared/entities/course-content-response.dto';
+import type { CourseDashboardDTO } from 'app/course/shared/entities/course-content-response.dto';
 
-/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
-export class CourseForDashboardDTO {
-    course!: Course;
+export interface CourseForDashboardResponseDTO extends Omit<CourseForDashboardDTO, 'course'> {
+    course: CourseDashboardDTO;
+}
 
-    totalScores!: CourseScores;
+export interface CourseForDashboardDTO {
+    course: Course;
 
-    textScores!: CourseScores;
-    programmingScores!: CourseScores;
-    modelingScores!: CourseScores;
-    fileUploadScores!: CourseScores;
-    quizScores!: CourseScores;
+    totalScores: CourseScores;
 
-    participationResults!: ParticipationResultDTO[];
+    textScores: CourseScores;
+    programmingScores: CourseScores;
+    modelingScores: CourseScores;
+    fileUploadScores: CourseScores;
+    quizScores: CourseScores;
 
-    courseNotificationCount!: number;
+    participationResults: ParticipationResultDTO[];
+
+    courseNotificationCount: number;
     irisEnabledInCourse?: boolean;
 
     /**
@@ -25,9 +30,24 @@ export class CourseForDashboardDTO {
     achievedPointsPerVariantGroup?: { [groupId: number]: number };
 }
 
-/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) marker. */
-export class ParticipationResultDTO {
+export interface ParticipationResultDTO {
     score?: number;
     rated?: boolean;
-    participationId!: number;
+    participationId: number;
+}
+
+export function courseForDashboardFromDTO(dto: CourseForDashboardResponseDTO): CourseForDashboardDTO {
+    return {
+        course: courseFromDashboardDTO(dto.course),
+        totalScores: dto.totalScores,
+        textScores: dto.textScores,
+        programmingScores: dto.programmingScores,
+        modelingScores: dto.modelingScores,
+        fileUploadScores: dto.fileUploadScores,
+        quizScores: dto.quizScores,
+        participationResults: dto.participationResults,
+        courseNotificationCount: dto.courseNotificationCount,
+        irisEnabledInCourse: dto.irisEnabledInCourse,
+        achievedPointsPerVariantGroup: dto.achievedPointsPerVariantGroup,
+    };
 }

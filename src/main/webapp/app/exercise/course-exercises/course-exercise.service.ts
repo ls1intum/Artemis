@@ -12,6 +12,7 @@ import { Observable, map } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { CourseExerciseDueDateDTO, exerciseFromCourseManagementDTO } from 'app/course/shared/entities/course-content-response.dto';
 
 @Injectable({ providedIn: 'root' })
 export class CourseExerciseService {
@@ -167,7 +168,8 @@ export class CourseExerciseService {
      */
     findAllExercisesWithDueDatesForCourse(courseId: number): Observable<HttpResponse<Exercise[]>> {
         return this.http
-            .get<Exercise[]>(`api/course/courses/${courseId}/all-exercises-with-due-dates`, { observe: 'response' })
+            .get<CourseExerciseDueDateDTO[]>(`api/course/courses/${courseId}/all-exercises-with-due-dates`, { observe: 'response' })
+            .pipe(map((res): HttpResponse<Exercise[]> => res.clone({ body: res.body?.map(exerciseFromCourseManagementDTO) ?? null })))
             .pipe(map((res: HttpResponse<Exercise[]>) => this.processExercisesHttpResponses(res)));
     }
 }

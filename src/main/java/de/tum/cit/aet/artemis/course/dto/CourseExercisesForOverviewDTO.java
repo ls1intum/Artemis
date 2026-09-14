@@ -38,7 +38,8 @@ public record CourseExercisesForOverviewDTO(Set<ExerciseOverviewDTO> exercises, 
      * @return the exercise-only view of it
      */
     public static CourseExercisesForOverviewDTO from(CourseForDashboardDTO dto) {
-        return new CourseExercisesForOverviewDTO(ExerciseOverviewDTO.of(dto.course().getExercises()), dto.totalScores(), dto.textScores(), dto.programmingScores(),
-                dto.modelingScores(), dto.fileUploadScores(), dto.quizScores(), dto.participationResults(), dto.achievedPointsPerVariantGroup());
+        return new CourseExercisesForOverviewDTO(dto.course().exercises().stream().map(CourseDashboardExerciseDTO::overview).collect(java.util.stream.Collectors.toSet()),
+                dto.totalScores(), dto.textScores(), dto.programmingScores(), dto.modelingScores(), dto.fileUploadScores(), dto.quizScores(), dto.participationResults(),
+                dto.achievedPointsPerVariantGroup());
     }
 }
