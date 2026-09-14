@@ -10,18 +10,18 @@ catalog:
   '@analogjs/vite-plugin-angular': 2.6.4
   '@analogjs/vitest-angular': 2.6.4
   '@arethetypeswrong/cli': 0.18.5
-  '@angular-devkit/architect': 0.2201.2
-  '@angular-devkit/core': 22.1.2
-  '@angular/build': 22.1.2
-  '@angular/cdk': 22.1.0
-  '@angular/cli': 22.1.2
-  '@angular/common': 22.1.0
-  '@angular/compiler': 22.1.0
-  '@angular/compiler-cli': 22.1.0
-  '@angular/core': 22.1.0
-  '@angular/forms': 22.1.0
-  '@angular/localize': 22.1.0
-  '@angular/platform-browser': 22.1.0
+  '@angular-devkit/architect': 0.2201.7
+  '@angular-devkit/core': 22.1.7
+  '@angular/build': 22.1.7
+  '@angular/cdk': 22.1.5
+  '@angular/cli': 22.1.7
+  '@angular/common': 22.1.5
+  '@angular/compiler': 22.1.5
+  '@angular/compiler-cli': 22.1.5
+  '@angular/core': 22.1.5
+  '@angular/forms': 22.1.5
+  '@angular/localize': 22.1.5
+  '@angular/platform-browser': 22.1.5
   '@fortawesome/angular-fontawesome': 5.1.0
   '@fortawesome/fontawesome-svg-core': 7.3.1
   '@fortawesome/free-solid-svg-icons': 7.3.1
@@ -42,12 +42,12 @@ catalog:
   chokidar: 5.0.0
   concurrently: 10.0.4
   cross-env: 10.1.0
-  dayjs: 1.11.21
+  dayjs: 1.11.23
   eslint: 10.8.0
   eslint-plugin-storybook: 10.5.5
   jsdom: 30.0.1
   lodash-es: 4.18.1
-  ng-packagr: 22.1.0
+  ng-packagr: 22.1.1
   postcss: 8.5.25
   publint: 0.3.22
   playwright: 1.62.1
@@ -63,8 +63,7 @@ catalog:
   vite: 8.1.5
   vitest: 4.1.10
   yaml: 2.9.0
-  zone.js: 0.16.2
-
+  zone.js: 0.16.3
 # No hoist shim: rely on pnpm's default isolated layout. Every package the
 # project imports is declared as a direct dependency in package.json; patches
 # go through pnpm.patchedDependencies (which works on the .pnpm symlink store
@@ -127,7 +126,7 @@ overrides:
   # @angular/localize is only pulled in transitively (e.g. via @ng-bootstrap/ng-bootstrap,
   # whose peer range requires ^22.0.0). Without this pin it resolves to an older 21.x
   # straggler that violates that peer range; force it to match the @angular/core version.
-  '@angular/localize': '22.1.0'
+  '@angular/localize': '22.1.5'
   'babel-plugin-istanbul>test-exclude': '8.0.0'
   '@babel/core': '7.29.7'
   '@babel/runtime': '7.29.7'

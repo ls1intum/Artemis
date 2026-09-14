@@ -7,6 +7,19 @@ buildscript {
     configurations.classpath {
         resolutionStrategy {
             force "com.github.jknack:handlebars:4.5.3"
+            // Force the patched Apache HttpComponents onto the build-script / plugin classpath too. The
+            // org.springframework.boot plugin drags in older httpclient5 / httpcore5 releases, which the GitHub
+            // dependency graph reports and Dependabot flags (GHSA-hjcp-jmpx-g3qm, GHSA-hf6x-8p5f-cgmf,
+            // GHSA-v3jc-474w-2wm6) even though the shipped WAR only ever contains the patched versions pinned in the
+            // dependencies block below. Build-time only, not shipped. Note the two trains are versioned independently
+            // and must not be collapsed onto one number: client5 tracks 5.6.x and core5 tracks 5.4.x, because every
+            // httpclient5-parent POM declares the core5 version it expects. Before bumping either train, read
+            // <httpcore.version> from httpclient5-parent-<version>.pom and pin core5 to exactly that.
+            // Keep each force equal to that module's project-level pin in the dependencies block below.
+            force "org.apache.httpcomponents.client5:httpclient5:5.6.4"
+            force "org.apache.httpcomponents.client5:httpclient5-cache:5.6.4"
+            force "org.apache.httpcomponents.core5:httpcore5:5.4.3"
+            force "org.apache.httpcomponents.core5:httpcore5-h2:5.4.3"
         }
     }
     // The custom OpenAPI generator (generatorName "angular22", https://github.com/ls1intum/openapi-generator-angular22)
@@ -157,9 +170,10 @@ gitProperties {
 // Override Spring Boot BOM versions to patched releases addressing known CVEs:
 // thymeleaf: GHSA-7rgv-g3jm-rvv4, GHSA-vjp2-6m4m-cv5q, GHSA-c9ph-gxww-7744
 // tomcat: GHSA-5m62-pw8w-7w9f, GHSA-h6fc-48rj-7qqh, GHSA-r29c-68gh-xp6x,
-//         GHSA-5mp6-jrq3-r938, GHSA-fv25-8xcx-gqjc, GHSA-gx5v-xp9w-j4cg, GHSA-9m89-8frq-c98c
+//         GHSA-5mp6-jrq3-r938, GHSA-fv25-8xcx-gqjc, GHSA-gx5v-xp9w-j4cg, GHSA-9m89-8frq-c98c,
+//         GHSA-gcx9-497g-6cp6, GHSA-9xv2-5v5q-p794, GHSA-h3x4-894j-xpx5
 ext["thymeleaf.version"] = "3.1.5.RELEASE"
-ext["tomcat.version"] = "11.0.22"
+ext["tomcat.version"] = "11.0.25"
 
 // Pin the entire Jackson 2.x and 3.x families to releases outside every known jackson-databind vulnerable
 // range. Spring Boot / Spring AI manage older jackson BOMs as dependency-management constraints, which beat
@@ -279,15 +293,19 @@ dependencies {
     // Required by Sharing Platform
     implementation "org.codeability:SharingPluginPlatformAPI:1.2.1"
     // Required by Spring cloud.
-    // Pinned below the vulnerable range: not vulnerable to CVE-2026-40542 / GHSA-v468-qcjx-r72w (vulnerable range >= 5.6-alpha1, < 5.6.1).
-    // The CVE affects the SCRAM-SHA-256 authentication scheme that was first introduced in 5.6; that code path does not
-    // exist in 5.5.x, and Artemis does not use SCRAM-SHA-256 anywhere. A transitive request for httpclient5:5.6 from
-    // io.weaviate:client6 (and httpclient5:5.5.2 from httpclient5-cache via the Spring BOM / Shibboleth) is resolved
-    // down to 5.5.1 by this explicit pin.
-    // We cannot upgrade to 5.6.1 (the patched release) because it breaks Hazelcast cluster formation; the bump was
-    // reverted in PR #12652.
-    implementation "org.apache.httpcomponents.client5:httpclient5:5.5.1"
-    implementation "org.apache.httpcomponents.core5:httpcore5:5.3.6"
+    // The client5 and core5 trains must be bumped together: httpclient5 5.6.x declares httpcore5 5.4.x. PR #12652 moved
+    // httpclient5 to 5.6.1 while leaving httpcore5 on 5.3.6 and had to be reverted because Hazelcast cluster formation
+    // broke on that mismatched pair. Keeping both explicit pins in sync avoids a repeat.
+    // Stay at or above httpclient5 5.6.3 / httpcore5 5.4.3, which close (httpclient5) a connection leak on
+    // Content-Encoding decode error leading to pool exhaustion, (httpcore5) HTTP/1 header parsing memory
+    // exhaustion, and (httpcore5-h2) an unbounded HPackDecoder header list before SETTINGS ACK. httpcore5-h2 is
+    // declared explicitly so the transitive request from httpclient5 cannot resolve down to a vulnerable 5.3.x.
+    implementation "org.apache.httpcomponents.client5:httpclient5:5.6.4"
+    // httpclient5-cache reaches the runtime classpath transitively (webauthn4j, helios-status-spring-starter) and
+    // would otherwise sit at an older patch than httpclient5. Pinned so the whole family stays on one version.
+    implementation "org.apache.httpcomponents.client5:httpclient5-cache:5.6.4"
+    implementation "org.apache.httpcomponents.core5:httpcore5:5.4.3"
+    implementation "org.apache.httpcomponents.core5:httpcore5-h2:5.4.3"
 
     implementation "jakarta.ws.rs:jakarta.ws.rs-api:4.0.0"
     implementation "org.glassfish.jersey.core:jersey-common:4.0.2"
