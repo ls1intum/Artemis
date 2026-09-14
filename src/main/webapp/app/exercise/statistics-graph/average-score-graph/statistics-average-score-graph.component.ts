@@ -2,13 +2,10 @@ import { Component, OnInit, computed, inject, input, signal } from '@angular/cor
 import { GraphColors, SpanType } from 'app/exercise/shared/entities/statistics.model';
 import { CourseManagementStatisticsModel } from 'app/quiz/shared/entities/course-management-statistics-model';
 import { faArrowLeft, faArrowRight, faFilter } from '@fortawesome/free-solid-svg-icons';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
-import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
-import { barChartOptions, toChartSelectEvent } from 'app/shared-ui/chart/chart-options';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
 import { axisTickFormattingWithPercentageSign } from 'app/exercise/statistics-graph/util/statistics-graph.utils';
 import { ChartExerciseTypeFilter } from 'app/exercise/chart/chart-exercise-type-filter';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
@@ -17,8 +14,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
-import { ChartModule } from 'primeng/chart';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiBarChartComponent, TumUiBarChartConfig, TumUiChartSelectEvent } from '@tumaet/ui-angular';
 
 interface ExerciseStatisticsEntry extends ChartSeriesEntry {
     exerciseType: ExerciseType;
@@ -35,7 +32,7 @@ export enum PerformanceInterval {
     selector: 'jhi-statistics-average-score-graph',
     templateUrl: './statistics-average-score-graph.component.html',
     styleUrls: ['./statistics-average-score-graph.component.scss'],
-    imports: [TranslateDirective, FaIconComponent, ChartModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgClass, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FaIconComponent, TumUiBarChartComponent, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgClass, ArtemisTranslatePipe],
 })
 export class StatisticsAverageScoreGraphComponent implements OnInit {
     private navigationUtilService = inject(ArtemisNavigationUtilService);
@@ -61,29 +58,25 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     /** the raw per-bar colors (GraphColors values); resolved to concrete theme colors below */
     readonly barColors = signal<string[]>([]);
 
-    private readonly resolvedColors = inject(ChartColorService).resolvedColors(() => this.barColors());
+    private readonly resolvedColors = computed(() => this.barColors());
 
-    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.resolvedColors()));
-    readonly chartOptions = computed(() =>
-        barChartOptions({
-            yAxis: { max: 100, tickFormatter: (value) => axisTickFormattingWithPercentageSign(String(value)) },
-            tooltip: {
-                label: (item) => {
-                    const name = String(item.label ?? '');
-                    const value = item.parsed.y ?? 0;
-                    return [
-                        `${this.translateService.instant('artemisApp.courseStatistics.exerciseAverage')}: ${value}%`,
-                        `${this.translateService.instant('artemisApp.courseStatistics.exerciseType')}: ${this.translateService.instant(
-                            'artemisApp.courseStatistics.' + this.convertTypeForTooltip(name, value),
-                        )}`,
-                    ];
-                },
+    readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), this.resolvedColors()));
+    readonly chartConfig = computed<TumUiBarChartConfig>(() => ({
+        yAxis: { max: 100, tickFormatter: (value) => axisTickFormattingWithPercentageSign(String(value)) },
+        tooltip: {
+            label: (item) => {
+                const name = item.label;
+                const value = item.value;
+                return [
+                    `${this.translateService.instant('artemisApp.courseStatistics.exerciseAverage')}: ${value}%`,
+                    `${this.translateService.instant('artemisApp.courseStatistics.exerciseType')}: ${this.translateService.instant(
+                        'artemisApp.courseStatistics.' + this.convertTypeForTooltip(name, value),
+                    )}`,
+                ];
             },
-            dataLabels: { formatter: (value) => this.formatDataLabel(value) },
-        }),
-    );
-    /** chartjs-plugin-datalabels renders the persistent per-bar value labels; pass to <p-chart [plugins]>. */
-    readonly dataLabelsPlugin = [ChartDataLabels];
+        },
+        dataLabels: { formatter: (value) => this.formatDataLabel(value) },
+    }));
 
     // for filtering
     exerciseScoresFilteredByPerformanceInterval: CourseManagementStatisticsModel[] = [];
@@ -148,11 +141,10 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
 
     /**
      * Handles the click event on one of the bars and navigates to the corresponding exercise statistics page
-     * @param event the event that is passed by p-chart
+     * @param event the event identifying the clicked bar
      */
-    onSelect(event: Parameters<typeof toChartSelectEvent>[0]): void {
-        const selected = toChartSelectEvent(event, this.chartData());
-        const dataEntry = selected?.meta as ExerciseStatisticsEntry | undefined;
+    onSelect(event: TumUiChartSelectEvent): void {
+        const dataEntry = event.meta as ExerciseStatisticsEntry | undefined;
 
         if (dataEntry) {
             const route = ['course-management', this.courseId(), '', dataEntry.exerciseId, 'exercise-statistics'];

@@ -38,7 +38,7 @@
                         }
                     </tr>
                 }
-                @for (gradeStep of gradeSteps(); track gradeStep; let last = $last) {
+                @for (gradeStep of gradeSteps(); track gradeStep.id ?? gradeStep.gradeName; let last = $last) {
                     <tr [class.highlighted]="gradeStep.gradeName === studentGradeOrBonusPointsOrGradeBonus || +gradeStep.gradeName === +studentGradeOrBonusPointsOrGradeBonus!">
                         <td>{{ gradeStep.gradeName }}</td>
                         <td>

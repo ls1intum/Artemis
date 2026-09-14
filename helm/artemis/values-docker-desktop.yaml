@@ -1,0 +1,87 @@
+# Local MVP values for Docker Desktop's managed three-node kind cluster.
+image:
+  repository: artemis-localci-app
+  tag: local
+  pullPolicy: IfNotPresent
+
+artemis:
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: "750m"
+      memory: "2Gi"
+    limits:
+      cpu: "2"
+      memory: "5Gi"
+  nodeSelector:
+    artemis.cit.tum.de/core: "true"
+  extraEnv:
+    - name: SPRING_LIQUIBASE_CONTEXTS
+      value: prod,e2e
+    - name: INFO_TESTSERVER
+      value: "true"
+    - name: ARTEMIS_TELEMETRY_ENABLED
+      value: "false"
+  config:
+    # The online UI works through a port-forward. LocalVC repository URLs must
+    # remain reachable from build-agent pods, so the cluster service is used.
+    serverUrl: http://artemis-http:8080
+    admin:
+      username: artemis_admin
+      # Injected by run-localci-kubernetes.sh, like the JWT secret below. Not "artemis_admin": the prod profile these
+      # pods run under refuses to start on a password that Artemis publishes as an example.
+      password: ""
+    # Generated and injected by run-localci-kubernetes.sh.
+    jwtBase64Secret: ""
+    secureCookies: false
+
+sharedStorage:
+  accessMode: ReadWriteOnce
+  size: 8Gi
+
+postgresql:
+  auth:
+    database: Artemis
+    username: Artemis
+    password: Artemis
+  persistence:
+    size: 5Gi
+
+registry:
+  password: admin
+
+broker:
+  auth:
+    username: guest
+    password: guest
+
+gateway:
+  enabled: false
+  create: false
+  ssh:
+    mode: none
+
+buildAgents:
+  enabled: true
+  replicaCount: 2
+  namespace: artemis-builds
+  concurrentBuildsPerAgent: 1
+  helperImage:
+    repository: artemis-localci-helper
+    tag: local
+    pullPolicy: IfNotPresent
+  nodeSelector:
+    artemis.cit.tum.de/build-worker: "true"
+  workloadNodeSelector:
+    artemis.cit.tum.de/build-worker: "true"
+  controllerResources:
+    requests:
+      cpu: "250m"
+      memory: "768Mi"
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+  defaultResources:
+    cpu: "1"
+    memory: 1Gi
+    ephemeralStorage: 2Gi

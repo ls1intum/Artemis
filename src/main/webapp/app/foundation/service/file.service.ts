@@ -7,6 +7,9 @@ import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entitie
 import { addPublicFilePrefix } from 'app/app.constants';
 import { generateUuid } from 'app/foundation/util/crypto.utils';
 
+/** Prefix of the link of a file stored under the lecture attachment path, as in attachments/lecture/{lectureId}/{filename}. */
+const LECTURE_ATTACHMENT_LINK_PREFIX = 'attachments/lecture/';
+
 @Injectable({ providedIn: 'root' })
 export class FileService {
     private http = inject(HttpClient);
@@ -163,9 +166,16 @@ export class FileService {
     /**
      * Returns the student version of the given link.
      *
+     * A file that still lies under the lecture attachment path is served by a route that takes no student segment, and
+     * it has no student version to begin with, so its own link is what a student downloads. Attachment video units
+     * created for an attachment that used to hang off a lecture directly keep such a link until their file is replaced.
+     *
      * @param link the file link
      */
     createStudentLink(link: string): string {
+        if (link.startsWith(LECTURE_ATTACHMENT_LINK_PREFIX)) {
+            return link;
+        }
         const lastSlashIndex = link.lastIndexOf('/');
         return `${link.substring(0, lastSlashIndex)}/student${link.substring(lastSlashIndex)}`;
     }

@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.output.CloseShieldOutputStream;
@@ -36,7 +37,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 
 /**
- * Service for exporting Git repositories to ZIPs, read straight from the bare repository on disk.
+ * Service for exporting Git repositories, read straight from the bare repository on disk.
  *
  * <p>
  * Supports two export modes:
@@ -47,8 +48,10 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
  *
  * <p>
  * Neither mode clones or checks out anything. Controllers get an
- * {@link org.springframework.core.io.InputStreamResource} so they can stream a response without a temporary file, and
- * bulk exports get {@link #exportRepositoryToZipFile}, which writes the archive straight into their output directory.
+ * {@link org.springframework.core.io.InputStreamResource} so they can stream a response without a temporary file. Bulk
+ * exports write straight into their output directory, either as one ZIP per repository
+ * ({@link #exportRepositoryToZipFile}) or as a directory per repository ({@link #exportRepositoryToDirectory}) for the
+ * callers whose layout is a directory.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -56,6 +59,9 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 public class GitRepositoryExportService {
 
     private static final Logger log = LoggerFactory.getLogger(GitRepositoryExportService.class);
+
+    /** A run of whitespace in a file name, removed so that the name needs no quoting. */
+    private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
 
     /** Suffix an archive carries while it is still being written. */
     private static final String PARTIAL_EXPORT_SUFFIX = ".part";
@@ -77,8 +83,9 @@ public class GitRepositoryExportService {
      * Copies a checked out participation repository into the given directory, under a name derived from the participation.
      *
      * <p>
-     * Only the export options that rewrite a repository still reach this method; every faithful export is streamed with
-     * {@link #exportRepositoryToZipFile} instead and never produces a working copy to copy from.
+     * Only the export options that rewrite a repository still reach this method. Every faithful export is streamed
+     * straight from the bare repository instead - to a ZIP with {@link #exportRepositoryToZipFile} or to a directory
+     * with {@link #exportRepositoryToDirectory} - and never produces a working copy to copy from.
      *
      * @param repo            Local Repository Object.
      * @param repositoryDir   path where the copy should be placed
@@ -96,7 +103,7 @@ public class GitRepositoryExportService {
     }
 
     private String sanitizeZipFilename(String filename) {
-        String sanitized = FileUtil.sanitizeFilename(filename).replaceAll("\\s+", "");
+        String sanitized = WHITESPACE_RUN.matcher(FileUtil.sanitizeFilename(filename)).replaceAll("");
         if (!sanitized.toLowerCase(java.util.Locale.ROOT).endsWith(".zip")) {
             sanitized += ".zip";
         }
@@ -133,6 +140,47 @@ public class GitRepositoryExportService {
         WORKING_TREE_ONLY,
         /** The working tree plus a synthetic {@code .git} directory, so the extracted archive is a usable repository. */
         WITH_HISTORY
+    }
+
+    /**
+     * Materializes a repository with its full history into a directory, straight from the bare repository.
+     *
+     * <p>
+     * Callers that have to hand back a directory rather than a ZIP - the personal data export does, because a student
+     * should not have to unpack a second archive to reach their own code - used to clone the repository and check it
+     * out to get there. Reading the objects directly skips the clone and the temporary working copy it needed.
+     *
+     * <p>
+     * The directory is assembled under a temporary name and moved into place only on success, so a failure cannot leave
+     * a half-written repository behind for a later step to pick up.
+     *
+     * @param repositoryUri   the repository to export
+     * @param targetDirectory the directory the repository directory is created in
+     * @param directoryName   the name of the repository directory
+     * @return the path of the materialized repository directory
+     * @throws IOException if the repository cannot be read or the directory cannot be written
+     */
+    public Path exportRepositoryToDirectory(VcsRepositoryUri repositoryUri, Path targetDirectory, String directoryName) throws IOException {
+        Files.createDirectories(targetDirectory);
+        Path repositoryPath = targetDirectory.resolve(FileUtil.sanitizeFilename(directoryName));
+        Path partialPath = targetDirectory.resolve(repositoryPath.getFileName() + PARTIAL_EXPORT_SUFFIX);
+
+        try {
+            // A staging directory an earlier run left behind would be written into rather than replaced, and
+            // DirectoryRepositoryContentSink only creates and overwrites the entries of the current repository, so a
+            // file that is no longer in it would survive and be published by the move below.
+            FileUtils.deleteDirectory(partialPath.toFile());
+            try (Repository bareRepository = gitService.getBareRepository(new LocalVCRepositoryUri(repositoryUri.toString()), false)) {
+                InMemoryRepositoryBuilder.writeToDirectory(bareRepository, partialPath);
+            }
+            FileUtil.publishAtomically(partialPath, repositoryPath);
+        }
+        finally {
+            if (Files.exists(partialPath) && !FileUtils.deleteQuietly(partialPath.toFile())) {
+                log.error("Could not delete the incomplete export {}", partialPath);
+            }
+        }
+        return repositoryPath;
     }
 
     /**
@@ -174,7 +222,7 @@ public class GitRepositoryExportService {
             catch (GitAPIException e) {
                 throw new IOException("Could not archive the repository " + repositoryUri, e);
             }
-            FileUtils.moveFile(partialFilePath.toFile(), zipFilePath.toFile());
+            FileUtil.publishAtomically(partialFilePath, zipFilePath);
         }
         finally {
             if (!FileUtils.deleteQuietly(partialFilePath.toFile()) && Files.exists(partialFilePath)) {
@@ -202,8 +250,8 @@ public class GitRepositoryExportService {
 
     /**
      * Exports a repository with full history including the .git directory directly to memory.
-     * This method uses JGit's ArchiveCommand to create a zip of the working tree and combines it
-     * with the .git directory for full history, all done in memory without disk checkout.
+     * The archive is assembled by {@link InMemoryRepositoryBuilder} from the bare repository's objects, so nothing is
+     * cloned or checked out.
      *
      * @param repositoryUri the URI of the repository to export
      * @param filename      the desired filename for the export (without extension)

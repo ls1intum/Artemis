@@ -11,7 +11,7 @@
 @for (alert of alerts(); track alert) {
     <div class="alert-animation-wrapper" animate.enter="alert-entering" animate.leave="alert-leaving">
         <div class="alert-wrap">
-            <div class="alert-inner" [ngClass]="alert.type.containerClassName">
+            <div class="alert-inner" data-testid="alert" [attr.data-alert-type]="alert.type.containerClassName" [ngClass]="alert.type.containerClassName">
                 <div class="left">
                     <fa-icon [icon]="alert.type.icon" size="2x" />
                     <div class="message" [innerHTML]="alert.message"></div>

@@ -282,6 +282,7 @@ public final class WeaviateTestUtil {
         var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
         var response = collection.query
                 .fetchObjects(query -> query.filters(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.LECTURE),
+                        Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.LECTURE_UNIT).not(),
                         Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(lectureId))).limit(1));
         if (response.objects().isEmpty()) {
             return null;
@@ -655,8 +656,12 @@ public final class WeaviateTestUtil {
             return null;
         }
         var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+        // `type` uses Weaviate's default WORD tokenization, so "answer_post" carries the token "post" and a bare
+        // type == "post" filter also matches answer posts. Without the NotEqual guard this helper reports an unrelated
+        // answer post that happens to share the numeric id, which is a false failure that depends on id allocation.
         var response = collection.query
                 .fetchObjects(query -> query.filters(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.POST),
+                        Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST).not(),
                         Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(postId))).limit(1));
         if (response.objects().isEmpty()) {
             return null;

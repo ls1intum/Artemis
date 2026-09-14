@@ -173,7 +173,7 @@ public class LectureUnitService {
             }
         }
 
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureUnitToDelete.getLecture().getId());
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureUnitToDelete.getLecture().getId());
         // Creating a new list of lecture units without the one we want to remove
         lecture.removeLectureUnitById(lectureUnit.getId());
         lectureRepository.save(lecture);

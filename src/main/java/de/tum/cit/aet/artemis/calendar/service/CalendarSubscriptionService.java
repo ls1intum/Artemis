@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -36,6 +37,12 @@ import net.fortuna.ical4j.model.property.immutable.ImmutableVersion;
 @Service
 @Profile(PROFILE_CORE)
 public class CalendarSubscriptionService {
+
+    /**
+     * Shared deliberately: {@link SecureRandom} is thread-safe, and constructing one re-seeds from the system
+     * entropy source on every call.
+     */
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final UserRepository userRepository;
 
@@ -96,9 +103,8 @@ public class CalendarSubscriptionService {
     }
 
     private byte[] generateSubscriptionTokenBytes() {
-        SecureRandom random = new SecureRandom();
         byte[] bytes = new byte[16];
-        random.nextBytes(bytes);
+        SECURE_RANDOM.nextBytes(bytes);
         return bytes;
     }
 
@@ -125,7 +131,7 @@ public class CalendarSubscriptionService {
      */
     public String getICSFileAsString(String courseShortName, Language language, Set<CalendarEventDTO> calendarEventDTOs) {
         Calendar calendar = new Calendar();
-        calendar.add(new ProdId("-//TUM//Artemis//" + language.getShortName().toUpperCase()));
+        calendar.add(new ProdId("-//TUM//Artemis//" + language.getShortName().toUpperCase(Locale.ROOT)));
         calendar.add(ImmutableVersion.VERSION_2_0);
         calendar.add(ImmutableCalScale.GREGORIAN);
         calendar.add(ImmutableMethod.PUBLISH);

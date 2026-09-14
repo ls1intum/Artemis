@@ -341,6 +341,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      *
      * @return the live {@link Set} of feedbacks; mutations are persisted by the Hibernate session
      */
+    @NonNull
     public Set<Feedback> getFeedbacks() {
         return feedbacks;
     }

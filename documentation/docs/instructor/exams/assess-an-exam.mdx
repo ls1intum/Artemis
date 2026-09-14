@@ -1,0 +1,146 @@
+---
+id: assess-an-exam
+title: Assess an Exam
+sidebar_label: Assess an Exam
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import assessmentDashboard from './assets/assessment_dashboard.png';
+import programmingAssessment from './assets/programming_assessment.png';
+import setSecondCorrectionExam from './assets/set_second_correction_exam.png';
+import secondCorrectionStatus from './assets/second_correction_status.png';
+import examAssessmentDashboardSecondCorrection from './assets/exam_assessment_dashboard_second_correction.png';
+import scoresTable from './assets/scores_table.png';
+import suspiciousBehaviorExamChecklist from './assets/suspicious_behavior_exam_checklist.png';
+import analysisOptions from './assets/analysis_options.png';
+import suspiciousBehaviorAnalysisResults from './assets/suspicious_behavior_analysis_results.png';
+import plagiarismCaseOverview from './assets/plagiarism_case_overview.png';
+import plagiarism from './assets/plagiarism.png';
+import examTimelineExample from './assets/exam_timeline_example.png';
+
+Assessment opens once the last student's working time has expired — the **Assessment** dashboard is inaccessible
+before then. Programming exercises already carry their automatic results; everything else waits for your
+correction team.
+
+## Assessment
+
+Two actions on the **Assessment** dashboard finish the automatic part of the grading, and neither happens on its
+own:
+
+- **Evaluate quizzes** grades every quiz submission in the exam. Skip it and the quizzes stay ungraded.
+- **Assess unsubmitted exams** awards zero points for exams that were never submitted and for empty submissions.
+  Skip it and those submissions sit in the dashboard as apparently outstanding work.
+
+<Image src={assessmentDashboard} alt="Assessment dashboard showing progress per exercise" size={ImageSize.large} caption="The assessment dashboard of an exam" />
+
+The dashboard is the correction team's view of the exam: how many submissions each exercise has, how many are
+assessed, and how the complaints stand. Assessment is anonymised — assessors do not see who wrote what.
+
+Quiz exercises do not appear here at all, because **Evaluate quizzes** grades them in one step.
+
+## Assess Student Exams
+
+**Exercise Dashboard** on an exercise opens its correction queue, and **Start new assessment** hands the assessor a
+random unassessed submission. Where an exercise carries example submissions, assessors have to work through those
+first — see [Add Exercises](/instructor/exams/add-exercises#add-exercises).
+
+Programming exercises are graded by their tests. Where
+[manual assessment](/instructor/exams/add-exercises#programming-exercises) is enabled, an assessor can review that
+result and add feedback of their own on top of it.
+
+<Image src={programmingAssessment} alt="Manual assessment of a programming submission" size={ImageSize.large} caption="Reviewing an automatic result by hand" />
+
+## Assessment with Second Correction Round
+
+Setting **Number of correction rounds in exam** to two lets a second assessor grade every exam after the first has.
+
+<Image src={setSecondCorrectionExam} alt="Number of correction rounds set to two" size={ImageSize.large} caption="Enabling the second correction round" />
+
+The dashboard then reports each round separately, alongside the complaints.
+
+<Image src={secondCorrectionStatus} alt="Assessment dashboard showing both correction rounds" size={ImageSize.large} caption="Progress across two correction rounds" />
+
+Whether tutors may work in the second round is a per-exercise switch you can flip at any time. Turning it off again
+does not remove second assessments that already exist.
+
+<Image src={examAssessmentDashboardSecondCorrection} alt="Per-exercise switch for the second correction round" size={ImageSize.large} caption="Allowing tutors into the second round" />
+
+In the second round, **Start new assessment** appears again on the exercise dashboard. The second assessment starts
+as a copy of the first one's feedback, which can be overridden and added to; it is saved as a separate result
+rather than replacing the first. While reviewing, assessors can turn on a badge that marks which round each piece
+of feedback came from — currently for text, modeling and file upload exercises.
+
+Both rounds are reachable from the exam's **Exercise Groups**, then **Scores** on the exercise concerned.
+
+<Image src={scoresTable} alt="Scores page listing results per student" size={ImageSize.large} caption="Results of an exercise across both rounds" />
+
+## Suspicious Behavior Detection
+
+The suspicious behaviour dashboard is the first correction step on the exam checklist. An exam session is a unique
+combination of IP address, user agent, instance id, session token and browser fingerprint, recorded whenever a
+student enters their exam — so a student who wrote from two machines, or two students who wrote from one, shows up
+as a pattern rather than as a suspicion.
+
+<Image src={suspiciousBehaviorExamChecklist} alt="Exam correction section of the checklist, with Check for suspicious behavior as its first step" size={ImageSize.large} caption="Reaching the dashboard from the checklist" />
+
+Choose which criteria to apply, then **Analyze Sessions**. Where the analysis finds something,
+**View Suspicious Sessions** shows the detail.
+
+<Image src={analysisOptions} alt="Available suspicious behaviour analysis options" size={ImageSize.large} caption="Choosing the analysis criteria" />
+
+<Image src={suspiciousBehaviorAnalysisResults} alt="Results of a suspicious behaviour analysis" size={ImageSize.large} caption="An analysis result" />
+
+<Callout variant={CalloutVariant.warning}>
+
+  A flagged session is a coincidence until you have explained it. Two students on one IP address is normal in a
+  computer lab behind a NAT, and a changed user agent is normal if a browser updated mid-exam. Treat the output as
+  a list of things to look into.
+
+</Callout>
+
+The lower half of the dashboard summarises plagiarism detection for the exercises that support it: how many
+potential results a detection run returned, and how many an instructor has since confirmed.
+**View Results or Run Detection** opens the detection page of that exercise, and once at least one case is
+confirmed, **View Cases** lists every confirmed case in the exam.
+
+<Image src={plagiarismCaseOverview} alt="Overview of confirmed plagiarism cases" size={ImageSize.large} caption="Confirmed plagiarism cases of an exam" />
+
+## Plagiarism Detection
+
+Plagiarism detection compares every submission of one exercise against every other and flags the pairs whose
+similarity exceeds a threshold you set. You then compare the flagged pairs side by side and decide. Confirmed and
+rejected cases can be exported as CSV for whatever process your institution runs.
+
+Detection is per exercise, so reach it through the exam's **Exercise Groups** and open the exercise, where
+**Plagiarism** sits among its actions. It is available for text and programming exercises; quiz, modeling and file
+upload exercises have no detection of their own.
+
+<Image src={plagiarism} alt="Plagiarism detection on a text exercise, with five comparisons at full similarity" size={ImageSize.large} caption="Plagiarism detection for one exercise" />
+
+<Callout variant={CalloutVariant.info}>
+
+  The mechanics of comparing, confirming and communicating a case are the same inside and outside an exam and are
+  described under [Plagiarism Check](/instructor/assessment-grading/plagiarism-check).
+
+</Callout>
+
+## Exam Timeline
+
+Artemis saves the state of a text, modeling or quiz submission every 30 seconds and whenever the student saves, so
+a submitted exam has a history rather than just a final state. **Exam timeline**, on the detail page of a submitted
+individual exam, replays it: a slider moves through the timestamps and a navigation bar switches between exercises.
+For a programming exercise it shows the git difference between the selected submission and either the previous one
+or the exercise template.
+
+The button is disabled until the exam is submitted, with a tooltip saying so.
+
+<Image src={examTimelineExample} alt="Exam timeline replaying a student's submissions" size={ImageSize.large} caption="The exam timeline of a submitted exam" />
+
+<Callout variant={CalloutVariant.info}>
+
+  This is the evidence to reach for when a student says their work disappeared, or when a suspicious session needs
+  explaining: it shows what was saved and when.
+
+</Callout>

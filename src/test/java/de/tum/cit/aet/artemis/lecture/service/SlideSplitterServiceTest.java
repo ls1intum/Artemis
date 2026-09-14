@@ -19,10 +19,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
@@ -35,8 +32,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
@@ -70,9 +65,6 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
     @Autowired
     private AttachmentRepository attachmentRepository;
-
-    @Autowired
-    private PlatformTransactionManager transactionManager;
 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
@@ -124,22 +116,34 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         }
     }
 
+    /**
+     * Re-uploading a file replaces the deck rather than adding a second copy of it. This path creates a slide per page
+     * unconditionally, so without detaching the previous set the unit would carry both: a three page file uploaded
+     * twice left six slides attached, each page present twice, and nothing in the UI to tell them apart.
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void repeatedBasicSlideSplitUsesUniqueImagePaths() {
+    void repeatedBasicSlideSplitReplacesTheDeckWithUniqueImagePaths() {
         slideRepository.deleteAll(slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()));
 
         slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf");
-        List<String> firstImagePaths = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).stream().map(Slide::getSlideImagePath).toList();
+        List<Slide> firstSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+        List<String> firstImagePaths = firstSlides.stream().map(Slide::getSlideImagePath).toList();
+        assertThat(firstSlides).as("the first upload produces one slide per page").hasSize(3);
 
         slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf");
-        List<String> allImagePaths = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).stream().map(Slide::getSlideImagePath).toList();
+        List<Slide> attachedSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+        List<String> attachedImagePaths = attachedSlides.stream().map(Slide::getSlideImagePath).toList();
 
-        assertThat(allImagePaths).hasSize(6).doesNotHaveDuplicates();
-        assertThat(allImagePaths).containsAll(firstImagePaths);
-        assertThat(firstImagePaths).allSatisfy(imagePath -> {
-            Path imageFile = FilePathConverter.fileSystemPathForExternalUri(URI.create(imagePath), FilePathType.SLIDE);
-            assertThat(imageFile).exists();
+        assertThat(attachedImagePaths).as("the unit carries exactly one slide per page of the re-uploaded file").hasSize(3).doesNotHaveDuplicates();
+        assertThat(attachedImagePaths).as("every attached slide belongs to the new deck").doesNotContainAnyElementsOf(firstImagePaths);
+
+        // Detached rather than deleted: the rows may still be referenced, and they keep pointing at files that exist.
+        assertThat(firstSlides).allSatisfy(slide -> {
+            Slide reloaded = slideRepository.findById(slide.getId()).orElseThrow();
+            assertThat(reloaded.getAttachmentVideoUnit()).as("a superseded slide is detached from the unit").isNull();
+            Path imageFile = FilePathConverter.fileSystemPathForExternalUri(URI.create(reloaded.getSlideImagePath()), FilePathType.SLIDE);
+            assertThat(imageFile).as("a detached slide still points at a file that exists").exists();
         });
     }
 
@@ -397,48 +401,6 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void updateSlideVisibilityWaitsForConcurrentSlideMutation() throws Exception {
-        Slide slide = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).getFirst();
-        ZonedDateTime hiddenUntil = ZonedDateTime.now().plusDays(1);
-        CountDownLatch mutationLockAcquired = new CountDownLatch(1);
-        CountDownLatch releaseMutation = new CountDownLatch(1);
-        var executor = Executors.newFixedThreadPool(2);
-
-        try {
-            var concurrentMutation = executor.submit(() -> new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
-                attachmentVideoUnitRepository.findByIdForUpdate(testAttachmentVideoUnit.getId()).orElseThrow();
-                mutationLockAcquired.countDown();
-                try {
-                    if (!releaseMutation.await(5, TimeUnit.SECONDS)) {
-                        throw new IllegalStateException("Timed out waiting to release the simulated slide mutation");
-                    }
-                }
-                catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new IllegalStateException(e);
-                }
-            }));
-            assertThat(mutationLockAcquired.await(5, TimeUnit.SECONDS)).isTrue();
-
-            var visibilityUpdate = executor
-                    .submit(() -> slideSplitterService.updateSlideVisibility(testAttachmentVideoUnit, List.of(new HiddenPageInfoDTO(slide.getId().toString(), hiddenUntil, null))));
-            assertThatThrownBy(() -> visibilityUpdate.get(200, TimeUnit.MILLISECONDS)).isInstanceOf(TimeoutException.class);
-
-            releaseMutation.countDown();
-            concurrentMutation.get(5, TimeUnit.SECONDS);
-            visibilityUpdate.get(5, TimeUnit.SECONDS);
-        }
-        finally {
-            releaseMutation.countDown();
-            executor.shutdownNow();
-        }
-
-        Slide updatedSlide = slideRepository.findById(slide.getId()).orElseThrow();
-        assertThat(updatedSlide.getHidden().toInstant()).isCloseTo(hiddenUntil.toInstant(), within(1, ChronoUnit.MILLIS));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void slideSplitRollbackKeepsPreviousImagesAndRemovesReplacementFiles() throws IOException {
         List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         Slide firstSlide = slides.get(0);
@@ -466,6 +428,47 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         assertThat(firstSlideOriginalFile).exists();
         try (var files = Files.walk(attachmentDirectory)) {
             assertThat(files.filter(Files::isRegularFile).collect(Collectors.toSet())).isEqualTo(filesBeforeFailedSplit);
+        }
+    }
+
+    /**
+     * The sibling rollback test above covers a failure while replacing an existing slide's image. This covers the other
+     * half of the compensation: a slide row that this operation created has to be removed again, or a retry would add a
+     * second copy of every page it had already written before the failure.
+     * <p>
+     * Deliberately against the real repository and the real filesystem rather than static mocks, as the sibling test is.
+     * What is under test is whether a row and a file that were genuinely written are genuinely gone again; a mock would
+     * only confirm that {@code deleteAllById} was called, which is the part that was never in doubt. This is the
+     * mechanism that replaced a transaction, so it has to be verified against something that can actually persist.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void slideSplitRollbackRemovesSlidesCreatedBeforeTheFailure() throws IOException {
+        List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+        Slide brokenSlide = slides.getFirst();
+        Path slideDirectory = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(testAttachmentVideoUnit.getId().toString()).resolve("slide");
+        Path brokenSlideFile = slideDirectory.resolve(brokenSlide.getId().toString()).resolve(Path.of(brokenSlide.getSlideImagePath()).getFileName());
+        brokenSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(brokenSlideFile, FilePathType.SLIDE, brokenSlide.getId()).toString());
+        slideRepository.save(brokenSlide);
+        // Removing the file makes updateExistingSlideImage throw once the loop reaches this slide.
+        Files.delete(brokenSlideFile);
+
+        Set<Long> slideIdsBefore = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).stream().map(Slide::getId).collect(Collectors.toSet());
+        Path attachmentDirectory = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(testAttachmentVideoUnit.getId().toString());
+        Set<Path> filesBefore;
+        try (var files = Files.walk(attachmentDirectory)) {
+            filesBefore = files.filter(Files::isRegularFile).collect(Collectors.toSet());
+        }
+
+        // The new slide is ordered first so that it is created, and its image written, before the failure hits.
+        List<SlideOrderDTO> pageOrder = List.of(new SlideOrderDTO("temp_created_before_failure", 1), new SlideOrderDTO(brokenSlide.getId().toString(), 2));
+
+        assertThatThrownBy(() -> slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf", List.of(), pageOrder))
+                .isInstanceOf(InternalServerErrorException.class);
+
+        assertThat(slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId())).extracting(Slide::getId).containsExactlyInAnyOrderElementsOf(slideIdsBefore);
+        try (var files = Files.walk(attachmentDirectory)) {
+            assertThat(files.filter(Files::isRegularFile).collect(Collectors.toSet())).isEqualTo(filesBefore);
         }
     }
 

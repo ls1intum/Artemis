@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -105,7 +106,7 @@ public class AuxiliaryRepositoryService {
             throw new BadRequestAlertException("Cannot set empty name for auxiliary repositories!", AUX_REPO_ENTITY_NAME,
                     ProgrammingExerciseErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
         }
-        auxiliaryRepository.setName(auxiliaryRepository.getName().toLowerCase());
+        auxiliaryRepository.setName(auxiliaryRepository.getName().toLowerCase(Locale.ROOT));
     }
 
     private void validateAuxiliaryRepositoryNameLength(AuxiliaryRepository auxiliaryRepository) {

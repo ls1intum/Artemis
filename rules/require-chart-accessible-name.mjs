@@ -1,10 +1,9 @@
 /**
- * Require every `<p-chart>` to carry an accessible name (or be explicitly hidden from assistive technology).
+ * Require every TUM UI chart to carry an accessible name (or be explicitly hidden from assistive technology).
  *
- * WHY: PrimeNG's chart component renders Chart.js into a `<canvas role="img">`. Everything the chart draws —
- * axis labels, data labels, the values themselves — is rasterised pixels: it cannot be selected, copied, or read.
- * `role="img"` without an accessible name makes a screen reader announce an unlabelled image, so the entire chart
- * is silent. PrimeNG exposes `ariaLabel` / `ariaLabelledBy`, which it forwards to the canvas.
+ * WHY: a chart renders into an `<svg role="img">`, and the accessible name is also the caption of the data table
+ * the chart renders alongside it for assistive technology. Without a name a screen reader announces an unlabelled
+ * image over an uncaptioned table, so the reader is told a chart exists but never what it is about.
  *
  * SATISFY IT by one of:
  *   - `[ariaLabel]="'some.translation.key' | artemisTranslate"` — preferred; reuse the chart's visible heading key
@@ -12,14 +11,11 @@
  *   - `aria-hidden="true"` — ONLY when the chart is decorative, i.e. every figure it shows is also rendered as
  *     text next to it, so hiding it removes nothing and avoids announcing the same number twice
  *
- * Chart.js has no SVG renderer, so a text alternative is the only way to expose chart content to assistive
- * technology; this rule keeps a new chart from silently regressing that.
- *
  * SCOPE: both external templates (`.html`, via the Angular template parser) and inline `template:` strings in
  * `.ts` component files — register the rule for both file globs. An empty name (`ariaLabel=""`) and a negated
  * `aria-hidden="false"` are rejected, since neither yields an accessible name.
  */
-const CHART_ELEMENT = 'p-chart';
+const CHART_ELEMENTS = ['tum-ui-bar-chart', 'tum-ui-line-chart', 'tum-ui-doughnut-chart'];
 
 const NAME_ATTRIBUTES = new Set(['ariaLabel', 'ariaLabelledBy', 'aria-label', 'aria-labelledby']);
 const HIDDEN_ATTRIBUTE = 'aria-hidden';
@@ -41,45 +37,47 @@ function isAccessibleTreatment(name, value) {
 }
 
 /**
- * Extracts the raw text of every `<p-chart …>` tag from a template string. Attribute values may contain `>`
- * (`[data]="a > b"`), so the scan tracks quoting instead of stopping at the first `>`.
+ * Extracts the raw text of every chart tag from a template string. Attribute values may contain `>`
+ * (`[series]="a > b"`), so the scan tracks quoting instead of stopping at the first `>`.
  */
 function extractChartTags(template) {
     const tags = [];
-    const opening = `<${CHART_ELEMENT}`;
-    let index = template.indexOf(opening);
-    while (index !== -1) {
-        let quote;
-        let cursor = index + opening.length;
-        while (cursor < template.length) {
-            const character = template[cursor];
-            if (quote) {
-                if (character === quote) {
-                    quote = undefined;
+    for (const element of CHART_ELEMENTS) {
+        const opening = `<${element}`;
+        let index = template.indexOf(opening);
+        while (index !== -1) {
+            let quote;
+            let cursor = index + opening.length;
+            while (cursor < template.length) {
+                const character = template[cursor];
+                if (quote) {
+                    if (character === quote) {
+                        quote = undefined;
+                    }
+                } else if (character === '"' || character === "'") {
+                    quote = character;
+                } else if (character === '>') {
+                    break;
                 }
-            } else if (character === '"' || character === "'") {
-                quote = character;
-            } else if (character === '>') {
-                break;
+                cursor++;
             }
-            cursor++;
+            tags.push({ element, text: template.slice(index, cursor) });
+            index = template.indexOf(opening, cursor);
         }
-        tags.push({ text: template.slice(index, cursor), offset: index });
-        index = template.indexOf(opening, cursor);
     }
     return tags;
 }
 
 /**
- * Splits a raw `<p-chart …>` start tag into its attributes. Scanning the tag text as a whole would accept a
+ * Splits a raw chart start tag into its attributes. Scanning the tag text as a whole would accept a
  * name-like string that merely sits inside ANOTHER attribute's value, e.g. `pTooltip='[ariaLabel]="Scores"'`.
  */
-function parseTagAttributes(tag) {
+function parseTagAttributes(tag, element) {
     const attributes = [];
     // name (possibly wrapped in [] or () bindings) optionally followed by ="value" / ='value'.
     const pattern = /([[(]?[\w:.$-]+[\])]?)(\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
     // Skip the element name itself.
-    pattern.lastIndex = tag.indexOf(CHART_ELEMENT) + CHART_ELEMENT.length;
+    pattern.lastIndex = tag.indexOf(element) + element.length;
     let match;
     while ((match = pattern.exec(tag)) !== null) {
         const rawName = match[1];
@@ -90,20 +88,20 @@ function parseTagAttributes(tag) {
     return attributes;
 }
 
-/** True when a raw `<p-chart …>` tag carries an accessible name or an explicit `aria-hidden="true"`. */
-function rawTagIsTreated(tag) {
-    return parseTagAttributes(tag).some((attribute) => isAccessibleTreatment(attribute.name, attribute.value));
+/** True when a raw chart tag carries an accessible name or an explicit `aria-hidden="true"`. */
+function rawTagIsTreated(tag, element) {
+    return parseTagAttributes(tag, element).some((attribute) => isAccessibleTreatment(attribute.name, attribute.value));
 }
 
 export default {
     meta: {
         type: 'problem',
         docs: {
-            description: 'Require an accessible name (ariaLabel/ariaLabelledBy) or an explicit aria-hidden on every <p-chart>, whose canvas is otherwise an unlabelled role="img".',
+            description: 'Require an accessible name (ariaLabel/ariaLabelledBy) or an explicit aria-hidden on every TUM UI chart, whose SVG is otherwise an unlabelled role="img".',
         },
         messages: {
             missingAccessibleName:
-                '<p-chart> renders a <canvas role="img"> with no accessible name, so screen readers announce an unlabelled image. Add [ariaLabel] (reuse the chart\'s visible heading translation key) or [ariaLabelledBy], or aria-hidden="true" if the chart only restates text shown next to it.',
+                'A chart renders an <svg role="img"> and an accompanying data table with no accessible name, so screen readers announce an unlabelled image over an uncaptioned table. Add [ariaLabel] (reuse the chart\'s visible heading translation key) or [ariaLabelledBy], or aria-hidden="true" if the chart only restates text shown next to it.',
         },
         schema: [],
     },
@@ -111,7 +109,7 @@ export default {
         return {
             // External templates, parsed by @angular-eslint/template-parser.
             Element(node) {
-                if (node.name !== CHART_ELEMENT) {
+                if (!CHART_ELEMENTS.includes(node.name)) {
                     return;
                 }
                 const treated = [...(node.attributes ?? []), ...(node.inputs ?? [])].some((attribute) =>
@@ -128,12 +126,13 @@ export default {
                     return;
                 }
                 const value = node.value;
-                const template = value?.type === 'TemplateLiteral' ? value.quasis.map((quasi) => quasi.value.raw).join(' ') : typeof value?.value === 'string' ? value.value : undefined;
+                const template =
+                    value?.type === 'TemplateLiteral' ? value.quasis.map((quasi) => quasi.value.raw).join(' ') : typeof value?.value === 'string' ? value.value : undefined;
                 if (!template) {
                     return;
                 }
                 for (const tag of extractChartTags(template)) {
-                    if (!rawTagIsTreated(tag.text)) {
+                    if (!rawTagIsTreated(tag.text, tag.element)) {
                         context.report({ node: value, messageId: 'missingAccessibleName' });
                     }
                 }

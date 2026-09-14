@@ -246,6 +246,13 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     protected getHasSidebar(): boolean {
+        let activeRoute = this.route.snapshot;
+        while (activeRoute.firstChild) {
+            activeRoute = activeRoute.firstChild;
+            if (activeRoute.data?.hasSidebar) {
+                return true;
+            }
+        }
         return this.communicationRouteLoaded();
     }
 

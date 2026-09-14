@@ -1,4 +1,4 @@
-import { Page } from 'playwright';
+import { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
 /** Escapes regex meta-characters in `value` so it can be used as a literal pattern. */
@@ -44,8 +44,8 @@ export class ExerciseTeamsPage {
                 }
             }
         }
-        await this.page.locator('#owner-search-input').waitFor({ state: 'visible', timeout: 30_000 });
-        await this.page.locator('#student-search-input').waitFor({ state: 'visible', timeout: 30_000 });
+        await this.page.locator('[data-testid="owner-search-input"]').waitFor({ state: 'visible', timeout: 30_000 });
+        await this.page.locator('[data-testid="student-search-input"]').waitFor({ state: 'visible', timeout: 30_000 });
     }
 
     /**
@@ -300,7 +300,7 @@ export class ExerciseTeamsPage {
      * @param username - the tutor username.
      */
     async setTeamTutor(username: string) {
-        await this.searchTutor(this.page.locator('#owner-search-input'), username);
+        await this.searchTutor(this.page.locator('[data-testid="owner-search-input"]'), username);
     }
 
     /**
@@ -308,7 +308,7 @@ export class ExerciseTeamsPage {
      * @param username - the student username.
      */
     async addStudentToTeam(username: string) {
-        await this.searchStudent(this.page.locator('#student-search-input'), username);
+        await this.searchStudent(this.page.locator('[data-testid="student-search-input"]'), username);
     }
 
     /**

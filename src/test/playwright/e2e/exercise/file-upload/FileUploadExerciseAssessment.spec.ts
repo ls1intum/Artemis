@@ -41,9 +41,11 @@ test.describe('File upload exercise assessment', { tag: '@slow' }, () => {
             await exerciseAssessment.clickHaveReadInstructionsButton();
             await exerciseAssessment.clickStartNewAssessment();
             await expect(fileUploadExerciseAssessment.getInstructionsRootElement().getByText(exercise.title!)).toBeVisible();
-            await expect(fileUploadExerciseAssessment.getInstructionsRootElement().locator('.collapse.show').getByText(exercise.problemStatement!)).toBeVisible();
-            await expect(fileUploadExerciseAssessment.getInstructionsRootElement().locator('.collapse.show').getByText(exercise.exampleSolution!)).toBeVisible();
-            await expect(fileUploadExerciseAssessment.getInstructionsRootElement().locator('.collapse.show').getByText(exercise.gradingInstructions!)).toBeVisible();
+            await expect(fileUploadExerciseAssessment.getInstructionsRootElement().getByTestId('expandable-section-content').getByText(exercise.problemStatement!)).toBeVisible();
+            await expect(fileUploadExerciseAssessment.getInstructionsRootElement().getByTestId('expandable-section-content').getByText(exercise.exampleSolution!)).toBeVisible();
+            await expect(
+                fileUploadExerciseAssessment.getInstructionsRootElement().getByTestId('expandable-section-content').getByText(exercise.gradingInstructions!),
+            ).toBeVisible();
             await fileUploadExerciseAssessment.downloadSubmissionFile();
             await fileUploadExerciseAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);
             await fileUploadExerciseAssessment.submitFeedback();

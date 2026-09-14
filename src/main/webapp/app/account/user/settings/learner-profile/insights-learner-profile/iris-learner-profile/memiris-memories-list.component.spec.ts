@@ -4,20 +4,16 @@ import { MemirisMemoriesListComponent } from './memiris-memories-list.component'
 import { IrisMemoriesHttpService } from 'app/iris/overview/services/iris-memories-http.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockProvider } from 'ng-mocks';
-import { Subject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { ResolveMemoriesConflictsModalComponent } from './resolve-memories-conflicts-modal.component';
 
 describe('MemirisMemoriesListComponent', () => {
     let fixture: ComponentFixture<MemirisMemoriesListComponent>;
     let component: MemirisMemoriesListComponent;
     let http: { getUserMemoryData: ReturnType<typeof vi.fn>; getUserMemory: ReturnType<typeof vi.fn>; deleteUserMemory: ReturnType<typeof vi.fn> };
     let alerts: { error: ReturnType<typeof vi.fn> };
-    let dialogService: { open: ReturnType<typeof vi.fn> };
-    let onClose: Subject<string[] | undefined>;
 
     const mockMemories = [
         { id: 'm1', title: 'Memory 1', content: '', learnings: [], connections: [], slept_on: false, deleted: false },
@@ -30,8 +26,6 @@ describe('MemirisMemoriesListComponent', () => {
     const mockConns = [{ id: 'c1', connectionType: 'related', memories: ['m1', 'm2'], description: 'desc', weight: 0.7 }];
 
     beforeEach(async () => {
-        onClose = new Subject<string[] | undefined>();
-        dialogService = { open: vi.fn().mockReturnValue({ onClose } as unknown as DynamicDialogRef) };
         await TestBed.configureTestingModule({
             imports: [MemirisMemoriesListComponent],
             providers: [
@@ -42,7 +36,6 @@ describe('MemirisMemoriesListComponent', () => {
                     deleteUserMemory: vi.fn().mockReturnValue(of(void 0)),
                 }),
                 MockProvider(AlertService, { error: vi.fn() }),
-                { provide: DialogService, useValue: dialogService },
             ],
         }).compileComponents();
 
@@ -97,7 +90,7 @@ describe('MemirisMemoriesListComponent', () => {
         expect(component.deleting()['m1']).toBe(false);
     });
 
-    it('should open the resolve-conflicts dialog with conflict groups and details, and apply deletions on close', async () => {
+    it('should show the resolve-conflicts dialog with conflict groups and details, and apply deletions when it resolves', async () => {
         const conflictMemories = [
             { id: 'm1', title: 'Memory 1', content: '', learnings: [], connections: ['cc'], slept_on: false, deleted: false },
             { id: 'm2', title: 'Memory 2', content: '', learnings: [], connections: ['cc'], slept_on: false, deleted: false },
@@ -109,15 +102,14 @@ describe('MemirisMemoriesListComponent', () => {
 
         component.openResolveConflictsModal();
 
-        expect(dialogService.open).toHaveBeenCalledTimes(1);
-        const [opened, config] = dialogService.open.mock.calls[0];
-        expect(opened).toBe(ResolveMemoriesConflictsModalComponent);
-        expect(config.data.conflictGroups).toEqual([['m1', 'm2']]);
-        expect(config.data.details['m1']).toBeTruthy();
-        expect(config.data.details['m2']).toBeTruthy();
+        expect(component.conflictDialogVisible()).toBe(true);
+        expect(component.conflictDialogGroups()).toEqual([['m1', 'm2']]);
+        expect(component.conflictDialogDetails()['m1']).toBeTruthy();
+        expect(component.conflictDialogDetails()['m2']).toBeTruthy();
 
         // Resolving the conflict (deleting m1) should remove it from the list without reloading
-        onClose.next(['m1']);
+        component.onConflictsResolved(['m1']);
+        expect(component.conflictDialogVisible()).toBe(false);
         expect(component.memories()).toHaveLength(1);
         expect(component.memories()[0].id).toBe('m2');
     });
@@ -125,7 +117,8 @@ describe('MemirisMemoriesListComponent', () => {
     it('should keep state when the resolve-conflicts dialog is dismissed', async () => {
         await component.loadMemories();
         component.openResolveConflictsModal();
-        onClose.next(undefined);
+        // Dismissing without resolving anything leaves the list exactly as it was.
+        component.conflictDialogVisible.set(false);
         expect(component.memories()).toHaveLength(2);
     });
 

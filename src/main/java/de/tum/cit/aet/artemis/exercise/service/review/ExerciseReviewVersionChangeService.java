@@ -573,7 +573,7 @@ public class ExerciseReviewVersionChangeService {
         return switch (filePlan.type()) {
             case UNCHANGED -> new LineMappingResult(oldLine, false);
             case UNMAPPABLE -> new LineMappingResult(null, true);
-            case EDITS -> mapLineWithEdits(oldLine, Objects.requireNonNull(filePlan.edits()));
+            case EDITS -> mapLineWithEdits(oldLine, filePlan.edits());
         };
     }
 
@@ -592,7 +592,7 @@ public class ExerciseReviewVersionChangeService {
         return switch (filePlan.type()) {
             case UNCHANGED -> new LineRangeMappingResult(oldStartLine, oldEndLine, false);
             case UNMAPPABLE -> new LineRangeMappingResult(null, null, true);
-            case EDITS -> mapRangeWithEdits(oldStartLine, oldEndLine, Objects.requireNonNull(filePlan.edits()));
+            case EDITS -> mapRangeWithEdits(oldStartLine, oldEndLine, filePlan.edits());
         };
     }
 

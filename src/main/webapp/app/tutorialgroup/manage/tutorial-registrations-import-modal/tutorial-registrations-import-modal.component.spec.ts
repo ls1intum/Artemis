@@ -3,7 +3,6 @@ import { By } from '@angular/platform-browser';
 import { Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogModule } from 'primeng/dialog';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import * as readUsersFromCsv from 'app/shared-ui/user-import/util/read-users-from-csv';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -14,7 +13,8 @@ import { ImportFlowStep, TutorialRegistrationsImportModalComponent } from './tut
 import { LoadingIndicatorOverlayComponent } from 'app/shared-ui/loading-indicator-overlay/loading-indicator-overlay.component';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { LoadingIndicatorOverlayStubComponent } from 'src/test/javascript/spec/helpers/stubs/tutorialgroup/loading-indicator-overlay-stub.component';
-import { PrimeNgDialogStubComponent } from 'src/test/javascript/spec/helpers/stubs/tutorialgroup/prime-ng-dialog-stub.component';
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
+import { DialogStubComponent } from 'src/test/javascript/spec/helpers/stubs/tutorialgroup/dialog-stub.component';
 import { TutorialRegistrationsImportModalTableStubComponent } from 'src/test/javascript/spec/helpers/stubs/tutorialgroup/tutorial-registrations-import-modal-table-stub.component';
 import { TutorialRegistrationsImportModalTableRow } from 'app/tutorialgroup/manage/tutorial-registrations-import-modal-table/tutorial-registrations-import-modal-table.component';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
@@ -70,7 +70,7 @@ describe('TutorialRegistrationsImportModalComponent', () => {
         const table = fixture.debugElement.query(By.directive(TutorialRegistrationsImportModalTableStubComponent))?.componentInstance ?? null;
 
         expect(component.flowStep()).toBe(ImportFlowStep.EXPLANATION);
-        expect(fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance.header()).toBe(
+        expect(fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance.header()).toBe(
             'artemisApp.pages.tutorialGroupRegistrations.importModal.explanationHeader',
         );
         expect(fixture.nativeElement.querySelector('[data-testid="choose-file-button"]')).not.toBeNull();
@@ -92,7 +92,7 @@ describe('TutorialRegistrationsImportModalComponent', () => {
         const table = fixture.debugElement.query(By.directive(TutorialRegistrationsImportModalTableStubComponent))?.componentInstance ?? null;
 
         expect(component.flowStep()).toBe(ImportFlowStep.CONFIRMATION);
-        expect(fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance.header()).toBe(
+        expect(fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance.header()).toBe(
             'artemisApp.pages.tutorialGroupRegistrations.importModal.confirmImportHeader',
         );
         expect(fixture.nativeElement.querySelector('[data-testid="choose-file-button"]')).toBeNull();
@@ -113,7 +113,7 @@ describe('TutorialRegistrationsImportModalComponent', () => {
     function expectResultsStep(resultCase: ResultsStepCase, expectedRows?: TutorialRegistrationsImportModalTableRow[]) {
         const table = fixture.debugElement.query(By.directive(TutorialRegistrationsImportModalTableStubComponent))?.componentInstance ?? null;
         expect(component.flowStep()).toBe(ImportFlowStep.RESULTS);
-        expect(fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance.header()).toBe(
+        expect(fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance.header()).toBe(
             'artemisApp.pages.tutorialGroupRegistrations.importModal.importResultsHeader',
         );
         expect(fixture.nativeElement.querySelector('[data-testid="finish-button"]')).not.toBeNull();
@@ -169,10 +169,10 @@ describe('TutorialRegistrationsImportModalComponent', () => {
         })
             .overrideComponent(TutorialRegistrationsImportModalComponent, {
                 remove: {
-                    imports: [DialogModule, TutorialRegistrationsImportModalTableComponent, LoadingIndicatorOverlayComponent],
+                    imports: [TumUiDialogComponent, TutorialRegistrationsImportModalTableComponent, LoadingIndicatorOverlayComponent],
                 },
                 add: {
-                    imports: [PrimeNgDialogStubComponent, TutorialRegistrationsImportModalTableStubComponent, LoadingIndicatorOverlayStubComponent],
+                    imports: [DialogStubComponent, TutorialRegistrationsImportModalTableStubComponent, LoadingIndicatorOverlayStubComponent],
                 },
             })
             .compileComponents();
@@ -200,7 +200,7 @@ describe('TutorialRegistrationsImportModalComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const dialog = fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance;
+        const dialog = fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance;
 
         expect(dialog.visible()).toBe(true);
         expectExplanationStep();
@@ -340,7 +340,7 @@ describe('TutorialRegistrationsImportModalComponent', () => {
         await fixture.whenStable();
 
         expect(component.isOpen()).toBe(false);
-        expect(fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance.visible()).toBe(false);
+        expect(fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance.visible()).toBe(false);
     });
 
     it('should import parsed students and show the positive results state when all students are registered', async () => {

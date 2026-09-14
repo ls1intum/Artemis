@@ -559,12 +559,14 @@ pre {
         resize: none;
         border: none;
         border-radius: $iris-border-radius-lg $iris-border-radius-lg 0 0;
+
         // The collapsed textarea must be tall enough to show the ghost suggestion, which renders in an
         // overlay pinned inside this box. The previous flat 40px left only 8px of content box after the
         // 16px vertical padding — less than a single line — so a wrapped suggestion spilled out of the
         // textarea and painted over the context tag and send button in the controls row below.
         min-height: calc(var(--iris-input-lines) * var(--iris-input-line-height) + 32px);
         line-height: var(--iris-input-line-height);
+
         // Keep at least the original ~5 lines of typing room on top of whatever the collapsed box
         // reserves, so layouts that reserve more lines for the ghost text do not end up with a shorter
         // scroll range than the wide layout has.
@@ -651,6 +653,7 @@ pre {
         top: 16px;
         left: 16px;
         right: 16px;
+
         // Clip to the textarea's content box so a suggestion longer than the input is cut off at its
         // edge instead of overflowing onto the context tag and send button in the controls row below.
         // Falls back to the collapsed line count before the textarea has been measured; once the user

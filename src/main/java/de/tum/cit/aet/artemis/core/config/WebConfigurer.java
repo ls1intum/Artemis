@@ -7,7 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
-import java.util.List;
+import java.util.Locale;
 
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.FilterRegistration;
@@ -26,7 +26,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.HttpMessageConverters;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.cors.CorsConfiguration;
@@ -37,6 +37,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolsInterceptor;
 import de.tum.cit.aet.artemis.core.security.filter.CachingHttpHeadersFilter;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageInterceptor;
 
 /**
  * Configuration of web application with Servlet 3.0 APIs.
@@ -56,12 +57,15 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
     private final LegacyApiPathDeprecationInterceptor legacyApiPathDeprecationInterceptor;
 
+    private final FeatureUsageInterceptor featureUsageInterceptor;
+
     public WebConfigurer(Environment env, ArtemisProperties jHipsterProperties, ToolsInterceptor toolsInterceptor,
-            LegacyApiPathDeprecationInterceptor legacyApiPathDeprecationInterceptor) {
+            LegacyApiPathDeprecationInterceptor legacyApiPathDeprecationInterceptor, FeatureUsageInterceptor featureUsageInterceptor) {
         this.env = env;
         this.jHipsterProperties = jHipsterProperties;
         this.toolsInterceptor = toolsInterceptor;
         this.legacyApiPathDeprecationInterceptor = legacyApiPathDeprecationInterceptor;
+        this.featureUsageInterceptor = featureUsageInterceptor;
     }
 
     @Override
@@ -94,9 +98,9 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
         if (server instanceof ConfigurableServletWebServerFactory servletWebServer) {
             MimeMappings mappings = new MimeMappings(MimeMappings.DEFAULT);
             // IE issue, see https://github.com/jhipster/generator-jhipster/pull/711
-            mappings.add("html", MediaType.TEXT_HTML_VALUE + ";charset=" + StandardCharsets.UTF_8.name().toLowerCase());
+            mappings.add("html", MediaType.TEXT_HTML_VALUE + ";charset=" + StandardCharsets.UTF_8.name().toLowerCase(Locale.ROOT));
             // CloudFoundry issue, see https://github.com/cloudfoundry/gorouter/issues/64
-            mappings.add("json", MediaType.TEXT_HTML_VALUE + ";charset=" + StandardCharsets.UTF_8.name().toLowerCase());
+            mappings.add("json", MediaType.TEXT_HTML_VALUE + ";charset=" + StandardCharsets.UTF_8.name().toLowerCase(Locale.ROOT));
             servletWebServer.setMimeMappings(mappings);
         }
     }
@@ -104,7 +108,7 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     private void setLocationForStaticAssets(WebServerFactory server) {
         if (server instanceof ConfigurableServletWebServerFactory servletWebServer) {
             String prefixPath = resolvePathPrefix();
-            boolean isWindows = System.getProperty("os.name").toLowerCase().contains("win");
+            boolean isWindows = System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win");
             String INVALID_PREFIX_ON_WINDOWS = "/";
             boolean isInvalidPrefixOnWindows = prefixPath.startsWith(INVALID_PREFIX_ON_WINDOWS);
             if (isWindows && isInvalidPrefixOnWindows) {
@@ -149,6 +153,13 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // First, so that a request rejected by one of the interceptors below is still counted (as an error). Requests
+        // rejected earlier, in the security filter chain, never reach an interceptor and are not counted at all.
+        // Not only /api/**: the app-site-association resources are annotated @FeatureUsage but map to /.well-known/
+        // deliberately, outside the api prefix, so an /api-only registration never saw their requests and their feature
+        // was reported as unused however often clients fetched it. The interceptor discards handlers the registry does
+        // not track, so widening the patterns cannot start counting anything unintended.
+        registry.addInterceptor(featureUsageInterceptor).addPathPatterns("/api/**", "/.well-known/**");
         registry.addInterceptor(toolsInterceptor).addPathPatterns("/api/**").excludePathPatterns("/api/*/public/**");
         // Tags responses on every API request that resolved to a multi-path controller (legacy + canonical
         // prefix). The interceptor reads the controller's @RequestMapping to derive the successor URL,
@@ -159,19 +170,25 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     /**
      * In Spring Framework 7, the default message converter ordering causes ResponseEntity&lt;String&gt;
      * responses to be serialized as JSON strings (wrapped in quotes) instead of plain text.
-     * This happens because MappingJackson2HttpMessageConverter is tried before StringHttpMessageConverter
+     * This happens because the Jackson converter is tried before StringHttpMessageConverter
      * and both support String types.
+     * <p>
+     * {@code configureMessageConvertersList} is the Spring 7 replacement for the deprecated
+     * {@code extendMessageConverters(List)}: it hands over the selected converters before they are configured
+     * individually, which is the same point in the lifecycle the old hook ran at.
      * <p>
      * This method moves all StringHttpMessageConverter instances before the Jackson converter
      * so that String responses are written as plain text by default, matching the behavior
      * expected by the client and tests.
      */
     @Override
-    public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
-        // Collect all StringHttpMessageConverters and remove them from their current positions
-        var stringConverters = converters.stream().filter(StringHttpMessageConverter.class::isInstance).toList();
-        converters.removeAll(stringConverters);
-        // Re-add them at the beginning so they take priority over Jackson for String responses
-        converters.addAll(0, stringConverters);
+    public void configureMessageConverters(HttpMessageConverters.ServerBuilder builder) {
+        builder.configureMessageConvertersList(converters -> {
+            // Collect all StringHttpMessageConverters and remove them from their current positions
+            var stringConverters = converters.stream().filter(StringHttpMessageConverter.class::isInstance).toList();
+            converters.removeAll(stringConverters);
+            // Re-add them at the beginning so they take priority over Jackson for String responses
+            converters.addAll(0, stringConverters);
+        });
     }
 }

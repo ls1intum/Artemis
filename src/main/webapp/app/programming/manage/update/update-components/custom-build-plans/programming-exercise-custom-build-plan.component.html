@@ -1,6 +1,13 @@
 <div class="form-group">
     <div class="form-check custom-checkbox">
-        <input class="form-check-input" type="checkbox" name="customizeBuildPlan" id="field_customizeBuildPlan" [(ngModel)]="programmingExercise().customizeBuildPlan" />
+        <input
+            class="form-check-input"
+            type="checkbox"
+            name="customizeBuildPlan"
+            id="field_customizeBuildPlan"
+            [ngModel]="programmingExercise().customizeBuildPlan"
+            (ngModelChange)="onCustomizeBuildPlanChange($event)"
+        />
         <label class="form-check-label custom-control-label" for="field_customizeBuildPlan" jhiTranslate="artemisApp.programmingExercise.customizeBuildPlan"></label>
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.customizeBuildPlanTooltip" />
     </div>

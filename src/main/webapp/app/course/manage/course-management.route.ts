@@ -145,14 +145,6 @@ export const courseManagementRoutes: Routes = [
                 },
             },
             {
-                path: ':courseId/exams/:examId/plagiarism-cases',
-                loadChildren: () => import('app/plagiarism/manage/instructor-view/plagiarism-instructor-view.route').then((m) => m.plagiarismInstructorRoutes),
-                // Preload-only authorities (no canActivate): least-privileged authority the plagiarism routes require, so eligible staff warm this lazy subtree while students stay pruned.
-                data: {
-                    authorities: IS_AT_LEAST_INSTRUCTOR,
-                },
-            },
-            {
                 path: ':courseId/exams',
                 loadChildren: () => import('app/exam/manage/exam-management.route').then((m) => m.examManagementRoutes),
                 // Preload-only authorities (no canActivate): least-privileged authority the exam management routes require, so eligible staff warm this lazy subtree while students stay pruned.

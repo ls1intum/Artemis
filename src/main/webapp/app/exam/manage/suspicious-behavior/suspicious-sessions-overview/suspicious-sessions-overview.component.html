@@ -1,4 +1,6 @@
-<h5 class="mb-3" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title"></h5>
+<div *titleBarTitle class="flex items-center">
+    <h5 class="mb-0" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title"></h5>
+</div>
 @for (suspiciousSessionsSet of suspiciousSessions(); track suspiciousSessionsSet; let i = $index) {
     <p class="mb-0">
         {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.case' | artemisTranslate }}

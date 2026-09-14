@@ -11,9 +11,9 @@ import org.springframework.cache.CacheManager;
  * Sends each cache to the manager that suits its value shape.
  *
  * <p>
- * Blob caches (see {@link BlobCacheConfiguration#BLOB_CACHE_NAMES}) go to a bounded per-node cache; everything else goes
- * to the distributed cache manager, which is what the small, read-heavy caches such as the title lookups need in order to
- * stay coherent across nodes.
+ * Blob caches (see {@link BlobCacheConfiguration#BLOB_CACHE_NAMES}) go to a bounded per-node cache, because a network round trip buys
+ * nothing for a rendered file or for one column found by primary key. Everything else goes to the distributed cache
+ * manager, which is what a cache whose entries must be identical on every node needs.
  *
  * <p>
  * Routing happens here rather than by annotating call sites so that the choice is made in one place and cannot drift as
@@ -49,6 +49,9 @@ public class RoutingCacheManager implements CacheManager {
      * @return the manager responsible for the given cache
      */
     private CacheManager managerFor(String name) {
-        return BlobCacheConfiguration.BLOB_CACHE_NAMES.contains(name) ? blobCacheManager : distributedCacheManager;
+        if (BlobCacheConfiguration.BLOB_CACHE_NAMES.contains(name)) {
+            return blobCacheManager;
+        }
+        return distributedCacheManager;
     }
 }

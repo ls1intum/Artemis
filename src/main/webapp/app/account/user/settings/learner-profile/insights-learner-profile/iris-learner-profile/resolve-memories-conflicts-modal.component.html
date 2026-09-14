@@ -1,48 +1,54 @@
-<div class="modal-body">
+<div>
     @if (groups()?.length) {
-        <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="mb-2 flex items-center justify-between gap-3">
             <div
-                class="fw-semibold"
+                class="font-semibold"
                 jhiTranslate="artemisApp.iris.memories.conflict.conflictCount"
                 [translateValues]="{ current: currentIndex() + 1, total: groups().length }"
             ></div>
-            <div class="btn-group">
+            <tum-ui-button-group>
                 <button
-                    class="btn btn-sm btn-outline-secondary"
+                    type="button"
+                    tumUiButton
+                    severity="secondary"
+                    variant="outlined"
+                    size="small"
                     (click)="prev()"
                     [disabled]="currentIndex() === 0"
                     jhiTranslate="artemisApp.iris.memories.conflict.previous"
                 ></button>
                 <button
-                    class="btn btn-sm btn-outline-secondary"
+                    type="button"
+                    tumUiButton
+                    severity="secondary"
+                    variant="outlined"
+                    size="small"
                     (click)="next()"
                     [disabled]="currentIndex() >= groups().length - 1"
                     jhiTranslate="artemisApp.iris.memories.conflict.next"
                 ></button>
-            </div>
+            </tum-ui-button-group>
         </div>
-        <div class="row g-3">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             @for (gid of currentGroup(); track gid) {
-                <div class="col-md-6 col-lg-4">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="fw-semibold">{{ details()[gid]?.title || gid }}</span>
-                            </div>
-                            <div class="small text-muted mb-2"><span jhiTranslate="artemisApp.iris.memories.conflict.memoryId"></span>: {{ gid }}</div>
-                            <div class="text-break mb-2">{{ details()[gid]?.content }}</div>
-                            <button class="btn btn-sm btn-success" [disabled]="busy()" (click)="keep(currentIndex(), gid)">
-                                <span jhiTranslate="artemisApp.iris.memories.conflict.keepThis"></span>
-                            </button>
-                        </div>
+                <tum-ui-card class="h-full">
+                    <div class="mb-2 flex items-center justify-between">
+                        <span class="font-semibold">{{ details()[gid]?.title || gid }}</span>
                     </div>
-                </div>
+                    <div class="mb-2 text-sm text-muted-color"><span jhiTranslate="artemisApp.iris.memories.conflict.memoryId"></span>: {{ gid }}</div>
+                    <div class="mb-2 break-words">{{ details()[gid]?.content }}</div>
+                    <tum-ui-button severity="success" size="small" [disabled]="busy()" (clicked)="keep(currentIndex(), gid)">
+                        <span jhiTranslate="artemisApp.iris.memories.conflict.keepThis"></span>
+                    </tum-ui-button>
+                </tum-ui-card>
             }
         </div>
     } @else {
-        <div class="small text-muted" jhiTranslate="artemisApp.iris.memories.conflict.noConflicts"></div>
+        <div class="text-sm text-muted-color" jhiTranslate="artemisApp.iris.memories.conflict.noConflicts"></div>
     }
 </div>
-<div class="modal-footer">
-    <button type="button" class="btn btn-secondary" (click)="close()" jhiTranslate="entity.action.close"></button>
+<div class="mt-4 flex justify-end">
+    <tum-ui-button severity="secondary" (clicked)="close()">
+        <span jhiTranslate="entity.action.close"></span>
+    </tum-ui-button>
 </div>

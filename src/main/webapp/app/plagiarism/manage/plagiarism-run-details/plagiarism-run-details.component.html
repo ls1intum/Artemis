@@ -45,12 +45,12 @@
         </div>
         <div class="plagiarism-run-details-info">
             <div style="height: 400px">
-                <p-chart
-                    type="bar"
-                    [data]="chartData()"
-                    [options]="chartOptions()"
-                    [plugins]="dataLabelsPlugin"
-                    (onDataSelect)="onSelect($event)"
+                <tum-ui-bar-chart
+                    [labels]="chartData().labels"
+                    [series]="chartData().series"
+                    [config]="chartConfig()"
+                    interactive
+                    (dataSelect)="onSelect($event)"
                     [ariaLabel]="'artemisApp.plagiarism.similarityDistribution' | artemisTranslate"
                 />
             </div>

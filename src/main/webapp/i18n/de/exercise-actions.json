@@ -11,8 +11,6 @@
             "startExercise": "Aufgabe starten",
             "startPractice": "Übung starten",
             "resumeExercise": "Aufgabe fortführen",
-            "requestManualFeedback": "Feedback anfragen",
-            "requestManualFeedbackTooltip": "Sendet eine Feedbackanfrage vor der Einreichungsfrist.",
             "requestAutomaticFeedback": "AI Feedback anfragen",
             "resumeExercisePractice": "Üben von Aufgabe fortführen",
             "resumeExerciseError": "Fehler beim Versuch die Aufgabe fortzuführen",

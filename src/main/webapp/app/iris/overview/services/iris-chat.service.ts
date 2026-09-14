@@ -717,7 +717,7 @@ export class IrisChatService implements OnDestroy {
             this.finalizedRunIds.add(payload.runId);
             this.lastSeenPartialSeqByRunId.delete(payload.runId);
         }
-        // The backend can resend an already-persisted assistant message (same id) to
+        // The server can resend an already-persisted assistant message (same id) to
         // attach createdMemories; only fire the unread-badge side effects for a new id.
         const isNewMessage = payload.message?.id === undefined || !this.messages.getValue().some((existing) => existing.id === payload.message!.id);
         if (payload.message?.sender === IrisSender.LLM) {

@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -21,10 +22,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
@@ -37,7 +38,7 @@ class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLoc
     @Autowired
     private LocalVCLocalCITestService localVCLocalCITestService;
 
-    private LocalRepository localRepository;
+    private LocalVCTestRepository localRepository;
 
     private LocalVCRepositoryUri repositoryUri;
 
@@ -51,20 +52,20 @@ class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLoc
 
     @BeforeEach
     void setUp() throws Exception {
-        projectKey = ("RSV" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)).toUpperCase();
+        projectKey = ("RSV" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)).toUpperCase(Locale.ROOT);
         String repositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey, "student1");
 
-        localRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repositorySlug);
+        localRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, repositorySlug);
 
         seededFilePath = "src/Test.java";
         seededContent = "class Test {}";
 
-        Path file = localRepository.workingCopyGitRepoFile.toPath().resolve(seededFilePath);
+        Path file = localRepository.workingCopyPath().resolve(seededFilePath);
         Files.createDirectories(file.getParent());
         FileUtils.write(file.toFile(), seededContent, StandardCharsets.UTF_8);
-        localRepository.workingCopyGitRepo.add().addFilepattern(".").call();
-        de.tum.cit.aet.artemis.localvc.service.GitService.commit(localRepository.workingCopyGitRepo).setMessage("seed content").call();
-        localRepository.workingCopyGitRepo.push().setRemote("origin").call();
+        localRepository.workingCopy().add().addFilepattern(".").call();
+        de.tum.cit.aet.artemis.localvc.service.GitService.commit(localRepository.workingCopy()).setMessage("seed content").call();
+        localRepository.workingCopy().push().setRemote("origin").call();
 
         repositoryUri = new LocalVCRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, repositorySlug));
         participation = new ProgrammingExerciseStudentParticipation();
@@ -75,7 +76,7 @@ class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLoc
     @AfterEach
     void tearDown() throws Exception {
         if (localRepository != null) {
-            localRepository.resetLocalRepo();
+            localRepository.deleteWorkingCopy();
         }
     }
 
@@ -102,9 +103,8 @@ class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLoc
     void getSelectedFilesContentSkipsBlobAbovePerFileLimit() throws Exception {
         String smallFilePath = "src/Small.java";
         String largeFilePath = "src/Large.java";
-        FileUtils.writeStringToFile(localRepository.workingCopyGitRepoFile.toPath().resolve(smallFilePath).toFile(), "class Small {}", StandardCharsets.UTF_8);
-        FileUtils.writeByteArrayToFile(localRepository.workingCopyGitRepoFile.toPath().resolve(largeFilePath).toFile(),
-                new byte[(int) RepositoryService.MAX_SELECTED_FILE_SIZE_BYTES + 1]);
+        FileUtils.writeStringToFile(localRepository.workingCopyPath().resolve(smallFilePath).toFile(), "class Small {}", StandardCharsets.UTF_8);
+        FileUtils.writeByteArrayToFile(localRepository.workingCopyPath().resolve(largeFilePath).toFile(), new byte[(int) RepositoryService.MAX_SELECTED_FILE_SIZE_BYTES + 1]);
         String commitHash = commitAndPushSelectedFiles();
 
         Map<String, String> files = repositoryService.getFilesContentAtCommit(participation.getProgrammingExercise(), commitHash, null, participation,
@@ -120,7 +120,7 @@ class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLoc
         Arrays.fill(content, (byte) 'a');
         for (int i = 0; i < 6; i++) {
             String filePath = "src/File" + i + ".java";
-            FileUtils.writeByteArrayToFile(localRepository.workingCopyGitRepoFile.toPath().resolve(filePath).toFile(), content);
+            FileUtils.writeByteArrayToFile(localRepository.workingCopyPath().resolve(filePath).toFile(), content);
             filePaths.add(filePath);
         }
         String commitHash = commitAndPushSelectedFiles();
@@ -137,8 +137,8 @@ class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLoc
         String shellScriptPath = "run.sh";
         String binaryFilePath = "plain.txt";
         String shellScript = "#!/bin/sh\necho hello\n";
-        FileUtils.writeStringToFile(localRepository.workingCopyGitRepoFile.toPath().resolve(shellScriptPath).toFile(), shellScript, StandardCharsets.UTF_8);
-        FileUtils.writeByteArrayToFile(localRepository.workingCopyGitRepoFile.toPath().resolve(binaryFilePath).toFile(), new byte[] { 0, 1, 2 });
+        FileUtils.writeStringToFile(localRepository.workingCopyPath().resolve(shellScriptPath).toFile(), shellScript, StandardCharsets.UTF_8);
+        FileUtils.writeByteArrayToFile(localRepository.workingCopyPath().resolve(binaryFilePath).toFile(), new byte[] { 0, 1, 2 });
         String commitHash = commitAndPushSelectedFiles();
 
         Map<String, String> files = repositoryService.getFilesContentAtCommit(participation.getProgrammingExercise(), commitHash, null, participation,
@@ -148,9 +148,9 @@ class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLoc
     }
 
     private String commitAndPushSelectedFiles() throws Exception {
-        localRepository.workingCopyGitRepo.add().addFilepattern(".").call();
-        var commit = de.tum.cit.aet.artemis.localvc.service.GitService.commit(localRepository.workingCopyGitRepo).setMessage("add selected files").call();
-        localRepository.workingCopyGitRepo.push().setRemote("origin").call();
+        localRepository.workingCopy().add().addFilepattern(".").call();
+        var commit = de.tum.cit.aet.artemis.localvc.service.GitService.commit(localRepository.workingCopy()).setMessage("add selected files").call();
+        localRepository.workingCopy().push().setRemote("origin").call();
         return commit.getName();
     }
 }
