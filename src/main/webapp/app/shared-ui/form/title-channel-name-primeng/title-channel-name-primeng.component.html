@@ -4,6 +4,9 @@
             @if (!hideTitleLabel()) {
                 <div>
                     <label [class]="'form-control-label' + (emphasizeLabels() ? ' emphasized-label' : '')" jhiTranslate="artemisApp.lecture.title" for="field_title"></label>
+                    @if (showRequiredMarker()) {
+                        <span class="text-state-danger" aria-hidden="true">*</span>
+                    }
                     @if (titleHelpIconText()) {
                         <jhi-help-icon [text]="titleHelpIconText()!" />
                     }
@@ -39,6 +42,9 @@
                         jhiTranslate="artemisApp.lecture.channelName"
                         for="field_channel_name"
                     ></label>
+                    @if (showRequiredMarker()) {
+                        <span class="text-state-danger" aria-hidden="true">*</span>
+                    }
                     @if (channelNameHelpIconText()) {
                         <jhi-help-icon [text]="channelNameHelpIconText()!" />
                     }
