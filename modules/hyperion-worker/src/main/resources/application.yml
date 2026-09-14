@@ -3,6 +3,14 @@ spring:
         name: artemis-hyperion-worker
     main:
         web-application-type: none
+    autoconfigure:
+        # Generation uses chat only. Do not instantiate unrelated provider clients.
+        exclude:
+            - org.springframework.ai.model.openai.autoconfigure.OpenAiEmbeddingAutoConfiguration
+            - org.springframework.ai.model.openai.autoconfigure.OpenAiImageAutoConfiguration
+            - org.springframework.ai.model.openai.autoconfigure.OpenAiAudioSpeechAutoConfiguration
+            - org.springframework.ai.model.openai.autoconfigure.OpenAiAudioTranscriptionAutoConfiguration
+            - org.springframework.ai.model.openai.autoconfigure.OpenAiModerationAutoConfiguration
     artemis:
         mode: native
         broker-url: ${HYPERION_BROKER_URL}
