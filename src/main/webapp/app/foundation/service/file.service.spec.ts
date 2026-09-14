@@ -226,5 +226,12 @@ describe('FileService', () => {
             const result = fileService.createStudentLink(link);
             expect(result).toBe(expectedStudentLink);
         });
+
+        it('should leave a link under the lecture attachment path alone', () => {
+            const link = 'attachments/lecture/42/slides.pdf';
+
+            const result = fileService.createStudentLink(link);
+            expect(result).toBe(link);
+        });
     });
 });

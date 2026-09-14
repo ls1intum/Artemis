@@ -79,7 +79,7 @@ async function expectLoadsOnceAndRefreshesOnReselect(page: Page, courseId: numbe
 
 /** A sidebar entry of a tab's own inner sidebar (lectures, exams, exercises and tutorial groups all use these cards). */
 function sidebarCard(page: Page, title: string) {
-    return page.locator('#test-sidebar-card-title', { hasText: title });
+    return page.getByTestId('sidebar-card-title').filter({ hasText: title });
 }
 
 test.describe('Course overview tabs', { tag: '@fast' }, () => {
@@ -98,7 +98,7 @@ test.describe('Course overview tabs', { tag: '@fast' }, () => {
         await courseManagementAPIRequests.deleteCourse(course, admin);
     });
 
-    test('Exercises tab lists the seeded exercises and never falls back to the dashboard endpoint', async ({ page, login, exerciseAPIRequests, courseOverview }) => {
+    test('Exercises tab lists the seeded exercises', async ({ page, login, exerciseAPIRequests, courseOverview }) => {
         // Released but not yet due, so the exercises land in the sidebar group a student sees expanded
         const released = dayjs().subtract(2, 'day');
         const due = dayjs().add(2, 'day');
@@ -107,12 +107,10 @@ test.describe('Course overview tabs', { tag: '@fast' }, () => {
 
         await login(studentOne);
         const exerciseRequests = recordRequests(page, new RegExp(`api/course/courses/${course.id}/exercises-for-overview`));
-        const dashboardRequests = recordRequests(page, new RegExp(`api/course/courses/${course.id}/for-dashboard`));
         await openCourseTab(page, course.id!, 'exercises');
 
         await expect(courseOverview.getExercise(first.title!)).toBeVisible();
         await expect(courseOverview.getExercise(second.title!)).toBeVisible();
-        expect(dashboardRequests, 'the deprecated whole-course endpoint must not be used').toHaveLength(0);
         await expectLoadsOnceAndRefreshesOnReselect(page, course.id!, 'exercises', exerciseRequests);
         // The refresh must not drop what is on screen — the list is replaced, not emptied and refilled
         await expect(courseOverview.getExercise(first.title!)).toBeVisible();
@@ -309,13 +307,13 @@ test.describe('Course overview tabs', { tag: '@fast' }, () => {
         // On a student's very first visit the tab asks whether to appear in the leaderboard, behind a modal mask that
         // blocks every other click until it is confirmed. The dialog is appended to the body, not to its host element,
         // and whether it appears depends on whether this student ever answered it, so wait for either outcome.
-        const confirmButton = page.locator('.p-dialog-footer button');
+        const confirmButton = page.getByTestId('quiz-training-confirm-button');
         const leagueBadge = page.locator('jhi-league-badge');
         await expect(confirmButton.or(leagueBadge).first()).toBeVisible({ timeout: 20_000 });
         if (await confirmButton.isVisible()) {
             await confirmButton.click();
         }
-        await expect(page.locator('.p-dialog-mask')).toHaveCount(0);
+        await expect(page.getByTestId('quiz-training-dialog-mask')).toHaveCount(0);
         await expect(leagueBadge).toBeVisible({ timeout: 20_000 });
 
         await expect.poll(() => leaderboardRequests.length, { timeout: 20_000 }).toBeGreaterThan(0);

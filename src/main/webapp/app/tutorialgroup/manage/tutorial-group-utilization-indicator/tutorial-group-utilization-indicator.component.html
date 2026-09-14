@@ -1,17 +1,25 @@
-@if (tutorialGroup().averageAttendance !== undefined && tutorialGroup().capacity !== undefined) {
-    <jhi-vertical-progress-bar
-        [fillLevelInPercent]="Math.round(((tutorialGroup()?.averageAttendance ?? 0) / (tutorialGroup()?.capacity ?? 1)) * 100)"
-        [widthInPixels]="20"
-        [heightInPixels]="50"
-        [tooltip]="'artemisApp.entities.tutorialGroup.averageAttendance' | artemisTranslate: { averageAttendance: tutorialGroup()?.averageAttendance }"
-    >
-        >
-    </jhi-vertical-progress-bar>
+@let utilizationPercentage = utilization();
+@let averageAttendance = tutorialGroup().averageAttendance;
+
+@if (utilizationPercentage !== undefined) {
+    <div class="flex items-center gap-2" [tumUiTooltip]="'artemisApp.entities.tutorialGroup.averageAttendance' | artemisTranslate: { averageAttendance: averageAttendance }">
+        <tum-ui-progress-bar
+            class="w-16 shrink-0"
+            size="small"
+            [showValue]="false"
+            [severity]="severity()"
+            [value]="utilizationPercentage"
+            [ariaLabel]="'artemisApp.entities.tutorialGroup.utilization' | artemisTranslate"
+        />
+        <span class="text-sm">{{ utilizationPercentage }}%</span>
+    </div>
+} @else if (averageAttendance !== undefined) {
+    <!-- Without a capacity there is no ratio to draw, but the raw attendance is still worth showing. -->
+    <span class="text-sm">{{ 'artemisApp.entities.tutorialGroup.averageAttendance' | artemisTranslate: { averageAttendance: averageAttendance } }}</span>
 } @else {
-    <!-- We can at least show the average attendance even if capacity is not defined-->
-    <span>{{
-        tutorialGroup().averageAttendance
-            ? ('artemisApp.entities.tutorialGroup.averageAttendance' | artemisTranslate: { averageAttendance: tutorialGroup().averageAttendance ?? '' })
-            : ''
-    }}</span>
+    <!-- No rail: an unknown utilization is not a measured zero, which is what a progress bar would announce. -->
+    <span class="text-sm" [tumUiTooltip]="'artemisApp.entities.tutorialGroup.noAttendanceRecorded' | artemisTranslate">
+        <span aria-hidden="true">–</span>
+        <span class="sr-only">{{ 'artemisApp.entities.tutorialGroup.noAttendanceRecorded' | artemisTranslate }}</span>
+    </span>
 }

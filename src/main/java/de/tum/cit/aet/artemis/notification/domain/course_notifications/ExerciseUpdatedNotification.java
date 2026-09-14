@@ -7,6 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
+import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseUpdatedPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user an exercise got updated.
@@ -14,15 +16,7 @@ import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 @CourseNotificationType(8)
 public class ExerciseUpdatedNotification extends CourseNotification {
 
-    protected Long exerciseId;
-
-    protected String exerciseTitle;
-
-    protected Long examId;
-
-    protected Long exerciseGroupId;
-
-    protected String exerciseType;
+    private final ExerciseUpdatedPayloadDTO payload;
 
     /**
      * Default constructor used when creating a new post notification.
@@ -30,11 +24,7 @@ public class ExerciseUpdatedNotification extends CourseNotification {
     public ExerciseUpdatedNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle, Long examId, Long exerciseGroupId,
             String exerciseType) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.exerciseId = exerciseId;
-        this.exerciseTitle = exerciseTitle;
-        this.examId = examId;
-        this.exerciseGroupId = exerciseGroupId;
-        this.exerciseType = exerciseType;
+        this.payload = new ExerciseUpdatedPayloadDTO(exerciseId, exerciseTitle, examId, exerciseGroupId, exerciseType);
     }
 
     /**
@@ -42,6 +32,7 @@ public class ExerciseUpdatedNotification extends CourseNotification {
      */
     public ExerciseUpdatedNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
+        this.payload = CourseNotificationPayloads.parse(parameters, ExerciseUpdatedPayloadDTO.class);
     }
 
     @Override
@@ -61,9 +52,15 @@ public class ExerciseUpdatedNotification extends CourseNotification {
 
     @Override
     public String getRelativeWebAppUrl() {
-        if (examId != null && exerciseGroupId != null && exerciseType != null) {
-            return "/course-management/" + courseId + "/exams/" + examId + "/exercise-groups/" + exerciseGroupId + "/" + exerciseType + "-exercises/" + exerciseId;
+        if (payload.examId() != null && payload.exerciseGroupId() != null && payload.exerciseType() != null) {
+            return "/course-management/" + courseId + "/exams/" + payload.examId() + "/exercise-groups/" + payload.exerciseGroupId() + "/" + payload.exerciseType() + "-exercises/"
+                    + payload.exerciseId();
         }
-        return "/courses/" + courseId + "/exercises/" + exerciseId;
+        return "/courses/" + courseId + "/exercises/" + payload.exerciseId();
+    }
+
+    @Override
+    public ExerciseUpdatedPayloadDTO payload() {
+        return payload;
     }
 }

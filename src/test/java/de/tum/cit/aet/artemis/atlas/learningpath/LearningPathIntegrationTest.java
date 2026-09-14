@@ -89,7 +89,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
         // Course must be created BEFORE outsider users are saved so that enrollPrefixedUsersInCourse
         // (called inside createEnrolledCoursesWithExercisesAndLectures) does not pick them up.
-        course = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1).getFirst();
+        course = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, 1).getFirst();
 
         // Add users that are not in the course (created AFTER enrollment so they stay unenrolled)
         userUtilService.createAndSaveUser(NOT_STUDENT_OF_COURSE);
@@ -204,7 +204,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     @Test
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testEnableLearningPathsWithNoCompetencies() throws Exception {
-        var courseWithoutCompetencies = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, false, false, 0).getFirst();
+        var courseWithoutCompetencies = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, false, 0).getFirst();
         enableLearningPathsRESTCall(courseWithoutCompetencies);
         final var updatedCourse = courseRepository.findWithEagerLearningPathsByIdElseThrow(courseWithoutCompetencies.getId());
         assertThat(updatedCourse.getLearningPathsEnabled()).as("should enable LearningPaths").isTrue();

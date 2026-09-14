@@ -129,10 +129,6 @@
                                 <div class="btn-group flex-btn-group-container">
                                     <div class="btn-group-vertical me-1 mb-1">
                                         @if (lecture.isAtLeastEditor) {
-                                            <a [routerLink]="[lecture.id, 'attachments']" class="btn btn-primary mb-1 btn-sm" id="attachments">
-                                                <fa-icon [icon]="faFile" />
-                                                <span class="d-none d-md-inline" jhiTranslate="entity.action.attachments"></span>
-                                            </a>
                                             <a [routerLink]="[lecture.id, 'unit-management']" class="btn btn-primary btn-sm" id="units">
                                                 <fa-icon [icon]="faPuzzlePiece" />
                                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.units"></span>
@@ -150,7 +146,7 @@
                                             <button
                                                 class="mt-1"
                                                 jhiDeleteButton
-                                                id="delete-lecture"
+                                                data-testid="delete-lecture"
                                                 [entityTitle]="lecture.title || ''"
                                                 deleteQuestion="artemisApp.lecture.delete.question"
                                                 deleteConfirmationText="artemisApp.lecture.delete.typeNameToConfirm"

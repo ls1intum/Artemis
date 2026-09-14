@@ -6,7 +6,7 @@
                     <button class="btn btn-sm btn-outline-secondary d-inline-block d-sm-none me-2" (click)="openSidebar()">
                         <fa-icon [icon]="faChevronLeft" />
                     </button>
-                    <h4 class="pointer d-inline-block rounded py-2 info mb-0" (click)="openConversationDetailDialog($event, INFO)">
+                    <h4 class="pointer d-inline-block rounded py-2 info mb-0" data-testid="conversation-name" (click)="openConversationDetailDialog($event, INFO)">
                         @if (activeConversationAsChannel(); as activeConversationAsChannel) {
                             <jhi-channel-icon [isPublic]="activeConversationAsChannel.isPublic!" [isAnnouncementChannel]="activeConversationAsChannel.isAnnouncementChannel!" />
                         }
@@ -101,7 +101,7 @@
             @if (activeConversationAsChannel(); as activeConversationAsChannel) {
                 @if (activeConversationAsChannel.topic && activeConversationAsChannel.topic.length > 0) {
                     <div class="text-body-secondary d-flex justify-content-between px-2">
-                        <span id="conversation-topic" class="d-inline-block mw-100">{{ activeConversationAsChannel.topic }}</span>
+                        <span data-testid="conversation-topic" class="d-inline-block mw-100">{{ activeConversationAsChannel.topic }}</span>
                     </div>
                 }
             }

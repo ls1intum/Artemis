@@ -19,6 +19,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -116,7 +117,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
             String mvnExecutable = Os.isFamily(Os.FAMILY_WINDOWS) ? "mvn.cmd" : "mvn";
             var lines = runProcess(new ProcessBuilder(mvnExecutable, "-version"));
             String prefix = "maven home:";
-            Optional<String> home = lines.stream().filter(line -> line.toLowerCase().startsWith(prefix)).findFirst();
+            Optional<String> home = lines.stream().filter(line -> line.toLowerCase(Locale.ROOT).startsWith(prefix)).findFirst();
             home.ifPresent(homeLocation -> System.setProperty("maven.home", homeLocation.substring(prefix.length()).strip()));
         }
         catch (Exception e) {
@@ -596,6 +597,10 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         String uniqueId = UUID.randomUUID().toString().substring(0, 8).replace("-", "");
         String originalShortName = exercise.getShortName();
         exercise.setShortName(originalShortName + uniqueId);
+        // The factory already derived a project key (and the test repository URI) from the original short name. The
+        // server derives the key from course and short name itself and never takes it from the request body, so the
+        // fixture has to re-derive it here or the connector mocks below would be registered for the stale key.
+        exercise.forceNewProjectKey();
         log.debug("Running test with unique exercise short name: {}", exercise.getShortName());
 
         exercise.setProgrammingLanguage(language);

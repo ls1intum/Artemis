@@ -6,7 +6,6 @@ import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
-import { Course } from 'app/course/shared/entities/course.model';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -23,9 +22,7 @@ interface TutorialGroupApiServiceMock {
 describe('TutorialGroupRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupRowButtonsComponent>;
     let component: TutorialGroupRowButtonsComponent;
-    const course = {
-        id: 1,
-    } as Course;
+    const courseId = 1;
     let tutorialGroup: TutorialGroup;
 
     let router: MockRouter;
@@ -57,16 +54,16 @@ describe('TutorialGroupRowButtonsComponent', () => {
     });
     const setInputValues = () => {
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
-        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('courseId', courseId);
         fixture.componentRef.setInput('isAtLeastInstructor', true);
     };
 
     it('should navigate to registrations', async () => {
-        await testButtonLeadsToRouting('registrations-' + tutorialGroup.id, ['/course-management', course.id!, 'tutorial-groups', tutorialGroup.id!, 'registrations']);
+        await testButtonLeadsToRouting('registrations-' + tutorialGroup.id, ['/course-management', courseId, 'tutorial-groups', tutorialGroup.id!, 'registrations']);
     });
 
     it('should navigate to edit', async () => {
-        await testButtonLeadsToRouting('edit-' + tutorialGroup.id, ['/course-management', course.id!, 'tutorial-groups', tutorialGroup.id!, 'edit']);
+        await testButtonLeadsToRouting('edit-' + tutorialGroup.id, ['/course-management', courseId, 'tutorial-groups', tutorialGroup.id!, 'edit']);
     });
 
     afterEach(() => {
@@ -76,7 +73,7 @@ describe('TutorialGroupRowButtonsComponent', () => {
     it('should call delete and emit deleted event', () => {
         const deleteEventSpy = vi.spyOn(component.tutorialGroupDeleted, 'emit');
         component.deleteTutorialGroup();
-        expect(tutorialGroupApiServiceMock.deleteTutorialGroup).toHaveBeenCalledWith(course.id!, tutorialGroup.id);
+        expect(tutorialGroupApiServiceMock.deleteTutorialGroup).toHaveBeenCalledWith(courseId, tutorialGroup.id);
         expect(deleteEventSpy).toHaveBeenCalledOnce();
     });
 

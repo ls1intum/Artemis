@@ -1,7 +1,11 @@
+---
+id: performance
+title: Performance
+sidebar_label: Performance
+---
+
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
-
-# Performance
 
 These guidelines focus on optimizing the performance of Spring Boot applications using Hibernate, with an emphasis on data economy, large-scale testing, paging, JSON data usage, and general SQL database best practices.
 You can find more best practices in the [Database Guidelines](/developer/guidelines/database) section.
@@ -385,7 +389,89 @@ Always perform sorting, filtering, and counting at the database level whenever p
 
 ### Avoid Transactions
 
-Transactions are generally slow and should be avoided unless necessary for consistency.
+A transaction boundary may only be declared inside a repository, and in practice only on a `@Modifying`
+query that needs one. `@Transactional`, `TransactionTemplate` and `PlatformTransactionManager` are not
+allowed in services or controllers.
+
+Two architecture tests enforce this over the whole of production code, with no exception list.
+`ArchitectureTest.testTransactionBoundariesOnlyInRepositories` requires that a `@Transactional` method be
+declared in a repository interface and that no class outside one carries the annotation.
+`ArchitectureTest.testNoProgrammaticTransactionManagement` forbids production code from touching anything
+in `org.springframework.transaction` other than the annotation package, which is what closes the
+`TransactionTemplate` and `PlatformTransactionManager` spelling of the same boundary. Test code is exempt
+from the second rule: a test may legitimately open a transaction to seed data, or to hold a row lock while
+asserting that the code under test waits for it.
+
+The reason is not that transactions are slow in themselves. It is that the cost of one scales with how
+long it stays open and how much it touches, and a boundary declared high up in a service is open for the
+whole call.
+
+**A wide transaction holds its locks for its entire span.** Every row a statement writes stays locked
+until the commit, so the transaction blocks anyone who needs those rows for as long as it runs — not for
+as long as the write took. A service method that spans a dozen repository calls, an HTTP request to
+another system and a file-system write keeps its first row locked across all of it. During an exam that
+is the difference between a slow endpoint and a stalled cohort.
+
+**Wide transactions deadlock.** Two of them that touch the same rows in a different order will
+eventually wait on each other, and the database resolves it by killing one. This failure is
+load-dependent: it does not appear in a test, it appears in the exam. The wider the boundary, the more
+rows it covers, and the more orderings exist to collide.
+
+**They are usually added for a failure that does not happen.** The argument for a broad boundary is
+almost always a rollback scenario — a partial write that must not survive. Ask how the run reaches that
+state, and how often. Most of the time the answer is a case that has never occurred, while the locking
+and deadlock cost is paid on every single request. Where a partial write really is unacceptable, the
+narrow fix is to order the writes so that the incomplete state is harmless, or to make the operation
+idempotent and retry it, rather than to wrap the whole flow.
+
+**A self-invoked `@Transactional` method silently does nothing.** Spring applies the annotation through
+a proxy, so calling the method from another method of the same class bypasses it:
+
+```java
+@Transactional
+public void claimPendingJobs() { ... }   // FOR UPDATE SKIP LOCKED needs the transaction
+
+public void onCallback() {
+    claimPendingJobs();   // proxy bypassed: runs without a transaction, no warning
+}
+```
+
+Nothing fails and nothing is logged. A `SELECT ... FOR UPDATE SKIP LOCKED` written to claim work then
+runs in autocommit, releases its lock immediately, and two nodes take the same job. The same trap
+applies to `@Async` — the method runs inline on the caller's thread — and to `@Cacheable`.
+
+Keeping boundaries inside repositories avoids all of this by construction: a repository method is one
+statement, its transaction is as short as that statement, and it is always reached through the proxy.
+
+#### What to write instead
+
+Almost every boundary that looked necessary in a service turns out to be one of two patterns.
+
+**Making a check and a write atomic: put the check in the `WHERE` clause.** A boundary is often there so
+that nothing can change between reading a row and writing it. A single statement cannot be interleaved, so
+move the condition into the query and let the row count tell you whether you won:
+
+```java
+@Transactional // ok because of modifying query
+@Modifying
+@Query("""
+        UPDATE AnswerPost answerPost
+        SET answerPost.verified = TRUE, answerPost.verifiedBy = :verifier
+        WHERE answerPost.id = :answerPostId AND answerPost.verified = FALSE
+        """)
+int updateVerificationIfUnverified(@Param("answerPostId") long answerPostId, @Param("verifier") User verifier);
+```
+
+Two tutors pressing approve at the same moment both pass a preceding `isVerified()` check; only one of them
+updates a row, and the other is told the answer is already verified. `AnswerPostRepository.verifyIfUnverified`
+and `LectureUnitProcessingStateRepository.claimIdleForDispatch` are the worked examples. This also replaces
+`SELECT ... FOR UPDATE SKIP LOCKED` for claiming queued work.
+
+**Undoing work when a later step fails: compensate explicitly.** Record what an operation created and put
+it back in a `catch` block. `SlideSplitterService.SlideOperation` is the pattern: it collects the files
+written and the rows saved, and restores both if any step throws. This is also what replaces
+`TransactionSynchronizationManager`, which cannot work at all without a boundary — see
+`ArchitectureTest.testNoTransactionSynchronization`.
 
 ## Server Startup Performance
 

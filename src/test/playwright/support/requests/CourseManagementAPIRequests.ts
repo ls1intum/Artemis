@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { generateUUID, titleLowercase } from '../utils';
+import { asModelDate, generateUUID, titleLowercase } from '../utils';
 import lectureTemplate from '../../fixtures/lecture/template.json';
 import { COURSE_ADMIN_BASE, Exercise } from '../constants';
 import { UserCredentials } from '../users';
@@ -63,8 +63,8 @@ export class CourseManagementAPIRequests {
         course.title = courseName;
         course.shortName = courseShortName;
         course.testCourse = true;
-        course.startDate = start;
-        course.endDate = end;
+        course.startDate = asModelDate(start);
+        course.endDate = asModelDate(end);
         course.timeZone = timeZone;
 
         if (allowCommunication && allowMessaging) {
@@ -155,6 +155,57 @@ export class CourseManagementAPIRequests {
             },
         });
         return response;
+    }
+
+    /**
+     * Moves the end date of a course into the past.
+     *
+     * Archiving is refused while a course is still running, so a test that has to participate first and archive
+     * afterwards cannot simply create the course as finished.
+     *
+     * @param courseId the course to move
+     * @param end      the new end date, by default one hour ago
+     */
+    async setCourseEndDate(courseId: number, end: dayjs.Dayjs = dayjs().subtract(1, 'hour')) {
+        const courseResponse = await this.page.request.get(`api/course/courses/${courseId}`);
+        const courseData = await courseResponse.json();
+        courseData.endDate = end.toISOString();
+        const response = await this.page.request.put(`api/course/courses/${courseId}`, {
+            multipart: {
+                course: {
+                    name: 'course',
+                    mimeType: 'application/json',
+                    buffer: Buffer.from(JSON.stringify(courseData)),
+                },
+            },
+        });
+        if (!response.ok()) {
+            throw new Error(`Could not move the end date of course ${courseId}: ${response.status()} ${await response.text()}`);
+        }
+        return response;
+    }
+
+    /**
+     * Waits until the archive of a course can be downloaded.
+     *
+     * Archiving runs asynchronously, and the only externally visible signal that it finished is that the download
+     * endpoint stops answering 404, so that is what is polled.
+     *
+     * @param courseId the archived course
+     * @param timeout  how long to wait in milliseconds
+     */
+    async waitForCourseArchive(courseId: number, timeout = 120000) {
+        const startTime = Date.now();
+        let lastStatus = 0;
+        while (Date.now() - startTime < timeout) {
+            const response = await this.page.request.get(`api/course/courses/${courseId}/download-archive`);
+            if (response.ok()) {
+                return;
+            }
+            lastStatus = response.status();
+            await this.page.waitForTimeout(2000);
+        }
+        throw new Error(`The archive of course ${courseId} was not ready within ${timeout}ms (last status ${lastStatus})`);
     }
 
     /**

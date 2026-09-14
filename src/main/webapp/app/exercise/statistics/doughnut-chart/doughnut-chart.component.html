@@ -21,13 +21,10 @@
                 </h1>
             }
         </div>
-        <p-chart
-            type="doughnut"
-            [data]="chartData()"
-            [options]="chartOptions()"
-            [responsive]="false"
-            width="200px"
-            height="200px"
+        <tum-ui-doughnut-chart
+            [labels]="chartData().labels"
+            [series]="chartData().series"
+            [config]="chartConfig()"
             [ariaLabel]="'exercise-statistics.' + doughnutChartTitle() | artemisTranslate"
         />
     </div>

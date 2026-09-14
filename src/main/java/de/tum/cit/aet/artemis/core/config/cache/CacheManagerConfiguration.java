@@ -23,8 +23,9 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvid
  * Exposes the {@link CacheManager} that {@code @Cacheable} resolves against, and enables Spring's caching support.
  *
  * <p>
- * It routes by cache name so that large blob values stay on the node that produced them while the small, read-heavy
- * caches remain shared across nodes. See {@link BlobCacheConfiguration} for why that split exists.
+ * It routes by cache name: large blob values and the title lookups stay on the node that reads them, and every cache
+ * whose entries have to be identical on all nodes stays shared. See {@link BlobCacheConfiguration} and
+ * {@link BlobCacheConfiguration} for why those are local.
  *
  * <p>
  * Caching is enabled here rather than on the Hazelcast configuration, because that one only exists when Hazelcast is the

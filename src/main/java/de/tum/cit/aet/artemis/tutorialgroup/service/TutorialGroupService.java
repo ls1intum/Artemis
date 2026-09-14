@@ -377,7 +377,7 @@ public class TutorialGroupService {
         // === Step 3: Register all found users to their respective tutorial groups ===
         Map<TutorialGroup, Set<User>> tutorialGroupToRegisteredUsers = new HashMap<>();
         for (var registrationUserPair : uniqueRegistrationsWithMatchingUsers.entrySet()) {
-            String title = Objects.requireNonNull(registrationUserPair.getKey().title());
+            String title = registrationUserPair.getKey().title();
             var tutorialGroup = tutorialGroupTitleToTutorialGroup.get(title.trim());
             var user = registrationUserPair.getValue();
             tutorialGroupToRegisteredUsers.computeIfAbsent(tutorialGroup, key -> new HashSet<>()).add(user);

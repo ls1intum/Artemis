@@ -53,6 +53,8 @@ import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-buil
 import { ExamStudentDTO, ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
 import { FilterDropdownComponent, FilterGroup } from 'app/exercise/shared/filter-dropdown/filter-dropdown.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
 interface MenuCommandEvent {
@@ -85,6 +87,8 @@ interface MenuCommandEvent {
         TableViewComponent,
         ConfirmDialog,
         FilterDropdownComponent,
+        CourseTitleBarActionsDirective,
+        CourseTitleBarTitleDirective,
     ],
     providers: [DialogService, ConfirmationService],
 })
@@ -111,7 +115,7 @@ export class ExamStudentsComponent implements OnDestroy {
     readonly studentsExportDialog = viewChild.required(StudentsExportDialogComponent);
     readonly studentsRoomDistributionDialog = viewChild.required(StudentsRoomDistributionDialogComponent);
     readonly addStudentsModal = viewChild.required(UserRegistrationModalComponent);
-    readonly individualExamsStatusPopover = viewChild.required<Popover>('individualExamsStatusPopover');
+    readonly individualExamsStatusPopover = viewChild<Popover>('individualExamsStatusPopover');
     readonly individualExamsStatusButton = viewChild<ElementRef<HTMLButtonElement>>('individualExamsStatusButton');
     readonly tableViewRef = viewChild(TableViewComponent);
 
@@ -526,23 +530,6 @@ export class ExamStudentsComponent implements OnDestroy {
         void this.router.navigate(['/course-management', this.courseId(), 'exams', exam.id, 'students', 'verify-attendance']);
     }
 
-    private openIndividualExamsStatusPopover(event?: Event, defer = false) {
-        const showPopover = () => {
-            const popover = this.individualExamsStatusPopover();
-            const target = this.individualExamsStatusButton()?.nativeElement;
-            if (!popover || !target || popover.overlayVisible) {
-                return;
-            }
-            popover.show(event ?? new MouseEvent('click'), target);
-        };
-
-        if (defer) {
-            setTimeout(showPopover, 0);
-            return;
-        }
-        showPopover();
-    }
-
     reloadStudentsView() {
         const exam = this.exam();
         if (!exam.id) {
@@ -606,11 +593,28 @@ export class ExamStudentsComponent implements OnDestroy {
         }
     }
 
+    private openIndividualExamsStatusPopover(event?: Event, defer = false) {
+        const showPopover = () => {
+            const popover = this.individualExamsStatusPopover();
+            const target = this.individualExamsStatusButton()?.nativeElement;
+            if (!popover || !target || popover.overlayVisible) {
+                return;
+            }
+            popover.show(event ?? new MouseEvent('click'), target);
+        };
+
+        if (defer) {
+            setTimeout(showPopover, 0);
+            return;
+        }
+        showPopover();
+    }
+
     /**
      * Generate all student exams for the exam on the server and handle the result.
      * Asks for confirmation if some exams already exist.
      */
-    handleGenerateStudentExams(event: Event | undefined) {
+    handleGenerateStudentExams(event?: Event) {
         if (this.studentExamCount() > 0) {
             this.confirmationService.confirm({
                 header: this.artemisTranslatePipe.transform('artemisApp.studentExams.generateStudentExams'),

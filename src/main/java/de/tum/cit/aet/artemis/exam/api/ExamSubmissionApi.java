@@ -10,7 +10,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.service.ExamSubmissionService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 
 @Conditional(ExamEnabled.class)
 @Controller
@@ -28,7 +28,7 @@ public class ExamSubmissionApi extends AbstractExamApi {
     }
 
     @Nullable
-    public StudentParticipation preventMultipleSubmissions(Exercise exercise, Submission submission, User user) {
+    public StudentParticipationSubmitTargetDTO preventMultipleSubmissions(Exercise exercise, Submission submission, User user) {
         return examSubmissionService.preventMultipleSubmissions(exercise, submission, user);
     }
 

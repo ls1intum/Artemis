@@ -32,7 +32,7 @@
             "resetOldCourses": "Löscht alle Studierendendaten alter Kurse, die die Übergangsfrist überschritten haben (und bereits archiviert wurden), wobei die Kursmaterialien erhalten bleiben. Diese Aktion kann nicht rückgängig gemacht werden.",
             "deleteOldCourseSubmissionVersions": "Löscht die Teilnahmeversionen (Editor-Verlauf) von Kursen, die vor dem konfigurierten Stichtag endeten.",
             "warnNotEnrolledUsers": "Sendet Nutzern, die in keinem Kurs eingeschrieben und über die konfigurierte Frist hinaus inaktiv sind, eine E-Mail mit der Warnung, dass ihr Konto nach der Übergangsfrist gelöscht wird. Eine Anmeldung bricht die Löschung ab. Administratoren sind nicht betroffen.",
-            "deleteNotEnrolledUsers": "Löscht (soft-delete) und anonymisiert gewarnte Nutzer, die weiterhin in keinem Kurs eingeschrieben sind, deren Übergangsfrist abgelaufen ist und die sich seit der Warnung nicht angemeldet haben. Administratoren sind nicht betroffen.",
+            "deleteNotEnrolledUsers": "Löscht gewarnte Nutzer dauerhaft, die weiterhin in keinem Kurs eingeschrieben sind, deren Übergangsfrist abgelaufen ist, die sich seit der Warnung nicht angemeldet haben und die keine verbleibenden Fachdatenreferenzen besitzen. Blockierte Nutzer bleiben unverändert. Administratoren sind nicht betroffen.",
             "deletePlagiarismCases": "Löscht die Plagiatsfälle (samt zugehöriger Benachrichtigungsbeiträge) von Kursen, die vor dem notenrelevanten Aufbewahrungsstichtag endeten (standardmäßig 5 Jahre). Plagiatsfälle sind notenrelevante Unterlagen und unterliegen derselben Aufbewahrungsfrist wie andere Prüfungsdaten. Diese Aktion kann nicht rückgängig gemacht werden."
         },
         "execute": {
@@ -70,7 +70,8 @@
             "submissionVersions": "Teilnahmeversionen",
             "courses": "Kurse",
             "users": "Nutzer",
-            "plagiarismCases": "Plagiatsfälle"
+            "plagiarismCases": "Plagiatsfälle",
+            "blockedUsers": "Durch verbleibende Referenzen blockierte Nutzer"
         },
         "button": {
             "execute": "Ausführen",

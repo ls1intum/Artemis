@@ -7,7 +7,7 @@
             <p>
                 <span>
                     {{ 'artemisApp.examManagement.checklist.introduction' | artemisTranslate }}
-                    <a href="https://docs.artemis.tum.de/instructor/exams/exam-timeline" jhiTranslate="artemisApp.examManagement.checklist.linkDescription"></a>
+                    <a href="https://docs.artemis.tum.de/instructor/exams/intro" jhiTranslate="artemisApp.examManagement.checklist.linkDescription"></a>
                     {{ 'artemisApp.examManagement.checklist.introductionPart2' | artemisTranslate }}
                 </span>
             </p>
@@ -593,7 +593,7 @@
                                 </ul>
                             </td>
                             <td>
-                                <a id="editButton_publish" [routerLink]="getExamRoutesByIdentifier()('edit')" class="btn btn-warning">
+                                <a data-testid="editButton_publish" [routerLink]="getExamRoutesByIdentifier()('edit')" class="btn btn-warning">
                                     <fa-icon [icon]="faWrench" />&nbsp;<span jhiTranslate="entity.action.edit"></span>
                                 </a>
                             </td>
@@ -631,7 +631,7 @@
                                 </ul>
                             </td>
                             <td>
-                                <a id="editButton_review" [routerLink]="getExamRoutesByIdentifier()('edit')" class="btn btn-warning">
+                                <a data-testid="editButton_review" [routerLink]="getExamRoutesByIdentifier()('edit')" class="btn btn-warning">
                                     <fa-icon [icon]="faWrench" />&nbsp;<span jhiTranslate="entity.action.edit"></span>
                                 </a>
                             </td>

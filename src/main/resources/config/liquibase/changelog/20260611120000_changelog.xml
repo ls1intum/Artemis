@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Create course_athena_config table. Course owns the FK (athena_config_id) so that
+         Hibernate does not issue a secondary SELECT per row for the non-owning side. -->
+    <changeSet id="20260611120000-1" author="artemis">
+        <createTable tableName="course_athena_config">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="grading_feedback_enabled" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="formative_feedback_enabled" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- Add FK from course to course_athena_config (owning side) -->
+    <changeSet id="20260611120000-2" author="artemis">
+        <addColumn tableName="course">
+            <column name="athena_config_id" type="bigint">
+                <constraints nullable="true" unique="true" uniqueConstraintName="uc_course_athena_config_id"/>
+            </column>
+        </addColumn>
+        <addForeignKeyConstraint
+            baseTableName="course" baseColumnNames="athena_config_id"
+            referencedTableName="course_athena_config" referencedColumnNames="id"
+            constraintName="fk_course_athena_config_id"/>
+    </changeSet>
+
+    <!-- Remove restricted_athena_modules_access from course -->
+    <changeSet id="20260611120000-3" author="artemis">
+        <dropColumn tableName="course" columnName="restricted_athena_modules_access"/>
+    </changeSet>
+
+    <!-- Remove feedback_suggestion_module from exercise -->
+    <changeSet id="20260611120000-4" author="artemis">
+        <dropColumn tableName="exercise" columnName="feedback_suggestion_module"/>
+    </changeSet>
+
+    <!-- Remove allow_feedback_requests from exercise -->
+    <changeSet id="20260611120000-5" author="artemis">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="exercise" columnName="allow_feedback_requests"/>
+        </preConditions>
+        <dropColumn tableName="exercise" columnName="allow_feedback_requests"/>
+    </changeSet>
+
+    <!-- Remove allow_manual_feedback_requests from exercise -->
+    <changeSet id="20260611120000-6" author="artemis">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="exercise" columnName="allow_manual_feedback_requests"/>
+        </preConditions>
+        <dropColumn tableName="exercise" columnName="allow_manual_feedback_requests"/>
+    </changeSet>
+
+    <changeSet id="20260611120000-7-add-student-exam-athena-feedback-requested-date" author="musaberkay">
+        <!-- Marks the moment a test-exam attempt reserved its slot against the cross-attempt Athena feedback request cap.
+             The reservation (not the eventual success of the generated feedback) is what counts toward the cap, and is set
+             atomically together with the cap check in a single UPDATE, so concurrent requests for the same or different
+             attempts of the same user/exam can no longer both observe a cap that has not yet been reached.
+
+             This changeSet previously lived in 20260812120000_changelog.xml under id
+             "20260812120000-1-add-student-exam-athena-feedback-requested-date". A database that already ran that
+             file+id combination has the column but no record of this new identity, so Liquibase would otherwise
+             retry the addColumn and fail on the duplicate column. -->
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="student_exam" columnName="athena_feedback_requested_date"/></not>
+        </preConditions>
+        <addColumn tableName="student_exam">
+            <column name="athena_feedback_requested_date" type="datetime(3)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Backfill athena_feedback_requested_date for attempts that reserved their cap slot before this column existed:
+         a successful AUTOMATIC_ATHENA result on one of the attempt's submissions is what the old cap/usage logic
+         counted, so its completion date is the closest equivalent to a reservation timestamp. Without this, every
+         such attempt reads as unused after deployment and the student gets a fresh cap allowance. Runs as its own
+         changeSet (not folded into -7) so it always executes, including on databases where the column-add change set
+         is MARK_RAN because the column already exists under its former identity. Guarded by "IS NULL" so it stays
+         idempotent if ever re-run. -->
+    <changeSet id="20260611120000-8-backfill-student-exam-athena-feedback-requested-date" author="musaberkay">
+        <sql dbms="postgresql">
+            UPDATE student_exam
+            SET athena_feedback_requested_date = reserved.requested_date
+            FROM (SELECT sep.student_exam_id AS student_exam_id, MIN(r.completion_date) AS requested_date
+                  FROM student_exam_participation sep
+                      JOIN submission s ON s.participation_id = sep.participation_id
+                      JOIN result r ON r.submission_id = s.id
+                      JOIN student_exam se ON se.id = sep.student_exam_id
+                      JOIN exam e ON e.id = se.exam_id
+                  WHERE r.assessment_type = 'AUTOMATIC_ATHENA'
+                    AND r.jhi_successful = TRUE
+                    AND se.test_run = FALSE
+                    AND e.test_exam = TRUE
+                  GROUP BY sep.student_exam_id) AS reserved
+            WHERE student_exam.id = reserved.student_exam_id
+                AND student_exam.athena_feedback_requested_date IS NULL
+        </sql>
+        <sql dbms="mysql">
+            UPDATE student_exam
+                JOIN (SELECT sep.student_exam_id AS student_exam_id, MIN(r.completion_date) AS requested_date
+                      FROM student_exam_participation sep
+                          JOIN submission s ON s.participation_id = sep.participation_id
+                          JOIN result r ON r.submission_id = s.id
+                          JOIN student_exam se ON se.id = sep.student_exam_id
+                          JOIN exam e ON e.id = se.exam_id
+                      WHERE r.assessment_type = 'AUTOMATIC_ATHENA'
+                        AND r.jhi_successful = TRUE
+                        AND se.test_run = FALSE
+                        AND e.test_exam = TRUE
+                      GROUP BY sep.student_exam_id) AS reserved ON student_exam.id = reserved.student_exam_id
+            SET student_exam.athena_feedback_requested_date = reserved.requested_date
+            WHERE student_exam.athena_feedback_requested_date IS NULL
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

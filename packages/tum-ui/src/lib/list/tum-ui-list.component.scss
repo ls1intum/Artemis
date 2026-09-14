@@ -1,0 +1,11 @@
+:host {
+    display: block;
+}
+
+.tum-ui-list-items {
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: var(--tumaet-ui-radius-md);
+
+    // Clip the first and last rows so their backgrounds follow the container's corners.
+    overflow: hidden;
+}

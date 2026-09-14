@@ -27,7 +27,7 @@
             role="combobox"
             [value]="inputText()"
             [disabled]="disabled()"
-            [placeholder]="'tumUi.datePicker.placeholder' | tumUiTranslate"
+            [placeholder]="placeholderKey() | tumUiTranslate"
             aria-haspopup="dialog"
             [attr.aria-expanded]="isOpen()"
             [attr.aria-controls]="isOpen() ? panelId() : null"
@@ -56,18 +56,18 @@
             class="tum:absolute tum:end-2 tum:flex tum:h-6 tum:w-6 tum:appearance-none tum:items-center tum:justify-center tum:border-0 tum:bg-transparent tum:p-0 tum:text-muted tum:hover:text-accent"
             [disabled]="disabled()"
             (click)="toggle()"
-            [attr.aria-label]="'tumUi.datePicker.open' | tumUiTranslate"
+            [attr.aria-label]="openLabelKey() | tumUiTranslate"
             aria-haspopup="dialog"
             [attr.aria-expanded]="isOpen() ? 'true' : 'false'"
             [attr.aria-controls]="isOpen() ? panelId() : null"
         >
-            <fa-icon [icon]="faCalendar" />
+            <fa-icon [icon]="timeOnly() ? faClock : faCalendar" />
         </button>
     </div>
 
     @if (!hideValidationMessage() && showErrorBorder()) {
         <span [id]="inputId() + '-error'" role="alert" class="tum:text-sm tum:text-state-danger">
-            {{ 'tumUi.datePicker.invalid' | tumUiTranslate }}
+            {{ invalidMessageKey() | tumUiTranslate }}
         </span>
     }
 </div>
@@ -78,15 +78,22 @@
         class="tum:rounded-md tum:border tum:border-border tum:bg-overlay-background tum:p-3 tum:shadow-lg"
         role="dialog"
         aria-modal="true"
-        [attr.aria-label]="'tumUi.datePicker.dialog' | tumUiTranslate"
+        [attr.aria-label]="dialogLabelKey() | tumUiTranslate"
         cdkTrapFocus
     >
-        <tum-ui-calendar [selected]="value()" [activeMonth]="activeMonth()" [focusOnInit]="true" (daySelected)="onDaySelect($event)" (monthChange)="activeMonth.set($event)" />
-        <div class="tum:mt-3 tum:flex tum:items-center tum:justify-center tum:gap-2" role="group" [attr.aria-label]="'tumUi.datePicker.time' | tumUiTranslate">
+        @if (!timeOnly()) {
+            <tum-ui-calendar [selected]="value()" [activeMonth]="activeMonth()" [focusOnInit]="true" (daySelected)="onDaySelect($event)" (monthChange)="activeMonth.set($event)" />
+        }
+        <div
+            class="tum:flex tum:items-center tum:justify-center tum:gap-2"
+            [class]="timeOnly() ? '' : 'tum:mt-3'"
+            role="group"
+            [attr.aria-label]="'tumUi.datePicker.time' | tumUiTranslate"
+        >
             <div class="tum:flex tum:flex-col tum:items-center">
                 <button
                     type="button"
-                    class="tum:appearance-none tum:border-0 tum:bg-transparent tum:p-1 tum:text-muted tum:hover:text-accent"
+                    class="tum:flex tum:h-6 tum:w-6 tum:appearance-none tum:items-center tum:justify-center tum:border-0 tum:bg-transparent tum:p-1 tum:text-muted tum:hover:text-accent"
                     [disabled]="disabled()"
                     (click)="stepHour(1)"
                     [attr.aria-label]="'tumUi.datePicker.incrementHour' | tumUiTranslate"
@@ -107,7 +114,7 @@
                 />
                 <button
                     type="button"
-                    class="tum:appearance-none tum:border-0 tum:bg-transparent tum:p-1 tum:text-muted tum:hover:text-accent"
+                    class="tum:flex tum:h-6 tum:w-6 tum:appearance-none tum:items-center tum:justify-center tum:border-0 tum:bg-transparent tum:p-1 tum:text-muted tum:hover:text-accent"
                     [disabled]="disabled()"
                     (click)="stepHour(-1)"
                     [attr.aria-label]="'tumUi.datePicker.decrementHour' | tumUiTranslate"
@@ -119,7 +126,7 @@
             <div class="tum:flex tum:flex-col tum:items-center">
                 <button
                     type="button"
-                    class="tum:appearance-none tum:border-0 tum:bg-transparent tum:p-1 tum:text-muted tum:hover:text-accent"
+                    class="tum:flex tum:h-6 tum:w-6 tum:appearance-none tum:items-center tum:justify-center tum:border-0 tum:bg-transparent tum:p-1 tum:text-muted tum:hover:text-accent"
                     [disabled]="disabled()"
                     (click)="stepMinute(1)"
                     [attr.aria-label]="'tumUi.datePicker.incrementMinute' | tumUiTranslate"
@@ -140,7 +147,7 @@
                 />
                 <button
                     type="button"
-                    class="tum:appearance-none tum:border-0 tum:bg-transparent tum:p-1 tum:text-muted tum:hover:text-accent"
+                    class="tum:flex tum:h-6 tum:w-6 tum:appearance-none tum:items-center tum:justify-center tum:border-0 tum:bg-transparent tum:p-1 tum:text-muted tum:hover:text-accent"
                     [disabled]="disabled()"
                     (click)="stepMinute(-1)"
                     [attr.aria-label]="'tumUi.datePicker.decrementMinute' | tumUiTranslate"
