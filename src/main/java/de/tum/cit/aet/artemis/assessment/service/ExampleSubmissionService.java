@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.ExampleSubmissionRequestDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
@@ -63,6 +64,69 @@ public class ExampleSubmissionService {
         this.textSubmissionImportApi = textSubmissionImportApi;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.tutorParticipationRepository = tutorParticipationRepository;
+    }
+
+    /**
+     * Creates an example submission for the given exercise from the request body. The submission entity is built from the
+     * exercise type (text or modeling); the request never carries an entity.
+     *
+     * @param exercise the managed exercise the example submission belongs to
+     * @param request  the request body
+     * @return the saved example submission
+     */
+    public ExampleSubmission create(Exercise exercise, ExampleSubmissionRequestDTO request) {
+        ExampleSubmission exampleSubmission = new ExampleSubmission();
+        exampleSubmission.setExercise(exercise);
+        exampleSubmission.setSubmission(newSubmissionFor(exercise, request.submission()));
+        applyMetadata(exampleSubmission, request);
+        return save(exampleSubmission);
+    }
+
+    /**
+     * Applies the request body to an existing example submission: metadata and the submitted content. The example
+     * assessment is not touched; it is managed through the exercise type's example assessment endpoint.
+     *
+     * @param exampleSubmission the example submission loaded with its submission and results
+     * @param request           the request body
+     * @return the saved example submission
+     */
+    public ExampleSubmission update(ExampleSubmission exampleSubmission, ExampleSubmissionRequestDTO request) {
+        applyContent(exampleSubmission.getSubmission(), request.submission());
+        applyMetadata(exampleSubmission, request);
+        return save(exampleSubmission);
+    }
+
+    private static void applyMetadata(ExampleSubmission exampleSubmission, ExampleSubmissionRequestDTO request) {
+        // null means "keep the default"; on create there is nothing to keep, so it means "not used for tutorial".
+        if (request.usedForTutorial() != null) {
+            exampleSubmission.setUsedForTutorial(request.usedForTutorial());
+        }
+        else if (exampleSubmission.getId() == null) {
+            exampleSubmission.setUsedForTutorial(Boolean.FALSE);
+        }
+        exampleSubmission.setAssessmentExplanation(request.assessmentExplanation());
+    }
+
+    private static Submission newSubmissionFor(Exercise exercise, ExampleSubmissionRequestDTO.SubmissionRequestDTO content) {
+        Submission submission = switch (exercise) {
+            case TextExercise ignored -> new TextSubmission();
+            case ModelingExercise ignored -> new ModelingSubmission();
+            default -> throw new BadRequestAlertException("Example submissions are not supported for this exercise type", ENTITY_NAME, "exerciseTypeNotSupported");
+        };
+        applyContent(submission, content);
+        return submission;
+    }
+
+    private static void applyContent(Submission submission, ExampleSubmissionRequestDTO.SubmissionRequestDTO content) {
+        switch (submission) {
+            case TextSubmission textSubmission -> textSubmission.setText(content.text());
+            case ModelingSubmission modelingSubmission -> {
+                modelingSubmission.setModel(content.model());
+                modelingSubmission.setExplanationText(content.explanationText());
+            }
+            default -> {
+            }
+        }
     }
 
     /**
