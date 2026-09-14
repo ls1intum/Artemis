@@ -470,7 +470,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
             assertThat(localAuxiliaryRepo.workingCopyCommits().getFirst()).isNotEqualTo(localAuxiliaryRepo.bareRepositoryCommits().getFirst());
 
             // Execute the Rest call
-            request.get(testRepoBaseUrl + auxiliaryRepository.getId() + "/pull", HttpStatus.OK, Void.class);
+            request.postWithoutLocation(testRepoBaseUrl + auxiliaryRepository.getId() + "/pull", null, HttpStatus.OK, null);
 
             // Check if the current commit is the same on the local and the remote repository and if the file exists on the local repository
             assertThat(localAuxiliaryRepo.workingCopyCommits().getFirst()).isEqualTo(localAuxiliaryRepo.bareRepositoryCommits().getFirst());
