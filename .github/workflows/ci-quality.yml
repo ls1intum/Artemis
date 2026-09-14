@@ -80,9 +80,7 @@ jobs:
         if: ${{ !cancelled() }}
         with:
           name: Java Architecture Tests
-          path: |
-            build/test-results/test/*.xml
-            modules/*/build/test-results/test/*.xml
+          path: build/test-results/test/*.xml,modules/*/build/test-results/test/*.xml
           reporter: java-junit
 
   client-style:
