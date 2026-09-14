@@ -104,9 +104,9 @@ public class StudentExamAthenaFeedbackService {
         if (athenaFeedbackApi.isEmpty() || (textFeedbackApi.isEmpty() && modelingFeedbackApi.isEmpty())) {
             throw new BadRequestAlertException("Athena feedback is not available", "StudentExam", "athenaNotAvailable");
         }
-        // Unlike a test exam attempt, a test run shares its participations with the user's other runs of the same
-        // exercise, so an unsubmitted run can still replace the submission this request would generate feedback for.
-        // Requiring the other runs to be submitted first keeps the feedback tied to the attempt it was requested for.
+        // By design, a test run shares its participation with the user's other runs of the same exercise, so there is
+        // one answer per exercise rather than one per attempt. Requiring the other runs to be submitted first only
+        // avoids generating feedback for an answer another open run is still editing.
         if (studentExam.isTestRun() && studentExamRepository.countOtherUnsubmittedTestRuns(studentExam.getExam().getId(), currentUser.getId(), studentExam.getId()) > 0) {
             throw new BadRequestAlertException("Submit your other test runs of this exam before requesting AI feedback", "StudentExam", "otherTestRunNotSubmitted", true);
         }
@@ -131,7 +131,7 @@ public class StudentExamAthenaFeedbackService {
         // generating new feedback.
         List<StudentParticipation> eligibleParticipations = participations.stream()
                 .filter(participation -> participation.getExercise() != null && eligibleExerciseIds.contains(participation.getExercise().getId()))
-                .filter(participation -> isEligibleForAthenaFeedback(participation, studentExam)).toList();
+                .filter(this::isEligibleForAthenaFeedback).toList();
         if (eligibleParticipations.isEmpty()) {
             throw new BadRequestAlertException("No exam exercises with course-level Athena formative feedback enabled", "StudentExam", "noCourseLevelAthenaFormativeEnabled", true);
         }
@@ -192,7 +192,7 @@ public class StudentExamAthenaFeedbackService {
      * existing Athena result, i.e. one that the corresponding feedback generator will actually process instead of
      * skipping.
      */
-    private boolean isEligibleForAthenaFeedback(StudentParticipation participation, StudentExam studentExam) {
+    private boolean isEligibleForAthenaFeedback(StudentParticipation participation) {
         Optional<Submission> latestSubmission = participation.findLatestSubmission();
         if (latestSubmission.isEmpty()) {
             return false;
@@ -201,12 +201,6 @@ public class StudentExamAthenaFeedbackService {
         boolean nonEmptySupportedSubmission = (submission instanceof TextSubmission textSubmission && !textSubmission.isEmpty())
                 || (submission instanceof ModelingSubmission modelingSubmission && !modelingSubmission.isEmpty());
         if (!nonEmptySupportedSubmission) {
-            return false;
-        }
-        // Only test runs share a participation between attempts. Applying this to a test exam would reject its own
-        // final answer, since hand-in stamps the student exam before writing last-second changes.
-        if (studentExam.isTestRun() && submission.getSubmissionDate() != null && studentExam.getSubmissionDate() != null
-                && submission.getSubmissionDate().isAfter(studentExam.getSubmissionDate())) {
             return false;
         }
         return athenaFeedbackApi.map(api -> !api.submissionHasAthenaResult(submission)).orElse(true);

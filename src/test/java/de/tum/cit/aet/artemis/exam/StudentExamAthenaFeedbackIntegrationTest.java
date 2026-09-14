@@ -594,20 +594,25 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void requestAthenaFeedback_shouldRejectWhenParticipationWasEditedByALaterTestRun() {
+        void requestAthenaFeedback_shouldDispatchTheCurrentAnswerWhenItWasSavedAfterHandIn() {
             Exam realExam = createRunningRealExam();
             TextExercise textExercise = addTextExerciseToExam(realExam);
             attachAthenaEnabledCourseTo(textExercise);
 
+            athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
+
             StudentExam testRun = createSubmittedTestRun(realExam, textExercise, "Meaningful text answer from the instructor.");
             StudentParticipation testRunParticipation = testRun.getStudentParticipations().iterator().next();
 
-            // A later, still-unsubmitted test run over the same exercise reuses this participation (test runs are
-            // looked up by student and exercise, not by attempt) and edits it after this one was submitted.
-            addTextSubmission(testRunParticipation, "Edited by a later, still-unsubmitted test run.");
+            // Hand-in stamps the student exam before saveSubmissions writes changed content, so the run's own final
+            // answer is dated after the attempt. Test runs share one answer per exercise by design, so the current
+            // content of that shared submission is what the request is for.
+            addTextSubmission(testRunParticipation, "A last second edit made while handing in.");
 
-            StudentExam finalTestRun = testRun;
-            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedback(finalTestRun, instructor));
+            studentExamAthenaFeedbackService.requestAthenaFeedback(testRun, instructor);
+
+            await().atMost(Duration.ofSeconds(5)).untilAsserted(athenaRequestMockProvider::verify);
+            verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(testRunParticipation), any(Result.class));
         }
     }
 
