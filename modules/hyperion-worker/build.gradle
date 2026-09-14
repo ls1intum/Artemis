@@ -1,0 +1,46 @@
+apply from: rootProject.file('gradle/hyperion-module.gradle')
+apply plugin: 'org.springframework.boot'
+apply plugin: 'org.cyclonedx.bom'
+
+dependencies {
+    implementation project(':hyperion-runtime')
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-artemis'
+    implementation "com.github.docker-java:docker-java-core:${docker_java_version}"
+    implementation "com.github.docker-java:docker-java-transport-zerodep:${docker_java_version}"
+    implementation 'org.apache.commons:commons-compress:1.28.0'
+    implementation 'commons-io:commons-io:2.21.0'
+    implementation 'tools.jackson.core:jackson-databind'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.apache.artemis:artemis-server'
+    testImplementation 'org.apache.artemis:artemis-jakarta-server'
+}
+
+springBoot {
+    mainClass = 'de.tum.cit.aet.artemis.hyperionworker.HyperionWorkerApplication'
+}
+
+jar {
+    enabled = false
+}
+
+bootJar {
+    archiveFileName = 'hyperion-worker.jar'
+}
+
+processTestResources {
+    from(rootProject.file('docker/hyperion/broker.xml')) {
+        rename 'broker.xml', 'hyperion-broker.xml'
+    }
+}
+
+cyclonedxDirectBom {
+    includeConfigs = ['runtimeClasspath']
+    includeLicenseText = false
+    xmlOutput.unsetConvention()
+}
+
+test {
+    // The embedded broker's journal releases JDK-allocated direct buffers, which Netty's Java 25 cleaner cannot release.
+    systemProperty 'io.netty.noUnsafe', 'false'
+}

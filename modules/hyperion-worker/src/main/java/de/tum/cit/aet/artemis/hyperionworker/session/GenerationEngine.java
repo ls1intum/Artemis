@@ -1,0 +1,23 @@
+package de.tum.cit.aet.artemis.hyperionworker.session;
+
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
+
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationAssignment;
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationOutput;
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentActivitySink;
+
+/** Local generation policy. No persistence or transport operations are exposed to model tools. */
+public interface GenerationEngine {
+
+    /**
+     * Runs one assignment; cancellation stops authoring, while the returned verified checkpoint may survive compute-budget exhaustion.
+     *
+     * @param assignment immutable core-authorized input
+     * @param cancelled  explicit cancellation, shutdown or loss of coordinator contact
+     * @param progress   bounded instructor activity
+     * @param checkpoint a frozen inspectable candidate; publishing does not request persistence
+     * @return the selected candidate, verification and accounting
+     */
+    GenerationOutput generate(GenerationAssignment assignment, BooleanSupplier cancelled, AgentActivitySink progress, Consumer<GenerationOutput> checkpoint);
+}

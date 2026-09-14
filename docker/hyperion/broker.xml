@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration xmlns="urn:activemq" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="urn:activemq /schema/artemis-configuration.xsd">
+    <core xmlns="urn:activemq:core">
+        <name>hyperion-generation</name>
+        <persistence-enabled>true</persistence-enabled>
+        <journal-type>NIO</journal-type>
+        <security-enabled>true</security-enabled>
+        <acceptors>
+            <acceptor name="worker-tls">tcp://0.0.0.0:61617?protocols=CORE;sslEnabled=true;keyStorePath=${hyperion.keyStorePath};keyStorePassword=${hyperion.keyStorePassword}</acceptor>
+        </acceptors>
+        <security-settings>
+            <security-setting match="#"/>
+            <security-setting match="hyperion.worker.worker-1.commands">
+                <permission type="send" roles="hyperion-core"/>
+                <permission type="consume" roles="hyperion-worker-1"/>
+            </security-setting>
+            <security-setting match="hyperion.worker.worker-1.events">
+                <permission type="send" roles="hyperion-worker-1"/>
+                <permission type="consume" roles="hyperion-core"/>
+            </security-setting>
+            <security-setting match="hyperion.dead-letter">
+                <permission type="consume" roles="hyperion-core"/>
+            </security-setting>
+        </security-settings>
+        <address-settings>
+            <address-setting match="#">
+                <dead-letter-address>hyperion.dead-letter</dead-letter-address>
+                <expiry-address>hyperion.dead-letter</expiry-address>
+                <redelivery-delay>1000</redelivery-delay>
+                <max-delivery-attempts>5</max-delivery-attempts>
+                <max-size-bytes>268435456</max-size-bytes>
+                <address-full-policy>FAIL</address-full-policy>
+                <auto-create-queues>false</auto-create-queues>
+                <auto-create-addresses>false</auto-create-addresses>
+                <auto-delete-queues>false</auto-delete-queues>
+                <auto-delete-addresses>false</auto-delete-addresses>
+            </address-setting>
+        </address-settings>
+        <addresses>
+            <address name="hyperion.worker.worker-1.commands">
+                <anycast><queue name="hyperion.worker.worker-1.commands"/></anycast>
+            </address>
+            <address name="hyperion.worker.worker-1.events">
+                <anycast><queue name="hyperion.worker.worker-1.events"/></anycast>
+            </address>
+            <address name="hyperion.dead-letter">
+                <anycast><queue name="hyperion.dead-letter"/></anycast>
+            </address>
+        </addresses>
+    </core>
+</configuration>
