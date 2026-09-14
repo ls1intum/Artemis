@@ -126,7 +126,7 @@ class DistributedDataSurfaceTest {
      */
     // These Hyperion types use new map/topic names, so their addition does not change any previously stored representation or require an epoch bump.
     private static final List<String> ROOTS_BY_NAME = List.of("de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService$RunInfo",
-            "de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService$CancelRequest",
+            "de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationCancelHooks$CancelRequest",
             "de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobReplayStore$JobUsage",
             "de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.HyperionGenerationBudgetService$TokenBudgetReservation",
             "de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationWorkerRegistryService$Presence");

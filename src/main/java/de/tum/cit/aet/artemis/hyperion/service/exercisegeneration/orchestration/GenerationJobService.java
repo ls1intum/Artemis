@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Consumer;
@@ -37,7 +35,6 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
-import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopic;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
@@ -64,8 +61,6 @@ public class GenerationJobService {
     static final String JOB_MAP_NAME = "hyperion-exercise-generation-jobs";
 
     private static final String CANCEL_MAP_NAME = "hyperion-exercise-generation-cancellations";
-
-    private static final String CANCEL_TOPIC_NAME = "hyperion-exercise-generation-cancel-requests";
 
     private static final String ENTITY_NAME = "hyperionExerciseGeneration";
 
@@ -97,7 +92,7 @@ public class GenerationJobService {
     @Nullable
     private final Duration longestConfiguredJobDuration;
 
-    private final Executor cancellationExecutor;
+    private final GenerationCancelHooks cancelHooks;
 
     private final int expectedDataMemberCount;
 
@@ -114,8 +109,6 @@ public class GenerationJobService {
     private GenerationJobReplayStore replayStore;
 
     private GenerationJobReaper reaper;
-
-    private final ConcurrentMap<String, Runnable> cancelHooks = new ConcurrentHashMap<>();
 
     @Autowired
     public GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
@@ -152,7 +145,7 @@ public class GenerationJobService {
         this.generationBudgetService = generationBudgetService;
         this.staleJobTimeout = staleJobTimeout;
         this.maxJobDuration = maxJobDuration;
-        this.cancellationExecutor = cancellationExecutor;
+        this.cancelHooks = new GenerationCancelHooks(distributedDataProvider, cancellationExecutor);
         this.expectedDataMemberCount = expectedDataMemberCount;
         this.terminalReplayTtl = terminalReplayTtl;
         this.exactProviderUsage = exactProviderUsage;
@@ -263,8 +256,7 @@ public class GenerationJobService {
         jobMap = distributedDataProvider.getMap(JOB_MAP_NAME);
         cancellationMap = distributedDataProvider.getExpiringMap(CANCEL_MAP_NAME, maxJobDuration);
         replayStore = new GenerationJobReplayStore(distributedDataProvider, terminalReplayTtl);
-        DistributedTopic<CancelRequest> cancelTopic = distributedDataProvider.getTopic(CANCEL_TOPIC_NAME);
-        cancelTopic.addMessageListener(message -> runLocalCancelHook(message.jobId()));
+        cancelHooks.subscribe();
         localNodeId = distributedDataProvider.getLocalNodeId();
         reaper = new GenerationJobReaper(this, distributedDataProvider, jobMap, cancellationMap, replayStore, generationBudgetService, staleJobTimeout, maxJobDuration);
     }
@@ -398,6 +390,7 @@ public class GenerationJobService {
                 }
             }
             if (jobMap.putIfAbsent(key, newJob) != null) {
+                // Only reachable if the lease expired mid-section and another node claimed the slot; losing the race is correct, overwriting its claim would not be.
                 throw new ConflictException(conflictMessage, ENTITY_NAME, errorKey);
             }
         }
@@ -574,40 +567,7 @@ public class GenerationJobService {
     }
 
     void interruptCluster(String jobId) {
-        // The hook closes over live sandbox objects, so it can only run on the node holding them: run it here and broadcast, so cancellation is prompt even when the request hits
-        // a different core node than the one running the sandbox.
-        runLocalCancelHook(jobId);
-        try {
-            distributedDataProvider.<CancelRequest>getTopic(CANCEL_TOPIC_NAME).publish(new CancelRequest(jobId));
-        }
-        catch (RuntimeException e) {
-            log.warn("Could not publish the cluster interrupt for cancelled generation job {}; workers will still observe the authoritative cancellation", jobId, e);
-        }
-    }
-
-    private void runLocalCancelHook(String jobId) {
-        Runnable hook = cancelHooks.remove(jobId);
-        if (hook != null) {
-            dispatchCancelHook(jobId, hook);
-        }
-    }
-
-    private void dispatchCancelHook(String jobId, Runnable hook) {
-        try {
-            cancellationExecutor.execute(() -> runCancelHook(jobId, hook));
-        }
-        catch (RejectedExecutionException e) {
-            log.error("Cancel hook dispatch for job {} was rejected; the generation worker will still observe the authoritative cancellation", jobId, e);
-        }
-    }
-
-    private void runCancelHook(String jobId, Runnable hook) {
-        try {
-            hook.run();
-        }
-        catch (RuntimeException e) {
-            log.warn("Cancel hook for job {} failed", jobId, e);
-        }
+        cancelHooks.interruptCluster(jobId);
     }
 
     /**
@@ -638,7 +598,7 @@ public class GenerationJobService {
             unlockJobSlot(key);
         }
         // The sandbox phase is over; there is no longer an in-flight tool/build operation that a cancel hook may safely interrupt.
-        cancelHooks.remove(jobId);
+        cancelHooks.deregister(jobId);
         return true;
     }
 
@@ -689,6 +649,7 @@ public class GenerationJobService {
             if (generationBudgetService != null && !generationBudgetService.refreshReservation(job.budgetReservationId())) {
                 return false;
             }
+            // Reports the heartbeat as lost if the slot changed under an expired lease, rather than overwriting whichever job now owns it.
             return jobMap.replace(key, job, job.withHeartbeat(Instant.now()));
         }
         finally {
@@ -744,10 +705,14 @@ public class GenerationJobService {
     }
 
     /**
-     * Returns a non-cancellable slot for exact-token, audited operator recovery.
+     * Returns the slot currently blocking an exercise when it is one the stale-job reaper refuses to release on its own, so an operator can read the exact token that
+     * {@link #recoverWedgedSlot(long, String)} requires.
+     * <p>
+     * That is every non-cancellable slot: an external REST mutation, an adaptation revert or its retained recovery state, and a generation past its point of no return. All of
+     * them block generation, revert <em>and</em> ordinary REST edits of the exercise, the map has no TTL, and nothing else ever clears them.
      *
-     * @param exerciseId exercise to inspect
-     * @return blocking slot, if present
+     * @param exerciseId the exercise id
+     * @return the blocking slot, if the exercise currently has one that cannot be reclaimed automatically
      */
     public Optional<WedgedSlotInfo> getWedgedSlotInfo(long exerciseId) {
         String key = key(exerciseId);
@@ -765,11 +730,15 @@ public class GenerationJobService {
     }
 
     /**
-     * Recovers an exact non-cancellable token after its owner departs.
+     * Value-guarded recovery for a non-cancellable slot whose owning JVM has been confirmed terminated. Cluster departure alone is insufficient because a partitioned request may
+     * still be writing, so this is an audited operator action rather than something the stale-job scan does.
+     * <p>
+     * Accepts a generation, revert, or external-mutation token. A recovered generation slot is terminalized like a stale one, so the instructor is told the run stopped and is
+     * warned to review the repositories rather than left with a job that reports as running forever.
      *
-     * @param exerciseId exercise to recover
-     * @param token      exact ownership token
-     * @return whether recovery succeeded
+     * @param exerciseId the exercise id
+     * @param token      the exact slot token to recover, as reported by {@link #getWedgedSlotInfo(long)}
+     * @return whether a departed owner's matching slot was recovered
      */
     public boolean recoverWedgedSlot(long exerciseId, String token) {
         if (token == null || token.isBlank()) {
@@ -825,14 +794,11 @@ public class GenerationJobService {
     }
 
     public void registerCancelHook(String jobId, Runnable hook) {
-        cancelHooks.put(jobId, hook);
-        if (isCancelled(jobId) && cancelHooks.remove(jobId, hook)) {
-            dispatchCancelHook(jobId, hook);
-        }
+        cancelHooks.register(jobId, hook, isCancelled(jobId));
     }
 
     public void deregisterCancelHook(String jobId) {
-        cancelHooks.remove(jobId);
+        cancelHooks.deregister(jobId);
     }
 
     public boolean isCancelled(String jobId) {
@@ -893,7 +859,10 @@ public class GenerationJobService {
         return String.valueOf(exerciseId);
     }
 
-    /** Non-expiring: cancellation and durable persistence must never overlap after a stalled caller resumes. */
+    /**
+     * Acquires the per-exercise coordination lock without a lease. Cancellation and the transition into durable persistence must remain mutually exclusive even when a
+     * provider call stalls for longer than expected; expiring this lock would let an old cancellation resume after a newer caller entered the non-cancellable phase.
+     */
     void lockJobSlot(String key) {
         jobMap.lock(key);
     }
@@ -961,12 +930,6 @@ public class GenerationJobService {
             return new JobInfo(jobId, userLogin, exerciseId, startedAt, deadlineAt, ownerNodeId, lastHeartbeatAt, newCancellable, budgetReservationId, mode, exerciseTitle,
                     courseId, participationOwners);
         }
-    }
-
-    private record CancelRequest(String jobId) implements Serializable {
-
-        @Serial
-        private static final long serialVersionUID = 1L;
     }
 
     public record JobTranscript(String jobId, String userLogin, long exerciseId, GenerationMode mode, List<ExerciseGenerationEventDTO> events, boolean done,
