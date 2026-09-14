@@ -14,7 +14,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 class HyperionSecretMaterialPolicyTest {
 
-    private static final String GITHUB_SENTINEL = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
+    private static final String GITHUB_SENTINEL = "ghp_" + "A".repeat(36);
 
     private final HyperionSecretMaterialPolicy policy = new HyperionSecretMaterialPolicy();
 
@@ -59,9 +59,9 @@ class HyperionSecretMaterialPolicyTest {
     }
 
     private static Stream<Arguments> supportedProviderTokens() {
-        return Stream.of(Arguments.of("AKIAIOSFODNN7EXAMPLE", HyperionSecretMaterialPolicy.Category.AWS_ACCESS_KEY_ID),
+        return Stream.of(Arguments.of("AKIA" + "IOSFODNN7EXAMPLE", HyperionSecretMaterialPolicy.Category.AWS_ACCESS_KEY_ID),
                 Arguments.of(GITHUB_SENTINEL, HyperionSecretMaterialPolicy.Category.GITHUB_TOKEN),
-                Arguments.of("glpat-abcdefghijklmnopqrst", HyperionSecretMaterialPolicy.Category.GITLAB_TOKEN));
+                Arguments.of("glpat-" + "abcdefghijklmnopqrst", HyperionSecretMaterialPolicy.Category.GITLAB_TOKEN));
     }
 
     @Test
@@ -74,12 +74,12 @@ class HyperionSecretMaterialPolicyTest {
                     String apiKey = "your-api-key-here";
                     String uuid = "477444bc-083e-478c-90fd-ce3037063361";
                     String sha256 = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
-                    String jwtFixture = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJmaXh0dXJlIn0.signature";
-                    String nearAws = "AKIAIOSFODNN7EXAMPL";
+                    String jwtFixture = "%s";
+                    String nearAws = "%s";
                     String nearGithub = "ghp_short";
-                    String nearGitlab = "glpat-exampletokenvalue";
+                    String nearGitlab = "%s";
                 }
-                """;
+                """.formatted(String.join(".", "eyJhbGciOiJIUzI1NiJ9", "eyJzdWIiOiJmaXh0dXJlIn0", "signature"), "AKIA" + "IOSFODNN7EXAMPL", "glpat-" + "exampletokenvalue");
 
         assertThat(policy.assess("src/Example.java", bytes(ordinarySource), HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT).isSafe()).isTrue();
     }
@@ -94,12 +94,27 @@ class HyperionSecretMaterialPolicyTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "AKIAIOSFODNN7EXAMPLE", GITHUB_SENTINEL, "glpat-abcdefghijklmnopqrst" })
+    @MethodSource("diagnosticTokens")
     void diagnosticPathIsRedactedWhenItContainsMatchingMaterial(String sentinel) {
         HyperionSecretMaterialPolicy.Assessment assessment = policy.assess("solution/" + sentinel + ".txt", bytes("ordinary"),
                 HyperionSecretMaterialPolicy.Origin.GENERATED_CANDIDATE);
 
         assertThat(assessment.safePath()).isEqualTo("<redacted-path>").doesNotContain(sentinel);
+    }
+
+    private static Stream<String> diagnosticTokens() {
+        return supportedProviderTokens().map(arguments -> (String) arguments.get()[0]);
+    }
+
+    @Test
+    void fineGrainedTokensAreBlockedWithoutRejectingNearMisses() {
+        String token = "github_pat_" + "A".repeat(22) + "_" + "b".repeat(59);
+        assertThat(policy.assess("fixture.txt", bytes(token), HyperionSecretMaterialPolicy.Origin.PROVIDER_PROMPT).category())
+                .contains(HyperionSecretMaterialPolicy.Category.GITHUB_TOKEN);
+        assertThat(policy.assess(token, bytes("ordinary"), HyperionSecretMaterialPolicy.Origin.PERSISTENCE).safePath()).isEqualTo("<redacted-path>");
+        for (String nearMiss : new String[] { token.substring(1), token.substring(0, token.length() - 1), "a" + token, token + "a" }) {
+            assertThat(policy.assess("fixture.txt", bytes(nearMiss), HyperionSecretMaterialPolicy.Origin.PROVIDER_PROMPT).isSafe()).isTrue();
+        }
     }
 
     private static byte[] bytes(String value) {

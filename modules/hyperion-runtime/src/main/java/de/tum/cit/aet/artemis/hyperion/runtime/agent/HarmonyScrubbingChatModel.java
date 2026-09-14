@@ -36,7 +36,10 @@ public class HarmonyScrubbingChatModel implements ChatModel {
 
     @Override
     public Flux<ChatResponse> stream(Prompt prompt) {
-        return delegate.stream(prompt).map(HarmonyScrubbingChatModel::scrub);
+        return Flux.defer(() -> {
+            StreamScrubber scrubber = new StreamScrubber();
+            return delegate.stream(prompt).map(scrubber::scrubChunk).concatWith(Flux.defer(scrubber::flush));
+        });
     }
 
     @Override
@@ -64,6 +67,40 @@ public class HarmonyScrubbingChatModel implements ChatModel {
             }
         }
         return changed ? new ChatResponse(rebuilt, response.getMetadata()) : response;
+    }
+
+    /** Holds only a possible token suffix, separately for each response choice and subscription. */
+    private static final class StreamScrubber {
+
+        private final List<String> pending = new ArrayList<>();
+
+        ChatResponse scrubChunk(ChatResponse response) {
+            List<Generation> results = new ArrayList<>();
+            for (int i = 0; i < response.getResults().size(); i++) {
+                while (pending.size() <= i) {
+                    pending.add("");
+                }
+                Generation generation = response.getResults().get(i);
+                AssistantMessage output = generation.getOutput();
+                String text = sanitizeHarmonyTokens(pending.get(i) + (output.getText() == null ? "" : output.getText()));
+                int suffix = text.lastIndexOf('<');
+                boolean incomplete = suffix >= 0 && (text.substring(suffix).equals("<") || text.substring(suffix).matches("<\\|[^|>]*\\|?"));
+                pending.set(i, incomplete ? text.substring(suffix) : "");
+                String clean = incomplete ? text.substring(0, suffix) : text;
+                results.add(
+                        new Generation(AssistantMessage.builder().content(clean).properties(output.getMetadata()).media(output.getMedia()).toolCalls(output.getToolCalls()).build(),
+                                generation.getMetadata()));
+            }
+            return new ChatResponse(results, response.getMetadata());
+        }
+
+        Flux<ChatResponse> flush() {
+            if (pending.stream().allMatch(String::isEmpty)) {
+                return Flux.empty();
+            }
+            // Incomplete delimiters are ordinary text. Do not duplicate provider usage or tool-call metadata when flushing them.
+            return Flux.just(new ChatResponse(pending.stream().map(text -> new Generation(new AssistantMessage(text))).toList()));
+        }
     }
 
     static String sanitizeHarmonyTokens(String content) {

@@ -33,7 +33,7 @@ public final class HyperionSecretMaterialPolicy {
 
     private static final Pattern AWS_ACCESS_KEY_ID = Pattern.compile("(?<![A-Z0-9])AKIA[A-Z0-9]{16}(?![A-Z0-9])");
 
-    private static final Pattern GITHUB_TOKEN = Pattern.compile("(?<![A-Za-z0-9])gh[pousr]_[A-Za-z0-9]{36,255}(?![A-Za-z0-9])");
+    private static final Pattern GITHUB_TOKEN = Pattern.compile("(?<![A-Za-z0-9])(?:gh[pousr]_[A-Za-z0-9]{36,255}|github_pat_[A-Za-z0-9]{22}_[A-Za-z0-9]{59})(?![A-Za-z0-9])");
 
     private static final Pattern GITLAB_TOKEN = Pattern.compile("(?<![A-Za-z0-9_-])glpat-[A-Za-z0-9_-]{20,255}(?![A-Za-z0-9_-])");
 

@@ -102,4 +102,35 @@ class HarmonyScrubbingChatModelTest {
         assertThat(chunks).hasSize(1);
         assertThat(chunks.getFirst().getResult().getOutput().getText()).isEqualTo("chunk");
     }
+
+    @Test
+    void streamHandlesEveryTokenSplitAndIsolatesSubscriptions() {
+        String raw = "before<|end|>after";
+        for (int split = 1; split < raw.length(); split++) {
+            ChatModel delegate = mock(ChatModel.class);
+            Prompt prompt = new Prompt("hi");
+            when(delegate.stream(prompt)).thenReturn(Flux.just(chunk(raw.substring(0, split)), chunk(raw.substring(split))));
+            Flux<ChatResponse> stream = new HarmonyScrubbingChatModel(delegate).stream(prompt);
+            assertThat(join(stream)).isEqualTo("beforeafter");
+            assertThat(join(stream)).isEqualTo("beforeafter");
+        }
+    }
+
+    @Test
+    void streamPreservesOrdinaryAndIncompleteDelimiters() {
+        for (String text : List.of("a < b", "text<", "text<|unfinished", "a<|bad>tail")) {
+            ChatModel delegate = mock(ChatModel.class);
+            Prompt prompt = new Prompt("hi");
+            when(delegate.stream(prompt)).thenReturn(Flux.fromIterable(text.chars().mapToObj(c -> chunk(String.valueOf((char) c))).toList()));
+            assertThat(join(new HarmonyScrubbingChatModel(delegate).stream(prompt))).isEqualTo(text);
+        }
+    }
+
+    private static ChatResponse chunk(String text) {
+        return new ChatResponse(List.of(new Generation(new AssistantMessage(text))));
+    }
+
+    private static String join(Flux<ChatResponse> stream) {
+        return stream.map(response -> response.getResult().getOutput().getText()).collectList().map(parts -> String.join("", parts)).block();
+    }
 }

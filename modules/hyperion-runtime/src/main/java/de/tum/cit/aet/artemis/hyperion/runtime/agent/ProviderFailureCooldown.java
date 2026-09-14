@@ -37,7 +37,7 @@ public interface ProviderFailureCooldown {
      */
     default <T> T execute(String key, Duration hardFailureCooldown, Supplier<T> providerCall) {
         Instant until = cooldownUntil(key);
-        if (until != null) {
+        if (until != null && until.isAfter(Instant.now())) {
             throw new ProviderInCooldownException(until);
         }
         try {
