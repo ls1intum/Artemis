@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import type { ApollonOptions } from '@tumaet/apollon';
+import type { ApollonEditor, ApollonOptions } from '@tumaet/apollon';
 
 type MockApollonOptions = Pick<ApollonOptions, 'model' | 'collaboration' | 'labels' | 'scrollLock'>;
 
@@ -7,7 +7,7 @@ const { MockApollonEditor } = vi.hoisted(() => {
     const deepClone = (obj: any): any => (obj ? JSON.parse(JSON.stringify(obj)) : {});
 
     class MockApollonEditorClass {
-        static exportModelAsSvg = vi.fn().mockResolvedValue({
+        static exportModelAsSvg = vi.fn<typeof ApollonEditor.exportModelAsSvg>().mockResolvedValue({
             svg: '<svg width="800" height="400" viewBox="0 0 800 400"></svg>',
             clip: { x: 0, y: 0, width: 800, height: 400 },
         });
@@ -106,12 +106,17 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
+import testClassDiagramV4 from 'test/helpers/sample/modeling/test-models/class-diagram-v4.json';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import dayjs from 'dayjs/esm';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { ModelingEditorTopLeftDirective } from 'app/modeling/shared/modeling-editor/modeling-editor-top-left.directive';
 
 @Component({
@@ -141,6 +146,7 @@ describe('ModelingEditorComponent', () => {
     const originalFullscreenEnabled = Object.getOwnPropertyDescriptor(document, 'fullscreenEnabled');
 
     beforeEach(() => {
+        MockApollonEditor.exportModelAsSvg.mockClear();
         Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, value: true });
         diagram.id = 1;
         diagram.jsonRepresentation = JSON.stringify(classDiagram);
@@ -221,6 +227,47 @@ describe('ModelingEditorComponent', () => {
         expect(fixture.nativeElement.querySelector('.readonly-diagram svg')).not.toBeNull();
         expect(component['apollonEditor']).toBeUndefined();
         expect(MockApollonEditor.exportModelAsSvg).toHaveBeenCalledWith(expect.objectContaining({ assessments: {} }));
+    });
+
+    it.each([
+        { model: testClassDiagram, nodeId: 'ccac14e5-c828-4afb-ab97-0fb2a67e77d6', edgeId: '5a9a4eb3-8281-4de4-b0f2-3e2f164574bd' },
+        { model: testClassDiagramV4, nodeId: 'class-in-package', edgeId: 'edge-1' },
+    ])('exports populated version $model.version example solutions from the student data path', async ({ model, nodeId, edgeId }) => {
+        const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        exercise.exampleSolutionPublicationDate = dayjs().subtract(1, 'day');
+        exercise.exampleSolutionModel = JSON.stringify(model);
+        const info = ExerciseService.extractExampleSolutionInfo(exercise, TestBed.inject(ArtemisMarkdownService));
+
+        fixture.componentRef.setInput('readOnly', true);
+        fixture.componentRef.setInput('umlModel', info.exampleSolutionUML);
+        fixture.componentRef.setInput('diagramType', info.modelingExercise?.diagramType);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(MockApollonEditor.exportModelAsSvg).toHaveBeenCalledWith(
+            expect.objectContaining({
+                nodes: expect.arrayContaining([expect.objectContaining({ id: nodeId })]),
+                edges: expect.arrayContaining([expect.objectContaining({ id: edgeId })]),
+            }),
+        );
+        expect(fixture.nativeElement.querySelector('svg')).not.toBeNull();
+    });
+
+    it('renders a read-only model arriving after view initialization', async () => {
+        fixture.componentRef.setInput('readOnly', true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('svg')).toBeNull();
+
+        fixture.componentRef.setInput('umlModel', classDiagram);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('svg')).not.toBeNull();
+        expect(component.apollonEditor).toBeUndefined();
     });
 
     it('ngOnDestroy', async () => {
