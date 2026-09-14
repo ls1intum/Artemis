@@ -247,6 +247,41 @@ describe('GlobalSearchModalComponent', () => {
             expect((component as any).filterPickerOpen()).toBe(true);
         });
 
+        it('returns home when the last chip is removed, rather than stranding an abandoned operator', () => {
+            // Composing `course:` and then removing the only chip used to leave the palette on that operator's
+            // value menu: no filters, no search text, and the results pane unreachable behind the menu.
+            component['applyTokens']([{ facet: 'type', value: 'course' }]);
+            component['onSearchInput']('course:');
+            expect((component as any).filterMenuOpen()).toBe(true);
+
+            component['onChipRemoved'](0);
+
+            expect(component['searchQuery']()).toBe('');
+            expect((component as any).operator()).toBeUndefined();
+            expect((component as any).filterPickerOpen()).toBe(true);
+        });
+
+        it('keeps a hand-typed operator open while the user is still typing it', () => {
+            // The counterpart of the case above: mid-composition the raw `type:` is content, so the value menu
+            // must survive. Reading both gestures the same way is what broke one or the other.
+            component['onSearchInput']('type:');
+
+            expect(component['searchQuery']()).toBe('type:');
+            expect((component as any).operator()?.facet).toBe('type');
+            expect((component as any).menuOptions().length).toBeGreaterThan(0);
+        });
+
+        it('keeps the search text when a chip is removed, so only a bare operator sends you home', () => {
+            component['applyTokens']([{ facet: 'type', value: 'course' }]);
+            component['onSearchInput']('databases course:');
+
+            component['onChipRemoved'](0);
+
+            // There is still something being searched for, so the palette stays where it is.
+            expect(component['searchQuery']()).toBe('databases course:');
+            expect((component as any).operator()?.facet).toBe('course');
+        });
+
         it('keeps the picker open on repeated Cmd+F instead of toggling back to the searchable-entity list', () => {
             pressFilterShortcut();
             expect((component as any).filterPickerOpen()).toBe(true);
