@@ -87,9 +87,12 @@ public class SearchableEntityReconcileScheduler {
 
     /**
      * Scans the index for rows whose entity is gone, and for rows whose stored content disagrees with what was last
-     * written. Runs overnight by default: the heaviest pass, and the only one that deletes.
+     * written. The heaviest pass, and the only one that deletes.
+     * <p>
+     * DEMO BRANCH: ticks every 10 minutes instead of the upstream overnight default (3am), so a lost delete
+     * visibly heals while someone is watching. The test corpus is small enough that a full index scan is cheap.
      */
-    @Scheduled(cron = "${artemis.scheduling.weaviate-reconcile-orphan-time:0 0 3 * * *}")
+    @Scheduled(cron = "${artemis.scheduling.weaviate-reconcile-orphan-time:0 */10 * * * *}")
     public void reconcileOrphans() {
         runPass(ReconcilePass.ORPHAN, reconcileProperties.orphanSweepEnabled(), orphanSweep::sweep);
     }

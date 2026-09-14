@@ -15,10 +15,11 @@ import org.springframework.validation.annotation.Validated;
  * All passes are disabled by default upstream: the missing pass queues the entire corpus the first time it runs,
  * and the orphan pass deletes, so enabling them is an operational decision rather than a deployment side effect.
  * <p>
- * DEMO BRANCH: the missing and drift passes default to ON here. A test server has nobody to make that operational
+ * DEMO BRANCH: all three passes default to ON here. A test server has nobody to make that operational
  * decision, and an index that only ever receives live changes stays empty, which makes the whole feature look
- * broken rather than switched off. The orphan pass stays OFF: it is the one that deletes, and running it against
- * an index still being filled is the wrong order. Upstream keeps all three false.
+ * broken rather than switched off. The orphan pass was switched on last, after the missing pass had filled the
+ * index: it is the one that deletes, and its delete cap and abort ratio bound what a single tick may remove.
+ * Upstream keeps all three false.
  * <p>
  * The two throttles protect different resources. {@code maxOutboxDepth} limits work handed to Weaviate; the
  * per-pass budgets limit queries against the database. A healthy system queues nothing, so the depth limit never
@@ -43,7 +44,7 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @ConfigurationProperties(prefix = "artemis.weaviate.reconcile", ignoreUnknownFields = false)
 public record WeaviateReconcileProperties(@DefaultValue("true") boolean missingSweepEnabled, @DefaultValue("true") boolean driftSweepEnabled,
-        @DefaultValue("false") boolean orphanSweepEnabled, @DefaultValue( {
+        @DefaultValue("true") boolean orphanSweepEnabled, @DefaultValue( {
                 "course", "lecture", "lecture_unit", "exam", "exercise", "faq", "channel" }) List<String> entityTypes,
         @DefaultValue("500") @Positive int maxOutboxDepth, @DefaultValue("5000") @Positive int missingBatchSize, @DefaultValue("200") @Positive int driftBatchSize,
         @DefaultValue("1000") @Positive int orphanPageSize, @DefaultValue("5") @Positive int orphanPagesPerTick, @DefaultValue("100") @Positive int orphanDeleteCapPerTick,
