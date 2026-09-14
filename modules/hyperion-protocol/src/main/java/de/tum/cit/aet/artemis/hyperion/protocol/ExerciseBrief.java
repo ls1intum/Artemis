@@ -8,8 +8,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 /** Authoring facts only: no course membership, repository URI or mutable persistence entity. */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseBrief(@JsonInclude(JsonInclude.Include.ALWAYS) String title, @JsonInclude(JsonInclude.Include.ALWAYS) String shortName, String packageName,
-        @JsonInclude(JsonInclude.Include.ALWAYS) @Nullable String problemStatement, @JsonInclude(JsonInclude.Include.ALWAYS) String prompt, Mode mode) {
+public record ExerciseBrief(@JsonInclude String title, @JsonInclude String shortName, String packageName, @JsonInclude @Nullable String problemStatement,
+        @JsonInclude String prompt, Mode mode) {
 
     public ExerciseBrief {
         if (title == null || title.length() > 255 || shortName == null || shortName.length() > 255 || packageName == null || packageName.length() > 255 || prompt == null

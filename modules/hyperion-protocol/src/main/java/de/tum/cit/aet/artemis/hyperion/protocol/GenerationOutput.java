@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 /** Frozen candidate and trusted-supervisor verdict; only core decides whether a run may persist. */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GenerationOutput(WorkspaceSnapshot candidate, VerificationResult verification, @Nullable String verifiedDigest, SpecFidelityReport review,
-        @JsonInclude(JsonInclude.Include.ALWAYS) String terminationReason, @Nullable GenerationUsage usage, AccountingState accountingState, String effortProfile) {
+        @JsonInclude String terminationReason, @Nullable GenerationUsage usage, AccountingState accountingState, String effortProfile) {
 
     public GenerationOutput {
         // NON_EMPTY omits the empty profile; an absent wire value selects deployment defaults.
