@@ -13,6 +13,14 @@ import org.springframework.context.annotation.Configuration;
 @Configuration(proxyBeanMethods = false)
 public class WorkerBrokerConfiguration {
 
+    /**
+     * Validates transport settings without opening a connection; JMS starts consumption after configuration succeeds.
+     *
+     * @param url      verified TLS broker URL
+     * @param user     scoped worker account
+     * @param password worker account credential
+     * @return bounded native connection factory
+     */
     @Bean(destroyMethod = "close")
     public ActiveMQConnectionFactory workerConnectionFactory(@Value("${spring.artemis.broker-url}") String url, @Value("${spring.artemis.user}") String user,
             @Value("${spring.artemis.password}") String password) {
