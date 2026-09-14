@@ -219,8 +219,11 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(rebuiltResult.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
         String jobStatuses = buildJobRepository.findAll().stream().filter(job -> Objects.equals(job.getParticipationId(), participation.getId()))
                 .map(job -> job.getBuildJobId() + ":" + job.getBuildStatus()).toList().toString();
-        assertThat(rebuiltResult.isSuccessful()).as("jobs %s, submission buildFailed=%s", jobStatuses, rebuiltSubmission.isBuildFailed()).isTrue();
-        assertThat(rebuiltSubmission.isBuildFailed()).isFalse();
+        // the attempt built (no container failed), but the fixture is only partly successful: like a single-container
+        // result with failing tests, the merged result is complete and scored, not successful
+        assertThat(rebuiltSubmission.isBuildFailed()).as("jobs %s", jobStatuses).isFalse();
+        assertThat(rebuiltResult.isSuccessful()).isFalse();
+        assertThat(rebuiltResult.getScore()).isNotNull();
         assertThat(feedbackTestNames(rebuiltResult)).containsExactlyInAnyOrderElementsOf(union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES));
 
         // The draft was not used as the aggregate (the automatic result above is separate), but, as after a
@@ -396,7 +399,8 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(testCaseFeedbacksOf(result)).filteredOn(feedback -> "testConstructors[Policy]".equals(feedback.getTestCase().getTestName())).hasSize(1);
         assertThat(result.getFeedbacks()).noneMatch(feedback -> feedback.getText() != null && feedback.getText().contains("Duplicate Test Case"));
         assertThat(result.getScore()).isGreaterThan(0.0);
-        assertThat(result.isSuccessful()).isTrue();
+        // partly successful fixture: scored, built, but not every test passed
+        assertThat(result.isSuccessful()).isFalse();
         assertThat(submission.isBuildFailed()).isFalse();
     }
 
@@ -521,7 +525,8 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(submission.getLatestResult().getId());
         Set<String> expectedNames = union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES);
         assertThat(feedbackTestNames(result)).containsExactlyInAnyOrderElementsOf(expectedNames);
-        assertThat(result.isSuccessful()).isTrue();
+        // the fixture is partly successful, so the merged result is scored but, as on the single-container path, not successful
+        assertThat(result.isSuccessful()).isFalse();
         assertThat(result.getScore()).isNotNull();
 
         // One build job per container, both linked to the shared result.

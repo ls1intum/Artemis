@@ -530,8 +530,8 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Finalizes the aggregated result of a multi-container build once every container has finished. It recomputes the
-     * score over the feedback of all containers, marks the result successful only if every container succeeded, and sets
-     * the completion date so the result is shown as complete.
+     * score over the feedback of all containers, marks the result successful only if every container ran and built and
+     * every relevant test case passed, and sets the completion date so the result is shown as complete.
      *
      * @param resultId         the id of the aggregated result to finalize
      * @param participation    the participation that was built
@@ -569,7 +569,14 @@ public class ProgrammingExerciseGradingService {
             }
         }
         calculateScoreForResult(aggregatedResult, participation.getProgrammingExercise(), isStudentParticipation);
-        aggregatedResult.setSuccessful(allJobsSucceeded && !anyContainerFailedToBuild);
+        // The containers contribute only their feedback rows to the aggregated result, so it carries no success flag of
+        // its own. The flag is derived from the scoring above, which counts the test cases relevant to this participation
+        // and those among them that passed (a test case no container reported counts as not passed): the merged result is
+        // successful when every relevant test case passed and every container ran and built. A build that executed no
+        // test case leaves both counts at zero and is not successful.
+        Integer testCaseCount = aggregatedResult.getTestCaseCount();
+        boolean everyRelevantTestCasePassed = testCaseCount != null && testCaseCount > 0 && testCaseCount.equals(aggregatedResult.getPassedTestCaseCount());
+        aggregatedResult.setSuccessful(everyRelevantTestCasePassed && allJobsSucceeded && !anyContainerFailedToBuild);
         aggregatedResult.setCompletionDate(completionDate);
 
         Optional<Result> mergedIntoManualResult = Optional.empty();
