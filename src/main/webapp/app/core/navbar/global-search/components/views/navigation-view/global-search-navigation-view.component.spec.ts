@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { type Mock, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { GlobalSearchNavigationViewComponent } from './global-search-navigation-view.component';
@@ -49,7 +49,18 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(irisEnabled) } },
                 { provide: AccountService, useValue: { userIdentity: signal({ selectedLLMUsage: llmDecision }) } },
-                { provide: Router, useValue: { navigate: vi.fn() } },
+                // createUrlTree / serializeUrl / url back the "already on this page" check. The serialized target
+                // differs from the current url by default, so these tests assert where a result leads; the one test
+                // that cares makes them match.
+                {
+                    provide: Router,
+                    useValue: {
+                        navigate: vi.fn(),
+                        createUrlTree: vi.fn((commands: unknown[]) => commands),
+                        serializeUrl: vi.fn(() => '/some/target'),
+                        url: '/somewhere/else',
+                    },
+                },
                 { provide: SearchOverlayService, useValue: { close: vi.fn(), isOpen: signal(false) } },
                 { provide: IrisSearchAnswerService, useValue: { ask: vi.fn() } },
             ],
@@ -227,6 +238,55 @@ describe('GlobalSearchNavigationViewComponent', () => {
             it('should navigate to faq', () => {
                 component['navigateToResult']({ type: 'faq', metadata: { courseId: 10 } } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'faq']);
+            });
+
+            it('should open a course without naming a tab, leaving its default to the route table', () => {
+                // The same link form the navbar uses. Naming a tab here would make search the one place that has to
+                // be updated by hand the day the course default changes.
+                component['navigateToResult']({ type: 'course', metadata: { courseId: 10 } } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10]);
+            });
+
+            it('should not navigate to a course the user is already somewhere inside', () => {
+                // `/courses/:id` redirects to the default tab after any comparison could run, so a course is matched
+                // by its subtree: from anywhere within it the click has nowhere to go.
+                (router.serializeUrl as unknown as Mock).mockReturnValue('/courses/10');
+                (router as { url: string }).url = '/courses/10/lectures/5';
+
+                component['navigateToResult']({ type: 'course', metadata: { courseId: 10 } } as GlobalSearchResult);
+
+                expect(router.navigate).not.toHaveBeenCalled();
+                // The click is still consumed: the palette closes even though there was nowhere to go.
+                expect(overlay.close).toHaveBeenCalled();
+            });
+
+            it('should still open a different course from inside one', () => {
+                (router.serializeUrl as unknown as Mock).mockReturnValue('/courses/20');
+                (router as { url: string }).url = '/courses/10/lectures/5';
+
+                component['navigateToResult']({ type: 'course', metadata: { courseId: 20 } } as GlobalSearchResult);
+
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 20]);
+            });
+
+            it('should not confuse a course whose id is a prefix of the current one', () => {
+                (router.serializeUrl as unknown as Mock).mockReturnValue('/courses/1');
+                (router as { url: string }).url = '/courses/10/lectures/5';
+
+                component['navigateToResult']({ type: 'course', metadata: { courseId: 1 } } as GlobalSearchResult);
+
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 1]);
+            });
+
+            it('should not re-run a navigation to the page already open', () => {
+                // The app runs the router with onSameUrlNavigation: 'reload', so navigating to the current URL
+                // rebuilds the page in place, which reads as a dead click rather than as a navigation.
+                (router.serializeUrl as unknown as Mock).mockReturnValue(router.url);
+
+                component['navigateToResult']({ type: 'faq', metadata: { courseId: 10 } } as GlobalSearchResult);
+
+                expect(router.navigate).not.toHaveBeenCalled();
+                expect(overlay.close).toHaveBeenCalled();
             });
 
             it('should navigate to channel', () => {

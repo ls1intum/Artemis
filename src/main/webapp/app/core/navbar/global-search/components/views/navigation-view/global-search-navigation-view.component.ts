@@ -8,7 +8,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { iconForEntityType } from 'app/core/navbar/global-search/util/entity-type-icons.util';
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { SearchResultItemComponent } from 'app/core/navbar/global-search/components/modal/search-result-item/search-result-item.component';
-import { Router } from '@angular/router';
+import { NavigationExtras, Router } from '@angular/router';
 import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/components/views/iris-answer/global-search-iris-answer.component';
@@ -102,12 +102,50 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         return iconForEntityType(type, badge);
     }
 
+    /**
+     * Opens a result, unless it is the page already on screen.
+     * <p>
+     * The app configures the router with `onSameUrlNavigation: 'reload'`, so navigating to the current URL is not
+     * ignored: it re-runs guards and resolvers and rebuilds the components, which reads as the page reloading in
+     * place for no reason. Any result can be clicked while its own target is open, so this is checked here for every
+     * type rather than in the one branch where it was first noticed.
+     * <p>
+     * Compared as serialized URLs rather than through `Router.isActive`, whose replacement produces a signal for a
+     * template to watch and is the wrong shape for a one-shot check inside a click. The string form also makes query
+     * params count, which matters because several result types differ only by those: two messages in one channel
+     * resolve to the same path.
+     */
+    private navigate(commands: unknown[], extras?: NavigationExtras): void {
+        if (this.router.serializeUrl(this.router.createUrlTree(commands, extras)) === this.router.url) {
+            return;
+        }
+        // Forwarded without a second argument when there are no extras, so this stays a transparent pass-through.
+        void (extras ? this.router.navigate(commands, extras) : this.router.navigate(commands));
+    }
+
+    /**
+     * Opens a course at whatever its default tab is, unless the user is already somewhere inside it.
+     * <p>
+     * The link stays `/courses/:id`, the same form the navbar and the rest of the app use, so the route table keeps
+     * deciding which tab that lands on; naming a tab here would let search drift from every other course link the
+     * day that default changes. It also means the destination cannot be compared with the current URL the way
+     * {@link navigate} does, because the redirect resolves after that comparison would run. "Already there" is
+     * therefore asked of the course subtree: anywhere inside the course counts, since the click has nowhere to go.
+     */
+    private navigateToCourse(courseId: string): void {
+        const courseUrl = this.router.serializeUrl(this.router.createUrlTree(['/courses', courseId]));
+        if (this.router.url === courseUrl || this.router.url.startsWith(`${courseUrl}/`)) {
+            return;
+        }
+        void this.router.navigate(['/courses', courseId]);
+    }
+
     protected navigateToResult(result: GlobalSearchResult) {
         if (result.type === LECTURE_CONTENT_TYPE) {
             const link = result.metadata?.['link'];
             const queryParams = result.metadata?.['queryParams'];
             if (link) {
-                void this.router.navigate([link], { queryParams });
+                this.navigate([link], { queryParams });
             }
             this.overlay.close();
             return;
@@ -121,7 +159,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
 
         switch (result.type) {
             case 'course':
-                void this.router.navigate(['/courses', courseId]);
+                this.navigateToCourse(courseId);
                 break;
             case 'exercise':
                 if (result.id) this.navigateToExercise(result, courseId);
@@ -136,7 +174,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
                 if (result.id) this.navigateToExam(result, courseId);
                 break;
             case 'faq':
-                void this.router.navigate(['/courses', courseId, 'faq']);
+                this.navigate(['/courses', courseId, 'faq']);
                 break;
             case 'channel':
                 if (result.id) this.navigateToChannel(courseId, result.id);
@@ -163,13 +201,13 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             this.navigateToExamExerciseDetailsPage(courseId, examId, exerciseGroupId, result);
         } else if (examId && isAtLeastTutor) {
             // Tutors: exam exercise assessment dashboard
-            void this.router.navigate(['/course-management', courseId, 'exams', examId, 'assessment-dashboard', result.id]);
+            this.navigate(['/course-management', courseId, 'exams', examId, 'assessment-dashboard', result.id]);
         } else if (examId) {
             // Students: student exam view
-            void this.router.navigate(['/courses', courseId, 'exams', examId]);
+            this.navigate(['/courses', courseId, 'exams', examId]);
         } else {
             // Students: student exercise view
-            void this.router.navigate(['/courses', courseId, 'exercises', result.id]);
+            this.navigate(['/courses', courseId, 'exercises', result.id]);
         }
     }
 
@@ -180,15 +218,15 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         const validExerciseSegments = new Set(['programming', 'modeling', 'text', 'file-upload', 'quiz']);
         const segment = result.badge && validExerciseSegments.has(result.badge) ? result.badge : 'text';
         const typeSegment = segment + '-exercises';
-        void this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, typeSegment, result.id]);
+        this.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, typeSegment, result.id]);
     }
 
     private navigateToStudentExamView(courseId: string, examId: string) {
-        void this.router.navigate(['/courses', courseId, 'exams', examId]);
+        this.navigate(['/courses', courseId, 'exams', examId]);
     }
 
     private navigateToLecture(courseId: string, lectureId: string) {
-        void this.router.navigate(['/courses', courseId, 'lectures', lectureId]);
+        this.navigate(['/courses', courseId, 'lectures', lectureId]);
     }
 
     private navigateToLectureUnit(result: GlobalSearchResult, courseId: string) {
@@ -202,22 +240,22 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         const isAtLeastEditor = !!result.metadata?.['isAtLeastEditor'];
         const isAtLeastTutor = !!result.metadata?.['isAtLeastTutor'];
         if (isAtLeastEditor) {
-            void this.router.navigate(['/course-management', courseId, 'exams', result.id]);
+            this.navigate(['/course-management', courseId, 'exams', result.id]);
         } else if (isAtLeastTutor) {
-            void this.router.navigate(['/course-management', courseId, 'exams', result.id, 'assessment-dashboard']);
+            this.navigate(['/course-management', courseId, 'exams', result.id, 'assessment-dashboard']);
         } else {
             this.navigateToStudentExamView(courseId, result.id!);
         }
     }
 
     private navigateToChannel(courseId: string, channelId: string) {
-        void this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId } });
+        this.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId } });
     }
 
     private navigateToPost(result: GlobalSearchResult, courseId: string) {
         const channelId = result.metadata?.['channelId'];
         if (channelId) {
-            void this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId, focusPostId: result.id } });
+            this.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId, focusPostId: result.id } });
         }
     }
 
@@ -225,7 +263,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         const channelId = result.metadata?.['channelId'];
         const postId = result.metadata?.['postId'];
         if (channelId && postId) {
-            void this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId, messageId: postId, focusReplyId: result.id } });
+            this.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId, messageId: postId, focusReplyId: result.id } });
         }
     }
 
