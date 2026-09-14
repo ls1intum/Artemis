@@ -133,6 +133,45 @@ class JavaSourceInspectorTest {
     }
 
     @Test
+    void unannotatedClassCannotBorrowRestrictionsOrTimeoutFromEarlierClass() {
+        String source = """
+                @de.tum.in.test.api.jupiter.Public
+                @de.tum.in.test.api.WhitelistPath("build")
+                @de.tum.in.test.api.BlacklistPath("build/classes/java/test")
+                @de.tum.in.test.api.StrictTimeout(1)
+                class Decoy {}
+                class Actual {
+                    @org.junit.jupiter.api.Test
+                    void runs() {}
+                }
+                """;
+        var summary = JavaSourceInspector.javaTestAnnotationSummary(source);
+        assertThat(summary.hasTestMethods()).isTrue();
+        assertThat(summary.classWithMissingAresAnnotations()).isTrue();
+        assertThat(summary.testMethodWithoutStrictTimeout()).isTrue();
+    }
+
+    @Test
+    void completedNestedClassCannotVouchForOuterMethods() {
+        String source = """
+                class Outer {
+                    @de.tum.in.test.api.jupiter.Public
+                    @de.tum.in.test.api.WhitelistPath("build")
+                    @de.tum.in.test.api.BlacklistPath("build/classes/java/test")
+                    @de.tum.in.test.api.StrictTimeout(1)
+                    class Decoy {
+                        String misleading = "{{{{";
+                    }
+                    @org.junit.jupiter.api.Test
+                    void runs() {}
+                }
+                """;
+        var summary = JavaSourceInspector.javaTestAnnotationSummary(source);
+        assertThat(summary.classWithMissingAresAnnotations()).isTrue();
+        assertThat(summary.testMethodWithoutStrictTimeout()).isTrue();
+    }
+
+    @Test
     void declaresPackageMatchingPath_ignoresACommentedOutPackageAndTheOnesThatFollow() {
         String source = """
                 // package de.tum.wrong;

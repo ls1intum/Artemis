@@ -44,7 +44,7 @@ final class JavaSourceInspector {
     }
 
     /** One class declaration's annotation block, keyed by the line the declaration starts on so a method can be attributed to the class that encloses it. */
-    private record JavaClassAnnotation(int start, String annotations) {
+    private record JavaClassAnnotation(int start, int end, String annotations) {
     }
 
     /**
@@ -73,6 +73,7 @@ final class JavaSourceInspector {
             imports.removeIf(importedType -> importedType.endsWith("." + localType));
         }
         String[] lines = withoutComments.split("\\R", -1);
+        String[] structuralLines = stripJavaTrivia(content, true).split("\\R", -1);
         List<JavaClassAnnotation> classes = new ArrayList<>();
         boolean hasTestMethods = false;
         boolean missingClassAnnotations = false;
@@ -88,22 +89,22 @@ final class JavaSourceInspector {
                 lineIndex = appendAnnotationContinuation(lines, lineIndex, annotations);
                 continue;
             }
-            if (annotations.isEmpty()) {
+            if (annotations.isEmpty() && !JAVA_CLASS_DECLARATION.matcher(structuralLines[lineIndex]).find()) {
                 continue;
             }
             int declarationLine = lineIndex;
-            String declaration = line;
+            String declaration = structuralLines[lineIndex].trim();
             while (!declaration.contains("{") && !declaration.contains(";") && lineIndex + 1 < lines.length) {
                 String nextLine = lines[lineIndex + 1].trim();
                 if (nextLine.startsWith("@")) {
                     break;
                 }
-                declaration += " " + nextLine;
+                declaration += " " + structuralLines[lineIndex + 1].trim();
                 lineIndex++;
             }
             String annotationBlock = annotations.toString();
             if (JAVA_CLASS_DECLARATION.matcher(declaration).find()) {
-                classes.add(new JavaClassAnnotation(declarationLine, annotationBlock));
+                classes.add(new JavaClassAnnotation(declarationLine, classEndLine(structuralLines, declarationLine), annotationBlock));
             }
             else if (JAVA_METHOD_DECLARATION.matcher(declaration).find() && hasJUnitTestAnnotation(annotationBlock)) {
                 hasTestMethods = true;
@@ -147,13 +148,33 @@ final class JavaSourceInspector {
         return balance;
     }
 
+    private static int classEndLine(String[] lines, int start) {
+        int depth = 0;
+        boolean opened = false;
+        for (int line = start; line < lines.length; line++) {
+            for (char character : lines[line].toCharArray()) {
+                if (character == '{') {
+                    opened = true;
+                    depth++;
+                }
+                else if (character == '}' && opened && --depth == 0) {
+                    return line;
+                }
+            }
+        }
+        // An unclosed declaration cannot supply trusted class annotations to a later method.
+        return start;
+    }
+
     private static String enclosingClassAnnotations(List<JavaClassAnnotation> classes, int line) {
         String annotations = "";
         for (JavaClassAnnotation javaClass : classes) {
             if (javaClass.start() > line) {
                 break;
             }
-            annotations = javaClass.annotations();
+            if (line <= javaClass.end()) {
+                annotations = javaClass.annotations();
+            }
         }
         return annotations;
     }
@@ -208,6 +229,10 @@ final class JavaSourceInspector {
      * source.
      */
     static String stripJavaComments(String content) {
+        return stripJavaTrivia(content, false);
+    }
+
+    private static String stripJavaTrivia(String content, boolean maskLiterals) {
         StringBuilder stripped = new StringBuilder(content.length());
         boolean inLineComment = false;
         boolean inBlockComment = false;
@@ -238,22 +263,22 @@ final class JavaSourceInspector {
             }
             else if (inTextBlock) {
                 if (current == '\\' && next != '\0') {
-                    stripped.append(current).append(next);
+                    stripped.append(maskLiterals ? ' ' : current).append(maskLiterals && next != '\n' && next != '\r' ? ' ' : next);
                     i++;
                 }
                 else if (content.startsWith("\"\"\"", i)) {
-                    stripped.append("\"\"\"");
+                    stripped.append(maskLiterals ? "   " : "\"\"\"");
                     i += 2;
                     inTextBlock = false;
                 }
                 else {
-                    stripped.append(current);
+                    stripped.append(maskLiterals && current != '\n' && current != '\r' ? ' ' : current);
                 }
             }
             else if (inString || inChar) {
-                stripped.append(current);
+                stripped.append(maskLiterals && current != '\n' && current != '\r' ? ' ' : current);
                 if (current == '\\' && next != '\0') {
-                    stripped.append(next);
+                    stripped.append(maskLiterals && next != '\n' && next != '\r' ? ' ' : next);
                     i++;
                 }
                 else if ((inString && current == '"') || (inChar && current == '\'')) {
@@ -272,14 +297,14 @@ final class JavaSourceInspector {
                 i++;
             }
             else if (content.startsWith("\"\"\"", i)) {
-                stripped.append("\"\"\"");
+                stripped.append(maskLiterals ? "   " : "\"\"\"");
                 i += 2;
                 inTextBlock = true;
             }
             else {
                 inString = current == '"';
                 inChar = current == '\'';
-                stripped.append(current);
+                stripped.append(maskLiterals && (inString || inChar) ? ' ' : current);
             }
         }
         return stripped.toString();
