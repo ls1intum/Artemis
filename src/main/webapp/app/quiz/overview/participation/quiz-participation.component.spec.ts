@@ -18,7 +18,7 @@ import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-dur
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
@@ -958,6 +958,26 @@ describe('QuizParticipationComponent - practice mode', () => {
         expect(request.request.url).toBe(`api/quiz/exercises/${quizExerciseForPractice.id}/submissions/practice`);
 
         expect(serviceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
+    });
+
+    it('should not let a late existing-result response overwrite a practice attempt started while it was loading', () => {
+        const existingResultResponse = new Subject<HttpResponse<StudentParticipation>>();
+        vi.spyOn(TestBed.inject(ParticipationService), 'getQuizParticipationResult').mockReturnValue(existingResultResponse);
+        vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
+        const updateSpy = vi.spyOn(component, 'updateParticipationFromServer');
+
+        // Open an existing practice result: the header already treats the attempt as finished and offers a restart.
+        component.mode.set('practice');
+        component.initPracticeMode(7);
+        expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
+
+        // The student restarts before the existing result has arrived.
+        component.restartPractice();
+        existingResultResponse.next({ body: { id: 7, testRun: true } as StudentParticipation } as HttpResponse<StudentParticipation>);
+
+        expect(existingResultResponse.observed).toBe(false);
+        expect(updateSpy).not.toHaveBeenCalled();
+        expect(component.viewingExistingPracticeResult()).toBe(false);
     });
 });
 

@@ -193,6 +193,8 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
     private participationSubscription?: Subscription;
     private quizExerciseSubscription?: Subscription;
     private quizBatchSubscription?: Subscription;
+    /** The pending practice load (an existing result or a fresh attempt), cancelled whenever practice mode is re-initialized. */
+    private practiceLoadSubscription?: Subscription;
 
     /**
      * debounced function to reset 'justSubmitted', so that time since last submission is displayed again when no submission has been made for at least 2 seconds
@@ -286,6 +288,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
         this.participationSubscription?.unsubscribe();
         this.quizExerciseSubscription?.unsubscribe();
         this.quizBatchSubscription?.unsubscribe();
+        this.practiceLoadSubscription?.unsubscribe();
         this.websocketSubscription?.unsubscribe();
         this.routeAndDataSubscription?.unsubscribe();
     }
@@ -338,13 +341,16 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      * loads quizExercise and starts practice mode, or loads an existing practice result if participationId is provided
      */
     initPracticeMode(participationId?: number, submissionId?: number) {
+        // The header offers "Start Practice Mode" as soon as an existing result is opened, before it has loaded. Cancel
+        // any load still pending so a late response cannot overwrite the attempt that replaced it.
+        this.practiceLoadSubscription?.unsubscribe();
         if (participationId) {
             this.viewingExistingPracticeResult.set(true);
             this.syncSubmitState();
             this.loadExistingPracticeResult(participationId, submissionId);
         } else {
             this.viewingExistingPracticeResult.set(false);
-            this.quizExerciseService.findForStudent(this.quizId).subscribe({
+            this.practiceLoadSubscription = this.quizExerciseService.findForStudent(this.quizId).subscribe({
                 next: (res: HttpResponse<QuizExercise>) => {
                     if (res.body && hasDueDatePassed(res.body)) {
                         this.startQuizPreviewOrPractice(res.body);
@@ -361,7 +367,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      * loads an existing practice participation result
      */
     private loadExistingPracticeResult(participationId: number, submissionId?: number) {
-        this.participationService.getQuizParticipationResult(this.quizId, participationId, submissionId).subscribe({
+        this.practiceLoadSubscription = this.participationService.getQuizParticipationResult(this.quizId, participationId, submissionId).subscribe({
             next: (response: HttpResponse<StudentParticipation>) => {
                 this.updateParticipationFromServer(response.body!);
             },
