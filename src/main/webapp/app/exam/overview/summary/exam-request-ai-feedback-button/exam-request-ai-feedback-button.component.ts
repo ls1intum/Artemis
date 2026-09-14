@@ -66,9 +66,17 @@ export class ExamRequestAiFeedbackButtonComponent {
         return (exam?.exercises ?? []).some((exercise) => exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING);
     });
 
+    // Test runs are the instructor's own rehearsal of a real exam and get the same formative feedback as a student's
+    // test exam attempt, so both kinds of attempt show the button. A test run summary is also reachable for the test
+    // runs of other instructors, where the server rejects the request, so those do not show the button.
     readonly isVisible = computed(() => {
         const exam = this.studentExam();
-        return !!exam?.exam?.testExam && this.athenaEnabled() && !!exam.submitted && !this.testExamConduction() && this.hasAthenaFeedbackSupportedExercise();
+        const isTestRun = !!exam?.testRun;
+        if (isTestRun && exam?.user?.id !== this.accountService.userIdentity()?.id) {
+            return false;
+        }
+        const isTestExamOrTestRun = !!exam?.exam?.testExam || isTestRun;
+        return isTestExamOrTestRun && this.athenaEnabled() && !!exam.submitted && !this.testExamConduction() && this.hasAthenaFeedbackSupportedExercise();
     });
 
     private readonly eligibleExerciseIds = computed(() => {
@@ -241,7 +249,7 @@ export class ExamRequestAiFeedbackButtonComponent {
     }
 
     // The server's usage count is reservation-based: it counts an attempt as soon as a request for it is accepted,
-    // not once generation completes (see StudentExamAthenaFeedbackService#requestAthenaFeedbackForTestExam). Always
+    // not once generation completes (see StudentExamAthenaFeedbackService#requestAthenaFeedback). Always
     // re-fetching it here - rather than inferring "already counted" from completed results and bumping locally -
     // keeps the badge correct even if the page is reloaded while a request for this attempt is still pending.
     private refreshAthenaFeedbackUsage(onError?: () => void): void {

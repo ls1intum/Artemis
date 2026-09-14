@@ -12,7 +12,6 @@ import generalInformation from './assets/course-configuration/general-informatio
 import exercisesAndGrading from './assets/course-configuration/exercises-and-grading.png';
 import additionalFeatures from './assets/course-configuration/additional-features.png';
 import studentEnrollment from './assets/course-configuration/student-enrollment.png';
-import athenaSettings from './assets/course-configuration/athena-settings.png';
 
 Once a course exists — from a [course request](/instructor/course-management/course-requests) or from an
 administrator — **Settings** at the foot of the course sidebar opens everything you can change about it. The page is
@@ -133,27 +132,6 @@ that has none of its own. Every participant sees whatever is in it.
 
 See [Communication](/instructor/communication-support/communication) for managing and moderating channels.
 
-### AI-Assisted Feedback
-
-These three settings appear only where an administrator has configured Athena for the instance, which is why they may
-be absent from your form entirely.
-
-<Image src={athenaSettings} alt="The three Athena settings, with the two nested under the master switch" size={ImageSize.large} caption="AI assisted feedback" />
-
-**AI Assisted Feedback for Exercises Enabled** is the master switch: with it off, no exercise in the course can use
-Athena at all. On its own it enables nothing — it makes the two below it available.
-
-**Formative Feedback Requests Enabled** lets students ask Athena for preliminary feedback on a draft *before* the due
-date. It is feedback to learn from rather than a mark, and it does not replace the assessment that follows.
-
-**Grading Feedback Suggestions Enabled** offers Athena's suggestions to tutors while they mark text, programming and
-modeling submissions. A suggestion is a starting point a person accepts, edits or ignores; nothing reaches a student
-without a reviewer submitting it.
-
-Each exercise then has its own switch as well, so enabling these here makes the feature possible rather than
-universal. See [AI-Assisted Feedback](/instructor/assessment-grading/ai-feedback) for which exercise types support
-which, and where each switch lives.
-
 ## Student Course Enrollment
 
 <Image src={studentEnrollment} alt="Student course enrollment section" size={ImageSize.large} caption="Student enrollment" />
@@ -184,3 +162,24 @@ decides how much it gives away.
 See [Iris](/instructor/communication-support/iris) for those settings, and
 [Iris for students](/student/learning-content/iris) for what a student meets — including the choice each student
 makes for themselves about whether to use AI at all.
+
+## AI-Assisted Feedback
+
+Athena's AI feedback is not on this form either. Its two switches sit in the **Athena AI Feedback** panel on the
+course overview, next to Iris, and each takes effect as soon as you set it — there is nothing to save. The panel
+appears only where an administrator has configured Athena for the instance. The general step of the course onboarding
+wizard offers the same two switches.
+
+**Formative feedback requests** lets students ask Athena for preliminary feedback on a draft *before* the due date. It
+is feedback to learn from rather than a mark, and it does not replace the assessment that follows. With it off,
+students in the course no longer see the button to request AI feedback.
+
+**Grading feedback suggestions** offers Athena's suggestions to tutors while they mark submissions. A suggestion is a
+starting point a person accepts, edits or ignores; nothing reaches a student without a reviewer submitting it. For
+programming and text exercises, turning it on or off also starts or stops Athena's processing of the submissions at
+each exercise's due date.
+
+Both switches cover text, modeling and programming exercises, but a programming exercise only where it is assessed
+semi-automatically, with manual assessment enabled alongside the tests. There is no per-exercise switch: every
+exercise in the course follows these two, as far as its type supports them. See
+[AI-Assisted Feedback](/instructor/assessment-grading/ai-feedback) for the details.
