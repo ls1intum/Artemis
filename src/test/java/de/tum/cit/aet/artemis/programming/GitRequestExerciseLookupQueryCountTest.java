@@ -16,17 +16,20 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
  * Pins the number of queries the git request path spends resolving its exercise.
  * <p>
  * Every clone, fetch and push resolves the exercise from the project key in the URL before it can authorize anything,
- * so a secondary select here is one the server pays on every git operation of every student. The lookup is a single
- * query only as long as its entity graph covers every eager association the path reads: the course for the role
- * checks, and for an exam exercise the exercise group, its exam and that exam's course for the date checks. Leaving one
- * out does not avoid reading it, it turns it into an extra round trip - which is what this test would catch.
+ * so a secondary select here is one the server pays on every git operation of every student. Authorization reads a
+ * projection rather than the entity, and the projection has to stay a single query: it joins the course, and for an
+ * exam exercise the exercise group, its exam and that exam's course, but selects only scalars from them. Splitting one
+ * of those joins off does not avoid reading it, it turns it into an extra round trip - which is what these tests catch.
+ * <p>
+ * The entity lookup is pinned alongside it because the ssh path and the build-agent paths still read the exercise, and
+ * are subject to the same rule: a missing eager association becomes a secondary select rather than no read at all.
  */
 class GitRequestExerciseLookupQueryCountTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "gitlookupcount";
 
     /**
-     * One query: the exercise with its submission policy, course, exercise group, exam and the exam's course.
+     * One query, whether the path reads the entity with its eager associations or the projection over the same joins.
      */
     private static final int EXERCISE_LOOKUP_QUERY_COUNT = 1;
 

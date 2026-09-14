@@ -187,26 +187,6 @@ public class ParticipationAuthorizationCheckService {
     }
 
     /**
-     * Determines whether a given programming exercise participation is locked.
-     * A practice mode participation is never locked.
-     * Otherwise, a participation is considered locked if:
-     * <ul>
-     * <li>The due date of the exercise has passed.</li>
-     * <li>The exercise is an exam exercise, and:
-     * <ul>
-     * <li>The associated student exam has already been submitted.</li>
-     * <li>The student exam does not exist (indicating an inconsistency).</li>
-     * </ul>
-     * </li>
-     * <li>A submission policy with a submission limit is active, and the submission count
-     * has reached or exceeded the limit.</li>
-     * </ul>
-     *
-     * @param participation The student participation for the programming exercise.
-     * @param exercise      The programming exercise to check.
-     * @return {@code true} if the participation is locked based on the conditions above; {@code false} otherwise.
-     */
-    /**
      * Whether the participation is locked, for a caller holding a projection of the exercise.
      * <p>
      * The same decision as {@link #isLocked(ProgrammingExerciseStudentParticipation, ProgrammingExercise)}, for the
@@ -249,11 +229,24 @@ public class ParticipationAuthorizationCheckService {
     }
 
     /**
-     * Determines whether the participation is locked, meaning the student can no longer push to its repository.
+     * Determines whether a given programming exercise participation is locked.
+     * A practice mode participation is never locked.
+     * Otherwise, a participation is considered locked if:
+     * <ul>
+     * <li>The due date of the exercise has passed.</li>
+     * <li>The exercise is an exam exercise, and:
+     * <ul>
+     * <li>The associated student exam has already been submitted.</li>
+     * <li>The student exam does not exist (indicating an inconsistency).</li>
+     * </ul>
+     * </li>
+     * <li>A submission policy with a submission limit is active, and the submission count
+     * has reached or exceeded the limit.</li>
+     * </ul>
      *
      * @param participation The student participation for the programming exercise.
      * @param exercise      The programming exercise to check.
-     * @return {@code true} if the participation is locked, {@code false} otherwise.
+     * @return {@code true} if the participation is locked based on the conditions above; {@code false} otherwise.
      */
     public boolean isLocked(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise exercise) {
         if (participation.isPracticeMode()) {

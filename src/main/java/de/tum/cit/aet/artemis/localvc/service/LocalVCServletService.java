@@ -754,7 +754,7 @@ public class LocalVCServletService {
      * Authentication is tried with: 1) user VCS access token, 2) user participation VCS access token 3) password
      *
      * @param authorizationHeader  the authorization header containing authentication credentials
-     * @param exercise             the programming exercise the user is attempting to access
+     * @param exercise             the projected exercise the user is attempting to access
      * @param localVCRepositoryUri the URI of the local version control repository the user is attempting to access
      * @return the authenticated {@link User} if authentication is successful
      * @throws LocalVCAuthException    if an error occurs during authentication with the local version control system
@@ -841,7 +841,7 @@ public class LocalVCServletService {
      *
      * @param user                 the user attempting authentication
      * @param providedToken        the participation VCS access token provided by the user
-     * @param exercise             the programming exercise containing the repository the user tries to access
+     * @param exercise             the projected exercise containing the repository the user tries to access
      * @param localVCRepositoryUri the URI of the local version control repository the user tries to access
      * @return {@code true} if the authentication is successful, {@code false} otherwise
      */
@@ -1082,7 +1082,7 @@ public class LocalVCServletService {
      *
      * @param repositoryTypeOrUserName   the repository type or the user name taken from the repository URI
      * @param user                       the user requesting access
-     * @param exercise                   the programming exercise the repository belongs to
+     * @param exercise                   the projected exercise the repository belongs to
      * @param repositoryActionType       whether the request reads or writes
      * @param localVCRepositoryUri       the URI of the requested repository
      * @param usingSSH                   whether the request arrived over SSH
@@ -1187,9 +1187,9 @@ public class LocalVCServletService {
      * For auxiliary repositories, the check is only performed for users who are at least TA,
      * to avoid an unnecessary database query for students (since loading auxiliary repositories requires a DB call).
      * If a student requests an auxiliary repository, this method returns {@code false} and the check is deferred to
-     * {@link LocalVCServletService#tryToLoadParticipation(boolean, String, LocalVCRepositoryUri, ProgrammingExercise)}.
+     * {@link LocalVCServletService#tryToLoadParticipation(boolean, String, LocalVCRepositoryUri, long, Supplier)}.
      *
-     * @param exerciseId               the id of the exercise the repository belongs to
+     * @param exercise                 the projected exercise the repository belongs to
      * @param repositoryTypeOrUserName the repository type name (e.g. "exercise", "solution", "tests") or the username for student repos
      * @param repositoryActionType     the action to be performed (READ or WRITE)
      * @param user                     the user requesting access
@@ -1428,7 +1428,7 @@ public class LocalVCServletService {
      *
      * @param repositoryTypeOrUserName the repository type or the user name taken from the repository URI
      * @param localVCRepositoryUri     the URI of the requested repository
-     * @param exercise                 the programming exercise the repository belongs to
+     * @param exerciseId               the id of the exercise the repository belongs to
      * @return a supplier that resolves the participation once
      */
     private Supplier<ProgrammingExerciseParticipation> participationResolver(String repositoryTypeOrUserName, LocalVCRepositoryUri localVCRepositoryUri, long exerciseId) {

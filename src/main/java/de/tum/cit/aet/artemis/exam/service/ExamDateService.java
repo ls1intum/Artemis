@@ -100,16 +100,6 @@ public class ExamDateService {
     }
 
     /**
-     * Scalar form of {@link #isIndividualExerciseWorkingPeriodOver(Exam, StudentParticipation)} for callers holding a
-     * projection of the participation rather than the entity.
-     *
-     * @param exam            the exam the exercise belongs to
-     * @param testRun         whether the participation is an instructor test run
-     * @param participantId   the id of the student the participation belongs to
-     * @param participationId the id of the participation, named in the error when no student exam exists
-     * @return true if the working period is over, false otherwise
-     */
-    /**
      * Whether the student's working period is over, for a caller that holds only the exam's id.
      * <p>
      * The git request path authorizes a push against a projection of the exercise, so it never loads the exam. Reading
@@ -126,14 +116,14 @@ public class ExamDateService {
     }
 
     /**
-     * Whether the student's working period for an exam exercise is over, for a caller holding a projection of the
-     * participation.
+     * Scalar form of {@link #isIndividualExerciseWorkingPeriodOver(Exam, StudentParticipation)} for callers holding a
+     * projection of the participation rather than the entity.
      *
      * @param exam            the exam the exercise belongs to
      * @param testRun         whether the participation is an instructor test run
      * @param participantId   the id of the student the participation belongs to
-     * @param participationId the id of the participation
-     * @return true if the working period is over
+     * @param participationId the id of the participation, named in the error when no student exam exists
+     * @return true if the working period is over, false otherwise
      */
     public boolean isIndividualExerciseWorkingPeriodOver(Exam exam, boolean testRun, long participantId, long participationId) {
         if (testRun) {

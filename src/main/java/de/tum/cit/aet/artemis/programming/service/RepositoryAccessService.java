@@ -156,7 +156,30 @@ public class RepositoryAccessService {
             return false;
         }
 
-        return hasWriteOrResetPermissionsForUnlockedParticipation(studentParticipation);
+        return hasWriteOrResetPermissionsForUnlockedParticipation(studentParticipation, exercise);
+    }
+
+    /**
+     * The projection counterpart of {@link #hasWriteOrResetPermissionsForUnlockedParticipation(StudentParticipation)}.
+     * <p>
+     * Reads the due date from the projection rather than from the participation's exercise, so that the git request
+     * path does not reach back into the entity it set out not to load - and, for an exam exercise, does not compute
+     * the working period a second time after {@code isLocked} already has.
+     *
+     * @param studentParticipation the student's participation
+     * @param exercise             the projected exercise
+     * @return true if the user may write to or reset the repository
+     */
+    private boolean hasWriteOrResetPermissionsForUnlockedParticipation(StudentParticipation studentParticipation, GitRepositoryAccessDTO exercise) {
+        boolean beforeDueDate = !exerciseDateService.isAfterDueDate(studentParticipation, exercise);
+
+        // The user has write or reset permissions if the due date has not passed yet.
+        if (beforeDueDate) {
+            return true;
+        }
+
+        // The user has write or reset permissions if due date has passed, but the participation is in practice mode.
+        return studentParticipation.isPracticeMode();
     }
 
     /**
