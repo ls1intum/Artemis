@@ -44,6 +44,8 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
+import de.tum.cit.aet.artemis.exercise.dto.TeamModelingSubmissionUpdateDTO;
+import de.tum.cit.aet.artemis.exercise.dto.TeamTextSubmissionUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
@@ -176,8 +178,7 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
     }
 
     private void sendTextViaWebsocket(long participationId, long submissionId) {
-        TextSubmission payload = ParticipationFactory.generateTextSubmission(UPDATE_TEXT, Language.ENGLISH, true);
-        payload.setId(submissionId);
+        var payload = new TeamTextSubmissionUpdateDTO(submissionId, UPDATE_TEXT, Language.ENGLISH, true, null);
         try {
             participationTeamWebsocketService.updateTextSubmission(participationId, payload, principal("student1"));
         }
@@ -311,8 +312,7 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
         ModelingSubmission other = modelingExerciseUtilService.addModelingSubmission(modelingExercise, ParticipationFactory.generateModelingSubmission(EXISTING_TEXT, true),
                 TEST_PREFIX + "student2");
 
-        ModelingSubmission payload = ParticipationFactory.generateModelingSubmission(UPDATE_TEXT, true);
-        payload.setId(other.getId());
+        var payload = new TeamModelingSubmissionUpdateDTO(other.getId(), UPDATE_TEXT, null, true);
         try {
             participationTeamWebsocketService.updateModelingSubmission(ownParticipation.getId(), payload, principal("student1"));
         }
@@ -424,8 +424,7 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
         clearInvocations(websocketMessagingService);
 
         if (websocket) {
-            TextSubmission payload = ParticipationFactory.generateTextSubmission(UPDATE_TEXT, Language.ENGLISH, true);
-            payload.setId(submissionId);
+            var payload = new TeamTextSubmissionUpdateDTO(submissionId, UPDATE_TEXT, Language.ENGLISH, true, null);
             assertThatExceptionOfType(ResponseStatusException.class)
                     .isThrownBy(() -> participationTeamWebsocketService.updateTextSubmission(participationId, payload, principal("student1")))
                     .satisfies(exception -> assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
@@ -461,8 +460,7 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
         long versionCount = submissionVersionRepository.count();
 
         if (websocket) {
-            ModelingSubmission payload = ParticipationFactory.generateModelingSubmission(UPDATE_TEXT, true);
-            payload.setId(submissionId);
+            var payload = new TeamModelingSubmissionUpdateDTO(submissionId, UPDATE_TEXT, null, true);
             assertThatExceptionOfType(ResponseStatusException.class)
                     .isThrownBy(() -> participationTeamWebsocketService.updateModelingSubmission(participationId, payload, principal("student1")))
                     .satisfies(exception -> assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
