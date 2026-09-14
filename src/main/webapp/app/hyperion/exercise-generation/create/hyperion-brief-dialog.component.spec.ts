@@ -324,6 +324,7 @@ describe('HyperionBriefDialogComponent', () => {
     });
 
     it('deletes only the unused draft and preserves the brief', () => {
+        const deleted = vi.spyOn(component.exerciseDeleted, 'emit');
         startFails();
         const pending = new Subject<HttpResponse<void>>();
         const remove = vi.spyOn(programmingExerciseService, 'delete').mockReturnValue(pending);
@@ -332,7 +333,9 @@ describe('HyperionBriefDialogComponent', () => {
         component.retryStart();
         expect(remove).toHaveBeenCalledExactlyOnceWith(42, false, false);
         expect(generationService.generate).toHaveBeenCalledTimes(1);
+        expect(deleted).not.toHaveBeenCalled();
         pending.next(new HttpResponse<void>({}));
+        expect(deleted).toHaveBeenCalledExactlyOnceWith(42);
         expect(component.createdExercise()).toBeUndefined();
         expect(component.startError()).toBeUndefined();
         expect(component.brief()).toBe(BRIEF);
@@ -340,10 +343,12 @@ describe('HyperionBriefDialogComponent', () => {
     });
 
     it('keeps recovery available when deletion fails', () => {
+        const deleted = vi.spyOn(component.exerciseDeleted, 'emit');
         startFails();
         vi.spyOn(programmingExerciseService, 'delete').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
         component.deleteCreatedExercise();
         expect(component.deleteFailed()).toBe(true);
+        expect(deleted).not.toHaveBeenCalled();
         expect(component.createdExercise()?.id).toBe(42);
         expect(component.busy()).toBe(false);
     });

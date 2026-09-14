@@ -240,6 +240,7 @@
         (groupCreate)="onAddModalGroupCreate()"
         (exportRequested)="openQuizExportDialog()"
         (exerciseCreated)="onGeneratedExerciseCreated($event)"
+        (exerciseDeleted)="onGeneratedExerciseDeleted($event)"
     />
 
     <!-- Declarative modals. Each with a required input is gated by its data signal, so it waits for the data. -->

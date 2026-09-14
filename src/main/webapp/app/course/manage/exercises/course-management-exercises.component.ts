@@ -449,6 +449,13 @@ export class CourseManagementExercisesComponent implements OnInit {
         this.rebuildCards();
     }
 
+    onGeneratedExerciseDeleted(exerciseId: number): void {
+        const exercise = this.exercises().find((candidate) => candidate.id === exerciseId);
+        if (exercise) {
+            this.onExerciseDeleted(exercise);
+        }
+    }
+
     onExerciseDeleted(deleted: Exercise): void {
         // Prune the exercise locally (flat list + its group) so it disappears without a reload.
         this.exercises.set(this.exercises().filter((e) => e.id !== deleted.id));

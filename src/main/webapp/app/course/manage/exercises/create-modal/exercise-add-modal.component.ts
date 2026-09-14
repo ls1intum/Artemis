@@ -83,6 +83,7 @@ export class ExerciseAddModalComponent {
     readonly groupCreate = output<void>();
     readonly exportRequested = output<void>();
     readonly exerciseCreated = output<ProgrammingExercise>();
+    readonly exerciseDeleted = output<number>();
 
     private readonly profileService = inject(ProfileService);
     private readonly featureToggleService = inject(FeatureToggleService);

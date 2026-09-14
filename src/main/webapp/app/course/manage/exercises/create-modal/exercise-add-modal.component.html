@@ -107,5 +107,11 @@
 </tum-ui-dialog>
 
 @if (courseId(); as id) {
-    <jhi-hyperion-brief-dialog [(visible)]="briefDialogVisible" [courseId]="id" (backRequested)="backToGenerationTypes()" (exerciseCreated)="exerciseCreated.emit($event)" />
+    <jhi-hyperion-brief-dialog
+        [(visible)]="briefDialogVisible"
+        [courseId]="id"
+        (backRequested)="backToGenerationTypes()"
+        (exerciseCreated)="exerciseCreated.emit($event)"
+        (exerciseDeleted)="exerciseDeleted.emit($event)"
+    />
 }

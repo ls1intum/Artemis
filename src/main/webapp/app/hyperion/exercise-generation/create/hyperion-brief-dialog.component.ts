@@ -39,6 +39,7 @@ export class HyperionBriefDialogComponent {
     readonly courseId = input.required<number>();
     readonly backRequested = output<void>();
     readonly exerciseCreated = output<ProgrammingExercise>();
+    readonly exerciseDeleted = output<number>();
 
     readonly brief = signal('');
     readonly briefTouched = signal(false);
@@ -181,6 +182,7 @@ export class HyperionBriefDialogComponent {
                     this.deleting.set(false);
                     this.createdExercise.set(undefined);
                     this.startError.set(undefined);
+                    this.exerciseDeleted.emit(exerciseId);
                 },
                 error: () => {
                     this.deleting.set(false);
