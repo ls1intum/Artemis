@@ -34,14 +34,20 @@
                 ></div>
                 @if (citationPopover(); as popover) {
                     <div class="iris-cite-popover" role="tooltip" data-testid="iris-citation-popover" [style.left.px]="popover.left" [style.top.px]="popover.top">
-                        <fa-icon
-                            [icon]="popover.icon"
-                            class="iris-chip-icon flex-shrink-0"
-                            [attr.aria-label]="popover.entityTypeKey ? (popover.entityTypeKey | artemisTranslate) : undefined"
-                        />
-                        <span class="iris-cite-popover-name text-truncate">{{ popover.name }}</span>
-                        @if (popover.meta) {
-                            <span class="iris-chip-meta text-body-secondary">· {{ popover.meta }}</span>
+                        <!-- One line per cited source, so a marker citing several names all of them. -->
+                        @for (entry of popover.entries; track entry.number) {
+                            <div class="iris-cite-popover-entry" [attr.data-testid]="'iris-citation-popover-entry-' + entry.number">
+                                <span class="iris-cite-popover-number">{{ entry.number }}</span>
+                                <fa-icon
+                                    [icon]="entry.icon"
+                                    class="iris-chip-icon flex-shrink-0"
+                                    [attr.aria-label]="entry.entityTypeKey ? (entry.entityTypeKey | artemisTranslate) : undefined"
+                                />
+                                <span class="iris-cite-popover-name text-truncate">{{ entry.name }}</span>
+                                @if (entry.meta) {
+                                    <span class="iris-chip-meta text-body-secondary">· {{ entry.meta }}</span>
+                                }
+                            </div>
                         }
                     </div>
                 }

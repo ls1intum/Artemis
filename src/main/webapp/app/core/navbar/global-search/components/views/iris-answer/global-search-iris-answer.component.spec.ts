@@ -547,7 +547,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             // @ts-expect-error — protected computed
             const view = component.citationView();
             expect(view.html).toContain('<sup class="iris-cite" data-n="1">1</sup>');
-            expect(view.html).toContain('<sup class="iris-cite" data-n="2">2</sup><sup class="iris-cite" data-n="3">3</sup>');
+            expect(view.html).toContain('<sup class="iris-cite" data-n="2 3">2,3</sup>');
             expect([...view.citedNumbers].sort()).toEqual([1, 2, 3]);
         });
 
@@ -594,6 +594,20 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             sup.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
             fixture.detectChanges();
             expect(fixture.nativeElement.querySelector('[data-testid="iris-citation-popover"]')).toBeNull();
+        });
+
+        it('names every source of a run, not just the first', () => {
+            // A marker citing three sources previously previewed only source 1, which left the rest
+            // uninspectable and defeated the purpose of citing them.
+            const sup = injectRenderedCitation('1 2 3');
+            sup.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+            fixture.detectChanges();
+
+            const popover = fixture.nativeElement.querySelector('[data-testid="iris-citation-popover"]');
+            expect(popover.textContent).toContain('Unit 1');
+            expect(popover.textContent).toContain('Unit 2');
+            expect(popover.textContent).toContain('Unit 3');
+            expect(popover.querySelectorAll('.iris-cite-popover-entry')).toHaveLength(3);
         });
 
         it('highlights the passage and its citation chip while hovered', () => {

@@ -207,17 +207,6 @@
     transition: background 120ms ease;
 }
 
-/* Chips of one run read as a group: a comma between neighbours, and only the first is spaced off the text. */
-:host ::ng-deep .iris-cite + .iris-cite {
-    margin-left: 0;
-}
-
-:host ::ng-deep .iris-cite + .iris-cite::before {
-    content: ',';
-    margin-right: 0.1rem;
-    color: var(--bs-primary);
-}
-
 :host ::ng-deep .iris-cite.iris-cite-lit {
     background: color-mix(in srgb, var(--bs-primary) 24%, transparent);
 }
@@ -228,12 +217,28 @@
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--bs-primary) 8%, transparent);
 }
 
-.iris-cite-popover {
-    position: absolute;
-    transform: translate(-50%, calc(-100% - 0.4rem));
+.iris-cite-popover-entry {
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
+    max-width: 100%;
+}
+
+.iris-cite-popover-number {
+    flex-shrink: 0;
+    font-weight: 700;
+    opacity: 0.7;
+}
+
+.iris-cite-popover {
+    position: absolute;
+    transform: translate(-50%, calc(-100% - 0.4rem));
+
+    /* A run cites several sources, so the popover stacks one line per source instead of sitting on one row. */
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
     max-width: 18rem;
     padding: 0.3rem 0.6rem;
     border: 1px solid color-mix(in srgb, var(--bs-primary) 18%, transparent);

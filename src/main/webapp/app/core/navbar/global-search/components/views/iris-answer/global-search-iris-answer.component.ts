@@ -111,8 +111,13 @@ export class GlobalSearchIrisAnswerComponent {
     protected readonly hasCitations = computed(() => this.citationView().citedNumbers.size > 0);
     /** Source numbers currently highlighted, linking answer passages and source chips in both directions. */
     protected readonly activeCitations = signal<ReadonlySet<number>>(new Set());
-    /** Popover state for a hovered inline citation, resolved to display fields at show time. */
-    protected readonly citationPopover = signal<{ left: number; top: number; name: string; meta?: string; icon: IconDefinition; entityTypeKey?: string } | undefined>(undefined);
+    /**
+     * Popover state for a hovered inline citation: one entry per source in the run, so a marker citing several
+     * sources names all of them. Showing only the first left the rest of a run uninspectable.
+     */
+    protected readonly citationPopover = signal<
+        { left: number; top: number; entries: { number: number; name: string; meta?: string; icon: IconDefinition; entityTypeKey?: string }[] } | undefined
+    >(undefined);
     /** Bumped when the lazily-rendered markdown lands, so the highlight effect re-runs over the new DOM. */
     private readonly markdownRenderTick = signal(0);
 
@@ -245,7 +250,7 @@ export class GlobalSearchIrisAnswerComponent {
         }
         const numbers = parseCitationNumbers(chip.dataset.n);
         this.activeCitations.set(new Set(numbers));
-        this.showCitationPopover(chip, numbers[0]);
+        this.showCitationPopover(chip, numbers);
     }
 
     protected onAnswerOut(event: Event): void {
@@ -310,9 +315,9 @@ export class GlobalSearchIrisAnswerComponent {
         }
     }
 
-    private showCitationPopover(chip: HTMLElement, sourceNumber: number | undefined): void {
+    private showCitationPopover(chip: HTMLElement, sourceNumbers: number[]): void {
         const region = chip.closest('.iris-answer-region');
-        if (!sourceNumber || !(region instanceof HTMLElement)) {
+        if (sourceNumbers.length === 0 || !(region instanceof HTMLElement)) {
             this.citationPopover.set(undefined);
             return;
         }
@@ -320,29 +325,31 @@ export class GlobalSearchIrisAnswerComponent {
         const regionRect = region.getBoundingClientRect();
         const left = chipRect.left - regionRect.left + chipRect.width / 2;
         const top = chipRect.top - regionRect.top;
+        const entries = sourceNumbers.map((sourceNumber) => this.popoverEntry(sourceNumber)).filter((entry) => entry !== undefined);
+        this.citationPopover.set(entries.length > 0 ? { left, top, entries } : undefined);
+    }
+
+    /** Resolves one cited source number to the fields the popover renders, whichever kind of source it is. */
+    private popoverEntry(sourceNumber: number): { number: number; name: string; meta?: string; icon: IconDefinition; entityTypeKey?: string } | undefined {
         const lectureSource = this.citedLectureSource(sourceNumber);
         if (lectureSource) {
-            this.citationPopover.set({
-                left,
-                top,
+            return {
+                number: sourceNumber,
                 name: lectureSource.lectureUnit.name,
                 meta: lectureSource.lectureUnit.displayMeta,
                 icon: this.SOURCE_ICONS[lectureSource.lectureUnit.sourceType] ?? this.faFile,
-            });
-            return;
+            };
         }
         const entitySource = this.citedEntitySource(sourceNumber);
         if (entitySource) {
-            this.citationPopover.set({
-                left,
-                top,
+            return {
+                number: sourceNumber,
                 name: entitySource.title ?? '',
                 meta: entitySource.course?.name,
                 icon: this.entityIcon(entitySource),
                 entityTypeKey: this.entityTypeLabelKey(entitySource.entityType),
-            });
-            return;
+            };
         }
-        this.citationPopover.set(undefined);
+        return undefined;
     }
 }

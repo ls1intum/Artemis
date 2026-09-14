@@ -8,17 +8,16 @@ describe('renderCitationMarkers', () => {
         expect([...result.citedNumbers]).toEqual([2]);
     });
 
-    it('gives every source in a run its own chip, so each one can be previewed', () => {
+    it('groups a run of consecutive markers into one chip carrying every source', () => {
         const result = renderCitationMarkers('Composition beats inheritance.[1][3]', 3);
-        expect(result.html).toBe('Composition beats inheritance.<sup class="iris-cite" data-n="1">1</sup><sup class="iris-cite" data-n="3">3</sup>');
+        expect(result.html).toBe('Composition beats inheritance.<sup class="iris-cite" data-n="1 3">1,3</sup>');
         expect([...result.citedNumbers]).toEqual([1, 3]);
     });
 
-    it('carries exactly one source number per chip', () => {
+    it('keeps every source of a run addressable from the one chip', () => {
         const result = renderCitationMarkers('Claim.[2][4][5]', 5);
-        const chips = [...(result.html ?? '').matchAll(/data-n="([^"]+)"/g)].map((match) => match[1]);
-        // A chip naming several sources could only ever preview one of them.
-        expect(chips).toEqual(['2', '4', '5']);
+        // The chip carries all three, which is what lets the popover name each of them.
+        expect(result.html).toBe('Claim.<sup class="iris-cite" data-n="2 4 5">2,4,5</sup>');
     });
 
     it('deduplicates repeated numbers inside a run', () => {
