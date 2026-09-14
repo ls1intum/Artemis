@@ -1216,7 +1216,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      *
      * This is the case if either:
      * <ul>
-     *   <li>a result is being shown — the attempt is over (e.g. just submitted, or viewing an existing practice result), or</li>
+     *   <li>in practice mode, a result is being shown or an existing practice result is opened — the attempt is over, or</li>
      *   <li>the submission has already been marked as submitted by the server, or</li>
      *   <li>the quiz working time has expired and the submission shows evidence of user interaction
      *       (e.g. at least one answer was given, or the submission has already been saved or created)</li>
@@ -1227,7 +1227,8 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      */
     private computeShouldTreatAsSubmittedForUi(hasAnyAnswer: boolean): boolean {
         const hasSavedOrAnswered = hasAnyAnswer || !!this.submission()?.submissionDate || !!this.submission()?.id;
-        return this.viewingExistingPracticeResult() || this.showingResult() || !!this.submission().submitted || (this.remainingTimeSeconds() < 0 && hasSavedOrAnswered);
+        const practiceAttemptOver = this.mode() === 'practice' && (this.viewingExistingPracticeResult() || this.showingResult());
+        return practiceAttemptOver || !!this.submission().submitted || (this.remainingTimeSeconds() < 0 && hasSavedOrAnswered);
     }
 
     /**

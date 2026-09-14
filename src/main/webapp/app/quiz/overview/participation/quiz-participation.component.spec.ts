@@ -549,6 +549,46 @@ describe('QuizParticipationComponent - live mode', () => {
         expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
     });
 
+    describe('shouldTreatAsSubmittedForUi for a finished attempt', () => {
+        beforeEach(() => {
+            component.submission().submitted = false;
+            component.remainingTimeSeconds.set(100);
+            vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
+        });
+
+        it('should be true in practice mode while an existing practice result is opened', () => {
+            component.mode.set('practice');
+            component.viewingExistingPracticeResult.set(true);
+            component.syncSubmitState();
+
+            expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
+        });
+
+        it('should be true in practice mode while a result is shown', () => {
+            component.mode.set('practice');
+            component.showingResult.set(true);
+            component.syncSubmitState();
+
+            expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
+        });
+
+        it('should be false in practice mode for a fresh attempt', () => {
+            component.mode.set('practice');
+            component.syncSubmitState();
+
+            expect(component.shouldTreatAsSubmittedForUi()).toBe(false);
+        });
+
+        it('should not treat a shown result as submitted in live mode', () => {
+            component.mode.set('live');
+            component.showingResult.set(true);
+            component.viewingExistingPracticeResult.set(true);
+            component.syncSubmitState();
+
+            expect(component.shouldTreatAsSubmittedForUi()).toBe(false);
+        });
+    });
+
     it.each([
         ['live', true, false, 0, false, LiveQuizParticipationStatus.NOT_STARTED],
         ['live', false, false, 0, false, LiveQuizParticipationStatus.PARTICIPATING],

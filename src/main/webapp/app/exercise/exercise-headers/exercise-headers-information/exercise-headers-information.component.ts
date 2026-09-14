@@ -169,10 +169,10 @@ export class ExerciseHeadersInformationComponent {
 
     readonly achievedPoints = computed<number>(() => {
         const relevantResult = this.quizPracticeInProgress() ? undefined : this.relevantResult();
-        if (!relevantResult) {
+        if (relevantResult?.score === undefined) {
             return 0;
         }
-        return roundValueSpecifiedByCourseSettings((relevantResult.score! * this.exercise().maxPoints!) / 100, this.resolvedCourse()) ?? 0;
+        return roundValueSpecifiedByCourseSettings((relevantResult.score * this.exercise().maxPoints!) / 100, this.resolvedCourse()) ?? 0;
     });
 
     readonly currentFeedbackRequestCount = computed<number>(
@@ -430,6 +430,8 @@ export class ExerciseHeadersInformationComponent {
     }
 
     getStaticCodeAnalysisItem(): InformationBox {
+        // Unlike the achieved points, which only count rated results, the code issues reflect the latest build whether
+        // it is rated or not, so this falls back to the latest result rather than to relevantResult().
         const issueCount = (this.displayedResult() ?? this.sortedHistoryResults().first())?.codeIssueCount ?? 0;
         return {
             title: 'artemisApp.courseOverview.exerciseDetails.codeIssues',

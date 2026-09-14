@@ -319,6 +319,8 @@ export class ExerciseHeaderActionsComponent {
      * Whether the quiz "Start practice" button should be shown: in the graded view only until the first practice
      * attempt exists, and in the practice view only once the current attempt is finished (to start another). It is
      * hidden while viewing a previous result (where the "Continue" action returns to the latest submission first).
+     * Once a practice attempt exists, a student in the graded view switches to practice mode, which opens the latest
+     * practice result, and starts another attempt from there.
      */
     readonly showQuizStartPracticeButton = computed(() => {
         if (!this.isStartPracticeAvailable() || this.onContinueExercise()) {

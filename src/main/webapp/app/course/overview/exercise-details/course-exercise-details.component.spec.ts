@@ -468,6 +468,41 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.participationMode()).toBe('practice');
     });
 
+    describe('quizSubmitDisabledForMode', () => {
+        const quizComponentMode = signal<string | undefined>(undefined);
+        const quizSubmitDisabled = signal(true);
+
+        beforeEach(() => {
+            quizComponentMode.set(undefined);
+            quizSubmitDisabled.set(true);
+            // The split panel is the routed child; stand in for the two signals the header binding reads.
+            vi.spyOn(comp as unknown as { splitPanel: () => unknown }, 'splitPanel').mockReturnValue({ quizComponentMode, quizSubmitDisabled });
+        });
+
+        it('should pass the quiz submit-disabled state through in graded mode', () => {
+            quizComponentMode.set('live');
+
+            expect(comp.quizSubmitDisabledForMode()).toBe(true);
+        });
+
+        it.each([undefined, 'live'])('should ignore the stale submit-disabled state in practice mode while the quiz component mode is %s', (mode) => {
+            comp.participationMode.set('practice');
+            quizComponentMode.set(mode);
+
+            expect(comp.quizSubmitDisabledForMode()).toBe(false);
+        });
+
+        it('should use the quiz submit-disabled state once the quiz component has switched to practice', () => {
+            comp.participationMode.set('practice');
+            quizComponentMode.set('practice');
+
+            expect(comp.quizSubmitDisabledForMode()).toBe(true);
+
+            quizSubmitDisabled.set(false);
+            expect(comp.quizSubmitDisabledForMode()).toBe(false);
+        });
+    });
+
     it('should replace, not duplicate, a re-emitted submission of an existing participation', () => {
         const participation = { id: 8, testRun: false, submissions: [{ id: 1 }, { id: 2 }] } as StudentParticipation;
         comp.studentParticipations = [participation];

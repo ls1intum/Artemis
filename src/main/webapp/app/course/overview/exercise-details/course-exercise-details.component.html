@@ -10,7 +10,7 @@
             [quizLiveStatus]="participationMode() === 'graded' ? liveQuizStatus() : undefined"
             [onSubmitExercise]="splitPanel()?.canSubmit() ? submitExercise : undefined"
             [onRestartPractice]="restartPractice"
-            [submitDisabled]="participationMode() === 'practice' && splitPanel()?.quizComponentMode() !== 'practice' ? false : (splitPanel()?.quizSubmitDisabled() ?? false)"
+            [submitDisabled]="quizSubmitDisabledForMode()"
             [submitLabel]="splitPanel()?.quizSubmitTitle() ?? 'entity.action.submit'"
             [quizPracticeAttemptFinished]="splitPanel()?.quizPracticeAttemptFinished() ?? false"
             [plagiarismCaseInfo]="plagiarismCaseInfo()"
