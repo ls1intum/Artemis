@@ -280,6 +280,9 @@ describe('Course Management Service', () => {
     it.each([true, false])('should start practice', (useGradedParticipation: boolean) => {
         const participationId = 12345;
         const participationDTO = createProgrammingParticipationDTO(participationId, true);
+        const gradedParticipation = new StudentParticipation();
+        programmingExercise.studentParticipations = [gradedParticipation];
+        const originalReleaseDate = programmingExercise.releaseDate;
         let participation: StudentParticipation | null | undefined;
         vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo);
 
@@ -297,6 +300,8 @@ describe('Course Management Service', () => {
         expect(participation?.testRun).toBe(true);
         expectDateConversionToBeDone(participation!.exercise!);
         expect(participation?.exercise?.studentParticipations?.[0]).toBe(participation);
+        expect(programmingExercise.studentParticipations).toEqual([gradedParticipation]);
+        expect(programmingExercise.releaseDate).toBe(originalReleaseDate);
     });
 
     it('should resume programming exercise', () => {

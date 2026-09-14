@@ -13,6 +13,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { StudentParticipationDTO, fromStudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Injectable({ providedIn: 'root' })
 export class CourseExerciseService {
@@ -141,14 +142,11 @@ export class CourseExerciseService {
      */
     handleParticipation(participation: StudentParticipation, exercise: Exercise): StudentParticipation {
         if (participation) {
-            participation.exercise = exercise;
             // convert date
             participation.initializationDate = convertDateFromServer(participation.initializationDate);
-            if (participation.exercise) {
-                const exercise = participation.exercise;
-                this.convertExerciseDatesFromServer(exercise);
-                exercise.studentParticipations = [participation];
-            }
+            const participationExercise = this.convertExerciseDatesFromServer(deepClone(exercise));
+            participationExercise.studentParticipations = [participation];
+            participation.exercise = participationExercise;
             this.participationWebsocketService.addParticipation(participation);
         }
         return participation;
