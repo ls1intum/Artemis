@@ -698,6 +698,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
                 assertThat(stats.getTutorLeaderboardEntries()).as("Number of tutor leaderboard entries is correct").hasSameSizeAs(tutors);
                 assertThat(stats.getNumberOfOpenComplaints()).as("Number of open complaints should be available to tutor").isNotNull();
                 assertThat(stats.getNumberOfOpenMoreFeedbackRequests()).as("Number of open more feedback requests should be available to tutor").isNotNull();
+                assertThat(stats.getComplaintsEnabled()).as("Complaints enabled flag mirrors the course setting").isEqualTo(course.getComplaintsEnabled());
+                assertThat(stats.getFeedbackRequestEnabled()).as("Feedback request enabled flag mirrors the course setting").isEqualTo(course.getRequestMoreFeedbackEnabled());
                 assertThat(stats.getNumberOfAssessmentLocks()).as("Number of assessment locks are not available for exercises").isNull();
 
                 if (exercise instanceof FileUploadExercise) {

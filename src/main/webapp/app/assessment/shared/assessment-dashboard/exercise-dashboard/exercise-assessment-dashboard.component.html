@@ -149,7 +149,14 @@
                                 <span class="hidden md:inline" jhiTranslate="artemisApp.exerciseAssessmentDashboard.exerciseDetails"></span>
                             </a>
                             @if (complaintsEnabled()) {
-                                <a tumUiButton severity="secondary" size="small" [routerLink]="complaintsLink()" data-testid="exercise-complaints">
+                                <a
+                                    tumUiButton
+                                    severity="secondary"
+                                    size="small"
+                                    [routerLink]="complaintsLink()"
+                                    data-testid="exercise-complaints"
+                                    [attr.aria-label]="'artemisApp.exercise.complaints' | artemisTranslate"
+                                >
                                     <fa-icon [icon]="faFlag" [fixedWidth]="true" />
                                     <span class="hidden md:inline" jhiTranslate="artemisApp.exercise.complaints"></span>
                                 </a>
