@@ -627,9 +627,6 @@ public class DockerSandbox implements InteractiveSandbox {
                     if (errorRef.get() != null) {
                         throw new SandboxUnavailableException("Could not copy files from sandbox session " + sessionId, errorRef.get());
                     }
-                    if (oversized.get()) {
-                        throw new SandboxUnavailableException("Sandbox copy-out archive exceeds the " + MAX_ARCHIVE_BYTES + " byte transfer limit.");
-                    }
                     try (final var inspectCommand = dockerClient.inspectExecCmd(execId)) {
                         exitCode = inspectCommand.exec().getExitCodeLong();
                         if (exitCode == null) {
@@ -649,6 +646,9 @@ public class DockerSandbox implements InteractiveSandbox {
                 }
                 finally {
                     closeQuietly(callback);
+                }
+                if (oversized.get()) {
+                    throw new SandboxUnavailableException("Sandbox copy-out archive exceeds the " + MAX_ARCHIVE_BYTES + " byte transfer limit.");
                 }
                 // A completed read-only archive command can fail for a missing report without invalidating the workspace.
                 if (exitCode != 0) {

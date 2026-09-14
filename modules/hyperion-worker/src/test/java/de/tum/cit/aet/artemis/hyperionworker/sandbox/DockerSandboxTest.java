@@ -304,6 +304,36 @@ class DockerSandboxTest {
     }
 
     @Test
+    void oversizedCopyOutPreservesCompletedReadOnlySession() {
+        ExecCreateCmd create = mock(ExecCreateCmd.class, org.mockito.Mockito.RETURNS_SELF);
+        ExecCreateCmdResponse created = mock(ExecCreateCmdResponse.class);
+        ExecStartCmd start = mock(ExecStartCmd.class, org.mockito.Mockito.RETURNS_SELF);
+        InspectExecCmd inspect = mock(InspectExecCmd.class);
+        InspectExecResponse inspected = mock(InspectExecResponse.class);
+        when(dockerClient.execCreateCmd("container-1")).thenReturn(create);
+        when(create.exec()).thenReturn(created);
+        when(created.getId()).thenReturn("copy-1");
+        when(dockerClient.execStartCmd("copy-1")).thenReturn(start);
+        doAnswer(invocation -> {
+            ResultCallback<Frame> callback = invocation.getArgument(0);
+            callback.onNext(new Frame(StreamType.STDOUT, new byte[40 * 1024 * 1024 + 1]));
+            callback.onComplete();
+            return callback;
+        }).when(start).exec(any());
+        when(dockerClient.inspectExecCmd("copy-1")).thenReturn(inspect);
+        when(inspect.exec()).thenReturn(inspected);
+        when(inspected.getExitCodeLong()).thenReturn(0L);
+        DockerSandbox service = new DockerSandbox(dockerClient,
+                new WorkerSettings("worker-1", IMAGE_ID, "runc", 1024 * 1024 * 1024, 100_000, 128, Duration.ofSeconds(10), Duration.ofSeconds(45), Duration.ofSeconds(5)));
+        service.markActive("container-1");
+
+        assertThatExceptionOfType(SandboxUnavailableException.class).isThrownBy(() -> service.copyOut("container-1", "/missing-report")).withMessageContaining("transfer limit");
+
+        assertThat(service.lastActivity("container-1")).isPresent();
+        verify(dockerClient, org.mockito.Mockito.never()).removeContainerCmd(anyString());
+    }
+
+    @Test
     void execPreservesUtf8CharactersSplitAcrossDockerFrames() {
         byte[] encoded = "compiler says: ä".getBytes(StandardCharsets.UTF_8);
         ExecCreateCmd execCreateCmd = mock(ExecCreateCmd.class);

@@ -95,7 +95,7 @@ public record SpecFidelityReport(@JsonInclude List<Finding> findings) {
 
     /** One spec-fidelity gap: {@code requirement} names it in the instructor's own terms, {@code detail} explains what to do about it. */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record Finding(Kind kind, String requirement, String detail) {
+    public record Finding(Kind kind, @JsonInclude String requirement, @JsonInclude String detail) {
 
         @JsonIgnore
         public boolean isBlocking() {

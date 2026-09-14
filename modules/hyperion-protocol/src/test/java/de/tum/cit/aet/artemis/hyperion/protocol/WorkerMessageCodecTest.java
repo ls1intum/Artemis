@@ -50,6 +50,20 @@ class WorkerMessageCodecTest {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = { "standard", "" })
+    @NullSource
+    void outcomeRoundTripPreservesEmptyNestedDiagnostics(String effortProfile) {
+        var id = identity();
+        var output = new GenerationOutput(new WorkspaceSnapshot(List.of()),
+                new VerificationResult(false, false, false, 0, List.of("No verified candidate"), List.of(new VerificationResult.TestFailureEvidence("", ""))), null,
+                new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, "", ""))), "RUN_FAILED", null,
+                GenerationOutput.AccountingState.INCOMPLETE, effortProfile);
+        var event = new WorkerEvent(WorkerCommand.PROTOCOL_VERSION, id.workerId(), id.workerIncarnation(), 1, Instant.now(), WorkerEvent.Type.FINISHED, id, false, IMAGE, null,
+                null, output);
+        assertThat(codec.decodeEvent(codec.encode(event))).isEqualTo(event);
+    }
+
+    @ParameterizedTest
     @ValueSource(booleans = { false, true })
     void heartbeatRoundTripPreservesIdleAndOccupiedCapacity(boolean occupied) {
         var id = identity();

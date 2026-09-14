@@ -29,6 +29,6 @@ public record VerificationResult(boolean mechanicallyVerified, boolean solutionP
 
     /** A template failure location and diagnostic, not executable instructions. */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TestFailureEvidence(String testName, String message) {
+    public record TestFailureEvidence(@JsonInclude String testName, @JsonInclude String message) {
     }
 }
