@@ -8,7 +8,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
-import { of, throwError } from 'rxjs';
+import { Subject, firstValueFrom, of, throwError } from 'rxjs';
 import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared-ui/export/export-constants';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,6 +18,10 @@ import * as csvUtils from 'app/shared-ui/user-import/util/write-users-to-csv';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { MockProvider } from 'ng-mocks';
 import { TableLazyLoadEvent } from 'primeng/table';
+import { TableViewComponent } from 'app/shared-ui/table-view/table-view';
+import { CourseRoleMember } from 'app/course/shared/course-group/course-role-member.model';
+import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
+import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 
 describe('CourseGroupComponent', () => {
     let comp: CourseGroupComponent;
@@ -73,21 +77,6 @@ describe('CourseGroupComponent', () => {
         expect(comp).not.toBeNull();
     });
 
-    describe('exportFileName', () => {
-        it('should derive the export filename from the role slug and course title', () => {
-            fixture.detectChanges();
-            expect(comp.exportFileName()).toBe('Students Course Title');
-        });
-
-        it('should return empty string when course has no title', () => {
-            const courseWithoutTitle = deepClone(course);
-            courseWithoutTitle.title = undefined;
-            fixture.componentRef.setInput('course', courseWithoutTitle);
-            fixture.detectChanges();
-            expect(comp.exportFileName()).toBe('');
-        });
-    });
-
     describe('columns', () => {
         it('should define columns for login, registration number, name, email, and profile picture', () => {
             fixture.detectChanges();
@@ -138,6 +127,19 @@ describe('CourseGroupComponent', () => {
             expect(comp.isLoading()).toBe(false);
         });
 
+        it('should clear stale rows and totalRows on error, so a failed load after a role switch does not keep showing the previous role under the new heading', () => {
+            const getPagedSpy = vi.spyOn(courseManagementService, 'getPagedUsersInCourseRole');
+            getPagedSpy.mockReturnValueOnce(of({ content: [user1, user2], totalElements: 2 }));
+            comp.onLazyLoad(mockLazyEvent);
+            expect(comp.rows()).toEqual([user1, user2]);
+
+            getPagedSpy.mockReturnValueOnce(throwError(() => new Error('Network error')));
+            comp.onLazyLoad(mockLazyEvent);
+
+            expect(comp.rows()).toEqual([]);
+            expect(comp.totalRows()).toBe(0);
+        });
+
         it('should not call API when course id is missing', () => {
             const courseWithoutId = deepClone(course);
             courseWithoutId.id = undefined;
@@ -170,9 +172,22 @@ describe('CourseGroupComponent', () => {
     });
 
     describe('role change (route reused across role tabs)', () => {
+        // Uses the real TableViewComponent so reset()'s internal signal reads are part of the test.
+        function createRealTableView(): TableViewComponent<CourseRoleMember> {
+            const tableViewFixture = TestBed.createComponent(TableViewComponent<CourseRoleMember>);
+            const tableView = tableViewFixture.componentInstance;
+            tableViewFixture.componentRef.setInput('cols', []);
+            tableViewFixture.componentRef.setInput('vals', []);
+            const mockTable = { first: 0, filters: {}, sortField: undefined, sortOrder: undefined };
+            vi.spyOn(tableView, 'dt').mockReturnValue(mockTable as any);
+            tableViewFixture.detectChanges();
+            (comp as any).tableViewRef = () => tableView;
+            return tableView;
+        }
+
         it('should not reset the table on the initial render', () => {
-            const resetSpy = vi.fn();
-            (comp as any).tableViewRef = () => ({ reset: resetSpy });
+            const tableView = createRealTableView();
+            const resetSpy = vi.spyOn(tableView, 'reset');
 
             fixture.detectChanges();
 
@@ -182,8 +197,9 @@ describe('CourseGroupComponent', () => {
         it('should reset the table and refetch data for the new role when courseRoleSlug changes', () => {
             const mockResult = { content: [user1], totalElements: 1 };
             const getPagedSpy = vi.spyOn(courseManagementService, 'getPagedUsersInCourseRole').mockReturnValue(of(mockResult));
-            // Simulate what TableViewComponent.reset() does in the real template: fire a fresh page-0 lazy load.
-            (comp as any).tableViewRef = () => ({ reset: () => comp.onLazyLoad(mockLazyEvent) });
+            const tableView = createRealTableView();
+            // mirrors the template's (onLazyLoad) binding
+            tableView.onLazyLoad.subscribe((event) => comp.onLazyLoad(event));
 
             fixture.detectChanges();
             expect(getPagedSpy).not.toHaveBeenCalled();
@@ -192,6 +208,25 @@ describe('CourseGroupComponent', () => {
             fixture.detectChanges();
 
             expect(getPagedSpy).toHaveBeenCalledExactlyOnceWith(123, CourseRoleSlug.TUTORS, expect.any(Object));
+        });
+
+        it('should not reset the table again when only the page size changes after a role switch', () => {
+            const tableView = createRealTableView();
+            tableView.onLazyLoad.subscribe((event) => comp.onLazyLoad(event));
+
+            const mockResult = { content: [user1], totalElements: 1 };
+            const getPagedSpy = vi.spyOn(courseManagementService, 'getPagedUsersInCourseRole').mockReturnValue(of(mockResult));
+
+            fixture.detectChanges();
+            fixture.componentRef.setInput('courseRoleSlug', CourseRoleSlug.TUTORS);
+            fixture.detectChanges(); // role-change effect runs once, calling the real reset()
+            getPagedSpy.mockClear();
+
+            // picking a page size must not re-trigger the role-change effect
+            tableView.pageChange({ first: 0, rows: 10 });
+            fixture.detectChanges();
+
+            expect(getPagedSpy).not.toHaveBeenCalled();
         });
     });
 
@@ -204,6 +239,17 @@ describe('CourseGroupComponent', () => {
             comp.removeFromGroup(user1);
 
             expect(removeFn).toHaveBeenCalledWith(user1.login);
+        });
+
+        it('should not decrement totalMembers below zero', () => {
+            const removeFn = vi.fn().mockReturnValue(of(new HttpResponse<void>()));
+            fixture.componentRef.setInput('removeUserFromGroup', removeFn);
+            fixture.detectChanges();
+            comp.totalMembers.set(0);
+
+            comp.removeFromGroup(user1);
+
+            expect(comp.totalMembers()).toBe(0);
         });
 
         it('should not call removeUserFromGroup when user has no login', () => {
@@ -231,6 +277,40 @@ describe('CourseGroupComponent', () => {
         });
     });
 
+    describe('onUsersRegistered', () => {
+        it('should reload the table without an extra request — registerUsersFn already updated totalMembers locally', () => {
+            const getPagedSpy = vi.spyOn(courseManagementService, 'getPagedUsersInCourseRole');
+            fixture.detectChanges();
+
+            expect(() => comp.onUsersRegistered()).not.toThrow();
+
+            expect(getPagedSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('onImportDone', () => {
+        it('should add the dialog-reported imported count to totalMembers, without an extra request', () => {
+            const getPagedSpy = vi.spyOn(courseManagementService, 'getPagedUsersInCourseRole');
+            fixture.detectChanges();
+            comp.totalMembers.set(5);
+            (comp as any).importDialog = () => ({ numberOfUsersImported: 3 });
+
+            comp.onImportDone();
+
+            expect(comp.totalMembers()).toBe(8);
+            expect(getPagedSpy).not.toHaveBeenCalled();
+        });
+
+        it('should leave totalMembers unchanged when the import dialog is not available', () => {
+            fixture.detectChanges();
+            comp.totalMembers.set(5);
+
+            comp.onImportDone();
+
+            expect(comp.totalMembers()).toBe(5);
+        });
+    });
+
     describe('exportUserInformation', () => {
         it('should call getAllUsersInCourseRole and export CSV with results', () => {
             const userWithDetails = deepClone(user1);
@@ -250,6 +330,20 @@ describe('CourseGroupComponent', () => {
             expect(rows[0][EMAIL_KEY]).toBe('user1@example.com');
             expect(rows[0][REGISTRATION_NUMBER_KEY]).toBe('123456');
             expect(keys).toEqual([NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY]);
+            expect(filename).toBe('Students Course Title');
+        });
+
+        it('should label the CSV with the role active when the export was requested, not the role navigated to while it was in flight', () => {
+            const userWithDetails = deepClone(user1);
+            const responseSubject = new Subject<HttpResponse<User[]>>();
+            vi.spyOn(courseManagementService, 'getAllUsersInCourseRole').mockReturnValue(responseSubject.asObservable());
+            const exportSpy = vi.spyOn(csvUtils, 'exportUserInformationAsCsv').mockImplementation(() => {});
+
+            comp.exportUserInformation();
+            fixture.componentRef.setInput('courseRoleSlug', CourseRoleSlug.TUTORS);
+            responseSubject.next(new HttpResponse({ body: [userWithDetails] }));
+
+            const [, , filename] = exportSpy.mock.calls[0];
             expect(filename).toBe('Students Course Title');
         });
 
@@ -300,6 +394,66 @@ describe('CourseGroupComponent', () => {
             expect(rows[0][NAME_KEY]).toBe('');
             expect(rows[0][EMAIL_KEY]).toBe('');
             expect(rows[0][REGISTRATION_NUMBER_KEY]).toBe('');
+        });
+    });
+
+    describe('registerUsersFn', () => {
+        const userToRegister: UserForRegistration = { id: 1, login: 'user1', name: 'User One', isRegistered: false };
+
+        it('should complete successfully when every user is registered (empty not-found body)', async () => {
+            vi.spyOn(courseManagementService, 'addUsersToCourseRole').mockReturnValue(of(new HttpResponse<StudentDTO[]>({ body: [] })));
+            fixture.detectChanges();
+            comp.totalMembers.set(5);
+
+            await expect(firstValueFrom(comp.registerUsersFn()([userToRegister]))).resolves.toBeUndefined();
+
+            expect(courseManagementService.addUsersToCourseRole).toHaveBeenCalledWith(
+                123,
+                [{ login: 'user1', firstName: '', lastName: '', registrationNumber: '', email: '' }],
+                courseGroup,
+            );
+            expect(comp.totalMembers()).toBe(6);
+        });
+
+        it('should error when nobody was registered, without touching totalMembers', async () => {
+            const notFound: StudentDTO = { login: 'user1', firstName: '', lastName: '', registrationNumber: '', email: '' };
+            vi.spyOn(courseManagementService, 'addUsersToCourseRole').mockReturnValue(of(new HttpResponse<StudentDTO[]>({ body: [notFound] })));
+            const reloadSpy = vi.fn();
+            (comp as any).tableViewRef = () => ({ reload: reloadSpy });
+            fixture.detectChanges();
+            comp.totalMembers.set(5);
+
+            await expect(firstValueFrom(comp.registerUsersFn()([userToRegister]))).rejects.toBeDefined();
+
+            expect(comp.totalMembers()).toBe(5);
+            expect(reloadSpy).not.toHaveBeenCalled();
+        });
+
+        it('should still count and show the users that were registered on a partial failure', async () => {
+            const secondUser: UserForRegistration = { id: 2, login: 'user2', name: 'User Two', isRegistered: false };
+            const notFound: StudentDTO = { login: 'user2', firstName: '', lastName: '', registrationNumber: '', email: '' };
+            vi.spyOn(courseManagementService, 'addUsersToCourseRole').mockReturnValue(of(new HttpResponse<StudentDTO[]>({ body: [notFound] })));
+            const reloadSpy = vi.fn();
+            (comp as any).tableViewRef = () => ({ reload: reloadSpy });
+            fixture.detectChanges();
+            comp.totalMembers.set(5);
+
+            await expect(firstValueFrom(comp.registerUsersFn()([userToRegister, secondUser]))).rejects.toBeDefined();
+
+            // user1 registered, user2 was not found
+            expect(comp.totalMembers()).toBe(6);
+            expect(reloadSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should short-circuit without calling the API when course id is missing', async () => {
+            const courseWithoutId = deepClone(course);
+            courseWithoutId.id = undefined;
+            fixture.componentRef.setInput('course', courseWithoutId);
+            const registerSpy = vi.spyOn(courseManagementService, 'addUsersToCourseRole');
+
+            await expect(firstValueFrom(comp.registerUsersFn()([userToRegister]))).resolves.toBeUndefined();
+
+            expect(registerSpy).not.toHaveBeenCalled();
         });
     });
 });

@@ -373,11 +373,7 @@
             "courseDashboard": "Kurs-Dashboard",
             "instructorDashboard": "Dashboard für Lehrende",
             "courseGroup": {
-                "outOf": "von",
-                "usersPerPage": "{{number}} Nutzer:innen pro Seite",
-                "showAllUsers": "Alle Nutzer:innen anzeigen",
                 "searchForUsers": "Nutzer:innen nach Login oder Namen suchen",
-                "searchNoResults": "Kein:e Nutzer:innen gefunden",
                 "login": "Login",
                 "registrationNumber": "Matrikelnummer",
                 "name": "Name",

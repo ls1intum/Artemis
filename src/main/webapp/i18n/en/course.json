@@ -373,11 +373,7 @@
             "courseDashboard": "Course Dashboard",
             "instructorDashboard": "Instructor Course Dashboard",
             "courseGroup": {
-                "outOf": "out of",
-                "usersPerPage": "{{number}} users per page",
-                "showAllUsers": "Show all users",
                 "searchForUsers": "Search for users by login or name",
-                "searchNoResults": "No users found",
                 "login": "Login",
                 "registrationNumber": "Registration Number",
                 "name": "Name",

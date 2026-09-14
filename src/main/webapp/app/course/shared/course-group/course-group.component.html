@@ -72,6 +72,11 @@
     </button>
 </ng-template>
 
-<jhi-user-registration-modal [titleKey]="'artemisApp.course.courseGroup.addUsers'" [searchFn]="searchUsersFn()" [registerFn]="registerUsersFn()" (registered)="onImportDone()" />
+<jhi-user-registration-modal
+    [titleKey]="'artemisApp.course.courseGroup.addUsers'"
+    [searchFn]="searchUsersFn()"
+    [registerFn]="registerUsersFn()"
+    (registered)="onUsersRegistered()"
+/>
 
 <jhi-users-import-dialog [courseId]="course().id!" [courseRoleSlug]="courseRoleSlug()" [tutorialGroup]="tutorialGroup()" (importCompleted)="onImportDone()" />

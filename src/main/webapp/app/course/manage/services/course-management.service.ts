@@ -651,16 +651,6 @@ export class CourseManagementService implements OnDestroy {
     }
 
     /**
-     * Adds a single user to the course with the given role.
-     * @param courseId - the id of the course
-     * @param courseRoleSlug - the role path segment ('students', 'tutors', 'editors', 'instructors')
-     * @param login - login of the user to be added
-     */
-    addUserToCourseRole(courseId: number, courseRoleSlug: CourseRoleSlug, login: string): Observable<HttpResponse<void>> {
-        return this.http.post<void>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}/${login}`, {}, { observe: 'response' });
-    }
-
-    /**
      * Bulk-adds users to the course with the given role.
      * @param courseId the id of the course
      * @param studentDtos Student DTOs of users to add

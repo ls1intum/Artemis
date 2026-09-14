@@ -3651,12 +3651,16 @@ public class CourseTestService {
     }
 
     private static MultiValueMap<String, String> pagedMembersParams(String page, String pageSize) {
+        return pagedMembersParams(page, pageSize, "");
+    }
+
+    private static MultiValueMap<String, String> pagedMembersParams(String page, String pageSize, String searchTerm) {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("page", page);
         params.add("pageSize", pageSize);
         params.add("sortingOrder", "ASCENDING");
         params.add("sortedColumn", "login");
-        params.add("searchTerm", "");
+        params.add("searchTerm", searchTerm);
         return params;
     }
 
@@ -3692,5 +3696,244 @@ public class CourseTestService {
     public void getPagedUsersInCourseRole_rejectsTooLargePageSize() throws Exception {
         var course = courseUtilService.createEnrolledCourse(userPrefix);
         request.getList("/api/course/courses/" + course.getId() + "/students/paged", HttpStatus.BAD_REQUEST, CourseRoleMemberDTO.class, pagedMembersParams("0", "5000"));
+    }
+
+    /**
+     * Test: a search term matching only the email column (not the login or name) still finds the member.
+     */
+    public void getPagedUsersInCourseRole_searchByEmail_returnsMatchingUser() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        List<CourseRoleMemberDTO> result = request.getList("/api/course/courses/" + course.getId() + "/students/paged", HttpStatus.OK, CourseRoleMemberDTO.class,
+                pagedMembersParams("0", "10", "@test.de"));
+        assertThat(result).extracting(CourseRoleMemberDTO::login).contains(userPrefix + "student1");
+    }
+
+    /**
+     * Test: a search term matching only the registration number column still finds the member.
+     */
+    public void getPagedUsersInCourseRole_searchByRegistrationNumber_returnsMatchingUser() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        userUtilService.setRegistrationNumberOfUserAndSave(userPrefix + "student1", "REG-" + userPrefix);
+        List<CourseRoleMemberDTO> result = request.getList("/api/course/courses/" + course.getId() + "/students/paged", HttpStatus.OK, CourseRoleMemberDTO.class,
+                pagedMembersParams("0", "10", "REG-" + userPrefix));
+        assertThat(result).extracting(CourseRoleMemberDTO::login).containsExactly(userPrefix + "student1");
+    }
+
+    /**
+     * Test: a {@code page}/{@code pageSize} combination whose offset overflows {@code int} is rejected with 400 instead of a 500
+     * from the JPA/Hibernate pagination pipeline.
+     */
+    public void getPagedUsersInCourseRole_rejectsOverflowingOffset() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        request.getList("/api/course/courses/" + course.getId() + "/students/paged", HttpStatus.BAD_REQUEST, CourseRoleMemberDTO.class,
+                pagedMembersParams(String.valueOf(Integer.MAX_VALUE), "200"));
+    }
+
+    /**
+     * Test: a course that does not exist returns 404, even for an admin who would otherwise pass the course-role check
+     * unconditionally and see an empty page instead of an error.
+     */
+    public void getPagedUsersInCourseRole_nonExistentCourse_returnsNotFound() throws Exception {
+        request.getList("/api/course/courses/" + Long.MAX_VALUE + "/students/paged", HttpStatus.NOT_FOUND, CourseRoleMemberDTO.class, pagedMembersParams("0", "10"));
+    }
+
+    /**
+     * Test: a {@code page}/{@code size} combination whose offset overflows {@code int} is rejected with 400 instead of a 500
+     * from the JPA/Hibernate pagination pipeline.
+     */
+    public void searchUsersForCourseRole_rejectsOverflowingOffset() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("searchTerm", userPrefix + "student");
+        params.add("page", String.valueOf(Integer.MAX_VALUE));
+        params.add("size", "200");
+        request.getList("/api/course/courses/" + course.getId() + "/students/users/search", HttpStatus.BAD_REQUEST, UserForRegistrationDTO.class, params);
+    }
+
+    /**
+     * Test: a course that does not exist returns 404, even for an admin who would otherwise pass the course-role check
+     * unconditionally and see global search results instead of an error.
+     */
+    public void searchUsersForCourseRole_nonExistentCourse_returnsNotFound() throws Exception {
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("searchTerm", userPrefix + "student");
+        request.getList("/api/course/courses/" + Long.MAX_VALUE + "/students/users/search", HttpStatus.NOT_FOUND, UserForRegistrationDTO.class, params);
+    }
+
+    /**
+     * Test: a search term matching only the login returns exactly that member.
+     */
+    public void getPagedUsersInCourseRole_searchByLogin_returnsMatchingUser() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        List<CourseRoleMemberDTO> result = request.getList("/api/course/courses/" + course.getId() + "/students/paged", HttpStatus.OK, CourseRoleMemberDTO.class,
+                pagedMembersParams("0", "10", userPrefix + "student1"));
+        assertThat(result).extracting(CourseRoleMemberDTO::login).containsExactly(userPrefix + "student1");
+    }
+
+    /**
+     * Test: a search term matching only the concatenated name (generated test users have firstName/lastName =
+     * login + "First"/"Last", and "First" never appears in the login itself) still finds the member.
+     */
+    public void getPagedUsersInCourseRole_searchByName_returnsMatchingUser() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        List<CourseRoleMemberDTO> result = request.getList("/api/course/courses/" + course.getId() + "/students/paged", HttpStatus.OK, CourseRoleMemberDTO.class,
+                pagedMembersParams("0", "10", userPrefix + "student2First"));
+        assertThat(result).extracting(CourseRoleMemberDTO::login).containsExactly(userPrefix + "student2");
+    }
+
+    /**
+     * Test: {@code sortingOrder=DESCENDING} with {@code sortedColumn=login} returns members in descending login order.
+     */
+    public void getPagedUsersInCourseRole_sortsDescendingByLogin() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        MultiValueMap<String, String> params = pagedMembersParams("0", String.valueOf(NUMBER_OF_STUDENTS));
+        params.set("sortingOrder", "DESCENDING");
+        List<CourseRoleMemberDTO> result = request.getList("/api/course/courses/" + course.getId() + "/students/paged", HttpStatus.OK, CourseRoleMemberDTO.class, params);
+        assertThat(result).extracting(CourseRoleMemberDTO::login).containsExactly(userPrefix + "student8", userPrefix + "student7", userPrefix + "student6",
+                userPrefix + "student5", userPrefix + "student4", userPrefix + "student3", userPrefix + "student2", userPrefix + "student1");
+    }
+
+    /**
+     * Test: sorting by {@code name} orders by the concatenated display name ({@code firstName + ' ' + lastName}) as a
+     * single string, not by ({@code firstName}, {@code lastName}) as separate columns. A tuple sort would put
+     * "Ann"/"Zulu" before "Ann Maria"/"Alpha" (shorter firstName sorts first), but the concatenated strings
+     * "Ann Maria Alpha" and "Ann Zulu" sort the other way around.
+     */
+    public void getPagedUsersInCourseRole_sortsByConcatenatedNameNotTuple() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        setUserName(userPrefix + "student1", "Ann", "Zulu");
+        setUserName(userPrefix + "student2", "Ann Maria", "Alpha");
+
+        MultiValueMap<String, String> params = pagedMembersParams("0", String.valueOf(NUMBER_OF_STUDENTS));
+        params.set("sortedColumn", "name");
+        List<CourseRoleMemberDTO> result = request.getList("/api/course/courses/" + course.getId() + "/students/paged", HttpStatus.OK, CourseRoleMemberDTO.class, params);
+
+        List<String> logins = result.stream().map(CourseRoleMemberDTO::login).toList();
+        assertThat(logins.indexOf(userPrefix + "student2")).as("Ann Maria Alpha should sort before Ann Zulu").isLessThan(logins.indexOf(userPrefix + "student1"));
+    }
+
+    private void setUserName(String login, String firstName, String lastName) {
+        User user = userUtilService.getUserByLogin(login);
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        userRepo.save(user);
+    }
+
+    /**
+     * Test: the returned DTO exposes login, the concatenated name, email, and visible registration number correctly.
+     */
+    public void getPagedUsersInCourseRole_returnsCorrectDtoFields() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        userUtilService.setRegistrationNumberOfUserAndSave(userPrefix + "student1", "REG-" + userPrefix);
+
+        List<CourseRoleMemberDTO> result = request.getList("/api/course/courses/" + course.getId() + "/students/paged", HttpStatus.OK, CourseRoleMemberDTO.class,
+                pagedMembersParams("0", "10", userPrefix + "student1"));
+
+        assertThat(result).hasSize(1);
+        CourseRoleMemberDTO dto = result.getFirst();
+        assertThat(dto.login()).isEqualTo(userPrefix + "student1");
+        assertThat(dto.name()).isEqualTo(userPrefix + "student1First " + userPrefix + "student1Last");
+        assertThat(dto.email()).isEqualTo(userPrefix + "student1@test.de");
+        assertThat(dto.visibleRegistrationNumber()).isEqualTo("REG-" + userPrefix);
+    }
+
+    /**
+     * Test: the response carries an {@code X-Total-Count} header with the total (unfiltered) member count.
+     */
+    public void getPagedUsersInCourseRole_setsTotalCountHeader() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        MvcResult result = request.performMvcRequest(get("/api/course/courses/" + course.getId() + "/students/paged").params(pagedMembersParams("0", "3")))
+                .andExpect(status().isOk()).andReturn();
+        assertThat(result.getResponse().getHeader("X-Total-Count")).isEqualTo(String.valueOf(NUMBER_OF_STUDENTS));
+    }
+
+    /**
+     * Test: page 1 returns a different, non-overlapping slice of members than page 0.
+     */
+    public void getPagedUsersInCourseRole_returnsSecondPage() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        List<CourseRoleMemberDTO> firstPage = request.getList("/api/course/courses/" + course.getId() + "/students/paged", HttpStatus.OK, CourseRoleMemberDTO.class,
+                pagedMembersParams("0", "5"));
+        List<CourseRoleMemberDTO> secondPage = request.getList("/api/course/courses/" + course.getId() + "/students/paged", HttpStatus.OK, CourseRoleMemberDTO.class,
+                pagedMembersParams("1", "5"));
+
+        assertThat(firstPage).hasSize(5);
+        assertThat(secondPage).hasSize(NUMBER_OF_STUDENTS - 5);
+        assertThat(secondPage).extracting(CourseRoleMemberDTO::login).doesNotContainAnyElementsOf(firstPage.stream().map(CourseRoleMemberDTO::login).toList());
+    }
+
+    /**
+     * Test: a non-instructor (tutor or student) receives 403 Forbidden.
+     */
+    public void getPagedUsersInCourseRole_forbiddenForNonInstructor() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        request.getList("/api/course/courses/" + course.getId() + "/students/paged", HttpStatus.FORBIDDEN, CourseRoleMemberDTO.class, pagedMembersParams("0", "10"));
+    }
+
+    /**
+     * Test: an unrecognized course-role slug is rejected with 400 (regression test for the {@code resolveCourseRole} check).
+     */
+    public void getPagedUsersInCourseRole_unknownSlug_returnsBadRequest() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        request.getList("/api/course/courses/" + course.getId() + "/unknownRole/paged", HttpStatus.BAD_REQUEST, CourseRoleMemberDTO.class, pagedMembersParams("0", "10"));
+    }
+
+    /**
+     * Test: a {@code size} of 0 is rejected with 400.
+     */
+    public void searchUsersForCourseRole_rejectsZeroSize() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("searchTerm", userPrefix + "student");
+        params.add("size", "0");
+        request.getList("/api/course/courses/" + course.getId() + "/students/users/search", HttpStatus.BAD_REQUEST, UserForRegistrationDTO.class, params);
+    }
+
+    /**
+     * Test: a {@code size} above the allowed maximum is rejected with 400.
+     */
+    public void searchUsersForCourseRole_rejectsTooLargeSize() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("searchTerm", userPrefix + "student");
+        params.add("size", "201");
+        request.getList("/api/course/courses/" + course.getId() + "/students/users/search", HttpStatus.BAD_REQUEST, UserForRegistrationDTO.class, params);
+    }
+
+    /**
+     * Test: a negative {@code page} is rejected with 400.
+     */
+    public void searchUsersForCourseRole_rejectsNegativePage() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("searchTerm", userPrefix + "student");
+        params.add("page", "-1");
+        request.getList("/api/course/courses/" + course.getId() + "/students/users/search", HttpStatus.BAD_REQUEST, UserForRegistrationDTO.class, params);
+    }
+
+    /**
+     * Test: a search term matching only the email finds the member (this endpoint searches all Artemis users, not
+     * just this course's members).
+     */
+    public void searchUsersForCourseRole_searchByEmail_returnsMatchingUser() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("searchTerm", userPrefix + "student1@test.de");
+        List<UserForRegistrationDTO> result = request.getList("/api/course/courses/" + course.getId() + "/students/users/search", HttpStatus.OK, UserForRegistrationDTO.class,
+                params);
+        assertThat(result).extracting(UserForRegistrationDTO::login).containsExactly(userPrefix + "student1");
+    }
+
+    /**
+     * Test: a search term matching only the registration number finds the member.
+     */
+    public void searchUsersForCourseRole_searchByRegistrationNumber_returnsMatchingUser() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        userUtilService.setRegistrationNumberOfUserAndSave(userPrefix + "student1", "REG-" + userPrefix);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("searchTerm", "REG-" + userPrefix);
+        List<UserForRegistrationDTO> result = request.getList("/api/course/courses/" + course.getId() + "/students/users/search", HttpStatus.OK, UserForRegistrationDTO.class,
+                params);
+        assertThat(result).extracting(UserForRegistrationDTO::login).containsExactly(userPrefix + "student1");
     }
 }

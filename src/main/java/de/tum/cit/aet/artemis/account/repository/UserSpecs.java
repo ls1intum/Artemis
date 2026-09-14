@@ -1,11 +1,15 @@
 package de.tum.cit.aet.artemis.account.repository;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
 
 import org.jspecify.annotations.NonNull;
@@ -20,6 +24,7 @@ import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.DomainObject_;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole_;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 
 /**
  * This class contains possible specifications to query for specified users.
@@ -220,14 +225,14 @@ public class UserSpecs {
     }
 
     /**
-     * Case-insensitive search across {@code login} and the concatenated full name ({@code firstName + ' ' + lastName}).
-     * Returns a no-op predicate when the search term is blank.
+     * Case-insensitive search across {@code login}, {@code email}, {@code registrationNumber}, and the concatenated full name
+     * ({@code firstName + ' ' + lastName}). Returns a no-op predicate when the search term is blank.
      *
      * @param searchTerm the text to search for; may be {@code null} or blank
-     * @return specification matching users whose login or full name contains the search term
+     * @return specification matching users whose login, email, registration number, or full name contains the search term
      */
     @NonNull
-    public static Specification<User> searchByLoginOrFullName(@Nullable String searchTerm) {
+    public static Specification<User> searchByLoginNameEmailOrRegistrationNumber(@Nullable String searchTerm) {
         if (searchTerm == null || searchTerm.isBlank()) {
             return (root, query, cb) -> cb.conjunction();
         }
@@ -235,7 +240,45 @@ public class UserSpecs {
         String pattern = "%" + escaped + "%";
         return (root, query, cb) -> {
             var fullName = cb.lower(cb.concat(cb.concat(cb.coalesce(root.get(User_.FIRST_NAME), ""), " "), cb.coalesce(root.get(User_.LAST_NAME), "")));
-            return cb.or(cb.like(cb.lower(root.get(User_.LOGIN)), pattern, '\\'), cb.like(fullName, pattern, '\\'));
+            return cb.or(cb.like(cb.lower(root.get(User_.LOGIN)), pattern, '\\'), cb.like(fullName, pattern, '\\'),
+                    cb.like(cb.lower(cb.coalesce(root.get(User_.EMAIL), "")), pattern, '\\'),
+                    cb.like(cb.lower(cb.coalesce(root.get(User_.REGISTRATION_NUMBER), "")), pattern, '\\'));
+        };
+    }
+
+    /**
+     * Orders {@code User} results by the given column, applying it as a {@code CriteriaQuery.orderBy()} side effect
+     * (mirrors {@code OrganizationSpecs.orderedForMembers}). {@code "name"} sorts by the concatenated
+     * {@code firstName + ' ' + lastName} expression, not by the two columns as a tuple, since the two orderings can
+     * disagree (e.g. "Ann"/"Zulu" vs "Ann Maria"/"Alpha"). Always adds an {@code id} tiebreaker, and is a no-op for
+     * the count query since ordering there is meaningless.
+     *
+     * @param sortedColumn {@code "login"}, {@code "email"}, {@code "visibleRegistrationNumber"}, or {@code "name"} (default)
+     * @param sortingOrder ascending or descending; {@code null} means ascending
+     * @return specification that sets ORDER BY as a side effect and always returns {@code null} as predicate
+     */
+    @NonNull
+    public static Specification<User> orderByColumn(@Nullable String sortedColumn, @Nullable SortingOrder sortingOrder) {
+        return (root, query, cb) -> {
+            if (query == null || Long.class.equals(query.getResultType())) {
+                return null;
+            }
+            boolean asc = sortingOrder != SortingOrder.DESCENDING;
+            List<Order> orders = new ArrayList<>();
+
+            switch (sortedColumn != null ? sortedColumn : "") {
+                case "login" -> orders.add(asc ? cb.asc(root.get(User_.LOGIN)) : cb.desc(root.get(User_.LOGIN)));
+                case "email" -> orders.add(asc ? cb.asc(root.get(User_.EMAIL)) : cb.desc(root.get(User_.EMAIL)));
+                case "visibleRegistrationNumber" -> orders.add(asc ? cb.asc(root.get(User_.REGISTRATION_NUMBER)) : cb.desc(root.get(User_.REGISTRATION_NUMBER)));
+                default -> {
+                    Expression<String> fullName = cb.concat(cb.concat(cb.coalesce(root.get(User_.FIRST_NAME), ""), " "), cb.coalesce(root.get(User_.LAST_NAME), ""));
+                    orders.add(asc ? cb.asc(fullName) : cb.desc(fullName));
+                }
+            }
+
+            orders.add(cb.asc(root.get(User_.ID)));
+            query.orderBy(orders);
+            return null;
         };
     }
 }

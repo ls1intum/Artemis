@@ -9,7 +9,8 @@ import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getSearchTermS
 import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getWithOrWithoutRegistrationNumberSpecification;
 import static de.tum.cit.aet.artemis.account.repository.UserSpecs.inCourseWithRole;
 import static de.tum.cit.aet.artemis.account.repository.UserSpecs.notSoftDeleted;
-import static de.tum.cit.aet.artemis.account.repository.UserSpecs.searchByLoginOrFullName;
+import static de.tum.cit.aet.artemis.account.repository.UserSpecs.orderByColumn;
+import static de.tum.cit.aet.artemis.account.repository.UserSpecs.searchByLoginNameEmailOrRegistrationNumber;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
@@ -1762,16 +1763,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return page of matching {@link User} entities
      */
     default Page<User> searchUsersInCourseRole(CourseRoleMembersSearchDTO search, long courseId, CourseRole role) {
-        Sort.Direction dir = search.sortingOrder() == SortingOrder.DESCENDING ? Sort.Direction.DESC : Sort.Direction.ASC;
-        Sort sort = switch (search.sortedColumn() != null ? search.sortedColumn() : "") {
-            case "visibleRegistrationNumber" -> Sort.by(dir, "registrationNumber").and(Sort.by("id"));
-            case "login" -> Sort.by(dir, "login").and(Sort.by("id"));
-            case "email" -> Sort.by(dir, "email").and(Sort.by("id"));
-            case "name", "" -> Sort.by(dir, "firstName").and(Sort.by(dir, "lastName")).and(Sort.by("id"));
-            default -> Sort.by(dir, "firstName").and(Sort.by(dir, "lastName")).and(Sort.by("id"));
-        };
-        Pageable pageable = PageRequest.of(search.page(), search.pageSize(), sort);
-        Specification<User> spec = notSoftDeleted().and(inCourseWithRole(courseId, role)).and(searchByLoginOrFullName(search.searchTerm()));
+        // orderByColumn() applies the sort as a query.orderBy() side effect, so the Pageable itself stays unsorted.
+        Pageable pageable = PageRequest.of(search.page(), search.pageSize());
+        Specification<User> spec = notSoftDeleted().and(inCourseWithRole(courseId, role)).and(searchByLoginNameEmailOrRegistrationNumber(search.searchTerm()))
+                .and(orderByColumn(search.sortedColumn(), search.sortingOrder()));
         return findAll(spec, pageable);
     }
 }

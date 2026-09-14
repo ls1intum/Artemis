@@ -240,10 +240,8 @@ public class CourseAccessService {
     @NonNull
     public Page<CourseRoleMemberDTO> getPagedUsersInCourseRole(long courseId, CourseRole role, CourseRoleMembersSearchDTO search) {
         Page<User> page = userRepository.searchUsersInCourseRole(search, courseId, role);
-        List<CourseRoleMemberDTO> members = page.getContent().stream().map(user -> {
-            user.setVisibleRegistrationNumber(user.getRegistrationNumber());
-            return new CourseRoleMemberDTO(user);
-        }).toList();
+        List<CourseRoleMemberDTO> members = page.getContent().stream()
+                .map(user -> new CourseRoleMemberDTO(user.getId(), user.getLogin(), user.getName(), user.getEmail(), user.getRegistrationNumber(), user.getImageUrl())).toList();
         return new PageImpl<>(members, page.getPageable(), page.getTotalElements());
     }
 
@@ -262,7 +260,7 @@ public class CourseAccessService {
         PageRequest pageable = PageRequest.of(page, size);
         Page<User> users = userRepository.searchAllByLoginOrNameOrEmailOrRegistrationNumber(pageable, searchTerm);
         List<Long> userIds = users.getContent().stream().map(User::getId).toList();
-        Set<Long> registeredIds = userIds.isEmpty() ? Set.of() : userCourseRoleRepository.findUserIdsByCourseIdAndRoleAndUserIdIn(courseId, role, userIds);
+        Set<Long> registeredIds = userIds.isEmpty() ? Set.of() : userCourseRoleRepository.findUserIdsByCourse_IdAndRoleAndUser_IdIn(courseId, role, userIds);
         List<UserForRegistrationDTO> dtos = users.getContent().stream().map(
                 u -> new UserForRegistrationDTO(u.getId(), u.getLogin(), u.getName(), u.getEmail(), u.getRegistrationNumber(), u.getImageUrl(), registeredIds.contains(u.getId())))
                 .toList();

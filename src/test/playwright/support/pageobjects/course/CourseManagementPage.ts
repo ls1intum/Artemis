@@ -214,7 +214,7 @@ export class CourseManagementPage {
 
         // Select the exact login (the login cell carries a per-login test id, so artemis_test_user_1
         // is not confused with artemis_test_user_10) and confirm the bulk registration.
-        const userRow = dialog.locator('tbody tr').filter({ has: dialog.getByTestId(`user-registration-login-${credentials.username}`) });
+        const userRow = dialog.locator('tbody tr').filter({ has: this.page.getByTestId(`user-registration-login-${credentials.username}`) });
         await userRow.waitFor({ state: 'visible', timeout: 30_000 });
         await userRow.locator('input[type="checkbox"]').check();
         await dialog.getByTestId('user-registration-confirm-button').click();

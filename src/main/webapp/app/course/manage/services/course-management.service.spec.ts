@@ -494,17 +494,6 @@ describe('Course Management Service', () => {
         req.flush(returnedFromService);
     });
 
-    it('should add user to course group', () => {
-        const user = new User(1, 'name');
-        const courseRoleSlug = CourseRoleSlug.STUDENTS;
-        courseManagementService
-            .addUserToCourseRole(course.id!, courseRoleSlug, user.login!)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual({}));
-        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/${courseRoleSlug}/${user.login}` });
-        req.flush({});
-    });
-
     it('should remove user from course group', () => {
         const user = new User(1, 'name');
         const courseRoleSlug = CourseRoleSlug.STUDENTS;

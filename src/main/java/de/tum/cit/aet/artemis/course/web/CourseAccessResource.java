@@ -548,6 +548,8 @@ public class CourseAccessResource {
     public ResponseEntity<List<CourseRoleMemberDTO>> getPagedUsersInCourseRole(@PathVariable Long courseId, @PathVariable String courseRoleSlug,
             @Valid CourseRoleMembersSearchDTO search) {
         log.debug("REST request to get paged users in course role for course: {}, role: {}", courseId, courseRoleSlug);
+        courseRepository.findByIdElseThrow(courseId);
+        checkPageOffsetElseThrow(search.page(), search.pageSize());
         CourseRole role = resolveCourseRole(courseRoleSlug);
         Page<CourseRoleMemberDTO> page = courseAccessService.getPagedUsersInCourseRole(courseId, role, search);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
@@ -570,10 +572,27 @@ public class CourseAccessResource {
     public ResponseEntity<List<UserForRegistrationDTO>> searchUsersForCourseRole(@PathVariable Long courseId, @PathVariable String courseRoleSlug, @RequestParam String searchTerm,
             @RequestParam(defaultValue = "0") @Min(0) int page, @RequestParam(defaultValue = "10") @Min(1) @Max(200) int size) {
         log.debug("REST request to search users for course {} role {} with term: {}", courseId, courseRoleSlug, searchTerm);
+        courseRepository.findByIdElseThrow(courseId);
+        checkPageOffsetElseThrow(page, size);
         CourseRole role = resolveCourseRole(courseRoleSlug);
         Page<UserForRegistrationDTO> result = courseAccessService.searchUsersForCourseRole(courseId, role, searchTerm, page, size);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), result);
         return new ResponseEntity<>(result.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * Rejects a page/pageSize combination whose offset ({@code page * pageSize}) would exceed {@link Integer#MAX_VALUE}.
+     * {@link PageRequest#of} accepts any non-negative {@code page}, and the resulting offset is later narrowed to an
+     * {@code int} by the JPA/Hibernate query pipeline; an offset beyond that range surfaces as a 500, not a 400.
+     *
+     * @param page     zero-based page index
+     * @param pageSize number of results per page
+     * @throws ResponseStatusException with status 400 (Bad Request) if the offset would overflow
+     */
+    private static void checkPageOffsetElseThrow(int page, int pageSize) {
+        if ((long) page * (long) pageSize > Integer.MAX_VALUE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The requested page is out of range.");
+        }
     }
 
     /**

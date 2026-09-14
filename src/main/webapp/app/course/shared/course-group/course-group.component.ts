@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -62,7 +62,7 @@ export class CourseGroupComponent {
                 isFirstRun = false;
                 return;
             }
-            this.tableViewRef()?.reset();
+            untracked(() => this.tableViewRef()?.reset());
         });
     }
 
@@ -82,15 +82,6 @@ export class CourseGroupComponent {
     /** Unfiltered total — only updated when no search term is active, so the export button stays visible during searches. */
     readonly totalMembers = signal<number>(0);
     readonly isLoading = signal<boolean>(false);
-    /** Export filename derived from the role slug and course title, e.g. "Students My Course". */
-    readonly exportFileName = computed<string>(() => {
-        const slug = this.courseRoleSlug();
-        const courseTitle = this.course()?.title;
-        if (!slug || !courseTitle) {
-            return '';
-        }
-        return slug.charAt(0).toUpperCase() + slug.slice(1) + ' ' + courseTitle;
-    });
 
     /** searchFn passed to the registration modal — searches all Artemis users, marks already-enrolled ones. */
     readonly searchUsersFn = computed(() => {
@@ -105,8 +96,25 @@ export class CourseGroupComponent {
         const slug = this.courseRoleSlug();
         return (users: UserForRegistration[]): Observable<void> => {
             if (!courseId) return of(void 0);
-            const dtos: StudentDTO[] = users.map((u) => ({ login: u.login, firstName: '', lastName: '', registrationNumber: u.registrationNumber ?? '', email: u.email ?? '' }));
-            return this.courseManagementService.addUsersToCourseRole(courseId, dtos, slug).pipe(map(() => void 0));
+            // login is enough to resolve the user server-side; the rest are ignored.
+            const dtos: StudentDTO[] = users.map((u) => ({ login: u.login, firstName: '', lastName: '', registrationNumber: '', email: '' }));
+            return this.courseManagementService.addUsersToCourseRole(courseId, dtos, slug).pipe(
+                map((response) => {
+                    // response.body lists the users that were NOT registered.
+                    const notFoundCount = response.body?.length ?? 0;
+                    const registeredCount = users.length - notFoundCount;
+                    if (registeredCount > 0) {
+                        this.totalMembers.update((n) => n + registeredCount);
+                    }
+                    if (notFoundCount > 0) {
+                        if (registeredCount > 0) {
+                            // must reload here: on error, the modal itself never calls reload().
+                            this.tableViewRef()?.reload();
+                        }
+                        throw new Error('Not all selected users could be registered');
+                    }
+                }),
+            );
         };
     });
 
@@ -171,14 +179,24 @@ export class CourseGroupComponent {
             },
             error: () => {
                 if (generation === this.lazyLoadGeneration) {
+                    // Clear stale rows instead of leaving the previous role's members on screen.
+                    this.rows.set([]);
+                    this.totalRows.set(0);
                     this.isLoading.set(false);
                 }
             },
         });
     }
 
+    /** registerUsersFn() already updated totalMembers, so this only reloads the table. */
+    onUsersRegistered(): void {
+        this.tableViewRef()?.reload();
+    }
+
+    /** numberOfUsersImported() is still valid here — the dialog only resets it on the next open(). */
     onImportDone(): void {
         this.tableViewRef()?.reload();
+        this.totalMembers.update((n) => n + (this.importDialog()?.numberOfUsersImported ?? 0));
     }
 
     openAddUsersModal(): void {
@@ -201,6 +219,7 @@ export class CourseGroupComponent {
                 next: () => {
                     this.dialogErrorSource.next('');
                     this.tableViewRef()?.reload();
+                    this.totalMembers.update((n) => Math.max(0, n - 1));
                 },
                 error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
             });
@@ -216,6 +235,7 @@ export class CourseGroupComponent {
         if (!courseId || !slug) {
             return;
         }
+        const fileName = CourseGroupComponent.buildExportFileName(slug, this.course().title);
         this.courseManagementService.getAllUsersInCourseRole(courseId, slug).subscribe({
             next: (res) => {
                 const users = res.body ?? [];
@@ -228,10 +248,18 @@ export class CourseGroupComponent {
                     [EMAIL_KEY]: user.email?.trim() ?? '',
                     [REGISTRATION_NUMBER_KEY]: user.visibleRegistrationNumber?.trim() ?? '',
                 }));
-                exportUserInformationAsCsv(exportRows, [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY], this.exportFileName());
+                exportUserInformationAsCsv(exportRows, [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY], fileName);
             },
         });
     }
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
+
+    /** Derives the export filename from the role slug and course title, e.g. "Students My Course". */
+    private static buildExportFileName(slug: CourseRoleSlug, courseTitle: string | undefined): string {
+        if (!courseTitle) {
+            return '';
+        }
+        return slug.charAt(0).toUpperCase() + slug.slice(1) + ' ' + courseTitle;
+    }
 }
