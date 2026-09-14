@@ -9,23 +9,25 @@
         no such ceiling and matches the type already used by every other date column in the schema.
 
         MySQL only: on PostgreSQL these columns are "timestamp without time zone", which has no 2038 ceiling and
-        needs no change. The ALTER runs under a UTC session so the UTC values held in the TIMESTAMP columns keep
-        their wall-clock reading once copied into the time-zone-less DATETIME columns; the previous session time
-        zone is restored afterwards. A MySQL MODIFY drops NOT NULL unless it is restated, so creation_date keeps
-        it explicitly.
+        needs no change. The ALTER intentionally runs under the ambient session time zone and does not override it.
+        MySQL renders a TIMESTAMP through the session time zone, and the ALTER writes that session rendering into the
+        time-zone-less DATETIME literal. Artemis then interprets the DATETIME literal through a UTC calendar
+        (Hibernate with hibernate.jdbc.time_zone=UTC), the same calendar it applied to the TIMESTAMP's session
+        rendering, so converting under the session time zone the application uses keeps the application-visible value
+        unchanged. Forcing the session to UTC would instead write the UTC rendering into DATETIME and shift every
+        existing value by the session offset on non-UTC servers. Spring Liquibase uses the application DataSource, so
+        the migration and the runtime share the same session time zone. A MySQL MODIFY drops NOT NULL unless it is
+        restated, so creation_date keeps it explicitly.
     -->
     <changeSet id="20260825000000-1" author="harbeck">
         <preConditions onFail="MARK_RAN">
             <dbms type="mysql"/>
         </preConditions>
         <sql>
-            SET @old_time_zone = @@SESSION.time_zone;
-            SET time_zone = '+00:00';
             ALTER TABLE user_public_ssh_key
                 MODIFY creation_date DATETIME(3) NOT NULL,
                 MODIFY last_used_date DATETIME(3) NULL,
                 MODIFY expiry_date DATETIME(3) NULL;
-            SET time_zone = @old_time_zone;
         </sql>
     </changeSet>
 </databaseChangeLog>
