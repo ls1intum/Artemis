@@ -77,6 +77,8 @@ public class WorkerSupervisor implements AutoCloseable {
 
     private final Map<UUID, WorkerEvent> pendingCheckpoints = new java.util.LinkedHashMap<>();
 
+    private final Map<UUID, WorkerEvent> pendingRejections = new java.util.LinkedHashMap<>();
+
     private boolean draining;
 
     private boolean prepared;
@@ -163,6 +165,10 @@ public class WorkerSupervisor implements AutoCloseable {
         if (!assignment.authoringDeadline().isAfter(Instant.now()) || admitted.containsKey(identity.executionId())) {
             return;
         }
+        if (pendingRejections.size() >= MAX_RECENT_ASSIGNMENTS) {
+            // Do not acknowledge another START when its rejection cannot be retained. The transacted listener must redeliver it.
+            throw new IllegalStateException("Generation rejection delivery backlog is full");
+        }
         if (admitted.size() >= MAX_RECENT_ASSIGNMENTS) {
             // Retire this incarnation rather than forget rejection identities and allow a delayed replay.
             draining = true;
@@ -173,7 +179,8 @@ public class WorkerSupervisor implements AutoCloseable {
         GenerationEngine policy = engine.get();
         if (!ready() || policy == null || identity.slot() >= settings.maxConcurrentGenerations() || occupiedExecutions().stream().anyMatch(id -> id.slot() == identity.slot())
                 || !imageDigest.equals(assignment.imageDigest())) {
-            publishBestEffort(event(WorkerEvent.Type.ERROR, identity, "Generation worker is not available for this assignment.", null, null));
+            pendingRejections.put(identity.executionId(), event(WorkerEvent.Type.ERROR, identity, "Generation worker is not available for this assignment.", null, null));
+            flushPending(pendingRejections);
             return;
         }
         ActiveExecution execution = new ActiveExecution(assignment, nanoTime.getAsLong());
@@ -262,6 +269,7 @@ public class WorkerSupervisor implements AutoCloseable {
     }
 
     private synchronized void flushTerminal() {
+        flushPending(pendingRejections);
         flushPending(pendingCheckpoints);
         if (pendingCheckpoints.isEmpty()) {
             flushPending(pendingTerminals);

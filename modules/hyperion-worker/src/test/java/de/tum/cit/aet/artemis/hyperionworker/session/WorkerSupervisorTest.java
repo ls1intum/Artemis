@@ -32,6 +32,37 @@ class WorkerSupervisorTest {
     private static final String IMAGE = "sha256:" + "a".repeat(64);
 
     @Test
+    void rejectedStartRetriesFailedDeliveryWithoutOccupyingASlot() throws InterruptedException {
+        var events = new LinkedBlockingQueue<WorkerEvent>();
+        AtomicInteger failures = new AtomicInteger();
+        AtomicInteger calls = new AtomicInteger();
+        GenerationEngine engine = (assignment, cancelled, progress, checkpoint) -> {
+            calls.incrementAndGet();
+            return result();
+        };
+        try (var worker = new WorkerSupervisor(settings(), event -> {
+            if (event.type() == WorkerEvent.Type.ERROR && failures.getAndIncrement() == 0) {
+                throw new IllegalStateException("publisher offline");
+            }
+            events.add(event);
+        }, () -> engine, () -> {
+        }, () -> IMAGE, System::nanoTime)) {
+            WorkerCommand valid = start(worker, events);
+            var id = new ExecutionIdentity("rejected", 2, UUID.randomUUID(), valid.identity().workerId(), valid.identity().workerIncarnation(), 1);
+            var a = valid.assignment();
+            var rejected = new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.START, id,
+                    new GenerationAssignment(id, a.brief(), a.parameters(), a.seed(), a.authoringDeadline(), IMAGE));
+            worker.accept(rejected);
+            worker.heartbeat();
+            assertThat(take(events, WorkerEvent.Type.ERROR).identity()).isEqualTo(id);
+            assertThat(take(events, WorkerEvent.Type.HEARTBEAT).capacity().executions()).isEmpty();
+            worker.accept(rejected);
+            assertThat(calls).hasValue(0);
+            assertThat(failures).hasValue(2);
+        }
+    }
+
+    @Test
     void fourSlotsOverlapAndCancellationOnlyCleansItsOwnExecution() throws InterruptedException {
         var events = new LinkedBlockingQueue<WorkerEvent>();
         var entered = new CountDownLatch(4);
