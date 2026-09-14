@@ -2,9 +2,12 @@ package de.tum.cit.aet.artemis.localvc.service.git;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -23,6 +26,10 @@ class DirectoryRepositoryContentSink implements RepositoryContentSink {
 
     private static final Logger log = LoggerFactory.getLogger(DirectoryRepositoryContentSink.class);
 
+    private static final Set<PosixFilePermission> OWNER_READ_WRITE = EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE);
+
+    private static final Set<StandardOpenOption> WRITE_OPTIONS = EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
+
     private final Path root;
 
     DirectoryRepositoryContentSink(Path root) throws IOException {
@@ -34,7 +41,7 @@ class DirectoryRepositoryContentSink implements RepositoryContentSink {
     public OutputStream openFile(String relativePath, int unixMode) throws IOException {
         Path target = resolveSafely(relativePath);
         Files.createDirectories(target.getParent());
-        OutputStream outputStream = Files.newOutputStream(target);
+        OutputStream outputStream = openOwnerOnly(target);
         return new OutputStream() {
 
             @Override
@@ -68,6 +75,34 @@ class DirectoryRepositoryContentSink implements RepositoryContentSink {
     }
 
     /**
+     * Opens the file for writing, owner-only from the instant it exists.
+     *
+     * <p>
+     * Tightening the permissions after the content is written would still leave a window: {@link Files#newOutputStream}
+     * creates the file under the process umask, so on a host with a permissive one the repository is readable by every
+     * other local account for as long as the write takes. Passing the permissions as a creation attribute closes that
+     * window, because the file never exists in a wider mode.
+     *
+     * <p>
+     * A creation attribute only applies when the file is created, so {@link #applyPermissions} still runs on close -
+     * both to add the executable bit and to cover a target that already existed.
+     *
+     * @param target the file to open
+     * @return the stream to write the file content to
+     * @throws IOException if the file cannot be opened
+     */
+    private static OutputStream openOwnerOnly(Path target) throws IOException {
+        try {
+            return Channels.newOutputStream(Files.newByteChannel(target, WRITE_OPTIONS, PosixFilePermissions.asFileAttribute(OWNER_READ_WRITE)));
+        }
+        catch (UnsupportedOperationException e) {
+            // Windows has no POSIX view, so the creation attribute cannot be requested. The content is written either way.
+            log.debug("Could not create {} with owner-only permissions: {}", target, e.getMessage());
+            return Files.newOutputStream(target);
+        }
+    }
+
+    /**
      * Resolves a path from the repository against the target directory, rejecting anything that would escape it. Names
      * come from a git tree, which can hold whatever a pushing client put there, so they are treated as untrusted.
      */
@@ -94,7 +129,7 @@ class DirectoryRepositoryContentSink implements RepositoryContentSink {
      * its ZIP entries, so what a student downloads is unchanged.
      */
     private static void applyPermissions(Path path, int unixMode) {
-        Set<PosixFilePermission> permissions = EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE);
+        Set<PosixFilePermission> permissions = EnumSet.copyOf(OWNER_READ_WRITE);
         if ((unixMode & 0100) != 0) {
             permissions.add(PosixFilePermission.OWNER_EXECUTE);
         }

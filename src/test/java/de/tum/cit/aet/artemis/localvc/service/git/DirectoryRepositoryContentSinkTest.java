@@ -82,6 +82,27 @@ class DirectoryRepositoryContentSinkTest {
     }
 
     /**
+     * Tightening the permissions on close is not enough on its own: between creation and close the file holds real
+     * repository content, and a permissive umask would let any other local account read it for the whole of that
+     * window. Assert the permissions while the stream is still open, which is the only moment that can catch it.
+     */
+    @Test
+    void shouldCreateFilesOwnerOnlyBeforeAnythingIsWrittenToThem() throws IOException {
+        assumeTrue(FileSystems.getDefault().supportedFileAttributeViews().contains("posix"), "POSIX permissions are not supported on this file system");
+
+        Path root = tempDir.resolve("repository");
+        try (DirectoryRepositoryContentSink sink = new DirectoryRepositoryContentSink(root)) {
+            try (OutputStream outputStream = sink.openFile("secret.txt", 0100644)) {
+                outputStream.write("student code".getBytes(StandardCharsets.UTF_8));
+                outputStream.flush();
+
+                assertThat(Files.getPosixFilePermissions(root.resolve("secret.txt"))).as("the file must never exist in a wider mode, not even mid-write")
+                        .containsExactlyInAnyOrder(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE);
+            }
+        }
+    }
+
+    /**
      * The synthetic {@code .git} directory is scaffolded before anything is written into it, and the builder asks for
      * the same directory more than once.
      */
