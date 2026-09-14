@@ -39,9 +39,20 @@ A single class while iterating:
 | An entity or an association            | Caching, entity conventions                         |
 | Anything at all in a large file        | Counted gates                                       |
 | Anything that lowercases or uppercases | Case conversion                                     |
+| Anything that serializes JSON          | Jackson version                                      |
 
 The detail for each, with the reason and the failing rule name, is in `reference/gates.md`. Read
 it rather than guessing; several of these rules forbid something that looks completely reasonable.
+
+**Jackson 2 must not appear in production code.** Artemis serializes with Jackson 3, whose packages are
+`tools.jackson`. Jackson 2 stays on the runtime classpath for third-party libraries that carry their own
+mapper, so a `com.fasterxml.jackson.databind`, `.core`, `.dataformat`, `.datatype`, `.module`, `.jr` or
+`.jaxrs` import still compiles — `testNoJackson2InProductionCode` in `ArchitectureTest` is what rejects it.
+The one exception is `com.fasterxml.jackson.annotation`: `jackson-annotations` never moved to the
+`tools.jackson` group, so `@JsonInclude`, `@JsonProperty` and `@JsonTypeInfo` stay where they are and must
+not be "fixed". Mappers are immutable in Jackson 3 — derive one with `JsonMapper.builder()` or
+`rebuild()`, never `configure()` or `registerModule()` on a built instance — and its exceptions are
+unchecked, so a `catch (IOException)` no longer catches a parse failure.
 
 ## The rules most often broken
 

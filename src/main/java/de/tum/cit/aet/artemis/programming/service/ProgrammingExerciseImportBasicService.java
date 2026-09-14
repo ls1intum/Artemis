@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
@@ -161,7 +161,7 @@ public class ProgrammingExerciseImportBasicService {
             try {
                 newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(newExercise));
             }
-            catch (JsonProcessingException e) {
+            catch (JacksonException e) {
                 throw new BadRequestAlertException("The build plan configuration is invalid", "programmingExercise", "invalidBuildPlanConfiguration");
             }
         }

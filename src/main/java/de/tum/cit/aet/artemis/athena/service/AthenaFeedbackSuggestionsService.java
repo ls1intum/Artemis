@@ -218,9 +218,9 @@ public class AthenaFeedbackSuggestionsService {
     public List<TextFeedbackDTO> getTextFeedbackSuggestions(TextExercise exercise, TextSubmission submission, boolean isGraded, @Nullable User user) throws NetworkingException {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        boolean feedbackEnabled = course != null && course.getAthenaConfig() != null
-                && (isGraded ? course.getAthenaConfig().isGradingFeedbackEnabled() : course.getAthenaConfig().isFormativeFeedbackEnabled());
+        // Through the exercise rather than by hand off the course: those accessors guard with Hibernate.isInitialized,
+        // so they answer without initialising the lazy configuration and without a query per call.
+        boolean feedbackEnabled = isGraded ? exercise.areFeedbackSuggestionsEnabled() : exercise.getAllowFeedbackRequests();
         if (!feedbackEnabled) {
             log.warn("Athena {} feedback is not enabled for course of exercise '{}' (#{}). Returning empty list.", isGraded ? "grading" : "auto", exercise.getTitle(),
                     exercise.getId());
@@ -273,9 +273,9 @@ public class AthenaFeedbackSuggestionsService {
             return List.of();
         }
 
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        boolean feedbackEnabled = course != null && course.getAthenaConfig() != null
-                && (isGraded ? course.getAthenaConfig().isGradingFeedbackEnabled() : course.getAthenaConfig().isFormativeFeedbackEnabled());
+        // Through the exercise rather than by hand off the course: those accessors guard with Hibernate.isInitialized,
+        // so they answer without initialising the lazy configuration and without a query per call.
+        boolean feedbackEnabled = isGraded ? exercise.areFeedbackSuggestionsEnabled() : exercise.getAllowFeedbackRequests();
         if (!feedbackEnabled) {
             log.warn("Athena {} feedback is not enabled for course of exercise '{}' (#{}). Returning empty list.", isGraded ? "grading" : "auto", exercise.getTitle(),
                     exercise.getId());
@@ -312,9 +312,9 @@ public class AthenaFeedbackSuggestionsService {
             throws NetworkingException {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Modeling Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        boolean feedbackEnabled = course != null && course.getAthenaConfig() != null
-                && (isGraded ? course.getAthenaConfig().isGradingFeedbackEnabled() : course.getAthenaConfig().isFormativeFeedbackEnabled());
+        // Through the exercise rather than by hand off the course: those accessors guard with Hibernate.isInitialized,
+        // so they answer without initialising the lazy configuration and without a query per call.
+        boolean feedbackEnabled = isGraded ? exercise.areFeedbackSuggestionsEnabled() : exercise.getAllowFeedbackRequests();
         if (!feedbackEnabled) {
             log.warn("Athena {} feedback is not enabled for course of exercise '{}' (#{}). Returning empty list.", isGraded ? "grading" : "auto", exercise.getTitle(),
                     exercise.getId());

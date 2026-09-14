@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.programming;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackMessageRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
@@ -48,7 +48,7 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
     protected String localVCPassword;
 
     @Autowired
-    protected ObjectMapper objectMapper;
+    protected JsonMapper objectMapper;
 
     @Autowired
     protected TestCaseFeedbackRepository testCaseFeedbackRepository;

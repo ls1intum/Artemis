@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
@@ -130,7 +130,7 @@ public class AutomaticAfterDueDateService {
      * @param programmingExerciseWithBuildConfig the programming exercise with its build configuration
      * @return the computed date or null if the value would not be set
      */
-    public ZonedDateTime computeBuildAndTestDate(ProgrammingExercise programmingExerciseWithBuildConfig) throws JsonProcessingException {
+    public ZonedDateTime computeBuildAndTestDate(ProgrammingExercise programmingExerciseWithBuildConfig) {
         return computeBuildAndTestDate(programmingExerciseWithBuildConfig, null, null, false);
     }
 
@@ -141,7 +141,7 @@ public class AutomaticAfterDueDateService {
      * @param buildAndTestOffset                 the offset to use for the computation (optional). If provided, the date is always recomputed.
      * @return the computed date or null if the value would not be set
      */
-    public ZonedDateTime computeBuildAndTestDate(final ProgrammingExercise programmingExerciseWithBuildConfig, final Duration buildAndTestOffset) throws JsonProcessingException {
+    public ZonedDateTime computeBuildAndTestDate(final ProgrammingExercise programmingExerciseWithBuildConfig, final Duration buildAndTestOffset) {
         return computeBuildAndTestDate(programmingExerciseWithBuildConfig, buildAndTestOffset, null, false);
     }
 
@@ -184,7 +184,7 @@ public class AutomaticAfterDueDateService {
             try {
                 computedBuildAndTestDate = computeBuildAndTestDate(programmingExercise, offset, newLatestEndDate, true);
             }
-            catch (JsonProcessingException e) {
+            catch (JacksonException e) {
                 log.error("Skipping automatic build-and-test date recomputation for programming exercise {} due to invalid build plan configuration in build config {}.",
                         programmingExercise.getId(), programmingExercise.getBuildConfig().getId(), e);
                 continue;
@@ -226,7 +226,7 @@ public class AutomaticAfterDueDateService {
     }
 
     private ZonedDateTime computeBuildAndTestDate(final ProgrammingExercise exerciseWithBuildConfig, final Duration offset, final ZonedDateTime newLatestWithGraceExamEndDate,
-            final boolean forceCompute) throws JsonProcessingException {
+            final boolean forceCompute) {
         final ZonedDateTime dueDate = exerciseWithBuildConfig.isExamExercise() ? newLatestWithGraceExamEndDate == null && examApi.isPresent()
                 ? getLatestExamEndDateWithGrace(examApi.orElseThrow().findByExerciseId(exerciseWithBuildConfig.getId()).orElseThrow())
                 : newLatestWithGraceExamEndDate : exerciseWithBuildConfig.getDueDate();

@@ -12,9 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
@@ -61,7 +61,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
 
     private final LLMTokenUsageService llmTokenUsageService;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final Optional<IrisCitationService> irisCitationService;
 
@@ -72,7 +72,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
      * Use this for chat sessions that can have citations (Course, Lecture, Exercise chats).
      */
     public AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, JsonMapper objectMapper, IrisMessageService irisMessageService,
             IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService,
             Optional<IrisCitationService> irisCitationService, PyrisJobService pyrisJobService) {
         this.irisSessionRepository = irisSessionRepository;
@@ -92,7 +92,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
      * Use this for sessions that don't support citations (e.g., Tutor Suggestions).
      */
     public AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, JsonMapper objectMapper, IrisMessageService irisMessageService,
             IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService,
             PyrisJobService pyrisJobService) {
         this.irisSessionRepository = irisSessionRepository;
@@ -124,7 +124,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             session.setLatestSuggestions(suggestions);
             irisSessionRepository.save(session);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new RuntimeException("Could not update latest suggestions for session " + session.getId(), e);
         }
     }
@@ -332,14 +332,14 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         if (trimmed.startsWith("{")) {
             try {
                 JsonNode jsonNode = objectMapper.readTree(trimmed);
-                if (jsonNode.has("type") && MCQ_CONTENT_TYPES.contains(jsonNode.get("type").asText())) {
+                if (jsonNode.has("type") && MCQ_CONTENT_TYPES.contains(jsonNode.get("type").asString())) {
                     if (isValidMcqNode(jsonNode)) {
                         return List.of(new IrisJsonMessageContent(jsonNode));
                     }
                     return List.of(new IrisTextMessageContent(MALFORMED_MCQ_ERROR_MESSAGE));
                 }
             }
-            catch (JsonProcessingException e) {
+            catch (JacksonException e) {
                 // Not valid JSON as a whole, try mixed content below
             }
         }
@@ -364,7 +364,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
 
             try {
                 JsonNode jsonNode = objectMapper.readTree(jsonCandidate);
-                if (!jsonNode.has("type") || !MCQ_CONTENT_TYPES.contains(jsonNode.get("type").asText())) {
+                if (!jsonNode.has("type") || !MCQ_CONTENT_TYPES.contains(jsonNode.get("type").asString())) {
                     continue;
                 }
                 if (!isValidMcqNode(jsonNode)) {
@@ -383,7 +383,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
                 lastEnd = jsonStart + jsonCandidate.length();
                 foundMcq = true;
             }
-            catch (JsonProcessingException e) {
+            catch (JacksonException e) {
                 // Invalid JSON, skip this match
             }
         }
@@ -456,7 +456,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
      * @return true if the node represents a valid MCQ
      */
     private boolean isValidMcqNode(JsonNode node) {
-        String type = node.has("type") ? node.get("type").asText() : "";
+        String type = node.has("type") ? node.get("type").asString() : "";
 
         if ("mcq-set".equals(type)) {
             JsonNode questions = node.get("questions");
@@ -485,7 +485,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
      */
     private boolean isValidSingleMcqNode(JsonNode node) {
         JsonNode question = node.get("question");
-        if (question == null || !question.isTextual() || question.asText().isBlank()) {
+        if (question == null || !question.isString() || question.asString().isBlank()) {
             return false;
         }
 
@@ -500,7 +500,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             }
             JsonNode text = option.get("text");
             JsonNode correct = option.get("correct");
-            if (text == null || !text.isTextual() || text.asText().isBlank()) {
+            if (text == null || !text.isString() || text.asString().isBlank()) {
                 return false;
             }
             if (correct == null || !correct.isBoolean()) {
@@ -515,7 +515,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         }
 
         JsonNode explanation = node.get("explanation");
-        if (explanation == null || !explanation.isTextual() || explanation.asText().isBlank()) {
+        if (explanation == null || !explanation.isString() || explanation.asString().isBlank()) {
             return false;
         }
 

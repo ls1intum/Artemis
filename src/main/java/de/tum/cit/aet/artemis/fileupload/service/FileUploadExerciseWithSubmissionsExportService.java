@@ -5,8 +5,9 @@ import java.util.List;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
+
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
@@ -22,9 +23,8 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 @Service
 public class FileUploadExerciseWithSubmissionsExportService extends ExerciseWithSubmissionsExportService {
 
-    public FileUploadExerciseWithSubmissionsExportService(FileUploadSubmissionExportService fileUploadSubmissionExportService,
-            MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
-        super(springMvcJacksonConverter, fileUploadSubmissionExportService);
+    public FileUploadExerciseWithSubmissionsExportService(FileUploadSubmissionExportService fileUploadSubmissionExportService, JsonMapper objectMapper) {
+        super(objectMapper, fileUploadSubmissionExportService);
     }
 
     /**

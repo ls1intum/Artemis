@@ -75,6 +75,12 @@ public class ContentExtractionService {
 
     private static final Logger log = LoggerFactory.getLogger(ContentExtractionService.class);
 
+    /** Horizontal whitespace at the end of a line, stripped from extracted content. */
+    private static final Pattern TRAILING_HORIZONTAL_WHITESPACE = Pattern.compile("(?m)[ \\t]+$");
+
+    /** Three or more newlines in a row, collapsed into exactly two. */
+    private static final Pattern NEWLINE_RUN = Pattern.compile("\\n{3,}");
+
     private static final String FLAVOR_STRIP_PROMPT_PATH = "/prompts/atlas/flavor_text_strip_prompt.st";
 
     private final ChatClient chatClient;
@@ -267,9 +273,9 @@ public class ContentExtractionService {
      */
     private String normalizeWhitespace(String text) {
         // Strip trailing horizontal whitespace from every line.
-        String stripped = text.replaceAll("(?m)[ \\t]+$", "");
+        String stripped = TRAILING_HORIZONTAL_WHITESPACE.matcher(text).replaceAll("");
         // Collapse three or more consecutive newlines to exactly two.
-        return stripped.replaceAll("\n{3,}", "\n\n");
+        return NEWLINE_RUN.matcher(stripped).replaceAll("\n\n");
     }
 
     private ExtractedContentDTO extractFromProgrammingExercise(ProgrammingExercise exercise, boolean applyFlavorStrip) {

@@ -109,6 +109,12 @@ public class LocalVCServletService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCServletService.class);
 
+    /** A carriage return or a line feed, replaced so that a logged path cannot forge a second log line. */
+    private static final Pattern LINE_BREAK = Pattern.compile("[\\r\\n]");
+
+    /** The git service suffix of a request path, which is not part of the repository path. */
+    private static final Pattern GIT_SERVICE_SUFFIX = Pattern.compile("/(info/refs|git-(upload|receive)-pack)$");
+
     private final AuthenticationManager authenticationManager;
 
     private final UserRepository userRepository;
@@ -252,7 +258,7 @@ public class LocalVCServletService {
 
         long timeNanoStart = System.nanoTime();
         // Sanitize once for all log statements to prevent CRLF injection
-        String sanitizedPath = repositoryPath.replaceAll("[\\r\\n]", "_");
+        String sanitizedPath = LINE_BREAK.matcher(repositoryPath).replaceAll("_");
 
         // Find the local repository depending on the name.
         Path normalizedBasePath = localVCBasePath.normalize();
@@ -977,7 +983,7 @@ public class LocalVCServletService {
 
     public LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
         String path = request.getRequestURI();
-        String normalizedPath = path.replaceFirst("/(info/refs|git-(upload|receive)-pack)$", "");
+        String normalizedPath = GIT_SERVICE_SUFFIX.matcher(path).replaceFirst("");
         return new LocalVCRepositoryUri(localVCBaseUri, Path.of(normalizedPath));
     }
 

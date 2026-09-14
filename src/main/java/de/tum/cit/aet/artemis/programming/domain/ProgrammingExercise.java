@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import jakarta.persistence.CascadeType;
@@ -70,6 +71,9 @@ public class ProgrammingExercise extends Exercise {
     }
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
+
+    /** A run of whitespace, which a project key may not contain. */
+    private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
 
     @Column(name = "test_repository_url")
     private String testRepositoryUri;
@@ -361,7 +365,7 @@ public class ProgrammingExercise extends Exercise {
 
     public void forceNewProjectKey() {
         Course course = getCourseViaExerciseGroupOrCourseMember();
-        this.projectKey = (course.getShortName() + this.getShortName()).toUpperCase(Locale.ROOT).replaceAll("\\s+", "");
+        this.projectKey = WHITESPACE_RUN.matcher((course.getShortName() + this.getShortName()).toUpperCase(Locale.ROOT)).replaceAll("");
     }
 
     @Override

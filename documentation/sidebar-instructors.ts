@@ -93,6 +93,7 @@ const sidebars: SidebarsConfig = {
                 'communication-support/communication',
                 'communication-support/faq',
                 'communication-support/tutorial-groups',
+                'communication-support/iris',
             ],
         },
         {
@@ -105,6 +106,7 @@ const sidebars: SidebarsConfig = {
             items: [
                 'assessment-grading/assessment',
                 'assessment-grading/grading',
+                'assessment-grading/ai-feedback',
                 'assessment-grading/plagiarism-check',
                 'assessment-grading/deimos',
             ],

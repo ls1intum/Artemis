@@ -18,7 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.model.ToolContext;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
@@ -54,7 +54,7 @@ class OrchestratorReadToolsServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new OrchestratorReadToolsService(new ObjectMapper(), courseCompetencyRepository, exerciseRepository, contentExtractionService);
+        service = new OrchestratorReadToolsService(new JsonMapper(), courseCompetencyRepository, exerciseRepository, contentExtractionService);
         Map<String, Object> ctx = new HashMap<>();
         ctx.put(OrchestratorToolContextKeys.COURSE_ID_KEY, COURSE_ID);
         toolContext = new ToolContext(ctx);

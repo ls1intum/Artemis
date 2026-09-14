@@ -26,6 +26,22 @@ class SentryTracesSampleRateTest {
         return (double) ReflectionTestUtils.invokeMethod(configuration, "getTracesSampleRate");
     }
 
+    private String scrub(String message) {
+        return ReflectionTestUtils.invokeMethod(new SentryConfiguration(), "scrubStringMessage", message);
+    }
+
+    @Test
+    @DisplayName("The user data a message carries is scrubbed")
+    void personalDataIsScrubbed() {
+        // None of this worked: the expression for the User{...} form was invalid ("User{" reads as the start of a
+        // repetition), so every call threw PatternSyntaxException rather than scrubbing anything. It only surfaced
+        // once the expressions were compiled up front instead of on every call.
+        assertThat(scrub("failed for user=barney_young while saving")).doesNotContain("barney_young");
+        assertThat(scrub("rejected User{login=barney_young, id=42} twice")).doesNotContain("barney_young").doesNotContain("42");
+        assertThat(scrub("mail to barney.young@tum.de bounced")).doesNotContain("barney.young@tum.de");
+        assertThat(scrub("nothing personal here")).isEqualTo("nothing personal here");
+    }
+
     @Test
     @DisplayName("A configured rate wins over the environment default")
     void configuredRateWins() {

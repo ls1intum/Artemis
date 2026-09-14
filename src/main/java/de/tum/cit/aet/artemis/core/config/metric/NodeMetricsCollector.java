@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.CacheStats;
 import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.DatabaseMetrics;
@@ -62,10 +62,10 @@ public class NodeMetricsCollector {
 
     private final NodeRegistryService nodeRegistryService;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     public NodeMetricsCollector(ArtemisMetricsEndpoint metricsEndpoint, DistributedDataProvider distributedDataProvider, NodeRegistryService nodeRegistryService,
-            ObjectMapper objectMapper) {
+            JsonMapper objectMapper) {
         this.metricsEndpoint = metricsEndpoint;
         this.distributedDataProvider = distributedDataProvider;
         this.nodeRegistryService = nodeRegistryService;

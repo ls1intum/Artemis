@@ -17,8 +17,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
@@ -61,7 +61,7 @@ public class ProgrammingFeedbackSynthesizerService {
      */
     public static final long SYNTHETIC_ID_STRIDE = Constants.SYNTHETIC_FEEDBACK_ID_STRIDE;
 
-    private static final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private static final JsonMapper objectMapper = JsonObjectMapper.get();
 
     private final TestCaseFeedbackRepository testCaseFeedbackRepository;
 
@@ -314,7 +314,7 @@ public class ProgrammingFeedbackSynthesizerService {
         try {
             view.setDetailTextTruncated(serializeScaIssueWithinFeedbackLimit(source, issueCategory));
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.warn("Could not serialize SCA issue {} of result {} for the client", source.getId(), resultId, e);
             view.setDetailTextTruncated(source.getMessageText());
         }
@@ -327,7 +327,7 @@ public class ProgrammingFeedbackSynthesizerService {
      * cut it in the middle of a string and make every client-side {@code JSON.parse} fail. Find the longest message
      * prefix whose complete serialized issue still fits instead.
      */
-    private String serializeScaIssueWithinFeedbackLimit(ScaFeedback source, String issueCategory) throws JsonProcessingException {
+    private String serializeScaIssueWithinFeedbackLimit(ScaFeedback source, String issueCategory) {
         String message = source.getMessageText();
         StaticCodeAnalysisIssue issue = createScaIssue(source, issueCategory, message, true);
         String serialized = objectMapper.writeValueAsString(issue);

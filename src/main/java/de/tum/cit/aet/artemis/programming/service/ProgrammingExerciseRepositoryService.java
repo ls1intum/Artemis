@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -71,6 +72,12 @@ public class ProgrammingExerciseRepositoryService {
     private static final String APP_NAME_PLACEHOLDER = "${appName}";
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseRepositoryService.class);
+
+    /** Everything that is neither a letter nor a digit, which a package name may not contain. */
+    private static final Pattern NON_PACKAGE_NAME_CHARACTER = Pattern.compile("[^a-zA-Z\\d]");
+
+    /** A space in a repository name, which the Maven artifact id spells as a hyphen. */
+    private static final Pattern SPACE = Pattern.compile(" ");
 
     private final GitService gitService;
 
@@ -829,7 +836,7 @@ public class ProgrammingExerciseRepositoryService {
         final String packageName = programmingExercise.getPackageName();
         // The client already provides a clean package name, but we have to make sure that no one abuses the API for injection.
         // So usually, the name should not change.
-        final String cleanPackageName = packageName.replaceAll("[^a-zA-Z\\d]", "");
+        final String cleanPackageName = NON_PACKAGE_NAME_CHARACTER.matcher(packageName).replaceAll("");
 
         if (ProjectType.PLAIN.equals(programmingExercise.getProjectType())) {
             FileUtil.replaceVariablesInDirectoryName(repositoryLocalPath, PACKAGE_NAME_FOLDER_PLACEHOLDER, cleanPackageName);
@@ -911,8 +918,8 @@ public class ProgrammingExerciseRepositoryService {
      * @return a map of replacements that should be applied
      */
     private static Map<String, String> replacementMapping(String oldRepositoryName, String newRepositoryName, ProgrammingLanguage programmingLanguage) {
-        String oldRepositoryNamePomXml = oldRepositoryName.replaceAll(" ", "-");
-        String newRepositoryNamePomXml = newRepositoryName.replaceAll(" ", "-");
+        String oldRepositoryNamePomXml = SPACE.matcher(oldRepositoryName).replaceAll("-");
+        String newRepositoryNamePomXml = SPACE.matcher(newRepositoryName).replaceAll("-");
 
         Map<String, String> replacements = new HashMap<>();
 
