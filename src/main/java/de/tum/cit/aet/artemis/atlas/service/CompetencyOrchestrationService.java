@@ -16,6 +16,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -109,11 +110,7 @@ public class CompetencyOrchestrationService {
 
     private final ToolCallbackProvider orchestratorPlanningToolCallbackProvider;
 
-    private final ToolCallbackProvider creatorToolCallbackProvider;
-
-    private final ToolCallbackProvider editorToolCallbackProvider;
-
-    private final ToolCallbackProvider assignerToolCallbackProvider;
+    private final ToolCallbackProvider orchestratorDelegationToolCallbackProvider;
 
     private final String deploymentName;
 
@@ -138,11 +135,9 @@ public class CompetencyOrchestrationService {
             @Qualifier("orchestratorTerminalToolCallbackProvider") AtlasToolSurface terminalTools,
             @Qualifier("orchestratorReadToolCallbackProvider") AtlasToolSurface orchestratorReadToolCallbackProvider,
             @Qualifier("orchestratorPlanningToolCallbackProvider") AtlasToolSurface orchestratorPlanningToolCallbackProvider,
-            @Qualifier("creatorToolCallbackProvider") AtlasToolSurface creatorToolCallbackProvider,
-            @Qualifier("editorToolCallbackProvider") AtlasToolSurface editorToolCallbackProvider,
-            @Qualifier("assignerToolCallbackProvider") AtlasToolSurface assignerToolCallbackProvider, Optional<DistributedDataProvider> distributedDataProvider,
-            AtlasOrchestratorProperties properties, ContentChangeAccumulatorService contentChangeAccumulatorService, LLMTokenUsageService llmTokenUsageService,
-            UserRepository userRepository, AtlasMLShortlistService shortlistService) {
+            @Qualifier("orchestratorDelegationToolCallbackProvider") AtlasToolSurface orchestratorDelegationToolCallbackProvider,
+            Optional<DistributedDataProvider> distributedDataProvider, AtlasOrchestratorProperties properties, ContentChangeAccumulatorService contentChangeAccumulatorService,
+            LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, AtlasMLShortlistService shortlistService) {
         this.exerciseRepository = exerciseRepository;
         this.contentExtractionService = contentExtractionService;
         this.orchestratorPlanningToolsService = orchestratorPlanningToolsService;
@@ -151,9 +146,7 @@ public class CompetencyOrchestrationService {
         this.terminalToolCallbackProvider = terminalTools.provider();
         this.orchestratorReadToolCallbackProvider = orchestratorReadToolCallbackProvider.provider();
         this.orchestratorPlanningToolCallbackProvider = orchestratorPlanningToolCallbackProvider.provider();
-        this.creatorToolCallbackProvider = creatorToolCallbackProvider.provider();
-        this.editorToolCallbackProvider = editorToolCallbackProvider.provider();
-        this.assignerToolCallbackProvider = assignerToolCallbackProvider.provider();
+        this.orchestratorDelegationToolCallbackProvider = orchestratorDelegationToolCallbackProvider.provider();
         this.deploymentName = properties.model();
         this.temperature = properties.temperature();
         this.reasoningEffort = properties.reasoningEffort();
@@ -599,12 +592,14 @@ public class CompetencyOrchestrationService {
         Map<String, Object> toolContext = new HashMap<>();
         toolContext.put(OrchestratorToolContextKeys.COURSE_ID_KEY, courseId);
         toolContext.put(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY, new AppliedActionsBuffer(appliedActions));
+        toolContext.put(OrchestratorToolContextKeys.LEARNING_OBJECT_ID_KEY, exerciseId);
+        toolContext.put(OrchestratorToolContextKeys.DELEGATION_COUNT_KEY, new AtomicInteger());
         AtlasToolCallBudget budget = AtlasToolCallBudget.budgetForContext(toolContext);
         ChatResponse chatResponse;
         try {
-            chatResponse = delegationService.delegateOrchestratorRound(systemPrompt, "Plan and execute the competency-management actions required by the listed exercise change.",
-                    options, toolContext, orchestratorReadToolCallbackProvider, orchestratorPlanningToolCallbackProvider, creatorToolCallbackProvider, editorToolCallbackProvider,
-                    assignerToolCallbackProvider, terminalToolCallbackProvider);
+            chatResponse = delegationService.delegateOrchestratorRound(systemPrompt,
+                    "Plan the competency-management work, delegate semantic batches in dependency order, verify the final index, and terminate explicitly.", options, toolContext,
+                    orchestratorReadToolCallbackProvider, orchestratorPlanningToolCallbackProvider, orchestratorDelegationToolCallbackProvider, terminalToolCallbackProvider);
         }
         catch (RuntimeException ex) {
             if (budget.completion() != null) {

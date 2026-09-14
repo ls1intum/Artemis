@@ -52,7 +52,7 @@ class ContentExtractionServiceFlavorStripTest {
     @Test
     void responsesEnabledUsesLunaHighAndNeverFallsBackToSharedChat() {
         var responseClient = org.mockito.Mockito.mock(ChatClient.class, Answers.RETURNS_DEEP_STUBS);
-        var properties = new de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", true, 300, 10, 30000L, 10);
+        var properties = new de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", "gpt-5.6-luna", "high", true, 300, 10, 30000L, 10);
         var selected = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, "gpt-5.6-luna", "high", 1.0, properties,
                 new de.tum.cit.aet.artemis.atlas.config.AtlasResponsesApiConfiguration.AtlasResponsesChatClient(responseClient));
         when(templateService.render(anyString(), any())).thenReturn("system");
@@ -71,7 +71,7 @@ class ContentExtractionServiceFlavorStripTest {
 
     @Test
     void responsesDisabledUsesSharedChatAndPreservesRawFallback() {
-        var properties = new de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", false, 300, 10, 30000L, 10);
+        var properties = new de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", "gpt-5.6-luna", "high", false, 300, 10, 30000L, 10);
         service = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, "gpt-5.6-luna", "high", 1.0, properties, null);
         stubLlm(new FlavorStripEditsDTO(List.of()));
         assertThat(service.stripFlavorText("Keep this.")).isEqualTo("Keep this.");

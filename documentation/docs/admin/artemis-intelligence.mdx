@@ -39,7 +39,7 @@ Conversely, source-level implementation choices such as Artemis Global Search sc
 
 ## Atlas model configuration
 
-Autonomous competency orchestration uses `gpt-5.6-luna` with `xhigh` reasoning. Narrative flavor stripping uses the same model with `high` reasoning. Interactive Atlas chat has its own `artemis.atlas.chat-model` setting.
+Autonomous competency orchestration uses `gpt-5.6-luna` with `xhigh` reasoning. Stateless Creator, Assigner, and Editor workers use the same model with `high` reasoning, as does narrative flavor stripping. Interactive Atlas chat has its own `artemis.atlas.chat-model` setting.
 
 ```yaml
 artemis:
@@ -49,16 +49,18 @@ artemis:
         orchestrator:
             model: gpt-5.6-luna
             reasoning-effort: xhigh
+            worker-model: gpt-5.6-luna
+            worker-reasoning-effort: high
             responses-api-enabled: true
 ```
 
 The Responses adapter uses the credentials, base URL, timeout, proxy, and HTTP customizers configured under `spring.ai.openai`. Configure a provider or gateway that supports `/responses`, the selected model/deployment, reasoning effort, function tools, and encrypted reasoning replay with `store: false`. For OpenAI or an OpenAI-compatible gateway, include `/v1` in the base URL and disable `microsoft-foundry`; for Microsoft Foundry, use the provider-specific configuration described in [Hyperion setup](./hyperion). Verify model/deployment availability on the chosen provider before enabling the feature. These settings do not provision a model deployment.
 
-Responses is enabled by default for orchestration and flavor stripping. Set `artemis.atlas.orchestrator.responses-api-enabled: false` to explicitly route both through the shared Chat Completions client. Choose model/deployment identifiers supported by that endpoint; no automatic transport fallback occurs after an error. Leave `flavor-strip-model` empty to disable stripping. If stripping fails or its selected client is unavailable, Artemis retains the original text.
+Responses is enabled by default for orchestration, its workers, and flavor stripping. Set `artemis.atlas.orchestrator.responses-api-enabled: false` to explicitly route all three through the shared Chat Completions client. Choose model/deployment identifiers supported by that endpoint; no automatic transport fallback occurs after an error. Leave `flavor-strip-model` empty to disable stripping. If stripping fails or its selected client is unavailable, Artemis retains the original text.
 
-Each autonomous run shares a budget of 256 attempted tool callbacks. Reads and failed tool calls consume the budget. The separate write cap is also 256, but the shared budget stops new writes and delegations after callback 224. The remaining callbacks are for verification and completion, and callback 256 is reserved for completion. Nested calls inherit the same budget rather than receiving another allocation.
+Each autonomous run shares a budget of 256 attempted tool callbacks. Reads and failed tool calls consume the budget. The separate write cap is also 256, but the shared budget stops new writes and delegations after callback 224. The remaining callbacks are for verification and completion, and callback 256 is reserved for main-orchestrator completion. Nested calls inherit the same budget rather than receiving another allocation. A separate limit permits at most 16 synchronous worker delegations per run, including failed and no-op dispatches. Workers receive only course-scoped reads, their role-specific mutations, and a one-shot completion tool; they cannot delegate further.
 
-The orchestrator refreshes the competency index after its latest work and finishes with a verified decision and an instructor-facing summary. An incomplete result retains applied changes and reports unresolved work. Budget exhaustion and missing or unverified completion do not automatically replay the run. Instructors can inspect the applied actions before requesting another run. Known usage is retained across Responses rounds; unavailable usage is not recorded as measured zero. Configure the selected model's costs under `artemis.llm.model-costs` for meaningful cost estimates.
+The orchestrator refreshes the competency index after its latest worker delegation and finishes with a verified decision and an instructor-facing summary. An incomplete result retains applied changes and reports unresolved work. Budget exhaustion and missing or unverified completion do not automatically replay the run. Instructors can inspect the applied actions before requesting another run. Known usage is retained across Responses rounds; unavailable usage is not recorded as measured zero. Configure the selected model's costs under `artemis.llm.model-costs` for meaningful cost estimates.
 
 ## Related documentation
 

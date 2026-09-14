@@ -41,6 +41,9 @@ public final class AtlasToolCallBudget {
     /** Tool-context key carrying the budget object through parent and worker rounds. */
     public static final String CONTEXT_KEY = "atlasToolCallBudget";
 
+    /** Context marker distinguishing worker callbacks in the shared audit trail. */
+    public static final String WORKER_CONTEXT_KEY = "atlasBudgetWorker";
+
     /** Maximum number of autonomous tool callbacks in one top-level run. */
     public static final int LIMIT = 256;
 
@@ -368,7 +371,7 @@ public final class AtlasToolCallBudget {
             finally {
                 budget.finish(work, version, verifiedIndex);
                 budget.activity.add(Map.of("tool", toolName, "argumentsSha256", argumentHash(arguments), "outcome", outcome, "role",
-                        context != null && Boolean.TRUE.equals(context.getContext().get("atlasBudgetWorker")) ? "worker" : "orchestrator"));
+                        context != null && Boolean.TRUE.equals(context.getContext().get(WORKER_CONTEXT_KEY)) ? "worker" : "orchestrator"));
             }
         }
     }

@@ -165,7 +165,7 @@ class AtlasResponsesChatModelTest {
         withUsage(last, 20, 3);
         when(responseService.create(any(ResponseCreateParams.class))).thenReturn(first, last);
         var adapter = new AtlasResponsesChatModel(openAIClient, new JsonMapper(), "gpt-5.6-luna");
-        var properties = new de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", true, 300, 10, 30000L, 10);
+        var properties = new de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", "gpt-5.6-luna", "high", true, 300, 10, 30000L, 10);
         var service = new AtlasAgentDelegationService(null, mock(AtlasPromptTemplateService.class), null, new de.tum.cit.aet.artemis.atlas.config.AtlasAgentProperties("chat", 1.0),
                 properties, new de.tum.cit.aet.artemis.atlas.config.AtlasResponsesApiConfiguration.AtlasResponsesChatClient(ChatClient.create(adapter)));
         var read = FunctionToolCallback.<Map<String, Object>, String>builder("listCompetencyIndex", input -> "{}").inputType(Map.class).build();
