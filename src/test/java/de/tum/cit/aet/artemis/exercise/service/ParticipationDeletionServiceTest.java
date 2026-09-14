@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,6 +22,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
@@ -33,6 +36,8 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionT
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class ParticipationDeletionServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
@@ -64,6 +69,9 @@ class ParticipationDeletionServiceTest extends AbstractSpringIntegrationJenkinsL
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
 
     @BeforeEach
     void init() {
@@ -119,6 +127,32 @@ class ParticipationDeletionServiceTest extends AbstractSpringIntegrationJenkinsL
         assertThat(buildLogEntryRepository.findById(studentSavedBuildLogs.getFirst().getId())).isPresent();
         participationDeletionService.deleteResultsAndSubmissionsOfParticipation(studentParticipation.getId(), true);
         assertThat(buildLogEntryRepository.findById(studentSavedBuildLogs.getFirst().getId())).isEmpty();
+    }
+
+    /**
+     * Reproduces the production failure that aborted the reset of course 121: a participation that is already gone by
+     * the time the batch deletion reaches it made {@code findByIdElseThrow} throw, which failed the reset of the whole
+     * exercise and in turn the whole course reset. A participation that no longer exists is the state the deletion
+     * wants, so it has to be a no-op.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteIfExists_isANoOpForAnAlreadyDeletedParticipation() {
+        var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        var textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+        long participationId = participation.getId();
+
+        participationDeletionService.delete(participationId, true);
+        assertThat(studentParticipationRepository.findById(participationId)).isEmpty();
+
+        // The batch deletion works from a set queried before the first delete, so it can reach a participation that
+        // another request already removed. That must not throw.
+        assertThatCode(() -> participationDeletionService.deleteIfExists(participationId)).doesNotThrowAnyException();
+
+        // Deleting a named participation directly stays an error: only the batch path knows that a missing
+        // participation is one it no longer has to delete.
+        assertThatThrownBy(() -> participationDeletionService.delete(participationId, true)).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test

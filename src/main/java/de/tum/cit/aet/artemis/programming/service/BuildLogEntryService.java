@@ -286,13 +286,20 @@ public class BuildLogEntryService {
     }
 
     /**
-     * Delete the build log entries for the given programming submission
+     * Delete the build log entries for the given programming submission.
+     * <p>
+     * The entries own the foreign key, so deleting them by submission id is enough; the submission itself is not
+     * written. It used to be saved here so that the collection's orphan removal cleared the old entries, the same
+     * pattern {@link #saveBuildLogs} already dropped. Saving is a {@code merge} of what is, at both call sites, a
+     * detached submission that is about to be deleted, and {@code Submission.results} cascades {@code ALL}: the
+     * merge therefore reaches results whose rows were already deleted, re-inserts them, and fails the flush with a
+     * {@code TransientPropertyValueException} because the submission they point at is gone as well. Deleting the rows
+     * directly keeps this out of the persistence context entirely.
      *
      * @param programmingSubmission the programming submission for which the build logs should be deleted
      */
     public void deleteBuildLogEntriesForProgrammingSubmission(ProgrammingSubmission programmingSubmission) {
         programmingSubmission.setBuildLogEntries(Set.of());
-        programmingSubmissionRepository.save(programmingSubmission);
         buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
     }
 

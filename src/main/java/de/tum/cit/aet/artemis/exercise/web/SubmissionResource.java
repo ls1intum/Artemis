@@ -127,8 +127,6 @@ public class SubmissionResource {
         for (Result result : results) {
             resultService.deleteResult(result, true);
         }
-        // We have to set the results to an empty list because otherwise clearing the build log entries does not work correctly
-        submission.get().setResults(Set.of());
         if (submission.get() instanceof ProgrammingSubmission programmingSubmission) {
             buildLogEntryService.deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission);
         }

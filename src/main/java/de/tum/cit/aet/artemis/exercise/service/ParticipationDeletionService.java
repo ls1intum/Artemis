@@ -115,7 +115,7 @@ public class ParticipationDeletionService {
         participantScoreRepository.deleteAllByExerciseId(exercise.getId());
 
         for (StudentParticipation participation : participationsToDelete) {
-            delete(participation.getId(), false);
+            deleteIfExists(participation.getId());
         }
 
         // The async ParticipantScoreScheduleService (on the scheduling node) may re-create a participant score
@@ -146,6 +146,29 @@ public class ParticipationDeletionService {
         List<StudentParticipation> participationsToDelete = studentParticipationRepository.findByTeamId(teamId);
         for (StudentParticipation participation : participationsToDelete) {
             delete(participation.getId(), false);
+        }
+    }
+
+    /**
+     * Deletes the participation with the given id, treating a participation that no longer exists as done rather than
+     * as an error.
+     * <p>
+     * Every caller that deletes a batch of participations works from a set queried before the first deletion, and with
+     * open-in-view disabled each repository call below re-reads the participation in its own transaction. A
+     * participation can be gone by the time its turn comes: a student deleted their own participation, the data-privacy
+     * cleanup removed it, or a reset is being retried after an earlier attempt failed halfway through. The state the
+     * caller wants is that the participation no longer exists, and that already holds, so there is nothing left to do.
+     * Letting {@link #delete} throw instead aborted the reset of the whole exercise, and with it the whole course
+     * reset, over a participation nothing was left to do for.
+     *
+     * @param participationId the id of the participation to delete
+     */
+    public void deleteIfExists(long participationId) {
+        try {
+            delete(participationId, false);
+        }
+        catch (EntityNotFoundException e) {
+            log.debug("Participation {} no longer exists, nothing to delete", participationId);
         }
     }
 
@@ -214,10 +237,10 @@ public class ParticipationDeletionService {
         // By removing the participation, the ResultListener will ignore this result instead of scheduling a participant score update
         // This is okay here, because we delete the whole participation (no older results will exist for the score)
         resultsToBeDeleted.forEach(result -> resultService.deleteResult(result, false));
-        // Delete all submissions for this participation
+        // Delete all submissions for this participation. The submissions here are detached (open-in-view is disabled)
+        // and the rows of their results were just deleted above, so nothing may write them back: deleteById re-reads
+        // the submission in its own transaction and cascades the removal from that managed copy.
         submissions.forEach(submission -> {
-            // We have to set the results to an empty list because otherwise clearing the build log entries does not work correctly
-            submission.setResults(Set.of());
             if (submission instanceof ProgrammingSubmission programmingSubmission) {
                 buildLogEntryService.deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission);
             }

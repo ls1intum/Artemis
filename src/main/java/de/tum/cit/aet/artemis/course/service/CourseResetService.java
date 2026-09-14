@@ -204,7 +204,7 @@ public class CourseResetService {
 
         // Per-exercise/exam failures are collected rather than aborting the whole batch at the first bad item; if any
         // occurred, the reset is reported as incomplete at the end so the caller retries it (the reset is idempotent).
-        List<Long> failedItems = new ArrayList<>();
+        List<FailedItem> failedItems = new ArrayList<>();
 
         try {
             progressService.startOperation(courseId, CourseOperationType.RESET, "Resetting exercises", TOTAL_RESET_STEPS);
@@ -290,7 +290,13 @@ public class CourseResetService {
             // If any individual exercise/exam could not be reset, report the reset as incomplete so it is retried
             // (the retry is a no-op for the items that already succeeded) rather than silently marking it done.
             if (!failedItems.isEmpty()) {
-                throw new IllegalStateException("Reset of course " + courseId + " is incomplete; failed to reset exercise/exam id(s): " + failedItems);
+                var incomplete = new IllegalStateException(
+                        "Reset of course " + courseId + " is incomplete; failed to reset exercise/exam id(s): " + failedItems.stream().map(FailedItem::id).toList());
+                // Carry the per-item causes on the exception itself. Without them the only record of why an item failed
+                // is the log line written when it was caught, on whichever node handled the request, which the 500
+                // response and the error reporting never see.
+                failedItems.forEach(failedItem -> incomplete.addSuppressed(failedItem.cause()));
+                throw incomplete;
             }
 
             progressService.completeOperation(courseId, CourseOperationType.RESET, TOTAL_RESET_STEPS, 0, startedAt);
@@ -323,7 +329,7 @@ public class CourseResetService {
      * @return the updated completed weight after resetting all exercises
      */
     private double resetExercisesWithWeightedProgress(long courseId, int stepsCompleted, ZonedDateTime startedAt, double completedWeight, double totalWeight,
-            List<Long> failedItems) {
+            List<FailedItem> failedItems) {
         Set<ExerciseDeletionInfoDTO> exercises = exerciseRepository.findDeletionInfoByCourseId(courseId);
         int totalExercises = exercises.size();
         int processed = 0;
@@ -350,7 +356,7 @@ public class CourseResetService {
             }
             catch (Exception e) {
                 log.error("Failed to reset exercise {} of course {}; continuing with the remaining exercises", exercise.id(), courseId, e);
-                failedItems.add(exercise.id());
+                failedItems.add(new FailedItem(exercise.id(), e));
             }
             completedWeight += exerciseWeight;
             processed++;
@@ -375,7 +381,7 @@ public class CourseResetService {
      * @return the updated completed weight after resetting all exams
      */
     private double resetExamsWithWeightedProgress(long courseId, List<ExamDeletionInfoDTO> examInfoList, int stepsCompleted, ZonedDateTime startedAt, double completedWeight,
-            double totalWeight, List<Long> failedItems) {
+            double totalWeight, List<FailedItem> failedItems) {
         if (examDeletionApi.isEmpty()) {
             return completedWeight;
         }
@@ -395,7 +401,7 @@ public class CourseResetService {
             }
             catch (Exception e) {
                 log.error("Failed to reset exam {} of course {}; continuing with the remaining exams", examInfo.examId(), courseId, e);
-                failedItems.add(examInfo.examId());
+                failedItems.add(new FailedItem(examInfo.examId(), e));
             }
             completedWeight += examWeight;
             processed++;
@@ -499,5 +505,15 @@ public class CourseResetService {
      */
     private void unenrollStudentsTutorsAndEditors(long courseId) {
         userCourseRoleRepository.deleteByCourse_IdAndRoleIn(courseId, List.of(CourseRole.STUDENT, CourseRole.TEACHING_ASSISTANT, CourseRole.EDITOR));
+    }
+
+    /**
+     * An exercise or exam whose reset failed, together with the exception that made it fail. The reset keeps going
+     * after a failed item, so the causes have to be held until the end and reported on the exception the reset throws.
+     *
+     * @param id    the id of the exercise or exam that could not be reset
+     * @param cause the exception that made the reset of that item fail
+     */
+    private record FailedItem(long id, Exception cause) {
     }
 }
