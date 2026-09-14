@@ -3,24 +3,35 @@ package de.tum.cit.aet.artemis.course.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.COURSE_OPERATION_PROGRESS_STATUS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseOperationType;
 import de.tum.cit.aet.artemis.course.dto.CourseOperationProgressDTO;
 
 /**
  * Service for managing and broadcasting course operation progress (delete, reset, archive).
- * Uses Hazelcast distributed cache for storing progress and WebSocket for real-time updates.
+ * Uses a distributed operation claim to prevent conflicting work and WebSocket for real-time progress updates.
  * <p>
  * Progress is tracked using a weighted system where different operations have different
  * costs based on their complexity. The weighted progress provides more accurate ETA
@@ -35,15 +46,30 @@ public class CourseOperationProgressService {
 
     private static final String COURSE_OPERATION_PROGRESS_TOPIC = "/topic/courses/%d/operation-progress";
 
+    private static final String COURSE_OPERATION_CLAIMS = "course-operation-claims";
+
+    private static final Duration COURSE_OPERATION_CLAIM_TIME_TO_LIVE = Duration.ofHours(1);
+
+    private static final Duration COURSE_OPERATION_CLAIM_RENEWAL_INTERVAL = Duration.ofMinutes(5);
+
     private final CacheManager cacheManager;
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    private final DistributedMap<Long, String> operationClaims;
+
+    private final TaskScheduler taskScheduler;
+
+    private final Map<OperationClaim, ScheduledFuture<?>> claimRenewals = new ConcurrentHashMap<>();
+
     private final ReentrantLock progressLock = new ReentrantLock();
 
-    public CourseOperationProgressService(CacheManager cacheManager, WebsocketMessagingService websocketMessagingService) {
+    public CourseOperationProgressService(CacheManager cacheManager, WebsocketMessagingService websocketMessagingService, DistributedDataProvider distributedDataProvider,
+            @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
         this.cacheManager = cacheManager;
         this.websocketMessagingService = websocketMessagingService;
+        this.operationClaims = distributedDataProvider.getExpiringMap(COURSE_OPERATION_CLAIMS, COURSE_OPERATION_CLAIM_TIME_TO_LIVE);
+        this.taskScheduler = taskScheduler;
     }
 
     /**
@@ -53,10 +79,34 @@ public class CourseOperationProgressService {
      * @param operationType the type of operation (DELETE, RESET, ARCHIVE)
      * @param firstStep     the name of the first step
      * @param totalSteps    the total number of steps in the operation
+     * @param startedAt     when the operation started; also identifies the owner of the distributed claim
      */
-    public void startOperation(long courseId, CourseOperationType operationType, String firstStep, int totalSteps) {
-        var status = CourseOperationProgressDTO.inProgress(operationType, firstStep, 0, totalSteps, 0, 0, 0, ZonedDateTime.now(), 0.0);
-        sendAndCacheProgress(courseId, status);
+    public void startOperation(long courseId, CourseOperationType operationType, String firstStep, int totalSteps, ZonedDateTime startedAt) {
+        OperationClaim operationClaim = operationClaim(courseId, operationType, startedAt);
+        operationClaims.lock(courseId);
+        try {
+            String existingClaim = operationClaims.putIfAbsent(courseId, operationClaim.value());
+            if (existingClaim != null) {
+                throw new ConflictException("Another operation is already in progress for this course", Course.ENTITY_NAME, "courseOperationInProgress");
+            }
+            try {
+                ScheduledFuture<?> renewal = taskScheduler.scheduleAtFixedRate(() -> renewOperationClaim(operationClaim),
+                        Instant.now().plus(COURSE_OPERATION_CLAIM_RENEWAL_INTERVAL), COURSE_OPERATION_CLAIM_RENEWAL_INTERVAL);
+                if (renewal == null) {
+                    throw new IllegalStateException("Could not schedule renewal of the course operation claim");
+                }
+                claimRenewals.put(operationClaim, renewal);
+            }
+            catch (RuntimeException e) {
+                operationClaims.remove(courseId, operationClaim.value());
+                throw e;
+            }
+            var status = CourseOperationProgressDTO.inProgress(operationType, firstStep, 0, totalSteps, 0, 0, 0, startedAt, 0.0);
+            sendAndCacheProgress(courseId, status);
+        }
+        finally {
+            operationClaims.unlock(courseId);
+        }
     }
 
     /**
@@ -78,7 +128,7 @@ public class CourseOperationProgressService {
             int failed, ZonedDateTime startedAt, double weightedProgressPercent) {
         var status = CourseOperationProgressDTO.inProgress(operationType, currentStep, stepsCompleted, totalSteps, itemsProcessed, totalItems, failed, startedAt,
                 weightedProgressPercent);
-        sendAndCacheProgress(courseId, status);
+        sendProgressIfOwned(courseId, operationType, startedAt, status);
     }
 
     /**
@@ -96,7 +146,7 @@ public class CourseOperationProgressService {
     public void updateProgress(long courseId, CourseOperationType operationType, String currentStep, int stepsCompleted, int totalSteps, ZonedDateTime startedAt,
             double weightedProgressPercent) {
         var status = CourseOperationProgressDTO.inProgress(operationType, currentStep, stepsCompleted, totalSteps, 0, 0, 0, startedAt, weightedProgressPercent);
-        sendAndCacheProgress(courseId, status);
+        sendProgressIfOwned(courseId, operationType, startedAt, status);
     }
 
     /**
@@ -110,7 +160,7 @@ public class CourseOperationProgressService {
      */
     public void completeOperation(long courseId, CourseOperationType operationType, int totalSteps, int failed, ZonedDateTime startedAt) {
         var status = CourseOperationProgressDTO.completed(operationType, totalSteps, failed, startedAt);
-        sendAndCacheProgress(courseId, status);
+        finishOperation(courseId, operationType, startedAt, status);
     }
 
     /**
@@ -129,7 +179,7 @@ public class CourseOperationProgressService {
     public void failOperation(long courseId, CourseOperationType operationType, String currentStep, int stepsCompleted, int totalSteps, int failed, ZonedDateTime startedAt,
             String errorMessage, double weightedProgressPercent) {
         var status = CourseOperationProgressDTO.failed(operationType, currentStep, stepsCompleted, totalSteps, failed, startedAt, errorMessage, weightedProgressPercent);
-        sendAndCacheProgress(courseId, status);
+        finishOperation(courseId, operationType, startedAt, status);
     }
 
     /**
@@ -141,6 +191,77 @@ public class CourseOperationProgressService {
     public Optional<CourseOperationProgressDTO> getOperationProgress(long courseId) {
         return Optional.ofNullable(cacheManager.getCache(COURSE_OPERATION_PROGRESS_STATUS)).map(cache -> cache.get(courseId))
                 .map(wrapper -> (CourseOperationProgressDTO) wrapper.get());
+    }
+
+    private void finishOperation(long courseId, CourseOperationType operationType, ZonedDateTime startedAt, CourseOperationProgressDTO status) {
+        OperationClaim operationClaim = operationClaim(courseId, operationType, startedAt);
+        boolean lockAcquired = false;
+        try {
+            operationClaims.lock(courseId);
+            lockAcquired = true;
+            if (operationClaim.value().equals(operationClaims.get(courseId))) {
+                sendAndCacheProgress(courseId, status);
+                operationClaims.remove(courseId, operationClaim.value());
+            }
+        }
+        finally {
+            try {
+                if (lockAcquired) {
+                    operationClaims.unlock(courseId);
+                }
+            }
+            finally {
+                stopClaimRenewal(operationClaim);
+            }
+        }
+    }
+
+    private void sendProgressIfOwned(long courseId, CourseOperationType operationType, ZonedDateTime startedAt, CourseOperationProgressDTO status) {
+        OperationClaim operationClaim = operationClaim(courseId, operationType, startedAt);
+        operationClaims.lock(courseId);
+        try {
+            if (operationClaim.value().equals(operationClaims.get(courseId))) {
+                sendAndCacheProgress(courseId, status);
+            }
+        }
+        finally {
+            operationClaims.unlock(courseId);
+        }
+    }
+
+    private void renewOperationClaim(OperationClaim operationClaim) {
+        boolean ownershipLost = false;
+        try {
+            operationClaims.lock(operationClaim.courseId());
+            try {
+                if (operationClaim.value().equals(operationClaims.get(operationClaim.courseId()))) {
+                    operationClaims.put(operationClaim.courseId(), operationClaim.value());
+                }
+                else {
+                    ownershipLost = true;
+                }
+            }
+            finally {
+                operationClaims.unlock(operationClaim.courseId());
+            }
+        }
+        catch (RuntimeException e) {
+            log.warn("Failed to renew the operation claim for course {}", operationClaim.courseId(), e);
+        }
+        if (ownershipLost) {
+            stopClaimRenewal(operationClaim);
+        }
+    }
+
+    private void stopClaimRenewal(OperationClaim operationClaim) {
+        ScheduledFuture<?> renewal = claimRenewals.remove(operationClaim);
+        if (renewal != null) {
+            renewal.cancel(false);
+        }
+    }
+
+    private OperationClaim operationClaim(long courseId, CourseOperationType operationType, ZonedDateTime startedAt) {
+        return new OperationClaim(courseId, operationType + ":" + startedAt.toInstant());
     }
 
     private void sendAndCacheProgress(long courseId, CourseOperationProgressDTO status) {
@@ -161,5 +282,8 @@ public class CourseOperationProgressService {
         finally {
             progressLock.unlock();
         }
+    }
+
+    private record OperationClaim(long courseId, String value) {
     }
 }

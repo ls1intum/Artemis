@@ -192,9 +192,9 @@ public class CourseDeletionService {
         double totalWeight = CourseOperationWeights.calculateDeletionTotalWeight(summary, actualExamWeight);
         double completedWeight = 0;
 
-        try {
-            progressService.startOperation(courseId, CourseOperationType.DELETE, "Deleting exercises", TOTAL_DELETE_STEPS);
+        progressService.startOperation(courseId, CourseOperationType.DELETE, "Deleting exercises", TOTAL_DELETE_STEPS, startedAt);
 
+        try {
             // Step 1: Delete exercises (with per-exercise progress updates)
             completedWeight = deleteExercisesWithWeightedProgress(courseId, stepsCompleted, startedAt, completedWeight, totalWeight);
             stepsCompleted++;

@@ -206,9 +206,9 @@ public class CourseResetService {
         // occurred, the reset is reported as incomplete at the end so the caller retries it (the reset is idempotent).
         List<Long> failedItems = new ArrayList<>();
 
-        try {
-            progressService.startOperation(courseId, CourseOperationType.RESET, "Resetting exercises", TOTAL_RESET_STEPS);
+        progressService.startOperation(courseId, CourseOperationType.RESET, "Resetting exercises", TOTAL_RESET_STEPS, startedAt);
 
+        try {
             // Step 1: Reset exercises (with per-exercise progress updates)
             completedWeight = resetExercisesWithWeightedProgress(courseId, stepsCompleted, startedAt, completedWeight, totalWeight, failedItems);
             stepsCompleted++;

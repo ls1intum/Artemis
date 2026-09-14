@@ -1,0 +1,164 @@
+package de.tum.cit.aet.artemis.course.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.COURSE_OPERATION_PROGRESS_STATUS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.util.concurrent.ScheduledFuture;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
+import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.TaskScheduler;
+
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
+import de.tum.cit.aet.artemis.course.domain.CourseOperationType;
+import de.tum.cit.aet.artemis.course.dto.CourseOperationProgressDTO;
+
+class CourseOperationProgressServiceTest {
+
+    private static final long COURSE_ID = 42L;
+
+    private CacheManager cacheManager;
+
+    private CourseOperationProgressService firstNode;
+
+    private CourseOperationProgressService secondNode;
+
+    @BeforeEach
+    void setUp() {
+        var distributedDataProvider = new LocalDataProviderService();
+        cacheManager = new ConcurrentMapCacheManager(COURSE_OPERATION_PROGRESS_STATUS);
+        firstNode = new CourseOperationProgressService(cacheManager, mock(WebsocketMessagingService.class), distributedDataProvider, taskScheduler());
+        secondNode = new CourseOperationProgressService(cacheManager, mock(WebsocketMessagingService.class), distributedDataProvider, taskScheduler());
+    }
+
+    @Test
+    void startOperationRejectsCompetingOperationAcrossNodes() {
+        ZonedDateTime resetStartedAt = ZonedDateTime.now();
+        firstNode.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, resetStartedAt);
+
+        assertThatExceptionOfType(ConflictException.class)
+                .isThrownBy(() -> secondNode.startOperation(COURSE_ID, CourseOperationType.DELETE, "Deleting exercises", 14, resetStartedAt.plusSeconds(1)))
+                .satisfies(exception -> assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+
+        assertThat(firstNode.getOperationProgress(COURSE_ID)).get().extracting(CourseOperationProgressDTO::operationType).isEqualTo(CourseOperationType.RESET);
+    }
+
+    @Test
+    void startOperationRejectsSecondResetAcrossNodes() {
+        ZonedDateTime resetStartedAt = ZonedDateTime.now();
+        firstNode.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, resetStartedAt);
+
+        assertThatExceptionOfType(ConflictException.class)
+                .isThrownBy(() -> secondNode.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, resetStartedAt));
+    }
+
+    @Test
+    void completeOperationReleasesClaimForNextOperation() {
+        ZonedDateTime resetStartedAt = ZonedDateTime.now();
+        firstNode.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, resetStartedAt);
+        firstNode.completeOperation(COURSE_ID, CourseOperationType.RESET, 11, 0, resetStartedAt);
+
+        ZonedDateTime archiveStartedAt = resetStartedAt.plusSeconds(1);
+        secondNode.startOperation(COURSE_ID, CourseOperationType.ARCHIVE, "Creating directories", 4, archiveStartedAt);
+
+        assertThat(secondNode.getOperationProgress(COURSE_ID)).get().extracting(CourseOperationProgressDTO::operationType).isEqualTo(CourseOperationType.ARCHIVE);
+    }
+
+    @Test
+    void failOperationReleasesClaimForRetry() {
+        ZonedDateTime resetStartedAt = ZonedDateTime.now();
+        firstNode.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, resetStartedAt);
+        firstNode.failOperation(COURSE_ID, CourseOperationType.RESET, "Reset failed", 1, 11, 1, resetStartedAt, "failure", 10.0);
+
+        ZonedDateTime retryStartedAt = resetStartedAt.plusSeconds(1);
+        secondNode.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, retryStartedAt);
+
+        assertThat(secondNode.getOperationProgress(COURSE_ID)).get().extracting(CourseOperationProgressDTO::startedAt).isEqualTo(retryStartedAt);
+    }
+
+    @Test
+    void staleOperationCannotOverwriteNewOwnerProgress() {
+        ZonedDateTime resetStartedAt = ZonedDateTime.now();
+        firstNode.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, resetStartedAt);
+        firstNode.completeOperation(COURSE_ID, CourseOperationType.RESET, 11, 0, resetStartedAt);
+
+        ZonedDateTime deleteStartedAt = resetStartedAt.plusSeconds(1);
+        secondNode.startOperation(COURSE_ID, CourseOperationType.DELETE, "Deleting exercises", 14, deleteStartedAt);
+        firstNode.updateProgress(COURSE_ID, CourseOperationType.RESET, "Deleting posts", 5, 11, resetStartedAt, 50.0);
+
+        assertThat(secondNode.getOperationProgress(COURSE_ID)).get().extracting(CourseOperationProgressDTO::operationType, CourseOperationProgressDTO::startedAt)
+                .containsExactly(CourseOperationType.DELETE, deleteStartedAt);
+    }
+
+    @Test
+    void activeOperationRenewsClaimAndStopsRenewalWhenFinished() {
+        DistributedDataProvider distributedDataProvider = mock(DistributedDataProvider.class);
+        @SuppressWarnings("unchecked")
+        DistributedMap<Long, String> operationClaims = mock(DistributedMap.class);
+        TaskScheduler taskScheduler = mock(TaskScheduler.class);
+        @SuppressWarnings("unchecked")
+        ScheduledFuture<Void> renewal = mock(ScheduledFuture.class);
+        ArgumentCaptor<Runnable> renewalTask = ArgumentCaptor.forClass(Runnable.class);
+
+        when(distributedDataProvider.<Long, String>getExpiringMap(any(String.class), any(Duration.class))).thenReturn(operationClaims);
+        when(taskScheduler.scheduleAtFixedRate(renewalTask.capture(), any(Instant.class), any(Duration.class))).thenAnswer(_ -> renewal);
+
+        var service = new CourseOperationProgressService(cacheManager, mock(WebsocketMessagingService.class), distributedDataProvider, taskScheduler);
+        ZonedDateTime startedAt = ZonedDateTime.now();
+        String claim = CourseOperationType.RESET + ":" + startedAt.toInstant();
+        when(operationClaims.get(COURSE_ID)).thenReturn(claim);
+
+        service.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, startedAt);
+        renewalTask.getValue().run();
+
+        verify(operationClaims).put(COURSE_ID, claim);
+
+        service.completeOperation(COURSE_ID, CourseOperationType.RESET, 11, 0, startedAt);
+        verify(renewal).cancel(false);
+    }
+
+    @Test
+    void completionStopsRenewalWhenDistributedLockFails() {
+        DistributedDataProvider distributedDataProvider = mock(DistributedDataProvider.class);
+        @SuppressWarnings("unchecked")
+        DistributedMap<Long, String> operationClaims = mock(DistributedMap.class);
+        TaskScheduler taskScheduler = mock(TaskScheduler.class);
+        @SuppressWarnings("unchecked")
+        ScheduledFuture<Void> renewal = mock(ScheduledFuture.class);
+
+        when(distributedDataProvider.<Long, String>getExpiringMap(any(String.class), any(Duration.class))).thenReturn(operationClaims);
+        when(taskScheduler.scheduleAtFixedRate(any(Runnable.class), any(Instant.class), any(Duration.class))).thenAnswer(_ -> renewal);
+
+        var service = new CourseOperationProgressService(cacheManager, mock(WebsocketMessagingService.class), distributedDataProvider, taskScheduler);
+        ZonedDateTime startedAt = ZonedDateTime.now();
+        service.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, startedAt);
+        doThrow(new IllegalStateException("provider unavailable")).when(operationClaims).lock(COURSE_ID);
+
+        assertThatThrownBy(() -> service.completeOperation(COURSE_ID, CourseOperationType.RESET, 11, 0, startedAt)).isInstanceOf(IllegalStateException.class);
+        verify(renewal).cancel(false);
+    }
+
+    private TaskScheduler taskScheduler() {
+        TaskScheduler taskScheduler = mock(TaskScheduler.class);
+        when(taskScheduler.scheduleAtFixedRate(any(Runnable.class), any(Instant.class), any(Duration.class))).thenAnswer(_ -> mock(ScheduledFuture.class));
+        return taskScheduler;
+    }
+}

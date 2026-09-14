@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.admin.service.export;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.course.service.CourseArchiveService.TOTAL_ARCHIVE_STEPS;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -114,8 +115,6 @@ public class CourseExamExportService {
         this.objectMapper = objectMapper;
     }
 
-    private static final int TOTAL_ARCHIVE_STEPS = 4;
-
     /**
      * Exports the entire course into a single zip file that is saved in the directory specified by outputDir.
      * This is used to export all exercises and exams of a course along with student submissions for the course archive
@@ -128,14 +127,34 @@ public class CourseExamExportService {
      */
     public Optional<Path> exportCourseForArchive(Course course, Path outputDir, List<String> exportErrors, Map<Long, ExamScoresDTO> examScoresData) {
         ZonedDateTime startedAt = ZonedDateTime.now();
+        progressService.startOperation(course.getId(), CourseOperationType.ARCHIVE, "Creating directories", TOTAL_ARCHIVE_STEPS, startedAt);
+        try {
+            Optional<Path> archivedCourse = exportCourseForArchive(course, outputDir, exportErrors, examScoresData, startedAt);
+            progressService.completeOperation(course.getId(), CourseOperationType.ARCHIVE, TOTAL_ARCHIVE_STEPS, exportErrors.size(), startedAt);
+            return archivedCourse;
+        }
+        catch (RuntimeException e) {
+            progressService.failOperation(course.getId(), CourseOperationType.ARCHIVE, "Archive failed", 0, TOTAL_ARCHIVE_STEPS, 0, startedAt, e.getMessage(), 0);
+            throw e;
+        }
+    }
+
+    /**
+     * Exports the course using an operation claim acquired before an asynchronous handoff.
+     *
+     * @param course         The course to export
+     * @param outputDir      The directory where the exported course is saved
+     * @param exportErrors   List of failures that occurred during the export
+     * @param examScoresData Map of exam ID to ExamScoresDTO containing comprehensive exam score data
+     * @param startedAt      when the archive operation was claimed
+     * @return Path to the zip file
+     */
+    public Optional<Path> exportCourseForArchive(Course course, Path outputDir, List<String> exportErrors, Map<Long, ExamScoresDTO> examScoresData, ZonedDateTime startedAt) {
         int stepsCompleted = 0;
 
         // Used for sending export progress notifications to instructors
         var notificationTopic = "/topic/courses/" + course.getId() + "/export-course";
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Creating temporary directories..."), null);
-
-        // Start progress tracking
-        progressService.startOperation(course.getId(), CourseOperationType.ARCHIVE, "Creating directories", TOTAL_ARCHIVE_STEPS);
 
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         var courseDirName = course.getShortName() + "-" + course.getTitle() + "-" + timestamp;
@@ -209,7 +228,6 @@ public class CourseExamExportService {
             Optional<Path> exportedCourse = zipExportedExercises(outputDir, exportErrors, notificationTopic, tmpCourseDir);
             stepsCompleted++;
 
-            progressService.completeOperation(course.getId(), CourseOperationType.ARCHIVE, TOTAL_ARCHIVE_STEPS, exportErrors.size(), startedAt);
             log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCourse.orElse(null));
             return exportedCourse;
         }
