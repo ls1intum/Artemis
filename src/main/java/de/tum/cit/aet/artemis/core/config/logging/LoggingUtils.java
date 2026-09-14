@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggerContextListener;
 import ch.qos.logback.core.ConsoleAppender;
@@ -17,7 +16,7 @@ import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
  * Provides methods that configure Logback appenders for JSON console output
  * and Logstash TCP socket forwarding. Since the {@code logstash-logback-encoder}
  * dependency is excluded, the Logstash TCP appender is a no-op stub that logs
- * a warning, while the JSON console appender uses a basic pattern layout.
+ * a warning, while the JSON console appender encodes its records with Jackson.
  */
 public final class LoggingUtils {
 
@@ -34,8 +33,8 @@ public final class LoggingUtils {
     /**
      * Adds (or replaces) the console appender with a JSON-formatted variant.
      * <p>
-     * Without the logstash-logback-encoder library on the classpath a structured
-     * pattern layout is used instead of a true JSON encoder.
+     * Without the logstash-logback-encoder library on the classpath the records are encoded by
+     * {@link JsonLoggingLayout}, which writes one properly escaped JSON object per line.
      *
      * @param context      the Logback {@link LoggerContext}
      * @param customFields JSON string of additional fields (currently informational)
@@ -55,13 +54,10 @@ public final class LoggingUtils {
         consoleAppender.setContext(context);
         consoleAppender.setName(CONSOLE_APPENDER_NAME);
 
-        PatternLayout layout = new PatternLayout();
+        // Encoded by Jackson rather than assembled by a pattern: a pattern cannot escape anything, so a quote or a
+        // backslash in a logged value used to end the JSON string and let whatever followed it become further fields.
+        JsonLoggingLayout layout = new JsonLoggingLayout();
         layout.setContext(context);
-        // This assembles JSON by hand, so it only escapes what the pattern's converters escape. CrlfEscapingMessageConverter
-        // takes the line breaks out of %msg, which is what would otherwise forge a whole record, but a quote or a backslash
-        // in a logged value still terminates the JSON string and lets an attacker add fields to this one. Closing that needs
-        // a real JSON encoder rather than a pattern; logstash-logback-encoder is excluded in build.gradle today.
-        layout.setPattern("{\"timestamp\":\"%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ}\",\"level\":\"%level\",\"logger\":\"%logger\",\"thread\":\"%thread\",\"message\":\"%msg\"}%n");
         layout.start();
 
         LayoutWrappingEncoder<ILoggingEvent> encoder = new LayoutWrappingEncoder<>();
