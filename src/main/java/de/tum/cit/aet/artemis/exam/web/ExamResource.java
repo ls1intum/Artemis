@@ -1094,7 +1094,10 @@ public class ExamResource {
 
     @NonNull
     private Exam checkAccessForStudentExamGenerationAndLogAuditEvent(Long courseId, Long examId, String auditEventAction) {
-        final Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
+        // Without the exam users: validateForStudentExamGeneration below reads only the exercise groups, and the
+        // generation itself reads the registered students as ids. Fetching them here pulled an ExamUser per student
+        // and, through its eager user association, a select per student on top.
+        final Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
 
         if (exam.getExamMode() == ExamMode.TEST || exam.getExamMode() == ExamMode.TEST_WITH_SIMULATION && !ZonedDateTime.now().isBefore(exam.getStartDate())) {
             throw new BadRequestAlertException("Generate student exams is only allowed for real exams", ENTITY_NAME, "generateStudentExamsOnlyForRealExams");

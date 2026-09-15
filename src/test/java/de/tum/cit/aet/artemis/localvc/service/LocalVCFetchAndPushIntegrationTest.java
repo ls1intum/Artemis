@@ -1102,9 +1102,10 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // Generate student exams using the service directly (avoids REST API validation issues)
             List<StudentExam> generatedExams = studentExamService.generateStudentExams(exam);
 
-            // Find student exams for student1 and student2
-            studentExam1 = generatedExams.stream().filter(se -> se.getUser().getLogin().equals(student1.getLogin())).findFirst().orElseThrow();
-            StudentExam studentExam2 = generatedExams.stream().filter(se -> se.getUser().getLogin().equals(student2.getLogin())).findFirst().orElseThrow();
+            // Find student exams for student1 and student2. Matched on the user id: a generated student exam carries an
+            // id-only user, so its login is not populated.
+            studentExam1 = generatedExams.stream().filter(se -> se.getUser().getId().equals(student1.getId())).findFirst().orElseThrow();
+            StudentExam studentExam2 = generatedExams.stream().filter(se -> se.getUser().getId().equals(student2.getId())).findFirst().orElseThrow();
 
             // Set started date for the student exams (simulating that students have started the exam)
             studentExam1.setStartedAndStartDate(now.minusMinutes(30));

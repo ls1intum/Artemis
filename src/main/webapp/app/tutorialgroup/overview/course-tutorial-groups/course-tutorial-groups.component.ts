@@ -1,4 +1,4 @@
-import { Component, Signal, computed, effect, inject, signal } from '@angular/core';
+import { Component, Signal, computed, effect, inject, signal, untracked } from '@angular/core';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
@@ -76,7 +76,7 @@ export class CourseTutorialGroupsComponent implements SidebarView {
         effect(() => {
             const courseId = this.courseId();
             if (courseId) {
-                this.setTutorialGroupsAndTutorialLectures(courseId);
+                untracked(() => this.setTutorialGroupsAndTutorialLectures(courseId));
             }
         });
 
