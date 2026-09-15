@@ -5,6 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import de.tum.cit.aet.artemis.core.security.RateLimitKey;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 
 /**
@@ -14,7 +15,8 @@ import de.tum.cit.aet.artemis.core.security.RateLimitType;
  *
  * <p>
  * Use {@link #type()} to specify a predefined rate limit type, which allows for configuration-based overrides
- * of the default RPM values defined in {@link RateLimitType}.
+ * of the default RPM values defined in {@link RateLimitType}. Use {@link #key()} to choose whether the limit is
+ * counted per client address or per authenticated user.
  * </p>
  */
 @Target({ ElementType.METHOD, ElementType.TYPE })
@@ -27,4 +29,12 @@ public @interface LimitRequestsPerMinute {
      * @return the rate limit type
      */
     RateLimitType type() default RateLimitType.AUTHENTICATION;
+
+    /**
+     * Identity the limit is counted against. Defaults to {@link RateLimitKey#IP} so existing usages keep counting
+     * per client address; use {@link RateLimitKey#USER} on authenticated endpoints that should be limited per user.
+     *
+     * @return the rate limit key
+     */
+    RateLimitKey key() default RateLimitKey.IP;
 }

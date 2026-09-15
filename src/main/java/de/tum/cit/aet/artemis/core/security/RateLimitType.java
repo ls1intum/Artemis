@@ -78,7 +78,25 @@ public enum RateLimitType {
      * <p>
      * Default: 120 requests per minute per client.
      */
-    AI_SEARCH_PIPELINE(120);
+    AI_SEARCH_PIPELINE(120),
+
+    /**
+     * Rate limit for the git-backed online-editor endpoints (reading, writing, committing files in a participation,
+     * test or auxiliary repository).
+     * <p>
+     * Every one of these calls checks out and pulls the working copy on the server, so a cheap client request turns
+     * into a much more expensive git operation (amplification). Without a limit a single authenticated user can drive
+     * unbounded server load through many or parallel calls.
+     * <p>
+     * Counted per user rather than per client address (see {@code RateLimitKey.USER}): the editor is used by many
+     * students at once during an exam, often behind a single campus address (NAT), so a per-address limit would
+     * throttle legitimate concurrent use. The default is generous enough for interactive human editing while still
+     * bounding automated abuse; it only applies where {@code artemis.rate-limiting.enabled} is switched on, and
+     * {@code artemis.rate-limiting.repository-editor-requests-per-minute} overrides it.
+     * <p>
+     * Default: 120 requests per minute per user.
+     */
+    REPOSITORY_EDITOR(120);
 
     private final int defaultRpm;
 

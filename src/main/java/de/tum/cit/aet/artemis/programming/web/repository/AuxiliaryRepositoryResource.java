@@ -31,7 +31,10 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.security.RateLimitKey;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
@@ -58,6 +61,10 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 @FeatureUsage("configuration/auxiliary-repositories")
 @RestController
 @RequestMapping({ "api/programming/auxiliary-repositories/", "api/programming/auxiliary-repository/" })
+// Every editor endpoint here checks out and pulls the working copy on the server, so a cheap request turns into a
+// much more expensive git operation. Limit them per user (see F-010) so a single account cannot drive unbounded load;
+// the limit only applies where rate limiting is switched on (off by default).
+@LimitRequestsPerMinute(type = RateLimitType.REPOSITORY_EDITOR, key = RateLimitKey.USER)
 public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
