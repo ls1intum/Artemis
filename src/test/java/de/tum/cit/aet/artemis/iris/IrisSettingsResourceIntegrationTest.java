@@ -90,7 +90,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
         enableIrisFor(course1);
 
         var current = irisSettingsService.getSettingsForCourse(course1);
-        var update = IrisCourseSettings.of(false, current.customInstructions(), current.variant(), current.supportLevel(), current.rateLimit());
+        var update = IrisCourseSettings.of(false, current.customInstructions(), current.variant(), current.supportLevel(), current.rateLimit(), current.proactiveStruggleEnabled());
 
         var response = request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.OK);
 
@@ -108,7 +108,8 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
         enableIrisFor(course1);
 
         var current = irisSettingsService.getSettingsForCourse(course1);
-        var update = IrisCourseSettings.of(current.enabled(), "Custom instructions for this course", current.variant(), current.supportLevel(), current.rateLimit());
+        var update = IrisCourseSettings.of(current.enabled(), "Custom instructions for this course", current.variant(), current.supportLevel(), current.rateLimit(),
+                current.proactiveStruggleEnabled());
 
         var response = request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.OK);
 
@@ -126,7 +127,8 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
         enableIrisFor(course1);
 
         var current = irisSettingsService.getSettingsForCourse(course1);
-        var update = IrisCourseSettings.of(current.enabled(), current.customInstructions(), IrisPipelineVariant.ADVANCED, current.supportLevel(), current.rateLimit());
+        var update = IrisCourseSettings.of(current.enabled(), current.customInstructions(), IrisPipelineVariant.ADVANCED, current.supportLevel(), current.rateLimit(),
+                current.proactiveStruggleEnabled());
 
         var response = request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.OK);
 
@@ -145,7 +147,8 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
 
         var current = irisSettingsService.getSettingsForCourse(course1);
         var newRateLimit = new IrisRateLimitConfiguration(100, 24);
-        var update = IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), current.supportLevel(), newRateLimit);
+        var update = IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), current.supportLevel(), newRateLimit,
+                current.proactiveStruggleEnabled());
 
         var response = request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.OK);
 
@@ -166,9 +169,37 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
         enableIrisFor(course1);
 
         var current = irisSettingsService.getSettingsForCourse(course1);
-        var update = IrisCourseSettings.of(current.enabled(), current.customInstructions(), IrisPipelineVariant.ADVANCED, current.supportLevel(), current.rateLimit());
+        var update = IrisCourseSettings.of(current.enabled(), current.customInstructions(), IrisPipelineVariant.ADVANCED, current.supportLevel(), current.rateLimit(),
+                current.proactiveStruggleEnabled());
 
         request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUpdateCourseSettings_asAdmin_enablesProactiveStruggle() throws Exception {
+        enableIrisFor(course1);
+
+        var current = irisSettingsService.getSettingsForCourse(course1);   // proactive off (default)
+        var update = IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), current.supportLevel(), current.rateLimit(), true);
+
+        var response = request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.OK);
+
+        assertThat(response.settings().proactiveStruggleEnabled()).isTrue();
+        assertThat(irisSettingsService.getSettingsForCourse(course1).proactiveStruggleEnabled()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateCourseSettings_asInstructor_enablesProactiveStruggle() throws Exception {
+        enableIrisFor(course1);
+
+        var current = irisSettingsService.getSettingsForCourse(course1);   // proactive off (default)
+        var update = IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), current.supportLevel(), current.rateLimit(), true);
+
+        var response = request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.OK);
+
+        assertThat(response.settings().proactiveStruggleEnabled()).isTrue();
     }
 
     @Test
@@ -178,7 +209,8 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
 
         var current = irisSettingsService.getSettingsForCourse(course1);
         var newRateLimit = new IrisRateLimitConfiguration(100, 24);
-        var update = IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), current.supportLevel(), newRateLimit);
+        var update = IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), current.supportLevel(), newRateLimit,
+                current.proactiveStruggleEnabled());
 
         request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.FORBIDDEN);
     }
@@ -189,7 +221,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
         enableIrisFor(course1);
 
         var current = irisSettingsService.getSettingsForCourse(course1);
-        var update = IrisCourseSettings.of(false, current.customInstructions(), current.variant(), current.supportLevel(), current.rateLimit());
+        var update = IrisCourseSettings.of(false, current.customInstructions(), current.variant(), current.supportLevel(), current.rateLimit(), current.proactiveStruggleEnabled());
 
         request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.FORBIDDEN);
     }
@@ -211,7 +243,8 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
 
         var current = irisSettingsService.getSettingsForCourse(course1);
         var oversizedInstructions = "a".repeat(2049); // Max is 2048
-        var update = IrisCourseSettings.of(current.enabled(), oversizedInstructions, current.variant(), current.supportLevel(), current.rateLimit());
+        var update = IrisCourseSettings.of(current.enabled(), oversizedInstructions, current.variant(), current.supportLevel(), current.rateLimit(),
+                current.proactiveStruggleEnabled());
 
         request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.BAD_REQUEST);
     }

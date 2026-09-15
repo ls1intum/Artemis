@@ -58,6 +58,30 @@ public class IrisMessage extends DomainObject {
     @Enumerated(EnumType.STRING)
     private IrisMessageSender sender;
 
+    @Nullable
+    @Enumerated(EnumType.STRING)
+    @Column(name = "origin")
+    private IrisMessageOrigin origin;
+
+    @Nullable
+    @Enumerated(EnumType.STRING)
+    @Column(name = "proactive_outcome")
+    private IrisProactiveOutcome proactiveOutcome;
+
+    @Nullable
+    @Column(name = "proactive_episode_id")
+    private String proactiveEpisodeId;
+
+    /**
+     * The exercise the proactive message was decided for, stamped at insert time. Deliberately NOT derived from
+     * {@code session.entityId}: a session is born a COURSE_CHAT and its mode/entityId change on every context switch,
+     * so the session is not a durable record of which exercise a row belongs to. Episode lookups scope by this column
+     * so an episode id reused across two exercises cannot make one exercise's outcome terminal for the other.
+     */
+    @Nullable
+    @Column(name = "proactive_exercise_id")
+    private Long proactiveExerciseId;
+
     @OrderColumn(name = "iris_message_content_order")
     @OneToMany(mappedBy = "message", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<IrisMessageContent> content = new ArrayList<>();
@@ -115,6 +139,42 @@ public class IrisMessage extends DomainObject {
 
     public void setSender(IrisMessageSender sender) {
         this.sender = sender;
+    }
+
+    @Nullable
+    public IrisMessageOrigin getOrigin() {
+        return origin;
+    }
+
+    public void setOrigin(@Nullable IrisMessageOrigin origin) {
+        this.origin = origin;
+    }
+
+    @Nullable
+    public IrisProactiveOutcome getProactiveOutcome() {
+        return proactiveOutcome;
+    }
+
+    public void setProactiveOutcome(@Nullable IrisProactiveOutcome proactiveOutcome) {
+        this.proactiveOutcome = proactiveOutcome;
+    }
+
+    @Nullable
+    public String getProactiveEpisodeId() {
+        return proactiveEpisodeId;
+    }
+
+    public void setProactiveEpisodeId(@Nullable String proactiveEpisodeId) {
+        this.proactiveEpisodeId = proactiveEpisodeId;
+    }
+
+    @Nullable
+    public Long getProactiveExerciseId() {
+        return proactiveExerciseId;
+    }
+
+    public void setProactiveExerciseId(@Nullable Long proactiveExerciseId) {
+        this.proactiveExerciseId = proactiveExerciseId;
     }
 
     public List<IrisMessageContent> getContent() {

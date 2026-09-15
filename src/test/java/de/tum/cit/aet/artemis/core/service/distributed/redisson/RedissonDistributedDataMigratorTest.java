@@ -29,6 +29,8 @@ import org.testcontainers.DockerClientFactory;
 
 import com.redis.testcontainers.RedisContainer;
 
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.shared.ValkeyTestContainerFactory;
 
 /**
@@ -260,12 +262,70 @@ class RedissonDistributedDataMigratorTest {
         assertThat(redissonClient.getQueue(keyFor(VERSION, "buildResultQueue")).readAll()).containsExactly("result-1");
     }
 
+    /**
+     * The transition this release adds. Its reason is the {@code features} map: Kryo encodes an enum key by ordinal,
+     * so the constant appended to {@code Feature} is a key the previous build cannot decode, and the second namespace
+     * is what keeps it out of that build's reach.
+     */
+    @Test
+    void testCarriesTheFirstNamespaceOverIntoTheSecond() {
+        redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set("1");
+        // An enum-keyed entry, which is the shape the bump is about, rather than a string that would encode the same
+        // either way.
+        redissonClient.getMap(keyFor(1, "features")).put(Feature.ProgrammingExercises, Boolean.FALSE);
+        redissonClient.getPriorityQueue(keyFor(1, "buildJobQueue")).add("job-1");
+        var job = new ChatJob("job-1", 3L, 4L, 5L, null, null, null);
+        redissonClient.getMapCache(keyFor(1, "pyris-job-map")).put("job-1", job, 1, TimeUnit.HOURS);
+
+        migrationServiceFor(2).migrateToCurrentVersion();
+
+        assertThat(redissonClient.getMap(keyFor(2, "features")).get(Feature.ProgrammingExercises)).isEqualTo(Boolean.FALSE);
+        assertThat(redissonClient.getPriorityQueue(keyFor(2, "buildJobQueue")).readAll()).containsExactly("job-1");
+        RMapCache<Object, Object> migratedJobs = redissonClient.getMapCache(keyFor(2, "pyris-job-map"));
+        assertThat(migratedJobs.get("job-1")).isEqualTo(job);
+        assertThat(migratedJobs.remainTimeToLive("job-1")).isPositive().isLessThanOrEqualTo(Duration.ofHours(1).toMillis());
+        assertThat(redissonClient.getKeys().countExists(keyFor(1, "features"), keyFor(1, "buildJobQueue"), keyFor(1, "pyris-job-map"))).isZero();
+        assertThat(storedVersion()).isEqualTo("2");
+    }
+
+    /**
+     * Unlike the unversioned store, a numbered namespace can be emptied by pattern, so what it holds beyond the
+     * carried structures is deleted rather than left behind.
+     */
+    @Test
+    void testDiscardsUncarriedKeysOfTheFirstNamespace() {
+        redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set("1");
+        redissonClient.getQueue(keyFor(1, "buildResultQueue")).add("result-1");
+        redissonClient.getMap(keyFor(1, "buildAgentInformation")).put("agent-1", "details");
+
+        migrationServiceFor(2).migrateToCurrentVersion();
+
+        assertThat(redissonClient.getQueue(keyFor(2, "buildResultQueue")).readAll()).containsExactly("result-1");
+        assertThat(redissonClient.getKeys().countExists(keyFor(1, "buildAgentInformation"))).isZero();
+        assertThat(redissonClient.getMap(keyFor(2, "buildAgentInformation")).isEmpty()).isTrue();
+    }
+
+    /**
+     * A deployment that never ran a versioned release takes every declared step in one startup, which is what the
+     * migrator validates up front before it moves an entry.
+     */
+    @Test
+    void testAnUnversionedStoreTakesEveryStepUpToTheCurrentVersion() {
+        redissonClient.getQueue("buildResultQueue").add("result-1");
+
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(redissonClient.getQueue(keyFor(VERSION, "buildResultQueue")).readAll()).containsExactly("result-1");
+        assertThat(redissonClient.getQueue(keyFor(1, "buildResultQueue"))).as("the intermediate namespace is drained, not just written").isEmpty();
+        assertThat(storedVersion()).isEqualTo(String.valueOf(VERSION));
+    }
+
     @Test
     void testRefusesToSkipAMissingAdjacentMigration() {
         redissonClient.getQueue(keyFor(UNVERSIONED, "buildResultQueue")).add("must-remain-unversioned");
 
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> migrationServiceFor(VERSION + 1).migrateToCurrentVersion())
-                .withMessageContaining("no migration step from 1").withMessageContaining("explicit adjacent-version migration");
+                .withMessageContaining("no migration step from " + VERSION).withMessageContaining("explicit adjacent-version migration");
         assertThat(storedVersion()).isNull();
         assertThat(redissonClient.getQueue(keyFor(UNVERSIONED, "buildResultQueue")).readAll()).containsExactly("must-remain-unversioned");
         assertThat(redissonClient.getQueue(keyFor(VERSION, "buildResultQueue"))).isEmpty();
