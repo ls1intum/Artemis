@@ -150,6 +150,15 @@ public final class SearchableEntitySchema {
         // Answer-post-specific properties
         public static final String POST_ID = "post_id";
 
+        /**
+         * Operational (non-display): the outbox id of the write that produced this row, a strictly monotonic
+         * logical clock. A bulk delete only removes rows whose {@code source_seq} predates the delete's own
+         * outbox id, so a delete deferred by backoff can never erase a per-entity write that was enqueued after
+         * it. Deliberately excluded from the sync-ledger content hash. Absent (null) on rows written before this
+         * property existed or seeded outside the outbox; such rows predate every delete and are always in scope.
+         */
+        public static final String SOURCE_SEQ = "source_seq";
+
         private Properties() {
         }
     }
@@ -203,5 +212,8 @@ public final class SearchableEntitySchema {
             filterable(Properties.CHANNEL_ID, INT, "The ID of the channel the post belongs to (only set for type 'post' and 'answer_post', null for all other types)"),
 
             // Answer-post-specific properties
-            filterable(Properties.POST_ID, INT, "The ID of the parent post (only set for type 'answer_post', null for all other types)")));
+            filterable(Properties.POST_ID, INT, "The ID of the parent post (only set for type 'answer_post', null for all other types)"),
+
+            // Operational field (present on every upserted row): the outbox write id, used to fence bulk deletes against newer writes
+            filterable(Properties.SOURCE_SEQ, INT, "The outbox write id that produced this row; a bulk delete only removes rows written before it")));
 }
