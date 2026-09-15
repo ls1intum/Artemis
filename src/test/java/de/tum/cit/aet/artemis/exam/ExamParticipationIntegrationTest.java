@@ -937,7 +937,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(examScores.examId()).isEqualTo(exam.getId());
 
         // Ensure that all exerciseGroups of the exam are present in the DTO
-        Set<Long> exerciseGroupIdsInDTO = examScores.exerciseGroups().stream().map(ExamScoresDTO.ExerciseGroup::id).collect(Collectors.toSet());
+        Set<Long> exerciseGroupIdsInDTO = examScores.exerciseGroups().stream().map(ExamScoresDTO.ExerciseGroupDTO::id).collect(Collectors.toSet());
         Set<Long> exerciseGroupIdsInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getId).collect(Collectors.toSet());
         assertThat(exerciseGroupIdsInExam).isEqualTo(exerciseGroupIdsInDTO);
 
@@ -958,7 +958,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
             // Compare exercise information
             long noOfExerciseGroupParticipations = 0;
             for (var originalExercise : originalExerciseGroup.getExercises()) {
-                // Find the corresponding ExerciseInfo object
+                // Find the corresponding ExerciseInfoDTO object
                 var exerciseDTO = exerciseGroupDTO.containedExercises().stream().filter(exerciseInfo -> exerciseInfo.exerciseId().equals(originalExercise.getId())).findFirst()
                         .orElseThrow();
                 // Check the exercise title

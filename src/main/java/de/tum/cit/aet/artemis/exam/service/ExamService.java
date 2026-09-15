@@ -484,7 +484,7 @@ public class ExamService {
 
         Map<Long, Long> exerciseIdToNumberParticipants = examGrades.stream().collect(Collectors.groupingBy(ExamGradeScoreDTO::exerciseId, Collectors.counting()));
         PlagiarismMapping plagiarismMapping = plagiarismCaseApi.map(api -> api.getPlagiarismMappingForExam(exam.getId())).orElse(PlagiarismMapping.empty());
-        var exerciseGroups = new ArrayList<ExamScoresDTO.ExerciseGroup>();
+        var exerciseGroups = new ArrayList<ExamScoresDTO.ExerciseGroupDTO>();
 
         // Adding exercise group information to DTO
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
@@ -494,7 +494,7 @@ public class ExamService {
 
             // Counter for exerciseGroup participations. Is calculated by summing up the number of exercise participations
             long numberOfExerciseGroupParticipants = 0;
-            var containedExercises = new ArrayList<ExamScoresDTO.ExerciseGroup.ExerciseInfo>();
+            var containedExercises = new ArrayList<ExamScoresDTO.ExerciseGroupDTO.ExerciseInfoDTO>();
             // Add information about exercise groups and exercises
 
             for (Exercise exercise : exerciseGroup.getExercises()) {
@@ -504,10 +504,10 @@ public class ExamService {
                     participantsForExercise = 0L;
                 }
                 numberOfExerciseGroupParticipants += participantsForExercise;
-                containedExercises.add(new ExamScoresDTO.ExerciseGroup.ExerciseInfo(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), participantsForExercise,
+                containedExercises.add(new ExamScoresDTO.ExerciseGroupDTO.ExerciseInfoDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), participantsForExercise,
                         exercise.getClass().getSimpleName()));
             }
-            var exerciseGroupDTO = new ExamScoresDTO.ExerciseGroup(exerciseGroup.getId(), exerciseGroup.getTitle(), maxPointsGroup, numberOfExerciseGroupParticipants,
+            var exerciseGroupDTO = new ExamScoresDTO.ExerciseGroupDTO(exerciseGroup.getId(), exerciseGroup.getTitle(), maxPointsGroup, numberOfExerciseGroupParticipants,
                     containedExercises);
             exerciseGroups.add(exerciseGroupDTO);
         }
