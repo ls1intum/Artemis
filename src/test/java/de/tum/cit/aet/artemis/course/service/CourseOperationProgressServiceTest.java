@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -75,8 +76,8 @@ class CourseOperationProgressServiceTest {
     @Test
     void completeOperationReleasesClaimForNextOperation() {
         ZonedDateTime resetStartedAt = STARTED_AT;
-        firstNode.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, resetStartedAt);
-        firstNode.completeOperation(COURSE_ID, CourseOperationType.RESET, 11, 0, resetStartedAt);
+        CourseOperationClaim resetClaim = firstNode.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, resetStartedAt);
+        firstNode.completeOperation(resetClaim, 11, 0);
 
         ZonedDateTime archiveStartedAt = resetStartedAt.plusSeconds(1);
         secondNode.startOperation(COURSE_ID, CourseOperationType.ARCHIVE, "Creating directories", 4, archiveStartedAt);
@@ -87,8 +88,8 @@ class CourseOperationProgressServiceTest {
     @Test
     void failOperationReleasesClaimForRetry() {
         ZonedDateTime resetStartedAt = STARTED_AT;
-        firstNode.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, resetStartedAt);
-        firstNode.failOperation(COURSE_ID, CourseOperationType.RESET, "Reset failed", 1, 11, 1, resetStartedAt, "failure", 10.0);
+        CourseOperationClaim resetClaim = firstNode.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, resetStartedAt);
+        firstNode.failOperation(resetClaim, "Reset failed", 1, 11, 1, "failure", 10.0);
 
         ZonedDateTime retryStartedAt = resetStartedAt.plusSeconds(1);
         secondNode.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, retryStartedAt);
@@ -99,12 +100,12 @@ class CourseOperationProgressServiceTest {
     @Test
     void staleOperationCannotOverwriteNewOwnerProgress() {
         ZonedDateTime resetStartedAt = STARTED_AT;
-        firstNode.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, resetStartedAt);
-        firstNode.completeOperation(COURSE_ID, CourseOperationType.RESET, 11, 0, resetStartedAt);
+        CourseOperationClaim resetClaim = firstNode.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, resetStartedAt);
+        firstNode.completeOperation(resetClaim, 11, 0);
 
         ZonedDateTime deleteStartedAt = resetStartedAt.plusSeconds(1);
         secondNode.startOperation(COURSE_ID, CourseOperationType.DELETE, "Deleting exercises", 14, deleteStartedAt);
-        firstNode.updateProgress(COURSE_ID, CourseOperationType.RESET, "Deleting posts", 5, 11, resetStartedAt, 50.0);
+        assertThatThrownBy(() -> firstNode.updateProgress(resetClaim, "Deleting posts", 5, 11, 50.0)).isInstanceOf(IllegalStateException.class);
 
         assertThat(secondNode.getOperationProgress(COURSE_ID)).get().extracting(CourseOperationProgressDTO::operationType, CourseOperationProgressDTO::startedAt)
                 .containsExactly(CourseOperationType.DELETE, deleteStartedAt);
@@ -125,15 +126,14 @@ class CourseOperationProgressServiceTest {
 
         var service = new CourseOperationProgressService(cacheManager, mock(WebsocketMessagingService.class), distributedDataProvider, taskScheduler);
         ZonedDateTime startedAt = STARTED_AT;
-        String claim = CourseOperationType.RESET + ":" + startedAt.toInstant();
-        when(operationClaims.get(COURSE_ID)).thenReturn(claim);
-
-        service.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, startedAt);
+        CourseOperationClaim operationClaim = service.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, startedAt);
+        String claimValue = operationClaim.ownerToken().toString();
+        when(operationClaims.get(COURSE_ID)).thenReturn(claimValue);
         renewalTask.getValue().run();
 
-        verify(operationClaims).put(COURSE_ID, claim);
+        verify(operationClaims).put(COURSE_ID, claimValue);
 
-        service.releaseOperationClaim(COURSE_ID, CourseOperationType.RESET, startedAt);
+        service.releaseOperationClaim(operationClaim);
         verify(renewal).cancel(false);
     }
 
@@ -151,10 +151,10 @@ class CourseOperationProgressServiceTest {
 
         var service = new CourseOperationProgressService(cacheManager, mock(WebsocketMessagingService.class), distributedDataProvider, taskScheduler);
         ZonedDateTime startedAt = STARTED_AT;
-        service.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, startedAt);
+        CourseOperationClaim operationClaim = service.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, startedAt);
         doThrow(new IllegalStateException("provider unavailable")).when(operationClaims).lock(COURSE_ID);
 
-        assertThatThrownBy(() -> service.completeOperation(COURSE_ID, CourseOperationType.RESET, 11, 0, startedAt)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> service.completeOperation(operationClaim, 11, 0)).isInstanceOf(IllegalStateException.class);
         verify(renewal).cancel(false);
     }
 
@@ -171,27 +171,66 @@ class CourseOperationProgressServiceTest {
         when(taskScheduler.scheduleAtFixedRate(any(Runnable.class), any(Instant.class), any(Duration.class))).thenAnswer(_ -> renewal);
 
         var service = new CourseOperationProgressService(cacheManager, mock(WebsocketMessagingService.class), distributedDataProvider, taskScheduler);
-        service.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, STARTED_AT);
+        CourseOperationClaim operationClaim = service.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, STARTED_AT);
         doThrow(new IllegalStateException("provider unavailable")).when(operationClaims).lock(COURSE_ID);
 
-        service.releaseOperationClaim(COURSE_ID, CourseOperationType.RESET, STARTED_AT);
+        service.releaseOperationClaim(operationClaim);
 
         verify(renewal).cancel(false);
     }
 
     @Test
-    void releaseOperationClaimIsIdempotentAndCannotReleaseNewOwner() {
-        firstNode.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, STARTED_AT);
-        firstNode.releaseOperationClaim(COURSE_ID, CourseOperationType.RESET, STARTED_AT);
+    void delayedReleaseWithIdenticalMetadataCannotReleaseNewOwner() {
+        CourseOperationClaim staleClaim = firstNode.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, STARTED_AT);
+        firstNode.releaseOperationClaim(staleClaim);
 
-        ZonedDateTime deleteStartedAt = STARTED_AT.plusSeconds(1);
-        secondNode.startOperation(COURSE_ID, CourseOperationType.DELETE, "Deleting exercises", 14, deleteStartedAt);
-        firstNode.releaseOperationClaim(COURSE_ID, CourseOperationType.RESET, STARTED_AT);
+        CourseOperationClaim currentClaim = secondNode.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, STARTED_AT);
+        firstNode.releaseOperationClaim(staleClaim);
 
         assertThatExceptionOfType(ConflictException.class)
                 .isThrownBy(() -> firstNode.startOperation(COURSE_ID, CourseOperationType.ARCHIVE, "Creating directories", 4, STARTED_AT.plusSeconds(2)));
         assertThat(secondNode.getOperationProgress(COURSE_ID)).get().extracting(CourseOperationProgressDTO::operationType, CourseOperationProgressDTO::startedAt)
-                .containsExactly(CourseOperationType.DELETE, deleteStartedAt);
+                .containsExactly(currentClaim.operationType(), currentClaim.startedAt());
+    }
+
+    @Test
+    void startOperationRollsBackClaimWhenInitialPublicationFails() {
+        DistributedDataProvider distributedDataProvider = new LocalDataProviderService();
+        WebsocketMessagingService websocketMessagingService = mock(WebsocketMessagingService.class);
+        TaskScheduler taskScheduler = mock(TaskScheduler.class);
+        @SuppressWarnings("unchecked")
+        ScheduledFuture<Void> renewal = mock(ScheduledFuture.class);
+        when(taskScheduler.scheduleAtFixedRate(any(Runnable.class), any(Instant.class), any(Duration.class))).thenAnswer(_ -> renewal);
+        doThrow(new AssertionError("publication failed")).when(websocketMessagingService).sendMessage(any(String.class), any(Object.class));
+        var service = new CourseOperationProgressService(cacheManager, websocketMessagingService, distributedDataProvider, taskScheduler);
+
+        assertThatThrownBy(() -> service.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, STARTED_AT)).isInstanceOf(AssertionError.class);
+
+        secondNode = new CourseOperationProgressService(cacheManager, mock(WebsocketMessagingService.class), distributedDataProvider, taskScheduler());
+        secondNode.startOperation(COURSE_ID, CourseOperationType.DELETE, "Deleting exercises", 14, STARTED_AT.plusSeconds(1));
+        verify(renewal).cancel(false);
+    }
+
+    @Test
+    void startOperationRollsBackClaimWhenUnlockFails() {
+        DistributedDataProvider distributedDataProvider = mock(DistributedDataProvider.class);
+        @SuppressWarnings("unchecked")
+        DistributedMap<Long, String> operationClaims = mock(DistributedMap.class);
+        TaskScheduler taskScheduler = mock(TaskScheduler.class);
+        @SuppressWarnings("unchecked")
+        ScheduledFuture<Void> renewal = mock(ScheduledFuture.class);
+        ArgumentCaptor<String> claimValue = ArgumentCaptor.forClass(String.class);
+
+        when(distributedDataProvider.<Long, String>getExpiringMap(any(String.class), any(Duration.class))).thenReturn(operationClaims);
+        when(taskScheduler.scheduleAtFixedRate(any(Runnable.class), any(Instant.class), any(Duration.class))).thenAnswer(_ -> renewal);
+        doThrow(new IllegalStateException("provider unavailable")).when(operationClaims).unlock(COURSE_ID);
+        var service = new CourseOperationProgressService(cacheManager, mock(WebsocketMessagingService.class), distributedDataProvider, taskScheduler);
+
+        assertThatThrownBy(() -> service.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, STARTED_AT)).isInstanceOf(IllegalStateException.class);
+
+        verify(operationClaims).putIfAbsent(eq(COURSE_ID), claimValue.capture());
+        verify(operationClaims).remove(COURSE_ID, claimValue.getValue());
+        verify(renewal).cancel(false);
     }
 
     private TaskScheduler taskScheduler() {

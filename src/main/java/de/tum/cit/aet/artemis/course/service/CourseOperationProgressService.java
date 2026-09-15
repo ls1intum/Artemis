@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantLock;
@@ -60,7 +61,7 @@ public class CourseOperationProgressService {
 
     private final TaskScheduler taskScheduler;
 
-    private final Map<OperationClaim, ScheduledFuture<?>> claimRenewals = new ConcurrentHashMap<>();
+    private final Map<CourseOperationClaim, ScheduledFuture<?>> claimRenewals = new ConcurrentHashMap<>();
 
     private final ReentrantLock progressLock = new ReentrantLock();
 
@@ -79,138 +80,165 @@ public class CourseOperationProgressService {
      * @param operationType the type of operation (DELETE, RESET, ARCHIVE)
      * @param firstStep     the name of the first step
      * @param totalSteps    the total number of steps in the operation
-     * @param startedAt     when the operation started; also identifies the owner of the distributed claim
+     * @param startedAt     when the operation started
+     * @return the unique claim that must be used for subsequent progress updates and cleanup
      */
-    public void startOperation(long courseId, CourseOperationType operationType, String firstStep, int totalSteps, ZonedDateTime startedAt) {
-        OperationClaim operationClaim = operationClaim(courseId, operationType, startedAt);
+    public CourseOperationClaim startOperation(long courseId, CourseOperationType operationType, String firstStep, int totalSteps, ZonedDateTime startedAt) {
+        CourseOperationClaim operationClaim = new CourseOperationClaim(courseId, operationType, startedAt, UUID.randomUUID());
         operationClaims.lock(courseId);
+        boolean claimInserted = false;
+        ScheduledFuture<?> renewal = null;
         try {
-            String existingClaim = operationClaims.putIfAbsent(courseId, operationClaim.value());
+            String existingClaim = operationClaims.putIfAbsent(courseId, operationClaim.ownerToken().toString());
             if (existingClaim != null) {
                 throw new ConflictException("Another operation is already in progress for this course", Course.ENTITY_NAME, "courseOperationInProgress");
             }
-            try {
-                ScheduledFuture<?> renewal = taskScheduler.scheduleAtFixedRate(() -> renewOperationClaim(operationClaim),
-                        Instant.now().plus(COURSE_OPERATION_CLAIM_RENEWAL_INTERVAL), COURSE_OPERATION_CLAIM_RENEWAL_INTERVAL);
-                if (renewal == null) {
-                    throw new IllegalStateException("Could not schedule renewal of the course operation claim");
-                }
-                claimRenewals.put(operationClaim, renewal);
+            claimInserted = true;
+            renewal = taskScheduler.scheduleAtFixedRate(() -> renewOperationClaim(operationClaim), Instant.now().plus(COURSE_OPERATION_CLAIM_RENEWAL_INTERVAL),
+                    COURSE_OPERATION_CLAIM_RENEWAL_INTERVAL);
+            if (renewal == null) {
+                throw new IllegalStateException("Could not schedule renewal of the course operation claim");
             }
-            catch (RuntimeException e) {
-                operationClaims.remove(courseId, operationClaim.value());
-                throw e;
-            }
+            claimRenewals.put(operationClaim, renewal);
             var status = CourseOperationProgressDTO.inProgress(operationType, firstStep, 0, totalSteps, 0, 0, 0, startedAt, 0.0);
             sendAndCacheProgress(courseId, status);
         }
-        finally {
+        catch (RuntimeException | Error failure) {
+            if (claimInserted) {
+                rollbackFailedStart(operationClaim, renewal, failure);
+            }
+            try {
+                operationClaims.unlock(courseId);
+            }
+            catch (RuntimeException | Error unlockFailure) {
+                failure.addSuppressed(unlockFailure);
+            }
+            throw failure;
+        }
+        try {
             operationClaims.unlock(courseId);
         }
+        catch (RuntimeException | Error failure) {
+            rollbackFailedStart(operationClaim, renewal, failure);
+            throw failure;
+        }
+        return operationClaim;
     }
 
     /**
      * Updates the progress of a course operation and broadcasts the update.
      * Use this overload for steps that process multiple items with trackable progress.
      *
-     * @param courseId                the ID of the course being operated on
-     * @param operationType           the type of operation
+     * @param operationClaim          the claim that owns the operation
      * @param currentStep             the name of the current step
      * @param stepsCompleted          the number of completed steps
      * @param totalSteps              the total number of steps
      * @param itemsProcessed          the number of items processed in the current step
      * @param totalItems              the total items to process in the current step
      * @param failed                  the number of failed items
-     * @param startedAt               when the operation started
      * @param weightedProgressPercent the weighted progress percentage (0-100)
      */
-    public void updateProgress(long courseId, CourseOperationType operationType, String currentStep, int stepsCompleted, int totalSteps, int itemsProcessed, int totalItems,
-            int failed, ZonedDateTime startedAt, double weightedProgressPercent) {
-        var status = CourseOperationProgressDTO.inProgress(operationType, currentStep, stepsCompleted, totalSteps, itemsProcessed, totalItems, failed, startedAt,
-                weightedProgressPercent);
-        sendProgressIfOwned(courseId, operationType, startedAt, status);
+    public void updateProgress(CourseOperationClaim operationClaim, String currentStep, int stepsCompleted, int totalSteps, int itemsProcessed, int totalItems, int failed,
+            double weightedProgressPercent) {
+        var status = CourseOperationProgressDTO.inProgress(operationClaim.operationType(), currentStep, stepsCompleted, totalSteps, itemsProcessed, totalItems, failed,
+                operationClaim.startedAt(), weightedProgressPercent);
+        sendProgressIfOwned(operationClaim, status);
     }
 
     /**
      * Updates the progress of a course operation and broadcasts the update.
      * Use this overload for simple steps that don't have item-level progress tracking (e.g., bulk deletes).
      *
-     * @param courseId                the ID of the course being operated on
-     * @param operationType           the type of operation
+     * @param operationClaim          the claim that owns the operation
      * @param currentStep             the name of the current step
      * @param stepsCompleted          the number of completed steps
      * @param totalSteps              the total number of steps
-     * @param startedAt               when the operation started
      * @param weightedProgressPercent the weighted progress percentage (0-100)
      */
-    public void updateProgress(long courseId, CourseOperationType operationType, String currentStep, int stepsCompleted, int totalSteps, ZonedDateTime startedAt,
-            double weightedProgressPercent) {
-        var status = CourseOperationProgressDTO.inProgress(operationType, currentStep, stepsCompleted, totalSteps, 0, 0, 0, startedAt, weightedProgressPercent);
-        sendProgressIfOwned(courseId, operationType, startedAt, status);
+    public void updateProgress(CourseOperationClaim operationClaim, String currentStep, int stepsCompleted, int totalSteps, double weightedProgressPercent) {
+        var status = CourseOperationProgressDTO.inProgress(operationClaim.operationType(), currentStep, stepsCompleted, totalSteps, 0, 0, 0, operationClaim.startedAt(),
+                weightedProgressPercent);
+        sendProgressIfOwned(operationClaim, status);
     }
 
     /**
      * Marks the operation as completed and broadcasts the final status.
      *
-     * @param courseId      the ID of the course
-     * @param operationType the type of operation
-     * @param totalSteps    the total number of steps completed
-     * @param failed        the number of failed operations
-     * @param startedAt     when the operation started
+     * @param operationClaim the claim that owns the operation
+     * @param totalSteps     the total number of steps completed
+     * @param failed         the number of failed operations
      */
-    public void completeOperation(long courseId, CourseOperationType operationType, int totalSteps, int failed, ZonedDateTime startedAt) {
-        var status = CourseOperationProgressDTO.completed(operationType, totalSteps, failed, startedAt);
-        finishOperation(courseId, operationType, startedAt, status);
+    public void completeOperation(CourseOperationClaim operationClaim, int totalSteps, int failed) {
+        var status = CourseOperationProgressDTO.completed(operationClaim.operationType(), totalSteps, failed, operationClaim.startedAt());
+        finishOperation(operationClaim, status);
     }
 
     /**
      * Marks the operation as failed and broadcasts the error status.
      *
-     * @param courseId                the ID of the course
-     * @param operationType           the type of operation
+     * @param operationClaim          the claim that owns the operation
      * @param currentStep             the step where the failure occurred
      * @param stepsCompleted          the number of completed steps
      * @param totalSteps              the total number of steps
      * @param failed                  the number of failed items
-     * @param startedAt               when the operation started
      * @param errorMessage            the error message describing the failure
      * @param weightedProgressPercent the weighted progress percentage at time of failure
      */
-    public void failOperation(long courseId, CourseOperationType operationType, String currentStep, int stepsCompleted, int totalSteps, int failed, ZonedDateTime startedAt,
-            String errorMessage, double weightedProgressPercent) {
-        var status = CourseOperationProgressDTO.failed(operationType, currentStep, stepsCompleted, totalSteps, failed, startedAt, errorMessage, weightedProgressPercent);
-        finishOperation(courseId, operationType, startedAt, status);
+    public void failOperation(CourseOperationClaim operationClaim, String currentStep, int stepsCompleted, int totalSteps, int failed, String errorMessage,
+            double weightedProgressPercent) {
+        var status = CourseOperationProgressDTO.failed(operationClaim.operationType(), currentStep, stepsCompleted, totalSteps, failed, operationClaim.startedAt(), errorMessage,
+                weightedProgressPercent);
+        finishOperation(operationClaim, status);
     }
 
     /**
      * Releases an operation claim without publishing a final progress status. This is an idempotent safety net for operation bodies that exit before they can report completion or
      * failure. A stale operation cannot release a newer operation's claim.
      *
-     * @param courseId      the ID of the course
-     * @param operationType the type of operation
-     * @param startedAt     when the operation started
+     * @param operationClaim the claim to release
      */
-    public void releaseOperationClaim(long courseId, CourseOperationType operationType, ZonedDateTime startedAt) {
-        OperationClaim operationClaim = operationClaim(courseId, operationType, startedAt);
+    public void releaseOperationClaim(CourseOperationClaim operationClaim) {
         boolean lockAcquired = false;
         try {
-            operationClaims.lock(courseId);
+            operationClaims.lock(operationClaim.courseId());
             lockAcquired = true;
-            operationClaims.remove(courseId, operationClaim.value());
+            operationClaims.remove(operationClaim.courseId(), operationClaim.ownerToken().toString());
         }
         catch (RuntimeException e) {
-            log.warn("Failed to release the operation claim for course {}; it will expire automatically", courseId, e);
+            log.warn("Failed to release the operation claim for course {}; it will expire automatically", operationClaim.courseId(), e);
         }
         finally {
-            if (lockAcquired) {
-                try {
-                    operationClaims.unlock(courseId);
-                }
-                catch (RuntimeException e) {
-                    log.warn("Failed to unlock the operation claim for course {}", courseId, e);
+            try {
+                if (lockAcquired) {
+                    operationClaims.unlock(operationClaim.courseId());
                 }
             }
-            stopClaimRenewal(operationClaim);
+            catch (RuntimeException e) {
+                log.warn("Failed to unlock the operation claim for course {}", operationClaim.courseId(), e);
+            }
+            finally {
+                stopClaimRenewal(operationClaim);
+            }
+        }
+    }
+
+    /**
+     * Verifies that the operation still owns its distributed claim and refreshes the claim lifetime. Destructive operation steps call this before mutating course data so a stale
+     * worker stops after losing its claim.
+     *
+     * @param operationClaim the claim whose ownership should be verified
+     * @throws IllegalStateException if another operation owns the course or the claim expired
+     */
+    public void verifyOperationClaim(CourseOperationClaim operationClaim) {
+        operationClaims.lock(operationClaim.courseId());
+        try {
+            if (!ownsClaim(operationClaim)) {
+                throw new IllegalStateException("Course operation claim ownership was lost for course " + operationClaim.courseId());
+            }
+            operationClaims.put(operationClaim.courseId(), operationClaim.ownerToken().toString());
+        }
+        finally {
+            operationClaims.unlock(operationClaim.courseId());
         }
     }
 
@@ -225,21 +253,20 @@ public class CourseOperationProgressService {
                 .map(wrapper -> (CourseOperationProgressDTO) wrapper.get());
     }
 
-    private void finishOperation(long courseId, CourseOperationType operationType, ZonedDateTime startedAt, CourseOperationProgressDTO status) {
-        OperationClaim operationClaim = operationClaim(courseId, operationType, startedAt);
+    private void finishOperation(CourseOperationClaim operationClaim, CourseOperationProgressDTO status) {
         boolean lockAcquired = false;
         try {
-            operationClaims.lock(courseId);
+            operationClaims.lock(operationClaim.courseId());
             lockAcquired = true;
-            if (operationClaim.value().equals(operationClaims.get(courseId))) {
-                sendAndCacheProgress(courseId, status);
-                operationClaims.remove(courseId, operationClaim.value());
+            if (ownsClaim(operationClaim)) {
+                sendAndCacheProgress(operationClaim.courseId(), status);
+                operationClaims.remove(operationClaim.courseId(), operationClaim.ownerToken().toString());
             }
         }
         finally {
             try {
                 if (lockAcquired) {
-                    operationClaims.unlock(courseId);
+                    operationClaims.unlock(operationClaim.courseId());
                 }
             }
             finally {
@@ -248,26 +275,18 @@ public class CourseOperationProgressService {
         }
     }
 
-    private void sendProgressIfOwned(long courseId, CourseOperationType operationType, ZonedDateTime startedAt, CourseOperationProgressDTO status) {
-        OperationClaim operationClaim = operationClaim(courseId, operationType, startedAt);
-        operationClaims.lock(courseId);
-        try {
-            if (operationClaim.value().equals(operationClaims.get(courseId))) {
-                sendAndCacheProgress(courseId, status);
-            }
-        }
-        finally {
-            operationClaims.unlock(courseId);
-        }
+    private void sendProgressIfOwned(CourseOperationClaim operationClaim, CourseOperationProgressDTO status) {
+        verifyOperationClaim(operationClaim);
+        sendAndCacheProgress(operationClaim.courseId(), status);
     }
 
-    private void renewOperationClaim(OperationClaim operationClaim) {
+    private void renewOperationClaim(CourseOperationClaim operationClaim) {
         boolean ownershipLost = false;
         try {
             operationClaims.lock(operationClaim.courseId());
             try {
-                if (operationClaim.value().equals(operationClaims.get(operationClaim.courseId()))) {
-                    operationClaims.put(operationClaim.courseId(), operationClaim.value());
+                if (ownsClaim(operationClaim)) {
+                    operationClaims.put(operationClaim.courseId(), operationClaim.ownerToken().toString());
                 }
                 else {
                     ownershipLost = true;
@@ -285,15 +304,33 @@ public class CourseOperationProgressService {
         }
     }
 
-    private void stopClaimRenewal(OperationClaim operationClaim) {
+    private void stopClaimRenewal(CourseOperationClaim operationClaim) {
         ScheduledFuture<?> renewal = claimRenewals.remove(operationClaim);
         if (renewal != null) {
             renewal.cancel(false);
         }
     }
 
-    private OperationClaim operationClaim(long courseId, CourseOperationType operationType, ZonedDateTime startedAt) {
-        return new OperationClaim(courseId, operationType + ":" + startedAt.toInstant());
+    private boolean ownsClaim(CourseOperationClaim operationClaim) {
+        return operationClaim.ownerToken().toString().equals(operationClaims.get(operationClaim.courseId()));
+    }
+
+    private void rollbackFailedStart(CourseOperationClaim operationClaim, ScheduledFuture<?> renewal, Throwable failure) {
+        try {
+            claimRenewals.remove(operationClaim);
+            if (renewal != null) {
+                renewal.cancel(false);
+            }
+        }
+        catch (RuntimeException | Error cancellationFailure) {
+            failure.addSuppressed(cancellationFailure);
+        }
+        try {
+            operationClaims.remove(operationClaim.courseId(), operationClaim.ownerToken().toString());
+        }
+        catch (RuntimeException | Error cleanupFailure) {
+            failure.addSuppressed(cleanupFailure);
+        }
     }
 
     private void sendAndCacheProgress(long courseId, CourseOperationProgressDTO status) {
@@ -314,8 +351,5 @@ public class CourseOperationProgressService {
         finally {
             progressLock.unlock();
         }
-    }
-
-    private record OperationClaim(long courseId, String value) {
     }
 }

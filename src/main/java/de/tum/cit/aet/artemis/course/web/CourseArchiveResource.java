@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.course.domain.CourseOperationType;
 import de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseArchiveService;
+import de.tum.cit.aet.artemis.course.service.CourseOperationClaim;
 import de.tum.cit.aet.artemis.course.service.CourseOperationProgressService;
 
 /**
@@ -105,19 +106,20 @@ public class CourseArchiveResource {
             throw new BadRequestAlertException("You cannot archive a course that is not over.", Course.ENTITY_NAME, "courseNotOver", true);
         }
         ZonedDateTime startedAt = now();
-        progressService.startOperation(courseId, CourseOperationType.ARCHIVE, "Creating directories", CourseArchiveService.TOTAL_ARCHIVE_STEPS, startedAt);
+        CourseOperationClaim operationClaim = progressService.startOperation(courseId, CourseOperationType.ARCHIVE, "Creating directories",
+                CourseArchiveService.TOTAL_ARCHIVE_STEPS, startedAt);
         boolean archiveScheduled = false;
         try {
-            courseArchiveService.archiveCourse(course, startedAt);
+            courseArchiveService.archiveCourse(course, operationClaim);
             archiveScheduled = true;
         }
         catch (RuntimeException e) {
-            progressService.failOperation(courseId, CourseOperationType.ARCHIVE, "Archive failed", 0, CourseArchiveService.TOTAL_ARCHIVE_STEPS, 0, startedAt, e.getMessage(), 0);
+            progressService.failOperation(operationClaim, "Archive failed", 0, CourseArchiveService.TOTAL_ARCHIVE_STEPS, 0, e.getMessage(), 0);
             throw e;
         }
         finally {
             if (!archiveScheduled) {
-                progressService.releaseOperationClaim(courseId, CourseOperationType.ARCHIVE, startedAt);
+                progressService.releaseOperationClaim(operationClaim);
             }
         }
 

@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +22,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseOperationType;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseArchiveService;
+import de.tum.cit.aet.artemis.course.service.CourseOperationClaim;
 import de.tum.cit.aet.artemis.course.service.CourseOperationProgressService;
 
 class CourseArchiveResourceTest {
@@ -61,13 +63,16 @@ class CourseArchiveResourceTest {
         CourseArchiveService courseArchiveService = mock(CourseArchiveService.class);
         CourseOperationProgressService progressService = mock(CourseOperationProgressService.class);
         var error = new AssertionError("executor failed");
+        var operationClaim = new CourseOperationClaim(COURSE_ID, CourseOperationType.ARCHIVE, COURSE_END_DATE, UUID.randomUUID());
 
         when(courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(COURSE_ID)).thenReturn(course);
-        doThrow(error).when(courseArchiveService).archiveCourse(eq(course), any(ZonedDateTime.class));
+        when(progressService.startOperation(eq(COURSE_ID), eq(CourseOperationType.ARCHIVE), eq("Creating directories"), eq(4), any(ZonedDateTime.class)))
+                .thenReturn(operationClaim);
+        doThrow(error).when(courseArchiveService).archiveCourse(course, operationClaim);
 
         var resource = new CourseArchiveResource(courseRepository, mock(AuthorizationCheckService.class), mock(UserRepository.class), courseArchiveService, progressService);
 
         assertThatThrownBy(() -> resource.archiveCourse(COURSE_ID)).isSameAs(error);
-        verify(progressService).releaseOperationClaim(eq(COURSE_ID), eq(CourseOperationType.ARCHIVE), any(ZonedDateTime.class));
+        verify(progressService).releaseOperationClaim(operationClaim);
     }
 }

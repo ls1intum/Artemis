@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseExamExportErrorCause;
 import de.tum.cit.aet.artemis.course.domain.CourseExamExportState;
 import de.tum.cit.aet.artemis.course.domain.CourseOperationType;
+import de.tum.cit.aet.artemis.course.service.CourseOperationClaim;
 import de.tum.cit.aet.artemis.course.service.CourseOperationProgressService;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -127,18 +128,18 @@ public class CourseExamExportService {
      */
     public Optional<Path> exportCourseForArchive(Course course, Path outputDir, List<String> exportErrors, Map<Long, ExamScoresDTO> examScoresData) {
         ZonedDateTime startedAt = ZonedDateTime.now();
-        progressService.startOperation(course.getId(), CourseOperationType.ARCHIVE, "Creating directories", TOTAL_ARCHIVE_STEPS, startedAt);
+        CourseOperationClaim operationClaim = progressService.startOperation(course.getId(), CourseOperationType.ARCHIVE, "Creating directories", TOTAL_ARCHIVE_STEPS, startedAt);
         try {
-            Optional<Path> archivedCourse = exportCourseForArchive(course, outputDir, exportErrors, examScoresData, startedAt);
-            progressService.completeOperation(course.getId(), CourseOperationType.ARCHIVE, TOTAL_ARCHIVE_STEPS, exportErrors.size(), startedAt);
+            Optional<Path> archivedCourse = exportCourseForArchive(course, outputDir, exportErrors, examScoresData, operationClaim);
+            progressService.completeOperation(operationClaim, TOTAL_ARCHIVE_STEPS, exportErrors.size());
             return archivedCourse;
         }
         catch (RuntimeException e) {
-            progressService.failOperation(course.getId(), CourseOperationType.ARCHIVE, "Archive failed", 0, TOTAL_ARCHIVE_STEPS, 0, startedAt, e.getMessage(), 0);
+            progressService.failOperation(operationClaim, "Archive failed", 0, TOTAL_ARCHIVE_STEPS, 0, e.getMessage(), 0);
             throw e;
         }
         finally {
-            progressService.releaseOperationClaim(course.getId(), CourseOperationType.ARCHIVE, startedAt);
+            progressService.releaseOperationClaim(operationClaim);
         }
     }
 
@@ -149,10 +150,11 @@ public class CourseExamExportService {
      * @param outputDir      The directory where the exported course is saved
      * @param exportErrors   List of failures that occurred during the export
      * @param examScoresData Map of exam ID to ExamScoresDTO containing comprehensive exam score data
-     * @param startedAt      when the archive operation was claimed
+     * @param operationClaim the claim that owns the archive operation
      * @return Path to the zip file
      */
-    public Optional<Path> exportCourseForArchive(Course course, Path outputDir, List<String> exportErrors, Map<Long, ExamScoresDTO> examScoresData, ZonedDateTime startedAt) {
+    public Optional<Path> exportCourseForArchive(Course course, Path outputDir, List<String> exportErrors, Map<Long, ExamScoresDTO> examScoresData,
+            CourseOperationClaim operationClaim) {
         int stepsCompleted = 0;
 
         // Used for sending export progress notifications to instructors
@@ -173,16 +175,14 @@ public class CourseExamExportService {
             String message = "Failed to export course " + course.getId() + " because the temporary directory: " + tmpCourseDir + " cannot be created.";
             notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.COMPLETED_WITH_ERRORS, List.of(message),
                     CourseExamExportErrorCause.DIR_NOT_CREATED.toString());
-            progressService.failOperation(course.getId(), CourseOperationType.ARCHIVE, "Creating directories", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, startedAt, message,
-                    calculateArchiveProgress(stepsCompleted));
+            progressService.failOperation(operationClaim, "Creating directories", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, message, calculateArchiveProgress(stepsCompleted));
             logMessageAndAppendToList(message, exportErrors, e);
             return Optional.empty();
         }
 
         try {
             // Step 1: Export course exercises and exams
-            progressService.updateProgress(course.getId(), CourseOperationType.ARCHIVE, "Exporting exercises", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, 0, 0, startedAt,
-                    calculateArchiveProgress(stepsCompleted));
+            progressService.updateProgress(operationClaim, "Exporting exercises", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, 0, 0, calculateArchiveProgress(stepsCompleted));
             List<Path> exportedFiles = exportCourseAndExamExercises(notificationTopic, course, tmpCourseDir.toString(), exportErrors, reportData);
             stepsCompleted++;
 
@@ -191,14 +191,12 @@ public class CourseExamExportService {
                 exportErrors.add(message);
                 notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.COMPLETED_WITH_ERRORS, List.of(message),
                         CourseExamExportErrorCause.NOTHING_TO_EXPORT.toString());
-                progressService.failOperation(course.getId(), CourseOperationType.ARCHIVE, "Exporting exercises", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, startedAt, message,
-                        calculateArchiveProgress(stepsCompleted));
+                progressService.failOperation(operationClaim, "Exporting exercises", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, message, calculateArchiveProgress(stepsCompleted));
                 return Optional.empty();
             }
 
             // Step 2: Export student data
-            progressService.updateProgress(course.getId(), CourseOperationType.ARCHIVE, "Exporting student data", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, 0, 0, startedAt,
-                    calculateArchiveProgress(stepsCompleted));
+            progressService.updateProgress(operationClaim, "Exporting student data", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, 0, 0, calculateArchiveProgress(stepsCompleted));
             notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Exporting student data..."), null);
             List<Path> studentDataFiles = courseStudentDataExportService.exportAllStudentData(course.getId(), tmpCourseDir, exportErrors);
             exportedFiles.addAll(studentDataFiles);
@@ -214,8 +212,7 @@ public class CourseExamExportService {
             stepsCompleted++;
 
             // Step 3: Write report and error file
-            progressService.updateProgress(course.getId(), CourseOperationType.ARCHIVE, "Writing reports", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, 0, 0, startedAt,
-                    calculateArchiveProgress(stepsCompleted));
+            progressService.updateProgress(operationClaim, "Writing reports", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, 0, 0, calculateArchiveProgress(stepsCompleted));
             try {
                 exportedFiles.add(writeReport(reportData, tmpCourseDir));
                 exportedFiles.add(writeFile(exportErrors, tmpCourseDir, "exportErrors.txt"));
@@ -226,8 +223,7 @@ public class CourseExamExportService {
             stepsCompleted++;
 
             // Step 4: Create zip file
-            progressService.updateProgress(course.getId(), CourseOperationType.ARCHIVE, "Creating archive", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, 0, 0, startedAt,
-                    calculateArchiveProgress(stepsCompleted));
+            progressService.updateProgress(operationClaim, "Creating archive", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, 0, 0, calculateArchiveProgress(stepsCompleted));
             Optional<Path> exportedCourse = zipExportedExercises(outputDir, exportErrors, notificationTopic, tmpCourseDir);
             stepsCompleted++;
 
@@ -236,8 +232,7 @@ public class CourseExamExportService {
         }
         catch (Exception e) {
             log.error("Failed to archive course {}", course.getId(), e);
-            progressService.failOperation(course.getId(), CourseOperationType.ARCHIVE, "Archive failed", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, startedAt, e.getMessage(),
-                    calculateArchiveProgress(stepsCompleted));
+            progressService.failOperation(operationClaim, "Archive failed", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, e.getMessage(), calculateArchiveProgress(stepsCompleted));
             throw e;
         }
     }
