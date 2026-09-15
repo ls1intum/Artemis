@@ -17,7 +17,7 @@ ready-made `artemis-oidc` realm with 21 test accounts.
 
 </Callout>
 
-## Step 1: Start Keycloak
+## Start Keycloak
 
 <Callout variant={CalloutVariant.warning}>
 
@@ -51,7 +51,7 @@ You now have:
 The realm is imported from `docker/oidc-test/artemis-oidc-realm.json` on every start, so anything you change in the
 admin console is gone when you recreate the container. Edit that file instead if you need a change to stick.
 
-## Step 2: Point Artemis at it
+## Point Artemis at it
 
 Copy `docker/oidc-test/application-oidc-test.yml` into your `src/main/resources/config/application-local.yml`. That
 file holds everything needed: the `artemis.user-management.oidc.enabled` flag, the claim mappings, and the client and
@@ -77,7 +77,7 @@ environment variable (`ARTEMIS_OIDC_ISSUER_URI`, `ARTEMIS_OIDC_AUTHORIZATION_URI
 variables outrank profile files whatever their order. Setting those is a reasonable option if you switch between the
 local and the real provider often.
 
-## Step 3: Check the client proxy
+## Check the client proxy
 
 If you run the client through the Angular dev server on port 9000, the login redirects have to reach the server
 through the proxy. `proxy.conf.mjs` already forwards them:
@@ -93,7 +93,7 @@ target: "http://localhost:8080",
 
 Nothing to do here unless you have changed that file.
 
-## Step 4: Sign in
+## Sign in
 
 The realm imports one administrator and 20 test users. Every password equals the username, so `artemis_test_user_7`
 signs in with `artemis_test_user_7`.
