@@ -106,12 +106,19 @@ public class CourseArchiveResource {
         }
         ZonedDateTime startedAt = now();
         progressService.startOperation(courseId, CourseOperationType.ARCHIVE, "Creating directories", CourseArchiveService.TOTAL_ARCHIVE_STEPS, startedAt);
+        boolean archiveScheduled = false;
         try {
             courseArchiveService.archiveCourse(course, startedAt);
+            archiveScheduled = true;
         }
         catch (RuntimeException e) {
             progressService.failOperation(courseId, CourseOperationType.ARCHIVE, "Archive failed", 0, CourseArchiveService.TOTAL_ARCHIVE_STEPS, 0, startedAt, e.getMessage(), 0);
             throw e;
+        }
+        finally {
+            if (!archiveScheduled) {
+                progressService.releaseOperationClaim(courseId, CourseOperationType.ARCHIVE, startedAt);
+            }
         }
 
         // Note: in the first version, we do not store the results with feedback and other metadata, as those will stay available in Artemis, the main focus is to allow

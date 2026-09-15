@@ -302,6 +302,9 @@ public class CourseResetService {
                     calculateProgressPercent(completedWeight, totalWeight));
             throw e;
         }
+        finally {
+            progressService.releaseOperationClaim(courseId, CourseOperationType.RESET, startedAt);
+        }
     }
 
     private double calculateProgressPercent(double completedWeight, double totalWeight) {

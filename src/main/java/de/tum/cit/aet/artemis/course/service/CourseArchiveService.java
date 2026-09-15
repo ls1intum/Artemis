@@ -171,6 +171,9 @@ public class CourseArchiveService {
             log.info(error);
             progressService.failOperation(course.getId(), CourseOperationType.ARCHIVE, "Archive failed", 0, TOTAL_ARCHIVE_STEPS, 0, startedAt, e.getMessage(), 0);
         }
+        finally {
+            progressService.releaseOperationClaim(course.getId(), CourseOperationType.ARCHIVE, startedAt);
+        }
 
         log.info("archive course took {}", TimeLogUtil.formatDurationFrom(start));
         return false;

@@ -183,6 +183,38 @@ public class CourseOperationProgressService {
     }
 
     /**
+     * Releases an operation claim without publishing a final progress status. This is an idempotent safety net for operation bodies that exit before they can report completion or
+     * failure. A stale operation cannot release a newer operation's claim.
+     *
+     * @param courseId      the ID of the course
+     * @param operationType the type of operation
+     * @param startedAt     when the operation started
+     */
+    public void releaseOperationClaim(long courseId, CourseOperationType operationType, ZonedDateTime startedAt) {
+        OperationClaim operationClaim = operationClaim(courseId, operationType, startedAt);
+        boolean lockAcquired = false;
+        try {
+            operationClaims.lock(courseId);
+            lockAcquired = true;
+            operationClaims.remove(courseId, operationClaim.value());
+        }
+        catch (RuntimeException e) {
+            log.warn("Failed to release the operation claim for course {}; it will expire automatically", courseId, e);
+        }
+        finally {
+            if (lockAcquired) {
+                try {
+                    operationClaims.unlock(courseId);
+                }
+                catch (RuntimeException e) {
+                    log.warn("Failed to unlock the operation claim for course {}", courseId, e);
+                }
+            }
+            stopClaimRenewal(operationClaim);
+        }
+    }
+
+    /**
      * Gets the current progress status for a course operation.
      *
      * @param courseId the ID of the course

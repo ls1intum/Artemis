@@ -310,6 +310,9 @@ public class CourseDeletionService {
                     calculateProgressPercent(completedWeight, totalWeight));
             throw e;
         }
+        finally {
+            progressService.releaseOperationClaim(courseId, CourseOperationType.DELETE, startedAt);
+        }
     }
 
     private double calculateProgressPercent(double completedWeight, double totalWeight) {

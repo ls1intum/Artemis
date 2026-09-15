@@ -35,6 +35,8 @@ class CourseOperationProgressServiceTest {
 
     private static final long COURSE_ID = 42L;
 
+    private static final ZonedDateTime STARTED_AT = ZonedDateTime.parse("2026-01-01T12:00:00Z");
+
     private CacheManager cacheManager;
 
     private CourseOperationProgressService firstNode;
@@ -51,7 +53,7 @@ class CourseOperationProgressServiceTest {
 
     @Test
     void startOperationRejectsCompetingOperationAcrossNodes() {
-        ZonedDateTime resetStartedAt = ZonedDateTime.now();
+        ZonedDateTime resetStartedAt = STARTED_AT;
         firstNode.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, resetStartedAt);
 
         assertThatExceptionOfType(ConflictException.class)
@@ -63,7 +65,7 @@ class CourseOperationProgressServiceTest {
 
     @Test
     void startOperationRejectsSecondResetAcrossNodes() {
-        ZonedDateTime resetStartedAt = ZonedDateTime.now();
+        ZonedDateTime resetStartedAt = STARTED_AT;
         firstNode.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, resetStartedAt);
 
         assertThatExceptionOfType(ConflictException.class)
@@ -72,7 +74,7 @@ class CourseOperationProgressServiceTest {
 
     @Test
     void completeOperationReleasesClaimForNextOperation() {
-        ZonedDateTime resetStartedAt = ZonedDateTime.now();
+        ZonedDateTime resetStartedAt = STARTED_AT;
         firstNode.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, resetStartedAt);
         firstNode.completeOperation(COURSE_ID, CourseOperationType.RESET, 11, 0, resetStartedAt);
 
@@ -84,7 +86,7 @@ class CourseOperationProgressServiceTest {
 
     @Test
     void failOperationReleasesClaimForRetry() {
-        ZonedDateTime resetStartedAt = ZonedDateTime.now();
+        ZonedDateTime resetStartedAt = STARTED_AT;
         firstNode.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, resetStartedAt);
         firstNode.failOperation(COURSE_ID, CourseOperationType.RESET, "Reset failed", 1, 11, 1, resetStartedAt, "failure", 10.0);
 
@@ -96,7 +98,7 @@ class CourseOperationProgressServiceTest {
 
     @Test
     void staleOperationCannotOverwriteNewOwnerProgress() {
-        ZonedDateTime resetStartedAt = ZonedDateTime.now();
+        ZonedDateTime resetStartedAt = STARTED_AT;
         firstNode.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, resetStartedAt);
         firstNode.completeOperation(COURSE_ID, CourseOperationType.RESET, 11, 0, resetStartedAt);
 
@@ -109,7 +111,7 @@ class CourseOperationProgressServiceTest {
     }
 
     @Test
-    void activeOperationRenewsClaimAndStopsRenewalWhenFinished() {
+    void activeOperationRenewsClaimAndReleaseStopsRenewal() {
         DistributedDataProvider distributedDataProvider = mock(DistributedDataProvider.class);
         @SuppressWarnings("unchecked")
         DistributedMap<Long, String> operationClaims = mock(DistributedMap.class);
@@ -122,7 +124,7 @@ class CourseOperationProgressServiceTest {
         when(taskScheduler.scheduleAtFixedRate(renewalTask.capture(), any(Instant.class), any(Duration.class))).thenAnswer(_ -> renewal);
 
         var service = new CourseOperationProgressService(cacheManager, mock(WebsocketMessagingService.class), distributedDataProvider, taskScheduler);
-        ZonedDateTime startedAt = ZonedDateTime.now();
+        ZonedDateTime startedAt = STARTED_AT;
         String claim = CourseOperationType.RESET + ":" + startedAt.toInstant();
         when(operationClaims.get(COURSE_ID)).thenReturn(claim);
 
@@ -131,7 +133,7 @@ class CourseOperationProgressServiceTest {
 
         verify(operationClaims).put(COURSE_ID, claim);
 
-        service.completeOperation(COURSE_ID, CourseOperationType.RESET, 11, 0, startedAt);
+        service.releaseOperationClaim(COURSE_ID, CourseOperationType.RESET, startedAt);
         verify(renewal).cancel(false);
     }
 
@@ -148,12 +150,48 @@ class CourseOperationProgressServiceTest {
         when(taskScheduler.scheduleAtFixedRate(any(Runnable.class), any(Instant.class), any(Duration.class))).thenAnswer(_ -> renewal);
 
         var service = new CourseOperationProgressService(cacheManager, mock(WebsocketMessagingService.class), distributedDataProvider, taskScheduler);
-        ZonedDateTime startedAt = ZonedDateTime.now();
+        ZonedDateTime startedAt = STARTED_AT;
         service.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, startedAt);
         doThrow(new IllegalStateException("provider unavailable")).when(operationClaims).lock(COURSE_ID);
 
         assertThatThrownBy(() -> service.completeOperation(COURSE_ID, CourseOperationType.RESET, 11, 0, startedAt)).isInstanceOf(IllegalStateException.class);
         verify(renewal).cancel(false);
+    }
+
+    @Test
+    void releaseOperationClaimStopsRenewalWhenDistributedLockFails() {
+        DistributedDataProvider distributedDataProvider = mock(DistributedDataProvider.class);
+        @SuppressWarnings("unchecked")
+        DistributedMap<Long, String> operationClaims = mock(DistributedMap.class);
+        TaskScheduler taskScheduler = mock(TaskScheduler.class);
+        @SuppressWarnings("unchecked")
+        ScheduledFuture<Void> renewal = mock(ScheduledFuture.class);
+
+        when(distributedDataProvider.<Long, String>getExpiringMap(any(String.class), any(Duration.class))).thenReturn(operationClaims);
+        when(taskScheduler.scheduleAtFixedRate(any(Runnable.class), any(Instant.class), any(Duration.class))).thenAnswer(_ -> renewal);
+
+        var service = new CourseOperationProgressService(cacheManager, mock(WebsocketMessagingService.class), distributedDataProvider, taskScheduler);
+        service.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, STARTED_AT);
+        doThrow(new IllegalStateException("provider unavailable")).when(operationClaims).lock(COURSE_ID);
+
+        service.releaseOperationClaim(COURSE_ID, CourseOperationType.RESET, STARTED_AT);
+
+        verify(renewal).cancel(false);
+    }
+
+    @Test
+    void releaseOperationClaimIsIdempotentAndCannotReleaseNewOwner() {
+        firstNode.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, STARTED_AT);
+        firstNode.releaseOperationClaim(COURSE_ID, CourseOperationType.RESET, STARTED_AT);
+
+        ZonedDateTime deleteStartedAt = STARTED_AT.plusSeconds(1);
+        secondNode.startOperation(COURSE_ID, CourseOperationType.DELETE, "Deleting exercises", 14, deleteStartedAt);
+        firstNode.releaseOperationClaim(COURSE_ID, CourseOperationType.RESET, STARTED_AT);
+
+        assertThatExceptionOfType(ConflictException.class)
+                .isThrownBy(() -> firstNode.startOperation(COURSE_ID, CourseOperationType.ARCHIVE, "Creating directories", 4, STARTED_AT.plusSeconds(2)));
+        assertThat(secondNode.getOperationProgress(COURSE_ID)).get().extracting(CourseOperationProgressDTO::operationType, CourseOperationProgressDTO::startedAt)
+                .containsExactly(CourseOperationType.DELETE, deleteStartedAt);
     }
 
     private TaskScheduler taskScheduler() {

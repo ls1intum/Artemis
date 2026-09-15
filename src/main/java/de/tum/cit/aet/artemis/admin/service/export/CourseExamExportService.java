@@ -137,6 +137,9 @@ public class CourseExamExportService {
             progressService.failOperation(course.getId(), CourseOperationType.ARCHIVE, "Archive failed", 0, TOTAL_ARCHIVE_STEPS, 0, startedAt, e.getMessage(), 0);
             throw e;
         }
+        finally {
+            progressService.releaseOperationClaim(course.getId(), CourseOperationType.ARCHIVE, startedAt);
+        }
     }
 
     /**
