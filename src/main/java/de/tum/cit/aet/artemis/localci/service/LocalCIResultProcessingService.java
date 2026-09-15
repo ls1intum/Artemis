@@ -388,21 +388,26 @@ public class LocalCIResultProcessingService {
             // different containers apart; what makes an interrupted sequence harmless is that every step is keyed by the
             // build group: a sibling only finds the aggregate through a job that links to it, so a container whose append
             // was saved but whose job was never linked leaves behind an in-progress result that nothing refers to, and
-            // the recovery below still records the job as finished, so the group cannot stay open.
+            // the recovery below still records the job as finished, so the group cannot stay open. A container whose job
+            // was linked but whose finalization failed keeps the link, see below.
             ContainerOutcome outcome = null;
+            Result appendedResult = null;
+            // Set once this container's job links to the aggregate. From then on the container's feedback is part of the
+            // merged result and the siblings find the aggregate through the link, so a later failure must not undo it.
+            BuildJob linkedContainerJob = null;
             try {
                 // The aggregate is found through the siblings that already merged into it, never through the submission's
                 // results: a retry or a re-push of the same commit is a new group with an aggregate of its own, and a
                 // tutor's draft assessment on the submission can never be mistaken for it.
                 Long aggregatedResultId = findAggregatedResultId(buildGroupId);
-                Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, effectiveBuildResult, testsExpected, buildGroup.containerName(),
+                appendedResult = programmingExerciseGradingService.appendContainerResult(participation, effectiveBuildResult, testsExpected, buildGroup.containerName(),
                         aggregatedResultId);
-                if (aggregatedResult != null) {
+                if (appendedResult != null) {
                     // Link this container's build job to the shared result; the link is how the siblings that finish after
                     // this one find the aggregate.
-                    BuildJob savedContainerJob = saveFinishedBuildJob(buildJob, buildStatus, aggregatedResult);
+                    linkedContainerJob = saveFinishedBuildJob(buildJob, buildStatus, appendedResult);
                     Result finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate());
-                    outcome = new ContainerOutcome(finalizedResult != null ? finalizedResult : aggregatedResult, savedContainerJob);
+                    outcome = new ContainerOutcome(finalizedResult != null ? finalizedResult : appendedResult, linkedContainerJob);
                 }
             }
             catch (RuntimeException e) {
@@ -410,6 +415,23 @@ public class LocalCIResultProcessingService {
             }
             if (outcome != null) {
                 return outcome;
+            }
+            if (linkedContainerJob != null) {
+                // The append and the link went through; only the finalization failed. The link stays: recording the job
+                // as failed without it, as the recovery below does, would drop this container's feedback from the merged
+                // result and, for the first container of the group, send the next sibling to a second aggregate. The
+                // finalization is attempted once more. If it fails again, the group is complete by count while its
+                // aggregate stays in progress, a state the missing-job retry does not cover because no job of the group
+                // is missing; it is logged as such.
+                Result finalizedResult = null;
+                try {
+                    finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate());
+                }
+                catch (RuntimeException e) {
+                    log.error("Could not finalize build group {} after container {} of build job {} merged; the group's aggregated result stays in progress", buildGroupId,
+                            buildGroup.containerName(), buildJob.id(), e);
+                }
+                return new ContainerOutcome(finalizedResult != null ? finalizedResult : appendedResult, linkedContainerJob);
             }
             // This container's result could not be merged. Its job is still recorded as finished, only without a result
             // link, so the group's completion count keeps advancing: if this was the last container, the aggregate its
