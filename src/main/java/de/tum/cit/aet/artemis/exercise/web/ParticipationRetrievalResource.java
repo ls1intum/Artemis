@@ -33,6 +33,8 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.DetailedParticipationDTO;
+import de.tum.cit.aet.artemis.exercise.dto.DetailedSubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationNameExportDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreDTO;
@@ -142,12 +144,13 @@ public class ParticipationRetrievalResource {
      */
     @GetMapping("participations/{participationId}/submissions")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<Submission>> getSubmissionsOfParticipation(@PathVariable Long participationId) {
+    public ResponseEntity<List<DetailedSubmissionDTO>> getSubmissionsOfParticipation(@PathVariable Long participationId) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         User user = userRepository.getUserWithAuthorities();
         checkAccessPermissionAtLeastInstructor(participation, user);
         List<Submission> submissions = submissionRepository.findAllWithResultsAndAssessorByParticipationId(participationId);
-        return ResponseEntity.ok(submissions);
+        DetailedParticipationDTO participationWithExercise = DetailedParticipationDTO.withExercise(participation);
+        return ResponseEntity.ok(submissions.stream().map(submission -> DetailedSubmissionDTO.of(submission, participationWithExercise)).toList());
     }
 
     /**
