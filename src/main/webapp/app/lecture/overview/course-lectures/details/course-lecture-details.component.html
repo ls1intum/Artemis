@@ -78,29 +78,17 @@
                                     <jhi-attachment-video-unit
                                         [courseId]="courseId()!"
                                         [lectureUnit]="lectureUnit"
-                                        [initiallyExpanded]="lectureUnit.id === targetUnitId()"
-                                        [targetTimestamp]="lectureUnit.id === targetUnitId() ? targetVideoTimestamp() : undefined"
-                                        [targetPdfPage]="lectureUnit.id === targetUnitId() ? targetPdfPage() : undefined"
+                                        [deepLink]="deepLink()"
                                         [irisSettings]="irisSettings()"
                                         [contextsProvider]="contextsProvider"
                                         (onCompletion)="completeLectureUnit($event)"
                                     />
                                 }
                                 @case (LectureUnitType.TEXT) {
-                                    <jhi-text-unit
-                                        [courseId]="courseId()!"
-                                        [lectureUnit]="lectureUnit"
-                                        [initiallyExpanded]="lectureUnit.id === targetUnitId()"
-                                        (onCompletion)="completeLectureUnit($event)"
-                                    />
+                                    <jhi-text-unit [courseId]="courseId()!" [lectureUnit]="lectureUnit" [deepLink]="deepLink()" (onCompletion)="completeLectureUnit($event)" />
                                 }
                                 @case (LectureUnitType.ONLINE) {
-                                    <jhi-online-unit
-                                        [courseId]="courseId()!"
-                                        [lectureUnit]="lectureUnit"
-                                        [initiallyExpanded]="lectureUnit.id === targetUnitId()"
-                                        (onCompletion)="completeLectureUnit($event)"
-                                    />
+                                    <jhi-online-unit [courseId]="courseId()!" [lectureUnit]="lectureUnit" [deepLink]="deepLink()" (onCompletion)="completeLectureUnit($event)" />
                                 }
                             }
                         </div>
