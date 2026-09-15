@@ -33,7 +33,8 @@
         color: var(--apollon-chrome-text-muted);
     }
 
-    &[data-notice='suggestions'] &__icon {
+    &[data-notice='suggestions'] &__icon,
+    &[data-notice='optInRequired'] &__icon {
         color: var(--apollon-primary);
     }
 
