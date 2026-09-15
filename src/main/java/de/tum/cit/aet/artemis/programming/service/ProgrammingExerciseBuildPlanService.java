@@ -165,9 +165,8 @@ public class ProgrammingExerciseBuildPlanService {
      * @return the persisted build config
      */
     public ProgrammingExerciseBuildConfig updateBuildPlanConfiguration(ProgrammingExercise programmingExercise, UpdateBuildPlanConfigurationDTO buildPlanConfiguration) {
-        // reuse the shared build phase validation so a misconfiguration is rejected with the same error and key as on the
-        // full exercise update path
-        programmingExerciseValidationService.validateBuildPhases(buildPlanConfiguration.buildPlan().phases());
+        BuildPlanConfigurationValidator.validate(buildPlanConfiguration.buildPlan());
+        // a blank top-level image would be persisted verbatim and leave a legacy configuration with an unusable image
         validateDockerImage(buildPlanConfiguration.buildPlan().dockerImage());
 
         var buildConfig = programmingExercise.getBuildConfig();
