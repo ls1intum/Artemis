@@ -1,10 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import dayjs from 'dayjs/esm';
 import {
+    applySemesterToDates,
     generateCourseShortName,
     getCurrentAndFutureSemesters,
     getCurrentSemester,
     getDefaultSemester,
     getNextSemester,
+    getSemesterDateRange,
     getSemesterProgress,
     getSemesters,
 } from 'app/foundation/util/semester-utils';
@@ -13,12 +16,12 @@ describe('SemesterUtils', () => {
     describe('getSemesters', () => {
         it('should get semesters around current year', () => {
             vi.useFakeTimers().setSystemTime(new Date('2019-01-10'));
-            const expectedSemesters = ['WS20/21', 'SS20', 'WS19/20', 'SS19', 'WS18/19', 'SS18', ''];
+            const expectedSemesters = ['WS20/21', 'SS20', 'WS19/20', 'SS19', 'WS18/19', 'SS18'];
 
             const semesters = getSemesters();
 
-            //expect length to be 7 (years 2018-2020) + one empty value
-            expect(semesters).toHaveLength(7);
+            //expect length to be 6 (years 2018-2020)
+            expect(semesters).toHaveLength(6);
             expect(semesters).toEqual(expectedSemesters);
         });
     });
@@ -244,5 +247,92 @@ describe('SemesterUtils', () => {
             // Umlauts don't match /[A-Z0-9]/i so they should be skipped
             expect(generateCourseShortName('Übung', 'SS25')).toBe('25C');
         });
+    });
+});
+
+describe('getSemesterDateRange', () => {
+    it('maps a winter semester to October 1 through March 31 of the following year', () => {
+        const range = getSemesterDateRange('WS25/26')!;
+        expect(range.startDate.format('YYYY-MM-DD')).toBe('2025-10-01');
+        expect(range.endDate.format('YYYY-MM-DD')).toBe('2026-03-31');
+    });
+
+    it('maps a summer semester to April 1 through September 30', () => {
+        const range = getSemesterDateRange('SS25')!;
+        expect(range.startDate.format('YYYY-MM-DD')).toBe('2025-04-01');
+        expect(range.endDate.format('YYYY-MM-DD')).toBe('2025-09-30');
+    });
+
+    it('starts at the beginning and ends at the end of the day', () => {
+        const range = getSemesterDateRange('SS25')!;
+        expect(range.startDate.format('HH:mm')).toBe('00:00');
+        expect(range.endDate.format('HH:mm')).toBe('23:59');
+    });
+
+    it.each(['', undefined, 'WS2025', '2025W', 'nonsense'])('returns undefined for %s', (semester) => {
+        expect(getSemesterDateRange(semester as string | undefined)).toBeUndefined();
+    });
+
+    it('returns undefined when the year after the slash is not the following year', () => {
+        expect(getSemesterDateRange('WS20/99')).toBeUndefined();
+    });
+
+    it('handles a winter semester that wraps the century', () => {
+        const range = getSemesterDateRange('WS99/00')!;
+        expect(range.startDate.format('YYYY-MM-DD')).toBe('2099-10-01');
+        expect(range.endDate.format('YYYY-MM-DD')).toBe('2100-03-31');
+    });
+});
+
+describe('applySemesterToDates', () => {
+    it('fills in dates that are empty', () => {
+        const result = applySemesterToDates('WS25/26', undefined, undefined, undefined);
+
+        expect(result.startDate!.format('YYYY-MM-DD')).toBe('2025-10-01');
+        expect(result.endDate!.format('YYYY-MM-DD')).toBe('2026-03-31');
+    });
+
+    it('replaces dates that still equal the previous semester range', () => {
+        const previousRange = getSemesterDateRange('WS25/26')!;
+
+        const result = applySemesterToDates('SS26', 'WS25/26', previousRange.startDate, previousRange.endDate);
+
+        expect(result.startDate!.format('YYYY-MM-DD')).toBe('2026-04-01');
+        expect(result.endDate!.format('YYYY-MM-DD')).toBe('2026-09-30');
+    });
+
+    it('passes a hand-set date through unchanged while its untouched sibling still follows the semester', () => {
+        const previousRange = getSemesterDateRange('WS25/26')!;
+        const handPickedStartDate = dayjs('2025-11-05');
+
+        const result = applySemesterToDates('SS26', 'WS25/26', handPickedStartDate, previousRange.endDate);
+
+        expect(result.startDate!.format('YYYY-MM-DD')).toBe('2025-11-05');
+        expect(result.endDate!.format('YYYY-MM-DD')).toBe('2026-09-30');
+    });
+
+    it('changes nothing for an unparseable semester', () => {
+        const startDate = dayjs('2025-11-05');
+        const endDate = dayjs('2026-01-10');
+
+        const result = applySemesterToDates('not-a-semester', 'WS25/26', startDate, endDate);
+
+        expect(result.startDate).toBe(startDate);
+        expect(result.endDate).toBe(endDate);
+    });
+});
+
+describe('getSemesters with an extra value', () => {
+    it('does not offer an empty semester any more', () => {
+        expect(getSemesters()).not.toContain('');
+    });
+
+    it('appends a legacy semester that the generated range does not cover', () => {
+        expect(getSemesters('WS16/17')).toContain('WS16/17');
+    });
+
+    it('does not duplicate a semester that is already generated', () => {
+        const semesters = getSemesters('SS20');
+        expect(semesters.filter((semester) => semester === 'SS20')).toHaveLength(1);
     });
 });
