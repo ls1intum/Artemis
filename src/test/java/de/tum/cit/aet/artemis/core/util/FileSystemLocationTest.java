@@ -228,6 +228,35 @@ class FileSystemLocationTest {
     }
 
     /**
+     * The round trip a client actually performs: it is served a URL and sends that same string back in the next update of the entity. `PublicFileUrl` percent-encodes the
+     * filename segment, so a value kept whole here has to be kept in its decoded form — storing the escapes would encode them a second time on the way out and look for a file
+     * named after the escape on the way in.
+     * <p>
+     * The colon itself is never escaped, because RFC 3986 allows it in a path segment. The fixture therefore carries a space after the colon: the colon is what makes the
+     * reduced name read as a URI scheme, and the space is what the served URL escapes.
+     */
+    @Test
+    void shouldSurviveTheServedUrlRoundTripForAColonBearingFilename() {
+        String legacyFilename = "lecture:my file.pdf";
+        String storedLegacy = "attachments/lectures/4/" + legacyFilename;
+
+        String servedOnce = new PublicFileUrl.LectureAttachment(4L, FileSystemLocation.filenameOf(storedLegacy)).url().toString();
+        assertThat(servedOnce).as("the served URL escapes the space once").contains("lecture:my%20file.pdf").doesNotContain("%2520");
+
+        String storedAgain = FileSystemLocation.storedFilename(servedOnce);
+        assertThat(storedAgain).as("what comes back is stored decoded, not as the escaped served URL").doesNotContain("%20").endsWith(legacyFilename);
+        assertThat(FileSystemLocation.refersToStoredFile(storedAgain)).as("and still names a stored file").isTrue();
+
+        String servedTwice = new PublicFileUrl.LectureAttachment(4L, FileSystemLocation.filenameOf(storedAgain)).url().toString();
+        assertThat(servedTwice).as("a second round trip escapes it exactly once again").isEqualTo(servedOnce);
+
+        assertThat(new FileSystemLocation.LectureAttachment(4L, FileSystemLocation.filenameOf(storedAgain)).path().getFileName())
+                .as("and the location resolves the real file name, not the escape").hasToString(legacyFilename);
+
+        assertThat(FileSystemLocation.storedFilename(storedAgain)).as("the reduction stays idempotent").isEqualTo(storedAgain);
+    }
+
+    /**
      * The guard above may not weaken the two things the reduction exists for: a served URL still reduces to the filename it names, and a reference to somewhere else is still
      * kept verbatim.
      */

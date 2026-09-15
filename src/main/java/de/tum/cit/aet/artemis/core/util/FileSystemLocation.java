@@ -418,11 +418,16 @@ public sealed interface FileSystemLocation {
             return value;
         }
         String filename = decodePercentEscapes(filenameOf(value));
+        if (refersToStoredFile(filename)) {
+            return filename;
+        }
         // The reduction may not change the answer it was reached through. A filename written before sanitization may contain a colon, and once its leading segments are gone
         // such a name parses as a URI scheme: `attachments/attachment-video-units/8/lecture:1.pdf` is a stored file, while the `lecture:1.pdf` it reduces to reads as external.
-        // Storing that would leave the attachment unservable and its file skipped on deletion, so the value is kept as it stands instead. It still resolves, because every
-        // location reduces its filename again through `filenameOf` when it builds a path.
-        return refersToStoredFile(filename) ? filename : value;
+        // Storing that would leave the attachment unservable and its file skipped on deletion, so the leading segments are kept, which is what keeps the value classified as a
+        // stored file. The last segment is still replaced by its decoded form: the value reaching this point may be a served URL, whose filename segment `PublicFileUrl`
+        // percent-encoded, and storing that encoded form would encode it a second time on the way out and look for a file named after the escapes on the way in. Every location
+        // reduces the value through `filenameOf` again when it builds a path, so the decoded last segment is the name that gets resolved.
+        return value.substring(0, value.lastIndexOf('/') + 1) + filename;
     }
 
     /**
