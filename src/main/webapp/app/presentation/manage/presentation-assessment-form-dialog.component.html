@@ -24,8 +24,8 @@
                 [fluid]="true"
                 [min]="0"
                 [max]="maxPointsUpperBound"
-                [step]="0.1"
-                [maxFractionDigits]="2"
+                [step]="0.001"
+                [maxFractionDigits]="3"
                 formControlName="maxPoints"
                 [placeholder]="'artemisApp.presentationAssessment.placeholder.maxPoints' | artemisTranslate"
             />
@@ -96,7 +96,7 @@
                 <fa-icon [icon]="faBan" />
                 <span jhiTranslate="entity.action.cancel"></span>
             </tum-ui-button>
-            <tum-ui-button type="submit">
+            <tum-ui-button type="submit" [disabled]="isSaving() || editForm.invalid">
                 <fa-icon [icon]="faSave" />
                 <span jhiTranslate="entity.action.save"></span>
             </tum-ui-button>

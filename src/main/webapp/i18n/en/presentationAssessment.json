@@ -12,18 +12,18 @@
             "title": "Title",
             "description": "Description",
             "maxPoints": "Max. points",
-            "resultPoints": "Result",
-            "resultPointsExceedMaxPoints": "Result points must not exceed max. points.",
+            "resultPoints": "Points",
+            "resultPointsExceedMaxPoints": "Points must not exceed max. points.",
             "placeholder": {
                 "title": "Title",
                 "maxPoints": "0",
-                "resultPoints": "0",
+                "resultPoints": "0.0",
                 "description": "Enter a description"
             },
             "validation": {
                 "numberRequired": "Please enter a number.",
                 "maxPointsMin": "Please enter a value greater than 0.",
-                "resultPointsMin": "Result must be at least 0.",
+                "resultPointsMin": "Points must be at least 0.",
                 "pointsMax": "Points must not exceed {{ max }}."
             },
             "presentationDate": "Presentation date",
@@ -31,6 +31,7 @@
             "picture": "Picture",
             "presentation": "Presentation",
             "presenter": "Presenter",
+            "presenters": "Presenters",
             "score": "Score",
             "overview": "Overview",
             "grading": "Grading",

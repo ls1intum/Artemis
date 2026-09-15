@@ -73,7 +73,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     });
 
     it('should accept decimal and reject excessive result points', () => {
-        component.editForm.controls.resultPoints.setValue(1.5);
+        component.editForm.controls.resultPoints.setValue(1.125);
         expect(component.editForm.controls.resultPoints.valid).toBe(true);
 
         component.editForm.controls.resultPoints.setValue(10001);

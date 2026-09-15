@@ -11,8 +11,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -36,7 +34,6 @@ public class PresentationAssessment extends DomainObject {
     private double maxPoints;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnoreProperties(value = "presentationAssessments", allowSetters = true)
     private Course course;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -87,7 +87,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createPresentationAssessment_shouldCreatePresentationAssessment() throws Exception {
-        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", 30.5, null, null, null, List.of());
+        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", 30.125, null, null, null, List.of());
 
         PresentationAssessmentDTO result = request.postWithResponseBody(getBaseUrl(course), dto, PresentationAssessmentDTO.class, HttpStatus.CREATED);
 
@@ -357,7 +357,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void savePresentationAssessmentInstances_shouldCreateOneInstancePerStudentAtomically() throws Exception {
-        PresentationAssessmentInstanceDTO dto = new PresentationAssessmentInstanceDTO(null, FIXED_DATE.plusDays(14), 15.5,
+        PresentationAssessmentInstanceDTO dto = new PresentationAssessmentInstanceDTO(null, FIXED_DATE.plusDays(14), 15.125,
                 List.of(TEST_PREFIX + "student1", TEST_PREFIX + "student2"), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, "Good presentation");
 
         List<PresentationAssessmentInstanceDTO> result = request.postListWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/batch", dto,
@@ -366,7 +366,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         assertThat(result).hasSize(2);
         assertThat(result).allSatisfy(instance -> {
             assertThat(instance.id()).isNotNull();
-            assertThat(instance.resultPoints()).isEqualTo(15.5);
+            assertThat(instance.resultPoints()).isEqualTo(15.125);
             assertThat(instance.studentLogins()).hasSize(1);
         });
         assertThat(result).flatExtracting(PresentationAssessmentInstanceDTO::studentLogins).containsExactlyInAnyOrder(TEST_PREFIX + "student1", TEST_PREFIX + "student2");

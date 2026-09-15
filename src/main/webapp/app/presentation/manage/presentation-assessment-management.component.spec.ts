@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -30,6 +30,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         findCourseStudents: ReturnType<typeof vi.fn>;
     };
     let alertService: { success: ReturnType<typeof vi.fn>; addAlert: ReturnType<typeof vi.fn> };
+    let router: { navigate: ReturnType<typeof vi.fn> };
 
     const courseId = 1;
     const course = { id: courseId, title: 'Test Course', isAtLeastInstructor: true } as Course;
@@ -65,12 +66,14 @@ describe('PresentationAssessmentManagementComponent', () => {
             ),
         };
         alertService = { success: vi.fn(), addAlert: vi.fn() };
+        router = { navigate: vi.fn().mockResolvedValue(true) };
 
         await TestBed.configureTestingModule({
             imports: [PresentationAssessmentManagementComponent],
             providers: [
                 { provide: PresentationAssessmentService, useValue: presentationAssessmentService },
                 { provide: AlertService, useValue: alertService },
+                { provide: Router, useValue: router },
                 { provide: TranslateService, useClass: MockTranslateService },
                 {
                     provide: CourseManagementService,
@@ -104,6 +107,20 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(presentationAssessmentService.findAllByCourseId).toHaveBeenCalledWith(courseId);
         expect(component.presentationAssessments()).toEqual([presentationAssessment]);
         expect(component.courseStudents()).toHaveLength(2);
+    });
+
+    it('should expose the linked exercise to the student perspective switch while its presentation is selected', () => {
+        const linkedPresentation = { ...presentationAssessment, id: 43, exerciseId: 7 };
+        router.navigate.mockClear();
+
+        component.selectPresentation(linkedPresentation);
+
+        expect(router.navigate).toHaveBeenCalledWith([], {
+            relativeTo: expect.anything(),
+            queryParams: { presentationExerciseId: 7 },
+            queryParamsHandling: 'merge',
+            replaceUrl: true,
+        });
     });
 
     it('should switch views and filter the student overview', () => {

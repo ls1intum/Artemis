@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { finalize } from 'rxjs/operators';
@@ -97,6 +97,7 @@ function studentRowKey(row: PresentationStudentRow | SelectedPresentationStudent
 })
 export class PresentationAssessmentManagementComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
+    private readonly router = inject(Router);
     private readonly presentationAssessmentService = inject(PresentationAssessmentService);
     private readonly alertService = inject(AlertService);
     private readonly courseManagementService = inject(CourseManagementService);
@@ -227,6 +228,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                 this.presentationAssessments.set(assessments);
                 if (!assessments.some((assessment) => assessment.id === this.selectedPresentationId())) {
                     this.selectedPresentationId.set(assessments[0]?.id);
+                    this.updateStudentViewExercise(assessments[0]);
                 }
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -240,6 +242,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     selectPresentation(presentationAssessment: PresentationAssessment): void {
         this.selectedPresentationId.set(presentationAssessment.id);
         this.viewMode.set('presentations');
+        this.updateStudentViewExercise(presentationAssessment);
     }
 
     onSidebarItemSelected(itemId: string | number): void {
@@ -255,6 +258,18 @@ export class PresentationAssessmentManagementComponent implements OnInit {
 
     setViewMode(viewMode: PresentationViewMode): void {
         this.viewMode.set(viewMode);
+        if (viewMode === 'students') {
+            this.updateStudentViewExercise(undefined);
+        }
+    }
+
+    private updateStudentViewExercise(presentationAssessment: PresentationAssessment | undefined): void {
+        void this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { presentationExerciseId: presentationAssessment?.exerciseId ?? null },
+            queryParamsHandling: 'merge',
+            replaceUrl: true,
+        });
     }
 
     updateStudentSearch(searchTerm: string): void {

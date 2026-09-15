@@ -9,6 +9,7 @@ import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { TumUiButtonComponent, TumUiInputDirective, TumUiInputNumberComponent, TumUiMessageComponent, TumUiSelectComponent } from '@tumaet/ui-angular';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { CourseGroupComponent } from 'app/course/shared/course-group/course-group.component';
@@ -38,6 +39,7 @@ const minimumPresentationDate: ValidatorFn = (control: AbstractControl): Validat
         ReactiveFormsModule,
         FaIconComponent,
         TranslateDirective,
+        ArtemisTranslatePipe,
         FormDateTimePickerComponent,
         CourseGroupComponent,
         TumUiButtonComponent,

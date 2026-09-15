@@ -277,6 +277,18 @@ describe('NavbarComponent', () => {
             expect(component.studentViewLink()).toEqual(['/courses', '123']);
         });
 
+        it('should link a selected exercise-linked presentation to its exercise in the student view', () => {
+            router.setUrl('/course-management/123/presentations?presentationExerciseId=42');
+
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'exercises', '42']);
+        });
+
+        it('should link a standalone presentation to the student course overview', () => {
+            router.setUrl('/course-management/123/presentations');
+
+            expect(component.studentViewLink()).toEqual(['/courses', '123']);
+        });
+
         it.each(['/admin/upcoming-exams-and-exercises', '/exams/rooms', '/lti/exercises/123'])(
             'should default perspective links to their overviews outside course routes for %s',
             (url) => {

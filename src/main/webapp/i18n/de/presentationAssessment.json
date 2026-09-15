@@ -12,18 +12,18 @@
             "title": "Titel",
             "description": "Beschreibung",
             "maxPoints": "Max. Punkte",
-            "resultPoints": "Ergebnis",
-            "resultPointsExceedMaxPoints": "Die erreichten Punkte dürfen die maximalen Punkte nicht überschreiten.",
+            "resultPoints": "Punkte",
+            "resultPointsExceedMaxPoints": "Punkte dürfen die maximalen Punkte nicht überschreiten.",
             "placeholder": {
                 "title": "Titel",
                 "maxPoints": "0",
-                "resultPoints": "0",
+                "resultPoints": "0.0",
                 "description": "Beschreibung eingeben"
             },
             "validation": {
                 "numberRequired": "Bitte gib eine Zahl ein.",
                 "maxPointsMin": "Bitte gib einen Wert größer als 0 ein.",
-                "resultPointsMin": "Das Ergebnis muss mindestens 0 betragen.",
+                "resultPointsMin": "Punkte müssen mindestens 0 betragen.",
                 "pointsMax": "Punkte dürfen {{ max }} nicht überschreiten."
             },
             "presentationDate": "Präsentationstermin",
@@ -31,6 +31,7 @@
             "picture": "Bild",
             "presentation": "Präsentation",
             "presenter": "Präsentierende Person",
+            "presenters": "Präsentierende",
             "score": "Punkte",
             "overview": "Übersicht",
             "grading": "Bewertung",

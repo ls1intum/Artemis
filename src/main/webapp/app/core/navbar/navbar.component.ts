@@ -769,6 +769,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
         const courseId = course?.id?.toString();
 
         const baseStudentPath = courseId ? ['/courses', courseId] : ['/courses'];
+        const presentationExerciseId = new URLSearchParams(url.split('?')[1] ?? '').get('presentationExerciseId');
+        if (courseId && url.includes('/presentations') && presentationExerciseId) {
+            return [...baseStudentPath, 'exercises', presentationExerciseId];
+        }
         const routeMappings = [
             { urlParts: ['exams'], targetPath: [...baseStudentPath, 'exams'] },
             { urlParts: ['exercises'], targetPath: [...baseStudentPath, 'exercises'] },
