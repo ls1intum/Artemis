@@ -540,7 +540,7 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.isDetailMissing()).toBe(true);
 
         // Simulate the drag-and-drop / rubric-dropdown paths, which mutate the existing feedback object in place.
-        feedback.gradingInstruction = { id: 1, credits: 0, feedback: 'Rubric text' };
+        feedback.gradingInstruction = { id: 1, credits: 0, feedback: 'Rubric text', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
         fixture.detectChanges();
 
         expect(component.canDismissWithoutConfirm()).toBe(false);
