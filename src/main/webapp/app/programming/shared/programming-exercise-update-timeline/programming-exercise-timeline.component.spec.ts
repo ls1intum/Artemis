@@ -578,9 +578,9 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         component.timelineStatus.subscribe(timelineStatusSpy);
         const timeline = fixture.debugElement.query(By.directive(TimelineComponent)).componentInstance as TimelineComponent;
 
-        timeline.timelineStatusChange.emit({ valid: false, empty: true });
+        timeline.timelineStatusChange.emit({ valid: false, empty: true, invalidItems: [] });
 
-        expect(timelineStatusSpy).toHaveBeenCalledWith({ valid: false, empty: true });
+        expect(timelineStatusSpy).toHaveBeenCalledWith({ valid: false, empty: true, invalidItems: [] });
     });
 
     it('should initialize as valid and not empty if no timeline is rendered', () => {

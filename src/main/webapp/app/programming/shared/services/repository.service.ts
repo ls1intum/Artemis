@@ -29,7 +29,7 @@ export class RepositoryService {
      * @param participationId The identifier of the participation.
      */
     pull(participationId: number): Observable<void> {
-        return this.http.get<void>(`api/programming/participations/${participationId}/repository/pull`, {});
+        return this.http.post<void>(`api/programming/participations/${participationId}/repository/pull`, {});
     }
 }
 
