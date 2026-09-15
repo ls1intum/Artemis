@@ -4,7 +4,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { faArrowUpRightFromSquare, faChevronDown, faChevronRight, faLink, faPencilAlt, faPlus, faSearch, faTrash, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUpRightFromSquare, faLink, faPencilAlt, faPlus, faSearch, faTrash, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import {
@@ -109,8 +109,6 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     protected readonly faUsers = faUsers;
     protected readonly faSearch = faSearch;
     protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
-    protected readonly faChevronDown = faChevronDown;
-    protected readonly faChevronRight = faChevronRight;
     protected readonly PresentationAssessmentMode = PresentationAssessmentMode;
 
     readonly courseId = signal<number>(0);

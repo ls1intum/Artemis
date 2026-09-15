@@ -173,22 +173,19 @@
     overflow: auto;
 }
 
-.presentation-expansion-button {
+.presentation-student-details-button {
     display: inline-flex;
-    width: 1.75rem;
-    height: 1.75rem;
     align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
     border: 0;
     border-radius: var(--p-border-radius-sm);
-    color: var(--p-text-muted-color);
+    padding: 0;
+    color: inherit;
     background: transparent;
+    text-align: left;
 
-    &:hover,
     &:focus-visible {
-        color: var(--p-primary-color);
-        background: var(--p-content-hover-background);
+        outline: 2px solid var(--p-focus-ring-color);
+        outline-offset: 2px;
     }
 }
 

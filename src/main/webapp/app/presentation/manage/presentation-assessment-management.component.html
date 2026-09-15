@@ -76,24 +76,18 @@
                                         @for (row of filteredSelectedPresentationStudentRows(); track row.rowKey) {
                                             <tr>
                                                 <td>
-                                                    <div class="flex items-center gap-3">
-                                                        @if (row.instance) {
-                                                            <button
-                                                                type="button"
-                                                                class="presentation-expansion-button"
-                                                                [attr.aria-expanded]="row.expanded"
-                                                                [attr.aria-controls]="'presentation-detail-' + row.rowKey"
-                                                                [attr.aria-label]="
-                                                                    (row.expanded
-                                                                        ? 'artemisApp.presentationAssessment.hideDetails'
-                                                                        : 'artemisApp.presentationAssessment.showDetails'
-                                                                    ) | artemisTranslate
-                                                                "
-                                                                (click)="toggleStudentRowDetails(row)"
-                                                            >
-                                                                <fa-icon [icon]="row.expanded ? faChevronDown : faChevronRight" />
-                                                            </button>
-                                                        }
+                                                    <button
+                                                        type="button"
+                                                        class="presentation-student-details-button flex items-center gap-3"
+                                                        [disabled]="!row.instance"
+                                                        [attr.aria-expanded]="row.instance ? row.expanded : null"
+                                                        [attr.aria-controls]="row.instance ? 'presentation-detail-' + row.rowKey : null"
+                                                        [attr.aria-label]="
+                                                            (row.expanded ? 'artemisApp.presentationAssessment.hideDetails' : 'artemisApp.presentationAssessment.showDetails')
+                                                                | artemisTranslate
+                                                        "
+                                                        (click)="toggleStudentRowDetails(row)"
+                                                    >
                                                         <span class="student-avatar">{{ row.studentLogin.slice(0, 2).toUpperCase() }}</span>
                                                         <div class="flex flex-col">
                                                             <strong>
@@ -106,7 +100,7 @@
                                                             </strong>
                                                             <small class="text-muted-color">{{ row.student.email || row.studentLogin }}</small>
                                                         </div>
-                                                    </div>
+                                                    </button>
                                                 </td>
                                                 <td>
                                                     @if (row.assessed) {
@@ -300,26 +294,23 @@
                                     @for (row of paginatedStudentRows(); track row.instance.id + ':' + row.studentLogin) {
                                         <tr>
                                             <td>
-                                                <div class="flex items-center gap-3">
-                                                    <button
-                                                        type="button"
-                                                        class="presentation-expansion-button"
-                                                        [attr.aria-expanded]="row.expanded"
-                                                        [attr.aria-controls]="'presentation-overview-detail-' + row.rowKey"
-                                                        [attr.aria-label]="
-                                                            (row.expanded ? 'artemisApp.presentationAssessment.hideDetails' : 'artemisApp.presentationAssessment.showDetails')
-                                                                | artemisTranslate
-                                                        "
-                                                        (click)="toggleStudentRowDetails(row)"
-                                                    >
-                                                        <fa-icon [icon]="row.expanded ? faChevronDown : faChevronRight" />
-                                                    </button>
+                                                <button
+                                                    type="button"
+                                                    class="presentation-student-details-button flex items-center gap-3"
+                                                    [attr.aria-expanded]="row.expanded"
+                                                    [attr.aria-controls]="'presentation-overview-detail-' + row.rowKey"
+                                                    [attr.aria-label]="
+                                                        (row.expanded ? 'artemisApp.presentationAssessment.hideDetails' : 'artemisApp.presentationAssessment.showDetails')
+                                                            | artemisTranslate
+                                                    "
+                                                    (click)="toggleStudentRowDetails(row)"
+                                                >
                                                     <span class="student-avatar">{{ row.studentLogin.slice(0, 2).toUpperCase() }}</span>
                                                     <div class="flex min-w-0 flex-col">
                                                         <strong class="truncate">{{ row.student.name || row.studentLogin }}</strong>
                                                         <small class="truncate text-muted-color">{{ row.student.email || row.studentLogin }}</small>
                                                     </div>
-                                                </div>
+                                                </button>
                                             </td>
                                             <td>
                                                 <div class="flex flex-col">
