@@ -149,15 +149,17 @@ public class PyrisPipelineService {
      * @param supportLevel the instructional support level ("low" / "moderate" / "high")
      * @param session      the chat session
      * @param eventVariant the event variant to trigger, if any
+     * @param clientId     identifies the browser tab the run was started from, so a mid-pipeline command can be addressed back to it; null when there is no originating client
      * @param dtoBuilder   a function that receives the base execution DTO, the persisted user and the feature-gated Pyris user DTO
      */
-    public void executeChatPipeline(String variant, String supportLevel, IrisChatSession session, Optional<String> eventVariant, ChatPipelineDTOBuilder dtoBuilder) {
+    public void executeChatPipeline(String variant, String supportLevel, IrisChatSession session, Optional<String> eventVariant, String clientId,
+            ChatPipelineDTOBuilder dtoBuilder) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var pyrisUser = toPyrisUserDTO(user);
         var lastMessageId = session.getMessages().isEmpty() ? null : session.getMessages().getLast().getId();
         // @formatter:off
         executePipeline("chat", userAiPreferenceService.findDecision(user.getId()), variant, supportLevel, eventVariant,
-            pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), lastMessageId),
+            pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), lastMessageId, clientId),
             executionDto -> dtoBuilder.apply(executionDto, user, pyrisUser),
             (runId, runState, error) -> irisChatWebsocketService.sendStatusUpdate(session, runId, runState, error));
         // @formatter:on

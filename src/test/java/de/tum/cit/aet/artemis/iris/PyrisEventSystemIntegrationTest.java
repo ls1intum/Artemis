@@ -239,7 +239,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         await().atMost(5, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
-        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), eq(irisSession), eq(Optional.of("progress_stalled")), any());
+        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), eq(irisSession), eq(Optional.of("progress_stalled")), any(), any());
     }
 
     @Test
@@ -261,7 +261,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
-        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), eq(irisSession), eq(Optional.of("build_failed")), any());
+        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), eq(irisSession), eq(Optional.of("build_failed")), any(), any());
     }
 
     @Test
@@ -283,7 +283,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
-        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), eq(irisSession), eq(Optional.of("build_failed")), any());
+        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), eq(irisSession), eq(Optional.of("build_failed")), any(), any());
     }
 
     @Test
@@ -308,7 +308,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         await().atMost(5, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
         ArgumentCaptor<IrisChatSession> sessionCaptor = ArgumentCaptor.forClass(IrisChatSession.class);
-        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), sessionCaptor.capture(), eq(Optional.of("build_failed")), any());
+        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), sessionCaptor.capture(), eq(Optional.of("build_failed")), any(), any());
 
         IrisChatSession usedSession = sessionCaptor.getValue();
         assertThat(usedSession.getMode()).isEqualTo(IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
@@ -354,7 +354,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         pyrisEventService.trigger(new NewResultEvent(result)).join();
 
         verify(irisChatSessionService, times(2)).handleNewResultEvent(any(NewResultEvent.class));
-        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any());
+        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -368,7 +368,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         pyrisEventService.trigger(new NewResultEvent(result)).join();
 
         verify(irisChatSessionService, times(1)).handleNewResultEvent(any(NewResultEvent.class));
-        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any());
+        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -384,7 +384,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         pyrisEventService.trigger(event).join();
 
         verify(irisChatSessionService, times(1)).handleNewResultEvent(event);
-        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any());
+        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -399,7 +399,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         pyrisEventService.trigger(event).join();
 
         verify(irisChatSessionService, times(1)).handleNewResultEvent(event);
-        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any());
+        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -414,7 +414,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         var event = new NewResultEvent(result);
 
         verify(irisChatSessionService, after(2000).never()).handleNewResultEvent(event);
-        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any());
+        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -440,7 +440,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
-        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), eq(irisSession), eq(Optional.of("build_failed")), any());
+        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), eq(irisSession), eq(Optional.of("build_failed")), any(), any());
     }
 
 }

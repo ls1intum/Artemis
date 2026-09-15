@@ -57,7 +57,7 @@ class PyrisPipelineServiceTest {
         user.setId(7L);
         user.setLogin("student");
         when(userRepository.findByIdElseThrow(7L)).thenReturn(user);
-        when(pyrisJobService.addChatJob(1L, 2L, 3L, null)).thenReturn("run-1");
+        when(pyrisJobService.addChatJob(1L, 2L, 3L, null, null)).thenReturn("run-1");
 
         var service = new PyrisPipelineService(pyrisConnectorService, pyrisJobService, mock(PyrisDTOService.class), irisChatWebsocketService,
                 mock(StudentParticipationRepository.class), userRepository, mock(CourseLoadService.class), mock(FeatureToggleService.class), mock(UserAiPreferenceService.class));
@@ -69,7 +69,7 @@ class PyrisPipelineServiceTest {
         session.setEntityId(3L);
         session.setUserId(7L);
 
-        service.executeChatPipeline("default", "moderate", session, Optional.empty(), (executionDto, ignoredUser, ignoredPyrisUser) -> new PyrisChatPipelineExecutionDTO(null,
+        service.executeChatPipeline("default", "moderate", session, Optional.empty(), null, (executionDto, ignoredUser, ignoredPyrisUser) -> new PyrisChatPipelineExecutionDTO(null,
                 List.of(), executionDto.settings(), null, ignoredPyrisUser, null, null, null, null, null, null, null, null, null));
 
         verify(irisChatWebsocketService).sendStatusUpdate(eq(session), eq("run-1"), eq(PyrisRunState.RUNNING), isNull());
@@ -131,7 +131,7 @@ class PyrisPipelineServiceTest {
         user.setId(7L);
         user.setLogin("student");
         when(userRepository.findByIdElseThrow(7L)).thenReturn(user);
-        when(pyrisJobService.addChatJob(1L, 2L, 3L, null)).thenReturn("run-1");
+        when(pyrisJobService.addChatJob(1L, 2L, 3L, null, null)).thenReturn("run-1");
         var userAiPreferenceService = mock(UserAiPreferenceService.class);
         when(userAiPreferenceService.findDecision(7L)).thenReturn(recordedDecision);
 
@@ -147,7 +147,7 @@ class PyrisPipelineServiceTest {
         session.setUserId(7L);
 
         var capturedSettings = new AtomicReference<PyrisPipelineExecutionSettingsDTO>();
-        service.executeChatPipeline("default", "moderate", session, Optional.empty(), (executionDto, ignoredUser, ignoredPyrisUser) -> {
+        service.executeChatPipeline("default", "moderate", session, Optional.empty(), null, (executionDto, ignoredUser, ignoredPyrisUser) -> {
             capturedSettings.set(executionDto.settings());
             return new PyrisChatPipelineExecutionDTO(null, List.of(), executionDto.settings(), null, ignoredPyrisUser, null, null, null, null, null, null, null, null, null);
         });

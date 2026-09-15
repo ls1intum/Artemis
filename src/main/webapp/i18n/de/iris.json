@@ -267,6 +267,7 @@
                     "failed": "Fehlgeschlagen"
                 },
                 "lecture_content_retrieval": "Lese Vorlesung",
+                "point_out_relevant_lecture_position": "Zeige Stelle in der Vorlesung",
                 "faq_content_retrieval": "Lese FAQs",
                 "get_course_details": "Suche Kursinformationen",
                 "get_exercise_list": "Suche Übungen",
@@ -310,6 +311,13 @@
             },
             "controlCenter": {
                 "tooltip": "Aktiviere oder deaktiviere Iris für deinen Kurs. Um benutzerdefinierte Anweisungen zu konfigurieren, klicke auf die Schaltfläche 'Konfigurieren'."
+            },
+            "pointOut": {
+                "label": "Zu {{target}} in Lerneinheit {{unit}} gesprungen",
+                "labelNoUnit": "Zu {{target}} gesprungen",
+                "page": "Seite {{page}}",
+                "timestamp": "Zeitpunkt {{time}}",
+                "and": " und "
             },
             "chatHistory": {
                 "title": "Chats",

@@ -29,7 +29,7 @@ describe('IrisChatHttpService', () => {
         it('should create a message', async () => {
             const returnedFromService = { ...mockClientMessage, id: 0 };
             const expected = { ...returnedFromService, id: 0 };
-            const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text('test message')], 123, {});
+            const requestDTO: IrisMessageRequestDTO = { content: [IrisMessageContentDTO.text('test message')], messageDifferentiator: 123, uncommittedFiles: {} };
             service
                 .createMessage(2, requestDTO)
                 .pipe(take(1))

@@ -143,7 +143,7 @@ public class IrisMessageResource {
         var uncommittedFiles = requestDTO.uncommittedFiles() != null ? requestDTO.uncommittedFiles() : java.util.Map.<String, String>of();
         // Extract context information from request (not persisted, only passed to Pyris)
         List<IrisMessageContextDTO> context = requestDTO.context() != null ? requestDTO.context() : List.of();
-        irisSessionService.requestMessageFromIris(session, uncommittedFiles, context);
+        irisSessionService.requestMessageFromIris(session, uncommittedFiles, context, requestDTO.clientId());
 
         String uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(IrisMessageResponseDTO.of(savedMessage));
