@@ -112,8 +112,24 @@ STRUCTURAL_SKIPS = {"package-info.java", "module-info.java"}
 # recognised only when some repository actually composes the interface, which is the thing Spring Data reacts to.
 SPRING_DATA_FRAGMENT_SUFFIX = "Impl"
 
-# `interface Name extends A, B<C> {` -- the declaration whose extends list may compose a fragment.
+# `interface Name extends A, B {` -- the declaration whose extends list may compose a fragment. Applied to a
+# source with its type arguments already removed, so that a generic declaration such as
+# `interface ArtemisJpaRepository<T, ID> extends JpaRepository<T, ID>, Fragment` is matched like any other.
 INTERFACE_EXTENDS = re.compile(r"\binterface\s+(\w+)\s+extends\s+([^{]+)\{", re.DOTALL)
+
+# One balanced `<...>` group with nothing nested inside it. Applied repeatedly, this removes a whole nest from
+# the inside out, which is what makes `Map<String, List<Long>>` disappear in two passes rather than leaving a
+# stray `>` behind for the declaration regex to trip over.
+TYPE_ARGUMENTS = re.compile(r"<[^<>]*>")
+
+
+def strip_type_arguments(source: str) -> str:
+    """Remove every balanced type argument list, innermost first."""
+    previous = None
+    while previous != source:
+        previous = source
+        source = TYPE_ARGUMENTS.sub("", source)
+    return source
 
 
 def _base_names(extends_list: str) -> list[str]:
@@ -139,7 +155,7 @@ def find_composed_fragment_interfaces(root: str) -> set[str]:
                     source = handle.read()
             except OSError:
                 continue
-            for _, extends_list in INTERFACE_EXTENDS.findall(source):
+            for _, extends_list in INTERFACE_EXTENDS.findall(strip_type_arguments(source)):
                 names = _base_names(extends_list)
                 # A repository is recognised by what it extends, which is always a Spring Data repository interface.
                 if any(name.endswith("Repository") for name in names) or "@Repository" in source:
@@ -308,6 +324,11 @@ def self_test() -> int:
               "package pkg;\npublic interface PostRepository extends JpaRepository<Post, Long>, FragmentRepository {}\n")
         write(java, "Standalone.java", "package pkg;\npublic interface Standalone {}\n")
         write(java, "StandaloneImpl.java", "package pkg;\npublic class StandaloneImpl implements Standalone {}\n")
+        write(java, "GenericFragment.java", "package pkg;\npublic interface GenericFragment {}\n")
+        write(java, "GenericFragmentImpl.java",
+              "package pkg;\npublic class GenericFragmentImpl implements GenericFragment {}\n")
+        write(java, "GenericBaseRepository.java",
+              "package pkg;\npublic interface GenericBaseRepository<T, ID> extends JpaRepository<T, ID>, GenericFragment {}\n")
         write(java, "LateAnnotation.java",
               "package pkg;\n" + "// filler to push the annotation past the old 4000-character cutoff\n" * 80
               + "@Component\npublic class LateAnnotation {}\n")
@@ -332,6 +353,7 @@ def self_test() -> int:
         check("a class only a test names is reported", os.path.join(java, "TestOnlyDto.java") in dead)
         check("a Spring Data fragment implementation is not reported", os.path.join(java, "FragmentRepositoryImpl.java") not in dead)
         check("an Impl of an interface no repository composes is still reported", os.path.join(java, "StandaloneImpl.java") in dead)
+        check("a fragment composed by a generic repository is never reported", os.path.join(java, "GenericFragmentImpl.java") not in dead)
 
     # `Caller` is itself unreferenced, which is why it is expected in `dead` above; that is the
     # documented layering behaviour, not a bug.
