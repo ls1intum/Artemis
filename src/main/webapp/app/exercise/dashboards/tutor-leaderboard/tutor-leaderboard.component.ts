@@ -4,19 +4,17 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { faExclamationTriangle, faSort } from '@fortawesome/free-solid-svg-icons';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TooltipModule } from 'primeng/tooltip';
 import { RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiTableDirective, TumUiTableSortEvent, TumUiTableSortableColumnComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-tutor-leaderboard',
     templateUrl: './tutor-leaderboard.component.html',
-    imports: [SortDirective, SortByDirective, TranslateDirective, FaIconComponent, TooltipModule, RouterLink, ArtemisTranslatePipe],
+    imports: [TumUiTableDirective, TumUiTableSortableColumnComponent, TumUiTooltipDirective, TranslateDirective, FaIconComponent, RouterLink, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorLeaderboardComponent {
@@ -49,6 +47,10 @@ export class TutorLeaderboardComponent {
      */
     readonly sortedTutorsData = computed<TutorLeaderboardElement[]>(() => this.sortService.sortByProperty([...this.tutorsData()], this.sortPredicate(), this.reverseOrder()));
 
-    readonly faSort = faSort;
     readonly faExclamationTriangle = faExclamationTriangle;
+
+    onSortChange(event: TumUiTableSortEvent): void {
+        this.sortPredicate.set(event.field);
+        this.reverseOrder.set(event.order > 0);
+    }
 }
