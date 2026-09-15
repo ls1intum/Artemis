@@ -371,7 +371,12 @@ jobs:
   docs:
     name: Build Documentation
     needs: detect-changes
-    if: needs.detect-changes.outputs.has_docs == 'true'
+    # Every develop push builds the current tree, even when its immediate diff has no docs changes.
+    # GitHub concurrency keeps only one pending run: a newer push can evict a queued docs-changing
+    # run, so relying only on the per-commit path filter can otherwise leave Pages permanently stale.
+    if: >-
+      needs.detect-changes.outputs.has_docs == 'true'
+      || (github.event_name == 'push' && github.ref == 'refs/heads/develop')
     uses: ./.github/workflows/ci-docs.yml
     permissions:
       contents: read
@@ -387,7 +392,7 @@ jobs:
   deploy-docs:
     name: Deploy Documentation
     needs: [detect-changes, docs]
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' && needs.detect-changes.outputs.has_docs == 'true' }}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

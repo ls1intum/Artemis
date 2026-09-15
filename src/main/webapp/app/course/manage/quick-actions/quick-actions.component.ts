@@ -29,6 +29,15 @@ export enum CourseManagementSection {
                 min-width: 0;
             }
 
+            // Side by side with the control center, reserve enough width to keep the
+            // stats row on a single line, so the AI panels next to it wrap instead.
+            // Only from xl up, where the section actually lays out as a row.
+            @media (min-width: 1200px) {
+                :host {
+                    min-width: min-content;
+                }
+            }
+
             .quick-actions-header {
                 display: flex;
                 align-items: center;
@@ -40,6 +49,7 @@ export enum CourseManagementSection {
 
             .user-stats {
                 display: flex;
+                align-items: center;
                 gap: 1.25rem;
             }
 

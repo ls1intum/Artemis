@@ -40,7 +40,7 @@ import { MockComponent, MockDirective } from 'ng-mocks';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { Component, input, output, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgModel, ValidationErrors } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
@@ -51,6 +51,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { ExerciseMode, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import * as Utils from 'app/exercise/course-exercises/course-utils';
 
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -89,9 +90,14 @@ class MockMarkdownEditorMonacoComponent {
     domainActions = input<unknown[]>([]);
 }
 
-// Mock for TitleChannelNameComponent interface
 class MockTitleChannelNameComponent {
     isValid = signal(true);
+    channelFieldDisplayed = true;
+    isChannelFieldDisplayed = () => this.channelFieldDisplayed;
+    titleErrors: ValidationErrors | undefined = undefined;
+    get field_title(): NgModel {
+        return { control: { errors: this.titleErrors } } as NgModel;
+    }
 }
 
 // Stub for ExerciseTitleChannelNameComponent - ng-mocks MockComponent doesn't handle viewChild properly
@@ -494,11 +500,11 @@ describe('TextExercise Management Update Component', () => {
             await fixture.whenStable();
             vi.mocked(exerciseService.validateDate).mockClear();
 
-            component.timelineStatus.set({ valid: false, empty: true });
+            component.timelineStatus.set({ valid: false, empty: true, invalidItems: [] });
             await fixture.whenStable();
 
             expect(exerciseService.validateDate).toHaveBeenCalledWith(exercise);
-            expect(component.timelineStatus()).toEqual({ valid: false, empty: true });
+            expect(component.timelineStatus()).toEqual({ valid: false, empty: true, invalidItems: [] });
         });
     });
 
@@ -658,5 +664,188 @@ describe('TextExercise Management Update Component', () => {
 
         expect(component.textExercise.categories).toEqual(newCategories);
         expect(component.exerciseCategories()).toEqual(newCategories);
+    });
+
+    describe('getInvalidReasons', () => {
+        let course: Course;
+
+        const filledInExercise = () => {
+            const exercise = new TextExercise(course, undefined);
+            exercise.title = 'Valid title';
+            exercise.channelName = 'valid-title';
+            exercise.mode = ExerciseMode.INDIVIDUAL;
+            exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            exercise.maxPoints = 10;
+            exercise.bonusPoints = 0;
+            return exercise;
+        };
+
+        let titleChannelNameComponentMock: MockTitleChannelNameComponent;
+
+        beforeEach(async () => {
+            course = createCourse();
+            routeData$.next({ textExercise: createExercise(course) });
+            routeUrl$.next([{ path: 'new' }] as UrlSegment[]);
+
+            fixture = TestBed.createComponent(TextExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            titleChannelNameComponentMock = new MockTitleChannelNameComponent();
+            component.exerciseTitleChannelNameComponent = (() => ({
+                titleChannelNameComponent: () => titleChannelNameComponentMock,
+            })) as unknown as typeof component.exerciseTitleChannelNameComponent;
+        });
+
+        it('should report the mandatory fields of an untouched creation form', () => {
+            component.textExercise = new TextExercise(course, undefined);
+            component.isExamMode.set(false);
+
+            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
+
+            expect(translateKeys).toContain('artemisApp.exercise.form.title.undefined');
+            expect(translateKeys).toContain('artemisApp.exercise.form.points.undefined');
+        });
+
+        it('should report no reason for a completely filled in exercise', () => {
+            component.textExercise = filledInExercise();
+            component.isExamMode.set(false);
+            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+
+            expect(component.getInvalidReasons()).toEqual([]);
+        });
+
+        it('should forward the timeline reasons', () => {
+            component.textExercise = filledInExercise();
+            component.isExamMode.set(false);
+            component.timelineStatus.set({
+                valid: false,
+                empty: true,
+                invalidItems: [{ labelStringKey: 'artemisApp.exercise.dueDate', reasonKey: 'artemisApp.exercise.form.timeline.order', dateName: 'Due Date' }],
+            });
+
+            expect(component.getInvalidReasons()).toEqual([{ translateKey: 'artemisApp.exercise.form.timeline.order', translateValues: { dateName: 'Due Date' } }]);
+        });
+
+        it('should report a title shorter than the minimum length', () => {
+            const exercise = filledInExercise();
+            exercise.title = 'ab';
+            component.textExercise = exercise;
+            component.isExamMode.set(false);
+            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+
+            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
+
+            expect(translateKeys).toContain('artemisApp.exercise.form.title.minlength');
+        });
+
+        it('should report a disallowed title', () => {
+            component.textExercise = filledInExercise();
+            component.isExamMode.set(false);
+            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+            titleChannelNameComponentMock.titleErrors = { disallowedValue: true };
+
+            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
+
+            expect(translateKeys).toContain('artemisApp.exercise.form.title.disallowedValue');
+        });
+
+        it('should require a channel name when the channel field is displayed', () => {
+            const exercise = filledInExercise();
+            exercise.channelName = undefined;
+            component.textExercise = exercise;
+            component.isExamMode.set(false);
+            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+            titleChannelNameComponentMock.channelFieldDisplayed = true;
+
+            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
+
+            expect(translateKeys).toContain('artemisApp.exercise.form.channelName.empty');
+        });
+
+        it('should not require a channel name when the channel field is hidden', () => {
+            const exercise = filledInExercise();
+            exercise.channelName = undefined;
+            component.textExercise = exercise;
+            component.isExamMode.set(false);
+            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+            titleChannelNameComponentMock.channelFieldDisplayed = false;
+
+            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
+
+            expect(translateKeys).not.toContain('artemisApp.exercise.form.channelName.empty');
+        });
+    });
+
+    describe('bonus points as the score mode changes', () => {
+        const bonusInput = () => fixture.debugElement.query(By.css('#field_bonusPoints'));
+        const gradingSectionIsValid = () => component.formSectionStatus().find((section) => section.title === 'artemisApp.exercise.sections.grading')?.valid;
+
+        /** Switches the score mode the way the picker does: it writes onto the exercise, then emits. */
+        async function switchScoreMode(mode: IncludedInOverallScore): Promise<void> {
+            const picker = fixture.debugElement.query(By.directive(IncludedInOverallScorePickerComponent));
+            component.textExercise.includedInOverallScore = mode;
+            picker.componentInstance.includedInOverallScoreChange.emit(mode);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+        }
+
+        beforeEach(async () => {
+            const exercise = createExercise(createCourse());
+            exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            exercise.maxPoints = 10;
+            exercise.bonusPoints = 0;
+            routeData$.next({ textExercise: exercise });
+            fixture = TestBed.createComponent(TextExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+            // The status is only computed once the title field resolves, and the real one is stubbed out here.
+            component.exerciseTitleChannelNameComponent = (() => ({
+                titleChannelNameComponent: () => new MockTitleChannelNameComponent(),
+            })) as unknown as typeof component.exerciseTitleChannelNameComponent;
+            // Exam mode short-circuits the plagiarism and timeline half of the grading verdict, leaving the points
+            // and the bonus points - which is the part these tests are about.
+            component.isExamMode.set(true);
+            component.calculateFormSectionStatus();
+            fixture.detectChanges();
+        });
+
+        it('should not call the grading section invalid just because the field is absent', async () => {
+            // Started from invalid on purpose. Asserting "valid" against a baseline that is already valid passes
+            // whether or not anything recomputed, which is exactly how this test first proved nothing.
+            const input: HTMLInputElement = bonusInput().nativeElement;
+            input.value = '99999';
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(gradingSectionIsValid()).toBe(false);
+
+            await switchScoreMode(IncludedInOverallScore.NOT_INCLUDED);
+
+            // The field is gone because the score does not include bonus points, which is not a fault to report -
+            // and the verdict has to be taken again to say so, rather than left at what it said a moment ago.
+            expect(bonusInput()).toBeNull();
+            expect(gradingSectionIsValid()).toBe(true);
+        });
+
+        it('should keep following the field after it is rebuilt, not the one it first saw', async () => {
+            await switchScoreMode(IncludedInOverallScore.NOT_INCLUDED);
+            await switchScoreMode(IncludedInOverallScore.INCLUDED_COMPLETELY);
+            expect(bonusInput()).not.toBeNull();
+            expect(gradingSectionIsValid()).toBe(true);
+
+            const input: HTMLInputElement = bonusInput().nativeElement;
+            input.value = '99999';
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            // Not recalculated by hand here: the point is that the subscription to the rebuilt control does it.
+            // Wiring done once at view init would still be listening to the control destroyed two switches ago.
+            expect(gradingSectionIsValid()).toBe(false);
+        });
     });
 });

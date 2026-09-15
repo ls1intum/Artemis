@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -256,9 +255,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @EntityGraph(type = LOAD, attributePaths = { "lectures" })
     Optional<Course> findWithEagerLecturesById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = "exerciseVariantGroups")
-    Optional<Course> findWithEagerExerciseVariantGroupsById(long courseId);
-
     /**
      * Returns an optional course by id with eagerly loaded exercises, plagiarism detection configuration, team assignment configuration, lectures and attachments.
      *
@@ -350,7 +346,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             FROM Course c
             WHERE c.id = :courseId
             """)
-    @Cacheable(cacheNames = "courseTitle", key = "#courseId", unless = "#result == null")
     String getCourseTitle(@Param("courseId") long courseId);
 
     /**
@@ -514,10 +509,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
 
     default Course findByIdWithEagerExercisesElseThrow(long courseId) throws EntityNotFoundException {
         return getValueElseThrow(Optional.ofNullable(findWithEagerExercisesById(courseId)), courseId);
-    }
-
-    default Course findWithEagerExerciseVariantGroupsByIdElseThrow(long courseId) throws EntityNotFoundException {
-        return getValueElseThrow(findWithEagerExerciseVariantGroupsById(courseId), courseId);
     }
 
     default Course findByIdWithEagerOnlineCourseConfigurationElseThrow(long courseId) throws EntityNotFoundException {
