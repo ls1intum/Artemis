@@ -1,0 +1,91 @@
+{
+    "artemisApp": {
+        "courseIngestionDashboard": {
+            "title": "Index-Dashboard",
+            "subtitle": "Pro Kurs, wie vollständig der Global-Search-Index im Vergleich zu den Erwartungen der Datenbank ist. Schreibgeschützt.",
+            "loading": "Wird geladen...",
+            "overview": {
+                "title": "Übersicht des Suchindex",
+                "refresh": "Übersicht neu laden",
+                "error": "Die Index-Übersicht konnte nicht geladen werden. Bitte versuchen Sie es erneut."
+            },
+            "services": {
+                "title": "Dienste",
+                "reachable": "Weaviate erreichbar",
+                "unreachable": "Weaviate nicht erreichbar",
+                "address": "Adresse",
+                "irisReachable": "Iris erreichbar",
+                "irisUnreachable": "Iris nicht erreichbar",
+                "irisDisabled": "Iris deaktiviert"
+            },
+            "collections": {
+                "title": "Indexierte Collections",
+                "collection": "Collection",
+                "objects": "Objekte",
+                "unavailable": "Nicht verfügbar",
+                "contents": {
+                    "slides": "Folien",
+                    "transcript": "Transkript",
+                    "segments": "Ausgerichtete Segmente",
+                    "unitSummary": "Einheit-Zusammenfassung"
+                }
+            },
+            "matrix": {
+                "title": "Abdeckung nach Kurs",
+                "lastUpdatedLabel": "Zuletzt aktualisiert",
+                "refresh": "Daten aktualisieren",
+                "refreshHint": "Berechnet die Abdeckung über alle Kurse neu; kann eine Weile dauern und Weaviate belasten.",
+                "search": "Kurse suchen",
+                "sortBy": "Sortieren nach",
+                "filterByStatus": "Nach Status filtern",
+                "filterByActive": "Nach Aktivität filtern",
+                "empty": "Keine Kurse vorhanden.",
+                "error": "Die Kursabdeckung konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
+                "courseFallback": "Kurs",
+                "legend": "Jede Zelle zeigt indexiert / erwartet pro Typ. Grün = vollständig, rot = fehlend, grau = nichts erwartet.",
+                "sort": {
+                    "name": "Name",
+                    "release": "Startdatum",
+                    "worstFirst": "Schlechteste zuerst",
+                    "lastIngested": "Zuletzt indexiert"
+                },
+                "status": {
+                    "all": "Alle"
+                },
+                "active": {
+                    "all": "Alle",
+                    "active": "Aktiv",
+                    "inactive": "Inaktiv"
+                },
+                "group": {
+                    "metadata": "Entitäts-Metadaten",
+                    "content": "Vorlesungsinhalte"
+                },
+                "column": {
+                    "course": "Kurs",
+                    "release": "Startdatum",
+                    "status": "Status",
+                    "lastIngested": "Zuletzt indexiert am"
+                },
+                "type": {
+                    "exercise": "Aufgabe",
+                    "lecture": "Vorlesung",
+                    "lecture_unit": "Einheit",
+                    "exam": "Klausur",
+                    "faq": "FAQ",
+                    "channel": "Kanal",
+                    "course": "Kurs",
+                    "slides": "Folien",
+                    "transcript": "Transkript",
+                    "segment_summary": "Segm.-Zusammenf.",
+                    "unit_summary": "Einheit-Zusammenf."
+                }
+            },
+            "status": {
+                "COMPLETE": "Vollständig",
+                "INCOMPLETE": "Unvollständig",
+                "EMPTY": "Leer"
+            }
+        }
+    }
+}
