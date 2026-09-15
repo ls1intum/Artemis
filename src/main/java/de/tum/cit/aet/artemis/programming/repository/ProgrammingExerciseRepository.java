@@ -1305,6 +1305,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     /**
      * Resolve the exercise and owning course metadata for Deimos manual exercise-scope runs.
      * Supports both regular course exercises and exam exercises.
+     * <p>
+     * The three course values are taken from the same branch, so they always describe one course: an exam exercise is owned by the course of its exam, and a row that named both
+     * would otherwise pair that course's id with the other course's title and icon.
      *
      * @param exerciseId the id of the programming exercise
      * @return projection containing exercise and course metadata
@@ -1314,8 +1317,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 p.id,
                 p.title,
                 CASE WHEN eg.id IS NOT NULL THEN ec.id ELSE c.id END,
-                COALESCE(c.title, ec.title),
-                COALESCE(c.courseIcon, ec.courseIcon))
+                CASE WHEN eg.id IS NOT NULL THEN ec.title ELSE c.title END,
+                CASE WHEN eg.id IS NOT NULL THEN ec.courseIcon ELSE c.courseIcon END)
             FROM ProgrammingExercise p
               LEFT JOIN p.course c
               LEFT JOIN p.exerciseGroup eg
