@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.localci.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -73,6 +74,17 @@ public class LocalCIResultProcessingService {
     static final Set<BuildStatus> FINISHED_BUILD_STATUSES = Set.of(BuildStatus.SUCCESSFUL, BuildStatus.FAILED, BuildStatus.ERROR, BuildStatus.CANCELLED, BuildStatus.TIMEOUT);
 
     private static final int BUILD_STATISTICS_UPDATE_THRESHOLD = 10;
+
+    /**
+     * How long after its last job finished a build group is left alone by {@link #finalizeCompletedBuildGroups()}: long
+     * enough for the container that finished last to have run its own finalization, so the sweep never races it.
+     */
+    private static final Duration COMPLETED_GROUP_GRACE_PERIOD = Duration.ofMinutes(2);
+
+    /**
+     * How many build groups one run of {@link #finalizeCompletedBuildGroups()} finalizes at most.
+     */
+    private static final int COMPLETED_GROUPS_PER_SWEEP = 50;
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
@@ -324,21 +336,113 @@ public class LocalCIResultProcessingService {
         // container that completed the merged result comes through, not once per container.
         boolean completedMergedResult = buildJob.buildGroup() == null || (result != null && result.getCompletionDate() != null);
         if (isSolutionBuildOfTestOrAuxPush(buildJob) && completedMergedResult) {
-            log.info("Triggering build of template repository for solution build with id {}", buildJob.id());
+            triggerTemplateBuild(buildJob.exerciseId(), buildJob.id(), buildJob.buildConfig().testCommitHash(), buildJob.repositoryInfo().triggeredByPushTo());
+        }
+    }
+
+    /**
+     * Triggers the build of the template repository after a solution build of a test or auxiliary push has finished.
+     *
+     * @param exerciseId        the id of the exercise
+     * @param buildJobId        the id of the solution build job, for the log
+     * @param testCommitHash    the commit hash of the test repository the solution was built against
+     * @param triggeredByPushTo the repository whose push triggered the solution build
+     */
+    private void triggerTemplateBuild(long exerciseId, String buildJobId, String testCommitHash, RepositoryType triggeredByPushTo) {
+        log.info("Triggering build of template repository for solution build with id {}", buildJobId);
+        try {
+            // Run async to not block the result processing thread
+            // runAsync uses the common ForkJoinPool, which the Artemis async executors do not wrap, so this
+            // lambda establishes its own context.
+            CompletableFuture.runAsync(() -> SecurityUtils
+                    .runAsSystem(() -> programmingTriggerService.triggerTemplateBuildAndNotifyUser(exerciseId, testCommitHash, SubmissionType.TEST, triggeredByPushTo)));
+        }
+        catch (EntityNotFoundException e) {
+            // Something went wrong while retrieving the template participation.
+            // At this point, programmingMessagingService.notifyUserAboutSubmissionError() does not work, because the template participation is not available.
+            // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build
+            // manually.
+            log.error("Something went wrong while triggering the template build for exercise {} after the solution build was finished.", exerciseId, e);
+        }
+    }
+
+    /**
+     * Finalizes the build groups whose jobs have all finished while their aggregated result stayed in progress. The
+     * container that finishes last finalizes its group, but append, link and finalize are committed one by one: if the
+     * process dies between the link and the finalization, or the finalization fails twice, the group is complete by
+     * count while its result never gets a completion date. Nothing else would ever finalize it, because no job of the
+     * group is missing, so the missing-job retry does not fire. This sweep finds such groups, waits out the grace period
+     * that keeps it from racing the last container's own finalization, and finalizes them under the group's lock, exactly
+     * as the last container would have: the result is scored, reported to the client, and a solution build's template is
+     * rebuilt. Groups with a job that is still queued, building or missing are not complete and are left alone.
+     *
+     * @return the number of build groups finalized by this run
+     */
+    public int finalizeCompletedBuildGroups() {
+        ZonedDateTime completedBefore = ZonedDateTime.now().minus(COMPLETED_GROUP_GRACE_PERIOD);
+        List<String> buildGroupIds = buildJobRepository.findCompletedBuildGroupsWithResultInProgress(FINISHED_BUILD_STATUSES, completedBefore,
+                PageRequest.of(0, COMPLETED_GROUPS_PER_SWEEP));
+        int finalizedGroups = 0;
+        for (String buildGroupId : buildGroupIds) {
             try {
-                // Run async to not block the result processing thread
-                // runAsync uses the common ForkJoinPool, which the Artemis async executors do not wrap, so this
-                // lambda establishes its own context.
-                CompletableFuture.runAsync(() -> SecurityUtils.runAsSystem(() -> programmingTriggerService.triggerTemplateBuildAndNotifyUser(buildJob.exerciseId(),
-                        buildJob.buildConfig().testCommitHash(), SubmissionType.TEST, buildJob.repositoryInfo().triggeredByPushTo())));
+                if (finalizeCompletedBuildGroup(buildGroupId)) {
+                    finalizedGroups++;
+                }
             }
-            catch (EntityNotFoundException e) {
-                // Something went wrong while retrieving the template participation.
-                // At this point, programmingMessagingService.notifyUserAboutSubmissionError() does not work, because the template participation is not available.
-                // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build
-                // manually.
-                log.error("Something went wrong while triggering the template build for exercise {} after the solution build was finished.", buildJob.exerciseId(), e);
+            catch (RuntimeException e) {
+                log.error("Could not finalize the complete build group {} whose aggregated result stayed in progress", buildGroupId, e);
             }
+        }
+        return finalizedGroups;
+    }
+
+    /**
+     * Finalizes one complete build group under its lock, unless a container finalized it in the meantime.
+     *
+     * @param buildGroupId the id of the build group
+     * @return true if the group's aggregated result was finalized by this call
+     */
+    private boolean finalizeCompletedBuildGroup(String buildGroupId) {
+        DistributedMap<String, Boolean> aggregationLocks = distributedDataAccessService.getResultAggregationLockMap();
+        aggregationLocks.lock(buildGroupId);
+        try {
+            // Re-checked under the lock: the last container may have finalized the group after the sweep's query ran.
+            if (!buildJobRepository.existsResultInProgressOfBuildGroup(buildGroupId)) {
+                return false;
+            }
+            Optional<BuildJob> anyJob = buildJobRepository.findFirstByBuildGroupIdOrderByIdAsc(buildGroupId);
+            if (anyJob.isEmpty()) {
+                return false;
+            }
+            BuildJob buildJob = anyJob.get();
+            Optional<Participation> participationOptional = participationRepository.findWithProgrammingExerciseWithBuildConfigById(buildJob.getParticipationId());
+            if (participationOptional.isEmpty()) {
+                log.warn("Participation with id {} of build group {} has been deleted. The group is not finalized.", buildJob.getParticipationId(), buildGroupId);
+                return false;
+            }
+            ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
+            if (participation.getProgrammingExercise() == null) {
+                participation.setProgrammingExercise(programmingExerciseRepository.getProgrammingExerciseWithBuildConfigFromParticipation(participation));
+            }
+            // Every job of the group has finished (that is what the query selected), so the number of finished jobs is the
+            // number the group waited for. The result completes when its last job did.
+            long finishedJobs = buildJobRepository.countByBuildGroupIdAndBuildStatusIn(buildGroupId, FINISHED_BUILD_STATUSES);
+            ZonedDateTime completionDate = buildJobRepository.findLatestBuildCompletionDateOfBuildGroup(buildGroupId).orElseGet(ZonedDateTime::now);
+            Result finalizedResult = finalizeIfGroupComplete(buildGroupId, (int) finishedJobs, participation, completionDate);
+            if (finalizedResult == null) {
+                return false;
+            }
+            log.info("Finalized build group {} of participation {}, whose aggregated result had stayed in progress", buildGroupId, participation.getId());
+            programmingMessagingService.notifyUserAboutNewResult(finalizedResult, participation);
+            // A solution build of a tests push carries the tests commit as the commit it built, see LocalCITriggerService.
+            if (buildJob.getRepositoryType() == RepositoryType.SOLUTION
+                    && (buildJob.getTriggeredByPushTo() == RepositoryType.TESTS || buildJob.getTriggeredByPushTo() == RepositoryType.AUXILIARY)) {
+                triggerTemplateBuild(buildJob.getExerciseId(), buildJob.getBuildJobId(), buildJob.getCommitHash(), buildJob.getTriggeredByPushTo());
+            }
+            return true;
+        }
+        finally {
+            aggregationLocks.unlock(buildGroupId);
         }
     }
 

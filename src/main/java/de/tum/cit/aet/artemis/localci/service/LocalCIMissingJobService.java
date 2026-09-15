@@ -42,15 +42,18 @@ public class LocalCIMissingJobService {
 
     private final DistributedDataAccessService distributedDataAccessService;
 
+    private final LocalCIResultProcessingService localCIResultProcessingService;
+
     @Value("${artemis.continuous-integration.max-missing-job-retries:3}")
     private int maxMissingJobRetries;
 
     public LocalCIMissingJobService(BuildJobRepository buildJobRepository, LocalCITriggerService localCITriggerService, ParticipationRepository participationRepository,
-            DistributedDataAccessService distributedDataAccessService) {
+            DistributedDataAccessService distributedDataAccessService, LocalCIResultProcessingService localCIResultProcessingService) {
         this.buildJobRepository = buildJobRepository;
         this.localCITriggerService = localCITriggerService;
         this.participationRepository = participationRepository;
         this.distributedDataAccessService = distributedDataAccessService;
+        this.localCIResultProcessingService = localCIResultProcessingService;
     }
 
     /**
@@ -139,6 +142,20 @@ public class LocalCIMissingJobService {
 
         if (missingJobsSlice.hasNext()) {
             log.debug("There are more missing jobs to process in the next scheduled run.");
+        }
+    }
+
+    /**
+     * Periodically finalizes the multi-container builds whose containers have all finished while their merged result
+     * stayed in progress. The missing-job retry above cannot cover them: none of their jobs is missing. See
+     * {@link LocalCIResultProcessingService#finalizeCompletedBuildGroups()}.
+     */
+    @Scheduled(fixedRateString = "${artemis.continuous-integration.retry-missing-jobs-interval-seconds:300}", initialDelayString = "${artemis.continuous-integration.retry-missing-jobs-delay-seconds:120}", timeUnit = TimeUnit.SECONDS)
+    public void finalizeCompletedBuildGroups() {
+        log.debug("Checking for complete build groups whose aggregated result stayed in progress");
+        int finalizedGroups = localCIResultProcessingService.finalizeCompletedBuildGroups();
+        if (finalizedGroups > 0) {
+            log.info("Finalized {} complete build groups whose aggregated result had stayed in progress", finalizedGroups);
         }
     }
 

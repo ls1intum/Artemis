@@ -91,6 +91,72 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     boolean existsByBuildGroupIdAndResultIsNull(String buildGroupId);
 
     /**
+     * The build groups whose jobs have all finished while their aggregated result is still in progress: groups whose last
+     * container's finalization did not go through, see {@code LocalCIResultProcessingService#finalizeCompletedBuildGroups}.
+     * A group with a job that is still queued, building or missing is not complete and is left alone, and so is a group
+     * whose jobs finished after the given date, so that a merge under way is not raced.
+     *
+     * @param finishedStatuses the statuses in which a job counts as finished
+     * @param completedBefore  only groups whose jobs finished before this date
+     * @param pageable         limits the number of groups
+     * @return the ids of the complete build groups whose aggregated result has no completion date
+     */
+    @Query("""
+            SELECT DISTINCT b.buildGroupId
+            FROM BuildJob b
+            WHERE b.buildGroupId IS NOT NULL
+                AND b.result IS NOT NULL
+                AND b.result.completionDate IS NULL
+                AND b.buildCompletionDate < :completedBefore
+                AND NOT EXISTS (
+                    SELECT o
+                    FROM BuildJob o
+                    WHERE o.buildGroupId = b.buildGroupId
+                        AND o.buildStatus NOT IN :finishedStatuses)
+            """)
+    List<String> findCompletedBuildGroupsWithResultInProgress(@Param("finishedStatuses") Collection<BuildStatus> finishedStatuses,
+            @Param("completedBefore") ZonedDateTime completedBefore, Pageable pageable);
+
+    /**
+     * Checks whether the aggregated result a build group's jobs link to is still in progress. Written as a query rather
+     * than derived, so that a job without a result does not count: the join to the result has to be an inner one.
+     *
+     * @param buildGroupId the id of the build group
+     * @return true if a job of the group links to a result without a completion date
+     */
+    @Query("""
+            SELECT COUNT(b) > 0
+            FROM BuildJob b
+            WHERE b.buildGroupId = :buildGroupId
+                AND b.result IS NOT NULL
+                AND b.result.completionDate IS NULL
+            """)
+    boolean existsResultInProgressOfBuildGroup(@Param("buildGroupId") String buildGroupId);
+
+    /**
+     * The completion date of the last job of a build group to finish, which is the completion date a finalized aggregated
+     * result carries.
+     *
+     * @param buildGroupId the id of the build group
+     * @return the latest completion date among the group's jobs, if any job has one
+     */
+    @Query("""
+            SELECT MAX(b.buildCompletionDate)
+            FROM BuildJob b
+            WHERE b.buildGroupId = :buildGroupId
+            """)
+    Optional<ZonedDateTime> findLatestBuildCompletionDateOfBuildGroup(@Param("buildGroupId") String buildGroupId);
+
+    /**
+     * The first job of a build group. Every job of a group belongs to the same participation and was triggered by the
+     * same push, so any one of them says what the group is a build of.
+     *
+     * @param buildGroupId the id of the build group
+     * @return the group's job with the lowest id
+     */
+    Optional<BuildJob> findFirstByBuildGroupIdOrderByIdAsc(String buildGroupId);
+
+    /**
      * Retrieves all build job ids that were submitted before the given date.
      *
      * @param date the date before which build jobs should be deleted

@@ -65,6 +65,9 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
     @Autowired
     private BuildLogEntryService buildLogEntryService;
 
+    @Autowired
+    private LocalCIResultProcessingService localCIResultProcessingService;
+
     @Override
     protected String getTestPrefix() {
         return TEST_PREFIX;
@@ -371,6 +374,65 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         Result finalizedSecond = programmingExerciseGradingService.finalizeContainerResult(secondAggregate.getId(), participation, true, ZonedDateTime.now());
         assertThat(finalizedSecond.getCompletionDate()).isNotNull();
         assertThat(resultRepository.findById(firstAggregate.getId()).orElseThrow().getCompletionDate()).isNull();
+    }
+
+    /**
+     * The sweep finalizes a build group whose jobs have all finished while its aggregated result stayed in progress, which
+     * is what a crash between the last container's link and its finalization leaves behind. A group that still has a
+     * container queued is not complete and is left alone, and a second run finds nothing left to do.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSweepFinalizesACompleteGroupWhoseAggregatedResultStayedInProgress() {
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        participation.setProgrammingExercise(programmingExercise);
+        ProgrammingSubmission completeSubmission = submissionOf(participation, "0000000000000000000000000000000000000006");
+        ProgrammingSubmission openSubmission = submissionOf(participation, "0000000000000000000000000000000000000007");
+
+        // both containers of the first group merged and their jobs finished minutes ago, but nothing finalized the result;
+        // the first container reported one of the exercise's test cases, so the finalized result carries a score
+        String completeCommit = completeSubmission.getCommitHash();
+        var passingJob = new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO("testClass[SortStrategy]", List.of())));
+        BuildResult resultA = new BuildResult(null, completeCommit, completeCommit, true, ZonedDateTime.now(), List.of(passingJob), null, null, false, 0);
+        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, resultA, true, "container_a", null);
+        saveFinishedJob(buildJobFor("sweep-0", "sweep", participation, completeCommit, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult,
+                ZonedDateTime.now().minusMinutes(5));
+        BuildResult resultB = new BuildResult(null, completeCommit, completeCommit, true, ZonedDateTime.now(), List.of(), null, null, false, 0);
+        Result aggregatedResultAgain = programmingExerciseGradingService.appendContainerResult(participation, resultB, false, "container_b", aggregatedResult.getId());
+        saveFinishedJob(buildJobFor("sweep-1", "sweep", participation, completeCommit, "container_b"), BuildStatus.SUCCESSFUL, aggregatedResultAgain,
+                ZonedDateTime.now().minusMinutes(4));
+
+        // the second group's first container merged just as long ago, but its sibling is still queued
+        String openCommit = openSubmission.getCommitHash();
+        BuildResult openResult = new BuildResult(null, openCommit, openCommit, true, ZonedDateTime.now(), List.of(), null, null, false, 0);
+        Result openAggregate = programmingExerciseGradingService.appendContainerResult(participation, openResult, false, "container_a", null);
+        saveFinishedJob(buildJobFor("open-0", "open", participation, openCommit, "container_a"), BuildStatus.SUCCESSFUL, openAggregate, ZonedDateTime.now().minusMinutes(5));
+        buildJobRepository.save(new BuildJob(buildJobFor("open-1", "open", participation, openCommit, "container_b"), BuildStatus.QUEUED, null));
+
+        assertThat(localCIResultProcessingService.finalizeCompletedBuildGroups()).as("one complete group with an in-progress result").isEqualTo(1);
+
+        Result finalizedResult = resultRepository.findById(aggregatedResult.getId()).orElseThrow();
+        assertThat(finalizedResult.getCompletionDate()).as("finalized with the completion date of its last job, not with the time of the sweep").isNotNull()
+                .isBefore(ZonedDateTime.now().minusMinutes(3));
+        assertThat(finalizedResult.getScore()).as("scored over the merged feedback").isGreaterThan(0.0);
+        assertThat(resultRepository.findById(openAggregate.getId()).orElseThrow().getCompletionDate()).as("a group with a queued container is not complete").isNull();
+        assertThat(localCIResultProcessingService.finalizeCompletedBuildGroups()).as("nothing left to finalize").isZero();
+    }
+
+    private ProgrammingSubmission submissionOf(ProgrammingExerciseStudentParticipation participation, String commitHash) {
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setCommitHash(commitHash);
+        submission.setSubmissionDate(ZonedDateTime.now());
+        submission.setType(SubmissionType.MANUAL);
+        submission.setSubmitted(true);
+        submission.setParticipation(participation);
+        return programmingSubmissionRepository.save(submission);
+    }
+
+    private void saveFinishedJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result, ZonedDateTime completionDate) {
+        BuildJob buildJob = new BuildJob(queueItem, buildStatus, result);
+        buildJob.setBuildCompletionDate(completionDate);
+        buildJobRepository.save(buildJob);
     }
 
     private BuildJobQueueItem buildJobFor(String id, String buildGroupId, ProgrammingExerciseStudentParticipation participation, String commitHash, String containerName) {
