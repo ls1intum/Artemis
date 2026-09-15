@@ -368,6 +368,19 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createPresentationAssessmentInstance_withDuplicateTrimmedLoginAndResult_shouldCreateSingleAssignment() throws Exception {
+        PresentationAssessmentInstanceDTO dto = new PresentationAssessmentInstanceDTO(null, FIXED_DATE.plusDays(14), 15.5,
+                List.of(TEST_PREFIX + "student1", " " + TEST_PREFIX + "student1 "), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, null);
+
+        PresentationAssessmentInstanceDTO result = request.postWithResponseBody(getInstancesUrl(course, presentationAssessment), dto, PresentationAssessmentInstanceDTO.class,
+                HttpStatus.CREATED);
+
+        assertThat(result.studentLogins()).containsExactly(TEST_PREFIX + "student1");
+        assertThat(result.resultPoints()).isEqualTo(15.5);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updatePresentationAssessmentInstance_shouldRejectExpandingGradedIndividualAndAllowUpdatingLegacySharedInstance() throws Exception {
         PresentationAssessmentInstanceDTO individual = request
                 .postWithResponseBody(
