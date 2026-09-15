@@ -82,9 +82,16 @@ both are normally registered, and the application ends up with two beans of that
 do coincide, Artemis fails to start rather than picking a winner, because
 `spring.main.allow-bean-definition-overriding` is `false` in `config/application.yml`, so the collision
 is a `BeanDefinitionOverrideException` and not something that can hide. Either way the question is
-settled by provenance, like every other one here. `@AutoConfigureAfter` and the `@ConditionalOnBean`
-family on a non-auto-configuration class are meaningless or order-dependent, and are a reliable sign of
-a generated leftover.
+settled by provenance, like every other one here.
+
+`@AutoConfigureAfter` on a class that is not an auto-configuration is meaningless: Spring Boot reads it
+only when ordering the classes listed in `AutoConfiguration.imports`, so on a component-scanned
+`@Configuration` it does nothing, and finding one is a reliable sign of a generated leftover. The
+`@ConditionalOn*` family is **not** the same case. On a `@Bean` method it is ordinary Spring and says
+nothing about the class: `AtlasAutoOrchestrationConfiguration` declares its `Clock` with
+`@ConditionalOnMissingBean` precisely so a test can supply a fixed one, and that configuration is live.
+Only on the class of a non-auto-configuration is it worth a second look, and then as a smell rather than
+a verdict — it is order-dependent there, which makes it fragile, not dead.
 
 ### When the check is wrong
 
