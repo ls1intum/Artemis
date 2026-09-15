@@ -690,10 +690,14 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
 
     /**
      * Generates random exams for each of the given users and saves them.
+     * <p>
+     * The {@link User} on each generated student exam is an id-only reference: only the foreign key is written on this
+     * path, and loading the full user cost one select per student. No field other than the id is populated, so a caller
+     * that needs the login, name or any other attribute has to load the users itself.
      *
      * @param exam    exam for which the individual student exams will be generated
      * @param userIds ids of the users for which the individual exams will be generated
-     * @return List of StudentExams generated for the given users
+     * @return List of StudentExams generated for the given users, each carrying an id-only {@link User}
      */
     default List<StudentExam> createRandomStudentExams(Exam exam, Set<Long> userIds) {
         List<StudentExam> studentExams = new ArrayList<>();
