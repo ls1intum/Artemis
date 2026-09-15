@@ -417,7 +417,15 @@ public sealed interface FileSystemLocation {
         if (!refersToStoredFile(value)) {
             return value;
         }
-        String filename = decodePercentEscapes(filenameOf(value));
+        int lastSeparator = value.lastIndexOf('/');
+        if (lastSeparator < 0) {
+            // A value carrying no path segments never came out of PublicFileUrl, which only ever encodes the last segment of a URL it assembles, so there is no encoding to
+            // undo and decoding would rewrite the name instead of restoring it. This is the value Hibernate hands back when it rehydrates a persisted DragItem through its
+            // setter, and a legacy file genuinely named `%41.png` would otherwise become `A.png` on every read: the next request would ask for a file that is not there, and
+            // the next save would persist the changed name. The reduction has nothing to do for such a value anyway, since it is already just a filename.
+            return value;
+        }
+        String filename = decodePercentEscapes(value.substring(lastSeparator + 1));
         if (refersToStoredFile(filename)) {
             return filename;
         }
@@ -427,7 +435,7 @@ public sealed interface FileSystemLocation {
         // stored file. The last segment is still replaced by its decoded form: the value reaching this point may be a served URL, whose filename segment `PublicFileUrl`
         // percent-encoded, and storing that encoded form would encode it a second time on the way out and look for a file named after the escapes on the way in. Every location
         // reduces the value through `filenameOf` again when it builds a path, so the decoded last segment is the name that gets resolved.
-        return value.substring(0, value.lastIndexOf('/') + 1) + filename;
+        return value.substring(0, lastSeparator + 1) + filename;
     }
 
     /**

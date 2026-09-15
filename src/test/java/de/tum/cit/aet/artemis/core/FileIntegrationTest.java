@@ -740,6 +740,40 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * @param content the bytes to store as the attachment
      * @return the saved attachment
      */
+    /**
+     * Two attachments of one lecture may carry the same display name, and the legacy URL carries nothing else: it is
+     * {@code {name}.{extension}}, so both answer to it. While the files still lay under the lecture directory the
+     * candidates were narrowed to the ones stored there, which usually left one; the migration moves every file into
+     * its unit's directory, so that filter is gone and the tie has to be broken deterministically instead. Without
+     * that, the same old link can serve a different unit's file from one request to the next.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testLegacyLectureAttachmentRouteIsDeterministicForTwoAttachmentsOfTheSameName() throws Exception {
+        byte[] olderContent = "the attachment the link was written for".getBytes();
+        Attachment older = createLectureAttachmentWithStoredFile(olderContent);
+        Lecture lecture = older.getAttachmentVideoUnit().getLecture();
+
+        AttachmentVideoUnit secondUnit = lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture);
+        Attachment sameName = LectureFactory.generateAttachment(ZonedDateTime.now());
+        sameName.setName(older.getName());
+        sameName.setAttachmentVideoUnit(secondUnit);
+        sameName.setLink("second-" + STORED_ATTACHMENT_FILENAME);
+        sameName = attachmentRepo.save(sameName);
+        secondUnit.setAttachment(sameName);
+        attachmentVideoUnitRepo.save(secondUnit);
+        FileUtils.writeByteArrayToFile(new FileSystemLocation.AttachmentVideoUnitFile(secondUnit.getId(), "second-" + STORED_ATTACHMENT_FILENAME).path().toFile(),
+                "the other unit's file".getBytes());
+
+        assertThat(sameName.getId()).as("the second attachment really is the newer one").isGreaterThan(older.getId());
+
+        String requestedName = older.getName() + ".pdf";
+        for (int attempt = 0; attempt < 3; attempt++) {
+            assertThat(request.get("/api/core/files/attachments/lectures/" + lecture.getId() + "/" + requestedName, HttpStatus.OK, byte[].class))
+                    .as("every request resolves to the same, older attachment").isEqualTo(olderContent);
+        }
+    }
+
     private Attachment createLectureAttachmentWithStoredFile(byte[] content) throws IOException {
         Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         lecture = lectureRepo.save(lecture);

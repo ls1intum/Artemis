@@ -176,6 +176,36 @@ class StoredFileReferenceTest {
     }
 
     /**
+     * A drag item is rehydrated from {@code quiz_question.content} through the same setter that normalizes client input, so whatever that setter does to a value is done again on
+     * every read of a persisted question. A filename written before filenames were sanitized may contain a per cent sign, and {@code %41} is a valid escape for {@code A}: if the
+     * setter decoded it, a file genuinely named {@code %41.png} would come back as {@code A.png}, the next request would ask for a file that is not there, and the next save
+     * would persist the changed name.
+     * <p>
+     * Only a value carrying path segments has been through {@code PublicFileUrl}, so only that value has an encoding to undo.
+     */
+    @Test
+    void aPersistedDragItemFilenameWithAPercentEscapeSurvivesHydration() throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        String legacyFilename = "%41.png";
+
+        DragItem hydrated = mapper.readValue("{\"pictureFilePath\":\"" + legacyFilename + "\"}", DragItem.class);
+        assertThat(hydrated.getPictureFilePath()).as("hydration from the persisted content is lossless").isEqualTo(legacyFilename);
+
+        JsonNode reserialized = mapper.readTree(mapper.writeValueAsString(hydrated));
+        assertThat(reserialized.get("pictureFilePath").asText()).as("and writing it back stores the same name").isEqualTo(legacyFilename);
+
+        assertThat(new DragItem().pictureFilePath(legacyFilename).getPictureFilePath()).as("assigning it directly is lossless too").isEqualTo(legacyFilename);
+
+        // The reduction still undoes the encoding for the one value that carries it: a served path the client sends back.
+        DragAndDropQuestion question = new DragAndDropQuestion();
+        question.setId(5L);
+        DragItem fromClient = new DragItem();
+        question.addDragItem(fromClient);
+        fromClient.setPictureFilePath("drag-and-drop/questions/5/drag-items/1/my%20item.png");
+        assertThat(fromClient.getPictureFilePath()).as("a served path is still reduced and decoded").isEqualTo("my item.png");
+    }
+
+    /**
      * The served path is what the client sends back in the next update of the question, and several write paths assign it straight to the drag item, so the setter reducing it is
      * the only thing that keeps a REST path out of the stored content.
      */

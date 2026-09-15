@@ -9,6 +9,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -483,8 +484,12 @@ public class FileResource {
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
         List<Attachment> lectureAttachments = api.findAllInLecture(lectureId);
-        Attachment attachment = lectureAttachments.stream().filter(lectureAttachment -> lectureAttachment.getName().equals(FilenameUtils.getBaseName(attachmentName))).findAny()
-                .orElseThrow(() -> new EntityNotFoundException("Attachment", attachmentName));
+        // The oldest match wins, rather than whichever row the query happened to return first. All this URL carries is the display name, which nothing makes unique within a
+        // lecture, so two attachments can answer to it. Until the files were moved out of the lecture directory the candidates were narrowed to the ones stored under it,
+        // which usually left one; that filter cannot survive the move, so the tie is broken here instead. The lowest id is the oldest attachment, which is the one a link
+        // written years ago was written for.
+        Attachment attachment = lectureAttachments.stream().filter(lectureAttachment -> lectureAttachment.getName().equals(FilenameUtils.getBaseName(attachmentName)))
+                .min(Comparator.comparing(Attachment::getId)).orElseThrow(() -> new EntityNotFoundException("Attachment", attachmentName));
 
         // The attachment reaches its lecture through the unit that owns it; the query fetched both with the course.
         Course course = attachment.getAttachmentVideoUnit().getLecture().getCourse();
