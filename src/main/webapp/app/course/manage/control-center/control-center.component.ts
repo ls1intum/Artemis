@@ -1,4 +1,4 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, inject, input, signal } from '@angular/core';
 import { IrisEnabledComponent } from 'app/iris/manage/settings/shared/iris-enabled/iris-enabled.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
@@ -11,7 +11,7 @@ import { AboutAthenaModalComponent } from 'app/course/manage/control-center/abou
 
 @Component({
     selector: 'jhi-control-center',
-    imports: [IrisEnabledComponent, IrisLogoComponent, AthenaEnabledComponent, AthenaLogoComponent, TranslateDirective],
+    imports: [IrisEnabledComponent, IrisLogoComponent, AthenaEnabledComponent, AthenaLogoComponent, TranslateDirective, AboutAthenaModalComponent],
     templateUrl: './control-center.component.html',
     styleUrls: ['./control-center.component.scss'],
 })
@@ -19,11 +19,12 @@ export class ControlCenterComponent {
     protected readonly IrisLogoSize = IrisLogoSize;
     private dialogService = inject(DialogService);
     private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
-    private aboutAthenaDialogRef: DynamicDialogRef<AboutAthenaModalComponent> | undefined;
 
     course = input.required<Course>();
     irisEnabled = input.required<boolean>();
     athenaEnabled = input.required<boolean>();
+
+    protected readonly aboutAthenaModalVisible = signal(false);
 
     openAboutIrisModal(): void {
         this.aboutIrisDialogRef?.close();
@@ -42,17 +43,6 @@ export class ControlCenterComponent {
     }
 
     openAboutAthenaModal(): void {
-        this.aboutAthenaDialogRef?.close();
-        this.aboutAthenaDialogRef =
-            this.dialogService.open(AboutAthenaModalComponent, {
-                modal: true,
-                closable: false,
-                dismissableMask: true,
-                showHeader: false,
-                styleClass: 'about-athena-dialog',
-                maskStyleClass: 'about-athena-dialog',
-                width: '40rem',
-                breakpoints: { '640px': '95vw' },
-            }) ?? undefined;
+        this.aboutAthenaModalVisible.set(true);
     }
 }

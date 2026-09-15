@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { ChangeDetectionStrategy, Component, model } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import type { IconDefinition } from '@fortawesome/free-solid-svg-icons';
-import { faGaugeHigh, faLayerGroup, faSliders, faUserCheck, faWandMagicSparkles, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faGaugeHigh, faLayerGroup, faSliders, faUserCheck, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import { faClock } from '@fortawesome/free-regular-svg-icons';
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.component';
@@ -23,14 +23,12 @@ interface FeatureCard {
     selector: 'jhi-about-athena-modal',
     templateUrl: './about-athena-modal.component.html',
     styleUrl: './about-athena-modal.component.scss',
-    imports: [AthenaLogoComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [AthenaLogoComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumUiDialogComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AboutAthenaModalComponent {
-    // Opened through PrimeNG's DynamicDialog (DialogService) from the course overview.
-    private readonly dynamicDialogRef = inject(DynamicDialogRef, { optional: true });
-
-    protected readonly faXmark = faXmark;
+    /** Two-way visibility, driven by the parent. */
+    readonly visible = model(false);
 
     protected readonly whatAthenaCanDo: FeatureCard[] = [
         {
@@ -67,8 +65,4 @@ export class AboutAthenaModalComponent {
             icon: faSliders,
         },
     ];
-
-    close(): void {
-        this.dynamicDialogRef?.close();
-    }
 }

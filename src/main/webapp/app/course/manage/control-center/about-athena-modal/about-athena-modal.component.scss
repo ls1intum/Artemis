@@ -1,37 +1,5 @@
 :host {
     display: block;
-    position: relative;
-}
-
-.close-btn-container {
-    position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    z-index: 3;
-}
-
-.close-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: none;
-    padding: 0.25rem;
-    cursor: pointer;
-    color: var(--bs-body-color);
-    line-height: 1;
-    z-index: 1;
-
-    &:hover {
-        opacity: 0.7;
-    }
-}
-
-.modal-content-wrapper {
-    padding: 2.5rem;
-    max-height: 40rem; /* 640px */
-    overflow-y: auto;
-    scrollbar-gutter: stable;
 }
 
 .header-section {

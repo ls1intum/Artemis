@@ -1,21 +1,16 @@
-<div class="close-btn-container">
-    <button type="button" class="close-btn" (click)="close()" [attr.aria-label]="'artemisApp.course.athenaConfig.aboutAthenaModal.close' | artemisTranslate">
-        <fa-icon [icon]="faXmark" aria-hidden="true" />
-    </button>
-</div>
-
-<div class="modal-content-wrapper" role="document" aria-labelledby="about-athena-title">
-    <!-- Header: Logo + title + subtexts -->
-    <div class="header-section">
-        <div class="logo-container">
-            <jhi-athena-logo [size]="40" />
+<tum-ui-dialog [(visible)]="visible" [dismissableMask]="true" size="medium" [closeButtonAriaLabel]="'artemisApp.course.athenaConfig.aboutAthenaModal.close' | artemisTranslate">
+    <ng-template #header>
+        <div class="header-section">
+            <div class="logo-container">
+                <jhi-athena-logo [size]="40" />
+            </div>
+            <div class="header-text">
+                <h2 jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.meetAthena"></h2>
+                <p class="subtitle" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.subtitle"></p>
+                <p class="description" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.description"></p>
+            </div>
         </div>
-        <div class="header-text">
-            <h2 id="about-athena-title" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.meetAthena"></h2>
-            <p class="subtitle" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.subtitle"></p>
-            <p class="description" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.description"></p>
-        </div>
-    </div>
+    </ng-template>
 
     <hr class="divider" />
 
@@ -52,4 +47,4 @@
             </div>
         }
     </section>
-</div>
+</tum-ui-dialog>

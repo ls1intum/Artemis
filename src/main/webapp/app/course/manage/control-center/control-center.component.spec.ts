@@ -36,6 +36,7 @@ describe('ControlCenterComponent', () => {
                         MockComponent(IrisEnabledComponent),
                         MockComponent(AthenaLogoComponent),
                         MockComponent(AthenaEnabledComponent),
+                        MockComponent(AboutAthenaModalComponent),
                     ],
                 },
             })
@@ -101,10 +102,12 @@ describe('ControlCenterComponent', () => {
     });
 
     it('should open the about Athena modal', () => {
-        const openSpy = vi.spyOn(TestBed.inject(DialogService), 'open').mockReturnValue(null);
+        const aboutAthenaModal = fixture.debugElement.query(By.directive(AboutAthenaModalComponent));
+        expect(aboutAthenaModal.componentInstance.visible()).toBe(false);
 
         fixture.componentInstance.openAboutAthenaModal();
+        fixture.detectChanges();
 
-        expect(openSpy).toHaveBeenCalledExactlyOnceWith(AboutAthenaModalComponent, expect.objectContaining({ modal: true, styleClass: 'about-athena-dialog' }));
+        expect(aboutAthenaModal.componentInstance.visible()).toBe(true);
     });
 });
