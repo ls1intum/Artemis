@@ -10,11 +10,6 @@ import Image, {ImageSize} from "../../../src/components/Image/Image";
 
 import modelingExerciseCardStudentView from './assets/modeling/modeling-exercise-card-student-view.png';
 import modelingExerciseStudentsInterface from './assets/modeling/modeling-exercise-students-interface.png';
-import automaticFeedbackRequestEditor from './assets/modeling/automatic-feedback-request-editor.png';
-import automaticFeedbackRequestAlert from './assets/modeling/automatic-feedback-request-alert.png';
-import automaticFeedbackRequestScore from './assets/modeling/automatic-feedback-request-score.png';
-import automaticFeedbackViewDetailed from './assets/modeling/automatic-feedback-view-detailed.png';
-import automaticFeedbackHistory from './assets/modeling/automatic-feedback-history.png';
 
 A modeling exercise asks you to draw rather than to write: a UML class diagram, an activity diagram, a use case
 diagram. You build it in Artemis's own editor, and it is marked element by element — a comment and a mark against
@@ -55,47 +50,14 @@ you like before the due date — the last version is the one that is marked.
 
 </Callout>
 
-## Automatic Student Feedback
+## AI Feedback on a Draft
 
-<Callout variant={CalloutVariant.info}>
+Where your instructor has switched it on, **Request AI feedback** gives you preliminary feedback on a submitted
+diagram before the due date, so you can fix what it finds and submit again. It reads both the **structure** of your
+diagram and its **layout**, and the comments land on the individual elements they are about rather than arriving as
+one verdict on the whole thing.
 
-  <strong>Why Automatic Student Feedback:</strong> In large courses, providing timely and personalized feedback on modeling exercises is challenging. Automated student feedback helps you identify misconceptions early, iterate on your work, and refine diagram modeling skills—all without waiting for an instructor or tutor to be available.
+It is not your mark: a tutor or instructor assesses your work after the due date regardless.
 
-</Callout>
-
-**Overview:**
-
-When a modeling exercise is configured to allow automatic AI preliminary feedback requests, you can request preliminary AI feedback for your modeling submissions. The feedback is generated through the Athena Service, which analyzes both the **structure** and **layout** of your diagrams.
-
-**How to Request Automatic Feedback:**
-
-1. **Requesting Feedback**
-   - Navigate to a **Modeling Exercise** with the **Automatic Student Feedback** feature enabled
-   - Create a diagram in the modeling editor and submit it
-   - Feedback may be requested either from the exercise overview page or directly within the modeling editor
-
-    <Image src={automaticFeedbackRequestEditor} alt="Automatic Feedback Request Editor" size={ImageSize.large} caption="Request Feedback Button" />
-2. **Viewing Feedback**
-   - After a feedback request is made, the system processes the diagram and generates preliminary feedback
-   - An alert appears at the top of the page to indicate that the feedback is ready
-
-    <Image src={automaticFeedbackRequestAlert} alt="Automatic Feedback Request Alert" size={ImageSize.large} caption="Feedback Ready Notification" />
-
-       - A preliminary score is displayed in the top-right corner of the screen
-
-    <Image src={automaticFeedbackRequestScore} alt="Automatic Feedback Request Score" size={ImageSize.large} caption="Preliminary Score Display" />
-
-       - Clicking on the score reveals detailed, inline feedback that highlights specific issues and provides suggestions directly within the diagram
-
-    <Image src={automaticFeedbackViewDetailed} alt="Automatic Feedback View Detailed" size={ImageSize.large} caption="Detailed AI Feedback View" />
-3. **Submission History**
-   - Feedback can be requested multiple times before the submission due date. All feedback requests are recorded in the submission history
-   - To review previous feedback, access the submission history section and click on an entry to display its detailed feedback
-
-    <Image src={automaticFeedbackHistory} alt="Automatic Feedback History" size={ImageSize.large} caption="Submission History with Feedback Requests" />
-
-    <Callout variant={CalloutVariant.warning}>
-
-      The automatic feedback is preliminary and may not reflect your final grade. Your instructor will provide the official assessment after the due date.
-
-    </Callout>
+See [AI Feedback on a Draft](/student/exercises/ai-feedback) for how to ask for it, what comes back, and the limits
+on how often.
