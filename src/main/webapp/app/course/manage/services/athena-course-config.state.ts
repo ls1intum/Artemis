@@ -17,6 +17,12 @@ const DISABLED_CONFIG: AthenaCourseConfigDTO = { gradingFeedbackEnabled: false, 
 /** The two course-level feedback style defaults, on the same 1-3 scale as a student's own learner-profile preference. */
 export type AthenaFeedbackStyleField = 'defaultFeedbackDetail' | 'defaultFeedbackFormality';
 
+/** Both style defaults, for the places that handle each of them on its own. */
+export const ATHENA_FEEDBACK_STYLE_FIELDS: readonly AthenaFeedbackStyleField[] = ['defaultFeedbackDetail', 'defaultFeedbackFormality'];
+
+/** Every field {@link AthenaCourseConfigState} tracks a revision for: the two on/off features and the two style defaults. */
+type AthenaConfigField = AthenaFeature | AthenaFeedbackStyleField;
+
 /**
  * The Athena feedback configuration of one course, as the toggles that switch it show it.
  *
@@ -59,7 +65,7 @@ export class AthenaCourseConfigState {
     /**
      * The instance-wide allowed-feedback-requests cap the last load reported; undefined until a load has answered.
      * Read-only and never switched, so unlike the two features above it is set straight from the load response
-     * rather than routed through {@link apply}, which only ever touches the one feature a switch was about.
+     * rather than routed through {@link applyFeature}, which only ever touches the one feature a switch was about.
      */
     readonly allowedFeedbackRequests = signal<number | undefined>(undefined);
 
@@ -85,17 +91,27 @@ export class AthenaCourseConfigState {
     private loadStarted = false;
 
     /**
-     * The state the server confirmed per feature; a failed switch rolls back to it. A feature the server has not
-     * spoken about yet is missing here rather than stored as disabled, so that a load answering afterwards still
+     * The state the server confirmed per field; a failed switch rolls back to it. A field the server has not
+     * spoken about yet is missing here rather than stored as disabled/0, so that a load answering afterwards still
      * counts.
      */
-    private readonly confirmed: Partial<Record<AthenaFeature, boolean>> = {};
+    private readonly confirmed: Partial<AthenaCourseConfigDTO> = {};
 
-    /** How often each feature has been switched, so that only its latest switch writes back an answer. */
-    private readonly revisions: Record<AthenaFeature, number> = { formativeFeedbackEnabled: 0, gradingFeedbackEnabled: 0 };
+    /** How often each field has been switched, so that only its latest switch writes back an answer. */
+    private readonly revisions: Record<AthenaConfigField, number> = {
+        formativeFeedbackEnabled: 0,
+        gradingFeedbackEnabled: 0,
+        defaultFeedbackDetail: 0,
+        defaultFeedbackFormality: 0,
+    };
 
-    /** The latest switch of each feature that has answered, so a switch still in flight can be told from a past one. */
-    private readonly settled: Record<AthenaFeature, number> = { formativeFeedbackEnabled: 0, gradingFeedbackEnabled: 0 };
+    /** The latest switch of each field that has answered, so a switch still in flight can be told from a past one. */
+    private readonly settled: Record<AthenaConfigField, number> = {
+        formativeFeedbackEnabled: 0,
+        gradingFeedbackEnabled: 0,
+        defaultFeedbackDetail: 0,
+        defaultFeedbackFormality: 0,
+    };
 
     constructor(
         private readonly courseId: number,
@@ -109,13 +125,15 @@ export class AthenaCourseConfigState {
      * first one, so an instructor who has had the page open for a while still picks up a change another instructor
      * made in the meantime.
      *
-     * The answer describes the course as of some point during the request, not as of when it arrives, so a feature
+     * The answer describes the course as of some point during the request, not as of when it arrives, so a field
      * switched while this request was on its way must not accept it: the answer may predate that switch even though
-     * it arrives after the switch's own request has already confirmed the newer value. A feature only takes the
-     * answer where nothing happened to it for the whole request: no switch already in flight when the request was
-     * made (a snapshot of {@link revisions} and {@link settled} taken before it is sent apart), and none started
-     * before the answer arrived either — as opposed to a switch that had already settled before this request was
-     * even made, which is merely old news the answer is expected to already reflect.
+     * it arrives after the switch's own request has already confirmed the newer value. This applies equally to the
+     * two on/off features and the two feedback style defaults - a slider left dragging while the settings page
+     * revalidates in the background needs the same protection a toggle does. A field only takes the answer where
+     * nothing happened to it for the whole request: no switch already in flight when the request was made (a
+     * snapshot of {@link revisions} and {@link settled} taken before it is sent apart), and none started before the
+     * answer arrived either — as opposed to a switch that had already settled before this request was even made,
+     * which is merely old news the answer is expected to already reflect.
      */
     load(): void {
         const revisionAtRequest = deepClone(this.revisions);
@@ -125,22 +143,22 @@ export class AthenaCourseConfigState {
             next: (loaded) => {
                 this.allowedFeedbackRequests.set(loaded.allowedFeedbackRequests);
                 for (const feature of ATHENA_FEATURES) {
-                    const wasIdleForWholeRequest = settledAtRequest[feature] === revisionAtRequest[feature] && this.revisions[feature] === revisionAtRequest[feature];
-                    if (!wasIdleForWholeRequest) {
-                        continue;
+                    if (this.wasIdleForWholeRequest(feature, revisionAtRequest, settledAtRequest)) {
+                        this.confirmed[feature] = loaded[feature];
+                        this.applyFeature(feature, loaded[feature]);
                     }
-                    this.confirmed[feature] = loaded[feature];
-                    this.apply(feature, loaded[feature]);
                 }
-                // The two feedback style defaults are only ever written from the settings page (see
-                // setFeedbackStyleDefault), so unlike the two features above they need none of the revision tracking
-                // that guards against a load overwriting a switch still in flight.
-                this.config.update((current) =>
-                    cloneWith(current ?? DISABLED_CONFIG, {
-                        defaultFeedbackDetail: loaded.defaultFeedbackDetail ?? 0,
-                        defaultFeedbackFormality: loaded.defaultFeedbackFormality ?? 0,
-                    }),
-                );
+                // The settings page keeps its sliders interactive while a cached mount revalidates in the background
+                // (see ensureLoaded), so a style default needs the same guard as the two features above: an instructor
+                // dragging one while this GET is still on its way must not have it snapped back by an answer that
+                // predates that drag.
+                for (const field of ATHENA_FEEDBACK_STYLE_FIELDS) {
+                    if (this.wasIdleForWholeRequest(field, revisionAtRequest, settledAtRequest)) {
+                        const value = loaded[field] ?? 0;
+                        this.confirmed[field] = value;
+                        this.applyStyle(field, value);
+                    }
+                }
                 this.isLoaded.set(true);
                 this.loadStarted = false;
             },
@@ -195,7 +213,7 @@ export class AthenaCourseConfigState {
         }
 
         const revision = ++this.revisions[feature];
-        this.apply(feature, enabled);
+        this.applyFeature(feature, enabled);
 
         // Only the switched feature is sent: restating the other one would write back whatever this client last read
         // for it, undoing a change made elsewhere in the meantime.
@@ -210,17 +228,17 @@ export class AthenaCourseConfigState {
                         continue;
                     }
                     this.confirmed[other] = body[other];
-                    this.apply(other, body[other]);
+                    this.applyFeature(other, body[other]);
                 }
 
                 const stored = body?.[feature] ?? enabled;
                 this.confirmed[feature] = stored;
                 this.settle(feature, revision);
-                this.applyIfLatest(feature, revision, stored);
+                this.applyFeatureIfLatest(feature, revision, stored);
             },
             error: (error: HttpErrorResponse) => {
                 this.settle(feature, revision);
-                this.applyIfLatest(feature, revision, this.confirmed[feature] ?? false);
+                this.applyFeatureIfLatest(feature, revision, this.confirmed[feature] ?? false);
                 onError(this.alertService, error);
             },
         });
@@ -241,25 +259,35 @@ export class AthenaCourseConfigState {
     }
 
     /**
-     * Sets one of the two course-level feedback style defaults and saves it right away, rolling back to the value
-     * shown before if the request fails. Unlike {@link setEnabled}, this is only ever written from the settings page
-     * - there is no course-overview toggle or onboarding wizard for it - so there is no other caller whose in-flight
-     * switch a revision would need to protect.
+     * Sets one of the two course-level feedback style defaults and saves it right away, rolling back to the last
+     * value the server confirmed if the request fails. Unlike {@link setEnabled} there is no other feature whose
+     * write could race this one, but the same request-ordering hazards {@link setEnabled} guards against still
+     * apply within a single field: a background revalidation (see {@link load}) can answer while the settings page
+     * keeps its slider interactive, and dragging a slider twice before the first save answers queues a second switch
+     * behind it. Both are guarded the same way, by a per-field revision that only the latest switch of that field may
+     * write back.
      *
      * @param field the field to change
      * @param value the new value (1-3), or 0 to clear the course default and fall back to the student's own preference
      */
     setFeedbackStyleDefault(field: AthenaFeedbackStyleField, value: number): void {
-        const previous = this.config()?.[field] ?? 0;
-        if (previous === value) {
+        if ((this.config()?.[field] ?? 0) === value) {
             return;
         }
 
-        this.config.update((current) => cloneWith(current ?? DISABLED_CONFIG, { [field]: value }));
+        const revision = ++this.revisions[field];
+        this.applyStyle(field, value);
 
         this.athenaCourseConfigService.updateCourseConfig(this.courseId, { [field]: value }).subscribe({
+            next: (response) => {
+                const stored = response.body?.[field] ?? value;
+                this.confirmed[field] = stored;
+                this.settle(field, revision);
+                this.applyStyleIfLatest(field, revision, stored);
+            },
             error: (error: HttpErrorResponse) => {
-                this.config.update((current) => cloneWith(current ?? DISABLED_CONFIG, { [field]: previous }));
+                this.settle(field, revision);
+                this.applyStyleIfLatest(field, revision, this.confirmed[field] ?? 0);
                 onError(this.alertService, error);
             },
         });
@@ -273,7 +301,7 @@ export class AthenaCourseConfigState {
      * @param feature the feature to show
      * @param enabled the state to show it in
      */
-    private apply(feature: AthenaFeature, enabled: boolean): void {
+    private applyFeature(feature: AthenaFeature, enabled: boolean): void {
         this.config.update((current) => cloneWith(current ?? DISABLED_CONFIG, { [feature]: enabled }));
     }
 
@@ -285,21 +313,58 @@ export class AthenaCourseConfigState {
      * @param revision the switch count this switch was started with
      * @param enabled the state the switch ended in
      */
-    private applyIfLatest(feature: AthenaFeature, revision: number, enabled: boolean): void {
+    private applyFeatureIfLatest(feature: AthenaFeature, revision: number, enabled: boolean): void {
         if (this.revisions[feature] === revision) {
-            this.apply(feature, enabled);
+            this.applyFeature(feature, enabled);
         }
     }
 
     /**
-     * Records that a switch has answered, so that a load arriving afterwards can tell whether the feature is still
+     * Shows one feedback style default, leaving everything else at whatever it currently is. See {@link applyFeature}.
+     *
+     * @param field the field to show
+     * @param value the value to show it in
+     */
+    private applyStyle(field: AthenaFeedbackStyleField, value: number): void {
+        this.config.update((current) => cloneWith(current ?? DISABLED_CONFIG, { [field]: value }));
+    }
+
+    /**
+     * Shows the outcome of a style-default save, unless the same field has been switched again since. See
+     * {@link applyFeatureIfLatest}.
+     *
+     * @param field the field the switch was about
+     * @param revision the switch count this switch was started with
+     * @param value the value the switch ended in
+     */
+    private applyStyleIfLatest(field: AthenaFeedbackStyleField, revision: number, value: number): void {
+        if (this.revisions[field] === revision) {
+            this.applyStyle(field, value);
+        }
+    }
+
+    /**
+     * Records that a switch has answered, so that a load arriving afterwards can tell whether the field is still
      * being switched. An answer cannot lower this: an older switch answering after a newer one leaves it where it is.
      *
-     * @param feature the feature the switch was about
+     * @param field the field the switch was about
      * @param revision the switch count that switch was started with
      */
-    private settle(feature: AthenaFeature, revision: number): void {
-        this.settled[feature] = Math.max(this.settled[feature], revision);
+    private settle(field: AthenaConfigField, revision: number): void {
+        this.settled[field] = Math.max(this.settled[field], revision);
+    }
+
+    /**
+     * Whether a field had no switch in flight for the whole duration of a {@link load} request: none already
+     * unanswered when the request was made, and none started before the request's answer arrived either. Only such a
+     * field may take the request's answer - see {@link load}.
+     *
+     * @param field the field to check
+     * @param revisionAtRequest a snapshot of {@link revisions} taken before the request was sent
+     * @param settledAtRequest a snapshot of {@link settled} taken before the request was sent
+     */
+    private wasIdleForWholeRequest(field: AthenaConfigField, revisionAtRequest: Record<AthenaConfigField, number>, settledAtRequest: Record<AthenaConfigField, number>): boolean {
+        return settledAtRequest[field] === revisionAtRequest[field] && this.revisions[field] === revisionAtRequest[field];
     }
 }
 

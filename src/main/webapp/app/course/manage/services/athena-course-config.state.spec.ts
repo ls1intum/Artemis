@@ -315,6 +315,41 @@ describe('AthenaCourseConfigState', () => {
             expect(state.defaultFeedbackDetail()).toBe(0);
             expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.http.400');
         });
+
+        it('should not let a slow revalidation clobber a style default that was confirmed after the request was sent', () => {
+            const { state, athenaCourseConfigService } = createState();
+            const get = new Subject<AthenaCourseConfigDTO>();
+            vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(get.asObservable());
+            vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(of(new HttpResponse({ body: { ...bothDisabled, defaultFeedbackDetail: 3 } })));
+
+            // The settings page mounts on a cached instance and starts revalidating in the background (ensureLoaded).
+            state.ensureLoaded();
+            // The instructor drags the slider to 3 - the save starts, sends its PATCH and gets a confirmed answer,
+            // all before the GET above answers.
+            state.setFeedbackStyleDefault('defaultFeedbackDetail', 3);
+            // The GET was sent before the save and only now answers with the state from before it - it must not
+            // undo what the save, which has since been confirmed by the server, already put on screen.
+            get.next(bothDisabled);
+
+            expect(state.defaultFeedbackDetail()).toBe(3);
+        });
+
+        it('should keep showing a later optimistic value when an earlier queued save for the same field fails', () => {
+            const { state, athenaCourseConfigService } = createState();
+            initWith(state, athenaCourseConfigService, bothDisabled);
+            const first = new Subject<HttpResponse<AthenaCourseConfigDTO>>();
+            const second = new Subject<HttpResponse<AthenaCourseConfigDTO>>();
+            vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValueOnce(first.asObservable()).mockReturnValueOnce(second.asObservable());
+
+            // The instructor drags the slider to 2, then to 3 again before the first save has answered.
+            state.setFeedbackStyleDefault('defaultFeedbackDetail', 2);
+            state.setFeedbackStyleDefault('defaultFeedbackDetail', 3);
+            first.error(new HttpErrorResponse({ status: 400 }));
+
+            // Rolling the first save back to what preceded it would restore 0, undoing the second save's optimistic
+            // 3 that has not answered yet.
+            expect(state.defaultFeedbackDetail()).toBe(3);
+        });
     });
 
     describe('masterEnabled', () => {
