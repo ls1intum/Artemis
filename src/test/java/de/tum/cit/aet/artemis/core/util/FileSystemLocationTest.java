@@ -214,6 +214,32 @@ class FileSystemLocationTest {
     }
 
     /**
+     * A filename written before filenames were sanitized may contain a colon, and once its leading path segments are gone such a name parses as a URI scheme. Reducing it would
+     * therefore turn a stored file into an external reference: the attachment would stop serving after an ordinary edit, and its file would be skipped when it is deleted.
+     */
+    @Test
+    void shouldNotReduceALegacyFilenameThatWouldThenReadAsExternal() {
+        String legacy = "attachments/attachment-video-units/8/lecture:1.pdf";
+
+        assertThat(FileSystemLocation.refersToStoredFile(legacy)).isTrue();
+        assertThat(FileSystemLocation.storedFilename(legacy)).isEqualTo(legacy);
+        assertThat(FileSystemLocation.refersToStoredFile(FileSystemLocation.storedFilename(legacy))).as("the value still names a stored file after a round trip").isTrue();
+        assertThat(FileSystemLocation.storedFilename(FileSystemLocation.storedFilename(legacy))).as("and the reduction stays idempotent").isEqualTo(legacy);
+    }
+
+    /**
+     * The guard above may not weaken the two things the reduction exists for: a served URL still reduces to the filename it names, and a reference to somewhere else is still
+     * kept verbatim.
+     */
+    @Test
+    void shouldStillReduceServedUrlsAndKeepExternalReferences() {
+        assertThat(FileSystemLocation.storedFilename("api/core/files/attachments/attachment-video-units/8/notes.pdf")).isEqualTo("notes.pdf");
+        assertThat(FileSystemLocation.storedFilename("notes.pdf")).isEqualTo("notes.pdf");
+        assertThat(FileSystemLocation.storedFilename("https://example.org/lecture-notes.pdf")).isEqualTo("https://example.org/lecture-notes.pdf");
+        assertThat(FileSystemLocation.storedFilename("/public/images/iris/logo.png")).isEqualTo("/public/images/iris/logo.png");
+    }
+
+    /**
      * Every served URL type is covered by the bridge above, so a new one cannot be added without deciding how its file is located.
      */
     @Test

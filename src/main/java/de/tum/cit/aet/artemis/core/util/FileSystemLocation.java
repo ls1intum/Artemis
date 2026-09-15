@@ -406,14 +406,23 @@ public sealed interface FileSystemLocation {
      * and sends it back untouched in the next update of the same entity, so without this the column would fill up with URLs again through the ordinary edit path. Feeding a bare
      * filename in returns it unchanged, so the reduction is idempotent and a client that sends back the URL it was served stores the same filename it already had.
      * <p>
-     * A value that does not name a file this application stores is left alone, see {@link #refersToStoredFile}.
+     * A value that does not name a file this application stores is left alone, see {@link #refersToStoredFile}. So is one whose reduced form would no longer name a stored file,
+     * which is how a legacy filename containing a colon survives: reducing it away would leave a value that reads as a URI scheme.
      *
      * @param value the value a caller wants to store, which may be a filename, an entire URL, or null
      * @return the filename to store, or the value unchanged when it names nothing this application stores
      */
     @Nullable
     static String storedFilename(@Nullable String value) {
-        return refersToStoredFile(value) ? decodePercentEscapes(filenameOf(value)) : value;
+        if (!refersToStoredFile(value)) {
+            return value;
+        }
+        String filename = decodePercentEscapes(filenameOf(value));
+        // The reduction may not change the answer it was reached through. A filename written before sanitization may contain a colon, and once its leading segments are gone
+        // such a name parses as a URI scheme: `attachments/attachment-video-units/8/lecture:1.pdf` is a stored file, while the `lecture:1.pdf` it reduces to reads as external.
+        // Storing that would leave the attachment unservable and its file skipped on deletion, so the value is kept as it stands instead. It still resolves, because every
+        // location reduces its filename again through `filenameOf` when it builds a path.
+        return refersToStoredFile(filename) ? filename : value;
     }
 
     /**
