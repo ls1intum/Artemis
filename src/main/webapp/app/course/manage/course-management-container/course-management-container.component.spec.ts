@@ -308,6 +308,7 @@ describe('CourseManagementContainerComponent', () => {
         component.atlasEnabled = true;
         component.ltiEnabled = true;
         component.irisEnabled = true;
+        component.athenaEnabled = true;
         component.tutorialGroupEnabled = true;
         const sidebarItems = component.getSidebarItems();
 
@@ -321,6 +322,7 @@ describe('CourseManagementContainerComponent', () => {
 
         expect(sidebarItems.find((item) => item.title === 'Communication')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'IRIS Settings')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'Athena Settings')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Assessment Dashboard')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Scores')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Statistics')).toBeTruthy();

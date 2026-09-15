@@ -18,6 +18,7 @@ import {
     faTableCells,
     faUserCheck,
     faUsers,
+    faWandMagicSparkles,
 } from '@fortawesome/free-solid-svg-icons';
 import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-item.service';
 
@@ -287,6 +288,19 @@ describe('CourseSidebarItemService', () => {
                 title: 'IRIS Settings',
                 translation: 'artemisApp.iris.settings.button.course.title',
                 testId: 'iris-settings',
+                hidden: false,
+            });
+        });
+
+        it('getAthenaSettingsItem should return correct item', () => {
+            const item = service.getAthenaSettingsItem(courseId);
+
+            expect(item).toEqual({
+                routerLink: `${courseId}/athena-settings`,
+                icon: faWandMagicSparkles,
+                title: 'Athena Settings',
+                translation: 'artemisApp.course.athenaConfig.settingsPage.sidebarTitle',
+                testId: 'athena-settings',
                 hidden: false,
             });
         });
