@@ -224,17 +224,24 @@ export class UnifiedFeedbackComponent {
 
     readonly defaultTitlePlaceholder = computed(() => this.artemisTranslatePipe.transform(this.feedbackTypeTitleKeys[this.inferredType()]));
 
-    readonly canDismissWithoutConfirm = computed(
-        () =>
+    /** Plain method, not computed: see {@link gradingInstructionText} for why this must re-read on every call. */
+    canDismissWithoutConfirm(): boolean {
+        return (
             (this.feedbackCredits() ?? 0) === 0 &&
             (this.feedbackDetail() ?? '').length === 0 &&
             this.displayTitle().length === 0 &&
             !this.feedback()?.gradingInstruction &&
-            !this.feedback()?.id,
-    );
+            !this.feedback()?.id
+        );
+    }
 
     readonly detailPlaceholder = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackCommentPlaceholder'));
-    readonly isDetailMissing = computed(() => this.editable() && !this.feedback()?.reference && !this.feedbackDetail() && !this.feedback()?.gradingInstruction?.feedback);
+
+    /** Plain method, not computed: see {@link gradingInstructionText} for why this must re-read on every call. */
+    isDetailMissing(): boolean {
+        return this.editable() && !this.feedback()?.reference && !this.feedbackDetail() && !this.feedback()?.gradingInstruction?.feedback;
+    }
+
     readonly rubricHint = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackHint'));
     readonly dismissTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedback'));
     readonly dismissConfirmTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation'));
@@ -326,12 +333,10 @@ export class UnifiedFeedbackComponent {
      * goes through onTitleInput.
      */
     private markAdaptedIfSuggestion(): void {
-        const current = this.currentTitlePrefix();
-        if (current !== FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER) {
-            return;
+        const title = this.feedbackTitle();
+        if (title) {
+            this.feedbackTitle.set(Feedback.markAdaptedIfAcceptedSuggestion(title));
         }
-        const title = (this.feedbackTitle() ?? '').slice(current.length);
-        this.feedbackTitle.set(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}${title}`);
     }
 
     onTitleInput(value: string): void {

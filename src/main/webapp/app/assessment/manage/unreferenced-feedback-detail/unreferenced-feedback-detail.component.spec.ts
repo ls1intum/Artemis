@@ -102,6 +102,28 @@ describe('Unreferenced Feedback Detail Component', () => {
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
+    it('should mark an accepted suggestion as adapted when a grading instruction is dropped onto it', () => {
+        const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
+        const feedback = {
+            id: 1,
+            text: 'FeedbackSuggestion:accepted:Missing null check',
+            detailText: 'feedback1',
+            credits: 1.5,
+        } as Feedback;
+        fixture.componentRef.setInput('feedback', feedback);
+
+        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((currentFeedback) => {
+            currentFeedback.gradingInstruction = instruction;
+            currentFeedback.credits = instruction.credits;
+        });
+        const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
+
+        comp.updateFeedbackOnDrop(new Event(''));
+
+        expect(emitSpy).toHaveBeenCalledWith(expect.objectContaining({ text: 'FeedbackSuggestion:adapted:Missing null check' }));
+        expect(comp.feedback().text).toBe('FeedbackSuggestion:adapted:Missing null check');
+    });
+
     it('exposes delete() as the sole deletion entry point for the unified feedback card', () => {
         fixture.componentRef.setInput('feedback', { id: 1, detailText: 'feedback1', credits: 1.5 } as Feedback);
         const emitSpy = vi.spyOn(comp.onFeedbackDelete, 'emit');

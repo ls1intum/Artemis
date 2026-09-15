@@ -530,6 +530,23 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.isDetailMissing()).toBe(true);
     });
 
+    it('should reflect a grading instruction assigned in place after render, not just on a new feedback object', () => {
+        fixture.componentRef.setInput('editable', true);
+        const feedback = {} as Feedback;
+        fixture.componentRef.setInput('feedback', feedback);
+        component.feedbackDetail.set('');
+        fixture.detectChanges();
+        expect(component.canDismissWithoutConfirm()).toBe(true);
+        expect(component.isDetailMissing()).toBe(true);
+
+        // Simulate the drag-and-drop / rubric-dropdown paths, which mutate the existing feedback object in place.
+        feedback.gradingInstruction = { id: 1, credits: 0, feedback: 'Rubric text' };
+        fixture.detectChanges();
+
+        expect(component.canDismissWithoutConfirm()).toBe(false);
+        expect(component.isDetailMissing()).toBe(false);
+    });
+
     it('should emit onDelete directly when dismissal needs no confirmation', () => {
         fixture.componentRef.setInput('editable', true);
         component.feedbackCredits.set(0);
