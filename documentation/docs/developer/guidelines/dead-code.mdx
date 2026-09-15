@@ -75,11 +75,16 @@ bd.getResourceDescription();  // the .class file the definition was read from
 
 Two traps make eyeballing this wrong. A *static nested* `@Configuration` **is** picked up by the
 component scan, because Spring scans `Outer$Nested.class` as its own resource — an un-annotated outer
-class does not make it dead. But a `@Bean` method returning a type that is itself a `@Component`
-never fires, because the scanned definition is registered first and wins, so the configuration class
-is instantiated for nothing. `@AutoConfigureAfter` and the `@ConditionalOnBean` family on a
-non-auto-configuration class are meaningless or order-dependent, and are a reliable sign of a
-generated leftover.
+class does not make it dead. And a `@Bean` method returning a type that is itself a `@Component` does
+**not** by itself make its configuration class dead: the two definitions are named differently — a
+`@Bean` method is named after the method, a scanned component after its decapitalized class name — so
+both are normally registered, and the application ends up with two beans of that type. Where the names
+do coincide, Artemis fails to start rather than picking a winner, because
+`spring.main.allow-bean-definition-overriding` is `false` in `config/application.yml`, so the collision
+is a `BeanDefinitionOverrideException` and not something that can hide. Either way the question is
+settled by provenance, like every other one here. `@AutoConfigureAfter` and the `@ConditionalOnBean`
+family on a non-auto-configuration class are meaningless or order-dependent, and are a reliable sign of
+a generated leftover.
 
 ### When the check is wrong
 
