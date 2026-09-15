@@ -405,8 +405,18 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         }
         this.loadingFeedbackSuggestions.set(true);
 
+        // The router can reuse this component for the next submission while this request is still in flight
+        // (#13580 review). Capture the identity of the submission/result the request was made for, and discard the
+        // response if either has since been replaced, so a stale suggestion cannot cross an assessment boundary.
+        const requestedSubmissionId = this.submission!.id;
+        const requestedResultId = this.result()!.id;
+        const isStale = () => this.submission?.id !== requestedSubmissionId || this.result()?.id !== requestedResultId;
+
         this.feedbackSuggestionsObservable = this.athenaService.getTextFeedbackSuggestions(this.exercise!, this.submission!).subscribe({
             next: (feedbackSuggestions) => {
+                if (isStale()) {
+                    return;
+                }
                 feedbackSuggestions.forEach((suggestion) => {
                     if (suggestion instanceof TextBlockRef) {
                         // referenced feedback suggestion - add to existing text blocks but avoid conflicts
@@ -423,7 +433,11 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 this.hasAutomaticFeedback.set(feedbackSuggestions.length > 0);
                 this.loadingFeedbackSuggestions.set(false);
             },
-            error: () => this.loadingFeedbackSuggestions.set(false),
+            error: () => {
+                if (!isStale()) {
+                    this.loadingFeedbackSuggestions.set(false);
+                }
+            },
         });
     }
 

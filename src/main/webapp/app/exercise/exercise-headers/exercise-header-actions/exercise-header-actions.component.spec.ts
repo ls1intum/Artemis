@@ -172,9 +172,7 @@ describe('ExerciseHeaderActionsComponent', () => {
     });
 
     describe('submitAndShowPopover', () => {
-        function submitPopoverRef() {
-            return (fixture.componentInstance as unknown as { submitPopoverRef: () => { isOpen: () => boolean } }).submitPopoverRef();
-        }
+        const submitPopoverRef = () => (fixture.componentInstance as unknown as { submitPopoverRef: () => { isOpen: () => boolean } }).submitPopoverRef();
 
         it('opens the AI-disabled recommendation popover even when the user has not accepted AI usage', () => {
             createComponent(withCourse(manualAssessmentProgrammingExercise(), true), { llmAccepted: false });

@@ -398,6 +398,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.loadingFeedbackSuggestions.set(true);
         try {
             const feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise(), submission.id!))) ?? [];
+            // The router can reuse this component for the next submission while this request is still in flight
+            // (#13580 review). Discard the response if the active submission has since been replaced, so a stale
+            // suggestion cannot cross an assessment boundary.
+            if (this.submission()?.id !== submission.id) {
+                return;
+            }
             const allFeedback = [...this.referencedFeedback, ...this.unreferencedFeedback()];
             this.feedbackSuggestions.set(
                 feedbackSuggestions.filter((suggestion) =>
@@ -405,7 +411,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 ),
             );
         } finally {
-            this.loadingFeedbackSuggestions.set(false);
+            if (this.submission()?.id === submission.id) {
+                this.loadingFeedbackSuggestions.set(false);
+            }
         }
     }
 
