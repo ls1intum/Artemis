@@ -152,7 +152,6 @@ export abstract class Exercise implements BaseEntity {
     public dueDateError?: boolean;
     public startDateError?: boolean;
     public exampleSolutionPublicationDateError?: boolean;
-    public exampleSolutionPublicationDateWarning?: boolean;
     public loading?: boolean;
     public numberOfParticipationsWithRatedResult?: number;
     public numberOfSuccessfulParticipations?: number;

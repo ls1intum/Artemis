@@ -340,7 +340,10 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     @Override
-    @GetMapping(value = "participations/{participationId}/repository/pull", produces = MediaType.APPLICATION_JSON_VALUE)
+    // POST rather than GET, even though nothing is submitted: a pull mutates the server-side working copy, and
+    // SameSite=Lax - the only thing standing in for CSRF tokens here - still sends the auth cookie on a cross-site
+    // top-level GET navigation. See the comment on csrf(...) in SecurityConfiguration.
+    @PostMapping(value = "participations/{participationId}/repository/pull", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<Void> pullChanges(@PathVariable Long participationId) {
         return super.pullChanges(participationId);

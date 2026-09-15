@@ -124,9 +124,8 @@ public class QuizExerciseImportService extends ExerciseImportService {
         log.debug("Copying the quiz exercise basis from {}", sourceExercise);
         prepareNewExerciseForImport(newExercise);
         // A caller may pass a full quiz (the import-exercise-group path binds request entities), whose managed/detached
-        // quiz statistic and batches cannot be persisted under the new exercise. Reset them: the statistic is recreated
-        // fresh on save, questions and (for non-exam) batches are re-copied from the source below.
-        newExercise.setQuizPointStatistic(null);
+        // batches cannot be persisted under the new exercise. Reset them; questions and (for non-exam) batches are
+        // re-copied from the source below.
         newExercise.setQuizBatches(new HashSet<>());
         super.copyExerciseBasis(newExercise, sourceExercise, new HashMap<>());
         newExercise.setRandomizeQuestionOrder(sourceExercise.isRandomizeQuestionOrder());

@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
@@ -60,7 +60,7 @@ public class OrchestratorReadToolsService {
     /** Cap on the title returned by {@link #getExerciseContent}; matches the batch path's {@code EXERCISE_TITLE_MAX}. */
     private static final int MAX_EXERCISE_TITLE_LENGTH = 200;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
@@ -76,7 +76,7 @@ public class OrchestratorReadToolsService {
      * @param exerciseRepository         repository for exercise lookups
      * @param contentExtractionService   service extracting learning-relevant exercise content
      */
-    public OrchestratorReadToolsService(ObjectMapper objectMapper, CourseCompetencyRepository courseCompetencyRepository, ExerciseRepository exerciseRepository,
+    public OrchestratorReadToolsService(JsonMapper objectMapper, CourseCompetencyRepository courseCompetencyRepository, ExerciseRepository exerciseRepository,
             ContentExtractionService contentExtractionService) {
         this.objectMapper = objectMapper;
         this.courseCompetencyRepository = courseCompetencyRepository;

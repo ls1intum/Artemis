@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExamExerciseGroupAssignmentDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupCreateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupUpdateDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
@@ -208,19 +209,23 @@ public class ExerciseGroupResource {
     /**
      * POST /courses/{courseId}/exams/{examId}/import-exercise-group : Imports exercise groups to the specified exam
      *
-     * @param courseId             the course to which the exam belongs
-     * @param examId               the exam to which the exercise groups should be added
-     * @param updatedExerciseGroup the list of Exercise Groups to be imported
-     * @param importId             an optional client-supplied id; when present, live import progress is sent to the importing user over a websocket
+     * @param courseId               the course to which the exam belongs
+     * @param examId                 the exam to which the exercise groups should be added
+     * @param exerciseGroupsToImport the exercise groups to import: each carries its title, mandatory flag and the source exercises (by id) with optional overrides
+     * @param importId               an optional client-supplied id; when present, live import progress is sent to the importing user over a websocket
      * @return the ResponseEntity with status 201 (Created) and with body the newly imported exercise groups, or with status 400 (Bad Request)
      */
     @PostMapping("courses/{courseId}/exams/{examId}/import-exercise-group")
     @EnforceAtLeastEditor
     public ResponseEntity<ExerciseGroupImportResultDTO> importExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId,
-            @RequestBody List<ExerciseGroup> updatedExerciseGroup, @RequestParam(required = false) String importId) throws IOException {
-        log.debug("REST request to import {} exercise group(s) to exam {}", updatedExerciseGroup.size(), examId);
+            @RequestBody List<ExerciseGroupImportDTO> exerciseGroupsToImport, @RequestParam(required = false) String importId) throws IOException {
+        log.debug("REST request to import {} exercise group(s) to exam {}", exerciseGroupsToImport.size(), examId);
 
         examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
+
+        // The DTOs become skeleton entities (title, mandatory flag, source exercise ids + overrides); the import service
+        // loads the source exercises by id and copies their content, exactly like the full exam import.
+        List<ExerciseGroup> updatedExerciseGroup = exerciseGroupsToImport.stream().map(ExerciseGroupImportDTO::toEntity).toList();
 
         // When the client supplies an importId, live progress is reported to the importing user over a websocket so the UI
         // can show a progress dialog while this (synchronous) request runs.

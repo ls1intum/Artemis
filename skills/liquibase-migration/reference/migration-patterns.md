@@ -68,8 +68,12 @@ simple case.
 
 ## Expand and contract
 
-For dropping or renaming a column that code still reads, split the work across two releases,
-because during a rolling deployment nodes on the previous version are still serving traffic.
+For dropping or renaming a column that code still references, split the work across two releases. Not
+because both versions run at once — the cluster is stopped for a migration, see the deployment model
+in `SKILL.md` — but because a release that drops a column cannot be rolled back: the previous version
+would reference a column that is no longer there. Reads are the obvious case and not the only one. A
+column the previous version never selects can still appear in the `INSERT` and `UPDATE` statements it
+issues, so check writers as well as readers before deciding a column is free to drop.
 
 1. **Expand.** Create the new structure, backfill it, and move every reader and writer across.
    Leave the old column in place, still populated.

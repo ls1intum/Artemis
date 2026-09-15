@@ -11,8 +11,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -91,8 +91,8 @@ class CompetencyProgressServiceTest {
         // Arrange the create path: the competency exists, there is no activity yet, and no existing progress row
         // (both racing threads reach this state), so updateCompetencyProgress attempts an INSERT.
         when(courseCompetencyRepository.findById(COMPETENCY_ID)).thenReturn(Optional.of(competency));
-        when(courseCompetencyRepository.findAllExerciseInfoByCompetencyIdAndUser(anyLong(), any(User.class))).thenReturn(Collections.emptySet());
-        when(courseCompetencyRepository.findAllLectureUnitInfoByCompetencyIdAndUser(anyLong(), any(User.class))).thenReturn(Collections.emptySet());
+        when(courseCompetencyRepository.findAllExerciseInfoByCompetencyIdAndUser(anyLong(), any(User.class))).thenReturn(Set.of());
+        when(courseCompetencyRepository.findAllLectureUnitInfoByCompetencyIdAndUser(anyLong(), any(User.class))).thenReturn(Set.of());
         when(competencyProgressRepository.findByCompetencyIdAndUserId(COMPETENCY_ID, USER_ID)).thenReturn(Optional.empty());
         // Our own INSERT loses the race with a concurrent creator -> unique-constraint violation.
         doThrow(new DataIntegrityViolationException("duplicate key value violates unique constraint \"competency_user_pkey\"")).when(competencyProgressRepository)

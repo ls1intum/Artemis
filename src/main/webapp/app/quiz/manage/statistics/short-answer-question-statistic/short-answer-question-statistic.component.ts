@@ -5,7 +5,7 @@ import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service'
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { ShortAnswerQuestionStatistic } from 'app/quiz/shared/entities/short-answer-question-statistic.model';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizQuestionStatisticResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 import { QuestionStatisticComponent, blueColor, greenColor } from 'app/quiz/manage/statistics/question-statistic.component';
 import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -37,7 +37,7 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
     faCheckCircle = faCheckCircle;
     faTimesCircle = faTimesCircle;
 
-    loadQuiz(quiz: QuizExercise, refresh: boolean) {
+    loadQuiz(quiz: QuizQuestionStatisticResponse, refresh: boolean) {
         const updatedQuestion = super.loadQuizCommon(quiz);
         if (!updatedQuestion) {
             return;

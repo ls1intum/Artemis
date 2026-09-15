@@ -177,7 +177,7 @@ class RedissonPriorityQueueBenchmarkTest {
         for (long value : durationsMicros) {
             totalMillis += value;
         }
-        return String.format("%-18s depth=%-5d mean=%5dus p95=%6dus lastDecileMean=%6dus totalWallClock=%6dms", label, depth, meanMicros(durationsMicros),
+        return "%-18s depth=%-5d mean=%5dus p95=%6dus lastDecileMean=%6dus totalWallClock=%6dms".formatted(label, depth, meanMicros(durationsMicros),
                 percentileMicros(durationsMicros, 95), meanMicros(tail), totalMillis / 1000);
     }
 
@@ -213,7 +213,7 @@ class RedissonPriorityQueueBenchmarkTest {
             // getQueuedJobs() reads the whole queue on every queue mutation for the admin websocket, so record it too.
             long readStart = System.nanoTime();
             int readSize = priority.getAll().size();
-            report.add(String.format("%-18s depth=%-5d getAll=%6dms (returned %d)", "priority getAll", depth, (System.nanoTime() - readStart) / 1_000_000, readSize));
+            report.add("%-18s depth=%-5d getAll=%6dms (returned %d)".formatted("priority getAll", depth, (System.nanoTime() - readStart) / 1_000_000, readSize));
             priority.clear();
         }
 

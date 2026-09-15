@@ -851,12 +851,19 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
     resetQuestionTitle(): void {
         const question = this.question();
         question.title = this.backupQuestion.title;
+        this.questionUpdated.emit();
     }
 
     /**
      * Resets the question text
      */
     resetQuestionText(): void {
+        this.restoreQuestionText();
+        this.questionUpdated.emit();
+    }
+
+    /** Restores the text without notifying, so a full reset emits once when everything is back. */
+    private restoreQuestionText(): void {
         const question = this.question();
         question.text = this.backupQuestion.text;
         question.explanation = this.backupQuestion.explanation;
@@ -878,7 +885,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
         question.dragItems = deepClone(this.backupQuestion.dragItems);
         question.correctMappings = deepClone(this.backupQuestion.correctMappings);
         question.isHighlighted = this.backupQuestion.isHighlighted;
-        this.resetQuestionText();
+        this.restoreQuestionText();
+        this.questionUpdated.emit();
     }
 
     /**

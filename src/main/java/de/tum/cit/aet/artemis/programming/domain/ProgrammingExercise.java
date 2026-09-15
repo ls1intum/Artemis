@@ -1,15 +1,18 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
+import static de.tum.cit.aet.artemis.core.util.DateUtil.validateStrictDateSequence;
 import static de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import jakarta.persistence.CascadeType;
@@ -28,6 +31,7 @@ import jakarta.persistence.SecondaryTable;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.TimeZoneStorage;
 import org.hibernate.annotations.TimeZoneStorageType;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,6 +71,9 @@ public class ProgrammingExercise extends Exercise {
     }
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
+
+    /** A run of whitespace, which a project key may not contain. */
+    private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
 
     @Column(name = "test_repository_url")
     private String testRepositoryUri;
@@ -204,6 +211,7 @@ public class ProgrammingExercise extends Exercise {
         return testRepositoryUri;
     }
 
+    @NonNull
     public List<AuxiliaryRepository> getAuxiliaryRepositories() {
         return this.auxiliaryRepositories;
     }
@@ -357,7 +365,7 @@ public class ProgrammingExercise extends Exercise {
 
     public void forceNewProjectKey() {
         Course course = getCourseViaExerciseGroupOrCourseMember();
-        this.projectKey = (course.getShortName() + this.getShortName()).toUpperCase(Locale.ROOT).replaceAll("\\s+", "");
+        this.projectKey = WHITESPACE_RUN.matcher((course.getShortName() + this.getShortName()).toUpperCase(Locale.ROOT)).replaceAll("");
     }
 
     @Override
@@ -740,6 +748,24 @@ public class ProgrammingExercise extends Exercise {
         if (getMaxStaticCodeAnalysisPenalty() != null && getMaxStaticCodeAnalysisPenalty() < 0) {
             throw new BadRequestAlertException("The static code analysis penalty must not be negative", "Exercise", "staticCodeAnalysisPenaltyNotNegative");
         }
+    }
+
+    @Override
+    public void validateDates() {
+        super.validateDates();
+
+        if (!validateBuildAndTestStudentSubmissionsAfterDueDate()) {
+            throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
+        }
+    }
+
+    private boolean validateBuildAndTestStudentSubmissionsAfterDueDate() {
+        ZonedDateTime buildAndTestDate = getBuildAndTestStudentSubmissionsAfterDueDate();
+        if (buildAndTestDate == null || isExamExercise()) {
+            return true;
+        }
+        return getDueDate() != null && validateStrictDateSequence(Arrays.asList(getReleaseDate(), getStartDate(), getDueDate()), buildAndTestDate,
+                Arrays.asList(getAssessmentDueDate(), getExampleSolutionPublicationDate()));
     }
 
     /**

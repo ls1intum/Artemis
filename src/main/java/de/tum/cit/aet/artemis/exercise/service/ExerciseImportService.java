@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -184,14 +185,14 @@ public abstract class ExerciseImportService {
 
     /**
      * This helper method does a hard copy of the result of a submission.
-     * To copy the feedback, it calls {@link #copyFeedback(List, Result, Map)}
+     * To copy the feedback, it calls {@link #copyFeedback(Collection, Result, Map)}
      *
      * @param originalResult                The original result to be copied
      * @param newSubmission                 The submission in which we link the result clone
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return The cloned result
      */
-    protected Result copyExampleResult(Result originalResult, Submission newSubmission, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+    protected Result copyExampleResult(@NonNull Result originalResult, Submission newSubmission, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         Result newResult = new Result();
         newResult.setAssessmentType(originalResult.getAssessmentType());
         newResult.setAssessor(originalResult.getAssessor());

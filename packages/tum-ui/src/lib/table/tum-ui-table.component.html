@@ -30,8 +30,8 @@
                     scope="col"
                     [style.min-width]="col.width"
                     [attr.aria-sort]="ariaSortFor(col)"
-                    [class]="columnVisibilityClasses(col)"
-                    class="tum:whitespace-nowrap tum:border-border tum:bg-content-background tum:px-4 tum:py-2 tum:text-start tum:font-semibold tum:text-text"
+                    [class]="headerCellClasses(col)"
+                    class="tum:border-border tum:bg-content-background tum:px-4 tum:py-2 tum:text-start tum:font-semibold tum:text-text"
                 >
                     <span class="tum:inline-flex tum:items-center tum:gap-1">
                         @if (col.sort && col.field) {
@@ -80,7 +80,8 @@
                 <th cdk-header-cell *cdkHeaderCellDef scope="col" class="tum:border-border tum:bg-content-background tum:px-4 tum:py-2">
                     <span class="tum:sr-only">{{ 'tumUi.table.actions' | tumUiTranslate }}</span>
                 </th>
-                <td cdk-cell *cdkCellDef="let row" class="tum:border-border tum:px-4 tum:py-2 tum:text-end">
+                <!-- Declares no width, so it is the one column auto layout can squeeze: nowrap keeps the controls on one line. -->
+                <td cdk-cell *cdkCellDef="let row" class="tum:border-border tum:px-4 tum:py-2 tum:text-end tum:whitespace-nowrap">
                     <ng-container [ngTemplateOutlet]="actions" [ngTemplateOutletContext]="{ $implicit: row }" />
                 </td>
             </ng-container>

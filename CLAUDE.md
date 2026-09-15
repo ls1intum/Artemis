@@ -9,7 +9,7 @@ This file holds **facts** about the repository. **Procedures** live in [`skills/
 - `e2e-pr-check` — run only the Playwright specs a change affects, and read the result correctly
 - `ci-triage` — classify a red build before changing any code
 - `server-arch-gates` — the architectural rules a server change must satisfy, and how to check each locally
-- `liquibase-migration` — write a changelog that survives a rolling deploy on both databases
+- `liquibase-migration` — write a changelog that applies cleanly on both databases
 - `client-conventions` — Angular signal APIs, cloning, template control flow, TUM UI styling
 - `write-tests` — base class selection and the test commands that silently do the wrong thing
 - `local-setup` — fresh clone to a running server and client
@@ -192,13 +192,18 @@ Organized by feature module:
   `instructor/`, `student/`, `developer/`, `about/`. There is no top-level `docs/` folder; that was the old Sphinx
   location and anything written there is invisible on the documentation site. A `README.md` next to the tool it
   explains (a script directory, a docker setup) stays where it is and does not move into the site tree.
-- Pages are Docusaurus `.mdx` files with `id`, `title` and `sidebar_label` frontmatter. A new page is only reachable
+- Pages are Docusaurus `.mdx` files with `id`, `title` and `sidebar_label` frontmatter, and no H1 in the body —
+  Docusaurus renders the heading from `title`, so writing both makes the title drift. A new page is only reachable
   once it is listed in the matching `documentation/sidebar-*.ts`, so add it there and link it from the related pages.
 - Write for the audience of the folder, in the present tense, describing what the reader sees and does in Artemis. Do
   not reference pull requests, issues, or commits, and do not describe the change relative to a previous release.
 - **Do not commit design documents, specs, plans, or scratch notes.** Working notes belong in the pull request
   description or the issue, not in the repository. What is worth keeping goes into `documentation/docs/` as a proper
   page for its audience.
+- Full conventions — heading and anchor rules, naming controls in bold rather than backticks, screenshot and
+  screencast practice, when to split a page — live in
+  [`documentation/docs/developer/guidelines/documentation.mdx`](./documentation/docs/developer/guidelines/documentation.mdx).
+  Read it before writing or restructuring a page.
 
 ### API Specification
 
@@ -216,9 +221,19 @@ Organized by feature module:
 - Do not inject `EntityManager` or `EntityManagerFactory` directly into services or controllers; all persistence operations must go through Spring Data repositories
 - Do not inject `JdbcClient`, `JdbcTemplate` or a `DataSource`; write the statement as a `@Query` on a repository (with `nativeQuery = true` where there is no entity to name). An ArchUnit rule (`ArchitectureTest.shouldNotUseRawJdbcDirectly`) enforces this outside `core.config`
 - Use DTOs (Java records) for REST endpoints
+- **`FetchType.EAGER` is forbidden on `@OneToOne`, `@OneToMany` and `@ManyToMany`** - the fetch type that applies counts, not the one written down, so a `@OneToOne` must spell out `fetch = FetchType.LAZY` (its default is eager) while `@OneToMany` and `@ManyToMany` are lazy already. `@ManyToOne` is out of scope: Hibernate cannot make a to-one lazy without bytecode enhancement or a proxy, and proxies break on entity hierarchies, so its eager default is a fact to design around rather than declare. An eager association is loaded for every caller including the ones that never read it: `Course.athenaConfig`, two booleans behind an eager one-to-one, cost 155,848 queries during a single 2000-student exam. An ArchUnit rule (`ArchitectureTest.testNoEagerFetching`) fails the build; the still-eager ones are in `FIELDS_ALLOWED_TO_FETCH_EAGERLY`, which may only shrink
+- **Do not fetch a lazy configuration through the entity that owns it.** Adding it to an `@EntityGraph` or `JOIN FETCH` so code further down can read it off the entity is an antipattern, and it does not work where the owner is reached through an eager `@ManyToOne` chain, because Hibernate resolves that by secondary select and the fetch plan stops applying. Give it its own repository and read it at the decision point: `CourseAthenaConfigRepository` and `CourseConfigurationRepository` are the pattern. Full rationale: `documentation/docs/developer/guidelines/database.mdx`
 - Prefer constructor injection for Spring beans
 - Use Java 25 features (records, sealed classes, pattern matching)
 - **Never call `String.toLowerCase()` or `String.toUpperCase()` without a locale.** Both fold case with the JVM default locale, so the same input gives a different answer depending on where the server runs: under a Turkish locale `I` lowercases to the dotless `ı`, which is enough to break a check on `os.name`, a file extension, a MIME type, a header value or a login without any error. Pass `Locale.ROOT` for machine-facing values, `Locale.ENGLISH` only where the surrounding code already does for the same kind of value (`User.setLogin` for logins). Where only the comparison matters, `equalsIgnoreCase`, `String.CASE_INSENSITIVE_ORDER` and `Pattern.CASE_INSENSITIVE` need no locale at all. An ArchUnit rule (`ArchitectureTest.testNoLocaleLessCaseConversion`) enforces this over production and test code
+
+### JSON serialization (Jackson)
+
+- **Artemis is on Jackson 3 — its packages are `tools.jackson`, not `com.fasterxml.jackson`.** Inject the auto-configured `tools.jackson.databind.json.JsonMapper` in Spring beans; use `JsonObjectMapper.get()` outside them. An ArchUnit rule (`ArchitectureTest.testNoJackson2InProductionCode`) fails the build on any `com.fasterxml.jackson.{databind,core,dataformat,datatype}` import in production code.
+- **The one exception is the annotations.** `jackson-annotations` never moved to the `tools.jackson` group, so `@JsonInclude`, `@JsonProperty`, `@JsonTypeInfo` and the rest stay on `com.fasterxml.jackson.annotation`. Do not "fix" those imports.
+- **Mappers are immutable.** There is no `configure(...)` or `registerModule(...)` on a built mapper — use `JsonMapper.builder()`, or `rebuild()` to derive one. Jackson 3 exceptions are unchecked (`tools.jackson.core.JacksonException`), and `java.time` support is built into `jackson-databind`, so no module registration is needed.
+- **`ArtemisJacksonDefaults` is the single definition of how Artemis configures a mapper.** It pins the Jackson 3 defaults that would otherwise change the JSON on the wire (primitive-null binding, getter-as-setter, enum `toString`), each with a TODO for dropping it. `JacksonSerializationContractTest` records the payloads those pins protect — remove a pin, run that test, and the failing fixture is the payload that would change.
+- Full guidance: `documentation/docs/developer/guidelines/rest-api.mdx` (## JSON Serialization).
 
 ### Caching
 

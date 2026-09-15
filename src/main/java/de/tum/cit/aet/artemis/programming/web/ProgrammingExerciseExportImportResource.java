@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -41,8 +42,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -101,6 +100,9 @@ import de.tum.cit.aet.artemis.programming.service.SubmissionPolicyService;
 public class ProgrammingExerciseExportImportResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseExportImportResource.class);
+
+    /** A run of whitespace in the submitted list of participant identifiers. */
+    private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
 
     private static final String ENTITY_NAME = "programmingExercise";
 
@@ -202,7 +204,7 @@ public class ProgrammingExerciseExportImportResource {
     @EnforceAtLeastEditor
     public ResponseEntity<ProgrammingExerciseResponseDTO> importProgrammingExercise(@RequestParam(name = "sourceExerciseId") long sourceExerciseId,
             @RequestBody ImportProgrammingExerciseRequestDTO newExerciseRequest, @RequestParam(defaultValue = "false") boolean recreateBuildPlans,
-            @RequestParam(defaultValue = "false") boolean setTestCaseVisibilityToAfterDueDate) throws JsonProcessingException {
+            @RequestParam(defaultValue = "false") boolean setTestCaseVisibilityToAfterDueDate) {
         if (sourceExerciseId < 0) {
             throw new BadRequestAlertException("Invalid source id when importing programming exercises", ENTITY_NAME, "invalidSourceExerciseId");
         }
@@ -398,7 +400,7 @@ public class ProgrammingExerciseExportImportResource {
 
         Set<Long> participationIds = new HashSet<>();
         if (!repositoryExportOptions.exportAllParticipants()) {
-            participantIdentifiers = participantIdentifiers.replaceAll("\\s+", "");
+            participantIdentifiers = WHITESPACE_RUN.matcher(participantIdentifiers).replaceAll("");
             Set<String> participantIdentifierList = new HashSet<>(List.of(participantIdentifiers.split(",")));
             participationIds = programmingExerciseStudentParticipationRepository.findIdsByExerciseIdAndParticipantIdentifier(exerciseId, participantIdentifierList);
         }
