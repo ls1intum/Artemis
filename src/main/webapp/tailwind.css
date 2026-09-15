@@ -101,6 +101,7 @@
 @source './app/exercise/dashboards/tutor-leaderboard';
 @source './app/exercise/exercise-action-bar';
 @source './app/exercise/exam-exercise-row-buttons';
+@source './app/exercise/structured-grading-criterion/grading-instructions-details';
 @source './app/exercise/unreferenced-feedback';
 @source './app/programming/shared/programming-exercise-update-timeline';
 @source './app/course/manage/user-management-dropdown';
