@@ -27,6 +27,7 @@ const sidebars: SidebarsConfig = {
                 'exercises/exercise-variants',
                 'exercises/practice-mode',
                 'exercises/quiz-training',
+                'exercises/ai-feedback',
             ],
         },
         {
