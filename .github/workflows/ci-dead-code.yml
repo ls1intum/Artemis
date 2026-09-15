@@ -1,0 +1,84 @@
+name: Dead Code
+
+# Repo-wide reachability gate: no Java class and no client TypeScript file that nothing can reach.
+# See documentation/docs/developer/guidelines/dead-code.mdx for the rationale and how to decide a
+# finding that the checks cannot settle on their own.
+#
+# Deliberately its own workflow rather than jobs in ci-quality.yml, for the same reason as
+# ci-terminology.yml: `quality` is gated on `build_relevant`, and dead code is most often created by
+# a pull request that only *deletes* things — removing the last caller of a class is exactly the
+# change that leaves one behind. This one runs on every pull request.
+#
+# Both jobs are pure source analysis: no Gradle build, no database, no server boot.
+
+on:
+  workflow_call:
+    inputs:
+      commit_sha:
+        description: 'SHA to check. PR builds use the PR head SHA (matching ci-build.yml).'
+        required: true
+        type: string
+
+permissions: {}  # default-deny; each job grants only what it needs
+
+# Workflow-level node pin is drift-checked by ci-workflows.yml.
+env:
+  CI: true
+  node: 24
+
+jobs:
+  server-dead-code:
+    name: Server Dead Code
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          # A pure source scan (no git diff), so pin the PR head and check exactly the tree
+          # Build and Test run against.
+          ref: ${{ inputs.commit_sha }}
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+      # First, because every failure mode of a reachability scan like this is a silent pass: a
+      # broadened annotation pattern or a skipped directory reports a clean tree rather than an
+      # error. The self-test proves the detector still works before the scan is believed.
+      - name: Checker self-test
+        run: python3 supporting_scripts/check_dead_code.py --self-test
+      - name: Server dead code check
+        run: python3 supporting_scripts/check_dead_code.py
+
+  client-dead-code:
+    name: Client Dead Code
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093  # v6.0.8
+        with:
+          run_install: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '${{ env.node }}'
+          cache: 'pnpm'
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+      # `--include files` only. knip also reports unused exports, exported types and enum members,
+      # of which Artemis still has a large backlog (117 / 221 / 26 at the time this gate was added),
+      # so gating on those would red every pull request from day one. Files are the tier that is
+      # clean today and the one that matches the server check: nothing can reach this file at all.
+      # `pnpm run dead-code:client:report` prints the full picture for anyone working the backlog
+      # down; tighten this gate as those numbers reach zero.
+      - name: Client dead code check
+        run: pnpm run dead-code:client
