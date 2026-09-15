@@ -136,9 +136,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     readonly feedbackForSelectedFile = computed<Feedback[]>(() => this.filterFeedbackForSelectedFile(this.feedbackInternal()));
 
     /** The 0-based editor line a referenced feedback belongs to; -1 for the (unreachable, since already filtered by reference) fallback case. */
-    protected getFeedbackLine(feedback: Feedback): number {
+    protected getFeedbackLine = (feedback: Feedback): number => {
         return Feedback.getReferenceLine(feedback) ?? -1;
-    }
+    };
 
     annotationsArray: Array<Annotation> = [];
     private addFeedbackKeydownListener?: Disposable;
