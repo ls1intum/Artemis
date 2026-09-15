@@ -11,6 +11,11 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { MockExamManagementService } from 'test/helpers/mocks/service/mock-exam-management.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ActivatedRoute, provideRouter } from '@angular/router';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 
 describe('UpcomingExamsAndExercisesComponent', () => {
     let component: UpcomingExamsAndExercisesComponent;
@@ -22,12 +27,13 @@ describe('UpcomingExamsAndExercisesComponent', () => {
         await TestBed.configureTestingModule({
             imports: [UpcomingExamsAndExercisesComponent],
             providers: [
+                provideRouter([]),
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: ExamManagementService, useClass: MockExamManagementService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
-        })
-            .overrideTemplate(UpcomingExamsAndExercisesComponent, '')
-            .compileComponents();
+        }).compileComponents();
 
         fixture = TestBed.createComponent(UpcomingExamsAndExercisesComponent);
         component = fixture.componentInstance;
@@ -66,6 +72,27 @@ describe('UpcomingExamsAndExercisesComponent', () => {
             component.ngOnInit();
 
             expect(component.upcomingExams()).toEqual([]);
+        });
+    });
+
+    describe('Exam Mode Badges', () => {
+        it('should render correct exam mode badges', () => {
+            const realExam = { id: 1, title: 'Real Exam', examMode: 'REAL' } as Exam;
+            const testExam = { id: 2, title: 'Test Exam', examMode: 'TEST' } as Exam;
+            const simulationExam = { id: 3, title: 'Simulation Exam', examMode: 'TEST_WITH_SIMULATION' } as Exam;
+
+            vi.spyOn(examManagementService, 'findAllCurrentAndUpcomingExams').mockReturnValue(of(new HttpResponse({ body: [realExam, testExam, simulationExam] })));
+
+            component.ngOnInit();
+            fixture.detectChanges();
+
+            const badges = fixture.nativeElement.querySelectorAll('jhi-exam-mode-badge');
+            expect(badges).toHaveLength(3);
+
+            // Verify the badges render the correct translation keys
+            expect(badges[0].textContent).toContain('artemisApp.examManagement.testExam.realExam');
+            expect(badges[1].textContent).toContain('artemisApp.examManagement.testExam.testExam');
+            expect(badges[2].textContent).toContain('artemisApp.examManagement.testExam.testExamWithSimulation');
         });
     });
 });

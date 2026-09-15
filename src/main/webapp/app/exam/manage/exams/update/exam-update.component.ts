@@ -10,6 +10,7 @@ import { Dialog } from 'primeng/dialog';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isRealExam } from 'app/exam/overview/exam.utils';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -35,6 +36,7 @@ import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { ExamTimelineComponent } from 'app/exam/manage/exams/update/exam-timeline.component';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
@@ -102,6 +104,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
 
     private originalEndDate?: dayjs.Dayjs;
 
+    private originalWorkingTime?: number;
+
     private componentActive = true;
 
     confirmEntityNameValue = signal('');
@@ -127,7 +131,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
                 }
 
                 // test exam only feature automatic assessment
-                if (exam.testExam) {
+                if (!isRealExam(exam)) {
                     exam.numberOfCorrectionRoundsInExam = 0;
                 } else if (!exam.numberOfCorrectionRoundsInExam) {
                     exam.numberOfCorrectionRoundsInExam = 1;
@@ -138,6 +142,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
                 this.isImportInSameCourse.set(isImport && exam.course?.id === data.course.id);
                 this.originalStartDate = exam.startDate?.clone();
                 this.originalEndDate = exam.endDate?.clone();
+                this.originalWorkingTime = exam.workingTime;
 
                 this.course = data.course;
                 this.exam.course = data.course;
@@ -182,7 +187,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     get oldWorkingTime(): number | undefined {
-        return normalWorkingTime(this.originalStartDate, this.originalEndDate);
+        return isRealExam(this.exam) ? normalWorkingTime(this.originalStartDate, this.originalEndDate) : this.originalWorkingTime;
     }
 
     get newWorkingTime(): number | undefined {
@@ -205,13 +210,13 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      * Updates the working time for real exams based on the start and end dates.
      */
     updateExamWorkingTime() {
-        if (this.exam.testExam) return;
+        if (!isRealExam(this.exam)) return;
 
         this.exam.workingTime = examWorkingTime(this.exam) ?? 0;
     }
 
     onExamModeChange() {
-        if (this.exam.testExam) {
+        if (!isRealExam(this.exam)) {
             // Preserve the rounded value
             this.exam.examWithAttendanceCheck = false;
             this.roundWorkingTime();
@@ -232,7 +237,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      * Returns the maximum working time in minutes for test exams.
      */
     get maxWorkingTimeInMinutes(): number {
-        if (!this.exam.testExam) return 0;
+        if (isRealExam(this.exam)) return 0;
 
         if (this.exam.startDate && this.exam.endDate) {
             // This considers decimal places as well.
@@ -249,8 +254,11 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      */
     handleSubmit() {
         const datesChanged = !(this.exam.startDate?.isSame(this.originalStartDate) && this.exam.endDate?.isSame(this.originalEndDate));
+        const workingTimeChanged = this.exam.workingTime !== this.originalWorkingTime;
 
-        if (datesChanged && this.isOngoingExam) {
+        const triggersPopup = this.isRealExam(this.exam) ? datesChanged : workingTimeChanged;
+
+        if (triggersPopup && this.isOngoingExam) {
             this.confirmEntityNameValue.set('');
             this.confirmDateChangeVisible.set(true);
         } else {
@@ -447,7 +455,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     get isValidNumberOfCorrectionRounds(): boolean {
-        if (this.exam.testExam) {
+        if (!isRealExam(this.exam)) {
             return this.exam.numberOfCorrectionRoundsInExam === 0;
         } else {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
@@ -485,7 +493,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      * and must not exceed 30 days (2592000 seconds).
      */
     get validateWorkingTime(): boolean {
-        if (this.exam.testExam) {
+        if (!isRealExam(this.exam)) {
             if (this.exam.workingTime === undefined || this.exam.workingTime < 1) {
                 return false;
             }
@@ -614,6 +622,9 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     get saveTitle(): string {
         return this.isImport() ? 'entity.action.import' : 'entity.action.save';
     }
+
+    protected readonly ExamMode = ExamMode;
+    protected readonly isRealExam = isRealExam;
 }
 
 /**

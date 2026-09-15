@@ -55,9 +55,9 @@ export class CourseOverviewTabDataService {
         return observable;
     }
 
-    loadExamsIfNeeded(courseId: number): Observable<ExamForOverview[]> {
+    loadExamsIfNeeded(courseId: number, reuseFromParentNavigation = false): Observable<ExamForOverview[]> {
         this.activateCourse(courseId);
-        if (this.exams?.courseId === courseId && this.exams.navigationId === currentNavigationId(this.router)) {
+        if (this.exams?.courseId === courseId && (reuseFromParentNavigation || this.exams.navigationId === currentNavigationId(this.router))) {
             return of(this.exams.data);
         }
         if (this.examsRequest?.courseId === courseId) {

@@ -23,18 +23,24 @@
                                 [toggleAriaLabel]="
                                     exam.title +
                                     ' (' +
-                                    ((exam.testExam ? 'artemisApp.examManagement.testExam.testExam' : 'artemisApp.examManagement.testExam.realExam') | artemisTranslate) +
+                                    ((isRealExam(exam)
+                                        ? 'artemisApp.examManagement.testExam.realExam'
+                                        : exam.examMode === 'TEST_WITH_SIMULATION'
+                                          ? 'artemisApp.examManagement.testExam.testExamWithSimulation'
+                                          : 'artemisApp.examManagement.testExam.testExam'
+                                    ) | artemisTranslate) +
                                     ')'
                                 "
                                 (click)="onPanelClick(exam.id!, $event)"
                             >
                                 <div tumUiPanelHeader class="flex items-center gap-2 min-w-0 mr-2 flex-1 cursor-pointer select-none">
-                                    <fa-icon
-                                        [icon]="exam.testExam ? faVial : faGraduationCap"
-                                        [tumUiTooltip]="
-                                            (exam.testExam ? 'artemisApp.examManagement.testExam.testExam' : 'artemisApp.examManagement.testExam.realExam') | artemisTranslate
-                                        "
-                                    />
+                                    @if (isRealExam(exam)) {
+                                        <fa-icon [icon]="faGraduationCap" [tumUiTooltip]="'artemisApp.examManagement.testExam.realExam' | artemisTranslate" />
+                                    } @else if (exam.examMode === ExamMode.TEST) {
+                                        <fa-icon [icon]="faVial" [tumUiTooltip]="'artemisApp.examManagement.testExam.testExam' | artemisTranslate" />
+                                    } @else {
+                                        <fa-icon [icon]="faFlaskVial" [tumUiTooltip]="'artemisApp.examManagement.testExam.testExamWithSimulation' | artemisTranslate" />
+                                    }
                                     <span class="truncate font-medium">{{ exam.title }}</span>
                                 </div>
                                 <div class="flex flex-col gap-1">
@@ -64,7 +70,7 @@
                                             [title]="'artemisApp.examManagement.testRun.testRun' | artemisTranslate"
                                         />
                                     }
-                                    @if (!exam.testExam) {
+                                    @if (isRealExam(exam)) {
                                         @if (course().isAtLeastTutor) {
                                             <jhi-sidebar-subpage-item
                                                 [subjectId]="exam.id"

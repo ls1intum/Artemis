@@ -1,5 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 /**
  * Minimal user projection returned alongside a {@link StudentExamDTO}.
@@ -32,7 +33,7 @@ export interface CourseForStudentExamDTO {
 export interface ExamForStudentExamDTO {
     id: number;
     title?: string;
-    testExam: boolean;
+    examMode: ExamMode;
     workingTime: number;
     course?: CourseForStudentExamDTO;
 }

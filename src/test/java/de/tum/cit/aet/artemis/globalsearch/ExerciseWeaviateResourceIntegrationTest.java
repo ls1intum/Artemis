@@ -838,7 +838,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
          */
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-        void testExamTypeFilterIncludesExamExercises() throws Exception {
+        void testExamModeFilterIncludesExamExercises() throws Exception {
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&types=exam&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
             var types = results.stream().map(GlobalSearchResultDTO::type).toList();
@@ -868,7 +868,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
          */
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testExamTypeFilterRespectsStudentExerciseAssignment() throws Exception {
+        void testExamModeFilterRespectsStudentExerciseAssignment() throws Exception {
             // Create an unassigned exercise in the ended exam
             var extraExerciseGroup = ExamFactory.generateExerciseGroup(true, endedExam);
             extraExerciseGroup = exerciseGroupRepository.save(extraExerciseGroup);

@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.event.ExamLiveEvent;
@@ -563,7 +564,7 @@ public class StudentExamResource {
         // Only a test exam or test run summary offers the AI feedback request - the client hides the button for anything else and
         // StudentExamAthenaFeedbackService rejects it - so a real exam attempt does not read the (lazy) Athena configuration.
         // A test run is an attempt on a real exam, so it has to be named here separately rather than covered by isTestExam().
-        if (studentExam.getExam().isTestExam() || studentExam.isTestRun()) {
+        if (!studentExam.getExam().getExamMode().isReal() || studentExam.isTestRun()) {
             courseAthenaConfigRepository.attachTo(studentExam.getExam().getCourse());
         }
         return ResponseEntity.ok(StudentExamForSummaryDTO.of(studentExam));
@@ -752,7 +753,7 @@ public class StudentExamResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         final Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
 
-        if (exam.isTestExam()) {
+        if (exam.isTestOrPractice(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Start exercises is only allowed for real exams", "StudentExam", "startExerciseOnlyForRealExams");
         }
 
@@ -798,12 +799,20 @@ public class StudentExamResource {
 
         // In case the studentExam is not yet started, a new participation with a specific initialization date should be created - isStarted uses Boolean
         // Test runs are already prepared when they are created.
-        if (studentExam.isTestExam() && !studentExam.isTestRun()) {
+        if (studentExam.getExam().isTestOrPractice(ZonedDateTime.now()) && !studentExam.isTestRun()) {
             boolean setupTestExamNeeded = studentExam.isStarted() == null || !studentExam.isStarted();
             if (setupTestExamNeeded) {
-
-                // Set up new participations for the Exercises
-                studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam);
+                // For test exam with simulation it can happen that the student has not started their
+                // prepared (simulation) attempt and therefore the participations are already prepared
+                boolean isFullyPrepared = false;
+                if (studentExam.getExam().getExamMode() == ExamMode.TEST_WITH_SIMULATION) {
+                    var studentExamWithParticipations = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExam.getId());
+                    isFullyPrepared = studentExamWithParticipations.getStudentParticipations().size() == studentExam.getExercises().size();
+                }
+                if (!isFullyPrepared) {
+                    // Set up new participations for the Exercises
+                    studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam);
+                }
             }
         }
 

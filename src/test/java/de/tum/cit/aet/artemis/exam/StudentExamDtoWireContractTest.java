@@ -196,7 +196,7 @@ class StudentExamDtoWireContractTest extends AbstractSpringIntegrationIndependen
 
         // A test exam, because that is the only kind whose summary offers the button. The flag used to be on the wire of
         // every exam only because the association was eager; a real exam summary no longer reads it.
-        exam.setTestExam(true);
+        exam.setExamMode(de.tum.cit.aet.artemis.exam.domain.ExamMode.TEST);
         exam = examRepository.save(exam);
 
         StudentExam studentExam = createSubmittedStudentExamWithResult(false).studentExam();

@@ -8,6 +8,7 @@ import org.hibernate.Hibernate;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -50,7 +51,7 @@ public record ProgrammingExerciseExamGroupDTO(Long id, String title, Boolean isM
      *
      * @param id                             the exam id
      * @param title                          the exam title (detail-page exam link)
-     * @param testExam                       whether this is a test exam (gates feedback-suggestion options)
+     * @param examMode                       whether this is a test exam (gates feedback-suggestion options)
      * @param examWithAttendanceCheck        whether attendance is checked during the exam
      * @param visibleDate                    when the exam becomes visible to students
      * @param startDate                      when students may start working on the exam
@@ -77,7 +78,7 @@ public record ProgrammingExerciseExamGroupDTO(Long id, String title, Boolean isM
      * @param course                         light course projection; {@code null} when the exam's course is not loaded
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ProgrammingExerciseExamDTO(Long id, String title, Boolean testExam, boolean examWithAttendanceCheck, ZonedDateTime visibleDate, ZonedDateTime startDate,
+    public record ProgrammingExerciseExamDTO(Long id, String title, ExamMode examMode, boolean examWithAttendanceCheck, ZonedDateTime visibleDate, ZonedDateTime startDate,
             ZonedDateTime endDate, ZonedDateTime publishResultsDate, ZonedDateTime examStudentReviewStart, ZonedDateTime examStudentReviewEnd,
             ZonedDateTime examSummaryPublicationDate, ZonedDateTime exampleSolutionPublicationDate, Integer gracePeriod, int workingTime, String startText, String endText,
             String confirmationStartText, String confirmationEndText, int examMaxPoints, Integer numberOfExercisesInExam, Integer numberOfCorrectionRoundsInExam,
@@ -92,7 +93,7 @@ public record ProgrammingExerciseExamGroupDTO(Long id, String title, Boolean isM
          * @return the projected exam
          */
         public static ProgrammingExerciseExamDTO of(Exam exam, ProgrammingExerciseCourseDTO course) {
-            return new ProgrammingExerciseExamDTO(exam.getId(), exam.getTitle(), exam.isTestExam(), exam.isExamWithAttendanceCheck(), exam.getVisibleDate(), exam.getStartDate(),
+            return new ProgrammingExerciseExamDTO(exam.getId(), exam.getTitle(), exam.getExamMode(), exam.isExamWithAttendanceCheck(), exam.getVisibleDate(), exam.getStartDate(),
                     exam.getEndDate(), exam.getPublishResultsDate(), exam.getExamStudentReviewStart(), exam.getExamStudentReviewEnd(), exam.getExamSummaryPublicationDate(),
                     exam.getExampleSolutionPublicationDate(), exam.getGracePeriod(), exam.getWorkingTime(), exam.getStartText(), exam.getEndText(), exam.getConfirmationStartText(),
                     exam.getConfirmationEndText(), exam.getExamMaxPoints(), exam.getNumberOfExercisesInExam(), exam.getNumberOfCorrectionRoundsInExam(),

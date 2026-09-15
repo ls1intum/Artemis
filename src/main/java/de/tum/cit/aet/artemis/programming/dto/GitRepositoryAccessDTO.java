@@ -49,7 +49,7 @@ public record GitRepositoryAccessDTO(long exerciseId, long courseId, ExerciseMod
         Exam exam = exercise.isExamExercise() ? exercise.getExerciseGroup().getExam() : null;
         return new GitRepositoryAccessDTO(exercise.getId(), exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getMode(), exercise.isAllowOfflineIde(),
                 exercise.getStartDate(), exercise.getReleaseDate(), exercise.getDueDate(), exam == null ? null : exam.getId(), exam == null ? null : exam.getStartDate(),
-                exam == null ? null : exam.isTestExam());
+                exam == null ? null : !exam.getExamMode().isReal());
     }
 
     /**

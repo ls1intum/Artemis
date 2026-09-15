@@ -10,6 +10,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 describe('Exam Import Paging Service', () => {
     let service: ExamImportPagingService;
@@ -19,7 +20,7 @@ describe('Exam Import Paging Service', () => {
         id: 1,
         title: 'RealExam For Testing',
         course: undefined,
-        testExam: false,
+        examMode: ExamMode.REAL,
     } as Exam;
 
     beforeEach(() => {
