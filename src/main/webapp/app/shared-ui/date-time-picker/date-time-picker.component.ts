@@ -76,6 +76,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
     // pickers share a page (e.g. the audits from/to filter).
     inputId = input<string>('date-input-field');
     labelTooltip = input<string>();
+    panelStyleClass = input<string>('');
     // Internal CVA value holder. Not a public input/model: consumers bind the value via the
     // ControlValueAccessor (formControlName / ngModel), never via [value]/[(value)]. Keeping it a
     // plain signal avoids the model's implicit `valueChange` output colliding with the explicit
@@ -99,6 +100,8 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
     pickerType = input<DateTimePickerType>(DateTimePickerType.DEFAULT); // Select type of picker
     fluid = input(true);
     baseZIndex = input<number>(1060); // z-index floor for the overlay panel so it renders above ng-bootstrap modals (~1055).
+    /** Keeps overlays inside focus-trapped containers when set to `self`; defaults to the document body. */
+    appendTo = input<HTMLElement | 'body' | 'self'>('body');
     valueChange = output<void>();
 
     protected isInputValid = signal<boolean>(true);
@@ -116,6 +119,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
     /** DEFAULT renders date + time; CALENDAR renders date only; TIMER renders time only. */
     protected showTime = computed(() => this.pickerType() === DateTimePickerType.DEFAULT);
     protected timeOnly = computed(() => this.pickerType() === DateTimePickerType.TIMER);
+    protected datePickerPanelStyleClass = computed(() => ['jhi-date-time-picker-panel', this.panelStyleClass()].filter(Boolean).join(' '));
     protected dateFormat = computed(() => (this.timeOnly() ? undefined : 'dd.mm.yy'));
     protected placeholder = computed(() => {
         switch (this.pickerType()) {

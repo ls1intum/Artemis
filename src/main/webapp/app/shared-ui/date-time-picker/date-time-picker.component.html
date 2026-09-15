@@ -39,7 +39,7 @@
     <p-datepicker
         #datePicker
         styleClass="w-full"
-        panelStyleClass="jhi-date-time-picker-panel"
+        [panelStyleClass]="datePickerPanelStyleClass()"
         [pt]="passThrough"
         [inputId]="inputId()"
         [fluid]="fluid()"
@@ -61,7 +61,7 @@
         [showIcon]="true"
         iconDisplay="input"
         showOnFocus="false"
-        appendTo="body"
+        [appendTo]="appendTo()"
         [baseZIndex]="baseZIndex()"
         [minDate]="minDate()"
         [maxDate]="maxDate()"

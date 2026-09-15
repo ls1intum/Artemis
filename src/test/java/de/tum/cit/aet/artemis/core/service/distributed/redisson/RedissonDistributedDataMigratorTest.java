@@ -145,6 +145,20 @@ class RedissonDistributedDataMigratorTest {
         assertThat(storedVersion()).isEqualTo(String.valueOf(VERSION));
     }
 
+    @Test
+    void testCarriesTheFirstNamespaceOverAfterFeatureEnumExtension() {
+        redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set("1");
+        redissonClient.getQueue(keyFor(1, "buildResultQueue")).add("result-1");
+        redissonClient.getMap(keyFor(1, "features")).put("Science", Boolean.FALSE);
+
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(redissonClient.getQueue(keyFor(VERSION, "buildResultQueue")).readAll()).containsExactly("result-1");
+        assertThat(redissonClient.getMap(keyFor(VERSION, "features"))).containsEntry("Science", Boolean.FALSE);
+        assertThat(redissonClient.getQueue(keyFor(1, "buildResultQueue"))).isEmpty();
+        assertThat(storedVersion()).isEqualTo(String.valueOf(VERSION));
+    }
+
     /**
      * The unversioned namespace is the whole keyspace, so the pattern delete that empties a numbered one would take
      * the new namespace and the version key with it. What is not carried over is therefore left where it is.
@@ -265,7 +279,7 @@ class RedissonDistributedDataMigratorTest {
         redissonClient.getQueue(keyFor(UNVERSIONED, "buildResultQueue")).add("must-remain-unversioned");
 
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> migrationServiceFor(VERSION + 1).migrateToCurrentVersion())
-                .withMessageContaining("no migration step from 1").withMessageContaining("explicit adjacent-version migration");
+                .withMessageContaining("no migration step from 2").withMessageContaining("explicit adjacent-version migration");
         assertThat(storedVersion()).isNull();
         assertThat(redissonClient.getQueue(keyFor(UNVERSIONED, "buildResultQueue")).readAll()).containsExactly("must-remain-unversioned");
         assertThat(redissonClient.getQueue(keyFor(VERSION, "buildResultQueue"))).isEmpty();
