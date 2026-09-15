@@ -102,7 +102,7 @@ export class CodeEditorRepositoryService extends DomainDependentEndpointService 
     };
 
     pull = () => {
-        return this.http.get<void>(`${this.restResourceUrl}/pull`, {}).pipe(handleErrorResponse(this.conflictService));
+        return this.http.post<void>(`${this.restResourceUrl}/pull`, {}).pipe(handleErrorResponse(this.conflictService));
     };
 
     /**

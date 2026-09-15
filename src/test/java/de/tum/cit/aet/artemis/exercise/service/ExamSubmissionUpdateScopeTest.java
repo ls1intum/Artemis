@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.TeamTextSubmissionUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
@@ -125,8 +126,7 @@ class ExamSubmissionUpdateScopeTest extends AbstractSpringIntegrationIndependent
     }
 
     private void sendViaWebsocket(long destinationParticipationId) {
-        TextSubmission payload = ParticipationFactory.generateTextSubmission(UPDATE_TEXT, Language.ENGLISH, true);
-        payload.setId(storedExamSubmission.getId());
+        var payload = new TeamTextSubmissionUpdateDTO(storedExamSubmission.getId(), UPDATE_TEXT, Language.ENGLISH, true, null);
         Principal principal = mock(Principal.class);
         when(principal.getName()).thenReturn(TEST_PREFIX + "student1");
         try {
