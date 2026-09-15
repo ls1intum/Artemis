@@ -188,6 +188,21 @@ describe('build-plan-phases.model', () => {
         ]);
     });
 
+    it('reads an explicit null repository list as an unscoped container', () => {
+        // BuildContainerDTO writes the repository list with Jackson's default inclusion so that an empty list (scoped to
+        // nothing) survives; an unscoped container therefore arrives with an explicit null, not with an absent key.
+        const parsed = parseBuildPlanPhases(
+            JSON.stringify({
+                containers: [
+                    { name: 'unscoped', repositories: null, phases: [{ name: 'test', script: './gradlew test' }] },
+                    { name: 'scoped', repositories: [], phases: [{ name: 'test', script: './gradlew test' }] },
+                ],
+            }),
+        );
+
+        expect(parsed?.containers?.map((container) => container.repositories)).toEqual([undefined, []]);
+    });
+
     it('detects phases that expect tests before the due date', () => {
         expect(
             hasExpectedTestsBeforeDueDate({

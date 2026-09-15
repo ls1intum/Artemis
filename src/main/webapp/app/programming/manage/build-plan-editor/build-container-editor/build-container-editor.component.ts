@@ -75,9 +75,10 @@ export class BuildContainerEditorComponent {
 
     /**
      * A container that scopes no repositories checks out the repositories configured on the exercise, which is what a
-     * build plan without containers does. Selecting repositories opts a container into the stricter scoping.
+     * build plan without containers does. Selecting repositories opts a container into the stricter scoping. A plan
+     * that comes straight from the server, such as a template, carries an explicit null for an unscoped container.
      */
-    readonly scopesRepositories = computed(() => this.container().repositories !== undefined);
+    readonly scopesRepositories = computed(() => this.container().repositories != undefined);
 
     setName(name: string): void {
         this.container.update((container) => cloneWith(container, { name }));

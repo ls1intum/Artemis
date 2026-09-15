@@ -26,8 +26,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param repositories   the repositories checked out into the container. Null means the container is not scoped and checks
  *                           out the repositories configured on the exercise, as a build plan without containers does; an
  *                           empty list means the container is scoped and receives only the assignment repository. The
- *                           empty list is kept during serialization (unlike the record default) so that this "scoped to
- *                           nothing" state is not silently turned back into the unscoped state.
+ *                           property is therefore serialized with Jackson's default inclusion (the bare annotation
+ *                           overrides the record's NON_EMPTY): the empty list is kept, so that this "scoped to nothing"
+ *                           state is not silently turned back into the unscoped state, and an unscoped container is
+ *                           written with an explicit null, which the client reads like an absent property.
  * @param phases         the build phases executed inside the container, in order
  * @param timeoutSeconds the timeout of this container's build job in seconds, or null to use the timeout configured on
  *                           the exercise. The exercise timeout has to cover the slowest container; a container whose
@@ -36,8 +38,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildContainerDTO(@NotBlank @Pattern(regexp = BuildContainerDTO.BUILD_CONTAINER_NAME_REGEX) String name, String dockerImage,
-        @JsonInclude(JsonInclude.Include.NON_NULL) List<@Valid BuildContainerRepositoryDTO> repositories, @NotEmpty List<@Valid BuildPhaseDTO> phases,
-        @Nullable @Positive Integer timeoutSeconds) {
+        @JsonInclude List<@Valid BuildContainerRepositoryDTO> repositories, @NotEmpty List<@Valid BuildPhaseDTO> phases, @Nullable @Positive Integer timeoutSeconds) {
 
     /**
      * Creates a container that checks out the repositories configured on the exercise, i.e. one that does not scope its

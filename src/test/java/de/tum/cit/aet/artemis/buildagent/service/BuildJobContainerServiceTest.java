@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +58,9 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
     CreateContainerCmd createContainerCmd;
 
     ArgumentCaptor<HostConfig> hostConfigCaptor;
+
+    @TempDir
+    private Path temporaryDirectory;
 
     private ExecCreateCmd execCreateCmd;
 
@@ -228,8 +232,7 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
     }
 
     private Path createRepository(String name) throws IOException {
-        Path repository = Files.createTempDirectory(name);
-        repository.toFile().deleteOnExit();
+        Path repository = Files.createDirectories(temporaryDirectory.resolve(name));
         Files.writeString(repository.resolve("file.txt"), "content");
         return repository;
     }

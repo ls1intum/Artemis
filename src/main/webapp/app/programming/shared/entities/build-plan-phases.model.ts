@@ -122,7 +122,13 @@ export function parseBuildPlanPhases(json: string | undefined): BuildPlanPhases 
     }
     return cloneWith(data, {
         phases: data.phases?.map(withPhaseDefaults),
-        containers: data.containers?.map((container: BuildContainer) => cloneWith(container, { phases: (container.phases ?? []).map(withPhaseDefaults) })),
+        containers: data.containers?.map((container: BuildContainer) =>
+            cloneWith(container, {
+                // the server writes an unscoped container with an explicit null, which must not read as "scoped to nothing"
+                repositories: container.repositories ?? undefined,
+                phases: (container.phases ?? []).map(withPhaseDefaults),
+            }),
+        ),
     });
 }
 
@@ -157,7 +163,7 @@ function isBuildContainer(value: unknown): value is BuildContainer {
     return (
         typeof v.name === 'string' &&
         (v.dockerImage == null || typeof v.dockerImage === 'string') &&
-        (v.repositories === undefined || (Array.isArray(v.repositories) && v.repositories.every(isBuildContainerRepository))) &&
+        (v.repositories == undefined || (Array.isArray(v.repositories) && v.repositories.every(isBuildContainerRepository))) &&
         Array.isArray(v.phases) &&
         v.phases.every(isBuildPhase)
     );
