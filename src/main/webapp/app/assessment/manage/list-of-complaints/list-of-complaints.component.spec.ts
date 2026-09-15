@@ -19,7 +19,9 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { SortService } from 'app/foundation/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
@@ -344,6 +346,75 @@ describe('ListOfComplaintsComponent', () => {
         expect(comp.complaintsToShow()).toEqual(openComplaints);
         expect(comp.filterOption()).toBeUndefined();
     });
+
+    it('assessorOptions and filter use privacy-safe assessorKey and assessorLabel for multiple foreign tutors', () => {
+        const foreignTutorA = { id: 1, assessorKey: '101', assessorLabel: 'Tutor Two' } as Complaint;
+        const foreignTutorB = { id: 2, assessorKey: '102', assessorLabel: 'Instructor One' } as Complaint;
+        const foreignTutorAAgain = { id: 3, assessorKey: '101', assessorLabel: 'Tutor Two' } as Complaint;
+        // accepted undefined so default addressed-filter keeps them visible
+        comp.complaints.set([foreignTutorA, foreignTutorB, foreignTutorAAgain]);
+
+        expect(comp.assessorOptions()).toEqual([
+            { key: '102', label: 'Instructor One' },
+            { key: '101', label: 'Tutor Two' },
+        ]);
+
+        comp.onAssessorFilterChange('101');
+
+        expect(comp.complaintsToShow().map((complaint) => complaint.id)).toEqual([1, 3]);
+    });
+
+    it('clears loading when the mine request fails', () => {
+        findAllByCourseIdStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.COMPLAINT });
+
+        comp.ngOnInit();
+
+        expect(comp.loading()).toBe(false);
+    });
+
+    it('requests the exercise-scoped all list on exercise-scoped routes', () => {
+        const findAllForExerciseStub = vi.spyOn(complaintService, 'findAllWithoutStudentInformationForExerciseId').mockReturnValue(of(emptyComplaintResponse()));
+        const findAllForCourseStub = vi.spyOn(complaintService, 'findAllWithoutStudentInformationForCourseId');
+        activatedRoute.setParameters({ courseId: 12, exerciseId: 34, complaintType: ComplaintType.COMPLAINT });
+        comp.ngOnInit();
+
+        comp.setComplaintScope('all');
+
+        expect(findAllForExerciseStub).toHaveBeenCalledExactlyOnceWith(34, ComplaintType.COMPLAINT);
+        verifyNotCalled(findAllForCourseStub);
+    });
+
+    it('requests the course-scoped all list on course-scoped routes', () => {
+        const findAllForCourseStub = vi.spyOn(complaintService, 'findAllWithoutStudentInformationForCourseId').mockReturnValue(of(emptyComplaintResponse()));
+        const findAllForExerciseStub = vi.spyOn(complaintService, 'findAllWithoutStudentInformationForExerciseId');
+        activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.COMPLAINT });
+        comp.ngOnInit();
+
+        comp.setComplaintScope('all');
+
+        expect(findAllForCourseStub).toHaveBeenCalledExactlyOnceWith(12, ComplaintType.COMPLAINT);
+        verifyNotCalled(findAllForExerciseStub);
+    });
+
+    it('sorts the assessor column by the same value the cell renders', () => {
+        const sortService = fixture.debugElement.injector.get(SortService);
+        const sortByFunctionSpy = vi.spyOn(sortService, 'sortByFunction');
+        const ownComplaint = { id: 1, result: { assessor: { name: 'Zoe Tutor' } } } as Complaint;
+        const foreignComplaint = { id: 2, assessorLabel: 'Alice Tutor' } as Complaint;
+        comp.complaintsToShow.set([ownComplaint, foreignComplaint]);
+        comp.complaintsSortingPredicate = 'assessorName';
+
+        comp.sortRows();
+
+        const sortKeyOf = sortByFunctionSpy.mock.calls[0][1] as (complaint: Complaint) => unknown;
+        expect(sortKeyOf(ownComplaint)).toBe('Zoe Tutor');
+        expect(sortKeyOf(foreignComplaint)).toBe('Alice Tutor');
+    });
+
+    function emptyComplaintResponse(): EntityResponseTypeArray {
+        return new HttpResponse<ComplaintDTO[]>({ body: [] });
+    }
 
     function verifyNotCalled(...instances: MockInstance[]) {
         for (const spyInstance of instances) {
