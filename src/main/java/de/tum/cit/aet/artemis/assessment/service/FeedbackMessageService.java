@@ -9,10 +9,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackMessage;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackMessageRepository;
@@ -32,19 +28,8 @@ public class FeedbackMessageService {
 
     private final FeedbackMessageRepository feedbackMessageRepository;
 
-    /**
-     * The insert of a new message row runs in a transaction of its own. Losing the unique-hash race fails that insert
-     * at flush time, which poisons the session it happened in: a surrounding transaction (the result merge of a
-     * multi-container build runs one) could then neither re-read the winner's row nor commit. In its own transaction
-     * the failed insert is rolled back alone and the surrounding one stays clean; the message rows are immutable and
-     * content-addressed, so committing one independently is harmless (an unreferenced row is collected by the cleanup).
-     */
-    private final TransactionTemplate insertTransaction;
-
-    public FeedbackMessageService(FeedbackMessageRepository feedbackMessageRepository, PlatformTransactionManager transactionManager) {
+    public FeedbackMessageService(FeedbackMessageRepository feedbackMessageRepository) {
         this.feedbackMessageRepository = feedbackMessageRepository;
-        this.insertTransaction = new TransactionTemplate(transactionManager);
-        this.insertTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     /**
@@ -75,33 +60,11 @@ public class FeedbackMessageService {
         message.setHash(hash);
         message.setText(text);
         try {
-            insertTransaction.execute(status -> feedbackMessageRepository.saveAndFlush(message));
+            return feedbackMessageRepository.saveAndFlush(message);
         }
         catch (DataIntegrityViolationException e) {
-            // another transaction inserted the same hash concurrently - its row is the one read back below
-            return readBack(hash).orElseThrow(() -> e);
+            // another transaction inserted the same hash concurrently - use its row
+            return feedbackMessageRepository.findByHash(hash).orElseThrow(() -> e);
         }
-        // The insert ran in its own transaction, so its instance belongs to that transaction's persistence context, not
-        // to the caller's. Handing it to a caller inside a transaction would leave the caller's context without the
-        // row: Hibernate then resolves the feedback's reference to it as an uninitialized proxy when it merges the
-        // result, and reading the message after the transaction has ended fails with no session to load it in. Reading
-        // the row back returns the instance the caller's own context manages.
-        return readBack(hash).orElseThrow(() -> new IllegalStateException("feedback message vanished right after its insert"));
-    }
-
-    /**
-     * Reads the message with the given hash after another transaction has committed it. Inside a transaction this has
-     * to be a locking read: under MySQL's REPEATABLE READ a plain read answers from the transaction's snapshot, which
-     * predates that commit whenever the caller has read anything before, and would not find the row. Outside a
-     * transaction every read sees the committed state, and a locking read would not be allowed anyway.
-     *
-     * @param hash the hash of the message text
-     * @return the committed row, if it exists
-     */
-    private Optional<FeedbackMessage> readBack(byte[] hash) {
-        if (TransactionSynchronizationManager.isActualTransactionActive()) {
-            return feedbackMessageRepository.findByHashForShare(hash);
-        }
-        return feedbackMessageRepository.findByHash(hash);
     }
 }

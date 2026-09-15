@@ -29,7 +29,6 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.ObjectUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -348,7 +347,6 @@ public class ProgrammingExerciseGradingService {
             // Preserve the build logs of a failed container, labeled by its name and saved next to the logs of the other
             // containers, so a crashed container's logs survive alongside its siblings' (as for a single-container build,
             // logs are only kept when the build failed). The submission's own log collection is deliberately not touched:
-            // replacing the managed collection would trip its orphan removal inside the surrounding transaction, and
             // saveBuildLogs would delete the logs the sibling containers already contributed.
             if (containerFailed && buildResult.hasLogs()) {
                 var buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildResult.extractBuildLogs(), exercise.getProgrammingLanguage());
@@ -361,6 +359,11 @@ public class ProgrammingExerciseGradingService {
             if (containerFailed) {
                 submission.setBuildFailed(true);
             }
+            // Saved before this container's feedback is appended: the submission cascades to its results, and the
+            // aggregate is detached, so saving the submission after the rows were added would merge the aggregate a
+            // second time, through an instance whose rows never received the ids the first merge gave to its copies,
+            // and insert every row twice. The duplicated test cases would then zero the score at finalization.
+            programmingSubmissionRepository.save(submission);
             // Drop feedback for a test case the aggregated result already carries from an earlier container. A shared
             // setup phase (e.g. the main-method check the DejaGnu containers each need) runs in several containers and
             // reports the same test case in each, but a test name is unique per exercise: without this, the merged
@@ -368,17 +371,14 @@ public class ProgrammingExerciseGradingService {
             // score. The test cases proper are partitioned across containers, so this only ever removes such repeats.
             // Only append the feedback here; the score is not recomputed until every container has finished (see
             // finalizeContainerResult), because scoring a partial result would mark the tests of containers that have
-            // not finished yet as "not executed". The rows are moved onto the aggregated result in place: it is managed
-            // by the caller's transaction (see LocalCIResultProcessingService), which inserts them when it commits, and
-            // Hibernate rejects a swapped orphan-removal collection on a managed entity at flush.
+            // not finished yet as "not executed". Saving the aggregate merges the detached result and inserts the rows
+            // through its cascade; the copy handed back is only used for its id.
             parsed.result().getTestCaseFeedbacks().stream().filter(distinctNewTestCaseFeedback(aggregatedResult)).forEach(aggregatedResult::addTestCaseFeedback);
             // static code analysis feedback carries no test case and is appended as reported
             parsed.result().getScaFeedbacks().forEach(aggregatedResult::addScaFeedback);
             aggregatedResult.setSubmission(submission);
             aggregatedResult.setExerciseId(exercise.getId());
-            aggregatedResult = resultRepository.save(aggregatedResult);
-            programmingSubmissionRepository.save(submission);
-            return aggregatedResult;
+            return resultRepository.save(aggregatedResult);
         }
         catch (ContinuousIntegrationException ex) {
             log.error("Container result for participation {} could not be appended", participation.getId(), ex);
@@ -401,54 +401,43 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Whether the result being processed is managed by a surrounding transaction. The single-container path and the
-     * result endpoint run without one, so their results are detached and a feedback collection is exchanged by swapping
-     * its reference (see {@link Result#setTestCaseFeedbacks}). The multi-container merge runs inside a transaction (see
-     * {@code LocalCIResultProcessingService}), where Hibernate rejects that swap on the managed result at flush ("a
-     * collection with orphan deletion was no longer referenced by the owning entity instance"); there, the rows are
-     * exchanged in place.
-     *
-     * @return true if the current thread runs inside a transaction
-     */
-    private static boolean processingInsideTransaction() {
-        return TransactionSynchronizationManager.isActualTransactionActive();
-    }
-
-    /**
-     * Replaces the typed automatic feedback of a result, in place when the result is managed and by swapping the
-     * collections when it is detached (see {@link #processingInsideTransaction()}).
+     * Replaces the typed automatic feedback of a result by swapping its collections. The results processed here are
+     * detached (no path runs inside a transaction), so the swap is what saving the result later merges.
      *
      * @param result            the result whose typed feedback is replaced
      * @param testCaseFeedbacks the test-case feedback rows to keep
      * @param scaFeedbacks      the static code analysis feedback rows to keep
      */
     private void replaceTypedFeedback(Result result, Collection<TestCaseFeedback> testCaseFeedbacks, Collection<ScaFeedback> scaFeedbacks) {
-        if (processingInsideTransaction()) {
-            result.getTestCaseFeedbacks().clear();
-            result.getScaFeedbacks().clear();
-            testCaseFeedbacks.forEach(result::addTestCaseFeedback);
-            scaFeedbacks.forEach(result::addScaFeedback);
-        }
-        else {
-            result.setTestCaseFeedbacks(testCaseFeedbacks);
-            result.setScaFeedbacks(scaFeedbacks);
-        }
+        result.setTestCaseFeedbacks(testCaseFeedbacks);
+        result.setScaFeedbacks(scaFeedbacks);
     }
 
     /**
-     * Inserts the typed feedback rows of a result that are not stored yet, so that they carry ids afterwards. A detached
-     * result takes the stored rows back through a swap of its collections; a managed one keeps its collections, which
-     * already hold the very instances the insert assigned the ids to (see {@link #processingInsideTransaction()}).
+     * Inserts the typed feedback rows of a result that are not stored yet, so that they carry ids afterwards. The detached
+     * result takes the stored rows back through a swap of its collections.
      *
      * @param result the result whose typed feedback rows are inserted
      */
     private void insertTypedFeedback(Result result) {
         List<TestCaseFeedback> storedTestCaseFeedbacks = testCaseFeedbackRepository.saveAll(result.getTestCaseFeedbacks());
         List<ScaFeedback> storedScaFeedbacks = scaFeedbackRepository.saveAll(result.getScaFeedbacks());
-        if (!processingInsideTransaction()) {
-            result.setTestCaseFeedbacks(storedTestCaseFeedbacks);
-            result.setScaFeedbacks(storedScaFeedbacks);
-        }
+        result.setTestCaseFeedbacks(storedTestCaseFeedbacks);
+        result.setScaFeedbacks(storedScaFeedbacks);
+    }
+
+    /**
+     * Inserts only the typed feedback rows of a result that are not stored yet, keeping the instances: persisting a new
+     * row assigns its id in place, whereas merging (what saving a stored result does for its rows) hands back copies
+     * whose lazy references, the message above all, are proxies that cannot be read once the session that merged them
+     * has closed. A result whose stored rows are loaded whole and whose new rows are inserted this way can be reported
+     * to the client as it is, without reloading it after the save.
+     *
+     * @param result the result whose new typed feedback rows are inserted
+     */
+    private void insertNewTypedFeedback(Result result) {
+        testCaseFeedbackRepository.saveAll(result.getTestCaseFeedbacks().stream().filter(feedback -> feedback.getId() == null).toList());
+        scaFeedbackRepository.saveAll(result.getScaFeedbacks().stream().filter(feedback -> feedback.getId() == null).toList());
     }
 
     /**
@@ -584,15 +573,20 @@ public class ProgrammingExerciseGradingService {
             // The same student policies as after a single-container result. Unlike there, the aggregated result already
             // exists (the containers' build jobs link to it), so it stays; when the submission is under manual
             // assessment its feedback is additionally merged into that manual result, which is then the one to report.
-            // Read through the repository, not the submission's lazy result collection: callers outside a transaction hold
-            // a detached submission, whose collection cannot be initialized.
+            // Read through the repository, not the submission's lazy result collection: the submission is detached, so
+            // its collection cannot be initialized.
             Result latestOtherResult = resultRepository.findAllBySubmissionIdOrderByIdDesc(programmingSubmission.getId()).stream()
                     .filter(candidate -> !candidate.getId().equals(resultId)).findFirst().orElse(null);
             mergedIntoManualResult = applyStudentResultPolicies(participation, aggregatedResult, programmingSubmission, latestOtherResult);
         }
         // Saved after the policies, as on the single-container path: the lock-repository policy marks the result unrated
-        // without saving it, so saving earlier would leave that flag to the caller's transaction (and lose it outside one).
-        aggregatedResult = resultRepository.save(aggregatedResult);
+        // without saving it, so saving earlier would lose that flag. The instance handed back is the one that was scored,
+        // not save's return value: the result is reported to the client right after this, and that report reads every
+        // row's test case and message, which the rows loaded above carry whole and the copies a merge hands back would
+        // only hold as proxies without a session. The rows the scoring added are inserted in place first, so that they
+        // carry ids too.
+        insertNewTypedFeedback(aggregatedResult);
+        resultRepository.save(aggregatedResult);
         return mergedIntoManualResult.orElse(aggregatedResult);
     }
 
@@ -954,29 +948,14 @@ public class ProgrammingExerciseGradingService {
         }
         // The rows are fetched together with their test cases AND their messages. The test cases because lazily loaded
         // rows reach them through proxies, which the equality the score calculation compares test cases with never
-        // satisfies. The messages because the result is reported to the client after the merge transaction has ended,
-        // and synthesizing the feedback for that report reads every message: a proxy left over from the transaction
-        // would then fail with no session to load it in, the report would never be sent, and the template rebuild that
-        // follows a solution build would never be triggered.
+        // satisfies. The messages because the finalized result is reported to the client as it is, and synthesizing
+        // the feedback for that report reads every message: a proxy would then fail with no session to load it in, the
+        // report would never be sent, and the template rebuild that follows a solution build would never be triggered.
         if (!Hibernate.isInitialized(result.getTestCaseFeedbacks())) {
-            if (processingInsideTransaction()) {
-                // A managed result keeps its collection and initializes it here, after the fetch: the rows the collection
-                // initializes with are the ones the fetch has just put into the persistence context, whole.
-                testCaseFeedbackRepository.findWithTestCaseAndMessageByResultIds(List.of(result.getId()));
-                Hibernate.initialize(result.getTestCaseFeedbacks());
-            }
-            else {
-                result.setTestCaseFeedbacks(testCaseFeedbackRepository.findWithTestCaseAndMessageByResultIds(List.of(result.getId())));
-            }
+            result.setTestCaseFeedbacks(testCaseFeedbackRepository.findWithTestCaseAndMessageByResultIds(List.of(result.getId())));
         }
         if (!Hibernate.isInitialized(result.getScaFeedbacks())) {
-            if (processingInsideTransaction()) {
-                scaFeedbackRepository.findWithMessageByResultIds(List.of(result.getId()));
-                Hibernate.initialize(result.getScaFeedbacks());
-            }
-            else {
-                result.setScaFeedbacks(scaFeedbackRepository.findWithMessageByResultIds(List.of(result.getId())));
-            }
+            result.setScaFeedbacks(scaFeedbackRepository.findWithMessageByResultIds(List.of(result.getId())));
         }
     }
 

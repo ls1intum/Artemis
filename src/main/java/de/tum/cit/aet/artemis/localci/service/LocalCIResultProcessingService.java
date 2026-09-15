@@ -29,7 +29,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -97,8 +96,6 @@ public class LocalCIResultProcessingService {
 
     private final Optional<LocalCIQueueWebsocketService> localCIQueueWebsocketService;
 
-    private final TransactionTemplate transactionTemplate;
-
     private UUID listenerId;
 
     private final AtomicLong processedResults = new AtomicLong();
@@ -114,8 +111,7 @@ public class LocalCIResultProcessingService {
             BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository,
             ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
             ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository, DistributedDataAccessService distributedDataAccessService,
-            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, Optional<LocalCIQueueWebsocketService> localCIQueueWebsocketService,
-            TransactionTemplate transactionTemplate) {
+            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, Optional<LocalCIQueueWebsocketService> localCIQueueWebsocketService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
@@ -127,7 +123,6 @@ public class LocalCIResultProcessingService {
         this.distributedDataAccessService = distributedDataAccessService;
         this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
         this.localCIQueueWebsocketService = localCIQueueWebsocketService;
-        this.transactionTemplate = transactionTemplate;
     }
 
     /**
@@ -388,26 +383,27 @@ public class LocalCIResultProcessingService {
         DistributedMap<String, Boolean> aggregationLocks = distributedDataAccessService.getResultAggregationLockMap();
         aggregationLocks.lock(buildGroupId);
         try {
+            // Append, link and finalize are three steps under the lock, each committed on its own, as every other write
+            // of the result processing is: Artemis avoids surrounding transactions. The lock is what keeps the steps of
+            // different containers apart; what makes an interrupted sequence harmless is that every step is keyed by the
+            // build group: a sibling only finds the aggregate through a job that links to it, so a container whose append
+            // was saved but whose job was never linked leaves behind an in-progress result that nothing refers to, and
+            // the recovery below still records the job as finished, so the group cannot stay open.
             ContainerOutcome outcome = null;
             try {
-                // Append, link and finalize run in one programmatic transaction that commits before the lock is released,
-                // so the next container of the group sees the appended feedback and the linked build job atomically.
-                outcome = transactionTemplate.execute(status -> {
-                    // The aggregate is found through the siblings that already merged into it, never through the
-                    // submission's results: a retry or a re-push of the same commit is a new group with an aggregate of
-                    // its own, and a tutor's draft assessment on the submission can never be mistaken for it.
-                    Long aggregatedResultId = findAggregatedResultId(buildGroupId);
-                    Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, effectiveBuildResult, testsExpected,
-                            buildGroup.containerName(), aggregatedResultId);
-                    if (aggregatedResult == null) {
-                        return null;
-                    }
-                    // Link this container's build job to the shared result; the link is how the siblings that finish
-                    // after this one find the aggregate.
+                // The aggregate is found through the siblings that already merged into it, never through the submission's
+                // results: a retry or a re-push of the same commit is a new group with an aggregate of its own, and a
+                // tutor's draft assessment on the submission can never be mistaken for it.
+                Long aggregatedResultId = findAggregatedResultId(buildGroupId);
+                Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, effectiveBuildResult, testsExpected, buildGroup.containerName(),
+                        aggregatedResultId);
+                if (aggregatedResult != null) {
+                    // Link this container's build job to the shared result; the link is how the siblings that finish after
+                    // this one find the aggregate.
                     BuildJob savedContainerJob = saveFinishedBuildJob(buildJob, buildStatus, aggregatedResult);
                     Result finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate());
-                    return new ContainerOutcome(finalizedResult != null ? finalizedResult : aggregatedResult, savedContainerJob);
-                });
+                    outcome = new ContainerOutcome(finalizedResult != null ? finalizedResult : aggregatedResult, savedContainerJob);
+                }
             }
             catch (RuntimeException e) {
                 log.error("Could not merge the result of container {} of build job {}", buildGroup.containerName(), buildJob.id(), e);
@@ -415,14 +411,12 @@ public class LocalCIResultProcessingService {
             if (outcome != null) {
                 return outcome;
             }
-            // This container's result could not be merged and the transaction above rolled back. Its job is still recorded
-            // as finished, only without a result link, so the group's completion count keeps advancing: if this was the
-            // last container, the aggregate its siblings built is finalized now, as failed, instead of staying open forever.
-            return transactionTemplate.execute(status -> {
-                BuildJob savedContainerJob = saveFinishedBuildJob(buildJob, BuildStatus.ERROR, null);
-                Result finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate());
-                return new ContainerOutcome(finalizedResult, savedContainerJob);
-            });
+            // This container's result could not be merged. Its job is still recorded as finished, only without a result
+            // link, so the group's completion count keeps advancing: if this was the last container, the aggregate its
+            // siblings built is finalized now, as failed, instead of staying open forever.
+            BuildJob savedContainerJob = saveFinishedBuildJob(buildJob, BuildStatus.ERROR, null);
+            Result finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate());
+            return new ContainerOutcome(finalizedResult, savedContainerJob);
         }
         finally {
             aggregationLocks.unlock(buildGroupId);
@@ -464,7 +458,7 @@ public class LocalCIResultProcessingService {
         // This service only knows how the jobs executed; whether the build itself succeeded is the grading service's call
         // (see finalizeContainerResult). A finished job without a result link is one whose merge failed. Both merge paths
         // record such a job as ERROR, which the status check already catches; the null check covers the one remaining
-        // writer, the fallback save in processResult after even the recovery transaction failed, which keeps the status
+        // writer, the fallback save in processResult after even the recovery path failed, which keeps the status
         // the agent reported: SUCCESSFUL for a job that ran fine and could not be merged.
         boolean allJobsSucceeded = !buildJobRepository.existsByBuildGroupIdAndBuildStatusNot(buildGroupId, BuildStatus.SUCCESSFUL)
                 && !buildJobRepository.existsByBuildGroupIdAndResultIsNull(buildGroupId);
@@ -473,7 +467,7 @@ public class LocalCIResultProcessingService {
 
     /**
      * What processing one container of a multi-container build produced: the shared result its feedback was appended to,
-     * and the build job saved for the container. The job is carried out of the locked transaction because the caller
+     * and the build job saved for the container. The job is carried out of the locked section because the caller
      * needs it to write the log file, and re-reading it there would be a second query for a row just written.
      *
      * @param result        the aggregated result of the submission, finalized once every container has finished

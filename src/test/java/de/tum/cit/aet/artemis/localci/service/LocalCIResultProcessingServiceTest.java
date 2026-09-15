@@ -28,7 +28,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
@@ -110,9 +109,6 @@ class LocalCIResultProcessingServiceTest {
     private LocalCIQueueWebsocketService localCIQueueWebsocketService;
 
     @Mock
-    private TransactionTemplate transactionTemplate;
-
-    @Mock
     private DistributedQueue<ResultQueueItem> resultQueue;
 
     @Mock
@@ -128,7 +124,7 @@ class LocalCIResultProcessingServiceTest {
     void setUp() {
         resultProcessingService = new LocalCIResultProcessingService(programmingExerciseGradingService, programmingMessagingService, buildJobRepository,
                 programmingExerciseRepository, participationRepository, programmingTriggerService, buildLogEntryService, programmingExerciseBuildStatisticsRepository,
-                distributedDataAccessService, programmingSubmissionMessagingService, Optional.of(localCIQueueWebsocketService), transactionTemplate);
+                distributedDataAccessService, programmingSubmissionMessagingService, Optional.of(localCIQueueWebsocketService));
         // The production executor hands the work to a pool thread, which would make every assertion below a race. This one
         // runs the same task on the calling thread, so the test observes the finished work rather than polling for it.
         ReflectionTestUtils.setField(resultProcessingService, "resultProcessingExecutor", inlineExecutor());
