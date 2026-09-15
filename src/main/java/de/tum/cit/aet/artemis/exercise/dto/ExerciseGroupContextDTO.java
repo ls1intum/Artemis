@@ -77,7 +77,7 @@ public record ExerciseGroupContextDTO(long id, @Nullable String title, @Nullable
          * @return the exam context
          */
         public static ExamContextDTO of(Exam exam) {
-            return new ExamContextDTO(exam.getId(), exam.getTitle(), exam.isTestExam(), exam.isExamWithAttendanceCheck(), exam.getNumberOfCorrectionRoundsInExam(),
+            return new ExamContextDTO(exam.getId(), exam.getTitle(), !exam.getExamMode().isReal(), exam.isExamWithAttendanceCheck(), exam.getNumberOfCorrectionRoundsInExam(),
                     exam.getNumberOfExercisesInExam(), exam.getVisibleDate(), exam.getStartDate(), exam.getEndDate(), exam.getPublishResultsDate(),
                     exam.getExamStudentReviewStart(), exam.getExamStudentReviewEnd(), exam.getExamSummaryPublicationDate(), exam.getExampleSolutionPublicationDate(),
                     exam.getGracePeriod(), exam.getWorkingTime(), exam.getExamMaxPoints(), exam.getRandomizeExerciseOrder(), exam.getStartText(), exam.getEndText(),
