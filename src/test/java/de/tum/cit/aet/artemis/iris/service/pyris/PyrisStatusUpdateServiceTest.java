@@ -137,6 +137,18 @@ class PyrisStatusUpdateServiceTest {
     }
 
     @Test
+    void globalSearchPartialResultIsForwardedAsStreamedDraft() {
+        var job = new GlobalSearchAnswerJob("global-run", "student1");
+        var partialUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.RUNNING, null, null, null, "Signals are reactive.[1]", 3);
+
+        service.handleStatusUpdate(job, partialUpdate);
+
+        verify(irisWebsocketService).send("student1", "global-search-answer",
+                new IrisGlobalSearchAnswerWebsocketDTO("global-run", true, null, null, "Signals are reactive.[1]", 3));
+        verify(pyrisJobService).updateJob(job);
+    }
+
+    @Test
     void globalSearchThinkingIsDerivedFromRunState() {
         var job = new GlobalSearchAnswerJob("global-run", "student1");
         var runningUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.RUNNING, null, null, null);
