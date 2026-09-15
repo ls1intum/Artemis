@@ -30,6 +30,6 @@ class ExerciseEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchi
     // TODO: Reduce this to 0 by removing entity references from DTOs
     @Override
     protected int getExpectedDtoEntityFieldViolations() {
-        return 3;
+        return 2;
     }
 }
