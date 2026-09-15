@@ -40,6 +40,8 @@ import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.service.QuizMessagingService;
 import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * REST controller for managing QuizExercise actions.
@@ -134,7 +136,8 @@ public class QuizExerciseResource {
      */
     @PutMapping("quiz-exercises/{quizExerciseId}/{action}")
     @EnforceAtLeastEditorInExercise(resourceIdFieldName = "quizExerciseId")
-    public ResponseEntity<QuizExerciseDatesDTO> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable QuizAction action) {
+    public ResponseEntity<QuizExerciseDatesDTO> performActionForQuizExercise(@PathVariable Long quizExerciseId,
+            @Parameter(schema = @Schema(type = "string", allowableValues = { "start-now", "end-now", "set-visible", "start-batch" })) @PathVariable QuizAction action) {
         log.debug("REST request to perform action {} on quiz exercise {}", action, quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExerciseId);
         var user = userRepository.getUserWithAuthorities();
