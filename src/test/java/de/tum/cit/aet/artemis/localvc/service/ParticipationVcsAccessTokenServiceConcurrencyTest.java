@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 
 /**
  * Two requests creating the access token for the same participation at the same moment.
@@ -44,7 +44,7 @@ class ParticipationVcsAccessTokenServiceConcurrencyTest {
     private ParticipationVCSAccessTokenRepository participationVcsAccessTokenRepository;
 
     @Mock
-    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+    private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationRepository;
 
     @Mock
     private TeamRepository teamRepository;
