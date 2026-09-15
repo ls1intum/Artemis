@@ -143,7 +143,7 @@ Logs and PID files are stored in the `.e2e-local/` directory (gitignored).
 
 If you want to manually install playwright, you can follow these steps:
 
-### 1. Install dependencies
+### Install dependencies
 
 First, navigate to the Playwright folder:
 
@@ -157,7 +157,7 @@ Then install the dependencies (activate pnpm once via `corepack enable` if you h
 pnpm install
 ```
 
-### 2. Customize Playwright configuration
+### Customize Playwright configuration
 
 We need to configure Playwright to match our local Artemis setup and user settings. All configurations are stored in
 the `playwright.env` file. The default configuration for an ICL setup looks as follows:
@@ -184,7 +184,7 @@ The committed <code>playwright.env</code> defaults to <code>BASE_URL=https://loc
 Make sure `BASE_URL` matches your Artemis client URL and `ADMIN_USERNAME` and
 `ADMIN_PASSWORD` match your Artemis admin user credentials.
 
-### 3. Configure test users
+### Configure test users
 
 Playwright tests require users with different roles to simulate concurrent user interactions. If you already
 have generated test users, you can skip this step. Generate users with the help of the user creation scripts under the
@@ -198,7 +198,7 @@ You can configure user IDs and check their corresponding user roles in the `src/
 Usernames are defined automatically by appending the userId to the `PLAYWRIGHT_USERNAME_TEMPLATE`.
 At the moment it is discouraged to change the template string, as the user creation script does not support other names yet.
 
-### 4. Setup Playwright package and its browser binaries
+### Setup Playwright package and its browser binaries
 
 Install Playwright browser binaries, set up the environment to ensure Playwright can locate these binaries.
 On some operating systems this might not work, and playwright needs to be manually installed via a package manager.
@@ -208,7 +208,7 @@ pnpm run playwright:setup-local
 pnpm run playwright:init
 ```
 
-### 5. Open Playwright UI
+### Open Playwright UI
 
 To open the Playwright UI, run:
 
@@ -343,7 +343,7 @@ unnecessary complexity, and other issues help maintain tests and enhance reliabi
 
 ## Playwright testing best practices
 
-### 1. Use page objects for common interactions
+### Use page objects for common interactions
 
 Page objects are a design pattern that helps to abstract the details of the page structure and interactions. They
 encapsulate the page elements and their interactions with the page. This makes the tests more readable and
@@ -354,7 +354,7 @@ performing common user actions or returning frequently used locators.
 Page objects are registered as fixtures to make them easily accessible in tests without caring about their
 initialization and teardown.
 
-### 2. Use fixtures
+### Use fixtures
 
 Test fixture in Playwright is a setup environment that prepares the necessary conditions and state required for your
 tests to run. It helps manage the initialization and cleanup tasks so that each test starts with a known state.
@@ -388,7 +388,7 @@ test('Test name', async ({ fixtureName }) => {
 });
 ```
 
-### 3. Use uniquely identifiable locators
+### Use uniquely identifiable locators
 
 Use unique locators to identify elements on the page. Playwright throws an error when interacting with a locator
 that matches multiple elements on the page. Reach for locators in this order:
@@ -474,7 +474,7 @@ await expect(panel.locator(`[data-testid="date-picker-day"][data-date="${key}"]`
 For markup Artemis owns, do not settle for that: give the element an attribute that says what the test wants to know,
 such as `data-selected` or `data-invalid`, and assert on it.
 
-### 4. Consider actionability of elements
+### Consider actionability of elements
 
 Checking for the state of an element before interacting with it is crucial to avoid flaky behavior. Actions like
 clicking a button or typing into an input field require a particular state from the element, such as visible and
@@ -514,7 +514,7 @@ the page - use <code>waitFor()</code> function of a locator instead.
 
 </Callout>
 
-### 5. AI-assisted test authoring with a Playwright MCP server
+### AI-assisted test authoring with a Playwright MCP server
 
 You can optionally use a Playwright Model Context Protocol (MCP) server as an external tool to expose the live
 application DOM to AI coding assistants such as GitHub Copilot and Claude Code while Artemis is running locally.
@@ -665,13 +665,13 @@ test result files between phases to prevent workspace pollution from inflating t
 
 In total there are two Docker containers started on the GitHub runner, plus Playwright running on the host:
 
-### 1. PostgreSQL
+### PostgreSQL
 
 This container starts a PostgreSQL database and exposes it on port 5432.
 The container automatically creates a new database `Artemis` and configures it
 with the recommended settings for Artemis.
 
-### 2. Artemis Application
+### Artemis Application
 
 The Docker image for the Artemis container is created from the already existing
 [Dockerfile](https://github.com/ls1intum/Artemis/blob/develop/docker/artemis/Dockerfile).
@@ -689,7 +689,7 @@ the PostgreSQL container and uses
 [health checks](https://docs.docker.com/compose/compose-file/compose-file-v2/#healthcheck)
 to wait until the database is up and running.
 
-### 3. Playwright
+### Playwright
 
 Playwright runs directly on the runner host (not in a container).
 The base URL is configurable via the `BASE_URL` environment variable read from

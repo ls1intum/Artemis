@@ -49,6 +49,22 @@ public record ModelingExerciseResponseDTO(Long id, String title, String shortNam
      * @return the corresponding DTO, or {@code null} if the input was {@code null}
      */
     public static ModelingExerciseResponseDTO of(ModelingExercise exercise) {
+        return of(exercise, false);
+    }
+
+    /**
+     * Creates the record written into the exercise details file of an archive. It is the response record without the
+     * ids of the plagiarism detection and the team assignment configuration: those are rows of this instance, and a
+     * file read back elsewhere must not carry them.
+     *
+     * @param exercise the modeling exercise to export (may be {@code null})
+     * @return the corresponding DTO, or {@code null} if the input was {@code null}
+     */
+    public static ModelingExerciseResponseDTO forExport(ModelingExercise exercise) {
+        return of(exercise, true);
+    }
+
+    private static ModelingExerciseResponseDTO of(ModelingExercise exercise, boolean forExport) {
         if (exercise == null) {
             return null;
         }
@@ -96,6 +112,11 @@ public record ModelingExerciseResponseDTO(Long id, String title, String shortNam
         PlagiarismDetectionConfigDTO plagiarismDetectionConfigDTO = Hibernate.isInitialized(exercise.getPlagiarismDetectionConfig())
                 ? PlagiarismDetectionConfigDTO.of(exercise.getPlagiarismDetectionConfig())
                 : null;
+
+        if (forExport) {
+            teamAssignmentConfigDTO = teamAssignmentConfigDTO == null ? null : teamAssignmentConfigDTO.withoutId();
+            plagiarismDetectionConfigDTO = plagiarismDetectionConfigDTO == null ? null : plagiarismDetectionConfigDTO.withoutId();
+        }
 
         // Only populated on the single-exercise detail endpoint, which explicitly loads example submissions; null/omitted elsewhere.
         Set<ModelingExampleSubmissionDTO> exampleSubmissionDTOs = ModelingDtoCollections.setFromInitializedSet(exercise.getExampleSubmissions(), ModelingExampleSubmissionDTO::of);
