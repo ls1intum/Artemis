@@ -139,7 +139,7 @@
         "coverage:pr": "node supporting_scripts/code-coverage/local-pr-coverage/local-pr-coverage.mjs",
         "dead-code": "python3 supporting_scripts/check_dead_code.py",
         "dead-code:client": "knip --include files",
-        "dead-code:client:report": "knip",
+        "dead-code:client:report": "knip --config knip.report.json",
         "docs:build": "pnpm --dir packages/tum-ui run storybook:prepare && pnpm run docs:build:prepared",
         "docs:build:prepared": "cross-env STORYBOOK_TUM_UI_GUIDE_URL=/developer/guidelines/tum-ui-kit pnpm --dir packages/tum-ui exec storybook build --output-dir ../../build/documentation-static/developer/tum-ui && node supporting_scripts/generate-tum-ui-reference-page.mjs && cross-env ARTEMIS_DOCS_TUM_UI=true pnpm --dir documentation run build",
         "docs:integration:check": "pnpm --dir documentation exec eslint tests && tsc --project documentation/tests/tsconfig.json",

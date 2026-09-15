@@ -22,7 +22,7 @@ ones that touch no Java and no TypeScript at all.
 ## The server check
 
 `supporting_scripts/check_dead_code.py` reports any top-level class under `src/main/java` whose
-simple name appears in no other file in the repository. Run it locally with:
+simple name appears in no other production file. Run it locally with:
 
 ```bash
 python3 supporting_scripts/check_dead_code.py
@@ -42,7 +42,18 @@ a Spring application:
   because anything names it. Zero references is the *normal* state of a live `@Configuration`. The
   check never reports a class carrying `@Component`, `@Service`, `@Configuration`, `@RestController`,
   `@Repository`, `@Entity`, `@Converter`, `@Endpoint`, `@Aspect` or the rest of the list in
-  `ANNOTATION_WIRED`.
+  `ANNOTATION_WIRED`. The annotation counts wherever it sits in the file and in its fully-qualified
+  form, so neither a long import block nor `@org.springframework.stereotype.Service` changes the
+  answer.
+- A **Spring Data repository fragment** is reachable by naming convention alone. For a fragment
+  interface `CustomPostRepository` that a repository extends, Spring Data instantiates
+  `CustomPostRepositoryImpl` purely because of the `Impl` suffix. Nothing names it and it carries no
+  annotation, so the check recognises the shape (`is_spring_data_fragment`) and skips it.
+
+**References are counted over production sources only.** `src/test` is not searched. A production
+class that only a test names is not reached from the application at all: the test asserts behaviour
+nothing asks for, and the class and its test are dead together. Where the class is a genuine test
+double that happens to live in `src/main`, move it into `src/test` rather than allowlisting it.
 
 ### Deciding an annotation-wired class
 
@@ -120,9 +131,17 @@ The gate gives a real answer for Angular because Artemis uses standalone compone
 directive or component that a template uses must appear in that component's `imports` array in
 TypeScript, so an unimported file is genuinely unreachable and knip never has to parse a template.
 
-Entry points are the whole of the configuration. `app.main.ts`, route files, specs, vitest configs
-and the `setupFiles` they name, the `@tumaet/ui-angular` public API and the Storybook stories are all
-declared as entries; a file reachable only from something *not* declared there is reported as unused.
+**The gate analyses the application only.** Its single entry is `app.main.ts`; specs are excluded from
+the project graph and the vitest plugin is off, so a spec cannot vouch for the file it tests and an
+orphaned route subtree cannot vouch for itself. Declaring every `*.routes.ts` as an entry is the
+tempting shortcut and it defeats the check: `admin.routes.ts` is reached through one lazy import in
+`app.routes.ts`, and rooting it directly means deleting that last caller leaves the gate green. The
+same holds for specs — a component whose only importer is its own spec has no application path.
+
+`pnpm run dead-code:client:report` uses `knip.report.json` instead, which keeps specs, vitest configs
+and the `setupFiles` they name as entries. That is the right shape for the advisory picture and the
+wrong shape for a gate.
+
 When knip reports a file you know is loaded, check whether its entry point is missing from
 `knip.json` before concluding the file is dead — a vitest `setupFiles` string is a reference no
 import graph can see.

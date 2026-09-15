@@ -48,10 +48,19 @@ import re
 import sys
 from collections import defaultdict
 
-# Roots searched for *references*. Anything that can name a Java class belongs here: Java sources and
-# tests, resources (spring.factories, Liquibase changelogs, application*.yml), the Angular client (the
-# generated OpenAPI client names server DTOs), the workflows, the docs and the helper scripts.
-REFERENCE_ROOTS = ["src", "docker", "supporting_scripts", "documentation", ".github", "gradle"]
+# Roots searched for *references*. Anything that can name a Java class belongs here: production Java
+# sources, resources (spring.factories, Liquibase changelogs, application*.yml), the Angular client
+# (the generated OpenAPI client names server DTOs), the workflows, the docs and the helper scripts.
+#
+# `src/test` is deliberately absent. A production class that only a test names is not reached from the
+# application at all: the test asserts behaviour nothing asks for, and the class and its test are dead
+# together. Counting test references hid three such pairs until this root was narrowed. A class the
+# framework reaches without being named is a separate question, answered by ANNOTATION_WIRED and
+# is_spring_data_fragment below, and never by a test reference.
+#
+# Naming a class in a comment anywhere under these roots makes it look referenced -- the name-collision
+# limitation in the module docstring. Do not name candidate classes here.
+REFERENCE_ROOTS = ["src/main", "docker", "supporting_scripts", "documentation", ".github", "gradle"]
 
 # Only classes below this root are *candidates* for removal. Test-only classes are out of scope:
 # a test helper that no test uses yet is a different problem with a different fix.
@@ -78,8 +87,12 @@ SKIP_SUFFIXES = (
 # Hibernate's. @Endpoint / @EndpointWebExtension are found by Actuator. @Aspect is woven by AspectJ.
 # @ConfigurationProperties is bound by name from configuration. @JsonComponent is picked up by
 # Jackson's Spring integration.
+#
+# The optional package prefix matches a fully-qualified form such as @org.springframework.stereotype.Service,
+# which is a valid annotation Spring scans exactly like the imported one. No class writes it that way today,
+# but the miss would turn a live bean into a red build on a required check, so the regex allows for it.
 ANNOTATION_WIRED = re.compile(
-    r"@(RestController|Controller|ControllerAdvice|RestControllerAdvice|Component|Service"
+    r"@(?:[A-Za-z_][A-Za-z0-9_$]*\.)*(RestController|Controller|ControllerAdvice|RestControllerAdvice|Component|Service"
     r"|Configuration|AutoConfiguration|Repository|Entity|Embeddable|MappedSuperclass|Converter"
     r"|Endpoint|EndpointWebExtension|ServletEndpoint|Aspect|SpringBootApplication"
     r"|ConfigurationProperties|JsonComponent|WebFilter|WebServlet|WebListener)\b"
@@ -87,6 +100,22 @@ ANNOTATION_WIRED = re.compile(
 
 # Files that are unreferenced by construction and are not classes anybody could call.
 STRUCTURAL_SKIPS = {"package-info.java", "module-info.java"}
+
+# Spring Data resolves a custom repository fragment by name: for a fragment interface `CustomPostRepository`
+# that a repository extends, it instantiates `CustomPostRepositoryImpl` purely because of the `Impl` suffix
+# (`repositoryImplementationPostfix`, `Impl` by default). Nothing names the implementation and it carries no
+# annotation, so it looks exactly like a dead class to a text search while being essential at runtime.
+SPRING_DATA_FRAGMENT_SUFFIX = "Impl"
+
+
+def is_spring_data_fragment(simple_name: str, source: str) -> bool:
+    """True if this is the `Impl` half of a Spring Data custom repository fragment."""
+    if not simple_name.endswith(SPRING_DATA_FRAGMENT_SUFFIX):
+        return False
+    fragment_interface = simple_name[: -len(SPRING_DATA_FRAGMENT_SUFFIX)]
+    if not fragment_interface:
+        return False
+    return re.search(rf"\bimplements\b[^{{]*\b{re.escape(fragment_interface)}\b", source) is not None
 
 # Classes that are genuinely reachable but that no file names, for a reason a text search cannot see.
 # Every entry needs the mechanism that reaches it, so the next person can tell a real entry from a
@@ -135,7 +164,13 @@ def build_reference_index(roots) -> dict[str, set[str]]:
 
 
 def find_candidates(root: str):
-    """Yield (simple_name, path) for every top-level class file eligible for the check."""
+    """Yield (simple_name, path) for every top-level class file eligible for the check.
+
+    The whole file is read rather than a prefix of it. The annotation sits after the imports and the
+    class Javadoc, and 36 classes in Artemis -- WebsocketConfiguration and ExamResource among them --
+    carry theirs past the 4,000th character. Reading a prefix made those look like plain classes, so
+    whether a live bean could fail this check depended on how long its import block happened to be.
+    """
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
         for filename in filenames:
@@ -144,12 +179,15 @@ def find_candidates(root: str):
             path = os.path.join(dirpath, filename)
             try:
                 with open(path, encoding="utf-8") as handle:
-                    head = handle.read(4000)
+                    source = handle.read()
             except OSError:
                 continue
-            if ANNOTATION_WIRED.search(head):
+            if ANNOTATION_WIRED.search(source):
                 continue
-            yield filename[:-len(".java")], path
+            simple_name = filename[:-len(".java")]
+            if is_spring_data_fragment(simple_name, source):
+                continue
+            yield simple_name, path
 
 
 def find_dead_classes(candidate_root=CANDIDATE_ROOT, reference_roots=REFERENCE_ROOTS):
@@ -198,8 +236,10 @@ def self_test() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         java = os.path.join(tmp, "src", "main", "java", "pkg")
         res = os.path.join(tmp, "src", "main", "resources")
+        test = os.path.join(tmp, "src", "test", "java", "pkg")
         os.makedirs(java)
         os.makedirs(res)
+        os.makedirs(test)
 
         def write(directory, filename, text):
             with open(os.path.join(directory, filename), "w", encoding="utf-8") as handle:
@@ -216,11 +256,21 @@ def self_test() -> int:
         write(res, "spring.factories", "some.Key=pkg.FactoriesOnly\n")
         write(java, "package-info.java", "package pkg;\n")
         write(java, "Allowlisted.java", "package pkg;\npublic class Allowlisted {}\n")
+        write(java, "QualifiedService.java",
+              "package pkg;\n@org.springframework.stereotype.Service\npublic class QualifiedService {}\n")
+        write(java, "TestOnlyDto.java", "package pkg;\npublic record TestOnlyDto(long id) {}\n")
+        write(test, "TestOnlyDtoTest.java", "package pkg;\nclass TestOnlyDtoTest { TestOnlyDto d; }\n")
+        write(java, "FragmentRepository.java", "package pkg;\npublic interface FragmentRepository {}\n")
+        write(java, "FragmentRepositoryImpl.java",
+              "package pkg;\npublic class FragmentRepositoryImpl implements FragmentRepository {}\n")
+        write(java, "LateAnnotation.java",
+              "package pkg;\n" + "// filler to push the annotation past the old 4000-character cutoff\n" * 80
+              + "@Component\npublic class LateAnnotation {}\n")
 
         allowlisted_path = os.path.join(java, "Allowlisted.java")
         ALLOWLIST[allowlisted_path.replace(os.sep, "/")] = "self-test entry"
         try:
-            dead = set(find_dead_classes(os.path.join(tmp, "src", "main", "java"), [tmp]))
+            dead = set(find_dead_classes(os.path.join(tmp, "src", "main", "java"), [os.path.join(tmp, "src", "main")]))
         finally:
             del ALLOWLIST[allowlisted_path.replace(os.sep, "/")]
 
@@ -232,6 +282,10 @@ def self_test() -> int:
         check("a spring.factories entry counts as a reference", os.path.join(java, "FactoriesOnly.java") not in dead)
         check("package-info.java is never reported", os.path.join(java, "package-info.java") not in dead)
         check("an allowlisted class is not reported", allowlisted_path not in dead)
+        check("a fully qualified annotation is never reported", os.path.join(java, "QualifiedService.java") not in dead)
+        check("an annotation past the 4000th character is never reported", os.path.join(java, "LateAnnotation.java") not in dead)
+        check("a class only a test names is reported", os.path.join(java, "TestOnlyDto.java") in dead)
+        check("a Spring Data fragment implementation is not reported", os.path.join(java, "FragmentRepositoryImpl.java") not in dead)
 
     # `Caller` is itself unreferenced, which is why it is expected in `dead` above; that is the
     # documented layering behaviour, not a bug.

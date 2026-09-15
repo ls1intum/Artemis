@@ -3,29 +3,32 @@
     "workspaces": {
         ".": {
             "entry": [
-                "src/main/webapp/app/app.main.ts"
+                "src/main/webapp/app/app.main.ts",
+                "src/main/webapp/**/*.spec.ts",
+                "src/test/javascript/**/*.spec.ts",
+                "src/test/javascript/spec/vitest-*setup.ts",
+                "vitest*.config.ts",
+                "rules/*.mjs"
             ],
             "project": [
                 "src/main/webapp/**/*.ts",
-                "!src/main/webapp/**/*.spec.ts"
+                "src/test/javascript/**/*.ts"
             ],
             "ignore": [
                 "src/main/webapp/app/openapi/**"
-            ],
-            "vitest": false
+            ]
         },
         "packages/tum-ui": {
             "entry": [
                 "src/public-api.ts",
                 "test-providers.ts",
                 "vitest*.config.ts",
-                "**/*.stories.ts"
+                "**/*.stories.ts",
+                "**/*.spec.ts"
             ],
             "project": [
-                "**/*.ts",
-                "!**/*.spec.ts"
-            ],
-            "vitest": false
+                "**/*.ts"
+            ]
         }
     },
     "exclude": [
