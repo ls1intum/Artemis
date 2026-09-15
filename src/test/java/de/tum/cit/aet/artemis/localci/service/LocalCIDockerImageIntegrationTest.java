@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -152,7 +151,8 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
     @BeforeEach
     void switchToRealDockerClient() {
         initializeLazyLocalCIServices();
-        TransportConfig dockerTransportConfig = Objects.requireNonNull(discoverDockerTransportConfig());
+        TransportConfig dockerTransportConfig = discoverDockerTransportConfig();
+        assertThat(dockerTransportConfig).isNotNull();
         originalDockerConnectionUri = (String) ReflectionTestUtils.getField(buildAgentConfiguration, "dockerConnectionUri");
         originalImageArchitecture = (String) ReflectionTestUtils.getField(buildAgentDockerService, "imageArchitecture");
         buildAgentConfiguration.closeBuildAgentServices();

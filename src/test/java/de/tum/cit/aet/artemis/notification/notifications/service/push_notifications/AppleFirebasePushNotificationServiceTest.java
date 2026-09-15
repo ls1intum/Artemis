@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import java.util.Date;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.concurrent.Executor;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -66,8 +67,10 @@ class AppleFirebasePushNotificationServiceTest {
         when(repositoryMock.findByUserIdIn(anySet(), eq(PushNotificationDeviceType.APNS))).thenReturn(List.of(applePushNotificationDeviceConfiguration));
         when(repositoryMock.findByUserIdIn(anySet(), eq(PushNotificationDeviceType.FIREBASE))).thenReturn(List.of(firebasePushNotificationDeviceConfiguration));
 
-        applePushNotificationService = new ApplePushNotificationService(repositoryMock, appleRestTemplateMock);
-        firebasePushNotificationService = new FirebasePushNotificationService(repositoryMock, firebaseRestTemplateMock);
+        // Run the relay dispatch on the calling thread, so the assertions below observe it without racing the executor.
+        Executor directExecutor = Runnable::run;
+        applePushNotificationService = new ApplePushNotificationService(repositoryMock, appleRestTemplateMock, directExecutor);
+        firebasePushNotificationService = new FirebasePushNotificationService(repositoryMock, firebaseRestTemplateMock, directExecutor);
 
         ReflectionTestUtils.setField(applePushNotificationService, "relayServerBaseUrl", "test");
         ReflectionTestUtils.setField(firebasePushNotificationService, "relayServerBaseUrl", "test");

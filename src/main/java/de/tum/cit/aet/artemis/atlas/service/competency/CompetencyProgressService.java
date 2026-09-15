@@ -537,7 +537,7 @@ public class CompetencyProgressService {
 
     private void setConfidenceReasonLow(CompetencyProgress competencyProgress, double recencyConfidence, double difficultyConfidence,
             double competencyLinkWeightConfidenceHeuristic) {
-        double minConfidenceHeuristic = DoubleStream.of(recencyConfidence, difficultyConfidence, competencyLinkWeightConfidenceHeuristic).min().getAsDouble();
+        double minConfidenceHeuristic = DoubleStream.of(recencyConfidence, difficultyConfidence, competencyLinkWeightConfidenceHeuristic).min().orElseThrow();
         if (recencyConfidence == minConfidenceHeuristic) {
             competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.RECENT_SCORES_LOWER);
         }
@@ -551,7 +551,7 @@ public class CompetencyProgressService {
 
     private void setConfidenceReasonHigh(CompetencyProgress competencyProgress, double recencyConfidence, double difficultyConfidence, double quickSolveConfidence,
             double competencyLinkWeightConfidenceHeuristic) {
-        double maxConfidenceHeuristic = DoubleStream.of(recencyConfidence, difficultyConfidence, quickSolveConfidence, competencyLinkWeightConfidenceHeuristic).max().getAsDouble();
+        double maxConfidenceHeuristic = DoubleStream.of(recencyConfidence, difficultyConfidence, quickSolveConfidence, competencyLinkWeightConfidenceHeuristic).max().orElseThrow();
         if (recencyConfidence == maxConfidenceHeuristic) {
             competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.RECENT_SCORES_HIGHER);
         }

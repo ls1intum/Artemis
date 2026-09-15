@@ -11,7 +11,8 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseOverviewDTO;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
 
@@ -20,7 +21,8 @@ public record LectureDetailsDTO(Long id, String title, String description, Zoned
         @JsonProperty("isTutorialLecture") boolean isTutorialLecture, CourseDTO course, List<LectureUnitDetailsDTO> lectureUnits) implements LectureDTO {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record CourseDTO(Long id, String title, String shortName) {
+    public record CourseDTO(Long id, String title, String shortName, CourseInformationSharingConfiguration courseInformationSharingConfiguration,
+            boolean athenaFormativeFeedbackEnabled) {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -37,7 +39,7 @@ public record LectureDetailsDTO(Long id, String title, String description, Zoned
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record LectureReferenceDTO(Long id) {
+    public record LectureReferenceDTO(Long id, @JsonProperty("isTutorialLecture") boolean isTutorialLecture, CourseDTO course) {
     }
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
@@ -64,7 +66,7 @@ public record LectureDetailsDTO(Long id, String title, String description, Zoned
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ExerciseUnitDTO(Long id, LectureReferenceDTO lecture, String name, ZonedDateTime releaseDate, boolean completed, boolean visibleToStudents,
-            List<CompetencyLinkDTO> competencyLinks, Exercise exercise, @JsonProperty("type") String type) implements LectureUnitDetailsDTO {
+            List<CompetencyLinkDTO> competencyLinks, ExerciseOverviewDTO exercise, @JsonProperty("type") String type) implements LectureUnitDetailsDTO {
 
         public ExerciseUnitDTO {
             type = "exercise";

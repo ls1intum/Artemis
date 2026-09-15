@@ -71,7 +71,16 @@ const sidebars: SidebarsConfig = {
                 type: 'doc',
                 id: 'exams/intro',
             },
-            items: ['exams/exam-timeline', 'exams/participation-checker'],
+            items: [
+                'exams/create-an-exam',
+                'exams/add-exercises',
+                'exams/prepare-and-test',
+                'exams/conduct-an-exam',
+                'exams/assess-an-exam',
+                'exams/grade-and-publish',
+                'exams/review-and-complaints',
+                'exams/participation-checker',
+            ],
         },
         {
             type: 'category',
@@ -84,6 +93,7 @@ const sidebars: SidebarsConfig = {
                 'communication-support/communication',
                 'communication-support/faq',
                 'communication-support/tutorial-groups',
+                'communication-support/iris',
             ],
         },
         {
@@ -96,6 +106,7 @@ const sidebars: SidebarsConfig = {
             items: [
                 'assessment-grading/assessment',
                 'assessment-grading/grading',
+                'assessment-grading/ai-feedback',
                 'assessment-grading/plagiarism-check',
                 'assessment-grading/deimos',
             ],

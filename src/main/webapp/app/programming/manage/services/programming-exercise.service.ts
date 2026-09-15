@@ -324,8 +324,10 @@ export class ProgrammingExerciseService {
 
         // important: sort to get the latest submission (the order of the server can be random)
         this.sortService.sortByProperty(submissions, 'submissionDate', true);
+        // No second sort here: sortByProperty above established the order, and calling sort() without a comparator
+        // on the submissions would compare them as strings, where every element is equal and nothing is reordered.
         // By id, not by position: the server holds a submission's results in a set, so the response order is arbitrary.
-        return getNewestResult(submissions.sort().last()?.results);
+        return getNewestResult(submissions.last()?.results);
     }
 
     /**

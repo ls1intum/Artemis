@@ -4,8 +4,6 @@ title: Resolving Duplicate User Email Addresses
 sidebar_label: User Email Uniqueness
 ---
 
-# Resolving Duplicate User Email Addresses
-
 Artemis enforces one case-insensitively unique email address per user account. Before upgrading to the release that introduces the database constraint, administrators must
 resolve all legacy conflicts. The database migration stops with an actionable error when conflicts remain instead of changing account ownership automatically.
 

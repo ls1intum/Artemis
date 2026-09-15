@@ -12,7 +12,6 @@ import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,11 +29,9 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
-import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
@@ -66,8 +63,6 @@ public class ProgrammingExerciseParticipationService {
 
     private final ParticipationRepository participationRepository;
 
-    private final TeamRepository teamRepository;
-
     private final Optional<VersionControlService> versionControlService;
 
     private final GitService gitService;
@@ -80,13 +75,12 @@ public class ProgrammingExerciseParticipationService {
 
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
-            ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService,
-            ResultRepository resultRepository, SubmissionRepository submissionRepository, UserRepository userRepository) {
+            ParticipationRepository participationRepository, GitService gitService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
+            SubmissionRepository submissionRepository, UserRepository userRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
         this.participationRepository = participationRepository;
-        this.teamRepository = teamRepository;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
         this.resultRepository = resultRepository;
@@ -138,43 +132,6 @@ public class ProgrammingExerciseParticipationService {
      */
     public Optional<ProgrammingExerciseStudentParticipation> findTeamParticipationByExerciseAndUser(ProgrammingExercise exercise, User user) {
         return studentParticipationRepository.findTeamParticipationByExerciseIdAndStudentId(exercise.getId(), user.getId());
-    }
-
-    /**
-     * Tries to retrieve a student participation for the given exercise id and username.
-     *
-     * @param exercise the exercise for which to find a participation
-     * @param username of the user to which the participation belongs.
-     * @return the participation for the given exercise and user.
-     * @throws EntityNotFoundException if there is no participation for the given exercise and user.
-     */
-    @NonNull
-    public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseAndStudentId(Exercise exercise, String username) throws EntityNotFoundException {
-        Optional<ProgrammingExerciseStudentParticipation> participation;
-        if (exercise.isTeamMode()) {
-            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
-            participation = optionalTeam.flatMap(team -> studentParticipationRepository.findByExerciseIdAndTeamId(exercise.getId(), team.getId()));
-        }
-        else {
-            participation = studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), username);
-        }
-        if (participation.isEmpty()) {
-            throw new EntityNotFoundException("participation could not be found by exerciseId " + exercise.getId() + " and user " + username);
-        }
-        return participation.get();
-    }
-
-    /**
-     * Tries to retrieve all student participation for the given exercise id and username.
-     *
-     * @param exercise the exercise for which to find a participation
-     * @param username of the user to which the participation belongs.
-     * @return the participations for the given exercise and user.
-     * @throws EntityNotFoundException if there is no participation for the given exercise and user.
-     */
-    @NonNull
-    public List<ProgrammingExerciseStudentParticipation> findStudentParticipationsByExerciseAndStudentId(Exercise exercise, String username) throws EntityNotFoundException {
-        return studentParticipationRepository.findAllByExerciseIdAndStudentLogin(exercise.getId(), username);
     }
 
     /**

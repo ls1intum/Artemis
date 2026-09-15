@@ -15,8 +15,8 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
@@ -82,7 +82,7 @@ public class HyperionReviewCommentContextRendererService {
 
     private final CommentThreadRepository commentThreadRepository;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     /**
      * Creates a renderer for deterministic review-thread prompt context serialization.
@@ -90,7 +90,7 @@ public class HyperionReviewCommentContextRendererService {
      * @param commentThreadRepository repository used to load review threads with comments
      * @param objectMapper            mapper used to serialize prompt payloads as JSON
      */
-    public HyperionReviewCommentContextRendererService(CommentThreadRepository commentThreadRepository, ObjectMapper objectMapper) {
+    public HyperionReviewCommentContextRendererService(CommentThreadRepository commentThreadRepository, JsonMapper objectMapper) {
         this.commentThreadRepository = commentThreadRepository;
         this.objectMapper = objectMapper;
     }
@@ -155,7 +155,7 @@ public class HyperionReviewCommentContextRendererService {
         try {
             return objectMapper.writeValueAsString(payload);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.warn("Failed to serialize existing review threads for exercise {}", exerciseId, e);
             return "{\"threads\":[]}";
         }
@@ -310,7 +310,7 @@ public class HyperionReviewCommentContextRendererService {
         try {
             return objectMapper.writeValueAsString(payload);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.warn("Failed to serialize review-thread prompt context for exercise {}", exerciseId, e);
             return "{\"threads\":[]}";
         }
