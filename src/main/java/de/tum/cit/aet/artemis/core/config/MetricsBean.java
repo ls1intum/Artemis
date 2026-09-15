@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.course.dto.ActiveCourseDTO.NO_SEMESTER_TAG;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -722,8 +721,7 @@ public class MetricsBean {
     private void updateStudentsCourseMultiGauge(Set<ActiveCourseDTO> activeCourses) {
         // A mutable collection is required here because otherwise the values can not be updated correctly
         final Set<MultiGauge.Row<?>> gauges = activeCourses.stream().map(course -> {
-            final String semesterTag = course.semester() != null ? course.semester() : NO_SEMESTER_TAG;
-            final Tags tags = Tags.of("courseId", Long.toString(course.id()), "courseName", course.title(), "semester", semesterTag);
+            final Tags tags = Tags.of("courseId", Long.toString(course.id()), "courseName", course.title(), "semester", course.semester());
             final long studentCount = course.numberOfStudents();
             return MultiGauge.Row.of(tags, studentCount);
         }).collect(Collectors.toSet());
@@ -745,13 +743,15 @@ public class MetricsBean {
         final Optional<ActiveCourseDTO> examCourse = courses.stream().filter(course -> Objects.equals(course.id(), exam.courseId())).findAny();
 
         final List<Tag> tags = new ArrayList<>();
+        // If the exam's course is not in the active-courses set, none of its three tags are emitted. Tags.of sorts by
+        // key, so collecting the semester here rather than after the exam tags does not change the resulting series.
         examCourse.ifPresent(course -> {
             tags.add(Tag.of("courseId", Long.toString(course.id())));
             tags.add(Tag.of("courseName", course.title()));
+            tags.add(Tag.of("semester", course.semester()));
         });
         tags.add(Tag.of("examId", Long.toString(exam.id())));
         tags.add(Tag.of("examName", exam.title()));
-        tags.add(Tag.of("semester", examCourse.map(ActiveCourseDTO::semester).orElse(NO_SEMESTER_TAG)));
 
         return Tags.of(tags);
     }
