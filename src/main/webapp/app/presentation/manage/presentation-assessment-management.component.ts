@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
@@ -203,9 +203,24 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             this.faLink,
         ),
     );
+    private readonly studentViewExerciseId = computed(() => (this.viewMode() === 'presentations' ? this.selectedPresentation()?.exerciseId : undefined));
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    constructor() {
+        effect(() => {
+            const exerciseId = this.studentViewExerciseId();
+            untracked(() => {
+                void this.router.navigate([], {
+                    relativeTo: this.route,
+                    queryParams: { presentationExerciseId: exerciseId ?? null },
+                    queryParamsHandling: 'merge',
+                    replaceUrl: true,
+                });
+            });
+        });
+    }
 
     ngOnInit(): void {
         this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId') ?? this.route.parent?.snapshot.paramMap.get('courseId')));
@@ -228,7 +243,6 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                 this.presentationAssessments.set(assessments);
                 if (!assessments.some((assessment) => assessment.id === this.selectedPresentationId())) {
                     this.selectedPresentationId.set(assessments[0]?.id);
-                    this.updateStudentViewExercise(assessments[0]);
                 }
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -242,7 +256,6 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     selectPresentation(presentationAssessment: PresentationAssessment): void {
         this.selectedPresentationId.set(presentationAssessment.id);
         this.viewMode.set('presentations');
-        this.updateStudentViewExercise(presentationAssessment);
     }
 
     onSidebarItemSelected(itemId: string | number): void {
@@ -258,18 +271,6 @@ export class PresentationAssessmentManagementComponent implements OnInit {
 
     setViewMode(viewMode: PresentationViewMode): void {
         this.viewMode.set(viewMode);
-        if (viewMode === 'students') {
-            this.updateStudentViewExercise(undefined);
-        }
-    }
-
-    private updateStudentViewExercise(presentationAssessment: PresentationAssessment | undefined): void {
-        void this.router.navigate([], {
-            relativeTo: this.route,
-            queryParams: { presentationExerciseId: presentationAssessment?.exerciseId ?? null },
-            queryParamsHandling: 'merge',
-            replaceUrl: true,
-        });
     }
 
     updateStudentSearch(searchTerm: string): void {

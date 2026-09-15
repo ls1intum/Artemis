@@ -111,9 +111,11 @@ describe('PresentationAssessmentManagementComponent', () => {
 
     it('should expose the linked exercise to the student perspective switch while its presentation is selected', () => {
         const linkedPresentation = { ...presentationAssessment, id: 43, exerciseId: 7 };
+        component.presentationAssessments.set([linkedPresentation]);
         router.navigate.mockClear();
 
         component.selectPresentation(linkedPresentation);
+        fixture.detectChanges();
 
         expect(router.navigate).toHaveBeenCalledWith([], {
             relativeTo: expect.anything(),
@@ -121,6 +123,16 @@ describe('PresentationAssessmentManagementComponent', () => {
             queryParamsHandling: 'merge',
             replaceUrl: true,
         });
+
+        router.navigate.mockClear();
+        component.presentationAssessments.set([{ ...linkedPresentation, exerciseId: 8 }]);
+        fixture.detectChanges();
+        expect(router.navigate).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: { presentationExerciseId: 8 } }));
+
+        router.navigate.mockClear();
+        component.setViewMode('students');
+        fixture.detectChanges();
+        expect(router.navigate).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: { presentationExerciseId: null } }));
     });
 
     it('should switch views and filter the student overview', () => {

@@ -291,6 +291,12 @@ describe('CourseManagementContainerComponent', () => {
         expect(component.sidebarItems().find((item) => item.title === 'Presentations')).toBeUndefined();
     });
 
+    it('should keep the transparent presentation layout when the URL contains query parameters', () => {
+        (router as unknown as MockRouter).setUrl('/course-management/1/presentations?presentationExerciseId=7');
+
+        expect(component.hasTransparentCourseBody()).toBe(true);
+    });
+
     it('should subscribe to profileService and set values correctly', async () => {
         await component.ngOnInit();
 
