@@ -29,8 +29,6 @@ Everything here is either measured or marked as an estimate. The measurements co
 [benchmark runs](/admin/benchmarking-tool#measured-results) against real deployments. This page carries
 the conclusions and links to the numbers rather than repeating them.
 
----
-
 ## Start here
 
 | If you are running | Deployment shape | Set it up with |
@@ -53,8 +51,6 @@ second machine to take over if it fails while the exam is running.
   and less error-prone than assembling a cluster by hand.
 
 </Callout>
-
----
 
 ## The two kinds of node
 
@@ -84,8 +80,6 @@ thousand students all submit smoothly, and to run only a modest number of build 
 during the exam arrives in minutes rather than seconds. Spending the other way round achieves nothing:
 many build agents behind too few core nodes gain you no capacity, because students cannot reach the exam
 to produce builds in the first place.
-
----
 
 ## One machine or several
 
@@ -120,8 +114,6 @@ repositories, a
 scheduled tasks and WebSocket connections consistent across the nodes, and a load balancer in front of
 them all. None of these turned out to be expensive in practice: see
 [what not to spend on](#what-not-to-spend-on).
-
----
 
 ## A starting point for sizing
 
@@ -163,8 +155,6 @@ Two adjustments worth making to the units:
 A build agent can run several build jobs at the same time. Budget at least 2 CPUs and 2 GB of memory for
 each concurrent job on that machine, and do not raise the number of concurrent jobs beyond what the
 machine's own CPUs and memory can support.
-
----
 
 ## What has been measured
 
@@ -214,8 +204,6 @@ numbers together: on its own, neither of them says anything.
 
 </Callout>
 
----
-
 ## What to scale when
 
 When an installation already exists and something is slow, match the symptom to the resource rather than
@@ -241,8 +229,6 @@ adding capacity everywhere. The middle column is what to check before spending m
   record the authentication mix alongside any measurement, or two numbers are not comparable.
 
 </Callout>
-
----
 
 ## Everything else in the deployment
 
@@ -270,8 +256,6 @@ for at all. The [Cleanup Service](/admin/cleanup-service) and the
 [automatic nightly cleanup](/admin/production-setup/additional-tips#automatic-cleanup) remove it, which is
 cheaper than buying storage for data that nobody needs.
 
----
-
 ## What not to spend on
 
 The supporting services never came close to a limit in any measurement: the repository storage used about
@@ -286,8 +270,6 @@ Two more places where money does not help:
   before they ran out of processor, and started swapping to disk under load.
 - **Extra build agents behind too few core nodes.** How quickly feedback arrives does not matter if
   students cannot reach the exam in the first place.
-
----
 
 ## Knowing when to scale
 
@@ -311,8 +293,6 @@ installation slows down without discovering it during a real exam.
 [Running a comparable scale test](/admin/benchmarking-tool#running-a-comparable-scale-test) describes what
 to record, so that a result still means something after the hardware or the Artemis version changes.
 Results from other institutions are very welcome.
-
----
 
 ## Related documentation
 
