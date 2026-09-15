@@ -10,7 +10,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -221,24 +220,27 @@ public abstract class ExerciseWithSubmissionsExportService {
     }
 
     /**
-     * Exports the exercise details as json file. The exercise details are just the exercise object.
+     * Projects the exercise into the record written to the exercise details file. Each exercise type returns the same
+     * record its REST endpoints return, so the exported JSON keeps the field names the import and the clients read.
+     *
+     * @param exercise the exercise that is exported
+     * @return the entity-free exercise details
+     */
+    protected abstract Record exerciseDetailsForExport(Exercise exercise);
+
+    /**
+     * Exports the exercise details as json file.
      *
      * @param exercise        the exercise that is exported
      * @param exportDir       the directory where the content of the export is stored
      * @param pathsToBeZipped the paths that should be included in the zip file
      */
-    private void exportExerciseDetails(Exercise exercise, Path exportDir, List<Path> pathsToBeZipped) throws IOException {
+    private void exportExerciseDetails(Exercise exercise, Path exportDir, List<Path> pathsToBeZipped) {
         var exerciseDetailsFileExtension = ".json";
         String exerciseDetailsFileName = EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + "-" + exercise.getTitle() + exerciseDetailsFileExtension;
         String cleanExerciseDetailsFileName = FileUtil.sanitizeFilename(exerciseDetailsFileName);
         var exerciseDetailsExportPath = exportDir.resolve(cleanExerciseDetailsFileName);
-        // do not include duplicate information
-        exercise.getCourseViaExerciseGroupOrCourseMember().setExercises(null);
-        exercise.getCourseViaExerciseGroupOrCourseMember().setExams(null);
-        // do not include related entities ids
-        Optional.ofNullable(exercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
-        Optional.ofNullable(exercise.getTeamAssignmentConfig()).ifPresent(it -> it.setId(null));
-        pathsToBeZipped.add(FileUtil.writeObjectToJsonFile(exercise, this.objectMapper, exerciseDetailsExportPath));
+        pathsToBeZipped.add(FileUtil.writeObjectToJsonFile(exerciseDetailsForExport(exercise), this.objectMapper, exerciseDetailsExportPath));
     }
 
     protected Path exportExerciseWithSubmissions(Exercise exercise, SubmissionExportOptionsDTO optionsDTO, Path exportDir, List<String> exportErrors,
