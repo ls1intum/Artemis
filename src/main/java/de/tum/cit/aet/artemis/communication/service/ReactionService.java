@@ -13,6 +13,8 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.Posting;
+import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.ReactionDTO;
@@ -84,18 +86,50 @@ public class ReactionService {
         reaction.setEmojiId(reactionDTO.emojiId());
         reaction.setUser(user);
 
-        var answerPostOpt = answerPostRepository.findById(targetId);
-        if (answerPostOpt.isPresent()) {
-            var answerPost = answerPostOpt.get();
-            checkThatCourseHasCourseIdElseThrow(course.getId(), answerPost.getCoursePostingBelongsTo());
-            reaction.setAnswerPost(answerPost);
-            return createReactionForAnswer(reaction, answerPost, user, course);
+        if (reactionDTO.postingType() == PostingType.ANSWER) {
+            return reactToAnswerPost(reaction, answerPostRepository.findByIdElseThrow(targetId), user, course);
+        }
+        if (reactionDTO.postingType() == PostingType.POST) {
+            return reactToPost(reaction, postRepository.findByIdElseThrow(targetId), user, course);
         }
 
-        var post = postRepository.findByIdElseThrow(targetId);
+        // No type given, so the id has to be resolved on its own. Posts and answer posts are numbered independently, which means the same value
+        // regularly denotes one of each; the course tells them apart in every case except the one where both happen to live in it.
+        Optional<AnswerPost> answerPost = answerPostRepository.findById(targetId).filter(candidate -> belongsToCourse(candidate.getCoursePostingBelongsTo(), courseId));
+        Optional<Post> post = postRepository.findById(targetId).filter(candidate -> belongsToCourse(candidate.getCoursePostingBelongsTo(), courseId));
+
+        if (answerPost.isPresent() && post.isPresent()) {
+            throw new BadRequestAlertException("The id " + targetId + " denotes both a post and an answer post in this course, so postingType is required",
+                    METIS_REACTION_ENTITY_NAME, "ambiguousPostingId");
+        }
+        if (answerPost.isPresent()) {
+            return reactToAnswerPost(reaction, answerPost.get(), user, course);
+        }
+        if (post.isPresent()) {
+            return reactToPost(reaction, post.get(), user, course);
+        }
+
+        // Nothing in this course carries the id. Resolve it anyway so that the failure says whether the posting is missing entirely or sits in
+        // another course, which is the distinction a caller needs to act on.
+        Posting posting = answerPostRepository.findById(targetId).map(Posting.class::cast).orElseGet(() -> postRepository.findByIdElseThrow(targetId));
+        checkThatCourseHasCourseIdElseThrow(course.getId(), posting.getCoursePostingBelongsTo());
+        throw new BadRequestAlertException("Could not resolve posting " + targetId, METIS_REACTION_ENTITY_NAME, "postingNotFound");
+    }
+
+    private boolean belongsToCourse(Course postingCourse, Long courseId) {
+        return postingCourse != null && Objects.equals(postingCourse.getId(), courseId);
+    }
+
+    private Reaction reactToPost(Reaction reaction, Post post, User user, Course course) {
         checkThatCourseHasCourseIdElseThrow(course.getId(), post.getCoursePostingBelongsTo());
         reaction.setPost(post);
         return createReactionForPost(reaction, post, user, course);
+    }
+
+    private Reaction reactToAnswerPost(Reaction reaction, AnswerPost answerPost, User user, Course course) {
+        checkThatCourseHasCourseIdElseThrow(course.getId(), answerPost.getCoursePostingBelongsTo());
+        reaction.setAnswerPost(answerPost);
+        return createReactionForAnswer(reaction, answerPost, user, course);
     }
 
     /**
