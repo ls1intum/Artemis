@@ -28,7 +28,7 @@ export class QuizExerciseApi {
      * @param quizExerciseId
      * @param action
      */
-    performActionForQuizExercise(quizExerciseId: number, action: 'start-now' | 'end-now' | 'set-visible' | 'start-batch'): Observable<QuizExerciseDates> {
+    performActionForQuizExercise(quizExerciseId: number, action: 'start-now' | 'end-now' | 'set-visible'): Observable<QuizExerciseDates> {
         const actionPath = encodeURIComponent(String(action));
         const url = `${this.basePath}/api/quiz/quiz-exercises/${quizExerciseId}/${actionPath}`;
         return this.http.put<QuizExerciseDates>(url, null);

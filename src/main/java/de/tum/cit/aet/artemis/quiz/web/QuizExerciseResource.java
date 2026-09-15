@@ -131,13 +131,13 @@ public class QuizExerciseResource {
      * PUT /quiz-exercises/:quizExerciseId/:action : perform the specified action for the quiz now
      *
      * @param quizExerciseId the id of the quiz exercise to start
-     * @param action         the action to perform on the quiz (allowed actions: "start-now", "set-visible")
+     * @param action         the action to perform on the quiz (allowed actions: "start-now", "end-now", "set-visible")
      * @return the response entity with status 200 if quiz was started, appropriate error code otherwise
      */
     @PutMapping("quiz-exercises/{quizExerciseId}/{action}")
     @EnforceAtLeastEditorInExercise(resourceIdFieldName = "quizExerciseId")
     public ResponseEntity<QuizExerciseDatesDTO> performActionForQuizExercise(@PathVariable Long quizExerciseId,
-            @Parameter(schema = @Schema(type = "string", allowableValues = { "start-now", "end-now", "set-visible", "start-batch" })) @PathVariable QuizAction action) {
+            @Parameter(schema = @Schema(type = "string", allowableValues = { "start-now", "end-now", "set-visible" })) @PathVariable QuizAction action) {
         log.debug("REST request to perform action {} on quiz exercise {}", action, quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExerciseId);
         var user = userRepository.getUserWithAuthorities();

@@ -306,7 +306,7 @@ paths:
         required: true
         schema:
           type: string
-          enum: [start-now, end-now, set-visible, start-batch]
+          enum: [start-now, end-now, set-visible]
       responses:
         '200':
           description: OK
