@@ -57,8 +57,8 @@
                     <div
                         class="@container relative overflow-hidden rounded-xl border border-[var(--border-color)] bg-[var(--surface-ground)] before:absolute before:inset-y-0 before:start-0 before:w-1 before:bg-[var(--primary)] before:content-['']"
                     >
-                        <div class="mb-0 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--border-color)] px-6 py-4 ps-[1.625rem]">
-                            <div class="min-w-0 flex-1">
+                        <div class="flex items-end justify-between gap-3 border-b border-[var(--border-color)] px-6 py-3 ps-[1.625rem]">
+                            <div class="flex min-w-0 flex-1 flex-col">
                                 <label
                                     class="mb-1.5 flex items-center gap-1 text-xs font-medium tracking-wider text-muted-color uppercase"
                                     jhiTranslate="artemisApp.exercise.assessmentCriterion"
@@ -94,7 +94,7 @@
                             <div class="grid grid-cols-1 gap-4 @[58rem]:grid-cols-2">
                                 @for (instruction of criterion.structuredGradingInstructions; track instruction; let instructionIndex = $index) {
                                     <div
-                                        class="@container [overflow-wrap:anywhere] rounded-lg border border-[var(--border-color)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--primary)_7%,var(--module-bg)),var(--module-bg))] px-[1.125rem] py-4"
+                                        class="@container [overflow-wrap:anywhere] rounded-lg border border-[var(--border-color)] bg-[color-mix(in_srgb,var(--primary)_4%,var(--module-bg))] px-[1.125rem] py-4"
                                     >
                                         <div class="grid grid-cols-1 items-end gap-3 @[22rem]:grid-cols-[6.25rem_minmax(0,1fr)_6.25rem_2.5rem]">
                                             <div class="flex min-w-0 flex-col [&_input]:w-full">
@@ -171,8 +171,8 @@
                                                 <fa-icon class="text-lg" [icon]="faTrash" />
                                             </button>
                                         </div>
-                                        <hr class="my-4 h-0 border-0 border-t border-[var(--border-color)]" />
-                                        <div class="grid grid-cols-1 gap-4 @[26rem]:grid-cols-2 @[26rem]:gap-0">
+                                        <div class="my-3 h-px bg-[var(--border-color)]"></div>
+                                        <div class="grid grid-cols-1 gap-x-0 gap-y-4 @[26rem]:grid-cols-2">
                                             <div class="flex min-w-0 flex-col @[26rem]:pr-4">
                                                 <label
                                                     class="mb-1.5 flex items-center gap-1 text-xs font-medium tracking-wider text-muted-color uppercase"
