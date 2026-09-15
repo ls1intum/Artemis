@@ -418,7 +418,8 @@ public class UserService {
             return handleRegisterUserWithSameLoginAsExistingUser(newUser, existingUser);
         }
 
-        // Do not use a single-result lookup here: installations can still contain legacy duplicate emails during the preparation phase.
+        // The unique index makes the address the caller is registering the only decisive fact, so an existence check is
+        // all that is needed; loading the account that holds it would tell the caller who that is.
         if (newUser.getEmail() != null && userRepository.existsByEmailIgnoreCase(newUser.getEmail())) {
             throw new EmailAlreadyUsedException();
         }
