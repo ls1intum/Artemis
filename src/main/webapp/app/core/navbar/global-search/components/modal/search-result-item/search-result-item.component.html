@@ -9,9 +9,6 @@
         <div class="result-content flex-grow-1 min-width-0">
             <div class="d-flex align-items-center gap-2 mb-1">
                 <h6 class="result-title mb-0 text-truncate">{{ result().title }}</h6>
-                @if (result().badge) {
-                    <span class="badge bg-secondary text-white px-2 py-1 small">{{ result().badge }}</span>
-                }
                 @if (isExamExercise()) {
                     <span class="badge badge-exam d-inline-flex align-items-center gap-1 px-2 py-1 small">
                         <fa-icon [icon]="faGraduationCap" size="xs" aria-hidden="true" />
@@ -27,8 +24,14 @@
             </div>
 
             <!-- Metadata Row -->
-            @if (hasAnyMetadata()) {
+            @if (result().badge || hasAnyMetadata()) {
                 <div class="result-metadata d-flex align-items-center gap-2 mb-2 text-secondary small">
+                    @if (result().badge) {
+                        <span class="result-type">{{ badgeLabelKey() | artemisTranslate }}</span>
+                        @if (hasAnyMetadata()) {
+                            <span>•</span>
+                        }
+                    }
                     @if (courseName()) {
                         <span class="d-flex align-items-center gap-1">
                             <fa-icon [icon]="faBook" size="sm" aria-hidden="true" />

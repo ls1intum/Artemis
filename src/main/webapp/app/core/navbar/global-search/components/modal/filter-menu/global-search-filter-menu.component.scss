@@ -1,0 +1,218 @@
+@use 'src/main/webapp/app/core/navbar/global-search/components/modal/search-list-row' as row;
+
+// The filter menu fills the results pane (no floating card): the palette reuses the results space
+// while the user composes a filter, so there is no overlay stacked on the modal. Rows mirror the
+// entity / result rows (icon tile + title + description) so both read at the same size.
+:host {
+    display: block;
+    height: 100%;
+}
+
+.filter-menu-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.filter-menu-header {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.75rem 1rem 0.4rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--bs-secondary-color);
+}
+
+// The dead-end statement takes the header slot, so it drops the eyebrow treatment and reads as a
+// sentence. The warning glyph is what separates it from a caption: without one, a quiet line of text in
+// the header slot reads as an aside about the word rather than as the palette reporting that nothing was
+// filtered. The text itself stays muted, so the marker does the work and nothing shouts.
+.filter-menu-header--message {
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 0.8rem;
+    font-weight: 400;
+    padding-bottom: 0.5rem;
+}
+
+.filter-menu-message-icon {
+    // Not --bs-warning: that amber reads as caution tape against the palette's greys. This is the same
+    // muted red as the dotted underline marking the same value in the input, so the two read as one signal.
+    color: color-mix(in srgb, var(--bs-danger) 78%, var(--bs-secondary-color));
+}
+
+// The raw text a literal-search row would search for. The quotes already mark it as verbatim, so it stays
+// in the body face: a second typeface inside one short row reads as an accident rather than as a signal.
+.filter-menu-literal {
+    color: var(--bs-body-color);
+    font-weight: 600;
+}
+
+// Back button in the header: steps up one level in the guided picker (value menu -> chooser -> root).
+// The chevron and the header label are both inside the button, so the whole row is the click target rather
+// than a 1.3rem glyph. Negative margins offset the padding, keeping the label exactly where the static
+// header title sits, and the typography is inherited so the button is indistinguishable from that title.
+.filter-menu-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: -0.25rem -0.45rem;
+    padding: 0.25rem 0.45rem;
+    border: none;
+    border-radius: 0.35rem;
+    background: transparent;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: inherit;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+        background: var(--global-search-item-hover-bg);
+        color: var(--bs-body-color);
+    }
+}
+
+.filter-menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+}
+
+.filter-menu-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+
+    // No row dividers: the menu reads as a clean list distinguished by hover / active fill only.
+    &:hover,
+    &.is-active {
+        background-color: var(--global-search-item-hover-bg);
+    }
+}
+
+// A row with no description line is a single line of text, so it centres against its 2.5rem icon tile
+// instead of top-aligning the way rows with a description do. Defined after .filter-menu-item because it
+// overrides that rule's align-items at equal specificity.
+.filter-menu-item--single {
+    align-items: center;
+}
+
+// A dead end offers recovery actions rather than filter values, and one of them is a whole sentence
+// carrying the user's raw query. The shared row title size is meant for short labels like "Lectures", so
+// both rows drop to the secondary size together: sizing only one of them left two adjacent rows visibly
+// mismatched, which is worse than either size on its own.
+.filter-menu--recovery .filter-menu-label {
+    @include row.description;
+}
+
+.filter-menu-item--literal {
+    .filter-menu-label {
+        display: flex;
+        gap: 0.3rem;
+        min-width: 0;
+    }
+
+    .filter-menu-literal {
+        min-width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+}
+
+// Icon tile matching the entity / result rows: a neutral rounded square with the blue entity icon.
+.filter-menu-icon {
+    @include row.icon-tile;
+}
+
+// Leading glyph: blue for include actions, red for exclude actions (the −filter: / −type: rows).
+.filter-menu-glyph {
+    color: var(--bs-primary);
+}
+
+.filter-menu-glyph--ex {
+    // Muted red (danger dialled back toward the neutral text colour) so exclude reads clearly without shouting.
+    color: color-mix(in srgb, var(--bs-danger) 68%, var(--bs-secondary-color));
+}
+
+.filter-menu-content {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-menu-label {
+    @include row.title;
+}
+
+.filter-menu-description {
+    @include row.description;
+}
+
+.filter-menu-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    align-self: center;
+}
+
+// Operator-syntax pill on the right of guided-picker rows, e.g. "type:".
+.filter-menu-syntax {
+    padding: 0.1rem 0.45rem;
+
+    // Bordered white pill so it stays outlined on the active row (whose grey fill would otherwise absorb it).
+    border: 1px solid var(--global-search-border-color);
+    border-radius: 0.35rem;
+    background: var(--global-search-modal-bg);
+    color: var(--bs-secondary-color);
+    font-family: var(--bs-font-monospace, monospace);
+    font-size: 0.8rem;
+}
+
+// Exclude rows tint the syntax pill a muted red (e.g. −filter:, −type:), matching the exclude glyph.
+.filter-menu-syntax--ex {
+    color: color-mix(in srgb, var(--bs-danger) 68%, var(--bs-secondary-color));
+    border-color: color-mix(in srgb, var(--bs-danger) 30%, var(--global-search-border-color));
+}
+
+// Faded placeholder inside a hint, e.g. the "filter" in −filter:.
+.hint-placeholder {
+    opacity: 0.55;
+}
+
+// Keyboard hint pill on the active row ("Tab" selects it).
+.filter-menu-hint {
+    padding: 0.1rem 0.45rem;
+    border: 1px solid var(--global-search-border-color);
+    border-radius: 0.35rem;
+    font-size: 0.72rem;
+    color: var(--bs-secondary-color);
+    background: var(--global-search-modal-bg);
+}
+
+.filter-menu-empty {
+    padding: 0.75rem 1rem;
+    color: var(--bs-secondary-color);
+    font-size: 0.9rem;
+}
+
+// In dark mode the shared modal surface (--global-search-modal-bg) is a saturated navy and the
+// global-search border is blue-tinted, which makes the pills read as blue. Give the syntax / hint
+// pills a neutral dark elevation + neutral borders in dark mode only; light mode stays white.
+:host-context([prime-ng-use-dark-theme='true']) {
+    .filter-menu-syntax,
+    .filter-menu-hint {
+        background: var(--bs-body-bg);
+        border-color: var(--bs-border-color);
+    }
+}

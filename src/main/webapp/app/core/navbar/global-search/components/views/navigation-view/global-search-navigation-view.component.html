@@ -74,13 +74,4 @@
             </div>
         }
     </div>
-} @else {
-    <!-- Searchable entities list (initial state) -->
-    <div class="entity-list" [class.mt-3]="irisEnabled()">
-        @for (entity of searchableEntities; track entity.id; let i = $index) {
-            <div #selectableItem>
-                <jhi-global-search-entity-item [entity]="entity" [isSelected]="selectedIndex() === actionButtonCount() + i" (entityClick)="onEntityItemClick($event)" />
-            </div>
-        }
-    </div>
 }

@@ -100,11 +100,12 @@ public class GlobalSearchResource {
      * Executes exactly one Weaviate request per invocation. Per-type access rules are encoded as a
      * compound {@code OR}-of-{@code AND}s filter so access control cannot leak across types.
      *
-     * @param query    the search query (may be empty to browse recent items)
-     * @param types    optional comma-separated list of types to include ({@code exercise,lecture,lecture_unit,exam,faq,channel,course,post,answer_post}
-     *                     or {@code all}; default {@code all})
-     * @param courseId optional course id to scope the search to a single course
-     * @param limit    maximum number of results (default 10, max 25)
+     * @param query            the search query (may be empty to browse recent items)
+     * @param types            optional comma-separated list of types to include ({@code exercise,lecture,lecture_unit,exam,faq,channel,course,post,answer_post}
+     *                             or {@code all}; default {@code all})
+     * @param courseIds        optional course ids to scope the search to one or more courses (OR); inaccessible or unknown ids are ignored
+     * @param excludeCourseIds optional course ids to hide from the results (OR); inaccessible or unknown ids are ignored
+     * @param limit            maximum number of results (default 10, max 25)
      * @return status 200 with a list of unified search results; empty list if the user has no access
      *         or all requested types are invalid
      */
@@ -112,16 +113,17 @@ public class GlobalSearchResource {
     @EnforceAtLeastStudent
     @Operation(summary = "Perform a unified semantic search across entity types", description = """
             Searches across multiple entity types (exercises, lectures, lecture units, exams, FAQs, channels, courses, posts, answer posts)
-            with a consistent response format. When courseId is not specified, the search is performed
+            with a consistent response format. When courseIds is not specified, the search is performed
             globally across all courses the authenticated user has access to. Per-type access rules are
             enforced server-side via compound Weaviate filters.""")
     @ApiResponse(responseCode = "200", description = "Search results matching the query")
     @ApiResponse(responseCode = "400", description = "Unsupported entity type requested")
     public ResponseEntity<List<GlobalSearchResultDTO>> globalSearch(@RequestParam("q") @Parameter(description = "Search query; can be empty to retrieve recent items") String query,
             @RequestParam(value = "types", required = false) @Parameter(description = "Comma-separated entity type filter (exercise, lecture, lecture_unit, exam, faq, channel, course, post, answer_post) or 'all'; default 'all'") String types,
-            @RequestParam(value = "courseId", required = false) @Parameter(description = "Course ID to restrict the search to a single course") Long courseId,
+            @RequestParam(value = "courseIds", required = false) @Parameter(description = "Course IDs to restrict the search to one or more courses (OR); inaccessible IDs are ignored") List<Long> courseIds,
+            @RequestParam(value = "excludeCourseIds", required = false) @Parameter(description = "Course IDs to exclude from the search; results in these courses are hidden") List<Long> excludeCourseIds,
             @RequestParam(value = "limit", defaultValue = "10") @Parameter(description = "Maximum number of results (1–25, default 10)") int limit) {
-        log.debug("REST request for global search with query: '{}', types: {}, courseId: {}, limit: {}", query, types, courseId, limit);
+        log.debug("REST request for global search with query: '{}', types: {}, courseIds: {}, excludeCourseIds: {}, limit: {}", query, types, courseIds, excludeCourseIds, limit);
 
         Set<String> requestedTypes = parseTypes(types);
         if (requestedTypes == null) {
@@ -131,7 +133,10 @@ public class GlobalSearchResource {
         int effectiveLimit = Math.clamp(limit, 1, 25);
         User user = userRepository.getUserWithAuthorities();
 
-        FilterBuildResult filterResult = buildSearchableItemFilter(user, courseId, requestedTypes);
+        // Defence-in-depth: bound the id lists so a crafted request cannot drive an unbounded findAllById /
+        // Weaviate containsAny on the admin paths. The cap sits far above any realistic UI use, so it never
+        // affects a normal filter set; excess ids are dropped (consistent with the lenient "drop, don't 4xx" contract).
+        FilterBuildResult filterResult = buildSearchableItemFilter(user, capCourseIds(courseIds), capCourseIds(excludeCourseIds), requestedTypes);
         if (!filterResult.hasAccess()) {
             return ResponseEntity.ok(List.of());
         }
@@ -142,7 +147,7 @@ public class GlobalSearchResource {
         Set<Long> staffCourseIds;
         Set<Long> editorCourseIds;
         if (filterResult.accessibleCoursesById() != null) {
-            // Non-admin (or admin with courseId): reuse courses already fetched during filter building
+            // Non-admin (or admin with courseIds): reuse courses already fetched during filter building
             coursesById = filterResult.accessibleCoursesById();
             staffCourseIds = filterResult.staffCourseIds();
             editorCourseIds = filterResult.editorCourseIds();
@@ -191,6 +196,20 @@ public class GlobalSearchResource {
             result.add(normalized);
         }
         return result.isEmpty() ? null : result;
+    }
+
+    /**
+     * Upper bound on the number of course ids honoured per {@code courseIds} / {@code excludeCourseIds} list.
+     * Sits far above any realistic filter set; excess ids are dropped rather than rejected.
+     */
+    private static final int MAX_COURSE_ID_FILTERS = 100;
+
+    /** Truncates a course-id list to {@link #MAX_COURSE_ID_FILTERS} so crafted requests cannot drive an unbounded query. */
+    private static List<Long> capCourseIds(List<Long> courseIds) {
+        if (courseIds == null || courseIds.size() <= MAX_COURSE_ID_FILTERS) {
+            return courseIds;
+        }
+        return courseIds.stream().limit(MAX_COURSE_ID_FILTERS).toList();
     }
 
     /**
@@ -272,8 +291,8 @@ public class GlobalSearchResource {
      * and {@code hasAccess} may be {@code false} (user has no accessible courses → short-circuit empty).
      * <p>
      * {@code accessibleCoursesById} and {@code staffCourseIds} are populated for non-admin paths
-     * (and admin-with-courseId) so the caller can resolve course names and staff membership without
-     * a redundant database round-trip. Both are {@code null} for admin-global (no courseId filter)
+     * (and admin-with-courseIds) so the caller can resolve course names and staff membership without
+     * a redundant database round-trip. Both are {@code null} for admin-global (no courseIds filter)
      * searches, where the result courses are unknown until after the Weaviate query.
      */
     private record FilterBuildResult(Filter filter, boolean hasAccess, Map<Long, Course> accessibleCoursesById, Set<Long> staffCourseIds, Set<Long> editorCourseIds) {
@@ -307,26 +326,59 @@ public class GlobalSearchResource {
      * <li>an {@code OR}-of-{@code AND}s filter with one disjunct per requested type otherwise</li>
      * </ul>
      */
-    private FilterBuildResult buildSearchableItemFilter(User user, Long courseId, Set<String> requestedTypes) {
+    private FilterBuildResult buildSearchableItemFilter(User user, List<Long> courseIds, List<Long> excludeCourseIds, Set<String> requestedTypes) {
         // Decide if the filters should be applied
         boolean isAdmin = authCheckService.isCurrentUserAdminAccessEnabled();
+        boolean hasCourseFilter = courseIds != null && !courseIds.isEmpty();
+        boolean hasExcludeFilter = excludeCourseIds != null && !excludeCourseIds.isEmpty();
         boolean needsCommFiltering = requestedTypes.contains(SearchableEntitySchema.TypeValues.CHANNEL) || requestedTypes.contains(SearchableEntitySchema.TypeValues.POST)
                 || requestedTypes.contains(SearchableEntitySchema.TypeValues.ANSWER_POST);
 
-        if (isAdmin && courseId == null && !needsCommFiltering) {
-            return new FilterBuildResult(buildTypeDiscriminatorFilter(requestedTypes), true, null, null, null);
+        if (isAdmin && !hasCourseFilter && !needsCommFiltering) {
+            // Admin, no include filter, no communication filtering: the cheap type-discriminator filter already
+            // covers visibility. An exclude filter is applied as a single NOT clause rather than enumerating the
+            // complement course set (which for an admin would be every course in the instance).
+            Filter adminFilter = buildTypeDiscriminatorFilter(requestedTypes);
+            if (hasExcludeFilter) {
+                // Safe because every indexed row carries a non-null course_id: course rows use their own id as
+                // course_id (CourseSearchableEntityDTO), and every other entity DTO writes the owning course_id.
+                // So this NOT-clause never evaluates against an absent property (whose negation semantics are
+                // version-dependent in Weaviate); a row is dropped iff its course_id is in the exclude set.
+                adminFilter = Filter.and(adminFilter, courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, excludeCourseIds).not());
+            }
+            return new FilterBuildResult(adminFilter, true, null, null, null);
         }
         List<Course> accessibleCourses;
-        if (isAdmin && courseId == null) {
+        if (isAdmin && !hasCourseFilter) {
             accessibleCourses = courseRepository.findAll();
         }
-        else if (courseId != null) {
-            Course course = courseRepository.findByIdElseThrow(courseId);
-            authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-            accessibleCourses = List.of(course);
+        else if (hasCourseFilter) {
+            // Scope to the requested courses the user can actually access. Inaccessible or unknown ids are dropped
+            // rather than rejected, so an OR across courses never 403s on a single stale id.
+            Set<Long> requestedCourseIds = new HashSet<>(courseIds);
+            if (isAdmin) {
+                accessibleCourses = new ArrayList<>();
+                courseRepository.findAllById(requestedCourseIds).forEach(accessibleCourses::add);
+            }
+            else {
+                accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getId(), false).stream().filter(course -> requestedCourseIds.contains(course.getId()))
+                        .toList();
+            }
+            if (accessibleCourses.isEmpty()) {
+                return new FilterBuildResult(null, false, null, null, null);
+            }
         }
         else {
             accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getId(), false);
+            if (accessibleCourses.isEmpty()) {
+                return new FilterBuildResult(null, false, null, null, null);
+            }
+        }
+        // Drop excluded courses so their results are hidden. Runs after include/access resolution, so an
+        // exclusion can only ever narrow the set the user may already see (never widen access).
+        if (hasExcludeFilter) {
+            Set<Long> excludedIds = new HashSet<>(excludeCourseIds);
+            accessibleCourses = accessibleCourses.stream().filter(course -> !excludedIds.contains(course.getId())).toList();
             if (accessibleCourses.isEmpty()) {
                 return new FilterBuildResult(null, false, null, null, null);
             }
@@ -347,7 +399,7 @@ public class GlobalSearchResource {
 
         List<Filter> disjuncts = new ArrayList<>();
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE)) {
-            if (isAdmin && courseId == null) {
+            if (isAdmin && !hasCourseFilter) {
                 disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.EXERCISE));
             }
             else {
@@ -359,7 +411,7 @@ public class GlobalSearchResource {
 
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.LECTURE)) {
-            if (isAdmin && courseId == null) {
+            if (isAdmin && !hasCourseFilter) {
                 disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.LECTURE));
             }
             else {
@@ -370,7 +422,7 @@ public class GlobalSearchResource {
             }
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.LECTURE_UNIT)) {
-            if (isAdmin && courseId == null) {
+            if (isAdmin && !hasCourseFilter) {
                 disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.LECTURE_UNIT));
             }
             else {
@@ -381,7 +433,7 @@ public class GlobalSearchResource {
             }
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.EXAM)) {
-            if (isAdmin && courseId == null) {
+            if (isAdmin && !hasCourseFilter) {
                 disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.EXAM));
             }
             else {
@@ -401,7 +453,7 @@ public class GlobalSearchResource {
             }
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.FAQ)) {
-            if (isAdmin && courseId == null) {
+            if (isAdmin && !hasCourseFilter) {
                 disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.FAQ));
             }
             else {
@@ -419,7 +471,7 @@ public class GlobalSearchResource {
             }
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.COURSE)) {
-            if (isAdmin && courseId == null) {
+            if (isAdmin && !hasCourseFilter) {
                 disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.COURSE));
             }
             else {
@@ -445,10 +497,15 @@ public class GlobalSearchResource {
         if (disjuncts.isEmpty()) {
             return new FilterBuildResult(null, false, null, null, null);
         }
-        if (disjuncts.size() == 1) {
-            return new FilterBuildResult(disjuncts.getFirst(), true, accessibleCoursesById, staffCourseIds, editorCourseIds);
+        Filter combined = disjuncts.size() == 1 ? disjuncts.getFirst() : Filter.or(disjuncts.toArray(new Filter[0]));
+        // Admin without an include filter builds unscoped type-discriminator disjuncts (e.g. typeEquals(exercise)), so
+        // narrowing the accessible-course set above never reaches them. Apply the exclusion as a single course_id NOT
+        // IN (...) clause here too, mirroring the fast path. Safe because every indexed row carries a non-null
+        // course_id, so the negation never evaluates against an absent property.
+        if (isAdmin && !hasCourseFilter && hasExcludeFilter) {
+            combined = Filter.and(combined, courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, excludeCourseIds).not());
         }
-        return new FilterBuildResult(Filter.or(disjuncts.toArray(new Filter[0])), true, accessibleCoursesById, staffCourseIds, editorCourseIds);
+        return new FilterBuildResult(combined, true, accessibleCoursesById, staffCourseIds, editorCourseIds);
     }
 
     /**
