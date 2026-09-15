@@ -69,7 +69,8 @@ import { RepositoryType } from '../../shared/code-editor/model/code-editor.model
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
-import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { effectiveContainers, parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -118,6 +119,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private consistencyCheckService = inject(ConsistencyCheckService);
     private sharingService = inject(ProgrammingExerciseSharingService);
+    private buildPhasesTemplateService = inject(BuildPhasesTemplateService);
 
     protected readonly deimosModuleEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_DEIMOS);
 
@@ -214,6 +216,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly consistencyExercises = signal<ProgrammingExercise[]>([]);
 
     readonly exerciseDetailSections = signal<DetailOverviewSection[]>([]);
+    /** the Docker image of the exercise's language default; a build container without an image of its own is built with it */
+    readonly defaultDockerImage = signal<string | undefined>(undefined);
+    private defaultDockerImageSubscription?: Subscription;
 
     private diffRunId = 0;
     private lastUpdateTime = 0;
@@ -255,6 +260,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.exerciseStatisticsSubscription?.unsubscribe();
         this.sharingEnabledSubscription?.unsubscribe();
         this.diffFetchSubscription?.unsubscribe();
+        this.defaultDockerImageSubscription?.unsubscribe();
     }
 
     /**
@@ -300,6 +306,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 }),
                 tap(() => {
                     this.localCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
+                    if (this.localCIEnabled()) {
+                        this.loadDefaultDockerImage(programmingExercise);
+                    }
                     const profileInfo = this.profileService.getProfileInfo();
                     if (this.programmingExercise().projectKey && this.programmingExercise().templateParticipation?.buildPlanId && profileInfo.buildPlanURLTemplate) {
                         this.programmingExercise().templateParticipation!.buildPlanUrl = createBuildPlanUrl(
@@ -346,6 +355,32 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.exerciseStatisticsSubscription = this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats.set(statistics);
         });
+    }
+
+    /**
+     * Resolves the Docker image of the exercise's language default, so that the build containers section can name
+     * the image a container without one of its own is built with. The section reads the signal this writes, so a
+     * late answer updates that one binding rather than rebuilding the already rendered sections.
+     *
+     * @param exercise the exercise whose language default is looked up
+     */
+    loadDefaultDockerImage(exercise: ProgrammingExercise): void {
+        if (!exercise.programmingLanguage) {
+            return;
+        }
+        this.defaultDockerImageSubscription?.unsubscribe();
+        this.defaultDockerImageSubscription = this.buildPhasesTemplateService
+            .getTemplate(this.isExamExercise(), exercise.programmingLanguage, exercise.projectType, exercise.staticCodeAnalysisEnabled, exercise.buildConfig?.sequentialTestRuns)
+            .subscribe({
+                next: (template) => {
+                    if (!template.dockerImage) {
+                        return;
+                    }
+                    this.defaultDockerImage.set(template.dockerImage);
+                },
+                // the section then falls back to naming the default without the image; not worth an alert
+                error: () => {},
+            });
     }
 
     private ensureExerciseDetailsInitialized() {
@@ -519,7 +554,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     getExerciseDetailsLanguageSection(exercise: ProgrammingExercise): DetailOverviewSection {
-        const buildPlanPhases = parseBuildPlanPhases(exercise.buildConfig?.buildPlanConfiguration);
+        const buildContainers = effectiveContainers(parseBuildPlanPhases(exercise.buildConfig?.buildPlanConfiguration));
+        // the images themselves are shown per container in the build containers detail below; this only decides whether
+        // the legacy build script is still worth showing next to the structured plan
+        const hasDockerImage = buildContainers.some((container) => !!container.dockerImage);
         const diffReportDetail = this.getDiffReportDetail();
         return {
             headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
@@ -621,23 +659,20 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     },
                 },
                 diffReportDetail,
-                !!buildPlanPhases?.dockerImage && {
-                    type: DetailType.Text,
-                    title: 'artemisApp.programmingExercise.dockerImage',
-                    data: { text: buildPlanPhases?.dockerImage },
-                },
                 !!exercise.buildConfig?.buildScript &&
-                    !!buildPlanPhases?.dockerImage && {
+                    hasDockerImage && {
                         type: DetailType.Markdown,
                         title: 'artemisApp.programmingExercise.script',
                         titleHelpText: 'artemisApp.programmingExercise.revertToTemplateBuildPlan',
                         data: { innerHtml: this.artemisMarkdown.safeHtmlForMarkdown('```bash\n' + exercise.buildConfig?.buildScript + '\n```') },
                     },
+                // the containers of the build plan, each with its phases; a plan without containers is shown as one container
                 this.localCIEnabled() &&
-                    !!buildPlanPhases?.phases?.length && {
-                        type: DetailType.ProgrammingBuildPhases,
-                        title: 'artemisApp.programmingExercise.buildPhasesEditor.title',
-                        data: { phases: buildPlanPhases.phases, isExamMode: this.isExamExercise() },
+                    !!buildContainers.length && {
+                        type: DetailType.ProgrammingBuildContainers,
+                        title: 'artemisApp.programmingExercise.buildContainersEditor.detailTitle',
+                        titleHelpText: 'artemisApp.programmingExercise.buildContainersEditor.help',
+                        data: { containers: buildContainers, isExamMode: this.isExamExercise(), defaultDockerImage: this.defaultDockerImage },
                     },
                 {
                     type: DetailType.Text,

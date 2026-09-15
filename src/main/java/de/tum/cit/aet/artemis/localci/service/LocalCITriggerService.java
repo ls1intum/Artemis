@@ -4,8 +4,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTA
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.hibernate.Hibernate;
@@ -45,6 +47,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerRepositoryDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
@@ -265,44 +268,77 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         RepositoryInfo repositoryInfo = getRepositoryInfo(participation, triggeredByPushTo, programmingExerciseBuildConfig);
 
-        BuildConfig buildConfig = getBuildConfig(participation, commitHashToBuild, assignmentCommitHash, testCommitHash, programmingExerciseBuildConfig);
+        // A build plan can define several containers; each one runs as its own build job so it is isolated from its
+        // siblings and can be distributed across build agents. A plan with at most one container yields a single job,
+        // which behaves exactly as before (containerName stays null, the whole submission is built on its own).
+        List<ContainerBuild> containerBuilds = resolveContainerBuilds(participation, commitHashToBuild, assignmentCommitHash, testCommitHash, programmingExerciseBuildConfig);
+
+        // The jobs of a multi-container build carry their build group membership: the group under which the result
+        // processing merges their results, the number of jobs it waits for, and the container each job builds. The build's
+        // own id serves as the group id: it is unique to this trigger call, so a retry or a re-push of the same commit opens
+        // a new group instead of joining a build that is still merging. The count is fixed here as well, so a build plan
+        // edited while the containers are still running cannot change what a running build waits for. A single-container
+        // build carries no membership; it is merged and finalized by its one job alone.
+        boolean multiContainerBuild = containerBuilds.size() > 1;
 
         BuildAgentDTO buildAgent = new BuildAgentDTO(null, null, null);
-
-        // The credential the agent that claims this job will clone with. Scoped to this job's repositories and valid
-        // only while the job is in the processing list, so it replaces the installation-wide build agent password
-        // rather than adding to it.
-        String cloneToken = buildJobCloneTokenService.generateCloneToken();
-
-        BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem(buildJobId, participation.getBuildPlanId(), buildAgent, participation.getId(), courseId,
-                programmingExercise.getId(), retryCount, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null, cloneToken);
+        var buildJobQueue = distributedDataAccessService.getDistributedBuildJobQueue();
 
         long buildJobDataNanos = System.nanoTime() - stageStart;
         stageStart = System.nanoTime();
 
-        // Save the build job before adding it to the queue to ensure it exists in the database.
-        // This prevents potential race conditions where a build agent pulls the job from the queue very quickly before it is persisted,
-        // leading to a failed update operation due to a missing record.
-        buildJobRepository.save(new BuildJob(buildJobQueueItem, BuildStatus.QUEUED, null));
+        for (int containerIndex = 0; containerIndex < containerBuilds.size(); containerIndex++) {
+            ContainerBuild containerBuild = containerBuilds.get(containerIndex);
+            BuildConfig buildConfig = containerBuild.buildConfig();
+            String containerName = containerBuild.containerName();
+            BuildJobQueueItem.BuildGroupMembership buildGroup = multiContainerBuild ? new BuildJobQueueItem.BuildGroupMembership(buildJobId, containerBuilds.size(), containerName)
+                    : null;
 
-        long persistNanos = System.nanoTime() - stageStart;
-        stageStart = System.nanoTime();
+            // Provision only the repositories this container lists into it. This is what isolates untrusted student code
+            // from the instructor's test files: a container that does not list the test repository never receives it.
+            RepositoryInfo scopedRepositoryInfo = scopeRepositoryInfo(repositoryInfo, containerBuild.container());
 
-        distributedDataAccessService.getDistributedBuildJobQueue().add(buildJobQueueItem);
+            // Each container needs its own build job id; a single-container plan keeps the historical id unchanged.
+            String jobId = multiContainerBuild ? buildJobId + "-" + containerIndex : buildJobId;
 
-        long enqueueNanos = System.nanoTime() - stageStart;
+            // The credential the agent that claims this job will clone with. Scoped to this job's repositories and valid
+            // only while the job is in the processing list, so it replaces the installation-wide build agent password
+            // rather than adding to it. Every container job is claimed independently, so each carries its own token.
+            String cloneToken = buildJobCloneTokenService.generateCloneToken();
+
+            // The containers of one commit are grouped at merge time via participation and commit hash (the submission does
+            // not exist yet when the build is triggered), so the job carries no submission reference.
+            BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem(jobId, participation.getBuildPlanId(), buildAgent, participation.getId(), courseId,
+                    programmingExercise.getId(), retryCount, priority, null, scopedRepositoryInfo, jobTimingInfo, buildConfig, null, buildGroup, cloneToken);
+
+            // Save the build job before adding it to the queue to ensure it exists in the database.
+            // This prevents potential race conditions where a build agent pulls the job from the queue very quickly before it is persisted,
+            // leading to a failed update operation due to a missing record.
+            buildJobRepository.save(new BuildJob(buildJobQueueItem, BuildStatus.QUEUED, null));
+            buildJobQueue.add(buildJobQueueItem);
+            log.info("Added build job {} for exercise {} and participation {} and container {} with priority {} to the queue", jobId, programmingExercise.getShortName(),
+                    participation.getId(), containerName, priority);
+
+            distributedDataAccessService.getDistributedDockerImageCleanupInfo().put(buildConfig.dockerImage(), jobTimingInfo.submissionDate());
+        }
+
+        long persistAndEnqueueNanos = System.nanoTime() - stageStart;
         // Queueing a build was measured as effectively the whole latency of a git push under exam load, while each
         // individual step is a few milliseconds when uncontended. Report the breakdown when a call is slow, so a
         // regression can be attributed to a step rather than guessed at.
-        long totalMillis = (commitHashNanos + buildJobDataNanos + persistNanos + enqueueNanos) / 1_000_000;
+        long totalMillis = (commitHashNanos + buildJobDataNanos + persistAndEnqueueNanos) / 1_000_000;
         if (totalMillis >= SLOW_TRIGGER_LOG_THRESHOLD_MILLIS) {
-            log.info("Slow build trigger for participation {}: {} ms total (commit hashes {} ms, build job data {} ms, persist {} ms, enqueue {} ms)", participation.getId(),
-                    totalMillis, commitHashNanos / 1_000_000, buildJobDataNanos / 1_000_000, persistNanos / 1_000_000, enqueueNanos / 1_000_000);
+            log.info("Slow build trigger for participation {}: {} ms total (commit hashes {} ms, build job data {} ms, persist and enqueue {} ms)", participation.getId(),
+                    totalMillis, commitHashNanos / 1_000_000, buildJobDataNanos / 1_000_000, persistAndEnqueueNanos / 1_000_000);
         }
-        log.info("Added build job {} for exercise {} and participation {} with priority {} to the queue", buildJobId, programmingExercise.getShortName(), participation.getId(),
-                priority);
+    }
 
-        distributedDataAccessService.getDistributedDockerImageCleanupInfo().put(buildConfig.dockerImage(), jobTimingInfo.submissionDate());
+    /**
+     * A build job to schedule for one container of a build plan: its identity (name, or null for a single-container
+     * plan), the {@link BuildConfig} that will be executed for it, and the container itself (or null for the exercise
+     * default), which selects the repositories that are provisioned into it.
+     */
+    private record ContainerBuild(@Nullable String containerName, BuildConfig buildConfig, @Nullable BuildContainerDTO container) {
     }
 
     // -------Helper methods for triggerBuild()-------
@@ -370,17 +406,47 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     }
 
-    private BuildConfig getBuildConfig(ProgrammingExerciseParticipation participation, String commitHashToBuild, String assignmentCommitHash, String testCommitHash,
-            ProgrammingExerciseBuildConfig buildConfig) throws LocalCIException {
-        String branch = participation instanceof ProgrammingExerciseStudentParticipation studentParticipation ? studentParticipation.getBranch() : buildConfig.getBranch();
+    /**
+     * Restricts the repositories that are provisioned into a container to the ones it lists. A container with no explicit
+     * repository selection (its list is null, which is the exercise default and the single-container case) receives every
+     * repository, exactly as before. The participation's own repository is always provided, because a container cannot
+     * build the code it does not have; the test, solution, and auxiliary repositories are only provided when the container
+     * lists them. This is the mechanism that keeps untrusted student code from receiving the instructor's test files.
+     *
+     * @param full      the full repository information of the participation
+     * @param container the container to scope for, or null for the exercise default (no scoping)
+     * @return the repository information restricted to what the container lists
+     */
+    private RepositoryInfo scopeRepositoryInfo(RepositoryInfo full, @Nullable BuildContainerDTO container) {
+        if (container == null || container.repositories() == null) {
+            return full;
+        }
+        Set<RepositoryType> types = container.repositories().stream().map(BuildContainerRepositoryDTO::type).collect(Collectors.toSet());
+        String testRepositoryUri = types.contains(RepositoryType.TESTS) ? full.testRepositoryUri() : null;
+        String solutionRepositoryUri = types.contains(RepositoryType.SOLUTION) ? full.solutionRepositoryUri() : null;
+        boolean includeAuxiliary = types.contains(RepositoryType.AUXILIARY);
+        String[] auxiliaryRepositoryUris = includeAuxiliary ? full.auxiliaryRepositoryUris() : new String[0];
+        String[] auxiliaryRepositoryCheckoutDirectories = includeAuxiliary ? full.auxiliaryRepositoryCheckoutDirectories() : new String[0];
+        return new RepositoryInfo(full.repositoryName(), full.repositoryType(), full.triggeredByPushTo(), full.assignmentRepositoryUri(), testRepositoryUri, solutionRepositoryUri,
+                auxiliaryRepositoryUris, auxiliaryRepositoryCheckoutDirectories);
+    }
+
+    /**
+     * Resolves the containers of the build plan into the build jobs that should be scheduled for the participation.
+     * A plan with several containers yields one {@link ContainerBuild} per container (identified by its name), each with
+     * its own build script and Docker image. A plan with at most one container yields a single build job whose container
+     * name is null, so it keeps behaving as a plain single-container build.
+     *
+     * @param participation        the participation to build
+     * @param commitHashToBuild    the commit hash that triggered the build (may be null)
+     * @param assignmentCommitHash the resolved commit hash of the assignment repository
+     * @param testCommitHash       the resolved commit hash of the test repository
+     * @param buildConfig          the build config of the exercise
+     * @return the list of container builds to schedule, never empty
+     */
+    private List<ContainerBuild> resolveContainerBuilds(ProgrammingExerciseParticipation participation, String commitHashToBuild, String assignmentCommitHash,
+            String testCommitHash, ProgrammingExerciseBuildConfig buildConfig) throws LocalCIException {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-        ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
-        ProjectType projectType = programmingExercise.getProjectType();
-        boolean staticCodeAnalysisEnabled = programmingExercise.isStaticCodeAnalysisEnabled();
-        boolean sequentialTestRunsEnabled = buildConfig.hasSequentialTestRuns();
-
-        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
-
         programmingExercise.setBuildConfig(buildConfig);
         BuildPlanPhasesDTO buildPlanPhasesDTO;
         try {
@@ -391,8 +457,45 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         }
 
         final List<BuildContainerDTO> containers = buildPlanPhasesDTO.effectiveContainers();
-        // a build plan without any phase falls back to the default phases and image of the exercise
-        final BuildContainerDTO container = containers.isEmpty() ? null : containers.getFirst();
+
+        // At most one container behaves as before: a single job that builds the whole submission, with a null container name.
+        if (containers.size() <= 1) {
+            final BuildContainerDTO container = containers.isEmpty() ? null : containers.getFirst();
+            BuildConfig config = buildConfigForContainer(participation, container, buildPlanPhasesDTO, commitHashToBuild, assignmentCommitHash, testCommitHash, buildConfig);
+            return List.of(new ContainerBuild(null, config, container));
+        }
+
+        // Several containers are each scheduled as an independent build job, identified by the container name.
+        List<ContainerBuild> containerBuilds = new ArrayList<>(containers.size());
+        for (BuildContainerDTO container : containers) {
+            BuildConfig config = buildConfigForContainer(participation, container, buildPlanPhasesDTO, commitHashToBuild, assignmentCommitHash, testCommitHash, buildConfig);
+            containerBuilds.add(new ContainerBuild(container.name(), config, container));
+        }
+        return containerBuilds;
+    }
+
+    /**
+     * Builds the {@link BuildConfig} for a single container. A null container falls back to the default phases and image
+     * of the exercise, which is the case for a build plan without any explicitly configured container.
+     *
+     * @param participation        the participation to build
+     * @param container            the container to build the config for, or null for the exercise default
+     * @param buildPlanPhasesDTO   the parsed build plan configuration (used for the plan-level default image)
+     * @param commitHashToBuild    the commit hash that triggered the build (may be null)
+     * @param assignmentCommitHash the resolved commit hash of the assignment repository
+     * @param testCommitHash       the resolved commit hash of the test repository
+     * @param buildConfig          the build config of the exercise
+     * @return the build config to execute for the container
+     */
+    private BuildConfig buildConfigForContainer(ProgrammingExerciseParticipation participation, @Nullable BuildContainerDTO container, BuildPlanPhasesDTO buildPlanPhasesDTO,
+            String commitHashToBuild, String assignmentCommitHash, String testCommitHash, ProgrammingExerciseBuildConfig buildConfig) {
+        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
+        String branch = participation instanceof ProgrammingExerciseStudentParticipation studentParticipation ? studentParticipation.getBranch() : buildConfig.getBranch();
+        ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
+        ProjectType projectType = programmingExercise.getProjectType();
+        boolean staticCodeAnalysisEnabled = programmingExercise.isStaticCodeAnalysisEnabled();
+        boolean sequentialTestRunsEnabled = buildConfig.hasSequentialTestRuns();
+        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
 
         final List<BuildPhaseDTO> phases = container == null ? buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise) : container.phases();
         final String configuredDockerImage = container == null ? buildPlanPhasesDTO.dockerImage() : container.dockerImage();
@@ -405,9 +508,12 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         final String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(programmingExercise.getBuildConfig(), activePhases);
 
+        // the exercise timeout has to cover the slowest container; a container can bound its own job more tightly
+        final int timeoutSeconds = container != null && container.timeoutSeconds() != null ? container.timeoutSeconds() : buildConfig.getTimeoutSeconds();
+
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
-                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),
-                buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
+                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, timeoutSeconds, buildConfig.getAssignmentCheckoutPath(), buildConfig.getTestCheckoutPath(),
+                buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
     }
 
     private List<String> finalizeResultPaths(final ProgrammingExerciseBuildConfig buildConfig, final Stream<String> resultPaths) {

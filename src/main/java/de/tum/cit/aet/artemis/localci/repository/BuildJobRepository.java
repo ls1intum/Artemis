@@ -44,6 +44,119 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     List<BuildJob> findWithDataByIdIn(List<Long> ids);
 
     /**
+     * The ids of the results the jobs of a build group have merged into, oldest first. The containers of one build are
+     * scheduled as separate jobs that share a build group (see {@code BuildJobQueueItem#buildGroupId}) and all merge into
+     * one result, so the first id is the group's aggregated result.
+     *
+     * @param buildGroupId the id of the build group
+     * @param pageable     limits the query, typically to the first linked result
+     * @return the ids of the results linked to the group's jobs, oldest first
+     */
+    @Query("""
+            SELECT b.result.id
+            FROM BuildJob b
+            WHERE b.buildGroupId = :buildGroupId
+                AND b.result IS NOT NULL
+            ORDER BY b.id ASC
+            """)
+    List<Long> findResultIdsOfBuildGroup(@Param("buildGroupId") String buildGroupId, Pageable pageable);
+
+    /**
+     * Counts the jobs of a build group that are in one of the given statuses. Used with the finished statuses to tell
+     * when every container of a multi-container build has reported, whether or not its result could be merged.
+     *
+     * @param buildGroupId  the id of the build group
+     * @param buildStatuses the statuses to count
+     * @return the number of the group's jobs in one of the statuses
+     */
+    long countByBuildGroupIdAndBuildStatusIn(String buildGroupId, Collection<BuildStatus> buildStatuses);
+
+    /**
+     * Checks whether any job of a build group has a status other than the given one. Used to decide whether the group's
+     * aggregated result should be marked successful once every container has finished.
+     *
+     * @param buildGroupId the id of the build group
+     * @param buildStatus  the status that counts as successful
+     * @return true if at least one of the group's jobs has a different status
+     */
+    boolean existsByBuildGroupIdAndBuildStatusNot(String buildGroupId, BuildStatus buildStatus);
+
+    /**
+     * Checks whether any job of a build group is not linked to a result. Once every container has finished, such a job is
+     * one whose result could not be merged, which makes the group's build unsuccessful.
+     *
+     * @param buildGroupId the id of the build group
+     * @return true if at least one of the group's jobs has no result
+     */
+    boolean existsByBuildGroupIdAndResultIsNull(String buildGroupId);
+
+    /**
+     * The build groups whose jobs have all finished while their aggregated result is still in progress: groups whose last
+     * container's finalization did not go through, see {@code LocalCIResultProcessingService#finalizeCompletedBuildGroups}.
+     * A group with a job that is still queued, building or missing is not complete and is left alone, and so is a group
+     * whose jobs finished after the given date, so that a merge under way is not raced.
+     *
+     * @param finishedStatuses the statuses in which a job counts as finished
+     * @param completedBefore  only groups whose jobs finished before this date
+     * @param pageable         limits the number of groups
+     * @return the ids of the complete build groups whose aggregated result has no completion date
+     */
+    @Query("""
+            SELECT DISTINCT b.buildGroupId
+            FROM BuildJob b
+            WHERE b.buildGroupId IS NOT NULL
+                AND b.result IS NOT NULL
+                AND b.result.completionDate IS NULL
+                AND b.buildCompletionDate < :completedBefore
+                AND NOT EXISTS (
+                    SELECT o
+                    FROM BuildJob o
+                    WHERE o.buildGroupId = b.buildGroupId
+                        AND o.buildStatus NOT IN :finishedStatuses)
+            """)
+    List<String> findCompletedBuildGroupsWithResultInProgress(@Param("finishedStatuses") Collection<BuildStatus> finishedStatuses,
+            @Param("completedBefore") ZonedDateTime completedBefore, Pageable pageable);
+
+    /**
+     * Checks whether the aggregated result a build group's jobs link to is still in progress. Written as a query rather
+     * than derived, so that a job without a result does not count: the join to the result has to be an inner one.
+     *
+     * @param buildGroupId the id of the build group
+     * @return true if a job of the group links to a result without a completion date
+     */
+    @Query("""
+            SELECT COUNT(b) > 0
+            FROM BuildJob b
+            WHERE b.buildGroupId = :buildGroupId
+                AND b.result IS NOT NULL
+                AND b.result.completionDate IS NULL
+            """)
+    boolean existsResultInProgressOfBuildGroup(@Param("buildGroupId") String buildGroupId);
+
+    /**
+     * The completion date of the last job of a build group to finish, which is the completion date a finalized aggregated
+     * result carries.
+     *
+     * @param buildGroupId the id of the build group
+     * @return the latest completion date among the group's jobs, if any job has one
+     */
+    @Query("""
+            SELECT MAX(b.buildCompletionDate)
+            FROM BuildJob b
+            WHERE b.buildGroupId = :buildGroupId
+            """)
+    Optional<ZonedDateTime> findLatestBuildCompletionDateOfBuildGroup(@Param("buildGroupId") String buildGroupId);
+
+    /**
+     * The first job of a build group. Every job of a group belongs to the same participation and was triggered by the
+     * same push, so any one of them says what the group is a build of.
+     *
+     * @param buildGroupId the id of the build group
+     * @return the group's job with the lowest id
+     */
+    Optional<BuildJob> findFirstByBuildGroupIdOrderByIdAsc(String buildGroupId);
+
+    /**
      * Retrieves all build job ids that were submitted before the given date.
      *
      * @param date the date before which build jobs should be deleted

@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
  * @param log  the log line content
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record BuildLogEntryDTO(Long id, ZonedDateTime time, String log) implements Serializable {
+public record BuildLogEntryDTO(Long id, ZonedDateTime time, String log, String containerName) implements Serializable {
 
     /**
      * Converts a {@link BuildLogEntry} into a {@link BuildLogEntryDTO}.
@@ -32,6 +32,8 @@ public record BuildLogEntryDTO(Long id, ZonedDateTime time, String log) implemen
         if (buildLogEntry == null) {
             return null;
         }
-        return new BuildLogEntryDTO(buildLogEntry.getId(), buildLogEntry.getTime(), buildLogEntry.getLog());
+        // The container name is set for the logs of a multi-container build only; the client groups the build output by
+        // it. It is null, and left out of the JSON, for a submission built by a single container.
+        return new BuildLogEntryDTO(buildLogEntry.getId(), buildLogEntry.getTime(), buildLogEntry.getLog(), buildLogEntry.getContainerName());
     }
 }

@@ -101,7 +101,7 @@ class BuildPlanPhasesDTOTest {
     void testKeepsScopedRepositoriesOfContainers() throws Exception {
         var studentTests = new BuildContainerDTO("student_tests", DOCKER_IMAGE, List.of(new BuildContainerRepositoryDTO(RepositoryType.USER)), List.of(phase("test")));
         var instructorTests = new BuildContainerDTO("instructor_tests", DOCKER_IMAGE, List.of(new BuildContainerRepositoryDTO(RepositoryType.USER),
-                new BuildContainerRepositoryDTO(RepositoryType.TESTS), new BuildContainerRepositoryDTO(RepositoryType.AUXILIARY, "grading-utils")), List.of(phase("test")));
+                new BuildContainerRepositoryDTO(RepositoryType.TESTS), new BuildContainerRepositoryDTO(RepositoryType.AUXILIARY)), List.of(phase("test")));
         var json = new BuildPlanPhasesDTO(null, null, List.of(studentTests, instructorTests)).toBuildPlanConfiguration();
 
         var containers = BuildPlanPhasesDTO.fromBuildPlanConfiguration(json).effectiveContainers();
@@ -110,7 +110,21 @@ class BuildPlanPhasesDTOTest {
         assertThat(containers.getFirst().repositories()).extracting(BuildContainerRepositoryDTO::type).containsExactly(RepositoryType.USER);
         assertThat(containers.getLast().repositories()).extracting(BuildContainerRepositoryDTO::type).containsExactly(RepositoryType.USER, RepositoryType.TESTS,
                 RepositoryType.AUXILIARY);
-        assertThat(containers.getLast().repositories()).extracting(BuildContainerRepositoryDTO::name).containsExactly(null, null, "grading-utils");
+    }
+
+    @Test
+    void testDistinguishesUnscopedFromScopedToNothingAcrossSerialization() throws Exception {
+        // null repositories means unscoped (checkout the exercise repositories); an empty list means scoped to nothing
+        // (only the assignment repository). The empty list must survive serialization, otherwise a container scoped to
+        // exclude every sensitive repository would be turned back into an unscoped container that receives all of them.
+        var unscoped = new BuildContainerDTO("unscoped", DOCKER_IMAGE, null, List.of(phase("test")));
+        var scopedToNothing = new BuildContainerDTO("scoped", DOCKER_IMAGE, List.of(), List.of(phase("test")));
+        var json = new BuildPlanPhasesDTO(null, null, List.of(unscoped, scopedToNothing)).toBuildPlanConfiguration();
+
+        var containers = BuildPlanPhasesDTO.fromBuildPlanConfiguration(json).effectiveContainers();
+
+        assertThat(containers.getFirst().repositories()).as("unscoped container keeps a null repository list").isNull();
+        assertThat(containers.getLast().repositories()).as("scoped-to-nothing container keeps its empty repository list").isEmpty();
     }
 
     @Test

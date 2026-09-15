@@ -23,4 +23,8 @@ public interface BuildLogEntryRepository extends ArtemisJpaRepository<BuildLogEn
     @Modifying
     void deleteByProgrammingSubmissionId(long programmingSubmissionId);
 
+    @Transactional // ok because of delete
+    @Modifying
+    void deleteByProgrammingSubmissionIdAndContainerName(long programmingSubmissionId, String containerName);
+
 }

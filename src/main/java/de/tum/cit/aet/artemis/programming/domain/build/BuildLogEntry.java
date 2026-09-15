@@ -32,6 +32,11 @@ public class BuildLogEntry extends DomainObject {
     @Column(name = "log")
     private String log;
 
+    // The name of the build container that produced this log line, or null for a submission built by a single container.
+    // It lets the build logs of a multi-container build be attributed to the container they came from.
+    @Column(name = "container_name")
+    private String containerName;
+
     @ManyToOne
     @JsonIgnore
     @JoinColumn(nullable = false)
@@ -66,6 +71,14 @@ public class BuildLogEntry extends DomainObject {
 
     public void setLog(String log) {
         this.log = log;
+    }
+
+    public String getContainerName() {
+        return containerName;
+    }
+
+    public void setContainerName(String containerName) {
+        this.containerName = containerName;
     }
 
     public ProgrammingSubmission getProgrammingSubmission() {

@@ -19,11 +19,19 @@
     @if (!isBuilding() && rawBuildLogs().length) {
         <div class="card-body build-output__content">
             <div class="buildoutput d-flex flex-column">
-                @for (logEntry of rawBuildLogs(); track logEntry) {
-                    <span class="build-output__entry">
-                        <span class="build-output__entry-date">{{ logEntry.time | artemisDate: 'short' : true }}</span>
-                        <span class="build-output__entry-text">{{ logEntry.log }}</span>
-                    </span>
+                @for (group of buildLogGroups(); track group.containerName) {
+                    @if (group.containerName) {
+                        <span class="build-output__container">
+                            <span jhiTranslate="artemisApp.editor.buildOutputContainer"></span>
+                            {{ group.containerName }}
+                        </span>
+                    }
+                    @for (logEntry of group.entries; track logEntry) {
+                        <span class="build-output__entry">
+                            <span class="build-output__entry-date">{{ logEntry.time | artemisDate: 'short' : true }}</span>
+                            <span class="build-output__entry-text">{{ logEntry.log }}</span>
+                        </span>
+                    }
                 }
             </div>
         </div>

@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.localci.service;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -40,15 +42,18 @@ public class LocalCIMissingJobService {
 
     private final DistributedDataAccessService distributedDataAccessService;
 
+    private final LocalCIResultProcessingService localCIResultProcessingService;
+
     @Value("${artemis.continuous-integration.max-missing-job-retries:3}")
     private int maxMissingJobRetries;
 
     public LocalCIMissingJobService(BuildJobRepository buildJobRepository, LocalCITriggerService localCITriggerService, ParticipationRepository participationRepository,
-            DistributedDataAccessService distributedDataAccessService) {
+            DistributedDataAccessService distributedDataAccessService, LocalCIResultProcessingService localCIResultProcessingService) {
         this.buildJobRepository = buildJobRepository;
         this.localCITriggerService = localCITriggerService;
         this.participationRepository = participationRepository;
         this.distributedDataAccessService = distributedDataAccessService;
+        this.localCIResultProcessingService = localCIResultProcessingService;
     }
 
     /**
@@ -110,10 +115,20 @@ public class LocalCIMissingJobService {
         List<BuildJob> missingJobs = missingJobsSlice.getContent();
         log.debug("Processing {} missing build jobs to retry", missingJobs.size());
 
+        // A multi-container build has one job per container, and retrying re-triggers the whole build, so a build whose
+        // containers all went missing is retried once for its build group, not once per container. The siblings' retry
+        // counts are raised along with it, so the retry limit applies to the build as a whole.
+        Set<String> retriedBuildGroups = new HashSet<>();
         for (BuildJob buildJob : missingJobs) {
             if (buildJob.getRetryCount() >= maxMissingJobRetries) {
                 log.warn("Build job with id {} for participation {} has reached the maximum number of {} retries and will not be retried.", buildJob.getBuildJobId(),
                         buildJob.getParticipationId(), maxMissingJobRetries);
+                continue;
+            }
+            String buildGroupId = buildJob.getBuildGroupId();
+            if (buildGroupId != null && !retriedBuildGroups.add(buildGroupId)) {
+                log.debug("Build job with id {} belongs to build group {}, which was already retried in this run", buildJob.getBuildJobId(), buildGroupId);
+                buildJobRepository.incrementRetryCount(buildJob.getBuildJobId());
                 continue;
             }
             try {
@@ -127,6 +142,20 @@ public class LocalCIMissingJobService {
 
         if (missingJobsSlice.hasNext()) {
             log.debug("There are more missing jobs to process in the next scheduled run.");
+        }
+    }
+
+    /**
+     * Periodically finalizes the multi-container builds whose containers have all finished while their merged result
+     * stayed in progress. The missing-job retry above cannot cover them: none of their jobs is missing. See
+     * {@link LocalCIResultProcessingService#finalizeCompletedBuildGroups()}.
+     */
+    @Scheduled(fixedRateString = "${artemis.continuous-integration.retry-missing-jobs-interval-seconds:300}", initialDelayString = "${artemis.continuous-integration.retry-missing-jobs-delay-seconds:120}", timeUnit = TimeUnit.SECONDS)
+    public void finalizeCompletedBuildGroups() {
+        log.debug("Checking for complete build groups whose aggregated result stayed in progress");
+        int finalizedGroups = localCIResultProcessingService.finalizeCompletedBuildGroups();
+        if (finalizedGroups > 0) {
+            log.info("Finalized {} complete build groups whose aggregated result had stayed in progress", finalizedGroups);
         }
     }
 
