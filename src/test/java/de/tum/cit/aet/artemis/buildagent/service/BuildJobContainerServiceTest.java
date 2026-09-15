@@ -12,11 +12,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -233,7 +235,7 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
 
     private Path createRepository(String name) throws IOException {
         Path repository = Files.createDirectories(temporaryDirectory.resolve(name));
-        Files.writeString(repository.resolve("file.txt"), "content");
+        FileUtils.writeStringToFile(repository.resolve("file.txt").toFile(), "content", StandardCharsets.UTF_8);
         return repository;
     }
 
