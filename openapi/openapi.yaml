@@ -1654,21 +1654,6 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizStatisticsOverview'}
-  /api/quiz/quiz-exercises/{quizExerciseId}/recalculate-statistics:
-    get:
-      tags: [quiz-statistics]
-      operationId: recalculateStatistics
-      parameters:
-      - name: quizExerciseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/QuizPointStatistics'}
   /api/quiz/quiz-exercises/{quizExerciseId}/for-student:
     get:
       tags: [quiz-exercise-retrieval]

@@ -55,14 +55,4 @@ export class QuizStatisticsApi {
         return this.http.get<QuizStatisticsOverview>(url);
     }
 
-    /**
-     *
-     *
-     * @param quizExerciseId
-     */
-    recalculateStatistics(quizExerciseId: number): Observable<QuizPointStatistics> {
-        const url = `${this.basePath}/api/quiz/quiz-exercises/${quizExerciseId}/recalculate-statistics`;
-        return this.http.get<QuizPointStatistics>(url);
-    }
-
 }
