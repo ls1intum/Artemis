@@ -264,6 +264,10 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * the entity brought its course with it - for an exam exercise the course twice, since it is reachable both
      * directly and through the exercise group's exam. The course is reduced to its id because the role checks read
      * nothing else from it.
+     * <p>
+     * An exercise names a course or an exercise group, never both: the exam exercise belongs to the course of its exam. The course is therefore taken from the exercise group when
+     * there is one, exactly as {@link de.tum.cit.aet.artemis.exercise.domain.Exercise#getCourseViaExerciseGroupOrCourseMember()} takes it. A {@code COALESCE} over the two ids
+     * would read the same for every well-formed exercise and authorize against the wrong course for one that broke the rule.
      *
      * @param projectKey the project key taken from the repository URI
      * @return the matching projections, which the caller expects to be exactly one
@@ -271,7 +275,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @Query("""
             SELECT new de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO(
                 pe.id,
-                COALESCE(c.id, ec.id),
+                CASE WHEN eg.id IS NOT NULL THEN ec.id ELSE c.id END,
                 pe.mode,
                 pe.allowOfflineIde,
                 pe.startDate,
@@ -1309,7 +1313,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             SELECT new de.tum.cit.aet.artemis.deimos.dto.DeimosExerciseScopeInfoDTO(
                 p.id,
                 p.title,
-                COALESCE(c.id, ec.id),
+                CASE WHEN eg.id IS NOT NULL THEN ec.id ELSE c.id END,
                 COALESCE(c.title, ec.title),
                 COALESCE(c.courseIcon, ec.courseIcon))
             FROM ProgrammingExercise p

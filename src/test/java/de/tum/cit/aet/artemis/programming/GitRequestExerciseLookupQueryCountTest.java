@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -39,6 +41,9 @@ class GitRequestExerciseLookupQueryCountTest extends AbstractSpringIntegrationIn
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseTestRepository;
 
+    @Autowired
+    private CourseUtilService courseUtilService;
+
     private ProgrammingExercise examProgrammingExercise;
 
     @BeforeEach
@@ -62,6 +67,39 @@ class GitRequestExerciseLookupQueryCountTest extends AbstractSpringIntegrationIn
     void testExamExerciseAccessProjectionIsResolvedInOneQuery() {
         assertThatDb(() -> programmingExerciseTestRepository.findAccessProjectionByProjectKey(examProgrammingExercise.getProjectKey()))
                 .hasBeenCalledAtMostTimes(EXERCISE_LOOKUP_QUERY_COUNT);
+    }
+
+    /**
+     * An exam exercise is authorized against the course of its exam, never against a course named directly on it. The
+     * two are the same for every exercise the API can produce, because the create and update paths refuse an exercise
+     * that carries both, so the row this pins has to be written past them.
+     * <p>
+     * It is worth pinning because the difference is invisible until it matters: a {@code COALESCE} over the two ids
+     * reads identically for every well-formed exercise and answers with the wrong course for exactly this one, and the
+     * caller turns that id straight into a role check. Resolving through the exercise group is also what
+     * {@code getCourseViaExerciseGroupOrCourseMember} does, which is the behaviour the projection replaced.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExamExerciseResolvesTheExamCourseEvenWhenItAlsoNamesAnotherCourse() {
+        Course examCourse = examProgrammingExercise.getExerciseGroup().getExam().getCourse();
+        Course unrelatedCourse = courseUtilService.addEmptyCourse();
+        assertThat(unrelatedCourse.getId()).as("the two courses have to differ for this to test anything").isNotEqualTo(examCourse.getId());
+
+        // Written past the REST layer on purpose: checkCourseAndExerciseGroupExclusivity rejects an exercise carrying both.
+        examProgrammingExercise.setCourse(unrelatedCourse);
+        programmingExerciseTestRepository.save(examProgrammingExercise);
+
+        ProgrammingExercise reloaded = programmingExerciseTestRepository.findOneByProjectKeyOrThrow(examProgrammingExercise.getProjectKey(), true);
+        assertThat(reloaded.getCourseViaExerciseGroupOrCourseMember().getId()).as("the entity resolves the exam course").isEqualTo(examCourse.getId());
+
+        var projection = assertThatDb(() -> programmingExerciseTestRepository.findAccessProjectionByProjectKey(examProgrammingExercise.getProjectKey()))
+                .hasBeenCalledAtMostTimes(EXERCISE_LOOKUP_QUERY_COUNT);
+
+        assertThat(projection).singleElement().satisfies(access -> {
+            assertThat(access.courseId()).as("and so does the projection").isEqualTo(examCourse.getId());
+            assertThat(access.courseId()).as("never the course named directly on the exercise").isNotEqualTo(unrelatedCourse.getId());
+        });
     }
 
     /**
