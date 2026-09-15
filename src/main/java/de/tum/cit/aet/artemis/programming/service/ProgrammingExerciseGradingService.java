@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
+import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
@@ -136,6 +137,8 @@ public class ProgrammingExerciseGradingService {
 
     private final ScaFeedbackRepository scaFeedbackRepository;
 
+    private final FeedbackRepository feedbackRepository;
+
     private final TestCasePointsService testCasePointsService;
 
     private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
@@ -149,7 +152,7 @@ public class ProgrammingExerciseGradingService {
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
             MavenCentralRateLimitNotificationService mavenCentralRateLimitNotificationService, FeedbackMessageService feedbackMessageService,
             TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository, TestCasePointsService testCasePointsService,
-            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService, FeedbackRepository feedbackRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
@@ -171,6 +174,7 @@ public class ProgrammingExerciseGradingService {
         this.feedbackMessageService = feedbackMessageService;
         this.testCaseFeedbackRepository = testCaseFeedbackRepository;
         this.scaFeedbackRepository = scaFeedbackRepository;
+        this.feedbackRepository = feedbackRepository;
         this.testCasePointsService = testCasePointsService;
         this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
@@ -335,14 +339,12 @@ public class ProgrammingExerciseGradingService {
             // Whether this container failed to build; applied to the submission once the attempt's result is resolved below.
             final boolean containerFailed = parsed.buildFailed();
 
-            // The submission is shared by all containers of the same commit. This path mutates and saves it and appends
-            // to its result, so the real entity has to be loaded: saving the detached skeleton that parseBuildResult
-            // hands back would cascade a result whose exerciseId was never populated over the stored row. A submission
-            // that was created as a fallback is already saved, so it reloads here like any other.
-            ProgrammingSubmission submission = programmingSubmissionRepository.findWithEagerResultsAndFeedbacksById(parsed.submission().getId()).map(loaded -> {
-                loaded.setParticipation((Participation) participation);
-                return loaded;
-            }).orElse(parsed.submission());
+            // The submission is shared by all containers of the same commit and is never saved as an entity here: its
+            // result collection cascades with orphan removal, and merging a detached copy of it would delete a result a
+            // tutor inserted in the meantime. The skeleton parseBuildResult hands back carries the id, which is all the
+            // result's foreign key, the build logs and the targeted flag update below need; a submission created as a
+            // fallback is already saved.
+            ProgrammingSubmission submission = parsed.submission();
 
             // Preserve the build logs of a failed container, labeled by its name and saved next to the logs of the other
             // containers, so a crashed container's logs survive alongside its siblings' (as for a single-container build,
@@ -353,17 +355,14 @@ public class ProgrammingExerciseGradingService {
                 buildLogService.appendBuildLogs(buildLogs, submission, containerName);
             }
 
-            // Resolving the attempt's in-progress result resets the submission's build-failed flag when it starts a fresh
-            // attempt, so the flag below reflects this attempt only: any failing container marks the submission failed.
             Result aggregatedResult = getOrCreateAggregatedResult(submission, exercise, aggregatedResultId);
-            if (containerFailed) {
-                submission.setBuildFailed(true);
+            // The build-failed flag is written with a targeted update, as on the single-container path. The first
+            // container of a build starts a fresh attempt and resets the flag left over from an earlier attempt of the
+            // same submission; any container that fails to build sets it. finalizeContainerResult reads it back from
+            // the stored submission.
+            if (aggregatedResultId == null || containerFailed) {
+                programmingSubmissionRepository.updateBuildFailed(submission.getId(), containerFailed);
             }
-            // Saved before this container's feedback is appended: the submission cascades to its results, and the
-            // aggregate is detached, so saving the submission after the rows were added would merge the aggregate a
-            // second time, through an instance whose rows never received the ids the first merge gave to its copies,
-            // and insert every row twice. The duplicated test cases would then zero the score at finalization.
-            programmingSubmissionRepository.save(submission);
             // Drop feedback for a test case the aggregated result already carries from an earlier container. A shared
             // setup phase (e.g. the main-method check the DejaGnu containers each need) runs in several containers and
             // reports the same test case in each, but a test name is unique per exercise: without this, the merged
@@ -427,17 +426,20 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Inserts only the typed feedback rows of a result that are not stored yet, keeping the instances: persisting a new
-     * row assigns its id in place, whereas merging (what saving a stored result does for its rows) hands back copies
-     * whose lazy references, the message above all, are proxies that cannot be read once the session that merged them
-     * has closed. A result whose stored rows are loaded whole and whose new rows are inserted this way can be reported
-     * to the client as it is, without reloading it after the save.
+     * Inserts only the feedback rows of a result that are not stored yet, keeping the instances: persisting a new row
+     * assigns its id in place, whereas merging (what saving a stored result does for its rows) hands back copies whose
+     * lazy references, the message above all, are proxies that cannot be read once the session that merged them has
+     * closed, and leaves the original rows without ids. A result whose stored rows are loaded whole and whose new rows
+     * are inserted this way can be reported to the client as it is, without reloading it after the save. Covers the
+     * typed rows and the legacy rows the scoring still writes (the submission penalty, the duplicate-test warning),
+     * because the client identifies feedback by id.
      *
-     * @param result the result whose new typed feedback rows are inserted
+     * @param result the result whose new feedback rows are inserted
      */
-    private void insertNewTypedFeedback(Result result) {
+    private void insertNewFeedback(Result result) {
         testCaseFeedbackRepository.saveAll(result.getTestCaseFeedbacks().stream().filter(feedback -> feedback.getId() == null).toList());
         scaFeedbackRepository.saveAll(result.getScaFeedbacks().stream().filter(feedback -> feedback.getId() == null).toList());
+        feedbackRepository.saveAll(result.getFeedbacks().stream().filter(feedback -> feedback.getId() == null).toList());
     }
 
     /**
@@ -501,9 +503,6 @@ public class ProgrammingExerciseGradingService {
             hydrateTypedFeedback(aggregatedResult);
             return aggregatedResult;
         }
-        // A new in-progress result marks the start of a fresh build attempt, so clear a build-failed flag left over from
-        // an earlier attempt of the same submission; the containers of this attempt set it again if any of them fails.
-        submission.setBuildFailed(false);
         Result result = new Result();
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         // stays null until every container has finished, which marks the result as still in progress
@@ -513,7 +512,6 @@ public class ProgrammingExerciseGradingService {
         result.setRatedIfNotAfterDueDate();
         result = resultRepository.save(result);
         result.setSubmission(submission);
-        submission.addResult(result);
         return result;
     }
 
@@ -583,9 +581,9 @@ public class ProgrammingExerciseGradingService {
         // without saving it, so saving earlier would lose that flag. The instance handed back is the one that was scored,
         // not save's return value: the result is reported to the client right after this, and that report reads every
         // row's test case and message, which the rows loaded above carry whole and the copies a merge hands back would
-        // only hold as proxies without a session. The rows the scoring added are inserted in place first, so that they
-        // carry ids too.
-        insertNewTypedFeedback(aggregatedResult);
+        // only hold as proxies without a session. The rows the scoring added, typed and legacy, are inserted in place
+        // first, so that they carry ids too.
+        insertNewFeedback(aggregatedResult);
         resultRepository.save(aggregatedResult);
         return mergedIntoManualResult.orElse(aggregatedResult);
     }

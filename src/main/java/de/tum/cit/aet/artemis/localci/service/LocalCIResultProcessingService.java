@@ -510,6 +510,12 @@ public class LocalCIResultProcessingService {
                     // Link this container's build job to the shared result; the link is how the siblings that finish after
                     // this one find the aggregate.
                     linkedContainerJob = saveFinishedBuildJob(buildJob, buildStatus, appendedResult);
+                    if (linkedContainerJob == null) {
+                        // saveFinishedBuildJob logs its failure and returns null. Nothing rolls the merged rows back, but
+                        // without the link the siblings cannot find the aggregate and the group's count is one short, so
+                        // the container is treated as one whose merge failed: the recovery below records its job.
+                        throw new IllegalStateException("the build job of container " + buildGroup.containerName() + " could not be saved after its result was merged");
+                    }
                     Result finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate());
                     outcome = new ContainerOutcome(finalizedResult != null ? finalizedResult : appendedResult, linkedContainerJob);
                 }

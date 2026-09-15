@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -591,6 +592,34 @@ class LocalCIResultProcessingServiceTest {
         // the aggregate is still in progress, so the student is told neither of a result nor of an error
         verify(programmingMessagingService, never()).notifyUserAboutNewResult(any(), any());
         verify(programmingSubmissionMessagingService, never()).notifyUserAboutSubmissionError(any(Participation.class), any(BuildTriggerWebsocketError.class));
+        verify(aggregationLocks).unlock("group-1");
+    }
+
+    @Test
+    void aContainerWhoseJobCannotBeSavedAfterItsMergeIsRecordedAsFailed() {
+        // saveFinishedBuildJob swallows the failure and returns null. Nothing rolls the merged rows back, so the container
+        // path must treat the missing link as a failed merge and record the job as failed without a link: that keeps the
+        // group's completion count advancing, instead of finalizing with a count one short and leaving the group open.
+        withQueuedResult(new ResultQueueItem(buildResult, containerJob("group-1", 2, "container_a"), List.of(), null));
+        withParticipation();
+        lenient().when(buildJobRepository.findByBuildJobId(anyString())).thenReturn(Optional.empty());
+        when(buildJobRepository.save(any(BuildJob.class))).thenThrow(new IllegalStateException("connection lost")).thenAnswer(invocation -> invocation.getArgument(0));
+        when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
+        when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of());
+        Result aggregatedResult = new Result();
+        aggregatedResult.setId(7L);
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull())).thenReturn(aggregatedResult);
+        when(buildJobRepository.countByBuildGroupIdAndBuildStatusIn(eq("group-1"), any())).thenReturn(1L);
+
+        resultProcessingService.processResultAsync();
+
+        // the failed link, then the recovery: recorded as failed and without a link
+        ArgumentCaptor<BuildJob> saved = ArgumentCaptor.captor();
+        verify(buildJobRepository, times(2)).save(saved.capture());
+        BuildJob recorded = saved.getAllValues().getLast();
+        assertThat(recorded.getBuildStatus()).isEqualTo(BuildStatus.ERROR);
+        assertThat(recorded.getResult()).isNull();
+        verify(programmingExerciseGradingService, never()).finalizeContainerResult(anyLong(), any(), anyBoolean(), any());
         verify(aggregationLocks).unlock("group-1");
     }
 

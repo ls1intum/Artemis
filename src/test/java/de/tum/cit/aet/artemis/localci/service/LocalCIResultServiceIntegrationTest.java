@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
@@ -38,6 +39,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
@@ -417,6 +419,42 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(finalizedResult.getScore()).as("scored over the merged feedback").isGreaterThan(0.0);
         assertThat(resultRepository.findById(openAggregate.getId()).orElseThrow().getCompletionDate()).as("a group with a queued container is not complete").isNull();
         assertThat(localCIResultProcessingService.finalizeCompletedBuildGroups()).as("nothing left to finalize").isZero();
+    }
+
+    /**
+     * The scoring adds legacy feedback rows to the finalized result, here the submission penalty. The result is reported
+     * to the client as it is, so those rows must carry ids like the typed rows do: the client identifies feedback by id.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFinalizedResultCarriesTheIdsOfTheFeedbackTheScoringAdded() {
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        participation.setProgrammingExercise(programmingExercise);
+        // one point per submission beyond a limit of one; an earlier submission with a result of its own exceeds it
+        SubmissionPenaltyPolicy penaltyPolicy = new SubmissionPenaltyPolicy();
+        penaltyPolicy.setSubmissionLimit(1);
+        penaltyPolicy.setExceedingPenalty(1.0);
+        penaltyPolicy.setActive(true);
+        programmingExerciseUtilService.addSubmissionPolicyToExercise(penaltyPolicy, programmingExercise);
+        ProgrammingSubmission earlierSubmission = submissionOf(participation, "0000000000000000000000000000000000000008");
+        Result earlierResult = new Result();
+        earlierResult.setAssessmentType(AssessmentType.AUTOMATIC);
+        earlierResult.setCompletionDate(ZonedDateTime.now().minusMinutes(4));
+        earlierResult.setSubmission(earlierSubmission);
+        earlierResult.setExerciseId(programmingExercise.getId());
+        resultRepository.save(earlierResult);
+
+        String commitHash = submissionOf(participation, "0000000000000000000000000000000000000009").getCommitHash();
+        var passingJob = new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO("testClass[SortStrategy]", List.of())));
+        BuildResult containerResult = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(passingJob), null, null, false, 0);
+        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, containerResult, true, "container_a", null);
+        buildJobRepository.save(new BuildJob(buildJobFor("penalty-0", "penalty", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult));
+
+        Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult.getId(), participation, true, ZonedDateTime.now());
+
+        assertThat(finalizedResult.getFeedbacks()).as("the penalty feedback the scoring added")
+                .anyMatch(feedback -> feedback.getText() != null && feedback.getText().startsWith(Feedback.SUBMISSION_POLICY_FEEDBACK_IDENTIFIER));
+        assertThat(finalizedResult.getFeedbacks()).as("reported with the ids the client identifies feedback by").allMatch(feedback -> feedback.getId() != null);
     }
 
     private ProgrammingSubmission submissionOf(ProgrammingExerciseStudentParticipation participation, String commitHash) {
