@@ -10,7 +10,11 @@
                     @if (showLeadingIcon()) {
                         <fa-icon [fixedWidth]="true" [icon]="$any(channelTypeIcon())?.[groupKey]" />
                     }
-                    {{ groupedData()[groupKey].translationKey ?? 'artemisApp.courseOverview.sidebar.' + groupKey | artemisTranslate | titlecase }}
+                    @if (groupedData()[groupKey].translationKey; as translationKey) {
+                        {{ translationKey | artemisTranslate | titlecase }}
+                    } @else {
+                        {{ 'artemisApp.courseOverview.sidebar.' + groupKey | artemisTranslate | titlecase }}
+                    }
                     @if (!groupedData()[groupKey].isHideCount) {
                         ({{ (groupedData()[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems')?.length }})
                     }

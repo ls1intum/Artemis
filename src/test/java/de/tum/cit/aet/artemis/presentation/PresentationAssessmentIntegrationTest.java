@@ -356,6 +356,46 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createPresentationAssessmentInstance_withMultipleStudentsAndResult_shouldReturnBadRequest() throws Exception {
+        long instancesBeforeRequest = presentationAssessmentInstanceRepository.count();
+        PresentationAssessmentInstanceDTO dto = new PresentationAssessmentInstanceDTO(null, FIXED_DATE.plusDays(14), 15.5,
+                List.of(TEST_PREFIX + "student1", TEST_PREFIX + "student2"), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, null);
+
+        request.postWithResponseBody(getInstancesUrl(course, presentationAssessment), dto, PresentationAssessmentInstanceDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(presentationAssessmentInstanceRepository.count()).isEqualTo(instancesBeforeRequest);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updatePresentationAssessmentInstance_shouldRejectExpandingGradedIndividualAndAllowUpdatingLegacySharedInstance() throws Exception {
+        PresentationAssessmentInstanceDTO individual = request
+                .postWithResponseBody(
+                        getInstancesUrl(course, presentationAssessment), new PresentationAssessmentInstanceDTO(null, FIXED_DATE.plusDays(14), null,
+                                List.of(TEST_PREFIX + "student1"), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, null),
+                        PresentationAssessmentInstanceDTO.class, HttpStatus.CREATED);
+        PresentationAssessmentInstanceDTO expandedIndividual = new PresentationAssessmentInstanceDTO(individual.id(), individual.presentationDate(), 12.5,
+                List.of(TEST_PREFIX + "student1", TEST_PREFIX + "student2"), individual.language(), individual.mode(), individual.location(), individual.meetingLink(), null);
+
+        request.putWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/" + individual.id(), expandedIndividual, PresentationAssessmentInstanceDTO.class,
+                HttpStatus.BAD_REQUEST);
+
+        PresentationAssessmentInstanceDTO shared = request.postWithResponseBody(
+                getInstancesUrl(course, presentationAssessment), new PresentationAssessmentInstanceDTO(null, FIXED_DATE.plusDays(15), null,
+                        List.of(TEST_PREFIX + "student1", TEST_PREFIX + "student2"), "en", PresentationAssessmentMode.IN_PERSON, "Room 2", null, null),
+                PresentationAssessmentInstanceDTO.class, HttpStatus.CREATED);
+        PresentationAssessmentInstanceDTO gradedShared = new PresentationAssessmentInstanceDTO(shared.id(), shared.presentationDate(), 13.5, shared.studentLogins(),
+                shared.language(), shared.mode(), shared.location(), shared.meetingLink(), "Legacy shared instance");
+
+        PresentationAssessmentInstanceDTO updated = request.putWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/" + shared.id(), gradedShared,
+                PresentationAssessmentInstanceDTO.class, HttpStatus.OK);
+
+        assertThat(updated.resultPoints()).isEqualTo(13.5);
+        assertThat(updated.studentLogins()).containsExactlyInAnyOrder(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void savePresentationAssessmentInstances_shouldCreateOneInstancePerStudentAtomically() throws Exception {
         PresentationAssessmentInstanceDTO dto = new PresentationAssessmentInstanceDTO(null, FIXED_DATE.plusDays(14), 15.125,
                 List.of(TEST_PREFIX + "student1", TEST_PREFIX + "student2"), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, "Good presentation");

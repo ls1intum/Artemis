@@ -138,7 +138,12 @@
                                                                 variant="text"
                                                                 [icon]="faTrash"
                                                                 [ariaLabel]="'entity.action.delete' | artemisTranslate"
-                                                                (clicked)="deleteInstance(presentationAssessment, instance, row.studentLogin)"
+                                                                jhiDeleteButton
+                                                                [renderButtonStyle]="false"
+                                                                [renderButtonText]="false"
+                                                                [actionType]="ActionType.Delete"
+                                                                deleteQuestion="artemisApp.presentationAssessment.delete.instanceQuestion"
+                                                                (delete)="deleteInstance(presentationAssessment, instance, row.studentLogin)"
                                                             />
                                                         </div>
                                                     }
@@ -286,7 +291,6 @@
                                         <th tumUiSortableColumn="presentationDate"><span jhiTranslate="artemisApp.presentationAssessment.date"></span></th>
                                         <th><span jhiTranslate="artemisApp.presentationAssessment.status"></span></th>
                                         <th tumUiSortableColumn="resultPoints"><span jhiTranslate="artemisApp.presentationAssessment.assessment"></span></th>
-                                        <th><span jhiTranslate="artemisApp.presentationAssessment.assessedBy"></span></th>
                                         <th></th>
                                     </tr>
                                 </thead>
@@ -354,7 +358,6 @@
                                                     <span class="text-muted-color">—</span>
                                                 }
                                             </td>
-                                            <td class="text-muted-color">—</td>
                                             <td>
                                                 <div class="flex justify-end gap-2" (click)="$event.stopPropagation()">
                                                     <tum-ui-button
@@ -370,14 +373,19 @@
                                                         variant="text"
                                                         [icon]="faTrash"
                                                         [ariaLabel]="'entity.action.delete' | artemisTranslate"
-                                                        (clicked)="deleteInstance(row.presentationAssessment, row.instance, row.studentLogin)"
+                                                        jhiDeleteButton
+                                                        [renderButtonStyle]="false"
+                                                        [renderButtonText]="false"
+                                                        [actionType]="ActionType.Delete"
+                                                        deleteQuestion="artemisApp.presentationAssessment.delete.instanceQuestion"
+                                                        (delete)="deleteInstance(row.presentationAssessment, row.instance, row.studentLogin)"
                                                     />
                                                 </div>
                                             </td>
                                         </tr>
                                         @if (row.expanded) {
                                             <tr class="presentation-detail-row" [id]="'presentation-overview-detail-' + row.rowKey">
-                                                <td colspan="8">
+                                                <td colspan="7">
                                                     <div class="instance-detail-grid">
                                                         <div>
                                                             <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.description"></span>:
@@ -416,7 +424,7 @@
                                         }
                                     } @empty {
                                         <tr>
-                                            <td colspan="8" class="text-center text-muted-color" jhiTranslate="artemisApp.presentationAssessment.noMatchingStudents"></td>
+                                            <td colspan="7" class="text-center text-muted-color" jhiTranslate="artemisApp.presentationAssessment.noMatchingStudents"></td>
                                         </tr>
                                     }
                                 </tbody>

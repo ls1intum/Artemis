@@ -778,8 +778,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     private getStudentViewLinkFromRoute(url: string, courseId: string): string[] {
         const baseStudentPath = ['/courses', courseId];
-        const presentationExerciseId = new URLSearchParams(url.split('?')[1] ?? '').get('presentationExerciseId');
-        if (url.includes('/presentations') && presentationExerciseId) {
+        const [path, query = ''] = url.split('?');
+        const presentationExerciseId = new URLSearchParams(query.split('#')[0]).get('presentationExerciseId');
+        if (path.split('#')[0].endsWith('/presentations') && presentationExerciseId) {
             return [...baseStudentPath, 'exercises', presentationExerciseId];
         }
         const routeMappings = [

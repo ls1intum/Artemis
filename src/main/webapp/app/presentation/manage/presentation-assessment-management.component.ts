@@ -41,6 +41,8 @@ import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { CollapseState, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { TranslateService } from '@ngx-translate/core';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import {
     AssessmentStatusFilter,
     FilterOption,
@@ -93,6 +95,7 @@ function studentRowKey(row: PresentationStudentRow | SelectedPresentationStudent
         TumUiTableSortableColumnComponent,
         TumUiTagComponent,
         SidebarComponent,
+        DeleteButtonDirective,
     ],
 })
 export class PresentationAssessmentManagementComponent implements OnInit {
@@ -111,6 +114,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     protected readonly faSearch = faSearch;
     protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
     protected readonly PresentationAssessmentMode = PresentationAssessmentMode;
+    protected readonly ActionType = ActionType;
 
     readonly courseId = signal<number>(0);
     readonly course = signal<Course | undefined>(undefined);

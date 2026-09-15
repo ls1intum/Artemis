@@ -93,6 +93,7 @@
             },
             "noExisting": "There are no presentation assessments for this course yet.",
             "delete": {
+                "instanceQuestion": "Are you sure you want to delete this presentation assessment instance?",
                 "question": "Are you sure you want to permanently delete the presentation assessment <strong>{{ title }}</strong>? This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the title of the presentation assessment to confirm."
             },

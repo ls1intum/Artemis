@@ -93,6 +93,7 @@
             },
             "noExisting": "Für diesen Kurs gibt es noch keine Präsentationsbewertungen.",
             "delete": {
+                "instanceQuestion": "Soll diese Präsentationsbewertungsinstanz wirklich gelöscht werden?",
                 "question": "Soll die Präsentationsbewertung <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Titel der Präsentationsbewertung zur Bestätigung ein."
             },
