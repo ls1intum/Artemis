@@ -531,7 +531,7 @@ public class ExamService {
                     .ifPresent(student -> participationsByStudentId.computeIfAbsent(student.getId(), _ -> new ArrayList<>()).add(participation)));
         }
 
-        var studentResults = new ArrayList<ExamScoresDTO.StudentResult>();
+        var studentResults = new ArrayList<ExamScoresDTO.StudentResultDTO>();
         var gradesByUser = examGrades.stream().collect(Collectors.groupingBy(ExamGradeScoreDTO::userId, Collectors.toSet()));
 
         // Resolve the participations of every student exam first. A test run and a test exam load theirs individually,
@@ -567,7 +567,7 @@ public class ExamService {
         int numberOfStudentResults = studentResults.size();
         var averagePointsAchieved = 0.0;
         if (numberOfStudentResults != 0) {
-            double sumOverallPoints = studentResults.stream().mapToDouble(ExamScoresDTO.StudentResult::overallPointsAchieved).sum();
+            double sumOverallPoints = studentResults.stream().mapToDouble(ExamScoresDTO.StudentResultDTO::overallPointsAchieved).sum();
             averagePointsAchieved = sumOverallPoints / numberOfStudentResults;
         }
 
@@ -688,7 +688,7 @@ public class ExamService {
         var scores = calculateExamScores(examId);
         var studentIdSet = new HashSet<>(studentIds);
         return scores.studentResults().stream().filter(studentResult -> studentIdSet.contains(studentResult.userId()))
-                .collect(Collectors.toMap(ExamScoresDTO.StudentResult::userId, studentResult -> new BonusSourceResultDTO(studentResult.overallPointsAchieved(),
+                .collect(Collectors.toMap(ExamScoresDTO.StudentResultDTO::userId, studentResult -> new BonusSourceResultDTO(studentResult.overallPointsAchieved(),
                         studentResult.mostSeverePlagiarismVerdict(), null, null, Boolean.TRUE.equals(studentResult.submitted()))));
 
     }
@@ -874,7 +874,7 @@ public class ExamService {
     }
 
     /**
-     * Generates a StudentResult from the given studentExam and participations of the student by aggregating scores and points
+     * Generates a StudentResultDTO from the given studentExam and participations of the student by aggregating scores and points
      * achieved per exercise by the relevant student if the given studentExam is assessed.
      * Calculates the corresponding grade if a GradingScale is given.
      *
@@ -885,25 +885,25 @@ public class ExamService {
      * @param calculateFirstCorrectionPoints flag to determine whether to calculate the first correction results or not
      * @return exam result for a student who participated in the exam
      */
-    private ExamScoresDTO.StudentResult calculateStudentResultWithGrade(StudentExam studentExam, Set<ExamGradeScoreDTO> examGrades, Exam exam, Optional<GradingScale> gradingScale,
-            boolean calculateFirstCorrectionPoints, List<QuizSubmittedAnswerCount> quizSubmittedAnswerCounts, PlagiarismMapping plagiarismMapping,
-            ExamBonusCalculator examBonusCalculator, List<Exercise> studentExercises, List<StudentParticipation> participations,
+    private ExamScoresDTO.StudentResultDTO calculateStudentResultWithGrade(StudentExam studentExam, Set<ExamGradeScoreDTO> examGrades, Exam exam,
+            Optional<GradingScale> gradingScale, boolean calculateFirstCorrectionPoints, List<QuizSubmittedAnswerCount> quizSubmittedAnswerCounts,
+            PlagiarismMapping plagiarismMapping, ExamBonusCalculator examBonusCalculator, List<Exercise> studentExercises, List<StudentParticipation> participations,
             Map<Long, List<CorrectionRoundResultDTO>> manualResultsBySubmissionId) {
         User user = studentExam.getUser();
         if (!Boolean.TRUE.equals(studentExam.isSubmitted())) {
             String noParticipationGrade = gradingScale.map(GradingScale::getNoParticipationGradeOrDefault).orElse(GradingScale.DEFAULT_NO_PARTICIPATION_GRADE);
-            return new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(), 0.0,
+            return new ExamScoresDTO.StudentResultDTO(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(), 0.0,
                     0.0, noParticipationGrade, noParticipationGrade, false, 0.0, null, null, null);
         }
         else if (plagiarismMapping.studentHasVerdict(user.getId(), PlagiarismVerdict.PLAGIARISM)) {
             String plagiarismGrade = gradingScale.map(GradingScale::getPlagiarismGradeOrDefault).orElse(GradingScale.DEFAULT_PLAGIARISM_GRADE);
-            return new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(), 0.0,
+            return new ExamScoresDTO.StudentResultDTO(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(), 0.0,
                     0.0, plagiarismGrade, plagiarismGrade, false, 0.0, null, null, PlagiarismVerdict.PLAGIARISM);
         }
         var overallPointsAchieved = 0.0;
         var overallScoreAchieved = 0.0;
         var overallPointsAchievedInFirstCorrection = 0.0;
-        Map<Long, ExamScoresDTO.ExerciseResult> exerciseGroupIdToExerciseResult = new HashMap<>();
+        Map<Long, ExamScoresDTO.ExerciseResultDTO> exerciseGroupIdToExerciseResult = new HashMap<>();
         var plagiarismCasesForStudent = plagiarismMapping.getPlagiarismCasesForStudent(user.getId());
         for (ExamGradeScoreDTO examGrade : examGrades) {
             ExamGradeScoreDTO finalExamGrade = examGrade;
@@ -939,7 +939,7 @@ public class ExamService {
             }
             double resultScore = (relevantResult != null && relevantResult.getScore() != null) ? relevantResult.getScore() : 0.0;
             exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
-                    new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), resultScore, achievedPoints, hasNonEmptySubmission));
+                    new ExamScoresDTO.ExerciseResultDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), resultScore, achievedPoints, hasNonEmptySubmission));
         }
         // Round the points again to prevent floating point issues that might occur when summing up the exercise points (e.g. 0.3 + 0.3 + 0.3 = 0.8999999999999999)
         overallPointsAchieved = roundScoreSpecifiedByCourseSettings(overallPointsAchieved, exam.getCourse());
@@ -966,7 +966,7 @@ public class ExamService {
             var studentVerdictsFromExercises = plagiarismCasesForStudent.values().stream().map(PlagiarismCase::getVerdict).toList();
             mostSevereVerdict = PlagiarismVerdict.findMostSevereVerdict(studentVerdictsFromExercises);
         }
-        return new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(),
+        return new ExamScoresDTO.StudentResultDTO(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(),
                 overallPointsAchieved, overallScoreAchieved, overallGrade, overallGradeInFirstCorrection, hasPassed, overallPointsAchievedInFirstCorrection, gradeWithBonus,
                 exerciseGroupIdToExerciseResult, mostSevereVerdict);
     }
