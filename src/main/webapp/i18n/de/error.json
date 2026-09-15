@@ -26,6 +26,7 @@
         "exerciseGroupCannotChange": "Die Aufgabengruppe darf hier nicht geändert werden.",
         "noCourseIdOrExerciseGroupId": "Für einen Import muss entweder courseId oder exerciseGroupId gesetzt sein.",
         "concurrencyFailure": "Ein:e Nutzer:in hat diese Daten zeitgleich mit dir geändert. Deine Änderungen wurden abgelehnt.",
+        "courseOperationInProgress": "Für diesen Kurs wird bereits ein Zurücksetzen, Löschen oder Archivieren ausgeführt. Warte, bis der Vorgang abgeschlossen ist, bevor du einen weiteren startest.",
         "validation": "Validierungsfehler auf dem Server.",
         "resultStringNull": "Fehler! Ein Ergebnistext ist erforderlich.",
         "resultStringTooLong": "Fehler! Der Ergebnistext ist zu lange (max. 255 Zeichen)",
