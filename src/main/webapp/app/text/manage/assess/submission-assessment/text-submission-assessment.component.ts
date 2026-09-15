@@ -405,9 +405,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         }
         this.loadingFeedbackSuggestions.set(true);
 
-        // The router can reuse this component for the next submission while this request is still in flight
-        // (#13580 review). Capture the identity of the submission/result the request was made for, and discard the
-        // response if either has since been replaced, so a stale suggestion cannot cross an assessment boundary.
+        // The router can reuse this component for the next submission while this request is still in flight.
+        // Capture the identity of the submission/result the request was made for, and discard the response if
+        // either has since been replaced, so a stale suggestion cannot cross an assessment boundary.
         const requestedSubmissionId = this.submission!.id;
         const requestedResultId = this.result()!.id;
         const isStale = () => this.submission?.id !== requestedSubmissionId || this.result()?.id !== requestedResultId;

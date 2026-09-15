@@ -349,6 +349,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         // Set domain to correctly fetch data
         this.domainService.setDomain([DomainType.PARTICIPATION, submission.participation!]);
         this.submission.set(submission);
+        // Suggestions and the loading flag belong to the previous submission; without this, a component reused for
+        // a new submission that is ineligible for its own load either renders stale suggestions or keeps spinning
+        // forever waiting for a response that will never update it.
+        this.feedbackSuggestions.set([]);
+        this.loadingFeedbackSuggestions.set(false);
         const manualResult = getLatestSubmissionResult(submission);
         if (!manualResult?.submission) {
             manualResult!.submission = submission;
@@ -413,9 +418,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.loadingFeedbackSuggestions.set(true);
         try {
             const feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise(), submission.id!))) ?? [];
-            // The router can reuse this component for the next submission while this request is still in flight
-            // (#13580 review). Discard the response if the active submission has since been replaced, so a stale
-            // suggestion cannot cross an assessment boundary.
+            // The router can reuse this component for the next submission while this request is still in flight.
+            // Discard the response if the active submission has since been replaced, so a stale suggestion cannot
+            // cross an assessment boundary.
             if (this.submission()?.id !== submission.id) {
                 return;
             }

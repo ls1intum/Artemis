@@ -792,6 +792,48 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
             expect(suggestionsSpy).toHaveBeenCalled();
         });
+
+        it('clears populated suggestions and loading state when the next submission does not start a new load', async () => {
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
+            vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(of([{ id: 1, detailText: 'stale' } as Feedback]));
+
+            await internals(comp).onSubmissionReceived('557', buildNewAssessmentSubmission());
+            expect(comp.feedbackSuggestions()).toHaveLength(1);
+
+            const nextSubmission = buildNewAssessmentSubmission();
+            (nextSubmission.participation!.exercise as ProgrammingExercise).course = { athenaGradingFeedbackEnabled: false } as Course;
+            await internals(comp).onSubmissionReceived('557', nextSubmission);
+
+            expect(comp.feedbackSuggestions()).toEqual([]);
+            expect(comp.loadingFeedbackSuggestions()).toBe(false);
+        });
+
+        it('discards an in-flight request and clears the loading state when the next submission does not start a new load', async () => {
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
+            const pendingResponse = new Subject<Feedback[]>();
+            const suggestionsSpy = vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(pendingResponse.asObservable());
+
+            const firstLoad = internals(comp).onSubmissionReceived('557', buildNewAssessmentSubmission());
+            await Promise.resolve();
+            expect(comp.loadingFeedbackSuggestions()).toBe(true);
+
+            // A different id, so the still-pending request above is recognisable as stale once it resolves.
+            const nextSubmission = buildNewAssessmentSubmission();
+            nextSubmission.id = 558;
+            (nextSubmission.participation!.exercise as ProgrammingExercise).course = { athenaGradingFeedbackEnabled: false } as Course;
+            await internals(comp).onSubmissionReceived('558', nextSubmission);
+
+            expect(comp.loadingFeedbackSuggestions()).toBe(false);
+            expect(comp.feedbackSuggestions()).toEqual([]);
+
+            pendingResponse.next([{ id: 1, detailText: 'stale' } as Feedback]);
+            pendingResponse.complete();
+            await firstLoad;
+
+            expect(suggestionsSpy).toHaveBeenCalledOnce();
+            expect(comp.feedbackSuggestions()).toEqual([]);
+            expect(comp.loadingFeedbackSuggestions()).toBe(false);
+        });
     });
 
     it('should keep the exam route and query parameters when replacing new with the loaded submission id', async () => {
