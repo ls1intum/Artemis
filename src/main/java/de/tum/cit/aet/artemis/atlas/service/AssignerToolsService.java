@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
@@ -53,7 +53,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 @Conditional(AtlasEnabled.class)
 public class AssignerToolsService {
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
@@ -72,7 +72,7 @@ public class AssignerToolsService {
      * @param competencyExerciseLinkRepository repository for competency-exercise links
      * @param competencyProgressApi            optional API triggering async progress recalculation
      */
-    public AssignerToolsService(ObjectMapper objectMapper, CourseCompetencyRepository courseCompetencyRepository, ExerciseRepository exerciseRepository,
+    public AssignerToolsService(JsonMapper objectMapper, CourseCompetencyRepository courseCompetencyRepository, ExerciseRepository exerciseRepository,
             CompetencyExerciseLinkRepository competencyExerciseLinkRepository, Optional<CompetencyProgressApi> competencyProgressApi) {
         this.objectMapper = objectMapper;
         this.courseCompetencyRepository = courseCompetencyRepository;

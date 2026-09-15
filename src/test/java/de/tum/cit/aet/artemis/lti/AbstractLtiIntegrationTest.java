@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.lti;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -46,5 +46,5 @@ public abstract class AbstractLtiIntegrationTest extends AbstractSpringIntegrati
 
     // Misc
     @Autowired
-    protected ObjectMapper objectMapper;
+    protected JsonMapper objectMapper;
 }

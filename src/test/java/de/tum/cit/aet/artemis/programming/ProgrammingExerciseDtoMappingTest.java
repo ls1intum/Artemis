@@ -18,8 +18,8 @@ import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -65,7 +66,7 @@ class ProgrammingExerciseDtoMappingTest {
      * endpoint tests (SubmissionPolicyIntegrationTest asserts the exact key sets on the real HTTP responses); the
      * mapping tests below only cover the record's own inclusion rules in a fast loop.
      */
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     // --- SubmissionPolicyDTO: inclusion rules and id pass-through --------------------------------------------------
 
@@ -79,7 +80,7 @@ class ProgrammingExerciseDtoMappingTest {
         JsonNode json = objectMapper.valueToTree(SubmissionPolicyDTO.of(policy));
 
         assertThat(json.has("type")).isTrue();
-        assertThat(json.get("type").asText()).isEqualTo("lock_repository");
+        assertThat(json.get("type").asString()).isEqualTo("lock_repository");
         assertThat(json.get("id").asLong()).isEqualTo(11L);
         assertThat(json.get("submissionLimit").asInt()).isEqualTo(3);
         // NON_EMPTY keeps a false Boolean: only nulls and empty containers are dropped
@@ -99,7 +100,7 @@ class ProgrammingExerciseDtoMappingTest {
 
         JsonNode json = objectMapper.valueToTree(SubmissionPolicyDTO.of(policy));
 
-        assertThat(json.get("type").asText()).isEqualTo("submission_penalty");
+        assertThat(json.get("type").asString()).isEqualTo("submission_penalty");
         assertThat(json.get("submissionLimit").asInt()).isEqualTo(5);
         assertThat(json.get("exceedingPenalty").asDouble()).isEqualTo(2.5);
         assertThat(json.get("active").asBoolean()).isTrue();

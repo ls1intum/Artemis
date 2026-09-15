@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -51,6 +52,9 @@ class AthenaRepositoryExportServiceUnitTest {
     @Mock
     private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationRepository;
 
+    @Mock
+    private CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     private AthenaRepositoryExportService athenaRepositoryExportService;
 
     private ProgrammingExercise programmingExercise;
@@ -62,7 +66,7 @@ class AthenaRepositoryExportServiceUnitTest {
     @BeforeEach
     void setUp() {
         athenaRepositoryExportService = new AthenaRepositoryExportService(programmingExerciseRepository, repositoryService, programmingSubmissionRepository,
-                programmingExerciseStudentParticipationRepository);
+                programmingExerciseStudentParticipationRepository, courseAthenaConfigRepository);
 
         programmingExercise = new ProgrammingExercise();
         programmingExercise.setId(EXERCISE_ID);

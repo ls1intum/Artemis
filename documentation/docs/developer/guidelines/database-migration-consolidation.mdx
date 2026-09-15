@@ -7,8 +7,6 @@ sidebar_label: Migration Consolidation
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 
-# Database Migration Consolidation
-
 Every major Artemis release folds the Liquibase changelogs of the previous release cycle into one initial schema
 file, `00000000000000_initial_schema.xml`. This page is the procedure for doing that, and it is written to be
 followed once per major version.
@@ -65,7 +63,7 @@ Consolidating 9.0.0 out of the 8.8.x cycle is the running example. Substitute yo
 - The release branch finalized, with its last bugfix tag cut (`8.8.6`).
 - `develop` checked out, with a `master.xml` listing everything accumulated since.
 
-### Step 1: Decide what to fold
+### Decide what to fold
 
 Changelogs present on both the release branch and `develop` get folded. Changelogs that exist only on `develop` are
 newer than the release and must stay as incremental migrations, because servers already running them have them
@@ -83,9 +81,10 @@ comm -12 \
   <(grep 'include file' src/main/resources/config/liquibase/master.xml | sed 's/.*changelog\///' | sed 's/".*//' | sort)
 ```
 
-Keep the "only on develop" list to hand. It is needed again in steps 4 and 5.
+Keep the "only on develop" list to hand. It is needed again when updating the cleanup changeset and
+`DatabaseMigration.java`.
 
-### Step 2: Edit the initial schema
+### Edit the initial schema
 
 Apply the **net structural effect** of the folded changelogs: add tables they created, drop tables they removed
 along with the indexes and foreign keys pointing at them, and add, remove or retype columns, indexes and foreign
@@ -105,7 +104,7 @@ only ever runs against a fresh one.
 Columns whose type differs per database go into changesets `00000000000002` and `00000000000003`, never into
 `00000000000001`. The same applies to the indexes and foreign keys that reference them.
 
-### Step 3: Verify the schema is equivalent
+### Verify the schema is equivalent
 
 The consolidated schema must produce a database structurally identical to the one `develop` produces, on both MySQL
 and PostgreSQL. `consolidate-changelogs.sh` checks exactly this: it starts four containers, applies `develop` to two
@@ -117,7 +116,7 @@ bash src/main/resources/config/liquibase/consolidate-changelogs.sh
 
 <Callout variant={CalloutVariant.info}>
 
-    Despite its name, the script only verifies. Editing the schema in step 2 stays manual.
+    Despite its name, the script only verifies. Editing the initial schema stays manual.
 
     It needs Docker, a worktree of `develop` (it uses `/tmp/artemis-develop-verify`), and the Gradle Liquibase
     plugin, and it binds ports 3310 and 3311 for MySQL and 5440 and 5441 for PostgreSQL, so stop any local database
@@ -128,7 +127,7 @@ bash src/main/resources/config/liquibase/consolidate-changelogs.sh
 Pay particular attention to what a diff of dumps reports quietly: primary key names, unique constraint names, and
 named `NOT NULL` constraints. Those are easy to lose when hand-editing and they do not surface in testing.
 
-### Step 4: Update the cleanup changeset
+### Update the cleanup changeset
 
 Give the changeset in `20240331151800_cleanup.xml` a new timestamp ID so it runs again on upgrade, and exclude every
 changelog from your "only on develop" list, because a test or staging server may already have applied them:
@@ -158,7 +157,7 @@ preserves one develop-only changelog; drop one and that server will try to apply
 
 </Callout>
 
-### Step 5: Update `DatabaseMigration.java`
+### Update `DatabaseMigration.java`
 
 Add the version an operator must reach before they may upgrade to the new major:
 
@@ -179,23 +178,23 @@ literal that had to be bumped by hand, and it drifted, because a stale value cha
 compatibility shims that read this column key on versions below 4.26 and on the 4.31.0 to 5.0.1 range, and they only
 run to validate a stored checksum, which these rows do not have while `MD5SUM` is null.
 
-### Step 6: Update `master.xml`
+### Update `master.xml`
 
 Remove every folded include. What remains is the initial schema, the cleanup, and the develop-only changelogs, in
 that order.
 
-### Step 7: Delete the folded changelog files
+### Delete the folded changelog files
 
 Remove their XML files from `src/main/resources/config/liquibase/changelog/`. Take the opportunity to delete
 orphans as well, meaning files still on disk that nothing in `master.xml` includes.
 
-### Step 8: Update `authorities.csv`
+### Update `authorities.csv`
 
 If a folded changelog inserted rows into `jhi_authority` with SQL, add them to `authorities.csv` instead. The
 initial schema populates that table with `loadData` from this file, so an authority that only ever existed as an
 `INSERT` in a deleted changelog would silently disappear from fresh installs.
 
-### Step 9: Verify
+### Verify
 
 ```bash
 ./gradlew test -x webapp                          # server tests, PostgreSQL via Testcontainers

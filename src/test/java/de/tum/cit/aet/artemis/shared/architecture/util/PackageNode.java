@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -45,7 +44,13 @@ public class PackageNode extends ClassPathNode {
      * @param segmentName this nodes segment name. Must not be <code>null</code>, contain '<code>.</code>' or be blank.
      */
     public PackageNode(PackageNode parent, String segmentName) {
-        super(Objects.requireNonNull(parent), segmentName);
+        super(parent, segmentName);
+        // ClassPathNode treats a null parent as the root, so this cannot be left to the annotation: a null would
+        // silently produce a second root-like node with the wrong name rather than failing. Only the package-private
+        // PackageNode(String) constructor, used by RootNode, may pass null.
+        if (parent == null) {
+            throw new IllegalArgumentException("PackageNode parent must not be null; only the root node has no parent");
+        }
         if (segmentName.contains(".")) {
             throw new IllegalArgumentException("PackageNode segment name must not contain '.': " + segmentName);
         }

@@ -54,6 +54,8 @@ public class Course extends DomainObject {
 
     private static final int DEFAULT_COMPLAINT_TEXT_LIMIT = 2000;
 
+    public static final int SEMESTER_MAX_LENGTH = 25;
+
     @Column(name = "title")
     private String title;
 
@@ -63,10 +65,10 @@ public class Course extends DomainObject {
     @Column(name = "short_name", unique = true)
     private String shortName;
 
-    @Column(name = "start_date")
+    @Column(name = "start_date", nullable = false)
     private ZonedDateTime startDate;
 
-    @Column(name = "end_date")
+    @Column(name = "end_date", nullable = false)
     private ZonedDateTime endDate;
 
     @Column(name = "enrollment_start_date")
@@ -78,7 +80,7 @@ public class Course extends DomainObject {
     @Column(name = "unenrollment_end_date")
     private ZonedDateTime unenrollmentEndDate;
 
-    @Column(name = "semester")
+    @Column(name = "semester", nullable = false)
     private String semester;
 
     @Column(name = "test_course", nullable = false)
@@ -165,8 +167,12 @@ public class Course extends DomainObject {
     @Column(name = "accuracy_of_scores", nullable = false)
     private Integer accuracyOfScores = 1; // default value
 
+    /**
+     * Lazy, like every other configuration on a course. Read it through {@code CourseAthenaConfigRepository} where it
+     * is needed rather than dragging it along with the course.
+     */
     @JsonIgnore
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JoinColumn(name = "athena_config_id")
     private CourseAthenaConfig athenaConfig;
 
@@ -386,8 +392,7 @@ public class Course extends DomainObject {
     public boolean unenrollmentIsActive() {
         ZonedDateTime now = ZonedDateTime.now();
         final boolean startCondition = getEnrollmentStartDate() == null || getEnrollmentStartDate().isBefore(now);
-        final boolean endCondition = (getUnenrollmentEndDate() == null && getEndDate() == null) || (getUnenrollmentEndDate() == null && getEndDate().isAfter(now))
-                || (getUnenrollmentEndDate() != null && getUnenrollmentEndDate().isAfter(now));
+        final boolean endCondition = (getUnenrollmentEndDate() == null && getEndDate().isAfter(now)) || (getUnenrollmentEndDate() != null && getUnenrollmentEndDate().isAfter(now));
         return startCondition && endCondition;
     }
 

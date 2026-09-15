@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.Loader;
@@ -46,6 +47,12 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 public class LectureUnitProcessingService {
 
     private static final Logger log = LoggerFactory.getLogger(LectureUnitProcessingService.class);
+
+    /** Everything a lecture unit name read off an outline slide may not contain. */
+    private static final Pattern UNSAFE_UNIT_NAME_CHARACTER = Pattern.compile("[^a-zA-Z0-9\\s()_-]");
+
+    /** Leading whitespace of a lecture unit name. */
+    private static final Pattern LEADING_WHITESPACE = Pattern.compile("^\\s*");
 
     private final FileService fileService;
 
@@ -296,7 +303,8 @@ public class LectureUnitProcessingService {
                     String[] lines = slideText.split("\r\n|\r|\n");
 
                     // if it's the outline slide it will get the next bullet point as unit name.
-                    String unitName = lines[outlineCount + 1].replaceAll("[^a-zA-Z0-9\\s()_-]", "").replaceFirst("^\\s*", "");
+                    String cleanedLine = UNSAFE_UNIT_NAME_CHARACTER.matcher(lines[outlineCount + 1]).replaceAll("");
+                    String unitName = LEADING_WHITESPACE.matcher(cleanedLine).replaceFirst("");
                     outlineMap.put(outlineCount, new LectureUnitSplit(unitName, outlineCount == 1 ? 1 : index, numberOfPages));
 
                     updatePreviousUnitEndPage(outlineCount, outlineMap, index);

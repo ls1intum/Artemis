@@ -9,7 +9,7 @@ This file holds **facts** about the repository. **Procedures** live in [`skills/
 - `e2e-pr-check` — run only the Playwright specs a change affects, and read the result correctly
 - `ci-triage` — classify a red build before changing any code
 - `server-arch-gates` — the architectural rules a server change must satisfy, and how to check each locally
-- `liquibase-migration` — write a changelog that survives a rolling deploy on both databases
+- `liquibase-migration` — write a changelog that applies cleanly on both databases
 - `client-conventions` — Angular signal APIs, cloning, template control flow, TUM UI styling
 - `write-tests` — base class selection and the test commands that silently do the wrong thing
 - `local-setup` — fresh clone to a running server and client
@@ -67,6 +67,8 @@ pnpm run build                       # Alternative production build
 pnpm run lint                        # ESLint
 pnpm run lint:fix                    # Fix ESLint issues
 pnpm run stylelint                   # SCSS linting
+python3 supporting_scripts/check_dead_code.py   # Unreachable Java classes (pnpm run dead-code)
+pnpm run dead-code:client            # Unreachable client TypeScript files (knip)
 pnpm run prettier:check              # Check formatting
 pnpm run prettier:write              # Fix formatting
 ```
@@ -141,7 +143,7 @@ Organized by feature module:
 - `account/` - User, authority, passkey, account REST, authentication, LDAP
 - `exercise/` - Base exercise functionality
 - `programming/` - Programming exercises (lifecycle, grading, repositories)
-- `jenkins/` - Jenkins CI backend connector
+- `jenkins/` - Jenkins CI connector
 - `localvc/` - Embedded git server (HTTP + SSH), repo URI handling, VCS access tokens
 - `localci/` - Local CI orchestration: build job queue, dispatch, result processing
 - `quiz/` - Quiz exercises
@@ -192,13 +194,18 @@ Organized by feature module:
   `instructor/`, `student/`, `developer/`, `about/`. There is no top-level `docs/` folder; that was the old Sphinx
   location and anything written there is invisible on the documentation site. A `README.md` next to the tool it
   explains (a script directory, a docker setup) stays where it is and does not move into the site tree.
-- Pages are Docusaurus `.mdx` files with `id`, `title` and `sidebar_label` frontmatter. A new page is only reachable
+- Pages are Docusaurus `.mdx` files with `id`, `title` and `sidebar_label` frontmatter, and no H1 in the body —
+  Docusaurus renders the heading from `title`, so writing both makes the title drift. A new page is only reachable
   once it is listed in the matching `documentation/sidebar-*.ts`, so add it there and link it from the related pages.
 - Write for the audience of the folder, in the present tense, describing what the reader sees and does in Artemis. Do
   not reference pull requests, issues, or commits, and do not describe the change relative to a previous release.
 - **Do not commit design documents, specs, plans, or scratch notes.** Working notes belong in the pull request
   description or the issue, not in the repository. What is worth keeping goes into `documentation/docs/` as a proper
   page for its audience.
+- Full conventions — heading and anchor rules, naming controls in bold rather than backticks, screenshot and
+  screencast practice, when to split a page — live in
+  [`documentation/docs/developer/guidelines/documentation.mdx`](./documentation/docs/developer/guidelines/documentation.mdx).
+  Read it before writing or restructuring a page.
 
 ### API Specification
 
@@ -216,23 +223,33 @@ Organized by feature module:
 - Do not inject `EntityManager` or `EntityManagerFactory` directly into services or controllers; all persistence operations must go through Spring Data repositories
 - Do not inject `JdbcClient`, `JdbcTemplate` or a `DataSource`; write the statement as a `@Query` on a repository (with `nativeQuery = true` where there is no entity to name). An ArchUnit rule (`ArchitectureTest.shouldNotUseRawJdbcDirectly`) enforces this outside `core.config`
 - Use DTOs (Java records) for REST endpoints
+- **`FetchType.EAGER` is forbidden on `@OneToOne`, `@OneToMany` and `@ManyToMany`** - the fetch type that applies counts, not the one written down, so a `@OneToOne` must spell out `fetch = FetchType.LAZY` (its default is eager) while `@OneToMany` and `@ManyToMany` are lazy already. `@ManyToOne` is out of scope: Hibernate cannot make a to-one lazy without bytecode enhancement or a proxy, and proxies break on entity hierarchies, so its eager default is a fact to design around rather than declare. An eager association is loaded for every caller including the ones that never read it: `Course.athenaConfig`, two booleans behind an eager one-to-one, cost 155,848 queries during a single 2000-student exam. An ArchUnit rule (`ArchitectureTest.testNoEagerFetching`) fails the build; the still-eager ones are in `FIELDS_ALLOWED_TO_FETCH_EAGERLY`, which may only shrink
+- **Do not fetch a lazy configuration through the entity that owns it.** Adding it to an `@EntityGraph` or `JOIN FETCH` so code further down can read it off the entity is an antipattern, and it does not work where the owner is reached through an eager `@ManyToOne` chain, because Hibernate resolves that by secondary select and the fetch plan stops applying. Give it its own repository and read it at the decision point: `CourseAthenaConfigRepository` and `CourseConfigurationRepository` are the pattern. Full rationale: `documentation/docs/developer/guidelines/database.mdx`
 - Prefer constructor injection for Spring beans
 - Use Java 25 features (records, sealed classes, pattern matching)
 - **Never call `String.toLowerCase()` or `String.toUpperCase()` without a locale.** Both fold case with the JVM default locale, so the same input gives a different answer depending on where the server runs: under a Turkish locale `I` lowercases to the dotless `ı`, which is enough to break a check on `os.name`, a file extension, a MIME type, a header value or a login without any error. Pass `Locale.ROOT` for machine-facing values, `Locale.ENGLISH` only where the surrounding code already does for the same kind of value (`User.setLogin` for logins). Where only the comparison matters, `equalsIgnoreCase`, `String.CASE_INSENSITIVE_ORDER` and `Pattern.CASE_INSENSITIVE` need no locale at all. An ArchUnit rule (`ArchitectureTest.testNoLocaleLessCaseConversion`) enforces this over production and test code
 
+### JSON serialization (Jackson)
+
+- **Artemis is on Jackson 3 — its packages are `tools.jackson`, not `com.fasterxml.jackson`.** Inject the auto-configured `tools.jackson.databind.json.JsonMapper` in Spring beans; use `JsonObjectMapper.get()` outside them. An ArchUnit rule (`ArchitectureTest.testNoJackson2InProductionCode`) fails the build on any `com.fasterxml.jackson.{databind,core,dataformat,datatype}` import in production code.
+- **The one exception is the annotations.** `jackson-annotations` never moved to the `tools.jackson` group, so `@JsonInclude`, `@JsonProperty`, `@JsonTypeInfo` and the rest stay on `com.fasterxml.jackson.annotation`. Do not "fix" those imports.
+- **Mappers are immutable.** There is no `configure(...)` or `registerModule(...)` on a built mapper — use `JsonMapper.builder()`, or `rebuild()` to derive one. Jackson 3 exceptions are unchecked (`tools.jackson.core.JacksonException`), and `java.time` support is built into `jackson-databind`, so no module registration is needed.
+- **`ArtemisJacksonDefaults` is the single definition of how Artemis configures a mapper.** It pins the Jackson 3 defaults that would otherwise change the JSON on the wire (primitive-null binding, getter-as-setter, enum `toString`), each with a TODO for dropping it. `JacksonSerializationContractTest` records the payloads those pins protect — remove a pin, run that test, and the failing fixture is the payload that would change.
+- Full guidance: `documentation/docs/developer/guidelines/rest-api.mdx` (## JSON Serialization).
+
 ### Caching
 
 - **Do not add `@Cache` (Hibernate L2) annotations on entities or associations.** Hibernate second-level cache is disabled cluster-wide and an ArchUnit rule (`ArchitectureTest.testNoHibernateSecondLevelCacheAnnotation`) fails the build if any reappears. Reason: `@Modifying @Query` repository methods bypass L2 invalidation, and the absence of service-level `@Transactional` leaves no clean place to coordinate eviction within a REST call — both produced cross-node stale-read bugs in the multi-node cluster (issue #12574, fixed in PR #12578; further cleanup in PR #12579).
-- **For DTO / projection caching, use Spring `@Cacheable`.** It resolves against the `RoutingCacheManager` in `core/config/cache/CacheManagerConfiguration`, which serves the per-node caches from a bounded Caffeine cache and every other cache from the distributed data provider. The per-node ones are the blobs of `BlobCacheConfiguration` (`files`, `plantUmlPng`, `plantUmlSvg`) and the titles of `TitleCacheConfiguration`; both expire entries after a TTL, so a cache whose staleness would be visible for long belongs in the distributed manager instead. Always pair `@Cacheable` with explicit eviction — `@CacheEvict` on the writer service, or a Hibernate `PostUpdateEventListener` / `PostDeleteEventListener`. See `TitleCacheEvictionService` for the canonical pattern, and `PerNodeCacheEvictionService` for propagating a per-node eviction across the cluster.
+- **For DTO / projection caching, use Spring `@Cacheable`.** It resolves against the `RoutingCacheManager` in `core/config/cache/CacheManagerConfiguration`, which serves the per-node caches from a bounded Caffeine cache and every other cache from the distributed data provider. The per-node ones are the blobs of `BlobCacheConfiguration` (`files`, `plantUmlPng`, `plantUmlSvg`), which expire entries after a TTL, so a cache whose staleness would be visible for long belongs in the distributed manager instead. Always pair `@Cacheable` with explicit eviction — `@CacheEvict` on the writer service, or a Hibernate `PostUpdateEventListener` / `PostDeleteEventListener`. See `PerNodeCacheEvictionService` for propagating a per-node eviction across the cluster.
 - The bar for adding a new cache: a measured performance gain that justifies the eviction-correctness work. The default answer is: do not cache.
 - Full rationale, history, and patterns: `documentation/docs/developer/guidelines/caching.mdx`.
 
 ### Distributed data (cross-node state)
 
-- **Never use Hazelcast or Redis directly.** All cross-node state — build job queue, feature toggles, scheduling messages, websocket broker status, LTI state, Pyris jobs, `@Cacheable` caches — goes through `DistributedDataProvider` (`core/service/distributed`). An ArchUnit rule (`DistributedDataProviderArchitectureTest`) fails the build if a production class outside a small, explicitly named set of backend adapters depends on `com.hazelcast..`, `org.redisson..` or `org.springframework.data.redis..`.
-- The backend is selected by `artemis.distributed-data.provider` (`Hazelcast` default, `Redis`, `Local`). With `Redis` no Hazelcast instance is created at all, so any direct usage silently loses that state instead of failing.
-- Request entry lifetimes at the call site with `getExpiringMap(name, ttl)`; a backend map configuration only applies to that backend. `getMap(name)` rejects a per-entry TTL for exactly this reason.
-- Missing capability? Add it to `DistributedDataProvider`, implement it for all three backends, and add a case to `AbstractDistributedDataTest` — that suite is what keeps the backends in agreement.
+- **Never use Hazelcast or Redis directly.** All cross-node state — build job queue, feature toggles, scheduling messages, websocket broker status, LTI state, Pyris jobs, `@Cacheable` caches — goes through `DistributedDataProvider` (`core/service/distributed`). An ArchUnit rule (`DistributedDataProviderArchitectureTest`) fails the build if a production class outside a small, explicitly named set of provider adapters depends on `com.hazelcast..`, `org.redisson..` or `org.springframework.data.redis..`.
+- The provider is selected by `artemis.distributed-data.provider` (`Hazelcast` default, `Redis`, `Local`). With `Redis` no Hazelcast instance is created at all, so any direct usage silently loses that state instead of failing.
+- Request entry lifetimes at the call site with `getExpiringMap(name, ttl)`; a provider-level map configuration only applies to that provider. `getMap(name)` rejects a per-entry TTL for exactly this reason.
+- Missing capability? Add it to `DistributedDataProvider`, implement it for all three providers, and add a case to `AbstractDistributedDataTest` — that suite is what keeps the providers in agreement.
 - Full rationale and patterns: `documentation/docs/developer/guidelines/distributed-data.mdx`.
 
 ### TypeScript/Angular
@@ -274,6 +291,26 @@ Organized by feature module:
     - **Colours use semantic tokens, never primitives or Bootstrap classes**: use TUM UI component variants or `text-state-danger`/`text-state-success`/`text-state-warning`/`text-state-info` for plain markup. Never use `--p-<color>-N` primitives, `text-red-500`, `text-danger`, or the superseded arbitrary `text-(--danger)` form. Full decision rules and the Bootstrap migration reference: `documentation/docs/developer/guidelines/client-development.mdx` (### Styling).
     - **Never hand-write PrimeNG component root classes** (`class="p-button"`, `class="p-inputtext"`). For a contained legacy fallback, render the real PrimeNG component so its styles load deterministically; `localRules/no-primeng-component-classes` enforces this.
     - See `documentation/docs/developer/guidelines/tum-ui-kit.mdx` for package ownership, public API, theming, stories, and integration rules.
+
+### Dead code
+
+- **A class or file that nothing can reach is deleted, not left behind.** Two required CI checks enforce this on every pull request: `supporting_scripts/check_dead_code.py` for Java and `knip` (config in `knip.json`) for the client. Both are pure source analysis and run even on pull requests that touch neither language, because the change that creates dead code is usually one that only deletes something.
+- **Reference count decides a plain class; it decides nothing about an annotation-wired one.** Java cannot use a type without naming it, so for a plain class "no file mentions the name" and "dead" are the same statement — and that covers JPQL constructor expressions in `@Query`, class literals in `@Conditional`, and fully-qualified names in `spring.factories` or a Liquibase changelog. A class carrying `@Component`, `@Service`, `@Configuration`, `@RestController`, `@Repository`, `@Entity`, `@Converter`, `@Endpoint` or `@Aspect` is found by a framework scan instead, so zero references is its normal state and the check skips it — wherever the annotation sits in the file, and in its fully-qualified form. A Spring Data fragment (`CustomPostRepositoryImpl` for a `CustomPostRepository` a repository extends) is reached by the `Impl` naming convention with neither a reference nor an annotation, and is skipped — but only when some repository actually composes the interface, since the `Impl` suffix alone would exempt every `FooImpl implements Foo` and hide a dead pair forever. Decide the rest with bean-definition provenance (`getFactoryBeanName()` / `getFactoryMethodName()` on the definition) from a booted context, never with a text search.
+- **Both gates count production references only.** `check_dead_code.py` does not search `src/test`, and the client gate enters at `app.main.ts` (and `src/public-api.ts` for tum-ui) with specs and stories out of the project graph. A class or component whose only user is its own test is dead together with that test: delete both, or move a genuine test double into `src/test`. The generous entry set — every `*.routes.ts`, every spec — lives in `knip.report.json` for `pnpm run dead-code:client:report`, because rooting a route file directly hides exactly the orphaned subtree the gate exists to catch.
+- A static nested `@Configuration` **is** component-scanned, so an un-annotated outer class does not make it dead; and a `@Bean` method returning a type that is itself a `@Component` does not make its configuration dead either — the two definitions carry different names (method name vs. decapitalized class name) and both register, while a genuine name collision fails startup with `BeanDefinitionOverrideException`, since `spring.main.allow-bean-definition-overriding` is `false`. `@AutoConfigureAfter` on a class that is not an auto-configuration is meaningless — Spring Boot reads it only when ordering `AutoConfiguration.imports` entries — and reliably marks a generated leftover. The `@ConditionalOn*` family does not: on a `@Bean` method it is ordinary Spring (`AtlasAutoOrchestrationConfiguration` declares its `Clock` with `@ConditionalOnMissingBean` so a test can override it, and is live), and on the class of a non-auto-configuration it is order-dependent, which is a smell rather than a verdict.
+- A genuine false positive goes in `ALLOWLIST` in the script **with the mechanism that reaches it**, not just an assertion that it is used. One entry exists: `core/ApplicationWebXml`, reached through the servlet container's `ServletContainerInitializer` SPI.
+- The client gate covers unused **files** only; `pnpm run dead-code:client:report` also lists the unused exports, exported types and enum members that are still a backlog. When knip reports a file you know is loaded, check whether its entry point is missing from `knip.json` first — a vitest `setupFiles` string is a reference no import graph can see.
+- **Unused *methods* are a separate, advisory check.** `UnusedMethodArchitectureTest` reports production methods that only the tests call (`./gradlew test --tests UnusedMethodArchitectureTest -x webapp`). It logs and never fails, because method-level reachability has a false-positive floor that class-level reachability does not: Hibernate, Jackson, JPQL and AspectJ all invoke methods with no bytecode reference. It already filters entry-point annotations, overrides (decided by reflection, since external supertypes import as stubs) and accessors in all three shapes Artemis uses — `getX()`/`setX(v)`, record-style `x()`, and fluent `x(v)`. Every entry is a candidate, not a verdict.
+- Full rationale and the provenance recipe: `documentation/docs/developer/guidelines/dead-code.mdx`.
+
+### Terminology
+
+- **Never write "frontend" or "backend".** Both are too vague to say which component is meant, they flip meaning depending on who is speaking, and they hide the boundary that actually matters. Name the component instead. This applies to code, comments, Javadoc, commit messages, pull request descriptions, and documentation. <!-- terminology-check: allow -->
+- Say **client** (or **web client**, **user interface**) for the Angular application, and **server** (or **application server**, or the specific service such as `the grading service`) for the Spring Boot application.
+- Say **provider** for a swappable distributed data implementation (Hazelcast, Redis, Local), and **adapter** for the glue that binds one of them. Elsewhere, name the concrete system: `the embedding service`, `the database`, `the mail transport`, `the version control system`.
+- Do not label people or teams either: prefer `client developer` / `server developer`, or better, the feature they own.
+- `supporting_scripts/check_terminology.py` fails CI on any new occurrence. `src/main/resources/config/liquibase/` is out of scope entirely, because a merged changeset is immutable: Liquibase stores a checksum and the application refuses to start when the file no longer matches. The check also allows a short list of third-party identifiers (Keycloak `frontendUrl`, Gateway API `backendRefs`, Angular `HttpXhrBackend`, the Dart `frontend_server_client` package, the macOS process `com.docker.backend`), which are other people's names and must not be renamed. An allowlisted name is exempt only as a whole token, so it cannot shield a coined one.
+- Full rationale, mapping table, and examples: `documentation/docs/developer/guidelines/terminology.mdx`.
 
 ### General
 
