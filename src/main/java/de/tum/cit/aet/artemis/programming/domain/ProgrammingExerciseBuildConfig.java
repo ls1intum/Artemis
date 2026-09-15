@@ -34,7 +34,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     @Column(name = "branch")
     private String branch;
 
-    @Column(name = "build_plan_configuration", columnDefinition = "longtext")
+    @Column(name = "build_plan_configuration", columnDefinition = "mediumtext")
     private String buildPlanConfiguration;
 
     private transient String buildScript;
@@ -58,7 +58,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     @Column(name = "timeout_seconds")
     private int timeoutSeconds;
 
-    @Column(name = "docker_flags", columnDefinition = "longtext")
+    @Column(name = "docker_flags", columnDefinition = "mediumtext")
     private String dockerFlags;
 
     @OneToOne(mappedBy = "buildConfig")
