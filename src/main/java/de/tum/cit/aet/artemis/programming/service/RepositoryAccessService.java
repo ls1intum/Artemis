@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
@@ -21,6 +22,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
@@ -85,6 +87,88 @@ public class RepositoryAccessService {
         }
 
         throw new AccessForbiddenException("You are not allowed to access the repository of this programming exercise.");
+    }
+
+    /**
+     * Checks whether the user may access the repository of the given participation, for a caller holding a projection
+     * of the exercise rather than the entity.
+     * <p>
+     * The git request path resolves its exercise on every clone, fetch and push, so it reads
+     * {@link GitRepositoryAccessDTO} instead of the exercise and its course. The decision is the same one the entity
+     * overload makes, expressed against those values.
+     *
+     * @param programmingParticipation the participation whose repository is being accessed
+     * @param user                     the user who wants to access the repository
+     * @param exercise                 the projected exercise behind the repository
+     * @param repositoryActionType     what the user wants to do with the repository
+     * @throws AccessForbiddenException if the user may not do it
+     */
+    public void checkAccessRepositoryElseThrow(ProgrammingExerciseParticipation programmingParticipation, User user, GitRepositoryAccessDTO exercise,
+            RepositoryActionType repositoryActionType) throws AccessForbiddenException {
+        long courseId = exercise.courseId();
+        // Each of these resolves in memory when the user was loaded with its course roles, and costs a query otherwise, so
+        // none of them is evaluated before its answer is actually needed. A student, the overwhelmingly common caller on
+        // this path, reaches only isAtLeastStudentInCourse.
+        if (authorizationCheckService.isAtLeastEditorInCourse(courseId, user)) {
+            return;
+        }
+        boolean isTeachingAssistant = authorizationCheckService.isTeachingAssistantInCourse(courseId, user);
+        if (isTeachingAssistant && repositoryActionType == RepositoryActionType.READ) {
+            return;
+        }
+
+        if (programmingParticipation instanceof ProgrammingExerciseStudentParticipation programmingStudentParticipation
+                && authorizationCheckService.isAtLeastStudentInCourse(courseId, user) && authorizationCheckService.isOwnerOfParticipation(programmingStudentParticipation, user)
+                && hasAccessToOwnStudentParticipation(exercise, repositoryActionType, programmingStudentParticipation, isTeachingAssistant)) {
+            return;
+        }
+
+        throw new AccessForbiddenException("You are not allowed to access the repository of this programming exercise.");
+    }
+
+    /**
+     * The projection counterpart of
+     * {@link #hasAccessToOwnStudentParticipation(ProgrammingExercise, RepositoryActionType, ProgrammingExerciseStudentParticipation, boolean)}.
+     *
+     * @param exercise             the projected exercise
+     * @param repositoryActionType what the user wants to do with the repository
+     * @param studentParticipation the student's participation
+     * @param isTeachingAssistant  whether the user is a teaching assistant in the course
+     * @return true if the user may access their own participation's repository
+     */
+    private boolean hasAccessToOwnStudentParticipation(GitRepositoryAccessDTO exercise, RepositoryActionType repositoryActionType,
+            ProgrammingExerciseStudentParticipation studentParticipation, boolean isTeachingAssistant) {
+        ZonedDateTime participationStart = exercise.participationStartDate();
+        boolean hasStarted = participationStart == null || participationStart.isBefore(ZonedDateTime.now());
+
+        if (!hasStarted) {
+            // Only teaching assistants have access to the repository before the exercise has started.
+            return isTeachingAssistant;
+        }
+
+        // The user always has read permissions after the exercise has started.
+        if (repositoryActionType == RepositoryActionType.READ) {
+            return true;
+        }
+
+        // An unlocked participation may be written to, with no further date check: isLocked answers false either
+        // because the participation is in practice mode, which is allowed regardless of the due date, or because the
+        // due date it evaluated first has not passed. Asking again would only repeat that evaluation - and for an
+        // exam exercise it is a repeated read of the exam and its eager course, which is what this path avoids.
+        return !participationAuthorizationCheckService.isLocked(studentParticipation, exercise);
+    }
+
+    /**
+     * Checks whether the user may use git outside the online editor, for a caller holding a projection.
+     *
+     * @param exercise the projected exercise
+     * @param user     the user who wants to access the repository
+     * @throws AccessForbiddenException if offline use is forbidden for this user
+     */
+    public void checkHasAccessToOfflineIDEElseThrow(GitRepositoryAccessDTO exercise, User user) throws AccessForbiddenException {
+        if (exercise.offlineIdeForbidden() && authorizationCheckService.isOnlyStudentInCourse(exercise.courseId(), user)) {
+            throw new AccessForbiddenException();
+        }
     }
 
     /**

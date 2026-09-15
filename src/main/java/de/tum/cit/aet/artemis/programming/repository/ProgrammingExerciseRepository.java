@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise_;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyValuesDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions;
@@ -233,10 +234,64 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories" })
     List<ProgrammingExercise> findAllWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesByCourseId(long courseId);
 
-    // course is an eager @ManyToOne, so fetching it here saves the secondary select that git authorization would
-    // otherwise pay on every request when it reads the course for its role checks
-    @EntityGraph(type = LOAD, attributePaths = { "submissionPolicy", "course" })
-    List<ProgrammingExercise> findWithSubmissionPolicyByProjectKey(String projectKey);
+    /**
+     * The exercise behind a project key, with everything the git request path reads from it.
+     * <p>
+     * Written as explicit fetches rather than an entity graph because of the last one. Hibernate joins an eager
+     * {@code @ManyToOne} of the root entity by itself, which already covers the course, the exercise group and its
+     * exam - but not the exam's own course, one hop further out, which an exam exercise then pays as a secondary
+     * select on every clone, fetch and push. Naming it here makes the whole lookup a single query.
+     *
+     * @param projectKey the project key taken from the repository URI
+     * @return the matching exercises, which the caller expects to be exactly one
+     */
+    @Query("""
+            SELECT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN FETCH pe.submissionPolicy
+                LEFT JOIN FETCH pe.course
+                LEFT JOIN FETCH pe.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam e
+                LEFT JOIN FETCH e.course
+            WHERE pe.projectKey = :projectKey
+            """)
+    List<ProgrammingExercise> findWithSubmissionPolicyByProjectKey(@Param("projectKey") String projectKey);
+
+    /**
+     * The values the git request path needs to authorize a repository access, for one project key.
+     * <p>
+     * A projection rather than the exercise: this runs on every clone, fetch and push, twice per git operation, and
+     * the entity brought its course with it - for an exam exercise the course twice, since it is reachable both
+     * directly and through the exercise group's exam. The course is reduced to its id because the role checks read
+     * nothing else from it.
+     * <p>
+     * An exercise names a course or an exercise group, never both: the exam exercise belongs to the course of its exam. The course is therefore taken from the exercise group when
+     * there is one, exactly as {@link de.tum.cit.aet.artemis.exercise.domain.Exercise#getCourseViaExerciseGroupOrCourseMember()} takes it. A {@code COALESCE} over the two ids
+     * would read the same for every well-formed exercise and authorize against the wrong course for one that broke the rule.
+     *
+     * @param projectKey the project key taken from the repository URI
+     * @return the matching projections, which the caller expects to be exactly one
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO(
+                pe.id,
+                CASE WHEN eg.id IS NOT NULL THEN ec.id ELSE c.id END,
+                pe.mode,
+                pe.allowOfflineIde,
+                pe.startDate,
+                pe.releaseDate,
+                pe.dueDate,
+                e.id,
+                e.startDate,
+                e.testExam)
+            FROM ProgrammingExercise pe
+                LEFT JOIN pe.course c
+                LEFT JOIN pe.exerciseGroup eg
+                LEFT JOIN eg.exam e
+                LEFT JOIN e.course ec
+            WHERE pe.projectKey = :projectKey
+            """)
+    List<GitRepositoryAccessDTO> findAccessProjectionByProjectKey(@Param("projectKey") String projectKey);
 
     @EntityGraph(type = LOAD, attributePaths = "buildConfig")
     List<ProgrammingExercise> findWithBuildConfigByProjectKey(String projectKey);
@@ -1250,6 +1305,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     /**
      * Resolve the exercise and owning course metadata for Deimos manual exercise-scope runs.
      * Supports both regular course exercises and exam exercises.
+     * <p>
+     * The three course values are taken from the same branch, so they always describe one course: an exam exercise is owned by the course of its exam, and a row that named both
+     * would otherwise pair that course's id with the other course's title and icon.
      *
      * @param exerciseId the id of the programming exercise
      * @return projection containing exercise and course metadata
@@ -1258,9 +1316,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             SELECT new de.tum.cit.aet.artemis.deimos.dto.DeimosExerciseScopeInfoDTO(
                 p.id,
                 p.title,
-                COALESCE(c.id, ec.id),
-                COALESCE(c.title, ec.title),
-                COALESCE(c.courseIcon, ec.courseIcon))
+                CASE WHEN eg.id IS NOT NULL THEN ec.id ELSE c.id END,
+                CASE WHEN eg.id IS NOT NULL THEN ec.title ELSE c.title END,
+                CASE WHEN eg.id IS NOT NULL THEN ec.courseIcon ELSE c.courseIcon END)
             FROM ProgrammingExercise p
               LEFT JOIN p.course c
               LEFT JOIN p.exerciseGroup eg

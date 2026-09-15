@@ -158,14 +158,6 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     @Query("""
             SELECT se
             FROM StudentExam se
-            WHERE se.exam.id = :examId
-                AND se.testRun = FALSE
-            """)
-    Set<StudentExam> findByExamId(@Param("examId") long examId);
-
-    @Query("""
-            SELECT se
-            FROM StudentExam se
                 LEFT JOIN FETCH se.examSessions
             WHERE se.exam.id = :examId
             	AND se.testRun = FALSE
@@ -491,6 +483,22 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     Set<User> findUsersWithStudentExamsForExam(@Param("examId") Long examId);
 
+    /**
+     * Get the ids of the users who already have a student exam, without loading the users themselves.
+     * <p>
+     * The caller only subtracts this set from the registered users, so the entities were never needed.
+     *
+     * @param examId the exam to query for
+     * @return the ids of the users with a student exam
+     */
+    @Query("""
+            SELECT DISTINCT se.user.id
+            FROM StudentExam se
+            WHERE se.testRun = FALSE
+                AND se.exam.id = :examId
+            """)
+    Set<Long> findUserIdsWithStudentExamsForExam(@Param("examId") Long examId);
+
     @Query("""
             SELECT DISTINCT se
             FROM StudentExam se
@@ -681,13 +689,17 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     }
 
     /**
-     * Generates random exams for each user in the given users set and saves them.
+     * Generates random exams for each of the given users and saves them.
+     * <p>
+     * The {@link User} on each generated student exam is an id-only reference: only the foreign key is written on this
+     * path, and loading the full user cost one select per student. No field other than the id is populated, so a caller
+     * that needs the login, name or any other attribute has to load the users itself.
      *
-     * @param exam  exam for which the individual student exams will be generated
-     * @param users users for which the individual exams will be generated
-     * @return List of StudentExams generated for the given users
+     * @param exam    exam for which the individual student exams will be generated
+     * @param userIds ids of the users for which the individual exams will be generated
+     * @return List of StudentExams generated for the given users, each carrying an id-only {@link User}
      */
-    default List<StudentExam> createRandomStudentExams(Exam exam, Set<User> users) {
+    default List<StudentExam> createRandomStudentExams(Exam exam, Set<Long> userIds) {
         List<StudentExam> studentExams = new ArrayList<>();
         SecureRandom random = new SecureRandom();
 
@@ -712,13 +724,15 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             }
         }
 
-        for (User user : users) {
+        for (Long userId : userIds) {
             // Create one student exam per user
             StudentExam studentExam = new StudentExam();
 
             studentExam.setWorkingTime(defaultWorkingTime);
             studentExam.setExam(exam);
-            studentExam.setUser(user);
+            // Only the foreign key is written here, so the id is all this needs. Loading the User to set it cost a
+            // select per student, and nothing on this path reads anything else from it.
+            studentExam.setUser(new User(userId));
             studentExam.setSubmitted(false);
             studentExam.setTestRun(false);
 
