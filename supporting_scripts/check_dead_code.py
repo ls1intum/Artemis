@@ -105,15 +105,54 @@ STRUCTURAL_SKIPS = {"package-info.java", "module-info.java"}
 # that a repository extends, it instantiates `CustomPostRepositoryImpl` purely because of the `Impl` suffix
 # (`repositoryImplementationPostfix`, `Impl` by default). Nothing names the implementation and it carries no
 # annotation, so it looks exactly like a dead class to a text search while being essential at runtime.
+#
+# The `Impl` suffix alone is not enough to earn the exemption. Any `FooImpl implements Foo` matches that shape,
+# and exempting all of them would hide a dead pair forever: the implementation's own `implements` clause keeps
+# the interface referenced, and the exemption would keep the implementation unexamined. So a fragment is
+# recognised only when some repository actually composes the interface, which is the thing Spring Data reacts to.
 SPRING_DATA_FRAGMENT_SUFFIX = "Impl"
 
+# `interface Name extends A, B<C> {` -- the declaration whose extends list may compose a fragment.
+INTERFACE_EXTENDS = re.compile(r"\binterface\s+(\w+)\s+extends\s+([^{]+)\{", re.DOTALL)
 
-def is_spring_data_fragment(simple_name: str, source: str) -> bool:
-    """True if this is the `Impl` half of a Spring Data custom repository fragment."""
+
+def _base_names(extends_list: str) -> list[str]:
+    """The simple names in an extends list, with type arguments and qualifiers stripped."""
+    names = []
+    for part in re.sub(r"<[^<>]*(?:<[^<>]*>)?[^<>]*>", "", extends_list).split(","):
+        part = part.strip().split(".")[-1]
+        if part.isidentifier():
+            names.append(part)
+    return names
+
+
+def find_composed_fragment_interfaces(root: str) -> set[str]:
+    """The interfaces some Spring Data repository extends, which is what makes an `Impl` of one a fragment."""
+    composed: set[str] = set()
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
+        for filename in filenames:
+            if not filename.endswith(".java"):
+                continue
+            try:
+                with open(os.path.join(dirpath, filename), encoding="utf-8") as handle:
+                    source = handle.read()
+            except OSError:
+                continue
+            for _, extends_list in INTERFACE_EXTENDS.findall(source):
+                names = _base_names(extends_list)
+                # A repository is recognised by what it extends, which is always a Spring Data repository interface.
+                if any(name.endswith("Repository") for name in names) or "@Repository" in source:
+                    composed.update(names)
+    return composed
+
+
+def is_spring_data_fragment(simple_name: str, source: str, composed_interfaces: set[str]) -> bool:
+    """True if this is the `Impl` half of a Spring Data custom repository fragment some repository composes."""
     if not simple_name.endswith(SPRING_DATA_FRAGMENT_SUFFIX):
         return False
     fragment_interface = simple_name[: -len(SPRING_DATA_FRAGMENT_SUFFIX)]
-    if not fragment_interface:
+    if not fragment_interface or fragment_interface not in composed_interfaces:
         return False
     return re.search(rf"\bimplements\b[^{{]*\b{re.escape(fragment_interface)}\b", source) is not None
 
@@ -163,7 +202,7 @@ def build_reference_index(roots) -> dict[str, set[str]]:
     return index
 
 
-def find_candidates(root: str):
+def find_candidates(root: str, composed_interfaces: set[str] | None = None):
     """Yield (simple_name, path) for every top-level class file eligible for the check.
 
     The whole file is read rather than a prefix of it. The annotation sits after the imports and the
@@ -171,6 +210,8 @@ def find_candidates(root: str):
     carry theirs past the 4,000th character. Reading a prefix made those look like plain classes, so
     whether a live bean could fail this check depended on how long its import block happened to be.
     """
+    if composed_interfaces is None:
+        composed_interfaces = find_composed_fragment_interfaces(root)
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
         for filename in filenames:
@@ -185,7 +226,7 @@ def find_candidates(root: str):
             if ANNOTATION_WIRED.search(source):
                 continue
             simple_name = filename[:-len(".java")]
-            if is_spring_data_fragment(simple_name, source):
+            if is_spring_data_fragment(simple_name, source, composed_interfaces):
                 continue
             yield simple_name, path
 
@@ -263,6 +304,10 @@ def self_test() -> int:
         write(java, "FragmentRepository.java", "package pkg;\npublic interface FragmentRepository {}\n")
         write(java, "FragmentRepositoryImpl.java",
               "package pkg;\npublic class FragmentRepositoryImpl implements FragmentRepository {}\n")
+        write(java, "PostRepository.java",
+              "package pkg;\npublic interface PostRepository extends JpaRepository<Post, Long>, FragmentRepository {}\n")
+        write(java, "Standalone.java", "package pkg;\npublic interface Standalone {}\n")
+        write(java, "StandaloneImpl.java", "package pkg;\npublic class StandaloneImpl implements Standalone {}\n")
         write(java, "LateAnnotation.java",
               "package pkg;\n" + "// filler to push the annotation past the old 4000-character cutoff\n" * 80
               + "@Component\npublic class LateAnnotation {}\n")
@@ -286,6 +331,7 @@ def self_test() -> int:
         check("an annotation past the 4000th character is never reported", os.path.join(java, "LateAnnotation.java") not in dead)
         check("a class only a test names is reported", os.path.join(java, "TestOnlyDto.java") in dead)
         check("a Spring Data fragment implementation is not reported", os.path.join(java, "FragmentRepositoryImpl.java") not in dead)
+        check("an Impl of an interface no repository composes is still reported", os.path.join(java, "StandaloneImpl.java") in dead)
 
     # `Caller` is itself unreferenced, which is why it is expected in `dead` above; that is the
     # documented layering behaviour, not a bug.

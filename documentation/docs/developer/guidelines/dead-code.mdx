@@ -37,7 +37,9 @@ a Spring application:
   type without naming it, and that covers JPQL constructor expressions inside `@Query`, class
   literals in `@Conditional`, and fully-qualified names in `spring.factories` or a Liquibase
   changelog, because the simple name is a token inside the qualified name either way. For a plain
-  class, "no file mentions the name" and "dead" are the same statement, so the check fails the build.
+  class, "no indexed input mentions the name" and "dead" are the same statement, so the check fails the
+  build. The index covers the reference roots below; a class whose name is only ever assembled at
+  runtime, outside those roots, is an `ALLOWLIST` candidate rather than a finding.
 - An **annotation-wired class** is reachable because a framework scans for its annotation, not
   because anything names it. Zero references is the *normal* state of a live `@Configuration`. The
   check never reports a class carrying `@Component`, `@Service`, `@Configuration`, `@RestController`,
@@ -48,7 +50,10 @@ a Spring application:
 - A **Spring Data repository fragment** is reachable by naming convention alone. For a fragment
   interface `CustomPostRepository` that a repository extends, Spring Data instantiates
   `CustomPostRepositoryImpl` purely because of the `Impl` suffix. Nothing names it and it carries no
-  annotation, so the check recognises the shape (`is_spring_data_fragment`) and skips it.
+  annotation, so the check recognises it (`is_spring_data_fragment`) and skips it. The suffix alone does
+  not earn the exemption: some repository has to compose the interface, because otherwise every
+  `FooImpl implements Foo` would be exempt and a dead pair would hide forever — the implementation's own
+  `implements` clause is what keeps the interface referenced.
 
 **References are counted over production sources only.** `src/test` is not searched. A production
 class that only a test names is not reached from the application at all: the test asserts behaviour
@@ -138,9 +143,14 @@ tempting shortcut and it defeats the check: `admin.routes.ts` is reached through
 `app.routes.ts`, and rooting it directly means deleting that last caller leaves the gate green. The
 same holds for specs — a component whose only importer is its own spec has no application path.
 
-`pnpm run dead-code:client:report` uses `knip.report.json` instead, which keeps specs, vitest configs
-and the `setupFiles` they name as entries. That is the right shape for the advisory picture and the
-wrong shape for a gate.
+The TUM UI package is gated the same way, and for the same reason: its single entry is
+`src/public-api.ts`, with specs and stories out of the project graph and the vitest and Storybook plugins
+off. A component that has lost its last export from the public API but is still rendered by its own story
+is unreachable from the library, and rooting the stories would have called it alive.
+
+`pnpm run dead-code:client:report` uses `knip.report.json` instead, which keeps specs, stories, vitest
+configs and the `setupFiles` they name as entries. That is the right shape for the advisory picture — it
+is also what covers the Storybook configuration itself — and the wrong shape for a gate.
 
 When knip reports a file you know is loaded, check whether its entry point is missing from
 `knip.json` before concluding the file is dead — a vitest `setupFiles` string is a reference no

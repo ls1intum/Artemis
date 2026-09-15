@@ -16,16 +16,15 @@
         },
         "packages/tum-ui": {
             "entry": [
-                "src/public-api.ts",
-                "test-providers.ts",
-                "vitest*.config.ts",
-                "**/*.stories.ts"
+                "src/public-api.ts"
             ],
             "project": [
-                "**/*.ts",
-                "!**/*.spec.ts"
+                "src/**/*.ts",
+                "!src/**/*.spec.ts",
+                "!src/**/*.stories.ts"
             ],
-            "vitest": false
+            "vitest": false,
+            "storybook": false
         }
     },
     "exclude": [
