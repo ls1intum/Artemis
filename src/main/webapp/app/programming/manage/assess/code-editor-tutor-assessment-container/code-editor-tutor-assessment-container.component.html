@@ -70,7 +70,7 @@
                 [isProblemStatementVisible]="false"
                 [editable]="false"
                 [participation]="participation()"
-                [feedbackSuggestions]="feedbackSuggestions()"
+                [referencedFeedback]="referencedFeedback()"
                 [showEditorInstructions]="showEditorInstructions"
                 [isTutorAssessment]="true"
                 [highlightFileChanges]="true"
@@ -78,8 +78,6 @@
                 [highlightDifferences]="highlightDifferences"
                 [course]="getCourseFromExercise(exercise())"
                 (onUpdateFeedback)="onUpdateFeedback($event)"
-                (onAcceptSuggestion)="removeSuggestion($event)"
-                (onDiscardSuggestion)="removeSuggestion($event)"
                 (onFileLoad)="highlightChangedLines($event)"
             >
                 <div editorTitle *ngTemplateOutlet="editorTitle"></div>
@@ -144,12 +142,9 @@
                 @if (manualResult()?.id; as resultId) {
                     <jhi-unreferenced-feedback
                         [(feedbacks)]="unreferencedFeedback"
-                        [feedbackSuggestions]="unreferencedFeedbackSuggestions()"
                         (feedbacksChange)="validateUpdatedFeedback($event)"
                         [readOnly]="readOnly()"
                         [highlightDifferences]="highlightDifferences"
-                        (onAcceptSuggestion)="removeSuggestion($event)"
-                        (onDiscardSuggestion)="removeSuggestion($event)"
                         [resultId]="resultId"
                         [gradingCriteria]="exercise()?.gradingCriteria ?? []"
                         [allFeedbacks]="allAssessmentFeedbacks()"

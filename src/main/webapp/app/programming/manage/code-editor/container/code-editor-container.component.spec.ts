@@ -95,17 +95,20 @@ describe('CodeEditorContainerComponent', () => {
         expect(component.isProblemStatementVisible()).toBe(true);
     });
 
-    it('should update file badges when feedback suggestions change', () => {
-        fixture.componentRef.setInput('feedbackSuggestions', [
-            { reference: 'file:src/main/App.java_line:3' } as Feedback,
-            { reference: 'file:src/main/App.java_line:10' } as Feedback,
-            { reference: 'file:src/Other.java_line:5' } as Feedback,
+    it('should update file badges from Athena feedback suggestions among the submission feedback', () => {
+        fixture.componentRef.setInput('referencedFeedback', [
+            { text: 'FeedbackSuggestion:accepted:1', reference: 'file:src/main/App.java_line:3' } as Feedback,
+            { text: 'FeedbackSuggestion:accepted:2', reference: 'file:src/main/App.java_line:10' } as Feedback,
+            { text: 'FeedbackSuggestion:accepted:3', reference: 'file:src/Other.java_line:5' } as Feedback,
+            // Not a suggestion - must not be counted towards the badge
+            { text: 'Regular manual feedback', reference: 'file:src/Other.java_line:9' } as Feedback,
         ]);
         fixture.detectChanges();
 
         expect(Object.keys(component.fileBadges())).toEqual(expect.arrayContaining(['src/main/App.java', 'src/Other.java']));
         expect(component.fileBadges()['src/main/App.java'][0].type).toBe(FileBadgeType.FEEDBACK_SUGGESTION);
         expect(component.fileBadges()['src/main/App.java'][0].count).toBe(2);
+        expect(component.fileBadges()['src/Other.java'][0].count).toBe(1);
     });
 
     it('should count only active review thread badges per file (one badge count per thread)', () => {
