@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Version the transcription of a lecture unit, so that Iris citations can tell whether a cited video timestamp still
+         refers to the content it was generated from. Timestamps come from transcription segments, so the transcription is
+         the artifact that has to be versioned - the video source hash next to these columns only detects a changed URL.
+
+         Both columns live on lecture_unit_processing_state rather than on lecture_transcription: the transcription row is
+         deleted and recreated when the video changes, which would reset a per-row counter back to 1 and make a citation
+         pinned to version 1 look unchanged. The processing state row survives, so the counter stays monotonic per unit.
+
+         Mirrors how attachments already work: transcription_content_hash decides whether anything actually changed (the
+         counterpart of attachment.sha256_hash), transcription_version is the value pinned into the citation marker (the
+         counterpart of attachment.version). -->
+    <changeSet id="20260828145443-01-add-transcription-version-columns" author="vivienxr">
+        <addColumn tableName="lecture_unit_processing_state">
+            <column name="transcription_version" type="int"/>
+            <column name="transcription_content_hash" type="varchar(64)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

@@ -234,7 +234,12 @@
             },
             "citation": {
                 "unitLabel": "Unit:",
-                "lectureLabel": "Lecture:"
+                "lectureLabel": "Lecture:",
+                "outdated": {
+                    "stale": "The cited material has changed since this answer was written, so the exact page or timestamp is not opened.",
+                    "gone": "The cited material no longer exists, so the exact page or timestamp cannot be opened.",
+                    "unverified": "The cited material cannot be checked right now, so the exact page or timestamp is not opened as a precaution."
+                }
             },
             "contextSelection": {
                 "label": "Select chat context",

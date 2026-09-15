@@ -154,6 +154,14 @@ public class LectureContentProcessingService {
 
         LectureUnitProcessingState state = existingState.orElseGet(() -> new LectureUnitProcessingState(unit));
 
+        // A retry replaces the failed row rather than reusing it, which would restart the transcription version at 1. Unlike the attachment version, which can always be
+        // read back from the attachment itself, this counter has no other home: losing it would make an Iris citation pinned to version 1 look current again after the
+        // next transcription, and send a student to a timestamp in material that has since changed. It is carried over so the count stays monotonic across retries.
+        stateToDelete.ifPresent(failedState -> {
+            state.setTranscriptionVersion(failedState.getTranscriptionVersion());
+            state.setTranscriptionContentHash(failedState.getTranscriptionContentHash());
+        });
+
         // Detect content changes
         boolean contentChanged = handleContentChanges(unit, state, hasVideo, hasPdf);
         boolean shouldReprocess = contentChanged || forceReprocessing;
