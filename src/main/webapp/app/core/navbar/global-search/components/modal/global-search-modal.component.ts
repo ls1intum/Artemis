@@ -1,22 +1,23 @@
 import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, computed, effect, inject, signal, untracked, viewChild, viewChildren } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { EMPTY, Subject, catchError, filter, of, switchMap, tap, timer } from 'rxjs';
+import { EMPTY, Subject, catchError, defer, filter, map, of, switchMap, tap, timeout, timer } from 'rxjs';
 import { SearchOverlayService } from '../../services/search-overlay.service';
 import { OsDetectorService } from '../../services/os-detector.service';
+import { IrisSearchAvailabilityService } from '../../services/iris-search-availability.service';
+import { LectureSearchService } from '../../services/lecture-search.service';
+import { mapLectureContentResult } from '../../models/lecture-content-result.util';
 import { AccountService } from 'app/core/auth/account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowDown, faArrowUp } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DialogModule } from 'primeng/dialog';
-import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { GlobalSearchNavigationViewComponent } from 'app/core/navbar/global-search/components/views/navigation-view/global-search-navigation-view.component';
 import { MIN_SEARCH_QUERY_LENGTH, SEARCH_DEBOUNCE_MS, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { GlobalSearchApi } from 'app/openapi/api/global-search-api';
 import { SearchInputComponent } from './search-input/search-input.component';
 import { SearchEntityType, SearchableEntity } from '../../models/searchable-entity.model';
-import { GlobalSearchLectureResultsComponent } from 'app/core/navbar/global-search/components/views/lecture-results/global-search-lecture-results.component';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -25,11 +26,14 @@ interface SearchState {
     filters: SearchEntityType[];
 }
 
+/** Max time to wait for Iris content search before falling back to the standard metadata lecture search. */
+export const CONTENT_SEARCH_TIMEOUT_MS = 5_000;
+
 @Component({
     selector: 'jhi-global-search-modal',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [DialogModule, FaIconComponent, ArtemisTranslatePipe, GlobalSearchNavigationViewComponent, GlobalSearchLectureResultsComponent, SearchInputComponent],
+    imports: [DialogModule, FaIconComponent, ArtemisTranslatePipe, GlobalSearchNavigationViewComponent, SearchInputComponent],
     templateUrl: './global-search-modal.component.html',
     styleUrls: ['./global-search-modal.component.scss'],
 })
@@ -41,11 +45,11 @@ export class GlobalSearchModalComponent implements OnDestroy {
     private readonly searchService = inject(GlobalSearchApi);
     private readonly courseStorageService = inject(CourseStorageService);
     private readonly translateService = inject(TranslateService);
+    private readonly availability = inject(IrisSearchAvailabilityService);
+    private readonly lectureSearchService = inject(LectureSearchService);
     protected readonly faArrowUp = faArrowUp;
     protected readonly faArrowDown = faArrowDown;
     protected readonly searchInputComponent = viewChild<SearchInputComponent>(SearchInputComponent);
-    protected readonly currentView = signal(SearchView.Navigation);
-    protected readonly SearchView = SearchView;
     protected readonly searchQuery = signal('');
     protected readonly activeFilters = signal<SearchEntityType[]>([]);
     protected readonly activeCourseId = signal<number | undefined>(undefined);
@@ -138,23 +142,42 @@ export class GlobalSearchModalComponent implements OnDestroy {
                         }
                     }
 
-                    // Network search — debounce, then fire HTTP request
+                    // Network search — debounce, then fire HTTP request.
+                    // When the lecture chip is the only active filter, Iris content search is available,
+                    // and the query is valid, route to Iris content search. If that request fails or
+                    // exceeds CONTENT_SEARCH_TIMEOUT_MS, fall back to the standard metadata lecture search
+                    // so the user still gets results. Every other path is the metadata search as before.
+                    const useContentSearch = filters.length === 1 && filters[0] === 'lecture' && this.availability.contentSearchAvailable() && hasValidQuery;
                     this.isLoading.set(true);
                     return timer(SEARCH_DEBOUNCE_MS).pipe(
-                        switchMap(() =>
-                            this.searchService.globalSearch(searchQuery, typeFilter, courseId).pipe(
-                                tap((results) => {
-                                    if (!hasValidQuery && (hasFilter || hasCourseFilter)) {
-                                        this.placeholderCache.set(cacheKey, results);
-                                    }
-                                }),
+                        switchMap(() => {
+                            // Deferred so globalSearch is only invoked when this observable is actually
+                            // subscribed (the metadata path or the content-search fallback), never eagerly.
+                            const metadataSearch$ = defer(() =>
+                                this.searchService.globalSearch(searchQuery, typeFilter, courseId).pipe(
+                                    tap((results) => {
+                                        if (!hasValidQuery && (hasFilter || hasCourseFilter)) {
+                                            this.placeholderCache.set(cacheKey, results);
+                                        }
+                                    }),
+                                ),
+                            );
+                            const search$ = useContentSearch
+                                ? this.lectureSearchService.search(searchQuery, 10, courseId ? [courseId] : undefined).pipe(
+                                      timeout(CONTENT_SEARCH_TIMEOUT_MS),
+                                      map((rs) => rs.map(mapLectureContentResult)),
+                                      // Content search failed or timed out: fall back to the metadata lecture search.
+                                      catchError(() => metadataSearch$),
+                                  )
+                                : metadataSearch$;
+                            return search$.pipe(
                                 catchError(() => {
                                     this.isLoading.set(false);
                                     this.searchError.set('global.search.searchFailed');
                                     return of([]);
                                 }),
-                            ),
-                        ),
+                            );
+                        }),
                     );
                 }),
                 takeUntilDestroyed(),
@@ -360,7 +383,6 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.hasSearched.set(false);
         this.isLoading.set(false);
         this.searchError.set(undefined);
-        this.currentView.set(SearchView.Navigation);
         this.placeholderCache.clear();
     }
 
@@ -383,11 +405,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
         switch (event.key) {
             case 'Escape':
                 event.preventDefault();
-                if (this.currentView() !== SearchView.Navigation) {
-                    this.navigateTo(SearchView.Navigation);
-                } else {
-                    this.overlay.close();
-                }
+                this.overlay.close();
                 break;
             case 'ArrowDown':
                 event.preventDefault();
@@ -402,14 +420,5 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
     private isToggleShortcut(event: KeyboardEvent): boolean {
         return event.key.toLowerCase() === 'k' && this.osDetector.isActionKey(event) && this.accountService.isAuthenticated() && !event.repeat;
-    }
-
-    protected navigateTo(view: SearchView) {
-        if (view === SearchView.Lecture) {
-            // TODO lecture search should support filters aswell
-            this.removeCourseFilter();
-        }
-        this.currentView.set(view);
-        this.selectedIndex.set(-1);
     }
 }
