@@ -1,0 +1,44 @@
+diff --git a/dist/katex.js b/dist/katex.js
+index d0d42de20cd6e7709cd66c77df4fd7b80a838cf4..bd0223fec910212151215044fd02ca0bbbde8589 100644
+--- a/dist/katex.js
++++ b/dist/katex.js
+@@ -14347,7 +14347,7 @@ const functions = _functions;
+  */
+ const spaceRegexString = "[ \r\n\t]";
+ const controlWordRegexString = "\\\\[a-zA-Z@]+";
+-const controlSymbolRegexString = "\\\\[^\uD800-\uDFFF]";
++const controlSymbolRegexString = "\\\\[^\\uD800-\\uDFFF]";
+ const controlWordWhitespaceRegexString = "(" + controlWordRegexString + ")" + spaceRegexString + "*";
+ const controlSpaceRegexString = "\\\\(\n|[ \r\t]+\n?)[ \r\t]*";
+ const combiningDiacriticalMarkString = "[\u0300-\u036f]";
+@@ -14358,7 +14358,7 @@ controlSpaceRegexString + "|") +
+ "([!-\\[\\]-\u2027\u202A-\uD7FF\uF900-\uFFFF]" + (// single codepoint
+ combiningDiacriticalMarkString + "*") +
+ // ...plus accents
+-"|[\uD800-\uDBFF][\uDC00-\uDFFF]" + (// surrogate pair
++"|[\\uD800-\\uDBFF][\\uDC00-\\uDFFF]" + (// surrogate pair
+ combiningDiacriticalMarkString + "*") +
+ // ...plus accents
+ "|\\\\verb\\*([^]).*?\\4" +
+diff --git a/src/Lexer.ts b/src/Lexer.ts
+index ad3ac38a442656c7b5d6dfed80b0da97c77da8dc..6b07713a7339717c892a5893e8cf8d50c2348e9a 100644
+--- a/src/Lexer.ts
++++ b/src/Lexer.ts
+@@ -43,7 +43,7 @@ import type Settings from "./Settings";
+  */
+ const spaceRegexString = "[ \r\n\t]";
+ const controlWordRegexString = "\\\\[a-zA-Z@]+";
+-const controlSymbolRegexString = "\\\\[^\uD800-\uDFFF]";
++const controlSymbolRegexString = "\\\\[^\\uD800-\\uDFFF]";
+ const controlWordWhitespaceRegexString =
+     `(${controlWordRegexString})${spaceRegexString}*`;
+ const controlSpaceRegexString = "\\\\(\n|[ \r\t]+\n?)[ \r\t]*";
+@@ -54,7 +54,7 @@ const tokenRegexString = `(${spaceRegexString}+)|` +  // whitespace
+     `${controlSpaceRegexString}|` +                   // \whitespace
+     "([!-\\[\\]-\u2027\u202A-\uD7FF\uF900-\uFFFF]" +  // single codepoint
+     `${combiningDiacriticalMarkString}*` +            // ...plus accents
+-    "|[\uD800-\uDBFF][\uDC00-\uDFFF]" +               // surrogate pair
++    "|[\\uD800-\\uDBFF][\\uDC00-\\uDFFF]" +               // surrogate pair
+     `${combiningDiacriticalMarkString}*` +            // ...plus accents
+     "|\\\\verb\\*([^]).*?\\4" +                       // \verb*
+     "|\\\\verb([^*a-zA-Z]).*?\\5" +                   // \verb unstarred
