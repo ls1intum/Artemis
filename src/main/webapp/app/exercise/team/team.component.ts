@@ -16,6 +16,9 @@ import { TeamParticipationTableComponent } from './team-participation-table/team
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-team',
@@ -41,6 +44,7 @@ export class TeamComponent implements OnInit {
     private teamService = inject(TeamService);
     private accountService = inject(AccountService);
     private router = inject(Router);
+    private courseStorageService = inject(CourseStorageService);
 
     team = signal<Team | undefined>(undefined);
     exercise = signal<Exercise | undefined>(undefined);
@@ -84,7 +88,9 @@ export class TeamComponent implements OnInit {
                 this.setLoadingState(true);
                 this.exerciseService.find(params['exerciseId']).subscribe({
                     next: (exerciseResponse) => {
-                        this.exercise.set(exerciseResponse.body!);
+                        const exercise = exerciseResponse.body!;
+                        this.exercise.set(exercise);
+                        this.storeExercise(exercise, Number(params['courseId']));
                         this.teamService.find(this.exercise()!, params['teamId']).subscribe({
                             next: (teamResponse) => {
                                 this.team.set(teamResponse.body!);
@@ -98,6 +104,17 @@ export class TeamComponent implements OnInit {
             },
             error: this.onLoadError,
         });
+    }
+
+    private storeExercise(exercise: Exercise, routeCourseId: number): void {
+        const courseId = exercise.course?.id ?? routeCourseId;
+        const storedCourse = this.courseStorageService.getCourse(courseId);
+        this.courseStorageService.updateCourse(
+            cloneWith(storedCourse ?? new Course(), {
+                id: courseId,
+                exercises: [...(storedCourse?.exercises?.filter((storedExercise) => storedExercise.id !== exercise.id) ?? []), exercise],
+            }),
+        );
     }
 
     private setLoadingState(loading: boolean) {
