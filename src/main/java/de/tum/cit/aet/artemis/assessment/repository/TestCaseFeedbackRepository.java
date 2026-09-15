@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -41,6 +42,19 @@ public interface TestCaseFeedbackRepository extends ArtemisJpaRepository<TestCas
             WHERE feedback.result.id IN :resultIds
             """)
     List<TestCaseFeedback> findWithTestCaseByResultIds(@Param("resultIds") Collection<Long> resultIds);
+
+    /**
+     * The ids of the test cases a result already carries feedback for, without loading the rows.
+     *
+     * @param resultId the id of the result
+     * @return the ids of the test cases with a feedback row on that result
+     */
+    @Query("""
+            SELECT feedback.testCase.id
+            FROM TestCaseFeedback feedback
+            WHERE feedback.result.id = :resultId
+            """)
+    Set<Long> findTestCaseIdsByResultId(@Param("resultId") long resultId);
 
     @Query("""
             SELECT feedback

@@ -370,14 +370,17 @@ public class ProgrammingExerciseGradingService {
             // score. The test cases proper are partitioned across containers, so this only ever removes such repeats.
             // Only append the feedback here; the score is not recomputed until every container has finished (see
             // finalizeContainerResult), because scoring a partial result would mark the tests of containers that have
-            // not finished yet as "not executed". Saving the aggregate merges the detached result and inserts the rows
-            // through its cascade; the copy handed back is only used for its id.
-            parsed.result().getTestCaseFeedbacks().stream().filter(distinctNewTestCaseFeedback(aggregatedResult)).forEach(aggregatedResult::addTestCaseFeedback);
+            // not finished yet as "not executed". The rows are inserted with a reference to the aggregate, whose own
+            // columns do not change on append: merging the aggregate instead would re-read every row the earlier
+            // containers stored, once per container, to insert the same new rows through its cascade.
+            Set<Long> seenTestCaseIds = aggregatedResultId == null ? new HashSet<>() : new HashSet<>(testCaseFeedbackRepository.findTestCaseIdsByResultId(aggregatedResultId));
+            List<TestCaseFeedback> newTestCaseFeedbacks = parsed.result().getTestCaseFeedbacks().stream().filter(distinctNewTestCaseFeedback(seenTestCaseIds))
+                    .peek(feedback -> feedback.setResult(aggregatedResult)).toList();
+            testCaseFeedbackRepository.saveAll(newTestCaseFeedbacks);
             // static code analysis feedback carries no test case and is appended as reported
-            parsed.result().getScaFeedbacks().forEach(aggregatedResult::addScaFeedback);
-            aggregatedResult.setSubmission(submission);
-            aggregatedResult.setExerciseId(exercise.getId());
-            return resultRepository.save(aggregatedResult);
+            List<ScaFeedback> newScaFeedbacks = parsed.result().getScaFeedbacks().stream().peek(feedback -> feedback.setResult(aggregatedResult)).toList();
+            scaFeedbackRepository.saveAll(newScaFeedbacks);
+            return aggregatedResult;
         }
         catch (ContinuousIntegrationException ex) {
             log.error("Container result for participation {} could not be appended", participation.getId(), ex);
@@ -388,14 +391,13 @@ public class ProgrammingExerciseGradingService {
     /**
      * A predicate that keeps a container's test-case feedback only if the aggregated result does not already carry
      * feedback for the same test case: a test case is kept the first time it is seen across the submission's containers
-     * and dropped afterwards. The test cases are compared by id, which a lazily loaded row answers without loading the
-     * test case itself.
+     * and dropped afterwards.
      *
-     * @param aggregatedResult the result the containers of one submission aggregate their feedback into
+     * @param seenTestCaseIds the ids of the test cases the aggregated result already carries feedback for; extended as
+     *                            the predicate sees further ones
      * @return a stateful predicate to use once per container while appending its feedback
      */
-    private Predicate<TestCaseFeedback> distinctNewTestCaseFeedback(Result aggregatedResult) {
-        Set<Long> seenTestCaseIds = aggregatedResult.getTestCaseFeedbacks().stream().map(feedback -> feedback.getTestCase().getId()).collect(Collectors.toCollection(HashSet::new));
+    private static Predicate<TestCaseFeedback> distinctNewTestCaseFeedback(Set<Long> seenTestCaseIds) {
         return feedback -> seenTestCaseIds.add(feedback.getTestCase().getId());
     }
 
@@ -498,10 +500,9 @@ public class ProgrammingExerciseGradingService {
      */
     private Result getOrCreateAggregatedResult(ProgrammingSubmission submission, ProgrammingExercise exercise, @Nullable Long aggregatedResultId) {
         if (aggregatedResultId != null) {
-            // reload with the feedback appended by the earlier containers, so the next append does not drop it
-            Result aggregatedResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(aggregatedResultId);
-            hydrateTypedFeedback(aggregatedResult);
-            return aggregatedResult;
+            // Loaded without its feedback: the append inserts its rows with a reference to the aggregate and never reads
+            // the rows the earlier containers stored (their test-case ids come from a projection).
+            return resultRepository.findByIdElseThrow(aggregatedResultId);
         }
         Result result = new Result();
         result.setAssessmentType(AssessmentType.AUTOMATIC);
@@ -573,8 +574,11 @@ public class ProgrammingExerciseGradingService {
             // assessment its feedback is additionally merged into that manual result, which is then the one to report.
             // Read through the repository, not the submission's lazy result collection: the submission is detached, so
             // its collection cannot be initialized.
+            // An automatic result still in progress is the leftover of an attempt whose merge was interrupted between the
+            // aggregate's insert and its job's link (nothing refers to it any more); it must not hide a tutor's assessment.
             Result latestOtherResult = resultRepository.findAllBySubmissionIdOrderByIdDesc(programmingSubmission.getId()).stream()
-                    .filter(candidate -> !candidate.getId().equals(resultId)).findFirst().orElse(null);
+                    .filter(candidate -> !candidate.getId().equals(resultId)).filter(candidate -> candidate.isManual() || candidate.getCompletionDate() != null).findFirst()
+                    .orElse(null);
             mergedIntoManualResult = applyStudentResultPolicies(participation, aggregatedResult, programmingSubmission, latestOtherResult);
         }
         // Saved after the policies, as on the single-container path: the lock-repository policy marks the result unrated

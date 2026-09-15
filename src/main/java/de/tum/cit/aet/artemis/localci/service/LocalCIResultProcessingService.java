@@ -249,6 +249,9 @@ public class LocalCIResultProcessingService {
             return;
         }
         Result result = null;
+        // Whether the result below is one to report: every single-container result is, a container's result only once
+        // its group has completed (see processContainerResult).
+        boolean completedResult = buildJob.buildGroup() == null;
         // A container of a multi-container build persists its own build job inside the locked aggregation below, because
         // that is what counts the finished containers, and hands it back here; every other path saves it in the finally
         // block. The status is resolved once for both, since it only depends on the job and the exception.
@@ -274,6 +277,7 @@ public class LocalCIResultProcessingService {
                     if (outcome != null) {
                         result = outcome.result();
                         savedBuildJob = outcome.savedBuildJob();
+                        completedResult = outcome.completed();
                     }
                 }
                 else {
@@ -315,8 +319,10 @@ public class LocalCIResultProcessingService {
                 // hands it a result carrying part of the feedback and no score, once per container: the client clears the
                 // pending submission on any result of that submission, and the same call reports the score to an external
                 // LMS over LTI and feeds Iris. A single-container build's result is reported as it always was; a container's
-                // result only once it carries the completion date the finalizing container sets.
-                else if (buildJob.buildGroup() == null || result.getCompletionDate() != null) {
+                // result only once the finalizing container completed it. Completion is the outcome's word, not the
+                // result's completion date: the finalized feedback may have been merged into a tutor's draft assessment,
+                // which carries no completion date and is reported all the same, as on the single-container path.
+                else if (completedResult) {
                     programmingMessagingService.notifyUserAboutNewResult(result, programmingExerciseParticipation);
                 }
 
@@ -334,8 +340,7 @@ public class LocalCIResultProcessingService {
         // If the build job is a solution build of a test or auxiliary push, we need to trigger the build of the corresponding template repository.
         // A multi-container solution build reports one queue item per container; the template is rebuilt once, when the
         // container that completed the merged result comes through, not once per container.
-        boolean completedMergedResult = buildJob.buildGroup() == null || (result != null && result.getCompletionDate() != null);
-        if (isSolutionBuildOfTestOrAuxPush(buildJob) && completedMergedResult) {
+        if (isSolutionBuildOfTestOrAuxPush(buildJob) && completedResult) {
             triggerTemplateBuild(buildJob.exerciseId(), buildJob.id(), buildJob.buildConfig().testCommitHash(), buildJob.repositoryInfo().triggeredByPushTo());
         }
     }
@@ -517,7 +522,7 @@ public class LocalCIResultProcessingService {
                         throw new IllegalStateException("the build job of container " + buildGroup.containerName() + " could not be saved after its result was merged");
                     }
                     Result finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate());
-                    outcome = new ContainerOutcome(finalizedResult != null ? finalizedResult : appendedResult, linkedContainerJob);
+                    outcome = new ContainerOutcome(finalizedResult != null ? finalizedResult : appendedResult, linkedContainerJob, finalizedResult != null);
                 }
             }
             catch (RuntimeException e) {
@@ -541,14 +546,14 @@ public class LocalCIResultProcessingService {
                     log.error("Could not finalize build group {} after container {} of build job {} merged; the group's aggregated result stays in progress", buildGroupId,
                             buildGroup.containerName(), buildJob.id(), e);
                 }
-                return new ContainerOutcome(finalizedResult != null ? finalizedResult : appendedResult, linkedContainerJob);
+                return new ContainerOutcome(finalizedResult != null ? finalizedResult : appendedResult, linkedContainerJob, finalizedResult != null);
             }
             // This container's result could not be merged. Its job is still recorded as finished, only without a result
             // link, so the group's completion count keeps advancing: if this was the last container, the aggregate its
             // siblings built is finalized now, as failed, instead of staying open forever.
             BuildJob savedContainerJob = saveFinishedBuildJob(buildJob, BuildStatus.ERROR, null);
             Result finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate());
-            return new ContainerOutcome(finalizedResult, savedContainerJob);
+            return new ContainerOutcome(finalizedResult, savedContainerJob, finalizedResult != null);
         }
         finally {
             aggregationLocks.unlock(buildGroupId);
@@ -602,10 +607,12 @@ public class LocalCIResultProcessingService {
      * and the build job saved for the container. The job is carried out of the locked section because the caller
      * needs it to write the log file, and re-reading it there would be a second query for a row just written.
      *
-     * @param result        the aggregated result of the submission, finalized once every container has finished
+     * @param result        the aggregated result of the submission, finalized once every container has finished, or the
+     *                          tutor's assessment the finalized feedback was merged into
      * @param savedBuildJob the persisted build job of this container, linked to that result
+     * @param completed     whether this container completed the group, so that the result is the one to report
      */
-    private record ContainerOutcome(Result result, BuildJob savedBuildJob) {
+    private record ContainerOutcome(Result result, BuildJob savedBuildJob, boolean completed) {
     }
 
     /**

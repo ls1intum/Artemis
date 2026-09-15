@@ -457,6 +457,42 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(finalizedResult.getFeedbacks()).as("reported with the ids the client identifies feedback by").allMatch(feedback -> feedback.getId() != null);
     }
 
+    /**
+     * An attempt whose merge was interrupted between the aggregate's insert and its job's link leaves an automatic result
+     * in progress on the submission that nothing refers to. It is the submission's newest result, but it must not hide
+     * the tutor's assessment from the finalize of the next attempt, whose feedback belongs into that assessment.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testAnInProgressLeftoverDoesNotHideTheAssessmentTheFinalizedFeedbackIsMergedInto() {
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        participation.setProgrammingExercise(programmingExercise);
+        ProgrammingSubmission submission = submissionOf(participation, "0000000000000000000000000000000000000010");
+        Result assessment = new Result();
+        assessment.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        assessment.setCompletionDate(ZonedDateTime.now().minusMinutes(10));
+        assessment.setSubmission(submission);
+        assessment.setExerciseId(programmingExercise.getId());
+        assessment = resultRepository.save(assessment);
+        // the newer leftover: automatic, never completed, linked by no job
+        Result leftover = new Result();
+        leftover.setAssessmentType(AssessmentType.AUTOMATIC);
+        leftover.setCompletionDate(null);
+        leftover.setSubmission(submission);
+        leftover.setExerciseId(programmingExercise.getId());
+        resultRepository.save(leftover);
+
+        String commitHash = submission.getCommitHash();
+        var passingJob = new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO("testClass[SortStrategy]", List.of())));
+        BuildResult containerResult = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(passingJob), null, null, false, 0);
+        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, containerResult, true, "container_a", null);
+        buildJobRepository.save(new BuildJob(buildJobFor("leftover-0", "leftover", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult));
+
+        Result reportedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult.getId(), participation, true, ZonedDateTime.now());
+
+        assertThat(reportedResult.getId()).as("the feedback was merged into the assessment, which is the result to report").isEqualTo(assessment.getId());
+    }
+
     private ProgrammingSubmission submissionOf(ProgrammingExerciseStudentParticipation participation, String commitHash) {
         ProgrammingSubmission submission = new ProgrammingSubmission();
         submission.setCommitHash(commitHash);

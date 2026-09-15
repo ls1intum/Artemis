@@ -35,6 +35,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
@@ -621,6 +622,35 @@ class LocalCIResultProcessingServiceTest {
         assertThat(recorded.getResult()).isNull();
         verify(programmingExerciseGradingService, never()).finalizeContainerResult(anyLong(), any(), anyBoolean(), any());
         verify(aggregationLocks).unlock("group-1");
+    }
+
+    @Test
+    void theLastContainerReportsTheAssessmentItsFeedbackWasMergedIntoEvenWithoutACompletionDate() {
+        // Finalize merges the feedback into a tutor's open assessment when there is one, and hands that assessment back. A
+        // draft assessment carries no completion date, and the single-container path reports it all the same; the report
+        // must not be suppressed because the guard mistakes the missing date for a group that is still in progress.
+        withQueuedResult(new ResultQueueItem(buildResult, containerJob("group-1", 1, "container_a"), List.of(), null));
+        withParticipation();
+        withSavedBuildJob();
+        when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
+        // no aggregate before the append, the appended one once the job links to it
+        when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of(), List.of(7L));
+        Result aggregatedResult = new Result();
+        aggregatedResult.setId(7L);
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull())).thenReturn(aggregatedResult);
+        when(buildJobRepository.countByBuildGroupIdAndBuildStatusIn(eq("group-1"), any())).thenReturn(1L);
+        when(buildJobRepository.existsByBuildGroupIdAndBuildStatusNot("group-1", BuildStatus.SUCCESSFUL)).thenReturn(false);
+        when(buildJobRepository.existsByBuildGroupIdAndResultIsNull("group-1")).thenReturn(false);
+        Result draftAssessment = new Result();
+        draftAssessment.setId(3L);
+        draftAssessment.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        draftAssessment.setCompletionDate(null);
+        when(programmingExerciseGradingService.finalizeContainerResult(eq(7L), any(), eq(true), any())).thenReturn(draftAssessment);
+
+        resultProcessingService.processResultAsync();
+
+        verify(programmingMessagingService).notifyUserAboutNewResult(draftAssessment, participation);
+        verify(programmingSubmissionMessagingService, never()).notifyUserAboutSubmissionError(any(Participation.class), any(BuildTriggerWebsocketError.class));
     }
 
     // --- the sweep over complete groups whose aggregate stayed in progress -------------------------------------------
