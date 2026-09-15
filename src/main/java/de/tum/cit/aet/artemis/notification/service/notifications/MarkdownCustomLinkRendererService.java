@@ -28,11 +28,15 @@ public class MarkdownCustomLinkRendererService implements MarkdownCustomRenderer
 
     private final Set<String> supportedTags;
 
+    /** The tags this renderer supports, as one expression. Assembled once: {@code render} is called for every rendered text. */
+    private final Pattern tagExpression;
+
     @Value("${server.url}")
     private URL artemisServerUrl;
 
     public MarkdownCustomLinkRendererService() {
         this.supportedTags = Set.of("programming", "modeling", "quiz", "text", "file-upload", "lecture", "attachment", "lecture-unit", "slide", "faq");
+        this.tagExpression = Pattern.compile("\\[(" + String.join("|", supportedTags) + ")\\](.*?)\\((.*?)\\)(.*?)\\[/\\1]");
     }
 
     /**
@@ -43,10 +47,7 @@ public class MarkdownCustomLinkRendererService implements MarkdownCustomRenderer
      * @return the newly rendered string.
      */
     public String render(String content) {
-        String tagPattern = String.join("|", supportedTags);
-        // The pattern checks for the occurrence of any tag and then extracts the link from it
-        Pattern pattern = Pattern.compile("\\[(" + tagPattern + ")\\](.*?)\\((.*?)\\)(.*?)\\[/\\1\\]");
-        Matcher matcher = pattern.matcher(content);
+        Matcher matcher = tagExpression.matcher(content);
         String parsedContent = content;
 
         while (matcher.find()) {
@@ -65,7 +66,7 @@ public class MarkdownCustomLinkRendererService implements MarkdownCustomRenderer
                 parsedContent = parsedContent.substring(0, matcher.start()) + parsedContent.substring(matcher.end());
             }
 
-            matcher = pattern.matcher(parsedContent);
+            matcher = tagExpression.matcher(parsedContent);
         }
 
         return parsedContent;

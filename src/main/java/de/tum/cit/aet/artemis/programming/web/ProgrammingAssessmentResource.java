@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.web.AssessmentResource;
@@ -42,6 +41,7 @@ import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingAssessmentResultDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingAssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingManualResultRequestDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingAssessmentService;
@@ -93,7 +93,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("programming-submissions/{submissionId}/assessment-after-complaint")
     @EnforceAtLeastTutor
-    public ResponseEntity<ProgrammingAssessmentResultDTO> updateProgrammingManualResultAfterComplaint(@RequestBody AssessmentUpdateDTO assessmentUpdate,
+    public ResponseEntity<ProgrammingAssessmentResultDTO> updateProgrammingManualResultAfterComplaint(@RequestBody ProgrammingAssessmentUpdateDTO assessmentUpdate,
             @PathVariable long submissionId) {
         log.debug("REST request to update the assessment of manual result for submission {} after complaint.", submissionId);
         User user = userRepository.getUserWithAuthorities();
@@ -104,7 +104,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             throw new AccessForbiddenException();
         }
 
-        Result result = programmingAssessmentService.updateAssessmentAfterComplaint(programmingSubmission.getLatestResult(), programmingExercise, assessmentUpdate);
+        Result result = programmingAssessmentService.updateAssessmentAfterComplaint(programmingSubmission.getLatestResult(), programmingExercise,
+                assessmentUpdate.toAssessmentUpdate());
         // Load the sub-graphs the response carries: the editor decides whether the current user may still override the
         // assessment from result.assessor, and it replaces its in-memory result with this one. Without the explicit
         // reload the assessor would arrive as null and the override controls would wrongly stay enabled.

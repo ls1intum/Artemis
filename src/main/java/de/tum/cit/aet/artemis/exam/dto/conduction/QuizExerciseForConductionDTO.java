@@ -6,6 +6,8 @@ import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import tools.jackson.databind.annotation.JsonDeserialize;
+
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionForExamDTO;
@@ -26,7 +28,7 @@ import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithoutSolutionDTO;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizExerciseForConductionDTO(Integer allowedNumberOfAttempts, Integer duration, boolean quizStarted, boolean quizEnded, QuizMode quizMode,
-        Boolean randomizeQuestionOrder, List<QuizQuestionForExamDTO> quizQuestions) {
+        Boolean randomizeQuestionOrder, @JsonDeserialize(contentAs = QuizQuestionWithSolutionDTO.class) List<QuizQuestionForExamDTO> quizQuestions) {
 
     /**
      * Extracts the quiz-specific fields, guarding against uninitialized lazy quiz-question collections.

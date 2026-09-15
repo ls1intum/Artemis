@@ -1,4 +1,4 @@
-import { Component, DoCheck, OnInit, computed, inject, input, viewChild } from '@angular/core';
+import { Component, DoCheck, OnInit, computed, inject, input, model, viewChild } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
@@ -21,7 +21,8 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements DoCheck, OnI
     private buildPhasesTemplateService = inject(BuildPhasesTemplateService);
     private legacyBuildPlanConverterService = inject(LegacyBuildPlanConverterService);
 
-    readonly programmingExercise = input.required<ProgrammingExercise>();
+    readonly programmingExercise = model.required<ProgrammingExercise>();
+
     readonly programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
     readonly isExamMode = input(false);
 
@@ -70,6 +71,10 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements DoCheck, OnI
         if (this.shouldReloadTemplate()) {
             this.loadBuildPhasesTemplate(this.programmingExerciseCreationConfig().isImportFromFile);
         }
+    }
+
+    onCustomizeBuildPlanChange(customizeBuildPlan: boolean) {
+        this.programmingExercise.update((exercise) => cloneWith(exercise, { customizeBuildPlan }));
     }
 
     shouldReloadTemplate(): boolean {

@@ -50,7 +50,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentAddressInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
-import de.tum.cit.aet.artemis.communication.dto.SavedPostDTO;
+import de.tum.cit.aet.artemis.communication.dto.LinkPreviewDTO;
 import de.tum.cit.aet.artemis.core.config.cache.BlobCacheConfiguration;
 import de.tum.cit.aet.artemis.core.service.cache.PerNodeCacheEvictionService.PerNodeCacheEviction;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.MapItemEvent;
@@ -242,12 +242,14 @@ class DistributedDataSurfaceTest {
         String recorded = Files.exists(RECORDED_SURFACE) ? Files.readString(RECORDED_SURFACE, StandardCharsets.UTF_8) : "";
 
         // Each name is followed by a space, because every recorded line reads "<kind> <name> serialVersionUID=...". A bare
-        // name is a substring of a longer one, so the SavedPost sentinel below went on passing on SavedPostStatus alone
-        // after the cached value became a projection, and stopped guarding anything.
+        // name is a substring of a longer one, so a sentinel on a bare name can go on passing on a longer name that
+        // merely starts with it, and stop guarding anything.
         assertThat(surface).as("notification and direct-topic payloads must remain part of the compatibility gate").contains(named(QueueItemEvent.class),
                 named(QueueItemEvent.EventType.class), named(MapItemEvent.class), named(MapItemEvent.EventType.class), named(PerNodeCacheEviction.class),
                 named(WebsocketBrokerReconnectMessage.class), named(ControlAction.class));
-        assertThat(surface).as("values stored through the distributed Spring cache must remain part of the compatibility gate").contains(named(SavedPostDTO.class));
+        // The link preview is the remaining @Cacheable value served by the distributed manager, so it is the sentinel
+        // that proves this gate still covers Spring cache values at all.
+        assertThat(surface).as("values stored through the distributed Spring cache must remain part of the compatibility gate").contains(named(LinkPreviewDTO.class));
 
         if (!surface.equals(recorded)) {
             // Written before asserting so that the fix is a reviewed copy rather than a hand edit.

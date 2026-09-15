@@ -544,7 +544,7 @@ public class ProgrammingExerciseGradingService {
      * @param participation for which the results should be updated.
      * @return a list of updated results (maximum two: latest automatic, and latest manual result).
      */
-    public List<Result> updateParticipationResults(final ProgrammingExerciseStudentParticipation participation) {
+    public List<Result> updateParticipationResults(@NonNull final ProgrammingExerciseStudentParticipation participation) {
         final ProgrammingExercise exercise = participation.getProgrammingExercise();
         final Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
         final Set<ProgrammingExerciseTestCase> testCasesBeforeDueDate = filterTestCasesForStudents(testCases, true);

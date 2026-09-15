@@ -66,8 +66,10 @@ public record ParticipationOverviewRowDTO(long exerciseId, long participationId,
      * @return the projected submission, or null if the row carries no submission
      */
     public @Nullable SubmissionOverviewDTO toSubmissionOverviewDTO(List<ResultOverviewDTO> results, ExerciseType exerciseType) {
+        // The overview query does not select the commit hash; the overview renders no source code.
         return submissionId == null ? null
-                : new SubmissionOverviewDTO(submissionId, submissionDate, Boolean.TRUE.equals(submitted), submissionType, exerciseType.getValue(), submissionBuildFailed, results);
+                : new SubmissionOverviewDTO(submissionId, submissionDate, Boolean.TRUE.equals(submitted), submissionType, exerciseType.getValue(), submissionBuildFailed, null,
+                        results);
     }
 
     private static String participationTypeName(Class<? extends Participation> participationType) {

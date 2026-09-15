@@ -38,13 +38,13 @@ import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
+import de.tum.cit.aet.artemis.assessment.service.AssessmentUpdate;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -227,7 +227,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         FeedbackDTO feedbackDTO = FeedbackDTO.of(longFeedback);
         final String editedLongText = "Edited long feedback ".repeat(100);
         FeedbackDTO editedFeedbackDTO = new FeedbackDTO(feedbackDTO.id(), feedbackDTO.text(), editedLongText, feedbackDTO.hasLongFeedbackText(), feedbackDTO.reference(),
-                feedbackDTO.credits(), feedbackDTO.positive(), feedbackDTO.type(), feedbackDTO.visibility(), feedbackDTO.gradingInstruction());
+                feedbackDTO.credits(), feedbackDTO.positive(), feedbackDTO.type(), feedbackDTO.visibility(), feedbackDTO.gradingInstruction(), feedbackDTO.testCase());
         TextAssessmentDTO body = new TextAssessmentDTO(List.of(editedFeedbackDTO), null, null);
         request.putWithResponseBodyAndParams("/api/text/participations/" + textSubmission.getParticipation().getId() + "/results/" + result.getId() + "/text-assessment", body,
                 ResultDTO.class, HttpStatus.OK, new LinkedMultiValueMap<>());
@@ -253,7 +253,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         FeedbackDTO feedbackDTO = FeedbackDTO.of(longFeedback);
         final String editedShortText = "Short edited feedback";
         FeedbackDTO editedFeedbackDTO = new FeedbackDTO(feedbackDTO.id(), feedbackDTO.text(), editedShortText, feedbackDTO.hasLongFeedbackText(), feedbackDTO.reference(),
-                feedbackDTO.credits(), feedbackDTO.positive(), feedbackDTO.type(), feedbackDTO.visibility(), feedbackDTO.gradingInstruction());
+                feedbackDTO.credits(), feedbackDTO.positive(), feedbackDTO.type(), feedbackDTO.visibility(), feedbackDTO.gradingInstruction(), feedbackDTO.testCase());
         TextAssessmentDTO body = new TextAssessmentDTO(List.of(editedFeedbackDTO), null, null);
         request.putWithResponseBodyAndParams("/api/text/participations/" + textSubmission.getParticipation().getId() + "/results/" + result.getId() + "/text-assessment", body,
                 ResultDTO.class, HttpStatus.OK, new LinkedMultiValueMap<>());
@@ -400,7 +400,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void updateTextAssessmentAfterComplaint_wrongParticipationId() throws Exception {
         TextSubmission textSubmission = textExerciseUtilService.createTextSubmissionWithResultAndAssessor(textExercise, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        AssessmentUpdateDTO assessmentUpdate = complaintUtilService.createComplaintAndResponse(textSubmission.getLatestResult(), TEST_PREFIX + "tutor2");
+        AssessmentUpdate assessmentUpdate = complaintUtilService.createComplaintAndResponse(textSubmission.getLatestResult(), TEST_PREFIX + "tutor2");
         TextAssessmentUpdateDTO textAssessmentUpdate = new TextAssessmentUpdateDTO(new ArrayList<>(), toComplaintResponseRequestDTO(assessmentUpdate.complaintResponse()), null,
                 new HashSet<>());
 
@@ -416,7 +416,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void updateTextAssessmentAfterComplaint_studentHidden() throws Exception {
         TextSubmission textSubmission = textExerciseUtilService.createTextSubmissionWithResultAndAssessor(textExercise, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        AssessmentUpdateDTO assessmentUpdate = complaintUtilService.createComplaintAndResponse(textSubmission.getLatestResult(), TEST_PREFIX + "tutor2");
+        AssessmentUpdate assessmentUpdate = complaintUtilService.createComplaintAndResponse(textSubmission.getLatestResult(), TEST_PREFIX + "tutor2");
         TextAssessmentUpdateDTO textAssessmentUpdate = new TextAssessmentUpdateDTO(new ArrayList<>(), toComplaintResponseRequestDTO(assessmentUpdate.complaintResponse()), null,
                 new HashSet<>());
 
@@ -502,8 +502,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment = prepareSubmission();
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO(new ArrayList<>(), null, null);
 
-        ResultDTO result = saveOrSubmitTextAssessment(participationId(submissionWithoutAssessment), Objects.requireNonNull(latestResultId(submissionWithoutAssessment)),
-                textAssessmentDTO, submit, HttpStatus.OK);
+        var latestResultId = latestResultId(submissionWithoutAssessment);
+        assertThat(latestResultId).isNotNull();
+        ResultDTO result = saveOrSubmitTextAssessment(participationId(submissionWithoutAssessment), latestResultId, textAssessmentDTO, submit, HttpStatus.OK);
         assertThat(result).as("saved result found").isNotNull();
         // The student of the participation is hidden for non-instructors: ResultDTO.participation() (ParticipationDTO) structurally carries no student field.
         assertThat(result.participation()).as("participation of result is present (student is structurally omitted)").isNotNull();
@@ -516,8 +517,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         // feedbacks omitted entirely (null), not just an empty list: this used to NPE/500 on the unguarded feedbacks.stream() path.
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO(null, null, null);
 
-        ResultDTO result = request.postWithResponseBody("/api/text/participations/" + participationId(submissionWithoutAssessment) + "/results/"
-                + Objects.requireNonNull(latestResultId(submissionWithoutAssessment)) + "/submit-text-assessment", textAssessmentDTO, ResultDTO.class, HttpStatus.OK);
+        ResultDTO result = request.postWithResponseBody(
+                "/api/text/participations/" + participationId(submissionWithoutAssessment) + "/results/" + latestResultId(submissionWithoutAssessment) + "/submit-text-assessment",
+                textAssessmentDTO, ResultDTO.class, HttpStatus.OK);
 
         assertThat(result).as("submitting an assessment with omitted feedbacks returns 200 (not 500)").isNotNull();
     }
@@ -529,8 +531,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment = prepareSubmission();
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO(new ArrayList<>(), null, null);
 
-        ResultDTO result = saveOrSubmitTextAssessment(1343L, Objects.requireNonNull(latestResultId(submissionWithoutAssessment)), textAssessmentDTO, submit,
-                HttpStatus.BAD_REQUEST);
+        var latestResultId = latestResultId(submissionWithoutAssessment);
+        assertThat(latestResultId).isNotNull();
+        ResultDTO result = saveOrSubmitTextAssessment(1343L, latestResultId, textAssessmentDTO, submit, HttpStatus.BAD_REQUEST);
         assertThat(result).isNull();
     }
 

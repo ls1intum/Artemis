@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
@@ -46,6 +46,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCase
 public class ProgrammingExerciseValidationService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseValidationService.class);
+
+    /** A run of whitespace, which a project key may not contain. */
+    private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
 
     // The minimum memory that a Docker container can be assigned is 6MB. This is a Docker limitation.
     private static final int MIN_DOCKER_MEMORY_MB = 6;
@@ -344,7 +347,7 @@ public class ProgrammingExerciseValidationService {
         try {
             phases = BuildPlanPhasesDTO.fromBuildPlanConfiguration(programmingExercise.getBuildConfig().getBuildPlanConfiguration()).phases();
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new BadRequestAlertException("The build plan configuration is invalid", "programmingExercise", "invalidBuildPlanConfiguration");
         }
 
@@ -405,7 +408,7 @@ public class ProgrammingExerciseValidationService {
      * @return true if a project with the same ProjectKey or ProjectName already exists, otherwise false
      */
     public boolean preCheckProjectExistsOnVCSOrCI(ProgrammingExercise programmingExercise, String courseShortName) {
-        String projectKey = (courseShortName + programmingExercise.getShortName().replaceAll("\\s+", "")).toUpperCase(Locale.ROOT);
+        String projectKey = (courseShortName + WHITESPACE_RUN.matcher(programmingExercise.getShortName()).replaceAll("")).toUpperCase(Locale.ROOT);
         String projectName = courseShortName + " " + programmingExercise.getTitle();
         log.debug("Project Key: {}", projectKey);
         log.debug("Project Name: {}", projectName);
