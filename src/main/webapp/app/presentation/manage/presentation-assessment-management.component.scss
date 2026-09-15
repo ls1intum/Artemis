@@ -173,6 +173,25 @@
     overflow: auto;
 }
 
+.presentation-expansion-button {
+    display: inline-flex;
+    width: 1.75rem;
+    height: 1.75rem;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border: 0;
+    border-radius: var(--p-border-radius-sm);
+    color: var(--p-text-muted-color);
+    background: transparent;
+
+    &:hover,
+    &:focus-visible {
+        color: var(--p-primary-color);
+        background: var(--p-content-hover-background);
+    }
+}
+
 .presentation-paginator {
     display: block;
     flex: 0 0 auto;

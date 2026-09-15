@@ -4,7 +4,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { faArrowUpRightFromSquare, faLink, faPencilAlt, faPlus, faSearch, faTrash, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUpRightFromSquare, faChevronDown, faChevronRight, faLink, faPencilAlt, faPlus, faSearch, faTrash, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import {
@@ -40,7 +40,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { CollapseState, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { TranslateService } from '@ngx-translate/core';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import {
     AssessmentStatusFilter,
     FilterOption,
@@ -61,6 +61,10 @@ const presentationSidebarCollapseStateRecord: Record<string, boolean> = { standa
 const PRESENTATION_SIDEBAR_COLLAPSE_STATE = presentationSidebarCollapseStateRecord as CollapseState;
 const presentationSidebarAlwaysShowRecord: Record<string, boolean> = {};
 const PRESENTATION_SIDEBAR_ALWAYS_SHOW = presentationSidebarAlwaysShowRecord as SidebarItemShowAlways;
+
+function studentRowKey(row: PresentationStudentRow | SelectedPresentationStudentRow): string {
+    return `${row.instance?.id ?? 'new'}:${row.studentLogin}`;
+}
 
 @Component({
     selector: 'jhi-presentation-assessment-management',
@@ -105,6 +109,8 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     protected readonly faUsers = faUsers;
     protected readonly faSearch = faSearch;
     protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
+    protected readonly faChevronDown = faChevronDown;
+    protected readonly faChevronRight = faChevronRight;
     protected readonly PresentationAssessmentMode = PresentationAssessmentMode;
 
     readonly courseId = signal<number>(0);
@@ -139,6 +145,11 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         const selectedId = this.selectedPresentationId();
         return this.presentationAssessments().find((assessment) => assessment.id === selectedId) ?? this.presentationAssessments()[0];
     });
+    readonly selectedPresentationExerciseRoute = computed<(string | number)[] | undefined>(() => {
+        const presentationAssessment = this.selectedPresentation();
+        const exercise = this.exercises().find((candidate) => candidate.id === presentationAssessment?.exerciseId);
+        return exercise?.id && exercise.type ? ['/course-management', this.courseId(), `${exercise.type}-exercises`, exercise.id] : undefined;
+    });
     readonly studentRows = computed<PresentationStudentRow[]>(() => {
         return createStudentRows(this.presentationAssessments(), this.courseStudents());
     });
@@ -146,7 +157,11 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         return createSelectedStudentRows(this.selectedPresentation(), this.courseStudents());
     });
     readonly filteredSelectedPresentationStudentRows = computed(() => {
-        return filterStudentRowsBySearch(this.selectedPresentationStudentRows(), this.studentSearchTerm());
+        const expandedRows = this.expandedStudentRows();
+        return filterStudentRowsBySearch(this.selectedPresentationStudentRows(), this.studentSearchTerm()).map((row) => {
+            const rowKey = studentRowKey(row);
+            return cloneWith(row, { rowKey, assessed: hasResultPoints(row.instance?.resultPoints), expanded: expandedRows.includes(rowKey) });
+        });
     });
     readonly filteredStudentRows = computed(() => {
         return filterAndSortStudentRows(this.studentRows(), {
@@ -160,7 +175,13 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     });
     readonly paginatedStudentRows = computed(() => {
         const start = this.overviewPage() * this.overviewPageSize();
-        return this.filteredStudentRows().slice(start, start + this.overviewPageSize());
+        const expandedRows = this.expandedStudentRows();
+        return this.filteredStudentRows()
+            .slice(start, start + this.overviewPageSize())
+            .map((row) => {
+                const rowKey = studentRowKey(row);
+                return cloneWith(row, { rowKey, assessed: hasResultPoints(row.instance.resultPoints), expanded: expandedRows.includes(rowKey) });
+            });
     });
     readonly assessedStudentCount = computed(() => this.studentRows().filter((row) => hasResultPoints(row.instance.resultPoints)).length);
     readonly pendingStudentCount = computed(() => this.studentRows().length - this.assessedStudentCount());
@@ -248,14 +269,6 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         this.studentSortOrder.set(event.order);
     }
 
-    getLinkedExerciseRoute(presentationAssessment: PresentationAssessment): (string | number)[] | undefined {
-        const exercise = this.exercises().find((candidate) => candidate.id === presentationAssessment.exerciseId);
-        if (!exercise?.id || !exercise.type) {
-            return undefined;
-        }
-        return ['/course-management', this.courseId(), `${exercise.type}-exercises`, exercise.id];
-    }
-
     setAssessmentStatusFilter(filter: AssessmentStatusFilter): void {
         this.assessmentStatusFilter.set(filter);
         this.overviewPage.set(0);
@@ -291,12 +304,8 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         if (!row.instance) {
             return;
         }
-        const key = this.studentRowKey(row);
+        const key = studentRowKey(row);
         this.expandedStudentRows.update((keys) => (keys.includes(key) ? keys.filter((value) => value !== key) : [...keys, key]));
-    }
-
-    isStudentRowExpanded(row: PresentationStudentRow | SelectedPresentationStudentRow): boolean {
-        return this.expandedStudentRows().includes(this.studentRowKey(row));
     }
 
     startEdit(presentationAssessment: PresentationAssessment): void {
@@ -417,13 +426,5 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             return;
         }
         this.instanceDialogVisible.set(false);
-    }
-
-    hasResultPoints(resultPoints: number | null | undefined): resultPoints is number {
-        return hasResultPoints(resultPoints);
-    }
-
-    studentRowKey(row: PresentationStudentRow | SelectedPresentationStudentRow): string {
-        return `${row.instance?.id ?? 'new'}:${row.studentLogin}`;
     }
 }

@@ -59,7 +59,7 @@
         </div>
         <div class="flex flex-col gap-2">
             <label for="presentation-instance-language" jhiTranslate="artemisApp.presentationAssessment.language"></label>
-            <tum-ui-select inputId="presentation-instance-language" [options]="languageOptions" optionLabel="label" optionValue="value" formControlName="language" />
+            <tum-ui-select inputId="presentation-instance-language" [options]="languageOptions()" optionLabel="label" optionValue="value" formControlName="language" />
         </div>
         <div class="flex flex-col gap-2">
             <label for="presentation-instance-mode" jhiTranslate="artemisApp.presentationAssessment.mode.label"></label>

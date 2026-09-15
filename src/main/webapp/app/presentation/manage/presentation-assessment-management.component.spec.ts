@@ -117,9 +117,11 @@ describe('PresentationAssessmentManagementComponent', () => {
     });
 
     it('should only consider an assigned numeric score as assessed', () => {
-        expect(component.hasResultPoints(undefined)).toBe(false);
-        expect(component.hasResultPoints(null)).toBe(false);
-        expect(component.hasResultPoints(0)).toBe(true);
+        component.presentationAssessments.set([{ ...presentationAssessment, instances: [{ id: 11, presentationDate, resultPoints: undefined, studentLogins: ['student1'] }] }]);
+        expect(component.filteredSelectedPresentationStudentRows()[0].assessed).toBe(false);
+
+        component.presentationAssessments.set([{ ...presentationAssessment, instances: [{ id: 11, presentationDate, resultPoints: 0, studentLogins: ['student1'] }] }]);
+        expect(component.filteredSelectedPresentationStudentRows()[0].assessed).toBe(true);
     });
 
     it('should only show students with an instance in the selected presentation', () => {
@@ -163,8 +165,17 @@ describe('PresentationAssessmentManagementComponent', () => {
 
     it('should create the course management route for the linked exercise', () => {
         component.exercises.set([{ id: 7, type: ExerciseType.TEXT } as Exercise]);
+        component.presentationAssessments.set([{ ...presentationAssessment, exerciseId: 7 }]);
 
-        expect(component.getLinkedExerciseRoute({ ...presentationAssessment, exerciseId: 7 })).toEqual(['/course-management', courseId, 'text-exercises', 7]);
+        expect(component.selectedPresentationExerciseRoute()).toEqual(['/course-management', courseId, 'text-exercises', 7]);
+    });
+
+    it('should expose stable keys and expansion state in the row view models', () => {
+        const row = component.filteredSelectedPresentationStudentRows()[0];
+        component.toggleStudentRowDetails(row);
+
+        expect(component.filteredSelectedPresentationStudentRows()[0]).toMatchObject({ rowKey: '11:student1', assessed: true, expanded: true });
+        expect(component.paginatedStudentRows()[0]).toMatchObject({ rowKey: '11:student1', assessed: true, expanded: true });
     });
 
     it('should open the create dialog without persisting on cancel', () => {

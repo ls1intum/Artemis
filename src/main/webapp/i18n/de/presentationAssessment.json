@@ -65,6 +65,12 @@
             "exerciseNotInCourse": "Die verknüpfte Aufgabe muss zu diesem Kurs gehören.",
             "instanceRequiresPresenter": "Wähle mindestens eine präsentierende Person aus.",
             "language": "Sprache",
+            "languageOptions": {
+                "english": "Englisch",
+                "german": "Deutsch"
+            },
+            "showDetails": "Details anzeigen",
+            "hideDetails": "Details ausblenden",
             "location": "Ort",
             "meetingLink": "Meeting-Link",
             "mode": {

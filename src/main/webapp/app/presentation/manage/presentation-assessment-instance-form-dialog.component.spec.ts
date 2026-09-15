@@ -47,6 +47,13 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         expect(component.editForm.controls.presentationTime.value?.minute()).toBe(26);
     });
 
+    it('should obtain localized language option labels from the translation service', () => {
+        expect(component.languageOptions()).toEqual([
+            { label: 'artemisApp.presentationAssessment.languageOptions.english', value: 'en' },
+            { label: 'artemisApp.presentationAssessment.languageOptions.german', value: 'de' },
+        ]);
+    });
+
     it('should require a presentation date', () => {
         component.editForm.controls.presentationDate.setValue(undefined);
 

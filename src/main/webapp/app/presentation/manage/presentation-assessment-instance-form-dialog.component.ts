@@ -69,10 +69,10 @@ export class PresentationAssessmentInstanceFormDialogComponent {
     protected readonly hiddenStudentColumnFields = ['id', 'visibleRegistrationNumber', 'email'];
     protected readonly resultPointsUpperBound = RESULT_POINTS_UPPER_BOUND;
     protected readonly minPresentationDate = MIN_PRESENTATION_DATE;
-    readonly languageOptions = [
-        { label: 'English', value: 'en' },
-        { label: 'Deutsch', value: 'de' },
-    ];
+    readonly languageOptions = computed(() => [
+        { label: this.translateService.instant('artemisApp.presentationAssessment.languageOptions.english'), value: 'en' },
+        { label: this.translateService.instant('artemisApp.presentationAssessment.languageOptions.german'), value: 'de' },
+    ]);
     readonly modeOptions = computed(() => [
         { label: this.translateService.instant('artemisApp.presentationAssessment.mode.online'), value: PresentationAssessmentMode.ONLINE },
         { label: this.translateService.instant('artemisApp.presentationAssessment.mode.inPerson'), value: PresentationAssessmentMode.IN_PERSON },

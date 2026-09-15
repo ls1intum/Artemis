@@ -65,6 +65,12 @@
             "exerciseNotInCourse": "The linked exercise must belong to this course.",
             "instanceRequiresPresenter": "Select at least one presenter.",
             "language": "Language",
+            "languageOptions": {
+                "english": "English",
+                "german": "German"
+            },
+            "showDetails": "Show details",
+            "hideDetails": "Hide details",
             "location": "Location",
             "meetingLink": "Meeting link",
             "mode": {
