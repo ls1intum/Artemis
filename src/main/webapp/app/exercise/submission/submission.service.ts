@@ -8,7 +8,8 @@ import { filter, map, tap } from 'rxjs/operators';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
-import { ComplaintResponseService } from 'app/assessment/manage/services/complaint-response.service';
+import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
@@ -23,10 +24,16 @@ export interface SubmissionWithComplaintDTO {
     complaint: Complaint;
 }
 
+/** The server shape of {@link SubmissionWithComplaintDTO}: the complaint arrives as a DTO and is converted here. */
+interface SubmissionWithComplaintResponseDTO {
+    submission: Submission;
+    complaint: ComplaintDTO;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SubmissionService {
     private http = inject(HttpClient);
-    private complaintResponseService = inject(ComplaintResponseService);
+    private complaintService = inject(ComplaintService);
     private accountService = inject(AccountService);
 
     public resourceUrl = 'api/exercise/submissions';
@@ -65,7 +72,7 @@ export class SubmissionService {
      */
     getSubmissionsWithComplaintsForTutor(exerciseId: number): Observable<HttpResponse<SubmissionWithComplaintDTO[]>> {
         return this.http
-            .get<SubmissionWithComplaintDTO[]>(`api/exercise/exercises/${exerciseId}/submissions-with-complaints`, { observe: 'response' })
+            .get<SubmissionWithComplaintResponseDTO[]>(`api/exercise/exercises/${exerciseId}/submissions-with-complaints`, { observe: 'response' })
             .pipe(map((res) => this.convertDTOsFromServer(res)));
     }
 
@@ -75,19 +82,40 @@ export class SubmissionService {
      */
     getSubmissionsWithMoreFeedbackRequestsForTutor(exerciseId: number): Observable<HttpResponse<SubmissionWithComplaintDTO[]>> {
         return this.http
-            .get<SubmissionWithComplaintDTO[]>(`api/exercise/exercises/${exerciseId}/more-feedback-requests-with-complaints`, { observe: 'response' })
+            .get<SubmissionWithComplaintResponseDTO[]>(`api/exercise/exercises/${exerciseId}/more-feedback-requests-with-complaints`, { observe: 'response' })
             .pipe(map((res) => this.convertDTOsFromServer(res)));
     }
 
-    protected convertDTOsFromServer(res: HttpResponse<SubmissionWithComplaintDTO[]>) {
-        if (res.body) {
-            res.body.forEach((dto) => {
-                dto.submission = SubmissionService.convertSubmissionDateFromServer(dto.submission)!;
-                dto.complaint = this.convertComplaintDatesFromServer(dto.complaint);
-                this.setSubmissionAccessRights(dto.submission);
-            });
+    protected convertDTOsFromServer(res: HttpResponse<SubmissionWithComplaintResponseDTO[]>): HttpResponse<SubmissionWithComplaintDTO[]> {
+        const body = (res.body ?? []).map((dto) => {
+            const submission = SubmissionService.convertSubmissionDateFromServer(dto.submission)!;
+            const complaint = this.complaintService.convertComplaintFromServerInList(dto.complaint);
+            SubmissionService.completeComplainedResult(complaint, submission);
+            return { submission, complaint };
+        });
+        return res.clone({ body });
+    }
+
+    /**
+     * The complaint carries a reduced copy of the complained-about result, and the more feedback request table renders
+     * that copy. The listed submission holds the same result in full, so take the programming numbers from there and
+     * hang the submission itself on the result: the result string, the code issue warning, the build log request and
+     * the commit line all read those. The result is matched by id, the latest result is not always the complained one.
+     * Anything the listed submission may not hold (an Athena result is stripped from it) has to come from the complaint
+     * itself.
+     */
+    private static completeComplainedResult(complaint: Complaint, submission: Submission) {
+        const complainedResult = complaint.result;
+        if (!complainedResult) {
+            return;
         }
-        return res;
+        complainedResult.submission = submission;
+        const listedResult = submission.results?.find((result) => result.id === complainedResult.id);
+        if (listedResult) {
+            complainedResult.testCaseCount = listedResult.testCaseCount;
+            complainedResult.passedTestCaseCount = listedResult.passedTestCaseCount;
+            complainedResult.codeIssueCount = listedResult.codeIssueCount;
+        }
     }
 
     public static convertSubmissionDateFromServer(submission: Submission | undefined) {
@@ -96,14 +124,6 @@ export class SubmissionService {
             this.reconnectSubmissionAndResult(submission);
         }
         return submission;
-    }
-
-    convertComplaintDatesFromServer(complaint: Complaint) {
-        complaint.submittedTime = convertDateFromServer(complaint.submittedTime);
-        if (complaint.complaintResponse) {
-            this.complaintResponseService.convertComplaintResponseDatesFromServer(complaint.complaintResponse);
-        }
-        return complaint;
     }
 
     /**
