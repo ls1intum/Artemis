@@ -36,7 +36,7 @@ export class QuizExerciseRetrievalApi {
      * @param isCourseFilter
      * @param isExamFilter
      */
-    getAllExercisesOnPage(page: number, pageSize: number, sortingOrder: 'ASCENDING' | 'DESCENDING', sortedColumn: string, searchTerm: string, isCourseFilter?: boolean, isExamFilter?: boolean): Observable<SearchResultPageDTOQuizExerciseForSearch> {
+    getAllExercisesOnPage(page: number, pageSize: number, sortingOrder: 'ASCENDING' | 'DESCENDING', sortedColumn: string, searchTerm?: string, isCourseFilter?: boolean, isExamFilter?: boolean): Observable<SearchResultPageDTOQuizExerciseForSearch> {
         const queryParams = new URLSearchParams();
         if (page !== undefined && page !== null) {
             queryParams.set('page', String(page));

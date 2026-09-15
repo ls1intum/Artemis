@@ -237,7 +237,7 @@ public class QuizExerciseRetrievalResource {
     @GetMapping("quiz-exercises")
     @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<QuizExerciseForSearchDTO>> getAllExercisesOnPage(@RequestParam int page, @RequestParam int pageSize,
-            @RequestParam SortingOrder sortingOrder, @RequestParam String sortedColumn, @RequestParam String searchTerm,
+            @RequestParam SortingOrder sortingOrder, @RequestParam String sortedColumn, @RequestParam(defaultValue = "") String searchTerm,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
         SearchTermPageableSearchDTO<String> search = new SearchTermPageableSearchDTO<>();
         search.setPage(page);

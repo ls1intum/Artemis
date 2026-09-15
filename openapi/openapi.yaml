@@ -1564,8 +1564,8 @@ paths:
         schema: {type: string}
       - name: searchTerm
         in: query
-        required: true
-        schema: {type: string}
+        required: false
+        schema: {type: string, default: ''}
       - name: isCourseFilter
         in: query
         required: false
@@ -4240,9 +4240,9 @@ components:
         subTypeReferenceId: {type: integer, format: int64}
         subTypeReferenceStartDate: {type: string, format: date-time}
         subTypeReferenceEndDate: {type: string, format: date-time}
+        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
         subTypeReferenceDates: {$ref: '#/components/schemas/ChannelSubTypeReferenceDates',
           writeOnly: true}
-        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
     ShortAnswerQuizQuestionWithSolution:
       required: [type]
       type: object
