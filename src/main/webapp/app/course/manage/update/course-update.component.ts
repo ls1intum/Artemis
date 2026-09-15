@@ -10,7 +10,7 @@ import { integerValidator } from 'app/shared-ui/form/integer-validator.directive
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
-import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI } from 'app/app.constants';
+import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI } from 'app/app.constants';
 import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import dayjs from 'dayjs/esm';
@@ -39,7 +39,7 @@ import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/com
 import { AccountService } from 'app/core/auth/account.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { onError } from 'app/foundation/util/global.utils';
-import { getSemesters } from 'app/foundation/util/semester-utils';
+import { applySemesterToDates, getSemesters } from 'app/foundation/util/semester-utils';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
 import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
@@ -160,7 +160,6 @@ export class CourseUpdateComponent implements OnInit {
     readonly athenaFeedbackEnabled = signal(false);
     readonly atlasEnabled = signal(false);
     readonly ltiEnabled = signal(false);
-    readonly isAthenaEnabled = signal(false);
     // Global auto-orchestration defaults, fetched when Atlas is active, shown as the override-field
     // placeholders so instructors see what an empty override resolves to. `undefined` until loaded
     // (or if the fetch fails) — the template falls back to a plain "Use default" label.
@@ -169,7 +168,11 @@ export class CourseUpdateComponent implements OnInit {
 
     private courseStorageService = inject(CourseStorageService);
 
-    readonly semesters = getSemesters();
+    // Bound directly in the template, so it must be a signal for zoneless change detection to pick up the
+    // ngOnInit assignment (the course, and therefore the semester list, is only known once ngOnInit runs).
+    readonly semesters = signal<string[]>([]);
+
+    private previousSemester?: string;
 
     // NOTE: These constants are used to define the maximum length of complaints and complaint responses.
     // This is the maximum value allowed in our database. These values must be the same as in Constants.java
@@ -215,7 +218,6 @@ export class CourseUpdateComponent implements OnInit {
 
         this.atlasEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS));
         this.ltiEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI));
-        this.isAthenaEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA));
         // Load the global auto-orchestration defaults to display as override placeholders. Best-effort:
         // if the feature toggle is off or the request fails, the placeholders stay on the plain
         // "Use default" label.
@@ -258,9 +260,9 @@ export class CourseUpdateComponent implements OnInit {
                 ),
                 description: new FormControl(this.course.description),
                 courseInformationSharingMessagingCodeOfConduct: new FormControl(this.course.courseInformationSharingMessagingCodeOfConduct),
-                startDate: new FormControl(this.course.startDate),
-                endDate: new FormControl(this.course.endDate),
-                semester: new FormControl(this.course.semester),
+                startDate: new FormControl(this.course.startDate, { validators: [Validators.required] }),
+                endDate: new FormControl(this.course.endDate, { validators: [Validators.required] }),
+                semester: new FormControl(this.course.semester, { validators: [Validators.required] }),
                 testCourse: new FormControl(this.course.testCourse),
                 gradeRelevant: new FormControl(this.course.courseConfiguration?.gradeRelevant ?? true),
                 dataRetentionHold: new FormControl(this.course.courseConfiguration?.dataRetentionHold ?? false),
@@ -301,8 +303,6 @@ export class CourseUpdateComponent implements OnInit {
                 maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
-                athenaGradingFeedbackEnabled: new FormControl(this.course.athenaGradingFeedbackEnabled),
-                athenaFormativeFeedbackEnabled: new FormControl(this.course.athenaFormativeFeedbackEnabled),
                 enrollmentEnabled: new FormControl(this.course.enrollmentEnabled),
                 enrollmentStartDate: new FormControl(this.course.enrollmentStartDate),
                 enrollmentEndDate: new FormControl(this.course.enrollmentEndDate),
@@ -317,6 +317,12 @@ export class CourseUpdateComponent implements OnInit {
             },
             { validators: CourseValidator },
         );
+
+        this.semesters.set(getSemesters(this.course.semester));
+        this.previousSemester = this.course.semester;
+        this.courseForm.controls['semester'].valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((semester) => {
+            this.applySemesterDateRange(semester ?? undefined);
+        });
 
         // Sync form date control values back to this.course so that validation getters
         // (isValidDate, isValidEnrollmentPeriod, isValidUnenrollmentEndDate) reflect
@@ -646,26 +652,6 @@ export class CourseUpdateComponent implements OnInit {
         this.course.testCourse = !this.course.testCourse;
     }
 
-    changeAthenaFeedbackEnabled() {
-        this.athenaFeedbackEnabled.update((v) => !v);
-        if (!this.athenaFeedbackEnabled()) {
-            this.course.athenaGradingFeedbackEnabled = false;
-            this.course.athenaFormativeFeedbackEnabled = false;
-            this.courseForm.controls['athenaGradingFeedbackEnabled'].setValue(false);
-            this.courseForm.controls['athenaFormativeFeedbackEnabled'].setValue(false);
-        }
-    }
-
-    changeAthenaGradingFeedback() {
-        this.course.athenaGradingFeedbackEnabled = !this.course.athenaGradingFeedbackEnabled;
-        this.courseForm.controls['athenaGradingFeedbackEnabled'].setValue(this.course.athenaGradingFeedbackEnabled);
-    }
-
-    changeAthenaFormativeFeedback() {
-        this.course.athenaFormativeFeedbackEnabled = !this.course.athenaFormativeFeedbackEnabled;
-        this.courseForm.controls['athenaFormativeFeedbackEnabled'].setValue(this.course.athenaFormativeFeedbackEnabled);
-    }
-
     /**
      * Reset the per-course override inputs when auto-orchestration is turned off. The override fields
      * are hidden by an @if on the toggle, so without this they would retain stale values that
@@ -719,15 +705,24 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
-     * Returns whether the dates are valid or not
-     * @return true if the dats are valid
+     * Returns whether the dates are valid or not. Both dates are mandatory, so a missing one is invalid.
+     * @return true if the dates are valid
      */
     get isValidDate(): boolean {
-        // allow instructors to set startDate and endDate later
         if (this.atLeastOneDateNotExisting()) {
-            return true;
+            return false;
         }
         return dayjs(this.course.startDate).isBefore(this.course.endDate);
+    }
+
+    /**
+     * Whether both dates are set but in the wrong order. Kept separate from a missing date, which the date picker
+     * reports itself through its required-field message.
+     *
+     * @return true when both dates exist and the start date is not before the end date
+     */
+    get isDateOrderInvalid(): boolean {
+        return !this.atLeastOneDateNotExisting() && !dayjs(this.course.startDate).isBefore(this.course.endDate);
     }
 
     /**
@@ -740,8 +735,8 @@ export class CourseUpdateComponent implements OnInit {
             return true;
         }
 
-        // enrollment period requires configured start and end date of the course
-        if (this.atLeastOneDateNotExisting() || !this.isValidDate) {
+        // enrollment period requires a valid start and end date of the course
+        if (!this.isValidDate) {
             return false;
         }
 
@@ -772,6 +767,25 @@ export class CourseUpdateComponent implements OnInit {
     private atLeastOneDateNotExisting(): boolean {
         // we need to take into account that the date is only deleted by the user, which leads to a invalid state of the date
         return !this.course.startDate || !this.course.endDate || !this.course.startDate.isValid() || !this.course.endDate.isValid();
+    }
+
+    /**
+     * Applies the date range of the newly selected semester to the start and end date controls, unless the user has
+     * picked a date by hand. Once a date is set by hand, later semester changes leave it alone, so editing an
+     * existing course never discards its real dates.
+     *
+     * @param semester the newly selected semester
+     */
+    private applySemesterDateRange(semester: string | undefined): void {
+        const { startDate, endDate } = applySemesterToDates(
+            semester,
+            this.previousSemester,
+            this.courseForm.controls['startDate'].value,
+            this.courseForm.controls['endDate'].value,
+        );
+        this.previousSemester = semester;
+        this.courseForm.controls['startDate'].setValue(startDate);
+        this.courseForm.controls['endDate'].setValue(endDate);
     }
 
     get isValidConfiguration(): boolean {

@@ -11,8 +11,6 @@ import generationSequence from '../assets/quiz-generation-sequence.png';
 This page describes the architecture behind Hyperion's AI-assisted quiz authoring, covering both question generation, in its free-topic and competency-grounded modes, and question refinement, applied to a single question or in bulk.
 For instructor-facing usage documentation, see [Quiz Exercise: Generate Multiple-Choice Questions with AI](../../instructor/exercises/quiz-exercise#generate-multiple-choice-questions-with-ai) and [Refine Multiple-Choice Questions with AI](../../instructor/exercises/quiz-exercise#refine-multiple-choice-questions-with-ai).
 
----
-
 ## Components
 
 Hyperion hosts two new server components for quiz authoring, backed by a set of prompt templates. The diagram below decomposes the subsystem and shows how it connects to the rest of Artemis and to the external services it depends on.
@@ -24,8 +22,6 @@ The diagram groups the system into four parts: the Artemis server, the Artemis q
 Quiz Generation builds structured prompts, calls the LLM provider through its service, and parses and validates the responses into valid Artemis questions. Competency Context aggregates the course context and exposes it to Quiz Generation, drawing entirely on existing Artemis services: it reads the competencies, their typed relations, and the linked exercises from Atlas's Competency Service, which in turn resolves the exercises through its own competency-exercise links; fetches the corresponding lecture units from the Lecture Service and calls Edutelligence's Lecture Snippet Service for embedded lecture retrieval.
 
 Both components are backed by Spring AI prompt files under `src/main/resources/prompts/hyperion/`, rendered by `HyperionPromptTemplateService`. All three service beans are lazily initialized and only registered in the Spring context when Hyperion is enabled through configuration; see [Hyperion Setup](../../admin/hyperion) for details.
-
----
 
 ## Question Generation
 
@@ -60,8 +56,6 @@ The LLM response is parsed into a nested record structure, then mapped and re-va
 - Any option text is blank or exceeds 2,000 characters
 - The correct-option count doesn't match the question type's structural rule (`validateCorrectOptionCount`): exactly 1 for single-choice, ≥1 for multiple-choice, exactly 2 options with exactly 1 correct for true/false
 
----
-
 ## Question Refinement
 
 Refinement takes the question as currently edited in the UI, together with a free-text refinement prompt, and returns either a refined question or an error, reusing the same output-validation path as generation.
@@ -83,8 +77,6 @@ The refined question can be restored to its previous state via a restore button,
 
 Bulk refinement reuses the architecture of the single-question refinement mechanism and parallelizes the requests across the questions, calling the same single-question refinement logic for each with the shared refinement prompt, and catches exceptions per question rather than letting one bad question abort the whole batch. Results are returned in the same order as the input questions.
 
----
-
 ## REST Endpoints
 
 | Method | Path                                                     | Request                                | Response                                |
@@ -92,8 +84,6 @@ Bulk refinement reuses the architecture of the single-question refinement mechan
 | POST   | `courses/{courseId}/quiz-exercises/generate-questions`   | `QuizQuestionGenerationRequestDTO`     | `QuizQuestionGenerationResponseDTO`     |
 | POST   | `courses/{courseId}/quiz-exercises/refine-question`      | `QuizQuestionRefinementRequestDTO`     | `QuizQuestionRefinementResponseDTO`     |
 | POST   | `courses/{courseId}/quiz-exercises/refine-all-questions` | `QuizQuestionBulkRefinementRequestDTO` | `QuizQuestionBulkRefinementResponseDTO` |
-
----
 
 ## Prompt-Injection Mitigation
 
@@ -107,11 +97,8 @@ Blocks of instructor-authored but still untrusted content (competency lists, com
 
 This is the equivalent delimiter-and-instruction pattern used by the [Consistency Check](./consistency-check) pipeline for problem-statement content.
 
----
-
 ## Client Integration
 
 On the client, `QuizAiGenerationService` wraps the generated OpenAPI client and maps the DTOs and the editor's `MultipleChoiceQuestion` / `GeneratedQuestion` models. The generation dialog and the inline per-question refinement panel plug into the existing Multiple-Choice question editor, while the quiz exercise update view hosts the bulk-refinement action, shown only when Hyperion is enabled and the quiz has at least one Multiple-Choice question.
 
 Before applying a refinement, both the single-question and bulk flows snapshot the pre-refinement question with a deep clone, which is what enables the restore-previous-version action in the refinement UI. The refinement itself then mutates the original question object in place.
-
