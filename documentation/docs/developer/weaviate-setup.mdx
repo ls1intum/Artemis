@@ -26,14 +26,10 @@ If you only need basic Artemis features without AI assistance and without global
 
 </Callout>
 
----
-
 ## Prerequisites
 
 - **Docker** and **Docker Compose** installed on your machine
 - At least 2GB of available disk space for data storage
-
----
 
 ## Quick Start
 
@@ -190,8 +186,6 @@ docker compose -f weaviate.yml down
 docker compose -f weaviate-embeddings.yml down
 ```
 
----
-
 ## Embedding Model Configuration
 
 When using `weaviate-embeddings.yml`, Weaviate automatically generates embeddings using the `embeddinggemma-300m` model from Google.
@@ -237,8 +231,6 @@ By default, the embedding model runs on CPU. To enable GPU acceleration:
 <Callout variant={CalloutVariant.info}>
   GPU acceleration significantly improves embedding generation speed, especially for large batches of documents.
 </Callout>
-
----
 
 ## Configuration
 
@@ -392,8 +384,6 @@ Weaviate data is persisted in the named Docker volume `artemis-weaviate`.
 
 </Callout>
 
----
-
 ## Integration with Artemis
 
 To enable Weaviate integration in Artemis, add the following to your `application-local.yml` (for local development) or `application-artemis.yml` (for production/staging deployments):
@@ -411,7 +401,7 @@ artemis:
         # api-key: admin-key                    # Optional: API key for Weaviate server authentication (see Authentication section)
 ```
 
-#### Additional Properties for `text2vec-openai`
+### Additional Properties for `text2vec-openai`
 
 When using `text2vec-openai`, you must also configure the following properties:
 
@@ -481,8 +471,6 @@ To ensure consistency across different Artemis nodes and during schema migration
 ### Consistent Date Formatting
 
 All date properties in Weaviate are normalized to a consistent ISO 8601 format (`yyyy-MM-dd'T'HH:mm:ss.SSSXXX`). This normalization happens both when writing to Weaviate and when reading results back, ensuring that the search interface receives uniform date strings regardless of how Weaviate or its drivers represent them internally.
-
----
 
 ## Troubleshooting
 
@@ -582,8 +570,6 @@ docker compose -f weaviate.yml up -d
     This will delete all stored embeddings and require re-indexing of lecture content.
 
 </Callout>
-
----
 
 ## Additional Resources
 
