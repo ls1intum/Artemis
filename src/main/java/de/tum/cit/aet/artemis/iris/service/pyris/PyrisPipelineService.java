@@ -204,7 +204,8 @@ public class PyrisPipelineService {
             pyrisJobService.addTutorSuggestionJob(post.getId(), course.getId(), session.getId()),
             executionDto -> new PyrisTutorSuggestionPipelineExecutionDTO(
                 new PyrisCourseDTO(course),
-                new PyrisPostDTO(post, userAiPreferenceService.findDecisions(PyrisPostDTO.answerAuthorIds(post))),
+                // No roles: the tutor suggestion prompt addresses a tutor about a thread, not the thread's participants.
+                new PyrisPostDTO(post, Map.of(), userAiPreferenceService.findDecisions(PyrisPostDTO.answerAuthorIds(post))),
                 pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
                 toPyrisUserDTO(user),
                 executionDto.settings(),
