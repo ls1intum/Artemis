@@ -441,7 +441,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     @Test
     void updateParticipationFiles_withoutPermission_isRefused() throws Exception {
         withAccessibleParticipation();
-        doThrow(new AccessForbiddenException("not yours")).when(repositoryAccessService).checkAccessRepositoryElseThrow(any(), any(), any(), any());
+        doThrow(new AccessForbiddenException("not yours")).when(repositoryAccessService).checkAccessRepositoryElseThrow(any(), any(), any(ProgrammingExercise.class), any());
 
         assertThatExceptionOfType(ResponseStatusException.class).isThrownBy(() -> resource.updateParticipationFiles(PARTICIPATION_ID, List.of(), false))
                 .satisfies(exception -> assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN));
