@@ -11,6 +11,7 @@ import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlock, TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -193,5 +194,46 @@ describe('TextblockAssessmentCardComponent', () => {
         component.select();
         fixture.changeDetectorRef.detectChanges();
         expect(sendAssessmentEvent).not.toHaveBeenCalled();
+    });
+
+    it('should initialize feedback and apply an armed instruction via the dedicated button when feedback was undefined', () => {
+        vi.useFakeTimers();
+        try {
+            const instruction: GradingInstruction = {
+                id: 1,
+                credits: 2,
+                feedback: 'good',
+                gradingScale: 'good',
+                instructionDescription: 'desc',
+                usageCount: 0,
+            };
+            const textBlockRef = TextBlockRef.new();
+            textBlockRef.selectable = true;
+            expect(textBlockRef.feedback).toBeUndefined();
+
+            fixture.componentRef.setInput('textBlockRef', textBlockRef);
+            fixture.componentRef.setInput('readOnly', false);
+            fixture.changeDetectorRef.detectChanges();
+
+            TestBed.inject(GradingInstructionSelectionService).armInstruction(instruction);
+            const sgiService = TestBed.inject(StructuredGradingCriterionService);
+            const applySpy = vi.spyOn(sgiService, 'applyArmedInstructionToFeedback').mockImplementation((feedback) => {
+                feedback.gradingInstruction = instruction;
+                feedback.credits = instruction.credits;
+                return true;
+            });
+            const didChangeSpy = vi.spyOn(component.didChange, 'emit');
+
+            component.applyArmedInstruction();
+
+            expect(textBlockRef.feedback).toBeDefined();
+            expect(applySpy).toHaveBeenCalledWith(textBlockRef.feedback);
+            expect(textBlockRef.feedback!.gradingInstruction).toEqual(instruction);
+            expect(textBlockRef.feedback!.credits).toBe(2);
+            expect(didChangeSpy).toHaveBeenCalledWith(textBlockRef);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
     });
 });

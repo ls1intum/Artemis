@@ -47,6 +47,7 @@ import {
 } from 'app/exercise/review/review-comment-utils';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { parseJson } from 'app/foundation/util/json.util';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
@@ -91,6 +92,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     readonly commitState = input.required<CommitState>();
     readonly editorState = input.required<EditorState>();
     readonly course = input<Course>();
+    readonly gradingCriteria = input<GradingCriterion[]>([]);
     readonly feedbacks = input<Feedback[]>([]);
     readonly feedbackSuggestions = input<Feedback[]>([]);
     readonly readOnlyManualFeedback = input<boolean>(false);
@@ -109,6 +111,11 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     readonly onError = output<string>();
     readonly onFileContentChange = output<{ fileName: string; text: string }>();
     readonly onUpdateFeedback = output<Feedback[]>();
+    /**
+     * Unsaved new inline drafts that already carry a grading instruction. Used by the assessment container for
+     * usage-limit counts before the card is saved into {@link onUpdateFeedback}.
+     */
+    readonly onPendingFeedbackChange = output<Feedback[]>();
     readonly onFileLoad = output<string>();
     readonly onAcceptSuggestion = output<Feedback>();
     readonly onDiscardSuggestion = output<Feedback>();
@@ -121,6 +128,8 @@ export class CodeEditorMonacoComponent implements OnDestroy {
 
     readonly loadingCount = signal<number>(0);
     readonly newFeedbackLines = signal<number[]>([]);
+    /** Line (0-based) → unsaved draft feedback that has a grading instruction link. */
+    private readonly pendingFeedbackByLine = signal<Map<number, Feedback>>(new Map());
     readonly binaryFileSelected = signal<boolean>(false);
     readonly imagePreviewUrl = signal<string | undefined>(undefined);
     readonly imagePreviewError = signal<boolean>(false);
@@ -295,6 +304,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             }
             this.setBuildAnnotations(this.annotationsArray);
             this.newFeedbackLines.set([]);
+            this.clearPendingFeedbacks();
             this.renderFeedbackWidgets();
             // changeModel() disposes line-decoration hover buttons; re-apply for the active mode.
             this.updateEditorInteractionMode();
@@ -309,6 +319,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
 
         if (feedbacksChanged) {
             this.newFeedbackLines.set([]);
+            this.clearPendingFeedbacks();
             this.renderFeedbackWidgets();
         }
 
@@ -558,6 +569,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             this.feedbackInternal.set([...this.feedbackInternal(), feedback]);
             this.newFeedbackLines.set(this.newFeedbackLines().filter((l) => l !== line));
         }
+        if (line !== undefined) {
+            this.removePendingFeedback(line);
+        }
         this.renderFeedbackWidgets();
         this.onUpdateFeedback.emit(this.feedbackInternal());
     }
@@ -567,11 +581,44 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * @param line The line the feedback item refers to.
      */
     cancelFeedback(line: number) {
+        this.removePendingFeedback(line);
         // We only have to remove new feedback.
         if (this.newFeedbackLines().includes(line)) {
             this.newFeedbackLines.set(this.newFeedbackLines().filter((l) => l !== line));
             this.renderFeedbackWidgets();
         }
+    }
+
+    /**
+     * Tracks an unsaved new-card draft that already links a grading instruction (or clears it on unlink).
+     */
+    setPendingFeedback(line: number, feedback: Feedback | undefined): void {
+        const next = new Map(this.pendingFeedbackByLine());
+        if (feedback?.gradingInstruction) {
+            next.set(line, feedback);
+        } else {
+            next.delete(line);
+        }
+        this.pendingFeedbackByLine.set(next);
+        this.onPendingFeedbackChange.emit([...next.values()]);
+    }
+
+    private removePendingFeedback(line: number): void {
+        if (!this.pendingFeedbackByLine().has(line)) {
+            return;
+        }
+        const next = new Map(this.pendingFeedbackByLine());
+        next.delete(line);
+        this.pendingFeedbackByLine.set(next);
+        this.onPendingFeedbackChange.emit([...next.values()]);
+    }
+
+    private clearPendingFeedbacks(): void {
+        if (this.pendingFeedbackByLine().size === 0) {
+            return;
+        }
+        this.pendingFeedbackByLine.set(new Map());
+        this.onPendingFeedbackChange.emit([]);
     }
 
     /**

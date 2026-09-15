@@ -182,6 +182,7 @@ describe('AssessmentInstructionsComponent', () => {
                 appliedInstructionCounts: signal(new Map([[1, 1]])),
                 removableInstructionIds: signal(new Set([1])),
                 applyInstruction: vi.fn(),
+                unapplyOneInstruction: vi.fn(),
                 unapplyInstruction: vi.fn(),
             };
             TestBed.inject(GradingInstructionSelectionService).register(host);
@@ -197,6 +198,7 @@ describe('AssessmentInstructionsComponent', () => {
                 appliedInstructionCounts: signal(new Map()),
                 removableInstructionIds: signal(new Set()),
                 applyInstruction: vi.fn(),
+                unapplyOneInstruction: vi.fn(),
                 unapplyInstruction: vi.fn(),
             });
             fixture.componentRef.setInput('readOnly', true);

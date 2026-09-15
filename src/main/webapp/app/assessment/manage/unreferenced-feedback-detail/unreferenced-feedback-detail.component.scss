@@ -1,36 +1,81 @@
-.card-body {
-    padding-top: 5px;
-    padding-bottom: 5px;
+/* The card root is a tum-ui-card, which brings the surface, radius and shadow; everything below lays out its
+   slots and applies the tone accent (awarded / deducted / neutral) as a left stripe. */
+.unreferenced-feedback-detail {
+    /* Tone stripe on the leading edge: green for awarded, red for deducted, neutral grey otherwise. */
+    &::before {
+        content: '';
+        position: absolute;
+        inset-block: 0;
+        inset-inline-start: 0;
+        width: 4px;
+        background-color: var(--secondary);
+    }
+
+    &[data-tone='positive']::before {
+        background-color: var(--success);
+    }
+
+    &[data-tone='negative']::before {
+        background-color: var(--danger);
+    }
 }
 
-.assessment-label > label {
-    float: left;
+.feedback-card__points-input {
+    /* Compact so the title field keeps most of the header row; +/- replace the spinner. */
+    width: 3.75rem;
+    min-width: 3.75rem;
+
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+        appearance: none;
+        margin: 0;
+    }
+
+    appearance: textfield;
 }
 
-fa-icon.exclamation-icon {
-    width: 16px;
-    margin-top: -6px;
+.feedback-card__step {
+    /* Fill the addon so the whole segment is the hit target; matches the addon's own padding exactly (see
+       tum-ui-input-group-addon.component.scss) so the button reaches the addon's edges without overflowing it. */
+    margin: calc(-1 * var(--spacing) * 2);
+    padding: calc(var(--spacing) * 2);
 }
 
-.is-suggestion .card-header,
-.is-suggestion .card-body {
+.feedback-card__correction-status {
+    fa-icon.exclamation-icon {
+        width: 16px;
+        margin-top: -6px;
+        color: var(--body-color);
+    }
+}
+
+/* Suggestions are not part of the assessment yet: tint them and grey the content down until hovered. */
+.is-suggestion {
     background-color: var(--feedback-suggestions-background);
-}
 
-.is-suggestion input,
-.is-suggestion textarea {
-    background-color: var(--feedback-suggestions-input-background);
-}
+    &::before {
+        display: none;
+    }
 
-/* A suggestion is rendered at full strength: it is there to be read and judged, and dimming it until the pointer
+    input,
+    textarea {
+        background-color: var(--feedback-suggestions-input-background);
+    }
+
+    .feedback-card > * {
+        opacity: 0.6;
+        transition: opacity 0.2s ease-in-out;
+    }
+
+    &:hover .feedback-card > *,
+    &:focus-within .feedback-card > * {
+        opacity: 1;
+    }
+    /* A suggestion is rendered at full strength: it is there to be read and judged, and dimming it until the pointer
    happens to be over it only made it harder to read. That it is not saved yet is already carried by the card's own
    background, its badge, and its accept / discard buttons. */
 
-.suggestion-action-buttons button {
-    width: fit-content;
-}
-
-.assessment-label {
-    padding-left: 5px;
-    padding-right: 5px;
+    .suggestion-action-buttons button {
+        width: fit-content;
+    }
 }
