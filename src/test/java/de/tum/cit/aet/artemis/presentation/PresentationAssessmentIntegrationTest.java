@@ -369,6 +369,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createPresentationAssessmentInstance_withDuplicateTrimmedLoginAndResult_shouldCreateSingleAssignment() throws Exception {
+        long instancesBeforeRequest = presentationAssessmentInstanceRepository.count();
         PresentationAssessmentInstanceDTO dto = new PresentationAssessmentInstanceDTO(null, FIXED_DATE.plusDays(14), 15.5,
                 List.of(TEST_PREFIX + "student1", " " + TEST_PREFIX + "student1 "), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, null);
 
@@ -377,6 +378,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
         assertThat(result.studentLogins()).containsExactly(TEST_PREFIX + "student1");
         assertThat(result.resultPoints()).isEqualTo(15.5);
+        assertThat(presentationAssessmentInstanceRepository.count()).isEqualTo(instancesBeforeRequest + 1);
     }
 
     @Test
