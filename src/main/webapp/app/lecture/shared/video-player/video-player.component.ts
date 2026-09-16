@@ -196,11 +196,11 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
         // A seek can only be judged against a known length, so track when the element has one. Metadata may already be
         // there for a cached resource, in which case no event follows and the initial read is the only chance to see it.
-        // A finite duration is the actual condition — an unbounded stream has its metadata and still no length to judge
+        // A positive finite duration is the actual condition — an unbounded stream has its metadata and still no length to judge
         // against — and it covers the not-yet-loaded case on its own, since the duration is NaN until metadata arrives.
         this.durationHandler = () => {
             const duration = videoElement.duration;
-            this.seekableState.set(videoElement.readyState >= 1 && Number.isFinite(duration));
+            this.seekableState.set(videoElement.readyState >= 1 && Number.isFinite(duration) && duration > 0);
             this.unboundedState.set(duration === Infinity);
         };
         videoElement.addEventListener('loadedmetadata', this.durationHandler);

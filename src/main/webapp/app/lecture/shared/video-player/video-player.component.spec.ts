@@ -273,6 +273,10 @@ describe('VideoPlayerComponent', () => {
         // Metadata arriving is exactly what gives the element its duration, so a real one comes with it — asserting
         // seekability off readyState alone would describe a state the element never actually reaches.
         Object.defineProperty(videoElement, 'readyState', { value: 1, configurable: true });
+        Object.defineProperty(videoElement, 'duration', { value: 0, configurable: true });
+        videoElement.dispatchEvent(new Event('loadedmetadata'));
+        expect(component.isSeekable()).toBe(false);
+
         Object.defineProperty(videoElement, 'duration', { value: 300, configurable: true });
         videoElement.dispatchEvent(new Event('loadedmetadata'));
 
