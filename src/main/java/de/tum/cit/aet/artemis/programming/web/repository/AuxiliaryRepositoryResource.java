@@ -60,7 +60,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 @Lazy
 @FeatureUsage("configuration/auxiliary-repositories")
 @RestController
-@RequestMapping({ "api/programming/auxiliary-repositories/", "api/programming/auxiliary-repository/" })
+@RequestMapping("api/programming/auxiliary-repositories/")
 // Every editor endpoint here checks out and pulls the working copy on the server, so a cheap request turns into a
 // much more expensive git operation. Limit them per user (see F-010) so a single account cannot drive unbounded load;
 // the limit only applies where rate limiting is switched on (off by default).
@@ -155,7 +155,10 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    @GetMapping(value = "{auxiliaryRepositoryId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
+    // POST rather than GET, even though nothing is submitted: a pull mutates the server-side working copy, and
+    // SameSite=Lax - the only thing standing in for CSRF tokens here - still sends the auth cookie on a cross-site
+    // top-level GET navigation. See the comment on csrf(...) in SecurityConfiguration.
+    @PostMapping(value = "{auxiliaryRepositoryId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     public ResponseEntity<Void> pullChanges(@PathVariable Long auxiliaryRepositoryId) {
         return super.pullChanges(auxiliaryRepositoryId);

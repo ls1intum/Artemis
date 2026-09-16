@@ -54,6 +54,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseResponseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTitleDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
@@ -170,7 +171,7 @@ public class ExerciseResource {
     @GetMapping("exercises/{exerciseId}")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<Exercise> getExercise(@PathVariable Long exerciseId) {
+    public ResponseEntity<ExerciseResponseDTO> getExercise(@PathVariable Long exerciseId) {
 
         log.debug("REST request to get Exercise : {}", exerciseId);
 
@@ -215,7 +216,7 @@ public class ExerciseResource {
                 exercise.filterSensitiveInformation();
             }
         }
-        return ResponseEntity.ok(exercise);
+        return ResponseEntity.ok(ExerciseResponseDTO.of(exercise));
     }
 
     /**
@@ -234,7 +235,7 @@ public class ExerciseResource {
      */
     @GetMapping("exercises/{exerciseId}/example-solution")
     @EnforceAtLeastStudent
-    public ResponseEntity<Exercise> getExerciseForExampleSolution(@PathVariable Long exerciseId) {
+    public ResponseEntity<ExerciseResponseDTO> getExerciseForExampleSolution(@PathVariable Long exerciseId) {
 
         log.debug("REST request to get exercise with example solution: {}", exerciseId);
 
@@ -256,7 +257,7 @@ public class ExerciseResource {
         }
 
         exercise.filterSensitiveInformation();
-        return ResponseEntity.ok(exercise);
+        return ResponseEntity.ok(ExerciseResponseDTO.of(exercise));
     }
 
     /**
@@ -269,7 +270,7 @@ public class ExerciseResource {
      */
     @GetMapping("exercises/{exerciseId}/for-assessment-dashboard")
     @EnforceAtLeastTutor
-    public ResponseEntity<Exercise> getExerciseForAssessmentDashboard(@PathVariable Long exerciseId) {
+    public ResponseEntity<ExerciseResponseDTO> getExerciseForAssessmentDashboard(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
@@ -309,7 +310,7 @@ public class ExerciseResource {
             tutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
         }
         exercise.setTutorParticipations(Set.of(tutorParticipation));
-        return ResponseEntity.ok(exercise);
+        return ResponseEntity.ok(ExerciseResponseDTO.of(exercise));
     }
 
     /**

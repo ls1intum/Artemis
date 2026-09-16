@@ -300,7 +300,7 @@ When a user attempts to log in with LDAP authentication enabled:
 3. If authentication succeeds, Artemis creates or updates the local user record with information from LDAP
 4. The user is granted access to Artemis
 
-### Configuration
+### Configuring LDAP
 
 To enable LDAP authentication, set the module-feature flag and configure the LDAP connection settings in your `application-artemis.yml`:
 
@@ -357,7 +357,7 @@ When passkeys are activated and passkey enforcement is enabled for administrator
 This approach minimizes the attack surface for the critical operation of registering new passkeys by limiting this privilege to a very small number of Super Admin users.
 This ensures that even if an administrator account is compromised, the attacker cannot bypass passkey enforcement by registering their own passkey without Super Admin approval.
 
-### Configuration
+### Configuring Passkey Enforcement
 
 To enable passkeys and enforce them for administrator features, add the following to your configuration:
 
@@ -375,7 +375,7 @@ artemis:
 - `artemis.user-management.passkey.require-for-administrator-features`: When enabled, administrators must be signed in with an approved passkey before any endpoint grants them administrator access (default: `false`)
 
 <Callout variant={CalloutVariant.warning}>
-    When enabling `require-for-administrator-features`, the internal system admin `artemis.user-management.internal-admin` will automatically be granted the role `Super Admin`.
+    When enabling `require-for-administrator-features`, the internal system admin `artemis.user-management.internal-admin` will automatically be granted the role **Super Admin**.
     Passkeys of a super admin are automatically approved on registration or when logging in with an unapproved passkey for the first time.
 </Callout>
 
@@ -457,7 +457,7 @@ It helps protect authentication and account management endpoints from brute-forc
 - Automatically excludes build agents from rate limiting
 
 
-### Configuration
+### Configuring the Rate Limit
 
 ```yaml
 artemis:

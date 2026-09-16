@@ -195,6 +195,7 @@
         "reactionNotFound": "The reaction could not be found.",
         "missingAssociation": "The reaction must be associated with a post or an answer post.",
         "emojiIdMissing": "emojiId must be set.",
+        "ambiguousPostingId": "The selected id belongs to both a post and an answer post in this course, so the type of posting has to be specified.",
         "exampleSubmission": {
             "isNull": "No example submission was provided.",
             "submissionIsNull": "This example submission has no solution attached.",
@@ -204,6 +205,7 @@
         "participationExerciseMismatch": "The feedback request could not be processed because the participation does not match the exercise.",
         "submissionExerciseMismatch": "The submission does not belong to the specified exercise.",
         "maxAthenaResultsReached": "Maximum number of AI feedback requests reached.",
+        "otherTestRunNotSubmitted": "Submit your other test runs of this exam before requesting AI feedback.",
         "submissionAlreadyHasAthenaResult": "Submission already has an Athena result.",
         "examExerciseNoAccessToAthena": "Exam exercises do not have access to Athena.",
         "noAccessToAthenaModule": "The exercise has no access to the selected Athena module.",

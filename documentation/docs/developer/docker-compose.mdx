@@ -50,8 +50,6 @@ import dockerStructure from './assets/artemis-docker-file-structure.drawio.png';
     `docker-compose.yml` mirrors the production setup, so it needs a signing key and an admin password of your own before it starts. See [Other Docker Compose Setups](#other-docker-compose-setups) below. If you would rather not configure anything, `docker compose --env-file .env -f docker/artemis-dev-postgres.yml up` starts as it is.
 </Callout>
 
----
-
 ## Other Docker Compose Setups
 
 <Image
@@ -172,8 +170,6 @@ Then configure Artemis to connect to these services via `application-local.yml`.
 
 Additional files like configuration files, Dockerfile, ... should be in a subdirectory with the **base service** or **setup** name (`docker/<base service or setup name>/`).
 
----
-
 ## Artemis Base Service
 
 Everything related to the Docker Image of Artemis (built by the Dockerfile) can be found [in the Server Setup section](/developer/setup#run-the-server-via-docker).
@@ -184,22 +180,16 @@ The `artemis.yml` **base service** (e.g. in the `artemis-prod-mysql.yml` setup) 
 - If you want to build the checked-out version run `docker compose build artemis-app` before starting Artemis.
 - If you want a specific version from the GitHub container registry change the `image:` value to the desired image for the `artemis-app` service and run `docker compose pull artemis-app`.
 
----
-
 ## Debugging with Docker
 
 See the [Debugging with Docker](/developer/docker-debugging) section for detailed information.
 In all development *docker compose* setups like `artemis-dev-mysql.yml` Java Remote Debugging is enabled by default.
-
----
 
 ## Service, Container and Volume Names
 
 Service names for the usage within *docker compose* are kept short, like `mysql`, to make it easier to use them in a CLI.
 
 Container and volume names are prepended with `artemis-` in order to not interfere with other container or volume names on your system.
-
----
 
 ## Get a Shell into the Containers
 
@@ -215,8 +205,6 @@ Container and volume names are prepended with `artemis-` in order to not interfe
 
 Analogous commands apply to other services.
 
----
-
 ## Other Useful Commands
 
 - Start a setup in the background: `docker compose up -d`
@@ -229,8 +217,6 @@ Analogous commands apply to other services.
 - Restart a service: `docker compose restart <name of the service>`
 - Remove all local Docker containers: `docker container rm $(docker ps -a -q)`
 - Remove all local Artemis Docker images: `docker rmi $(docker images --filter=reference="ghcr.io/ls1intum/artemis:*" -q)`
-
----
 
 ## Using Traefik as a Reverse Proxy
 
