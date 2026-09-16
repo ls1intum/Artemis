@@ -128,7 +128,6 @@ export class Course implements BaseEntity {
     public relativeScore?: number;
     public absoluteScore?: number;
     public maxScore?: number;
-    public irisEnabledInCourse?: boolean;
 
     public courseArchivePath?: string;
     public onboardingDone?: boolean;
