@@ -45,7 +45,7 @@ import de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration;
         "artemis.version-control.build-agent-use-ssh=true", "artemis.version-control.ssh-private-key-folder-path=local/server-integration-test-localci/ssh-keys",
         "artemis.hyperion.enabled=true", "artemis.deimos.enabled=true", "artemis.atlas.enabled=true", "artemis.atlas.atlasml.enabled=true",
         // Use separate repo paths for LocalCI/LocalVC tests to isolate from other test buckets
-        "artemis.repo-clone-path=./local/server-integration-test-localci/repos",
+        "artemis.failed-build-logs-path=./local/server-integration-test-localci/failed-build-logs", "artemis.repo-clone-path=./local/server-integration-test-localci/repos",
         "artemis.version-control.local-vcs-repo-path=./local/server-integration-test-localci/local-vcs-repos", "artemis.lti.enabled=true" })
 @ContextConfiguration(classes = TestBuildAgentConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractSpringIntegrationLocalCILocalVCTestBase {

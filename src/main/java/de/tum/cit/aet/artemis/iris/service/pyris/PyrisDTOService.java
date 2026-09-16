@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
@@ -42,9 +43,13 @@ public class PyrisDTOService {
 
     private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
-    public PyrisDTOService(RepositoryService repositoryService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
+    private final BuildLogEntryService buildLogEntryService;
+
+    public PyrisDTOService(RepositoryService repositoryService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService,
+            BuildLogEntryService buildLogEntryService) {
         this.repositoryService = repositoryService;
         this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
+        this.buildLogEntryService = buildLogEntryService;
     }
 
     /**
@@ -83,8 +88,8 @@ public class PyrisDTOService {
      * @return the converted PyrisSubmissionDTO
      */
     public PyrisSubmissionDTO toPyrisSubmissionDTO(@NonNull ProgrammingSubmission submission, Map<String, String> uncommittedFiles) {
-        var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog()))
-                .toList();
+        var buildLogEntries = buildLogEntryService.getLatestBuildLogs(submission).stream()
+                .map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog())).toList();
         Map<String, String> committedFiles = getFilteredRepositoryContents((ProgrammingExerciseParticipation) submission.getParticipation());
         Map<String, String> mergedRepository = new HashMap<>(committedFiles);
         mergedRepository.putAll(uncommittedFiles); // This overwrites any files with same path

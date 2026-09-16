@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -249,10 +248,10 @@ public class ProgrammingExerciseGradingService {
                     var buildLogMessages = buildLogs.stream().map(BuildLogEntry::getLog).toList();
                     mavenCentralRateLimitNotificationService.notifyInstructorsIfBuildWasRateLimited(exercise.getId(), programmingLanguage, buildLogMessages);
                     buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);
-                    var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, latestSubmission);
-
-                    // Set the received logs in order to avoid duplicate entries (this removes existing logs)
-                    latestSubmission.setBuildLogEntries(new LinkedHashSet<>(savedBuildLogs));
+                    // The logs are written to disk, keyed by submission, and replace whatever was stored for a previous build of it. The entries are deliberately not put
+                    // back onto the submission: they are no longer rows, so attaching them would ask the cascade on this association to persist entities that have no
+                    // submission of their own, and nothing reads the association on the way out of this method.
+                    buildLogService.saveBuildLogs(buildLogs, latestSubmission);
                 }
             }
 
