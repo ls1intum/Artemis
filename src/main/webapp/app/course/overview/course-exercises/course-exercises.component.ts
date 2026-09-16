@@ -203,6 +203,12 @@ export class CourseExercisesComponent implements SidebarView {
     }
 
     navigateToExercise() {
+        // The URL read below decides which exercise is open, but during a navigation away it already points
+        // at another course, while relativeTo still resolves against this one. Auto-selecting then replaces
+        // the destination the user picked, so leave the choice to whoever owns the new URL.
+        if (!this.router.url.startsWith(`/courses/${this._courseId()}/exercises`)) {
+            return;
+        }
         const upcomingExercise = this.courseOverviewService.getUpcomingExercise(this._course()?.exercises);
         const lastSelectedExercise = this.getLastSelectedExercise();
         let exerciseId = this.route.firstChild?.snapshot?.params.exerciseId;
