@@ -366,7 +366,8 @@ describe('Course Management Update Component', () => {
             // CourseAthenaConfigResource - so the saved course does not carry them either.
             delete entity.athenaGradingFeedbackEnabled;
             delete entity.athenaFormativeFeedbackEnabled;
-            const createStub = vi.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
+            const createStub = vi.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: { id: 42 } })));
+            const navigateStub = vi.spyOn(TestBed.inject(Router), 'navigate');
             comp.course = entity;
             comp.courseForm = new FormGroup({
                 onlineCourse: new FormControl(entity.onlineCourse),
@@ -394,6 +395,7 @@ describe('Course Management Update Component', () => {
             // THEN
             expect(createStub).toHaveBeenCalledOnce();
             expect(createStub).toHaveBeenCalledWith(entity, undefined);
+            expect(navigateStub).toHaveBeenCalledExactlyOnceWith(['course-management', '42']);
             expect(comp.isSaving()).toBe(false);
         });
 
