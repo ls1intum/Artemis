@@ -312,7 +312,7 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
         await requestOk(page, 'put', `api/notification/courses/${course.id}/setting-preset`, { data: 2 });
         await requestOk(page, 'get', 'api/calendar/subscription-token');
         await requestOk(page, 'post', 'api/core/data-exports');
-        await requestOk(page, 'post', 'api/programming/ssh-settings/public-key', {
+        await requestOk(page, 'post', 'api/programming/ssh-settings/public-keys', {
             data: { label: 'Key', publicKey: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJmVQGKLYtBLBS1ZKMTCPeF2Nd9wJXJ1UkVOgHUYdNhU deletion@example.com' },
         });
         await requestOk(page, 'put', 'api/programming/ide-settings?programmingLanguage=JAVA', {

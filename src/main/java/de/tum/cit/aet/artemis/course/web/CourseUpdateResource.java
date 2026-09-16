@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.course.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
@@ -38,6 +36,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -123,7 +122,7 @@ public class CourseUpdateResource {
     @PutMapping(value = "courses/{courseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastInstructor
     public ResponseEntity<Course> updateCourse(@PathVariable Long courseId, @RequestPart("course") @Valid CourseUpdateDTO courseUpdateDTO,
-            @RequestPart(required = false) MultipartFile file) throws URISyntaxException {
+            @RequestPart(required = false) MultipartFile file) {
         log.debug("REST request to update Course : {}", courseUpdateDTO);
         User user = userRepository.getUserWithAuthorities();
 
@@ -197,15 +196,15 @@ public class CourseUpdateResource {
         if (file != null) {
             Path basePath = FilePathConverter.getCourseIconFilePath();
             Path savePath = FileUtil.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
-            existingCourse.setCourseIcon(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.COURSE_ICON, courseId).toString());
+            existingCourse.setCourseIcon(savePath.getFileName().toString());
             if (existingCourseIcon != null) {
                 // delete old course icon
-                fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(new URI(existingCourseIcon), FilePathType.COURSE_ICON), 0);
+                fileService.schedulePathForDeletion(new FileSystemLocation.CourseIcon(existingCourseIcon).path(), 0);
             }
         }
         else if (courseUpdateDTO.courseIcon() == null && existingCourseIcon != null) {
             // delete old course icon
-            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(new URI(existingCourseIcon), FilePathType.COURSE_ICON), 0);
+            fileService.schedulePathForDeletion(new FileSystemLocation.CourseIcon(existingCourseIcon).path(), 0);
         }
 
         boolean wasOnlineCourse = existingCourse.getOnlineCourseConfiguration() != null;

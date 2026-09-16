@@ -383,7 +383,7 @@ public class QuizExerciseUtilService {
         }
         FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/data-export/drag_and_drop_background.jpg"), backgroundPathInFileSystem.toFile());
         FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/data-export/drag_item.jpg"), dragItemPathInFileSystem.toFile());
-        dragAndDropQuestion.setBackgroundFilePath("drag-and-drop/backgrounds/3/drag_and_drop_background.jpg");
+        dragAndDropQuestion.setBackgroundFilePath("drag_and_drop_background.jpg");
         submittedDragAndDropAnswer.setQuizQuestion(dragAndDropQuestion);
         dragAndDropQuestion.setExercise(quizExercise);
         DragAndDropMapping dragAndDropMapping = new DragAndDropMapping();
