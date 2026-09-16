@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -707,8 +708,20 @@ public class UserService {
         // granted TA/EDITOR/INSTRUCTOR role can. Rebuild authorities only when they could actually change.
         if (role != CourseRole.STUDENT) {
             user = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
-            user.setAuthorities(authorityService.buildAuthorities(user));
-            saveUser(user);
+            Set<Authority> rebuiltAuthorities = authorityService.buildAuthorities(user);
+            // The check above is per (user, course, role), but the authorities written here are global. Granting the same user a staff role in
+            // two courses at once therefore passes both checks and then writes the same jhi_user_authority row twice, and one of the two loses on
+            // the primary key. Not writing when nothing changed removes the ordinary case; the concurrent one is handled below.
+            if (!rebuiltAuthorities.equals(user.getAuthorities())) {
+                user.setAuthorities(rebuiltAuthorities);
+                try {
+                    saveUser(user);
+                }
+                catch (DataIntegrityViolationException concurrentGrant) {
+                    // Another request granted the same authority first, which is the state this one wanted, so there is nothing left to do.
+                    log.debug("Authorities of user {} were granted concurrently", user.getLogin(), concurrentGrant);
+                }
+            }
         }
     }
 
