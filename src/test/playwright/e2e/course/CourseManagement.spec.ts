@@ -128,7 +128,12 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await courseCreation.setEnableMoreFeedback(courseData.enableMoreFeedback);
             await courseCreation.setMaxRequestMoreFeedbackTimeDays(courseData.maxRequestMoreFeedbackTimeDays);
 
-            const courseBody = await courseCreation.submit();
+            const createdCourse = await courseCreation.submit();
+            course = createdCourse;
+            expect(createdCourse.id).toBeDefined();
+            const courseResponse = await page.request.get(`api/course/courses/${createdCourse.id}`);
+            expect(courseResponse.ok()).toBeTruthy();
+            const courseBody = await courseResponse.json();
             course = courseBody;
 
             expect(courseBody.title).toBe(courseData.title);
