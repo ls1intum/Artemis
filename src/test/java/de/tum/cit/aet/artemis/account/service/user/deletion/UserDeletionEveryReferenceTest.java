@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -114,7 +115,10 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
     private void seedOneRowForEveryReference() {
         long userId = target.getId();
         long courseId = course.getId();
-        Timestamp now = Timestamp.from(Instant.now());
+        // One reading, so the two timestamps cannot come from different instants.
+        Instant seededAt = Instant.now();
+        Timestamp now = Timestamp.from(seededAt);
+        Timestamp inSixMonths = Timestamp.from(seededAt.plus(180, ChronoUnit.DAYS));
 
         long exerciseId = insert("exercise", values("discriminator", "T", "title", "Exercise", "course_id", courseId));
         long participationId = insert("participation", values("discriminator", "SP", "exercise_id", exerciseId, "student_id", bystander.getId()));
@@ -164,7 +168,9 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
 
         // COURSE MEMBERSHIP, COMMUNICATION and the course request
         seed(UserDeletionReferencePolicy.COURSE_ROLE, userId, values("course_id", courseId, "course_role", "STUDENT"));
-        seed(UserDeletionReferencePolicy.COURSE_REQUEST, userId, values("title", "Requested course", "short_name", TEST_PREFIX + "req", "reason", "because", "created_date", now));
+        // The course request carries a semester and both dates because all three are mandatory on the table.
+        seed(UserDeletionReferencePolicy.COURSE_REQUEST, userId, values("title", "Requested course", "short_name", TEST_PREFIX + "req", "reason", "because", "created_date", now,
+                "semester", "WS24/25", "start_date", now, "end_date", inSixMonths));
         seed(UserDeletionReferencePolicy.CONVERSATION_MEMBERSHIP, userId, values("conversation_id", conversationId));
         seed(UserDeletionReferencePolicy.CONVERSATION_CREATOR, userId,
                 values("discriminator", "C", "course_id", courseId, "creation_date", now, "name", "own", "is_course_wide", true));

@@ -71,8 +71,17 @@ public class ExerciseGroup extends DomainObject {
         this.exercises = exercises;
     }
 
+    /**
+     * Adds the exercise to this group and points the exercise back at it.
+     * <p>
+     * {@code Exercise#exerciseGroup} owns the association, so updating only this collection would leave the exercise
+     * with no owner and the database rejects such a row.
+     *
+     * @param exercise the exercise that belongs to this group
+     */
     public void addExercise(Exercise exercise) {
         this.exercises.add(exercise);
+        exercise.setExerciseGroup(this);
     }
 
     @Override

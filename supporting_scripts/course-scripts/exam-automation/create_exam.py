@@ -88,7 +88,7 @@ def create_exam(session: requests.Session, course_id: int, title: str, short_nam
 
 def get_course_students(session: requests.Session, course_id: int) -> List[Dict[str, Any]]:
     """Get all students enrolled in the course."""
-    url: str = f"{SERVER_URL}/core/courses/{course_id}/students"
+    url: str = f"{SERVER_URL}/course/courses/{course_id}/students"
     response: requests.Response = session.get(url)
 
     if response.status_code == 200:

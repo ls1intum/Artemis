@@ -292,7 +292,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         CompetencyRelation relation = createRelation(courseCompetency, competency2, RelationType.EXTENDS);
         Prerequisite prerequisite = prerequisiteUtilService.createPrerequisite(course);
 
-        request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
         assertThat(courseCompetencyRepository.existsById(courseCompetency.getId())).isFalse();
         assertThat(courseCompetencyRepository.existsById(competency2.getId())).isFalse();
@@ -345,6 +345,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         TextExercise exercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
         exercise.setMaxPoints(1.0);
         exercise.setIncludedInOverallScore(includedInOverallScore);
+        // Save the exercise itself rather than letting the link write it, so the row carries the course the factory set.
+        exercise = exerciseRepository.save(exercise);
         CompetencyExerciseLink link = new CompetencyExerciseLink(newCompetency, exercise, 1);
         competencyExerciseLinkRepository.save(link);
 

@@ -27,7 +27,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.admin.domain.DataExport;
 import de.tum.cit.aet.artemis.admin.domain.DataExportState;
 import de.tum.cit.aet.artemis.admin.dto.DataExportAdminDTO;
@@ -52,7 +51,7 @@ import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 @FeatureUsage("data-privacy/data-exports")
 @RestController
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/admin/", LegacyAdminRestPaths.CORE_ADMIN_PREFIX })
+@RequestMapping("api/admin/")
 public class AdminDataExportResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminDataExportResource.class);

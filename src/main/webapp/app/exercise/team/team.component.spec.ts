@@ -10,7 +10,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { mockExercise, mockTeam, mockTeams } from 'test/helpers/mocks/service/mock-team.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -20,6 +20,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { Course } from 'app/course/shared/entities/course.model';
 
 /**
  * The component under test uses signal-based state (`team`, `exercise`, `isLoading`, ...).
@@ -38,6 +40,7 @@ describe('TeamComponent', () => {
     let exerciseService: ExerciseService;
     let teamService: TeamService;
     let alertService: AlertService;
+    let courseStorageService: CourseStorageService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -63,6 +66,7 @@ describe('TeamComponent', () => {
         router = TestBed.inject(Router);
         teamService = TestBed.inject(TeamService);
         exerciseService = TestBed.inject(ExerciseService);
+        courseStorageService = TestBed.inject(CourseStorageService);
     });
 
     afterEach(() => {
@@ -79,6 +83,22 @@ describe('TeamComponent', () => {
             expect(comp.team()).toEqual(mockTeam);
             expect(comp.isTeamOwner()).toBe(false);
             expect(findSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should add the fetched exercise to course storage without dropping existing course content', async () => {
+            const existingExercise = { id: 2, type: ExerciseType.TEXT } as Exercise;
+            courseStorageService.updateCourse({ id: 1, title: 'Course', exercises: [existingExercise] } as Course);
+            const fetchedExercise = { ...mockExercise, type: ExerciseType.PROGRAMMING } as Exercise;
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<Exercise>({ body: fetchedExercise })));
+            vi.spyOn(teamService, 'find').mockReturnValue(of(new HttpResponse<Team>({ body: mockTeam })));
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(courseStorageService.getCourse(1)).toMatchObject({
+                title: 'Course',
+                exercises: [existingExercise, fetchedExercise],
+            });
         });
 
         it('should call alert service error when exercise service fails', async () => {

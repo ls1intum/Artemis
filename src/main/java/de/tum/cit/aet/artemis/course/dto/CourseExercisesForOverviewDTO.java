@@ -29,16 +29,4 @@ import de.tum.cit.aet.artemis.exercise.dto.ParticipationResultDTO;
 public record CourseExercisesForOverviewDTO(Set<ExerciseOverviewDTO> exercises, CourseScoresDTO totalScores, CourseScoresDTO textScores, CourseScoresDTO programmingScores,
         CourseScoresDTO modelingScores, CourseScoresDTO fileUploadScores, CourseScoresDTO quizScores, Set<ParticipationResultDTO> participationResults,
         Map<Long, Double> achievedPointsPerVariantGroup) {
-
-    /**
-     * Re-envelopes the score calculation result, which is shared with the (deprecated) for-dashboard endpoint, dropping
-     * the course so only the exercise data is sent.
-     *
-     * @param dto the dashboard DTO produced by the shared score calculation
-     * @return the exercise-only view of it
-     */
-    public static CourseExercisesForOverviewDTO from(CourseForDashboardDTO dto) {
-        return new CourseExercisesForOverviewDTO(ExerciseOverviewDTO.of(dto.course().getExercises()), dto.totalScores(), dto.textScores(), dto.programmingScores(),
-                dto.modelingScores(), dto.fileUploadScores(), dto.quizScores(), dto.participationResults(), dto.achievedPointsPerVariantGroup());
-    }
 }
