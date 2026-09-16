@@ -237,7 +237,7 @@ export class ExerciseDetailsStudentActionsComponent {
             .resumeProgrammingExercise(this.exercise().id!, participation!.id!, this.exercise())
             .pipe(finalize(() => this._isLoading.set(false)))
             .subscribe({
-                next: (resumedParticipation: StudentParticipation | null) => {
+                next: (resumedParticipation: StudentParticipation) => {
                     if (resumedParticipation) {
                         // Otherwise the client would think that all results are loaded, but there would not be any (=> no graded result).
                         const currentParticipations = this._studentParticipations();

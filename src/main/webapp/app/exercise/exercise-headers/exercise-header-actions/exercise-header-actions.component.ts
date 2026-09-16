@@ -353,7 +353,7 @@ export class ExerciseHeaderActionsComponent {
             .resumeProgrammingExercise(this.exercise().id!, participation!.id!, this.exercise())
             .pipe(finalize(() => this._isLoading.set(false)))
             .subscribe({
-                next: (resumedParticipation: StudentParticipation | null) => {
+                next: (resumedParticipation: StudentParticipation) => {
                     if (resumedParticipation) {
                         this.receiveNewParticipation(resumedParticipation);
                         this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');

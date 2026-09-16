@@ -195,7 +195,7 @@ describe('Course Management Service', () => {
     it('should start exercise', () => {
         const participationId = 12345;
         const participationDTO = createProgrammingParticipationDTO(participationId, false);
-        let participation: StudentParticipation | null | undefined;
+        let participation: StudentParticipation | undefined;
         vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo);
 
         service
@@ -231,7 +231,7 @@ describe('Course Management Service', () => {
                 },
             ],
         };
-        let participation: StudentParticipation | null | undefined;
+        let participation: StudentParticipation | undefined;
 
         service
             .startExercise(exerciseId, textExercise)
@@ -264,7 +264,7 @@ describe('Course Management Service', () => {
                 },
             ],
         };
-        let participation: StudentParticipation | null | undefined;
+        let participation: StudentParticipation | undefined;
 
         service
             .startExercise(exerciseId, fileUploadExercise)
@@ -283,7 +283,7 @@ describe('Course Management Service', () => {
         const gradedParticipation = new StudentParticipation();
         programmingExercise.studentParticipations = [gradedParticipation];
         const originalReleaseDate = programmingExercise.releaseDate;
-        let participation: StudentParticipation | null | undefined;
+        let participation: StudentParticipation | undefined;
         vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo);
 
         service
@@ -307,7 +307,7 @@ describe('Course Management Service', () => {
     it('should resume programming exercise', () => {
         const participationId = 12345;
         const participationDTO = createProgrammingParticipationDTO(participationId, false);
-        let participation: StudentParticipation | null | undefined;
+        let participation: StudentParticipation | undefined;
         vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo);
 
         service
@@ -328,7 +328,7 @@ describe('Course Management Service', () => {
 
     it('should adapt a request-feedback response', () => {
         const participationId = 12345;
-        let participation: StudentParticipation | null | undefined;
+        let participation: StudentParticipation | undefined;
 
         service
             .requestFeedback(exerciseId, participationId)
