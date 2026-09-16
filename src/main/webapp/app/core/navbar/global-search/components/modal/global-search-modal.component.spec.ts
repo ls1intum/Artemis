@@ -545,6 +545,21 @@ describe('GlobalSearchModalComponent', () => {
             expect(mockSearchService.globalSearch).not.toHaveBeenCalled();
         });
 
+        it('routes the grouped Lectures selection to content search, which is what the UI actually applies', () => {
+            // Selecting "Lecture Details" (or opening the palette on a lectures route) applies both lecture
+            // types. A predicate that accepted only ['lecture'] left this branch unreachable in the product
+            // while every test still passed, because the tests set a filter state the UI never produces.
+            component['addFilter'](['lecture', 'lecture_unit']);
+            vi.advanceTimersByTime(300);
+            mockSearchService.globalSearch.mockClear();
+
+            component['onSearchInput']('signals');
+            vi.advanceTimersByTime(300);
+
+            expect(mockLectureSearchService.search).toHaveBeenCalledWith('signals', 10, undefined);
+            expect(mockSearchService.globalSearch).not.toHaveBeenCalled();
+        });
+
         it('should pass [courseId] to LectureSearchService when a course filter is set', () => {
             component['activeCourseId'].set(42);
             component['activeFilters'].set(['lecture']);

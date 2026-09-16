@@ -147,7 +147,12 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     // and the query is valid, route to Iris content search. If that request fails or
                     // exceeds CONTENT_SEARCH_TIMEOUT_MS, fall back to the standard metadata lecture search
                     // so the user still gets results. Every other path is the metadata search as before.
-                    const useContentSearch = filters.length === 1 && filters[0] === 'lecture' && this.availability.contentSearchAvailable() && hasValidQuery;
+                    // The lecture filter is a group, not a single type: selecting "Lecture Details" applies
+                    // ['lecture', 'lecture_unit'], and the lectures route context applies the same pair. Asking
+                    // whether every active type belongs to that group is what makes this reachable from the UI;
+                    // requiring exactly ['lecture'] described a state nothing produces.
+                    const lectureFilterOnly = filters.length > 0 && filters.every((type) => type === 'lecture' || type === 'lecture_unit');
+                    const useContentSearch = lectureFilterOnly && this.availability.contentSearchAvailable() && hasValidQuery;
                     this.isLoading.set(true);
                     return timer(SEARCH_DEBOUNCE_MS).pipe(
                         switchMap(() => {
