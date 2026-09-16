@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -411,8 +412,15 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         // exam submission gate a few frames up, which handed it to the caller. Looking it up again would repeat the same
         // row read on every quiz save.
         // only the foreign key is needed from the gate's participation, which its id gives without a load
-        quizSubmission.setParticipation(participationFromExamGate != null ? StudentParticipation.idOnlyReference(participationFromExamGate.id())
-                : this.getParticipation(quizExercise, quizSubmission, user));
+        StudentParticipation participation = participationFromExamGate != null ? StudentParticipation.idOnlyReference(participationFromExamGate.id())
+                : this.getParticipation(quizExercise, quizSubmission, user);
+        // The save merges, so a client-supplied id has to belong to the resolved participation before it can drive an update.
+        // The exam gate already replaced the id with its participation's own submission when it resolved the participation.
+        if (participationFromExamGate == null && quizSubmission.getId() != null
+                && !quizSubmissionRepository.existsByIdAndParticipationId(quizSubmission.getId(), participation.getId())) {
+            throw new AccessForbiddenException();
+        }
+        quizSubmission.setParticipation(participation);
         var savedQuizSubmission = quizSubmissionRepository.save(quizSubmission);
         savedQuizSubmission.filterForStudentsDuringQuiz();
         return savedQuizSubmission;

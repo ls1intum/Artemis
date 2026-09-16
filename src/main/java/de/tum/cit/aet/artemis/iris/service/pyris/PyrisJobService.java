@@ -43,13 +43,13 @@ import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
 @Conditional(IrisEnabled.class)
 public class PyrisJobService {
 
+    private static final Logger log = LoggerFactory.getLogger(PyrisJobService.class);
+
     /**
      * Shared deliberately: {@link SecureRandom} is thread-safe, and constructing one re-seeds from the system
      * entropy source on every call.
      */
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-
-    private static final Logger log = LoggerFactory.getLogger(PyrisJobService.class);
 
     private final DistributedDataProvider distributedDataProvider;
 

@@ -90,13 +90,6 @@ public class LectureContentProcessingScheduler {
     private static final int ABSOLUTE_TIMEOUT_HOURS = 12;
 
     /**
-     * Age after which a dispatch claim (IDLE row with {@code startedAt} set) whose send never
-     * happened is released back into the queue. Ten minutes is far beyond any legitimate gap
-     * between the claim commit and the webhook send.
-     */
-    private static final int CLAIM_EXPIRY_MINUTES = 10;
-
-    /**
      * How long the stage progress counter may stand still, while heartbeats keep arriving, before
      * the run counts as stalled (wedged mid-stage) rather than slow. Configurable via
      * {@code artemis.iris.ingestion.stall-window}.
@@ -171,12 +164,6 @@ public class LectureContentProcessingScheduler {
 
         log.debug("Checking for processing states that need attention...");
 
-        // Release dispatch claims whose send never completed (crash between claim commit and webhook)
-        int releasedClaims = processingStateRepository.releaseExpiredDispatchClaims(ZonedDateTime.now().minusMinutes(CLAIM_EXPIRY_MINUTES));
-        if (releasedClaims > 0) {
-            log.warn("dispatch-claim-expired released={} — claims older than {} minutes were requeued", releasedClaims, CLAIM_EXPIRY_MINUTES);
-        }
-
         // Lease reaper: reclaim runs whose worker stopped renewing its lease. A lapsed lease means
         // the worker process is gone (crash, restart, partition), so the retry budget is preserved.
         reclaimLapsedLeases();
@@ -188,8 +175,33 @@ public class LectureContentProcessingScheduler {
         recoverStuckPhase(ProcessingPhase.TRANSCRIBING, NO_CALLBACK_TIMEOUT_MINUTES);
         recoverStuckPhase(ProcessingPhase.INGESTING, NO_CALLBACK_TIMEOUT_MINUTES);
 
+        // Then release dispatch claims whose owner never finished dispatching them, e.g. a node killed by a rolling
+        // deploy between taking the claim and writing the phase. Nothing else selects those rows, so without this the
+        // unit waits forever; see releaseAbandonedIdleClaims.
+        releaseAbandonedDispatchClaims();
+
         // Then, dispatch any IDLE jobs waiting in the queue (backup trigger)
         callbackService.dispatchPendingJobs();
+    }
+
+    /**
+     * Release dispatch claims that a node abandoned mid-dispatch.
+     * <p>
+     * The claim commits before the dispatch it belongs to, so a node dying in between leaves a row that no query
+     * selects: IDLE with a {@code startedAt} set. The cutoff is the same no-callback timeout used above — a claim
+     * older than that is not in flight any more.
+     * <p>
+     * Retry claims need nothing here: {@code claimRetryEligible} leases {@code retryEligibleAt} into the future
+     * instead of clearing it, so an abandoned retry becomes eligible again when the lease lapses.
+     */
+    private void releaseAbandonedDispatchClaims() {
+        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime cutoff = now.minusMinutes(NO_CALLBACK_TIMEOUT_MINUTES);
+
+        int releasedClaims = processingStateRepository.releaseAbandonedIdleClaims(cutoff, now);
+        if (releasedClaims > 0) {
+            log.info("Released {} abandoned dispatch claims older than {} minutes; the units are back in the queue", releasedClaims, NO_CALLBACK_TIMEOUT_MINUTES);
+        }
     }
 
     /**

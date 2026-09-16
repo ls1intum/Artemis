@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
-import de.tum.cit.aet.artemis.localvc.config.LocalVCLegacyRestPaths;
 import de.tum.cit.aet.artemis.localvc.service.ssh.SshFingerprintsProviderService;
 
 /**
@@ -24,7 +23,7 @@ import de.tum.cit.aet.artemis.localvc.service.ssh.SshFingerprintsProviderService
 @Lazy
 @FeatureUsage("access/ssh-fingerprints")
 @RestController
-@RequestMapping({ "api/localvc/", LocalVCLegacyRestPaths.PROGRAMMING_PREFIX })
+@RequestMapping("api/localvc/")
 public class SshFingerprintsProviderResource {
 
     SshFingerprintsProviderService sshFingerprintsProviderService;
