@@ -93,8 +93,7 @@ export class ExerciseSplitPanelComponent {
     // Exposes the active quiz component's mode as a reactive signal so parent templates
     // can guard against stale submit-disabled state during the live→practice transition.
     readonly quizComponentMode = computed(() => this._quizComponent()?.mode());
-    // The quiz component caches its attempt state per UI tick, so gate it on the mode it reports right now: a
-    // component whose mode changes keeps the finished state of the attempt it has left until the next tick.
+    // The attempt state is cached per UI tick, so pair it with the mode the component reports right now.
     readonly quizPracticeAttemptFinished = computed(() => this.quizComponentMode() === 'practice' && (this._quizComponent()?.practiceAttemptFinished() ?? false));
     readonly quizPracticeInProgress = computed(() => this.exercise().type === ExerciseType.QUIZ && this.participationMode() === 'practice' && !this.quizPracticeAttemptFinished());
     readonly quizSubmitTitle = computed(() => this._quizComponent()?.submitTitleKey() ?? 'entity.action.submit');
@@ -344,10 +343,8 @@ export class ExerciseSplitPanelComponent {
         }
         const params = this.route.firstChild?.snapshot.paramMap;
         if (params?.get('participationId') || params?.get('submissionId')) {
-            // The URL still names the participation (and possibly the submission) the previous attempt was opened on,
-            // so a fresh attempt would run under an old result — the header would keep showing its score once the new
-            // attempt is submitted. Route back to the bare practice route instead: the quiz component is re-created
-            // there and starts the attempt itself, so the outgoing one is not restarted as well.
+            // The URL still names the attempt that was opened, so a fresh one would run under its result. Route back
+            // to the bare practice route: the quiz component is re-created there and starts the attempt itself.
             void this.router.navigate(['quiz-exercises', this.exercise().id, 'practice'], { relativeTo: this.route.parent });
             return true;
         }

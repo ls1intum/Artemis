@@ -977,7 +977,7 @@ describe('QuizParticipationComponent - practice mode', () => {
             component.remainingTimeSeconds.set(-1);
             component.syncSubmitState();
 
-            // The empty attempt never counts as submitted, but it is over: the student may start another one.
+            // Never counts as submitted, but it is over: the student may start another one.
             expect(component.shouldTreatAsSubmittedForUi()).toBe(false);
             expect(component.practiceAttemptFinished()).toBe(true);
         });
@@ -1011,7 +1011,7 @@ describe('QuizParticipationComponent - practice mode', () => {
 
         httpMock.expectOne({ method: 'POST' }).flush({}, { status: 500, statusText: 'Internal Server Error' });
 
-        // Submit stays disabled and the attempt is not submitted, so "Start Practice Mode" is the only way out.
+        // Submit stays disabled and nothing was submitted, so "Start Practice Mode" is the only way out.
         expect(component.isSubmitDisabled()).toBe(true);
         expect(component.shouldTreatAsSubmittedForUi()).toBe(false);
         expect(component.practiceAttemptFinished()).toBe(true);

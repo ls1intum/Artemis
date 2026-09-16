@@ -335,12 +335,11 @@ describe('ExerciseSplitPanelComponent', () => {
             expect(component.quizComponentMode()).toBe('practice');
             expect(component.quizPracticeAttemptFinished()).toBe(false);
 
-            // The quiz component owns the decision (it also knows about an expired attempt that never submitted),
-            // so the panel follows it rather than combining the mode with a submitted flag of its own.
+            // The quiz component owns the decision, since it also knows about an expired attempt that never submitted.
             quizComponent.practiceAttemptFinished.set(true);
             expect(component.quizPracticeAttemptFinished()).toBe(true);
 
-            // The quiz component's state is cached per tick, so a mode that has already moved on wins over it.
+            // Its state is cached per tick, so a mode that has already moved on wins over it.
             quizComponent.mode.set('live');
             expect(component.quizComponentMode()).toBe('live');
             expect(component.quizPracticeAttemptFinished()).toBe(false);

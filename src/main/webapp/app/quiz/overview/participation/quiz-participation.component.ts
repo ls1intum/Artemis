@@ -1240,22 +1240,13 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
     }
 
     /**
-     * Indicates whether the practice attempt is over, so the student can start another one.
-     *
-     * This is wider than {@link shouldTreatAsSubmittedForUi}: an attempt whose working time expired without a single
-     * answer never counts as submitted, yet the Submit action is disabled from that moment on. Without a state of its
-     * own, such an attempt would leave the student with no action at all whenever the automatic submission does not
-     * land (for example when it fails and the error handler returns to exactly that state).
-     *
-     * @param submittedForUi the result of {@link computeShouldTreatAsSubmittedForUi} for this tick
-     * @returns `true` if the practice attempt has ended; `false` outside practice mode
+     * Whether the practice attempt is over, so the student can start another one. Wider than
+     * {@link shouldTreatAsSubmittedForUi}: an attempt that expired without a single answer never counts as submitted,
+     * yet Submit is disabled from then on, which would leave the student with no action at all. A submission still in
+     * flight keeps the attempt open, because on success it ends with a result.
      */
     private computePracticeAttemptFinished(submittedForUi: boolean): boolean {
-        if (this.mode() !== 'practice') {
-            return false;
-        }
-        // A submission still in flight keeps the attempt open: when it succeeds, the attempt ends with a result.
-        return submittedForUi || (this.remainingTimeSeconds() < 0 && !this.isSubmitting());
+        return this.mode() === 'practice' && (submittedForUi || (this.remainingTimeSeconds() < 0 && !this.isSubmitting()));
     }
 
     /**
