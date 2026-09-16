@@ -19,13 +19,14 @@ ci.yml                                                            (single entry 
 ├── test            ── uses ci-test.yml           (server + client test suites)
 ├── quality         ── uses ci-quality.yml        (server + client style/lint/type-check, Java analyses)
 ├── gradle-wrapper  ── uses ci-gradle-wrapper.yml (if has_gradle; wrapper-jar integrity)
-├── docs            ── uses ci-docs.yml           (if has_docs)
+├── docs            ── uses ci-docs.yml           (if has_docs, or on every develop push)
 ├── translation     ── uses ci-translation.yml    (if has_i18n)
 ├── workflows       ── uses ci-workflows.yml      (if .github changed; actionlint)
 ├── version-consistency ─ uses ci-version-consistency.yml (if has_version; build.gradle/openapi/README in sync)
 ├── bean-instantiations ─ uses ci-bean-instantiations.yml (if has_beans; boots the app, checks startup bean metrics)
 ├── skills          ── uses ci-skills.yml         (if has_skills; every path an agent skill cites still resolves)
 ├── terminology     ── uses ci-terminology.yml    (always, incl. docs-only PRs; repo-wide component-naming gate)
+├── dead-code       ── uses ci-dead-code.yml      (always; unreachable Java classes + unreachable client files)
 ├── e2e             ── uses ci-e2e.yml            (after build; required but flakiness-aware — reds only on a real, non-flaky regression; a known-flaky-only run is exonerated)
 │
 │   ADVISORY — runs for signal, never blocks merge:
@@ -178,6 +179,12 @@ Concurrency lives only on the umbrella. Reusables share the umbrella's `run_id`,
 parent's concurrency lock applies transitively. **Never** add a `concurrency:` block to a
 `ci-*.yml` reusable — it creates a second lock that can deadlock the parent
 ([actions/runner#3205](https://github.com/actions/runner/issues/3205)).
+
+GitHub keeps only one pending run in a concurrency group by default, even when
+`cancel-in-progress` is false. A newer `develop` push can therefore replace an older pending push.
+The documentation build runs on every `develop` push so that a replacement run deploys the full
+current documentation tree instead of losing documentation changes that belonged to the evicted
+run. Pull requests still use `has_docs`, so this recovery guarantee adds no unrelated PR work.
 
 The one exception is the `deploy-docs` **job** in `ci.yml`, which carries a job-level
 `concurrency: { group: pages, cancel-in-progress: false }`. Job-level concurrency is safe (it is

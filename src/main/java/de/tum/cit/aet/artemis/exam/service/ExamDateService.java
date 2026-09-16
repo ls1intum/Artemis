@@ -100,6 +100,22 @@ public class ExamDateService {
     }
 
     /**
+     * Whether the student's working period is over, for a caller that holds only the exam's id.
+     * <p>
+     * The git request path authorizes a push against a projection of the exercise, so it never loads the exam. Reading
+     * the exam here, once and only for an exam exercise that actually reaches the write check, is cheaper than
+     * carrying it through the whole authorization path - and keeps this date logic reading the entity it was written
+     * against.
+     *
+     * @param examId               the exam the exercise belongs to
+     * @param studentParticipation the participation to check
+     * @return true if the working period is over
+     */
+    public boolean isIndividualExerciseWorkingPeriodOver(long examId, StudentParticipation studentParticipation) {
+        return isIndividualExerciseWorkingPeriodOver(examRepository.findByIdElseThrow(examId), studentParticipation);
+    }
+
+    /**
      * Scalar form of {@link #isIndividualExerciseWorkingPeriodOver(Exam, StudentParticipation)} for callers holding a
      * projection of the participation rather than the entity.
      *

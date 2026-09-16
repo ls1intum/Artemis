@@ -1,0 +1,173 @@
+---
+id: dead-code
+title: Dead Code
+sidebar_label: Dead Code
+---
+
+Artemis deletes code that nothing can reach. Two checks enforce this on every pull request, one for
+the server and one for the client, and both are part of the required **All required CI Passed** gate.
+
+## Why a check rather than an occasional cleanup
+
+Nothing else in the build can see dead code. Checkstyle covers Javadoc and braces, Modernizer covers
+legacy APIs, and SonarQube Cloud and Codacy report only *file-local* unused things: a private method,
+a private field, a local variable. A public DTO, exception, pipe or component that no longer has a
+single caller passes every one of them.
+
+The result is that dead code is found only when somebody goes looking, and it is created most often
+by a pull request that is otherwise a clean deletion — removing the last caller of a class is exactly
+the change that leaves the class behind. Both checks therefore run on every pull request, including
+ones that touch no Java and no TypeScript at all.
+
+## The server check
+
+`supporting_scripts/check_dead_code.py` reports any top-level class under `src/main/java` whose
+simple name appears in no other production file. Run it locally with:
+
+```bash
+python3 supporting_scripts/check_dead_code.py
+pnpm run dead-code                        # the same thing, through the package script
+python3 supporting_scripts/check_dead_code.py --self-test
+```
+
+The rule is narrow on purpose, because "can anything reach this class?" has two different answers in
+a Spring application:
+
+- A **plain class** is reachable only if some other file writes its name. Java offers no way to use a
+  type without naming it, and that covers JPQL constructor expressions inside `@Query`, class
+  literals in `@Conditional`, and fully-qualified names in `spring.factories` or a Liquibase
+  changelog, because the simple name is a token inside the qualified name either way. For a plain
+  class, "no indexed input mentions the name" and "dead" are the same statement, so the check fails the
+  build. The index covers the reference roots below; a class whose name is only ever assembled at
+  runtime, outside those roots, is an `ALLOWLIST` candidate rather than a finding.
+- An **annotation-wired class** is reachable because a framework scans for its annotation, not
+  because anything names it. Zero references is the *normal* state of a live `@Configuration`. The
+  check never reports a class carrying `@Component`, `@Service`, `@Configuration`, `@RestController`,
+  `@Repository`, `@Entity`, `@Converter`, `@Endpoint`, `@Aspect` or the rest of the list in
+  `ANNOTATION_WIRED`. The annotation counts wherever it sits in the file and in its fully-qualified
+  form, so neither a long import block nor `@org.springframework.stereotype.Service` changes the
+  answer.
+- A **Spring Data repository fragment** is reachable by naming convention alone. For a fragment
+  interface `CustomPostRepository` that a repository extends, Spring Data instantiates
+  `CustomPostRepositoryImpl` purely because of the `Impl` suffix. Nothing names it and it carries no
+  annotation, so the check recognises it (`is_spring_data_fragment`) and skips it. The suffix alone does
+  not earn the exemption: some repository has to compose the interface, because otherwise every
+  `FooImpl implements Foo` would be exempt and a dead pair would hide forever — the implementation's own
+  `implements` clause is what keeps the interface referenced.
+
+**References are counted over production sources only.** `src/test` is not searched. A production
+class that only a test names is not reached from the application at all: the test asserts behaviour
+nothing asks for, and the class and its test are dead together. Where the class is a genuine test
+double that happens to live in `src/main`, move it into `src/test` rather than allowlisting it.
+
+### Deciding an annotation-wired class
+
+Because references cannot settle those, a text search cannot tell you whether a `@Configuration` is
+dead. Bean-definition provenance can. Boot the context in a test extending
+`AbstractSpringIntegrationIndependentTest` and ask where the bean actually came from:
+
+```java
+var bd = ((ConfigurableApplicationContext) ctx).getBeanFactory().getBeanDefinition(name);
+bd.getFactoryBeanName();      // set if a @Bean method created it, null if component-scanned
+bd.getFactoryMethodName();
+bd.getResourceDescription();  // the .class file the definition was read from
+```
+
+Two traps make eyeballing this wrong. A *static nested* `@Configuration` **is** picked up by the
+component scan, because Spring scans `Outer$Nested.class` as its own resource — an un-annotated outer
+class does not make it dead. And a `@Bean` method returning a type that is itself a `@Component` does
+**not** by itself make its configuration class dead: the two definitions are named differently — a
+`@Bean` method is named after the method, a scanned component after its decapitalized class name — so
+both are normally registered, and the application ends up with two beans of that type. Where the names
+do coincide, Artemis fails to start rather than picking a winner, because
+`spring.main.allow-bean-definition-overriding` is `false` in `config/application.yml`, so the collision
+is a `BeanDefinitionOverrideException` and not something that can hide. Either way the question is
+settled by provenance, like every other one here.
+
+`@AutoConfigureAfter` on a class that is not an auto-configuration is meaningless: Spring Boot reads it
+only when ordering the classes listed in `AutoConfiguration.imports`, so on a component-scanned
+`@Configuration` it does nothing, and finding one is a reliable sign of a generated leftover. The
+`@ConditionalOn*` family is **not** the same case. On a `@Bean` method it is ordinary Spring and says
+nothing about the class: `AtlasAutoOrchestrationConfiguration` declares its `Clock` with
+`@ConditionalOnMissingBean` precisely so a test can supply a fixed one, and that configuration is live.
+Only on the class of a non-auto-configuration is it worth a second look, and then as a smell rather than
+a verdict — it is order-dependent there, which makes it fragile, not dead.
+
+### When the check is wrong
+
+Add the class to `ALLOWLIST` in the script, together with the mechanism that reaches it — not merely
+the assertion that it is used. The list has one entry today,
+`core/ApplicationWebXml`, which the servlet container discovers through the
+`ServletContainerInitializer` SPI and which nothing in the repository names; deleting it would break
+WAR deployments while leaving every test green.
+
+The check errs towards silence. It does not look at nested types, it reports a class reachable only
+from other dead code only once that code is gone (so dead code peels off in layers), and a name that
+collides with an unrelated identifier anywhere in the repository counts as a reference. A missed
+detection costs nothing; a false positive would block an unrelated pull request.
+
+## Unused methods (advisory)
+
+The class-level check cannot see a method that lost its last production caller: the class stays alive as long as
+anything names it. `UnusedMethodArchitectureTest` reports production methods that **only the tests call** — code kept
+alive by a test asserting behaviour nothing asks for any more.
+
+```bash
+./gradlew test --tests UnusedMethodArchitectureTest -x webapp
+```
+
+It is deliberately advisory: it logs a report and never fails. Method-level reachability has a false-positive floor
+that class-level reachability does not, because frameworks invoke methods with no bytecode reference — Hibernate reads
+entity properties, Jackson reads DTO accessors, JPQL names properties as strings, AspectJ weaves advice. The rule
+removes the categories it can recognise:
+
+- methods carrying an entry-point annotation (Spring MVC mappings, `@Scheduled`, `@EventListener`, `@Bean`, AspectJ
+  advice, JPA lifecycle callbacks, Jackson annotations, Actuator operations);
+- overrides and interface implementations, which are invoked through the supertype, so ArchUnit records the call
+  against the supertype's declaration and the override itself looks uncalled. Reflection decides this rather than
+  ArchUnit's class graph, because supertypes outside the Artemis packages import as stubs carrying no methods;
+- accessors, in all three shapes Artemis uses: `getX()`/`setX(v)`, the record-style `x()`, and the fluent `x(v)`
+  returning `this`. They carry no signal, since reflective access reaches exactly that shape without a call site.
+
+Entries name the full signature, parameters included — two overloads where production still calls one and only a test
+calls the other are otherwise indistinguishable.
+
+Treat each entry as a candidate, not a verdict. When the report has been triaged and its false-positive rate is
+understood, it can become a gate with a recorded baseline.
+
+## The client check
+
+`knip`, configured in `knip.json`, reports TypeScript files that nothing imports. Run it with:
+
+```bash
+pnpm run dead-code:client          # the CI gate: unused files only
+pnpm run dead-code:client:report   # the full picture, including unused exports and types
+```
+
+The gate gives a real answer for Angular because Artemis uses standalone components: a pipe,
+directive or component that a template uses must appear in that component's `imports` array in
+TypeScript, so an unimported file is genuinely unreachable and knip never has to parse a template.
+
+**The gate analyses the application only.** Its single entry is `app.main.ts`; specs are excluded from
+the project graph and the vitest plugin is off, so a spec cannot vouch for the file it tests and an
+orphaned route subtree cannot vouch for itself. Declaring every `*.routes.ts` as an entry is the
+tempting shortcut and it defeats the check: `admin.routes.ts` is reached through one lazy import in
+`app.routes.ts`, and rooting it directly means deleting that last caller leaves the gate green. The
+same holds for specs — a component whose only importer is its own spec has no application path.
+
+The TUM UI package is gated the same way, and for the same reason: its single entry is
+`src/public-api.ts`, with specs and stories out of the project graph and the vitest and Storybook plugins
+off. A component that has lost its last export from the public API but is still rendered by its own story
+is unreachable from the library, and rooting the stories would have called it alive.
+
+`pnpm run dead-code:client:report` uses `knip.report.json` instead, which keeps specs, stories, vitest
+configs and the `setupFiles` they name as entries. That is the right shape for the advisory picture — it
+is also what covers the Storybook configuration itself — and the wrong shape for a gate.
+
+When knip reports a file you know is loaded, check whether its entry point is missing from
+`knip.json` before concluding the file is dead — a vitest `setupFiles` string is a reference no
+import graph can see.
+
+The gate covers unused **files** only. Artemis still has a backlog of unused exports, exported types
+and enum members that `pnpm run dead-code:client:report` lists; gating on those today would red every
+pull request. Tighten the `--include` list in `package.json` as that backlog reaches zero.
