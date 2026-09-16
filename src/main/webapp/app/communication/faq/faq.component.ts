@@ -138,6 +138,8 @@ export class FaqComponent implements OnInit, OnDestroy {
     private handleDeleteSuccess(faqId: number) {
         this.faqs = this.faqs?.filter((faq) => faq.id !== faqId);
         this.hasFaqs.set((this.faqs?.length ?? 0) > 0);
+        this.refreshFaqList(this.searchInput.getValue());
+        this.sortRows();
         this.dialogErrorSource.next('');
         this.loadCourseFaqCategories(this.courseId());
     }
