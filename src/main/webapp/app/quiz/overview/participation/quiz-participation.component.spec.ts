@@ -960,43 +960,21 @@ describe('QuizParticipationComponent - practice mode', () => {
         expect(serviceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
     });
 
-    describe('practiceAttemptFinished', () => {
-        beforeEach(() => {
-            component.mode.set('practice');
-            vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
-        });
+    // An empty attempt never counts as submitted, so only practiceAttemptFinished can offer the student a restart.
+    it.each([
+        ['practice', 100, false, false],
+        ['practice', -1, false, true],
+        ['practice', -1, true, false],
+        ['live', -1, false, false],
+    ])('should report a %s attempt with %i seconds left and submitting=%s as finished=%s', (mode, remainingSeconds, isSubmitting, expected) => {
+        vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
+        component.mode.set(mode as string);
+        component.remainingTimeSeconds.set(remainingSeconds as number);
+        component.isSubmitting.set(isSubmitting as boolean);
+        component.syncSubmitState();
 
-        it('should not report a finished attempt while the working time is still running', () => {
-            component.remainingTimeSeconds.set(100);
-            component.syncSubmitState();
-
-            expect(component.practiceAttemptFinished()).toBe(false);
-        });
-
-        it('should report a finished attempt once the working time expired without any answer', () => {
-            component.remainingTimeSeconds.set(-1);
-            component.syncSubmitState();
-
-            // Never counts as submitted, but it is over: the student may start another one.
-            expect(component.shouldTreatAsSubmittedForUi()).toBe(false);
-            expect(component.practiceAttemptFinished()).toBe(true);
-        });
-
-        it('should not report a finished attempt while the automatic submission is still in flight', () => {
-            component.remainingTimeSeconds.set(-1);
-            component.isSubmitting.set(true);
-            component.syncSubmitState();
-
-            expect(component.practiceAttemptFinished()).toBe(false);
-        });
-
-        it('should not report a finished practice attempt in live mode', () => {
-            component.mode.set('live');
-            component.remainingTimeSeconds.set(-1);
-            component.syncSubmitState();
-
-            expect(component.practiceAttemptFinished()).toBe(false);
-        });
+        expect(component.shouldTreatAsSubmittedForUi()).toBe(false);
+        expect(component.practiceAttemptFinished()).toBe(expected);
     });
 
     it('should let the student start another attempt when the automatic submission of an expired empty attempt fails', () => {

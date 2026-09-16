@@ -1240,16 +1240,6 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
     }
 
     /**
-     * Whether the practice attempt is over, so the student can start another one. Wider than
-     * {@link shouldTreatAsSubmittedForUi}: an attempt that expired without a single answer never counts as submitted,
-     * yet Submit is disabled from then on, which would leave the student with no action at all. A submission still in
-     * flight keeps the attempt open, because on success it ends with a result.
-     */
-    private computePracticeAttemptFinished(submittedForUi: boolean): boolean {
-        return this.mode() === 'practice' && (submittedForUi || (this.remainingTimeSeconds() < 0 && !this.isSubmitting()));
-    }
-
-    /**
      * Syncs the submit button state signals so that the exercise header actions
      * component can render the correct disabled state and label without relying
      * on a button inside this component.
@@ -1259,7 +1249,9 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
         const hasAnyAnswer = this.hasAnyAnswer();
         const submittedForUi = this.computeShouldTreatAsSubmittedForUi(hasAnyAnswer);
         this._shouldTreatAsSubmittedForUi.set(submittedForUi);
-        this._practiceAttemptFinished.set(this.computePracticeAttemptFinished(submittedForUi));
+        // The practice attempt is also over once it expired: an attempt without a single answer never counts as
+        // submitted, yet Submit is disabled from then on. A submission in flight keeps it open, as it ends in a result.
+        this._practiceAttemptFinished.set(this.mode() === 'practice' && (submittedForUi || (this.remainingTimeSeconds() < 0 && !this.isSubmitting())));
         const disabled = submittedForUi || this.isSubmitting() || this.waitingForQuizStart() || this.remainingTimeSeconds() < 0;
         this._isSubmitDisabled.set(disabled);
         this._submitTitleKey.set(submittedForUi ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit');

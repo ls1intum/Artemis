@@ -343,8 +343,8 @@ export class ExerciseSplitPanelComponent {
         }
         const params = this.route.firstChild?.snapshot.paramMap;
         if (params?.get('participationId') || params?.get('submissionId')) {
-            // The URL still names the attempt that was opened, so a fresh one would run under its result. Route back
-            // to the bare practice route: the quiz component is re-created there and starts the attempt itself.
+            // The URL still names the attempt that was opened, so restart on the bare route, which re-creates the
+            // quiz component — it starts the fresh attempt itself, free of the previous result.
             void this.router.navigate(['quiz-exercises', this.exercise().id, 'practice'], { relativeTo: this.route.parent });
             return true;
         }
