@@ -268,7 +268,7 @@ class AnswerPostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
             assertAnswerPostExistsInWeaviate(weaviateService, answerPost.getId());
 
             long answerPostId = answerPost.getId();
-            request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
+            request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
             assertAnswerPostNotInWeaviate(weaviateService, answerPostId);
         }

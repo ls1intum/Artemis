@@ -1347,7 +1347,7 @@ public class ProgrammingExerciseTestService {
     // TEST
     public void resumeProgrammingExercise_doesNotExist(ExerciseMode exerciseMode) throws Exception {
         setupCourseWithProgrammingExercise(exerciseMode);
-        request.putWithResponseBody("/api/programming/exercises/" + exercise.getId() + "/resume-programming-participation/" + -1, null,
+        request.putWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/-1/resume-programming-participation", null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.NOT_FOUND);
     }
 
@@ -1363,7 +1363,8 @@ public class ProgrammingExerciseTestService {
         var participant = participation.getParticipant();
         mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
 
-        participation = request.putWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
+        participation = request.putWithResponseBody(
+                "/api/exercise/exercises/" + exercise.getId() + "/participations/" + participation.getId() + "/resume-programming-participation", null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
 
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
@@ -1441,12 +1442,13 @@ public class ProgrammingExerciseTestService {
 
         if (!buildPlanExists) {
             mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
-            participation = request.putWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
+            participation = request.putWithResponseBody(
+                    "/api/exercise/exercises/" + exercise.getId() + "/participations/" + participation.getId() + "/resume-programming-participation", null,
                     ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
         }
 
         // Construct trigger-build url and execute request
-        String url = "/api/programming/programming-submissions/" + participation.getId() + "/trigger-failed-build";
+        String url = "/api/programming/participations/" + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
 
         // Fetch updated participation and assert
