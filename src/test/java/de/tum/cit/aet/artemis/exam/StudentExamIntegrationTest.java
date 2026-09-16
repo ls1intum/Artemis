@@ -782,10 +782,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         JsonNode listed = response.get(0);
         assertThat(listed.path("participation").path("testRun").asBoolean()).isTrue();
         // Submission is polymorphic; the client switches on the discriminator, so it has to survive the DTO
-        assertThat(listed.path("submissionExerciseType").asText()).isNotBlank();
+        assertThat(listed.path("submissionExerciseType").asString()).isNotBlank();
         // the assessment link needs the participation id, and the client restores the participation subclass from its type
         assertThat(listed.path("participation").path("id").isNumber()).isTrue();
-        assertThat(listed.path("participation").path("type").asText()).isEqualTo("student");
+        assertThat(listed.path("participation").path("type").asString()).isEqualTo("student");
         // the exam assessment dashboard picks the result of the displayed round by correctionRound and silently drops the row without it
         assertThat(listed.path("results")).isNotEmpty().allSatisfy(result -> assertThat(result.path("correctionRound").isInt()).isTrue());
         assertThat(listed.path("results")).anySatisfy(result -> assertThat(result.path("correctionRound").asInt()).isZero());
@@ -821,7 +821,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(response).hasSize(1);
         // the result badge reads "x of y passed tests" off these two counters of the listed draft
         assertThat(wire.get(0).path("results")).anySatisfy(result -> {
-            assertThat(result.path("assessmentType").asText()).isEqualTo(AssessmentType.SEMI_AUTOMATIC.name());
+            assertThat(result.path("assessmentType").asString()).isEqualTo(AssessmentType.SEMI_AUTOMATIC.name());
             assertThat(result.path("testCaseCount").isInt()).isTrue();
             assertThat(result.path("passedTestCaseCount").isInt()).isTrue();
         });
