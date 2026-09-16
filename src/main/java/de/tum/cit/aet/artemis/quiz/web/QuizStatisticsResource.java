@@ -17,7 +17,6 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
-import de.tum.cit.aet.artemis.quiz.config.QuizLegacyRestPaths;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.dto.QuizPointStatisticsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.QuizQuestionStatisticResponseDTO;
@@ -75,7 +74,7 @@ public class QuizStatisticsResource {
      * @return the quiz exercise with point statistics
      */
     @SuppressWarnings("deprecation")
-    @GetMapping({ "quiz-exercises/{quizExerciseId}/statistics/points", QuizLegacyRestPaths.RECALCULATE_STATISTICS })
+    @GetMapping("quiz-exercises/{quizExerciseId}/statistics/points")
     @EnforceAtLeastTutorInExercise(resourceIdFieldName = "quizExerciseId")
     public ResponseEntity<QuizPointStatisticsDTO> getQuizPointStatistic(@PathVariable long quizExerciseId) {
         QuizExercise quizExercise = getQuizExerciseForStatistics(quizExerciseId);
