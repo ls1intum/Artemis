@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { type Mock, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Observable, of } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import { GlobalSearchFilterService } from './global-search-filter.service';
 import { SearchCourseOptionsService } from './search-course-options.service';
 import { MenuCourse } from '../models/search-menu.util';
@@ -22,14 +23,17 @@ describe('GlobalSearchFilterService', () => {
         getCourses: vi.fn<() => Course[]>().mockReturnValue([]),
     };
 
+    const courseGeneration = signal(0);
     const mockCourseOptionsService = {
         getCourses: vi.fn<() => Observable<MenuCourse[]>>().mockReturnValue(of([])),
+        generation: courseGeneration.asReadonly(),
     };
 
     beforeEach(() => {
         vi.clearAllMocks();
         mockCourseStorageService.getCourses.mockReturnValue([]);
         mockCourseOptionsService.getCourses.mockReturnValue(of([]));
+        courseGeneration.set(0);
         TestBed.configureTestingModule({
             providers: [
                 GlobalSearchFilterService,
@@ -99,11 +103,51 @@ describe('GlobalSearchFilterService', () => {
             // An empty response must not make the menu emptier than it was before the request was made.
             mockCourseStorageService.getCourses.mockReturnValue([{ id: 4, title: 'Stored Course' } as Course]);
             mockCourseOptionsService.getCourses.mockReturnValue(of([]));
+            courseGeneration.set(0);
 
             service.searchQuery.set('course:');
             TestBed.tick();
 
             expect(service.menuOptions().map((option) => option.label)).toEqual(['Stored Course']);
+        });
+    });
+
+    describe('a change of signed-in user', () => {
+        it("drops the previous user's courses and reads the list again", () => {
+            mockCourseOptionsService.getCourses.mockReturnValue(of([{ id: 7, title: "A's course" }]));
+            service.searchQuery.set('course:');
+            TestBed.tick();
+            expect(service.menuOptions().map((option) => option.label)).toEqual(["A's course"]);
+
+            mockCourseOptionsService.getCourses.mockReturnValue(of([{ id: 9, title: "B's course" }]));
+            courseGeneration.set(1);
+            service.searchQuery.set('');
+            TestBed.tick();
+            service.searchQuery.set('course:');
+            TestBed.tick();
+
+            expect(service.menuOptions().map((option) => option.label)).toEqual(["B's course"]);
+        });
+
+        it('ignores a response that arrives after the user changed', () => {
+            // The request was made for the previous user; letting it land would undo the reset and put their
+            // courses back in front of whoever signed in next.
+            const late = new Subject<MenuCourse[]>();
+            mockCourseOptionsService.getCourses.mockReturnValue(late.asObservable());
+            service.searchQuery.set('course:');
+            TestBed.tick();
+
+            // The user changes, so the service drops its cache and the next read is a fresh request.
+            const fresh = new Subject<MenuCourse[]>();
+            mockCourseOptionsService.getCourses.mockReturnValue(fresh.asObservable());
+            courseGeneration.set(1);
+            TestBed.tick();
+
+            // Only now does the previous user's request answer.
+            late.next([{ id: 7, title: "A's course" }]);
+            TestBed.tick();
+
+            expect(service.menuOptions()).toHaveLength(0);
         });
     });
 

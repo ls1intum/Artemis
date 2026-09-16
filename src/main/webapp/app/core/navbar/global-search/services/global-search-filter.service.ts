@@ -52,6 +52,8 @@ export class GlobalSearchFilterService {
     /** Whether that read is in flight, so an empty menu can say "loading" rather than "you have no courses". */
     private readonly coursesLoading: WritableSignal<boolean> = signal(false);
     private courseFetchStarted = false;
+    /** The user generation the cached list was read for, so it can be dropped when the user changes. */
+    private loadedCourseGeneration = 0;
 
     /** The current text in the search input (may be a `facet:` operator being typed). */
     readonly searchQuery: WritableSignal<string> = signal('');
@@ -189,8 +191,16 @@ export class GlobalSearchFilterService {
 
     constructor() {
         // Read the course list the first time a course value menu is actually opened, rather than when the palette is
-        // constructed: a session that never filters by course never pays for the request.
+        // constructed: a session that never filters by course never pays for the request. The list belongs to the user
+        // it was read for, so a change of account discards it before the next open rather than offering the previous
+        // user's courses.
         effect(() => {
+            const generation = this.courseOptionsService.generation();
+            if (generation !== this.loadedCourseGeneration) {
+                this.loadedCourseGeneration = generation;
+                this.courseFetchStarted = false;
+                this.fetchedCourses.set([]);
+            }
             if (this.operator()?.facet === 'course') {
                 this.loadCoursesOnce();
             }
@@ -213,6 +223,7 @@ export class GlobalSearchFilterService {
             return;
         }
         this.courseFetchStarted = true;
+        const generation = this.courseOptionsService.generation();
         this.coursesLoading.set(true);
         this.courseOptionsService
             .getCourses()
@@ -220,6 +231,11 @@ export class GlobalSearchFilterService {
             .subscribe({
                 // The service degrades a failed read to an empty list, so both arms only have to release the flag.
                 next: (courses) => {
+                    // A response that outlived the user it was requested for must not repopulate the menu for
+                    // whoever signed in next; that arrival would otherwise undo the reset above.
+                    if (generation !== this.courseOptionsService.generation()) {
+                        return;
+                    }
                     this.fetchedCourses.set(courses);
                     this.coursesLoading.set(false);
                 },
