@@ -215,21 +215,15 @@ export class AthenaCourseConfigState {
         const revision = ++this.revisions[feature];
         this.applyFeature(feature, enabled);
 
-        // Only the switched feature is sent: restating the other one would write back whatever this client last read
-        // for it, undoing a change made elsewhere in the meantime.
+        // Only the switched feature is sent: restating the other fields would write back whatever this client last
+        // read for them, undoing a change made elsewhere in the meantime.
         this.athenaCourseConfigService.updateCourseConfig(this.courseId, { [feature]: enabled }).subscribe({
             next: (response) => {
-                // The response is the complete stored configuration, not just the switched feature: merge in the
-                // other feature too, unless a switch of it is still in flight and would otherwise have its own
-                // optimistic value overwritten by what this request read before that switch was made.
+                // The response is the complete stored configuration, not just the switched feature: merge in every
+                // other field too, so a change made to them elsewhere while this request was in flight is not left
+                // stale on screen.
                 const body = response.body;
-                for (const other of ATHENA_FEATURES) {
-                    if (other === feature || body?.[other] === undefined || this.settled[other] !== this.revisions[other]) {
-                        continue;
-                    }
-                    this.confirmed[other] = body[other];
-                    this.applyFeature(other, body[other]);
-                }
+                this.mergeSiblingFields(body, feature);
 
                 const stored = body?.[feature] ?? enabled;
                 this.confirmed[feature] = stored;
@@ -280,7 +274,13 @@ export class AthenaCourseConfigState {
 
         this.athenaCourseConfigService.updateCourseConfig(this.courseId, { [field]: value }).subscribe({
             next: (response) => {
-                const stored = response.body?.[field] ?? value;
+                // The response is the complete stored configuration, not just the switched field: merge in every
+                // other field too, so a change made to them elsewhere while this request was in flight is not left
+                // stale on screen.
+                const body = response.body;
+                this.mergeSiblingFields(body, field);
+
+                const stored = body?.[field] ?? value;
                 this.confirmed[field] = stored;
                 this.settle(field, revision);
                 this.applyStyleIfLatest(field, revision, stored);
@@ -339,6 +339,39 @@ export class AthenaCourseConfigState {
      */
     private applyStyleIfLatest(field: AthenaFeedbackStyleField, revision: number, value: number): void {
         if (this.revisions[field] === revision) {
+            this.applyStyle(field, value);
+        }
+    }
+
+    /**
+     * Merges every tracked field but `excluded` from a save's response into what is on screen. A save only sends the
+     * one field it is about (see {@link setEnabled}, {@link setFeedbackStyleDefault}), but the response is the
+     * complete stored configuration, so it also carries whatever another instructor changed on the other three
+     * fields while this request was in flight — without this, that change would sit stored on the server but stay
+     * invisible on screen until the next {@link load}. A field with a switch still in flight keeps its own
+     * optimistic value instead: this response was read from the server before that switch was made, so writing it
+     * back would undo what the switch already put on screen.
+     *
+     * @param body the complete stored configuration a save's response carries, or undefined if none was sent
+     * @param excluded the field the save itself was about; already applied by the caller
+     */
+    private mergeSiblingFields(body: AthenaCourseConfigDTO | undefined, excluded: AthenaConfigField): void {
+        if (!body) {
+            return;
+        }
+        for (const feature of ATHENA_FEATURES) {
+            if (feature === excluded || this.settled[feature] !== this.revisions[feature]) {
+                continue;
+            }
+            this.confirmed[feature] = body[feature];
+            this.applyFeature(feature, body[feature]);
+        }
+        for (const field of ATHENA_FEEDBACK_STYLE_FIELDS) {
+            if (field === excluded || this.settled[field] !== this.revisions[field]) {
+                continue;
+            }
+            const value = body[field] ?? 0;
+            this.confirmed[field] = value;
             this.applyStyle(field, value);
         }
     }
