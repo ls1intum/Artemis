@@ -369,6 +369,28 @@ describe('ResultUtils', () => {
         });
     });
 
+    describe('styling for participations that carry no exercise', () => {
+        // The team-assignment websocket payload sends participations without their exercise, so the badge helpers must
+        // use the exercise the caller passes in (regression guard).
+        const participationWithoutExercise = { id: 42, type: ParticipationType.PROGRAMMING } as Participation;
+        const automaticResult = { id: 7, score: 50, assessmentType: AssessmentType.AUTOMATIC, completionDate: dayjs().subtract(1, 'minute') } as Result;
+        const manuallyAssessedExercise = { id: 3, type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.SEMI_AUTOMATIC } as Exercise;
+
+        it('resultIsPreliminary uses the explicit exercise', () => {
+            expect(resultIsPreliminary(automaticResult, participationWithoutExercise)).toBe(false);
+            expect(resultIsPreliminary(automaticResult, participationWithoutExercise, manuallyAssessedExercise)).toBe(true);
+        });
+
+        it('getResultIconClass marks a preliminary result with the explicit exercise', () => {
+            expect(getResultIconClass(automaticResult, participationWithoutExercise, ResultTemplateStatus.HAS_RESULT, manuallyAssessedExercise)).toBe(faQuestionCircle);
+        });
+
+        it('isOnlyCompilationTested uses the explicit exercise', () => {
+            expect(isOnlyCompilationTested(automaticResult, participationWithoutExercise, ResultTemplateStatus.HAS_RESULT)).toBe(false);
+            expect(isOnlyCompilationTested(automaticResult, participationWithoutExercise, ResultTemplateStatus.HAS_RESULT, manuallyAssessedExercise)).toBe(true);
+        });
+    });
+
     describe('results without a participation', () => {
         const automaticResult = { id: 1, score: 80, assessmentType: AssessmentType.AUTOMATIC } as Result;
 
