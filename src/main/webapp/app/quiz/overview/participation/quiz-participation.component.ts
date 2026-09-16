@@ -1080,6 +1080,8 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      * @param result
      */
     onSubmitPracticeOrPreviewSuccess(result: Result) {
+        this.runningTimeouts.forEach((timeout) => clearTimeout(timeout));
+        this.runningTimeouts = [];
         this.isSubmitting.set(false);
         this.syncSubmitState();
         this.submission.set(result.submission as QuizSubmission);

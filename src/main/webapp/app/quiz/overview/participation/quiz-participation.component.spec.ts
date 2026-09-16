@@ -997,6 +997,26 @@ describe('QuizParticipationComponent - practice mode', () => {
         expect(component.practiceAttemptFinished()).toBe(true);
     });
 
+    it('should not submit again at the original deadline of a practice attempt that was already submitted', () => {
+        vi.useFakeTimers();
+        const practiceQuiz = { ...quizExerciseForPractice, duration: 120 } as QuizExercise;
+        vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: practiceQuiz } as HttpResponse<QuizExercise>));
+        fixture.detectChanges();
+
+        component.submitExercise();
+        httpMock.expectOne({ method: 'POST' }).flush({
+            submissionDate: now,
+            submitted: true,
+            submission: { submittedAnswers: [], participation: { exercise: practiceQuiz } },
+        } as Result);
+
+        vi.advanceTimersByTime(practiceQuiz.duration! * 1000);
+
+        expect(component.isSubmitting()).toBe(false);
+        expect(component.practiceAttemptFinished()).toBe(true);
+        vi.useRealTimers();
+    });
+
     it('should not let a late existing-result response overwrite a practice attempt started while it was loading', () => {
         const existingResultResponse = new Subject<HttpResponse<StudentParticipation>>();
         vi.spyOn(TestBed.inject(ParticipationService), 'getQuizParticipationResult').mockReturnValue(existingResultResponse);
