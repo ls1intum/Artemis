@@ -120,7 +120,8 @@ class ReactionServiceUnitTest {
 
         ReactionDTO withoutType = new ReactionDTO(null, null, null, "smiley", SHARED_ID, null);
 
-        assertThatThrownBy(() -> reactionService.createReaction(COURSE_ID, withoutType)).isInstanceOf(EntityNotFoundException.class);
+        assertThatThrownBy(() -> reactionService.createReaction(COURSE_ID, withoutType)).isInstanceOf(EntityNotFoundException.class).hasMessageContaining("Posting")
+                .hasMessageContaining(String.valueOf(SHARED_ID));
     }
 
     @Test
