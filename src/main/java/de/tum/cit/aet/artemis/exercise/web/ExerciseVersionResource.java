@@ -51,16 +51,14 @@ public class ExerciseVersionResource {
     }
 
     /**
-     * GET versions/:exerciseId/versions : get all versions for an exercise.
+     * GET exercises/:exerciseId/versions : get all versions for an exercise.
      * Returns paginated exercise version history with author information.
      *
      * @param exerciseId the ID of the exercise to retrieve versions for
      * @param pageable   pagination information
      * @return the ResponseEntity with status 200 (OK) and the list of exercise versions in body
      */
-    // Canonical path pairs the id with its collection (exercises/{exerciseId}/versions); the bare
-    // {exerciseId}/versions path is kept as a deprecated alias so existing clients keep working.
-    @GetMapping({ "exercises/{exerciseId}/versions", "{exerciseId}/versions" })
+    @GetMapping("exercises/{exerciseId}/versions")
     @EnforceAtLeastTutorInExercise(resourceIdFieldName = "exerciseId")
     public ResponseEntity<List<ExerciseVersionMetadataDTO>> getExerciseVersions(@PathVariable Long exerciseId, Pageable pageable) {
         log.debug("REST request to get versions for Exercise : {}", exerciseId);
@@ -70,15 +68,13 @@ public class ExerciseVersionResource {
     }
 
     /**
-     * GET version/:versionId : get a specific version of an exercise.
+     * GET exercises/:exerciseId/versions/:versionId : get a specific version of an exercise.
      *
      * @param exerciseId the ID of the exercise that the endpoint should access
      * @param versionId  the ID of the exercise version to retrieve
      * @return the ResponseEntity with status 200 (OK) and the exercise snapshot in body
      */
-    // Canonical path uses the plural collections (exercises/{exerciseId}/versions/{versionId}); the
-    // legacy {exerciseId}/version/{versionId} path is kept as a deprecated alias for existing clients.
-    @GetMapping({ "exercises/{exerciseId}/versions/{versionId}", "{exerciseId}/version/{versionId}" })
+    @GetMapping("exercises/{exerciseId}/versions/{versionId}")
     @EnforceAtLeastTutorInExercise(resourceIdFieldName = "exerciseId")
     public ResponseEntity<ExerciseSnapshotDTO> getExerciseSnapshot(@PathVariable Long exerciseId, @PathVariable Long versionId) {
         log.debug("REST request to get snapshot for ExerciseVersion : {}", versionId);
