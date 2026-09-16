@@ -570,8 +570,6 @@ function courseUpdateDTOFromManagementDTO(course: CourseManagementDTO): CourseUp
         presentationScore: course.presentationScore,
         maxPoints: course.maxPoints,
         accuracyOfScores: course.accuracyOfScores,
-        athenaGradingFeedbackEnabled: course.athenaGradingFeedbackEnabled,
-        athenaFormativeFeedbackEnabled: course.athenaFormativeFeedbackEnabled,
         timeZone: course.timeZone,
         courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
         onboardingDone: course.onboardingDone,

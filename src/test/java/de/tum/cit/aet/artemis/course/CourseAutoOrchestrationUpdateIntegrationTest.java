@@ -53,19 +53,16 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
         course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
     }
 
-    private Course updateCourse(Course courseToUpdate) throws Exception {
+    private CourseManagementDTO updateCourse(Course courseToUpdate) throws Exception {
         return updateCourse(courseToUpdate.getId(), courseToUpdate);
     }
 
-    private Course updateCourse(long courseId, Object courseToUpdate) throws Exception {
+    private CourseManagementDTO updateCourse(long courseId, Object courseToUpdate) throws Exception {
         JsonMapper mapper = request.getObjectMapper();
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(courseToUpdate).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + courseId).file(coursePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
         MvcResult result = request.performMvcRequest(builder).andExpect(status().isOk()).andReturn();
-        CourseUpdateDTO response = mapper.readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
-        Course updatedCourse = response.applyTo(new Course());
-        updatedCourse.setId(response.id());
-        return updatedCourse;
+        return mapper.readValue(result.getResponse().getContentAsString(), CourseManagementDTO.class);
     }
 
     /**
@@ -162,8 +159,8 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
         update.put("description", "Unrelated description change");
         copyConfigurationToUpdateRequest(update, loadedConfiguration);
 
-        Course updated = updateCourse(course.getId(), update);
-        assertThat(updated.getDescription()).isEqualTo("Unrelated description change");
+        CourseManagementDTO updated = updateCourse(course.getId(), update);
+        assertThat(updated.description()).isEqualTo("Unrelated description change");
 
         var persisted = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
         assertThat(persisted.getId()).isEqualTo(originalConfigId);

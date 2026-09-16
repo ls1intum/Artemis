@@ -25,7 +25,6 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
 import de.tum.cit.aet.artemis.course.dto.CourseConfigurationResponseDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseManagementDTO;
-import de.tum.cit.aet.artemis.course.dto.CourseUpdateDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -67,15 +66,12 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
         courseRepository.save(course);
     }
 
-    private Course updateCourse(long courseId, Object courseToUpdate) throws Exception {
+    private CourseManagementDTO updateCourse(long courseId, Object courseToUpdate) throws Exception {
         JsonMapper mapper = request.getObjectMapper();
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(courseToUpdate).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + courseId).file(coursePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
         MvcResult result = request.performMvcRequest(builder).andExpect(status().isOk()).andReturn();
-        CourseUpdateDTO response = mapper.readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
-        Course updatedCourse = response.applyTo(new Course());
-        updatedCourse.setId(response.id());
-        return updatedCourse;
+        return mapper.readValue(result.getResponse().getContentAsString(), CourseManagementDTO.class);
     }
 
     @Test
@@ -104,11 +100,12 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
         update.put("description", "Unrelated description change");
         copyConfigurationToUpdateRequest(update, configuration);
 
-        Course updated = updateCourse(course.getId(), update);
+        CourseManagementDTO updated = updateCourse(course.getId(), update);
 
-        assertThat(updated.getDescription()).isEqualTo("Unrelated description change");
-        assertThat(updated.isGradeRelevant()).isFalse();
-        assertThat(updated.isDataRetentionHold()).isTrue();
+        assertThat(updated.description()).isEqualTo("Unrelated description change");
+        assertThat(updated.courseConfiguration()).isNotNull();
+        assertThat(updated.courseConfiguration().gradeRelevant()).isFalse();
+        assertThat(updated.courseConfiguration().dataRetentionHold()).isTrue();
 
         CourseConfiguration persisted = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
         assertThat(persisted.isGradeRelevant()).isFalse();
