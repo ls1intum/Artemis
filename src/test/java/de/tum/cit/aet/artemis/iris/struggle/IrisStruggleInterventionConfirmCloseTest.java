@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.struggle;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -29,13 +30,13 @@ import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
+import de.tum.cit.aet.artemis.iris.dao.IrisSessionContextDAO;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveEpisode;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -111,18 +112,28 @@ class IrisStruggleInterventionConfirmCloseTest {
     /** The proactive message the append fragment built and cascaded, or {@code null} when nothing was appended. */
     private IrisMessage appendedMessage;
 
-    // The append seam: the session repository's write fragment locks the session, builds the message and cascades
-    // it, so a test stubs the lock and the merge and inspects the message the fragment built.
+    // The append seam: the session repository's write fragment locks the session, re-reads its context as a
+    // projection and inserts the message row through the message repository, so a test stubs the lock, that
+    // projection and the insert, and inspects the message the fragment built.
     private void stubProactiveAppend(IrisChatSession session, @Nullable Long assignedId) {
         when(irisSessionRepository.findByIdWithWriteLockElseThrow(session.getId())).thenReturn(session);
-        when(irisSessionRepository.saveAndFlush(any(IrisSession.class))).thenAnswer(call -> {
-            IrisSession saved = call.getArgument(0);
-            appendedMessage = saved.getMessages().getLast();
-            if (assignedId != null) {
-                appendedMessage.setId(assignedId);
-            }
-            return saved;
+        stubSessionContext(session);
+        when(irisMessageRepository.findHighestListIndexForUpdate(session.getId())).thenReturn(Optional.empty());
+        when(irisMessageRepository.saveAndFlush(any(IrisMessage.class))).thenAnswer(call -> {
+            appendedMessage = call.getArgument(0);
+            // The database assigns an id on insert, and the index update below names it, so the stub does too. Tests
+            // that do not care which id it is pass null and get an arbitrary one.
+            appendedMessage.setId(assignedId == null ? 1L : assignedId);
+            return appendedMessage;
         });
+        when(irisMessageRepository.setListIndex(anyLong(), anyInt())).thenReturn(1);
+    }
+
+    // What the context projection returns for a session the test built, which is what the binding re-check under the
+    // lock reads instead of the locked instance.
+    private void stubSessionContext(IrisChatSession session) {
+        lenient().when(irisSessionRepository.findContextById(session.getId()))
+                .thenReturn(Optional.of(new IrisSessionContextDAO(session.getMode(), session.getEntityId(), session.getCourseId())));
     }
 
     @Test
@@ -148,7 +159,7 @@ class IrisStruggleInterventionConfirmCloseTest {
         // Persist, outcome, broadcast. The row is inserted before its outcome, so a close never gates away its own
         // row, and the broadcast trails both, closing the window a concurrent dismiss used to slip through.
         InOrder order = inOrder(irisSessionRepository, irisMessageRepository, irisChatWebsocketService);
-        order.verify(irisSessionRepository).saveAndFlush(any(IrisSession.class));
+        order.verify(irisMessageRepository).saveAndFlush(any(IrisMessage.class));
         order.verify(irisMessageRepository).setProactiveOutcomeIfNull(anyLong(), eq(IrisProactiveOutcome.RECOVERED));
         order.verify(irisChatWebsocketService).sendMessage(eq(session), any(), any(), any());
     }
@@ -170,7 +181,7 @@ class IrisStruggleInterventionConfirmCloseTest {
         InOrder order = inOrder(irisSessionRepository, irisMessageRepository);
         order.verify(irisSessionRepository).findByIdWithWriteLockElseThrow(session.getId());
         order.verify(irisMessageRepository).findEpisodeOutcomes("ep-cc", 3L, 42L);
-        order.verify(irisSessionRepository).saveAndFlush(any(IrisSession.class));
+        order.verify(irisMessageRepository).saveAndFlush(any(IrisMessage.class));
     }
 
     @Test
@@ -316,7 +327,8 @@ class IrisStruggleInterventionConfirmCloseTest {
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
         when(irisMessageRepository.findEpisodeOutcomes("ep-cc", 3L, 42L)).thenReturn(List.of());
         when(irisSessionRepository.findByIdWithWriteLockElseThrow(session.getId())).thenReturn(session);
-        when(irisSessionRepository.saveAndFlush(any(IrisSession.class))).thenThrow(new DataIntegrityViolationException("persist failed"));
+        stubSessionContext(session);
+        when(irisMessageRepository.saveAndFlush(any(IrisMessage.class))).thenThrow(new DataIntegrityViolationException("persist failed"));
         var update = closeUpdate(true, "Closing", "Done", null);
 
         service.handleConfirmClose(progressJob, update);   // must not throw
@@ -339,6 +351,9 @@ class IrisStruggleInterventionConfirmCloseTest {
         // The append re-reads the session under a write lock, so hand the same instance back. Lenient because the
         // paths that never persist do not reach it.
         lenient().when(irisSessionRepository.findByIdWithWriteLockElseThrow(session.getId())).thenReturn(session);
+        // The binding re-check reads the context through the projection rather than off that instance, so both have
+        // to point at the same session; a test that re-stubs this helper for another exercise moves both.
+        stubSessionContext(session);
         return session;
     }
 

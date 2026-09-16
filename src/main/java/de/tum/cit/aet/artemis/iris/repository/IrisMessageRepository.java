@@ -185,6 +185,49 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
     Optional<Integer> findListIndex(@Param("messageId") long messageId);
 
     /**
+     * The highest index a session's messages currently occupy, one past which an append takes. Native for the same
+     * reason as {@link #findListIndex}.
+     *
+     * <p>
+     * A locking read rather than a plain {@code SELECT MAX(...)}: under MySQL's REPEATABLE READ a plain read is
+     * answered from the snapshot the transaction opened, so an append made from a transaction that had already read
+     * the session would miss a row another transaction committed since and hand out an index that row already holds.
+     * InnoDB answers a locking read from the current data instead, which is what PostgreSQL's READ COMMITTED does for
+     * every statement anyway. Rows whose index is not written yet are excluded, so the two engines cannot disagree
+     * over where a {@code NULL} sorts; such a row only exists inside the appending transaction, between its insert
+     * and its {@link #setListIndex}. What keeps two appends from reading this at the same time is the session write
+     * lock the caller holds.
+     *
+     * @param sessionId the session to append to
+     * @return the highest index in use, or empty for a session with no messages
+     */
+    @Query(value = """
+            SELECT iris_message_order
+            FROM iris_message
+            WHERE session_id = :sessionId
+              AND iris_message_order IS NOT NULL
+            ORDER BY iris_message_order DESC
+            LIMIT 1
+            FOR UPDATE
+            """, nativeQuery = true)
+    Optional<Integer> findHighestListIndexForUpdate(@Param("sessionId") long sessionId);
+
+    /**
+     * Write an inserted message's position in its session's ordered list. The row is inserted through the message
+     * side rather than through the collection that owns {@code iris_message_order}, which is what keeps an append
+     * from merging a message list the persistence context may hold in a stale state; the column it leaves behind is
+     * set here.
+     *
+     * @param messageId the message to place
+     * @param listIndex the index it takes
+     * @return number of rows updated, which the caller checks is exactly one
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query(value = "UPDATE iris_message SET iris_message_order = :listIndex WHERE id = :messageId", nativeQuery = true)
+    int setListIndex(@Param("messageId") long messageId, @Param("listIndex") int listIndex);
+
+    /**
      * Close the hole a deleted row leaves in its session's list indices. A plain delete does not go through the
      * collection that owns {@code iris_message_order}, and the gap is not cosmetic: Hibernate materialises an ordered
      * collection by index, so the next load puts a {@code null} on the missing one and fails. The caller holds the

@@ -11,7 +11,6 @@ import org.springframework.beans.factory.ObjectProvider;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
-import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeWriteRepositoryImpl;
@@ -34,8 +33,7 @@ final class IrisWriteFragments {
 
     /** Attach both write fragments to the given mocks. */
     static void attachTo(IrisSessionRepository sessions, IrisMessageRepository messages, IrisProactiveEpisodeRepository episodes) {
-        // Only the context switch writes through the chat session repository, and no caller of this helper drives one.
-        var sessionFragment = new IrisSessionWriteRepositoryImpl(providerOf(sessions), mock(IrisChatSessionRepository.class), messages);
+        var sessionFragment = new IrisSessionWriteRepositoryImpl(providerOf(sessions), messages);
         var episodeFragment = new IrisProactiveEpisodeWriteRepositoryImpl(providerOf(episodes), messages, providerOf(sessions));
 
         lenient().when(sessions.appendMessage(anyLong(), any(), any(IrisMessageSender.class)))

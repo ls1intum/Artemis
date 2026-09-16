@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -27,6 +28,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.stream.IntStream;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
@@ -333,15 +335,17 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
         var reloaded = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
         assertThat(reloaded.getMessages()).as("no concurrently committed message may be dropped by another writer's stale collection").hasSize(writers);
+        assertListIndicesAreContiguous(reloaded.getId(), writers);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void contextSwitchHoldsTheSessionLockAcrossItsAggregateSave() throws Exception {
-        // applyContextChange appends the CTXSWAP marker and then merges the session aggregate. If the lock were
-        // released between the two (saveMessage committing on its own), a chat append committing in that gap would be
-        // orphan-removed by the aggregate merge. Run a stream of appends against the session while the switch runs
-        // and assert none of them is lost.
+    void contextSwitchHoldsTheSessionLockAcrossItsContextUpdate() throws Exception {
+        // applyContextChange appends the CTXSWAP marker and then writes the new context. Both happen under one
+        // session write lock, and the marker append allocates its list index under that same lock. If the lock were
+        // released in between (the append committing on its own), a chat append committing in that gap would claim
+        // the index the marker already took. Run a stream of appends against the session while the switch runs and
+        // assert none of them is lost.
         IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
@@ -367,6 +371,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         var reloaded = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
         // every plain append plus the single CTXSWAP marker
         assertThat(reloaded.getMessages()).as("the context switch must not orphan-remove a concurrently appended message").hasSize(appends + 1);
+        assertListIndicesAreContiguous(reloaded.getId(), appends + 1);
     }
 
     @Test
@@ -377,8 +382,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
         outer.execute(status -> {
             // Pre-load the session WITH its messages inside the outer transaction: the shape revealAmbient produces,
-            // where the session is resolved before the append. From here the persistence context manages an
-            // initialized collection, and a later fetch join does NOT refresh it - only an explicit refresh does.
+            // where the session is resolved before the append. From here the persistence context manages a collection
+            // that no later query re-reads, so an append going through it would write a list index the committed rows
+            // already use.
             var managed = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
             assertThat(managed.getMessages()).isEmpty();
 
@@ -397,14 +403,43 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
                 concurrent.shutdownNow();
             }
 
-            // Append through the stale managed instance. Without the refresh under the lock, the merge writes back a
-            // collection that never saw the concurrent row and orphanRemoval deletes it again.
+            // Append through the stale managed instance. An append that merged the aggregate would write back a
+            // collection that never saw the concurrent row, and orphanRemoval would delete it again.
             irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(managed), managed, IrisMessageSender.LLM);
             return null;
         });
 
         var reloaded = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
         assertThat(reloaded.getMessages()).as("the concurrently committed message must survive an append made from an already-managed session").hasSize(2);
+        assertListIndicesAreContiguous(reloaded.getId(), 2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void appendRollsBackTheRowAndItsListIndexTogether() {
+        // The append inserts the row and writes its list index in two statements. They only add up to one list
+        // element because they share a transaction, so a caller's rollback has to take both, not leave a row behind
+        // whose index nothing set.
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        var outer = new TransactionTemplate(transactionManager);
+
+        outer.executeWithoutResult(status -> {
+            irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
+            status.setRollbackOnly();
+        });
+
+        assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getMessages()).as("the rolled back append must leave no row behind").isEmpty();
+    }
+
+    /**
+     * Asserts the session's rows occupy exactly the indices {@code 0..expectedCount - 1}. Counting messages is not
+     * enough: two appends that allocated the same index leave a duplicate that Hibernate resolves by dropping one
+     * slot, which a size assertion on a list of the same length would not notice.
+     */
+    private void assertListIndicesAreContiguous(long sessionId, int expectedCount) {
+        var indices = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId).getMessages().stream().map(message -> irisMessageRepository.findListIndex(message.getId()))
+                .flatMap(Optional::stream).toList();
+        assertThat(indices).as("every appended message must hold its own list index").containsExactlyInAnyOrderElementsOf(IntStream.range(0, expectedCount).boxed().toList());
     }
 
     @ParameterizedTest

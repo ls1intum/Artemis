@@ -1,9 +1,7 @@
 package de.tum.cit.aet.artemis.iris.repository;
 
 import java.time.ZonedDateTime;
-import java.util.Objects;
 
-import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +16,6 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 
 /**
@@ -30,6 +27,13 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
  * with {@code spring.main.allow-circular-references: false} - but it still has to go through the repository proxy
  * rather than around it, both to reuse the queries declared on {@link IrisSessionRepository} statement for statement
  * and to keep the transaction interceptor in the call path.
+ *
+ * <p>
+ * Nothing here merges the session aggregate. Every write is either a row insert or a scalar update, so an
+ * {@code IrisSession} that the persistence context holds with an already-loaded message list is never written back,
+ * and {@code orphanRemoval} can never delete a row that list does not know about. What still needs the session write
+ * lock is the ordering: {@code iris_message_order} is allocated as "one past the current maximum", and two appends
+ * reading that maximum at the same time would claim the same index.
  */
 public class IrisSessionWriteRepositoryImpl implements IrisSessionWriteRepository {
 
@@ -37,19 +41,15 @@ public class IrisSessionWriteRepositoryImpl implements IrisSessionWriteRepositor
 
     private final ObjectProvider<IrisSessionRepository> irisSessionRepository;
 
-    private final IrisChatSessionRepository irisChatSessionRepository;
-
     private final IrisMessageRepository irisMessageRepository;
 
-    public IrisSessionWriteRepositoryImpl(ObjectProvider<IrisSessionRepository> irisSessionRepository, IrisChatSessionRepository irisChatSessionRepository,
-            IrisMessageRepository irisMessageRepository) {
+    public IrisSessionWriteRepositoryImpl(ObjectProvider<IrisSessionRepository> irisSessionRepository, IrisMessageRepository irisMessageRepository) {
         this.irisSessionRepository = irisSessionRepository;
-        this.irisChatSessionRepository = irisChatSessionRepository;
         this.irisMessageRepository = irisMessageRepository;
     }
 
     @Override
-    public IrisSession appendMessage(long sessionId, IrisMessage message, IrisMessageSender sender) {
+    public IrisMessage appendMessage(long sessionId, IrisMessage message, IrisMessageSender sender) {
         return appendInCurrentTransaction(sessionId, message, sender);
     }
 
@@ -57,46 +57,48 @@ public class IrisSessionWriteRepositoryImpl implements IrisSessionWriteRepositor
     public @Nullable IrisMessage switchContextAndAppendMarker(long sessionId, IrisChatMode newMode, long newEntityId, long expectedCourseId, String entityName) {
         var sessions = irisSessionRepository.getObject();
         // Marker append and context update under one session write lock. If the append were the only holder it would
-        // release the lock on its own commit, and the context update would then cascade-merge a message list a
-        // concurrent append may already have added to, which orphanRemoval would delete.
-        if (!(sessions.findByIdWithWriteLockElseThrow(sessionId) instanceof IrisChatSession locked)) {
-            throw new IllegalStateException("Context can only be switched on a chat session, but session " + sessionId + " is not one");
-        }
-        // Taking the lock does not refresh an entity the persistence context already manages, so without this the
-        // decision could run on state read before the lock. Flush first so the refresh discards nothing pending.
+        // release the lock on its own commit, and the context update would then run against a session a concurrent
+        // switch may already have moved on.
+        sessions.findByIdWithWriteLockElseThrow(sessionId);
+        // Flush first, so the read below sees what the caller has pending.
         sessions.flush();
-        sessions.refresh(locked);
-        // Everything describing the transition comes from the locked session, not the caller's copy: a concurrent
-        // switch that won the lock has already moved the session on.
-        if (locked.getMode() == newMode && locked.getEntityId() == newEntityId) {
+        // Everything describing the transition comes from this projection, not from the caller's copy and not from the
+        // locked instance: the lock does not refresh an entity the persistence context already manages, while a
+        // projection carries what the locking read returned.
+        var context = sessions.findContextById(sessionId)
+                .orElseThrow(() -> new IllegalStateException("Context can only be switched on a chat session, but session " + sessionId + " is not one"));
+        if (context.chatMode() == newMode && context.entityId() == newEntityId) {
             return null;   // the other switch picked the same target; there is no transition left to record
         }
-        if (expectedCourseId != locked.getCourseId()) {
+        if (expectedCourseId != context.courseId()) {
             // Thrown from inside the boundary: the flush above already wrote what the caller had pending.
             throw new ConflictException("New context must belong to the same course as the session", "Iris", "irisCourseMismatch");
         }
 
-        var marker = IrisContextSwitchMarker.forSwitch(locked.getMode(), newMode, newEntityId, entityName);
+        var marker = IrisContextSwitchMarker.forSwitch(context.chatMode(), newMode, newEntityId, entityName);
         IrisMessage markerMessage = new IrisMessage();
         markerMessage.addContent(new IrisJsonMessageContent(JsonObjectMapper.get().valueToTree(marker)));
-        IrisMessage saved = appendInCurrentTransaction(locked.getId(), markerMessage, IrisMessageSender.CTXSWAP).getMessages().getLast();
+        IrisMessage saved = appendInCurrentTransaction(sessionId, markerMessage, IrisMessageSender.CTXSWAP);
 
-        locked.setMode(newMode);
-        locked.setEntityId(newEntityId);
-        irisChatSessionRepository.save(locked);
+        int updated = sessions.updateContext(sessionId, newMode, newEntityId);
+        if (updated != 1) {
+            throw new IllegalStateException("Context switch did not update session " + sessionId + ", " + updated + " rows changed");
+        }
         return saved;
     }
 
     @Override
     public @Nullable IrisMessage appendProactiveMessage(long sessionId, long exerciseId, String text, @Nullable String episodeId) {
         var sessions = irisSessionRepository.getObject();
-        if (!(sessions.findByIdWithWriteLockElseThrow(sessionId) instanceof IrisChatSession locked)) {
+        sessions.findByIdWithWriteLockElseThrow(sessionId);
+        sessions.flush();
+        var context = sessions.findContextById(sessionId).orElse(null);
+        if (context == null) {
+            log.info("Dropping proactive message: session {} is not a chat session, and the append was for exercise {}", sessionId, exerciseId);
             return null;
         }
-        sessions.flush();
-        sessions.refresh(locked);
-        if (locked.getMode() != IrisChatMode.PROGRAMMING_EXERCISE_CHAT || !Objects.equals(locked.getEntityId(), exerciseId)) {
-            log.info("Dropping proactive message: session {} moved to mode={} entity={} before the append for exercise {}", locked.getId(), locked.getMode(), locked.getEntityId(),
+        if (context.chatMode() != IrisChatMode.PROGRAMMING_EXERCISE_CHAT || context.entityId() != exerciseId) {
+            log.info("Dropping proactive message: session {} is at mode={} entity={} before the append for exercise {}", sessionId, context.chatMode(), context.entityId(),
                     exerciseId);
             return null;
         }
@@ -110,7 +112,7 @@ public class IrisSessionWriteRepositoryImpl implements IrisSessionWriteRepositor
         if (episodeId != null) {
             message.setProactiveEpisodeId(episodeId);
         }
-        return appendInCurrentTransaction(locked.getId(), message, IrisMessageSender.LLM).getMessages().getLast();
+        return appendInCurrentTransaction(sessionId, message, IrisMessageSender.LLM);
     }
 
     @Override
@@ -131,41 +133,32 @@ public class IrisSessionWriteRepositoryImpl implements IrisSessionWriteRepositor
         removedIndex.ifPresent(index -> irisMessageRepository.compactMessageOrderAfter(sessionId.get(), index));
     }
 
-    // A plain call, so it joins whatever boundary is already open. It re-takes the session's write lock even when
-    // the caller holds it: the lock is re-entrant for the holder, and the reload it guards is what makes the append
-    // safe on its own for callers that take no outer lock.
-    private IrisSession appendInCurrentTransaction(long sessionId, IrisMessage message, IrisMessageSender sender) {
+    // A plain call, so it joins whatever boundary is already open. It re-takes the session's write lock even when the
+    // caller holds it: the lock is re-entrant for the holder, and it is what makes the index allocation below safe on
+    // its own for callers that take no outer lock.
+    private IrisMessage appendInCurrentTransaction(long sessionId, IrisMessage message, IrisMessageSender sender) {
         var sessions = irisSessionRepository.getObject();
-        // Reload immediately before the cascade rather than trusting an already-initialized collection. saveAndFlush
-        // merges the whole aggregate, so a stale messages list is written back over the committed rows: a column
-        // another transaction set meanwhile is reset, and the appended message takes a list position a row missing
-        // from the stale list already holds. Saving the message on its own is not an option either, because
-        // @OrderColumn on IrisSession#messages is maintained from the owner side, so a standalone insert leaves
-        // iris_message_order null and the next read fails with "Illegal null value for list index". Reloading alone
-        // only narrows the window, so lock, reload, append and save happen in one transaction.
-        var locked = sessions.findByIdWithWriteLockElseThrow(sessionId);
-        // Flush first: the refresh overwrites the entity with database state and would otherwise discard changes the
-        // caller has not flushed. Hibernate's auto-flush covers this today, but the ordering is too easy to break.
+        IrisSession locked = sessions.findByIdWithWriteLockElseThrow(sessionId);
+        // Flush before reading the highest index, so a row the caller has inserted but not written is part of it.
+        // Hibernate's auto-flush does not cover the native query below, which names a table rather than an entity.
         sessions.flush();
-        // Which re-read is needed depends on what the lock handed back. A managed instance is not refreshed by a
-        // query, so the fetch join would return the same stale collection and the lock would protect nothing. A
-        // session the lock loaded fresh carries no collection yet, and there the fetch join is the read.
-        IrisSession lockedWithMessages;
-        if (Hibernate.isInitialized(locked.getMessages())) {
-            sessions.refresh(locked);
-            lockedWithMessages = locked;
-        }
-        else {
-            lockedWithMessages = sessions.findByIdWithMessagesElseThrow(locked.getId());
-        }
+        int listIndex = irisMessageRepository.findHighestListIndexForUpdate(sessionId).map(highest -> highest + 1).orElse(0);
 
         message.setSender(sender);
         message.setSentAt(ZonedDateTime.now());
-        message.setSession(lockedWithMessages);
+        message.setSession(locked);
         message.getContent().forEach(content -> content.setMessage(message));
 
-        lockedWithMessages.getMessages().add(message);
-        // saveAndFlush so the cascaded message has its generated id.
-        return sessions.saveAndFlush(lockedWithMessages);
+        // Through the message side rather than through session.getMessages(): appending to that collection means
+        // merging the whole aggregate back, and a list the persistence context loaded before a concurrent commit would
+        // take a row with it. saveAndFlush, because the row has to exist before the index update names its id.
+        IrisMessage saved = irisMessageRepository.saveAndFlush(message);
+        int indexed = irisMessageRepository.setListIndex(saved.getId(), listIndex);
+        if (indexed != 1) {
+            // Leaving the column null would make the next read of the list fail on the missing index, so the whole
+            // append has to go back.
+            throw new IllegalStateException("Appended message " + saved.getId() + " of session " + sessionId + " did not receive a list index");
+        }
+        return saved;
     }
 }

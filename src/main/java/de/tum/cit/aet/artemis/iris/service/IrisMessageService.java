@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.iris.service;
 
 import jakarta.ws.rs.BadRequestException;
 
-import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -41,16 +40,11 @@ public class IrisMessageService {
             throw new BadRequestException("Message must have at least one content element");
         }
 
-        // The write itself is a repository operation: it locks the session row, reloads the ordered message list under
-        // that lock, appends and cascades in ONE transaction, because a stale list merged back over the committed rows
-        // loses a concurrent append. See IrisSessionWriteRepository#appendMessage for why each of those steps is there.
-        var savedSession = irisSessionRepository.appendMessage(session.getId(), message, sender);
-        if (Hibernate.isInitialized(session.getMessages())) {
-            // Keep the caller's own instance consistent, as before; an uninitialized one is left alone so it
-            // still loads the committed state lazily.
-            session.setMessages(savedSession.getMessages());
-        }
-
-        return savedSession.getMessages().getLast();
+        // The write itself is a repository operation: it locks the session row, allocates the next list index under
+        // that lock and inserts the row, in ONE transaction. See IrisSessionWriteRepository#appendMessage for why.
+        // The caller's own session instance is deliberately left alone: adding the message to a list it loaded earlier
+        // would put it at a position the committed rows already use, and the next flush of that list would write the
+        // duplicate index out.
+        return irisSessionRepository.appendMessage(session.getId(), message, sender);
     }
 }

@@ -19,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.dao.IrisSessionContextDAO;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 
 /**
@@ -120,6 +122,47 @@ public interface IrisSessionRepository extends ArtemisJpaRepository<IrisSession,
             WHERE s.id = :sessionId
             """)
     void updateLatestSuggestions(@Param("sessionId") long sessionId, @Param("latestSuggestions") String latestSuggestions);
+
+    /**
+     * The chat session's current context, as a projection. Read right after {@link #findByIdWithWriteLock} by the
+     * writers that decide on it: the lock does not refresh an instance the persistence context already manages, so a
+     * writer reading the mode off that instance can decide on state from before the lock, while this query returns
+     * values built from its own result set. See {@link IrisSessionContextDAO}.
+     *
+     * <p>
+     * A locking read, and re-entrant for the caller that already holds the row: on MySQL a plain read would be
+     * answered from the snapshot the transaction opened, which for a caller that had read the session before locking
+     * it is exactly the state the lock was taken to get past.
+     *
+     * @param sessionId the session to read
+     * @return the context, or empty when the session does not exist or is not a chat session
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.iris.dao.IrisSessionContextDAO(s.chatMode, s.entityId, s.courseId)
+            FROM IrisChatSession s
+            WHERE s.id = :sessionId
+            """)
+    Optional<IrisSessionContextDAO> findContextById(@Param("sessionId") long sessionId);
+
+    /**
+     * Move a chat session to a new context without touching the rest of the aggregate, for the same reason as
+     * {@link #updateTitle}.
+     *
+     * @param sessionId   the session to move
+     * @param chatMode    the mode to move to
+     * @param newEntityId the entity the new mode points at
+     * @return the number of rows updated, which the caller checks is exactly one
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE IrisChatSession s
+            SET s.chatMode = :chatMode,
+                s.entityId = :newEntityId
+            WHERE s.id = :sessionId
+            """)
+    int updateContext(@Param("sessionId") long sessionId, @Param("chatMode") IrisChatMode chatMode, @Param("newEntityId") long newEntityId);
 
     /**
      * Counts all Iris sessions for a given user, regardless of concrete session type.
