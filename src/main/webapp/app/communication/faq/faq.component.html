@@ -154,7 +154,7 @@
         >
             <ng-container tumUiEmptyStateActions>
                 @if (!hasFaqs()) {
-                    <a id="{{ isAtLeastInstructor() ? 'create-faq' : 'propose-faq' }}" class="btn btn-sm btn-primary" [routerLink]="['new']">
+                    <a class="btn btn-sm btn-primary" [routerLink]="['new']">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="{{ isAtLeastInstructor() ? 'artemisApp.faq.home.createLabel' : 'artemisApp.faq.home.proposeLabel' }}"></span>
                     </a>
