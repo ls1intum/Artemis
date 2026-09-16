@@ -9,6 +9,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
+import org.hibernate.collection.spi.PersistentSet;
 import org.junit.jupiter.api.Test;
 
 import tools.jackson.databind.JsonNode;
@@ -20,12 +22,16 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.ActiveExamForCourseDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseAssessmentDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseDashboardDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseExerciseDueDateDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseForEnrollmentDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseForQuizSelectionDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseManagementDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseManagementExerciseDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseScoresDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseWithContentDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseWithExercisesDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseWithOrganizationsDTO;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.LockedCourseSubmissionDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -60,8 +66,8 @@ class CourseDtoSerializationTest {
         Exam exam = new Exam();
         exam.setId(20L);
         exam.setTitle("Active Midterm");
-        exam.setStartDate(ZonedDateTime.now().minusHours(1));
-        exam.setEndDate(ZonedDateTime.now().plusHours(1));
+        exam.setStartDate(ZonedDateTime.parse("2026-09-16T12:00:00Z"));
+        exam.setEndDate(ZonedDateTime.parse("2026-09-16T13:00:00Z"));
         exam.setTestExam(false);
         exam.setExamMaxPoints(80);
         exam.setCourse(course);
@@ -82,7 +88,7 @@ class CourseDtoSerializationTest {
         assertThat(activeExam.get("course").get("title").asString()).isEqualTo("Active Exam Course");
         assertThat(activeExam.get("examMaxPoints").asInt()).isEqualTo(80);
         // The app writes dates as ISO-8601 strings, not epoch numbers.
-        assertThat(activeExam.get("startDate").isString()).as("startDate is an ISO string").isTrue();
+        assertThat(activeExam.get("startDate").asString()).isEqualTo("2026-09-16T12:00:00Z");
 
         CoursesForDashboardDTO deserialized = objectMapper.readValue(json, CoursesForDashboardDTO.class);
         assertThat(deserialized.courses()).hasSize(1);
@@ -300,5 +306,54 @@ class CourseDtoSerializationTest {
         assertThat(managementDTO.onlineCourseConfiguration()).isNull();
         assertThat(managementDTO.tutorialGroupsConfiguration()).isNull();
         assertThat(managementDTO.courseConfiguration()).isNull();
+    }
+
+    @Test
+    void shouldMapEmptyCollectionsWithoutLoadingWhenCourseCollectionsAreUnloaded() {
+        Course course = new Course();
+        course.setId(98L);
+        course.setTitle("Unloaded Course");
+        course.setShortName("unloaded");
+        course.setExercises(new PersistentSet<>());
+        course.setLectures(new PersistentSet<>());
+        course.setExams(new PersistentSet<>());
+        course.setCompetencies(new PersistentSet<>());
+        course.setPrerequisites(new PersistentSet<>());
+        course.setOrganizations(new PersistentSet<>());
+
+        TextExercise exercise = new TextExercise();
+        exercise.setId(500L);
+        exercise.setTitle("Unloaded Categories Exercise");
+        exercise.setCategories(new PersistentSet<>());
+
+        assertCourseCollectionsUninitialized(course);
+        assertThat(Hibernate.isInitialized(exercise.getCategories())).isFalse();
+
+        CourseDashboardDTO dashboardDTO = CourseDashboardDTO.of(course);
+        assertThat(dashboardDTO.exercises()).isEmpty();
+        assertThat(dashboardDTO.lectures()).isEmpty();
+        assertThat(dashboardDTO.exams()).isEmpty();
+        assertThat(dashboardDTO.competencies()).isEmpty();
+        assertThat(dashboardDTO.prerequisites()).isEmpty();
+
+        CourseManagementDTO managementDTO = CourseManagementDTO.of(course);
+        assertThat(managementDTO.onlineCourseConfiguration()).isNull();
+
+        assertThat(CourseForEnrollmentDTO.of(course).prerequisites()).isEmpty();
+        assertThat(CourseForQuizSelectionDTO.of(course).exercises()).isEmpty();
+        assertThat(CourseWithOrganizationsDTO.of(course).organizations()).isEmpty();
+        assertThat(CourseExerciseDueDateDTO.of(exercise).categories()).isEmpty();
+
+        assertCourseCollectionsUninitialized(course);
+        assertThat(Hibernate.isInitialized(exercise.getCategories())).isFalse();
+    }
+
+    private void assertCourseCollectionsUninitialized(Course course) {
+        assertThat(Hibernate.isInitialized(course.getExercises())).isFalse();
+        assertThat(Hibernate.isInitialized(course.getLectures())).isFalse();
+        assertThat(Hibernate.isInitialized(course.getExams())).isFalse();
+        assertThat(Hibernate.isInitialized(course.getCompetencies())).isFalse();
+        assertThat(Hibernate.isInitialized(course.getPrerequisites())).isFalse();
+        assertThat(Hibernate.isInitialized(course.getOrganizations())).isFalse();
     }
 }
