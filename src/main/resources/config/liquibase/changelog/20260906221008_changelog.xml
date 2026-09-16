@@ -48,9 +48,17 @@
     over JSON_TABLE on MySQL. Both preserve the order of the array, which matters because the authored order of the
     drag items is what a student sees when the question does not randomize them.
 
-    The rollback of each changeset is empty on purpose. The prefix that was removed is not recoverable from the row,
-    and it is not needed: the application reads a bare filename correctly, so rolling back the code without rolling
-    back the data leaves a working system.
+    The rollback of each changeset is empty on purpose: the prefix that was removed is not recoverable from the row.
+
+    That makes this release forward-only. Withdrawing it is a restore, not a redeployment of the previous version, and
+    the backup has to be taken before these changesets run. The previous release resolves a stored value by segment
+    position - FilePathConverter#getLectureAttachmentFileSystemPath and #getAttachmentVideoUnitFileSystemPath both read
+    path.getName(2) - and a bare filename has one segment, so once these changesets have run that release raises
+    FilePathParsingException for every lecture attachment and attachment video unit file it is asked for. Reducing a
+    stored value to its last segment on read is what this release does; the one before it requires the segments to be
+    there. This is the case the multi-instance guide describes under Deploying a New Version, where a migration leaves
+    a schema the previous version cannot meet and the way back has to be planned before the upgrade rather than after
+    it.
 
     Ordering. This file is included after 20260905235721_changelog.xml, which is chronological and also the only order
     master.xml should ever be in, but the two are independent in the forward direction either way:
