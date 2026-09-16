@@ -12,12 +12,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TextblockFeedbackDropdownComponent } from './dropdown/textblock-feedback-dropdown.component';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-text-block-feedback-editor',
     templateUrl: './text-block-feedback-editor.component.html',
     styleUrls: ['./text-block-feedback-editor.component.scss'],
-    imports: [UnifiedFeedbackComponent, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, TextblockFeedbackDropdownComponent, FaIconComponent],
+    imports: [UnifiedFeedbackComponent, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, TextblockFeedbackDropdownComponent, FaIconComponent, TranslateDirective],
 })
 export class TextBlockFeedbackEditorComponent {
     private route = inject(ActivatedRoute);

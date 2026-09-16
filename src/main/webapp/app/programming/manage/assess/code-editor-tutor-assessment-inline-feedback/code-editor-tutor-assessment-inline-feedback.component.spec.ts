@@ -123,7 +123,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(comp.currentFeedback().text).toBe(`File ${fileName} at line ${codeLine + 1}`);
     });
 
-    it('should keep the suggestion prefix in the title when an SGI is dropped on a feedback suggestion', () => {
+    it('should keep the suggestion identity but mark it adapted when an SGI is dropped on an accepted suggestion', () => {
         const suggestionText = `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check`;
         fixture.componentRef.setInput('feedback', {
             type: FeedbackType.MANUAL,
@@ -140,8 +140,9 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
 
         expect(comp.currentFeedback().gradingInstruction).toEqual(instruction);
         expect(comp.currentFeedback().reference).toBe(`file:${fileName}_line:${codeLine}`);
-        // The auto-generated title must not overwrite the suggestion identity.
-        expect(comp.currentFeedback().text).toBe(suggestionText);
+        // The auto-generated title must not overwrite the suggestion identity, but dropping an SGI is an edit like
+        // any other, so the accepted suggestion transitions to adapted.
+        expect(comp.currentFeedback().text).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`);
     });
 
     it('should count feedback with one credit as positive', () => {
