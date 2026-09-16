@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
 /**
  * Service that parses a zip file uploaded by an instructor and stores manual assessments for the participants of a programming exercise at once.
@@ -500,7 +501,7 @@ public class AssessmentUploadService {
             final StudentParticipation participation = Optional.ofNullable(participationsById.get(row.participationId()))
                     .orElseThrow(() -> new IllegalStateException("Validated participation %d is no longer available".formatted(row.participationId())));
             final Submission submission = Optional.ofNullable(latestSubmissionsByParticipationId.get(row.participationId()))
-                    .orElseGet(() -> initializeSubmittedExternalSubmission(participation, exercise));
+                    .orElseGet(() -> initializeSubmittedExternalSubmission(participation));
             final Result manualResult = buildManualResult(exercise, submission, row);
             submission.addResult(manualResult);
             newResults.add(manualResult);
@@ -538,17 +539,21 @@ public class AssessmentUploadService {
      * submitted, dated submission. A submission left unsubmitted and undated is omitted from finished-assessment queries and result views that require
      * {@code submission.submitted = TRUE}, which would hide the imported assessment for participants who never pushed a submission.
      * <p>
-     * <b>Preconditions:</b> {@code participation} has no submission yet and {@code exercise} is the persisted programming exercise it belongs to.
+     * <b>Preconditions:</b> {@code participation} has no submission yet and is the persisted participation of the programming exercise being imported into.
      * <p>
      * <b>Postcondition:</b> a persisted, submitted external submission connected to {@code participation} is returned.
      *
      * @param participation the participation without a prior submission
-     * @param exercise      the programming exercise the submission belongs to
      * @return the persisted, submitted external submission
      */
-    private Submission initializeSubmittedExternalSubmission(final StudentParticipation participation, final ProgrammingExercise exercise) {
-        assert participation != null && exercise != null : "participation and exercise must not be null";
-        final Submission submission = submissionRepository.initializeSubmission(participation, exercise, SubmissionType.EXTERNAL);
+    private Submission initializeSubmittedExternalSubmission(final StudentParticipation participation) {
+        assert participation != null : "participation must not be null";
+        // Built here rather than through SubmissionRepository.initializeSubmission, which also adds the submission to the participation's lazy submissions collection. That
+        // collection is not initialized on the participation this service reads, and no transaction spans the two calls that would let it load: touching it throws. It is pure
+        // in-memory bookkeeping anyway — the submission owns the association and nothing below reads the collection back.
+        final Submission submission = new ProgrammingSubmission();
+        submission.setType(SubmissionType.EXTERNAL);
+        submission.setParticipation(participation);
         submission.setSubmitted(true);
         submission.setSubmissionDate(ZonedDateTime.now());
         return submissionRepository.save(submission);
