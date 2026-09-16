@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.dto.UserNameDTO;
+import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -394,7 +394,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         TextParticipationDTO response = request.get("/api/text/text-editor/" + participation.getId(), HttpStatus.OK, TextParticipationDTO.class);
 
         assertThat(response.team()).as("team is exposed on the participation for a team text exercise").isNotNull();
-        assertThat(response.team().students()).as("team members carry their login so the client can verify ownership").extracting(UserNameDTO::login)
+        assertThat(response.team().students()).as("team members carry their login so the client can verify ownership").extracting(UserPublicInfoDTO::getLogin)
                 .contains(TEST_PREFIX + "student1");
     }
 

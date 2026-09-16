@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.dto.UserNameDTO;
+import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -819,7 +819,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         assertThat(receivedSubmission.participation().team()).as("team is present").isNotNull();
         assertThat(receivedSubmission.participation().team().students()).as("team members are present").isNotNull();
-        assertThat(receivedSubmission.participation().team().students()).extracting(UserNameDTO::login).contains(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+        assertThat(receivedSubmission.participation().team().students()).extracting(UserPublicInfoDTO::getLogin).contains(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
     }
 
     @Test
@@ -1261,7 +1261,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         assertThat(response.participation()).as("participation is present").isNotNull();
         assertThat(response.participation().team()).as("team is present").isNotNull();
         assertThat(response.participation().team().students()).as("team members are present").isNotNull();
-        assertThat(response.participation().team().students()).extracting(UserNameDTO::login).containsExactlyInAnyOrder(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+        assertThat(response.participation().team().students()).extracting(UserPublicInfoDTO::getLogin).containsExactlyInAnyOrder(TEST_PREFIX + "student1",
+                TEST_PREFIX + "student2");
     }
 
     private ModelingSubmissionResponseDTO performInitialModelSubmission(Long exerciseId, ModelingSubmission submission) throws Exception {
