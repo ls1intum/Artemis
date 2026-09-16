@@ -41,7 +41,18 @@ describe('PresentationAssessmentManagementComponent', () => {
         description: 'Final project presentation',
         maxPoints: 20,
         courseId,
-        instances: [{ id: 11, presentationDate, resultPoints: 18, studentLogins: ['student1', 'student2'] }],
+        instances: [
+            {
+                id: 11,
+                presentationDate,
+                resultPoints: 18,
+                studentLogins: ['student1', 'student2'],
+                students: [
+                    { login: 'student1', name: 'Student One' },
+                    { login: 'student2', name: 'Student Two' },
+                ],
+            },
+        ],
     };
 
     beforeEach(async () => {
@@ -107,6 +118,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(presentationAssessmentService.findAllByCourseId).toHaveBeenCalledWith(courseId);
         expect(component.presentationAssessments()).toEqual([presentationAssessment]);
         expect(component.courseStudents()).toHaveLength(2);
+        expect(presentationAssessmentService.findCourseStudents).not.toHaveBeenCalled();
     });
 
     it('should expose the linked exercise to the student perspective switch while its presentation is selected', () => {

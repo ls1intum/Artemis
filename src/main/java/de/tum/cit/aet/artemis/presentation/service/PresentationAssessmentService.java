@@ -204,16 +204,16 @@ public class PresentationAssessmentService {
     }
 
     private void applyInstanceDto(Course course, PresentationAssessment assessment, PresentationAssessmentInstance instance, PresentationAssessmentInstanceDTO dto) {
-        rejectGradedMultiStudentAssignment(instance, dto);
+        rejectMultiStudentAssignment(instance, dto);
         applyInstanceData(assessment, instance, dto);
         instance.setStudents(resolveAssignedCourseStudents(course, dto.studentLogins()));
     }
 
-    private void rejectGradedMultiStudentAssignment(PresentationAssessmentInstance instance, PresentationAssessmentInstanceDTO dto) {
+    private void rejectMultiStudentAssignment(PresentationAssessmentInstance instance, PresentationAssessmentInstanceDTO dto) {
         long assignedStudentCount = dto.studentLogins().stream().map(login -> login == null ? "" : login.trim()).distinct().count();
-        if (dto.resultPoints() != null && instance.getStudents().size() <= 1 && assignedStudentCount > 1) {
-            throw new BadRequestAlertException("A graded presentation instance must belong to exactly one student", PresentationAssessmentInstance.ENTITY_NAME,
-                    "gradedInstanceHasMultipleStudents");
+        if (instance.getStudents().size() <= 1 && assignedStudentCount != 1) {
+            throw new BadRequestAlertException("An individual presentation instance must belong to exactly one student", PresentationAssessmentInstance.ENTITY_NAME,
+                    "individualInstanceHasInvalidStudentCount");
         }
     }
 

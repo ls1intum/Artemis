@@ -40,7 +40,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { CollapseState, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { TranslateService } from '@ngx-translate/core';
-import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import {
@@ -122,7 +122,11 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     readonly isSaving = signal(false);
     readonly isLoadingAssignedStudents = signal(false);
     readonly exercises = signal<Exercise[]>([]);
-    readonly courseStudents = signal<User[]>([]);
+    readonly courseStudents = computed(() =>
+        this.presentationAssessments().flatMap((assessment) =>
+            (assessment.instances ?? []).flatMap((instance) => (instance.students ?? []).map((student) => hydrate(new User(), student))),
+        ),
+    );
     readonly viewMode = signal<PresentationViewMode>('students');
     readonly selectedPresentationId = signal<number | undefined>(undefined);
     readonly studentSearchTerm = signal('');
@@ -232,10 +236,6 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         this.loadAll();
         this.courseManagementService.findWithExercises(this.courseId()).subscribe({
             next: (res: HttpResponse<Course>) => this.exercises.set(res.body?.exercises ?? []),
-            error: (res: HttpErrorResponse) => onError(this.alertService, res),
-        });
-        this.presentationAssessmentService.findCourseStudents(this.courseId()).subscribe({
-            next: (res: HttpResponse<User[]>) => this.courseStudents.set(res.body ?? []),
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
     }

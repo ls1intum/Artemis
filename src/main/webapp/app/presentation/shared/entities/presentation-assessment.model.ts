@@ -1,4 +1,5 @@
 import dayjs from 'dayjs/esm';
+import { User } from 'app/account/user/user.model';
 
 export interface PresentationAssessment {
     id?: number;
@@ -16,6 +17,7 @@ export interface PresentationAssessmentInstance {
     presentationDate?: dayjs.Dayjs;
     resultPoints?: number | null;
     studentLogins?: string[];
+    students?: Pick<User, 'login' | 'name' | 'firstName' | 'lastName' | 'email' | 'imageUrl'>[];
     language?: string;
     mode?: PresentationAssessmentMode;
     location?: string;
