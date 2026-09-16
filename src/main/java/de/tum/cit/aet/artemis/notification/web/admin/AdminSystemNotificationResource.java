@@ -25,7 +25,6 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.notification.config.NotificationLegacyRestPaths;
 import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
 import de.tum.cit.aet.artemis.notification.dto.SystemNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.SystemNotificationUpdateDTO;
@@ -40,10 +39,7 @@ import de.tum.cit.aet.artemis.notification.service.SystemNotificationService;
 @Lazy
 @FeatureUsage("system-notifications/administration")
 @RestController
-// The legacy "api/communication/" prefix is kept for backwards compatibility with deployed clients and will be removed
-// once those clients have migrated. New clients should use the "api/notification/" prefix.
-@SuppressWarnings("deprecation")
-@RequestMapping({ "api/notification/admin/", NotificationLegacyRestPaths.COMMUNICATION_PREFIX + "admin/" })
+@RequestMapping("api/notification/admin/")
 public class AdminSystemNotificationResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminSystemNotificationResource.class);
