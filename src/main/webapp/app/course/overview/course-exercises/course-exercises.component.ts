@@ -23,6 +23,9 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
 import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
 import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { faCode } from '@fortawesome/free-solid-svg-icons';
+import { TumUiEmptyStateComponent } from '@tumaet/ui-angular';
 
 /**
  * Minimal contract for exercise-details route components activated in the inner outlet.
@@ -70,7 +73,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     selector: 'jhi-course-exercises',
     templateUrl: './course-exercises.component.html',
     styleUrls: ['../course-overview/course-overview.scss'],
-    imports: [SidebarComponent, CourseSidebarToggleButtonComponent, NgStyle, RouterOutlet, TranslateDirective],
+    imports: [SidebarComponent, CourseSidebarToggleButtonComponent, NgStyle, RouterOutlet, TranslateDirective, ArtemisTranslatePipe, TumUiEmptyStateComponent],
 })
 export class CourseExercisesComponent implements SidebarView {
     private courseStorageService = inject(CourseStorageService);
@@ -118,6 +121,7 @@ export class CourseExercisesComponent implements SidebarView {
 
     protected readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
+    protected readonly faCode = faCode;
 
     constructor() {
         // Selecting the exercises tab while already on it acts as a refresh
