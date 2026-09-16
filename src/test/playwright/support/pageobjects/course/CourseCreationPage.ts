@@ -191,10 +191,15 @@ export class CourseCreationPage {
 
     /**
      * Submits the created exam.
+     *
+     * Scopes `waitForResponse` to the create method (POST) — the generic `COURSE_ADMIN_BASE` glob
+     * also matches concurrent GETs (refresh, stats, dashboards) that the page issues right before
+     * the form save, and racing against those returns a course object without a title.
+     *
      * @returns the response if a test needs it
      */
     async submit() {
-        const responsePromise = this.page.waitForResponse(COURSE_ADMIN_BASE);
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(COURSE_ADMIN_BASE) && resp.request().method() === 'POST');
         await this.page.click('#save-entity');
         const response = await responsePromise;
         return await readResponseJson(response);
