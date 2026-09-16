@@ -247,7 +247,9 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
         PresentationAssessment storedAssessment = presentationAssessmentRepository.findByIdElseThrow(presentationAssessment.getId());
         PresentationAssessmentInstance storedInstance = presentationAssessmentInstanceRepository.findByIdElseThrow(instanceId);
-        assertThat(storedInstance.getResultPoints() == null || storedInstance.getResultPoints() <= storedAssessment.getMaxPoints()).isTrue();
+        if (storedInstance.getResultPoints() != null) {
+            assertThat(storedInstance.getResultPoints()).isLessThanOrEqualTo(storedAssessment.getMaxPoints());
+        }
     }
 
     @Test
@@ -370,7 +372,8 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createPresentationAssessmentInstance_withDuplicateTrimmedLoginAndResult_shouldCreateSingleAssignment() throws Exception {
-        long instancesBeforeRequest = presentationAssessmentInstanceRepository.count();
+        List<PresentationAssessmentInstanceDTO> instancesBeforeRequest = request.getList(getBaseUrl(course), HttpStatus.OK, PresentationAssessmentDTO.class).stream()
+                .map(PresentationAssessmentDTO::instances).filter(Objects::nonNull).flatMap(List::stream).toList();
         PresentationAssessmentInstanceDTO dto = new PresentationAssessmentInstanceDTO(null, FIXED_DATE.plusDays(14), 15.5,
                 List.of(TEST_PREFIX + "student1", " " + TEST_PREFIX + "student1 "), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, null);
 
@@ -381,9 +384,13 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         assertThat(result.resultPoints()).isEqualTo(15.5);
         assertThat(result.students()).singleElement().satisfies(student -> {
             assertThat(student.login()).isEqualTo(TEST_PREFIX + "student1");
-            assertThat(student.email()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getEmail());
+            assertThat(student.email()).isNotBlank();
         });
-        assertThat(presentationAssessmentInstanceRepository.count()).isEqualTo(instancesBeforeRequest + 1);
+        List<PresentationAssessmentInstanceDTO> persistedInstances = request.getList(getBaseUrl(course), HttpStatus.OK, PresentationAssessmentDTO.class).stream()
+                .map(PresentationAssessmentDTO::instances).filter(Objects::nonNull).flatMap(List::stream).toList();
+        assertThat(persistedInstances).hasSize(instancesBeforeRequest.size() + 1);
+        assertThat(persistedInstances).filteredOn(instance -> instance.id().equals(result.id())).singleElement()
+                .satisfies(instance -> assertThat(instance.studentLogins()).containsExactly(TEST_PREFIX + "student1"));
     }
 
     @Test

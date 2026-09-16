@@ -135,7 +135,6 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     readonly presentationTypeFilter = signal<PresentationTypeFilter>('all');
     readonly overviewPage = signal(0);
     readonly overviewPageSize = signal(25);
-    readonly expandedInstanceIds = signal<number[]>([]);
     readonly expandedStudentRows = signal<string[]>([]);
     readonly presentationDialogVisible = signal(false);
     readonly dialogPresentationAssessment = signal<PresentationAssessment | undefined>(undefined);
@@ -305,17 +304,6 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     updateOverviewPageSize(pageSize: number): void {
         this.overviewPageSize.set(pageSize);
         this.overviewPage.set(0);
-    }
-
-    toggleInstanceDetails(instance: PresentationAssessmentInstance): void {
-        if (!instance.id) {
-            return;
-        }
-        this.expandedInstanceIds.update((ids) => (ids.includes(instance.id!) ? ids.filter((id) => id !== instance.id) : [...ids, instance.id!]));
-    }
-
-    isInstanceExpanded(instance: PresentationAssessmentInstance): boolean {
-        return !!instance.id && this.expandedInstanceIds().includes(instance.id);
     }
 
     toggleStudentRowDetails(row: PresentationStudentRow | SelectedPresentationStudentRow): void {

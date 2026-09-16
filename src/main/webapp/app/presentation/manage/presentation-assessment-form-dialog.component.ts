@@ -99,31 +99,31 @@ export class PresentationAssessmentFormDialogComponent {
         effect(() => (this.isSaving() ? this.editForm.disable({ emitEvent: false }) : this.editForm.enable({ emitEvent: false })));
     }
 
-    filterExercises(event: TumUiAutoCompleteSearchEvent): void {
+    readonly filterExercises = (event: TumUiAutoCompleteSearchEvent): void => {
         const query = event.query.trim().toLocaleLowerCase();
         this.filteredExercises.set(query ? this.exercises().filter((exercise) => exercise.title?.toLocaleLowerCase().includes(query)) : this.exercises());
-    }
+    };
 
-    save(): void {
+    readonly save = (): void => {
         if (this.isSaving() || this.editForm.invalid) {
             this.editForm.markAllAsTouched();
             return;
         }
         this.saved.emit({ presentationAssessment: this.createFromForm() });
-    }
+    };
 
-    cancel(): void {
+    readonly cancel = (): void => {
         this.cancelled.emit();
-    }
+    };
 
-    requestDelete(): void {
+    readonly requestDelete = (): void => {
         const presentationAssessment = this.presentationAssessment();
         if (presentationAssessment?.id) {
             this.deleteRequested.emit(presentationAssessment);
         }
-    }
+    };
 
-    private createFromForm(): PresentationAssessment {
+    private readonly createFromForm = (): PresentationAssessment => {
         const formValue = this.editForm.getRawValue();
         return {
             id: this.presentationAssessment()?.id,
@@ -133,5 +133,5 @@ export class PresentationAssessmentFormDialogComponent {
             courseId: this.courseId(),
             exerciseId: formValue.exercise?.id,
         };
-    }
+    };
 }
