@@ -124,15 +124,9 @@ public interface IrisSessionRepository extends ArtemisJpaRepository<IrisSession,
     void updateLatestSuggestions(@Param("sessionId") long sessionId, @Param("latestSuggestions") String latestSuggestions);
 
     /**
-     * The chat session's current context, as a projection. Read right after {@link #findByIdWithWriteLock} by the
-     * writers that decide on it: the lock does not refresh an instance the persistence context already manages, so a
-     * writer reading the mode off that instance can decide on state from before the lock, while this query returns
-     * values built from its own result set. See {@link IrisSessionContextDAO}.
-     *
-     * <p>
-     * A locking read, and re-entrant for the caller that already holds the row: on MySQL a plain read would be
-     * answered from the snapshot the transaction opened, which for a caller that had read the session before locking
-     * it is exactly the state the lock was taken to get past.
+     * The chat session's current context, read right after {@link #findByIdWithWriteLock} by the writers that decide
+     * on it. A projection rather than the locked instance, because the lock does not refresh one the persistence
+     * context already manages; locking, because a plain read is answered from the transaction's snapshot on MySQL.
      *
      * @param sessionId the session to read
      * @return the context, or empty when the session does not exist or is not a chat session

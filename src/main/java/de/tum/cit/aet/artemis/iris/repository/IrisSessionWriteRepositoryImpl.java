@@ -29,11 +29,9 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
  * and to keep the transaction interceptor in the call path.
  *
  * <p>
- * Nothing here merges the session aggregate. Every write is either a row insert or a scalar update, so an
- * {@code IrisSession} that the persistence context holds with an already-loaded message list is never written back,
- * and {@code orphanRemoval} can never delete a row that list does not know about. What still needs the session write
- * lock is the ordering: {@code iris_message_order} is allocated as "one past the current maximum", and two appends
- * reading that maximum at the same time would claim the same index.
+ * Nothing here merges the session aggregate, so a message list the persistence context holds in a stale state is
+ * never written back and {@code orphanRemoval} cannot delete a row it does not know about. The session write lock
+ * remains, because {@code iris_message_order} is allocated as one past the current highest.
  */
 public class IrisSessionWriteRepositoryImpl implements IrisSessionWriteRepository {
 
@@ -62,9 +60,7 @@ public class IrisSessionWriteRepositoryImpl implements IrisSessionWriteRepositor
         sessions.findByIdWithWriteLockElseThrow(sessionId);
         // Flush first, so the read below sees what the caller has pending.
         sessions.flush();
-        // Everything describing the transition comes from this projection, not from the caller's copy and not from the
-        // locked instance: the lock does not refresh an entity the persistence context already manages, while a
-        // projection carries what the locking read returned.
+        // The transition is described by what the lock found, never by the caller's copy.
         var context = sessions.findContextById(sessionId)
                 .orElseThrow(() -> new IllegalStateException("Context can only be switched on a chat session, but session " + sessionId + " is not one"));
         if (context.chatMode() == newMode && context.entityId() == newEntityId) {
@@ -139,8 +135,8 @@ public class IrisSessionWriteRepositoryImpl implements IrisSessionWriteRepositor
     private IrisMessage appendInCurrentTransaction(long sessionId, IrisMessage message, IrisMessageSender sender) {
         var sessions = irisSessionRepository.getObject();
         IrisSession locked = sessions.findByIdWithWriteLockElseThrow(sessionId);
-        // Flush before reading the highest index, so a row the caller has inserted but not written is part of it.
-        // Hibernate's auto-flush does not cover the native query below, which names a table rather than an entity.
+        // Hibernate does not auto-flush for the native query below, which names a table rather than an entity, so a
+        // row the caller inserted would not count towards the highest index.
         sessions.flush();
         int listIndex = irisMessageRepository.findHighestListIndexForUpdate(sessionId).map(highest -> highest + 1).orElse(0);
 
@@ -149,14 +145,12 @@ public class IrisSessionWriteRepositoryImpl implements IrisSessionWriteRepositor
         message.setSession(locked);
         message.getContent().forEach(content -> content.setMessage(message));
 
-        // Through the message side rather than through session.getMessages(): appending to that collection means
-        // merging the whole aggregate back, and a list the persistence context loaded before a concurrent commit would
-        // take a row with it. saveAndFlush, because the row has to exist before the index update names its id.
+        // Through the message side rather than through session.getMessages(), which would merge the whole aggregate
+        // back. saveAndFlush, because the row has to exist before the index update names its id.
         IrisMessage saved = irisMessageRepository.saveAndFlush(message);
         int indexed = irisMessageRepository.setListIndex(saved.getId(), listIndex);
         if (indexed != 1) {
-            // Leaving the column null would make the next read of the list fail on the missing index, so the whole
-            // append has to go back.
+            // A null index fails the next read of the list, so the whole append goes back.
             throw new IllegalStateException("Appended message " + saved.getId() + " of session " + sessionId + " did not receive a list index");
         }
         return saved;

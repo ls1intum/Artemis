@@ -383,8 +383,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         outer.execute(status -> {
             // Pre-load the session WITH its messages inside the outer transaction: the shape revealAmbient produces,
             // where the session is resolved before the append. From here the persistence context manages a collection
-            // that no later query re-reads, so an append going through it would write a list index the committed rows
-            // already use.
+            // that no later query re-reads.
             var managed = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
             assertThat(managed.getMessages()).isEmpty();
 
@@ -404,7 +403,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             }
 
             // Append through the stale managed instance. An append that merged the aggregate would write back a
-            // collection that never saw the concurrent row, and orphanRemoval would delete it again.
+            // collection that never saw the concurrent row, and orphanRemoval would delete it.
             irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(managed), managed, IrisMessageSender.LLM);
             return null;
         });
@@ -417,9 +416,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void appendRollsBackTheRowAndItsListIndexTogether() {
-        // The append inserts the row and writes its list index in two statements. They only add up to one list
-        // element because they share a transaction, so a caller's rollback has to take both, not leave a row behind
-        // whose index nothing set.
+        // The append inserts the row and writes its list index in two statements, so a caller's rollback has to take
+        // both rather than leave a row behind whose index nothing set.
         IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
         var outer = new TransactionTemplate(transactionManager);
 
@@ -431,11 +429,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getMessages()).as("the rolled back append must leave no row behind").isEmpty();
     }
 
-    /**
-     * Asserts the session's rows occupy exactly the indices {@code 0..expectedCount - 1}. Counting messages is not
-     * enough: two appends that allocated the same index leave a duplicate that Hibernate resolves by dropping one
-     * slot, which a size assertion on a list of the same length would not notice.
-     */
+    /** Counting messages is not enough: two appends on the same index leave a list of the same length. */
     private void assertListIndicesAreContiguous(long sessionId, int expectedCount) {
         var indices = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId).getMessages().stream().map(message -> irisMessageRepository.findListIndex(message.getId()))
                 .flatMap(Optional::stream).toList();

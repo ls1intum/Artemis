@@ -40,11 +40,8 @@ public class IrisMessageService {
             throw new BadRequestException("Message must have at least one content element");
         }
 
-        // The write itself is a repository operation: it locks the session row, allocates the next list index under
-        // that lock and inserts the row, in ONE transaction. See IrisSessionWriteRepository#appendMessage for why.
-        // The caller's own session instance is deliberately left alone: adding the message to a list it loaded earlier
-        // would put it at a position the committed rows already use, and the next flush of that list would write the
-        // duplicate index out.
+        // The caller's own session instance is deliberately left alone: adding the message to a list it loaded
+        // earlier would give it a list index the committed rows already use.
         return irisSessionRepository.appendMessage(session.getId(), message, sender);
     }
 }

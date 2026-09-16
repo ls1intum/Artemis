@@ -17,11 +17,10 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
  *
  * <p>
  * Every method here is only correct as a unit: {@code iris_message_order} is allocated as one past the highest index
- * a session's rows currently hold, so reading that maximum, inserting the row and writing its index have to happen
- * under {@link IrisSessionRepository#findByIdWithWriteLock}, or two writers claim the same position. None of them goes
- * through the collection that owns the column - an append that merged the session aggregate would write back whatever
- * message list the persistence context happens to hold, and {@code orphanRemoval} would delete the rows missing from
- * it.
+ * a session's rows hold, so reading that index, inserting the row and writing its own have to share
+ * {@link IrisSessionRepository#findByIdWithWriteLock}, or two writers claim the same position. None of them goes
+ * through the collection that owns the column, which would merge the session aggregate and let {@code orphanRemoval}
+ * delete the rows the merged list never saw.
  */
 @Lazy
 @Repository
@@ -34,8 +33,7 @@ public interface IrisSessionWriteRepository {
      * @param sessionId the session to append to
      * @param message   the message to append; its sender, timestamp, session and content back-references are set here
      * @param sender    the sender to stamp on the message
-     * @return the saved message. Deliberately not the session: the caller's own instance is left untouched, because
-     *         appending to a message list it loaded earlier would write a stale list index back on the next flush
+     * @return the saved message, deliberately not the session: the caller's own instance is left untouched
      */
     @Transactional // ok: the lock, the index allocation and the insert are only correct as one unit
     IrisMessage appendMessage(long sessionId, IrisMessage message, IrisMessageSender sender);
