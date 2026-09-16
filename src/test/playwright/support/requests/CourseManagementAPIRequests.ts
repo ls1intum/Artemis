@@ -2,8 +2,7 @@ import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
-import { toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
-import { courseFromManagementDTO } from 'app/course/shared/entities/course-management-response.dto';
+import type { CourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
 import type { CourseManagementDTO } from 'app/course/shared/entities/course-management-response.dto';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { asModelDate, generateUUID, titleLowercase } from '../utils';
@@ -188,7 +187,7 @@ export class CourseManagementAPIRequests {
                 course: {
                     name: 'course',
                     mimeType: 'application/json',
-                    buffer: Buffer.from(JSON.stringify(toCourseUpdateDTO(courseFromManagementDTO(courseData)))),
+                    buffer: Buffer.from(JSON.stringify(courseUpdateDTOFromManagementDTO(courseData))),
                 },
             },
         });
@@ -213,7 +212,7 @@ export class CourseManagementAPIRequests {
                 course: {
                     name: 'course',
                     mimeType: 'application/json',
-                    buffer: Buffer.from(JSON.stringify(toCourseUpdateDTO(courseFromManagementDTO(courseData)))),
+                    buffer: Buffer.from(JSON.stringify(courseUpdateDTOFromManagementDTO(courseData))),
                 },
             },
         });
@@ -537,4 +536,48 @@ export class CourseManagementAPIRequests {
             throw new Error(`Failed to enable learning paths: ${response.status()} ${response.statusText()} - ${errorBody}`);
         }
     }
+}
+
+// Playwright runs this file under Node, which cannot resolve dayjs/esm; toCourseUpdateDTO pulls it in through date.utils, so the mapping stays local.
+function courseUpdateDTOFromManagementDTO(course: CourseManagementDTO): CourseUpdateDTO {
+    return {
+        id: course.id,
+        title: course.title,
+        shortName: course.shortName,
+        description: course.description,
+        semester: course.semester,
+        startDate: course.startDate,
+        endDate: course.endDate,
+        enrollmentStartDate: course.enrollmentStartDate,
+        enrollmentEndDate: course.enrollmentEndDate,
+        unenrollmentEndDate: course.unenrollmentEndDate,
+        testCourse: course.testCourse,
+        onlineCourse: course.onlineCourse,
+        language: course.language,
+        defaultProgrammingLanguage: course.defaultProgrammingLanguage,
+        maxComplaints: course.maxComplaints,
+        maxTeamComplaints: course.maxTeamComplaints,
+        maxComplaintTimeDays: course.maxComplaintTimeDays,
+        maxRequestMoreFeedbackTimeDays: course.maxRequestMoreFeedbackTimeDays,
+        maxComplaintTextLimit: course.maxComplaintTextLimit,
+        maxComplaintResponseTextLimit: course.maxComplaintResponseTextLimit,
+        color: course.color,
+        courseIcon: course.courseIcon,
+        enrollmentEnabled: course.enrollmentEnabled,
+        enrollmentConfirmationMessage: course.enrollmentConfirmationMessage,
+        unenrollmentEnabled: course.unenrollmentEnabled,
+        courseInformationSharingMessagingCodeOfConduct: course.courseInformationSharingMessagingCodeOfConduct,
+        learningPathsEnabled: course.learningPathsEnabled,
+        presentationScore: course.presentationScore,
+        maxPoints: course.maxPoints,
+        accuracyOfScores: course.accuracyOfScores,
+        timeZone: course.timeZone,
+        courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
+        onboardingDone: course.onboardingDone,
+        gradeRelevant: course.courseConfiguration?.gradeRelevant ?? true,
+        dataRetentionHold: course.courseConfiguration?.dataRetentionHold ?? false,
+        autoOrchestratorEnabled: course.courseConfiguration?.autoOrchestratorEnabled ?? false,
+        debounceWindowSecondsOverride: course.courseConfiguration?.debounceWindowSecondsOverride,
+        maxDailyOrchestrationOverride: course.courseConfiguration?.maxDailyOrchestrationOverride,
+    };
 }
