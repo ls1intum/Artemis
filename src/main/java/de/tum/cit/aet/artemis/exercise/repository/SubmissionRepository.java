@@ -619,12 +619,14 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
      * Participations without a submission are intentionally absent.
      * <p>
      * The assessment-upload storage path inspects {@code Submission.results} for every returned submission (to find the manual result it overwrites) and replaces that result's
-     * feedback; fetching both collections here keeps that a single query instead of two lazy loads per participation, so a batch import scales independently of its size.
+     * feedback; fetching both collections here keeps that a single query instead of two lazy loads per participation, so a batch import scales independently of its size. The
+     * participation is fetched for the same reason: it is an eager to-one that Hibernate would otherwise resolve with one select per returned submission, since no transaction
+     * spans this call and the one that already loaded the participations.
      * <p>
      * <b>Preconditions:</b> {@code exerciseId} identifies a persisted exercise and {@code participationIds} is non-{@code null}, non-empty, and contains persisted ids.
      * <p>
-     * <b>Postcondition:</b> at most one submission per requested participation is returned, it is that participation's latest submission, and its {@code results} and their
-     * {@code feedbacks} are initialized.
+     * <b>Postcondition:</b> at most one submission per requested participation is returned, it is that participation's latest submission, and its {@code participation},
+     * {@code results} and their {@code feedbacks} are initialized.
      *
      * @param exerciseId       the target exercise id
      * @param participationIds the participations being imported
@@ -633,10 +635,11 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
     @Query("""
             SELECT DISTINCT s
             FROM Submission s
+                LEFT JOIN FETCH s.participation p
                 LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH r.feedbacks
-            WHERE s.participation.exercise.id = :exerciseId
-                AND s.participation.id IN :participationIds
+            WHERE p.exercise.id = :exerciseId
+                AND p.id IN :participationIds
                 AND s.id = (
                     SELECT MAX(s2.id)
                     FROM Submission s2
