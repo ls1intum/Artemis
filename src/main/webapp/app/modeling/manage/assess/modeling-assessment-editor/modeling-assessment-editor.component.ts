@@ -350,7 +350,20 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             }
             // Feedback suggestions are automatically accepted: add them directly to the editable feedback list.
             if (this.result()) {
-                this.result()!.feedbacks = [...(this.result()?.feedbacks || []), ...suggestions];
+                // Referenced modeling suggestions are typed AUTOMATIC (unlike programming/text, which use MANUAL),
+                // so an assessment containing only already-persisted suggestions still satisfies the "automatic
+                // feedback only" reload gate above and fetches Athena again. Skip anything already present so a
+                // reload cannot append the same suggestion twice.
+                const existingFeedback = this.result()?.feedbacks ?? [];
+                const newSuggestions = suggestions.filter((suggestion) =>
+                    existingFeedback.every(
+                        (feedback) =>
+                            feedback.reference !== suggestion.reference ||
+                            Feedback.stripSuggestionPrefix(feedback.text ?? '') !== Feedback.stripSuggestionPrefix(suggestion.text ?? '') ||
+                            feedback.detailText !== suggestion.detailText,
+                    ),
+                );
+                this.result()!.feedbacks = [...existingFeedback, ...newSuggestions];
                 this.result.set(this.result());
             }
             this.handleFeedback(this.result()?.feedbacks);

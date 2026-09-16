@@ -114,12 +114,10 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         if (feedback.text) {
             feedback.text = Feedback.markAdaptedIfAcceptedSuggestion(feedback.text);
         }
-        if (!Feedback.isFeedbackSuggestion(feedback)) {
-            feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
+        if (!Feedback.isFeedbackSuggestion(feedback) && !feedback.text) {
+            feedback.text = this.derivedTitle();
         }
-        if (feedback.credits && feedback.credits > 0) {
-            feedback.positive = true;
-        }
+        feedback.positive = (feedback.credits ?? 0) > 0;
         this.onUpdateFeedback.emit(feedback);
     }
 

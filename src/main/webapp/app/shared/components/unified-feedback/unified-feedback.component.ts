@@ -127,6 +127,7 @@ export class UnifiedFeedbackComponent {
 
     private readonly detailTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('detailTextarea');
     private readonly titleTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('titleTextarea');
+    private readonly creditsInput = viewChild<ElementRef<HTMLInputElement>>('creditsInput');
     private readonly confirmIcon = viewChild(ConfirmIconComponent);
 
     private readonly feedbackTypeConfigs: Record<FeedbackType, FeedbackTypeConfig> = {
@@ -361,7 +362,15 @@ export class UnifiedFeedbackComponent {
     }
 
     onCreditsChange(value: number): void {
-        this.feedbackCredits.set(this.normalizedCredits(value));
+        const normalized = this.normalizedCredits(value);
+        this.feedbackCredits.set(normalized);
+        // [ngModel] is one-way here, and set() is a no-op under Object.is when normalization lands back on the
+        // value the signal already held (e.g. 1.6 snapping to an already-current 1.5), so the DOM would otherwise
+        // keep showing the un-normalized value the tutor typed while the stored/saved credits differ from it.
+        const input = this.creditsInput()?.nativeElement;
+        if (input) {
+            input.value = normalized === undefined ? '' : String(normalized);
+        }
         this.markAdaptedIfSuggestion();
     }
 

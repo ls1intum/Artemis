@@ -420,7 +420,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             }
             const allFeedback = [...this.referencedFeedback(), ...this.unreferencedFeedback()];
             const newSuggestions = feedbackSuggestions.filter((suggestion) =>
-                allFeedback.every((feedback) => feedback.detailText !== suggestion.detailText || feedback.reference !== suggestion.reference),
+                allFeedback.every(
+                    (feedback) =>
+                        Feedback.stripSuggestionPrefix(feedback.text ?? '') !== Feedback.stripSuggestionPrefix(suggestion.text ?? '') ||
+                        feedback.detailText !== suggestion.detailText ||
+                        feedback.reference !== suggestion.reference,
+                ),
             );
             // Feedback suggestions are automatically accepted: add them directly to the editable feedback list.
             if (newSuggestions.length > 0) {
