@@ -960,6 +960,63 @@ describe('QuizParticipationComponent - practice mode', () => {
         expect(serviceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
     });
 
+    describe('practiceAttemptFinished', () => {
+        beforeEach(() => {
+            component.mode.set('practice');
+            vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
+        });
+
+        it('should not report a finished attempt while the working time is still running', () => {
+            component.remainingTimeSeconds.set(100);
+            component.syncSubmitState();
+
+            expect(component.practiceAttemptFinished()).toBe(false);
+        });
+
+        it('should report a finished attempt once the working time expired without any answer', () => {
+            component.remainingTimeSeconds.set(-1);
+            component.syncSubmitState();
+
+            // The empty attempt never counts as submitted, but it is over: the student may start another one.
+            expect(component.shouldTreatAsSubmittedForUi()).toBe(false);
+            expect(component.practiceAttemptFinished()).toBe(true);
+        });
+
+        it('should not report a finished attempt while the automatic submission is still in flight', () => {
+            component.remainingTimeSeconds.set(-1);
+            component.isSubmitting.set(true);
+            component.syncSubmitState();
+
+            expect(component.practiceAttemptFinished()).toBe(false);
+        });
+
+        it('should not report a finished practice attempt in live mode', () => {
+            component.mode.set('live');
+            component.remainingTimeSeconds.set(-1);
+            component.syncSubmitState();
+
+            expect(component.practiceAttemptFinished()).toBe(false);
+        });
+    });
+
+    it('should let the student start another attempt when the automatic submission of an expired empty attempt fails', () => {
+        vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
+        fixture.detectChanges();
+
+        // The working time ran out without a single answer, so the component submits automatically.
+        component.remainingTimeSeconds.set(-1);
+        component.submitExercise();
+
+        expect(component.practiceAttemptFinished()).toBe(false);
+
+        httpMock.expectOne({ method: 'POST' }).flush({}, { status: 500, statusText: 'Internal Server Error' });
+
+        // Submit stays disabled and the attempt is not submitted, so "Start Practice Mode" is the only way out.
+        expect(component.isSubmitDisabled()).toBe(true);
+        expect(component.shouldTreatAsSubmittedForUi()).toBe(false);
+        expect(component.practiceAttemptFinished()).toBe(true);
+    });
+
     it('should not let a late existing-result response overwrite a practice attempt started while it was loading', () => {
         const existingResultResponse = new Subject<HttpResponse<StudentParticipation>>();
         vi.spyOn(TestBed.inject(ParticipationService), 'getQuizParticipationResult').mockReturnValue(existingResultResponse);

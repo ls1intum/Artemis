@@ -167,6 +167,8 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
     readonly submitTitleKey = this._submitTitleKey.asReadonly();
     private readonly _shouldTreatAsSubmittedForUi = signal(false);
     readonly shouldTreatAsSubmittedForUi = this._shouldTreatAsSubmittedForUi.asReadonly();
+    private readonly _practiceAttemptFinished = signal(false);
+    readonly practiceAttemptFinished = this._practiceAttemptFinished.asReadonly();
 
     private readonly _liveHeaderInfo = signal<QuizLiveHeaderInfo | undefined>(undefined, { equal: quizLiveHeaderInfoEqual });
     readonly liveHeaderInfo = this._liveHeaderInfo.asReadonly();
@@ -1238,6 +1240,25 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
     }
 
     /**
+     * Indicates whether the practice attempt is over, so the student can start another one.
+     *
+     * This is wider than {@link shouldTreatAsSubmittedForUi}: an attempt whose working time expired without a single
+     * answer never counts as submitted, yet the Submit action is disabled from that moment on. Without a state of its
+     * own, such an attempt would leave the student with no action at all whenever the automatic submission does not
+     * land (for example when it fails and the error handler returns to exactly that state).
+     *
+     * @param submittedForUi the result of {@link computeShouldTreatAsSubmittedForUi} for this tick
+     * @returns `true` if the practice attempt has ended; `false` outside practice mode
+     */
+    private computePracticeAttemptFinished(submittedForUi: boolean): boolean {
+        if (this.mode() !== 'practice') {
+            return false;
+        }
+        // A submission still in flight keeps the attempt open: when it succeeds, the attempt ends with a result.
+        return submittedForUi || (this.remainingTimeSeconds() < 0 && !this.isSubmitting());
+    }
+
+    /**
      * Syncs the submit button state signals so that the exercise header actions
      * component can render the correct disabled state and label without relying
      * on a button inside this component.
@@ -1247,6 +1268,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
         const hasAnyAnswer = this.hasAnyAnswer();
         const submittedForUi = this.computeShouldTreatAsSubmittedForUi(hasAnyAnswer);
         this._shouldTreatAsSubmittedForUi.set(submittedForUi);
+        this._practiceAttemptFinished.set(this.computePracticeAttemptFinished(submittedForUi));
         const disabled = submittedForUi || this.isSubmitting() || this.waitingForQuizStart() || this.remainingTimeSeconds() < 0;
         this._isSubmitDisabled.set(disabled);
         this._submitTitleKey.set(submittedForUi ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit');
