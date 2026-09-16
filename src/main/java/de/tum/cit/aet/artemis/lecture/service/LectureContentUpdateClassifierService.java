@@ -5,11 +5,11 @@ import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -30,11 +30,11 @@ public class LectureContentUpdateClassifierService {
      * @param fileUpdateResult the attachment file update result, if an attachment update was attempted
      * @return all required Pyris update kinds, or an empty set if no update is required
      */
-    public Set<LectureContentUpdateKind> classifyAll(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after, AttachmentFileUpdateResult fileUpdateResult) {
+    public Set<LectureContentUpdateKind> classifyAll(@NonNull LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after,
+            AttachmentFileUpdateResult fileUpdateResult) {
         if (after == null) {
             return Set.of(LectureContentUpdateKind.DELETE);
         }
-        Objects.requireNonNull(before, "before");
         Map<LectureContentUpdateKind, Boolean> changes = new EnumMap<>(LectureContentUpdateKind.class);
         changes.put(LectureContentUpdateKind.CONTENT, isContentUpdate(before, after, fileUpdateResult));
         changes.put(LectureContentUpdateKind.VISIBILITY, isVisibilityUpdate(before, after));

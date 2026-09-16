@@ -312,7 +312,7 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
         await requestOk(page, 'put', `api/notification/courses/${course.id}/setting-preset`, { data: 2 });
         await requestOk(page, 'get', 'api/calendar/subscription-token');
         await requestOk(page, 'post', 'api/core/data-exports');
-        await requestOk(page, 'post', 'api/programming/ssh-settings/public-key', {
+        await requestOk(page, 'post', 'api/programming/ssh-settings/public-keys', {
             data: { label: 'Key', publicKey: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJmVQGKLYtBLBS1ZKMTCPeF2Nd9wJXJ1UkVOgHUYdNhU deletion@example.com' },
         });
         await requestOk(page, 'put', 'api/programming/ide-settings?programmingLanguage=JAVA', {
@@ -323,6 +323,9 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
                 title: `Requested ${generateUUID().slice(0, 6)}`,
                 shortName: `req${generateUUID().slice(0, 6).replace(/-/g, '')}`,
                 semester: 'WS26/27',
+                // The dates are mandatory and have to match the semester above, which runs October to March.
+                startDate: dayjs('2026-10-01').toISOString(),
+                endDate: dayjs('2027-03-31').toISOString(),
                 testCourse: true,
                 reason: 'For the deletion test',
             },

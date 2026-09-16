@@ -28,6 +28,7 @@ import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.ConcreteProxy;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -55,7 +56,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "S")
 @ConcreteProxy
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "submissionExerciseType")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "submissionExerciseType", visible = true)
 // Annotation necessary to distinguish between concrete implementations of Submission when deserializing from JSON
 // @formatter:off
 @JsonSubTypes({
@@ -225,6 +226,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     }
 
     @JsonProperty(value = "results", access = JsonProperty.Access.READ_ONLY)
+    @NonNull
     public Set<Result> getResults() {
         return results;
     }

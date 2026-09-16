@@ -79,7 +79,9 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
             provider.enableMockingOfRequests();
             provider.mockSaveCompetenciesAny();
         });
-        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime releaseDate = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime dueDate = releaseDate.plusHours(1);
+        ZonedDateTime assessmentDueDate = dueDate.plusHours(1);
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
         course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         course2 = courseUtilService.createEnrolledCourse(TEST_PREFIX);
@@ -91,8 +93,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         courseCompetency = createCourseCompetencyForCourse.apply(course);
         lecture = createLecture(course);
 
-        textExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, courseCompetency, false);
-        teamTextExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, courseCompetency, true);
+        textExercise = createTextExercise(releaseDate, dueDate, assessmentDueDate, courseCompetency, false);
+        teamTextExercise = createTextExercise(releaseDate, dueDate, assessmentDueDate, courseCompetency, true);
 
         creatingLectureUnitsOfLecture(courseCompetency);
     }
@@ -290,7 +292,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         CompetencyRelation relation = createRelation(courseCompetency, competency2, RelationType.EXTENDS);
         Prerequisite prerequisite = prerequisiteUtilService.createPrerequisite(course);
 
-        request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
         assertThat(courseCompetencyRepository.existsById(courseCompetency.getId())).isFalse();
         assertThat(courseCompetencyRepository.existsById(competency2.getId())).isFalse();

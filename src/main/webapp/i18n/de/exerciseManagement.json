@@ -6,10 +6,12 @@
             "programmingFeatureDisabled": "Programmieraufgaben sind derzeit deaktiviert.",
             "action": {
                 "import": "Importieren",
-                "export": "Exportieren"
+                "export": "Exportieren",
+                "createVariantWithAi": "Variante mit KI erstellen"
             },
             "error": {
-                "onlyIndividualQuiz": "Nur Quizze im Einzelmodus können einer Aufgabengruppe hinzugefügt werden."
+                "onlyIndividualQuiz": "Nur Quizze im Einzelmodus können einer Aufgabengruppe hinzugefügt werden.",
+                "automaticTestRunAfterAssessmentDueDate": "Die Zeitleiste der Variantengruppe kann für diese Programmieraufgabe nicht verwendet werden. LocalCI würde die automatischen Tests erst nach dem Ende der Bewertung ausführen. Verschiebe die Bewertungsfrist hinter den automatischen Testlauf und versuche es erneut."
             },
             "view": {
                 "list": "Liste",

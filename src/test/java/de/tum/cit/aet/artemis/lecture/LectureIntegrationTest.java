@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import java.net.URI;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
@@ -33,10 +32,10 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
-import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
@@ -225,6 +224,18 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         assertThat(channel.getName()).isEqualTo("lecture-loremipsum"); // note "i" is lower case as a channel name should not contain upper case letters
     }
 
+    @ParameterizedTest
+    @ValueSource(ints = { 0, -1 })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createLecture_nonStrictDateSequence_shouldReturnBadRequest(int endDateOffsetHours) throws Exception {
+        Course course = courseRepository.findByIdElseThrow(this.course1.getId());
+        ZonedDateTime startDate = ZonedDateTime.now();
+        LectureResource.SimpleLectureDTO lecture = new LectureResource.SimpleLectureDTO(null, "Invalid dates", null, startDate, startDate.plusHours(endDateOffsetHours), false,
+                null, LectureResource.SimpleLectureDTO.CourseDTO.from(course));
+
+        request.postWithResponseBody("/api/lecture/lectures", lecture, Lecture.class, HttpStatus.BAD_REQUEST);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createLecture_alreadyId_shouldReturnBadRequest() throws Exception {
@@ -238,9 +249,10 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     void updateLecture_correctRequestBody_shouldUpdateLecture() throws Exception {
         Lecture originalLecture = lectureRepository.findById(lecture1.getId()).orElseThrow();
         String editedChannelName = "edited-lecture-channel";
-        var updatedDate = ZonedDateTime.now().plusMonths(3);
+        var updatedStartDate = ZonedDateTime.now().plusMonths(3);
+        var updatedEndDate = updatedStartDate.plusHours(1);
         conversationUtilService.createCourseWideChannel(originalLecture.getCourse(), editedChannelName);
-        LectureResource.SimpleLectureDTO lectureDto = new LectureResource.SimpleLectureDTO(originalLecture.getId(), "Updated", "Updated", updatedDate, updatedDate, false,
+        LectureResource.SimpleLectureDTO lectureDto = new LectureResource.SimpleLectureDTO(originalLecture.getId(), "Updated", "Updated", updatedStartDate, updatedEndDate, false,
                 editedChannelName, LectureResource.SimpleLectureDTO.CourseDTO.from(originalLecture.getCourse()));
 
         // create channel with same name
@@ -254,8 +266,20 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         assertThat(channel.getName()).isEqualTo(editedChannelName);
         assertThat(updatedLecture.title()).isEqualTo("Updated");
         assertThat(updatedLecture.description()).isEqualTo("Updated");
-        assertThat(updatedLecture.startDate()).isEqualTo(updatedDate);
-        assertThat(updatedLecture.endDate()).isEqualTo(updatedDate);
+        assertThat(updatedLecture.startDate()).isEqualTo(updatedStartDate);
+        assertThat(updatedLecture.endDate()).isEqualTo(updatedEndDate);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 0, -1 })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateLecture_nonStrictDateSequence_shouldReturnBadRequest(int endDateOffsetHours) throws Exception {
+        Lecture originalLecture = lectureRepository.findByIdElseThrow(lecture1.getId());
+        ZonedDateTime startDate = ZonedDateTime.now().plusMonths(3);
+        LectureResource.SimpleLectureDTO lectureDto = new LectureResource.SimpleLectureDTO(originalLecture.getId(), "Invalid dates", null, startDate,
+                startDate.plusHours(endDateOffsetHours), false, null, LectureResource.SimpleLectureDTO.CourseDTO.from(originalLecture.getCourse()));
+
+        request.putWithResponseBody("/api/lecture/lectures", lectureDto, LectureResource.SimpleLectureDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -371,6 +395,10 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         LectureDetailsDTO.ExerciseUnitDTO exerciseUnitDTO = (LectureDetailsDTO.ExerciseUnitDTO) receivedLectureWithDetails.lectureUnits().stream()
                 .filter(unit -> unit instanceof LectureDetailsDTO.ExerciseUnitDTO).toList().getFirst();
         assertThat(exerciseUnitDTO.competencyLinks()).hasSize(1);
+        // the exercise is projected as on the course overview; the lecture page renders it with the same exercise row
+        assertThat(exerciseUnitDTO.exercise().id()).isEqualTo(textExercise.getId());
+        assertThat(exerciseUnitDTO.exercise().type()).isEqualTo(textExercise.getExerciseType());
+        assertThat(exerciseUnitDTO.lecture().id()).isEqualTo(lecture1.getId());
         LectureDetailsDTO.AttachmentUnitDTO attachmentUnitDTO = receivedLectureWithDetails.lectureUnits().stream()
                 .filter(unit -> unit instanceof LectureDetailsDTO.AttachmentUnitDTO).map(unit -> (LectureDetailsDTO.AttachmentUnitDTO) unit)
                 .filter(unit -> unit.id().equals(attachmentVideoUnit.getId())).findFirst().orElseThrow();
@@ -378,6 +406,22 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         assertThat(attachmentUnitDTO.attachment().displayPageNumbers()).containsExactly(75, 76, 77);
 
         testGetLecture(lecture1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureWithDetails_athenaFormativeFeedbackEnabled_shouldReportItEnabled() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(lecture1.getCourse().getId());
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
+
+        LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
+
+        // the discussion section reads this switch; the configuration is lazy, so an unfetched one would report false here
+        assertThat(receivedLectureWithDetails.course().athenaFormativeFeedbackEnabled()).isTrue();
     }
 
     @Test
@@ -627,11 +671,12 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportPutsEveryAttachmentUnderTheDirectoryOfItsUnit() throws Exception {
-        // An attachment video unit created for an attachment that used to hang off a lecture directly keeps that
-        // attachment's URI, so its file still lies under the lecture attachment directory. Importing must copy it into
-        // the directory of the new unit all the same: writing it under the lecture directory would name the new unit's
-        // id where a lecture id belongs, and the route that serves those files reads it as a lecture id, so the student
-        // download would look for the attachment under a lecture that does not have it.
+        // An attachment video unit created for an attachment that used to hang off a lecture directly still has its file
+        // under the lecture attachment directory. Nothing on the row says so any more, so Attachment.fileLocation finds
+        // it by looking. Importing must copy that file into the directory of the new unit all the same: writing it under
+        // the lecture directory would name the new unit's id where a lecture id belongs, and the route that serves those
+        // files reads it as a lecture id, so the student download would look for the attachment under a lecture that
+        // does not have it.
         AttachmentVideoUnit migratedUnit = new AttachmentVideoUnit();
         migratedUnit.setDescription("Lorem Ipsum");
         migratedUnit.setLecture(lecture1);
@@ -644,7 +689,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         migratedUnit.setName(migratedAttachment.getName());
         migratedUnit.setReleaseDate(migratedAttachment.getReleaseDate());
         migratedUnit = attachmentVideoUnitRepository.save(migratedUnit);
-        assertThat(migratedAttachment.getLink()).startsWith("attachments/lecture/" + lecture1.getId() + "/");
+        assertThat(migratedAttachment.fileLocation()).containsInstanceOf(FileSystemLocation.LectureAttachment.class);
+        assertThat(migratedAttachment.fileLocation().orElseThrow().path())
+                .isEqualTo(new FileSystemLocation.LectureAttachment(lecture1.getId(), migratedAttachment.getLink()).path()).exists();
         lecture1 = lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(migratedUnit));
 
         Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
@@ -659,12 +706,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         assertThatAttachmentLiesUnderItsOwnUnitDirectory(findImportedUnit(importedLecture, attachmentVideoUnit.getName()));
         AttachmentVideoUnit importedMigratedUnit = findImportedUnit(importedLecture, "Migrated lecture attachment");
         Attachment importedMigratedAttachment = assertThatAttachmentLiesUnderItsOwnUnitDirectory(importedMigratedUnit);
-        // The import is what finishes the move, so the copy no longer names the lecture attachment directory.
-        assertThat(importedMigratedAttachment.getLink()).doesNotStartWith("attachments/lecture/");
 
-        // The instructor download resolves either shape, so only the student download shows the difference.
         userUtilService.changeUser(TEST_PREFIX + "student1");
-        String filename = importedMigratedAttachment.getLink().substring(importedMigratedAttachment.getLink().lastIndexOf('/') + 1);
+        String filename = FileSystemLocation.filenameOf(importedMigratedAttachment.getLink());
         request.get("/api/core/files/attachments/attachment-video-units/" + importedMigratedUnit.getId() + "/student/" + filename, HttpStatus.OK, byte[].class);
     }
 
@@ -675,8 +719,10 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
 
     private Attachment assertThatAttachmentLiesUnderItsOwnUnitDirectory(AttachmentVideoUnit importedUnit) {
         Attachment importedAttachment = attachmentVideoUnitRepository.findByIdElseThrow(importedUnit.getId()).getAttachment();
-        assertThat(importedAttachment.getLink()).startsWith("attachments/attachment-unit/" + importedUnit.getId() + "/");
-        assertThat(FilePathConverter.fileSystemPathForExternalUri(URI.create(importedAttachment.getLink()), FilePathType.ATTACHMENT_UNIT)).exists();
+        assertThat(importedAttachment.getLink()).startsWith("attachments/attachment-video-units/" + importedUnit.getId() + "/");
+        assertThat(importedAttachment.fileLocation()).containsInstanceOf(FileSystemLocation.AttachmentVideoUnitFile.class);
+        assertThat(importedAttachment.fileLocation().orElseThrow().path())
+                .isEqualTo(new FileSystemLocation.AttachmentVideoUnitFile(importedUnit.getId(), importedAttachment.getLink()).path()).exists();
         return importedAttachment;
     }
 
@@ -690,6 +736,16 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         LectureSeriesCreateLectureDTO dto1 = new LectureSeriesCreateLectureDTO(titleLecture1, startLecture1, endLecture1);
 
         request.postWithoutResponseBody("/api/lecture/courses/-1/lectures", List.of(dto1), HttpStatus.FORBIDDEN);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 0, -1 })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createLectureSeries_nonStrictDateSequence_shouldReturnBadRequest(int endDateOffsetHours) throws Exception {
+        ZonedDateTime startDate = ZonedDateTime.now();
+        LectureSeriesCreateLectureDTO lecture = new LectureSeriesCreateLectureDTO("Invalid dates", startDate, startDate.plusHours(endDateOffsetHours));
+
+        request.postWithoutResponseBody("/api/lecture/courses/" + course1.getId() + "/lectures", List.of(lecture), HttpStatus.BAD_REQUEST);
     }
 
     @Test

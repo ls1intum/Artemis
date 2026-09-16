@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mockStatic;
 
 import java.nio.charset.StandardCharsets;
@@ -36,10 +35,11 @@ class LectureUnitContentFingerprintServiceTest {
         return unit;
     }
 
-    private AttachmentVideoUnit unitWithPdf(Path pdfPath) {
+    private AttachmentVideoUnit unitWithPdf(String filename) {
         AttachmentVideoUnit unit = new AttachmentVideoUnit();
+        unit.setId(42L);
         Attachment attachment = new Attachment();
-        attachment.setLink("/api/core/files/attachments/" + pdfPath.getFileName() + ".pdf");
+        attachment.setLink("/api/core/files/attachments/attachment-unit/42/" + filename);
         unit.setAttachment(attachment);
         return unit;
     }
@@ -64,12 +64,12 @@ class LectureUnitContentFingerprintServiceTest {
 
     @Test
     void fingerprintCoversThePdfBytes() throws Exception {
-        Path pdfPath = tempDir.resolve("slides.pdf");
+        AttachmentVideoUnit unit = unitWithPdf("slides.pdf");
+        Path pdfPath = tempDir.resolve("42").resolve("slides.pdf");
         FileUtils.writeStringToFile(pdfPath.toFile(), "original content", StandardCharsets.UTF_8);
-        AttachmentVideoUnit unit = unitWithPdf(pdfPath);
 
         try (MockedStatic<FilePathConverter> filePathConverter = mockStatic(FilePathConverter.class)) {
-            filePathConverter.when(() -> FilePathConverter.fileSystemPathForExternalUri(any(), any())).thenReturn(pdfPath);
+            filePathConverter.when(FilePathConverter::getAttachmentVideoUnitFileSystemPath).thenReturn(tempDir);
 
             String original = fingerprintService.computeFingerprint(unit);
             String unchanged = fingerprintService.computeFingerprint(unit);
@@ -82,10 +82,10 @@ class LectureUnitContentFingerprintServiceTest {
 
     @Test
     void unreadableAttachmentFileFailsInsteadOfFingerprintingWithoutIt() {
-        AttachmentVideoUnit unit = unitWithPdf(tempDir.resolve("missing.pdf"));
+        AttachmentVideoUnit unit = unitWithPdf("missing.pdf");
 
         try (MockedStatic<FilePathConverter> filePathConverter = mockStatic(FilePathConverter.class)) {
-            filePathConverter.when(() -> FilePathConverter.fileSystemPathForExternalUri(any(), any())).thenReturn(tempDir.resolve("missing.pdf"));
+            filePathConverter.when(FilePathConverter::getAttachmentVideoUnitFileSystemPath).thenReturn(tempDir);
 
             assertThatThrownBy(() -> fingerprintService.computeFingerprint(unit)).isInstanceOf(IllegalStateException.class);
         }

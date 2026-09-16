@@ -21,7 +21,7 @@ public record ExamStudentDTO(
         Long studentExamId, Integer workingTime, Boolean started, Boolean submitted, ZonedDateTime startedDate, ZonedDateTime submissionDate, Long numberOfExamSessions,
         String progress) {
 
-    /** Progress keys, matching the frontend ExamProgress type. */
+    /** Progress keys, matching the client ExamProgress type. */
     public static final String PROGRESS_EXAM_MISSING = "examMissing";
 
     public static final String PROGRESS_NOT_STARTED = "notStarted";

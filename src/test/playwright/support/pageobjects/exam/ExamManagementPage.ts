@@ -144,7 +144,7 @@ export class ExamManagementPage {
         // the row for a just-handed-in student can take >30s to surface in the first response
         // (the participation-state propagation lags behind the submit POST). Try up to four
         // reload attempts with progressively shorter per-attempt waits — totalling ~90s — so
-        // the test does not give up on a slow but eventually-correct backend state.
+        // the test does not give up on a slow but eventually-correct server state.
         let visible = await visibleWithin(30_000);
         for (let attempt = 0; !visible && attempt < 3; attempt++) {
             await this.page.reload();

@@ -469,13 +469,13 @@ class LectureContentProcessingSchedulerTest {
         }
 
         @Test
-        void shouldReleaseExpiredDispatchClaims() {
+        void shouldReleaseAbandonedDispatchClaims() {
             when(processingStateRepository.findStuckStates(any(), any(ZonedDateTime.class), any(ZonedDateTime.class))).thenReturn(List.of());
-            when(processingStateRepository.releaseExpiredDispatchClaims(any())).thenReturn(2);
+            when(processingStateRepository.releaseAbandonedIdleClaims(any(), any())).thenReturn(2);
 
             scheduler.processScheduledRetries();
 
-            verify(processingStateRepository).releaseExpiredDispatchClaims(any(ZonedDateTime.class));
+            verify(processingStateRepository).releaseAbandonedIdleClaims(any(ZonedDateTime.class), any(ZonedDateTime.class));
         }
     }
 

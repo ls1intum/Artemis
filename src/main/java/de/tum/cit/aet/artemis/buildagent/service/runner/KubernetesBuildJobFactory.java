@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -47,6 +48,9 @@ import io.fabric8.kubernetes.api.model.batch.v1.JobBuilder;
 @Profile(PROFILE_BUILDAGENT)
 @ConditionalOnProperty(prefix = "artemis.continuous-integration", name = "build-runner", havingValue = "kubernetes")
 public class KubernetesBuildJobFactory {
+
+    /** The shape a Kubernetes environment variable name has to have. */
+    private static final Pattern ENVIRONMENT_VARIABLE_NAME = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
 
     static final String MANAGED_LABEL = "artemis.cit.tum.de/managed";
 
@@ -228,7 +232,7 @@ public class KubernetesBuildJobFactory {
                     throw new LocalCIException("Kubernetes build environment variables must use KEY=value syntax: " + value);
                 }
                 String name = value.substring(0, separator);
-                if (!name.matches("[A-Za-z_][A-Za-z0-9_]*")) {
+                if (!ENVIRONMENT_VARIABLE_NAME.matcher(name).matches()) {
                     throw new LocalCIException("Invalid Kubernetes build environment variable name: " + name);
                 }
                 environment.add(env(name, value.substring(separator + 1)));

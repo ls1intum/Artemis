@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
@@ -1182,7 +1181,9 @@ public class CourseUtilService {
                     StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, userPrefix + "student" + j);
                     ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
                     var user = userUtilService.getUserByLogin(userPrefix + "student" + j);
-                    modelSubmissionService.handleModelingSubmission(submission, modelingExercise, user, null);
+                    submission = modelSubmissionService.handleModelingSubmission(submission, modelingExercise, user, null).submission();
+                    // the save wrote the foreign key from an id; this utility holds the participation itself and reads it below
+                    submission.setParticipation(participation);
                     studentParticipationRepo.save(participation);
                     if (numberOfAssessments >= j) {
                         Result result = participationUtilService.generateResultWithScore(submission, currentUser, 3.0);
@@ -1225,7 +1226,7 @@ public class CourseUtilService {
                     var savedSubmission = fileUploadExerciseUtilService.saveFileUploadSubmission(fileUploadExercise, submission, userPrefix + "student" + j);
                     var filePath = FilePathConverter.buildFileUploadSubmissionPath(fileUploadExercise.getId(), savedSubmission.getId()).resolve("file.pdf");
                     FileUtils.write(filePath.toFile(), "test content", Charset.defaultCharset());
-                    savedSubmission.setFilePath(FilePathConverter.externalUriForFileSystemPath(filePath, FilePathType.FILE_UPLOAD_SUBMISSION, submission.getId()).toString());
+                    savedSubmission.setFilePath(new PublicFileUrl.FileUploadSubmission(fileUploadExercise.getId(), savedSubmission.getId(), "file.pdf").clientPath());
                     fileUploadSubmissionRepo.save(savedSubmission);
                     if (numberOfAssessments >= j) {
                         Result result = participationUtilService.generateResultWithScore(submission, currentUser, 3.0);

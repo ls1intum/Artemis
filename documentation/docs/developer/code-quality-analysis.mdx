@@ -1,0 +1,111 @@
+---
+id: code-quality-analysis
+title: Code Quality Analysis
+sidebar_label: Code Quality Analysis
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+Artemis enforces code quality in its own CI and, separately, publishes a code quality grade through
+external services. The two are easy to confuse, and they carry very different weight.
+
+**The enforcing checks are the ones in this repository.** A pull request cannot merge until
+`ci-quality.yml` and `ci-test.yml` are green, and between them they run Spotless, Checkstyle,
+Modernizer, the ArchUnit architecture rules, the dependency-family guard, ESLint with the custom
+rules in `rules/`, Prettier, Stylelint, the TypeScript compiler, the Playwright lint and type-check,
+the large-class and complex-bean ceilings in `supporting_scripts/analyze_java_files.py`, the
+over-fetch detector in `supporting_scripts/find_slow_queries.py`, and the per-module coverage floors
+in `gradle/jacoco.gradle`. This is where a quality problem actually stops you.
+
+**The external grades are signal, not gates.** Neither can block a merge, and neither should be read
+as a summary of the list above.
+
+## Codacy
+
+Codacy analyzes every `develop` commit on its own infrastructure. Nothing in this repository triggers
+it, and no CI job depends on it. It serves the `code quality` badge in the root `README.md`, and that
+badge links to the repository dashboard at
+[app.codacy.com](https://app.codacy.com/gh/ls1intum/Artemis/dashboard?branch=develop).
+
+Its analysis scope comes from `.codacy.yaml`, which Codacy reads from `develop`. That file has two
+layers: a repository-wide `exclude_paths` floor that every engine inherits, and per-engine
+`exclude_paths` beneath it. The floor exists because **tools can only be enabled in Codacy Cloud, not
+from the configuration file** — the set of active engines therefore changes without any commit to
+this repository, and a per-engine list would silently fail to cover a newly enabled engine.
+
+<Callout variant={CalloutVariant.info}>
+    A Codacy "A" is narrower than it sounds. The active pattern set is essentially static application
+    security testing, so the grade reflects how few flagged findings there are per line. It says
+    nothing about the architecture rules, the signal-API rules, the cloning rules, or the coverage
+    floors that CI actually enforces.
+</Callout>
+
+Codacy's *coverage* figure is a separate matter: it is stale, which is why the `coverage` badge in
+the root `README.md` is computed and hosted by Artemis instead. See
+`supporting_scripts/code-coverage/coverage-badge/README.md`.
+
+## SonarQube Cloud
+
+SonarQube Cloud analyzes the deployed application — server and client in one project — and exists so
+its grade can be compared against Codacy's on exactly the same code. **It currently feeds no badge.**
+The comparison comes first; a badge decision follows from it.
+
+The analysis runs from `.github/workflows/ci-sonar.yml` on `develop` pushes after a green `test` job,
+importing the JaCoCo and LCOV reports that job already uploaded, so no test suite is re-run. All
+configuration lives in `gradle/sonar.gradle`.
+
+### Getting a grade on demand
+
+A full CI run takes around two hours because of the end-to-end tail. To get a grade without waiting,
+dispatch the workflow directly from the **Actions** tab, or from the command line by naming the ref
+you want analysed:
+
+```bash
+gh workflow run ci-sonar.yml --ref develop
+```
+
+The dispatch takes no inputs: the ref you name is the commit that gets analysed, and a dispatched run
+has no `test` job whose coverage artifacts it could import, so it reports no coverage. The ratings and
+issue counts still come back, which is what the comparison with Codacy turns on. For coverage, use the
+run that a push to `develop` triggers.
+
+### Running it locally
+
+Analysis uploads to SonarQube Cloud and therefore needs a token. Nothing wires `sonar` into `check`
+or `build`, so an ordinary local build never contacts the service.
+
+```bash
+export SONAR_TOKEN="paste-your-token-here"
+./gradlew compileJava sonar -x webapp
+```
+
+To inspect the configuration without contacting the service at all, dump the computed properties:
+
+```bash
+./gradlew compileJava sonar -Dsonar.scanner.internal.dumpToFile=/tmp/sonar-props.txt -x webapp
+grep -E '^sonar\.(sources|exclusions|java\.binaries)' /tmp/sonar-props.txt
+```
+
+Keep `compileJava` in that command even though it dumps rather than analyzes. Without it the run
+reproduces the degraded configuration described below instead of the real one, and
+`sonar.java.binaries` — one of the properties the `grep` asks about — is simply absent.
+
+### Two things to know before changing it
+
+**Scope is a contract with `.codacy.yaml`.** The exclusion list in `gradle/sonar.gradle` mirrors that
+file's repository-wide `exclude_paths` floor: exercise templates, test code and specs, Storybook
+stories, `supporting_scripts`, and the throwaway OIDC test provider. Change one list without the
+other and the two grades stop measuring the same code, which removes the only reason to run both.
+
+What is shared is that floor, not the whole scope. Sonar additionally narrows analysis to the four
+roots named in `sonar.sources`, while Codacy declares no `include_paths` and therefore also grades
+supported repository tooling that sits outside them. So the two grades are comparable on the
+application code, and Codacy's covers somewhat more than that.
+
+**`compileJava` is required, not an optimization.** Sonar's Java analyzer needs bytecode. The Gradle
+plugin derives `sonar.java.binaries` from the main source set's output directory, but only if that
+directory already exists — with no prior compile the property is omitted and the Java half of the
+analysis degrades without reporting an error. This is why the CI job and the commands above compile
+first. `-x webapp` skips the Angular production build, because Sonar analyzes the TypeScript sources
+rather than the bundled output.

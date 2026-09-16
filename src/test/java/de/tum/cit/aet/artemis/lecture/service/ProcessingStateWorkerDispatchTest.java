@@ -92,7 +92,8 @@ class ProcessingStateWorkerDispatchTest {
 
     @Test
     void claimReturnsPreparedScalarsAndMarksWorkerSeen() {
-        when(processingStateRepository.claimJobsForDispatch(any(), eq(2))).thenReturn(List.of(testState));
+        when(processingStateRepository.findIdleForDispatch(any(), eq(2))).thenReturn(List.of(testState));
+        when(processingStateRepository.claimIdleForDispatch(eq(500L), any())).thenReturn(1);
 
         List<ClaimedIngestionUnitDTO> claims = callbackService.claimUnitsForWorker(WORKER_BOOT_ID, 2);
 
@@ -106,11 +107,11 @@ class ProcessingStateWorkerDispatchTest {
 
     @Test
     void claimClampsRequestedJobsToTheSanityBound() {
-        when(processingStateRepository.claimJobsForDispatch(any(), anyInt())).thenReturn(List.of());
+        when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of());
 
         callbackService.claimUnitsForWorker(WORKER_BOOT_ID, 99);
 
-        verify(processingStateRepository).claimJobsForDispatch(any(), eq(8));
+        verify(processingStateRepository).findIdleForDispatch(any(), eq(8));
     }
 
     @Test
@@ -118,7 +119,8 @@ class ProcessingStateWorkerDispatchTest {
         List<ClaimedIngestionUnitDTO> claims = callbackService.claimUnitsForWorker(WORKER_BOOT_ID, 0);
 
         assertThat(claims).isEmpty();
-        verify(processingStateRepository, never()).claimJobsForDispatch(any(), anyInt());
+        verify(processingStateRepository, never()).findIdleForDispatch(any(), anyInt());
+        verify(processingStateRepository, never()).findStatesReadyForRetry(any(), any(), anyInt());
         assertThat(workerMapBacking).containsKey("lastSeenAt");
     }
 

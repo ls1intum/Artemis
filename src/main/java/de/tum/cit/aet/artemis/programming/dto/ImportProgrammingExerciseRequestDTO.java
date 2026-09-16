@@ -96,7 +96,7 @@ public record ImportProgrammingExerciseRequestDTO(@Nullable Long id, String titl
         Boolean allowComplaintsForAutomaticAssessments, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, Boolean allowOnlineEditor, Boolean allowOfflineIde,
         Boolean allowOnlineIde, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty, Boolean showTestNamesToStudents, Boolean releaseTestsWithExampleSolution,
         ProgrammingLanguage programmingLanguage, ProjectType projectType, String projectKey, String testRepositoryUri, UpdateProgrammingExerciseBuildConfigDTO buildConfig,
-        Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, List<AuxiliaryRepositoryDTO> auxiliaryRepositories, SubmissionPolicyDTO submissionPolicy,
+        List<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, List<AuxiliaryRepositoryDTO> auxiliaryRepositories, SubmissionPolicyDTO submissionPolicy,
         PlagiarismDetectionConfigDTO plagiarismDetectionConfig, CourseRefDTO course, ExerciseGroupIdDTO exerciseGroup, SourceParticipationRefDTO templateParticipation,
         SourceParticipationRefDTO solutionParticipation) implements CompetencyLinksHolderDTO, ProgrammingExerciseRequestDTO {
 
@@ -134,6 +134,9 @@ public record ImportProgrammingExerciseRequestDTO(@Nullable Long id, String titl
         // The three collections below are where import and create deliberately differ: import normalizes a missing
         // collection to an empty one, create leaves it at the entity default.
         exercise.setCategories(categories == null ? new HashSet<>() : new HashSet<>(categories));
+        // A list, not a set, on the wire: the export nulls the criterion and instruction ids, and GradingCriterionDTO
+        // is a record with value equality, so a set would merge two criteria that only differ by id and drop a rubric
+        // row. The entities are distinct even without ids, so they only go into a set once they are built.
         exercise.setGradingCriteria(
                 gradingCriteria == null ? new HashSet<>() : gradingCriteria.stream().map(GradingCriterionDTO::toEntity).collect(Collectors.toCollection(HashSet::new)));
         exercise.setAuxiliaryRepositories(new ArrayList<>());

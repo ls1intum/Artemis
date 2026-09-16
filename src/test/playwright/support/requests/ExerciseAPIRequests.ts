@@ -86,7 +86,7 @@ export class ExerciseAPIRequests {
      *   - programmingShortName: The short name of the programming exercise
      *   - programmingLanguage: The programming language for the exercise
      *   - packageName: The package name of the programming exercise
-     *   - assessmentDate: The due date of the assessment
+     *   - assessmentDate: The due date of the assessment, which the server requires to be strictly after the due date
      *   - assessmentType: The assessment type of the exercise
      *   - buildPlanConfiguration: Serialized LocalCI build phases used when the exercise is created
      * @returns Promise<ProgrammingExercise> representing the programming exercise created.
@@ -125,7 +125,9 @@ export class ExerciseAPIRequests {
             programmingLanguage = ProgrammingLanguage.JAVA,
             projectType,
             packageName = 'de.test',
-            assessmentDate = dayjs().add(2, 'days'),
+            // Derived from the due date rather than from now: the server requires a strictly increasing date sequence, and a
+            // caller passing a due date two days out would otherwise land in the same millisecond as an absolute default
+            assessmentDate = dueDate.add(1, 'day'),
             exampleSolutionPublicationDate,
             assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,
             mode = ExerciseMode.INDIVIDUAL,
@@ -185,6 +187,11 @@ export class ExerciseAPIRequests {
         }
 
         const response = await this.page.request.post(`${PROGRAMMING_EXERCISE_BASE}/setup`, { data: exercise });
+        // Asserted so a rejected setup throws loudly here, instead of cascading into an undefined exercise id and a
+        // test that waits three minutes for a page it was never going to reach
+        if (!response.ok()) {
+            throw new Error(`Failed to create programming exercise: ${response.status()} ${await response.text()}`);
+        }
         return this.withKnownExerciseGroup(await response.json(), exerciseGroup);
     }
 
@@ -222,12 +229,12 @@ export class ExerciseAPIRequests {
     }
 
     /**
-     * Submits the example submission to the specified repository.
+     * Submits the example submission to the participation's repository.
      *
-     * @param repositoryId - The repository ID. The repository ID is equal to the participation ID.
+     * @param participationId - The ID of the participation whose repository is written to.
      * @param submission - The example submission to be submitted.
      */
-    async makeProgrammingExerciseSubmission(repositoryId: number, submission: ProgrammingExerciseSubmission) {
+    async makeProgrammingExerciseSubmission(participationId: number, submission: ProgrammingExerciseSubmission) {
         const data = await Promise.all(
             submission.files.map(async (file) => {
                 let fileName = file.name;
@@ -240,11 +247,11 @@ export class ExerciseAPIRequests {
                 };
             }),
         );
-        await this.page.request.put(`api/programming/repository/${repositoryId}/files?commit=yes`, { data });
+        await this.page.request.put(`api/programming/participations/${participationId}/repository/files?commit=yes`, { data });
     }
 
-    async createProgrammingExerciseFile(repositoryId: number, filename: string) {
-        return await this.page.request.post(`api/programming/repository/${repositoryId}/file?file=${filename}`);
+    async createProgrammingExerciseFile(participationId: number, filename: string) {
+        return await this.page.request.post(`api/programming/participations/${participationId}/repository/file?file=${filename}`);
     }
 
     /**

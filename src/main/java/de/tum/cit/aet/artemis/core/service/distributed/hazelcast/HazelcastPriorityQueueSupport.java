@@ -5,10 +5,10 @@ import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.HazelcastInstance;
 
 /**
- * Guards the priority-queue contract of the Hazelcast backend.
+ * Guards the priority-queue contract of the Hazelcast provider.
  *
  * <p>
- * Unlike the Redisson and local backends, Hazelcast does not order a queue by the items' natural ordering on its own.
+ * Unlike the Redisson and local providers, Hazelcast does not order a queue by the items' natural ordering on its own.
  * Ordering comes from a {@link QueueConfig#setPriorityComparatorClassName(String)} entry that is bound to a specific
  * queue <em>name</em> and has to exist before the queue proxy is created. Artemis configures exactly one such entry,
  * for {@code buildJobQueue}.

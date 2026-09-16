@@ -22,8 +22,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.localci.service.LegacyBuildPlanConverterService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.programming.dto.ExportedExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 
 @Profile(PROFILE_CORE)
@@ -147,7 +148,7 @@ public class ProgrammingExerciseImportFromFileService {
             }
 
             try {
-                programmingExerciseRepositoryService.adjustProjectNames(getProgrammingExerciseFromDetailsFile(importExerciseDir).getTitle(), newProgrammingExercise);
+                programmingExerciseRepositoryService.adjustProjectNames(getExerciseDetailsFromFile(importExerciseDir).title(), newProgrammingExercise);
             }
             catch (GitAPIException | IOException e) {
                 log.error("Error during adjustment of placeholders of ProgrammingExercise {}", newProgrammingExercise.getTitle(), e);
@@ -217,20 +218,20 @@ public class ProgrammingExerciseImportFromFileService {
     }
 
     /**
-     * Reads the programming exercise details from the JSON file in the extracted zip path.
+     * Reads the exported exercise details from the JSON file in the extracted zip path.
      *
      * @param extractedZipPath the path to the extracted zip file containing the exercise details
-     * @return the programming exercise object deserialized from the JSON file
+     * @return the exercise details deserialized from the JSON file
      * @throws IOException if there is an error reading the file
      */
-    private ProgrammingExercise getProgrammingExerciseFromDetailsFile(Path extractedZipPath) throws IOException {
+    private ExportedExerciseDetailsDTO getExerciseDetailsFromFile(Path extractedZipPath) throws IOException {
         var exerciseJsonPath = retrieveExerciseJsonPath(extractedZipPath);
-        ObjectMapper objectMapper = JsonObjectMapper.get();
+        JsonMapper objectMapper = JsonObjectMapper.get();
 
         try {
-            return objectMapper.readValue(exerciseJsonPath.toFile(), ProgrammingExercise.class);
+            return objectMapper.readValue(exerciseJsonPath.toFile(), ExportedExerciseDetailsDTO.class);
         }
-        catch (IOException e) {
+        catch (JacksonException e) {
             throw new BadRequestAlertException("The JSON file for the programming exercise is not valid or was not found.", "programmingExercise", "exerciseJsonNotValidOrFound");
         }
     }
@@ -300,9 +301,8 @@ public class ProgrammingExerciseImportFromFileService {
      * This handles the build config where the buildPlanConfiguration is still in the old format.
      *
      * @param programmingExercise the exercise to handle
-     * @throws JsonProcessingException when serialization failed
      */
-    private void handleLegacyLocalCIProgrammingExercise(ProgrammingExercise programmingExercise) throws JsonProcessingException {
+    private void handleLegacyLocalCIProgrammingExercise(ProgrammingExercise programmingExercise) {
         if (!profileService.isLocalCIActive() || programmingExercise.getBuildConfig() == null) {
             return;
         }
@@ -315,7 +315,7 @@ public class ProgrammingExerciseImportFromFileService {
                 // check that it is in the valid format
                 BuildPlanPhasesDTO.fromBuildPlanConfiguration(programmingExercise.getBuildConfig().getBuildPlanConfiguration());
             }
-            catch (JsonProcessingException e) {
+            catch (JacksonException e) {
                 // if not reset it
                 programmingExercise.getBuildConfig().setBuildPlanConfiguration(null);
             }

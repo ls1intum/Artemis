@@ -6,13 +6,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.persistence.LockModeType;
-
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -92,14 +89,6 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
             WHERE attachmentVideoUnit.id = :attachmentVideoUnitId
             """)
     Optional<AttachmentVideoUnit> findWithAttachmentById(@Param("attachmentVideoUnitId") long attachmentVideoUnitId);
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
-            SELECT attachmentVideoUnit
-            FROM AttachmentVideoUnit attachmentVideoUnit
-            WHERE attachmentVideoUnit.id = :attachmentVideoUnitId
-            """)
-    Optional<AttachmentVideoUnit> findByIdForUpdate(@Param("attachmentVideoUnitId") long attachmentVideoUnitId);
 
     /**
      * Find AttachmentVideoUnits from active, non-test courses that don't have a processing state yet.

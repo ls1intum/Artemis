@@ -26,7 +26,7 @@ const mockResult: LectureSearchResult = {
 
 const mockResultNoSnippet: LectureSearchResult = {
     course: { id: 2, name: 'Server-Side Development' },
-    lecture: { id: 2, name: 'Backend Fundamentals' },
+    lecture: { id: 2, name: 'Distributed Systems' },
     lectureUnit: { id: 2, name: 'Spring Boot Overview', link: '/courses/2/lectures/2/units/2', pageNumber: 7, sourceType: 'lecture_unit_slide', queryParams: { unit: 2, page: 7 } },
 };
 

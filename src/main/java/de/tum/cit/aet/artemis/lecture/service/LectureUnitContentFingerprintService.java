@@ -13,8 +13,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 
@@ -55,7 +54,8 @@ public class LectureUnitContentFingerprintService {
     }
 
     private byte[] readAttachmentBytes(AttachmentVideoUnit unit) {
-        Path path = FilePathConverter.fileSystemPathForExternalUri(URI.create(unit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
+        String filename = Path.of(URI.create(unit.getAttachment().getLink()).getPath()).getFileName().toString();
+        Path path = new FileSystemLocation.AttachmentVideoUnitFile(unit.getId(), filename).path();
         try {
             return Files.readAllBytes(path);
         }

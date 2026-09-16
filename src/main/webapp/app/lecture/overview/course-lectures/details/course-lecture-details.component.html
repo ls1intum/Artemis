@@ -8,30 +8,18 @@
 @if (lecture(); as lecture) {
     <div class="d-flex flex-column h-100 overflow-hidden">
         <!--
-            Header card, laid out exactly like the exercise header: the title on its own line with the start and end
-            date beneath it, then the grey divider to the content card.
+            The page's own title bar. `page-top-bar` holds it to the same height as the shell's title bars, so the
+            lecture page reads like the other student pages; the start and end dates sit with the description instead.
+            `px-*` rather than `p-*`, so Bootstrap's !important spacing does not overrule the class's vertical padding.
         -->
-        <div class="lecture-header detail-header-card module-bg rounded-3 p-2 shell-divider-b">
-            <div class="detail-header-title-row gap-3">
-                @if (isSidebarCollapsed()) {
-                    <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
-                }
-                <h5 class="mb-0 text-truncate">
-                    <fa-icon class="me-2" [icon]="faChalkboardTeacher" />
-                    {{ lecture.title }}
-                </h5>
-            </div>
-            <div class="d-flex flex-row gap-2">
-                @for (informationBoxData of informationBoxData(); track informationBoxData.title) {
-                    <jhi-information-box [informationBoxData]="informationBoxData">
-                        <ng-container contentComponent>
-                            @if (informationBoxData.content.type === 'dateTime') {
-                                <span contentComponent>{{ informationBoxData.content.value | artemisDate }}</span>
-                            }
-                        </ng-container>
-                    </jhi-information-box>
-                }
-            </div>
+        <div class="page-top-bar module-bg rounded-3 px-3 shell-divider-b d-flex align-items-center gap-3">
+            @if (isSidebarCollapsed()) {
+                <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
+            }
+            <h5 class="mb-0 text-truncate">
+                <fa-icon class="me-2" [icon]="faChalkboardTeacher" />
+                {{ lecture.title }}
+            </h5>
         </div>
 
         <!--
@@ -41,6 +29,18 @@
         -->
         <jhi-resizable-panels class="flex-fill overflow-hidden" [useViewportWidthForCollapse]="true" storageKey="lecture-details-split">
             <ng-template jhiPanel [label]="'artemisApp.courseOverview.lectureDetails.lectureContent'" [icon]="faChalkboardTeacher">
+                <!-- Above the description rather than inside it, so the dates still show for a lecture without one. -->
+                <div class="d-flex flex-row flex-wrap gap-2 mb-2">
+                    @for (informationBoxData of informationBoxData(); track informationBoxData.title) {
+                        <jhi-information-box [informationBoxData]="informationBoxData">
+                            <ng-container contentComponent>
+                                @if (informationBoxData.content.type === 'dateTime') {
+                                    <span contentComponent>{{ informationBoxData.content.value | artemisDate }}</span>
+                                }
+                            </ng-container>
+                        </jhi-information-box>
+                    }
+                </div>
                 @if (lecture.description) {
                     <div class="row mb-2 mt-2 align-items-baseline">
                         <div class="col-auto">

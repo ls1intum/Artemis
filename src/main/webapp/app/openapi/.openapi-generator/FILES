@@ -12,6 +12,7 @@ api/tutorial-group-free-period-api.ts
 api/tutorial-group-session-api.ts
 api/tutorial-groups-configuration-api.ts
 model/answer-option-with-solution.ts
+model/answer-option-without-solution.ts
 model/artifact-location.ts
 model/assessment-criteria-generation-request.ts
 model/assessment-criteria-generation-response.ts
@@ -34,6 +35,7 @@ model/difficulty-assessment.ts
 model/drag-and-drop-mapping-from-live-client.ts
 model/drag-and-drop-mapping.ts
 model/drag-and-drop-quiz-question-with-solution.ts
+model/drag-and-drop-submitted-answer-after-evaluation.ts
 model/drag-and-drop-submitted-answer-from-live-client.ts
 model/drag-item.ts
 model/drop-location.ts
@@ -47,6 +49,7 @@ model/leaderboard-entry.ts
 model/leaderboard-setting.ts
 model/leaderboard-with-current-user-entry.ts
 model/multiple-choice-quiz-question-with-solution.ts
+model/multiple-choice-submitted-answer-after-evaluation.ts
 model/multiple-choice-submitted-answer-from-live-client.ts
 model/problem-statement-generation-request.ts
 model/problem-statement-generation-response.ts
@@ -67,18 +70,21 @@ model/quiz-question-refinement-response.ts
 model/quiz-question-refinement-success.ts
 model/quiz-question-training.ts
 model/quiz-question-with-solution.ts
+model/quiz-question-without-solution.ts
 model/rewrite-faq-request.ts
 model/rewrite-faq-response.ts
 model/short-answer-mapping.ts
 model/short-answer-quiz-question-with-solution.ts
 model/short-answer-solution.ts
 model/short-answer-spot.ts
+model/short-answer-submitted-answer-after-evaluation.ts
 model/short-answer-submitted-answer-from-live-client.ts
 model/short-answer-submitted-text-from-live-client.ts
 model/short-answer-submitted-text.ts
 model/student-export.ts
 model/student.ts
 model/submitted-answer-after-evaluation.ts
+model/submitted-answer-before-evaluation.ts
 model/submitted-answer-from-live-client.ts
 model/timing.ts
 model/tokens.ts

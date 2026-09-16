@@ -146,6 +146,7 @@ public class LectureResource {
         if (newLectureDto.id() != null) {
             throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idExists");
         }
+        validateLectureDates(newLectureDto.startDate(), newLectureDto.endDate());
         Course course = courseRepository.findByIdElseThrow(newLectureDto.course.id());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
@@ -210,6 +211,7 @@ public class LectureResource {
     }
 
     private Lecture createLectureUsing(LectureSeriesCreateLectureDTO lectureDTO, Course course) {
+        validateLectureDates(lectureDTO.startDate(), lectureDTO.endDate());
         Lecture lecture = new Lecture();
         lecture.setCourse(course);
         lecture.setTitle(lectureDTO.title());
@@ -242,6 +244,7 @@ public class LectureResource {
         if (updatedLectureDto.course == null || !course.getId().equals(updatedLectureDto.course.id())) {
             throw new BadRequestAlertException("Lecture does not belong to the specified course", ENTITY_NAME, "courseMismatch");
         }
+        validateLectureDates(updatedLectureDto.startDate(), updatedLectureDto.endDate());
         updateLectureAttributesFromDTO(originalLecture, updatedLectureDto);
 
         channelService.updateLectureChannel(originalLecture, updatedLectureDto.channelName());
@@ -258,6 +261,12 @@ public class LectureResource {
         lecture.setStartDate(lectureDTO.startDate());
         lecture.setEndDate(lectureDTO.endDate());
         lecture.setIsTutorialLecture(lectureDTO.isTutorialLecture());
+    }
+
+    private static void validateLectureDates(@Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate) {
+        if (startDate != null && endDate != null && !startDate.isBefore(endDate)) {
+            throw new BadRequestAlertException("Lecture start date must be before end date", ENTITY_NAME, "invalidDateRange");
+        }
     }
 
     /**
@@ -469,18 +478,15 @@ public class LectureResource {
      * <p>
      * This will clone and import the whole lecture with associated lectureUnits and attachments.
      *
-     * @param sourceLectureIdQuery The ID of the original lecture which should get imported (provided as a query parameter; preferred)
-     * @param sourceLectureIdPath  The ID of the original lecture which should get imported (provided as a legacy path variable; deprecated)
-     * @param courseId             The ID of the course to import the lecture to
+     * @param sourceLectureId The ID of the original lecture which should get imported
+     * @param courseId        The ID of the course to import the lecture to
      * @return The imported lecture (200), a not found error (404) if the lecture does not exist,
      *         or a forbidden error (403) if the user is not at least an editor in the source or target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
-    @PostMapping({ "lectures/import", "lectures/import/{sourceLectureId}" })
+    @PostMapping("lectures/import")
     @EnforceAtLeastEditor
-    public ResponseEntity<SimpleLectureDTO> importLecture(@RequestParam(name = "sourceLectureId", required = false) Long sourceLectureIdQuery,
-            @PathVariable(name = "sourceLectureId", required = false) Long sourceLectureIdPath, @RequestParam long courseId) throws URISyntaxException {
-        long sourceLectureId = sourceLectureIdQuery != null ? sourceLectureIdQuery : (sourceLectureIdPath != null ? sourceLectureIdPath : -1L);
+    public ResponseEntity<SimpleLectureDTO> importLecture(@RequestParam long sourceLectureId, @RequestParam long courseId) throws URISyntaxException {
         final var user = userRepository.getUserWithAuthorities();
         final var sourceLecture = lectureRepository.findByIdWithLectureUnitsElseThrow(sourceLectureId);
         final var destinationCourse = courseRepository.findByIdWithLecturesElseThrow(courseId);

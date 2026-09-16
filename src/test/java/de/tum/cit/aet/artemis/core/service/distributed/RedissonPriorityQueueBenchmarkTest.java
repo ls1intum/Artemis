@@ -18,7 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.DockerClientFactory;
 
-import com.redis.testcontainers.RedisStackContainer;
+import com.redis.testcontainers.RedisContainer;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistribu
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.shared.ValkeyTestContainerFactory;
 
 /**
  * Measures how the cost of enqueueing a build job into a Redis-backed queue scales with the queue depth.
@@ -66,7 +67,7 @@ class RedissonPriorityQueueBenchmarkTest {
      */
     private static final int[] DEPTHS = { 100, 1000, 5000 };
 
-    private static RedisStackContainer redis;
+    private static RedisContainer valkey;
 
     private static RedissonClient redissonClient;
 
@@ -81,12 +82,12 @@ class RedissonPriorityQueueBenchmarkTest {
 
     @BeforeAll
     static void beforeAll() {
-        assertThat(isDockerAvailable()).as("this benchmark requires Docker for the Redis testcontainer").isTrue();
-        redis = new RedisStackContainer(RedisStackContainer.DEFAULT_IMAGE_NAME.withTag(RedisStackContainer.DEFAULT_TAG));
-        redis.start();
+        assertThat(isDockerAvailable()).as("this benchmark requires Docker for the Valkey testcontainer").isTrue();
+        valkey = ValkeyTestContainerFactory.create();
+        valkey.start();
 
         Config config = new Config();
-        config.useSingleServer().setAddress("redis://" + redis.getHost() + ":" + redis.getMappedPort(6379));
+        config.useSingleServer().setAddress("redis://" + valkey.getHost() + ":" + valkey.getMappedPort(6379));
         redissonClient = Redisson.create(config);
     }
 
@@ -95,8 +96,8 @@ class RedissonPriorityQueueBenchmarkTest {
         if (redissonClient != null) {
             redissonClient.shutdown();
         }
-        if (redis != null) {
-            redis.stop();
+        if (valkey != null) {
+            valkey.stop();
         }
     }
 
@@ -176,7 +177,7 @@ class RedissonPriorityQueueBenchmarkTest {
         for (long value : durationsMicros) {
             totalMillis += value;
         }
-        return String.format("%-18s depth=%-5d mean=%5dus p95=%6dus lastDecileMean=%6dus totalWallClock=%6dms", label, depth, meanMicros(durationsMicros),
+        return "%-18s depth=%-5d mean=%5dus p95=%6dus lastDecileMean=%6dus totalWallClock=%6dms".formatted(label, depth, meanMicros(durationsMicros),
                 percentileMicros(durationsMicros, 95), meanMicros(tail), totalMillis / 1000);
     }
 
@@ -212,7 +213,7 @@ class RedissonPriorityQueueBenchmarkTest {
             // getQueuedJobs() reads the whole queue on every queue mutation for the admin websocket, so record it too.
             long readStart = System.nanoTime();
             int readSize = priority.getAll().size();
-            report.add(String.format("%-18s depth=%-5d getAll=%6dms (returned %d)", "priority getAll", depth, (System.nanoTime() - readStart) / 1_000_000, readSize));
+            report.add("%-18s depth=%-5d getAll=%6dms (returned %d)".formatted("priority getAll", depth, (System.nanoTime() - readStart) / 1_000_000, readSize));
             priority.clear();
         }
 
