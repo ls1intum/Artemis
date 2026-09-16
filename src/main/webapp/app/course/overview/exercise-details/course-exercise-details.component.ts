@@ -232,6 +232,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private participationUpdateListener?: Subscription;
     private teamAssignmentUpdateListener?: Subscription;
 
+    // Result ids for which an AI feedback request toast was already shown, so a later, unrelated participation
+    // update that still carries the same (already-notified) Athena result does not show it again.
+    private notifiedAthenaResultIds = new Set<number>();
+
     // Icons
     faBook = faBook;
     faEye = faEye;
@@ -496,15 +500,21 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     ) {
                         this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
                     }
+                    // A failed non-graded Athena request (modeling/text) is broadcast without ever being saved, so it never gets an id
+                    // (see TextExerciseFeedbackService/ModelingExerciseFeedbackService: "does not save empty result"). Such a result can
+                    // never recur in a later event, so it needs no dedup; only an id-bearing (i.e. persisted) result does.
+                    const lastAthenaResult = getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last();
                     if (
-                        (getAllResultsOfAllSubmissions(changedParticipation.submissions)?.length > getAllResultsOfAllSubmissions(currentGraded?.submissions).length ||
-                            getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.completionDate === undefined) &&
-                        getAllResultsOfAllSubmissions(changedParticipation.submissions).last()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
-                        getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.successful !== undefined
+                        (lastAthenaResult?.id === undefined || !this.notifiedAthenaResultIds.has(lastAthenaResult.id)) &&
+                        lastAthenaResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
+                        lastAthenaResult?.successful !== undefined
                     ) {
-                        if (getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.successful === true) {
+                        if (lastAthenaResult.id !== undefined) {
+                            this.notifiedAthenaResultIds.add(lastAthenaResult.id);
+                        }
+                        if (lastAthenaResult.successful === true) {
                             this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.exercise?.title ?? '' });
-                        } else if (getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.successful === false) {
+                        } else if (lastAthenaResult.successful === false) {
                             this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                         }
                     }

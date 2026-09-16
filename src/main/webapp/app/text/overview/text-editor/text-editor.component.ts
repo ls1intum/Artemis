@@ -128,6 +128,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     submissionId: number | undefined;
     resultId: number | undefined;
 
+    // Result ids for which an AI feedback request toast was already shown, so a later, unrelated participation
+    // update that still carries the same (already-notified) Athena result does not show it again.
+    private notifiedAthenaResultIds = new Set<number>();
+
     ngOnInit() {
         if (this.inputValuesArePresent()) {
             this.setupComponentWithInputValues();
@@ -200,15 +204,19 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 }
                 const changedParticipation = updatedParticipation as StudentParticipation;
                 const results = changedParticipation.submissions?.flatMap((submission) => submission.results ?? []) || [];
-                const oldResults = this.participation().submissions?.flatMap((submission) => submission.results ?? []) || [];
                 // By id, not by position: the server holds a submission's results in a set, so the response order is arbitrary.
                 const lastResult = getNewestResult(results);
+                // A failed non-graded Athena request is broadcast without ever being saved, so it never gets an id (see
+                // TextExerciseFeedbackService: "does not save empty result"). Such a result can never recur in a later
+                // event, so it needs no dedup; only an id-bearing (i.e. persisted) result does.
                 const isNewAthenaResult =
-                    !!results &&
-                    ((results?.length || 0) > (oldResults.length || 0) || lastResult?.completionDate === undefined) &&
+                    (lastResult?.id === undefined || !this.notifiedAthenaResultIds.has(lastResult.id)) &&
                     lastResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
                     lastResult?.successful !== undefined;
                 if (isNewAthenaResult) {
+                    if (lastResult.id !== undefined) {
+                        this.notifiedAthenaResultIds.add(lastResult.id);
+                    }
                     if (lastResult?.successful === false) {
                         this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                     } else {
