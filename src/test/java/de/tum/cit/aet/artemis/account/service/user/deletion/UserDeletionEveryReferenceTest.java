@@ -207,10 +207,18 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         seed(UserDeletionReferencePolicy.LTI_LAUNCH, userId, values("iss", "https://platform", "sub", "subject", "deployment_id", "deployment", "resource_link_id", "link"));
         seed(UserDeletionReferencePolicy.COMPETENCY_PROGRESS, userId, values("competency_id", competencyId));
         seed(UserDeletionReferencePolicy.LECTURE_PROGRESS, userId, values("lecture_unit_id", lectureUnitId));
+        seed(UserDeletionReferencePolicy.LEARNING_PATH, userId, values("course_id", courseId, "progress", 0));
+        seed(UserDeletionReferencePolicy.LEARNER_PROFILE, userId, values("feedback_detail", 2, "feedback_formality", 2, "has_setup_feedback_preferences", false));
+        // The per-course part of the profile points at it, so seeding one proves the deletion takes that down first.
+        Long learnerProfileId = jdbcTemplate.queryForObject("SELECT id FROM learner_profile WHERE user_id = ?", Long.class, userId);
+        insertInto("course_learner_profile",
+                values("learner_profile_id", learnerProfileId, "course_id", courseId, "aim_for_grade_or_bonus", 3, "time_investment", 3, "repetition_intensity", 3));
         seed(UserDeletionReferencePolicy.QUIZ_QUESTION_PROGRESS, userId, values("quiz_question_id", quizQuestionId, "course_id", courseId, "due_date", now));
         seed(UserDeletionReferencePolicy.QUIZ_TRAINING_LEADERBOARD, userId,
                 values("course_id", courseId, "league", 1, "score", 0, "answered_correctly", 0, "answered_wrong", 0, "due_date", now, "streak", 0, "show_in_leaderboard", true));
         seed(UserDeletionReferencePolicy.LLM_USAGE_ACTOR, userId, values());
+        seed(UserDeletionReferencePolicy.VCS_ACCESS_LOG, userId, values("participation_id", participationId, "name", "Deleted Account", "email", "deleted@localhost",
+                "repository_action_type", 0, "authentication_mechanism", 0, "timestamp", now));
     }
 
     /**

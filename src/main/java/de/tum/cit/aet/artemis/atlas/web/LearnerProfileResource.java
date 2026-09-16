@@ -83,11 +83,7 @@ public class LearnerProfileResource {
         profile.setFeedbackFormality(DEFAULT_PROFILE_VALUE);
         profile.setHasSetupFeedbackPreferences(false);
 
-        user.setLearnerProfile(profile);
-        userRepository.save(user);
-
-        LearnerProfile persistedProfile = learnerProfileRepository.findByUserElseThrow(user);
-        return ResponseEntity.ok(LearnerProfileDTO.of(persistedProfile));
+        return ResponseEntity.ok(LearnerProfileDTO.of(learnerProfileRepository.save(profile)));
     }
 
     /**

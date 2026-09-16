@@ -234,7 +234,7 @@ public class CourseUpdateResource {
         // if learning paths got enabled, generate learning paths for students
         if (!oldLearningPathsEnabled && courseUpdateDTO.learningPathsEnabled() && learningPathApi.isPresent()) {
             Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(result.getId());
-            Set<User> students = userRepository.getStudentsWithLearnerProfile(courseWithCompetencies);
+            Set<User> students = userRepository.getStudentsWithAuthorities(courseWithCompetencies);
             learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfiles(courseWithCompetencies, students));
             learningPathApi.ifPresent(api -> api.generateLearningPaths(courseWithCompetencies));
         }

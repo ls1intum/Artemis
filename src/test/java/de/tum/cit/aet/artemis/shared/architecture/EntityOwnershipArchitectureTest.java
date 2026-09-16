@@ -56,32 +56,24 @@ class EntityOwnershipArchitectureTest extends AbstractArchitectureTest {
      */
     private static final Set<String> ENTITIES_WITHOUT_A_DECLARED_PARENT = Set.of(
             // one-to-one where the parent holds the pointer, so nothing in the schema ties the child to it
-            "de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile", "de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig",
-            "de.tum.cit.aet.artemis.course.domain.CourseConfiguration", "de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig",
-            "de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration", "de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig",
-            "de.tum.cit.aet.artemis.programming.domain.build.BuildPlan", "de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig",
-            "de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy", "de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy",
-            "de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy", "de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration",
-            // reference a parent through plain columns that carry no foreign key at all
-            "de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath", "de.tum.cit.aet.artemis.programming.domain.VcsAccessLog");
+            "de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig", "de.tum.cit.aet.artemis.course.domain.CourseConfiguration",
+            "de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig", "de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration",
+            "de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig", "de.tum.cit.aet.artemis.programming.domain.build.BuildPlan",
+            "de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig", "de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy",
+            "de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy", "de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy",
+            "de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration");
 
     /**
      * Parents the database still lets be null. Each one is a shape that needs a decision before a constraint: the rows
      * that violate it cannot be repaired from what they carry, or the application detaches them on purpose.
      */
     private static final Set<String> PARENTS_THAT_ARE_STILL_NULLABLE = Set.of(
-            // SlideSplitterService detaches superseded slides deliberately; what "superseded" should mean comes first
-            "de.tum.cit.aet.artemis.lecture.domain.Slide.attachmentVideoUnit",
             // a self-referencing tree, where a null parent is a legitimate root node
             "de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea.parent",
             // rows exist today that carry no evidence of which parent they belonged to
             "de.tum.cit.aet.artemis.exercise.domain.Submission.participation", "de.tum.cit.aet.artemis.exercise.domain.participation.Participation.exercise",
             "de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmissionElement.plagiarismSubmission", "de.tum.cit.aet.artemis.assessment.domain.Feedback.result",
-            "de.tum.cit.aet.artemis.quiz.domain.QuizQuestion.exercise", "de.tum.cit.aet.artemis.communication.domain.Post.conversation",
-            // PlagiarismResource#deletePlagiarismComparisons detaches the submission when it cleans up a comparison
-            "de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission.plagiarismComparison",
-            // the exercise's collection owns the order column, so Hibernate dissociates a repository it removes
-            "de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository.exercise");
+            "de.tum.cit.aet.artemis.quiz.domain.QuizQuestion.exercise", "de.tum.cit.aet.artemis.communication.domain.Post.conversation");
 
     @Test
     void everyEntityIsARootOrDeclaresItsParent() {
@@ -119,8 +111,8 @@ class EntityOwnershipArchitectureTest extends AbstractArchitectureTest {
     void theRemainingWorkIsNotGrowing() {
         // The two lists are the backlog this test exists to shrink. Pinning their size makes an addition a deliberate
         // edit with a reviewer attached, rather than the path of least resistance when a new entity does not fit.
-        assertThat(ENTITIES_WITHOUT_A_DECLARED_PARENT).as("entities that cannot name a parent: move the foreign key onto the entity instead of adding to this list").hasSize(14);
-        assertThat(PARENTS_THAT_ARE_STILL_NULLABLE).as("parents the database still lets be null: require them instead of adding to this list").hasSize(10);
+        assertThat(ENTITIES_WITHOUT_A_DECLARED_PARENT).as("entities that cannot name a parent: move the foreign key onto the entity instead of adding to this list").hasSize(11);
+        assertThat(PARENTS_THAT_ARE_STILL_NULLABLE).as("parents the database still lets be null: require them instead of adding to this list").hasSize(7);
     }
 
     private static Stream<JavaClass> entities() {

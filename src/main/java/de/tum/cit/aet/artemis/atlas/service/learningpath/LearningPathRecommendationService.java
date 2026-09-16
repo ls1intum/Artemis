@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationObjectDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.service.LearningObjectService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.exercise.domain.BaseExercise;
@@ -65,6 +66,8 @@ public class LearningPathRecommendationService {
     private final CompetencyProgressRepository competencyProgressRepository;
 
     private final CourseCompetencyRepository courseCompetencyRepository;
+
+    private final CourseLearnerProfileRepository courseLearnerProfileRepository;
 
     /**
      * Base utility that is used to calculate a competencies' utility with respect to the earliest due date of the competency.
@@ -110,12 +113,14 @@ public class LearningPathRecommendationService {
     private static final int MIN_DAYS_BETWEEN_REPETITION = 7;
 
     protected LearningPathRecommendationService(CompetencyRelationRepository competencyRelationRepository, LearningObjectService learningObjectService,
-            ParticipantScoreService participantScoreService, CompetencyProgressRepository competencyProgressRepository, CourseCompetencyRepository courseCompetencyRepository) {
+            ParticipantScoreService participantScoreService, CompetencyProgressRepository competencyProgressRepository, CourseCompetencyRepository courseCompetencyRepository,
+            CourseLearnerProfileRepository courseLearnerProfileRepository) {
         this.competencyRelationRepository = competencyRelationRepository;
         this.learningObjectService = learningObjectService;
         this.participantScoreService = participantScoreService;
         this.competencyProgressRepository = competencyProgressRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
+        this.courseLearnerProfileRepository = courseLearnerProfileRepository;
     }
 
     /**
@@ -630,8 +635,9 @@ public class LearningPathRecommendationService {
      * @return the recommended ordering of learning objects
      */
     public List<LearningObject> getRecommendedOrderOfLearningObjects(User user, CourseCompetency competency, double combinedPriorConfidence, boolean repeatedTests) {
-        var learnerProfile = user.getLearnerProfile();
-        var courseLearnerProfile = learnerProfile.getCourseLearnerProfiles().stream().findFirst().orElse(new CourseLearnerProfile());
+        // Read the profile where the recommendation is made rather than through the account: hanging it off User made
+        // every account load fetch a profile almost no caller wants.
+        var courseLearnerProfile = courseLearnerProfileRepository.findByUserIdAndCourseId(user.getId(), competency.getCourse().getId()).orElseGet(CourseLearnerProfile::new);
 
         var pendingLectureUnits = competency.getLectureUnitLinks().stream().sorted(Comparator.comparingDouble(CompetencyLectureUnitLink::getWeight).reversed())
                 .map(CompetencyLectureUnitLink::getLectureUnit).filter(lectureUnit -> !lectureUnit.isCompletedFor(user)).toList();
