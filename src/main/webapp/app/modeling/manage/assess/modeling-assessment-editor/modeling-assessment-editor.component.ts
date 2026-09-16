@@ -16,7 +16,7 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
-import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackHighlightColor, FeedbackSuggestionType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
@@ -398,7 +398,13 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.referencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference);
         this.unreferencedFeedback.set(feedback.filter((feedbackElement) => !feedbackElement.reference));
 
-        this.hasAutomaticFeedback.set(feedback.some((feedbackItem) => feedbackItem.type === FeedbackType.AUTOMATIC));
+        // Accepted/adapted suggestions persist as manual feedback with a suggestion-state text marker, so a plain
+        // AUTOMATIC type check alone misses them on reload - it only ever sees suggestions merged in this session.
+        this.hasAutomaticFeedback.set(
+            feedback.some(
+                (feedbackItem) => feedbackItem.type === FeedbackType.AUTOMATIC || Feedback.getFeedbackSuggestionType(feedbackItem) !== FeedbackSuggestionType.NO_SUGGESTION,
+            ),
+        );
         this.highlightAutomaticFeedback();
 
         if (this.highlightMissingFeedback()) {

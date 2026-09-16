@@ -24,7 +24,7 @@ import { ProgrammingSubmissionService } from 'app/programming/shared/services/pr
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
-import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackSuggestionType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
@@ -182,7 +182,19 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     faExternalLink = faExternalLink;
     faCircleInfo = faCircleInfo;
 
-    readonly hasAutomaticFeedback = computed(() => this.automaticFeedback().length > 0 || this.hasAcceptedFeedbackSuggestions());
+    /**
+     * True whenever automatic or AI-suggested feedback is present: freshly generated automatic feedback, suggestions
+     * accepted during this session ({@link hasAcceptedFeedbackSuggestions}), or - on reload - accepted/adapted
+     * suggestions already persisted as manual feedback, which the two checks above cannot see.
+     */
+    readonly hasAutomaticFeedback = computed(
+        () =>
+            this.automaticFeedback().length > 0 ||
+            this.hasAcceptedFeedbackSuggestions() ||
+            [...this.referencedFeedback(), ...this.unreferencedFeedback()].some(
+                (feedback) => Feedback.getFeedbackSuggestionType(feedback) !== FeedbackSuggestionType.NO_SUGGESTION,
+            ),
+    );
 
     readonly isFeedbackSuggestionsEnabled = computed(() => Boolean(getCourseFromExercise(this.exercise())?.athenaGradingFeedbackEnabled));
 
