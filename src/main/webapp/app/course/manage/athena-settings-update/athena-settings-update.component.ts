@@ -151,12 +151,13 @@ export class AthenaSettingsUpdateComponent {
 
     /**
      * The track position, in percent, of a tick's value (1/2/3 -> 0/50/100), so the template can position ticks,
-     * the fill and the handle without repeating the mapping.
+     * the fill and the handle without repeating the mapping. The unset value (0) also maps to 0, so the fill
+     * width stays valid (never negative) while no course default is selected.
      *
-     * @param value the tick value (1-3) to position
+     * @param value the tick value (0-3, 0 meaning unset) to position
      */
     protected tickPercent(value: number): number {
-        return (value - 1) * 50;
+        return value > 0 ? (value - 1) * 50 : 0;
     }
 
     /**
