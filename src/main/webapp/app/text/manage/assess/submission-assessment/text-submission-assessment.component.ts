@@ -408,7 +408,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 this.hasAutomaticFeedback.set(feedbackSuggestions.length > 0);
                 this.loadingFeedbackSuggestions.set(false);
             },
-            error: () => this.loadingFeedbackSuggestions.set(false),
+            error: () => {
+                this.loadingFeedbackSuggestions.set(false);
+                this.alertService.error('artemisApp.textAssessment.error.loadFeedbackSuggestionsFailed');
+            },
         });
     }
 

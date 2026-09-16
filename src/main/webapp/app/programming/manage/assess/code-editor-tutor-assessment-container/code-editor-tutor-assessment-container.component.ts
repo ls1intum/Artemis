@@ -402,6 +402,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     allFeedback.every((feedback) => feedback.detailText !== suggestion.detailText || feedback.reference !== suggestion.reference),
                 ),
             );
+        } catch {
+            this.onError('artemisApp.programmingAssessment.loadFeedbackSuggestionsFailed');
         } finally {
             this.loadingFeedbackSuggestions.set(false);
         }
