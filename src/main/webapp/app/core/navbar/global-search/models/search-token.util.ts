@@ -1,5 +1,5 @@
 import { FilterToken } from './search-token.model';
-import { ALL_SEARCHABLE_TYPES, TYPE_FACETS } from './facet-catalog';
+import { TYPE_FACETS } from './facet-catalog';
 import { SearchEntityType } from './searchable-entity.model';
 
 /**
@@ -26,26 +26,36 @@ export function removeTokenAt(tokens: FilterToken[], index: number): FilterToken
 }
 
 /**
- * Expands the `type` tokens into the server `types` query value.
- * - Positive tokens win: their server types are unioned.
- * - Only exclusions present: everything except the excluded server types (over the full server set,
- *   so "exclude Exams" still keeps lecture units).
- * - No type tokens: undefined, so the server applies its default 'all'.
+ * Expands the positive `type` tokens into the server `types` query value.
+ * <p>
+ * Exclusions are deliberately not folded in here as a complement. "Everything except exercises" and "only exams"
+ * produce the identical type list, so the server cannot tell them apart, and its exam-exercise expansion fires for
+ * both. {@link excludedTypeTokens} carries the exclusions under their own name instead, which keeps the two distinct.
+ *
+ * @param tokens the active filter tokens
+ * @return the comma-separated server types, or undefined when no type is positively selected
  */
 export function expandTypeTokens(tokens: FilterToken[]): string | undefined {
-    const typeTokens = tokens.filter((token) => token.facet === 'type');
-    const positives = typeTokens.filter((token) => !token.negate);
-    const negatives = typeTokens.filter((token) => token.negate);
-
-    let serverTypes: SearchEntityType[];
-    if (positives.length > 0) {
-        serverTypes = unique(positives.flatMap((token) => serverTypesFor(token.value)));
-    } else if (negatives.length > 0) {
-        const excluded = new Set(negatives.flatMap((token) => serverTypesFor(token.value)));
-        serverTypes = ALL_SEARCHABLE_TYPES.filter((type) => !excluded.has(type));
-    } else {
+    const positives = tokens.filter((token) => token.facet === 'type' && !token.negate);
+    if (positives.length === 0) {
         return undefined;
     }
+    const serverTypes = unique(positives.flatMap((token) => serverTypesFor(token.value)));
+    return serverTypes.length > 0 ? serverTypes.join(',') : undefined;
+}
+
+/**
+ * The server types to hide, from the negated `type` tokens.
+ *
+ * @param tokens the active filter tokens
+ * @return the comma-separated server types to hide, or undefined when nothing is excluded
+ */
+export function excludedTypeTokens(tokens: FilterToken[]): string | undefined {
+    const negatives = tokens.filter((token) => token.facet === 'type' && token.negate);
+    if (negatives.length === 0) {
+        return undefined;
+    }
+    const serverTypes = unique(negatives.flatMap((token) => serverTypesFor(token.value)));
     return serverTypes.length > 0 ? serverTypes.join(',') : undefined;
 }
 

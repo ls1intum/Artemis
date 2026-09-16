@@ -103,6 +103,8 @@ public class GlobalSearchResource {
      * @param query            the search query (may be empty to browse recent items)
      * @param types            optional comma-separated list of types to include ({@code exercise,lecture,lecture_unit,exam,faq,channel,course,post,answer_post}
      *                             or {@code all}; default {@code all})
+     * @param excludeTypes     optional comma-separated list of types to hide; a row whose type is listed is dropped
+     *                             regardless of {@code types}
      * @param courseIds        optional course ids to scope the search to one or more courses (OR); inaccessible or unknown ids are ignored
      * @param excludeCourseIds optional course ids to hide from the results (OR); inaccessible or unknown ids are ignored
      * @param limit            maximum number of results (default 10, max 25)
@@ -120,6 +122,7 @@ public class GlobalSearchResource {
     @ApiResponse(responseCode = "400", description = "Unsupported entity type requested")
     public ResponseEntity<List<GlobalSearchResultDTO>> globalSearch(@RequestParam("q") @Parameter(description = "Search query; can be empty to retrieve recent items") String query,
             @RequestParam(value = "types", required = false) @Parameter(description = "Comma-separated entity type filter (exercise, lecture, lecture_unit, exam, faq, channel, course, post, answer_post) or 'all'; default 'all'") String types,
+            @RequestParam(value = "excludeTypes", required = false) @Parameter(description = "Comma-separated entity types to hide from the results; applied after 'types'") String excludeTypes,
             @RequestParam(value = "courseIds", required = false) @Parameter(description = "Course IDs to restrict the search to one or more courses (OR); inaccessible IDs are ignored") List<Long> courseIds,
             @RequestParam(value = "excludeCourseIds", required = false) @Parameter(description = "Course IDs to exclude from the search; results in these courses are hidden") List<Long> excludeCourseIds,
             @RequestParam(value = "limit", defaultValue = "10") @Parameter(description = "Maximum number of results (1–25, default 10)") int limit) {
@@ -129,6 +132,18 @@ public class GlobalSearchResource {
         if (requestedTypes == null) {
             return ResponseEntity.badRequest().build();
         }
+        // Exclusions are carried as their own parameter rather than folded into `types` by the client. A complement
+        // computed client-side arrives looking exactly like a deliberate narrow request, which is indistinguishable
+        // from one: "everything except exercises" and "only exams" are the same list, and the exam-exercise expansion
+        // below would fire for both. Naming the exclusion keeps the two apart.
+        Set<String> hiddenTypes = parseExcludedTypes(excludeTypes);
+        if (hiddenTypes == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        requestedTypes.removeAll(hiddenTypes);
+        if (requestedTypes.isEmpty()) {
+            return ResponseEntity.ok(List.of());
+        }
 
         int effectiveLimit = Math.clamp(limit, 1, 25);
         User user = userRepository.getUserWithAuthorities();
@@ -136,7 +151,7 @@ public class GlobalSearchResource {
         // Defence-in-depth: bound the id lists so a crafted request cannot drive an unbounded findAllById /
         // Weaviate containsAny on the admin paths. The cap sits far above any realistic UI use, so it never
         // affects a normal filter set; excess ids are dropped (consistent with the lenient "drop, don't 4xx" contract).
-        FilterBuildResult filterResult = buildSearchableItemFilter(user, capCourseIds(courseIds), capCourseIds(excludeCourseIds), requestedTypes);
+        FilterBuildResult filterResult = buildSearchableItemFilter(user, capCourseIds(courseIds), capCourseIds(excludeCourseIds), requestedTypes, hiddenTypes);
         if (!filterResult.hasAccess()) {
             return ResponseEntity.ok(List.of());
         }
@@ -180,6 +195,30 @@ public class GlobalSearchResource {
      * @param types the raw query parameter value
      * @return the parsed set, or {@code null} if any requested token is invalid
      */
+    /**
+     * Parses the types to hide. Unlike {@link #parseTypes}, a blank value means "hide nothing" rather than "all".
+     *
+     * @param excludeTypes the comma-separated parameter value, possibly null
+     * @return the types to hide, or null if any entry is not a known type
+     */
+    private static Set<String> parseExcludedTypes(String excludeTypes) {
+        if (excludeTypes == null || excludeTypes.isBlank()) {
+            return Set.of();
+        }
+        Set<String> result = new LinkedHashSet<>();
+        for (String token : excludeTypes.split(",")) {
+            String normalized = token.trim().toLowerCase(Locale.ROOT);
+            if (normalized.isEmpty()) {
+                continue;
+            }
+            if (!VALID_TYPES.contains(normalized)) {
+                return null;
+            }
+            result.add(normalized);
+        }
+        return result;
+    }
+
     private static Set<String> parseTypes(String types) {
         if (types == null || types.isBlank() || "all".equalsIgnoreCase(types.trim())) {
             return new LinkedHashSet<>(VALID_TYPES);
@@ -326,7 +365,7 @@ public class GlobalSearchResource {
      * <li>an {@code OR}-of-{@code AND}s filter with one disjunct per requested type otherwise</li>
      * </ul>
      */
-    private FilterBuildResult buildSearchableItemFilter(User user, List<Long> courseIds, List<Long> excludeCourseIds, Set<String> requestedTypes) {
+    private FilterBuildResult buildSearchableItemFilter(User user, List<Long> courseIds, List<Long> excludeCourseIds, Set<String> requestedTypes, Set<String> hiddenTypes) {
         // Decide if the filters should be applied
         boolean isAdmin = authCheckService.isCurrentUserAdminAccessEnabled();
         boolean hasCourseFilter = courseIds != null && !courseIds.isEmpty();
@@ -338,7 +377,7 @@ public class GlobalSearchResource {
             // Admin, no include filter, no communication filtering: the cheap type-discriminator filter already
             // covers visibility. An exclude filter is applied as a single NOT clause rather than enumerating the
             // complement course set (which for an admin would be every course in the instance).
-            Filter adminFilter = buildTypeDiscriminatorFilter(requestedTypes);
+            Filter adminFilter = buildTypeDiscriminatorFilter(requestedTypes, hiddenTypes);
             if (hasExcludeFilter) {
                 // Safe because every indexed row carries a non-null course_id: course rows use their own id as
                 // course_id (CourseSearchableEntityDTO), and every other entity DTO writes the owning course_id.
@@ -444,8 +483,10 @@ public class GlobalSearchResource {
             }
 
             // When the exam filter is active, also include exercises that belong to exams
+            // As above: skip the expansion when exercises were explicitly hidden rather than merely not asked for.
             boolean isExerciseTypeAlreadyRequested = requestedTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE);
-            if (!isExerciseTypeAlreadyRequested) {
+            boolean areExercisesHidden = hiddenTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE);
+            if (!isExerciseTypeAlreadyRequested && !areExercisesHidden) {
                 Filter examExerciseDisjunct = buildExamExerciseDisjunct(roleSets, studentExamInfo);
                 if (examExerciseDisjunct != null) {
                     disjuncts.add(examExerciseDisjunct);
@@ -825,14 +866,16 @@ public class GlobalSearchResource {
 
     // -- Shared helpers --
 
-    private static Filter buildTypeDiscriminatorFilter(Set<String> types) {
+    private static Filter buildTypeDiscriminatorFilter(Set<String> types, Set<String> hiddenTypes) {
         List<Filter> typeFilters = new ArrayList<>(types.size());
         for (String type : types) {
             typeFilters.add(typeEquals(type));
         }
 
-        boolean isExamRequestedButExercisesAreNotIncludedYet = types.contains(SearchableEntitySchema.TypeValues.EXAM)
-                && !types.contains(SearchableEntitySchema.TypeValues.EXERCISE);
+        // Absent is not the same as excluded: exercises may be missing because only exams were asked for, in which
+        // case exam exercises belong in the answer, or because the caller hid them, in which case they do not.
+        boolean isExamRequestedButExercisesAreNotIncludedYet = types.contains(SearchableEntitySchema.TypeValues.EXAM) && !types.contains(SearchableEntitySchema.TypeValues.EXERCISE)
+                && !hiddenTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE);
         if (isExamRequestedButExercisesAreNotIncludedYet) {
             typeFilters.add(Filter.and(typeEquals(SearchableEntitySchema.TypeValues.EXERCISE), Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true)));
         }

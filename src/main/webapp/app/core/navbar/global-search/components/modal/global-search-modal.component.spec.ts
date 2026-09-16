@@ -611,7 +611,7 @@ describe('GlobalSearchModalComponent', () => {
             component['onSearchInput']('test');
             vi.advanceTimersByTime(300);
 
-            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', undefined, undefined, undefined);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', undefined, undefined, undefined, undefined);
             expect(component['results']()).toEqual(queryResults);
 
             // Now toggle a filter with the same query — should still re-trigger
@@ -619,7 +619,7 @@ describe('GlobalSearchModalComponent', () => {
             component['applyTokens']([{ facet: 'type', value: 'exercise' }]);
             vi.advanceTimersByTime(300);
 
-            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', 'exercise', undefined, undefined);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', 'exercise', undefined, undefined, undefined);
             expect(component['results']()).toEqual(filteredResults);
         });
 
@@ -632,7 +632,7 @@ describe('GlobalSearchModalComponent', () => {
             vi.advanceTimersByTime(300);
 
             expect(component['filterPickerOpen']()).toBe(false);
-            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('deep', undefined, undefined, undefined);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('deep', undefined, undefined, undefined, undefined);
         });
 
         it('returns to the guided picker when the search box is cleared and no filter is left', () => {
@@ -664,7 +664,7 @@ describe('GlobalSearchModalComponent', () => {
             vi.advanceTimersByTime(300);
 
             expect(component['filterPickerOpen']()).toBe(false);
-            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('course', undefined, undefined, undefined);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('course', undefined, undefined, undefined, undefined);
         });
 
         it('keeps the search text while a filter is composed through the picker', () => {
@@ -679,7 +679,7 @@ describe('GlobalSearchModalComponent', () => {
 
             expect(component['searchQuery']()).toBe('linear regression');
             expect(component['tokens']()).toHaveLength(1);
-            expect(mockSearchService.globalSearch).toHaveBeenLastCalledWith('linear regression', 'course', undefined, undefined);
+            expect(mockSearchService.globalSearch).toHaveBeenLastCalledWith('linear regression', 'course', undefined, undefined, undefined);
         });
 
         it('switches back to the results on a second Cmd+F once a search sits behind the menu', () => {
@@ -703,12 +703,12 @@ describe('GlobalSearchModalComponent', () => {
             vi.advanceTimersByTime(300);
 
             expect(component['deadEnd']()).toBe(true);
-            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('nsjkfncs', undefined, undefined, undefined);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('nsjkfncs', undefined, undefined, undefined, undefined);
 
             component['onOptionSelected'](0);
             vi.advanceTimersByTime(300);
 
-            expect(mockSearchService.globalSearch).toHaveBeenLastCalledWith('nsjkfncs type:candle', undefined, undefined, undefined);
+            expect(mockSearchService.globalSearch).toHaveBeenLastCalledWith('nsjkfncs type:candle', undefined, undefined, undefined, undefined);
             expect(component['filterMenuOpen']()).toBe(false);
         });
 
@@ -875,7 +875,7 @@ describe('GlobalSearchModalComponent', () => {
 
             expect(component['searchQuery']()).toBe('linear regression');
             expect(component['tokens']()).toHaveLength(3);
-            expect(mockSearchService.globalSearch).toHaveBeenLastCalledWith('linear regression', 'lecture,lecture_unit', [1, 2], undefined);
+            expect(mockSearchService.globalSearch).toHaveBeenLastCalledWith('linear regression', 'lecture,lecture_unit', undefined, [1, 2], undefined);
         });
 
         it('walks the exclude branch and offers the right way back at every level', () => {
@@ -1196,7 +1196,7 @@ describe('GlobalSearchModalComponent', () => {
             component['onSearchInput']('test');
             vi.advanceTimersByTime(300);
 
-            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', 'exercise', [42], undefined);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', 'exercise', undefined, [42], undefined);
         });
 
         it('should pass excludeCourseIds to globalSearch for a negated course token', () => {
@@ -1208,7 +1208,18 @@ describe('GlobalSearchModalComponent', () => {
             component['onSearchInput']('test');
             vi.advanceTimersByTime(300);
 
-            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', undefined, undefined, [7]);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', undefined, undefined, undefined, [7]);
+        });
+
+        it('sends a type exclusion under excludeTypes rather than as a complement', () => {
+            // A complement computed here would reach the server as "exam, lecture, ... " with exercise merely
+            // absent, which is indistinguishable from asking only for exams. The server expands exams to their
+            // exercises in that case, so excluding Exercises would have returned exercises.
+            component['applyTokens']([{ facet: 'type', value: 'exercise', negate: true }]);
+            component['onSearchInput']('test');
+            vi.advanceTimersByTime(300);
+
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', undefined, 'exercise', undefined, undefined);
         });
 
         it('applies context filters on open and leaves them intact on backspace over the empty input', () => {

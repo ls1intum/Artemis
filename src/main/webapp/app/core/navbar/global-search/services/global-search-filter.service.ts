@@ -9,7 +9,7 @@ import { SearchCourseOptionsService } from './search-course-options.service';
 import { SearchEntityType } from '../models/searchable-entity.model';
 import { FilterToken, TypeFacetValue } from '../models/search-token.model';
 import { TYPE_FACETS, TYPE_FACET_ORDER } from '../models/facet-catalog';
-import { addOrToggleToken, excludedCourseIds, expandTypeTokens, removeTokenAt, selectedCourseIds } from '../models/search-token.util';
+import { addOrToggleToken, excludedCourseIds, excludedTypeTokens, expandTypeTokens, removeTokenAt, selectedCourseIds } from '../models/search-token.util';
 import { appendOperator, parseOperator, stripOperator } from '../models/search-operator.util';
 
 /**
@@ -78,6 +78,8 @@ export class GlobalSearchFilterService {
 
     // Query params derived from the tokens and sent to the server.
     readonly typesParam: Signal<string | undefined> = computed(() => expandTypeTokens(this.tokens()));
+    /** Types the user chose to hide, sent under their own name rather than folded into {@link typesParam}. */
+    readonly excludeTypesParam: Signal<string | undefined> = computed(() => excludedTypeTokens(this.tokens()));
     readonly courseIdsParam: Signal<number[]> = computed(() => selectedCourseIds(this.tokens()));
     readonly excludeCourseIdsParam: Signal<number[]> = computed(() => excludedCourseIds(this.tokens()));
     // Server types for the currently included type facets (drives the navigation view's active cards).

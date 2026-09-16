@@ -1,4 +1,11 @@
-import { addOrToggleToken, excludedCourseIds, expandTypeTokens, removeTokenAt, selectedCourseIds } from 'app/core/navbar/global-search/models/search-token.util';
+import {
+    addOrToggleToken,
+    excludedCourseIds,
+    excludedTypeTokens,
+    expandTypeTokens,
+    removeTokenAt,
+    selectedCourseIds,
+} from 'app/core/navbar/global-search/models/search-token.util';
 import { FilterToken } from 'app/core/navbar/global-search/models/search-token.model';
 
 describe('search token utilities', () => {
@@ -27,12 +34,28 @@ describe('search token utilities', () => {
             expect(expandTypeTokens([type('exercise'), type('exam')])).toBe('exercise,exam');
         });
 
-        it('exclusion returns every server type except the excluded ones', () => {
-            expect(expandTypeTokens([type('exam', true)])).toBe('exercise,lecture,lecture_unit,faq,channel,course,post,answer_post');
+        it('leaves the types unset when only exclusions are active', () => {
+            // Exclusions are no longer folded in as a complement: "everything except exams" and "only exercises"
+            // would otherwise reach the server as the same list, and it cannot tell those apart.
+            expect(expandTypeTokens([type('exam', true)])).toBeUndefined();
         });
 
-        it('positive tokens win over exclusions', () => {
+        it('ignores exclusions when a positive type is selected', () => {
             expect(expandTypeTokens([type('exercise'), type('exam', true)])).toBe('exercise');
+        });
+    });
+
+    describe('excludedTypeTokens', () => {
+        it('returns nothing when no type is excluded', () => {
+            expect(excludedTypeTokens([type('exercise'), course('5')])).toBeUndefined();
+        });
+
+        it('expands an excluded facet to its server types', () => {
+            expect(excludedTypeTokens([type('lecture', true)])).toBe('lecture,lecture_unit');
+        });
+
+        it('unions several exclusions', () => {
+            expect(excludedTypeTokens([type('exam', true), type('faq', true)])).toBe('exam,faq');
         });
     });
 

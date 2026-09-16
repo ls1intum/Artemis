@@ -64,6 +64,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly searchQuery = this.filter.searchQuery;
     protected readonly tokens = this.filter.tokens;
     protected readonly typesParam = this.filter.typesParam;
+    protected readonly excludeTypesParam = this.filter.excludeTypesParam;
     protected readonly courseIdsParam = this.filter.courseIdsParam;
     protected readonly excludeCourseIdsParam = this.filter.excludeCourseIdsParam;
     protected readonly activeFilters = this.filter.activeFilters;
@@ -217,9 +218,10 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
                     const query = event.query;
                     const types = this.typesParam();
+                    const excludeTypes = this.excludeTypesParam();
                     const courseIds = this.courseIdsParam();
                     const excludeCourseIds = this.excludeCourseIdsParam();
-                    const hasFilter = types !== undefined || courseIds.length > 0 || excludeCourseIds.length > 0;
+                    const hasFilter = types !== undefined || excludeTypes !== undefined || courseIds.length > 0 || excludeCourseIds.length > 0;
                     const trimmedQuery = query?.trim() || '';
                     const hasValidQuery = trimmedQuery.length >= MIN_SEARCH_QUERY_LENGTH;
                     const isTooShort = trimmedQuery.length > 0 && !hasValidQuery;
@@ -267,7 +269,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     this.isLoading.set(true);
                     return timer(SEARCH_DEBOUNCE_MS).pipe(
                         switchMap(() =>
-                            this.searchService.globalSearch(searchQuery, types, courseIdsParam, excludeCourseIdsParam).pipe(
+                            this.searchService.globalSearch(searchQuery, types, excludeTypes, courseIdsParam, excludeCourseIdsParam).pipe(
                                 tap((results) => {
                                     if (!hasValidQuery && hasFilter) {
                                         this.placeholderCache.set(cacheKey, results);

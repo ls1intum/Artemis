@@ -852,6 +852,34 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
     class ExamMetadataFlagTests {
 
         /**
+         * Asking for exams expands to the exercises inside them, which is what makes the Exams filter useful.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testExamTypeAlsoReturnsItsExercises() throws Exception {
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Ongoing%20Exam%20Exercise&types=exam&courseIds=" + course.getId(), HttpStatus.OK,
+                    GlobalSearchResultDTO.class);
+
+            assertThat(results.stream().map(GlobalSearchResultDTO::title)).contains(SEARCH_PREFIX + " Ongoing Exam Exercise");
+        }
+
+        /**
+         * Hiding exercises must hide exam exercises too: they are exercises.
+         * <p>
+         * The expansion above keys on exams being requested while exercises are not, and a client that folded an
+         * exclusion into a complement produced exactly that shape, so excluding exercises used to return them. The
+         * exclusion is carried under its own name precisely so the two cases stay distinguishable here.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testExcludingExercisesAlsoHidesExamExercises() throws Exception {
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Ongoing%20Exam%20Exercise&excludeTypes=exercise&courseIds=" + course.getId(), HttpStatus.OK,
+                    GlobalSearchResultDTO.class);
+
+            assertThat(results.stream().map(GlobalSearchResultDTO::title)).doesNotContain(SEARCH_PREFIX + " Ongoing Exam Exercise");
+        }
+
+        /**
          * Editors/instructors should see {@code isAtLeastEditor: true} in the metadata of exam results
          * so the client can route them to the exam management page.
          */
