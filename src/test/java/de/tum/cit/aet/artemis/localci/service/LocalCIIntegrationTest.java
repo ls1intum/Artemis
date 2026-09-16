@@ -242,6 +242,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         assertThat(buildJob.getBuildCompletionDate()).isNull();
 
         // resume the build agent
+        sharedQueueProcessingService.resetInitializedState();
         sharedQueueProcessingService.init();
 
         await().atMost(5, TimeUnit.SECONDS).until(() -> {
@@ -351,6 +352,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         assertThat(buildJob.getBuildStatus()).isEqualTo(BuildStatus.MISSING);
 
         // resume the build agent
+        sharedQueueProcessingService.resetInitializedState();
         sharedQueueProcessingService.init();
     }
 
@@ -397,10 +399,69 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
             return allJobsForParticipation.size() >= 2 && allJobsForParticipation.stream().anyMatch(j -> j.getRetryCount() == 1 && !j.getBuildJobId().equals(originalBuildJobId));
         });
 
-        // Resume the build agent
-        sharedQueueProcessingService.init();
+        // Resume the build agent, with nothing left in the queues for it to pick up
         processingJobs.clear();
         queuedJobs.clear();
+        sharedQueueProcessingService.resetInitializedState();
+        sharedQueueProcessingService.init();
+    }
+
+    /**
+     * A multi-container build has one job per container, and a missing job is retried by re-triggering the whole build.
+     * When every container of a build went missing, the build is retried once for its build group, not once per
+     * container: one new build is scheduled and every missing sibling's retry count is raised.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMissingSiblingContainerJobsAreRetriedAsOneBuild() {
+        // Stop the build agent to prevent the build job from being processed
+        sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
+
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        processNewPush(commitHash, studentAssignmentRepository.bareRepository().getRepository(), userTestRepository.getUserWithAuthorities());
+        await().atMost(60, TimeUnit.SECONDS).pollInterval(500, TimeUnit.MILLISECONDS).until(() -> {
+            Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
+            return buildJobOptional.isPresent() && buildJobOptional.get().getBuildStatus() == BuildStatus.QUEUED;
+        });
+
+        // Turn the queued job into the two container jobs of one build group, both missing for long enough to be retried.
+        BuildJob firstContainerJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId()).orElseThrow();
+        String buildGroupId = firstContainerJob.getBuildJobId();
+        String firstContainerJobId = firstContainerJob.getBuildJobId();
+        ZonedDateTime submissionDate = ZonedDateTime.now().minusMinutes(10);
+        firstContainerJob.setBuildGroupId(buildGroupId);
+        firstContainerJob.setBuildStatus(BuildStatus.MISSING);
+        firstContainerJob.setBuildSubmissionDate(submissionDate);
+        buildJobRepository.saveAndFlush(firstContainerJob);
+        BuildJob secondContainerJob = new BuildJob();
+        secondContainerJob.setBuildJobId(buildGroupId + "-1");
+        secondContainerJob.setBuildGroupId(buildGroupId);
+        secondContainerJob.setParticipationId(studentParticipation.getId());
+        secondContainerJob.setBuildStatus(BuildStatus.MISSING);
+        secondContainerJob.setBuildSubmissionDate(submissionDate);
+        buildJobRepository.saveAndFlush(secondContainerJob);
+
+        // Clear the queue so the retry service doesn't find the jobs there
+        queuedJobs.clear();
+
+        localCIMissingJobService.retryMissingJobs();
+
+        // Both missing siblings count as retried once ...
+        await().atMost(5, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+            assertThat(buildJobRepository.findByBuildJobId(firstContainerJobId).orElseThrow().getRetryCount()).isEqualTo(1);
+            assertThat(buildJobRepository.findByBuildJobId(buildGroupId + "-1").orElseThrow().getRetryCount()).isEqualTo(1);
+        });
+        // ... but the build itself was re-triggered once: exactly one job exists for the participation outside the missing group.
+        List<BuildJob> retriedJobs = buildJobRepository.findAll().stream()
+                .filter(job -> studentParticipation.getId().equals(job.getParticipationId()) && !buildGroupId.equals(job.getBuildGroupId())).toList();
+        assertThat(retriedJobs).hasSize(1);
+        assertThat(retriedJobs.getFirst().getRetryCount()).isEqualTo(1);
+
+        // Resume the build agent, with nothing left in the queues for it to pick up
+        processingJobs.clear();
+        queuedJobs.clear();
+        sharedQueueProcessingService.resetInitializedState();
+        sharedQueueProcessingService.init();
     }
 
     @Test
@@ -862,6 +923,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         BuildJobQueueItem item = queuedJobs.stream().filter(i -> i.buildConfig().commitHashToBuild().equals(commitHash) && i.participationId() == studentParticipation.getId())
                 .findFirst().orElseThrow();
         assertThat(item.jobTimingInfo().estimatedDuration()).isEqualTo(22);
+        sharedQueueProcessingService.resetInitializedState();
         sharedQueueProcessingService.init();
 
         await().until(() -> processingJobs.values().stream().anyMatch(buildJobQueueItem -> buildJobQueueItem.buildConfig().commitHashToBuild().equals(commitHash)
@@ -882,7 +944,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         JobTimingInfo jobTimingInfo = new JobTimingInfo(ZonedDateTime.now().minusSeconds(30), ZonedDateTime.now(), null, ZonedDateTime.now().plusSeconds(30), 60);
         BuildConfig buildConfig = new BuildConfig(null, null, commitHash, commitHash, null, null, null, null, false, false, null, 0, null, null, null, null);
         BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem("1", "1", null, submission.getParticipation().getId(), 1L, programmingExercise.getId(), 0, 1, null, null,
-                jobTimingInfo, buildConfig, null);
+                jobTimingInfo, buildConfig, null, null, null);
 
         processingJobs.put(buildJobQueueItem.id(), buildJobQueueItem);
         var submissionDto = request.get("/api/programming/programming-exercise-participations/" + submission.getParticipation().getId() + "/latest-pending-submission",

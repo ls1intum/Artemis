@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -31,12 +32,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
+import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
@@ -134,6 +137,8 @@ public class ProgrammingExerciseGradingService {
 
     private final ScaFeedbackRepository scaFeedbackRepository;
 
+    private final FeedbackRepository feedbackRepository;
+
     private final TestCasePointsService testCasePointsService;
 
     private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
@@ -147,7 +152,7 @@ public class ProgrammingExerciseGradingService {
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
             MavenCentralRateLimitNotificationService mavenCentralRateLimitNotificationService, FeedbackMessageService feedbackMessageService,
             TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository, TestCasePointsService testCasePointsService,
-            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService, FeedbackRepository feedbackRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
@@ -169,6 +174,7 @@ public class ProgrammingExerciseGradingService {
         this.feedbackMessageService = feedbackMessageService;
         this.testCaseFeedbackRepository = testCaseFeedbackRepository;
         this.scaFeedbackRepository = scaFeedbackRepository;
+        this.feedbackRepository = feedbackRepository;
         this.testCasePointsService = testCasePointsService;
         this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
@@ -202,36 +208,15 @@ public class ProgrammingExerciseGradingService {
         log.debug("Received new build result (NEW) for participation {}", participation.getId());
 
         try {
-            ContinuousIntegrationResultService ciResultService = continuousIntegrationResultService.orElseThrow();
-            var buildResult = ciResultService.convertBuildResult(requestBody);
-
-            checkCorrectBranchElseThrow(participation, buildResult);
-            checkHasCommitHashElseThrow(buildResult);
-
             ProgrammingExercise exercise = participation.getProgrammingExercise();
+            // A single-container build reports every test case of the exercise, so a solution build may deactivate the
+            // ones missing from its result.
+            ParsedBuildResult parsed = parseBuildResult(participation, requestBody, testsExpected, true);
+            var buildResult = parsed.buildResult();
+            Result newResult = parsed.result();
+            var latestSubmission = parsed.submission();
+            final boolean buildFailed = parsed.buildFailed();
 
-            // Find out which test cases were executed and calculate the score according to their status and weight.
-            // This needs to be done as some test cases might not have been executed.
-            // When the result is from a solution participation, extract the feedback items (= test cases) and store them in our database.
-            if (participation instanceof SolutionProgrammingExerciseParticipation) {
-                feedbackCreationService.extractTestCasesFromResultAndBroadcastUpdates(buildResult, exercise);
-            }
-
-            Result newResult = ciResultService.createResultFromBuildResult(buildResult, participation);
-
-            // Fetch submission or create a fallback
-            var latestSubmission = getSubmissionForBuildResult(participation, buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
-
-            // Determine if the build failed based on whether tests were expected.
-            // When tests are expected: build failed if the build reported no test results at all. What decides is
-            // the reported count, not the stored test-case feedback: feedback is only stored for tests the exercise
-            // knows, and it knows them from the solution build. If that build failed or has not run yet, this build
-            // still ran its tests - the student must not be told their build failed because of it.
-            // When tests are NOT expected (compile-only phase): build failed if the script exited with non-zero.
-            final boolean noTestResults = newResult.getTestCaseCount() == 0;
-            final Integer exitCode = buildResult.buildScriptExitCode();
-            final boolean scriptFailed = exitCode != null && exitCode != 0;
-            final var buildFailed = testsExpected ? noTestResults : scriptFailed;
             if (latestSubmission.isBuildFailed() != buildFailed) {
                 // Written directly. This is one boolean on a row that already exists, and it used to reach the database
                 // only through saving the whole submission at the end of this method.
@@ -267,6 +252,344 @@ public class ProgrammingExerciseGradingService {
             log.error("Result for participation {} could not be created", participation.getId(), ex);
             return null;
         }
+    }
+
+    /**
+     * Parses a raw build result and resolves what both result paths need from it: the feedback it reports, the submission
+     * it belongs to, and whether the build failed. What follows differs between the two: a single-container build turns
+     * the result into the submission's result, while one container of a multi-container build appends its feedback to the
+     * result shared by its siblings.
+     *
+     * @param participation             the participation that was built
+     * @param requestBody               the raw build result
+     * @param testsExpected             whether test results are expected from this build (false for compile-only phases)
+     * @param deactivateAbsentTestCases whether a solution build may deactivate the test cases that are missing from this
+     *                                      result, which only holds for a result covering every test case of the exercise
+     * @return the parsed build result
+     */
+    private ParsedBuildResult parseBuildResult(ProgrammingExerciseParticipation participation, Object requestBody, boolean testsExpected, boolean deactivateAbsentTestCases) {
+        ContinuousIntegrationResultService ciResultService = continuousIntegrationResultService.orElseThrow();
+        var buildResult = ciResultService.convertBuildResult(requestBody);
+
+        checkCorrectBranchElseThrow(participation, buildResult);
+        checkHasCommitHashElseThrow(buildResult);
+
+        // When the result is from a solution participation, extract the feedback items (= test cases) and store them in
+        // our database. This finds out which test cases were executed, as some of them might not have been.
+        if (participation instanceof SolutionProgrammingExerciseParticipation) {
+            feedbackCreationService.extractTestCasesFromResultAndBroadcastUpdates(buildResult, participation.getProgrammingExercise(), deactivateAbsentTestCases);
+        }
+
+        Result result = ciResultService.createResultFromBuildResult(buildResult, participation);
+
+        // The submission may already have been created by the push flow, otherwise a fallback is created. A matched
+        // submission comes back as a detached skeleton (see BuildResultSubmissionDTO#toDetachedSubmission), which is
+        // enough to read from; a caller that mutates and saves it has to load the real entity itself.
+        var submission = getSubmissionForBuildResult(participation, buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
+
+        // Determine if the build failed based on whether tests were expected.
+        // When tests are expected: build failed if the build reported no test results at all. What decides is
+        // the reported count, not the stored test-case feedback: feedback is only stored for tests the exercise
+        // knows, and it knows them from the solution build. If that build failed or has not run yet, this build
+        // still ran its tests - the student must not be told their build failed because of it.
+        // When tests are NOT expected (compile-only phase): build failed if the script exited with non-zero.
+        final boolean noTestResults = result.getTestCaseCount() == 0;
+        final Integer exitCode = buildResult.buildScriptExitCode();
+        final boolean scriptFailed = exitCode != null && exitCode != 0;
+        final boolean buildFailed = testsExpected ? noTestResults : scriptFailed;
+
+        return new ParsedBuildResult(buildResult, result, submission, buildFailed);
+    }
+
+    /**
+     * What both result paths read out of a raw build result before they diverge.
+     *
+     * @param buildResult the converted build result
+     * @param result      the result carrying the feedback this build reported, not saved yet
+     * @param submission  the submission the build belongs to, detached unless it was created as a fallback
+     * @param buildFailed whether the build failed, judged by the reported test count and the script's exit code
+     */
+    private record ParsedBuildResult(BuildResultNotification buildResult, Result result, ProgrammingSubmission submission, boolean buildFailed) {
+    }
+
+    /**
+     * Appends the build result of one container of a multi-container build plan to the aggregated result shared by all
+     * containers of the same build. Instead of creating a standalone result per container, every container's feedback is
+     * collected into a single in-progress result (its completion date stays null until every container has finished, see
+     * {@link #finalizeContainerResult}); the score is only computed then, over the feedback of all containers. Which
+     * containers belong together is the caller's knowledge: it passes the id of the result the earlier containers of the
+     * same build merged into, or null for the first container, which then starts the build's result.
+     *
+     * @param participation      the participation that was built
+     * @param requestBody        the raw build result of the container
+     * @param testsExpected      whether tests were expected for this container
+     * @param containerName      the name of the container that produced this result, used to label its build logs
+     * @param aggregatedResultId the id of the result the earlier containers of the same build merged into, or null if this
+     *                               is the first container of the build to report
+     * @return the aggregated result with this container's feedback appended, or null if it could not be created
+     */
+    public Result appendContainerResult(@NonNull ProgrammingExerciseParticipation participation, @NonNull Object requestBody, boolean testsExpected, @Nullable String containerName,
+            @Nullable Long aggregatedResultId) {
+        try {
+            ProgrammingExercise exercise = participation.getProgrammingExercise();
+            // This container reports only its own test cases; not deactivating the absent ones keeps a solution build
+            // from deactivating the test cases of its sibling containers, which each report their own share.
+            ParsedBuildResult parsed = parseBuildResult(participation, requestBody, testsExpected, false);
+            var buildResult = parsed.buildResult();
+            // Whether this container failed to build; applied to the submission once the attempt's result is resolved below.
+            final boolean containerFailed = parsed.buildFailed();
+
+            // The submission is shared by all containers of the same commit and is never saved as an entity here: its
+            // result collection cascades with orphan removal, and merging a detached copy of it would delete a result a
+            // tutor inserted in the meantime. The skeleton parseBuildResult hands back carries the id, which is all the
+            // result's foreign key, the build logs and the targeted flag update below need; a submission created as a
+            // fallback is already saved.
+            ProgrammingSubmission submission = parsed.submission();
+
+            // Preserve the build logs of a failed container, labeled by its name and saved next to the logs of the other
+            // containers, so a crashed container's logs survive alongside its siblings' (as for a single-container build,
+            // logs are only kept when the build failed). The submission's own log collection is deliberately not touched:
+            // saveBuildLogs would delete the logs the sibling containers already contributed.
+            if (containerFailed && buildResult.hasLogs()) {
+                var buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildResult.extractBuildLogs(), exercise.getProgrammingLanguage());
+                buildLogService.appendBuildLogs(buildLogs, submission, containerName);
+            }
+
+            Result aggregatedResult = getOrCreateAggregatedResult(submission, exercise, aggregatedResultId);
+            // The build-failed flag is written with a targeted update, as on the single-container path. The first
+            // container of a build starts a fresh attempt and resets the flag left over from an earlier attempt of the
+            // same submission; any container that fails to build sets it. finalizeContainerResult reads it back from
+            // the stored submission.
+            if (aggregatedResultId == null || containerFailed) {
+                programmingSubmissionRepository.updateBuildFailed(submission.getId(), containerFailed);
+            }
+            // Drop feedback for a test case the aggregated result already carries from an earlier container. A shared
+            // setup phase (e.g. the main-method check the DejaGnu containers each need) runs in several containers and
+            // reports the same test case in each, but a test name is unique per exercise: without this, the merged
+            // result would hold that test case several times, which the scoring treats as a duplicate and zeroes the
+            // score. The test cases proper are partitioned across containers, so this only ever removes such repeats.
+            // Only append the feedback here; the score is not recomputed until every container has finished (see
+            // finalizeContainerResult), because scoring a partial result would mark the tests of containers that have
+            // not finished yet as "not executed". The rows are inserted with a reference to the aggregate, whose own
+            // columns do not change on append: merging the aggregate instead would re-read every row the earlier
+            // containers stored, once per container, to insert the same new rows through its cascade.
+            Set<Long> seenTestCaseIds = aggregatedResultId == null ? new HashSet<>() : new HashSet<>(testCaseFeedbackRepository.findTestCaseIdsByResultId(aggregatedResultId));
+            List<TestCaseFeedback> newTestCaseFeedbacks = parsed.result().getTestCaseFeedbacks().stream().filter(distinctNewTestCaseFeedback(seenTestCaseIds))
+                    .peek(feedback -> feedback.setResult(aggregatedResult)).toList();
+            testCaseFeedbackRepository.saveAll(newTestCaseFeedbacks);
+            // static code analysis feedback carries no test case and is appended as reported
+            List<ScaFeedback> newScaFeedbacks = parsed.result().getScaFeedbacks().stream().peek(feedback -> feedback.setResult(aggregatedResult)).toList();
+            scaFeedbackRepository.saveAll(newScaFeedbacks);
+            return aggregatedResult;
+        }
+        catch (ContinuousIntegrationException ex) {
+            log.error("Container result for participation {} could not be appended", participation.getId(), ex);
+            return null;
+        }
+    }
+
+    /**
+     * A predicate that keeps a container's test-case feedback only if the aggregated result does not already carry
+     * feedback for the same test case: a test case is kept the first time it is seen across the submission's containers
+     * and dropped afterwards.
+     *
+     * @param seenTestCaseIds the ids of the test cases the aggregated result already carries feedback for; extended as
+     *                            the predicate sees further ones
+     * @return a stateful predicate to use once per container while appending its feedback
+     */
+    private static Predicate<TestCaseFeedback> distinctNewTestCaseFeedback(Set<Long> seenTestCaseIds) {
+        return feedback -> seenTestCaseIds.add(feedback.getTestCase().getId());
+    }
+
+    /**
+     * Replaces the typed automatic feedback of a result by swapping its collections. The results processed here are
+     * detached (no path runs inside a transaction), so the swap is what saving the result later merges.
+     *
+     * @param result            the result whose typed feedback is replaced
+     * @param testCaseFeedbacks the test-case feedback rows to keep
+     * @param scaFeedbacks      the static code analysis feedback rows to keep
+     */
+    private void replaceTypedFeedback(Result result, Collection<TestCaseFeedback> testCaseFeedbacks, Collection<ScaFeedback> scaFeedbacks) {
+        result.setTestCaseFeedbacks(testCaseFeedbacks);
+        result.setScaFeedbacks(scaFeedbacks);
+    }
+
+    /**
+     * Inserts the typed feedback rows of a result that are not stored yet, so that they carry ids afterwards. The detached
+     * result takes the stored rows back through a swap of its collections.
+     *
+     * @param result the result whose typed feedback rows are inserted
+     */
+    private void insertTypedFeedback(Result result) {
+        List<TestCaseFeedback> storedTestCaseFeedbacks = testCaseFeedbackRepository.saveAll(result.getTestCaseFeedbacks());
+        List<ScaFeedback> storedScaFeedbacks = scaFeedbackRepository.saveAll(result.getScaFeedbacks());
+        result.setTestCaseFeedbacks(storedTestCaseFeedbacks);
+        result.setScaFeedbacks(storedScaFeedbacks);
+    }
+
+    /**
+     * Inserts only the feedback rows of a result that are not stored yet, keeping the instances: persisting a new row
+     * assigns its id in place, whereas merging (what saving a stored result does for its rows) hands back copies whose
+     * lazy references, the message above all, are proxies that cannot be read once the session that merged them has
+     * closed, and leaves the original rows without ids. A result whose stored rows are loaded whole and whose new rows
+     * are inserted this way can be reported to the client as it is, without reloading it after the save. Covers the
+     * typed rows and the legacy rows the scoring still writes (the submission penalty, the duplicate-test warning),
+     * because the client identifies feedback by id.
+     *
+     * @param result the result whose new feedback rows are inserted
+     */
+    private void insertNewFeedback(Result result) {
+        testCaseFeedbackRepository.saveAll(result.getTestCaseFeedbacks().stream().filter(feedback -> feedback.getId() == null).toList());
+        scaFeedbackRepository.saveAll(result.getScaFeedbacks().stream().filter(feedback -> feedback.getId() == null).toList());
+        feedbackRepository.saveAll(result.getFeedbacks().stream().filter(feedback -> feedback.getId() == null).toList());
+    }
+
+    /**
+     * The two steps a scored automatic result of a STUDENT participation triggers, shared by the single-container path and
+     * the multi-container finalize: locking the repository under a lock-repository submission policy, and merging the new
+     * automatic feedback into the latest manual result when the submission is already under manual assessment.
+     * <p>
+     * The submission policy is read from the exercise instance, which {@code calculateScoreForResult} has already
+     * resolved; loading it again meant a second fetch of the whole exercise and its course for every result. Neither
+     * step applies to a practice-mode participation.
+     *
+     * @param participation         the student participation the result belongs to
+     * @param processedResult       the scored automatic result
+     * @param programmingSubmission the submission the result belongs to
+     * @param latestOtherResult     the submission's latest result apart from the new one, or null if there is none
+     * @return the manual result the feedback was merged into, or empty if the automatic result stands on its own
+     */
+    private Optional<Result> applyStudentResultPolicies(ProgrammingExerciseParticipation participation, Result processedResult, ProgrammingSubmission programmingSubmission,
+            @Nullable Result latestOtherResult) {
+        // When a student receives a new result, we want to check whether we need to lock the participation and the
+        // repository when a lock repository policy is present. Only lock the repository and the participation if the
+        // participation is not for a test run (i.e. for a course exercise practice repository or for an instructor exam
+        // test run repository). Student test exam participations will still be locked by this.
+        SubmissionPolicy submissionPolicy = participation.getProgrammingExercise().getSubmissionPolicy();
+        if (submissionPolicy instanceof LockRepositoryPolicy policy && !((ProgrammingExerciseStudentParticipation) participation).isPracticeMode()) {
+            submissionPolicyService.handleLockRepositoryPolicy(processedResult, (Participation) participation, policy);
+        }
+
+        if (latestOtherResult != null && latestOtherResult.isManual() && !((Participation) participation).isPracticeMode()) {
+            // Note: in this case, we do not want to keep the automatic result on its own, but update the latest semi-automatic one
+            Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(latestOtherResult.getId(), processedResult);
+            // Adding back dropped submission. The result owns the foreign key, so saving it is enough; the
+            // submission itself did not change.
+            updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
+            // Saved, but the instance handed back is the one that was merged into, not save's return value: outside a
+            // transaction (the single-container path) save merges a detached result and returns a copy whose test cases
+            // are uninitialized proxies, which the broadcast that follows cannot read without a session. The original
+            // keeps the initialized test cases its rows were inserted with, and it already carries every id.
+            resultRepository.save(updatedLatestSemiAutomaticResult);
+            return Optional.of(updatedLatestSemiAutomaticResult);
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Returns the result the containers of one build aggregate their feedback into: the result the earlier containers
+     * merged into when the caller identified one, otherwise a new in-progress result, which marks the start of a build
+     * attempt. An attempt never joins the open result of an earlier attempt of the same submission, and never a tutor's
+     * draft assessment on it, because the result is identified by the caller through the build's jobs rather than found
+     * among the submission's results.
+     *
+     * @param submission         the submission shared by all containers of the build
+     * @param exercise           the programming exercise
+     * @param aggregatedResultId the id of the result the earlier containers merged into, or null for the first container
+     * @return the aggregated result to append feedback to
+     */
+    private Result getOrCreateAggregatedResult(ProgrammingSubmission submission, ProgrammingExercise exercise, @Nullable Long aggregatedResultId) {
+        if (aggregatedResultId != null) {
+            // Loaded without its feedback: the append inserts its rows with a reference to the aggregate and never reads
+            // the rows the earlier containers stored (their test-case ids come from a projection).
+            return resultRepository.findByIdElseThrow(aggregatedResultId);
+        }
+        Result result = new Result();
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
+        // stays null until every container has finished, which marks the result as still in progress
+        result.setCompletionDate(null);
+        result.setExerciseId(exercise.getId());
+        result.setSubmission(submission);
+        result.setRatedIfNotAfterDueDate();
+        result = resultRepository.save(result);
+        result.setSubmission(submission);
+        return result;
+    }
+
+    /**
+     * Finalizes the aggregated result of a multi-container build once every container has finished. It recomputes the
+     * score over the feedback of all containers, marks the result successful only if every container ran and built and
+     * every relevant test case passed, and sets the completion date so the result is shown as complete.
+     *
+     * @param resultId         the id of the aggregated result to finalize
+     * @param participation    the participation that was built
+     * @param allJobsSucceeded whether every container's build job finished with a successful job status and merged its result
+     * @param completionDate   the completion date to set on the finalized result
+     * @return the finalized result
+     */
+    public Result finalizeContainerResult(long resultId, ProgrammingExerciseParticipation participation, boolean allJobsSucceeded, ZonedDateTime completionDate) {
+        Result aggregatedResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
+        // the scoring below reads the typed feedback of every container, which the eager fetch above does not load
+        hydrateTypedFeedback(aggregatedResult);
+        boolean isStudentParticipation = !(participation instanceof SolutionProgrammingExerciseParticipation)
+                && !(participation instanceof TemplateProgrammingExerciseParticipation);
+        // A job status only records how the job executed: a container whose build script crashed still completes as a
+        // SUCCESSFUL job. The build outcome itself is the submission's build-failed flag, maintained per container in
+        // appendContainerResult, so the result is successful only when both agree.
+        boolean anyContainerFailedToBuild = aggregatedResult.getSubmission() instanceof ProgrammingSubmission submission && submission.isBuildFailed();
+        // A solution build generates the exercise's test cases, but each container of a multi-container build reported
+        // only its own share and could not deactivate a test removed from the solution (its absence there is a sibling's
+        // test, not a removal). Now that every container's feedback is merged, a test case no container reported is
+        // genuinely gone: reconcile the deactivations once, over the union. This must run before the score is calculated,
+        // which adds a "Test was not executed." placeholder for every registered test case and would otherwise both keep
+        // the stale test case active and count it against the students that are graded next. A container that failed to
+        // build reported none of its tests, so their absence says nothing about the solution: the reconciliation is
+        // skipped for such a build, and the registry keeps the state of the last clean solution build.
+        if (participation instanceof SolutionProgrammingExerciseParticipation) {
+            if (anyContainerFailedToBuild) {
+                log.info("Skipping the test case reconciliation of exercise {}: a container of the solution build failed, so its test cases are absent without being removed",
+                        participation.getProgrammingExercise().getId());
+            }
+            else {
+                Set<String> presentTestCaseNames = aggregatedResult.getTestCaseFeedbacks().stream().map(feedback -> feedback.getTestCase().getTestName())
+                        .collect(Collectors.toSet());
+                feedbackCreationService.deactivateSolutionTestCasesAbsentFromMergedResult(presentTestCaseNames, participation.getProgrammingExercise());
+            }
+        }
+        calculateScoreForResult(aggregatedResult, participation.getProgrammingExercise(), isStudentParticipation);
+        // The containers contribute only their feedback rows to the aggregated result, so it carries no success flag of
+        // its own. The flag is derived from the scoring above, which counts the test cases relevant to this participation
+        // and those among them that passed (a test case no container reported counts as not passed): the merged result is
+        // successful when every relevant test case passed and every container ran and built. A build that executed no
+        // test case leaves both counts at zero and is not successful.
+        Integer testCaseCount = aggregatedResult.getTestCaseCount();
+        boolean everyRelevantTestCasePassed = testCaseCount != null && testCaseCount > 0 && testCaseCount.equals(aggregatedResult.getPassedTestCaseCount());
+        aggregatedResult.setSuccessful(everyRelevantTestCasePassed && allJobsSucceeded && !anyContainerFailedToBuild);
+        aggregatedResult.setCompletionDate(completionDate);
+
+        Optional<Result> mergedIntoManualResult = Optional.empty();
+        if (isStudentParticipation && aggregatedResult.getSubmission() instanceof ProgrammingSubmission programmingSubmission) {
+            // The same student policies as after a single-container result. Unlike there, the aggregated result already
+            // exists (the containers' build jobs link to it), so it stays; when the submission is under manual
+            // assessment its feedback is additionally merged into that manual result, which is then the one to report.
+            // Read through the repository, not the submission's lazy result collection: the submission is detached, so
+            // its collection cannot be initialized.
+            // An automatic result still in progress is the leftover of an attempt whose merge was interrupted between the
+            // aggregate's insert and its job's link (nothing refers to it any more); it must not hide a tutor's assessment.
+            Result latestOtherResult = resultRepository.findAllBySubmissionIdOrderByIdDesc(programmingSubmission.getId()).stream()
+                    .filter(candidate -> !candidate.getId().equals(resultId)).filter(candidate -> candidate.isManual() || candidate.getCompletionDate() != null).findFirst()
+                    .orElse(null);
+            mergedIntoManualResult = applyStudentResultPolicies(participation, aggregatedResult, programmingSubmission, latestOtherResult);
+        }
+        // Saved after the policies, as on the single-container path: the lock-repository policy marks the result unrated
+        // without saving it, so saving earlier would lose that flag. The instance handed back is the one that was scored,
+        // not save's return value: the result is reported to the client right after this, and that report reads every
+        // row's test case and message, which the rows loaded above carry whole and the copies a merge hands back would
+        // only hold as proxies without a session. The rows the scoring added, typed and legacy, are inserted in place
+        // first, so that they carry ids too.
+        insertNewFeedback(aggregatedResult);
+        resultRepository.save(aggregatedResult);
+        return mergedIntoManualResult.orElse(aggregatedResult);
     }
 
     /**
@@ -365,30 +688,10 @@ public class ProgrammingExerciseGradingService {
         var programmingSubmission = (ProgrammingSubmission) processedResult.getSubmission();
 
         if (isStudentParticipation) {
-            // When a student receives a new result, we want to check whether we need to lock the participation and the
-            // repository when a lock repository policy is present. At this point, we know that the programming
-            // exercise exists and that the participation must be a ProgrammingExerciseStudentParticipation.
-            // Only lock the repository and the participation if the participation is not for a test run (i.e. for a course exercise practice repository or for an instructor exam
-            // test run repository).
-            // Student test exam participations will still be locked by this.
-            // Already resolved: calculateScoreForResult above loads the submission policy for a student participation
-            // and sets it on this very exercise instance. Loading it again meant a second fetch of the whole exercise
-            // and the course it eagerly brings with it, problem statement and code of conduct included, for every
-            // result.
-            SubmissionPolicy submissionPolicy = programmingExercise.getSubmissionPolicy();
-            if (submissionPolicy instanceof LockRepositoryPolicy policy && !((ProgrammingExerciseStudentParticipation) participation).isPracticeMode()) {
-                submissionPolicyService.handleLockRepositoryPolicy(processedResult, (Participation) participation, policy);
-            }
-
-            if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual() && !((Participation) participation).isPracticeMode()) {
-                // Note: in this case, we do not want to save the processedResult, but we only want to update the latest semi-automatic one
-                Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(programmingSubmission.getLatestResult().getId(), processedResult);
-                // Adding back dropped submission. The result owns the foreign key, so saving it is enough; the
-                // submission itself did not change.
-                updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
-                resultRepository.save(updatedLatestSemiAutomaticResult);
-
-                return updatedLatestSemiAutomaticResult;
+            var mergedIntoManualResult = applyStudentResultPolicies(participation, processedResult, programmingSubmission, programmingSubmission.getLatestResult());
+            if (mergedIntoManualResult.isPresent()) {
+                // The new automatic feedback was merged into the latest manual result, which replaces the new result.
+                return mergedIntoManualResult.get();
             }
         }
 
@@ -422,8 +725,7 @@ public class ProgrammingExerciseGradingService {
         // remove old automatic feedback (legacy rows, e.g. duplicate-test warnings and submission-policy feedback)
         latestSemiAutomaticResult.getFeedbacks().removeIf(feedback -> feedback != null && feedback.getType() == FeedbackType.AUTOMATIC);
         // remove the old typed automatic feedback; the copies added below are inserted separately and get fresh ids, so they cannot collide with these pending deletes
-        latestSemiAutomaticResult.setTestCaseFeedbacks(List.of());
-        latestSemiAutomaticResult.setScaFeedbacks(List.of());
+        replaceTypedFeedback(latestSemiAutomaticResult, List.of(), List.of());
         latestSemiAutomaticResult = resultRepository.save(latestSemiAutomaticResult);
 
         // copy all automatic feedback from the new automatic result (the copies share the deduplicated message rows)
@@ -433,8 +735,7 @@ public class ProgrammingExerciseGradingService {
         // Insert the copies right away: a synthesized legacy view is addressed by the id of its row, so everything that serializes this result afterwards needs the ids. They
         // are persisted (not merged) because they are new, which means the ids land on these very instances - and their test cases stay the initialized ones copied above,
         // which a merge copy would have replaced with uninitialized proxies.
-        semiAutomaticResult.setTestCaseFeedbacks(testCaseFeedbackRepository.saveAll(semiAutomaticResult.getTestCaseFeedbacks()));
-        semiAutomaticResult.setScaFeedbacks(scaFeedbackRepository.saveAll(semiAutomaticResult.getScaFeedbacks()));
+        insertTypedFeedback(semiAutomaticResult);
         List<Feedback> copiedFeedbacks = newAutomaticResult.getFeedbacks().stream().map(feedbackService::copyFeedback).toList();
         latestSemiAutomaticResult = resultService.addFeedbackToResult(semiAutomaticResult, copiedFeedbacks, false);
 
@@ -647,11 +948,16 @@ public class ProgrammingExerciseGradingService {
         if (result.getId() == null) {
             return;
         }
+        // The rows are fetched together with their test cases AND their messages. The test cases because lazily loaded
+        // rows reach them through proxies, which the equality the score calculation compares test cases with never
+        // satisfies. The messages because the finalized result is reported to the client as it is, and synthesizing
+        // the feedback for that report reads every message: a proxy would then fail with no session to load it in, the
+        // report would never be sent, and the template rebuild that follows a solution build would never be triggered.
         if (!Hibernate.isInitialized(result.getTestCaseFeedbacks())) {
-            result.setTestCaseFeedbacks(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(result.getId())));
+            result.setTestCaseFeedbacks(testCaseFeedbackRepository.findWithTestCaseAndMessageByResultIds(List.of(result.getId())));
         }
         if (!Hibernate.isInitialized(result.getScaFeedbacks())) {
-            result.setScaFeedbacks(scaFeedbackRepository.findByResultIds(List.of(result.getId())));
+            result.setScaFeedbacks(scaFeedbackRepository.findWithMessageByResultIds(List.of(result.getId())));
         }
     }
 
@@ -1059,8 +1365,7 @@ public class ProgrammingExerciseGradingService {
      * @param staticCodeAnalysisFeedback Static code analysis feedback to keep
      */
     private void removeAllTestCaseFeedbackAndSetScoreToZero(Result result, List<ScaFeedback> staticCodeAnalysisFeedback) {
-        result.setTestCaseFeedbacks(List.of());
-        result.setScaFeedbacks(staticCodeAnalysisFeedback);
+        replaceTypedFeedback(result, List.of(), staticCodeAnalysisFeedback);
         result.setScore(0D);
         result.setTestCaseCount(0);
         result.setPassedTestCaseCount(0);

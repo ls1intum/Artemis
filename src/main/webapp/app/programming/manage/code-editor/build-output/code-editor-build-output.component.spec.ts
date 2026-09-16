@@ -137,6 +137,46 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(buildLogHtmlEntries).toHaveLength(buildLogs.length);
     });
 
+    it('should group the build output by the container that produced it', () => {
+        const participation = { id: 1, submissions: [{ id: 1, results: [{ id: 1 }] }] } as Participation;
+        // The entries arrive ordered by time, which interleaves the containers of a multi-container build.
+        const containerLogs = [
+            { time: '2019-05-15T10:32:11+02:00', log: 'instructor line one', containerName: 'instructor_tests' },
+            { time: '2019-05-15T10:32:12+02:00', log: 'student line one', containerName: 'student_tests' },
+            { time: '2019-05-15T10:32:13+02:00', log: 'instructor line two', containerName: 'instructor_tests' },
+        ];
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));
+        getFeedbackDetailsForResultStub.mockReturnValue(of({ body: [] }));
+        getBuildLogsStub.mockReturnValue(of(containerLogs));
+
+        fixture.componentRef.setInput('participation', participation);
+        fixture.detectChanges();
+
+        // One group per container, in the order the containers first reported, each keeping its lines in time order.
+        expect(comp.buildLogGroups().map((group) => group.containerName)).toEqual(['instructor_tests', 'student_tests']);
+        expect(comp.buildLogGroups().map((group) => group.entries.map((entry) => entry.log))).toEqual([['instructor line one', 'instructor line two'], ['student line one']]);
+
+        const renderedContainers = debugElement.queryAll(By.css('.build-output__container'));
+        expect(renderedContainers.map((element) => element.nativeElement.textContent.trim())).toEqual(
+            expect.arrayContaining([expect.stringContaining('instructor_tests'), expect.stringContaining('student_tests')]),
+        );
+        expect(debugElement.queryAll(By.css('.build-output__entry'))).toHaveLength(containerLogs.length);
+    });
+
+    it('should not label the build output of a submission built by a single container', () => {
+        const participation = { id: 1, submissions: [{ id: 1, results: [{ id: 1 }] }] } as Participation;
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));
+        getFeedbackDetailsForResultStub.mockReturnValue(of({ body: [] }));
+        getBuildLogsStub.mockReturnValue(of(buildLogs));
+
+        fixture.componentRef.setInput('participation', participation);
+        fixture.detectChanges();
+
+        expect(comp.buildLogGroups()).toHaveLength(1);
+        expect(comp.buildLogGroups()[0].containerName).toBeUndefined();
+        expect(debugElement.queryAll(By.css('.build-output__container'))).toHaveLength(0);
+    });
+
     it('does not re-fetch build logs when the participation object is replaced with the same id and latest result (prevents the constructor-effect buildlogs loop, #12976)', () => {
         const makeParticipation = (resultId: number) => ({ id: 1, submissions: [{ id: 1, results: [{ id: resultId }] }] }) as Participation;
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));

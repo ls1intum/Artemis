@@ -506,6 +506,21 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     }
 
     @Test
+    void getBuildLogs_forAMultiContainerBuild_carriesTheContainerName() {
+        // The client groups the build output by the container that produced each line, so the name must reach it.
+        var submission = submissionWithResult(50L, 90L, true);
+        participation.setSubmissions(Set.of(submission));
+        var log = new BuildLogEntry(java.time.ZonedDateTime.now(), "student container terminated");
+        log.setContainerName("student_tests");
+        when(participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(PARTICIPATION_ID)).thenReturn(participation);
+        when(buildLogService.getLatestBuildLogs(submission)).thenReturn(List.of(log));
+
+        var body = resource.getBuildLogs(PARTICIPATION_ID, Optional.empty()).getBody();
+        assertThat(body).hasSize(1);
+        assertThat(body.getFirst().containerName()).isEqualTo("student_tests");
+    }
+
+    @Test
     void getBuildLogs_forAResultOfAnotherParticipation_isRefused() {
         // The result id is a request parameter, so without this check a student could read the build log of any submission.
         participation.setSubmissions(Set.of(submissionWithResult(50L, 90L, true)));
