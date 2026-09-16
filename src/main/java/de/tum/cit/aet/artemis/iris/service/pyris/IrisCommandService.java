@@ -200,7 +200,9 @@ public class IrisCommandService {
      * A point-out must name the lecture unit to navigate in and at least one position within it. {@link #buildPointOutMarkerContent} relies on this having passed.
      */
     private boolean isValidPointOut(Map<String, JsonNode> parameters) {
-        return isPositiveIntegral(parameters.get("lectureUnitId")) && (isPositiveIntegral(parameters.get("page")) || isNonNegativeNumber(parameters.get("timestamp")));
+        var page = parameters.get("page");
+        return isPositiveIntegral(parameters.get("lectureUnitId")) && (page == null || isPositiveIntegral(page))
+                && (page != null || isNonNegativeNumber(parameters.get("timestamp")));
     }
 
     private boolean isPositiveIntegral(JsonNode value) {

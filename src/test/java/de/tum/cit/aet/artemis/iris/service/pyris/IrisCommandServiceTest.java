@@ -263,6 +263,12 @@ class IrisCommandServiceTest {
         assertThat(commandService.executeCommand(job, pointOutCommand(null, 3), null).applied()).isFalse();
         assertThat(commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, null), null).applied()).isFalse();
 
+        var parameters = new LinkedHashMap<String, JsonNode>();
+        parameters.put("lectureUnitId", JsonNodeFactory.instance.numberNode(LECTURE_UNIT_ID));
+        parameters.put("page", JsonNodeFactory.instance.numberNode(0));
+        parameters.put("timestamp", JsonNodeFactory.instance.numberNode(0));
+        assertThat(commandService.executeCommand(job, new PyrisCommandDTO("pointOut", parameters), null).applied()).isFalse();
+
         verify(coordinationService, never()).register(anyString(), anyString());
         verify(irisWebsocketService, never()).send(any(), any(), any());
     }
