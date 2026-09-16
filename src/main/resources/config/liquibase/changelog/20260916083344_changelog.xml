@@ -93,4 +93,25 @@
         </rollback>
     </changeSet>
 
+
+    <!--
+    H2 is the no-Docker way of running the test suite (gradle/test.gradle, -Dzonky.test.database.type=H2), so it has
+    to carry the constraint too: without it a run there passes on fixtures the other two engines reject, which is the
+    opposite of what a second engine is for. It gets its own changeset rather than joining the dbms list above, because
+    that precondition reads information_schema through a current-schema function that differs per engine and H2 folds
+    an unquoted table name to upper case on top of it. There is nothing here for a precondition to guard: an H2
+    database only ever exists for the length of a test run and is created from scratch.
+    -->
+    <changeSet id="20260916083344-04-exercise-exactly-one-owner-h2" author="krusche" dbms="h2">
+        <comment>The same constraint on the in-process database the test suite can be pointed at.</comment>
+        <sql>
+            ALTER TABLE exercise ADD CONSTRAINT CHECK_EXERCISE_COURSE_OR_EXERCISE_GROUP
+            CHECK ((course_id IS NOT NULL AND exercise_group_id IS NULL)
+                OR (course_id IS NULL AND exercise_group_id IS NOT NULL));
+        </sql>
+        <rollback>
+            <sql>ALTER TABLE exercise DROP CONSTRAINT CHECK_EXERCISE_COURSE_OR_EXERCISE_GROUP;</sql>
+        </rollback>
+    </changeSet>
+
 </databaseChangeLog>
