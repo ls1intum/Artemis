@@ -271,7 +271,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
 
     private processFeedbackRequest(participation = this.participation) {
         this.courseExerciseService.requestFeedback(this.exercise().id!, participation!.id!).subscribe({
-            next: (updatedParticipation: StudentParticipation) => {
+            next: (updatedParticipation: StudentParticipation | null) => {
                 if (updatedParticipation) {
                     if (this.participationId() === undefined || this.participationId() === participation?.id) {
                         this.isFeedbackRequestPending.set(true);
