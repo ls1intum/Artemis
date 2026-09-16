@@ -148,7 +148,7 @@ class IrisCommandServiceTest {
         when(coordinationService.register(anyString(), eq("student1"))).thenReturn(CompletableFuture.completedFuture(new IrisCommandAckDTO("corr", true)));
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.COMMAND))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var result = commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3));
+        var result = commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3), null);
 
         assertThat(result.applied()).isTrue();
         verify(irisWebsocketService).send(eq("student1"), anyString(), any());
@@ -165,7 +165,7 @@ class IrisCommandServiceTest {
         var savedMarker = ArgumentCaptor.forClass(IrisMessage.class);
         when(irisMessageService.saveMessage(savedMarker.capture(), eq(session), eq(IrisMessageSender.COMMAND))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3));
+        commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3), null);
 
         // The marker mirrors the command's {type, parameters} shape so history readers parse it like a command, with
         // what only Artemis can resolve added to the parameters: the unit's name and the lecture it belongs to. The
@@ -199,11 +199,10 @@ class IrisCommandServiceTest {
         stubLectureUnitInCourse(COURSE_ID);
         when(coordinationService.register(anyString(), eq("student1"))).thenReturn(CompletableFuture.completedFuture(new IrisCommandAckDTO("corr", true)));
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.COMMAND))).thenAnswer(invocation -> invocation.getArgument(0));
-        var jobStartedFromTab = new ChatJob("job-2", COURSE_ID, SESSION_ID, null, null, null, null, "tab-7");
         var payload = ArgumentCaptor.forClass(Object.class);
 
-        commandService.executeCommand(jobStartedFromTab, pointOutCommand(LECTURE_UNIT_ID, 3));
-        commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3));
+        commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3), "tab-7");
+        commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3), null);
 
         verify(irisWebsocketService, times(2)).send(eq("student1"), anyString(), payload.capture());
         assertThat(((IrisCommandRequestWebsocketDTO) payload.getAllValues().getFirst()).targetClientId()).isEqualTo("tab-7");
@@ -221,7 +220,7 @@ class IrisCommandServiceTest {
                 }
                 """, PyrisCommandDTO.class);
 
-        var result = commandService.executeCommand(job, command);
+        var result = commandService.executeCommand(job, command, null);
 
         // Point-out is the only defined command type. Anything else must not reach the client at all, so the
         // pipeline learns "not applied" immediately instead of waiting out the ack timeout for nobody.
@@ -238,7 +237,7 @@ class IrisCommandServiceTest {
         stubLectureUnitInCourse(COURSE_ID);
         when(coordinationService.register(anyString(), eq("student1"))).thenReturn(CompletableFuture.completedFuture(new IrisCommandAckDTO("corr", false)));
 
-        var result = commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3));
+        var result = commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3), null);
 
         assertThat(result.applied()).isFalse();
         verify(irisWebsocketService).send(eq("student1"), anyString(), any());
@@ -252,7 +251,7 @@ class IrisCommandServiceTest {
         stubLectureUnitInCourse(COURSE_ID);
         when(coordinationService.register(anyString(), eq("student1"))).thenReturn(CompletableFuture.failedFuture(new TimeoutException("no ack")));
 
-        var result = commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3));
+        var result = commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3), null);
 
         assertThat(result.applied()).isFalse();
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
@@ -261,8 +260,8 @@ class IrisCommandServiceTest {
     @Test
     void executeCommand_incompletePointOutShortCircuitsWithoutContactingClient() {
         // Neither a command without a target unit nor one without a position in it can be carried out by anyone.
-        assertThat(commandService.executeCommand(job, pointOutCommand(null, 3)).applied()).isFalse();
-        assertThat(commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, null)).applied()).isFalse();
+        assertThat(commandService.executeCommand(job, pointOutCommand(null, 3), null).applied()).isFalse();
+        assertThat(commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, null), null).applied()).isFalse();
 
         verify(coordinationService, never()).register(anyString(), anyString());
         verify(irisWebsocketService, never()).send(any(), any(), any());
@@ -275,16 +274,16 @@ class IrisCommandServiceTest {
 
         // A unit outside the chat's course. Above all its name must never reach this chat's history.
         stubLectureUnitInCourse(COURSE_ID + 1);
-        assertThat(commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3)).applied()).isFalse();
+        assertThat(commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3), null).applied()).isFalse();
 
         // An id that exists nowhere.
         when(lectureUnitRepositoryApi.findAllByIdsWithLecture(List.of(LECTURE_UNIT_ID))).thenReturn(List.of());
-        assertThat(commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3)).applied()).isFalse();
+        assertThat(commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3), null).applied()).isFalse();
 
         // No lecture module at all, so there are no units to point into.
         var serviceWithoutLectures = new IrisCommandService(coordinationService, irisWebsocketService, irisChatWebsocketService, irisMessageService, irisSessionRepository,
                 userRepository, JsonMapper.builder().build(), Optional.empty());
-        assertThat(serviceWithoutLectures.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3)).applied()).isFalse();
+        assertThat(serviceWithoutLectures.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3), null).applied()).isFalse();
 
         verify(coordinationService, never()).register(anyString(), anyString());
         verify(irisWebsocketService, never()).send(any(), any(), any());

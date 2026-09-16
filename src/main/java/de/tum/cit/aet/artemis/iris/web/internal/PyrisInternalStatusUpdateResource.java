@@ -110,7 +110,7 @@ public class PyrisInternalStatusUpdateResource {
             throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
         }
 
-        return ResponseEntity.ok(irisCommandService.executeCommand(job, command));
+        return ResponseEntity.ok(irisCommandService.executeCommand(job, command, pyrisJobService.getChatJobClientId(job.jobId())));
     }
 
     /**

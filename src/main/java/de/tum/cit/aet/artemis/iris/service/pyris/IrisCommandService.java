@@ -108,13 +108,14 @@ public class IrisCommandService {
      * Dispatches on the command type: supporting a new one means adding a case here plus the client-side code that executes it. A type without a case is dropped instantly — no
      * client could carry it out, so forwarding it would only block the pipeline until the ack timeout expires for nobody.
      *
-     * @param job     the chat job the command belongs to
-     * @param command the command to execute
+     * @param job            the chat job the command belongs to
+     * @param command        the command to execute
+     * @param targetClientId the browser tab that started the job, or {@code null} when no tab was recorded
      * @return the result reported back to Pyris
      */
-    public PyrisCommandResultDTO executeCommand(ChatJob job, PyrisCommandDTO command) {
+    public PyrisCommandResultDTO executeCommand(ChatJob job, PyrisCommandDTO command, @Nullable String targetClientId) {
         return switch (command.type()) {
-            case POINT_OUT_TYPE -> executePointOut(job, command);
+            case POINT_OUT_TYPE -> executePointOut(job, command, targetClientId);
             case null, default -> {
                 log.debug("Ignoring Iris command of unsupported type {}", command.type());
                 yield PyrisCommandResultDTO.notApplied();
@@ -125,11 +126,12 @@ public class IrisCommandService {
     /**
      * Points the student to a position in the lecture combined view and, once the client confirms it moved there, records the point-out in the chat history.
      *
-     * @param job     the chat job the command belongs to
-     * @param command the point-out command to execute
+     * @param job            the chat job the command belongs to
+     * @param command        the point-out command to execute
+     * @param targetClientId the browser tab that started the job, or {@code null} when no tab was recorded
      * @return the result reported back to Pyris
      */
-    private PyrisCommandResultDTO executePointOut(ChatJob job, PyrisCommandDTO command) {
+    private PyrisCommandResultDTO executePointOut(ChatJob job, PyrisCommandDTO command, @Nullable String targetClientId) {
         if (!isValidPointOut(command.parameters())) {
             return PyrisCommandResultDTO.notApplied();
         }
@@ -139,7 +141,7 @@ public class IrisCommandService {
             return PyrisCommandResultDTO.notApplied();
         }
         var session = irisSessionRepository.findByIdElseThrow(job.sessionId());
-        if (!dispatchToClient(session, command, job.clientId())) {
+        if (!dispatchToClient(session, command, targetClientId)) {
             return PyrisCommandResultDTO.notApplied();
         }
 
