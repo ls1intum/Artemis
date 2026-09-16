@@ -106,6 +106,7 @@ import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepo
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.dto.DomainObjectDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
@@ -131,7 +132,6 @@ import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForImportDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseManagementDetailViewDTO;
-import de.tum.cit.aet.artemis.course.dto.CourseUpdateDTO;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.OnlineCourseDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -417,14 +417,13 @@ public class CourseTestService {
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
 
         var result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
-        CourseUpdateDTO createdCourse = objectMapper.readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
-        assertThat(createdCourse.id()).isNotNull();
-        assertThat(createdCourse.title()).isEqualTo(course.getTitle());
-        assertThat(createdCourse.shortName()).isEqualTo(course.getShortName());
-        assertThat(createdCourse.gradeRelevant()).isTrue();
-        assertThat(createdCourse.dataRetentionHold()).isFalse();
-        assertThat(result.getResponse().getHeader("Location")).isEqualTo("/api/admin/courses/" + createdCourse.id());
-        courseRepo.findByIdElseThrow(createdCourse.id());
+        long createdCourseId = objectMapper.readValue(result.getResponse().getContentAsString(), DomainObjectDTO.class).id();
+        assertThat(result.getResponse().getHeader("Location")).isEqualTo("/api/admin/courses/" + createdCourseId);
+        Course createdCourse = courseRepo.findByIdElseThrow(createdCourseId);
+        assertThat(createdCourse.getTitle()).isEqualTo(course.getTitle());
+        assertThat(createdCourse.getShortName()).isEqualTo(course.getShortName());
+        assertThat(createdCourse.isGradeRelevant()).isTrue();
+        assertThat(createdCourse.isDataRetentionHold()).isFalse();
         // Note: The old test for creating a course with an ID is no longer needed since the CourseCreateDTO
         // doesn't include an ID field - the server-side always creates a new entity with a fresh ID.
     }
@@ -434,9 +433,7 @@ public class CourseTestService {
         Course course1 = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course1.setShortName("shortName");
 
-        var result = request.performMvcRequest(buildCreateCourse(course1)).andExpect(status().isCreated()).andReturn();
-        CourseUpdateDTO createdCourse = objectMapper.readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
-        assertThat(courseRepo.findByIdElseThrow(createdCourse.id())).isNotNull();
+        assertThat(courseRepo.findByIdElseThrow(createCourseAndGetId(buildCreateCourse(course1)))).isNotNull();
 
         Course course2 = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course2.setShortName("shortName");
@@ -620,10 +617,7 @@ public class CourseTestService {
         // Generate POST Request Body with maxComplaints = 5, maxComplaintTimeDays = 14, communication = false, messaging = true
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), 5, 5, 14, 2000, 2000, false, false, 0);
 
-        MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
-        CourseUpdateDTO createdCourse = objectMapper.readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
-        // Because the courseId is automatically generated we cannot use the findById method to retrieve the saved course.
-        Course getFromRepo = courseRepo.findByIdElseThrow(createdCourse.id());
+        Course getFromRepo = courseRepo.findByIdElseThrow(createCourseAndGetId(buildCreateCourse(course)));
         assertThat(getFromRepo.getMaxComplaints()).as("Course has right maxComplaints Value").isEqualTo(5);
         assertThat(getFromRepo.getMaxComplaintTimeDays()).as("Course has right maxComplaintTimeDays Value").isEqualTo(14);
         assertThat(getFromRepo.getCourseInformationSharingConfiguration()).as("Course has right information sharing config value")
@@ -636,7 +630,7 @@ public class CourseTestService {
         course.setMaxComplaintTimeDays(7);
         course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
         course.setMaxRequestMoreFeedbackTimeDays(7);
-        result = request.performMvcRequest(buildUpdateCourse(getFromRepo.getId(), course)).andExpect(status().isOk()).andReturn();
+        MvcResult result = request.performMvcRequest(buildUpdateCourse(getFromRepo.getId(), course)).andExpect(status().isOk()).andReturn();
         Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
         assertThat(updatedCourse.getMaxComplaints()).as("maxComplaints Value updated successfully").isEqualTo(course.getMaxComplaints());
         assertThat(updatedCourse.getMaxComplaintTimeDays()).as("maxComplaintTimeDays Value updated successfully").isEqualTo(course.getMaxComplaintTimeDays());
@@ -903,17 +897,16 @@ public class CourseTestService {
         course1.setShortName("testdefaultchannels");
         course1.setEnrollmentEnabled(true);
 
-        var result = request.performMvcRequest(buildCreateCourse(course1)).andExpect(status().isCreated()).andReturn();
-        CourseUpdateDTO course2 = objectMapper.readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
-        assertThat(courseRepo.findByIdElseThrow(course2.id())).isNotNull();
+        long courseId = createCourseAndGetId(buildCreateCourse(course1));
+        assertThat(courseRepo.findByIdElseThrow(courseId)).isNotNull();
 
-        request.postWithoutLocation("/api/course/courses/" + course2.id() + "/students/" + userPrefix + "student1", null, HttpStatus.OK, null);
-        request.postWithoutLocation("/api/course/courses/" + course2.id() + "/instructors/" + userPrefix + "instructor1", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/course/courses/" + courseId + "/students/" + userPrefix + "student1", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/course/courses/" + courseId + "/instructors/" + userPrefix + "instructor1", null, HttpStatus.OK, null);
 
         // Check if all default channels are created
         await().untilAsserted(() -> {
             SecurityUtils.setAuthorizationObject();
-            var channels = channelRepository.findChannelsByCourseId(course2.id());
+            var channels = channelRepository.findChannelsByCourseId(courseId);
             assertThat(channels).hasSize(DefaultChannelType.values().length);
             channels.forEach(channel -> assertThat(Arrays.stream(DefaultChannelType.values()).map(DefaultChannelType::getName)).contains(channel.getName()));
         });
@@ -3121,21 +3114,18 @@ public class CourseTestService {
     public void testCreateValidOnlineCourse() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
-        MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
-        CourseUpdateDTO createdCourse = objectMapper.readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
-        Course courseWithOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createdCourse.id());
+        Course courseWithOnlineConfiguration = courseRepo
+                .findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createCourseAndGetId(buildCreateCourse(course)));
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration()).isNotNull();
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getUserPrefix()).isEqualTo(courseWithOnlineConfiguration.getShortName());
     }
 
     public void testUpdateToOnlineCourse() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
-        MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
-        CourseUpdateDTO createdCourseDTO = objectMapper.readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
-        Course createdCourse = courseRepo.findByIdElseThrow(createdCourseDTO.id());
+        Course createdCourse = courseRepo.findByIdElseThrow(createCourseAndGetId(buildCreateCourse(course)));
 
         createdCourse.setOnlineCourse(true);
-        result = request.performMvcRequest(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk()).andReturn();
+        MvcResult result = request.performMvcRequest(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk()).andReturn();
         Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
         assertThat(updatedCourse.getOnlineCourseConfiguration()).isNotNull();
@@ -3159,13 +3149,11 @@ public class CourseTestService {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
 
-        MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
-        CourseUpdateDTO createdCourseDTO = objectMapper.readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
-        Course createdCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createdCourseDTO.id());
+        Course createdCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createCourseAndGetId(buildCreateCourse(course)));
 
         course.setOnlineCourse(true);
 
-        result = request.performMvcRequest(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk()).andReturn();
+        MvcResult result = request.performMvcRequest(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk()).andReturn();
         Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
         Course actualCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(updatedCourse.getId());
@@ -3180,12 +3168,10 @@ public class CourseTestService {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
 
-        MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
-        CourseUpdateDTO createdCourseDTO = objectMapper.readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
-        Course createdCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createdCourseDTO.id());
+        Course createdCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createCourseAndGetId(buildCreateCourse(course)));
 
         createdCourse.setOnlineCourse(false);
-        result = request.performMvcRequest(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk()).andReturn();
+        MvcResult result = request.performMvcRequest(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk()).andReturn();
         Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
         Course courseWithoutOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(updatedCourse.getId());
@@ -3209,9 +3195,7 @@ public class CourseTestService {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
 
-        MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
-        CourseUpdateDTO createdCourseDTO = objectMapper.readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
-        Course createdCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createdCourseDTO.id());
+        Course createdCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createCourseAndGetId(buildCreateCourse(course)));
         String courseId = createdCourse.getId().toString();
 
         // without online course configuration
@@ -3238,9 +3222,7 @@ public class CourseTestService {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(false);
 
-        MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
-        CourseUpdateDTO createdCourse = objectMapper.readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
-        String courseId = createdCourse.id().toString();
+        String courseId = String.valueOf(createCourseAndGetId(buildCreateCourse(course)));
 
         OnlineCourseConfiguration onlineCourseConfiguration = CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null);
 
@@ -3251,9 +3233,7 @@ public class CourseTestService {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
 
-        MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
-        CourseUpdateDTO createdCourseDTO = objectMapper.readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
-        Course createdCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createdCourseDTO.id());
+        Course createdCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createCourseAndGetId(buildCreateCourse(course)));
         String courseId = createdCourse.getId().toString();
 
         OnlineCourseConfiguration ocConfiguration = createdCourse.getOnlineCourseConfiguration();
@@ -3363,18 +3343,22 @@ public class CourseTestService {
         return builder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
     }
 
+    /**
+     * Creates a course through the admin endpoint and returns the id the server assigned.
+     */
+    private long createCourseAndGetId(MockMultipartHttpServletRequestBuilder createRequest) throws Exception {
+        MvcResult result = request.performMvcRequest(createRequest).andExpect(status().isCreated()).andReturn();
+        return objectMapper.readValue(result.getResponse().getContentAsString(), DomainObjectDTO.class).id();
+    }
+
     private Course createCourseWithCourseImageAndReturn() throws Exception {
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
-        var result = request.performMvcRequest(buildCreateCourse(course, "testIcon")).andExpect(status().isCreated()).andReturn();
-        CourseUpdateDTO createdCourseDTO = objectMapper.readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
+        var createdCourse = courseRepo.findByIdElseThrow(createCourseAndGetId(buildCreateCourse(course, "testIcon")));
+        assertThat(createdCourse.getCourseIcon()).as("Course icon got stored").isNotNull();
 
-        assertThat(createdCourseDTO.courseIcon()).as("Course icon got stored").isNotNull();
-        String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, createdCourseDTO.courseIcon());
+        String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, createdCourse.getCourseIcon());
         var imgResult = request.performMvcRequest(get(requestUrl)).andExpect(status().isOk()).andExpect(content().contentType(MediaType.IMAGE_PNG)).andReturn();
         assertThat(imgResult.getResponse().getContentAsByteArray()).isNotEmpty();
-
-        var createdCourse = courseRepo.findByIdElseThrow(createdCourseDTO.id());
-        assertThat(createdCourse.getCourseIcon()).as("Course icon got stored").isNotNull();
 
         return createdCourse;
     }

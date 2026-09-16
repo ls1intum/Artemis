@@ -2,7 +2,6 @@ import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
-import type { CourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { asModelDate, generateUUID, titleLowercase } from '../utils';
 import lectureTemplate from '../../fixtures/lecture/template.json';
@@ -130,7 +129,7 @@ export class CourseManagementAPIRequests {
         if (!response.ok()) {
             throw new Error(`Failed to create course: ${response.status()} ${response.statusText()} - ${await response.text()}`);
         }
-        const created: CourseUpdateDTO = await response.json();
+        const created: { id: number } = await response.json();
         course.id = created.id;
         return course;
     }

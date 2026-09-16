@@ -12,15 +12,12 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
 import { provideHttpClient } from '@angular/common/http';
-import { CourseUpdateDTO, toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('Course Admin Service', () => {
     let courseAdminService: CourseAdminService;
     let httpMock: HttpTestingController;
     const resourceUrl = 'api/admin/courses';
     let course: Course;
-    let returnedFromService: CourseUpdateDTO;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -37,7 +34,6 @@ describe('Course Admin Service', () => {
         httpMock = TestBed.inject(HttpTestingController);
 
         ({ course } = createSampleCourse());
-        returnedFromService = toCourseUpdateDTO(course);
     });
 
     afterEach(() => {
@@ -45,86 +41,17 @@ describe('Course Admin Service', () => {
         vi.restoreAllMocks();
     });
 
-    it('should create course', () => {
+    it('should create a course and hand back the id the server assigned', () => {
         delete course.id;
 
         courseAdminService
-            .create(deepClone(course))
+            .create(course)
             .pipe(take(1))
-            .subscribe((res) => {
-                expect(res.body).toBeInstanceOf(Course);
-                expect(res.body?.id).toBe(returnedFromService.id);
-                expect(res.body?.title).toBe(returnedFromService.title);
-                expect(res.body?.startDate?.toJSON()).toBe(returnedFromService.startDate);
-                expect(res.body?.courseConfiguration).toEqual({
-                    gradeRelevant: returnedFromService.gradeRelevant,
-                    dataRetentionHold: returnedFromService.dataRetentionHold,
-                    autoOrchestratorEnabled: returnedFromService.autoOrchestratorEnabled,
-                    debounceWindowSecondsOverride: returnedFromService.debounceWindowSecondsOverride,
-                    maxDailyOrchestrationOverride: returnedFromService.maxDailyOrchestrationOverride,
-                });
-            });
+            .subscribe((res) => expect(res.body).toEqual({ id: 1234 }));
 
         const req = httpMock.expectOne({ method: 'POST', url: resourceUrl });
-        req.flush(returnedFromService);
-    });
-
-    it('should create a course from a response with omitted optional fields', () => {
-        delete course.id;
-        const partialResponse: Partial<CourseUpdateDTO> = {
-            id: 1234,
-            title: 'Course with minimal response',
-            shortName: 'minimal',
-            maxComplaintTimeDays: 0,
-            maxRequestMoreFeedbackTimeDays: 0,
-            maxComplaintTextLimit: 0,
-            maxComplaintResponseTextLimit: 0,
-        };
-
-        courseAdminService
-            .create(deepClone(course))
-            .pipe(take(1))
-            .subscribe((res) => {
-                expect(res.body).toBeInstanceOf(Course);
-                expect(res.body?.description).toBeUndefined();
-                expect(res.body?.semester).toBeUndefined();
-                expect(res.body?.color).toBeUndefined();
-                expect(res.body?.courseIcon).toBeUndefined();
-                expect(res.body?.enrollmentConfirmationMessage).toBeUndefined();
-                expect(res.body?.timeZone).toBeUndefined();
-                expect(res.body?.complaintsEnabled).toBe(false);
-                expect(res.body?.requestMoreFeedbackEnabled).toBe(false);
-                expect(res.body?.courseConfiguration?.debounceWindowSecondsOverride).toBeUndefined();
-                expect(res.body?.courseConfiguration?.maxDailyOrchestrationOverride).toBeUndefined();
-            });
-
-        const req = httpMock.expectOne({ method: 'POST', url: resourceUrl });
-        req.flush(partialResponse);
-    });
-
-    it('should enable complaints from the complaint period alone, as the server does', () => {
-        delete course.id;
-        const response: Partial<CourseUpdateDTO> = {
-            id: 1234,
-            title: 'Complaints without text limits',
-            shortName: 'complaints',
-            maxComplaints: 3,
-            maxComplaintTimeDays: 7,
-            maxRequestMoreFeedbackTimeDays: 0,
-            maxComplaintTextLimit: 0,
-            maxComplaintResponseTextLimit: 0,
-        };
-
-        courseAdminService
-            .create(deepClone(course))
-            .pipe(take(1))
-            .subscribe((res) => {
-                expect(res.body?.complaintsEnabled).toBe(true);
-                expect(res.body?.requestMoreFeedbackEnabled).toBe(false);
-            });
-
-        const req = httpMock.expectOne({ method: 'POST', url: resourceUrl });
-        req.flush(response);
+        expect(req.request.body).toBeInstanceOf(FormData);
+        req.flush({ id: 1234 });
     });
 
     it('should delete a course', () => {

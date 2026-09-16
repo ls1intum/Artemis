@@ -165,21 +165,4 @@ public record CourseUpdateDTO(
 
         return course;
     }
-
-    /**
-     * Creates a CourseUpdateDTO from an existing Course entity.
-     *
-     * @param course the course entity to convert
-     * @return a new CourseUpdateDTO with values from the course
-     */
-    public static CourseUpdateDTO of(Course course) {
-        return new CourseUpdateDTO(course.getId(), course.getTitle(), course.getShortName(), course.getDescription(), course.getSemester(), course.getStartDate(),
-                course.getEndDate(), course.getEnrollmentStartDate(), course.getEnrollmentEndDate(), course.getUnenrollmentEndDate(), course.isTestCourse(),
-                course.isOnlineCourse(), course.getLanguage(), course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(),
-                course.getMaxComplaintTimeDays(), course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(),
-                course.getColor(), course.getCourseIcon(), course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(),
-                course.getCourseInformationSharingMessagingCodeOfConduct(), course.getLearningPathsEnabled(), course.getPresentationScore(), course.getMaxPoints(),
-                course.getAccuracyOfScores(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(), course.isOnboardingDone(), course.isGradeRelevant(),
-                course.isDataRetentionHold(), course.getAutoOrchestratorEnabled(), course.getDebounceWindowSecondsOverride(), course.getMaxDailyOrchestrationOverride());
-    }
 }
