@@ -25,8 +25,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopi
  * Propagates the eviction of a per-node cache entry to every node.
  *
  * <p>
- * Per-node caches (the blobs of {@link BlobCacheConfiguration} and the titles of
- * {@link de.tum.cit.aet.artemis.core.config.cache.TitleCacheConfiguration}) keep a copy on each node, so an eviction
+ * Per-node caches (the blobs of {@link BlobCacheConfiguration}) keep a copy on each node, so an eviction
  * performed on the node handling a write would otherwise leave every other node answering with the previous value.
  * This broadcasts the eviction so all nodes drop the entry.
  *

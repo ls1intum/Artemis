@@ -22,7 +22,7 @@ public record DragAndDropQuestionWithSolutionDTO(@JsonUnwrapped DragAndDropQuest
         // correctMappings is null on a question that has been masked for students (solutions/mappings stripped before
         // results are published); treat that as no mappings instead of dereferencing null.
         List<DragAndDropMappingDTO> correctMappings = dragAndDropQuestion.getCorrectMappings() == null ? null
-                : dragAndDropQuestion.getCorrectMappings().stream().map(DragAndDropMappingDTO::of).toList();
+                : dragAndDropQuestion.getCorrectMappings().stream().map(mapping -> DragAndDropMappingDTO.of(dragAndDropQuestion.getId(), mapping)).toList();
         return new DragAndDropQuestionWithSolutionDTO(DragAndDropQuestionWithoutSolutionDTO.of(dragAndDropQuestion), correctMappings);
     }
 
