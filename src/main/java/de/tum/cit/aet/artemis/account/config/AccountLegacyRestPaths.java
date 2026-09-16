@@ -11,36 +11,19 @@ package de.tum.cit.aet.artemis.account.config;
  * picked up automatically by {@code LegacyApiPathDeprecationInterceptor}, which tags every legacy-
  * prefix request with {@code Deprecation} / {@code Sunset} / {@code Link} headers.
  * <p>
+ * Only the passkey prefix is left. The others were retired once their callers turned out to be the
+ * web client, which ships with the server, or a developer script rather than a released app.
+ * <p>
  * TODO: Remove this class together with all its references once external clients have migrated.
  */
 public final class AccountLegacyRestPaths {
 
-    /** Legacy class-level prefix used by TokenResource and UserResource. */
-    @Deprecated(forRemoval = true, since = "9.3")
-    public static final String CORE_PREFIX = "api/core/";
-
-    /**
-     * Legacy class-level prefix used by AccountResource. It folds in the former {@code account/}
-     * resource segment so the canonical paths drop the confusing {@code api/account/account/...}
-     * duplication: the successor paths are now {@code api/account/...} (e.g.
-     * {@code api/account/profile-picture}, {@code api/account/basic-information}) while the legacy
-     * {@code api/core/account/...} paths are unchanged.
-     */
-    @Deprecated(forRemoval = true, since = "9.3")
-    public static final String CORE_ACCOUNT_PREFIX = "api/core/account/";
-
-    /**
-     * Legacy class-level prefix used by AdminUserResource (admin user management). Still called by
-     * artemis-android, which creates users through {@code POST api/core/admin/users}. Successor:
-     * {@code "api/account/admin/"}. Removable once artemis-android#694 has shipped.
-     */
-    @Deprecated(forRemoval = true, since = "9.3")
-    public static final String CORE_ADMIN_PREFIX = "api/core/admin/";
-
     /**
      * Legacy class-level prefix used by PasskeyResource. Still called by artemis-android, which reads
-     * the current user's passkeys through {@code GET api/core/passkey/user}. Successor:
-     * {@code "api/account/passkeys/"}. Removable once artemis-android#694 has shipped.
+     * the current user's passkeys through {@code GET api/core/passkey/user}; the released 2.1.4 tag
+     * does so from {@code PasskeySettingsServiceImpl}. Successor: {@code "api/account/passkeys/"}.
+     * Removable once artemis-android#694 has shipped and the sunset in
+     * {@code LegacyApiPathDeprecationInterceptor#SUNSET_DATE} has passed.
      */
     @Deprecated(forRemoval = true, since = "9.3")
     public static final String CORE_PASSKEY_PREFIX = "api/core/passkey/";
