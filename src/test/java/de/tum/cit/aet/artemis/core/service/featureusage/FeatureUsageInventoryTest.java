@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.core.service.featureusage;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assumptions.assumeThat;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -110,19 +109,15 @@ class FeatureUsageInventoryTest extends AbstractSpringIntegrationIndependentTest
      * its real usage.
      * <p>
      * The legacy paths are read off the controllers rather than listed here. A hand-written list is wrong twice over: it goes stale the moment an alias is added or retired,
-     * which is how {@code api/core/admin/} came to be guarded while {@code api/core/passkey/} never was, and it cannot express an alias whose prefix is also somebody else's
-     * canonical prefix, as {@code api/core/} was for the course module while remaining the canonical prefix of {@code FileResource}.
+     * which is how {@code api/core/admin/} came to be guarded while {@code api/core/passkey/} never was, and it cannot express the aliases whose prefix is also somebody else's
+     * canonical prefix, as {@code api/core/} is for the course module and for {@code FileResource} at the same time.
      */
     @Test
     void shouldNotCountAControllerWithALegacyAliasTwice() {
         featureUsageRegistry.registerEndpoints(requestMappingHandlerMapping);
 
         Set<String> legacyPaths = legacyAliasPaths();
-        // An assumption rather than an assertion, so that this reports as skipped rather than as a silent pass. The
-        // aliases are being retired; the last one left, api/programming/public/ on PublicBuildPlanResource, sits behind
-        // the Jenkins profile this context does not activate. Once it is gone the check below has nothing to catch and
-        // saying so out loud is better than a green test that examined nothing.
-        assumeThat(legacyPaths).as("the endpoints reachable under a legacy class level prefix").isNotEmpty();
+        assertThat(legacyPaths).as("the endpoints reachable under a legacy class level prefix").isNotEmpty();
         assertThat(writtenFeatures()).extracting(TrackedFeature::getIdentifier).doesNotHaveDuplicates()
                 .noneMatch(identifier -> legacyPaths.contains(identifier.substring(identifier.indexOf(' ') + 1)));
     }
