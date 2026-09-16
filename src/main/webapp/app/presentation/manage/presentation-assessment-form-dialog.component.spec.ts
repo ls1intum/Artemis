@@ -103,12 +103,32 @@ describe('PresentationAssessmentFormDialogComponent', () => {
         expect(saved).toHaveBeenCalledWith({ presentationAssessment: expect.objectContaining({ exerciseId: replacement.id }) });
     });
 
+    it('should allow editing and saving a presentation with the smallest valid max points', () => {
+        fixture.componentRef.setInput('presentationAssessment', { ...presentationAssessment, maxPoints: 0.001 });
+        fixture.detectChanges();
+        expect(component.editForm.valid).toBe(true);
+        component.editForm.controls.title.setValue('Updated presentation');
+
+        component.save();
+
+        expect(saved).toHaveBeenCalledOnce();
+        expect(saved).toHaveBeenCalledWith({
+            presentationAssessment: expect.objectContaining({ id: presentationAssessment.id, title: 'Updated presentation', maxPoints: 0.001 }),
+        });
+    });
+
     it('should reject invalid max points', () => {
         component.editForm.controls.maxPoints.setValue(0);
         expect(component.editForm.controls.maxPoints.hasError('min')).toBe(true);
 
         component.editForm.controls.maxPoints.setValue(-1);
         expect(component.editForm.controls.maxPoints.hasError('min')).toBe(true);
+
+        component.editForm.controls.maxPoints.setValue(0.0009);
+        expect(component.editForm.controls.maxPoints.hasError('min')).toBe(true);
+
+        component.editForm.controls.maxPoints.setValue(0.001);
+        expect(component.editForm.controls.maxPoints.valid).toBe(true);
 
         component.editForm.controls.maxPoints.setValue(1.5);
         expect(component.editForm.controls.maxPoints.valid).toBe(true);

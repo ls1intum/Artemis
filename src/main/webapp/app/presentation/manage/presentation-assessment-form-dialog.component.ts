@@ -26,7 +26,7 @@ export interface PresentationAssessmentFormDialogResult {
 }
 
 const MAX_POINTS_UPPER_BOUND = 10000;
-const MIN_POINTS = 0.01;
+const MIN_POINTS = 0.001;
 const notBlank: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
     typeof control.value === 'string' && control.value.trim().length === 0 ? { required: true } : null;
 
