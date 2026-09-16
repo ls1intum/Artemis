@@ -93,7 +93,7 @@ Click **Run in Background** to close the window and let the job continue. It the
 
 <Image src={navbarTray} alt="Variant generation tray in the navigation bar" size={ImageSize.medium} caption="Background generations in the navbar tray" />
 
-Cancelling ends the job and removes the half-finished exercise copy, including its repositories and their builds. Jobs stay in the tray for 24 hours so you can review a result later.
+Canceling ends the job and removes the half-finished exercise copy, including its repositories and their builds. Jobs stay in the tray for 24 hours so you can review a result later.
 
 ### Review the Result
 
@@ -119,7 +119,7 @@ Before a variant is accepted, it has to pass objective gates. They run cheapest 
 | **Completed** | Every hard gate passed, and every best-effort check that ran reported nothing. The variant is placed as configured and ready for review. A best-effort check that could not run is skipped silently, so review the variant yourself rather than reading **Completed** as a full semantic sign-off |
 | **Draft with warnings** | Some check did not pass within the attempt budget, or the placement failed. The exercise is created all the same, with a short note on what is wrong — open it in the editor and fix that. A warning about the placement means the variant is not in the group you chose, so move it there yourself |
 | **Failed** | The run could not produce a variant. The result step explains the phase it failed in and how to continue, and the half-provisioned exercise is deleted |
-| **Cancelled** | You stopped the run, and the half-provisioned exercise is deleted |
+| **Canceled** | You stopped the run, and the half-provisioned exercise is deleted |
 
 <Callout variant={CalloutVariant.warning}>
 
@@ -133,7 +133,7 @@ Before a variant is accepted, it has to pass objective gates. They run cheapest 
 
 <Callout variant={CalloutVariant.info}>
 
-  Deleting the half-finished copy of a failed or cancelled run can itself fail — if the repository or the build
+  Deleting the half-finished copy of a failed or canceled run can itself fail — if the repository or the build
   cannot be removed, the exercise survives. Artemis says so on the result step and links the copy with **Open in
   Editor**, so that a run reporting a cleanup problem is one to follow up on: delete that exercise by hand.
 
