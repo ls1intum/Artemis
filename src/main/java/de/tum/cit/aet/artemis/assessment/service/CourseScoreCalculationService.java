@@ -260,7 +260,7 @@ public class CourseScoreCalculationService {
         Set<StudentParticipation> gradedStudentParticipations = new HashSet<>();
         for (Exercise exercise : course.getExercises()) {
             exercise.setCourse(course);
-            // This method is used in the CourseResource where the course is first fetched with lazy participations, and participations are then fetched separately in the
+            // This method is used in the CourseOverviewResource where the course is first fetched with lazy participations, and participations are then fetched separately in the
             // CourseService and added to the course if found.
             // If no participations are found for the course, no value is set to the course's participations and trying to access them here would throw a
             // LazyInitializationException. This is why we first need to check if the participations are initialized before adding them to the list of participations.
