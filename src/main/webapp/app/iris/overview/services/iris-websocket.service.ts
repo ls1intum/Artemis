@@ -70,18 +70,20 @@ export class IrisWebsocketService implements OnDestroy {
      * @return true if the session was successfully unsubscribed, false otherwise.
      */
     public unsubscribeFromSession(sessionId: number): boolean {
+        let unsubscribed = false;
         const commandChannel = this.commandChannels.get(sessionId);
         if (commandChannel) {
             commandChannel.wsSubscription.unsubscribe();
             this.commandChannels.delete(sessionId);
+            unsubscribed = true;
         }
         const subscribedChannel = this.subscribedChannels.get(sessionId);
         if (subscribedChannel) {
             subscribedChannel.wsSubscription.unsubscribe();
             this.subscribedChannels.delete(sessionId);
-            return true;
+            unsubscribed = true;
         }
-        return false;
+        return unsubscribed;
     }
 
     /**

@@ -36,6 +36,6 @@ class PyrisMessageDTOTest {
         assertThat(dto.sender()).isEqualTo(IrisMessageSender.COMMAND);
         assertThat(dto.contents()).hasSize(1);
         // Unchanged JSON: the wording the LLM reads is built in Pyris, next to the prompts.
-        assertThat(((PyrisJsonMessageContentDTO) dto.contents().getFirst()).jsonContent()).contains("\"type\":\"pointOut\"", "\"lectureUnitId\":42", "\"page\":3");
+        assertThat(((PyrisJsonMessageContentDTO) dto.contents().getFirst()).jsonContent()).isEqualTo(POINT_OUT_MARKER);
     }
 }

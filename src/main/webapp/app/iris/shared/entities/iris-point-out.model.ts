@@ -42,22 +42,31 @@ export interface IrisPointOut {
  * @returns the point-out if the parameters hold up, undefined otherwise
  */
 export function parsePointOut(parameters: Record<string, unknown> | undefined): IrisPointOut | undefined {
-    if (typeof parameters?.['lectureUnitId'] !== 'number') {
+    const lectureUnitId = parameters?.['lectureUnitId'];
+    if (typeof lectureUnitId !== 'number' || !Number.isSafeInteger(lectureUnitId) || lectureUnitId <= 0) {
         return undefined;
     }
-    const page = typeof parameters['page'] === 'number' ? parameters['page'] : undefined;
-    const timestamp = typeof parameters['timestamp'] === 'number' ? parameters['timestamp'] : undefined;
+    const pageValue = parameters?.['page'];
+    if (typeof pageValue === 'number' && (!Number.isSafeInteger(pageValue) || pageValue < 1)) {
+        return undefined;
+    }
+    const page = typeof pageValue === 'number' ? pageValue : undefined;
+    const timestampValue = parameters?.['timestamp'];
+    if (typeof timestampValue === 'number' && (!Number.isFinite(timestampValue) || timestampValue < 0)) {
+        return undefined;
+    }
+    const timestamp = typeof timestampValue === 'number' ? timestampValue : undefined;
     if (page === undefined && timestamp === undefined) {
         return undefined;
     }
     // Only markers carry the unit name and its lecture; a server-pushed command simply leaves both undefined.
-    const lectureUnitName = typeof parameters['lectureUnitName'] === 'string' ? parameters['lectureUnitName'] : undefined;
-    const lectureId = typeof parameters['lectureId'] === 'number' ? parameters['lectureId'] : undefined;
+    const lectureUnitName = typeof parameters?.['lectureUnitName'] === 'string' ? parameters['lectureUnitName'] : undefined;
+    const lectureId = typeof parameters?.['lectureId'] === 'number' ? parameters['lectureId'] : undefined;
     // Purely a label, so a value that could not be printed as a page number is dropped rather than
     // rejecting the whole point-out: the navigation it describes is still perfectly good.
-    const displayPageValue = parameters['displayPage'];
+    const displayPageValue = parameters?.['displayPage'];
     const displayPage = typeof displayPageValue === 'number' && Number.isInteger(displayPageValue) && displayPageValue > 0 ? displayPageValue : undefined;
-    return { lectureUnitId: parameters['lectureUnitId'], lectureId, page, displayPage, timestamp, lectureUnitName };
+    return { lectureUnitId, lectureId, page, displayPage, timestamp, lectureUnitName };
 }
 
 /**
