@@ -1250,8 +1250,9 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
         const submittedForUi = this.computeShouldTreatAsSubmittedForUi(hasAnyAnswer);
         this._shouldTreatAsSubmittedForUi.set(submittedForUi);
         // The practice attempt is also over once it expired: an attempt without a single answer never counts as
-        // submitted, yet Submit is disabled from then on. A submission in flight keeps it open, as it ends in a result.
-        this._practiceAttemptFinished.set(this.mode() === 'practice' && (submittedForUi || (this.remainingTimeSeconds() < 0 && !this.isSubmitting())));
+        // submitted, yet Submit is disabled from then on. A submission in flight keeps it open — restarting under one
+        // would let its response land on the fresh attempt.
+        this._practiceAttemptFinished.set(this.mode() === 'practice' && !this.isSubmitting() && (submittedForUi || this.remainingTimeSeconds() < 0));
         const disabled = submittedForUi || this.isSubmitting() || this.waitingForQuizStart() || this.remainingTimeSeconds() < 0;
         this._isSubmitDisabled.set(disabled);
         this._submitTitleKey.set(submittedForUi ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit');
