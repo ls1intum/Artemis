@@ -140,8 +140,8 @@ public class ProgrammingExerciseUtilService {
     @Autowired
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
-    public ProgrammingExercise createSampleProgrammingExercise() {
-        return createSampleProgrammingExercise("Title", "Shortname");
+    public ProgrammingExercise createSampleProgrammingExercise(Course course) {
+        return createSampleProgrammingExercise(course, "Title", "Shortname");
     }
 
     /**
@@ -161,12 +161,16 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Create an example programming exercise
+     * Create an example programming exercise in the given course.
      *
+     * @param course    the course the exercise belongs to; an exercise row names a course or an exercise group, never neither
+     * @param title     the title of the exercise
+     * @param shortName the short name of the exercise
      * @return the created programming exercise
      */
-    public ProgrammingExercise createSampleProgrammingExercise(String title, String shortName) {
+    public ProgrammingExercise createSampleProgrammingExercise(Course course, String title, String shortName) {
         var programmingExercise = new ProgrammingExercise();
+        programmingExercise.setCourse(course);
         programmingExercise.setTitle(title);
         programmingExercise.setShortName(shortName);
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);

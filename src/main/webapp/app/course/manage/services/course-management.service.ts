@@ -233,9 +233,6 @@ export class CourseManagementService implements OnDestroy {
                     res.body.courses?.forEach((courseForDashboardDTO) => {
                         if (courseForDashboardDTO.course.id) {
                             this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course.id, courseForDashboardDTO.courseNotificationCount);
-
-                            // Setting the helper attribute in the course so we can use it in the course overview guard.
-                            courseForDashboardDTO.course.irisEnabledInCourse = courseForDashboardDTO.irisEnabledInCourse;
                         }
                         courses.push(courseForDashboardDTO.course);
                         this.saveScoresInStorage(courseForDashboardDTO);
@@ -353,7 +350,7 @@ export class CourseManagementService implements OnDestroy {
     }
 
     /**
-     * Stores the score parts of a course payload. Shared by the (deprecated) for-dashboard response, the courses list
+     * Stores the score parts of a course payload. Shared by the for-dashboard response, the courses list
      * and the exercises-for-overview response, which all carry the same score fields.
      *
      * @param courseId the course the scores belong to
