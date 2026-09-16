@@ -340,8 +340,10 @@ describe('ExerciseSplitPanelComponent', () => {
             quizComponent.practiceAttemptFinished.set(true);
             expect(component.quizPracticeAttemptFinished()).toBe(true);
 
+            // The quiz component's state is cached per tick, so a mode that has already moved on wins over it.
             quizComponent.mode.set('live');
             expect(component.quizComponentMode()).toBe('live');
+            expect(component.quizPracticeAttemptFinished()).toBe(false);
         });
 
         describe('restartPractice', () => {

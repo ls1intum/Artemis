@@ -93,7 +93,9 @@ export class ExerciseSplitPanelComponent {
     // Exposes the active quiz component's mode as a reactive signal so parent templates
     // can guard against stale submit-disabled state during the live→practice transition.
     readonly quizComponentMode = computed(() => this._quizComponent()?.mode());
-    readonly quizPracticeAttemptFinished = computed(() => this._quizComponent()?.practiceAttemptFinished() ?? false);
+    // The quiz component caches its attempt state per UI tick, so gate it on the mode it reports right now: a
+    // component whose mode changes keeps the finished state of the attempt it has left until the next tick.
+    readonly quizPracticeAttemptFinished = computed(() => this.quizComponentMode() === 'practice' && (this._quizComponent()?.practiceAttemptFinished() ?? false));
     readonly quizPracticeInProgress = computed(() => this.exercise().type === ExerciseType.QUIZ && this.participationMode() === 'practice' && !this.quizPracticeAttemptFinished());
     readonly quizSubmitTitle = computed(() => this._quizComponent()?.submitTitleKey() ?? 'entity.action.submit');
     readonly quizLiveHeaderInfo = computed(() => this._quizComponent()?.liveHeaderInfo());
