@@ -29,8 +29,6 @@ If you have one single server, or your own NGINX instance, just skip all NGINX r
     Just make sure that you use unique port mappings for your Docker containers (e.g. `8081` for Jenkins, `8080` for Artemis).
 </Callout>
 
----
-
 ## Prerequisites
 
 - [Docker](https://docs.docker.com/install)
@@ -38,8 +36,6 @@ If you have one single server, or your own NGINX instance, just skip all NGINX r
 <Callout variant={CalloutVariant.info}>
     Make sure that docker has enough memory (~ 6GB). To adapt it, go to `Preferences -> Resources` and restart Docker.
 </Callout>
-
----
 
 ## Artemis Configuration
 
@@ -137,8 +133,6 @@ Starting the Artemis server should now succeed.
 
 </details>
 
----
-
 ## Jenkins Setup
 
 ### Automated Jenkins Server Setup
@@ -194,8 +188,6 @@ The following steps describe how to deploy a pre-configured version of the Jenki
 
 4. You're done. You can now run Artemis with the LocalVC/Jenkins environment.
 
----
-
 ### Manual Jenkins Server Setup
 
 1. Pull the latest Jenkins LTS Docker image
@@ -227,11 +219,9 @@ The following steps describe how to deploy a pre-configured version of the Jenki
    error_log  /var/log/nginx/error.log warn;
    pid        /var/run/nginx.pid;
 
-
    events {
        worker_connections  1024;
    }
-
 
    http {
        include       /etc/nginx/mime.types;
@@ -323,8 +313,6 @@ The following steps describe how to deploy a pre-configured version of the Jenki
            password: your.chosen.password
    ```
 
----
-
 ### Required Jenkins Plugins
 
 <Callout variant={CalloutVariant.info}>
@@ -364,8 +352,6 @@ Choose "Download now and install after restart" and checking the "Restart Jenkin
 
 </details>
 
----
-
 ### Timestamper Configuration
 
 Go to *Manage Jenkins → System Configuration → Configure*. There you will find the Timestamper configuration, use the following value for both formats:
@@ -381,8 +367,6 @@ Go to *Manage Jenkins → System Configuration → Configure*. There you will fi
     caption="Timestamper configuration in Jenkins"
 />
 
----
-
 ### Server Notification Plugin
 
 Artemis needs to receive a notification after every build, which contains the test results and additional commit information.
@@ -397,8 +381,6 @@ Go to the Jenkins plugin page (*Manage Jenkins → System Configuration → Plug
     size={ImageSize.large}
     caption="Upload custom plugin in Jenkins"
 />
-
----
 
 ### Jenkins Credentials
 
@@ -448,8 +430,6 @@ Go to *Manage Jenkins → Security → Credentials → Jenkins → Global creden
        continuous-integration:
            vcs-credentials: the.id.of.the.username.and.password.credentials.from.jenkins
    ```
-
----
 
 ### Upgrading Jenkins
 
@@ -502,15 +482,13 @@ In order to upgrade Jenkins to a newer version, you need to rebuild the Docker i
     You should also update the Jenkins plugins regularly due to security reasons. You can update them directly in the Web User Interface in the Plugin Manager.
 </Callout>
 
----
-
 ## Build Agents
 
 You can either run the builds locally (that means on the machine that hosts Jenkins) or on remote build agents.
 
 ### Configuring Local Build Agents
 
-Go to `Manage Jenkins` → `Nodes` → `Built-In Node` → `Configure`
+Go to **Manage Jenkins** → **Nodes** → **Built-In Node** → **Configure**
 
 Configure your master node like this (adjust the number of executors, if needed). Make sure to add the docker label.
 
@@ -520,8 +498,6 @@ Configure your master node like this (adjust the number of executors, if needed)
     size={ImageSize.large}
     caption="Jenkins local node configuration"
 />
-
----
 
 ### Alternative Local Build Agents Setup Using Docker
 
@@ -622,8 +598,6 @@ An alternative way of adding a build agent that will use docker (similar to the 
 
 6. Node should now be up and running
 
----
-
 ### Installing Remote Build Agents
 
 You might want to run the builds on additional Jenkins agents, especially if a large amount of students should use the system at the same time.
@@ -654,7 +628,7 @@ This guide explains setting up a remote agent on an Ubuntu virtual machine that 
     caption="Jenkins SSH credentials configuration"
 />
 
-8. Add a new node (select a name and select `Permanent Agent`):
+8. Add a new node (select a name and select **Permanent Agent**):
    Set the number of executors so that it matches your machine's specs: This is the number of concurrent builds this agent can handle. It is recommended to match the number of cores of the machine, but you might want to adjust this later if needed.
 
    Set the remote root directory to `/home/jenkins/remote_agent`.
@@ -685,8 +659,6 @@ This guide explains setting up a remote agent on an Ubuntu virtual machine that 
 
 11. You are finished, the new agent should now also process builds.
 
----
-
 ## Jenkins User Management
 
 Artemis supports user management in Jenkins as of version 4.11.0. Creating an account in Artemis will also create an account on Jenkins using the same password. This enables users to login and access Jenkins. Updating and/or deleting users from Artemis will also lead to updating and/or deleting from Jenkins.
@@ -698,8 +670,6 @@ Unfortunately, Jenkins does not provide a Rest API for user management which pre
 - In Jenkins, users are created in an on-demand basis. For example, when a build is performed, its change log is computed and as a result commits from users who Jenkins has never seen may be discovered and created.
 - Since Jenkins users may be re-created automatically, issues may occur such as 1) creating a user, deleting it, and then re-creating it and 2) changing the username of the user and reverting back to the previous one.
 - Updating a user will re-create it in Jenkins and therefore remove any additionally saved Jenkins-specific user data such as API access tokens.
-
----
 
 ## Jenkins Build Plan Access Control Configuration
 
@@ -725,8 +695,6 @@ This section explains the changes required in Jenkins in order to set up build p
     size={ImageSize.large}
     caption="Jenkins build plan access control configuration"
 />
-
----
 
 ## Caching
 
