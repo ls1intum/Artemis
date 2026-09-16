@@ -1,0 +1,38 @@
+{
+    "$schema": "https://unpkg.com/knip@6/schema.json",
+    "workspaces": {
+        ".": {
+            "entry": [
+                "src/main/webapp/app/app.main.ts"
+            ],
+            "project": [
+                "src/main/webapp/**/*.ts",
+                "!src/main/webapp/**/*.spec.ts"
+            ],
+            "ignore": [
+                "src/main/webapp/app/openapi/**"
+            ],
+            "vitest": false
+        },
+        "packages/tum-ui": {
+            "entry": [
+                "src/public-api.ts"
+            ],
+            "project": [
+                "src/**/*.ts",
+                "!src/**/*.spec.ts",
+                "!src/**/*.stories.ts"
+            ],
+            "vitest": false,
+            "storybook": false
+        }
+    },
+    "exclude": [
+        "dependencies",
+        "devDependencies",
+        "optionalPeerDependencies",
+        "unlisted",
+        "binaries",
+        "unresolved"
+    ]
+}

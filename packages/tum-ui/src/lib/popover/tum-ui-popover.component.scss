@@ -1,0 +1,51 @@
+/*
+ * The panel grows into place rather than appearing whole, which is what makes an anchored panel read as belonging to
+ * the thing it points at instead of as a layer dropped over the page.
+ *
+ * It grows from the edge nearest its origin, so the motion starts where the reader just clicked: a panel below its
+ * anchor unfolds downwards, one above it upwards. `appliedPlacement` is the side it actually ended up on, which is
+ * not always the side it asked for - CDK flips it when there is no room.
+ *
+ * Short enough not to be waited for, and eased so the growth is spread across it rather than dumped into the first
+ * frames. Measured rather than guessed: the expo-style curves this started with were 80% done a quarter of the way
+ * through, which reads as a pop with a slow tail. A plain ease-out is 38% grown at a quarter and 68% at half, so the
+ * panel is still visibly moving for most of its run.
+ */
+.tum-ui-popover-panel {
+    animation: tum-ui-popover-in 160ms ease-out;
+    transform-origin: top center;
+
+    &[data-placement='top'] {
+        transform-origin: bottom center;
+    }
+
+    &[data-placement='left'] {
+        transform-origin: center right;
+    }
+
+    &[data-placement='right'] {
+        transform-origin: center left;
+    }
+}
+
+@keyframes tum-ui-popover-in {
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/*
+ * Nothing moves for a reader who has asked for that. The panel still appears; it simply arrives at its full size,
+ * which is the state the animation ends in anyway.
+ */
+@media (prefers-reduced-motion: reduce) {
+    .tum-ui-popover-panel {
+        animation: none;
+    }
+}

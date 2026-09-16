@@ -1,0 +1,95 @@
+<div class="flex items-center justify-between gap-3 px-4 py-3">
+    <h2 class="m-0 flex items-baseline gap-2 text-base font-semibold">
+        <span jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.allHolidays"></span>
+        <span class="text-sm font-normal opacity-60" data-testid="holiday-list-count">{{ entries().length }}</span>
+    </h2>
+    <div class="flex items-center gap-1" role="group" data-testid="holiday-list-filter">
+        @for (option of filters; track option.value) {
+            <button
+                tumUiButton
+                size="small"
+                type="button"
+                [severity]="filter() === option.value ? 'primary' : 'secondary'"
+                [variant]="filter() === option.value ? 'solid' : 'outlined'"
+                [attr.aria-pressed]="filter() === option.value"
+                [attr.data-filter]="option.value"
+                (click)="filterChange.emit(option.value)"
+            >
+                <span [jhiTranslate]="option.labelKey"></span>
+            </button>
+        }
+    </div>
+</div>
+
+@if (entries().length === 0) {
+    <p class="px-4 py-6 text-center opacity-60" data-testid="holiday-list-empty" jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.noHolidays"></p>
+} @else {
+    <ul class="m-0 list-none p-0" data-testid="holiday-list">
+        @for (entry of entries(); track entry.key) {
+            <li
+                class="flex items-center gap-3 border-t border-(--tumaet-ui-border-color) px-4 py-2.5"
+                data-testid="holiday-list-item"
+                [attr.data-holiday-id]="entry.holiday.period.id"
+            >
+                <!-- Fixed width so the date blocks line up however wide the localized month abbreviation is. -->
+                <div class="flex w-10 flex-none flex-col items-center" aria-hidden="true">
+                    <span class="text-[0.6875rem] tracking-wide uppercase opacity-60">{{ entry.monthLabel }}</span>
+                    <span class="text-lg leading-tight font-bold">{{ entry.dayOfMonth }}</span>
+                </div>
+
+                <!-- Takes the slack, so the tag and the buttons stay pinned to the end of the row. -->
+                <div class="flex min-w-0 flex-1 flex-col">
+                    <span class="font-semibold break-words">{{ entry.holiday.reason }}</span>
+                    <span class="sr-only" data-testid="holiday-list-accessible-date">{{ entry.accessibleDate }}</span>
+                    <span class="text-[0.8125rem] opacity-70" aria-hidden="true">{{ entry.whenLabel }} · {{ entry.timeLabel }}</span>
+                    <span class="sr-only">{{ entry.timeLabel }}</span>
+                </div>
+
+                @if (entry.sessionCount > 0) {
+                    <tum-ui-tag
+                        severity="danger"
+                        rounded="true"
+                        data-testid="holiday-list-sessions"
+                        [value]="'artemisApp.pages.tutorialFreePeriodsManagement.sessionsCancelled' | artemisTranslate: { count: entry.sessionCount }"
+                    />
+                }
+
+                <div class="flex flex-none items-center gap-2">
+                    <button
+                        tumUiButton
+                        size="small"
+                        severity="secondary"
+                        variant="outlined"
+                        type="button"
+                        data-testid="holiday-edit"
+                        [attr.aria-label]="'artemisApp.pages.tutorialFreePeriodsManagement.editHolidayNamed' | artemisTranslate: { reason: entry.holiday.reason }"
+                        (click)="requestEdit(entry.holiday, $event)"
+                    >
+                        <fa-icon [icon]="faWrench" />
+                        <!-- sr-only in the narrow panel keeps the label in the accessibility tree so the icon-only button stays named -->
+                        <span class="sr-only 2xl:not-sr-only" jhiTranslate="entity.action.edit"></span>
+                    </button>
+                    <button
+                        tumUiButton
+                        size="small"
+                        severity="danger"
+                        variant="outlined"
+                        type="button"
+                        data-testid="holiday-delete"
+                        [tumUiTooltip]="'entity.action.delete' | artemisTranslate"
+                        [attr.aria-label]="'artemisApp.pages.tutorialFreePeriodsManagement.deleteHolidayNamed' | artemisTranslate: { reason: entry.holiday.reason }"
+                        (click)="deleteRequested.emit(entry.holiday)"
+                    >
+                        <fa-icon [icon]="faTrash" />
+                    </button>
+                </div>
+            </li>
+        }
+    </ul>
+}
+
+@if (filter() === 'upcoming' && pastCount() > 0) {
+    <p class="m-0 border-t border-(--tumaet-ui-border-color) px-4 py-3 text-[0.8125rem] opacity-70" data-testid="holiday-list-past-note">
+        {{ 'artemisApp.pages.tutorialFreePeriodsManagement.pastHidden' | artemisTranslate: { count: pastCount() } }}
+    </p>
+}
