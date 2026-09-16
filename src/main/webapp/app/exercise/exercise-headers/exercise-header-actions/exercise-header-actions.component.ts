@@ -318,7 +318,7 @@ export class ExerciseHeaderActionsComponent {
         this._isLoading.set(true);
         const programmingExercise = this._programmingExercise();
         this.courseExerciseService
-            .startExercise(this.exercise().id!)
+            .startExercise(this.exercise().id!, this.exercise())
             .pipe(finalize(() => this._isLoading.set(false)))
             .subscribe({
                 next: (participation) => {
@@ -350,10 +350,10 @@ export class ExerciseHeaderActionsComponent {
         this._isLoading.set(true);
         const participation = testRun ? this._practiceParticipation() : this._gradedParticipation();
         this.courseExerciseService
-            .resumeProgrammingExercise(this.exercise().id!, participation!.id!)
+            .resumeProgrammingExercise(this.exercise().id!, participation!.id!, this.exercise())
             .pipe(finalize(() => this._isLoading.set(false)))
             .subscribe({
-                next: (resumedParticipation: StudentParticipation) => {
+                next: (resumedParticipation: StudentParticipation | null) => {
                     if (resumedParticipation) {
                         this.receiveNewParticipation(resumedParticipation);
                         this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
