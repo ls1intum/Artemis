@@ -512,7 +512,7 @@ Mobile apps (iOS, Android) and the VS Code extension consume these paths and can
 
 ```java
 // Class-level: the canonical prefix carries the collection; the legacy prefix stays unchanged.
-@RequestMapping({ "api/notification/courses/", "api/communication/notification/" })
+@RequestMapping({ "api/localci/public/", LocalCILegacyRestPaths.PROGRAMMING_PUBLIC_PREFIX })
 
 // Method-level (single class prefix): list the canonical path first, the legacy path second.
 @GetMapping({ "exercises/{exerciseId}/versions", "{exerciseId}/versions" })
