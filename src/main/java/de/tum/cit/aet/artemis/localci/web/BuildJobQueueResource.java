@@ -37,7 +37,6 @@ import de.tum.cit.aet.artemis.core.util.SliceUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
-import de.tum.cit.aet.artemis.localci.config.LocalCILegacyRestPaths;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
@@ -47,7 +46,7 @@ import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
 @Lazy
 @FeatureUsage("build-system/build-queue")
 @RestController
-@RequestMapping({ "api/localci/", LocalCILegacyRestPaths.PROGRAMMING_PREFIX })
+@RequestMapping("api/localci/")
 public class BuildJobQueueResource {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobQueueResource.class);
@@ -79,7 +78,7 @@ public class BuildJobQueueResource {
      * @param buildJobId the id of the build job
      * @return the build job, or 404 if not found or does not belong to the course
      */
-    @GetMapping({ "courses/{courseId}/build-jobs/{buildJobId}", "courses/{courseId}/build-job/{buildJobId}" })
+    @GetMapping("courses/{courseId}/build-jobs/{buildJobId}")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<BuildJobDTO> getBuildJobById(@PathVariable long courseId, @PathVariable String buildJobId) {
         if (buildJobId == null || buildJobId.isBlank()) {
@@ -149,7 +148,7 @@ public class BuildJobQueueResource {
      * @param buildJobId the id of the build job to cancel
      * @return the ResponseEntity with the result of the cancellation
      */
-    @DeleteMapping({ "courses/{courseId}/build-jobs/{buildJobId}/cancel", "courses/{courseId}/cancel-job/{buildJobId}" })
+    @DeleteMapping("courses/{courseId}/build-jobs/{buildJobId}/cancel")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> cancelBuildJob(@PathVariable long courseId, @PathVariable String buildJobId) {
         log.debug("REST request to cancel the build job for course {} and with id {}", courseId, buildJobId);

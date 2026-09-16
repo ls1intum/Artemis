@@ -230,7 +230,7 @@ public abstract class RepositoryResource {
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     public ResponseEntity<Void> pullChanges(Long domainId) {
-        log.debug("REST request to commit Repository for domainId : {}", domainId);
+        log.debug("REST request to pull Repository for domainId : {}", domainId);
 
         return executeAndCheckForExceptions(() -> {
             try (Repository repository = getRepository(domainId, RepositoryActionType.READ, true, false)) {

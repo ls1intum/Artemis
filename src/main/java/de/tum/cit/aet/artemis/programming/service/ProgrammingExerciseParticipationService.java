@@ -131,7 +131,18 @@ public class ProgrammingExerciseParticipationService {
      * @throws EntityNotFoundException if there is no participation for the given exercise and user.
      */
     public Optional<ProgrammingExerciseStudentParticipation> findTeamParticipationByExerciseAndUser(ProgrammingExercise exercise, User user) {
-        return studentParticipationRepository.findTeamParticipationByExerciseIdAndStudentId(exercise.getId(), user.getId());
+        return findTeamParticipationByExerciseAndUser(exercise.getId(), user);
+    }
+
+    /**
+     * The team participation of a user in an exercise, for a caller that holds only the exercise's id.
+     *
+     * @param exerciseId the exercise to look in
+     * @param user       the user whose team participation is wanted
+     * @return the participation, or empty if the user has none
+     */
+    public Optional<ProgrammingExerciseStudentParticipation> findTeamParticipationByExerciseAndUser(long exerciseId, User user) {
+        return studentParticipationRepository.findTeamParticipationByExerciseIdAndStudentId(exerciseId, user.getId());
     }
 
     /**
@@ -236,10 +247,23 @@ public class ProgrammingExerciseParticipationService {
      * @return the participation belonging to the provided repositoryURI and repository type or username
      */
     public ProgrammingExerciseParticipation fetchParticipationWithSubmissionsByRepository(String repositoryTypeOrUserName, String repositoryURI, ProgrammingExercise exercise) {
+        return fetchParticipationWithSubmissionsByRepository(repositoryTypeOrUserName, repositoryURI, exercise.getId());
+    }
+
+    /**
+     * The participation behind a repository together with its submissions, for a caller that holds only the
+     * exercise's id.
+     *
+     * @param repositoryTypeOrUserName the repository type, or the login of the student the repository belongs to
+     * @param repositoryURI            the uri of the repository
+     * @param exerciseId               the exercise the repository belongs to
+     * @return the participation behind the repository
+     */
+    public ProgrammingExerciseParticipation fetchParticipationWithSubmissionsByRepository(String repositoryTypeOrUserName, String repositoryURI, long exerciseId) {
         var repositoryURL = repositoryURI.replace("/git-upload-pack", "").replace("/git-receive-pack", "");
 
         if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
-            return solutionParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
+            return solutionParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exerciseId);
         }
         if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
             return templateParticipationRepository.findWithSubmissionsByRepositoryUriElseThrow(repositoryURL);
@@ -262,9 +286,21 @@ public class ProgrammingExerciseParticipationService {
      * @return the participation belonging to the provided repositoryURI and repository type or username
      */
     public ProgrammingExerciseParticipation fetchParticipationByRepository(String repositoryTypeOrUserName, String repositoryURI, ProgrammingExercise exercise) {
+        return fetchParticipationByRepository(repositoryTypeOrUserName, repositoryURI, exercise.getId());
+    }
+
+    /**
+     * The participation behind a repository, for a caller that holds only the exercise's id.
+     *
+     * @param repositoryTypeOrUserName the repository type, or the login of the student the repository belongs to
+     * @param repositoryURI            the uri of the repository
+     * @param exerciseId               the exercise the repository belongs to
+     * @return the participation behind the repository
+     */
+    public ProgrammingExerciseParticipation fetchParticipationByRepository(String repositoryTypeOrUserName, String repositoryURI, long exerciseId) {
         var repositoryURL = repositoryURI.replace("/git-upload-pack", "").replace("/git-receive-pack", "");
         if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
-            return solutionParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
+            return solutionParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exerciseId);
         }
         if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
             return templateParticipationRepository.findByRepositoryUriElseThrow(repositoryURL);
