@@ -74,7 +74,10 @@ describe('ExerciseSplitPanelComponent', () => {
                                 <ng-template jhiPanel [label]="editorLabelKey()">Editor</ng-template>
                             }
                             @if (exercise().type !== ExerciseType.QUIZ) {
-                                <ng-template jhiPanel [label]="'problemStatement'">Problem Statement</ng-template>
+                                <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.details'">Details + Problem Statement</ng-template>
+                            }
+                            @if (exercise().type === ExerciseType.QUIZ) {
+                                <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.details'">Details</ng-template>
                             }
                             @if (showIris()) {
                                 <ng-template jhiPanel [label]="'iris'" [startsCollapsed]="irisPanelStartsCollapsed()">Iris</ng-template>
@@ -171,6 +174,44 @@ describe('ExerciseSplitPanelComponent', () => {
         expect(resizablePanels.activeRightIndex()).toBe(0);
         expect(fixture.nativeElement.querySelector('.collapsed-right-panel')).toBeNull();
         expect(fixture.nativeElement.textContent).toContain('Problem Statement');
+    });
+
+    describe('exercise details panel', () => {
+        /**
+         * Every type shows its details in one panel labelled "Exercise Details": for a quiz that panel holds only the
+         * details, for every other type it also holds the problem statement. It must never be panels()[0], because
+         * ResizablePanelsComponent makes the first panel the left pane and the rest the right-hand tabs.
+         */
+        function panelLabels(): string[] {
+            const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance.panels();
+            return panels.map((panel: PanelDirective) => panel.label());
+        }
+
+        it.each([ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD, ExerciseType.PROGRAMMING, ExerciseType.QUIZ])(
+            'should render exactly one details panel for %s',
+            (type) => {
+                fixture.componentRef.setInput('exercise', { id: 1, type } as Exercise);
+                fixture.detectChanges();
+
+                const labels = panelLabels();
+                expect(labels.filter((label) => label === 'artemisApp.courseOverview.exerciseDetails.details')).toHaveLength(1);
+            },
+        );
+
+        it('should never make the details panel the left pane', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.MODELING } as Exercise);
+            fixture.componentRef.setInput('studentParticipation', { id: 5 } as StudentParticipation);
+            fixture.detectChanges();
+
+            expect(panelLabels()[0]).not.toBe('artemisApp.courseOverview.exerciseDetails.details');
+        });
+
+        it('should no longer label a panel problem statement', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT } as Exercise);
+            fixture.detectChanges();
+
+            expect(panelLabels()).not.toContain('artemisApp.courseOverview.exerciseDetails.problemStatement');
+        });
     });
 
     describe('submit dispatch', () => {

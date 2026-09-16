@@ -195,6 +195,34 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     /**
+     * Both example submission edit pages load the exercise from {@code GET /api/exercise/exercises/:id} and send that
+     * response verbatim as {@code exampleSubmission.exercise} in the save request. The save reads only its id, so the
+     * rest of the echoed response must be ignored and the id must match the path.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateExampleModelingSubmission_acceptsEchoedExerciseResponse() throws Exception {
+        exampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, true);
+        ExampleSubmissionDetailDTO created = request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission,
+                ExampleSubmissionDetailDTO.class, HttpStatus.OK);
+
+        String exerciseJson = request.get("/api/exercise/exercises/" + modelingExercise.getId(), HttpStatus.OK, String.class);
+
+        JsonMapper mapper = request.getObjectMapper();
+        ObjectNode body = mapper.createObjectNode();
+        body.put("id", created.id());
+        body.put("usedForTutorial", false);
+        body.set("exercise", mapper.readTree(exerciseJson));
+        body.set("submission", mapper.valueToTree(created.submission()));
+
+        ExampleSubmissionDetailDTO updated = request.putWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions", body,
+                ExampleSubmissionDetailDTO.class, HttpStatus.OK);
+
+        assertThat(updated.id()).isEqualTo(created.id());
+        modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(updated.submission().id(), validModel);
+    }
+
+    /**
      * Once an example assessment exists, the edit page attaches the result it loaded from the (migrated, DTO-shaped)
      * example-assessment endpoint to the submission before the save PUT. The echoed result must keep every column the
      * server-side cascade merge writes back - {@code Result.exerciseId} is a primitive non-null FK column, so a wire
