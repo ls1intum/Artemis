@@ -1,0 +1,60 @@
+:host {
+    min-width: 0;
+}
+
+.tum-ui-empty-state-icon {
+    width: calc(var(--tumaet-ui-spacing) * 14);
+    height: calc(var(--tumaet-ui-spacing) * 14);
+    border: 1px solid var(--tumaet-ui-control-border-color);
+    border-radius: var(--tumaet-ui-radius-xl);
+    background-color: var(--tumaet-ui-content-background);
+    color: var(--tumaet-ui-primary-color);
+    font-size: var(--tumaet-ui-font-size-lg);
+}
+
+:host([data-variant='solid']) .tum-ui-empty-state-icon {
+    border-color: var(--tumaet-ui-primary-color);
+    background-color: var(--tumaet-ui-primary-color);
+    color: var(--tumaet-ui-primary-contrast-color);
+}
+
+:host([data-variant='plain']) .tum-ui-empty-state-icon {
+    width: auto;
+    height: auto;
+    border: 0;
+    background-color: transparent;
+}
+
+.tum-ui-empty-state-title {
+    margin: calc(var(--tumaet-ui-spacing) * 4) 0 0;
+    color: var(--tumaet-ui-text-color);
+    font-size: var(--tumaet-ui-font-size-xl);
+    font-weight: 600;
+    line-height: var(--tumaet-ui-line-height-xl);
+}
+
+.tum-ui-empty-state-description {
+    max-width: 40rem;
+    margin: calc(var(--tumaet-ui-spacing) * 2) 0 0;
+    color: var(--tumaet-ui-text-color);
+    font-size: var(--tumaet-ui-font-size-base);
+    line-height: var(--tumaet-ui-line-height-base);
+}
+
+.tum-ui-empty-state-actions {
+    max-width: 100%;
+    gap: calc(var(--tumaet-ui-spacing) * 4);
+    margin-block-start: calc(var(--tumaet-ui-spacing) * 4);
+}
+
+.tum-ui-empty-state-documentation {
+    margin-block-start: calc(var(--tumaet-ui-spacing) * 4);
+    color: var(--tumaet-ui-muted-color);
+    font-size: var(--tumaet-ui-font-size-sm);
+    line-height: var(--tumaet-ui-line-height-sm);
+}
+
+.tum-ui-empty-state-actions:empty,
+.tum-ui-empty-state-documentation:empty {
+    display: none;
+}

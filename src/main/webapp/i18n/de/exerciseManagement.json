@@ -20,6 +20,13 @@
                 "group": "Gruppe"
             },
             "noExercisesMatch": "Keine Aufgaben stimmen mit \"{{ search }}\" überein.",
+            "empty": {
+                "title": "Noch keine Aufgaben",
+                "description": "Aufgaben, die du für diesen Kurs erstellst, werden hier aufgelistet. Du kannst auch Aufgaben aus einem bestehenden Kurs importieren.",
+                "create": "Aufgabe erstellen",
+                "import": "Aus Kurs importieren",
+                "documentation": "Mehr über Aufgaben erfahren"
+            },
             "selection": {
                 "count": "{{ count }} ausgewählt",
                 "deselectAll": "Auswahl aufheben",
