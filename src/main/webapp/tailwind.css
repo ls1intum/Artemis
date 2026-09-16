@@ -75,9 +75,6 @@
 /* The exam-scores page still carries legacy Bootstrap markup, but its layout and chart spacing are Tailwind. */
 @source './app/exam/manage/exam-scores';
 
-/* Only the second-correction button: its host alignment utilities must not depend on an unrelated module
-   happening to use the same classes. Bootstrap's .float-end in this folder keeps winning through !important. */
-@source './app/assessment/shared/assessment-dashboard/exercise-dashboard/second-correction-button';
 @source './app/localci/build-queue';
 @source './app/course/request';
 @source './app/shared-ui/user-import';
@@ -100,6 +97,8 @@
 @source './app/account';
 @source './app/course/manage/update/course-update.component.html';
 @source './app/exam/manage/exercise-groups';
+@source './app/assessment/shared/assessment-dashboard';
+@source './app/exercise/dashboards/tutor-leaderboard';
 @source './app/exercise/exercise-action-bar';
 @source './app/exercise/exam-exercise-row-buttons';
 @source './app/exercise/unreferenced-feedback';

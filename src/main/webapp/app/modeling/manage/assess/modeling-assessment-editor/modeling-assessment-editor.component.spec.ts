@@ -92,6 +92,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                         snapshot: {
                             paramMap: convertToParamMap({}),
                             queryParamMap: convertToParamMap({}),
+                            queryParams: { 'correction-round': '0', testRun: 'false' },
                         },
                         parent: {
                             paramMap: of(convertToParamMap({})),
@@ -193,14 +194,15 @@ describe('ModelingAssessmentEditorComponent', () => {
 
     it('should rewrite only the new segment of the assessment path once a random submission is locked', async () => {
         const location = TestBed.inject(Location);
-        vi.spyOn(location, 'path').mockReturnValue('/course-management/1/modeling-exercises/7/submissions/new/assessment?correction-round=0');
         const go = vi.spyOn(location, 'go').mockImplementation(() => {});
+        component.courseId = 1;
+        component.exerciseId = 7;
         vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(getSubmissionWithData()));
 
         component['loadRandomSubmission'](7);
         await fixture.whenStable();
 
-        expect(go).toHaveBeenCalledExactlyOnceWith('/course-management/1/modeling-exercises/7/submissions/1/assessment?correction-round=0');
+        expect(go).toHaveBeenCalledExactlyOnceWith('/course-management/1/modeling-exercises/7/submissions/1/assessment?correction-round=0&testRun=false');
     });
 
     describe('ngOnInit tests', () => {
@@ -419,6 +421,42 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
             expect(component.submission()).toBe(mockSubmission);
             expect(component.assessmentsAreValid()).toBe(false);
+        });
+
+        it('should keep the exam route and query parameters when replacing new with the loaded submission id', async () => {
+            const mockSubmission = {
+                id: 123,
+                submitted: true,
+                participation: {
+                    exercise: {
+                        id: 1,
+                        type: 'modeling',
+                    } as Exercise,
+                },
+            } as ModelingSubmission;
+            vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(mockSubmission));
+            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of(new HttpResponse<ComplaintDTO>({ body: undefined })));
+            const createUrlTreeSpy = vi.spyOn(router, 'createUrlTree');
+            const goSpy = vi.spyOn(TestBed.inject(Location), 'go').mockImplementation(() => {});
+
+            paramMapSubject.next(
+                convertToParamMap({
+                    submissionId: 'new',
+                    courseId: '2',
+                    examId: '3',
+                    exerciseGroupId: '4',
+                    exerciseId: '14',
+                }),
+            );
+            await fixture.whenStable();
+
+            expect(createUrlTreeSpy).toHaveBeenCalledWith(
+                ['/course-management', '2', 'exams', '3', 'exercise-groups', '4', 'modeling-exercises', '14', 'submissions', '123', 'assessment'],
+                { queryParams: { 'correction-round': '0', testRun: 'false' } },
+            );
+            expect(goSpy).toHaveBeenCalledExactlyOnceWith(
+                '/course-management/2/exams/3/exercise-groups/4/modeling-exercises/14/submissions/123/assessment?correction-round=0&testRun=false',
+            );
         });
     });
 

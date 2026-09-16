@@ -65,6 +65,8 @@ export class ExampleSubmissionImportComponent extends ImportComponent<Submission
         const exercise = this.exercise();
         this.content()?.resultsOnPage?.forEach((submission) => {
             submission.submissionSize = this.exampleSubmissionService.getSubmissionSize(submission, exercise);
+            // the result badge routes to result.submission, which the list payload does not repeat on each result
+            submission.participation?.submissions?.forEach((sibling) => sibling.results?.forEach((result) => (result.submission ??= sibling)));
         });
     }
 
