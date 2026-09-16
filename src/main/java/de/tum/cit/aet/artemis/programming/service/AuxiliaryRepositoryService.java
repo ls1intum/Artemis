@@ -222,7 +222,18 @@ public class AuxiliaryRepositoryService {
      * @return true if the repository is an auxiliary repository of the exercise, false otherwise.
      */
     public boolean isAuxiliaryRepositoryOfExercise(String repositoryName, ProgrammingExercise exercise) {
-        return findAuxiliaryRepositoryIdOfExercise(repositoryName, exercise).isPresent();
+        return isAuxiliaryRepositoryOfExercise(repositoryName, exercise.getId());
+    }
+
+    /**
+     * Whether the exercise has an auxiliary repository by that name, for a caller that holds only the exercise's id.
+     *
+     * @param repositoryName the name of the auxiliary repository, as it appears in its repository uri
+     * @param exerciseId     the exercise the repository would belong to
+     * @return true if the exercise has such an auxiliary repository
+     */
+    public boolean isAuxiliaryRepositoryOfExercise(String repositoryName, long exerciseId) {
+        return findAuxiliaryRepositoryIdOfExercise(repositoryName, exerciseId).isPresent();
     }
 
     /**
@@ -233,7 +244,19 @@ public class AuxiliaryRepositoryService {
      * @return the id of that auxiliary repository, or empty if the exercise has none by that name
      */
     public Optional<Long> findAuxiliaryRepositoryIdOfExercise(String repositoryName, ProgrammingExercise exercise) {
-        List<AuxiliaryRepository> auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(exercise.getId());
+        return findAuxiliaryRepositoryIdOfExercise(repositoryName, exercise.getId());
+    }
+
+    /**
+     * Finds the id of the auxiliary repository of the given exercise that carries the given name, for a caller that
+     * holds only the exercise's id.
+     *
+     * @param repositoryName the name of the auxiliary repository, as it appears in its repository uri
+     * @param exerciseId     the exercise the repository belongs to
+     * @return the id of that auxiliary repository, or empty if the exercise has none by that name
+     */
+    public Optional<Long> findAuxiliaryRepositoryIdOfExercise(String repositoryName, long exerciseId) {
+        List<AuxiliaryRepository> auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(exerciseId);
         for (AuxiliaryRepository repo : auxiliaryRepositories) {
             if (repo.getName().equals(repositoryName)) {
                 return Optional.ofNullable(repo.getId());
