@@ -244,9 +244,9 @@ public class PyrisJobService {
             if (existing != null) {
                 return Optional.empty();
             }
-            // Shares the job map with every other pipeline. The map is only ever read by token, never iterated, so
-            // a build that does not know this record never reads one. What makes the release compatible is
-            // DistributedDataSchema.VERSION being raised to 2, which puts an older build on the previous namespace.
+            // Shares the job map with every other pipeline. The map is only ever read by token, never iterated, so a
+            // build that does not know this record never reads one: the token that would find it is handed out by
+            // this build alone. That is why the new record needs no distributed schema version of its own.
             getPyrisJobMap().put(token, job);
             // The marker was written before the job, so it would expire first and the run would outlive the
             // reservation protecting it. Re-stamping keeps the marker's lifetime the longer of the two.
