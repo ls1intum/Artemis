@@ -7,6 +7,8 @@ import dayjs from 'dayjs/esm';
 
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
+import { ResultComponent } from 'app/exercise/result/result.component';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
@@ -14,7 +16,7 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
 @Component({
     selector: 'jhi-submission-result-status',
     templateUrl: './submission-result-status.component.html',
-    imports: [UpdatingResultComponent, TranslateDirective, ProgrammingExerciseStudentTriggerBuildButtonComponent],
+    imports: [UpdatingResultComponent, ResultComponent, TranslateDirective, ProgrammingExerciseStudentTriggerBuildButtonComponent],
 })
 export class SubmissionResultStatusComponent {
     private readonly initializationStatesToShowProgrammingResult = [InitializationState.INITIALIZED, InitializationState.INACTIVE, InitializationState.FINISHED];
@@ -33,6 +35,7 @@ export class SubmissionResultStatusComponent {
      */
     readonly exercise = input.required<Exercise>();
     readonly studentParticipation = input<StudentParticipation>();
+    readonly result = input<Result>();
     readonly updatingResultClass = input<string>('');
     readonly showBadge = input(false);
     readonly showUngradedResults = input(false);
@@ -44,6 +47,7 @@ export class SubmissionResultStatusComponent {
     readonly showProgressBar = input(false);
     readonly quizLiveStatusOverride = input<LiveQuizParticipationStatus>();
     readonly isPractice = input(false);
+    readonly quizPracticeInProgress = input(false);
 
     // Computed signal for whether due date has passed
     private readonly afterDueDate = computed(() => {
@@ -109,6 +113,12 @@ export class SubmissionResultStatusComponent {
     readonly shouldShowResult = computed(() => {
         const exercise = this.exercise();
         const studentParticipation = this.studentParticipation();
+
+        // While a fresh practice attempt is in progress, the previous attempt's result must not be shown — fall through
+        // to the in-progress "participating" status instead.
+        if (this.quizPracticeInProgress()) {
+            return false;
+        }
 
         if (exercise?.type === ExerciseType.QUIZ) {
             return !!getAllResultsOfAllSubmissions(studentParticipation?.submissions).length;

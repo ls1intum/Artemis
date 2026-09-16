@@ -169,6 +169,19 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         return this.participationMode() === 'practice' ? (this.practiceStudentParticipation() ?? this.gradedStudentParticipation()) : this.gradedStudentParticipation();
     });
 
+    /**
+     * The submit-disabled state for the header. While the page is already in practice mode but the routed quiz
+     * component has not switched to practice yet (not mounted, or still the live component), its submit-disabled
+     * state belongs to the graded attempt and is ignored.
+     */
+    readonly quizSubmitDisabledForMode = computed(() => {
+        const splitPanel = this.splitPanel();
+        if (this.participationMode() === 'practice' && splitPanel?.quizComponentMode() !== 'practice') {
+            return false;
+        }
+        return splitPanel?.quizSubmitDisabled() ?? false;
+    });
+
     setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void {
         this.isSidebarCollapsed.set(isCollapsed);
         this.sidebarToggle.set(toggleSidebar);
