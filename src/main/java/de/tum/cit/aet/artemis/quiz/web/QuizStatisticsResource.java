@@ -68,7 +68,6 @@ public class QuizStatisticsResource {
 
     /**
      * Gets the point-bucket histogram of a quiz.
-     * The legacy recalculation path maps here because on-demand statistics have no persisted aggregate to recalculate.
      *
      * @param quizExerciseId the id of the quiz exercise
      * @return the quiz exercise with point statistics
