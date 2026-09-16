@@ -3,7 +3,8 @@ package de.tum.cit.aet.artemis.iris.dto;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.JsonNode;
+
+import tools.jackson.databind.JsonNode;
 
 /**
  * Sent to the client to request execution of a command while the Iris pipeline is still running (before the answer arrives). The client tries to carry it out and replies with an

@@ -3,7 +3,8 @@ package de.tum.cit.aet.artemis.iris.service.pyris.dto.chat;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.JsonNode;
+
+import tools.jackson.databind.JsonNode;
 
 /**
  * A command Iris performs on the client alongside a chat answer, such as pointing the student to a position in the lecture combined view.

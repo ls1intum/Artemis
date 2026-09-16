@@ -25,9 +25,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.JsonNodeFactory;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
@@ -101,7 +101,7 @@ class IrisCommandServiceTest {
     @BeforeEach
     void setUp() {
         commandService = new IrisCommandService(coordinationService, irisWebsocketService, irisChatWebsocketService, irisMessageService, irisSessionRepository, userRepository,
-                new ObjectMapper(), Optional.of(lectureUnitRepositoryApi));
+                JsonMapper.builder().build(), Optional.of(lectureUnitRepositoryApi));
         job = new ChatJob("job-1", COURSE_ID, SESSION_ID, null, null, null, null);
     }
 
@@ -171,17 +171,17 @@ class IrisCommandServiceTest {
         // what only Artemis can resolve added to the parameters: the unit's name and the lecture it belongs to. The
         // lecture is what a click on the chip navigates by later, when the chat may sit in a different one entirely.
         var marker = ((IrisJsonMessageContent) savedMarker.getValue().getContent().getFirst()).getJsonNode();
-        assertThat(marker.get("type").asText()).isEqualTo("pointOut");
+        assertThat(marker.get("type").stringValue()).isEqualTo("pointOut");
         assertThat(marker.get("parameters").get("lectureUnitId").asLong()).isEqualTo(LECTURE_UNIT_ID);
         assertThat(marker.get("parameters").get("page").asInt()).isEqualTo(3);
-        assertThat(marker.get("parameters").get("lectureUnitName").asText()).isEqualTo("Sorting");
+        assertThat(marker.get("parameters").get("lectureUnitName").stringValue()).isEqualTo("Sorting");
         assertThat(marker.get("parameters").get("lectureId").asLong()).isEqualTo(LECTURE_ID);
         assertThat(marker.has("lectureUnitId")).isFalse();
     }
 
     @Test
     void commandDtos_serializeTheWayPyrisAndTheClientExpect() throws Exception {
-        var mapper = new ObjectMapper();
+        var mapper = JsonMapper.builder().build();
         var parameters = Map.<String, JsonNode>of("lectureUnitId", JsonNodeFactory.instance.numberNode(LECTURE_UNIT_ID));
 
         // Pyris requires "applied" in the response body; NON_EMPTY must not drop the primitive false.
@@ -212,7 +212,7 @@ class IrisCommandServiceTest {
 
     @Test
     void executeCommand_unsupportedCommandTypeIsDroppedWithoutContactingTheClient() throws Exception {
-        var command = new ObjectMapper().readValue("""
+        var command = JsonMapper.builder().build().readValue("""
                 {
                     "type": "highlightTerm",
                     "parameters": {
@@ -283,7 +283,7 @@ class IrisCommandServiceTest {
 
         // No lecture module at all, so there are no units to point into.
         var serviceWithoutLectures = new IrisCommandService(coordinationService, irisWebsocketService, irisChatWebsocketService, irisMessageService, irisSessionRepository,
-                userRepository, new ObjectMapper(), Optional.empty());
+                userRepository, JsonMapper.builder().build(), Optional.empty());
         assertThat(serviceWithoutLectures.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3)).applied()).isFalse();
 
         verify(coordinationService, never()).register(anyString(), anyString());

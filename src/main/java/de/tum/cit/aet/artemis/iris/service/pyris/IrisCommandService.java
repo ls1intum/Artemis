@@ -14,9 +14,9 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
@@ -85,12 +85,12 @@ public class IrisCommandService {
 
     private final UserRepository userRepository;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
     public IrisCommandService(IrisCommandCoordinationService coordinationService, IrisWebsocketService irisWebsocketService, IrisChatWebsocketService irisChatWebsocketService,
-            IrisMessageService irisMessageService, IrisSessionRepository irisSessionRepository, UserRepository userRepository, ObjectMapper objectMapper,
+            IrisMessageService irisMessageService, IrisSessionRepository irisSessionRepository, UserRepository userRepository, JsonMapper objectMapper,
             Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi) {
         this.coordinationService = coordinationService;
         this.irisWebsocketService = irisWebsocketService;
