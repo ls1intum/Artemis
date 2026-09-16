@@ -742,6 +742,24 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.BAD_REQUEST);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithMissingExamMode() throws Exception {
+        ObjectNode examJson = request.getObjectMapper().valueToTree(ExamUpdateDTO.of(ExamFactory.generateExam(course1, "examModeValidationTest")));
+        examJson.remove("examMode");
+
+        request.postAndExpectError("/api/exam/courses/" + course1.getId() + "/exams", examJson, HttpStatus.BAD_REQUEST, "validation");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_failsWithMissingExamMode() throws Exception {
+        ObjectNode examJson = request.getObjectMapper().valueToTree(ExamUpdateDTO.of(exam1));
+        examJson.remove("examMode");
+
+        request.putAndExpectError("/api/exam/courses/" + course1.getId() + "/exams", examJson, HttpStatus.BAD_REQUEST, "validation");
+    }
+
     @ParameterizedTest(name = "title=\"{0}\"")
     @NullSource
     @ValueSource(strings = { "", "   " })
@@ -750,7 +768,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // A missing (null), empty or whitespace-only title has to be rejected with a clean 400, not persisted and not failing while mapping the null title to the entity
         ObjectNode examJson = examBodyWithTitle(ExamUpdateDTO.of(ExamFactory.generateExam(course1, "examTitleValidationTest")), title);
 
-        request.postAndExpectError("/api/exam/courses/" + course1.getId() + "/exams", examJson, HttpStatus.BAD_REQUEST, "examTitleEmpty");
+        request.postAndExpectError("/api/exam/courses/" + course1.getId() + "/exams", examJson, HttpStatus.BAD_REQUEST, title == null ? "validation" : "examTitleEmpty");
     }
 
     @ParameterizedTest(name = "title=\"{0}\"")
@@ -760,7 +778,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testUpdateExam_failsWithMissingOrBlankTitle(String title) throws Exception {
         ObjectNode examJson = examBodyWithTitle(ExamUpdateDTO.of(exam1), title);
 
-        request.putAndExpectError("/api/exam/courses/" + course1.getId() + "/exams", examJson, HttpStatus.BAD_REQUEST, "examTitleEmpty");
+        request.putAndExpectError("/api/exam/courses/" + course1.getId() + "/exams", examJson, HttpStatus.BAD_REQUEST, title == null ? "validation" : "examTitleEmpty");
     }
 
     @ParameterizedTest(name = "title=\"{0}\"")

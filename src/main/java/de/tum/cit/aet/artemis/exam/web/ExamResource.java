@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
 
 import org.jspecify.annotations.NonNull;
@@ -262,7 +263,7 @@ public class ExamResource {
      */
     @PostMapping("courses/{courseId}/exams")
     @EnforceAtLeastInstructor
-    public ResponseEntity<ExamDTO> createExam(@PathVariable Long courseId, @RequestBody ExamUpdateDTO examDTO) throws URISyntaxException {
+    public ResponseEntity<ExamDTO> createExam(@PathVariable Long courseId, @Valid @RequestBody ExamUpdateDTO examDTO) throws URISyntaxException {
         log.debug("REST request to create an exam : {}", examDTO);
         if (examDTO.id() != null) {
             throw new BadRequestAlertException("A new exam cannot already have an ID", ENTITY_NAME, "idExists");
@@ -295,7 +296,7 @@ public class ExamResource {
      */
     @PutMapping("courses/{courseId}/exams")
     @EnforceAtLeastInstructor
-    public ResponseEntity<ExamDTO> updateExam(@PathVariable Long courseId, @RequestBody ExamUpdateDTO examUpdateDTO) {
+    public ResponseEntity<ExamDTO> updateExam(@PathVariable Long courseId, @Valid @RequestBody ExamUpdateDTO examUpdateDTO) {
         log.debug("REST request to update an exam : {}", examUpdateDTO);
 
         if (examUpdateDTO.id() == null) {
