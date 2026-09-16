@@ -1499,7 +1499,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
      * TODO move the following test into a different test file, as they do not use the programming-exercise-participations/.. endpoint, but programming-exercise/..
      * move the endpoint itself too
      * <p>
-     * Test for GET - programming-exercise/{exerciseID}/commit-history/{repositoryType}
+     * Test for GET - programming-exercises/{exerciseId}/commit-history/{repositoryType}
      */
     @Nested
     class GetCommitHistoryForTemplateSolutionTestOrAuxRepo {
@@ -1599,7 +1599,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     /**
-     * Tests for programming-exercise-participations/{participationId}/files-content/{commitId}
+     * Tests for programming-exercise-participations/{participationId}/files-content
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -1617,7 +1617,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     /**
      * TODO refactor endpoint to contain participation -> programming-exercise-participations
-     * tests GET - programming-exercise/{exerciseId}/files-content-commit-details/{commitId}
+     * tests GET - programming-exercises/{exerciseId}/files-content-commit-details
      */
     @Nested
     class GetParticipationRepositoryFilesForCommitsDetailsView {

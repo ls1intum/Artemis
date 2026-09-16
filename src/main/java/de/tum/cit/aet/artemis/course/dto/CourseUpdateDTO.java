@@ -17,7 +17,6 @@ import de.tum.cit.aet.artemis.core.config.StrictIntegerDeserializer;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -44,10 +43,10 @@ public record CourseUpdateDTO(
         @NotNull Long id,
 
         // Basic info
-        @NotBlank @Size(max = 255) String title, @NotBlank @Size(max = 255) String shortName, @Size(max = 2000) String description, String semester,
+        @NotBlank @Size(max = 255) String title, @NotBlank @Size(max = 255) String shortName, @Size(max = 2000) String description, @NotBlank @Size(max = 25) String semester,
 
         // Dates
-        ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime enrollmentStartDate, ZonedDateTime enrollmentEndDate, ZonedDateTime unenrollmentEndDate,
+        @NotNull ZonedDateTime startDate, @NotNull ZonedDateTime endDate, ZonedDateTime enrollmentStartDate, ZonedDateTime enrollmentEndDate, ZonedDateTime unenrollmentEndDate,
 
         // Configuration flags
         boolean testCourse, Boolean onlineCourse, Language language, ProgrammingLanguage defaultProgrammingLanguage,
@@ -62,8 +61,8 @@ public record CourseUpdateDTO(
 
         // Course features
         boolean learningPathsEnabled, @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
-        @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores, boolean athenaGradingFeedbackEnabled,
-        boolean athenaFormativeFeedbackEnabled, String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone,
+        @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores, String timeZone,
+        CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone,
 
         // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained).
         // Boxed so an omitted value fails safe to grade-relevant (the longer retention), not to earlier deletion.
@@ -127,17 +126,12 @@ public record CourseUpdateDTO(
         course.setPresentationScore(presentationScore);
         course.setMaxPoints(maxPoints);
         course.setAccuracyOfScores(accuracyOfScores);
-        if (course.getAthenaConfig() == null) {
-            course.setAthenaConfig(new CourseAthenaConfig());
-        }
-        course.getAthenaConfig().setGradingFeedbackEnabled(athenaGradingFeedbackEnabled);
-        course.getAthenaConfig().setFormativeFeedbackEnabled(athenaFormativeFeedbackEnabled);
         course.setTimeZone(timeZone);
         course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
-        // Enforce the auto-orchestration override bounds server-side: the @Min(1) bean-validation annotations are not
-        // active here (the multipart update endpoint does not run @Valid), so a crafted request could otherwise persist
-        // zero/negative overrides that the scheduler would treat as invalid configuration.
+        // Enforce the auto-orchestration override bounds again here: the @Min(1) bean-validation annotations on this DTO
+        // already reject a non-positive override via the validated update endpoint (@Valid on CourseUpdateResource#updateCourse).
+        // This check is defense-in-depth against any caller that builds and applies this DTO directly, bypassing bean validation.
         if ((debounceWindowSecondsOverride != null && debounceWindowSecondsOverride < 1) || (maxDailyOrchestrationOverride != null && maxDailyOrchestrationOverride < 1)) {
             throw new BadRequestAlertException("Auto-orchestration overrides must be positive", Course.ENTITY_NAME, "invalidAutoOrchestrationOverride", true);
         }
@@ -181,9 +175,7 @@ public record CourseUpdateDTO(
                 course.getMaxComplaintTimeDays(), course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(),
                 course.getColor(), course.getCourseIcon(), course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(),
                 course.getCourseInformationSharingMessagingCodeOfConduct(), course.getLearningPathsEnabled(), course.getPresentationScore(), course.getMaxPoints(),
-                course.getAccuracyOfScores(), course.getAthenaConfig() != null && course.getAthenaConfig().isGradingFeedbackEnabled(),
-                course.getAthenaConfig() != null && course.getAthenaConfig().isFormativeFeedbackEnabled(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(),
-                course.isOnboardingDone(), course.isGradeRelevant(), course.isDataRetentionHold(), course.getAutoOrchestratorEnabled(), course.getDebounceWindowSecondsOverride(),
-                course.getMaxDailyOrchestrationOverride());
+                course.getAccuracyOfScores(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(), course.isOnboardingDone(), course.isGradeRelevant(),
+                course.isDataRetentionHold(), course.getAutoOrchestratorEnabled(), course.getDebounceWindowSecondsOverride(), course.getMaxDailyOrchestrationOverride());
     }
 }

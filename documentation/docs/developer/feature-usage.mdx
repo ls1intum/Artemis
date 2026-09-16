@@ -66,7 +66,7 @@ request ──> FeatureUsageInterceptor        (resolve feature, measure, captur
 startup ──> FeatureUsageRegistry           (scan mappings, upsert inventory, cache Method -> id)
 ```
 
-### 1. Startup inventory, `FeatureUsageRegistry`
+### Startup inventory, `FeatureUsageRegistry`
 
 Runs on `ApplicationReadyEvent` on every node. It reads
 `RequestMappingHandlerMapping.getHandlerMethods()`, keeps the handlers in Artemis packages, and derives per endpoint:
@@ -96,7 +96,7 @@ Every node runs the same scan. Concurrent first starts race on the unique key; t
 The class deliberately holds no reference to any controller type: `ArchitectureTest.testNoRestControllersImported`
 forbids importing a `@RestController`, so everything goes through runtime reflection on `HandlerMethod`.
 
-### 2. The interceptor
+### The interceptor
 
 A `HandlerInterceptor`, not a filter, because only here is the resolved handler method available, and the handler method
 is what both identifies the feature and bounds the data: the set of handler methods is fixed at roughly a thousand,
@@ -111,7 +111,7 @@ completes on another thread still reports the right role and the full duration. 
 ASYNC dispatch, so the values of the first dispatch are kept rather than overwritten; taking the second call's would
 measure only that dispatch and read the role from a context it does not necessarily carry.
 
-### 3. Accumulation, `FeatureUsageCollector`
+### Accumulation, `FeatureUsageCollector`
 
 A `ConcurrentHashMap` from `(featureId, usageDay, callerRole)` to `LongAdder` counters. Recording is a map lookup and a
 few increments, well under a microsecond, with no database access, no string building and no annotation reads.
@@ -134,7 +134,7 @@ Buckets of a day that is over and whose counters have all been reported are drop
 over a long uptime. Recording never propagates a failure: a usage counter must not be able to break the request it
 measures.
 
-### 4. Flush, `FeatureUsageFlushService`
+### Flush, `FeatureUsageFlushService`
 
 Runs on **every** node, not just the scheduling one, because each node accumulates its own counters and nothing else would
 persist them.

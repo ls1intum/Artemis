@@ -12,15 +12,11 @@ When a user authenticates via the OIDC provider for the first time, Artemis invo
 - The feature is fully controlled by the `artemis.user-management.oidc.enabled: true` module-feature flag.
 - If you run the system behind a **reverse proxy**, you must explicitly forward the following secure endpoints to the Artemis core instance: **/oauth2/** and **/login/oauth2/**.
 
----
-
 ## Architecture and Filtering Mechanics
 
 The OIDC ecosystem leverages Spring Security's OAuth2 Client libraries to inject an isolated, decoupled filter chain. This chain intercepts requests, ensuring OIDC callbacks are parsed and verified before hitting default platform filters.
 
 Unlike standard stateless operations, the initialization flow briefly establishes a highly secured, short-lived HTTP session in RAM. This session acts as an anti-tampering buffer, storing state and cryptographic nonce parameters to shield the system against Cross-Site Request Forgery (CSRF) or token-replay mutations.
-
----
 
 ## Configuration Specification
 

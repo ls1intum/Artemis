@@ -144,13 +144,13 @@ public class IrisChatSessionResource {
     // -------------------------------------------------------------------------
 
     /**
-     * GET api/iris/chat/{courseId}/session/{sessionId}: Retrieve an Iris Session by id.
+     * GET api/iris/chat/courses/{courseId}/sessions/{sessionId}: Retrieve an Iris Session by id.
      *
      * @param courseId  of the course
      * @param sessionId of the session
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the iris session
      */
-    @GetMapping({ "courses/{courseId}/sessions/{sessionId}", "{courseId}/session/{sessionId}" })
+    @GetMapping("courses/{courseId}/sessions/{sessionId}")
     @EnforceAtLeastStudentInCourse
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<IrisChatSessionResponseDTO> getSessionById(@PathVariable Long courseId, @PathVariable Long sessionId) {

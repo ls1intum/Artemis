@@ -25,6 +25,7 @@ const sidebars: SidebarsConfig = {
                 'exercises/text-exercise',
                 'exercises/file-upload-exercise',
                 'exercises/quiz-training',
+                'exercises/ai-feedback',
             ],
         },
         {

@@ -4,7 +4,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -33,9 +32,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -92,8 +91,14 @@ public class SlideSplitterService {
             return CompletableFuture.completedFuture(null);
         }
 
-        Path attachmentPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
-        File file = attachmentPath.toFile();
+        Optional<FileSystemLocation> fileLocation = attachmentVideoUnit.getAttachment().fileLocation();
+        if (fileLocation.isEmpty()) {
+            // An attachment that links to a document hosted elsewhere has no PDF here to split, and the filename its link ends in may belong to an unrelated attachment.
+            log.debug("Skipping slide split job for AttachmentVideoUnit {}, whose attachment links to a document this application does not store", job.attachmentVideoUnitId());
+            return CompletableFuture.completedFuture(null);
+        }
+
+        File file = fileLocation.get().path().toFile();
         try (PDDocument document = Loader.loadPDF(file)) {
             String pdfFilename = file.getName();
             if (job.pageOrder() == null) {
@@ -183,7 +188,7 @@ public class SlideSplitterService {
                 operation.recordCreatedFile(savePath);
 
                 Slide slideEntity = new Slide();
-                slideEntity.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) slideNumber).toString());
+                slideEntity.setSlideImagePath(savePath.getFileName().toString());
                 slideEntity.setSlideNumber(slideNumber);
                 slideEntity.setAttachmentVideoUnit(attachmentVideoUnit);
                 operation.save(slideEntity);
@@ -291,6 +296,9 @@ public class SlideSplitterService {
             slideEntity = existingSlidesMap.get(slideId);
         }
 
+        // The slide image is stored in a directory named by the slide's number, so the number the slide had while that image was written is needed to find it again. Read it
+        // before the new order overwrites it.
+        int numberTheImageWasWrittenUnder = slideEntity.getSlideNumber();
         slideEntity.setSlideNumber(order);
         ZonedDateTime previousHiddenValue = updateSlideHiddenStatus(slideEntity, hiddenPagesMap, slideId);
 
@@ -298,7 +306,7 @@ public class SlideSplitterService {
             createNewSlideImage(operation, slideEntity, pdfRenderer, fileNameWithOutExt, attachmentVideoUnit, order, totalPages);
         }
         else {
-            updateExistingSlideImage(operation, slideEntity, fileNameWithOutExt, attachmentVideoUnit, order);
+            updateExistingSlideImage(operation, slideEntity, fileNameWithOutExt, attachmentVideoUnit, order, numberTheImageWasWrittenUnder);
         }
 
         // Save slide and schedule unhiding if needed
@@ -349,17 +357,25 @@ public class SlideSplitterService {
                     .resolve(String.valueOf(order)).resolve(filename));
             operation.recordCreatedFile(savePath);
 
-            slideEntity.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) order).toString());
+            slideEntity.setSlideImagePath(savePath.getFileName().toString());
         }
     }
 
     /**
      * Update image for an existing slide.
+     *
+     * @param operation                     the running operation, which records the file written and the one it supersedes so a failure can be undone
+     * @param slideEntity                   the slide being renumbered
+     * @param fileNameWithOutExt            the name of the document the slide belongs to, without its extension
+     * @param attachmentVideoUnit           the attachment video unit the slide belongs to
+     * @param order                         the number the slide is being given
+     * @param numberTheImageWasWrittenUnder the number the slide had while its current image was written, which names the directory that image is in
      */
-    private void updateExistingSlideImage(SlideOperation operation, Slide slideEntity, String fileNameWithOutExt, AttachmentVideoUnit attachmentVideoUnit, int order) {
+    private void updateExistingSlideImage(SlideOperation operation, Slide slideEntity, String fileNameWithOutExt, AttachmentVideoUnit attachmentVideoUnit, int order,
+            int numberTheImageWasWrittenUnder) {
         String oldPath = slideEntity.getSlideImagePath();
         if (oldPath != null && !oldPath.isEmpty()) {
-            Path originalPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(oldPath), FilePathType.SLIDE);
+            Path originalPath = new FileSystemLocation.Slide(attachmentVideoUnit.getId(), numberTheImageWasWrittenUnder, oldPath).path();
             String newFilename = uniqueSlideFilename(fileNameWithOutExt, attachmentVideoUnit.getId(), order);
 
             try {
@@ -376,7 +392,7 @@ public class SlideSplitterService {
                     operation.recordCreatedFile(savePath);
                     operation.recordSupersededFile(originalPath);
 
-                    slideEntity.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) order).toString());
+                    slideEntity.setSlideImagePath(savePath.getFileName().toString());
                 }
                 else {
                     log.warn("Could not find existing slide file at path: {}", originalPath);

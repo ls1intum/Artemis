@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.communication;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.VOTE_EMOJI_ID;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.util.Collection;
 import java.util.List;
@@ -25,6 +26,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostSortCriterion;
+import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
@@ -489,7 +491,60 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(reactionRepository.findById(createdReaction.id())).isEmpty();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreatedReactionReportsWhichKindOfPostingItBelongsTo() throws Exception {
+        // A post id and an answer post id come from separate identity columns, so the number alone does not say which of the two it denotes. The
+        // response has to name the kind, otherwise a client cannot tell what it just reacted to.
+        // postingType and relatedPostId are both derived from the association the server persisted, so the response alone says which posting the
+        // reaction ended up on.
+        Post post = existingPostsWithAnswers.getFirst();
+        ReactionDTO onPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", createReactionDTOOnPost(post), ReactionDTO.class,
+                HttpStatus.CREATED);
+        assertThat(onPost.postingType()).isEqualTo(PostingType.POST);
+        assertThat(onPost.relatedPostId()).isEqualTo(post.getId());
+
+        AnswerPost answerPost = existingAnswerPosts.getFirst();
+        ReactionDTO onAnswer = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", createReactionDTOOnAnswerPost(answerPost),
+                ReactionDTO.class, HttpStatus.CREATED);
+        assertThat(onAnswer.postingType()).isEqualTo(PostingType.ANSWER);
+        assertThat(onAnswer.relatedPostId()).isEqualTo(answerPost.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateReactionWithoutPostingTypeStillResolvesPostInCourse() throws Exception {
+        // Clients released before postingType existed send the id alone. While only one posting in the course carries it, the id is still
+        // unambiguous and the reaction has to be created.
+        Post postReactedOn = existingPostsWithAnswers.getFirst();
+        assumeTrue(answerPostIdsInCourse().stream().noneMatch(id -> id.equals(postReactedOn.getId())), "this post id is ambiguous within the course");
+
+        ReactionDTO withoutType = new ReactionDTO(null, null, null, "smiley", postReactedOn.getId(), null);
+
+        ReactionDTO createdReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", withoutType, ReactionDTO.class,
+                HttpStatus.CREATED);
+
+        assertThat(createdReaction.relatedPostId()).isEqualTo(postReactedOn.getId());
+        assertThat(createdReaction.postingType()).isEqualTo(PostingType.POST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateReactionOnPostingOfAnotherCourseIsRejected() throws Exception {
+        Post postInOtherCourse = conversationUtilService.createPostsWithAnswerPostsWithinCourse(courseUtilService.createEnrolledCourse(TEST_PREFIX), TEST_PREFIX).getFirst();
+
+        ReactionDTO reaction = new ReactionDTO(null, null, null, "smiley", postInOtherCourse.getId(), PostingType.POST);
+
+        // The error key, not just the status: several other things about this request could produce a bad request, and the one this test is about
+        // is the course check.
+        request.postAndExpectError("/api/communication/courses/" + courseId + "/postings/reactions", reaction, HttpStatus.BAD_REQUEST, "wrongCourse");
+    }
+
     // HELPER METHODS
+
+    private List<Long> answerPostIdsInCourse() {
+        return existingAnswerPosts.stream().map(AnswerPost::getId).toList();
+    }
 
     private ReactionDTO createReactionDTOOnPost(Post postReactedOn) {
         Reaction reaction = new Reaction();
