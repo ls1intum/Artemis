@@ -40,7 +40,7 @@ These fail the build or corrupt production state. Each is enforced; none is a st
 - Never write "frontend" or "backend". <!-- terminology-check: allow --> Say **client** (Angular) and **server** (Spring Boot), or name the concrete system. Applies to code, comments, commit messages, and documentation; `supporting_scripts/check_terminology.py` fails CI on new occurrences.
 - Do not commit design documents, specs, plans, or scratch notes. Working notes belong in the pull request or issue.
 
-Enforcement lives in ArchUnit (`ArchitectureTest`, `DistributedDataProviderArchitectureTest`), ESLint local rules (`rules/*.mjs`), and the terminology script. One ArchUnit violation reds two CI jobs.
+Enforcement lives in ArchUnit (`ArchitectureTest`, `DistributedDataProviderArchitectureTest`), ESLint local rules (`rules/*.mjs`), and the terminology script. One ArchUnit violation fails two CI jobs.
 
 ## Tech stack
 
