@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
 import de.tum.cit.aet.artemis.account.config.PasskeyEnabled;
 import de.tum.cit.aet.artemis.account.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -43,7 +44,8 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 @Lazy
 @FeatureUsage("account/passkeys")
 @RestController
-@RequestMapping("api/account/passkeys/")
+@SuppressWarnings("deprecation")
+@RequestMapping({ "api/account/passkeys/", AccountLegacyRestPaths.CORE_PASSKEY_PREFIX })
 public class PasskeyResource {
 
     private static final Logger log = LoggerFactory.getLogger(PasskeyResource.class);
