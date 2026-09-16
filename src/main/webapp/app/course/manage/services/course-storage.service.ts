@@ -72,7 +72,7 @@ export class CourseStorageService implements OnDestroy {
 
     /** All courses currently stored for the logged-in user. */
     getCourses(): Course[] {
-        return [...this.storedCourses];
+        return [...this.storedCourses()];
     }
 
     /**
