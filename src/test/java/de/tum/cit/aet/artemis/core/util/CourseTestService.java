@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.util;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
+import static de.tum.cit.aet.artemis.core.util.QueryCountAssert.assertThatDb;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
@@ -193,6 +194,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
@@ -253,6 +255,9 @@ public class CourseTestService {
 
     @Autowired
     private RequestUtilService request;
+
+    @Autowired
+    private HibernateQueryInterceptor queryInterceptor;
 
     @Autowired
     private ZipFileTestUtilService zipFileTestUtilService;
@@ -1525,11 +1530,11 @@ public class CourseTestService {
                         if (submission != null) {
                             // Test that the correct text submission was filtered.
                             if (exercise.overview().type() == ExerciseType.TEXT) {
-                                assertThat(submission.submissionExerciseType()).as("Correct text submission").isEqualTo("text");
+                                assertThat(submission.submissionExerciseType()).as("Submission exercise type is text").isEqualTo("text");
                             }
                             // Test that the correct modeling submission was filtered.
                             else if (exercise.overview().type() == ExerciseType.MODELING) {
-                                assertThat(submission.submissionExerciseType()).as("Correct modeling submission").isEqualTo("modeling");
+                                assertThat(submission.submissionExerciseType()).as("Submission exercise type is modeling").isEqualTo("modeling");
                             }
                         }
                     }
@@ -1599,6 +1604,20 @@ public class CourseTestService {
 
         assertThat(receivedCourse.competencies()).isNotEmpty();
         assertThat(receivedCourse.competencies()).hasSameSizeAs(course.getCompetencies());
+    }
+
+    // Test
+    public void testGetCourseWithExercisesQueryCountStaysBoundedWithAllExerciseTypes() throws Exception {
+        Course course = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, false, false, 0).getFirst();
+
+        CourseWithExercisesDTO withExercises = assertThatDb(queryInterceptor,
+                () -> request.get("/api/course/courses/" + course.getId() + "/with-exercises", HttpStatus.OK, CourseWithExercisesDTO.class)).hasBeenCalledAtMostTimes(3);
+        assertThat(withExercises.exercises()).hasSize(5);
+
+        CourseWithContentDTO withContent = assertThatDb(queryInterceptor,
+                () -> request.get("/api/course/courses/" + course.getId() + "/with-exercises-lectures-competencies", HttpStatus.OK, CourseWithContentDTO.class))
+                .hasBeenCalledAtMostTimes(12);
+        assertThat(withContent.exercises()).hasSize(5);
     }
 
     // Test
@@ -1977,6 +1996,14 @@ public class CourseTestService {
             }
             else {
                 assertThat(courseWithExercises.exercises()).as("Course contains correct number of exercises").hasSize(numberOfExercises);
+
+                // GET api/course/courses stopped carrying exercises; with-exercises is now the only tutor-facing route
+                // for them, so the assessment-relevant fields must still reach the tutor from there.
+                var programmingExercise = courseWithExercises.exercises().stream().filter(exercise -> "programming".equals(exercise.type())).findFirst().orElseThrow();
+                assertThat(((ProgrammingExerciseResponseDTO) programmingExercise).problemStatement()).as("Tutor still receives the problem statement")
+                        .isEqualTo("Problem Statement");
+                assertThat(((ProgrammingExerciseResponseDTO) programmingExercise).gradingInstructions()).as("Tutor still receives the grading instructions")
+                        .isEqualTo("some grading instructions");
             }
         }
     }
@@ -2821,6 +2848,16 @@ public class CourseTestService {
 
             // TODO: Assert the other exercises after it's implemented
         });
+    }
+
+    // Test
+    public void testGetCourseIncludesArchivePathWhenCourseIsArchived() throws Exception {
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
+        course.setCourseArchivePath("some-archive-path");
+        course = courseRepo.save(course);
+
+        CourseManagementDTO courseDTO = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        assertThat(courseDTO.courseArchivePath()).isEqualTo(course.getCourseArchivePath());
     }
 
     // Test

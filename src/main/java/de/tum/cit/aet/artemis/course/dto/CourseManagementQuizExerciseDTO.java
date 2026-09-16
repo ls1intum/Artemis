@@ -16,8 +16,15 @@ import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithoutQuestionsDTO;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseManagementQuizExerciseDTO(@JsonUnwrapped QuizExerciseWithoutQuestionsDTO quizExercise) implements CourseManagementExerciseDTO {
 
+    /**
+     * Maps a course-management list entry. The course is dropped: it is the enclosing object in that list, so a
+     * per-exercise copy would be a redundant back-reference.
+     *
+     * @param exercise the course exercise to map
+     * @return the lean course-list response DTO
+     */
     public static CourseManagementQuizExerciseDTO of(QuizExercise exercise) {
-        return new CourseManagementQuizExerciseDTO(QuizExerciseWithoutQuestionsDTO.of(exercise));
+        return new CourseManagementQuizExerciseDTO(QuizExerciseWithoutQuestionsDTO.of(exercise).withoutCourse());
     }
 
     @Override

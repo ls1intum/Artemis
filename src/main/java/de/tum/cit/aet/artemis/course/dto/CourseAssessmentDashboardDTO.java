@@ -29,7 +29,7 @@ public record CourseAssessmentDashboardDTO(@JsonUnwrapped CourseManagementDTO co
     /** Exercise statistics needed by the assessment dashboard. */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record AssessmentExerciseDTO(long id, String type, String title, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate,
-            IncludedInOverallScore includedInOverallScore, boolean allowComplaintsForAutomaticAssessments, boolean secondCorrectionEnabled,
+            IncludedInOverallScore includedInOverallScore, boolean allowComplaintsForAutomaticAssessments, boolean secondCorrectionEnabled, boolean teamMode,
             @Nullable DueDateStat numberOfSubmissions, @Nullable DueDateStat totalNumberOfAssessments, DueDateStat[] numberOfAssessmentsOfCorrectionRounds,
             @Nullable Long numberOfComplaints, @Nullable Long numberOfOpenComplaints, @Nullable Long numberOfMoreFeedbackRequests, @Nullable Long numberOfOpenMoreFeedbackRequests,
             @Nullable Double averageRating, @Nullable Long numberOfRatings, Set<TutorParticipationDTO> tutorParticipations) {
@@ -37,7 +37,7 @@ public record CourseAssessmentDashboardDTO(@JsonUnwrapped CourseManagementDTO co
         private static AssessmentExerciseDTO of(Exercise exercise) {
             DueDateStat[] correctionRounds = exercise.getNumberOfAssessmentsOfCorrectionRounds();
             return new AssessmentExerciseDTO(exercise.getId(), exercise.getType(), exercise.getTitle(), exercise.getDueDate(), exercise.getAssessmentDueDate(),
-                    exercise.getIncludedInOverallScore(), exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getSecondCorrectionEnabled(),
+                    exercise.getIncludedInOverallScore(), exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getSecondCorrectionEnabled(), exercise.isTeamMode(),
                     exercise.getNumberOfSubmissions(), exercise.getTotalNumberOfAssessments(),
                     correctionRounds == null ? new DueDateStat[0] : Arrays.copyOf(correctionRounds, correctionRounds.length), exercise.getNumberOfComplaints(),
                     exercise.getNumberOfOpenComplaints(), exercise.getNumberOfMoreFeedbackRequests(), exercise.getNumberOfOpenMoreFeedbackRequests(), exercise.getAverageRating(),

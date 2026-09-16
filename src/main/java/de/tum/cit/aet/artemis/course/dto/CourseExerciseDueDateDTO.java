@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.course.dto;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
+import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -16,6 +17,7 @@ public record CourseExerciseDueDateDTO(long id, ExerciseType type, String title,
 
     /** Maps the due-date repository projection. */
     public static CourseExerciseDueDateDTO of(Exercise exercise) {
-        return new CourseExerciseDueDateDTO(exercise.getId(), exercise.getExerciseType(), exercise.getTitle(), exercise.getDueDate(), Set.copyOf(exercise.getCategories()));
+        Set<String> categories = exercise.getCategories() != null && Hibernate.isInitialized(exercise.getCategories()) ? exercise.getCategories() : Set.of();
+        return new CourseExerciseDueDateDTO(exercise.getId(), exercise.getExerciseType(), exercise.getTitle(), exercise.getDueDate(), categories);
     }
 }

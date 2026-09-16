@@ -19,6 +19,7 @@ export interface ActiveExamForCourseDashboardDTO {
     startDate: string;
     endDate: string;
     testExam: boolean;
+    examMaxPoints?: number;
     course: ActiveExamCourseReferenceDTO;
 }
 
@@ -34,6 +35,7 @@ export function coursesForDashboardFromDTO(dto: CoursesForDashboardResponseDTO):
             hydrate(new Exam(), examDTO, {
                 startDate: convertDateStringFromServer(examDTO.startDate),
                 endDate: convertDateStringFromServer(examDTO.endDate),
+                examMaxPoints: examDTO.examMaxPoints,
             }),
         ),
     };

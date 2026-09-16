@@ -9,6 +9,7 @@ import type { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import type { ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import type { TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import type { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -173,7 +174,15 @@ export interface CourseDashboardExamDTO {
 }
 
 export function exerciseFromCourseManagementDTO(dto: CourseManagementExerciseDTO): Exercise {
-    return hydrate(new CourseManagementExercise(dto.type), dto);
+    const exercise = hydrate(new CourseManagementExercise(dto.type), dto, {
+        releaseDate: convertDateStringFromServer(dto.releaseDate),
+        startDate: convertDateStringFromServer(dto.startDate),
+        dueDate: convertDateStringFromServer(dto.dueDate),
+        assessmentDueDate: convertDateStringFromServer(dto.assessmentDueDate),
+        exampleSolutionPublicationDate: convertDateStringFromServer(dto.exampleSolutionPublicationDate),
+    });
+    ExerciseService.parseExerciseCategories(exercise);
+    return exercise;
 }
 
 export function courseFromWithExercisesDTO(dto: CourseWithExercisesDTO): Course {

@@ -26,7 +26,7 @@ import { CourseForDashboardDTO, ParticipationResultDTO } from 'app/course/shared
 import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { OnlineCourseDtoModel } from 'app/lti/shared/entities/online-course-dto.model';
-import { CoursesForDashboardDTO } from 'app/course/shared/entities/courses-for-dashboard-dto';
+import { CoursesForDashboardDTO, CoursesForDashboardResponseDTO, coursesForDashboardFromDTO } from 'app/course/shared/entities/courses-for-dashboard-dto';
 import { provideHttpClient } from '@angular/common/http';
 import { createSampleCourse } from 'test/helpers/sample/course-sample-data';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
@@ -36,9 +36,27 @@ import { CourseNotificationService } from 'app/notification/course-notification/
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
-import { CourseDashboardDTO, CourseWithContentDTO, courseFromDashboardDTO, courseFromWithContentDTO } from 'app/course/shared/entities/course-content-response.dto';
-import { CourseForQuizSelectionDTO, courseFromQuizSelectionDTO } from 'app/course/shared/entities/course-management-response.dto';
+import {
+    CourseAssessmentDashboardDTO,
+    CourseDashboardDTO,
+    CourseManagementExerciseDTO,
+    CourseWithContentDTO,
+    courseFromAssessmentDashboardDTO,
+    courseFromDashboardDTO,
+    courseFromWithContentDTO,
+    exerciseFromCourseManagementDTO,
+} from 'app/course/shared/entities/course-content-response.dto';
+import {
+    CourseForEnrollmentDTO,
+    CourseForQuizSelectionDTO,
+    CourseManagementDTO,
+    courseFromEnrollmentDTO,
+    courseFromManagementDTO,
+    courseFromQuizSelectionDTO,
+} from 'app/course/shared/entities/course-management-response.dto';
 import type { LockedCourseSubmissionDTO } from 'app/course/shared/entities/locked-course-submission.dto';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 
 const courseDateFields = ['startDate', 'endDate', 'enrollmentStartDate', 'enrollmentEndDate', 'unenrollmentEndDate'] as const satisfies readonly (keyof Course)[];
 type CourseDateField = (typeof courseDateFields)[number];
@@ -701,6 +719,142 @@ describe('Course Management Service', () => {
         expect(responseCourses?.[0]).toBeInstanceOf(Course);
         expect(responseCourses?.[0]?.id).toBe(7);
         expect(setTitleSpy).not.toHaveBeenCalled();
+    });
+});
+
+describe('Course DTO adapter boundary', () => {
+    const minimalCourseManagementDTO: CourseManagementDTO = {
+        id: 1,
+        title: 'Course',
+        shortName: 'C1',
+        testCourse: false,
+        unenrollmentEnabled: false,
+        onboardingDone: false,
+        onlineCourse: false,
+        maxComplaintTimeDays: 7,
+        maxRequestMoreFeedbackTimeDays: 7,
+        maxComplaintTextLimit: 2000,
+        maxComplaintResponseTextLimit: 2000,
+        complaintsEnabled: true,
+        requestMoreFeedbackEnabled: true,
+        athenaGradingFeedbackEnabled: false,
+        athenaFormativeFeedbackEnabled: false,
+        learningPathsEnabled: false,
+        trainingEnabled: false,
+    };
+
+    const exerciseCategoryJson = JSON.stringify({ category: 'Important', color: '#3e8acc' });
+
+    const rawExerciseFixture = (overrides: Record<string, unknown>): CourseManagementExerciseDTO & Record<string, unknown> =>
+        ({
+            id: 501,
+            title: 'Fixture exercise',
+            releaseDate: '2026-01-01T00:00:00Z',
+            startDate: '2026-01-02T00:00:00Z',
+            dueDate: '2026-02-01T00:00:00Z',
+            assessmentDueDate: '2026-02-15T00:00:00Z',
+            exampleSolutionPublicationDate: '2026-03-01T00:00:00Z',
+            maxPoints: 10,
+            bonusPoints: 0,
+            categories: [exerciseCategoryJson],
+            teamMode: true,
+            ...overrides,
+        }) as CourseManagementExerciseDTO & Record<string, unknown>;
+
+    const exerciseFixturesByType: Record<ExerciseType, { subtypeField: string; subtypeValue: unknown }> = {
+        [ExerciseType.PROGRAMMING]: { subtypeField: 'programmingLanguage', subtypeValue: 'JAVA' },
+        [ExerciseType.TEXT]: { subtypeField: 'exampleSolution', subtypeValue: 'sample solution' },
+        [ExerciseType.MODELING]: { subtypeField: 'diagramType', subtypeValue: 'ClassDiagram' },
+        [ExerciseType.FILE_UPLOAD]: { subtypeField: 'filePattern', subtypeValue: 'pdf,zip' },
+        [ExerciseType.QUIZ]: { subtypeField: 'quizMode', subtypeValue: 'SYNCHRONIZED' },
+    };
+
+    it.each(Object.values(ExerciseType))('converts dates, categories, teamMode and the %s subtype field at the adapter boundary', (type) => {
+        const { subtypeField, subtypeValue } = exerciseFixturesByType[type];
+        const dto = rawExerciseFixture({ type, [subtypeField]: subtypeValue });
+
+        const exercise = exerciseFromCourseManagementDTO(dto);
+
+        expect(dayjs.isDayjs(exercise.releaseDate)).toBe(true);
+        expect(dayjs.isDayjs(exercise.startDate)).toBe(true);
+        expect(dayjs.isDayjs(exercise.dueDate)).toBe(true);
+        expect(dayjs.isDayjs(exercise.assessmentDueDate)).toBe(true);
+        expect(dayjs.isDayjs(exercise.exampleSolutionPublicationDate)).toBe(true);
+        expect(exercise.categories).toEqual([new ExerciseCategory('Important', '#3e8acc')]);
+        expect(exercise.teamMode).toBe(true);
+        expect((exercise as unknown as Record<string, unknown>)[subtypeField]).toEqual(subtypeValue);
+    });
+
+    it('hydrates examMaxPoints onto the active exam, and leaves it undefined (not defaulted to 1) when the server omits it', () => {
+        const dto: CoursesForDashboardResponseDTO = {
+            courses: [],
+            activeExams: [
+                {
+                    id: 1,
+                    title: 'Exam with points',
+                    startDate: '2026-01-01T00:00:00Z',
+                    endDate: '2026-01-01T02:00:00Z',
+                    testExam: false,
+                    examMaxPoints: 20,
+                    course: { id: 5, title: 'Course' },
+                },
+                { id: 2, title: 'Exam without points', startDate: '2026-01-01T00:00:00Z', endDate: '2026-01-01T02:00:00Z', testExam: false, course: { id: 5, title: 'Course' } },
+            ],
+        };
+
+        const result = coursesForDashboardFromDTO(dto);
+
+        expect(result.activeExams?.[0].examMaxPoints).toBe(20);
+        expect(result.activeExams?.[1].examMaxPoints).toBeUndefined();
+    });
+
+    it('carries teamMode from the assessment-dashboard exercise DTO onto the Exercise model', () => {
+        const dto: CourseAssessmentDashboardDTO = {
+            ...minimalCourseManagementDTO,
+            exercises: [
+                {
+                    id: 10,
+                    type: ExerciseType.TEXT,
+                    title: 'Team exercise',
+                    teamMode: true,
+                    numberOfAssessmentsOfCorrectionRounds: [],
+                    secondCorrectionEnabled: false,
+                    allowComplaintsForAutomaticAssessments: false,
+                    tutorParticipations: [],
+                },
+            ],
+        };
+
+        const course = courseFromAssessmentDashboardDTO(dto);
+
+        expect(course.exercises?.[0]?.teamMode).toBe(true);
+    });
+
+    it('round-trips courseArchivePath from CourseManagementDTO onto the Course model', () => {
+        const withArchive: CourseManagementDTO = { ...minimalCourseManagementDTO, courseArchivePath: 'archives/course-1.zip' };
+
+        expect(courseFromManagementDTO(withArchive).courseArchivePath).toBe('archives/course-1.zip');
+        expect(courseFromManagementDTO(minimalCourseManagementDTO).courseArchivePath).toBeUndefined();
+    });
+
+    it('hydrates title, semester, description and prerequisites from the enrollment DTO', () => {
+        const dto: CourseForEnrollmentDTO = {
+            id: 3,
+            title: 'Interactive Learning',
+            description: 'Enroll to learn interactively',
+            semester: 'WS26',
+            enrollmentConfirmationMessage: 'Welcome!',
+            prerequisites: [{ id: 9, title: 'Basics', masteryThreshold: 80, optional: false, type: CourseCompetencyType.COMPETENCY, softDueDate: '2026-01-01T00:00:00Z' }],
+        };
+
+        const course = courseFromEnrollmentDTO(dto);
+
+        expect(course.title).toBe('Interactive Learning');
+        expect(course.semester).toBe('WS26');
+        expect(course.description).toBe('Enroll to learn interactively');
+        expect(course.prerequisites).toHaveLength(1);
+        expect(course.prerequisites?.[0]).toMatchObject({ id: 9, title: 'Basics' });
+        expect(dayjs.isDayjs(course.prerequisites?.[0]?.softDueDate)).toBe(true);
     });
 });
 

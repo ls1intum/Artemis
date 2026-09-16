@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -270,7 +271,7 @@ public class CourseManagementResource {
         User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
         Set<Exercise> exercises = exerciseRepository.findByCourseIdWithFutureDueDatesAndCategories(courseId);
-        return ResponseEntity.ok(exercises.stream().map(CourseExerciseDueDateDTO::of).collect(java.util.stream.Collectors.toSet()));
+        return ResponseEntity.ok(exercises.stream().map(CourseExerciseDueDateDTO::of).collect(Collectors.toSet()));
     }
 
     /**

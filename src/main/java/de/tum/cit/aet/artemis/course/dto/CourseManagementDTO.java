@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
  * @param timeZone                                       the optional course time zone
  * @param color                                          the optional display color
  * @param courseIcon                                     the optional course icon
+ * @param courseArchivePath                              the optional path of the course archive
  * @param enrollmentEnabled                              whether self-enrollment is enabled, when configured
  * @param unenrollmentEnabled                            whether self-unenrollment is enabled
  * @param enrollmentConfirmationMessage                  the optional enrollment confirmation message
@@ -68,14 +69,15 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 public record CourseManagementDTO(long id, String title, String shortName, @Nullable String description, @Nullable String semester, @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate, @Nullable ZonedDateTime enrollmentStartDate, @Nullable ZonedDateTime enrollmentEndDate, @Nullable ZonedDateTime unenrollmentEndDate,
         boolean testCourse, @Nullable Language language, @Nullable ProgrammingLanguage defaultProgrammingLanguage, @Nullable String timeZone, @Nullable String color,
-        @Nullable String courseIcon, @Nullable Boolean enrollmentEnabled, boolean unenrollmentEnabled, @Nullable String enrollmentConfirmationMessage, boolean onboardingDone,
-        boolean onlineCourse, @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration,
-        @Nullable String courseInformationSharingMessagingCodeOfConduct, @Nullable Integer maxComplaints, @Nullable Integer maxTeamComplaints, int maxComplaintTimeDays,
-        int maxRequestMoreFeedbackTimeDays, int maxComplaintTextLimit, int maxComplaintResponseTextLimit, @Nullable Integer presentationScore, @Nullable Integer maxPoints,
-        @Nullable Integer accuracyOfScores, boolean complaintsEnabled, boolean requestMoreFeedbackEnabled, boolean athenaGradingFeedbackEnabled,
-        boolean athenaFormativeFeedbackEnabled, boolean learningPathsEnabled, boolean trainingEnabled, @Nullable Long numberOfStudents, @Nullable Long numberOfTeachingAssistants,
-        @Nullable Long numberOfEditors, @Nullable Long numberOfInstructors, @Nullable OnlineCourseConfigurationResponseDTO onlineCourseConfiguration,
-        @Nullable TutorialGroupsConfigurationResponseDTO tutorialGroupsConfiguration, @Nullable CourseConfigurationResponseDTO courseConfiguration) {
+        @Nullable String courseIcon, @Nullable String courseArchivePath, @Nullable Boolean enrollmentEnabled, boolean unenrollmentEnabled,
+        @Nullable String enrollmentConfirmationMessage, boolean onboardingDone, boolean onlineCourse,
+        @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration, @Nullable String courseInformationSharingMessagingCodeOfConduct,
+        @Nullable Integer maxComplaints, @Nullable Integer maxTeamComplaints, int maxComplaintTimeDays, int maxRequestMoreFeedbackTimeDays, int maxComplaintTextLimit,
+        int maxComplaintResponseTextLimit, @Nullable Integer presentationScore, @Nullable Integer maxPoints, @Nullable Integer accuracyOfScores, boolean complaintsEnabled,
+        boolean requestMoreFeedbackEnabled, boolean athenaGradingFeedbackEnabled, boolean athenaFormativeFeedbackEnabled, boolean learningPathsEnabled, boolean trainingEnabled,
+        @Nullable Long numberOfStudents, @Nullable Long numberOfTeachingAssistants, @Nullable Long numberOfEditors, @Nullable Long numberOfInstructors,
+        @Nullable OnlineCourseConfigurationResponseDTO onlineCourseConfiguration, @Nullable TutorialGroupsConfigurationResponseDTO tutorialGroupsConfiguration,
+        @Nullable CourseConfigurationResponseDTO courseConfiguration) {
 
     /**
      * Maps a course without traversing any collection or uninitialized configuration association.
@@ -89,8 +91,8 @@ public record CourseManagementDTO(long id, String title, String shortName, @Null
         CourseConfiguration configuration = course.getCourseConfiguration();
         return new CourseManagementDTO(course.getId(), course.getTitle(), course.getShortName(), course.getDescription(), course.getSemester(), course.getStartDate(),
                 course.getEndDate(), course.getEnrollmentStartDate(), course.getEnrollmentEndDate(), course.getUnenrollmentEndDate(), course.isTestCourse(), course.getLanguage(),
-                course.getDefaultProgrammingLanguage(), course.getTimeZone(), course.getColor(), course.getCourseIcon(), course.isEnrollmentEnabled(),
-                course.isUnenrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isOnboardingDone(), course.isOnlineCourse(),
+                course.getDefaultProgrammingLanguage(), course.getTimeZone(), course.getColor(), course.getCourseIcon(), course.getCourseArchivePath(),
+                course.isEnrollmentEnabled(), course.isUnenrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isOnboardingDone(), course.isOnlineCourse(),
                 course.getCourseInformationSharingConfiguration(), course.getCourseInformationSharingMessagingCodeOfConduct(), course.getMaxComplaints(),
                 course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(), course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(),
                 course.getMaxComplaintResponseTextLimit(), course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(), course.getComplaintsEnabled(),

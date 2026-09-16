@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.course.dto;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
@@ -15,7 +16,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
  * @param exercises the exercises visible to the requesting tutor
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseWithExercisesDTO(@JsonUnwrapped CourseManagementDTO course, Set<CourseManagementExerciseDTO> exercises) {
+public record CourseWithExercisesDTO(@JsonUnwrapped CourseManagementDTO course, @JsonIgnoreProperties("course") Set<CourseManagementExerciseDTO> exercises) {
 
     /** Maps the already authorized and fetched course graph. */
     public static CourseWithExercisesDTO of(Course course) {

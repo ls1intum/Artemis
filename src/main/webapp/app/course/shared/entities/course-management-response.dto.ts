@@ -128,6 +128,7 @@ export interface CourseManagementDTO {
     onlineCourseConfiguration?: OnlineCourseConfigurationResponseDTO;
     tutorialGroupsConfiguration?: TutorialGroupsConfigurationResponseDTO;
     courseConfiguration?: CourseConfigurationResponseDTO;
+    courseArchivePath?: string;
 }
 
 export interface CourseManagementOverviewDTO {

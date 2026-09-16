@@ -3,32 +3,41 @@ package de.tum.cit.aet.artemis.course;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoresDTO;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.ActiveExamForCourseDashboardDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseAssessmentDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseManagementDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseManagementExerciseDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseScoresDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseWithContentDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseWithExercisesDTO;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.LockedCourseSubmissionDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
@@ -39,10 +48,10 @@ import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
  */
 class CourseDtoSerializationTest {
 
-    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule()).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     @Test
-    void testCoursesForDashboardSerializationWithActiveExam() throws Exception {
+    void shouldSerializeIsoDatesAndExamMaxPointsWhenActiveExamExistsForDashboard() {
         Course course = new Course();
         course.setId(10L);
         course.setTitle("Active Exam Course");
@@ -54,6 +63,7 @@ class CourseDtoSerializationTest {
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
         exam.setEndDate(ZonedDateTime.now().plusHours(1));
         exam.setTestExam(false);
+        exam.setExamMaxPoints(80);
         exam.setCourse(course);
 
         ActiveExamForCourseDashboardDTO activeExamDTO = ActiveExamForCourseDashboardDTO.of(exam);
@@ -67,20 +77,26 @@ class CourseDtoSerializationTest {
         JsonNode tree = objectMapper.readTree(json);
         assertThat(tree.has("courses")).isTrue();
         assertThat(tree.has("activeExams")).isTrue();
-        assertThat(tree.get("activeExams").get(0).get("title").asText()).isEqualTo("Active Midterm");
-        assertThat(tree.get("activeExams").get(0).get("course").get("title").asText()).isEqualTo("Active Exam Course");
+        JsonNode activeExam = tree.get("activeExams").get(0);
+        assertThat(activeExam.get("title").asString()).isEqualTo("Active Midterm");
+        assertThat(activeExam.get("course").get("title").asString()).isEqualTo("Active Exam Course");
+        assertThat(activeExam.get("examMaxPoints").asInt()).isEqualTo(80);
+        // The app writes dates as ISO-8601 strings, not epoch numbers.
+        assertThat(activeExam.get("startDate").isString()).as("startDate is an ISO string").isTrue();
 
         CoursesForDashboardDTO deserialized = objectMapper.readValue(json, CoursesForDashboardDTO.class);
         assertThat(deserialized.courses()).hasSize(1);
         assertThat(deserialized.activeExams()).hasSize(1);
+        assertThat(deserialized.activeExams().iterator().next().examMaxPoints()).isEqualTo(80);
     }
 
     @Test
-    void testCourseManagementDtoExcludesForbiddenEntityAndProxyFields() throws Exception {
+    void shouldExcludeForbiddenEntityAndProxyFieldsAndIncludeArchivePathWhenCourseManagementDtoSerialized() {
         Course course = new Course();
         course.setId(42L);
         course.setTitle("Management Course");
         course.setShortName("mgmt");
+        course.setCourseArchivePath("archives/mgmt-42.zip");
 
         CourseManagementDTO dto = CourseManagementDTO.of(course);
         JsonNode json = objectMapper.valueToTree(dto);
@@ -88,6 +104,7 @@ class CourseDtoSerializationTest {
         assertThat(json.has("id")).isTrue();
         assertThat(json.has("title")).isTrue();
         assertThat(json.has("shortName")).isTrue();
+        assertThat(json.get("courseArchivePath").asString()).isEqualTo("archives/mgmt-42.zip");
 
         assertThat(json.has("courseRoles")).isFalse();
         assertThat(json.has("organizations")).isFalse();
@@ -100,7 +117,7 @@ class CourseDtoSerializationTest {
     }
 
     @Test
-    void testCourseWithExercisesDtoPolymorphicSerializationAndDeserialization() throws Exception {
+    void shouldSerializeAndDeserializePolymorphicExerciseTypesWhenCourseWithExercisesDtoUsed() {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise.setId(101L);
         programmingExercise.setTitle("Polymorphic Programming");
@@ -128,8 +145,7 @@ class CourseDtoSerializationTest {
         CourseWithExercisesDTO deserialized = objectMapper.readValue(json, CourseWithExercisesDTO.class);
         assertThat(deserialized.exercises()).hasSize(2);
 
-        Map<String, CourseManagementExerciseDTO> exercisesByTitle = deserialized.exercises().stream()
-                .collect(java.util.stream.Collectors.toMap(CourseManagementExerciseDTO::title, e -> e));
+        Map<String, CourseManagementExerciseDTO> exercisesByTitle = deserialized.exercises().stream().collect(Collectors.toMap(CourseManagementExerciseDTO::title, e -> e));
 
         CourseManagementExerciseDTO loadedProg = exercisesByTitle.get("Polymorphic Programming");
         assertThat(loadedProg).isInstanceOf(ProgrammingExerciseResponseDTO.class);
@@ -141,10 +157,95 @@ class CourseDtoSerializationTest {
     }
 
     @Test
-    void testLockedCourseSubmissionDtoExcludesSensitiveContentAndBackreferences() throws Exception {
+    void shouldOmitCourseKeyForEveryExerciseTypeWhenCourseWithExercisesOrContentDtoSerialized() {
+        Course course = new Course();
+        course.setId(60L);
+        course.setTitle("Discriminator Course");
+        course.setShortName("disc");
+
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setId(201L);
+        programmingExercise.setTitle("Prog");
+        programmingExercise.setShortName("prog");
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        course.addExercises(programmingExercise);
+
+        TextExercise textExercise = new TextExercise();
+        textExercise.setId(202L);
+        textExercise.setTitle("Text");
+        textExercise.setShortName("text");
+        course.addExercises(textExercise);
+
+        ModelingExercise modelingExercise = new ModelingExercise();
+        modelingExercise.setId(203L);
+        modelingExercise.setTitle("Modeling");
+        modelingExercise.setShortName("model");
+        modelingExercise.setDiagramType(DiagramType.ClassDiagram);
+        course.addExercises(modelingExercise);
+
+        FileUploadExercise fileUploadExercise = new FileUploadExercise();
+        fileUploadExercise.setId(204L);
+        fileUploadExercise.setTitle("Upload");
+        fileUploadExercise.setShortName("upload");
+        fileUploadExercise.setFilePattern("pdf");
+        course.addExercises(fileUploadExercise);
+
+        QuizExercise quizExercise = new QuizExercise();
+        quizExercise.setId(205L);
+        quizExercise.setTitle("Quiz");
+        quizExercise.setShortName("quiz");
+        course.addExercises(quizExercise);
+
+        assertNoCourseKeyOnAnyExerciseAndKeepsSubtypeFields(objectMapper.valueToTree(CourseWithExercisesDTO.of(course)).get("exercises"));
+        assertNoCourseKeyOnAnyExerciseAndKeepsSubtypeFields(objectMapper.valueToTree(CourseWithContentDTO.of(course)).get("exercises"));
+    }
+
+    private void assertNoCourseKeyOnAnyExerciseAndKeepsSubtypeFields(JsonNode exercises) {
+        assertThat(exercises).hasSize(5);
+
+        Map<String, JsonNode> exercisesByType = new HashMap<>();
+        exercises.forEach(exercise -> exercisesByType.put(exercise.get("type").asString(), exercise));
+        assertThat(exercisesByType).containsOnlyKeys("programming", "text", "modeling", "file-upload", "quiz");
+
+        Set<String> typesWithCourseKey = exercisesByType.entrySet().stream().filter(entry -> entry.getValue().has("course")).map(Map.Entry::getKey).collect(Collectors.toSet());
+        assertThat(typesWithCourseKey).as("exercise types that still leak a course back-reference").isEmpty();
+
+        assertThat(exercisesByType.get("programming").get("programmingLanguage").asString()).isEqualTo("JAVA");
+        assertThat(exercisesByType.get("modeling").get("diagramType").asString()).isEqualTo("ClassDiagram");
+        assertThat(exercisesByType.get("file-upload").get("filePattern").asString()).isEqualTo("pdf");
+        assertThat(exercisesByType.get("quiz").get("quizMode").asString()).isEqualTo("SYNCHRONIZED");
+    }
+
+    @Test
+    void shouldIncludeTeamModeWhenAssessmentExerciseDtoSerialized() {
+        Course course = new Course();
+        course.setId(70L);
+        course.setTitle("Assessment Course");
+        course.setShortName("assess");
+
+        TextExercise teamExercise = new TextExercise();
+        teamExercise.setId(301L);
+        teamExercise.setTitle("Team Exercise");
+        teamExercise.setMode(ExerciseMode.TEAM);
+        course.addExercises(teamExercise);
+
+        CourseAssessmentDashboardDTO dto = CourseAssessmentDashboardDTO.of(course);
+        JsonNode exercise = objectMapper.valueToTree(dto).get("exercises").get(0);
+        assertThat(exercise.get("teamMode").asBoolean()).isTrue();
+    }
+
+    @Test
+    void shouldExcludeSensitiveContentAndBackReferencesWhenLockedCourseSubmissionDtoSerialized() {
+        Course course = new Course();
+        course.setId(80L);
+        course.setTitle("Locked Course");
+        course.setShortName("locked");
+
         TextExercise exercise = new TextExercise();
         exercise.setId(201L);
         exercise.setTitle("Exam Essay");
+        // The exercise carries a course back-reference in production; the DTO must not leak it regardless.
+        exercise.setCourse(course);
 
         StudentParticipation participation = new StudentParticipation();
         participation.setId(301L);
@@ -167,7 +268,7 @@ class CourseDtoSerializationTest {
     }
 
     @Test
-    void testLockedCourseSubmissionDtoAllowsMissingParticipation() {
+    void shouldOmitOptionalFieldsWhenLockedCourseSubmissionDtoHasNoParticipation() {
         LockedCourseSubmissionDTO dto = new LockedCourseSubmissionDTO(402L, null, "text", null, null);
         JsonNode json = objectMapper.valueToTree(dto);
 
@@ -177,11 +278,16 @@ class CourseDtoSerializationTest {
     }
 
     @Test
-    void testMapperHandlesUninitializedAndNullCollectionsSafely() {
+    void shouldMapEmptyCollectionsWhenCourseCollectionsAreNull() {
         Course course = new Course();
         course.setId(99L);
         course.setTitle("Uninitialized Course");
         course.setShortName("uninit");
+        course.setExercises(null);
+        course.setLectures(null);
+        course.setExams(null);
+        course.setCompetencies(null);
+        course.setPrerequisites(null);
 
         CourseDashboardDTO dashboardDTO = CourseDashboardDTO.of(course);
         assertThat(dashboardDTO.exercises()).isEmpty();
