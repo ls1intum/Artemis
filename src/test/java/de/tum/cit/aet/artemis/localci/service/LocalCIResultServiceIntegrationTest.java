@@ -493,6 +493,29 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(reportedResult.getId()).as("the feedback was merged into the assessment, which is the result to report").isEqualTo(assessment.getId());
     }
 
+    /**
+     * The processing-map event that reports a job as building is delivered asynchronously and can arrive after the job's
+     * result has been processed: an agent's event thread that a long build blocks delays it by the length of that build.
+     * Reopening the finished job would make its build group look incomplete, so neither the merge of the last container
+     * nor the sweep would ever finalize the aggregated result. A job that is still pending must take the transition.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testALateBuildingEventDoesNotReopenAFinishedContainerJob() {
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        String commitHash = "abcdefabcdefabcdefabcdefabcdefabcdefabcd";
+        buildJobRepository.save(new BuildJob(buildJobFor("late-0", "late", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, null));
+        buildJobRepository.save(new BuildJob(buildJobFor("late-1", "late", participation, commitHash, "container_b"), BuildStatus.QUEUED, null));
+
+        ZonedDateTime buildStartDate = ZonedDateTime.now();
+        buildJobRepository.updateBuildJobStatusWithBuildStartDate("late-0", BuildStatus.BUILDING, buildStartDate);
+        buildJobRepository.updateBuildJobStatusWithBuildStartDate("late-1", BuildStatus.BUILDING, buildStartDate);
+
+        assertThat(buildJobRepository.findByBuildJobId("late-0")).map(BuildJob::getBuildStatus).as("a finished job stays finished").contains(BuildStatus.SUCCESSFUL);
+        assertThat(buildJobRepository.findByBuildJobId("late-1")).map(BuildJob::getBuildStatus).as("a queued job starts building").contains(BuildStatus.BUILDING);
+        assertThat(buildJobRepository.countByBuildGroupIdAndBuildStatusIn("late", LocalCIResultProcessingService.FINISHED_BUILD_STATUSES)).isEqualTo(1);
+    }
+
     private ProgrammingSubmission submissionOf(ProgrammingExerciseStudentParticipation participation, String commitHash) {
         ProgrammingSubmission submission = new ProgrammingSubmission();
         submission.setCommitHash(commitHash);

@@ -334,6 +334,10 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
      * Update the build job status and set the build start date if it is not set yet. The buildStartDate is required to calculate the statistics and the correctly display in the
      * build overview.
      * This is used to update missing jobs that do not have a build start date yet.
+     * <p>
+     * A job that has already finished is left alone: the processing-map event that reports a job as building is delivered
+     * asynchronously and can arrive after the job's result has been processed, and reopening the finished job would make
+     * its build group look incomplete forever.
      *
      * @param buildJobId     the build job id
      * @param newStatus      the new build status
@@ -346,6 +350,13 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             SET b.buildStatus = :newStatus,
                 b.buildStartDate = CASE WHEN b.buildStartDate IS NULL THEN :buildStartDate ELSE b.buildStartDate END
             WHERE b.buildJobId = :buildJobId
+                AND b.buildStatus NOT IN (
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.FAILED,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.ERROR,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.CANCELLED,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.TIMEOUT
+                )
             """)
     void updateBuildJobStatusWithBuildStartDate(@Param("buildJobId") String buildJobId, @Param("newStatus") BuildStatus newStatus,
             @Param("buildStartDate") ZonedDateTime buildStartDate);
