@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
@@ -30,7 +29,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 @Lazy
 @FeatureUsage("organizations/organizations")
 @RestController
-@RequestMapping({ "api/account/", AccountLegacyRestPaths.CORE_PREFIX })
+@RequestMapping("api/account/")
 public class OrganizationResource {
 
     private static final Logger log = LoggerFactory.getLogger(OrganizationResource.class);
