@@ -719,6 +719,12 @@ public class UserService {
                 }
                 catch (DataIntegrityViolationException concurrentGrant) {
                     // Another request granted the same authority first, which is the state this one wanted, so there is nothing left to do.
+                    // Only that collision may be swallowed: any other integrity violation would leave the authority unwritten while this method
+                    // reports success. The constraint name is worded differently per database, so assert the outcome instead of matching on it.
+                    Set<Authority> persistedAuthorities = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).map(User::getAuthorities).orElse(Set.of());
+                    if (!persistedAuthorities.containsAll(rebuiltAuthorities)) {
+                        throw concurrentGrant;
+                    }
                     log.debug("Authorities of user {} were granted concurrently", user.getLogin(), concurrentGrant);
                 }
             }
