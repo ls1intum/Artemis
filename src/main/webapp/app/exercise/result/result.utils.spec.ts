@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, expect, vi } from 'vitest';
 import {
+    AthenaResultNotificationTracker,
     MissingResultInformation,
     ResultTemplateStatus,
     breakCircularResultBackReferences,
@@ -449,6 +450,59 @@ describe('ResultUtils', () => {
             breakCircularResultBackReferences(baseResult);
 
             expect(baseResult.feedbacks[0].result).toBeUndefined();
+        });
+    });
+
+    describe('AthenaResultNotificationTracker', () => {
+        const athenaResult = (overrides: Partial<Result>): Result => ({ assessmentType: AssessmentType.AUTOMATIC_ATHENA, ...overrides }) as Result;
+
+        it('does not notify for a non-Athena result', () => {
+            const tracker = new AthenaResultNotificationTracker();
+            expect(tracker.shouldNotify({ assessmentType: AssessmentType.MANUAL, successful: true } as Result)).toBe(false);
+        });
+
+        it('does not notify for an undefined result', () => {
+            const tracker = new AthenaResultNotificationTracker();
+            expect(tracker.shouldNotify(undefined)).toBe(false);
+        });
+
+        it('does not notify for a pending Athena request (successful is undefined)', () => {
+            const tracker = new AthenaResultNotificationTracker();
+            expect(tracker.shouldNotify(athenaResult({ submission: { id: 1 } as Submission, successful: undefined }))).toBe(false);
+        });
+
+        it('notifies once for a persisted (id-bearing) result and suppresses a repeated notification for the same id', () => {
+            const tracker = new AthenaResultNotificationTracker();
+            const result = athenaResult({ id: 42, successful: true });
+
+            expect(tracker.shouldNotify(result)).toBe(true);
+            expect(tracker.shouldNotify(result)).toBe(false);
+        });
+
+        it('notifies once for an unsaved (id-less) failure and suppresses a stale replay of the same submission', () => {
+            const tracker = new AthenaResultNotificationTracker();
+            const failedResult = athenaResult({ submission: { id: 7 } as Submission, successful: false });
+
+            expect(tracker.shouldNotify(failedResult)).toBe(true);
+            // A later, unrelated event still carrying the cached placeholder for the same submission must not re-notify.
+            expect(tracker.shouldNotify(failedResult)).toBe(false);
+        });
+
+        it('notifies again for a genuine retry after a fresh pending request for the same submission', () => {
+            const tracker = new AthenaResultNotificationTracker();
+            const submission = { id: 7 } as Submission;
+
+            expect(tracker.shouldNotify(athenaResult({ submission, successful: false }))).toBe(true);
+            // A fresh request for the same submission resets the dedup, so its own failure is shown too.
+            expect(tracker.shouldNotify(athenaResult({ submission, successful: undefined }))).toBe(false);
+            expect(tracker.shouldNotify(athenaResult({ submission, successful: false }))).toBe(true);
+        });
+
+        it('notifies independently for unsaved failures of different submissions', () => {
+            const tracker = new AthenaResultNotificationTracker();
+
+            expect(tracker.shouldNotify(athenaResult({ submission: { id: 1 } as Submission, successful: false }))).toBe(true);
+            expect(tracker.shouldNotify(athenaResult({ submission: { id: 2 } as Submission, successful: false }))).toBe(true);
         });
     });
 });

@@ -24,7 +24,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { getFirstResultWithComplaint, getLatestSubmissionResult, getNewestResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { getUnreferencedFeedback, isAthenaAIResult } from 'app/exercise/result/result.utils';
+import { AthenaResultNotificationTracker, getUnreferencedFeedback, isAthenaAIResult } from 'app/exercise/result/result.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -128,9 +128,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     submissionId: number | undefined;
     resultId: number | undefined;
 
-    // Result ids for which an AI feedback request toast was already shown, so a later, unrelated participation
-    // update that still carries the same (already-notified) Athena result does not show it again.
-    private notifiedAthenaResultIds = new Set<number>();
+    private readonly athenaResultNotificationTracker = new AthenaResultNotificationTracker();
 
     ngOnInit() {
         if (this.inputValuesArePresent()) {
@@ -206,17 +204,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 const results = changedParticipation.submissions?.flatMap((submission) => submission.results ?? []) || [];
                 // By id, not by position: the server holds a submission's results in a set, so the response order is arbitrary.
                 const lastResult = getNewestResult(results);
-                // A failed non-graded Athena request is broadcast without ever being saved, so it never gets an id (see
-                // TextExerciseFeedbackService: "does not save empty result"). Such a result can never recur in a later
-                // event, so it needs no dedup; only an id-bearing (i.e. persisted) result does.
-                const isNewAthenaResult =
-                    (lastResult?.id === undefined || !this.notifiedAthenaResultIds.has(lastResult.id)) &&
-                    lastResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
-                    lastResult?.successful !== undefined;
-                if (isNewAthenaResult) {
-                    if (lastResult.id !== undefined) {
-                        this.notifiedAthenaResultIds.add(lastResult.id);
-                    }
+                if (this.athenaResultNotificationTracker.shouldNotify(lastResult)) {
                     if (lastResult?.successful === false) {
                         this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                     } else {
