@@ -585,8 +585,8 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
         ExerciseDetailsDTO details = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
 
-        assertThat(details.exercise().getExerciseVariantGroup()).isNotNull();
-        assertThat(details.exercise().getExerciseVariantGroup().getMaxPoints()).isEqualTo(100.0);
+        assertThat(details.exercise().exercise().exerciseVariantGroup()).isNotNull();
+        assertThat(details.exercise().exercise().exerciseVariantGroup().maxPoints()).isEqualTo(100.0);
     }
 
     /** The quiz edit DTO reads the association (maps title/maxPoints/dates off it), so an unfetched proxy would throw here. */
