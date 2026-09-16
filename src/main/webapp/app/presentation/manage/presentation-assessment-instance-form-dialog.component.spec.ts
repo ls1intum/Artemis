@@ -91,6 +91,18 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         expect(savedInstance.presentationDate!.format('YYYY-MM-DD HH:mm')).toBe('2026-08-10 14:45');
     });
 
+    it('should prevent saving an excessive remark and allow saving after shortening it', () => {
+        component.editForm.controls.remark.setValue('a'.repeat(1001));
+        component.save();
+        expect(component.editForm.controls.remark.getError('maxlength')).toEqual({ requiredLength: 1000, actualLength: 1001 });
+        expect(saved).not.toHaveBeenCalled();
+
+        component.editForm.controls.remark.setValue('a'.repeat(1000));
+        component.save();
+        expect(component.editForm.controls.remark.valid).toBe(true);
+        expect(saved).toHaveBeenCalledOnce();
+    });
+
     it('should include a trimmed remark when saving an instance', () => {
         component.editForm.controls.remark.setValue('  Strong presentation  ');
 

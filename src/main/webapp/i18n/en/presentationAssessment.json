@@ -45,6 +45,7 @@
             "status": "Status",
             "assessment": "Assessment",
             "remark": "Remark",
+            "remarkTooLong": "The remark must not exceed {{ max }} characters. Shorten it to enable saving.",
             "note": "Remark",
             "assessed": "Assessed",
             "pending": "Pending",

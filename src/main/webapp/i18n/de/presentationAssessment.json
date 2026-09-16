@@ -45,6 +45,7 @@
             "status": "Status",
             "assessment": "Bewertung",
             "remark": "Anmerkung",
+            "remarkTooLong": "Die Anmerkung darf höchstens {{ max }} Zeichen enthalten. Kürze sie, um speichern zu können.",
             "note": "Anmerkung",
             "assessed": "Bewertet",
             "pending": "Ausstehend",

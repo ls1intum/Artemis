@@ -142,7 +142,32 @@ public interface AssessmentDataCleanupRepository extends ArtemisJpaRepository<Co
             DELETE FROM presentation_assessment_instance_student
             WHERE student_id = :userId
             """)
-    int deletePresentationAssessmentInstanceStudents(@Param("userId") long userId);
+    int detachPresentationAssessmentInstanceStudents(@Param("userId") long userId);
+
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("""
+            DELETE FROM PresentationAssessmentInstance instance
+            WHERE SIZE(instance.students) = 1
+                AND instance.id IN (
+                    SELECT assignedInstance.id FROM PresentationAssessmentInstance assignedInstance
+                    JOIN assignedInstance.students student WHERE student.id = :userId
+                )
+            """)
+    int deleteSoleMemberPresentationAssessmentInstances(@Param("userId") long userId);
+
+    /**
+     * Removes individual instances with their sole presenter and only detaches the presenter from shared instances.
+     * Hibernate also removes the join-table rows for the entity bulk deletion.
+     *
+     * @param userId the account being deleted
+     * @return the number of removed presenter assignments
+     */
+    @Transactional
+    default int deletePresentationAssessmentInstanceStudents(long userId) {
+        int individualInstances = deleteSoleMemberPresentationAssessmentInstances(userId);
+        return individualInstances + detachPresentationAssessmentInstanceStudents(userId);
+    }
 
     /**
      * Deletes the responses to the complaints the account raised, so that the complaints themselves can be removed.

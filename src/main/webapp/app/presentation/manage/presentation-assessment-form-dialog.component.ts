@@ -26,6 +26,7 @@ export interface PresentationAssessmentFormDialogResult {
 }
 
 const MAX_POINTS_UPPER_BOUND = 10000;
+const MIN_POINTS = 0.01;
 const notBlank: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
     typeof control.value === 'string' && control.value.trim().length === 0 ? { required: true } : null;
 
@@ -65,12 +66,13 @@ export class PresentationAssessmentFormDialogComponent {
     protected readonly faSave = faSave;
     protected readonly faTrash = faTrash;
     protected readonly maxPointsUpperBound = MAX_POINTS_UPPER_BOUND;
+    protected readonly minPoints = MIN_POINTS;
     readonly filteredExercises = signal<Exercise[]>([]);
 
     editForm = this.formBuilder.group({
         title: ['', [Validators.required, notBlank, Validators.maxLength(255)]],
         description: ['', [Validators.maxLength(1000)]],
-        maxPoints: [undefined as number | undefined, [Validators.required, Validators.min(0.01), Validators.max(MAX_POINTS_UPPER_BOUND)]],
+        maxPoints: [undefined as number | undefined, [Validators.required, Validators.min(MIN_POINTS), Validators.max(MAX_POINTS_UPPER_BOUND)]],
         exercise: [undefined as Exercise | undefined],
     });
 
@@ -89,7 +91,7 @@ export class PresentationAssessmentFormDialogComponent {
             const exercises = this.exercises();
             this.filteredExercises.set(exercises);
             const presentationAssessment = untracked(this.presentationAssessment);
-            if (!this.editForm.controls.exercise.value && presentationAssessment?.exerciseId) {
+            if (this.editForm.controls.exercise.pristine && !this.editForm.controls.exercise.value && presentationAssessment?.exerciseId) {
                 this.editForm.controls.exercise.setValue(
                     exercises.find((exercise) => exercise.id === presentationAssessment.exerciseId),
                     { emitEvent: false },
@@ -131,7 +133,7 @@ export class PresentationAssessmentFormDialogComponent {
             description: formValue.description ?? undefined,
             maxPoints: formValue.maxPoints ?? undefined,
             courseId: this.courseId(),
-            exerciseId: formValue.exercise?.id,
+            exerciseId: formValue.exercise?.id ?? (this.editForm.controls.exercise.pristine ? this.presentationAssessment()?.exerciseId : undefined),
         };
     };
 }

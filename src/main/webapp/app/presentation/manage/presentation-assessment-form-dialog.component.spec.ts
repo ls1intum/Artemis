@@ -65,6 +65,44 @@ describe('PresentationAssessmentFormDialogComponent', () => {
         expect(component.editForm.controls.exercise.value).toBe(exercise);
     });
 
+    it('should preserve the linked exercise when saving before exercises load', () => {
+        fixture.componentRef.setInput('presentationAssessment', { ...presentationAssessment, exerciseId: exercise.id });
+        fixture.componentRef.setInput('exercises', []);
+        fixture.detectChanges();
+        component.editForm.controls.title.setValue('Updated title');
+
+        component.save();
+
+        expect(saved).toHaveBeenCalledWith({ presentationAssessment: expect.objectContaining({ title: 'Updated title', exerciseId: exercise.id }) });
+    });
+
+    it('should preserve an explicit removal when exercises load later', () => {
+        fixture.componentRef.setInput('presentationAssessment', { ...presentationAssessment, exerciseId: exercise.id });
+        fixture.componentRef.setInput('exercises', []);
+        fixture.detectChanges();
+        component.editForm.controls.exercise.setValue(undefined);
+        component.editForm.controls.exercise.markAsDirty();
+
+        fixture.componentRef.setInput('exercises', [exercise]);
+        fixture.detectChanges();
+        component.save();
+
+        expect(component.editForm.controls.exercise.value).toBeUndefined();
+        expect(saved).toHaveBeenCalledWith({ presentationAssessment: expect.objectContaining({ exerciseId: undefined }) });
+    });
+
+    it('should save a replacement exercise selected by the user', () => {
+        fixture.componentRef.setInput('presentationAssessment', { ...presentationAssessment, exerciseId: exercise.id });
+        fixture.detectChanges();
+        const replacement = { id: 8, title: 'Replacement' } as Exercise;
+        component.editForm.controls.exercise.setValue(replacement);
+        component.editForm.controls.exercise.markAsDirty();
+
+        component.save();
+
+        expect(saved).toHaveBeenCalledWith({ presentationAssessment: expect.objectContaining({ exerciseId: replacement.id }) });
+    });
+
     it('should reject invalid max points', () => {
         component.editForm.controls.maxPoints.setValue(0);
         expect(component.editForm.controls.maxPoints.hasError('min')).toBe(true);
@@ -73,6 +111,9 @@ describe('PresentationAssessmentFormDialogComponent', () => {
         expect(component.editForm.controls.maxPoints.hasError('min')).toBe(true);
 
         component.editForm.controls.maxPoints.setValue(1.5);
+        expect(component.editForm.controls.maxPoints.valid).toBe(true);
+
+        component.editForm.controls.maxPoints.setValue(0.01);
         expect(component.editForm.controls.maxPoints.valid).toBe(true);
 
         component.editForm.controls.maxPoints.setValue(10001);

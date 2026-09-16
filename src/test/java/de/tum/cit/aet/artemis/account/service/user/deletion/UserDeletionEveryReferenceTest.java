@@ -101,6 +101,33 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         assertThat(userTestRepository.findById(bystander.getId())).as("the account that shares the seeded parents survives").isPresent();
     }
 
+    @Test
+    void presentationCleanupDeletesIndividualInstancesAndPreservesSharedInstances() {
+        long[] instanceIds = transactionTemplate.execute(status -> {
+            long assessmentId = insert("presentation_assessment", values("title", "Presentation cleanup", "max_points", 10, "course_id", course.getId()));
+            Timestamp presentationDate = Timestamp.from(Instant.parse("2026-01-15T12:00:00Z"));
+            long individualId = insert("presentation_assessment_instance", values("presentation_assessment_id", assessmentId, "presentation_date", presentationDate, "language",
+                    "en", "presentation_mode", "IN_PERSON", "result_points", 9));
+            long sharedId = insert("presentation_assessment_instance", values("presentation_assessment_id", assessmentId, "presentation_date", presentationDate, "language", "en",
+                    "presentation_mode", "IN_PERSON", "result_points", 4));
+            insertInto("presentation_assessment_instance_student", values("presentation_assessment_instance_id", individualId, "student_id", target.getId()));
+            insertInto("presentation_assessment_instance_student", values("presentation_assessment_instance_id", sharedId, "student_id", target.getId()));
+            insertInto("presentation_assessment_instance_student", values("presentation_assessment_instance_id", sharedId, "student_id", bystander.getId()));
+            return new long[] { individualId, sharedId, assessmentId };
+        });
+
+        userReferenceCleanupService.resolve(UserDeletionReferencePolicy.PRESENTATION_ASSESSMENT_INSTANCE_STUDENT, target.getId());
+
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM presentation_assessment_instance WHERE id = ?", Long.class, instanceIds[0])).isZero();
+        assertThat(jdbcTemplate.queryForObject("SELECT result_points FROM presentation_assessment_instance WHERE id = ?", Double.class, instanceIds[1])).isEqualTo(4.0);
+        assertThat(jdbcTemplate.queryForList("SELECT student_id FROM presentation_assessment_instance_student WHERE presentation_assessment_instance_id = ?", Long.class,
+                instanceIds[1])).containsExactly(bystander.getId());
+        assertThat(userReferenceCleanupService.count(UserDeletionReferencePolicy.PRESENTATION_ASSESSMENT_INSTANCE_STUDENT, List.of(target.getId()))).isEmpty();
+        assertThat(
+                jdbcTemplate.queryForObject("SELECT MAX(result_points) FROM presentation_assessment_instance WHERE presentation_assessment_id = ?", Double.class, instanceIds[2]))
+                .as("the deleted individual grade no longer prevents lowering the maximum points").isEqualTo(4.0);
+    }
+
     private Map<UserDeletionReferencePolicy, Long> counts(User user) {
         Map<UserDeletionReferencePolicy, Long> counts = new LinkedHashMap<>();
         for (UserDeletionReferencePolicy policy : UserDeletionReferencePolicy.values()) {
