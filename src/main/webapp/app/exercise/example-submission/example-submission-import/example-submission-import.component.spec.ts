@@ -124,6 +124,19 @@ describe('ExampleSubmissionImportComponent', () => {
         expect(component.getLatestResult(submissionWithResult)).toEqual(ratedResult);
     });
 
+    it('links every listed result to its submission so the result badge can route to it', async () => {
+        vi.useFakeTimers();
+        const ratedResult = { id: 7, score: 90, rated: true } as Result;
+        const sibling = { id: 5, results: [ratedResult] } as Submission;
+        const listed = { id: 5, participation: { id: 2, type: ParticipationType.STUDENT, submissions: [sibling] } as StudentParticipation } as Submission;
+        searchSpy.mockReturnValue(of({ numberOfPages: 1, resultsOnPage: [listed] }));
+
+        component.searchTerm = 'search';
+        await vi.advanceTimersByTimeAsync(300);
+
+        expect(component.getLatestResult(component.content().resultsOnPage[0])?.submission?.id).toBe(5);
+    });
+
     it('getLatestResult returns undefined when the submission has no participation', () => {
         expect(component.getLatestResult({ id: 9 } as Submission)).toBeUndefined();
     });

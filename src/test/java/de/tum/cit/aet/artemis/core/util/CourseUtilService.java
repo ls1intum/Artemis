@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
@@ -282,7 +281,7 @@ public class CourseUtilService {
     public Course createCourseWithExercisesAndLecturesAndCompetencies() {
         Course course = createCourse();
 
-        ProgrammingExercise programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise(course);
         course.addExercises(programmingExercise);
 
         Lecture lecture = lectureUtilService.createLecture(course);
@@ -1227,7 +1226,7 @@ public class CourseUtilService {
                     var savedSubmission = fileUploadExerciseUtilService.saveFileUploadSubmission(fileUploadExercise, submission, userPrefix + "student" + j);
                     var filePath = FilePathConverter.buildFileUploadSubmissionPath(fileUploadExercise.getId(), savedSubmission.getId()).resolve("file.pdf");
                     FileUtils.write(filePath.toFile(), "test content", Charset.defaultCharset());
-                    savedSubmission.setFilePath(FilePathConverter.externalUriForFileSystemPath(filePath, FilePathType.FILE_UPLOAD_SUBMISSION, submission.getId()).toString());
+                    savedSubmission.setFilePath(new PublicFileUrl.FileUploadSubmission(fileUploadExercise.getId(), savedSubmission.getId(), "file.pdf").clientPath());
                     fileUploadSubmissionRepo.save(savedSubmission);
                     if (numberOfAssessments >= j) {
                         Result result = participationUtilService.generateResultWithScore(submission, currentUser, 3.0);
@@ -1356,8 +1355,8 @@ public class CourseUtilService {
     public Course createEnrolledCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor(String userPrefix) {
         Course course = this.createCourse();
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, PAST_TIMESTAMP, PAST_TIMESTAMP, PAST_TIMESTAMP);
-        ProgrammingExercise programmingExercise1 = programmingExerciseUtilService.createSampleProgrammingExercise();
-        ProgrammingExercise programmingExercise2 = programmingExerciseUtilService.createSampleProgrammingExercise("Title1", "shortnameone");
+        ProgrammingExercise programmingExercise1 = programmingExerciseUtilService.createSampleProgrammingExercise(course);
+        ProgrammingExercise programmingExercise2 = programmingExerciseUtilService.createSampleProgrammingExercise(course, "Title1", "shortnameone");
 
         course.addExercises(textExercise);
         course.addExercises(programmingExercise1);

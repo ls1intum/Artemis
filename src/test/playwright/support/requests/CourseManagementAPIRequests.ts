@@ -129,7 +129,9 @@ export class CourseManagementAPIRequests {
         if (!response.ok()) {
             throw new Error(`Failed to create course: ${response.status()} ${response.statusText()} - ${await response.text()}`);
         }
-        return response.json();
+        const created: { id: number } = await response.json();
+        course.id = created.id;
+        return course;
     }
 
     /**
