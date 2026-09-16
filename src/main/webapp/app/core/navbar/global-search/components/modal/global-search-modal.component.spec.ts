@@ -94,6 +94,9 @@ describe('GlobalSearchModalComponent', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        // clearAllMocks resets call history but not implementations, so a mockReturnValue set by one
+        // test would otherwise leak into every later one and make results order-dependent.
+        mockCourseStorageService.getCourse.mockImplementation((id) => courses.find((course) => course.id === id));
         mockSearchService.globalSearch.mockReturnValue(of<GlobalSearchResult[]>([]));
         TestBed.configureTestingModule({
             imports: [GlobalSearchModalComponent, MockPipe(ArtemisTranslatePipe)],
