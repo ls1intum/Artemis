@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationSer
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ReactionTestRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismPostApi;
@@ -110,6 +111,27 @@ class ReactionServiceUnitTest {
 
         assertThat(created.getPost()).isSameAs(post);
         assertThat(created.getAnswerPost()).isNull();
+    }
+
+    @Test
+    void anIdThatDenotesNoPostingAtAllIsNotFound() {
+        when(postRepository.findById(SHARED_ID)).thenReturn(Optional.empty());
+        when(answerPostRepository.findById(SHARED_ID)).thenReturn(Optional.empty());
+
+        ReactionDTO withoutType = new ReactionDTO(null, null, null, "smiley", SHARED_ID, null);
+
+        assertThatThrownBy(() -> reactionService.createReaction(COURSE_ID, withoutType)).isInstanceOf(EntityNotFoundException.class);
+    }
+
+    @Test
+    void anIdThatDenotesAPostingOnlyInAnotherCourseIsRejectedAsWrongCourse() {
+        when(postRepository.findById(SHARED_ID)).thenReturn(Optional.empty());
+        when(answerPostRepository.findById(SHARED_ID)).thenReturn(Optional.of(answerPostInCourse(otherCourse())));
+
+        ReactionDTO withoutType = new ReactionDTO(null, null, null, "smiley", SHARED_ID, null);
+
+        assertThatThrownBy(() -> reactionService.createReaction(COURSE_ID, withoutType)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("does not belong to the given course");
     }
 
     private Post postInCourse() {

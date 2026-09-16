@@ -196,7 +196,6 @@
         "missingAssociation": "Die Reaktion muss einem Beitrag oder einer Antwort zugeordnet sein.",
         "emojiIdMissing": "emojiId muss gesetzt sein.",
         "ambiguousPostingId": "Die gewählte ID gehört in diesem Kurs sowohl zu einem Beitrag als auch zu einer Antwort, daher muss die Art des Beitrags angegeben werden.",
-        "postingNotFound": "Der Beitrag, auf den reagiert werden soll, konnte nicht gefunden werden.",
         "exampleSubmission": {
             "isNull": "Es wurde keine Beispielabgabe übermittelt.",
             "submissionIsNull": "Diese Beispielabgabe enthält keine Lösung.",

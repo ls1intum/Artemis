@@ -196,7 +196,6 @@
         "missingAssociation": "The reaction must be associated with a post or an answer post.",
         "emojiIdMissing": "emojiId must be set.",
         "ambiguousPostingId": "The selected id belongs to both a post and an answer post in this course, so the type of posting has to be specified.",
-        "postingNotFound": "The posting to react to could not be found.",
         "exampleSubmission": {
             "isNull": "No example submission was provided.",
             "submissionIsNull": "This example submission has no solution attached.",

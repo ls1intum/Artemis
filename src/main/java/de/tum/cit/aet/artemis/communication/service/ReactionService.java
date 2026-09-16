@@ -13,7 +13,6 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.domain.Posting;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
@@ -24,6 +23,7 @@ import de.tum.cit.aet.artemis.communication.repository.ReactionRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismPostApi;
@@ -95,8 +95,11 @@ public class ReactionService {
 
         // No type given, so the id has to be resolved on its own. Posts and answer posts are numbered independently, which means the same value
         // regularly denotes one of each; the course tells them apart in every case except the one where both happen to live in it.
-        Optional<AnswerPost> answerPost = answerPostRepository.findById(targetId).filter(candidate -> belongsToCourse(candidate.getCoursePostingBelongsTo(), courseId));
-        Optional<Post> post = postRepository.findById(targetId).filter(candidate -> belongsToCourse(candidate.getCoursePostingBelongsTo(), courseId));
+        Optional<AnswerPost> answerPostById = answerPostRepository.findById(targetId);
+        Optional<Post> postById = postRepository.findById(targetId);
+
+        Optional<AnswerPost> answerPost = answerPostById.filter(candidate -> belongsToCourse(candidate.getCoursePostingBelongsTo(), courseId));
+        Optional<Post> post = postById.filter(candidate -> belongsToCourse(candidate.getCoursePostingBelongsTo(), courseId));
 
         if (answerPost.isPresent() && post.isPresent()) {
             throw new BadRequestAlertException("The id " + targetId + " denotes both a post and an answer post in this course, so postingType is required",
@@ -109,11 +112,12 @@ public class ReactionService {
             return reactToPost(reaction, post.get(), user, course);
         }
 
-        // Nothing in this course carries the id. Resolve it anyway so that the failure says whether the posting is missing entirely or sits in
-        // another course, which is the distinction a caller needs to act on.
-        Posting posting = answerPostRepository.findById(targetId).map(Posting.class::cast).orElseGet(() -> postRepository.findByIdElseThrow(targetId));
-        checkThatCourseHasCourseIdElseThrow(course.getId(), posting.getCoursePostingBelongsTo());
-        throw new BadRequestAlertException("Could not resolve posting " + targetId, METIS_REACTION_ENTITY_NAME, "postingNotFound");
+        // Nothing in this course carries the id, so the request fails either way. Which way matters to the caller: an id that denotes no posting
+        // at all is a 404, while one that denotes a posting in another course is the same wrongCourse rejection the typed paths give.
+        if (answerPostById.isEmpty() && postById.isEmpty()) {
+            throw new EntityNotFoundException("Posting", targetId);
+        }
+        throw new BadRequestAlertException("Reaction does not belong to the given course", METIS_REACTION_ENTITY_NAME, "wrongCourse");
     }
 
     private boolean belongsToCourse(Course postingCourse, Long courseId) {
