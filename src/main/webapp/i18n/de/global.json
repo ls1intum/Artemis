@@ -150,6 +150,10 @@
             "irisAnswerShowLess": "Weniger anzeigen",
             "irisAnswerMore": "weitere",
             "irisAnswerThinking": "Nachdenken…",
+            "irisAnswerNoneRelevant": "Iris hat gesucht, aber in diesem Kurs ist nichts relevant genug für eine verlässliche Antwort.",
+            "irisAnswerNoneRelevantHint": "Die Ergebnisse unten helfen vielleicht trotzdem weiter.",
+            "irisAnswerFailed": "Bei der Antwort von Iris ist ein Problem aufgetreten. Die Suchergebnisse sind davon nicht betroffen.",
+            "irisAnswerRetry": "Erneut versuchen",
             "irisCollapseSources": "Weniger Quellen anzeigen",
             "irisAiBadge": "KI",
             "entityType": {

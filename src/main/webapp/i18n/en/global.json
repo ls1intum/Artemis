@@ -150,6 +150,10 @@
             "irisAnswerShowLess": "Show less",
             "irisAnswerMore": "more",
             "irisAnswerThinking": "Iris is thinking…",
+            "irisAnswerNoneRelevant": "Iris looked, but nothing in this course is relevant enough to answer confidently.",
+            "irisAnswerNoneRelevantHint": "The results below might still help.",
+            "irisAnswerFailed": "Iris ran into a problem while answering. The search results are unaffected.",
+            "irisAnswerRetry": "Try again",
             "irisCollapseSources": "Show fewer sources",
             "irisAiBadge": "AI",
             "entityType": {

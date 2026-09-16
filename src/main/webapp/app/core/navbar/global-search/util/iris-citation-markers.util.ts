@@ -3,12 +3,17 @@
  *
  * The answer arrives as markdown containing sentence-level markers like `[2]`
  * (already sanitized and renumbered server-side to index the returned sources
- * list). This util converts each RUN of consecutive markers into one small
- * `<sup>` chip element before markdown rendering; the markdown pipeline keeps
- * inline HTML (`html: true`) and DOMPurify keeps `sup`, `class` and `data-*`
- * attributes, so the chip survives sanitization. An answer without markers
- * passes through unchanged, which keeps old-server responses rendering
- * exactly as before.
+ * list). This util converts EACH marker into its own small `<sup>` chip element
+ * before markdown rendering; the markdown pipeline keeps inline HTML
+ * (`html: true`) and DOMPurify keeps `sup`, `class` and `data-*` attributes, so
+ * the chip survives sanitization. An answer without markers passes through
+ * unchanged, which keeps old-server responses rendering exactly as before.
+ *
+ * A run of consecutive markers stays one chip per source rather than a single
+ * combined chip: a combined chip is one hover target and one link for several
+ * sources, so it cannot say what source 2 alone supports and its click can only
+ * ever open the first of them. The run still reads as a group because
+ * `.iris-cite + .iris-cite` tightens the spacing between adjacent chips.
  */
 
 /** One or more consecutive `[n]` markers, treated as a single citation run. */
@@ -25,11 +30,12 @@ export interface CitationRenderResult {
 }
 
 /**
- * Replaces citation marker runs with superscript chip elements.
+ * Replaces citation markers with one superscript chip element each.
  *
  * Markers outside `1..sourceCount` are dropped defensively (the server already
  * strips them, but the client must not trust that); a run left empty after
- * filtering disappears entirely.
+ * filtering disappears entirely. Repeats inside one run collapse to a single
+ * chip, so `[1][1]` does not render the same source twice.
  *
  * @param answer the answer markdown as received from the server
  * @param sourceCount the number of sources the markers may index into
@@ -51,7 +57,7 @@ export function renderCitationMarkers(answer: string | undefined, sourceCount: n
             return '';
         }
         numbers.forEach((n) => cited.add(n));
-        return `<sup class="iris-cite" data-n="${numbers.join(' ')}">${numbers.join(',')}</sup>`;
+        return numbers.map((n) => `<sup class="iris-cite" data-n="${n}">${n}</sup>`).join('');
     });
     return { html, citedNumbers: cited };
 }

@@ -8,16 +8,18 @@ describe('renderCitationMarkers', () => {
         expect([...result.citedNumbers]).toEqual([2]);
     });
 
-    it('groups a run of consecutive markers into one chip carrying every source', () => {
+    it('renders a run of consecutive markers as one chip per source', () => {
+        // One hover target and one link per source: a combined chip could neither say what source 3
+        // alone supports nor open anything but the first of them.
         const result = renderCitationMarkers('Composition beats inheritance.[1][3]', 3);
-        expect(result.html).toBe('Composition beats inheritance.<sup class="iris-cite" data-n="1 3">1,3</sup>');
+        expect(result.html).toBe('Composition beats inheritance.<sup class="iris-cite" data-n="1">1</sup><sup class="iris-cite" data-n="3">3</sup>');
         expect([...result.citedNumbers]).toEqual([1, 3]);
     });
 
-    it('keeps every source of a run addressable from the one chip', () => {
-        const result = renderCitationMarkers('Claim.[2][4][5]', 5);
-        // The chip carries all three, which is what lets the popover name each of them.
-        expect(result.html).toBe('Claim.<sup class="iris-cite" data-n="2 4 5">2,4,5</sup>');
+    it('gives every chip in a run exactly one source number', () => {
+        const result = renderCitationMarkers('Claim.[1][2][3]', 3);
+        const numbers = [...(result.html ?? '').matchAll(/data-n="([^"]*)"/g)].map((match) => match[1]);
+        expect(numbers).toEqual(['1', '2', '3']);
     });
 
     it('deduplicates repeated numbers inside a run', () => {
