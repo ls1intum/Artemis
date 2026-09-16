@@ -2,6 +2,11 @@
     min-height: 1.75rem;
 }
 
+// Leading magnifier reads as a muted affordance, not as content.
+.search-icon {
+    color: var(--tumaet-ui-muted-color);
+}
+
 // Outlined chip: white body, a faint grey only on the facet (left) half, short facet/value divider.
 .tok {
     --tok-accent: var(--bs-primary);

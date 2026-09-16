@@ -120,6 +120,11 @@
         display: flex;
         gap: 0.3rem;
         min-width: 0;
+
+        // The prefix ("Search for") is a bare text node, so it cannot take flex-shrink itself. Holding it
+        // on one line here makes the quoted literal absorb the squeeze and ellipsize instead of the
+        // prefix breaking across two lines.
+        white-space: nowrap;
     }
 
     .filter-menu-literal {
@@ -157,6 +162,8 @@
 
 .filter-menu-description {
     @include row.description;
+
+    color: var(--tumaet-ui-muted-color);
 }
 
 .filter-menu-meta {

@@ -1,7 +1,7 @@
-<div class="search-input-container flex-shrink-0 border-bottom p-3">
+<div class="search-input-container shrink-0 border-b p-3">
     <!-- Search input (always its own full-width line) -->
-    <div class="search-line d-flex align-items-center">
-        <fa-icon [icon]="faSearch" class="search-icon text-secondary me-2" aria-hidden="true" />
+    <div class="search-line flex items-center">
+        <fa-icon [icon]="faSearch" class="search-icon me-2" aria-hidden="true" />
         <div class="search-field">
             <!-- Overlay that colours the typed `facet:` operator; the real input text is transparent while active. -->
             <div class="search-highlight" aria-hidden="true">
@@ -40,7 +40,7 @@
             />
         </div>
         @if (isLoading()) {
-            <span class="spinner-border spinner-border-sm text-secondary me-2" role="status" [attr.aria-label]="'global.search.searching' | artemisTranslate"></span>
+            <span class="sr-only" role="status">{{ 'global.search.searching' | artemisTranslate }}</span>
         }
         <!-- Guided filter picker trigger (also opened with Cmd/Ctrl+F). -->
         <button type="button" class="filter-trigger" [disabled]="filterDisabled()" (click)="filterTrigger.emit()" [attr.aria-label]="'global.search.filter' | artemisTranslate">
@@ -52,7 +52,7 @@
 
     <!-- Active filter chips, on their own row directly beneath the input (Layout B) -->
     @if (hasChips()) {
-        <div class="chips-row d-flex flex-wrap align-items-center gap-2 mt-2">
+        <div class="chips-row flex flex-wrap items-center gap-2 mt-2">
             @for (chip of chips(); track chip.key) {
                 <span
                     class="tok"

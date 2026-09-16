@@ -31,10 +31,10 @@
                 (click)="optionSelected.emit(i)"
                 (mouseenter)="optionHovered.emit(i)"
             >
-                <div class="filter-menu-icon flex-shrink-0">
+                <div class="filter-menu-icon shrink-0">
                     <fa-icon [icon]="option.icon" size="lg" class="filter-menu-glyph" [class.filter-menu-glyph--ex]="isExcludeGlyph(option)" aria-hidden="true" />
                 </div>
-                <div class="filter-menu-content min-width-0">
+                <div class="filter-menu-content min-w-0">
                     <span class="filter-menu-label">
                         {{ option.label }}
                         @if (option.literal; as literal) {
@@ -42,10 +42,10 @@
                         }
                     </span>
                     @if (option.description) {
-                        <span class="filter-menu-description text-secondary">{{ option.description }}</span>
+                        <span class="filter-menu-description">{{ option.description }}</span>
                     }
                 </div>
-                <div class="filter-menu-meta flex-shrink-0">
+                <div class="filter-menu-meta shrink-0">
                     @if (option.hint; as hint) {
                         @let parts = hintParts(hint);
                         <span class="filter-menu-syntax" [class.filter-menu-syntax--ex]="isExcludeHint(hint)"
