@@ -9,7 +9,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationResultDTO;
 
 /**
- * Returned by the for-dashboard resources.
+ * Returned by the for-dashboard endpoint.
  * Contains a course (e.g. shown in the course-card.component) and different types of scores.
  *
  * @param course                        the course
