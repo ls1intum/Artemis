@@ -85,19 +85,16 @@ def foldable_changelogs(master: Path) -> list[Path]:
 
 def changeset_engines(changeset) -> set[str]:
     """
-    Returns the engine families a changeset applies to.
+    Returns the engine families a changeset's ``dbms`` *attribute* restricts it to.
 
-    A changeset says so either with a dbms attribute or with a <dbms> precondition, and Artemis uses
-    both spellings. Anything that names neither applies everywhere.
+    The ``<dbms>`` precondition is deliberately not read here. Answering what it means requires
+    understanding the ``<not>`` and ``<or>`` around it, which the precondition evaluator in
+    schema_state already does; a second, simpler reading of the same elements would disagree with it at
+    exactly one spelling -- ``<not><dbms type="postgresql"/></not>``, which scopes a changeset *to*
+    MySQL while naming PostgreSQL. Collecting names out of the tree would read that backwards and drop
+    the changeset from the MySQL baseline without saying so.
     """
-    named: set[str] = set()
-    for value in (changeset.get("dbms") or "").split(","):
-        if value.strip():
-            named.add(value.strip().lower())
-    for preconditions in changeset.iter(PRECONDITIONS):
-        for element in preconditions.iter(DBMS):
-            named.update(value.strip().lower() for value in (element.get("type") or "").split(",") if value.strip())
-
+    named = {value.strip().lower() for value in (changeset.get("dbms") or "").split(",") if value.strip()}
     if not named:
         return {"mysql", "postgres"}
     engines = set()
@@ -106,6 +103,11 @@ def changeset_engines(changeset) -> set[str]:
     if named & POSTGRES_FAMILY:
         engines.add("postgres")
     return engines
+
+
+def scopes_by_database(preconditions) -> bool:
+    """Whether these preconditions say anything about which database they apply to."""
+    return preconditions is not None and next(preconditions.iter(DBMS), None) is not None
 
 
 # --- Folding ---------------------------------------------------------------------------------------
@@ -180,8 +182,11 @@ def fold(changelogs: list[Path]) -> tuple[dict[str, Schema], list[str], set[str]
                     # to do too -- but only where Liquibase would have carried on. onFail="HALT", the
                     # default, aborts the whole update instead, so a database in that state never
                     # reached the schema being folded and the fold cannot speak for it.
+                    #
+                    # A precondition that names a database is the exception: failing it on the other
+                    # engine is how a changeset scopes itself, not a state anyone has to answer for.
                     on_fail = (preconditions.get("onFail") or "HALT").upper()
-                    if on_fail not in ("MARK_RAN", "CONTINUE"):
+                    if on_fail not in ("MARK_RAN", "CONTINUE") and not scopes_by_database(preconditions):
                         refusals.append(f"{context}: precondition fails during the fold with onFail=\"{on_fail}\", which would abort an update rather than skip it")
                     continue
                 for element in changeset:

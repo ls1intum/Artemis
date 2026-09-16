@@ -168,10 +168,19 @@ class Database:
         result = run(argv)
         if result.returncode != 0:
             raise RuntimeError(f"could not start {self.container}: {result.stderr.strip()}")
-        self._await_ready()
+        try:
+            self._await_ready()
+        except BaseException:
+            # __exit__ only runs once __enter__ has returned, so a container that never becomes ready
+            # would be left running and holding its published port, and the next run would fail to bind.
+            self.remove()
+            raise
         return self
 
     def __exit__(self, *exc) -> None:
+        self.remove()
+
+    def remove(self) -> None:
         run(["docker", "rm", "-f", self.container])
 
     def _await_ready(self, timeout_seconds: int = 180) -> None:

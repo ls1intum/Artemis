@@ -14,6 +14,7 @@ import org.springframework.boot.liquibase.autoconfigure.LiquibaseProperties;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
+import liquibase.changelog.ChangeLogHistoryServiceFactory;
 import liquibase.changelog.ChangeSet;
 import liquibase.database.Database;
 import liquibase.exception.LiquibaseException;
@@ -107,10 +108,41 @@ public class ArtemisSpringLiquibase extends SpringLiquibase {
 
         Contexts contexts = new Contexts(getContexts());
         LabelExpression labels = new LabelExpression(getLabelFilter());
-        history.changeLogSync(contexts, labels);
 
-        verifyNothingWasLeftUnrecorded(history, contexts, labels);
+        try {
+            history.changeLogSync(contexts, labels);
+            verifyNothingWasLeftUnrecorded(history, contexts, labels);
+        }
+        catch (LiquibaseException | RuntimeException failure) {
+            discardPartialHistory(database, failure);
+            throw failure;
+        }
         log.info("Recorded the folded changelog history");
+    }
+
+    /**
+     * Returns the database to the empty state this attempt started from.
+     * <p>
+     * Each recorded changeset is committed on its own, so a sync that fails partway leaves rows behind.
+     * Those rows are what {@link #isEmpty} reads, so leaving them would make the next start believe the
+     * history was already recorded: it would skip the sync, and the folded changesets that never got
+     * recorded would execute as ordinary migrations. Dropping the changelog tables costs nothing here,
+     * because this only runs on a database that had no rows in them a moment ago, and it leaves the next
+     * start facing exactly the empty database this one did.
+     *
+     * @param database the database whose changelog history is to be discarded
+     * @param failure  the failure being propagated, which a failure to clean up is attached to
+     */
+    private void discardPartialHistory(Database database, Exception failure) {
+        try {
+            ChangeLogHistoryServiceFactory.getInstance().getChangeLogService(database).destroy();
+            log.error("Recording the folded changelog history failed; discarded what had been recorded so that the next start retries it");
+        }
+        catch (Exception cleanupFailure) {
+            failure.addSuppressed(cleanupFailure);
+            log.error("Recording the folded changelog history failed, and the partial history could not be discarded. "
+                    + "Restore the database to an empty state before starting again, or the folded changelogs will execute as migrations.");
+        }
     }
 
     /**
