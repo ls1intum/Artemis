@@ -64,6 +64,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
+import de.tum.cit.aet.artemis.buildagent.service.SharedQueueProcessingService;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
@@ -118,6 +119,9 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
     private LocalCIResultProcessingService localCIResultProcessingService;
 
     @Autowired
+    private SharedQueueProcessingService sharedQueueProcessingService;
+
+    @Autowired
     private TestCaseFeedbackRepository testCaseFeedbackRepository;
 
     private LocalVCTestRepository studentAssignmentRepository;
@@ -147,6 +151,11 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
 
     @BeforeEach
     void initRepositories() throws Exception {
+        // Every test here needs a live build agent. Other tests of this shared context stop the agent's queue listener
+        // to simulate missing jobs, and a plain init() afterwards is a no-op while the service still counts as
+        // initialized; on CI this class ran right after such a test and every build stayed queued.
+        sharedQueueProcessingService.resetInitializedState();
+        sharedQueueProcessingService.init();
         studentAssignmentRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, assignmentRepositorySlug);
         commitHash = localVCLocalCITestService.commitFile(studentAssignmentRepository.workingCopyPath(), studentAssignmentRepository.workingCopy());
         studentAssignmentRepository.workingCopy().push().call();

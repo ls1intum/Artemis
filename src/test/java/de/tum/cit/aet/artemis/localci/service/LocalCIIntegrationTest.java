@@ -242,6 +242,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         assertThat(buildJob.getBuildCompletionDate()).isNull();
 
         // resume the build agent
+        sharedQueueProcessingService.resetInitializedState();
         sharedQueueProcessingService.init();
 
         await().atMost(5, TimeUnit.SECONDS).until(() -> {
@@ -351,6 +352,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         assertThat(buildJob.getBuildStatus()).isEqualTo(BuildStatus.MISSING);
 
         // resume the build agent
+        sharedQueueProcessingService.resetInitializedState();
         sharedQueueProcessingService.init();
     }
 
@@ -398,6 +400,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         });
 
         // Resume the build agent
+        sharedQueueProcessingService.resetInitializedState();
         sharedQueueProcessingService.init();
         processingJobs.clear();
         queuedJobs.clear();
@@ -455,6 +458,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         assertThat(retriedJobs.getFirst().getRetryCount()).isEqualTo(1);
 
         // Resume the build agent
+        sharedQueueProcessingService.resetInitializedState();
         sharedQueueProcessingService.init();
         processingJobs.clear();
         queuedJobs.clear();
@@ -919,6 +923,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         BuildJobQueueItem item = queuedJobs.stream().filter(i -> i.buildConfig().commitHashToBuild().equals(commitHash) && i.participationId() == studentParticipation.getId())
                 .findFirst().orElseThrow();
         assertThat(item.jobTimingInfo().estimatedDuration()).isEqualTo(22);
+        sharedQueueProcessingService.resetInitializedState();
         sharedQueueProcessingService.init();
 
         await().until(() -> processingJobs.values().stream().anyMatch(buildJobQueueItem -> buildJobQueueItem.buildConfig().commitHashToBuild().equals(commitHash)
