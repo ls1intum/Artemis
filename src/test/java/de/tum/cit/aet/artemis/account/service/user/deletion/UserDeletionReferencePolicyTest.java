@@ -35,13 +35,18 @@ class UserDeletionReferencePolicyTest {
      * {@code user_groups} and {@code competency_jol} long after both tables were gone, and the deletion had to look
      * up at run time which of its tables still existed in order to skip them again. Subtracting what later
      * changesets drop is what lets the catalogue mean the current schema.
+     *
+     * <p>
+     * The walk starts at the Liquibase root rather than at one directory below it, so that it covers the
+     * baseline, the folded history and the changelogs written since alike. Where a changelog sits is a
+     * question of what has been consolidated, which says nothing about whether it declares a foreign key.
      */
     @Test
     void everyLiquibaseForeignKeyToUserHasExactlyOnePolicy() throws IOException {
         Set<String> schemaReferences = new HashSet<>();
         Set<String> droppedTables = new HashSet<>();
         Set<String> droppedColumns = new HashSet<>();
-        Path changelogDirectory = Path.of("src/main/resources/config/liquibase/changelog");
+        Path changelogDirectory = Path.of("src/main/resources/config/liquibase");
         try (Stream<Path> paths = Files.walk(changelogDirectory)) {
             for (Path path : paths.filter(file -> file.toString().endsWith(".xml")).toList()) {
                 String changelog = Files.readString(path);
