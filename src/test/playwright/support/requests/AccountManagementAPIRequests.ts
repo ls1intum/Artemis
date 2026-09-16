@@ -27,7 +27,7 @@ export class AccountManagementAPIRequests {
         }
         for (const publicKey of publicKeys) {
             if (publicKey.label === this.PLAYWRIGHT_SSH_LABEL) {
-                await this.page.request.delete(`${BASE_API}/programming/ssh-settings/public-key/${publicKey.id}`);
+                await this.page.request.delete(`${BASE_API}/programming/ssh-settings/public-keys/${publicKey.id}`);
             }
         }
     }

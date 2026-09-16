@@ -57,7 +57,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 @Lazy
 @FeatureUsage("configuration/auxiliary-repositories")
 @RestController
-@RequestMapping({ "api/programming/auxiliary-repositories/", "api/programming/auxiliary-repository/" })
+@RequestMapping("api/programming/auxiliary-repositories/")
 public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;

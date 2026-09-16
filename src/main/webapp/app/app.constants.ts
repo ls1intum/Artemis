@@ -19,18 +19,40 @@ export const SCORE_PATTERN = '^[0-9]{1,2}$|^100$';
 export const ARTEMIS_DEFAULT_COLOR = '#3E8ACC';
 export const ARTEMIS_VERSION_HEADER = 'Content-Version';
 
+/**
+ * Turns a served file reference into the URL it is requested under.
+ *
+ * The server assembles every file reference it sends from a hardcoded template plus the owning entity (`PublicFileUrl` and `ServedFileUrl` on the server), but it sends the
+ * result one segment narrower than the real URL: `PublicFileUrl#clientPath` strips the leading `files/` because this function puts `api/core/files/` back. The two halves are a
+ * single contract, so a call site that stops prefixing a value the server sent requests a path that does not exist.
+ *
+ * **Why the client still prefixes at all.** The natural end state is that the server sends the whole URL and this function disappears. That is a change to the value of a JSON
+ * field rather than to a path, and unlike a path a field has no room for a deprecated alias: there is one value and every client reads it. The mobile apps and the VS Code
+ * extension prepend their own base URL and this same prefix, so a server that started sending complete URLs would make all of them build `api/core/files/api/core/files/...`.
+ * The REST guideline is explicit that those clients cannot be updated in lockstep (see `documentation/docs/developer/guidelines/rest-api.mdx`), which is also why the previous
+ * spellings of the file paths are still served (see `CoreLegacyFileRestPaths` on the server). Removing this function is therefore a later release's change, once those clients
+ * read the field without prefixing.
+ *
+ * An already prefixed value is passed through unchanged, so that switching the server over is a pure server change: a browser tab still running this release against a server
+ * that has been upgraded past it keeps rendering its images instead of silently doubling the prefix.
+ *
+ * @param filePath a file reference as the server sent it, relative to {@link FILES_PATH_PREFIX}
+ * @returns the URL to request the file under, or undefined when there is no reference
+ */
 export const addPublicFilePrefix = (filePath?: string): string | undefined => {
     if (!filePath) {
         return undefined;
     }
-    if (filePath.startsWith('blob') || filePath.startsWith('/public/') || filePath.startsWith('http')) {
-        // Already an absolute URL, a static resource, or locally stored — no prefix needed
+    if (filePath.startsWith('blob') || filePath.startsWith('/public/') || filePath.startsWith('http') || filePath.startsWith(FILES_PATH_PREFIX)) {
+        // Already an absolute URL, a static resource, a locally held preview, or a complete served URL: nothing to prepend
         return filePath;
-    } else {
-        return filePath ? `${FILES_PATH_PREFIX}${filePath}` : undefined;
     }
+    return `${FILES_PATH_PREFIX}${filePath}`;
 };
 
+/**
+ * The prefix every stored file is served under, which is the `api/core/` request mapping of the server's `FileResource` plus its `files/` segment.
+ */
 export const FILES_PATH_PREFIX = 'api/core/files/';
 
 export const MODULE_FEATURE_PASSKEY = 'passkey';
