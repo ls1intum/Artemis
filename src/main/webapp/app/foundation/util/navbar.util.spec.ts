@@ -61,15 +61,42 @@ describe('navbar util shell metrics', () => {
         return teardown;
     }
 
-    it('writes the measured navbar and footer heights', () => {
+    it('writes the measured navbar and footer heights, snapped to the device pixel grid', () => {
         addElement('jhi-navbar', 63.75);
         addElement('jhi-footer', 31.5);
 
         startObserving();
         vi.runAllTimers();
 
-        expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('63.75px');
-        expect(document.documentElement.style.getPropertyValue('--footer-height')).toBe('31.5px');
+        expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('64px');
+        expect(document.documentElement.style.getPropertyValue('--footer-height')).toBe('32px');
+    });
+
+    it('measures once when ResizeObserver is unavailable', () => {
+        addElement('jhi-navbar', 64);
+        globalThis.ResizeObserver = undefined as unknown as typeof ResizeObserver;
+
+        expect(() => startObserving()).not.toThrow();
+        vi.runAllTimers();
+
+        expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('64px');
+    });
+
+    it('snaps against devicePixelRatio, so a whole CSS pixel is not assumed to be a whole device pixel', () => {
+        const originalRatio = window.devicePixelRatio;
+        Object.defineProperty(window, 'devicePixelRatio', { value: 2, configurable: true });
+        try {
+            addElement('jhi-navbar', 63.4);
+            addElement('jhi-footer', 31.4);
+
+            startObserving();
+            vi.runAllTimers();
+
+            expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('63.5px');
+            expect(document.documentElement.style.getPropertyValue('--footer-height')).toBe('31.5px');
+        } finally {
+            Object.defineProperty(window, 'devicePixelRatio', { value: originalRatio, configurable: true });
+        }
     });
 
     it('observes both elements and re-targets them after a navigation', () => {
@@ -203,19 +230,6 @@ describe('navbar util shell metrics', () => {
 
         expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('');
         expect(observed.size).toBe(0);
-    });
-
-    it('still measures once when ResizeObserver is unavailable', () => {
-        addElement('jhi-navbar', 72);
-        addElement('jhi-footer', 36);
-        (globalThis as { ResizeObserver?: unknown }).ResizeObserver = undefined;
-
-        const teardown = observeShellMetrics();
-
-        // The fallback runs the same measurement, so both shell boundaries have to be written, not just the navbar.
-        expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('72px');
-        expect(document.documentElement.style.getPropertyValue('--footer-height')).toBe('36px');
-        expect(() => teardown()).not.toThrow();
     });
 
     it('updateHeaderHeight writes --header-height, which exam mode owns, not --navbar-height', () => {

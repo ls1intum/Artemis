@@ -16,7 +16,7 @@ export class ScaFeedbackModal {
      * and the feedback list rendered at least the expected number of feedback items.
      */
     async shouldRenderFeedbackDetails(minimumFeedbackItems = 1) {
-        await expect(this.page.locator('#result-detail-spinner')).toBeHidden();
+        await expect(this.page.locator('[data-testid="result-detail-spinner"]')).toBeHidden();
         await expect(this.page.locator('.result-detail-container')).toBeVisible();
         // The empty-state fallback ("No result details available.") must not be shown when feedback is present.
         await expect(this.page.getByText('No result details available.')).toBeHidden();
@@ -28,7 +28,7 @@ export class ScaFeedbackModal {
     }
 
     async shouldShowPointChart() {
-        await expect(this.page.locator('#feedback-chart')).toBeVisible();
+        await expect(this.page.locator('[data-testid="feedback-chart"]')).toBeVisible();
     }
 
     /**
@@ -53,7 +53,7 @@ export class ScaFeedbackModal {
     async closeModal() {
         // After the migration to PrimeNG DialogService, the inline modal header (with .feedback-header__close)
         // is suppressed in dialog mode in favour of PrimeNG's own header X.
-        await this.page.locator('.p-dialog .p-dialog-close-button, .p-dialog [data-pc-section="closebutton"]').first().click();
+        await this.page.locator('[role="dialog"] [data-pc-name="pcclosebutton"]').first().click();
         await expect(this.page.locator('.result-detail-container')).not.toBeAttached();
     }
 }

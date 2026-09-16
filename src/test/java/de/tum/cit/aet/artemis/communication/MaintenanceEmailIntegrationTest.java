@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.communication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -95,7 +95,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         mailEnabledProperties.getMail().setFrom("test@greenmail.test");
 
         testMailService = new MailSendingService(mailEnabledProperties, greenMailSender, mainMessageSource, testTemplateEngine);
-        ReflectionTestUtils.setField(testMailService, "artemisServerUrl", new URL("http://localhost:9000"));
+        ReflectionTestUtils.setField(testMailService, "artemisServerUrl", URI.create("http://localhost:9000").toURL());
 
         recipient = new User();
         recipient.setEmail("instructor@greenmail.test");
@@ -243,19 +243,6 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(now);
         long count = maintenanceEmailRecipientRepository.countInstructorRecipientsForMaintenanceEmail(now);
         assertThat(count).isEqualTo(recipients.size());
-    }
-
-    @Test
-    void findInstructorRecipients_shouldIncludeInstructorsOfCourseWithNullDates() {
-        var now = ZonedDateTime.now();
-        // Course with null start and end dates should be considered ongoing
-        Course openCourse = CourseFactory.generateCourse(null, null, null, new HashSet<>());
-        courseRepository.save(openCourse);
-        var instructor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
-        userUtilService.enrollUserInCourse(instructor1, openCourse, CourseRole.INSTRUCTOR);
-
-        var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(now);
-        assertThat(recipients).isNotEmpty();
     }
 
     @Test

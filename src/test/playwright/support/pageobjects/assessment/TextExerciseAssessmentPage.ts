@@ -17,11 +17,11 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
     }
 
     private async typeIntoFeedbackEditor(sectionIndex: number, feedbackText: string) {
-        await this.getFeedbackSection(sectionIndex).locator('#feedback-editor-text-input').fill(feedbackText);
+        await this.getFeedbackSection(sectionIndex).locator('[data-testid="feedback-editor-text-input"]').fill(feedbackText);
     }
 
     private async typePointsIntoFeedbackEditor(sectionIndex: number, feedbackPoints: number) {
-        const textField = this.getFeedbackSection(sectionIndex).locator('#feedback-editor-points-input');
+        const textField = this.getFeedbackSection(sectionIndex).locator('[data-testid="feedback-editor-points-input"]');
         await textField.clear();
         await textField.fill(feedbackPoints.toString());
     }
@@ -47,7 +47,7 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
         return await responsePromise;
     }
 
-    async submit() {
+    override async submit() {
         // Retry on multi-node 5xx flakes (Hazelcast Result.feedbacks ordered-list invalidation lag)
         // so the test surfaces the genuine outcome instead of a transient cluster cache error.
         for (let attempt = 0; attempt < 3; attempt++) {
@@ -62,19 +62,19 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
         throw new Error('TextExerciseAssessment.submit exhausted retries');
     }
 
-    async rejectComplaint(response: string, examMode: boolean) {
+    override async rejectComplaint(response: string, examMode: boolean) {
         return await super.rejectComplaint(response, examMode, ExerciseType.TEXT);
     }
 
-    async acceptComplaint(response: string, examMode: boolean) {
+    override async acceptComplaint(response: string, examMode: boolean) {
         return await super.acceptComplaint(response, examMode, ExerciseType.TEXT);
     }
 
     getWordCountElement() {
-        return this.page.locator('#text-assessment-word-count');
+        return this.page.locator('[data-testid="text-assessment-word-count"]');
     }
 
     getCharacterCountElement() {
-        return this.page.locator('#text-assessment-character-count');
+        return this.page.locator('[data-testid="text-assessment-character-count"]');
     }
 }

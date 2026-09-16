@@ -4,8 +4,7 @@ import static de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer.LTI13_DEEP
 import static de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import java.net.URI;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
@@ -26,6 +25,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.nimbusds.jwt.SignedJWT;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 
 /**
@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
  */
 @Conditional(LtiEnabled.class)
 @Lazy
+@FeatureUsage("lti/launch")
 @RestController
 public class PublicLtiResource {
 
@@ -49,7 +50,7 @@ public class PublicLtiResource {
      *
      * @param request  HTTP request
      * @param response HTTP response
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the response containing the application-local redirect location
      * @throws IOException If an input or output exception occurs
      */
     @PostMapping({ LTI13_LOGIN_REDIRECT_PROXY, LTI13_DEEPLINK_REDIRECT })
@@ -72,14 +73,9 @@ public class PublicLtiResource {
             return ResponseEntity.ok().build();
         }
 
-        UriComponentsBuilder uriBuilder = buildRedirect(request);
-        uriBuilder.path(LOGIN_REDIRECT_CLIENT_PATH);
-        uriBuilder.queryParam("state", URLEncoder.encode(state, StandardCharsets.UTF_8));
-        uriBuilder.queryParam("id_token", URLEncoder.encode(idToken, StandardCharsets.UTF_8));
-        String redirectUrl = uriBuilder.build().toString();
-        log.info("redirect to url: {}", redirectUrl);
-        response.sendRedirect(redirectUrl); // Redirect using user-provided values is safe because user-provided values are used in the query parameters, not the url itself
-        return ResponseEntity.ok().build();
+        URI redirectUrl = UriComponentsBuilder.fromPath(LOGIN_REDIRECT_CLIENT_PATH).queryParam("state", state).queryParam("id_token", idToken).build().encode().toUri();
+        log.info("LTI redirect generated for client path {}", LOGIN_REDIRECT_CLIENT_PATH);
+        return ResponseEntity.status(HttpStatus.FOUND).location(redirectUrl).build();
     }
 
     /**
@@ -94,7 +90,7 @@ public class PublicLtiResource {
             return !parsedToken.getJWTClaimsSet().getExpirationTime().before(Date.from(Instant.now()));
         }
         catch (ParseException e) {
-            log.info("LTI request: JWT token is invalid: {}", token, e);
+            log.info("LTI request contains an invalid JWT token", e);
             return false;
         }
     }
@@ -109,13 +105,5 @@ public class PublicLtiResource {
         String message = "Illegal parameter on oauth2 authorization response: id_token";
         log.error(message);
         response.sendError(HttpStatus.BAD_REQUEST.value(), message);
-    }
-
-    private UriComponentsBuilder buildRedirect(HttpServletRequest request) {
-        UriComponentsBuilder redirectUrlComponentsBuilder = UriComponentsBuilder.newInstance().scheme(request.getScheme()).host(request.getServerName());
-        if (request.getServerPort() != 80 && request.getServerPort() != 443) {
-            redirectUrlComponentsBuilder.port(request.getServerPort());
-        }
-        return redirectUrlComponentsBuilder;
     }
 }

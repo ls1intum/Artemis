@@ -11,6 +11,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -116,7 +117,8 @@ public class ProgrammingTriggerService {
      */
     @Async
     public void triggerInstructorBuildForExercise(long exerciseId) throws EntityNotFoundException {
-        // Async can't access the authentication object. We need to do any security checks before this point.
+        // The caller's context reaches this thread when there is one; this stands in for the paths that have none.
+        // Security checks still belong before this point, since the stand-in is not a user.
         SecurityUtils.setAuthorizationObject();
         // Loaded with the associations the trigger reads off the exercise, so the batch below does not have to load it
         // a second time and no participation has to load either of them for itself.
@@ -213,6 +215,12 @@ public class ProgrammingTriggerService {
             Thread.sleep(externalSystemRequestBatchWaitingTime);
         }
         catch (InterruptedException ex) {
+            // The interrupt status is deliberately not restored, which is what java:S2142 would ask for, and the batch
+            // deliberately carries on. There is no durable retry behind this loop: the scheduled build after the due
+            // date is a one-shot task that ExerciseLifecycle only ever schedules while its timestamp is still in the
+            // future, so a run that stops half way is never recreated on startup, and the exercise's testCasesChanged
+            // flag is not consulted by that scheduler either. Stopping here would leave the remaining participations
+            // permanently unbuilt, whereas carrying on costs one lost pause.
             log.error("Exception encountered when pausing before executing successive build for participation {}", participationId, ex);
         }
     }
@@ -340,7 +348,7 @@ public class ProgrammingTriggerService {
         return continuousIntegrationTriggerService.get().prepareSharedTriggerData(exercise.get());
     }
 
-    public void logTriggerInstructorBuild(User user, Exercise exercise, Course course) {
+    public void logTriggerInstructorBuild(@NonNull User user, @NonNull Exercise exercise, @NonNull Course course) {
         var auditEvent = new AuditEvent(user.getLogin(), TRIGGER_INSTRUCTOR_BUILD, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} triggered an instructor build for all participations in exercise {} with id {}", user.getLogin(), exercise.getTitle(), exercise.getId());

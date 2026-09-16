@@ -3,6 +3,8 @@ artemis:
         enabled: true
         atlasml:
             enabled: false
+    deimos:
+        enabled: false
     hyperion:
         enabled: false
     iris:
@@ -46,7 +48,7 @@ artemis:
             enabled: false # Set this to true to enable OIDC single sign-on;
         passkey:
             enabled: false # used by Constants.PASSKEY_ENABLED_PROPERTY_NAME
-            require-for-administrator-features: false # if true, administrators must authenticate with passkey to access admin features
+            require-for-administrator-features: false # if true, administrators must be signed in with a super-admin-approved passkey before any endpoint grants them administrator access
             ask-users-to-setup: true # if true, users who have not set up a passkey will be asked to do so
             token-validity-in-seconds-for-passkey: 15552000 # jwtToken is valid for 180 days when using passkey authentication
             # relying-party-id: ""  # Optional: override the WebAuthn Relying Party ID (defaults to the hostname from server.url). Needed when a reverse proxy serves a different hostname.
@@ -76,6 +78,14 @@ management:
             roles: 'ROLE_ADMIN,ROLE_SUPER_ADMIN'
             probes:
                 enabled: true
+            cache:
+                # The health endpoint is public, so every liveness probe runs every indicator. One of them, Weaviate,
+                # asks a remote server whether it is ready and took 1.7 s per call on a 2000 student benchmark - 272 s
+                # of request time on a single node in ten minutes, for an answer that had not changed. Serving repeated
+                # probes from this cache leaves detection well inside a minute, which is shorter than the consecutive
+                # failures an alert waits for anyway. Note this covers unauthenticated callers, which is what probes
+                # and the status page are; a signed-in admin opening the health page always gets a fresh answer.
+                time-to-live: 30s
         artemismetrics:
             access: read_only
     metrics:

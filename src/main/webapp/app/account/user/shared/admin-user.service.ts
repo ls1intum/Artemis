@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { User } from 'app/account/user/user.model';
 import { UserFilter } from 'app/admin/user-management/user-management.component';
+import { BulkUserDeletionImpact, BulkUserDeletionRequest, UserDeletionImpact, UserDeletionResult } from 'app/account/user/shared/user-deletion.model';
 
 @Injectable({ providedIn: 'root' })
 export class AdminUserService {
@@ -102,17 +103,29 @@ export class AdminUserService {
      * @param login The login of the user to delete.
      * @return Observable<HttpResponse<void>>
      */
-    deleteUser(login: string): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${login}`, { observe: 'response' });
+    deleteUser(login: string, impactFingerprint = ''): Observable<HttpResponse<UserDeletionResult>> {
+        return this.http.delete<UserDeletionResult>(`${this.resourceUrl}/${login}`, { body: { impactFingerprint }, observe: 'response' });
     }
 
     /**
-     * Delete users on the server.
-     * @param logins The logins of the users to delete.
-     * @return Observable<HttpResponse<void>>
+     * Preview the exact impact of permanently deleting one user.
      */
-    deleteUsers(logins: string[]): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}`, { body: logins, observe: 'response' });
+    getDeletionImpact(login: string): Observable<HttpResponse<UserDeletionImpact>> {
+        return this.http.get<UserDeletionImpact>(`${this.resourceUrl}/${login}/deletion-impact`, { observe: 'response' });
+    }
+
+    /**
+     * Preview and aggregate the exact impact of permanently deleting multiple users.
+     */
+    getBulkDeletionImpact(logins: string[]): Observable<HttpResponse<BulkUserDeletionImpact>> {
+        return this.http.post<BulkUserDeletionImpact>(`${this.resourceUrl}/deletion-impact`, { logins }, { observe: 'response' });
+    }
+
+    /**
+     * Delete users after confirming their individual impact fingerprints.
+     */
+    deleteUsers(request: BulkUserDeletionRequest): Observable<HttpResponse<UserDeletionResult[]>> {
+        return this.http.delete<UserDeletionResult[]>(`${this.resourceUrl}`, { body: request, observe: 'response' });
     }
 
     /**

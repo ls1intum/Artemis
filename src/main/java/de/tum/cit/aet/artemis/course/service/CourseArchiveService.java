@@ -86,15 +86,14 @@ public class CourseArchiveService {
     }
 
     /**
-     * Retrieves all inactive courses from non-null semesters that the current user is enrolled in
-     * for the course archive. This refers to old courses that are not shown in the course overview anymore.
+     * Retrieves inactive courses that the current user can access.
      *
      * @return A list of courses for the course archive.
      */
     public Set<CourseForArchiveDTO> getAllCoursesForCourseArchive() {
         var user = userRepository.getUserWithAuthorities();
-        boolean isAdmin = authCheckService.isAdmin(user);
-        return courseRepository.findInactiveCoursesForUserRolesWithNonNullSemester(isAdmin, user.getId(), ZonedDateTime.now());
+        boolean isAdmin = authCheckService.isCurrentUserAdminAccessEnabled();
+        return courseRepository.findInactiveCoursesForUserRolesForArchive(isAdmin, user.getId(), ZonedDateTime.now());
     }
 
     /**
@@ -124,7 +123,7 @@ public class CourseArchiveService {
         SecurityUtils.setAuthorizationObject();
 
         // Archiving a course is only possible after the course is over
-        if (course.getEndDate() == null || ZonedDateTime.now().isBefore(course.getEndDate())) {
+        if (ZonedDateTime.now().isBefore(course.getEndDate())) {
             return false;
         }
 

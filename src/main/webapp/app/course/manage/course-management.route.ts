@@ -11,15 +11,6 @@ import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication
 
 export const courseManagementRoutes: Routes = [
     {
-        path: '',
-        loadComponent: () => import('app/course/manage/course-management/course-management.component').then((m) => m.CourseManagementComponent),
-        data: {
-            authorities: IS_AT_LEAST_TUTOR,
-            pageTitle: 'artemisApp.course.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
         path: 'new',
         loadComponent: () => import('./update/course-update.component').then((m) => m.CourseUpdateComponent),
         data: {
@@ -45,8 +36,8 @@ export const courseManagementRoutes: Routes = [
         loadComponent: () => import('app/course/manage/course-management-container/course-management-container.component').then((m) => m.CourseManagementContainerComponent),
         // The container renders a full-bleed layout (its own sidebar, title bar, and module-bg content box), so it must
         // NOT be wrapped in the app-level module-background card (see app.component.html). Declare this explicitly so it
-        // overrides the parent `course-management` route's `usesModuleBackground: true` (which is meant for the course
-        // list). Angular 22 inherits parent route data down to the deepest activated child, so relying on the flag's
+        // overrides the parent `course-management` route's `usesModuleBackground: true`. Angular 22 inherits parent
+        // route data down to the deepest activated child, so relying on the flag's
         // absence — as this did before — no longer keeps the container full-bleed and left it shifted/cropped (#13189).
         data: {
             usesModuleBackground: false,
@@ -147,14 +138,6 @@ export const courseManagementRoutes: Routes = [
             },
             {
                 path: ':courseId/plagiarism-cases',
-                loadChildren: () => import('app/plagiarism/manage/instructor-view/plagiarism-instructor-view.route').then((m) => m.plagiarismInstructorRoutes),
-                // Preload-only authorities (no canActivate): least-privileged authority the plagiarism routes require, so eligible staff warm this lazy subtree while students stay pruned.
-                data: {
-                    authorities: IS_AT_LEAST_INSTRUCTOR,
-                },
-            },
-            {
-                path: ':courseId/exams/:examId/plagiarism-cases',
                 loadChildren: () => import('app/plagiarism/manage/instructor-view/plagiarism-instructor-view.route').then((m) => m.plagiarismInstructorRoutes),
                 // Preload-only authorities (no canActivate): least-privileged authority the plagiarism routes require, so eligible staff warm this lazy subtree while students stay pruned.
                 data: {

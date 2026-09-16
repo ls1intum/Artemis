@@ -122,7 +122,7 @@ describe('FileService', () => {
     describe('downloadMergedFile', () => {
         it('should download the merged PDF file', () => {
             const lectureId = 123;
-            const expectedUrl = `api/core/files/attachments/lecture/${lectureId}/merge-pdf`;
+            const expectedUrl = `api/core/files/attachments/lectures/${lectureId}/merge-pdf`;
             const blobResponse = new Blob(['PDF content'], { type: 'application/pdf' });
 
             fileService.downloadMergedFile(lectureId).subscribe((response) => {
@@ -225,6 +225,13 @@ describe('FileService', () => {
 
             const result = fileService.createStudentLink(link);
             expect(result).toBe(expectedStudentLink);
+        });
+
+        it('should leave a link under the lecture attachment path alone', () => {
+            const link = 'attachments/lecture/42/slides.pdf';
+
+            const result = fileService.createStudentLink(link);
+            expect(result).toBe(link);
         });
     });
 });

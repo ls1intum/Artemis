@@ -24,8 +24,16 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 @Primary
 public interface ResultTestRepository extends ResultRepository {
 
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("UPDATE Result r SET r.rated = NULL WHERE r.id = :resultId")
+    int setRatedToNull(@Param("resultId") long resultId);
+
     @EntityGraph(type = LOAD, attributePaths = "submission")
     Optional<Result> findResultWithSubmissionsById(long resultId);
+
+    @EntityGraph(type = LOAD, attributePaths = "submission")
+    List<Result> findAllBySubmissionParticipationIdOrderByCompletionDateDesc(long participationId);
 
     Set<Result> findAllBySubmissionParticipationExerciseId(long exerciseId);
 
@@ -34,13 +42,15 @@ public interface ResultTestRepository extends ResultRepository {
 
     Optional<Result> findDistinctBySubmissionId(long submissionId);
 
+    long countBySubmissionId(long submissionId);
+
     @EntityGraph(type = LOAD, attributePaths = "feedbacks")
     Optional<Result> findDistinctWithFeedbackBySubmissionId(long submissionId);
 
     List<Result> findBySubmissionParticipationIdOrderByCompletionDateDesc(long participationId);
 
     default Result findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(long participationId) {
-        return getValueElseThrow(findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId));
+        return getValueElseThrow(findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId));
     }
 
     /**

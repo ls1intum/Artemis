@@ -2,16 +2,19 @@ import { Component, computed, effect, inject, input, output, signal, untracked }
 import { ActivatedRoute, ChildrenOutletContexts, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { participationChildRouteSegments } from 'app/course/overview/exercise-details/participation-child-route';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { faAlignLeft, faComment, faGear, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
+import { faCircleInfo, faComment, faGear, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { ProblemStatementComponent } from 'app/course/overview/exercise-details/problem-statement/problem-statement.component';
-import { isExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
+import { ExerciseSubmission, isExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { LiveQuizParticipationStatus, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { QuizParticipationBase } from 'app/quiz/overview/participation/quiz-participation.base';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
+import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
+import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
@@ -43,6 +46,7 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
         RouterLink,
         ResizablePanelsComponent,
         PanelDirective,
+        ExerciseHeadersInformationComponent,
         ProblemStatementComponent,
         IrisBaseChatbotComponent,
         IrisLogoComponent,
@@ -72,6 +76,8 @@ export class ExerciseSplitPanelComponent {
     private readonly _quizEnded = signal(false);
     private readonly _quizHasStarted = signal(false);
     private readonly _quizComponent = signal<QuizParticipationBase | undefined>(undefined);
+    /** The routed participation component, so `canSubmit` can ask a read-only surface to withdraw the Submit action. */
+    private readonly _submissionComponent = signal<ExerciseSubmission | undefined>(undefined);
     private quizStartedSubscription: { unsubscribe(): void } | undefined;
     private quizSubmittedSubscription: { unsubscribe(): void } | undefined;
     private liveQuizStatusSubscription: { unsubscribe(): void } | undefined;
@@ -86,11 +92,12 @@ export class ExerciseSplitPanelComponent {
     readonly quizSubmitDisabled = computed(() => this._quizComponent()?.isSubmitDisabled() ?? false);
     readonly quizSubmitTitle = computed(() => this._quizComponent()?.submitTitleKey() ?? 'entity.action.submit');
     readonly quizLiveHeaderInfo = computed(() => this._quizComponent()?.liveHeaderInfo());
+
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly faGear = faGear;
     protected readonly faComment = faComment;
     protected readonly faGraduationCap = faGraduationCap;
-    protected readonly faAlignLeft = faAlignLeft;
+    protected readonly faCircleInfo = faCircleInfo;
     protected readonly getIcon = getIcon;
     protected readonly ExerciseType = ExerciseType;
     protected readonly AssessmentType = AssessmentType;
@@ -107,6 +114,11 @@ export class ExerciseSplitPanelComponent {
     readonly allowComplaintsForAutomaticAssessments = input<boolean>(false);
     readonly exampleSolutionInfo = input<ExampleSolutionInfo>();
     readonly participationMode = input<ParticipationMode>('graded');
+    readonly submissionPolicy = input<SubmissionPolicy>();
+    readonly athenaEnabled = input<boolean>(false);
+    readonly quizLiveStatus = input<LiveQuizParticipationStatus>();
+    /** Whether the title bar is showing the status and due date pills, in which case the details leave them out. */
+    readonly titleBarShowsPills = input<boolean>(false);
 
     /**
      * Stable key describing the sub-route this panel should navigate to. It deliberately captures only the route
@@ -251,14 +263,9 @@ export class ExerciseSplitPanelComponent {
                 if (!participation?.id) return;
                 const currentParticipationId = this.route.firstChild?.snapshot.paramMap.get('participationId');
                 if (currentParticipationId === String(participation.id)) return;
-                if (type === ExerciseType.TEXT) {
-                    void this.router.navigate(['text-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
-                } else if (type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor) {
-                    void this.router.navigate(['programming-exercises', exercise.id, 'code-editor', participation.id], { relativeTo: this.route.parent });
-                } else if (type === ExerciseType.MODELING) {
-                    void this.router.navigate(['modeling-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
-                } else if (type === ExerciseType.FILE_UPLOAD) {
-                    void this.router.navigate(['file-upload-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
+                const segments = participationChildRouteSegments(exercise, participation);
+                if (segments) {
+                    void this.router.navigate(segments, { relativeTo: this.route.parent });
                 }
             });
         });
@@ -288,6 +295,10 @@ export class ExerciseSplitPanelComponent {
             return quizBatchStarted || quizHasStarted;
         }
         if (!studentParticipation) return false;
+        const canSubmitExercise = this._submissionComponent()?.canSubmitExercise;
+        if (canSubmitExercise && !canSubmitExercise()) {
+            return false;
+        }
         if (type === ExerciseType.PROGRAMMING) {
             return (this.exercise() as ProgrammingExercise).allowOnlineEditor ?? false;
         }
@@ -316,6 +327,9 @@ export class ExerciseSplitPanelComponent {
     }
 
     onOutletActivate(component: unknown): void {
+        if (isExerciseSubmission(component)) {
+            this._submissionComponent.set(component);
+        }
         if (component instanceof QuizParticipationBase) {
             this._quizComponent.set(component);
             this.quizStartedSubscription = component.quizStartedEvent.subscribe(() => {
@@ -337,6 +351,7 @@ export class ExerciseSplitPanelComponent {
     }
 
     onOutletDeactivate(): void {
+        this._submissionComponent.set(undefined);
         this._quizComponent.set(undefined);
         this.quizStartedSubscription?.unsubscribe();
         this.quizStartedSubscription = undefined;

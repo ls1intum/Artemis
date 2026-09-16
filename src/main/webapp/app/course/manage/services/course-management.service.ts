@@ -13,7 +13,6 @@ import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/st
 import { AccountService } from 'app/core/auth/account.service';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { Submission, reconnectSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
-import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
 import { convertDateFromClient } from 'app/foundation/util/date.utils';
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
@@ -234,9 +233,6 @@ export class CourseManagementService implements OnDestroy {
                     res.body.courses?.forEach((courseForDashboardDTO) => {
                         if (courseForDashboardDTO.course.id) {
                             this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course.id, courseForDashboardDTO.courseNotificationCount);
-
-                            // Setting the helper attribute in the course so we can use it in the course overview guard.
-                            courseForDashboardDTO.course.irisEnabledInCourse = courseForDashboardDTO.irisEnabledInCourse;
                         }
                         courses.push(courseForDashboardDTO.course);
                         this.saveScoresInStorage(courseForDashboardDTO);
@@ -266,40 +262,9 @@ export class CourseManagementService implements OnDestroy {
     }
 
     /**
-     * Finds one course with all of its content using a GET request.
-     *
-     * @deprecated The web client no longer uses this: the course overview loads {@link findCourseForOverview} and each
-     * tab loads what it needs. The endpoint stays for the iOS, Android and VS Code clients. Do not add new callers.
-     * @param courseId the course to fetch
-     */
-    findOneForDashboard(courseId: number): Observable<EntityResponseType> {
-        const params = new HttpParams();
-        return this.http.get<CourseForDashboardDTO>(`${this.resourceUrl}/${courseId}/for-dashboard`, { params, observe: 'response' }).pipe(
-            map((res: HttpResponse<CourseForDashboardDTO>) => {
-                if (res.body) {
-                    const courseForDashboardDTO: CourseForDashboardDTO = res.body;
-                    if (courseForDashboardDTO.course.id) {
-                        this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course.id, courseForDashboardDTO.courseNotificationCount);
-
-                        // Expose the per-course Iris enablement on the cached course object for the overview UI (the guard uses the dedicated access endpoint instead).
-                        courseForDashboardDTO.course.irisEnabledInCourse = courseForDashboardDTO.irisEnabledInCourse;
-                    }
-                    this.saveScoresInStorage(courseForDashboardDTO);
-
-                    // Replace the CourseForDashboardDTO in the response body with the normal course to enable further processing.
-                    return res.clone({ body: courseForDashboardDTO.course });
-                }
-                return res;
-            }),
-            map((res: EntityResponseType) => this.processCourseEntityResponseType(res)),
-            tap((res: EntityResponseType) => this.courseStorageService.updateCourse(res.body !== null ? res.body : undefined)),
-        );
-    }
-
-    /**
      * Fetches the course itself for the course overview container, without any of its content.
      *
-     * This replaces {@link findOneForDashboard} for the web client: exercises, lectures, exams, participations and
+     * This is what the web client uses: exercises, lectures, exams, participations and
      * scores are loaded by the tab that needs them, so entering a course no longer pays for content the user may never
      * open. The result is stored in the {@link CourseStorageService} exactly as before, so everything reading the course
      * from there keeps working.
@@ -503,20 +468,6 @@ export class CourseManagementService implements OnDestroy {
     }
 
     /**
-     * finds all courses together with user stats using a GET request
-     * @param req
-     */
-    getWithUserStats(req?: Record<string, string | number | boolean>): Observable<EntityArrayResponseType> {
-        const options = createRequestOption(req);
-        this.fetchingCoursesForNotifications = true;
-        const generation = this.stateGeneration;
-        return this.http.get<Course[]>(`${this.resourceUrl}/with-user-stats`, { params: options, observe: 'response' }).pipe(
-            map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)),
-            map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res, generation)),
-        );
-    }
-
-    /**
      * finds all courses for the overview using a GET request
      * @param req a dictionary which is sent as request option along the REST call
      */
@@ -537,28 +488,6 @@ export class CourseManagementService implements OnDestroy {
      */
     getCoursesForArchive(): Observable<HttpResponse<CourseForArchiveDTO[]>> {
         return this.http.get<CourseForArchiveDTO[]>(`${this.resourceUrl}/for-archive`, { observe: 'response' });
-    }
-
-    /**
-     * returns the exercise details of the courses for the courses' management dashboard
-     * @param onlyActive - if true, only active courses will be considered in the result
-     */
-    getExercisesForManagementOverview(onlyActive: boolean): Observable<HttpResponse<Course[]>> {
-        let httpParams = new HttpParams();
-        httpParams = httpParams.append('onlyActive', onlyActive.toString());
-        return this.http
-            .get<Course[]>(`${this.resourceUrl}/exercises-for-management-overview`, { params: httpParams, observe: 'response' })
-            .pipe(map((res: HttpResponse<Course[]>) => this.processCourseEntityArrayResponseType(res)));
-    }
-
-    /**
-     * returns the stats of the courses for the courses' management dashboard
-     * @param onlyActive - if true, only active courses will be considered in the result
-     */
-    getStatsForManagementOverview(onlyActive: boolean): Observable<HttpResponse<CourseManagementOverviewStatisticsDto[]>> {
-        let httpParams = new HttpParams();
-        httpParams = httpParams.append('onlyActive', onlyActive.toString());
-        return this.http.get<CourseManagementOverviewStatisticsDto[]>(`${this.resourceUrl}/stats-for-management-overview`, { params: httpParams, observe: 'response' });
     }
 
     /**
@@ -844,6 +773,9 @@ export class CourseManagementService implements OnDestroy {
     private setCourseDates(course: Course) {
         course.startDate = course.startDate ? dayjs(course.startDate) : undefined;
         course.endDate = course.endDate ? dayjs(course.endDate) : undefined;
+        course.enrollmentStartDate = course.enrollmentStartDate ? dayjs(course.enrollmentStartDate) : undefined;
+        course.enrollmentEndDate = course.enrollmentEndDate ? dayjs(course.enrollmentEndDate) : undefined;
+        course.unenrollmentEndDate = course.unenrollmentEndDate ? dayjs(course.unenrollmentEndDate) : undefined;
         course.exercises = ExerciseService.convertExercisesDateFromServer(course.exercises);
         course.lectures = this.lectureService.convertLectureArrayDatesFromServer(course.lectures);
     }

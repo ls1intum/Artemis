@@ -4,6 +4,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -11,6 +13,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -28,6 +32,8 @@ import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequ
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -35,12 +41,16 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseCreateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 
 @Isolated
 class LtiQuizIntegrationTest extends AbstractLtiIntegrationTest {
 
     private static final String TEST_PREFIX = "ltiquizsubmissiontest";
+
+    @Autowired
+    private ResultTestRepository resultRepository;
 
     @BeforeEach
     void init() {
@@ -83,45 +93,55 @@ class LtiQuizIntegrationTest extends AbstractLtiIntegrationTest {
         verifyNoInteractions(lti13Service);
 
         // End the quiz right now
-        quizExercise = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        quizExercise = quizExerciseTestRepository.findOneWithQuestionsAndCategoriesAndBatches(quizExercise.getId());
         assertThat(quizExercise).isNotNull();
         quizExercise.setDueDate(ZonedDateTime.now());
         exerciseRepository.saveAndFlush(quizExercise);
 
         quizSubmissionService.calculateAllResults(quizExercise.getId());
 
-        await().atMost(2, SECONDS).untilAsserted(() -> lti13Service.onNewResult(any()));
+        await().atMost(2, SECONDS).untilAsserted(() -> verify(lti13Service).onNewResult(any()));
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testLtiReevaluateStatistics() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testLtiServicesAreCalledUponQuizReevaluation() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
-        QuizExercise quizExercise = createQuizExercise(ZonedDateTime.now().plusHours(5));
-        quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
-        quizExercise.setDueDate(ZonedDateTime.now().minusHours(2));
+        QuizExercise quizExercise = createSimpleQuizExercise(ZonedDateTime.now().minusMinutes(1), 240);
+        quizExercise = quizExerciseService.save(quizExercise);
+        StudentParticipation participation = null;
+        ZonedDateTime completionDate = ZonedDateTime.now().minusSeconds(1);
 
-        var now = ZonedDateTime.now();
-
-        // generate submissions for each student
-        int numberOfParticipants = 10;
-        userUtilService.addStudents(TEST_PREFIX, 2, 14);
-
-        for (int i = 1; i <= numberOfParticipants; i++) {
-            QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, i, true, now.minusHours(3));
-            participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student" + i);
-            participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
+        for (int i = 0; i < 2; i++) {
+            QuizSubmission quizSubmission = new QuizSubmission();
+            for (var question : quizExercise.getQuizQuestions()) {
+                quizSubmission.addSubmittedAnswers(QuizExerciseFactory.generateSubmittedAnswerForQuizWithCorrectAndFalseAnswers(question));
+            }
+            quizSubmission.submitted(true);
+            quizSubmission.setSubmissionDate(completionDate.plusNanos(i));
+            if (participation == null) {
+                participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
+                participation = (StudentParticipation) quizSubmission.getParticipation();
+            }
+            else {
+                participationUtilService.addSubmission(participation, quizSubmission);
+            }
+            participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, completionDate.plusNanos(i), quizSubmission, true, true, 100);
         }
 
-        // calculate statistics
-        QuizExercise quizExerciseWithRecalculatedStatistics = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK,
-                QuizExercise.class);
+        verifyNoInteractions(lti13Service);
+        assertThat(participation.getId()).isNotNull();
+        long participationId = participation.getId();
+        quizExercise = quizExerciseService.reEvaluate(QuizExerciseReEvaluateDTO.of(quizExercise), quizExercise, List.of());
 
-        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(10);
-        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
+        List<Result> reEvaluatedResults = resultRepository.findByExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
+        assertThat(reEvaluatedResults).hasSize(2).allSatisfy(result -> assertThat(result.getScore()).isEqualTo(11.1));
+        await().atMost(2, SECONDS)
+                .untilAsserted(() -> verify(lti13Service, times(1)).onNewResult(argThat(actualParticipation -> actualParticipation.getId().equals(participationId))));
 
-        verify(lti13Service, times(10)).onNewResult(any());
-
+        clearInvocations(lti13Service);
+        quizExerciseService.reEvaluate(QuizExerciseReEvaluateDTO.of(quizExercise), quizExercise, List.of());
+        verifyNoInteractions(lti13Service);
     }
 
     private QuizExercise createSimpleQuizExercise(ZonedDateTime releaseDate, int duration) {
@@ -139,7 +159,7 @@ class LtiQuizIntegrationTest extends AbstractLtiIntegrationTest {
 
         QuizExercise quizExerciseServer = createQuizExerciseWithFiles(quizExercise);
         assertThat(quizExerciseServer).isNotNull();
-        QuizExercise quizExerciseDatabase = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
+        QuizExercise quizExerciseDatabase = quizExerciseTestRepository.findOneWithQuestionsAndCategoriesAndBatches(quizExerciseServer.getId());
         assertThat(quizExerciseServer).isNotNull();
         assertThat(quizExerciseDatabase).isNotNull();
 

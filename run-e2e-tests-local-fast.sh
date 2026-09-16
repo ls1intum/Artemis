@@ -13,6 +13,11 @@ set -e
 # Options:
 #   --stop              Kill server, client, and database; exit
 #   --filter <pattern>  Run only tests matching the pattern (e.g., "Quiz")
+#   --specs "<paths>"   Run only these spec paths, relative to src/test/playwright
+#                         (e.g., "e2e/exam/ExamResults.spec.ts e2e/lecture/").
+#                         Replaces the default "run everything under e2e/".
+#                         Combines with --filter. Get the paths for a branch with
+#                         .ci/E2E-tests/determine-relevant-tests.sh
 #   --skip-server       Reuse already-running server
 #   --skip-client       Reuse already-running client
 #   --skip-db           Reuse already-running Postgres
@@ -38,6 +43,7 @@ SKIP_CLIENT=false
 SKIP_DB=false
 DEBUG=false
 TEST_FILTER=""
+TEST_SPECS=""
 PLAYWRIGHT_EXTRA_ARGS=()
 export PLAYWRIGHT_VIDEO_MODE="${PLAYWRIGHT_VIDEO_MODE:-off}"
 export PLAYWRIGHT_COVERAGE="${PLAYWRIGHT_COVERAGE:-off}"
@@ -57,6 +63,17 @@ IRIS_SECRET_TOKEN="${IRIS_SECRET_TOKEN:-iris-e2e-secret-token}"
 IRIS_ARTEMIS_CALLBACK_URL="${IRIS_ARTEMIS_CALLBACK_URL:-http://host.docker.internal:8080}"
 # The Iris-enabled seed course whose course-level Iris settings get turned on.
 IRIS_COURSE_ID="${IRIS_COURSE_ID:-9022}"
+
+# Hyperion (AI exercise-variant generation) e2e support: when RUN_HYPERION=true the
+# runner starts a deterministic OpenAI-compatible mock LLM (a bare Python process, see
+# src/test/playwright/support/hyperion-mock-llm/) and enables Hyperion on the Artemis
+# server pointed at it via spring.ai.openai.*. Unlike Iris, Hyperion talks to the LLM
+# directly through Spring AI, so no microservice is needed — just the mock. Off by
+# default so normal runs are unaffected. Run the variant suite with:
+#     RUN_HYPERION=true ./run-e2e-tests-local-fast.sh --filter "Variant"
+RUN_HYPERION="${RUN_HYPERION:-false}"
+HYPERION_MOCK_LLM_SCRIPT="src/test/playwright/support/hyperion-mock-llm/mock_llm.py"
+HYPERION_MOCK_LLM_PORT="${HYPERION_MOCK_LLM_PORT:-8090}"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -79,7 +96,17 @@ while [[ $# -gt 0 ]]; do
             TEST_FILTER="$2"
             shift 2
             ;;
-        --help) head -25 "$0" | tail -21; exit 0 ;;
+        --specs)
+            if [[ -z "$2" || "${2:0:1}" == "-" ]]; then
+                echo -e "${RED}ERROR: --specs requires a non-empty list of spec paths${NC}"
+                echo "Usage: --specs \"<paths>\""
+                echo "Example: --specs \"e2e/exam/ExamResults.spec.ts e2e/lecture/\""
+                exit 1
+            fi
+            TEST_SPECS="$2"
+            shift 2
+            ;;
+        --help) head -30 "$0" | tail -26; exit 0 ;;
         *) echo -e "${RED}Unknown option: $1${NC}"; exit 1 ;;
     esac
 done
@@ -187,6 +214,15 @@ if [ "$STOP" = true ]; then
     if docker compose -f "$IRIS_STACK_COMPOSE" ps -q 2>/dev/null | grep -q .; then
         echo "Stopping Iris/Pyris stack..."
         docker compose -f "$IRIS_STACK_COMPOSE" down -v 2>/dev/null || true
+    fi
+
+    # Stop the Hyperion mock LLM if it is running (bare Python process)
+    if [ -f "$LOCAL_DIR/hyperion-mock-llm.pid" ]; then
+        MOCK_PID=$(cat "$LOCAL_DIR/hyperion-mock-llm.pid")
+        if kill -0 "$MOCK_PID" 2>/dev/null; then
+            echo "Stopping Hyperion mock LLM (PID $MOCK_PID)..."
+            kill_tree "$MOCK_PID"
+        fi
     fi
 
     # Stop Postgres
@@ -337,6 +373,47 @@ if [ "$SKIP_SERVER" = false ]; then
         export ARTEMIS_IRIS_SECRETTOKEN="${IRIS_SECRET_TOKEN}"
     fi
 
+    # Optional: start the deterministic mock LLM and enable Hyperion on the server.
+    # Hyperion enablement (artemis.hyperion.enabled=true) also makes management/info
+    # activeModuleFeatures include "hyperion", which the variant e2e suite probes to
+    # decide whether to run. The mock speaks the OpenAI Chat Completions API; Spring AI's
+    # OpenAI client points at it via spring.ai.openai.base-url (note the /v1 suffix — the
+    # SDK appends /chat/completions itself).
+    if [ "$RUN_HYPERION" = true ]; then
+        echo -e "${BLUE}Hyperion enabled (RUN_HYPERION=true): starting the mock LLM on port ${HYPERION_MOCK_LLM_PORT}...${NC}"
+        # Kill any stale listener AND wait for the socket to be released — the new process cannot bind before.
+        check_port_available "${HYPERION_MOCK_LLM_PORT}" "Hyperion mock LLM"
+        MOCK_LLM_PORT="${HYPERION_MOCK_LLM_PORT}" python3 "$HYPERION_MOCK_LLM_SCRIPT" > "$LOCAL_DIR/hyperion-mock-llm.log" 2>&1 &
+        MOCK_LLM_PID=$!
+        echo "$MOCK_LLM_PID" > "$LOCAL_DIR/hyperion-mock-llm.pid"
+        # Wait for the mock to accept connections before the server boots against it.
+        MOCK_READY=false
+        for _ in $(seq 1 20); do
+            if curl -sf "http://localhost:${HYPERION_MOCK_LLM_PORT}/health" >/dev/null 2>&1; then
+                MOCK_READY=true
+                break
+            fi
+            sleep 0.5
+        done
+        if [ "$MOCK_READY" = true ]; then
+            echo -e "${GREEN}Mock LLM is listening (PID $MOCK_LLM_PID).${NC}"
+        else
+            # Continuing would enable Hyperion and point Spring AI at a dead port, so the variant suite would
+            # fail later with connection errors that say nothing about the real cause.
+            echo -e "${RED}ERROR: mock LLM did not become ready; aborting instead of running Hyperion against a dead endpoint.${NC}"
+            if kill -0 "$MOCK_LLM_PID" 2>/dev/null; then
+                kill_tree "$MOCK_LLM_PID"
+            fi
+            rm -f "$LOCAL_DIR/hyperion-mock-llm.pid"
+            exit 1
+        fi
+        export ARTEMIS_HYPERION_ENABLED="true"
+        export SPRING_AI_OPENAI_BASE_URL="http://localhost:${HYPERION_MOCK_LLM_PORT}/v1"
+        export SPRING_AI_OPENAI_API_KEY="dummy-key"
+        export SPRING_AI_OPENAI_MICROSOFT_FOUNDRY="false"
+        export SPRING_AI_OPENAI_CHAT_MODEL="mock-model"
+    fi
+
     # Server environment variables
     export SPRING_PROFILES_ACTIVE="artemis,scheduling,localvc,localci,buildagent,core,dev"
     export SPRING_DATASOURCE_URL="jdbc:postgresql://localhost:5432/Artemis?sslmode=disable"
@@ -371,6 +448,9 @@ if [ "$SKIP_SERVER" = false ]; then
     export ARTEMIS_VERSIONCONTROL_SSHHOSTKEYPATH="$(pwd)/src/test/playwright/ssh-keys"
     export ARTEMIS_VERSIONCONTROL_SSHPORT="7921"
     export ARTEMIS_TELEMETRY_ENABLED="false"
+    # Feature usage flushes every five minutes in production, and FeatureUsage.spec.ts asserts that a counter reaches
+    # the database. Matches docker/artemis/config/playwright.env, which the containerised stacks read instead.
+    export ARTEMIS_FEATURE_USAGE_FLUSH_INTERVAL="10s"
     export SERVER_URL="http://localhost:8080"
     # When Iris is enabled, Pyris runs in a container and must reach Artemis on the
     # host for status callbacks. server.url is the artemisBaseUrl Artemis hands to
@@ -549,8 +629,17 @@ sample_cpu() {
 sample_cpu &
 CPU_MONITOR_PID=$!
 
-# Build base Playwright args
-BASE_ARGS=(e2e)
+# Build base Playwright args.
+# Positional args are the spec paths Playwright runs. Default to the whole e2e/ tree;
+# --specs narrows it to an explicit set (word-split on purpose, the option is documented
+# as a space-separated list). --grep filters by test title and composes with either.
+BASE_ARGS=()
+if [ -n "$TEST_SPECS" ]; then
+    # shellcheck disable=SC2206  # deliberate word splitting: --specs is a space-separated list
+    BASE_ARGS=($TEST_SPECS)
+else
+    BASE_ARGS=(e2e)
+fi
 if [ -n "$TEST_FILTER" ]; then
     BASE_ARGS+=(--grep "$TEST_FILTER")
 fi

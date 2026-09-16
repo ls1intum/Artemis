@@ -5,22 +5,28 @@ import { RouterModule } from '@angular/router';
 import { CommonModule, SlicePipe } from '@angular/common';
 import { getContrastingTextColor } from 'app/foundation/util/color.utils';
 import { CourseNotificationBubbleComponent } from 'app/notification/course-notification/course-notification-bubble/course-notification-bubble.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faWrench } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-course-card-header',
     templateUrl: './course-card-header.component.html',
     styleUrls: ['./course-card-header.component.scss'],
-    imports: [ImageComponent, RouterModule, SlicePipe, CommonModule, CourseNotificationBubbleComponent],
+    imports: [ImageComponent, RouterModule, SlicePipe, CommonModule, CourseNotificationBubbleComponent, FaIconComponent, TranslateDirective],
 })
 export class CourseCardHeaderComponent {
     protected readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
+    protected readonly faWrench = faWrench;
     courseIcon = input.required<string>();
     courseTitle = input.required<string>();
     courseColor = input.required<string>();
     courseId = input.required<number>();
     courseNotificationCount = input<number>(0);
     archiveMode = input<boolean>(false);
+    canManageCourse = input<boolean>(false);
 
     readonly color = computed(() => this.courseColor() || this.ARTEMIS_DEFAULT_COLOR);
     readonly titleColor = computed(() => getContrastingTextColor(this.color()));
+    readonly showArchiveManagementAction = computed(() => this.archiveMode() && this.canManageCourse());
 }

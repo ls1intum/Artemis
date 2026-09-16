@@ -1,125 +1,148 @@
 @if (isRegistrationEnabled() || isInternalUser()) {
     <div>
-        <div class="row justify-content-center">
-            <div class="col-md-8">
+        <div class="flex justify-center">
+            <div class="w-full md:w-2/3">
                 @if (currentUser(); as currentAccount) {
                     <h2 jhiTranslate="settings.title" [translateValues]="{ username: currentAccount.login }">
                         User settings for <b>{{ currentAccount.login }}</b>
                     </h2>
                 }
                 @if (success()) {
-                    <div class="alert alert-success" jhiTranslate="settings.messages.success">
-                        <strong>Settings saved!</strong>
-                    </div>
+                    <tum-ui-message severity="success">
+                        <span jhiTranslate="settings.messages.success"><strong>Settings saved!</strong></span>
+                    </tum-ui-message>
                 }
                 @if (isSaml2Active()) {
-                    <p-message severity="info">
+                    <tum-ui-message severity="info">
                         <span jhiTranslate="settings.saml2SyncedInfo"> Your name and email address are managed by your institution via SAML2 and cannot be changed here. </span>
-                    </p-message>
+                    </tum-ui-message>
                 }
                 @if (errorEmailExists()) {
-                    <div class="alert alert-danger" jhiTranslate="settings.messages.error.emailExists"><strong>Email is already in use!</strong> Please choose another one.</div>
+                    <tum-ui-message severity="error">
+                        <span jhiTranslate="settings.messages.error.emailExists"><strong>Email is already in use!</strong> Please choose another one.</span>
+                    </tum-ui-message>
                 }
                 @if (currentUser()) {
                     <form name="form" role="form" (ngSubmit)="saveSettings()" [formGroup]="settingsForm" novalidate>
-                        <div class="form-group">
-                            <label class="form-control-label" for="firstName" jhiTranslate="settings.form.firstname"></label>
+                        <tum-ui-form-field
+                            class="mb-3"
+                            controlId="firstName"
+                            required
+                            [invalid]="settingsForm.controls.firstName.invalid && (settingsForm.controls.firstName.dirty || settingsForm.controls.firstName.touched)"
+                        >
+                            <span tumUiFormFieldLabel jhiTranslate="settings.form.firstname"></span>
                             <input
                                 type="text"
-                                class="form-control"
+                                tumUiInput
+                                class="w-full"
                                 id="firstName"
                                 name="firstName"
                                 placeholder="{{ 'settings.form.firstname.placeholder' | artemisTranslate }}"
                                 formControlName="firstName"
                                 [disabled]="!isInternalUser() || isSaml2Active()"
+                                required
                             />
-                            @if (settingsForm.controls.firstName.invalid && (settingsForm.controls.firstName.dirty || settingsForm.controls.firstName.touched)) {
-                                <div>
-                                    @if (settingsForm.controls.firstName.errors?.required) {
-                                        <small class="form-text text-danger" jhiTranslate="settings.messages.validate.firstname.required"></small>
-                                    }
-                                    @if (settingsForm.controls.firstName.errors?.minlength) {
-                                        <small class="form-text text-danger" jhiTranslate="settings.messages.validate.firstname.minlength"></small>
-                                    }
-                                    @if (settingsForm.controls.firstName.errors?.maxlength) {
-                                        <small class="form-text text-danger" jhiTranslate="settings.messages.validate.firstname.maxlength"></small>
-                                    }
-                                </div>
-                            }
-                        </div>
-                        <div class="form-group">
-                            <label class="form-control-label" for="lastName" jhiTranslate="settings.form.lastname"></label>
+                            <ng-container tumUiFormFieldError>
+                                @if (settingsForm.controls.firstName.errors?.required) {
+                                    <small jhiTranslate="settings.messages.validate.firstname.required"></small>
+                                }
+                                @if (settingsForm.controls.firstName.errors?.minlength) {
+                                    <small jhiTranslate="settings.messages.validate.firstname.minlength"></small>
+                                }
+                                @if (settingsForm.controls.firstName.errors?.maxlength) {
+                                    <small jhiTranslate="settings.messages.validate.firstname.maxlength"></small>
+                                }
+                            </ng-container>
+                        </tum-ui-form-field>
+                        <tum-ui-form-field
+                            class="mb-3"
+                            controlId="lastName"
+                            required
+                            [invalid]="settingsForm.controls.lastName.invalid && (settingsForm.controls.lastName.dirty || settingsForm.controls.lastName.touched)"
+                        >
+                            <span tumUiFormFieldLabel jhiTranslate="settings.form.lastname"></span>
                             <input
                                 type="text"
-                                class="form-control"
+                                tumUiInput
+                                class="w-full"
                                 id="lastName"
                                 name="lastName"
                                 placeholder="{{ 'settings.form.lastname.placeholder' | artemisTranslate }}"
                                 formControlName="lastName"
                                 [disabled]="!isInternalUser() || isSaml2Active()"
+                                required
                             />
-                            @if (settingsForm.controls.lastName.invalid && (settingsForm.controls.lastName.dirty || settingsForm.controls.lastName.touched)) {
-                                <div>
-                                    @if (settingsForm.controls.lastName.errors?.required) {
-                                        <small class="form-text text-danger" jhiTranslate="settings.messages.validate.lastname.required"></small>
-                                    }
-                                    @if (settingsForm.controls.lastName.errors?.minlength) {
-                                        <small class="form-text text-danger" jhiTranslate="settings.messages.validate.lastname.minlength"></small>
-                                    }
-                                    @if (settingsForm.controls.lastName.errors?.maxlength) {
-                                        <small class="form-text text-danger" jhiTranslate="settings.messages.validate.lastname.maxlength"></small>
-                                    }
-                                </div>
-                            }
-                        </div>
+                            <ng-container tumUiFormFieldError>
+                                @if (settingsForm.controls.lastName.errors?.required) {
+                                    <small jhiTranslate="settings.messages.validate.lastname.required"></small>
+                                }
+                                @if (settingsForm.controls.lastName.errors?.minlength) {
+                                    <small jhiTranslate="settings.messages.validate.lastname.minlength"></small>
+                                }
+                                @if (settingsForm.controls.lastName.errors?.maxlength) {
+                                    <small jhiTranslate="settings.messages.validate.lastname.maxlength"></small>
+                                }
+                            </ng-container>
+                        </tum-ui-form-field>
                         @if (allowedEmailPatternReadable()) {
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <strong jhiTranslate="global.form.email.pattern"></strong>
                                 {{ allowedEmailPatternReadable() }}
                             </div>
                         }
-                        <div class="form-group">
-                            <label class="form-control-label" for="email" jhiTranslate="global.form.email"></label>
+                        <tum-ui-form-field
+                            class="mb-3"
+                            controlId="email"
+                            required
+                            [invalid]="settingsForm.controls.email.invalid && (settingsForm.controls.email.dirty || settingsForm.controls.email.touched)"
+                        >
+                            <span tumUiFormFieldLabel jhiTranslate="global.form.email"></span>
                             <input
                                 type="email"
-                                class="form-control"
+                                tumUiInput
+                                class="w-full"
                                 id="email"
                                 name="email"
                                 placeholder="{{ 'global.form.email.placeholder' | artemisTranslate }}"
                                 formControlName="email"
                                 [disabled]="!isInternalUser() || isSaml2Active()"
+                                required
                             />
-                            @if (settingsForm.controls.email.invalid && (settingsForm.controls.email.dirty || settingsForm.controls.email.touched)) {
-                                <div>
-                                    @if (settingsForm.controls.email.errors?.required) {
-                                        <small class="form-text text-danger" jhiTranslate="global.messages.validate.email.required"></small>
-                                    }
-                                    @if (settingsForm.controls.email.errors?.email) {
-                                        <small class="form-text text-danger" jhiTranslate="global.messages.validate.email.invalid"></small>
-                                    }
-                                    @if (settingsForm.controls.email.errors?.minlength) {
-                                        <small class="form-text text-danger" jhiTranslate="global.messages.validate.email.minlength"></small>
-                                    }
-                                    @if (settingsForm.controls.email.errors?.maxlength) {
-                                        <small class="form-text text-danger" jhiTranslate="global.messages.validate.email.maxlength"></small>
-                                    }
-                                    @if (settingsForm.controls.email.errors?.pattern) {
-                                        <small class="form-text text-danger" jhiTranslate="global.messages.validate.email.pattern"></small>
-                                    }
-                                </div>
-                            }
-                        </div>
+                            <ng-container tumUiFormFieldError>
+                                @if (settingsForm.controls.email.errors?.required) {
+                                    <small jhiTranslate="global.messages.validate.email.required"></small>
+                                }
+                                @if (settingsForm.controls.email.errors?.email) {
+                                    <small jhiTranslate="global.messages.validate.email.invalid"></small>
+                                }
+                                @if (settingsForm.controls.email.errors?.minlength) {
+                                    <small jhiTranslate="global.messages.validate.email.minlength"></small>
+                                }
+                                @if (settingsForm.controls.email.errors?.maxlength) {
+                                    <small jhiTranslate="global.messages.validate.email.maxlength"></small>
+                                }
+                                @if (settingsForm.controls.email.errors?.pattern) {
+                                    <small jhiTranslate="global.messages.validate.email.pattern"></small>
+                                }
+                            </ng-container>
+                        </tum-ui-form-field>
                         @if (languages && languages.length > 0) {
-                            <div class="form-group">
-                                <label for="langKey" jhiTranslate="settings.form.language"></label>
-                                <select class="form-select" id="langKey" name="langKey" formControlName="langKey">
-                                    @for (language of languages; track language) {
-                                        <option [value]="language">{{ language | findLanguageFromKey }}</option>
-                                    }
-                                </select>
-                            </div>
+                            <tum-ui-form-field class="mb-3" controlId="langKey">
+                                <span tumUiFormFieldLabel jhiTranslate="settings.form.language"></span>
+                                <tum-ui-select
+                                    class="w-full"
+                                    inputId="langKey"
+                                    name="langKey"
+                                    formControlName="langKey"
+                                    [options]="languageOptions"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                />
+                            </tum-ui-form-field>
                         }
-                        <button type="submit" [disabled]="settingsForm.invalid" class="btn btn-primary" jhiTranslate="settings.form.button"></button>
+                        <tum-ui-button type="submit" [disabled]="settingsForm.invalid">
+                            <span jhiTranslate="settings.form.button"></span>
+                        </tum-ui-button>
                     </form>
                 }
             </div>

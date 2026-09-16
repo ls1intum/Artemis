@@ -22,7 +22,7 @@ import io.github.bucket4j.distributed.remote.RemoteBucketState;
  * the Local provider supports.
  *
  * <p>
- * Bucket4j addresses its backends through compare-and-swap on a serialised bucket state. The identity comparison that
+ * Bucket4j addresses its distributed stores through compare-and-swap on a serialised bucket state. The identity comparison that
  * {@link ConcurrentMap#replace(Object, Object, Object)} performs on {@code byte[]} is exactly the semantics needed here:
  * {@link CompareAndSwapOperation#getStateData} hands out the stored array instance, so the swap succeeds if and only if
  * no other thread replaced it in the meantime.

@@ -1,0 +1,35 @@
+:host {
+    position: relative;
+    display: block;
+}
+
+.tum-ui-search-field-icon,
+.tum-ui-search-field-clear {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    line-height: 1;
+    z-index: 1;
+}
+
+/* Decorative, and it covers part of the field: let clicks through so tapping it focuses the input. */
+.tum-ui-search-field-icon {
+    inset-inline-start: calc(var(--tumaet-ui-spacing) * 3);
+    pointer-events: none;
+}
+
+.tum-ui-search-field-clear {
+    inset-inline-end: calc(var(--tumaet-ui-spacing) * 2.5);
+}
+
+/* Both paddings are constant so the term does not shift when the clear control appears. */
+.tum-ui-input {
+    width: 100%;
+    padding-inline-start: calc(var(--tumaet-ui-spacing) * 10);
+    padding-inline-end: calc(var(--tumaet-ui-spacing) * 8);
+}
+
+/* WebKit renders its own clear control for type="search"; ours is the one that is themed and labelled. */
+.tum-ui-input::-webkit-search-cancel-button {
+    display: none;
+}

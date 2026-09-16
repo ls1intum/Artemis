@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { DebugElement } from '@angular/core';
+import { Location } from '@angular/common';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { BehaviorSubject, Observable, Subject, asapScheduler, firstValueFrom, of, scheduled, throwError } from 'rxjs';
@@ -32,7 +33,7 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
-import { ActivatedRoute, ParamMap, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, UrlTree, convertToParamMap, provideRouter } from '@angular/router';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
@@ -177,6 +178,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         ({
             params: of({ submissionId: 123 }),
             queryParamMap: of(convertToParamMap({ testRun: false })),
+            snapshot: { queryParams: { 'correction-round': '0', testRun: 'false' } },
         }) as any as ActivatedRoute;
     const fileContent = 'This is the content of a file';
     const templateFileSessionReturn: { [fileName: string]: string } = { 'folder/file1': fileContent };
@@ -741,6 +743,23 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.assessmentsAreValid()).toBe(true);
     });
 
+    it('should keep the exam route and query parameters when replacing new with the loaded submission id', async () => {
+        comp.courseId = 2;
+        comp.examId = 3;
+        comp.exerciseGroupId = 4;
+        comp.exerciseId = 14;
+        const createUrlTreeSpy = vi.spyOn(router, 'createUrlTree').mockReturnValue({ toString: () => '/rewritten' } as unknown as UrlTree);
+        const goSpy = vi.spyOn(TestBed.inject(Location), 'go').mockImplementation(() => {});
+
+        await internals(comp).onSubmissionReceived('new', submission);
+
+        expect(createUrlTreeSpy).toHaveBeenCalledExactlyOnceWith(
+            ['/course-management', '2', 'exams', '3', 'exercise-groups', '4', 'programming-exercises', '14', 'submissions', '1234', 'assessment'],
+            { queryParams: { 'correction-round': '0', testRun: 'false' } },
+        );
+        expect(goSpy).toHaveBeenCalledExactlyOnceWith('/rewritten');
+    });
+
     it('should not invalidate assessment after saving', async () => {
         vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment');
 
@@ -938,13 +957,13 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.hasAutomaticFeedback()).toBe(false);
     });
 
-    it('should return true for isFeedbackSuggestionsEnabled when feedbackSuggestionModule is set', () => {
-        comp.exercise.set(Object.assign({}, exercise, { feedbackSuggestionModule: 'module_text_programming' }) as unknown as ProgrammingExercise);
+    it('should return true for isFeedbackSuggestionsEnabled when athenaGradingFeedbackEnabled is set on course', () => {
+        comp.exercise.set(Object.assign({}, exercise, { course: { athenaGradingFeedbackEnabled: true } }) as unknown as ProgrammingExercise);
         expect(comp.isFeedbackSuggestionsEnabled()).toBe(true);
     });
 
-    it('should return false for isFeedbackSuggestionsEnabled when feedbackSuggestionModule is absent', () => {
-        comp.exercise.set(Object.assign({}, exercise, { feedbackSuggestionModule: undefined }) as unknown as ProgrammingExercise);
+    it('should return false for isFeedbackSuggestionsEnabled when athenaGradingFeedbackEnabled is absent', () => {
+        comp.exercise.set(Object.assign({}, exercise, { course: { athenaGradingFeedbackEnabled: false } }) as unknown as ProgrammingExercise);
         expect(comp.isFeedbackSuggestionsEnabled()).toBe(false);
     });
 

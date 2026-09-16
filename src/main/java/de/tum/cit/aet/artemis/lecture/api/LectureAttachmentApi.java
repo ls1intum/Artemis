@@ -4,12 +4,14 @@ import java.util.List;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.dto.AttachmentFileLocationDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 
@@ -34,15 +36,15 @@ public class LectureAttachmentApi extends AbstractLectureApi {
         return attachmentVideoUnitRepository.findByIdElseThrow(id);
     }
 
-    public Attachment findAttachmentByIdElseThrow(long id) {
-        return attachmentRepository.findByIdElseThrow(id);
-    }
-
     public List<AttachmentVideoUnit> findAllByLectureIdAndAttachmentTypeElseThrow(long lectureId, AttachmentType type) {
         return attachmentVideoUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, type);
     }
 
-    public List<Attachment> findAllByLectureId(long lectureId) {
-        return attachmentRepository.findAllByLectureId(lectureId);
+    public List<Attachment> findAllInLecture(long lectureId) {
+        return attachmentRepository.findAllInLecture(lectureId);
+    }
+
+    public List<AttachmentFileLocationDTO> findAttachmentFileLocationsAfter(long minimumAttachmentId, int limit) {
+        return attachmentRepository.findAttachmentFileLocationsAfter(minimumAttachmentId, Pageable.ofSize(limit));
     }
 }

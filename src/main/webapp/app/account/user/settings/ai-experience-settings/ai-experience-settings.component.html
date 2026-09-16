@@ -1,4 +1,4 @@
-<div class="d-flex justify-content-between">
+<div class="flex justify-between">
     <h2 jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.title"></h2>
 </div>
 <p jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.description"></p>
@@ -6,55 +6,43 @@
 
 <h5 jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.yourAiMode"></h5>
 
-<div class="card mt-3">
-    <div class="card-body">
-        @if (currentSelection() === LLMSelectionDecision.CLOUD_AI) {
-            <h6 class="card-title fw-bold" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.cloudTitle"></h6>
-            <p class="card-text" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.cloudDescription"></p>
-            <p class="card-text text-body-secondary">
-                <small
-                    jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.selectedOn"
-                    [translateValues]="{ date: (selectionDate() | artemisDate: 'long-date') }"
-                ></small>
-            </p>
-        } @else if (currentSelection() === LLMSelectionDecision.LOCAL_AI) {
-            <h6 class="card-title fw-bold" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.localTitle"></h6>
-            <p class="card-text" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.localDescription"></p>
-            <p class="card-text text-body-secondary">
-                <small
-                    jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.selectedOn"
-                    [translateValues]="{ date: (selectionDate() | artemisDate: 'long-date') }"
-                ></small>
-            </p>
-        } @else if (currentSelection() === LLMSelectionDecision.NO_AI) {
-            <h6 class="card-title fw-bold" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.noAiTitle"></h6>
-            <p class="card-text" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.noAiDescription"></p>
-            <p class="card-text text-body-secondary">
-                <small
-                    jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.selectedOn"
-                    [translateValues]="{ date: (selectionDate() | artemisDate: 'long-date') }"
-                ></small>
-            </p>
-        } @else {
-            <h6 class="card-title fw-bold" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.noSelectionTitle"></h6>
-            <p class="card-text" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.noSelectionDescription"></p>
-        }
+<tum-ui-card class="mt-3 block">
+    @if (currentSelection() === LLMSelectionDecision.CLOUD_AI) {
+        <h6 class="font-bold" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.cloudTitle"></h6>
+        <p jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.cloudDescription"></p>
+        <p class="text-muted-color">
+            <small jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.selectedOn" [translateValues]="{ date: (selectionDate() | artemisDate: 'long-date') }"></small>
+        </p>
+    } @else if (currentSelection() === LLMSelectionDecision.LOCAL_AI) {
+        <h6 class="font-bold" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.localTitle"></h6>
+        <p jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.localDescription"></p>
+        <p class="text-muted-color">
+            <small jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.selectedOn" [translateValues]="{ date: (selectionDate() | artemisDate: 'long-date') }"></small>
+        </p>
+    } @else if (currentSelection() === LLMSelectionDecision.NO_AI) {
+        <h6 class="font-bold" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.noAiTitle"></h6>
+        <p jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.noAiDescription"></p>
+        <p class="text-muted-color">
+            <small jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.selectedOn" [translateValues]="{ date: (selectionDate() | artemisDate: 'long-date') }"></small>
+        </p>
+    } @else {
+        <h6 class="font-bold" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.noSelectionTitle"></h6>
+        <p jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.noSelectionDescription"></p>
+    }
 
-        <div class="d-flex align-items-center gap-3 mt-3">
-            @if (currentSelection()) {
-                <button
-                    type="button"
-                    class="btn btn-primary"
-                    (click)="openSelectionModal()"
-                    jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.changeSelection"
-                ></button>
-            } @else {
-                <button type="button" class="btn btn-primary" (click)="openSelectionModal()" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.chooseNow"></button>
-            }
-            <a routerLink="/ai-experience-info" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.learnMore"></a>
-        </div>
+    <div class="mt-3 flex items-center gap-3">
+        @if (currentSelection()) {
+            <tum-ui-button (clicked)="openSelectionModal()">
+                <span jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.changeSelection"></span>
+            </tum-ui-button>
+        } @else {
+            <tum-ui-button (clicked)="openSelectionModal()">
+                <span jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.chooseNow"></span>
+            </tum-ui-button>
+        }
+        <a routerLink="/ai-experience-info" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.learnMore"></a>
     </div>
-</div>
+</tum-ui-card>
 
 <hr />
 
@@ -72,7 +60,12 @@
     </p>
     <div class="mt-2">
         <button
+            type="button"
+            tumUiButton
+            severity="danger"
+            size="small"
             jhiDeleteButton
+            [renderButtonStyle]="false"
             [actionType]="ActionType.Cleanup"
             [renderButtonText]="false"
             [deleteQuestion]="'artemisApp.userSettings.aiExperienceSettingsPage.deleteQuestion'"
@@ -81,9 +74,9 @@
             (delete)="deleteAllIrisInteractions()"
             [dialogError]="dialogError$"
         >
-            <span class="text-white" jhiTranslate="entity.action.cleanup"></span>
+            <span jhiTranslate="entity.action.cleanup"></span>
         </button>
     </div>
 } @else {
-    <p class="mt-2 text-body-secondary" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.noData"></p>
+    <p class="mt-2 text-muted-color" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.noData"></p>
 }

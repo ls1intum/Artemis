@@ -1,7 +1,7 @@
 import { Component, OnDestroy, effect, inject, input, output, signal } from '@angular/core';
 import { faCheckDouble, faFilter, faFilterCircleXmark, faHashtag, faPeopleGroup, faPlusCircle, faSearch, faUser } from '@fortawesome/free-solid-svg-icons';
-import { ActivatedRoute, Params } from '@angular/router';
-import { Subscription, distinctUntilChanged } from 'rxjs';
+import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
+import { Subscription, distinctUntilChanged, filter } from 'rxjs';
 import { SidebarEventService } from './service/sidebar-event.service';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseFilterOptions, ExerciseFilterResults } from 'app/foundation/types/exercise-filter';
@@ -46,6 +46,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 })
 export class SidebarComponent implements OnDestroy {
     private route = inject(ActivatedRoute);
+    private router = inject(Router);
     private sidebarEventService = inject(SidebarEventService);
     private modalService = inject(NgbModal);
     private sessionStorageService = inject(SessionStorageService);
@@ -108,16 +109,32 @@ export class SidebarComponent implements OnDestroy {
         effect(() => {
             this.subscribeToSidebarEvents();
         });
-        // Replaces ngOnChanges: (re)subscribe to route params.
+        // Replaces ngOnChanges: (re)subscribe to the params identifying the selected entity.
         effect(() => {
             // Re-run when the route changes (the ActivatedRoute itself is stable, but keep parity with the
             // previous ngOnChanges trigger which fired on input changes).
             this.sidebarData();
             this.paramSubscription?.unsubscribe();
-            this.paramSubscription = this.route.params?.subscribe((params) => {
-                this.routeParams.set(params);
-            });
+            // The sidebar sits on the list route ('exercises', 'lectures', …), which carries no entity id of its own,
+            // so its own params are always empty. The selected entity's id lives on the activated child route
+            // (':exerciseId', 'group/:groupId', …), which is swapped out on navigation rather than re-emitting.
+            this.readSelectedEntityParams();
+            this.paramSubscription = this.router.events?.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => this.readSelectedEntityParams());
         });
+    }
+
+    /**
+     * Reads the params that identify the entity the detail outlet currently shows.
+     *
+     * A child route inherits every param of its ancestors, so the child of 'exercises' reports
+     * `{ courseId, exerciseId }`. Only the params the child adds on top of what the sidebar's own route already sees
+     * name the selected entity, so the inherited ones are dropped — otherwise consumers reading "the" param can pick
+     * up the course id instead.
+     */
+    private readSelectedEntityParams(): void {
+        const childParams = this.route.firstChild?.snapshot?.params ?? {};
+        const inheritedParams = this.route.snapshot?.params ?? {};
+        this.routeParams.set(Object.fromEntries(Object.entries(childParams).filter(([key]) => !(key in inheritedParams))));
     }
 
     createNewChannel() {

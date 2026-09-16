@@ -2,7 +2,7 @@
     <button
         #trigger
         type="button"
-        [id]="inputId()"
+        [id]="resolvedInputId()"
         [class]="triggerClasses()"
         [disabled]="isDisabled()"
         [attr.name]="name()"
@@ -13,6 +13,8 @@
         [attr.aria-controls]="isOpen() ? listboxId : null"
         [attr.aria-activedescendant]="isOpen() ? activeOptionId() : null"
         [attr.aria-label]="ariaLabel()"
+        [attr.aria-describedby]="describedBy()"
+        [attr.aria-invalid]="isInvalid() ? 'true' : null"
         (click)="toggle()"
         (keydown)="onTriggerKeydown($event)"
     >
@@ -36,13 +38,29 @@
 
 <ng-template #panel>
     <div class="tum-ui-select-panel tum:box-border tum:w-full tum:rounded-md tum:border tum:border-border tum:bg-overlay-background tum:text-text tum:shadow-md">
+        @if (filter()) {
+            <div class="tum:border-b tum:border-border tum:p-1">
+                <input
+                    #filterInput
+                    type="text"
+                    class="tum-ui-select-filter tum:box-border tum:w-full tum:appearance-none tum:rounded-sm tum:border tum:border-control-border tum:bg-control-background tum:px-2 tum:py-1.5 tum:text-sm tum:text-text tum:placeholder:text-muted tum:focus-visible:outline tum:focus-visible:outline-2 tum:focus-visible:outline-focus"
+                    [value]="filterText()"
+                    [attr.placeholder]="filterPlaceholder() ?? ('tumUi.select.filter' | tumUiTranslate)"
+                    [attr.aria-label]="filterAriaLabel() ?? ('tumUi.select.filter' | tumUiTranslate)"
+                    [attr.aria-controls]="listboxId"
+                    [attr.aria-activedescendant]="activeOptionId()"
+                    (input)="onFilterInput($event)"
+                    (keydown)="onFilterKeydown($event)"
+                />
+            </div>
+        }
         <ul
             [id]="listboxId"
             role="listbox"
             [attr.aria-label]="ariaLabel()"
             class="tum:m-0 tum:flex tum:max-h-60 tum:list-none tum:flex-col tum:gap-0.5 tum:overflow-y-auto tum:p-1 tum:outline-none"
         >
-            @for (option of options(); track $index; let i = $index) {
+            @for (option of visibleOptions(); track $index; let i = $index) {
                 <li
                     [id]="optionId(i)"
                     role="option"
@@ -58,7 +76,7 @@
                 </li>
             } @empty {
                 <li role="option" aria-selected="false" aria-disabled="true" class="tum:px-3 tum:py-2 tum:text-muted">
-                    {{ emptyMessage() ?? ('tumUi.select.empty' | tumUiTranslate) }}
+                    {{ isFiltering() ? ('tumUi.select.noResults' | tumUiTranslate) : (emptyMessage() ?? ('tumUi.select.empty' | tumUiTranslate)) }}
                 </li>
             }
         </ul>

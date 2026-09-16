@@ -21,7 +21,7 @@
 
     <!-- Loading state -->
     @if (isLoading()) {
-        <div class="text-muted-color flex justify-center" id="result-detail-spinner">
+        <div class="text-muted-color flex justify-center" data-testid="result-detail-spinner">
             <fa-icon animation="spin" size="lg" [icon]="faCircleNotch" />
         </div>
     } @else {
@@ -78,13 +78,13 @@
                     </div>
                 }
 
-                @if (scoreChartVisible() && result().submission?.participation?.exercise) {
+                @if (scoreChartVisible() && resolvedExercise()) {
                     <div class="mb-12">
-                        <div id="feedback-chart" class="chart-space h-20">
-                            <p-chart
-                                type="bar"
-                                [data]="scoreChartData()"
-                                [options]="scoreChartOptions()"
+                        <div data-testid="feedback-chart" class="chart-space h-20">
+                            <tum-ui-bar-chart
+                                [labels]="scoreChartData().labels"
+                                [series]="scoreChartData().series"
+                                [config]="scoreChartConfig()"
                                 [ariaLabel]="'artemisApp.feedback.modal.scoreChartAriaLabel' | artemisTranslate"
                             />
                         </div>
@@ -102,7 +102,7 @@
                     <hr />
                 }
 
-                @if (!loadingFailed() && resultIsPreliminary(result(), participation())) {
+                @if (!loadingFailed() && resultIsPreliminary(result(), participation(), resolvedExercise())) {
                     <div>
                         <div class="flex justify-end m-1">
                             <p-tag severity="warn" [value]="'artemisApp.result.preliminary' | artemisTranslate | uppercase" />

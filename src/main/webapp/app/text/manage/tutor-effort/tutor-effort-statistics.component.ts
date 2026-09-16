@@ -11,12 +11,10 @@ import { round } from 'app/foundation/util/utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { ChartModule } from 'primeng/chart';
-import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
-import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
-import { barChartOptions } from 'app/shared-ui/chart/chart-options';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PlagiarismAndTutorEffortDirective } from 'app/plagiarism/manage/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
+import { TumUiBarChartComponent, TumUiBarChartConfig } from '@tumaet/ui-angular';
 
 interface TutorEffortRange {
     minimumTimeSpent: number;
@@ -27,7 +25,7 @@ interface TutorEffortRange {
     selector: 'jhi-text-exercise-tutor-effort-statistics',
     templateUrl: './tutor-effort-statistics.component.html',
     styleUrls: ['./tutor-effort-statistics.component.scss'],
-    imports: [TranslateDirective, FaIconComponent, HelpIconComponent, ChartModule, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FaIconComponent, HelpIconComponent, TumUiBarChartComponent, ArtemisTranslatePipe],
 })
 export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDirective implements OnInit {
     private route = inject(ActivatedRoute);
@@ -35,7 +33,6 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     private textExerciseService = inject(TextExerciseService);
     private textAssessmentService = inject(TextAssessmentService);
     private translateService = inject(TranslateService);
-    private chartColorService = inject(ChartColorService);
 
     readonly tutorEfforts = signal<TutorEffort[]>([]);
     readonly numberOfSubmissions = signal<number>(undefined!);
@@ -59,35 +56,33 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     // Icons
     faSync = faSync;
 
-    private readonly resolvedColors = this.chartColorService.resolvedColors(() => this.chartColors());
+    private readonly resolvedColors = computed(() => this.chartColors());
 
-    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.resolvedColors()));
-    readonly chartOptions = computed(() =>
-        barChartOptions({
-            xAxis: { label: this.xAxisLabel() },
-            yAxis: { label: this.yAxisLabel(), max: this.yScaleMax(), tickFormatter: this.yAxisTickFormatting },
-            tooltip: {
-                title: (items) => {
-                    const item = items[0];
-                    if (!item) {
-                        return '';
-                    }
-                    const amount = item.parsed.y;
-                    const tutorsKey = amount !== 1 ? 'artemisApp.textExercise.tutorEffortStatistics.multipleTutors' : 'artemisApp.textExercise.tutorEffortStatistics.singleTutor';
-                    return `${amount} ${this.translateService.instant(tutorsKey)}`;
-                },
-                label: (item) => {
-                    const label = item.label ?? '';
-                    return [
-                        this.translateService.instant('artemisApp.textExercise.tutorEffortStatistics.forMinutes', { interval: label }),
-                        this.translateService.instant('artemisApp.textExercise.tutorEffortStatistics.medianOfSubmissions', {
-                            median: this.getMedianAmountOfAssessedSubmissions(label),
-                        }),
-                    ];
-                },
+    readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), this.resolvedColors()));
+    readonly chartConfig = computed<TumUiBarChartConfig>(() => ({
+        xAxis: { label: this.xAxisLabel() },
+        yAxis: { label: this.yAxisLabel(), max: this.yScaleMax(), tickFormatter: this.yAxisTickFormatting },
+        tooltip: {
+            title: (items) => {
+                const item = items[0];
+                if (!item) {
+                    return '';
+                }
+                const amount = item.value;
+                const tutorsKey = amount !== 1 ? 'artemisApp.textExercise.tutorEffortStatistics.multipleTutors' : 'artemisApp.textExercise.tutorEffortStatistics.singleTutor';
+                return `${amount} ${this.translateService.instant(tutorsKey)}`;
             },
-        }),
-    );
+            label: (item) => {
+                const label = item.label;
+                return [
+                    this.translateService.instant('artemisApp.textExercise.tutorEffortStatistics.forMinutes', { interval: label }),
+                    this.translateService.instant('artemisApp.textExercise.tutorEffortStatistics.medianOfSubmissions', {
+                        median: this.getMedianAmountOfAssessedSubmissions(label),
+                    }),
+                ];
+            },
+        },
+    }));
 
     constructor() {
         super();

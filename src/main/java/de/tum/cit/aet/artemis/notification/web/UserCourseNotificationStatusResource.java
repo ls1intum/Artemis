@@ -15,15 +15,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.notification.config.NotificationLegacyRestPaths;
 import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationStatusUpdateRequestDTO;
 import de.tum.cit.aet.artemis.notification.service.UserCourseNotificationStatusService;
 
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("course-notifications/read-status")
 @RestController
-// The legacy "api/communication/" prefix is kept for backwards compatibility with deployed clients and will be removed
-// once those clients have migrated. New clients should use the "api/notification/" prefix.
+// The legacy "api/communication/notification/" prefix is kept because artemis-android still calls it; it will be removed once
+// artemis-android#694 has shipped. New clients should use the "api/notification/courses/" prefix.
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/notification/courses/", NotificationLegacyRestPaths.COMMUNICATION_NOTIFICATION_PREFIX })
 public class UserCourseNotificationStatusResource {

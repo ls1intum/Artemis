@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,8 +53,8 @@ class SavedPostResourceIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnPostsWhenGetSavedPostIsCalled() throws Exception {
-        request.performMvcRequest(
-                MockMvcRequestBuilders.get("/api/communication/saved-posts?courseId=" + exampleCourseId + "&status=" + SavedPostStatus.IN_PROGRESS.toString().toLowerCase()))
+        request.performMvcRequest(MockMvcRequestBuilders
+                .get("/api/communication/saved-posts?courseId=" + exampleCourseId + "&status=" + SavedPostStatus.IN_PROGRESS.toString().toLowerCase(Locale.ROOT)))
                 .andExpect(MockMvcResultMatchers.status().isOk()).andExpect(jsonPath("$", hasSize(1))).andExpect(jsonPath("$[0].id").value(testPost.getId()));
     }
 
@@ -65,7 +66,7 @@ class SavedPostResourceIntegrationTest extends AbstractConversationTest {
         conversationMessageRepository.save(newTestPost);
 
         request.performMvcRequest(
-                MockMvcRequestBuilders.post("/api/communication/saved-posts/{postId}?type={type}", newTestPost.getId(), PostingType.POST.toString().toLowerCase()))
+                MockMvcRequestBuilders.post("/api/communication/saved-posts/{postId}?type={type}", newTestPost.getId(), PostingType.POST.toString().toLowerCase(Locale.ROOT)))
                 .andExpect(MockMvcResultMatchers.status().isCreated());
 
         conversationMessageRepository.delete(newTestPost);
@@ -86,7 +87,8 @@ class SavedPostResourceIntegrationTest extends AbstractConversationTest {
             savedPosts.add(savedPost);
         }
 
-        request.performMvcRequest(MockMvcRequestBuilders.post("/api/communication/saved-posts/{postId}?type={type}", testPost.getId(), PostingType.POST.toString().toLowerCase()))
+        request.performMvcRequest(
+                MockMvcRequestBuilders.post("/api/communication/saved-posts/{postId}?type={type}", testPost.getId(), PostingType.POST.toString().toLowerCase(Locale.ROOT)))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest()).andExpect(jsonPath("$.message").value("error.savedPostMaxReached"));
 
         // Cleanup
@@ -97,13 +99,15 @@ class SavedPostResourceIntegrationTest extends AbstractConversationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnOkWhenUpdatingProperStatus() throws Exception {
         request.performMvcRequest(MockMvcRequestBuilders.put("/api/communication/saved-posts/{postId}?status={status}&type={type}", testPost.getId(),
-                SavedPostStatus.COMPLETED.toString().toLowerCase(), PostingType.POST.toString().toLowerCase())).andExpect(MockMvcResultMatchers.status().isOk());
+                SavedPostStatus.COMPLETED.toString().toLowerCase(Locale.ROOT), PostingType.POST.toString().toLowerCase(Locale.ROOT)))
+                .andExpect(MockMvcResultMatchers.status().isOk());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnNoContentWhenDeletingSavedPost() throws Exception {
-        request.performMvcRequest(MockMvcRequestBuilders.delete("/api/communication/saved-posts/{postId}?type={type}", testPost.getId(), PostingType.POST.toString().toLowerCase()))
+        request.performMvcRequest(
+                MockMvcRequestBuilders.delete("/api/communication/saved-posts/{postId}?type={type}", testPost.getId(), PostingType.POST.toString().toLowerCase(Locale.ROOT)))
                 .andExpect(MockMvcResultMatchers.status().isNoContent());
     }
 

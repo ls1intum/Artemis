@@ -16,11 +16,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
-import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -31,6 +29,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -60,9 +59,9 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -71,7 +70,6 @@ import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
-import de.tum.cit.aet.artemis.admin.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.cit.aet.artemis.admin.repository.CustomAuditEventRepository;
 import de.tum.cit.aet.artemis.admin.service.export.CourseExamExportService;
 import de.tum.cit.aet.artemis.admin.service.export.DataExportUtil;
@@ -105,7 +103,6 @@ import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
@@ -122,6 +119,7 @@ import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepos
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.course.dto.CourseAccessStateDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseAvailableTabsDTO;
@@ -280,7 +278,7 @@ public class CourseTestService {
     private LtiPlatformConfigurationTestRepository ltiPlatformConfigurationRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Autowired
     private ExamUserRepository examUserRepository;
@@ -453,6 +451,25 @@ public class CourseTestService {
         testCreateCourseWithNegativeValue(course);
     }
 
+    // Tests that the three fields the data-protection features depend on cannot be omitted.
+    public void testCreateCourseWithoutStartDate() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setStartDate(null);
+        request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isBadRequest());
+    }
+
+    public void testCreateCourseWithoutEndDate() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setEndDate(null);
+        request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isBadRequest());
+    }
+
+    public void testCreateCourseWithoutSemester() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setSemester(null);
+        request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isBadRequest());
+    }
+
     // Test
     public void testCreateCourseWithNegativeMaxComplainTimeDays() throws Exception {
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
@@ -554,6 +571,16 @@ public class CourseTestService {
         request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isBadRequest());
     }
 
+    // Test: the update endpoint runs @Valid on CourseUpdateDTO, so a blank semester (@NotBlank) must be rejected
+    // through the real REST endpoint, not just via the Course domain object's own validateSemester().
+    public void testUpdateCourseWithBlankSemester() throws Exception {
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
+        course.setStartDate(ZonedDateTime.now().minusDays(5));
+        course.setEndDate(ZonedDateTime.now().plusDays(5));
+        course.setSemester("   ");
+        request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isBadRequest());
+    }
+
     // Test
     public void testCreateCourseWithModifiedMaxComplainTimeDaysAndMaxComplains() throws Exception {
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
@@ -613,7 +640,6 @@ public class CourseTestService {
 
     // Test
     public void testDeleteCourseWithPermission() throws Exception {
-        // add to new list so that we can add another course with ARTEMIS_GROUP_DEFAULT_PREFIX so that delete group will be tested properly
         List<Course> courses = new ArrayList<>(courseUtilService.createEnrolledCoursesWithExercisesAndLectures(userPrefix, true, 5));
         Course course3 = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(4), new HashSet<>(), true);
         course3 = courseRepo.save(course3);
@@ -665,11 +691,17 @@ public class CourseTestService {
             }
         }
 
+        // Indexing is asynchronous, so wait for it to land before deleting. An upsert that completes after the
+        // deletion has swept the collection would leave a row the deletion can no longer remove.
+        for (Long exerciseId : allExerciseIds) {
+            WeaviateTestUtil.awaitExerciseInWeaviate(weaviateService, exerciseId);
+        }
+
         for (Course course : courses) {
             if (!course.getExercises().isEmpty()) {
                 groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(course.getExercises().iterator().next());
             }
-            request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
+            request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
         }
 
         // Verify exercises are removed from Weaviate after course deletion
@@ -682,7 +714,7 @@ public class CourseTestService {
             // assertThat(notificationRepo.findAll()).as("All notifications are deleted").isEmpty(); // TODO: Readd this and check only for notifications of course
             assertThat(examRepo.findByCourseId(course.getId())).as("All exams are deleted").isEmpty();
             assertThat(exerciseRepo.findAllExercisesByCourseId(course.getId())).as("All Exercises are deleted").isEmpty();
-            assertThat(lectureRepo.findAllByCourseIdWithAttachments(course.getId())).as("All Lectures are deleted").isEmpty();
+            assertThat(lectureRepo.findAllByCourseId(course.getId())).as("All Lectures are deleted").isEmpty();
             assertThat(conversationRepository.findAllByCourseId(course.getId())).as("All Conversations are deleted").isEmpty();
 
             // Verify new data is also deleted
@@ -786,7 +818,7 @@ public class CourseTestService {
         });
 
         // Perform reset (use postWithoutLocation since reset endpoint returns 200 OK without location header)
-        request.postWithoutLocation("/api/core/admin/courses/" + courseId + "/reset", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/admin/courses/" + courseId + "/reset", null, HttpStatus.OK, null);
 
         // Verify course structure is preserved
         assertThat(courseRepo.findById(courseId)).as("Course still exists after reset").isPresent();
@@ -830,17 +862,17 @@ public class CourseTestService {
     // Test
     public void testResetCourseWithoutPermission() throws Exception {
         Course course = courseUtilService.createCourse();
-        request.postWithoutLocation("/api/core/admin/courses/" + course.getId() + "/reset", null, HttpStatus.FORBIDDEN, null);
+        request.postWithoutLocation("/api/admin/courses/" + course.getId() + "/reset", null, HttpStatus.FORBIDDEN, null);
     }
 
     // Test
     public void testResetCourseNotFound() throws Exception {
-        request.postWithoutLocation("/api/core/admin/courses/" + Long.MAX_VALUE + "/reset", null, HttpStatus.NOT_FOUND, null);
+        request.postWithoutLocation("/api/admin/courses/" + Long.MAX_VALUE + "/reset", null, HttpStatus.NOT_FOUND, null);
     }
 
     // Test
     public void testDeleteNotExistingCourse() throws Exception {
-        request.delete("/api/core/admin/courses/-1", HttpStatus.NOT_FOUND);
+        request.delete("/api/admin/courses/-1", HttpStatus.NOT_FOUND);
     }
 
     // Test
@@ -1028,50 +1060,6 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetCourseForDashboard(boolean userRefresh) throws Exception {
-        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
-        CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/course/courses/" + courses.getFirst().getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK,
-                CourseForDashboardDTO.class);
-        Course receivedCourse = receivedCourseForDashboard.course();
-
-        // Test that the received course has five exercises
-        assertThat(receivedCourse.getExercises()).as("Five exercises are returned").hasSize(5);
-        // Test that the received course has two lectures
-        assertThat(receivedCourse.getLectures()).as("Two lectures are returned").hasSize(2);
-        // Test that the received course has two competencies
-
-        assertThat(receivedCourse.getCompetencies()).isEmpty();
-        assertThat(receivedCourse.getPrerequisites()).isEmpty();
-        assertThat(receivedCourse.getTutorialGroups()).isEmpty();
-        assertThat(receivedCourse.getTutorialGroupsConfiguration()).isNull();
-
-        // Iterate over all exercises of the remaining course
-        for (Exercise exercise : courses.getFirst().getExercises()) {
-            // Test that the exercise does not have more than one participation.
-            assertThat(exercise.getStudentParticipations()).as("At most one participation for exercise").hasSizeLessThanOrEqualTo(1);
-            if (!exercise.getStudentParticipations().isEmpty()) {
-                // Buffer participation so that null checking is easier.
-                Participation participation = exercise.getStudentParticipations().iterator().next();
-                if (!participation.getSubmissions().isEmpty()) {
-                    // The call filters participations by submissions and their result. After the call each participation shouldn't have more than one submission.
-                    assertThat(participation.getSubmissions()).as("At most one submission for participation").hasSizeLessThanOrEqualTo(1);
-                    Submission submission = participation.getSubmissions().iterator().next();
-                    if (submission != null) {
-                        // Test that the correct text submission was filtered.
-                        if (submission instanceof TextSubmission textSubmission) {
-                            assertThat(textSubmission.getText()).as("Correct text submission").isEqualTo("text");
-                        }
-                        // Test that the correct modeling submission was filtered.
-                        else if (submission instanceof ModelingSubmission modelingSubmission) {
-                            assertThat(modelingSubmission.getModel()).as("Correct modeling submission").isEqualTo("model1");
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // Test
     public void testGetCourseAvailableTabs() throws Exception {
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
         CourseAvailableTabsDTO tabs = request.get("/api/course/courses/" + courses.getFirst().getId() + "/available-tabs", HttpStatus.OK, CourseAvailableTabsDTO.class);
@@ -1115,6 +1103,26 @@ public class CourseTestService {
     }
 
     // Test
+    public void testGetCourseForOverviewIncludesAthenaFlags() throws Exception {
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
+        Course course = courses.getFirst();
+
+        // Course-level Athena config is what gates student-facing feedback-request controls on the overview path,
+        // so the lean projection must carry it even though most other Athena/instructor-facing fields stay off it.
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepo.save(course);
+
+        CourseForOverviewDTO overview = request.get("/api/course/courses/" + course.getId() + "/for-overview", HttpStatus.OK, CourseForOverviewDTO.class);
+
+        assertThat(overview.athenaGradingFeedbackEnabled()).isTrue();
+        assertThat(overview.athenaFormativeFeedbackEnabled()).isTrue();
+    }
+
+    // Test
     public void testGetCourseForOverviewForbidden() throws Exception {
         Course course = createCourseWithEnrollmentEnabled(false);
         unenrollStudent1FromAllCourses();
@@ -1128,11 +1136,17 @@ public class CourseTestService {
         ZonedDateTime now = ZonedDateTime.now();
         User student = userUtilService.getUserByLogin(userPrefix + "student1");
 
+        // allowFeedbackRequests is now derived from the course-wide Athena config rather than a per-exercise field.
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepo.save(course);
+
         // Pin every programming action field read by the overview. The graded participation deliberately differs from
         // the practice participation so the projection cannot accidentally copy the wrong repository.
         ProgrammingExercise programmingExercise = course.getExercises().stream().filter(ProgrammingExercise.class::isInstance).map(ProgrammingExercise.class::cast).findFirst()
                 .orElseThrow();
-        programmingExercise.setAllowFeedbackRequests(true);
         programmingExercise.setAllowOnlineEditor(true);
         programmingExercise.setAllowOfflineIde(true);
         programmingExerciseRepository.save(programmingExercise);
@@ -1186,7 +1200,7 @@ public class CourseTestService {
         assertThat(projectedTeamExercise.studentAssignedTeamIdComputed()).isTrue();
 
         var projectedProgrammingExercise = exercises.exercises().stream().filter(exercise -> exercise.id().equals(programmingExercise.getId())).findFirst().orElseThrow();
-        assertThat(projectedProgrammingExercise.allowFeedbackRequests()).as("manual feedback action remains available").isTrue();
+        assertThat(projectedProgrammingExercise.allowFeedbackRequests()).as("reflects the course-level Athena formative feedback setting").isTrue();
         assertThat(projectedProgrammingExercise.allowOnlineEditor()).as("online editor action remains available").isTrue();
         assertThat(projectedProgrammingExercise.allowOfflineIde()).as("clone and offline IDE actions remain available").isTrue();
         assertThat(projectedProgrammingExercise.studentParticipations()).as("graded and practice programming participations are projected").hasSize(2);
@@ -1205,18 +1219,6 @@ public class CourseTestService {
         assertThat(exercises.totalScores()).as("the derived scores are returned").isNotNull();
         assertThat(exercises.totalScores().studentScores().absoluteScore()).as("the projection-backed calculator evaluates a non-zero result").isPositive();
         assertThat(exercises.totalScores().studentScores().presentationScore()).as("the stateless calculator counts projected basic presentation scores").isEqualTo(1.0);
-
-        // The new endpoint uses database projections and a stateless DTO calculator. Keep its score semantics pinned to
-        // the entity-based endpoint while native clients still use that path.
-        CourseForDashboardDTO dashboard = request.get("/api/course/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
-        assertThat(exercises.totalScores()).isEqualTo(dashboard.totalScores());
-        assertThat(exercises.textScores()).isEqualTo(dashboard.textScores());
-        assertThat(exercises.programmingScores()).isEqualTo(dashboard.programmingScores());
-        assertThat(exercises.modelingScores()).isEqualTo(dashboard.modelingScores());
-        assertThat(exercises.fileUploadScores()).isEqualTo(dashboard.fileUploadScores());
-        assertThat(exercises.quizScores()).isEqualTo(dashboard.quizScores());
-        assertThat(exercises.participationResults()).containsExactlyInAnyOrderElementsOf(dashboard.participationResults());
-        assertThat(exercises.achievedPointsPerVariantGroup()).isEqualTo(dashboard.achievedPointsPerVariantGroup());
 
         var programmingGradeBeforePendingSubmission = exercises.participationResults().stream()
                 .filter(result -> result.participationId().equals(gradedProgrammingParticipation.getId())).findFirst().orElseThrow();
@@ -1344,21 +1346,6 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetCourseForDashboardAccessDenied(boolean userRefresh) throws Exception {
-        Course course = createCourseWithEnrollmentEnabled(true);
-        unenrollStudent1FromAllCourses();
-        request.get("/api/course/courses/" + course.getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.FORBIDDEN, Course.class);
-    }
-
-    // Test
-    public void testGetCourseForDashboardForbiddenWithEnrollmentPossible() throws Exception {
-        Course course = createCourseWithEnrollmentEnabled(true);
-        unenrollStudent1FromAllCourses();
-        // still expect forbidden (403) from endpoint (only now the skipAlert flag will be set)
-        request.get("/api/course/courses/" + course.getId() + "/for-dashboard", HttpStatus.FORBIDDEN, Course.class);
-    }
-
-    // Test
     public void testGetCourseForEnrollment() throws Exception {
         Course course = createCourseWithEnrollmentEnabled(true);
         // remove student from course so that they are not already enrolled (UCR-based unenrollment)
@@ -1430,19 +1417,6 @@ public class CourseTestService {
             registeredStudent.setExam(examRegistered);
             examRegistered.addExamUser(examUserRepository.save(registeredStudent));
 
-            CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/course/courses/" + courses[i].getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK,
-                    CourseForDashboardDTO.class);
-            Course receivedCourse = receivedCourseForDashboard.course();
-            assertThat(receivedCourse).isNotNull();
-            if (i == 0) {
-                assertThat(receivedCourse.getExams()).isEmpty();
-            }
-            else if (i == 1) {
-                assertThat(receivedCourse.getExams()).containsExactlyInAnyOrder(examRegistered, testExam);
-            }
-            else {
-                assertThat(receivedCourse.getExams()).containsExactlyInAnyOrder(examUnregistered, examRegistered, testExam);
-            }
         }
         var receivedCoursesForDashboard = request.get("/api/course/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
         List<Course> receivedCourses = receivedCoursesForDashboard.courses().stream().map(CourseForDashboardDTO::course).toList();
@@ -1495,21 +1469,16 @@ public class CourseTestService {
         participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student2");
 
         var receivedCoursesForDashboard = request.get("/api/course/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
-        CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/course/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
         Course finalCourse = course;
         CourseForDashboardDTO receivedCourseForDashboardFromGeneralCall = receivedCoursesForDashboard.courses().stream()
                 .filter(dto -> dto.course().getId().equals(finalCourse.getId())).findFirst().orElseThrow();
 
         assertThat(receivedCourseForDashboardFromGeneralCall.participationResults()).hasSize(1);
-        assertThat(receivedCourseForDashboard.participationResults()).hasSize(1);
 
         assertThat(receivedCourseForDashboardFromGeneralCall.course().getExercises().stream().findFirst().orElseThrow().getStudentParticipations()).hasSize(1);
-        assertThat(receivedCourseForDashboard.course().getExercises().stream().findFirst().orElseThrow().getStudentParticipations()).hasSize(2);
 
         assertThat(receivedCourseForDashboardFromGeneralCall.totalScores().studentScores().absoluteScore()).isEqualTo(0.42 * 42, Offset.offset(0.1));
-        assertThat(receivedCourseForDashboard.totalScores().studentScores().absoluteScore()).isEqualTo(0.42 * 42, Offset.offset(0.1));
         assertThat(receivedCourseForDashboardFromGeneralCall.programmingScores().studentScores().absoluteScore()).isEqualTo(0.42 * 42, Offset.offset(0.1));
-        assertThat(receivedCourseForDashboard.programmingScores().studentScores().absoluteScore()).isEqualTo(0.42 * 42, Offset.offset(0.1));
     }
 
     // Test
@@ -1576,7 +1545,7 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetCoursesAccurateTimezoneEvaluation() throws Exception {
+    public void testGetCoursesAccurateTimezoneEvaluation(boolean shouldIncludeFutureCourseOnDashboard) throws Exception {
         Course courseActive = CourseFactory.generateCourse(null, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>());
         Course courseNotActivePast = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>());
         Course courseNotActiveFuture = CourseFactory.generateCourse(null, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>());
@@ -1592,7 +1561,12 @@ public class CourseTestService {
         long courseNotActivePastId = courseNotActivePast.getId();
         long courseNotActiveFutureId = courseNotActiveFuture.getId();
         assertThat(courses.stream().filter(c -> Objects.equals(c.getId(), courseNotActivePastId)).toList()).as("Past inactive course was filtered out").isEmpty();
-        assertThat(courses.stream().filter(c -> Objects.equals(c.getId(), courseNotActiveFutureId)).toList()).as("Future inactive course was filtered out").isEmpty();
+        if (shouldIncludeFutureCourseOnDashboard) {
+            assertThat(courses.stream().filter(c -> Objects.equals(c.getId(), courseNotActiveFutureId)).toList()).as("Future course is included for management users").hasSize(1);
+        }
+        else {
+            assertThat(courses.stream().filter(c -> Objects.equals(c.getId(), courseNotActiveFutureId)).toList()).as("Future course is filtered out for students").isEmpty();
+        }
 
         Course finalCourseActive = courseActive;
         Optional<Course> optionalCourse = courses.stream().filter(c -> Objects.equals(c.getId(), finalCourseActive.getId())).findFirst();
@@ -1630,23 +1604,6 @@ public class CourseTestService {
         Course course = request.get("/api/course/courses/" + courseWithOrganization.getId() + "/with-organizations", HttpStatus.OK, Course.class);
         assertThat(course.getOrganizations()).isEqualTo(courseWithOrganization.getOrganizations());
         assertThat(course.getOrganizations()).isNotEmpty();
-    }
-
-    // Test
-    public void testGetAllCoursesWithUserStats() throws Exception {
-        // createEnrolledCoursesWithExercisesAndLectures calls enrollPrefixedUsersInCourse internally
-        List<Course> testCourses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(userPrefix, false, 0);
-        Course course = testCourses.getFirst();
-
-        List<Course> receivedCourses = request.getList("/api/course/courses/with-user-stats", HttpStatus.OK, Course.class);
-
-        Optional<Course> optionalCourse = receivedCourses.stream().filter(c -> Objects.equals(c.getId(), course.getId())).findFirst();
-        assertThat(optionalCourse).as("Course is returned").isPresent();
-        Course returnedCourse = optionalCourse.orElseThrow();
-
-        assertThat(returnedCourse.getNumberOfStudents()).isEqualTo(NUMBER_OF_STUDENTS);
-        assertThat(returnedCourse.getNumberOfTeachingAssistants()).isEqualTo(NUMBER_OF_TUTORS);
-        assertThat(returnedCourse.getNumberOfInstructors()).isEqualTo(NUMBER_OF_INSTRUCTORS);
     }
 
     // Test
@@ -2836,7 +2793,7 @@ public class CourseTestService {
 
         final String repoSuffix = "-" + userPrefix + "student1";
 
-        var buildPlanId = (programmingExercise.getProjectKey() + repoSuffix).toUpperCase();
+        var buildPlanId = (programmingExercise.getProjectKey() + repoSuffix).toUpperCase(Locale.ROOT);
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), buildPlanId, false);
         request.delete("/api/course/courses/" + course.getId() + "/cleanup", HttpStatus.OK);
 
@@ -2888,220 +2845,6 @@ public class CourseTestService {
         Course returnedCourse = optionalCourse.orElseThrow();
 
         assertThat(returnedCourse.getId()).isEqualTo(instructorsCourse.getId());
-    }
-
-    // Test
-    public void testGetExercisesForCourseOverview() throws Exception {
-
-        // Add two courses, containing one not belonging to the instructor
-        var testCourses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(userPrefix, false, 0);
-        var instructorsCourse = testCourses.getFirst();
-        var nonInstructorsCourse = testCourses.get(1);
-
-        // Remove instructor1 from nonInstructorsCourse so they only see instructorsCourse
-        var instructor = userUtilService.getUserByLogin(userPrefix + "instructor1");
-        userUtilService.unenrollUserFromCourse(instructor, nonInstructorsCourse);
-
-        var courses = request.getList("/api/course/courses/exercises-for-management-overview", HttpStatus.OK, Course.class);
-
-        assertThat(courses.stream().filter(c -> Objects.equals(c.getId(), nonInstructorsCourse.getId())).toList()).as("Non instructors course was filtered out").isEmpty();
-
-        Optional<Course> optionalCourse = courses.stream().filter(c -> Objects.equals(c.getId(), instructorsCourse.getId())).findFirst();
-        assertThat(optionalCourse).as("Instructors course is returned").isPresent();
-        Course returnedCourse = optionalCourse.orElseThrow();
-
-        var exerciseDetails = returnedCourse.getExercises();
-        assertThat(exerciseDetails).isNotNull();
-        assertThat(exerciseDetails).hasSize(5);
-
-        var quizDetailsOptional = exerciseDetails.stream().filter(e -> e instanceof QuizExercise).findFirst();
-        assertThat(quizDetailsOptional).isPresent();
-
-        var quizExercise = ExerciseUtilService.getFirstExerciseWithType(returnedCourse, QuizExercise.class);
-
-        var quizDetails = quizDetailsOptional.get();
-        assertThat(quizDetails.getCategories()).hasSize(quizExercise.getCategories().size());
-
-        var detailsCategories = quizDetails.getCategories().stream().findFirst();
-        var exerciseCategories = quizExercise.getCategories().stream().findFirst();
-        assertThat(detailsCategories).isPresent();
-        assertThat(exerciseCategories).isPresent();
-        assertThat(detailsCategories).contains(exerciseCategories.get());
-    }
-
-    // Test
-    public void testGetExerciseStatsForCourseOverview() throws Exception {
-        var instructorsCourse = courseUtilService.createEnrolledCourse(userPrefix);
-
-        instructorsCourse.setStartDate(ZonedDateTime.now().minusWeeks(1).with(DayOfWeek.MONDAY));
-        instructorsCourse.setEndDate(ZonedDateTime.now().minusWeeks(1).with(DayOfWeek.WEDNESDAY));
-
-        var instructor = userUtilService.getUserByLogin(userPrefix + "instructor1");
-
-        // Get two students
-        var student = userUtilService.createAndSaveUser(userPrefix + "user1");
-        var student2 = userUtilService.createAndSaveUser(userPrefix + "user2");
-
-        // Add a team exercise which was just released but not due
-        var releaseDate = ZonedDateTime.now().minusDays(4);
-        var futureDueDate = ZonedDateTime.now().plusDays(2);
-        var futureAssessmentDueDate = ZonedDateTime.now().plusDays(4);
-        var teamExerciseNotEnded = textExerciseUtilService.createTeamTextExercise(instructorsCourse, releaseDate, futureDueDate, futureAssessmentDueDate);
-        teamExerciseNotEnded = exerciseRepo.save(teamExerciseNotEnded);
-
-        // Add a team with a participation to the exercise
-        final var teamExerciseId = teamExerciseNotEnded.getId();
-        var teamStudents = new HashSet<User>();
-        teamStudents.add(student);
-        var team = teamUtilService.createTeam(teamStudents, instructor, teamExerciseNotEnded, "team");
-        textExerciseUtilService.createSubmissionForTextExercise(teamExerciseNotEnded, team, "Team Text");
-        instructorsCourse.addExercises(teamExerciseNotEnded);
-
-        // Create an exercise which has passed the due and assessment due date
-        var dueDate = ZonedDateTime.now().minusDays(2);
-        var passedAssessmentDueDate = ZonedDateTime.now().minusDays(1);
-        var exerciseAssessmentDone = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, passedAssessmentDueDate, instructorsCourse);
-        exerciseAssessmentDone.setMaxPoints(5.0);
-        exerciseAssessmentDone = exerciseRepo.save(exerciseAssessmentDone);
-
-        // Add a single participation to that exercise
-        final var exerciseId = exerciseAssessmentDone.getId();
-        participationUtilService.createParticipationSubmissionAndResult(exerciseId, student, 5.0, 0.0, 60, true);
-
-        instructorsCourse.addExercises(exerciseAssessmentDone);
-
-        // Create an exercise which is currently in assessment
-        var exerciseInAssessment = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, futureAssessmentDueDate, instructorsCourse);
-        exerciseInAssessment.setMaxPoints(15.0);
-        exerciseInAssessment = exerciseRepo.save(exerciseInAssessment);
-
-        // Add a participation and submission to that exercise
-        final var exerciseIdInAssessment = exerciseInAssessment.getId();
-        var resultToSetAssessorFor = participationUtilService.createParticipationSubmissionAndResult(exerciseIdInAssessment, student, 15.0, 0.0, 30, true);
-        resultToSetAssessorFor.getSubmission().setSubmissionDate(dueDate.minusHours(1));
-        resultToSetAssessorFor.getSubmission().setSubmitted(true);
-        resultToSetAssessorFor.setAssessor(instructor);
-        resultRepo.saveAndFlush(resultToSetAssessorFor);
-        submissionRepository.saveAndFlush(resultToSetAssessorFor.getSubmission());
-
-        // Add a participation without submission to that exercise (just starting)
-        participationService.startExercise(exerciseInAssessment, student2, false);
-
-        instructorsCourse.addExercises(exerciseInAssessment);
-
-        courseRepo.save(instructorsCourse);
-
-        TextExercise finalExerciseInAssessment = exerciseInAssessment;
-        await().until(() -> !participantScoreRepository.findAllByExercise(finalExerciseInAssessment).isEmpty());
-        TextExercise finalExerciseAssessmentDone = exerciseAssessmentDone;
-        await().until(() -> !participantScoreRepository.findAllByExercise(finalExerciseAssessmentDone).isEmpty());
-
-        var courseDtos = request.getList("/api/course/courses/stats-for-management-overview", HttpStatus.OK, CourseManagementOverviewStatisticsDTO.class);
-        // We only added one course, so expect one dto
-        assertThat(courseDtos).hasSize(1);
-
-        Optional<CourseManagementOverviewStatisticsDTO> optionalCourseDTO = courseDtos.stream().filter(dto -> Objects.equals(dto.courseId(), instructorsCourse.getId()))
-                .findFirst();
-        assertThat(optionalCourseDTO).as("Active course was not filtered").isPresent();
-        CourseManagementOverviewStatisticsDTO dto = optionalCourseDTO.orElseThrow();
-
-        assertThat(dto.courseId()).isEqualTo(instructorsCourse.getId());
-        assertThat(dto.activeStudents()).as("course was only active for 3 days").hasSize(1);
-
-        // Expect our three created exercises
-        var exerciseDTOS = dto.exerciseDTOS();
-        assertThat(exerciseDTOS).hasSize(3);
-
-        // Get the statistics of the exercise with a passed assessment due date
-        var statisticsOptional = exerciseDTOS.stream().filter(exercise -> exercise.getExerciseId().equals(exerciseId)).findFirst();
-        assertThat(statisticsOptional).isPresent();
-
-        // Since the exercise is a "past exercise", the average score are the only statistics we set
-        var statisticsDTO = statisticsOptional.get();
-        assertThat(statisticsDTO.getAverageScoreInPercent()).isEqualTo(60.0);
-        assertThat(statisticsDTO.getExerciseMaxPoints()).isEqualTo(5.0);
-        assertThat(statisticsDTO.getNoOfParticipatingStudentsOrTeams()).isZero();
-        assertThat(statisticsDTO.getParticipationRateInPercent()).isZero();
-        assertThat(statisticsDTO.getNoOfStudentsInCourse()).isEqualTo(8);
-        assertThat(statisticsDTO.getNoOfRatedAssessments()).isZero();
-        assertThat(statisticsDTO.getNoOfAssessmentsDoneInPercent()).isZero();
-        assertThat(statisticsDTO.getNoOfSubmissionsInTime()).isZero();
-
-        // Get the statistics of the team exercise
-        var teamStatisticsOptional = exerciseDTOS.stream().filter(exercise -> exercise.getExerciseId().equals(teamExerciseId)).findFirst();
-        assertThat(teamStatisticsOptional).isPresent();
-
-        // Since that exercise is still "currently in progress", the participations are the only statistics we set
-        var teamStatisticsDTO = teamStatisticsOptional.get();
-        assertThat(teamStatisticsDTO.getAverageScoreInPercent()).isZero();
-        assertThat(teamStatisticsDTO.getExerciseMaxPoints()).isEqualTo(10.0);
-        assertThat(teamStatisticsDTO.getNoOfParticipatingStudentsOrTeams()).isEqualTo(1);
-        assertThat(teamStatisticsDTO.getParticipationRateInPercent()).isEqualTo(100D);
-        assertThat(teamStatisticsDTO.getNoOfStudentsInCourse()).isEqualTo(8);
-        assertThat(teamStatisticsDTO.getNoOfTeamsInCourse()).isEqualTo(1);
-        assertThat(teamStatisticsDTO.getNoOfRatedAssessments()).isZero();
-        assertThat(teamStatisticsDTO.getNoOfAssessmentsDoneInPercent()).isZero();
-        assertThat(teamStatisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(1L);
-
-        // Get the statistics of the exercise in assessment
-        var exerciseInAssessmentStatisticsOptional = exerciseDTOS.stream().filter(exercise -> exercise.getExerciseId().equals(exerciseIdInAssessment)).findFirst();
-        assertThat(exerciseInAssessmentStatisticsOptional).isPresent();
-
-        // Since that exercise is "currently in assessment", we need the numberOfRatedAssessment, assessmentsDoneInPercent and the numberOfSubmissionsInTime
-        var exerciseInAssessmentStatisticsDTO = exerciseInAssessmentStatisticsOptional.get();
-        assertThat(exerciseInAssessmentStatisticsDTO.getAverageScoreInPercent()).isZero();
-        assertThat(exerciseInAssessmentStatisticsDTO.getExerciseMaxPoints()).isEqualTo(15.0);
-        assertThat(exerciseInAssessmentStatisticsDTO.getNoOfParticipatingStudentsOrTeams()).isZero();
-        assertThat(exerciseInAssessmentStatisticsDTO.getParticipationRateInPercent()).isZero();
-        assertThat(exerciseInAssessmentStatisticsDTO.getNoOfStudentsInCourse()).isEqualTo(8);
-        assertThat(exerciseInAssessmentStatisticsDTO.getNoOfRatedAssessments()).isEqualTo(1);
-        assertThat(exerciseInAssessmentStatisticsDTO.getNoOfAssessmentsDoneInPercent()).isEqualTo(100.0);
-        assertThat(exerciseInAssessmentStatisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(1L);
-    }
-
-    // Test
-    public void testGetExerciseStatsForCourseOverviewWithPastExercises() throws Exception {
-        // Add a single course with six past exercises, from which only five are returned
-        var instructorsCourse = courseUtilService.createEnrolledCourse(userPrefix);
-
-        var releaseDate = ZonedDateTime.now().minusDays(7);
-        var dueDate = ZonedDateTime.now().minusDays(4);
-        var olderDueDate = ZonedDateTime.now().minusDays(4);
-        var assessmentDueDate = ZonedDateTime.now().minusDays(2);
-        var olderAssessmentDueDate = ZonedDateTime.now().minusDays(3);
-        var oldestAssessmentDueDate = ZonedDateTime.now().minusDays(6);
-
-        // Add five exercises with different combinations of due dates and assessment due dates
-        instructorsCourse.addExercises(exerciseRepo.save(TextExerciseFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, instructorsCourse)));
-        instructorsCourse.addExercises(exerciseRepo.save(TextExerciseFactory.generateTextExercise(releaseDate, null, assessmentDueDate, instructorsCourse)));
-        instructorsCourse.addExercises(exerciseRepo.save(TextExerciseFactory.generateTextExercise(releaseDate, olderDueDate, assessmentDueDate, instructorsCourse)));
-        instructorsCourse.addExercises(exerciseRepo.save(TextExerciseFactory.generateTextExercise(releaseDate, olderDueDate, olderAssessmentDueDate, instructorsCourse)));
-        instructorsCourse.addExercises(exerciseRepo.save(TextExerciseFactory.generateTextExercise(releaseDate, null, olderAssessmentDueDate, instructorsCourse)));
-
-        // Add one exercise which will be sorted last due to the oldest assessment due date
-        var exerciseNotReturned = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, oldestAssessmentDueDate, instructorsCourse);
-        exerciseNotReturned = exerciseRepo.save(exerciseNotReturned);
-        final var exerciseId = exerciseNotReturned.getId();
-        instructorsCourse.addExercises(exerciseNotReturned);
-        courseRepo.save(instructorsCourse);
-
-        var courseDtos = request.getList("/api/course/courses/stats-for-management-overview", HttpStatus.OK, CourseManagementOverviewStatisticsDTO.class);
-        // We only added one course, so expect one dto
-        assertThat(courseDtos).hasSize(1);
-
-        var optionalCourseDTO = courseDtos.stream().filter(dto -> Objects.equals(dto.courseId(), instructorsCourse.getId())).findFirst();
-        assertThat(optionalCourseDTO).as("Active course was not filtered").isPresent();
-        CourseManagementOverviewStatisticsDTO dto = optionalCourseDTO.orElseThrow();
-
-        assertThat(dto.courseId()).isEqualTo(instructorsCourse.getId());
-
-        // Only five exercises should be returned
-        var exerciseDTOS = dto.exerciseDTOS();
-        assertThat(exerciseDTOS).hasSize(5);
-
-        // The one specific exercise should not be included
-        var statisticsOptional = exerciseDTOS.stream().filter(exercise -> exercise.getExerciseId().equals(exerciseId)).findFirst();
-        assertThat(statisticsOptional).isEmpty();
     }
 
     public void testGetCourseManagementDetailDataForFutureCourse() throws Exception {
@@ -3291,8 +3034,9 @@ public class CourseTestService {
         assertThat(courseDTO.currentAbsoluteAverageScore()).isEqualTo(18);
         assertThat(courseDTO.currentMaxAverageScore()).isEqualTo(30);
 
+        // A course that has not ended yet: the overview runs up to the current week, not up to the end date
         course2.setStartDate(now.minusWeeks(20));
-        course2.setEndDate(null);
+        course2.setEndDate(now.plusWeeks(1));
         courseRepo.save(course2);
 
         // API call for the lifetime overview
@@ -3445,7 +3189,7 @@ public class CourseTestService {
         CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null);
         course = courseRepo.save(course);
 
-        request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
         assertThat(onlineCourseConfigurationRepository.findById(course.getOnlineCourseConfiguration().getId())).isNotPresent();
     }
@@ -3562,14 +3306,14 @@ public class CourseTestService {
         assertThat(dto.registrationId()).isEqualTo(clientId);
     }
 
-    public MockMultipartHttpServletRequestBuilder buildCreateCourse(@NonNull Course course) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildCreateCourse(@NonNull Course course) throws JacksonException {
         return buildCreateCourse(course, null);
     }
 
-    public MockMultipartHttpServletRequestBuilder buildCreateCourse(@NonNull Course course, String fileContent) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildCreateCourse(@NonNull Course course, String fileContent) throws JacksonException {
         CourseCreateDTO dto = toCourseCreateDTO(course);
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(dto).getBytes());
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/core/admin/courses").file(coursePart);
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/admin/courses").file(coursePart);
         if (fileContent != null) {
             var filePart = new MockMultipartFile("file", "placeholderName.png", MediaType.IMAGE_PNG_VALUE, fileContent.getBytes());
             builder.file(filePart);
@@ -3589,16 +3333,15 @@ public class CourseTestService {
                 course.getLanguage(), course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(),
                 course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(), course.getColor(),
                 course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(), course.getLearningPathsEnabled(),
-                course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(), course.getRestrictedAthenaModulesAccess(), course.getTimeZone(),
-                course.getCourseInformationSharingConfiguration(), course.isGradeRelevant(), course.getAutoOrchestratorEnabled(), course.getDebounceWindowSecondsOverride(),
-                course.getMaxDailyOrchestrationOverride());
+                course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(),
+                course.isGradeRelevant(), course.getAutoOrchestratorEnabled(), course.getDebounceWindowSecondsOverride(), course.getMaxDailyOrchestrationOverride());
     }
 
-    public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course) throws JacksonException {
         return buildUpdateCourse(id, course, null);
     }
 
-    public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course, String fileContent) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course, String fileContent) throws JacksonException {
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(course).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + id).file(coursePart);
         if (fileContent != null) {
@@ -3634,7 +3377,7 @@ public class CourseTestService {
         byte[] iconBytes = "icon".getBytes();
         MockMultipartFile iconFile = new MockMultipartFile("file", "icon.png", MediaType.APPLICATION_JSON_VALUE, iconBytes);
         Course savedCourseWithFile = request.putWithMultipartFile("/api/course/courses/" + course.getId(), course, "course", iconFile, Course.class, HttpStatus.OK, null);
-        Path path = FilePathConverter.fileSystemPathForExternalUri(URI.create(savedCourseWithFile.getCourseIcon()), FilePathType.COURSE_ICON);
+        Path path = new FileSystemLocation.CourseIcon(savedCourseWithFile.getCourseIcon()).path();
 
         savedCourseWithFile.setCourseIcon(null);
         request.putWithMultipartFile("/api/course/courses/" + savedCourseWithFile.getId(), savedCourseWithFile, "course", null, Course.class, HttpStatus.OK, null);
@@ -3692,10 +3435,8 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetAllCoursesForCourseArchiveWithNonNullSemestersAndEndDate() throws Exception {
+    public void testGetAllCoursesForCourseArchive() throws Exception {
         List<Course> expectedOldCourses = new ArrayList<>();
-        // we have to set the semester of all existing courses to null to avoid them being selected by the archive logic
-        courseRepo.clearSemester();
         for (int i = 1; i <= 4; i++) {
             expectedOldCourses.add(courseUtilService.createEnrolledCourse(userPrefix));
         }
@@ -3706,23 +3447,32 @@ public class CourseTestService {
         expectedOldCourses.get(1).setEndDate(ZonedDateTime.now().minusDays(10));
         expectedOldCourses.get(2).setSemester("WS21/22");
         expectedOldCourses.get(2).setEndDate(ZonedDateTime.now().minusDays(10));
-        expectedOldCourses.get(3).setSemester(null); // will be filtered out
+        expectedOldCourses.get(3).setSemester("WS22/23");
+        expectedOldCourses.get(3).setEndDate(ZonedDateTime.now().minusDays(10));
 
         courseRepo.saveAll(expectedOldCourses);
 
         final Set<CourseForArchiveDTO> actualOldCourses = request.getSet("/api/course/courses/for-archive", HttpStatus.OK, CourseForArchiveDTO.class);
-        assertThat(actualOldCourses).as("Course archive has 3 courses").hasSize(3);
-        assertThat(actualOldCourses).as("Course archive has the correct semesters").extracting("semester").containsExactlyInAnyOrder(expectedOldCourses.get(0).getSemester(),
-                expectedOldCourses.get(1).getSemester(), expectedOldCourses.get(2).getSemester());
-        assertThat(actualOldCourses).as("Course archive got the correct courses").extracting("id").containsExactlyInAnyOrder(expectedOldCourses.get(0).getId(),
-                expectedOldCourses.get(1).getId(), expectedOldCourses.get(2).getId());
-        Optional<CourseForArchiveDTO> notFound = actualOldCourses.stream().filter(c -> Objects.equals(c.id(), expectedOldCourses.get(3).getId())).findFirst();
-        assertThat(notFound).as("Course archive did not fetch the last course").isNotPresent();
+        assertThat(actualOldCourses).as("Course archive got the expected courses").extracting(CourseForArchiveDTO::id)
+                .contains(expectedOldCourses.stream().map(Course::getId).toArray(Long[]::new));
+        // A course can no longer be semester-independent, so the fourth course carries the most recent semester instead.
+        Optional<CourseForArchiveDTO> mostRecentOldCourse = actualOldCourses.stream().filter(c -> Objects.equals(c.id(), expectedOldCourses.get(3).getId())).findFirst();
+        assertThat(mostRecentOldCourse).as("Course archive contains the course of the most recent semester").isPresent();
+        assertThat(mostRecentOldCourse.orElseThrow().semester()).isEqualTo("WS22/23");
+
+        Course archivedTestCourse = courseUtilService.createEnrolledCourse(userPrefix);
+        archivedTestCourse.setTestCourse(true);
+        archivedTestCourse.setSemester("WS22/23");
+        archivedTestCourse.setEndDate(ZonedDateTime.now().minusDays(10));
+        courseRepo.save(archivedTestCourse);
+
+        final Set<CourseForArchiveDTO> coursesIncludingTestCourse = request.getSet("/api/course/courses/for-archive", HttpStatus.OK, CourseForArchiveDTO.class);
+        assertThat(coursesIncludingTestCourse).extracting("id").contains(archivedTestCourse.getId());
+        assertThat(coursesIncludingTestCourse.stream().filter(course -> course.id() == archivedTestCourse.getId()).findFirst().orElseThrow().testCourse()).isTrue();
     }
 
     // Test
     public void testGetAllCoursesForCourseArchiveForUnenrolledStudent() throws Exception {
-        courseRepo.clearSemester();
         Course course1 = courseUtilService.createCourse();
         course1.setSemester("SS20");
         course1.setEndDate(ZonedDateTime.now().minusDays(10));

@@ -1,16 +1,27 @@
-<div ngbDropdown container="body" class="d-inline">
-    <button id="user-management-dropdown" class="user-mgmt-btn" ngbDropdownToggle>
-        <fa-icon [icon]="faUser" />
-        <span class="d-none d-sm-inline"> {{ 'global.menu.admin.userManagement' | artemisTranslate }}</span>
-    </button>
-    <div ngbDropdownMenu aria-labelledby="instructor-actions-dropdown">
-        @for (userAddAction of userAddActions(); track userAddAction) {
-            <a class="btn" [routerLink]="userAddAction.routerLink" ngbDropdownItem [id]="userAddAction.id">
-                @if (userAddAction.icon) {
-                    <fa-icon [fixedWidth]="true" [icon]="userAddAction.icon" class="ms-2 me-3" />
-                }
+<!-- The label is repeated as aria-label because it is only rendered from the `sm` breakpoint up: without it the
+     trigger is an unnamed icon button on a phone. The id stays alongside the test hook because the menu is named
+     by it, so an end-to-end test never has to reach for an id that exists for an accessibility relation. -->
+<button
+    id="user-management-dropdown"
+    data-testid="user-management-dropdown"
+    type="button"
+    tumUiButton
+    severity="secondary"
+    variant="outlined"
+    size="small"
+    [attr.aria-label]="'global.menu.admin.userManagement' | artemisTranslate"
+    [tumUiMenuTrigger]="userAddMenu"
+>
+    <fa-icon [icon]="faUser" />
+    <span class="hidden sm:inline">{{ 'global.menu.admin.userManagement' | artemisTranslate }}</span>
+</button>
+<ng-template #userAddMenu>
+    <tum-ui-menu aria-labelledby="user-management-dropdown">
+        @for (userAddAction of userAddActions(); track userAddAction.id) {
+            <a tumUiMenuItem [routerLink]="userAddAction.routerLink" [id]="userAddAction.id">
+                <fa-icon [fixedWidth]="true" [icon]="userAddAction.icon" />
                 <span [jhiTranslate]="userAddAction.label"></span>
             </a>
         }
-    </div>
-</div>
+    </tum-ui-menu>
+</ng-template>

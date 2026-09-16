@@ -46,6 +46,13 @@ export const highlightCards: HighlightCardData[] = [
         borderColor: '#A2AD00',
     },
     {
+        icon: faGauge,
+        title: 'Measured, Not Asserted',
+        description:
+            'The performance claims on this site come from a published reference run: 4,000 students sitting one exam at 0.09s average with zero failed requests. The load generator that produced it ships with Artemis, so you can re-run it on your own hardware.',
+        borderColor: '#E37222',
+    },
+    {
         icon: faLock,
         title: 'Institutional Data Sovereignty',
         description:
@@ -392,7 +399,7 @@ export const featureCategories: FeatureCategory[] = [
             feature('scalability', 'Scalability (concurrent users)', [S, S, S, S, P, P], {
                 tooltip: 'Ability to handle large numbers of simultaneous users',
                 notes: {
-                    [PlatformId.Artemis]: 'Used for courses and online exams with more than 2,000 students; scales horizontally',
+                    [PlatformId.Artemis]: 'Measured at 4,000 students sitting one exam: 390,988 requests, zero failures, 0.09s average. Scales horizontally',
                     [PlatformId.ILIAS]: 'Requires careful tuning for large deployments',
                     [PlatformId.OpenOlat]: 'Suitable for mid-size deployments',
                 },

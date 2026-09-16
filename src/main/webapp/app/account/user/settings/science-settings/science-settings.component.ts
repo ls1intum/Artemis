@@ -10,6 +10,8 @@ import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.
 import { UserSettingsDirective } from 'app/account/user/settings/directive/user-settings.directive';
 import { ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
 import { ScienceSetting } from 'app/account/user/settings/science-settings/science-settings-structure';
+import { FormsModule } from '@angular/forms';
+import { TumUiListComponent, TumUiListItemDirective, TumUiToggleSwitchComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-science-settings',
@@ -21,6 +23,10 @@ import { ScienceSetting } from 'app/account/user/settings/science-settings/scien
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
         ArtemisTranslatePipe,
+        FormsModule,
+        TumUiListComponent,
+        TumUiListItemDirective,
+        TumUiToggleSwitchComponent,
     ],
 })
 export class ScienceSettingsComponent extends UserSettingsDirective implements OnInit, OnDestroy {
@@ -61,17 +67,15 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
     }
 
     /**
-     * Catches the toggle event from a user click
-     * Toggles the respective setting and saves it immediately
+     * Applies a switch change to the respective setting and saves it immediately.
      */
-    toggleSetting(event: MouseEvent) {
-        const settingId = (event.currentTarget as HTMLElement | undefined)?.id;
-        const settingToUpdate = this.settings().find((setting) => setting.settingId === settingId);
+    toggleSetting(setting: ScienceSetting, active: boolean) {
+        const settingToUpdate = this.settings().find((candidate) => candidate.settingId === setting.settingId);
         if (!settingToUpdate) {
             return;
         }
         const confirmedValue = this.lastConfirmedValues.get(settingToUpdate.settingId) ?? settingToUpdate.active;
-        settingToUpdate.active = !settingToUpdate.active;
+        settingToUpdate.active = active;
         settingToUpdate.changed = true;
 
         // Cancel any in-flight save to prevent race conditions on rapid toggles
@@ -87,9 +91,11 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
                 this.finishSaving();
             },
             error: (res) => {
-                // Revert to the last server-confirmed value
+                // Revert to the last server-confirmed value. The setting is mutated in place, so re-set the
+                // structure to publish the revert: the signal notifies on an unchanged reference.
                 settingToUpdate.active = confirmedValue;
                 settingToUpdate.changed = false;
+                this.userSettings.set(this.userSettings());
                 this.onError(res);
             },
         });

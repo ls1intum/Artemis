@@ -67,6 +67,19 @@ class ManagementEndpointAccessTest extends AbstractSpringIntegrationIndependentT
         }
     }
 
+    /**
+     * An issued token cannot be revoked, so the administrator authority it carries only says what was true when it was
+     * signed. Actuator endpoints are not served by an annotated handler, so this rule is the only thing standing
+     * between a deactivated, deleted or demoted administrator and the management endpoints, and it therefore has to
+     * weigh the persisted account rather than the token alone. The mock account below exists in no database, which is
+     * what an administrator whose role was revoked looks like to the check.
+     */
+    @Test
+    @WithMockUser(username = "management-contract-revoked-admin", roles = { "ADMIN" })
+    void generalManagementRuleShouldRejectAnAdministratorAuthorityThatTheAccountNoLongerHas() throws Exception {
+        assertThat(status("/management/env")).isEqualTo(403);
+    }
+
     @Test
     @WithAnonymousUser
     void generalManagementRuleShouldRequireAuthentication() throws Exception {

@@ -16,13 +16,11 @@ import de.tum.cit.aet.artemis.account.domain.User;
 public record MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName, String activationKey, String resetKey) {
 
     /**
-     * Returns the user's full name in the format used by the mail templates.
+     * Returns the user's display name in the format used by the mail templates, falling back to the login when the account has no
+     * name (see {@link User#displayName}).
      */
     public String getName() {
-        if (lastName != null && !lastName.isEmpty()) {
-            return firstName + " " + lastName;
-        }
-        return firstName;
+        return User.displayName(firstName, lastName, login);
     }
 
     /**

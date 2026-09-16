@@ -36,11 +36,11 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
         Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate,
         ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, AssessmentType assessmentType, boolean secondCorrectionEnabled,
         Boolean presentationScoreEnabled, String problemStatement, String exampleSolution, String gradingInstructions, Set<String> categories, String channelName,
-        String feedbackSuggestionModule, boolean allowComplaintsForAutomaticAssessments, boolean allowFeedbackRequests, Long courseId, Double courseAccuracyOfScores,
-        CourseForQuizExerciseDTO course, Long exerciseGroupId, Long examId, ZonedDateTime examPublishResultsDate, TeamAssignmentConfigDTO teamAssignmentConfig,
-        Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, PlagiarismDetectionConfigDTO plagiarismDetectionConfig,
-        boolean gradingInstructionFeedbackUsed, Set<ExampleSubmissionDTO> exampleSubmissions, Boolean teamMode, TextExerciseExamGroupDTO exerciseGroup,
-        ExerciseVariantGroupReferenceDTO exerciseVariantGroup) implements Serializable {
+        boolean allowComplaintsForAutomaticAssessments, boolean allowFeedbackRequests, Long courseId, Double courseAccuracyOfScores, CourseForQuizExerciseDTO course,
+        Long exerciseGroupId, Long examId, ZonedDateTime examPublishResultsDate, TeamAssignmentConfigDTO teamAssignmentConfig, Set<GradingCriterionDTO> gradingCriteria,
+        Set<CompetencyLinkDTO> competencyLinks, PlagiarismDetectionConfigDTO plagiarismDetectionConfig, boolean gradingInstructionFeedbackUsed,
+        Set<ExampleSubmissionDTO> exampleSubmissions, Boolean teamMode, TextExerciseExamGroupDTO exerciseGroup, ExerciseVariantGroupReferenceDTO exerciseVariantGroup)
+        implements Serializable {
 
     /**
      * Creates a {@link TextExerciseResponseDTO} from the given {@link TextExercise}.
@@ -49,6 +49,22 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
      * @return the corresponding DTO, or {@code null} if the input was {@code null}
      */
     public static TextExerciseResponseDTO of(TextExercise exercise) {
+        return of(exercise, false);
+    }
+
+    /**
+     * Creates the record written into the exercise details file of an archive. It is the response record without the
+     * ids of the plagiarism detection and the team assignment configuration: those are rows of this instance, and a
+     * file read back elsewhere must not carry them.
+     *
+     * @param exercise the text exercise to export (may be {@code null})
+     * @return the corresponding DTO, or {@code null} if the input was {@code null}
+     */
+    public static TextExerciseResponseDTO forExport(TextExercise exercise) {
+        return of(exercise, true);
+    }
+
+    private static TextExerciseResponseDTO of(TextExercise exercise, boolean forExport) {
         if (exercise == null) {
             return null;
         }
@@ -111,6 +127,11 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
                 ? PlagiarismDetectionConfigDTO.of(exercise.getPlagiarismDetectionConfig())
                 : null;
 
+        if (forExport) {
+            teamAssignmentConfigDTO = teamAssignmentConfigDTO == null ? null : teamAssignmentConfigDTO.withoutId();
+            plagiarismDetectionConfigDTO = plagiarismDetectionConfigDTO == null ? null : plagiarismDetectionConfigDTO.withoutId();
+        }
+
         // Only populated on the single-exercise detail endpoint, which explicitly loads example submissions; null/omitted elsewhere.
         Set<ExampleSubmissionDTO> exampleSubmissionDTOs = Hibernate.isInitialized(exercise.getExampleSubmissions())
                 ? exercise.getExampleSubmissions().stream().map(ExampleSubmissionDTO::of).collect(Collectors.toSet())
@@ -129,9 +150,9 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
                 exercise.getMode(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(), exercise.getReleaseDate(), exercise.getStartDate(),
                 exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getAssessmentType(),
                 exercise.getSecondCorrectionEnabled(), exercise.getPresentationScoreEnabled(), exercise.getProblemStatement(), exercise.getExampleSolution(),
-                exercise.getGradingInstructions(), categories, exercise.getChannelName(), exercise.getFeedbackSuggestionModule(),
-                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), courseId, courseAccuracyOfScores, course, exerciseGroupId, examId,
-                examPublishResultsDate, teamAssignmentConfigDTO, gradingCriterionDTOs, competencyLinkDTOs, plagiarismDetectionConfigDTO,
-                exercise.isGradingInstructionFeedbackUsed(), exampleSubmissionDTOs, exercise.getMode() == ExerciseMode.TEAM, exerciseGroup, exerciseVariantGroupDTO);
+                exercise.getGradingInstructions(), categories, exercise.getChannelName(), exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(),
+                courseId, courseAccuracyOfScores, course, exerciseGroupId, examId, examPublishResultsDate, teamAssignmentConfigDTO, gradingCriterionDTOs, competencyLinkDTOs,
+                plagiarismDetectionConfigDTO, exercise.isGradingInstructionFeedbackUsed(), exampleSubmissionDTOs, exercise.getMode() == ExerciseMode.TEAM, exerciseGroup,
+                exerciseVariantGroupDTO);
     }
 }

@@ -73,13 +73,7 @@
                 @if (showIcon()) {
                     <fa-icon class="result-score-icon" [class]="textColorClass()" [icon]="resultIconClass()" size="lg" />
                 }
-                <span
-                    [class]="textColorClass()"
-                    class="result leading-tight"
-                    [ngClass]="{ 'clickable-result': !isInSidebarCard() && resolvedExercise()?.type !== ExerciseType.QUIZ }"
-                    id="result-score"
-                    (click)="!isInSidebarCard() ? showDetails(currentResult) : ''"
-                >
+                <span [class]="textColorClass()" class="result leading-tight" [class.clickable-result]="canShowDetails()" id="result-score" (click)="showDetails(currentResult)">
                     <span [pTooltip]="resultTooltip() | artemisTranslate">{{ resultString() }}</span>
                     @if (short() && currentResult.codeIssueCount) {
                         <span [pTooltip]="'artemisApp.result.codeIssuesTooltip' | artemisTranslate">
@@ -140,7 +134,7 @@
                 @if (result(); as missingResult) {
                     @if (resolvedExercise()?.type !== ExerciseType.QUIZ) {
                         <span
-                            [ngClass]="{ 'clickable-result': !isInSidebarCard() }"
+                            [class.clickable-result]="canShowDetails()"
                             class="result"
                             (click)="showDetails(missingResult)"
                             jhiTranslate="artemisApp.result.missing.viewPrevious"

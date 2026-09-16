@@ -70,6 +70,7 @@ public abstract class Conversation extends DomainObject {
 
     @ManyToOne
     @JsonIgnore
+    @JoinColumn(nullable = false)
     private Course course;
 
     @CreatedDate

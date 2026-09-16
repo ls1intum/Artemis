@@ -7,8 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.admin.config.DataCleanupProperties;
@@ -45,7 +43,7 @@ public class AutomaticDataCleanupScheduleService {
             return;
         }
         log.info("Scheduled data-privacy cleanup: warning instructors of old courses due for a student-data reset");
-        runAsSystem(dataCleanupService::warnOldCoursesReset);
+        SecurityUtils.runAsSystem(dataCleanupService::warnOldCoursesReset);
     }
 
     /**
@@ -57,7 +55,7 @@ public class AutomaticDataCleanupScheduleService {
             return;
         }
         log.info("Scheduled data-privacy cleanup: resetting the student data of old courses");
-        runAsSystem(dataCleanupService::resetOldCourses);
+        SecurityUtils.runAsSystem(dataCleanupService::resetOldCourses);
     }
 
     /**
@@ -69,7 +67,7 @@ public class AutomaticDataCleanupScheduleService {
             return;
         }
         log.info("Scheduled data-privacy cleanup: deleting feedback of non-latest results of old courses");
-        runAsSystem(dataCleanupService::deleteFeedbackOfNonLatestResultsOfOldCourses);
+        SecurityUtils.runAsSystem(dataCleanupService::deleteFeedbackOfNonLatestResultsOfOldCourses);
     }
 
     /**
@@ -81,7 +79,7 @@ public class AutomaticDataCleanupScheduleService {
             return;
         }
         log.info("Scheduled data-privacy cleanup: deleting submission versions of old courses");
-        runAsSystem(dataCleanupService::deleteOldCourseSubmissionVersions);
+        SecurityUtils.runAsSystem(dataCleanupService::deleteOldCourseSubmissionVersions);
     }
 
     /**
@@ -94,20 +92,20 @@ public class AutomaticDataCleanupScheduleService {
             return;
         }
         log.info("Scheduled data-privacy cleanup: warning not-enrolled, inactive users about an upcoming account deletion");
-        runAsSystem(dataCleanupService::warnNotEnrolledUsers);
+        SecurityUtils.runAsSystem(dataCleanupService::warnNotEnrolledUsers);
     }
 
     /**
-     * Soft-deletes users who were warned, whose grace period has elapsed, and who are still not-enrolled and inactive
-     * (phase 2 of the not-enrolled-user cleanup).
+     * Permanently deletes users who were warned, whose grace period has elapsed, who are still not-enrolled and inactive,
+     * and whose course-owned data has already been cleaned so no blocking domain references remain.
      */
     @Scheduled(cron = "${artemis.scheduling.not-enrolled-users-cleanup-time:0 0 6 1 * *}")
     public void deleteNotEnrolledUsers() {
         if (!dataCleanupProperties.notEnrolledUsersScheduleEnabled()) {
             return;
         }
-        log.info("Scheduled data-privacy cleanup: soft-deleting warned not-enrolled, inactive users");
-        runAsSystem(dataCleanupService::deleteNotEnrolledUsers);
+        log.info("Scheduled data-privacy cleanup: permanently deleting eligible warned not-enrolled, inactive users");
+        SecurityUtils.runAsSystem(dataCleanupService::deleteNotEnrolledUsers);
     }
 
     /**
@@ -119,24 +117,6 @@ public class AutomaticDataCleanupScheduleService {
             return;
         }
         log.info("Scheduled data-privacy cleanup: deleting plagiarism cases of old courses");
-        runAsSystem(dataCleanupService::deletePlagiarismCasesOfOldCourses);
-    }
-
-    /**
-     * Runs the given cleanup job with a synthetic system authorization, restoring the previous security context
-     * afterwards so the mutated thread-local state cannot leak to unrelated work on the reused scheduler thread.
-     *
-     * @param job the cleanup job to run
-     */
-    private void runAsSystem(Runnable job) {
-        SecurityContext previousContext = SecurityContextHolder.getContext();
-        try {
-            SecurityContextHolder.clearContext();
-            SecurityUtils.setAuthorizationObject();
-            job.run();
-        }
-        finally {
-            SecurityContextHolder.setContext(previousContext);
-        }
+        SecurityUtils.runAsSystem(dataCleanupService::deletePlagiarismCasesOfOldCourses);
     }
 }

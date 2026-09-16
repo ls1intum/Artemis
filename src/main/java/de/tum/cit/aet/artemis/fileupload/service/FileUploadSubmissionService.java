@@ -24,9 +24,10 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EmptyFileException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -34,10 +35,12 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.core.util.PublicFileUrl;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -63,9 +66,10 @@ public class FileUploadSubmissionService extends SubmissionService {
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             ParticipationService participationService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, FileService fileService,
             AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService,
-            ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi) {
+            ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi,
+            TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
-                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi);
+                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi, testCaseFeedbackRepository, scaFeedbackRepository);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileService = fileService;
         this.exerciseDateService = exerciseDateService;
@@ -85,13 +89,14 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @throws EmptyFileException if file is empty
      */
     public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise exercise, User user,
-            @Nullable StudentParticipation participationFromExamGate) throws IOException, EmptyFileException {
+            @Nullable StudentParticipationSubmitTargetDTO participationFromExamGate) throws IOException, EmptyFileException {
         // Don't allow submissions after the due date (except if the exercise was started after the due date)
         // Reuse the participation the exam submission gate already resolved, when the caller passed one. It only does
         // so for a single, non test run participation of an exam exercise, which is exactly the case where this lookup
         // would return the same row. Every other caller passes null and the participation is resolved here.
-        final var optionalParticipation = participationFromExamGate != null ? Optional.of(participationFromExamGate)
-                : participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
+        // The gate never hands one over for a file upload: this reads the previous file off participation.submissions,
+        // which the gate's projection does not carry, so the participation is resolved here with them.
+        final var optionalParticipation = participationService.findOneByExerciseAndStudentWithEagerSubmissionsAnyState(exercise, user);
         if (optionalParticipation.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());
         }
@@ -183,7 +188,7 @@ public class FileUploadSubmissionService extends SubmissionService {
             fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
         }
         final Path savePath = saveFileForSubmission(file, fileUploadSubmission, exercise);
-        final URI newFilePath = FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.FILE_UPLOAD_SUBMISSION, fileUploadSubmission.getId());
+        final URI newFilePath = URI.create(new PublicFileUrl.FileUploadSubmission(exercise.getId(), fileUploadSubmission.getId(), savePath.getFileName().toString()).clientPath());
 
         // We need to ensure that we can access the store file and the stored file is the same as was passed to us in the request
         final var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(savePath));
@@ -195,9 +200,11 @@ public class FileUploadSubmissionService extends SubmissionService {
         Optional<FileUploadSubmission> previousFileUploadSubmission = participation.findLatestSubmission();
 
         previousFileUploadSubmission.filter(previousSubmission -> previousSubmission.getFilePath() != null).ifPresent(previousSubmission -> {
-            final URI oldFilePath = URI.create(previousSubmission.getFilePath());
+            // Compared as strings rather than as URIs: a value stored before filenames were sanitized may contain a space, which URI.create rejects outright, and a submission
+            // is not the place to find that out.
+            final String oldFilePath = previousSubmission.getFilePath();
             // check if we already had a file associated with this submission
-            if (!oldFilePath.equals(newFilePath)) { // different name
+            if (!oldFilePath.equals(newFilePath.toString())) { // different name
                 // IMPORTANT: only delete the file when it has changed the name
                 previousSubmission.onDelete();
             }

@@ -7,7 +7,6 @@ import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +37,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -53,6 +54,7 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionOwnerDTO;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionResponseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithComplaintDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -95,10 +97,15 @@ public class SubmissionService {
 
     private final Optional<AthenaApi> athenaApi;
 
+    private final TestCaseFeedbackRepository testCaseFeedbackRepository;
+
+    private final ScaFeedbackRepository scaFeedbackRepository;
+
     public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
             FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService, ParticipationRepository participationRepository,
-            ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi) {
+            ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi, TestCaseFeedbackRepository testCaseFeedbackRepository,
+            ScaFeedbackRepository scaFeedbackRepository) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -111,6 +118,8 @@ public class SubmissionService {
         this.complaintRepository = complaintRepository;
         this.feedbackService = feedbackService;
         this.athenaApi = athenaApi;
+        this.testCaseFeedbackRepository = testCaseFeedbackRepository;
+        this.scaFeedbackRepository = scaFeedbackRepository;
     }
 
     /**
@@ -234,22 +243,6 @@ public class SubmissionService {
     }
 
     /**
-     * Returns the next submission without result and with individual due date,
-     * in the ordering of their individual due dates.
-     *
-     * @param exercise        the exercise for which we want to retrieve a submission
-     * @param examMode        flag to determine if test runs should be removed. This should be set to true for exam exercises
-     * @param correctionRound the correction round we want our submission to have results for
-     * @return the next submission, ordered by individual due date (the earliest first), without any manual result
-     */
-    public Optional<Submission> getNextAssessableSubmission(Exercise exercise, boolean examMode, int correctionRound) {
-        var assessableSubmissions = getAssessableSubmissions(exercise, examMode, correctionRound);
-
-        return assessableSubmissions.stream().filter(a -> a.getParticipation().getIndividualDueDate() != null)
-                .min(Comparator.comparing(a -> a.getParticipation().getIndividualDueDate()));
-    }
-
-    /**
      * Given an exercise, find the submission to assess using Athena, if enabled.
      *
      * @param <S>                 the submission type
@@ -327,15 +320,15 @@ public class SubmissionService {
     }
 
     /**
-     * Get all currently locked submissions for all users in the given exam.
+     * Get all currently locked submissions across the given exercises (used for an exam).
      * These are all submissions for which users started, but did not yet finish the assessment.
      *
-     * @param examId - the exam id
-     * @param user   - the user trying to access the locked submissions
+     * @param exerciseIds - the ids of the exam's exercises
+     * @param user        - the user trying to access the locked submissions
      * @return - list of submissions that have locked results in the exam
      */
-    public List<Submission> getLockedSubmissions(Long examId, User user) {
-        List<Submission> submissions = submissionRepository.getLockedSubmissionsAndResultsByExamId(examId);
+    public List<Submission> getLockedSubmissions(Collection<Long> exerciseIds, User user) {
+        List<Submission> submissions = submissionRepository.getLockedSubmissionsAndResultsByExerciseIds(exerciseIds);
 
         for (Submission submission : submissions) {
             hideDetails(submission, user);
@@ -420,7 +413,36 @@ public class SubmissionService {
     public Set<Feedback> copyFeedbackToNewResult(Result newResult, Result oldResult) {
         Collection<Feedback> oldFeedback = oldResult.getFeedbacks();
         copyFeedbackToResult(newResult, oldFeedback);
+        copyTypedFeedbackToResult(newResult, oldResult);
         return newResult.getFeedbacks();
+    }
+
+    /**
+     * Copies the typed automatic feedback (test-case and SCA rows) of the old result to the new result.
+     * The rows are loaded from the database (the old result's collections may be uninitialized) and the
+     * copies share the deduplicated message rows. No-op for results of non-programming exercises.
+     *
+     * @param newResult the result to copy the typed feedback to
+     * @param oldResult the result to copy the typed feedback from
+     */
+    protected void copyTypedFeedbackToResult(Result newResult, Result oldResult) {
+        if (oldResult == null || oldResult.getId() == null) {
+            return;
+        }
+        // fetch the shared message rows eagerly: the copies keep the message reference, and the new result
+        // may be synthesized for serialization right away (e.g. exam test-run drafts) - a lazy proxy would
+        // fail there with a LazyInitializationException
+        testCaseFeedbackRepository.findWithTestCaseAndMessageByResultIds(List.of(oldResult.getId())).stream().map(feedbackService::copyTestCaseFeedback)
+                .forEach(newResult::addTestCaseFeedback);
+        scaFeedbackRepository.findWithMessageByResultIds(List.of(oldResult.getId())).stream().map(feedbackService::copyScaFeedback).forEach(newResult::addScaFeedback);
+
+        // Insert the copies right away when the target result already exists: a synthesized legacy view is addressed by the id of the row it comes from, so every caller that
+        // serializes the new result afterwards needs those ids. The rows are new, so this persists them in place - the ids land on these very instances and the eagerly
+        // fetched test cases and messages above survive, both of which a merge copy would lose. A result that is not persisted yet gets its rows through the caller's save.
+        if (newResult.getId() != null) {
+            newResult.setTestCaseFeedbacks(testCaseFeedbackRepository.saveAll(newResult.getTestCaseFeedbacks()));
+            newResult.setScaFeedbacks(scaFeedbackRepository.saveAll(newResult.getScaFeedbacks()));
+        }
     }
 
     /**
@@ -455,6 +477,8 @@ public class SubmissionService {
         }
         Result newResult = new Result();
         setExerciseIdFromSubmission(submission, newResult);
+        // Set before copying the feedback, which saves the result: the result owns the foreign key to its submission.
+        newResult.setSubmission(submission);
         copyFeedbackToNewResult(newResult, oldResult);
         return copyResultContentAndAddToSubmission(submission, newResult, oldResult);
     }
@@ -472,8 +496,18 @@ public class SubmissionService {
     public Result createResultAfterComplaintResponse(Submission submission, Result oldResult, List<Feedback> feedbacks, String assessmentNoteText) {
         Result newResult = new Result();
         setExerciseIdFromSubmission(submission, newResult);
+        // Set before the first save below: copyFeedbackToResult saves the result, and the result owns the foreign key
+        // to its submission, so leaving it for copyResultContentAndAddToSubmission would insert a result without one.
+        newResult.setSubmission(submission);
         updateAssessmentNoteAfterComplaintResponse(newResult, assessmentNoteText, submission.getLatestResult().getAssessor());
-        copyFeedbackToResult(newResult, feedbacks);
+        List<Feedback> feedbackToCopy = new ArrayList<>(feedbacks);
+        if (submission.getParticipation().getExercise() instanceof ProgrammingExercise) {
+            // The client echoes the automatic test-case and SCA feedback items it received (synthesized
+            // from the typed collections, hence without ids) - they are copied as typed rows below instead.
+            feedbackToCopy.removeIf(feedback -> (feedback.getId() == null || feedback.getId() < 0) && (feedback.getTestCase() != null || feedback.isStaticCodeAnalysisFeedback()));
+        }
+        copyFeedbackToResult(newResult, feedbackToCopy);
+        copyTypedFeedbackToResult(newResult, oldResult);
         newResult = copyResultContentAndAddToSubmission(submission, newResult, oldResult);
         return newResult;
     }
@@ -602,20 +636,44 @@ public class SubmissionService {
         // copy feedback from automatic result
         if (existingAutomaticResult.isPresent()) {
             draftAssessment.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-            // also saves the draft assessment
             draftAssessment.setFeedbacks(copyFeedbackToNewResult(draftAssessment, existingAutomaticResult.get()));
+            // copyFeedbackToNewResult saves the draft before the typed test-case/SCA copies are attached -
+            // save again so the typed rows are persisted with the draft. Deliberately keep (and return) the
+            // original object instead of the merge result: the merge replaces the eagerly fetched test-case
+            // and message associations of the copies with uninitialized proxies, which would break the
+            // synthesized serialization of the draft.
+            resultRepository.save(draftAssessment);
         }
 
         return draftAssessment;
     }
 
     /**
+     * Defence in depth for {@link #checkCorrectionRoundIsValidElseThrow(Exercise, int)}: the endpoints validate the round against
+     * the exercise before they lock, this only makes sure that no path which skips that validation can persist a result for a
+     * negative round. The upper bound is not checked here because the exercise reachable from a submission does not
+     * necessarily have its exam loaded.
+     *
+     * @param correctionRound the correction round to check
+     * @throws BadRequestAlertException if the correction round is negative
+     */
+    protected static void checkCorrectionRoundIsNotNegativeElseThrow(int correctionRound) {
+        if (correctionRound < 0) {
+            throw new BadRequestAlertException("The correction round must not be negative", ENTITY_NAME, "invalidCorrectionRound");
+        }
+    }
+
+    /**
      * Soft locks the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e.
      * the client will not allow tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first.
      *
-     * @param submission the submission to lock
+     * @param submission      the submission to lock
+     * @param correctionRound the correction round to lock the submission for, must not be negative
+     * @return the locked result
+     * @throws BadRequestAlertException if the correction round is negative
      */
     protected Result lockSubmission(Submission submission, int correctionRound) {
+        checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
         Result result = submission.getResultForCorrectionRound(correctionRound);
         if (result == null && correctionRound > 0) {
             // copy the result of the previous correction round
@@ -630,14 +688,15 @@ public class SubmissionService {
         }
 
         // The round this result belongs to is stored on the result itself. This is the one place where a manual result
-        // for a correction round is created or claimed, so it is also where a result that predates the column gets its
-        // round the first time a tutor opens it.
+        // for a correction round is created or claimed, and the round the tutor asked for takes precedence over the one
+        // Submission.addResult would derive.
         result.setCorrectionRound(correctionRound);
         result.setAssessmentType(AssessmentType.MANUAL);
-        // Workaround to prevent the assessor turning into a proxy object after saving
-        var assessor = result.getAssessor();
-        result = resultRepository.save(result);
-        result.setAssessor(assessor);
+        // Deliberately keep (and return) the object the submission's result set already holds instead of the
+        // merge result: the set ignores re-adding an equal copy, so a caller that adds the returned result back
+        // would keep the stale instance. Returning the original also avoids the assessor (and every other
+        // association) turning into an uninitialized proxy, which the merge result does.
+        resultRepository.save(result);
         return result;
     }
 
@@ -702,7 +761,7 @@ public class SubmissionService {
         }
         else {
             // special check for programming exercises as they use buildAndTestStudentSubmissionAfterDueDate instead of dueDate
-            if (exercise instanceof ProgrammingExercise programmingExercise && !exercise.getAllowFeedbackRequests()) {
+            if (exercise instanceof ProgrammingExercise programmingExercise) {
                 if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
                         && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
                     log.debug("The due date to build and test of exercise '{}' has not been reached yet.", exercise.getTitle());
@@ -714,6 +773,22 @@ public class SubmissionService {
                 log.debug("The due date of exercise '{}' has not been reached yet.", exercise.getTitle());
                 throw new AccessForbiddenException("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
             }
+        }
+    }
+
+    /**
+     * The correction round is a request parameter, so a caller can send any int. A round outside {@code [0, numberOfCorrectionRounds)}
+     * would otherwise be stored on a new manual result that no dashboard, lookup or score calculation ever reaches again.
+     * Call this before locking a submission, at a point where the exercise (and its exam, for exam exercises) is loaded.
+     *
+     * @param exercise        the exercise the submission belongs to
+     * @param correctionRound the requested correction round
+     * @throws BadRequestAlertException if the round is negative or not below the exercise's number of correction rounds
+     */
+    public void checkCorrectionRoundIsValidElseThrow(Exercise exercise, int correctionRound) {
+        if (correctionRound < 0 || correctionRound >= exercise.getNumberOfCorrectionRounds()) {
+            throw new BadRequestAlertException("The correction round " + correctionRound + " does not exist for exercise " + exercise.getId(), ENTITY_NAME,
+                    "invalidCorrectionRound");
         }
     }
 
@@ -850,12 +925,15 @@ public class SubmissionService {
             }
 
             // add each submission with its complaint to the DTO
-            submissions.stream().filter(submission -> submission.getResultWithComplaint() != null).forEach(submission -> {
-                // get the complaint which belongs to the submission
+            submissions.forEach(submission -> {
+                Result complainedResult = submission.getResultWithComplaint();
+                if (complainedResult == null) {
+                    return;
+                }
                 submission.setResults(submission.getNonAthenaResults());
-                Complaint complaintOfSubmission = complaintMap.get(submission.getResultWithComplaint().getId());
+                Complaint complaintOfSubmission = complaintMap.get(complainedResult.getId());
                 prepareComplaintAndSubmission(complaintOfSubmission, submission);
-                submissionWithComplaintDTOs.add(new SubmissionWithComplaintDTO(submission, complaintOfSubmission));
+                submissionWithComplaintDTOs.add(SubmissionWithComplaintDTO.of(submission, complaintOfSubmission));
             });
         }
 
@@ -887,13 +965,14 @@ public class SubmissionService {
      * @param exerciseId Id of the exercise the submissions belongs to
      * @return A wrapper object containing a list of all found submissions and the total number of pages
      */
-    public SearchResultPageDTO<Submission> getSubmissionsOnPageWithSize(SearchTermPageableSearchDTO<String> search, Long exerciseId) {
+    public SearchResultPageDTO<SubmissionResponseDTO> getSubmissionsOnPageWithSize(SearchTermPageableSearchDTO<String> search, Long exerciseId) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.STUDENT_PARTICIPATION);
         String searchTerm = search.getSearchTerm();
         Page<StudentParticipation> studentParticipationPage = studentParticipationRepository.findAllWithEagerSubmissionsAndResultsByExerciseId(exerciseId, searchTerm, pageable);
 
-        var latestSubmissions = studentParticipationPage.getContent().stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).toList();
-        final Page<Submission> submissionPage = new PageImpl<>(latestSubmissions, pageable, latestSubmissions.size());
+        var latestSubmissions = studentParticipationPage.getContent().stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+                .map(SubmissionResponseDTO::ofWithParticipationSubmissions).toList();
+        final Page<SubmissionResponseDTO> submissionPage = new PageImpl<>(latestSubmissions, pageable, latestSubmissions.size());
         return new SearchResultPageDTO<>(submissionPage.getContent(), studentParticipationPage.getTotalPages());
     }
 }

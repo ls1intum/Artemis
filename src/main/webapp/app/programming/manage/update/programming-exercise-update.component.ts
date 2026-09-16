@@ -2,7 +2,7 @@ import { ActivatedRoute, Params, Router } from '@angular/router';
 import { AfterViewInit, Component, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
-import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { BUILD_PLAN_CONFIGURATION_MAX_LENGTH, DOCKER_FLAGS_MAX_LENGTH, ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingForImport } from 'app/programming/shared/entities/programming-exercise.model';
@@ -69,6 +69,25 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
+
+/**
+ * Reasons that already name a field rendered inside the grading form. Each of these also turns the grading
+ * component's aggregate `formValid` false, so reporting the generic grading message alongside one of them
+ * would state the same problem twice — see {@link ProgrammingExerciseUpdateComponent.validateGradingSection}.
+ */
+const GRADING_FIELD_REASON_KEYS = new Set([
+    'artemisApp.exercise.form.points.undefined',
+    'artemisApp.exercise.form.points.customMin',
+    'artemisApp.exercise.form.points.customMax',
+    'artemisApp.exercise.form.bonusPoints.undefined',
+    'artemisApp.exercise.form.bonusPoints.customMin',
+    'artemisApp.exercise.form.bonusPoints.customMax',
+    'artemisApp.exercise.form.maxPenalty.pattern',
+    'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning.required',
+    'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning.pattern',
+    'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning.required',
+    'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning.pattern',
+]);
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -283,7 +302,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     // This is a wrapper to allow modifications from the other subcomponents
     public readonly importOptions: ImportOptions = {
         recreateBuildPlans: false,
-        updateTemplate: false,
         setTestCaseVisibilityToAfterDueDate: true,
     };
     public originalStaticCodeAnalysisEnabled: boolean | undefined;
@@ -915,13 +933,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
         this.isSaving.set(true);
 
-        if (this.exerciseService.hasExampleSolutionPublicationDateWarning(this.programmingExercise)) {
-            this.alertService.addAlert({
-                type: AlertType.WARNING,
-                message: 'artemisApp.exercise.exampleSolutionPublicationDateWarning',
-            });
-        }
-
         /*
          If properties for an auxiliary repository were edited, the changes have to be done manually in the VCS and CIS.
          Creating or deleting new auxiliary repositories works automatically and does not throw a warning.
@@ -1161,10 +1172,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     onStaticCodeAnalysisChanged() {
-        // On import: If SCA mode changed, activate recreation of build plans and update of the template
+        // On import: If SCA mode changed, activate recreation of build plans
         if (this.isImportFromExistingExercise && this.programmingExercise.staticCodeAnalysisEnabled !== this.originalStaticCodeAnalysisEnabled) {
             this.importOptions.recreateBuildPlans = true;
-            this.importOptions.updateTemplate = true;
         }
 
         if (!this.programmingExercise.staticCodeAnalysisEnabled) {
@@ -1172,8 +1182,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
     }
 
-    onRecreateBuildPlanOrUpdateTemplateChange() {
-        if (!this.importOptions.recreateBuildPlans || !this.importOptions.updateTemplate) {
+    onRecreateBuildPlanChange() {
+        if (!this.importOptions.recreateBuildPlans) {
             this.programmingExercise.staticCodeAnalysisEnabled = this.originalStaticCodeAnalysisEnabled;
         }
 
@@ -1257,19 +1267,37 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.validateTimeout(validationErrorReasons);
         this.validateCheckoutPaths(validationErrorReasons);
         this.validateExercisePlagiarism(validationErrorReasons);
+        // Must stay after the points, bonus-point, penalty and submission-limit checks: it defers to them.
         this.validateGradingSection(validationErrorReasons);
         this.validateBuildPhaseNames(validationErrorReasons);
+        this.validateBuildConfigSize(validationErrorReasons);
 
         return validationErrorReasons;
     }
 
+    /**
+     * Fallback for the grading form as a whole. It stays because the timeline it contains has no validator of
+     * its own, so this is the only thing that reports an invalid timeline. It is skipped when a grading field
+     * already reported the cause, which would otherwise duplicate e.g. missing points as a second, vaguer line.
+     *
+     * An invalid timeline is not such a duplicate: it is a separate cause that only this message names. Suppressing
+     * it alongside a field error would hide the timeline until that field is fixed, so the deduplication applies
+     * only when the named fields are the whole story.
+     */
     private validateGradingSection(validationErrorReasons: ValidationReason[]): void {
-        if (this.exerciseGradingComponent()?.formValid === false) {
-            validationErrorReasons.push({
-                translateKey: 'artemisApp.programmingExercise.gradingSection.invalidReason',
-                translateValues: {},
-            });
+        if (this.exerciseGradingComponent()?.formValid !== false) {
+            return;
         }
+        // The grading component now carries the timeline's status directly, where it used to reach into a child
+        // lifecycle component for it.
+        const isTimelineInvalid = this.exerciseGradingComponent()?.timelineStatus().valid === false;
+        if (!isTimelineInvalid && validationErrorReasons.some((reason) => GRADING_FIELD_REASON_KEYS.has(reason.translateKey))) {
+            return;
+        }
+        validationErrorReasons.push({
+            translateKey: 'artemisApp.programmingExercise.gradingSection.invalidReason',
+            translateValues: {},
+        });
     }
 
     private validateExercisePlagiarism(validationErrorReasons: ValidationReason[]) {
@@ -1307,6 +1335,37 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (!phasesValid) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.programmingExercise.buildPhasesEditor.invalidPhaseNames',
+                translateValues: {},
+            });
+        }
+    }
+
+    /**
+     * Validates that the build config text fields do not exceed their maximum allowed length, mirroring the server-side
+     * limits so the user gets immediate feedback instead of an HTTP 400. The build plan configuration is checked against
+     * its live serialized value (the same accessor used when saving), the docker flags against the value stored on the
+     * build config (which is updated on every edit).
+     *
+     * @param validationErrorReasons the list of validation reasons to append to
+     */
+    private validateBuildConfigSize(validationErrorReasons: ValidationReason[]): void {
+        if (!this.programmingExercise.customizeBuildPlan || this.customBuildPlansSupported !== PROFILE_LOCALCI) {
+            return;
+        }
+
+        const customBuildPlanComponent = this.exerciseLanguageComponent()?.programmingExerciseCustomBuildPlanComponent();
+        const buildPlanConfiguration = customBuildPlanComponent?.getBuildPlanPhasesJSON();
+        if (buildPlanConfiguration !== undefined && buildPlanConfiguration.length > BUILD_PLAN_CONFIGURATION_MAX_LENGTH) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.programmingExercise.buildConfig.buildPlanConfigurationTooLong',
+                translateValues: {},
+            });
+        }
+
+        const dockerFlags = this.programmingExercise.buildConfig?.dockerFlags;
+        if (dockerFlags !== undefined && dockerFlags.length > DOCKER_FLAGS_MAX_LENGTH) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.programmingExercise.buildConfig.dockerFlagsTooLong',
                 translateValues: {},
             });
         }
@@ -1708,9 +1767,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         config.validOnlineIdeSelection = this.validOnlineIdeSelection;
         config.inProductionEnvironment = this.inProductionEnvironment;
         config.recreateBuildPlans = this.importOptions.recreateBuildPlans;
-        config.onRecreateBuildPlanOrUpdateTemplateChange = this.onRecreateBuildPlanOrUpdateTemplateChange;
-        config.updateTemplate = this.importOptions.updateTemplate;
-        config.recreateBuildPlanOrUpdateTemplateChange = this.onRecreateBuildPlanOrUpdateTemplateChange;
+        config.recreateBuildPlanChange = this.onRecreateBuildPlanChange;
         config.buildPlanLoaded = this.buildPlanLoaded;
         return config as ProgrammingExerciseCreationConfig;
     }

@@ -22,9 +22,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
-import de.tum.cit.aet.artemis.notification.config.NotificationLegacyRestPaths;
 import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
 import de.tum.cit.aet.artemis.notification.dto.SystemNotificationDTO;
 import de.tum.cit.aet.artemis.notification.repository.SystemNotificationRepository;
@@ -34,11 +34,9 @@ import de.tum.cit.aet.artemis.notification.repository.SystemNotificationReposito
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("system-notifications/system-notifications")
 @RestController
-// The legacy "api/communication/" prefix is kept for backwards compatibility with deployed clients and will be removed
-// once those clients have migrated. New clients should use the "api/notification/" prefix.
-@SuppressWarnings("deprecation")
-@RequestMapping({ "api/notification/", NotificationLegacyRestPaths.COMMUNICATION_PREFIX })
+@RequestMapping("api/notification/")
 public class SystemNotificationResource {
 
     private static final Logger log = LoggerFactory.getLogger(SystemNotificationResource.class);

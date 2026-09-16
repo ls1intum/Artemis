@@ -2,12 +2,7 @@ package de.tum.cit.aet.artemis.programming.util;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -16,7 +11,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -52,7 +46,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
@@ -940,15 +933,14 @@ public class ProgrammingExerciseUtilService {
     public Result addTemplateSubmissionWithResult(ProgrammingExercise programmingExercise) {
         var templateParticipation = programmingExercise.getTemplateParticipation();
         ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setParticipation(templateParticipation);
+        templateParticipation.addSubmission(submission);
         submission = submissionRepository.save(submission);
-        // TODO check if it needs to be persisted like before
         Result result = new Result();
         result.setExerciseId(programmingExercise.getId());
-        templateParticipation.addSubmission(submission);
-        submission.setParticipation(templateParticipation);
+        // Adding the result to the submission also gives it the back reference it is written with, so one save is
+        // enough. Saving the submission again here would let the cascade write a second result for the same submission.
         submission.addResult(result);
-        submission = submissionRepository.save(submission);
-        result.setSubmission(submission);
         result = resultRepo.save(result);
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
         return result;
@@ -962,19 +954,18 @@ public class ProgrammingExerciseUtilService {
      * @return the newly created result
      */
     public Result addSolutionSubmissionWithResult(ProgrammingExercise programmingExercise) {
-        var templateParticipation = programmingExercise.getSolutionParticipation();
+        var solutionParticipation = programmingExercise.getSolutionParticipation();
         ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setParticipation(solutionParticipation);
+        solutionParticipation.addSubmission(submission);
         submission = submissionRepository.save(submission);
         Result result = new Result();
         result.setExerciseId(programmingExercise.getId());
-        templateParticipation.addSubmission(submission);
-        submission.setParticipation(templateParticipation);
+        // Adding the result to the submission also gives it the back reference it is written with, so one save is
+        // enough. Saving the submission again here would let the cascade write a second result for the same submission.
         submission.addResult(result);
-        submission = submissionRepository.save(submission);
-        result.setSubmission(submission);
-
         result = resultRepo.save(result);
-        solutionProgrammingExerciseParticipationRepository.save(templateParticipation);
+        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
         return result;
     }
 
@@ -1070,24 +1061,5 @@ public class ProgrammingExerciseUtilService {
      */
     public ProgrammingExercise loadProgrammingExerciseWithEagerReferences(ProgrammingExercise lazyExercise) {
         return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise.getId());
-    }
-
-    /**
-     * Creates an example repository and makes the given GitService return it when asked to check it out.
-     *
-     * @throws Exception if creating the repository fails
-     */
-    public void createGitRepository() throws Exception {
-        // Create repository
-        var testRepo = new LocalRepository(defaultBranch);
-        testRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
-        // Add test file to the repository folder
-        Path filePath = Path.of(testRepo.workingCopyGitRepoFile + "/Test.java");
-        var file = Files.createFile(filePath).toFile();
-        FileUtils.write(file, "Test", Charset.defaultCharset());
-        // Create mock repo that has the file
-        var mockRepository = mock(Repository.class);
-        doReturn(true).when(mockRepository).isValidFile(any());
-        doReturn(testRepo.workingCopyGitRepoFile.toPath()).when(mockRepository).getLocalPath();
     }
 }

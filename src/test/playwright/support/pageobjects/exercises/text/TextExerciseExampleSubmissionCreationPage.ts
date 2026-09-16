@@ -1,4 +1,4 @@
-import { Page } from 'playwright';
+import { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
 /**
@@ -12,11 +12,11 @@ export class TextExerciseExampleSubmissionCreationPage {
     }
 
     getInstructionsRootElement() {
-        return this.page.locator('#instructions');
+        return this.page.locator('[data-testid="instructions"]');
     }
 
     async typeExampleSubmission(example: string) {
-        await this.page.locator('#example-text-submission-input').fill(example);
+        await this.page.locator('[data-testid="example-text-submission-input"]').fill(example);
     }
 
     async clickCreateNewExampleSubmission() {

@@ -128,21 +128,45 @@ public class WebsocketMessagingService {
 
     /**
      * Determine if a message for a specific topic should be compressed.
+     * <p>
+     * The topic is matched first because it rejects almost everything: only the build queue and build agent topics are
+     * compressible, and every other message the server sends - submissions, results, exam events, notifications - is
+     * decided by the regex alone. Asking about the payload first made every one of those pay for a question whose
+     * answer could not matter.
      */
     private static boolean shouldCompress(String topic, Object payload) {
         // Only compress messages for specific topics
         if (topic == null) {
             return false;
         }
-        if (isEmpty(payload)) {
+        // Match the topic against the regex
+        if (!COMPRESSIBLE_TOPICS.matcher(topic).matches()) {
             return false;
         }
-        // Match the topic against the regex
-        return COMPRESSIBLE_TOPICS.matcher(topic).matches();
+        return !isEmpty(payload);
     }
 
+    /**
+     * Whether there is nothing worth compressing.
+     * <p>
+     * Deliberately does not call {@code toString()} on an arbitrary payload. Doing so rendered whole DTO graphs to a
+     * String only to ask whether the String was empty and then discard it: profiling a 1000-student exam found 4.3% of
+     * the Artemis nodes' on-CPU samples inside this method, almost all of it in {@code StringBuilder.append} and
+     * integer-to-text conversion under {@code BuildJobQueueItem.toString} and {@code BuildConfig.toString}.
+     * <p>
+     * A DTO's {@code toString()} is never empty, so the check only ever meant anything for a text payload, and that is
+     * what it now asks about.
+     *
+     * @param payload the message payload
+     * @return true if the payload carries nothing
+     */
     private static boolean isEmpty(Object payload) {
-        return payload == null || payload.toString().isEmpty() || (payload instanceof Collection<?> collection && collection.isEmpty())
-                || (payload instanceof Map<?, ?> map && map.isEmpty());
+        return switch (payload) {
+            case null -> true;
+            case CharSequence text -> text.isEmpty();
+            case Collection<?> collection -> collection.isEmpty();
+            case Map<?, ?> map -> map.isEmpty();
+            default -> false;
+        };
     }
 }

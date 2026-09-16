@@ -83,9 +83,10 @@
     .p-togglebutton,
     .p-select,
     .p-multiselect,
-    /* Search fields are projected into these bars too (FAQ, both shells); PrimeNG sizes its inputs taller. */
+    /* Search fields are projected into these bars too (FAQ, both shells); both kits size their inputs taller. */
     .p-inputtext,
     .p-iconfield,
+    .tum-ui-input,
     .btn {
         height: var(--title-bar-content-height);
         min-height: var(--title-bar-content-height);
@@ -160,6 +161,23 @@
  */
 @mixin title-bar-size-container {
     container: title-bar / inline-size;
+}
+
+/*
+ * A small bordered box for a title bar: a label and its value on one line, at the bar's control height, so it lines
+ * up with the buttons beside it. The outline is the one the information boxes carry — their `border border-1
+ * rounded-3` resolves to these two values — so a box in the bar reads as one of them rather than as a separate kind
+ * of thing. Used by the quiz countdown and by the inline information box the exercise bar shows when it has room.
+ */
+@mixin title-bar-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    height: var(--title-bar-content-height);
+    padding-inline: 0.5rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius-lg);
+    white-space: nowrap;
 }
 
 /*
