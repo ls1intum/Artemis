@@ -104,17 +104,21 @@ occurrence out of the line and matches what is left, so `const frontendUrl = res
 `resolveBackendService`, and `backendRefsList` is still reported even though `backendRefs` is allowlisted. Otherwise an
 allowlist entry would be a way to smuggle a new name past a required check.
 
-### Liquibase changelogs are out of scope
+### Liquibase changelogs are in scope, with one thing the check cannot ask for
 
-`src/main/resources/config/liquibase/` is not scanned at all. Liquibase stores a checksum per
-changeset, and the application refuses to start when a recorded changeset no longer matches what the
-file says, so editing a changelog that has already been merged breaks startup on every database that
-ran it, production included. A comment that says "backend" in a changeset from last spring stays as
-it is.
+`src/main/resources/config/liquibase/` is scanned like everything else. It used to be skipped
+wholesale on the grounds that a merged changeset is immutable, and only half of that is true: Liquibase
+computes a changeset checksum from the forward change elements and any `modifySql`, so an XML comment,
+a `<comment>` element and a `<rollback>` body can all be edited on a released changelog without moving
+a recorded checksum. Prose in a changelog is ordinary prose, and a comment that says "backend" in a
+changeset from last spring can simply be reworded.
 
-This is a scope rule rather than an allowlist entry on purpose. If the check reported those lines,
-somebody would eventually do as it asked, and a checker must never be the reason for an unsafe edit.
-New changelogs should of course say provider, server or database like everything else. See
+What cannot be reworded after merge is the text *inside* a change element: a column name, a table name,
+a string literal in a `<sql>` body. Editing one of those breaks startup on every database that already
+ran the changeset, and the inline opt-out is no way out either, because the marker would have to sit
+inside the element and would move the same checksum. So that case has to be caught while the changelog
+is still unmerged, which is when this check runs on a pull request — and it is a reason to name a
+column after the concrete system in the first place. There is no such occurrence in the tree today. See
 [the migration guidelines](/developer/guidelines/database) and `skills/liquibase-migration/SKILL.md`.
 
 ### When the check is genuinely wrong

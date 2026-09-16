@@ -16,7 +16,6 @@ export class CourseForDashboardDTO {
     participationResults!: ParticipationResultDTO[];
 
     courseNotificationCount!: number;
-    irisEnabledInCourse?: boolean;
 
     /**
      * Points the student earns per variant group, keyed by group id, already capped and plagiarism-adjusted by the
