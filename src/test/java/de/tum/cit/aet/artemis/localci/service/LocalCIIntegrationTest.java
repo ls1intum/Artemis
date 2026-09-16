@@ -399,11 +399,11 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
             return allJobsForParticipation.size() >= 2 && allJobsForParticipation.stream().anyMatch(j -> j.getRetryCount() == 1 && !j.getBuildJobId().equals(originalBuildJobId));
         });
 
-        // Resume the build agent
-        sharedQueueProcessingService.resetInitializedState();
-        sharedQueueProcessingService.init();
+        // Resume the build agent, with nothing left in the queues for it to pick up
         processingJobs.clear();
         queuedJobs.clear();
+        sharedQueueProcessingService.resetInitializedState();
+        sharedQueueProcessingService.init();
     }
 
     /**
@@ -457,11 +457,11 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         assertThat(retriedJobs).hasSize(1);
         assertThat(retriedJobs.getFirst().getRetryCount()).isEqualTo(1);
 
-        // Resume the build agent
-        sharedQueueProcessingService.resetInitializedState();
-        sharedQueueProcessingService.init();
+        // Resume the build agent, with nothing left in the queues for it to pick up
         processingJobs.clear();
         queuedJobs.clear();
+        sharedQueueProcessingService.resetInitializedState();
+        sharedQueueProcessingService.init();
     }
 
     @Test
