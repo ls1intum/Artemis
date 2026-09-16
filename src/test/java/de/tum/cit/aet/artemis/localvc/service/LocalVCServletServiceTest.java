@@ -206,7 +206,7 @@ class LocalVCServletServiceTest {
         AuthenticationContext.Session context = new AuthenticationContext.Session(session);
 
         // Call the public method directly (no reflection needed)
-        localVCServletService.saveFailedAccessVcsAccessLog(context, "student1", testExercise, testRepositoryUri, testUser, RepositoryActionType.READ);
+        localVCServletService.saveFailedAccessVcsAccessLog(context, "student1", testExercise.getId(), testRepositoryUri, testUser, RepositoryActionType.READ);
 
         verify(vcsAccessLogService).saveAccessLog(eq(testUser), any(), eq(RepositoryActionType.CLONE_FAIL), eq(AuthenticationMechanism.SSH), anyString(), anyString());
     }

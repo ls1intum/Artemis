@@ -865,7 +865,8 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             managedUserVM.setOrganizations(Set.of(new OrganizationDTO(Long.MAX_VALUE, "Ignored", "ignored", null, null, "ignored", null, null, null)));
 
             mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
-                    .andExpect(status().isNotFound());
+                    .andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("invalidOrganizationReference"))
+                    .andExpect(jsonPath("$.title").value("Organization with ID " + Long.MAX_VALUE + " does not exist"));
         }
 
         @Test

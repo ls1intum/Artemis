@@ -22,8 +22,8 @@ import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.OrganizationCourseDTO;
 import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
-import de.tum.cit.aet.artemis.account.dto.OrganizationInputDTO;
 import de.tum.cit.aet.artemis.account.dto.OrganizationMemberDTO;
+import de.tum.cit.aet.artemis.account.dto.OrganizationRequestDTO;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.account.repository.OrganizationSpecs;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -87,7 +87,7 @@ public class OrganizationService {
      * @param organizationDTO the organization data to add
      * @return the persisted organization entity
      */
-    public Organization add(OrganizationInputDTO organizationDTO) {
+    public Organization add(OrganizationRequestDTO organizationDTO) {
         Organization organization = new Organization();
         applyInput(organization, organizationDTO);
         Organization addedOrganization = save(organization);
@@ -105,7 +105,7 @@ public class OrganizationService {
      * @param organizationDTO the updated organization data
      * @return the updated organization
      */
-    public Organization update(long organizationId, OrganizationInputDTO organizationDTO) {
+    public Organization update(long organizationId, OrganizationRequestDTO organizationDTO) {
         log.debug("Request to update Organization : {}", organizationDTO);
         boolean indexingRequired = false;
         var oldOrganization = organizationRepository.findByIdElseThrow(organizationId);
@@ -119,7 +119,7 @@ public class OrganizationService {
         return organizationRepository.save(oldOrganization);
     }
 
-    private static void applyInput(Organization organization, OrganizationInputDTO organizationDTO) {
+    private static void applyInput(Organization organization, OrganizationRequestDTO organizationDTO) {
         organization.setName(organizationDTO.name());
         organization.setShortName(organizationDTO.shortName());
         organization.setUrl(organizationDTO.url());

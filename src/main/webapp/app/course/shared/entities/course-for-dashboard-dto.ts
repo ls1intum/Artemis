@@ -21,7 +21,6 @@ export interface CourseForDashboardDTO {
     participationResults: ParticipationResultDTO[];
 
     courseNotificationCount: number;
-    irisEnabledInCourse?: boolean;
 
     /**
      * Points the student earns per variant group, keyed by group id, already capped and plagiarism-adjusted by the
@@ -47,7 +46,6 @@ export function courseForDashboardFromDTO(dto: CourseForDashboardResponseDTO): C
         quizScores: dto.quizScores,
         participationResults: dto.participationResults,
         courseNotificationCount: dto.courseNotificationCount,
-        irisEnabledInCourse: dto.irisEnabledInCourse,
         achievedPointsPerVariantGroup: dto.achievedPointsPerVariantGroup,
     };
 }

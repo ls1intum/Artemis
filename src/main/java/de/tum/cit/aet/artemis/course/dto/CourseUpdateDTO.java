@@ -19,7 +19,6 @@ import de.tum.cit.aet.artemis.core.config.StrictIntegerDeserializer;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -46,10 +45,11 @@ public record CourseUpdateDTO(
         @NotNull Long id,
 
         // Basic info
-        @NotBlank @Size(max = 255) String title, @NotBlank @Size(max = 255) String shortName, @Nullable @Size(max = 2000) String description, @Nullable String semester,
+        @NotBlank @Size(max = 255) String title, @NotBlank @Size(max = 255) String shortName, @Nullable @Size(max = 2000) String description,
+        @NotBlank @Size(max = 25) String semester,
 
         // Dates
-        @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable ZonedDateTime enrollmentStartDate, @Nullable ZonedDateTime enrollmentEndDate,
+        @NotNull ZonedDateTime startDate, @NotNull ZonedDateTime endDate, @Nullable ZonedDateTime enrollmentStartDate, @Nullable ZonedDateTime enrollmentEndDate,
         @Nullable ZonedDateTime unenrollmentEndDate,
 
         // Configuration flags
@@ -65,8 +65,7 @@ public record CourseUpdateDTO(
 
         // Course features
         boolean learningPathsEnabled, @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
-        @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Nullable @Min(0) @Max(5) Integer accuracyOfScores,
-        boolean athenaGradingFeedbackEnabled, boolean athenaFormativeFeedbackEnabled, @Nullable String timeZone,
+        @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Nullable @Min(0) @Max(5) Integer accuracyOfScores, @Nullable String timeZone,
         @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone,
 
         // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained).
@@ -131,17 +130,12 @@ public record CourseUpdateDTO(
         course.setPresentationScore(presentationScore);
         course.setMaxPoints(maxPoints);
         course.setAccuracyOfScores(accuracyOfScores);
-        if (course.getAthenaConfig() == null) {
-            course.setAthenaConfig(new CourseAthenaConfig());
-        }
-        course.getAthenaConfig().setGradingFeedbackEnabled(athenaGradingFeedbackEnabled);
-        course.getAthenaConfig().setFormativeFeedbackEnabled(athenaFormativeFeedbackEnabled);
         course.setTimeZone(timeZone);
         course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
-        // Enforce the auto-orchestration override bounds server-side: the @Min(1) bean-validation annotations are not
-        // active here (the multipart update endpoint does not run @Valid), so a crafted request could otherwise persist
-        // zero/negative overrides that the scheduler would treat as invalid configuration.
+        // Enforce the auto-orchestration override bounds again here: the @Min(1) bean-validation annotations on this DTO
+        // already reject a non-positive override via the validated update endpoint (@Valid on CourseUpdateResource#updateCourse).
+        // This check is defense-in-depth against any caller that builds and applies this DTO directly, bypassing bean validation.
         if ((debounceWindowSecondsOverride != null && debounceWindowSecondsOverride < 1) || (maxDailyOrchestrationOverride != null && maxDailyOrchestrationOverride < 1)) {
             throw new BadRequestAlertException("Auto-orchestration overrides must be positive", Course.ENTITY_NAME, "invalidAutoOrchestrationOverride", true);
         }
@@ -170,24 +164,5 @@ public record CourseUpdateDTO(
         configuration.setMaxDailyOrchestrationOverride(maxDailyOrchestrationOverride);
 
         return course;
-    }
-
-    /**
-     * Creates a CourseUpdateDTO from an existing Course entity.
-     *
-     * @param course the course entity to convert
-     * @return a new CourseUpdateDTO with values from the course
-     */
-    public static CourseUpdateDTO of(Course course) {
-        return new CourseUpdateDTO(course.getId(), course.getTitle(), course.getShortName(), course.getDescription(), course.getSemester(), course.getStartDate(),
-                course.getEndDate(), course.getEnrollmentStartDate(), course.getEnrollmentEndDate(), course.getUnenrollmentEndDate(), course.isTestCourse(),
-                course.isOnlineCourse(), course.getLanguage(), course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(),
-                course.getMaxComplaintTimeDays(), course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(),
-                course.getColor(), course.getCourseIcon(), course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(),
-                course.getCourseInformationSharingMessagingCodeOfConduct(), course.getLearningPathsEnabled(), course.getPresentationScore(), course.getMaxPoints(),
-                course.getAccuracyOfScores(), course.getAthenaConfig() != null && course.getAthenaConfig().isGradingFeedbackEnabled(),
-                course.getAthenaConfig() != null && course.getAthenaConfig().isFormativeFeedbackEnabled(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(),
-                course.isOnboardingDone(), course.isGradeRelevant(), course.isDataRetentionHold(), course.getAutoOrchestratorEnabled(), course.getDebounceWindowSecondsOverride(),
-                course.getMaxDailyOrchestrationOverride());
     }
 }

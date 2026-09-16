@@ -71,7 +71,7 @@ public record ExerciseOverviewDTO(ExerciseType type, Long id, String title, Doub
         Boolean allowOfflineIde, Boolean staticCodeAnalysisEnabled, Boolean allowOnlineIde, ProgrammingLanguage programmingLanguage,
         ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, Boolean showTestNamesToStudents, Integer maxStaticCodeAnalysisPenalty, Boolean quizEnded,
         Set<QuizBatchOverviewDTO> quizBatches, Long studentAssignedTeamId, boolean studentAssignedTeamIdComputed, ExerciseVariantGroupReferenceDTO exerciseVariantGroup,
-        @JsonInclude(JsonInclude.Include.ALWAYS) Set<ParticipationOverviewDTO> studentParticipations) {
+        Set<ParticipationOverviewDTO> studentParticipations) {
 
     /**
      * Projects an exercise, together with the user's participations, for the course overview.

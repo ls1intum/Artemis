@@ -1,8 +1,7 @@
-import { convertDateFromClient, convertDateStringFromServer } from 'app/foundation/util/date.utils';
+import { convertDateFromClient } from 'app/foundation/util/date.utils';
 import { Course } from './course.model';
 import type { CourseInformationSharingConfiguration, Language } from './course.model';
 import type { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 
 /**
  * DTO for creating a new course.
@@ -48,8 +47,6 @@ export interface CourseCreateDTO {
     presentationScore?: number;
     maxPoints?: number;
     accuracyOfScores?: number;
-    athenaGradingFeedbackEnabled: boolean;
-    athenaFormativeFeedbackEnabled: boolean;
     timeZone?: string;
     courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
 
@@ -108,8 +105,6 @@ export function toCourseCreateDTO(course: Course): CourseCreateDTO {
         presentationScore: course.presentationScore,
         maxPoints: course.maxPoints,
         accuracyOfScores: course.accuracyOfScores,
-        athenaGradingFeedbackEnabled: course.athenaGradingFeedbackEnabled ?? false,
-        athenaFormativeFeedbackEnabled: course.athenaFormativeFeedbackEnabled ?? false,
         timeZone: course.timeZone,
         courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
 
@@ -171,8 +166,6 @@ export interface CourseUpdateDTO {
     presentationScore?: number;
     maxPoints?: number;
     accuracyOfScores?: number;
-    athenaGradingFeedbackEnabled: boolean;
-    athenaFormativeFeedbackEnabled: boolean;
     timeZone?: string;
     courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
     onboardingDone: boolean;
@@ -187,35 +180,6 @@ export interface CourseUpdateDTO {
     autoOrchestratorEnabled: boolean;
     debounceWindowSecondsOverride?: number;
     maxDailyOrchestrationOverride?: number;
-}
-
-/**
- * Builds the component-facing Course model from the course create/update transport DTO.
- *
- * @param dto the course DTO returned by the server
- * @returns a hydrated Course with reconstructed retention configuration and dates
- */
-export function courseFromUpdateDTO(dto: CourseUpdateDTO): Course {
-    const courseData: Partial<CourseUpdateDTO> = deepClone(dto);
-    delete courseData.gradeRelevant;
-    delete courseData.dataRetentionHold;
-    delete courseData.autoOrchestratorEnabled;
-    delete courseData.debounceWindowSecondsOverride;
-    delete courseData.maxDailyOrchestrationOverride;
-    const course: Course = hydrate(new Course(), courseData);
-    course.startDate = convertDateStringFromServer(dto.startDate);
-    course.endDate = convertDateStringFromServer(dto.endDate);
-    course.enrollmentStartDate = convertDateStringFromServer(dto.enrollmentStartDate);
-    course.enrollmentEndDate = convertDateStringFromServer(dto.enrollmentEndDate);
-    course.unenrollmentEndDate = convertDateStringFromServer(dto.unenrollmentEndDate);
-    course.courseConfiguration = {
-        gradeRelevant: dto.gradeRelevant,
-        dataRetentionHold: dto.dataRetentionHold,
-        autoOrchestratorEnabled: dto.autoOrchestratorEnabled,
-        debounceWindowSecondsOverride: dto.debounceWindowSecondsOverride,
-        maxDailyOrchestrationOverride: dto.maxDailyOrchestrationOverride,
-    };
-    return course;
 }
 
 /**
@@ -269,8 +233,6 @@ export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
         presentationScore: course.presentationScore,
         maxPoints: course.maxPoints,
         accuracyOfScores: course.accuracyOfScores,
-        athenaGradingFeedbackEnabled: course.athenaGradingFeedbackEnabled ?? false,
-        athenaFormativeFeedbackEnabled: course.athenaFormativeFeedbackEnabled ?? false,
         timeZone: course.timeZone,
         courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
         onboardingDone: course.onboardingDone ?? false,

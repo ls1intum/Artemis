@@ -36,7 +36,6 @@ import { CourseNotificationService } from 'app/notification/course-notification/
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
-import { toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
 import { CourseDashboardDTO, CourseWithContentDTO, courseFromDashboardDTO, courseFromWithContentDTO } from 'app/course/shared/entities/course-content-response.dto';
 import { CourseForQuizSelectionDTO, courseFromQuizSelectionDTO } from 'app/course/shared/entities/course-management-response.dto';
 import type { LockedCourseSubmissionDTO } from 'app/course/shared/entities/locked-course-submission.dto';
@@ -159,13 +158,10 @@ describe('Course Management Service', () => {
         courseManagementService
             .update(1, { ...course }, courseImage)
             .pipe(take(1))
-            .subscribe((res) => {
-                expect(res.body?.id).toBe(course.id);
-                expect(res.body?.title).toBe(course.title);
-            });
+            .subscribe((res) => expect(res.body).toEqual(course));
 
         const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/1` });
-        req.flush(toCourseUpdateDTO(course));
+        req.flush(returnedFromService);
     });
 
     it('should update online course configuration', () => {

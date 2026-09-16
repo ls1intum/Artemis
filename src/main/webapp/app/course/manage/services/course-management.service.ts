@@ -32,7 +32,7 @@ import { CourseNotificationService } from 'app/notification/course-notification/
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { convertTutorialGroupArrayDatesFromServer, convertTutorialGroupsConfigurationDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
-import { CourseUpdateDTO, courseFromUpdateDTO, toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
+import { toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import {
     CourseForEnrollmentDTO,
@@ -151,8 +151,8 @@ export class CourseManagementService implements OnDestroy {
             // The image was cropped by us and is a blob, so we need to set a placeholder name for the server check
             formData.append('file', courseImage, 'placeholderName.png');
         }
-        return this.http.put<CourseUpdateDTO>(`${this.resourceUrl}/${courseId}`, formData, { observe: 'response' }).pipe(
-            map((res) => this.mapCourseDTOResponse(res, courseFromUpdateDTO)),
+        return this.http.put<CourseManagementDTO>(`${this.resourceUrl}/${courseId}`, formData, { observe: 'response' }).pipe(
+            map((res) => this.mapCourseDTOResponse(res, courseFromManagementDTO)),
             map((res) => this.processCourseEntityResponseType(res)),
         );
     }
@@ -266,9 +266,6 @@ export class CourseManagementService implements OnDestroy {
                     res.body.courses?.forEach((courseForDashboardDTO) => {
                         if (courseForDashboardDTO.course.id) {
                             this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course.id, courseForDashboardDTO.courseNotificationCount);
-
-                            // Setting the helper attribute in the course so we can use it in the course overview guard.
-                            courseForDashboardDTO.course.irisEnabledInCourse = courseForDashboardDTO.irisEnabledInCourse;
                         }
                         courses.push(courseForDashboardDTO.course);
                         this.saveScoresInStorage(courseForDashboardDTO);
@@ -386,7 +383,7 @@ export class CourseManagementService implements OnDestroy {
     }
 
     /**
-     * Stores the score parts of a course payload. Shared by the (deprecated) for-dashboard response, the courses list
+     * Stores the score parts of a course payload. Shared by the for-dashboard response, the courses list
      * and the exercises-for-overview response, which all carry the same score fields.
      *
      * @param courseId the course the scores belong to

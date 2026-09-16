@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
 
 /** Course and derived exercise statistics displayed on the tutor assessment dashboard. */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseAssessmentDashboardDTO(@JsonUnwrapped CourseManagementDTO course, @JsonInclude(JsonInclude.Include.ALWAYS) Set<AssessmentExerciseDTO> exercises) {
+public record CourseAssessmentDashboardDTO(@JsonUnwrapped CourseManagementDTO course, Set<AssessmentExerciseDTO> exercises) {
 
     /** Maps the course after assessment statistics have been generated. */
     public static CourseAssessmentDashboardDTO of(Course course) {

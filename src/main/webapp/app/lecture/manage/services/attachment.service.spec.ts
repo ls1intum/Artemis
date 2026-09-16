@@ -16,7 +16,7 @@ describe('Attachment Service', () => {
         attachment.id = 1;
         attachment.name = 'testss';
         attachment.attachmentType = AttachmentType.FILE;
-        attachment.link = 'attachments/attachment-unit/4/Mein_Test_PDF4.pdf';
+        attachment.link = 'attachments/attachment-video-units/4/Mein_Test_PDF4.pdf';
         attachment.releaseDate = dayjs();
         attachment.uploadDate = dayjs();
     });
@@ -35,7 +35,7 @@ describe('Attachment Service', () => {
 
         expect(dayjs.isDayjs(converted.releaseDate)).toBe(true);
         expect(dayjs.isDayjs(converted.uploadDate)).toBe(true);
-        expect(converted.linkUrl).toBe('api/core/files/attachments/attachment-unit/4/Mein_Test_PDF4.pdf');
+        expect(converted.linkUrl).toBe('api/core/files/attachments/attachment-video-units/4/Mein_Test_PDF4.pdf');
     });
 
     it('should tolerate a missing attachment', () => {

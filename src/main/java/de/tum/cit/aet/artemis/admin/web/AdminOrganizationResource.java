@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
@@ -31,12 +32,11 @@ import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.OrganizationCourseDTO;
 import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
-import de.tum.cit.aet.artemis.account.dto.OrganizationInputDTO;
 import de.tum.cit.aet.artemis.account.dto.OrganizationMemberDTO;
+import de.tum.cit.aet.artemis.account.dto.OrganizationRequestDTO;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.OrganizationService;
-import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.admin.dto.LoginListDTO;
 import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -56,7 +56,7 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 @FeatureUsage("organizations/organization-administration")
 @RestController
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/admin/", LegacyAdminRestPaths.CORE_ADMIN_PREFIX })
+@RequestMapping("api/admin/")
 public class AdminOrganizationResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminOrganizationResource.class);
@@ -175,7 +175,7 @@ public class AdminOrganizationResource {
      * @return the ResponseEntity containing the added organization with status 200 (OK), or 404 (Not Found) otherwise
      */
     @PostMapping("organizations")
-    public ResponseEntity<OrganizationDTO> addOrganization(@Valid @RequestBody OrganizationInputDTO organizationDTO) {
+    public ResponseEntity<OrganizationDTO> addOrganization(@Valid @RequestBody OrganizationRequestDTO organizationDTO) {
         log.debug("REST request to add new organization : {}", organizationDTO);
         if (organizationDTO.id() != null) {
             throw new BadRequestAlertException("A new organization cannot already have an ID", ENTITY_NAME, "idExists");
@@ -193,7 +193,7 @@ public class AdminOrganizationResource {
      * @return the ResponseEntity containing the updated organization with status 200 (OK), or 404 (Not Found) otherwise
      */
     @PutMapping("organizations/{organizationId}")
-    public ResponseEntity<OrganizationDTO> updateOrganization(@PathVariable Long organizationId, @Valid @RequestBody OrganizationInputDTO organizationDTO) {
+    public ResponseEntity<OrganizationDTO> updateOrganization(@PathVariable Long organizationId, @Valid @RequestBody OrganizationRequestDTO organizationDTO) {
         log.debug("REST request to update organization : {}", organizationDTO);
         if (organizationDTO.id() == null) {
             throw new BadRequestAlertException("The ID of the organization in the RequestBody isn't set!", ENTITY_NAME, "noId");
@@ -201,7 +201,6 @@ public class AdminOrganizationResource {
         if (!organizationDTO.id().equals(organizationId)) {
             throw new BadRequestAlertException("organizationId in path doesn't match the one in the RequestBody!", ENTITY_NAME, "organizationIdDoesNotMatch");
         }
-        organizationRepository.findByIdElseThrow(organizationDTO.id());
         Organization updated = organizationService.update(organizationId, organizationDTO);
         return ResponseEntity.ok(OrganizationDTO.of(updated));
     }
@@ -311,7 +310,7 @@ public class AdminOrganizationResource {
     public ResponseEntity<Set<OrganizationDTO>> getAllOrganizationsByUser(@PathVariable Long userId) {
         log.debug("REST request to get all organizations of user : {}", userId);
         Set<Organization> organizations = organizationRepository.findAllOrganizationsByUserId(userId);
-        return new ResponseEntity<>(organizations.stream().map(OrganizationDTO::of).collect(java.util.stream.Collectors.toSet()), HttpStatus.OK);
+        return new ResponseEntity<>(organizations.stream().map(OrganizationDTO::of).collect(Collectors.toSet()), HttpStatus.OK);
     }
 
     /**

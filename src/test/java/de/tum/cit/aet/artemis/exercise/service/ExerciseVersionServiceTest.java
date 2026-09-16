@@ -374,7 +374,12 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
                 ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(newProgrammingExercise, exercise.getShortName(), "Updated Title", true, ProgrammingLanguage.SWIFT);
                 yield newProgrammingExercise;
             case QuizExercise quizExercise:
+                // emptyOutQuizExercise prepares a quiz for an import request and clears its course on the way. This
+                // test saves the entity instead of posting it, so the course is put back: an exercise row belongs to a
+                // course or to an exercise group, never to neither.
+                Course quizCourse = quizExercise.getCourseViaExerciseGroupOrCourseMember();
                 quizExerciseUtilService.emptyOutQuizExercise(quizExercise);
+                quizExercise.setCourse(quizCourse);
                 yield quizExercise;
             case ModelingExercise modelingExercise:
                 modelingExercise.setExampleSolutionModel("Updated example solution");
