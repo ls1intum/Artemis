@@ -496,17 +496,19 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testCreatedReactionReportsWhichKindOfPostingItBelongsTo() throws Exception {
         // A post id and an answer post id come from separate identity columns, so the number alone does not say which of the two it denotes. The
         // response has to name the kind, otherwise a client cannot tell what it just reacted to.
+        // postingType and relatedPostId are both derived from the association the server persisted, so the response alone says which posting the
+        // reaction ended up on.
         Post post = existingPostsWithAnswers.getFirst();
         ReactionDTO onPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", createReactionDTOOnPost(post), ReactionDTO.class,
                 HttpStatus.CREATED);
         assertThat(onPost.postingType()).isEqualTo(PostingType.POST);
-        assertThat(reactionRepository.findReactionsByPostId(post.getId())).extracting(Reaction::getId).contains(onPost.id());
+        assertThat(onPost.relatedPostId()).isEqualTo(post.getId());
 
         AnswerPost answerPost = existingAnswerPosts.getFirst();
         ReactionDTO onAnswer = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", createReactionDTOOnAnswerPost(answerPost),
                 ReactionDTO.class, HttpStatus.CREATED);
         assertThat(onAnswer.postingType()).isEqualTo(PostingType.ANSWER);
-        assertThat(reactionRepository.findReactionsByAnswerPostId(answerPost.getId())).extracting(Reaction::getId).contains(onAnswer.id());
+        assertThat(onAnswer.relatedPostId()).isEqualTo(answerPost.getId());
     }
 
     @Test
@@ -533,7 +535,9 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         ReactionDTO reaction = new ReactionDTO(null, null, null, "smiley", postInOtherCourse.getId(), PostingType.POST);
 
-        request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reaction, ReactionDTO.class, HttpStatus.BAD_REQUEST);
+        // The error key, not just the status: several other things about this request could produce a bad request, and the one this test is about
+        // is the course check.
+        request.postAndExpectError("/api/communication/courses/" + courseId + "/postings/reactions", reaction, HttpStatus.BAD_REQUEST, "wrongCourse");
     }
 
     // HELPER METHODS
