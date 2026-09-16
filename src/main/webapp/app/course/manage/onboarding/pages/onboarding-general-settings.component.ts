@@ -5,16 +5,16 @@ import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selec
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { getSemesters } from 'app/foundation/util/semester-utils';
-import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { applySemesterToDates, getSemesters } from 'app/foundation/util/semester-utils';
+import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATHENA, MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
-import { KeyValuePipe, NgClass, NgStyle } from '@angular/common';
+import { KeyValuePipe, NgStyle } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCheck, faCog, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCog } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -22,6 +22,9 @@ import { IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-co
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
+import { AthenaFeature, createAthenaCourseConfigState } from 'app/course/manage/services/athena-course-config.state';
+import { EnabledToggleComponent } from 'app/shared-ui/enabled-toggle/enabled-toggle.component';
+import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.component';
 
 @Component({
     selector: 'jhi-onboarding-general-settings',
@@ -32,13 +35,14 @@ import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/abou
         ColorSelectorComponent,
         FormDateTimePickerComponent,
         TranslateDirective,
-        NgClass,
         NgStyle,
         KeyValuePipe,
         ArtemisTranslatePipe,
         FaIconComponent,
         DocumentationButtonComponent,
         IrisLogoComponent,
+        EnabledToggleComponent,
+        AthenaLogoComponent,
     ],
 })
 export class OnboardingGeneralSettingsComponent implements OnInit {
@@ -56,9 +60,28 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     readonly irisSettings = signal<IrisCourseSettingsDTO | undefined>(undefined);
     readonly isIrisEnabled = computed(() => this.irisSettings()?.enabled ?? false);
 
+    readonly athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
+    /**
+     * Loading, switching and rolling back work the same here as on the course overview, so both share this state. It
+     * is replaced whenever the course id changes, and there is none while the Athena module is inactive.
+     */
+    private readonly athenaState = createAthenaCourseConfigState(computed(() => (this.athenaEnabled ? this.course()?.id : undefined)));
+    readonly athenaConfig = computed(() => this.athenaState()?.config());
+    readonly isAthenaFormativeEnabled = computed(() => this.athenaState()?.formativeFeedbackEnabled() ?? false);
+    readonly isAthenaGradingEnabled = computed(() => this.athenaState()?.gradingFeedbackEnabled() ?? false);
+
+    /** The two Athena toggle rows, rendered by one @for so the markup stays in a single place. */
+    protected readonly athenaFeatures = [
+        { key: 'formativeFeedbackEnabled' as const, testId: 'onboarding-athena-formative-feedback', enabled: this.isAthenaFormativeEnabled },
+        { key: 'gradingFeedbackEnabled' as const, testId: 'onboarding-athena-grading-feedback', enabled: this.isAthenaGradingEnabled },
+    ];
+
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
-    readonly semesters = getSemesters();
+    readonly semesters = computed(() => getSemesters(this.course().semester));
+    readonly semesterMissing = computed(() => !this.course().semester?.trim());
+
+    private previousSemester?: string;
 
     readonly languageOptions: { key: string; value: string }[] = [
         { key: Language.ENGLISH, value: 'English' },
@@ -66,23 +89,23 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     ];
 
     protected readonly faCog = faCog;
-    protected readonly faCheck = faCheck;
-    protected readonly faTimes = faTimes;
 
     readonly colorSelector = viewChild(ColorSelectorComponent);
 
     ngOnInit(): void {
+        this.previousSemester = this.course().semester;
+        const courseId = this.course()?.id;
+        if (!courseId) {
+            return;
+        }
         if (this.irisEnabled) {
-            const courseId = this.course()?.id;
-            if (courseId) {
-                this.irisSettingsService.getCourseSettingsWithRateLimit(courseId).subscribe({
-                    next: (response) => {
-                        if (response) {
-                            this.irisSettings.set(response.settings);
-                        }
-                    },
-                });
-            }
+            this.irisSettingsService.getCourseSettingsWithRateLimit(courseId).subscribe({
+                next: (response) => {
+                    if (response) {
+                        this.irisSettings.set(response.settings);
+                    }
+                },
+            });
         }
     }
 
@@ -108,9 +131,27 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
         });
     }
 
+    /**
+     * Switch one of the two Athena feedback features and save it right away, like the Iris toggle above: the Athena
+     * configuration is not part of the course DTO the wizard saves on step navigation.
+     *
+     * @param feature the feature to switch
+     * @param enabled whether the feature should be enabled
+     */
+    setAthenaFeatureEnabled(feature: AthenaFeature, enabled: boolean) {
+        this.athenaState()?.setEnabled(feature, enabled);
+    }
+
     updateField<K extends keyof Course>(field: K, value: Course[K]) {
         const current = Course.from(this.course());
         current[field] = value;
+        if (field === 'semester') {
+            const semester = value as string | undefined;
+            const { startDate, endDate } = applySemesterToDates(semester, this.previousSemester, current.startDate, current.endDate);
+            current.startDate = startDate;
+            current.endDate = endDate;
+            this.previousSemester = semester;
+        }
         this.courseUpdated.emit(current);
     }
 

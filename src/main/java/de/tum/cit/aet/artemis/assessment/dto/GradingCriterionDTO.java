@@ -33,6 +33,18 @@ public record GradingCriterionDTO(Long id, String title, List<GradingInstruction
     }
 
     /**
+     * Returns the same criterion without the row ids, its own and those of its instructions, for payloads that are
+     * written to a file and read back by another instance, whose import copies them onto the rubric it creates.
+     *
+     * @return a copy of this DTO with {@code null} ids
+     */
+    public GradingCriterionDTO withoutIds() {
+        List<GradingInstructionDTO> instructions = structuredGradingInstructions == null ? null
+                : structuredGradingInstructions.stream().map(GradingInstructionDTO::withoutId).toList();
+        return new GradingCriterionDTO(null, title, instructions);
+    }
+
+    /**
      * Converts this DTO into a {@link GradingCriterion} entity.
      *
      * @return a new {@link GradingCriterion} with values copied from the DTO

@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
 import { ActivatedRoute, Navigation, ParamMap, Router, UrlTree, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
@@ -572,6 +574,12 @@ describe('CourseExerciseDetailsComponent', () => {
     it('should show discussion section when communication is enabled', async () => {
         vi.useFakeTimers();
         fixture.detectChanges();
+        // The right-hand group renders only its active tab, and Exercise Details is now the first of them, so the
+        // communication tab has to be selected before its content exists.
+        const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent));
+        const labels = panels.componentInstance.rightPanels().map((panel: PanelDirective) => panel.label());
+        panels.componentInstance.setActiveRight(labels.indexOf('artemisApp.metis.communication.label'));
+        fixture.detectChanges();
         await vi.advanceTimersByTimeAsync(500);
 
         const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
@@ -787,6 +795,39 @@ describe('CourseExerciseDetailsComponent', () => {
 
         expect(comp.participationMode()).toBe('practice');
         expect(navigateSpy).toHaveBeenCalledWith(['programming-exercises', exercise.id, 'code-editor', 680], expect.objectContaining({ replaceUrl: true }));
+    });
+
+    describe('continue to latest', () => {
+        // Both the flag and the action are owned here rather than delegated to the details panel: that panel is
+        // unmounted whenever another tab is shown, which used to leave the header offering an action that did nothing.
+        it('should navigate to the latest submission without needing the details panel', () => {
+            comp.courseId = 1;
+            comp.exercise = { ...exercise, type: ExerciseType.TEXT, course: { id: 1 } } as unknown as Exercise;
+            const participation = { id: 42, testRun: false } as StudentParticipation;
+            comp.studentParticipations = [participation];
+            vi.spyOn(participationService, 'getSpecificStudentParticipation').mockReturnValue(participation);
+            const router = TestBed.inject(Router) as unknown as MockRouter;
+            const navigateSpy = vi.spyOn(router, 'navigate');
+
+            comp.continueToLatest();
+
+            expect(navigateSpy).toHaveBeenCalledWith(['/courses', 1, 'exercises', 'text-exercises', exercise.id, 'participate', 42]);
+        });
+
+        it.each([
+            ['/courses/1/exercises/2/participate/3', false],
+            ['/courses/1/exercises/2/submission/7', true],
+            ['/courses/1/exercises/2/result/9', true],
+        ])('should take the viewing-submission state from the route %s', (url, expected) => {
+            comp.exercise = { ...exercise, type: ExerciseType.TEXT, course: { id: 1 } } as unknown as Exercise;
+            // detectChanges so ngOnInit runs and subscribes; the route sync is wired there.
+            fixture.detectChanges();
+            const router = TestBed.inject(Router) as unknown as MockRouter;
+
+            router.setUrl(url);
+
+            expect(comp.isViewingSubmission()).toBe(expected);
+        });
     });
 
     it('does not add a history entry when correcting the URL to the practice participation', () => {

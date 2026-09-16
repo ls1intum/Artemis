@@ -14,45 +14,49 @@ import { SortService } from 'app/foundation/service/sort.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { AssessmentDashboardInformationComponent, AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
 import { TutorLeaderboardElement } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.model';
-import { faClipboard, faHeartBroken, faShieldAlt, faSort, faTable } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUpRightFromSquare, faCircleInfo, faClipboard, faHeartBroken, faShieldAlt, faTable, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TutorParticipationGraphComponent } from 'app/exercise/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.component';
 import { NotReleasedTagComponent } from 'app/shared-ui/components/not-released-tag/not-released-tag.component';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { ExamAssessmentButtonsComponent } from 'app/assessment/shared/assessment-dashboard/exam-assessment-buttons/exam-assessment-buttons.component';
 import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/assessment/shared/assessment-dashboard/tutor-issue';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { SecondCorrectionEnableButtonComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/second-correction-button/second-correction-enable-button.component';
 import { MODULE_FEATURE_DEIMOS, MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
-import { TumUiButtonDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
 import { DeimosDateRangeModalComponent, DeimosDateRangeSelection } from 'app/shared/deimos/deimos-date-range-modal.component';
 import { DeimosService } from 'app/programming/shared/services/deimos.service';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import dayjs from 'dayjs/esm';
+import {
+    TumUiButtonDirective,
+    TumUiCheckboxComponent,
+    TumUiMessageComponent,
+    TumUiPanelComponent,
+    TumUiTableDirective,
+    TumUiTableSortEvent,
+    TumUiTableSortableColumnComponent,
+    TumUiTagComponent,
+    TumUiTooltipDirective,
+} from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
     templateUrl: './assessment-dashboard.component.html',
-    styleUrls: ['./exam-assessment-buttons/exam-assessment-buttons.component.scss'],
     providers: [CourseManagementService],
     imports: [
         TumUiMessageComponent,
@@ -62,17 +66,13 @@ import dayjs from 'dayjs/esm';
         ExamAssessmentButtonsComponent,
         AssessmentDashboardInformationComponent,
         FormsModule,
-        NgbTooltip,
         ArtemisTranslatePipe,
-        SecondCorrectionEnableButtonComponent,
         TutorParticipationGraphComponent,
         TutorLeaderboardComponent,
         NotReleasedTagComponent,
         DocumentationButtonComponent,
         ArtemisTimeAgoPipe,
         ArtemisDatePipe,
-        SortDirective,
-        SortByDirective,
         FeatureOverlayComponent,
         CourseTitleBarActionsDirective,
         CourseTitleBarTitleComponent,
@@ -80,11 +80,16 @@ import dayjs from 'dayjs/esm';
         TumUiButtonDirective,
         DeimosDateRangeModalComponent,
         FeatureToggleHideDirective,
+        TumUiCheckboxComponent,
+        TumUiPanelComponent,
+        TumUiTableDirective,
+        TumUiTableSortableColumnComponent,
+        TumUiTagComponent,
+        TumUiTooltipDirective,
     ],
 })
 export class AssessmentDashboardComponent implements OnInit {
     private courseService = inject(CourseManagementService);
-    private exerciseService = inject(ExerciseService);
     private examManagementService = inject(ExamManagementService);
     private alertService = inject(AlertService);
     private accountService = inject(AccountService);
@@ -95,6 +100,7 @@ export class AssessmentDashboardComponent implements OnInit {
 
     readonly TeamFilterProp = TeamFilterProp;
     readonly documentationType: DocumentationType = 'Assessment';
+    readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
 
     readonly plagiarismEnabled = signal<boolean>(false);
     readonly deimosModuleEnabled = signal<boolean>(false);
@@ -119,7 +125,6 @@ export class AssessmentDashboardComponent implements OnInit {
     readonly assessmentLocks = signal(new AssessmentDashboardInformationEntry(0, 0));
     readonly ratings = signal(new AssessmentDashboardInformationEntry(0, 0));
 
-    readonly totalAssessmentPercentage = signal(0);
     readonly hideFinishedExercises = signal<boolean>(true);
     readonly hideOptional = signal<boolean>(false);
 
@@ -128,8 +133,8 @@ export class AssessmentDashboardComponent implements OnInit {
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
 
-    exercisesSortingPredicate = 'assessmentDueDate';
-    exercisesReverseOrder = false;
+    readonly exercisesSortingPredicate = signal('assessmentDueDate');
+    readonly exercisesReverseOrder = signal(false);
 
     readonly tutor = signal<User>(undefined!);
 
@@ -139,18 +144,17 @@ export class AssessmentDashboardComponent implements OnInit {
 
     readonly tutorIssues = signal<TutorIssue[]>([]);
 
-    isTogglingSecondCorrection: Map<number, boolean> = new Map<number, boolean>();
-
     readonly FeatureToggle = FeatureToggle;
     readonly deimosDateRangeModal = viewChild<DeimosDateRangeModalComponent>('deimosDateRangeModal');
     protected deimosSubmitting = signal(false);
 
     // Icons
-    faSort = faSort;
+    faCircleInfo = faCircleInfo;
     faTable = faTable;
     faClipboard = faClipboard;
     faHeartBroken = faHeartBroken;
     faShieldAlt = faShieldAlt;
+    faTriangleExclamation = faTriangleExclamation;
 
     /**
      * On init set the courseID, load all exercises and statistics for tutors and set the identity for the AccountService.
@@ -244,11 +248,6 @@ export class AssessmentDashboardComponent implements OnInit {
                         }
                         this.assessmentLocks.set(new AssessmentDashboardInformationEntry(stats.totalNumberOfAssessmentLocks, stats.numberOfAssessmentLocks));
 
-                        if (stats.numberOfSubmissions.total > 0) {
-                            this.totalAssessmentPercentage.set(
-                                Math.floor((totalNumberOfAssessments / (stats.numberOfSubmissions.total * stats.numberOfAssessmentsOfCorrectionRounds.length)) * 100),
-                            );
-                        }
                         this.computeIssuesWithTutorPerformance();
                     },
                     error: (response: HttpErrorResponse) => this.onError(response),
@@ -324,10 +323,6 @@ export class AssessmentDashboardComponent implements OnInit {
                         this.ratings.set(new AssessmentDashboardInformationEntry(stats.numberOfRatings, 0));
                     }
                     this.assessmentLocks.set(new AssessmentDashboardInformationEntry(stats.totalNumberOfAssessmentLocks, stats.numberOfAssessmentLocks));
-
-                    if (stats.numberOfSubmissions.total > 0) {
-                        this.totalAssessmentPercentage.set(Math.floor((stats.totalNumberOfAssessments / stats.numberOfSubmissions.total) * 100));
-                    }
 
                     this.computeIssuesWithTutorPerformance();
                 },
@@ -412,18 +407,8 @@ export class AssessmentDashboardComponent implements OnInit {
     private extractExercises(exercises?: Exercise[]) {
         if (exercises && exercises.length > 0) {
             this.allExercises.set(exercises);
-            this.initIsTogglingSecondCorrection();
             this.updateExercises();
         }
-    }
-
-    /**
-     * Initiates the map that contains the current toggling state (false) for each exercise.
-     */
-    private initIsTogglingSecondCorrection() {
-        this.allExercises().forEach((exercise) => {
-            this.isTogglingSecondCorrection.set(exercise.id!, false);
-        });
     }
 
     private getUnfinishedExercises(exercises?: Exercise[]) {
@@ -481,24 +466,14 @@ export class AssessmentDashboardComponent implements OnInit {
 
     sortRows() {
         const sorted = [...this.currentlyShownExercises()];
-        this.sortService.sortByProperty(sorted, this.exercisesSortingPredicate, this.exercisesReverseOrder);
+        this.sortService.sortByProperty(sorted, this.exercisesSortingPredicate(), this.exercisesReverseOrder());
         this.currentlyShownExercises.set(sorted);
     }
 
-    toggleSecondCorrection(exerciseId: number) {
-        const currentExercise = this.currentlyShownExercises().find((exercise) => exercise.id === exerciseId)!;
-        this.isTogglingSecondCorrection.set(currentExercise.id!, true);
-        this.exerciseService.toggleSecondCorrection(exerciseId).subscribe({
-            next: (res: boolean) => {
-                currentExercise.secondCorrectionEnabled = res;
-                this.isTogglingSecondCorrection.set(currentExercise.id!, false);
-                // Commit a new array reference so the signal notifies (the exercise object was mutated in place).
-                this.currentlyShownExercises.set([...this.currentlyShownExercises()]);
-            },
-            error: (err: HttpErrorResponse) => {
-                this.onError(err);
-            },
-        });
+    onExerciseSortChange(event: TumUiTableSortEvent): void {
+        this.exercisesSortingPredicate.set(event.field);
+        this.exercisesReverseOrder.set(event.order > 0);
+        this.sortRows();
     }
 
     getAssessmentDashboardLinkForExercise(exercise: Exercise): string[] {

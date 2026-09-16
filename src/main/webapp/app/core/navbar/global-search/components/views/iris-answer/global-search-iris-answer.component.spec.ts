@@ -3,7 +3,7 @@ import { MarkdownDirective } from 'app/foundation/directives/markdown.directive'
 import { TranslateService } from '@ngx-translate/core';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Subject } from 'rxjs';
+import { Subject, throwError } from 'rxjs';
 import { Router, provideRouter } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -52,6 +52,12 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
     const originalScrollIntoView = Element.prototype.scrollIntoView;
 
+    /** Drains the word-by-word reveal of a streamed answer, which no single tick would. */
+    function revealEverything(): void {
+        vi.advanceTimersByTime(5000);
+        fixture.detectChanges();
+    }
+
     beforeAll(() => {
         Element.prototype.scrollIntoView = vi.fn();
     });
@@ -91,33 +97,37 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
     it('should render the iris card when thinking', () => {
         // @ts-expect-error — accessing protected signal for testing
-        component.irisThinking.set(true);
+        component.phase.set('thinking');
         fixture.detectChanges();
 
         const card = fixture.nativeElement.querySelector('.iris-inline-answer');
         expect(card).toBeTruthy();
     });
 
-    it('should render the thinking wrapper when irisThinking is true', () => {
+    it('should render the strip status while thinking', () => {
         // @ts-expect-error
-        component.irisThinking.set(true);
+        component.phase.set('thinking');
         fixture.detectChanges();
 
-        const thinkingWrapper = fixture.nativeElement.querySelector('.iris-thinking-wrapper');
+        const thinkingWrapper = fixture.nativeElement.querySelector('[data-testid="iris-strip-status"]');
         expect(thinkingWrapper).toBeTruthy();
     });
 
-    it('should not render the thinking wrapper when irisThinking is false', () => {
+    it('should not render the strip status once an answer exists', () => {
         // @ts-expect-error
+        component.phase.set('answering');
+        // @ts-expect-error — accessing protected signal for testing
         component.irisResult.set({ answer: 'Some answer', sources: [] });
         fixture.detectChanges();
 
-        const thinkingWrapper = fixture.nativeElement.querySelector('.iris-thinking-wrapper');
+        const thinkingWrapper = fixture.nativeElement.querySelector('[data-testid="iris-strip-status"]');
         expect(thinkingWrapper).toBeNull();
     });
 
     it('should render the answer text region when irisResult has an answer', () => {
         // @ts-expect-error
+        component.phase.set('answering');
+        // @ts-expect-error — accessing protected signal for testing
         component.irisResult.set({ answer: 'Signals are reactive primitives.', sources: [] });
         fixture.detectChanges();
 
@@ -127,6 +137,8 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
     it('should apply is-clamped class when shouldClamp is true', () => {
         // @ts-expect-error
+        component.phase.set('answering');
+        // @ts-expect-error — accessing protected signal for testing
         component.irisResult.set({ answer: 'Long answer.', sources: [] });
         fixture.detectChanges(); // effect runs, resets isOverflowing=false
         // Set isOverflowing AFTER effect ran — changing it does not re-trigger the effect
@@ -140,6 +152,8 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
     it('should apply is-expanded class when isOverflowing and isExpanded are both true', () => {
         // @ts-expect-error
+        component.phase.set('answering');
+        // @ts-expect-error — accessing protected signal for testing
         component.irisResult.set({ answer: 'Long answer.', sources: [] });
         fixture.detectChanges(); // effect runs, resets isOverflowing/isExpanded to false
         // @ts-expect-error
@@ -154,6 +168,8 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
     it('should show the "show more" toggle button when the answer overflows', () => {
         // @ts-expect-error
+        component.phase.set('answering');
+        // @ts-expect-error — accessing protected signal for testing
         component.irisResult.set({ answer: 'Long answer text here.', sources: [] });
         fixture.detectChanges(); // effect runs, resets isOverflowing
         // @ts-expect-error
@@ -166,6 +182,8 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
     it('should expand the answer when the "show more" toggle button is clicked', () => {
         // @ts-expect-error
+        component.phase.set('answering');
+        // @ts-expect-error — accessing protected signal for testing
         component.irisResult.set({ answer: 'Long answer.', sources: [] });
         fixture.detectChanges(); // effect runs, resets isOverflowing
         // @ts-expect-error
@@ -181,6 +199,8 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
     it('should show the "show less" toggle button when expanded', () => {
         // @ts-expect-error
+        component.phase.set('answering');
+        // @ts-expect-error — accessing protected signal for testing
         component.irisResult.set({ answer: 'Long answer.', sources: [] });
         fixture.detectChanges(); // effect runs, resets isOverflowing/isExpanded
         // @ts-expect-error
@@ -203,6 +223,8 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
     it('should render source chips when sources are present', () => {
         // @ts-expect-error
+        component.phase.set('answering');
+        // @ts-expect-error — accessing protected signal for testing
         component.irisResult.set({ answer: 'Some answer', sources: SOURCES.slice(0, 2) });
         fixture.detectChanges();
 
@@ -212,6 +234,8 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
     it('should show the "+N more" button when there are more than 2 sources', () => {
         // @ts-expect-error
+        component.phase.set('answering');
+        // @ts-expect-error — accessing protected signal for testing
         component.irisResult.set({ answer: 'Some answer', sources: SOURCES });
         fixture.detectChanges();
 
@@ -221,6 +245,8 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
     it('should expand all sources when the "+N more" button is clicked', () => {
         // @ts-expect-error
+        component.phase.set('answering');
+        // @ts-expect-error — accessing protected signal for testing
         component.irisResult.set({ answer: 'Some answer', sources: SOURCES });
         fixture.detectChanges();
 
@@ -234,6 +260,8 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
     it('should show the collapse button when all sources are expanded', () => {
         // @ts-expect-error
+        component.phase.set('answering');
+        // @ts-expect-error — accessing protected signal for testing
         component.irisResult.set({ answer: 'Some answer', sources: SOURCES });
         fixture.detectChanges(); // effect runs, resets moreOpen=false
         // @ts-expect-error
@@ -246,6 +274,8 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
     it('should collapse sources when the collapse button is clicked', () => {
         // @ts-expect-error
+        component.phase.set('answering');
+        // @ts-expect-error — accessing protected signal for testing
         component.irisResult.set({ answer: 'Some answer', sources: SOURCES });
         fixture.detectChanges(); // effect runs, resets moreOpen=false
         // @ts-expect-error
@@ -261,6 +291,8 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
     it('should reset isExpanded, isOverflowing, and moreOpen when irisResult changes', () => {
         // @ts-expect-error
+        component.phase.set('answering');
+        // @ts-expect-error — accessing protected signal for testing
         component.irisResult.set({ answer: 'First answer', sources: [] });
         // @ts-expect-error
         component.isExpanded.set(true);
@@ -270,6 +302,8 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
         // Trigger effect by setting a new result
         // @ts-expect-error
+        component.phase.set('answering');
+        // @ts-expect-error — accessing protected signal for testing
         component.irisResult.set({ answer: 'Second answer', sources: [] });
         fixture.detectChanges();
 
@@ -322,7 +356,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             expect(mockAsk).not.toHaveBeenCalled();
         });
 
-        it('should set irisThinking to true when a thinking update is received', () => {
+        it('should enter the thinking phase when a thinking update is received', () => {
             fixture.componentRef.setInput('searchQuery', 'what are signals?');
             fixture.detectChanges();
             vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
@@ -331,7 +365,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             askSubject.next({ runId: 'run-1', isThinking: true });
             fixture.detectChanges();
 
-            expect(component['irisThinking']()).toBe(true);
+            expect(component['phase']()).toBe('thinking');
         });
 
         it('should set irisResult with the answer when the final update is received', () => {
@@ -343,7 +377,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             askSubject.next({ runId: 'run-1', isThinking: false, answer: 'Signals are reactive.', sources: [] });
             fixture.detectChanges();
 
-            expect(component['irisThinking']()).toBe(false);
+            expect(component['phase']()).not.toBe('thinking');
             expect(component['irisResult']()).toEqual({ answer: 'Signals are reactive.', sources: [], entitySources: [] });
         });
 
@@ -359,7 +393,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             expect(component['irisResult']()).toBeUndefined();
         });
 
-        it('should reset irisResult and irisThinking immediately when a new query is emitted', () => {
+        it('should reset the result and the phase immediately when a new query is emitted', () => {
             // First query resolves
             fixture.componentRef.setInput('searchQuery', 'query one');
             fixture.detectChanges();
@@ -375,7 +409,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             fixture.detectChanges();
 
             expect(component['irisResult']()).toBeUndefined();
-            expect(component['irisThinking']()).toBe(false);
+            expect(component['phase']()).not.toBe('thinking');
         });
 
         it('should ignore a final update whose runId does not match the thinking update', () => {
@@ -391,7 +425,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             fixture.detectChanges();
 
             expect(component['irisResult']()).toBeUndefined();
-            expect(component['irisThinking']()).toBe(true);
+            expect(component['phase']()).toBe('thinking');
         });
 
         it('should accept a final update whose runId matches the thinking update', () => {
@@ -421,11 +455,11 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             startQuery();
             askSubject.next({ runId: 'run-1', isThinking: true });
             fixture.detectChanges();
-            expect(component['irisThinking']()).toBe(true);
+            expect(component['phase']()).toBe('thinking');
 
             askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'Signals are', partialSeq: 1 });
             fixture.detectChanges();
-            expect(component['irisThinking']()).toBe(false);
+            expect(component['phase']()).not.toBe('thinking');
             expect(component['irisResult']()).toEqual({ answer: 'Signals are', sources: [] });
 
             askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'Signals are reactive primitives.', partialSeq: 2 });
@@ -446,13 +480,13 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'Draft', partialSeq: 1 });
             askSubject.next({ runId: 'run-1', isThinking: true });
             fixture.detectChanges();
-            expect(component['irisThinking']()).toBe(false);
+            expect(component['phase']()).not.toBe('thinking');
         });
 
         it('renders draft markers as citation chips before any sources exist', () => {
             startQuery();
             askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'A claim.[2]', partialSeq: 1 });
-            fixture.detectChanges();
+            revealEverything();
             expect(component['citationView']().html).toContain('<sup class="iris-cite" data-n="2">2</sup>');
         });
 
@@ -460,9 +494,9 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             startQuery();
             askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'Draft.[1]', partialSeq: 5 });
             askSubject.next({ runId: 'run-1', isThinking: false, answer: 'Final answer.[1]', sources: SOURCES });
-            fixture.detectChanges();
+            revealEverything();
             expect(component['irisResult']()).toEqual({ answer: 'Final answer.[1]', sources: SOURCES, entitySources: [] });
-            expect(component['isPartialAnswer']()).toBe(false);
+            expect(component['isSettled']()).toBe(true);
         });
     });
 
@@ -471,15 +505,18 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
         beforeEach(() => {
             // @ts-expect-error — accessing protected signal for testing
+            component.phase.set('answering');
+            // @ts-expect-error — accessing protected signal for testing
             component.irisResult.set({ answer: MARKED_ANSWER, sources: SOURCES });
             fixture.detectChanges();
         });
 
-        it('converts marker runs into citation chip HTML', () => {
+        it('converts each marker into its own citation chip', () => {
             // @ts-expect-error — protected computed
             const view = component.citationView();
             expect(view.html).toContain('<sup class="iris-cite" data-n="1">1</sup>');
-            expect(view.html).toContain('<sup class="iris-cite" data-n="2 3">2,3</sup>');
+            expect(view.html).toContain('<sup class="iris-cite" data-n="2">2</sup>');
+            expect(view.html).toContain('<sup class="iris-cite" data-n="3">3</sup>');
             expect([...view.citedNumbers].sort()).toEqual([1, 2, 3]);
         });
 
@@ -492,18 +529,33 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
         it('does not number the chips for a markerless answer', () => {
             // @ts-expect-error
+            component.phase.set('answering');
+            // @ts-expect-error — accessing protected signal for testing
             component.irisResult.set({ answer: 'Plain answer.', sources: SOURCES });
             fixture.detectChanges();
             expect(fixture.nativeElement.querySelectorAll('[data-testid="iris-chip-number"]').length).toBe(0);
         });
 
-        it('highlights a source chip while it is hovered', () => {
+        it('keeps a source highlighted after the pointer leaves its chip', () => {
+            // The highlight has to survive the trip into the answer: releasing it on the chip's own
+            // mouseleave would make reading what a source supports need a click, and a click opens it.
             const chip = fixture.nativeElement.querySelector('.iris-chip');
             chip.dispatchEvent(new Event('mouseenter'));
             fixture.detectChanges();
             expect(chip.classList).toContain('iris-chip-lit');
 
             chip.dispatchEvent(new Event('mouseleave'));
+            fixture.detectChanges();
+            expect(chip.classList).toContain('iris-chip-lit');
+        });
+
+        it('clears the highlight when the pointer leaves the card', () => {
+            const chip = fixture.nativeElement.querySelector('.iris-chip');
+            chip.dispatchEvent(new Event('mouseenter'));
+            fixture.detectChanges();
+            expect(chip.classList).toContain('iris-chip-lit');
+
+            fixture.nativeElement.querySelector('.iris-inline-answer').dispatchEvent(new Event('mouseleave'));
             fixture.detectChanges();
             expect(chip.classList).not.toContain('iris-chip-lit');
         });
@@ -549,6 +601,8 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             const router = TestBed.inject(Router);
             const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
             // @ts-expect-error — protected signal
+            component.phase.set('answering');
+            // @ts-expect-error — accessing protected signal for testing
             component.irisResult.set({ answer: 'Draft.[1]', sources: [] });
             fixture.detectChanges();
             const sup = injectRenderedCitation('1');
@@ -559,6 +613,8 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
     describe('entity sources', () => {
         beforeEach(() => {
+            // @ts-expect-error — accessing protected signal for testing
+            component.phase.set('answering');
             // @ts-expect-error — accessing protected signal for testing
             component.irisResult.set({ answer: 'Worth 10 points.[4] From slides.[1]', sources: SOURCES, entitySources: ENTITY_SOURCES });
             fixture.detectChanges();
@@ -647,6 +703,136 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
         it('should fall back to faFile for an unknown source type', () => {
             expect(component['SOURCE_ICONS']['unknown_type'] ?? component['faFile']).toBe(faFile);
+        });
+    });
+
+    describe('the card while Iris is working', () => {
+        function startQuery(): void {
+            fixture.componentRef.setInput('searchQuery', 'what are signals?');
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+        }
+
+        it('stays a slim strip until there is something to show', () => {
+            startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: true });
+            fixture.detectChanges();
+
+            expect(component['isOpen']()).toBe(false);
+            expect(fixture.nativeElement.querySelector('.iris-inline-answer').classList).not.toContain('is-open');
+            expect(fixture.nativeElement.querySelector('[data-testid="iris-strip-status"]')).toBeTruthy();
+        });
+
+        it('opens the card as soon as the first draft arrives', () => {
+            startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: true });
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'Signals are', partialSeq: 1 });
+            fixture.detectChanges();
+
+            expect(component['isOpen']()).toBe(true);
+            expect(fixture.nativeElement.querySelector('.iris-inline-answer').classList).toContain('is-open');
+        });
+
+        it('reveals a streamed draft progressively rather than all at once', () => {
+            startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'Signals are reactive primitives in Angular.', partialSeq: 1 });
+            fixture.detectChanges();
+            expect(component['displayedAnswer']()).toBe('');
+
+            vi.advanceTimersByTime(80);
+            const partway = component['displayedAnswer']();
+            expect(partway.length).toBeGreaterThan(0);
+            expect(partway.length).toBeLessThan('Signals are reactive primitives in Angular.'.length);
+
+            revealEverything();
+            expect(component['displayedAnswer']()).toBe('Signals are reactive primitives in Angular.');
+        });
+
+        it('never reveals half of a citation marker', () => {
+            startQuery();
+            // The draft breaks mid-marker, which is what arriving in clumps looks like.
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'A claim [1', partialSeq: 1 });
+            vi.advanceTimersByTime(5000);
+            fixture.detectChanges();
+
+            expect(component['displayedAnswer']()).not.toContain('[1');
+        });
+
+        it('shows an answer delivered in one piece immediately', () => {
+            startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: false, answer: 'Signals are reactive.', sources: [] });
+            fixture.detectChanges();
+
+            // Nothing arrived progressively, so there is nothing to smooth out and nothing to wait for.
+            expect(component['displayedAnswer']()).toBe('Signals are reactive.');
+            expect(component['isSettled']()).toBe(true);
+        });
+
+        it('withholds the show-more toggle until the answer has settled', () => {
+            startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'A long draft that keeps going.', partialSeq: 1 });
+            fixture.detectChanges();
+            // @ts-expect-error — accessing protected signal for testing
+            component.isOverflowing.set(true);
+            fixture.detectChanges();
+
+            expect(component['shouldClamp']()).toBe(false);
+            expect(fixture.nativeElement.querySelector('.iris-toggle-btn')).toBeNull();
+        });
+    });
+
+    describe('how the card ends', () => {
+        function startQuery(): void {
+            fixture.componentRef.setInput('searchQuery', 'what are signals?');
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+        }
+
+        it('says so when nothing is relevant instead of vanishing', () => {
+            startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: true });
+            askSubject.next({ runId: 'run-1', isThinking: false });
+            fixture.detectChanges();
+
+            expect(component['phase']()).toBe('noAnswer');
+            expect(fixture.nativeElement.querySelector('[data-testid="iris-no-answer"]')).toBeTruthy();
+        });
+
+        it('folds the no-answer card away once it has been read', () => {
+            startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: false });
+            fixture.detectChanges();
+            expect(component['isDismissed']()).toBe(false);
+
+            vi.advanceTimersByTime(6000);
+            fixture.detectChanges();
+
+            expect(component['isDismissed']()).toBe(true);
+            expect(fixture.nativeElement.querySelector('.iris-inline-answer').classList).toContain('is-dismissed');
+        });
+
+        it('offers a retry when the pipeline fails', () => {
+            mockAsk.mockReturnValueOnce(throwError(() => new Error('pipeline down')));
+            startQuery();
+
+            expect(component['phase']()).toBe('failed');
+            expect(fixture.nativeElement.querySelector('[data-testid="iris-answer-retry"]')).toBeTruthy();
+        });
+
+        it('asks again when the retry is used', () => {
+            mockAsk.mockReturnValueOnce(throwError(() => new Error('pipeline down')));
+            startQuery();
+            expect(mockAsk).toHaveBeenCalledTimes(1);
+
+            fixture.nativeElement.querySelector('[data-testid="iris-answer-retry"]').click();
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+
+            expect(mockAsk).toHaveBeenCalledTimes(2);
+            expect(component['phase']()).not.toBe('failed');
         });
     });
 });

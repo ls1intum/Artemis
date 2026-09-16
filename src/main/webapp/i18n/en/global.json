@@ -17,7 +17,9 @@
             "copied": "Copied",
             "new": "New",
             "expand": "Expand",
-            "collapse": "Collapse"
+            "collapse": "Collapse",
+            "enabled": "Enabled",
+            "disabled": "Disabled"
         },
         "weekdays": {
             "monday": "Monday",
@@ -98,6 +100,10 @@
             "irisAnswerShowLess": "Show less",
             "irisAnswerMore": "more",
             "irisAnswerThinking": "Iris is thinking…",
+            "irisAnswerNoneRelevant": "Iris looked, but nothing in this course is relevant enough to answer confidently.",
+            "irisAnswerNoneRelevantHint": "The results below might still help.",
+            "irisAnswerFailed": "Iris ran into a problem while answering. The search results are unaffected.",
+            "irisAnswerRetry": "Try again",
             "irisCollapseSources": "Show fewer sources",
             "irisAiBadge": "AI",
             "entityType": {
@@ -295,7 +301,6 @@
             "cancel": "Cancel",
             "confirm": "Confirm",
             "refresh": "Refresh",
-            "invalidInput": "Invalid Input",
             "requiredLabel": "* required"
         },
         "messages": {
