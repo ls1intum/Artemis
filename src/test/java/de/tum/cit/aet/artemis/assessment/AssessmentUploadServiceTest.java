@@ -84,7 +84,6 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         programmingExercise.setBonusPoints(0.0);
         // Configure the exercise so manual results are allowed (same gate as the assessment editor): semi-automatic assessment with the relevant due dates in the past.
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-        programmingExercise.setAllowFeedbackRequests(false);
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(7));
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(3));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
@@ -303,8 +302,8 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldNotCreateSubmissionForSubmissionlessParticipantWhenAnotherParticipantIsBlockedByComplaint() {
         // Regression test for the all-or-nothing contract: participation1 has a complained manual result that blocks the whole upload, while participation2 has no submission at
-        // all. Because the complaint gate rejects the upload before any missing submission is created, participation2 must not receive a submission — otherwise the transaction
-        // would commit that submission even though the upload reports that nothing was stored.
+        // all. The upload writes nothing before the complaint gate has passed, so participation2 must not receive a submission — otherwise a rejected upload would leave that
+        // submission behind even though it reports that nothing was stored.
         assessmentUploadService.importAssessments(programmingExercise,
                 buildZip("Identifier,Overall points\n%s,40\n".formatted(identifier1), Map.of(identifier1 + ".txt", "first")));
         final Result manualResult = getManualResults(participation1.getId()).getFirst();

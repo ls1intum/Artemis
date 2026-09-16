@@ -30,8 +30,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentUploadErrorType;
@@ -64,7 +62,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * named after the exported repository folder of the participant (e.g. {@code Course-Exercise-<participationId>-<login>.txt}) and its content becomes the manual feedback.
  * <p>
  * The upload is processed all-or-nothing: the whole zip is validated first and, only if no {@link AssessmentUploadErrorType error} is found, the assessments are
- * created. An existing manual assessment of a participant is overwritten in place — its score and feedback are replaced while the assessment itself is kept, so ratings,
+ * created. Every check that can reject the upload — including the complaint check, which needs the stored results — runs before the first write, so a rejected upload never
+ * persists anything. An existing manual assessment of a participant is overwritten in place — its score and feedback are replaced while the assessment itself is kept, so ratings,
  * participant scores and complaints that reference it stay valid. A participant whose current manual assessment has an open complaint is rejected instead of overwritten.
  *
  * @see AssessmentUploadResultDTO
@@ -91,8 +90,6 @@ public class AssessmentUploadService {
 
     private final SubmissionService submissionService;
 
-    private final TransactionTemplate transactionTemplate;
-
     /**
      * Creates a service for validating and storing uploaded manual assessments.
      * <p>
@@ -100,17 +97,14 @@ public class AssessmentUploadService {
      *
      * @param archiveParser                           the parser turning the uploaded zip into structured CSV and text-file contents
      * @param assessmentUploadParticipationRepository the repository used to resolve participants
-     * @param submissionRepository                    the repository used to create missing submissions and to persist the ordered results collection
+     * @param submissionRepository                    the repository used to load the latest submissions and to create the missing ones
      * @param assessmentUploadResultService           the service used to replace manual assessment results
      * @param submissionService                       the service enforcing the shared assessment-availability gate
-     * @param transactionManager                      the transaction manager used to store the complete upload atomically
      * @throws IllegalArgumentException if any parameter is {@code null}
      */
     public AssessmentUploadService(final AssessmentUploadArchiveParsingService archiveParser, final AssessmentUploadParticipationRepository assessmentUploadParticipationRepository,
-            final SubmissionRepository submissionRepository, final AssessmentUploadResultService assessmentUploadResultService, final SubmissionService submissionService,
-            final PlatformTransactionManager transactionManager) {
-        if (Stream.of(archiveParser, assessmentUploadParticipationRepository, submissionRepository, assessmentUploadResultService, submissionService, transactionManager)
-                .anyMatch(Objects::isNull)) {
+            final SubmissionRepository submissionRepository, final AssessmentUploadResultService assessmentUploadResultService, final SubmissionService submissionService) {
+        if (Stream.of(archiveParser, assessmentUploadParticipationRepository, submissionRepository, assessmentUploadResultService, submissionService).anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("The assessment upload service dependencies must not be null");
         }
         this.archiveParser = archiveParser;
@@ -118,7 +112,6 @@ public class AssessmentUploadService {
         this.submissionRepository = submissionRepository;
         this.assessmentUploadResultService = assessmentUploadResultService;
         this.submissionService = submissionService;
-        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     /**
@@ -285,7 +278,7 @@ public class AssessmentUploadService {
             return AssessmentUploadResultDTO.failure(errors);
         }
 
-        return transactionTemplate.execute(status -> storeValidatedRows(exercise, validatedRows));
+        return storeValidatedRows(exercise, validatedRows);
     }
 
     /**
@@ -610,8 +603,8 @@ public class AssessmentUploadService {
         final Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         result.setExerciseId(exercise.getId());
         result.setScore(row.points(), exercise.getMaxPoints(), course);
-        // Mutate the managed collection instead of replacing it: Hibernate rejects a swapped reference on an attached entity whose collection uses orphan removal, and the
-        // in-place clear is what deletes the previous feedback (and its long feedback text) as an orphan.
+        // Mutate the collection instead of replacing it: Hibernate rejects a swapped reference on a collection that uses orphan removal, and the in-place clear is what deletes
+        // the previous feedback (and its long feedback text) as an orphan once the result is saved.
         result.getFeedbacks().clear();
         result.addFeedback(buildManualFeedback(row.feedbackText(), row.points()));
     }

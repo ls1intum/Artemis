@@ -21,7 +21,6 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.transaction.PlatformTransactionManager;
 
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadParticipationDTO;
 import de.tum.cit.aet.artemis.assessment.repository.AssessmentUploadParticipationRepository;
@@ -110,7 +109,7 @@ class AssessmentUploadTemplateGenerationTest {
         final AssessmentUploadParticipationRepository participationRepository = mock(AssessmentUploadParticipationRepository.class);
         when(participationRepository.findAllForAssessmentUploadTemplate(EXERCISE_ID)).thenReturn(participations);
         return new AssessmentUploadService(mock(AssessmentUploadArchiveParsingService.class), participationRepository, mock(SubmissionRepository.class),
-                mock(AssessmentUploadResultService.class), mock(SubmissionService.class), mock(PlatformTransactionManager.class));
+                mock(AssessmentUploadResultService.class), mock(SubmissionService.class));
     }
 
     private static ProgrammingExercise exerciseWithId(final long id) {

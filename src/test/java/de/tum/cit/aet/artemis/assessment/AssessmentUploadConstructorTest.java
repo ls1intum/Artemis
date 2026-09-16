@@ -8,7 +8,6 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.servlet.autoconfigure.MultipartProperties;
-import org.springframework.transaction.PlatformTransactionManager;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentUploadErrorType;
@@ -46,26 +45,22 @@ class AssessmentUploadConstructorTest {
         final SubmissionRepository submissionRepository = mock(SubmissionRepository.class);
         final AssessmentUploadResultService assessmentUploadResultService = mock(AssessmentUploadResultService.class);
         final SubmissionService submissionService = mock(SubmissionService.class);
-        final PlatformTransactionManager transactionManager = mock(PlatformTransactionManager.class);
 
-        assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(null, assessmentUploadParticipationRepository, submissionRepository,
-                assessmentUploadResultService, submissionService, transactionManager));
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> new AssessmentUploadService(archiveParser, null, submissionRepository, assessmentUploadResultService, submissionService, transactionManager));
-        assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(archiveParser, assessmentUploadParticipationRepository, null,
-                assessmentUploadResultService, submissionService, transactionManager));
         assertThatIllegalArgumentException().isThrownBy(
-                () -> new AssessmentUploadService(archiveParser, assessmentUploadParticipationRepository, submissionRepository, null, submissionService, transactionManager));
-        assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(archiveParser, assessmentUploadParticipationRepository, submissionRepository,
-                assessmentUploadResultService, null, transactionManager));
-        assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(archiveParser, assessmentUploadParticipationRepository, submissionRepository,
-                assessmentUploadResultService, submissionService, null));
+                () -> new AssessmentUploadService(null, assessmentUploadParticipationRepository, submissionRepository, assessmentUploadResultService, submissionService));
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new AssessmentUploadService(archiveParser, null, submissionRepository, assessmentUploadResultService, submissionService));
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new AssessmentUploadService(archiveParser, assessmentUploadParticipationRepository, null, assessmentUploadResultService, submissionService));
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new AssessmentUploadService(archiveParser, assessmentUploadParticipationRepository, submissionRepository, null, submissionService));
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new AssessmentUploadService(archiveParser, assessmentUploadParticipationRepository, submissionRepository, assessmentUploadResultService, null));
     }
 
     @Test
     void shouldRejectNullAssessmentUploadResultServiceDependencies() {
-        final Object[] dependencies = { mock(UserRepository.class), mock(AssessmentUploadResultRepository.class), Optional.<LtiApi>empty(), mock(ResultWebsocketService.class),
-                mock(SubmissionRepository.class) };
+        final Object[] dependencies = { mock(UserRepository.class), mock(AssessmentUploadResultRepository.class), Optional.<LtiApi>empty(), mock(ResultWebsocketService.class) };
 
         for (int dependencyIndex = 0; dependencyIndex < dependencies.length; dependencyIndex++) {
             final Object[] dependenciesWithNull = dependencies.clone();
@@ -77,7 +72,7 @@ class AssessmentUploadConstructorTest {
     @SuppressWarnings("unchecked")
     private AssessmentUploadResultService createAssessmentUploadResultService(final Object[] dependencies) {
         return new AssessmentUploadResultService((UserRepository) dependencies[0], (AssessmentUploadResultRepository) dependencies[1], (Optional<LtiApi>) dependencies[2],
-                (ResultWebsocketService) dependencies[3], (SubmissionRepository) dependencies[4]);
+                (ResultWebsocketService) dependencies[3]);
     }
 
     @Test

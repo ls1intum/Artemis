@@ -15,8 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -26,7 +24,6 @@ import de.tum.cit.aet.artemis.assessment.repository.AssessmentUploadResultReposi
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 
@@ -48,8 +45,6 @@ public class AssessmentUploadResultService {
 
     private final ResultWebsocketService resultWebsocketService;
 
-    private final SubmissionRepository submissionRepository;
-
     /**
      * Creates a service for storing and updating uploaded manual results.
      * <p>
@@ -59,19 +54,17 @@ public class AssessmentUploadResultService {
      * @param assessmentUploadResultRepository repository used to store and load uploaded results
      * @param ltiApi                           optional LTI integration notified about new results
      * @param resultWebsocketService           websocket service notified about new results
-     * @param submissionRepository             repository used to flush the {@code Submission.results} collection the new results are attached to
      * @throws IllegalArgumentException if a parameter is {@code null}
      */
     public AssessmentUploadResultService(final UserRepository userRepository, final AssessmentUploadResultRepository assessmentUploadResultRepository,
-            final Optional<LtiApi> ltiApi, final ResultWebsocketService resultWebsocketService, final SubmissionRepository submissionRepository) {
-        if (Stream.of(userRepository, assessmentUploadResultRepository, ltiApi, resultWebsocketService, submissionRepository).anyMatch(Objects::isNull)) {
+            final Optional<LtiApi> ltiApi, final ResultWebsocketService resultWebsocketService) {
+        if (Stream.of(userRepository, assessmentUploadResultRepository, ltiApi, resultWebsocketService).anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("The assessment upload result service dependencies must not be null");
         }
         this.userRepository = userRepository;
         this.assessmentUploadResultRepository = assessmentUploadResultRepository;
         this.ltiApi = ltiApi;
         this.resultWebsocketService = resultWebsocketService;
-        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -83,14 +76,13 @@ public class AssessmentUploadResultService {
      * editor.
      * <p>
      * <b>Preconditions:</b> both collections are non-{@code null} and contain no {@code null} elements; every result in {@code newResults} is transient and already attached to
-     * its submission's {@code results} collection (via {@link Submission#addResult}) with the submission reference set; every result in {@code updatedResults} is a managed,
-     * persisted result. Empty collections are permitted and produce an empty result.
+     * its submission's {@code results} collection (via {@link Submission#addResult}) with the submission reference set; every result in {@code updatedResults} is a persisted
+     * result whose feedback was replaced in place. Empty collections are permitted and produce an empty result.
      * <p>
-     * <b>Postcondition:</b> every supplied result is stored as a manual result — new ones cascade-persisted through their owning submission — and its notification is sent
-     * immediately when no transaction is active, or scheduled for the surrounding transaction's successful commit.
+     * <b>Postcondition:</b> every supplied result is stored as a manual result and its notification has been sent.
      *
      * @param newResults     newly created results, each attached to its submission's results collection
-     * @param updatedResults existing managed results that were edited in place
+     * @param updatedResults existing persisted results that were edited in place
      * @param ratedResult    override value for the rated property of every result
      * @return the stored results with eagerly loaded submissions and feedback
      * @throws IllegalArgumentException if a precondition is violated
@@ -114,43 +106,14 @@ public class AssessmentUploadResultService {
         final ZonedDateTime completionDate = ZonedDateTime.now();
         results.forEach(result -> initializeManualResult(result, ratedResult, assessor, completionDate));
 
-        // Persist through the owning (already managed) submissions: flushing cascade-persists each new result attached to its submission's results collection and assigns it its
-        // id, and writes the in-place edits of the existing results through dirty checking. Every new result must already be attached to its submission's results collection by
-        // the caller, so that the collection stays consistent with the database within this transaction.
-        submissionRepository.flush();
-
-        final List<Long> resultIds = results.stream().map(Result::getId).toList();
+        // Write every result explicitly. There is no surrounding transaction, so the results the caller edited are detached and nothing would be written by dirty checking.
+        // Saving an existing result merges those edits, and its feedback association (cascade ALL with orphan removal) both persists the replacement feedback and deletes the
+        // feedback the upload removed; saving a new result inserts it together with its feedback.
+        final List<Long> resultIds = assessmentUploadResultRepository.saveAll(results).stream().map(Result::getId).toList();
         final List<Result> savedResults = assessmentUploadResultRepository.findAllWithSubmissionAndFeedbackAndTeamStudentsByIds(resultIds);
-        notifyAboutNewResultsAfterCommit(savedResults);
+        // Each save has already committed, so "after the results are stored" is simply the next statement.
+        savedResults.forEach(this::notifyAboutNewResultSafely);
         return savedResults;
-    }
-
-    /**
-     * Sends result notifications immediately when no transaction is active, or after the active transaction commits.
-     * <p>
-     * <b>Preconditions:</b> {@code savedResults} is non-{@code null}, non-empty, contains no {@code null} elements, and every result is persisted and has an initialized
-     * submission.
-     * <p>
-     * <b>Postcondition:</b> notifications were attempted before return when no transaction synchronization is active; otherwise exactly one after-commit callback was registered
-     * for all supplied results. Notification failures do not propagate.
-     *
-     * @param savedResults persisted results with their notification graph initialized
-     */
-    private void notifyAboutNewResultsAfterCommit(final List<Result> savedResults) {
-        assert savedResults != null && !savedResults.isEmpty() : "savedResults must not be null or empty";
-        assert savedResults.stream()
-                .allMatch(result -> result != null && result.getId() != null && result.getSubmission() != null) : "savedResults must be persisted and have submissions";
-        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            savedResults.forEach(this::notifyAboutNewResultSafely);
-            return;
-        }
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-
-            @Override
-            public void afterCommit() {
-                savedResults.forEach(AssessmentUploadResultService.this::notifyAboutNewResultSafely);
-            }
-        });
     }
 
     /**
