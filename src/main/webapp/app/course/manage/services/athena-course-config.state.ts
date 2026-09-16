@@ -352,10 +352,10 @@ export class AthenaCourseConfigState {
      * optimistic value instead: this response was read from the server before that switch was made, so writing it
      * back would undo what the switch already put on screen.
      *
-     * @param body the complete stored configuration a save's response carries, or undefined if none was sent
+     * @param body the complete stored configuration a save's response carries, or null/undefined if none was sent
      * @param excluded the field the save itself was about; already applied by the caller
      */
-    private mergeSiblingFields(body: AthenaCourseConfigDTO | undefined, excluded: AthenaConfigField): void {
+    private mergeSiblingFields(body: AthenaCourseConfigDTO | null | undefined, excluded: AthenaConfigField): void {
         if (!body) {
             return;
         }
