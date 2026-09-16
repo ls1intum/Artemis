@@ -764,6 +764,24 @@ describe('GlobalSearchModalComponent', () => {
             expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
         });
 
+        it('should not serve one type exclusion from another exclusion cached results', () => {
+            // Exclusions are sent to the server, so two different ones must not share a cache entry.
+            const examExcludedResults: GlobalSearchResult[] = [{ id: '9', type: 'lecture', title: 'A Lecture', badge: '', metadata: {} }];
+            mockSearchService.globalSearch.mockReturnValue(of(filteredResults));
+
+            component['applyTokens']([{ facet: 'type', value: 'exercise', negate: true }]);
+            vi.advanceTimersByTime(300);
+            expect(component['results']()).toEqual(filteredResults);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
+
+            mockSearchService.globalSearch.mockReturnValue(of(examExcludedResults));
+            component['applyTokens']([{ facet: 'type', value: 'exam', negate: true }]);
+            vi.advanceTimersByTime(300);
+
+            expect(mockSearchService.globalSearch).toHaveBeenCalledTimes(2);
+            expect(component['results']()).toEqual(examExcludedResults);
+        });
+
         it('should not get stuck loading when filter is removed and re-added quickly within debounce window', () => {
             mockSearchService.globalSearch.mockReturnValue(of(filteredResults));
 

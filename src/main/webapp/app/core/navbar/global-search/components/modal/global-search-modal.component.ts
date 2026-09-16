@@ -254,7 +254,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     const searchQuery = hasValidQuery ? trimmedQuery : '';
                     const courseIdsParam = courseIds.length ? courseIds : undefined;
                     const excludeCourseIdsParam = excludeCourseIds.length ? excludeCourseIds : undefined;
-                    const cacheKey = this.filterCacheKey(types, courseIds, excludeCourseIds);
+                    const cacheKey = this.filterCacheKey(types, excludeTypes, courseIds, excludeCourseIds);
 
                     // Empty query with filter — serve from cache synchronously if available
                     if (!hasValidQuery && hasFilter) {
@@ -472,10 +472,10 @@ export class GlobalSearchModalComponent implements OnDestroy {
     }
 
     /** Stable cache key for placeholder (empty-query) results, keyed by the active filter set. */
-    private filterCacheKey(types: string | undefined, courseIds: number[], excludeCourseIds: number[]): string {
+    private filterCacheKey(types: string | undefined, excludeTypes: string | undefined, courseIds: number[], excludeCourseIds: number[]): string {
         const ids = [...courseIds].sort((a, b) => a - b).join('.');
         const excludeIds = [...excludeCourseIds].sort((a, b) => a - b).join('.');
-        return `${types ?? ''}_${ids}_x${excludeIds}`;
+        return `${types ?? ''}_e${excludeTypes ?? ''}_${ids}_x${excludeIds}`;
     }
 
     /**
@@ -485,7 +485,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     private applyTokens(tokens: FilterToken[]) {
         this.tokens.set(tokens);
         const query = this.searchText();
-        const cacheKey = this.filterCacheKey(this.typesParam(), this.courseIdsParam(), this.excludeCourseIdsParam());
+        const cacheKey = this.filterCacheKey(this.typesParam(), this.excludeTypesParam(), this.courseIdsParam(), this.excludeCourseIdsParam());
         const hasCached = !query && this.placeholderCache.has(cacheKey);
         if (!hasCached) {
             this.isLoading.set(true);
