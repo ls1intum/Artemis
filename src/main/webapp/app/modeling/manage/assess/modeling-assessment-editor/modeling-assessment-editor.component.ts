@@ -333,8 +333,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
         this.isLoading.set(false);
 
-        const automaticFeedbackCount = this.result()?.feedbacks?.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC).length ?? 0;
-        if (getCourseFromExercise(this.modelingExercise())?.athenaGradingFeedbackEnabled && (this.result()?.feedbacks?.length ?? 0) === automaticFeedbackCount) {
+        const feedbacks = this.result()?.feedbacks ?? [];
+        const automaticFeedbackCount = feedbacks.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC).length;
+        // Referenced modeling suggestions are typed AUTOMATIC (unlike programming/text, which use MANUAL), so an
+        // adapted suggestion still counts toward automaticFeedbackCount above even though it is no longer a fresh
+        // assessment. Excluding any feedback that already carries a suggestion marker keeps this a genuine
+        // "nothing assessed yet" check instead of re-fetching (and re-appending) suggestions on every reload.
+        const hasPersistedSuggestions = feedbacks.some((feedback) => Feedback.getFeedbackSuggestionType(feedback) !== FeedbackSuggestionType.NO_SUGGESTION);
+        if (getCourseFromExercise(this.modelingExercise())?.athenaGradingFeedbackEnabled && !hasPersistedSuggestions && feedbacks.length === automaticFeedbackCount) {
             void this.fetchAndApplyFeedbackSuggestions();
         }
     }

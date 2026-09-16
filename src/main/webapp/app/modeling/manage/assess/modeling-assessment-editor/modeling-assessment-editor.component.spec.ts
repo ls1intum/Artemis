@@ -13,7 +13,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, Feedback, FeedbackHighlightColor, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
@@ -375,6 +375,25 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(suggestionsSpy).toHaveBeenCalledOnce();
             expect(component.referencedFeedback).toContainEqual(suggestion);
             expect(component.loadingFeedbackSuggestions()).toBe(false);
+        });
+
+        it('should not re-fetch feedback suggestions when the submission already has a persisted adapted suggestion', async () => {
+            // Referenced modeling suggestions are typed AUTOMATIC, so a saved adapted suggestion alone still looked
+            // like "only automatic feedback" (a fresh assessment) to the old gate, causing it to refetch and
+            // duplicate the suggestion - and its credits - on every reload.
+            const submission = getSubmissionWithData();
+            (submission.participation!.exercise as Exercise).exerciseGroup!.exam!.course!.athenaGradingFeedbackEnabled = true;
+            submission.results![0].feedbacks = [
+                { id: 3, reference: 'element:1', type: FeedbackType.AUTOMATIC, credits: 2, text: `${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Adapted suggestion` } as Feedback,
+            ];
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(submission));
+            const suggestionsSpy = vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([new Feedback()]));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+            expect(component.result()?.feedbacks).toHaveLength(1);
         });
 
         it('should not fetch feedback suggestions when Athena grading feedback is disabled', async () => {
