@@ -1,0 +1,433 @@
+---
+id: entity-ownership
+title: Entity Ownership and Orphans
+sidebar_label: Entity Ownership
+---
+
+Every row in the Artemis database belongs to something. A quiz question belongs to its quiz, a
+submission to its participation, a lecture to its course. When the link that expresses that is
+missing, the row becomes an **orphan**: it is still stored, still counted, still backed up, and no
+longer reachable from anywhere in the application.
+
+An orphan is worse than a leak. It is invisible in the user interface, so it reads as deleted, and
+it is invisible to the deletion routines, so it never actually is. Account deletion and the data
+privacy cleanup both walk the object graph downwards from the account and the course; a row nobody
+points at is not on that walk, which means personal data can survive a deletion that reported
+success.
+
+This page records, for every entity, what it belongs to and whether the database guarantees it.
+
+## What makes an entity orphan-proof
+
+Three things have to hold, and only the first is about the entity itself:
+
+1. **The owning foreign key is `NOT NULL`.** A nullable owner column is a standing invitation: any
+   write that forgets to set it, any bulk update that clears it, any import that half-finishes,
+   produces a row belonging to nothing. Where an entity may belong to one of two parents, the
+   alternative is a check constraint over both columns.
+2. **Deleting the parent reaches the child.** `ON DELETE CASCADE` removes it, `RESTRICT` refuses
+   until the application has removed it. `ON DELETE SET NULL` on an *owning* key does neither: it
+   manufactures the orphan on purpose. It is right for a reference (an assessor, a verifier), wrong
+   for a parent.
+3. **The child holds the key, not the parent.** A one-to-one where the parent carries the pointer
+   leaves the child with no foreign key at all. Nulling the pointer, or deleting the parent after
+   nulling it, strands the row with nothing left in the schema to find it by.
+
+## Saying it in the code
+
+The mapping alone cannot express any of this, because a nullable `@ManyToOne` looks the same whether
+it is a parent nobody made required or a reference that genuinely may be absent. A result references
+its assessor and outlives them; a result belongs to its submission and has no meaning without it.
+Two annotations make the author say which:
+
+```java
+@AggregateRoot("Reference data.")
+public class Ide extends DomainObject { }
+```
+
+```java
+@ManyToOne
+@JoinColumn(name = "course_id", nullable = false)
+@Parent
+private Course course;
+```
+
+Where an entity has several possible parents, each carries the constraint that makes exactly one of
+them present, because no single column can say it:
+
+```java
+@ManyToOne
+@JoinColumn(name = "post_id")
+@Parent(enforcedBy = "CHECK_REACTION_POST_OR_ANSWER")
+private Post post;
+```
+
+`EntityOwnershipArchitectureTest` holds every entity to one of the two statements, checks that a
+declared parent is actually required, and checks that a named constraint exists in a Liquibase
+changelog — so an entity cannot claim a guarantee the schema does not make. It also holds the list
+of entities that do not satisfy this yet. That list may only shrink.
+
+## Ownership by module
+
+`Root` means the entity owns itself and has no parent by design. `Required` means the database
+refuses a row without its parent. `Held by the parent` is the inverse one-to-one described above.
+
+### Account
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `Authority` | — | Root | No | Reference data. |
+| `ConductAgreement` | Course `course_id` and User `user_id` | Required (all) | No | Cascades on both. |
+| `Organization` | — | Root | No | Reference data. |
+| `PasskeyCredential` | User `user_id` | Required | No | Cascades on user deletion. |
+| `User` | — | Root | No | Account root. |
+| `UserActivity` | User `user_id` | Required | No | Cascades on user deletion. |
+| `UserAiPreference` | User `user_id` | Required | No | Cascades on user deletion. |
+| `UserRecoveryKey` | User `user_id` | Required | No | Cascades on user deletion. |
+
+### Admin
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `ApplicationAuditEvent` | — | Root | No | Audit trail, deliberately independent. |
+| `CleanupJobExecution` | — | Root | No | Operational log. |
+| `DataExport` | User `user_id` | Required | No |  |
+| `LLMTokenUsageRequest` | LLMTokenUsageTrace `trace_id` | Required | No |  |
+| `LLMTokenUsageTrace` | — | Root | No | Usage record; every id column is a nullable reference. |
+| `MigrationChangelog` | — | Root | No | Operational log. |
+| `PersistentAuditEvent` | — | Root | No | Audit trail, deliberately independent. |
+| `SecurityAuditEvent` | — | Root | No | Audit trail, deliberately independent. |
+
+### Assessment
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `AssessmentNote` | Result `result_id` | Required | No |  |
+| `Bonus` | GradingScale `bonus_to_grading_scale_id` | Required | No |  |
+| `Complaint` | Result `result_id` | Required | No | Complainant is a student or a team; both columns are nullable. |
+| `ComplaintResponse` | Complaint `complaint_id` | Required | No |  |
+| `ExampleSubmission` | Exercise `exercise_id` | Required | No |  |
+| `Feedback` | Result `result_id` | Optional | **Yes** | Nullable. |
+| `FeedbackMessage` | — | Root | No | Reference data. |
+| `GradeStep` | GradingScale `grading_scale_id` | Required | No |  |
+| `GradingCriterion` | Exercise `exercise_id` | Required | No |  |
+| `GradingInstruction` | GradingCriterion `grading_criterion_id` | Required | No |  |
+| `GradingScale` | Course `course_id` or Exam `exam_id` | Required (check constraint) | No | `CHECK_GRADING_SCALE_COURSE_OR_EXAM`. |
+| `LongFeedbackText` | Feedback `feedback_id` | Required | No | Cascades on feedback deletion. |
+| `ParticipantScore` and 2 subclasses | Exercise `exercise_id` | Required | No | Participant is a user or a team; both columns are nullable. |
+| `Rating` | Result `result_id` | Required | No |  |
+| `Result` | Submission `submission_id` | Required | No |  |
+| `ScaFeedback` | Result `result_id` | Required | No |  |
+| `TestCaseFeedback` | Result `result_id` | Required | No |  |
+| `TutorParticipation` | Exercise `assessed_exercise_id` | Required | No |  |
+
+### Atlas
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `Competency` and 2 subclasses | Course `course_id` | Required | No |  |
+| `CompetencyExerciseLink` | Competency `competency_id` and Exercise `exercise_id` | Required (all) | No |  |
+| `CompetencyLectureUnitLink` | Competency `competency_id` and LectureUnit `lecture_unit_id` | Required (all) | No |  |
+| `CompetencyProgress` | Competency `competency_id` and User `user_id` | Required (all) | No |  |
+| `CompetencyRelation` | Competency head and tail | Required (all) | No | Cascades on both. |
+| `CourseLearnerProfile` | Course `course_id` and LearnerProfile `learner_profile_id` | Required (all) | No |  |
+| `KnowledgeArea` | KnowledgeArea `parent_id` | Optional | **Yes** | Self-referencing tree; a null parent is a legitimate root. |
+| `LearnerProfile` | User `jhi_user.learner_profile_id` | Held by the parent | **Yes** | The user points at it; nothing points back. |
+| `LearningPath` | Course `course_id` and User `user_id` | No foreign key | **Yes** | Both columns exist but carry no foreign key at all. |
+| `ScienceEvent` | — | Root | No | Analytics event; `resource_id` is an untyped pointer with no foreign key. |
+| `ScienceSetting` | — | Root | No | Keyed by user login rather than by foreign key. |
+| `Source` | — | Root | No | Reference data. |
+| `StandardizedCompetency` | KnowledgeArea `knowledge_area_id` | Required | No |  |
+
+### Communication
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `AnswerPost` | Post `post_id` | Required | No |  |
+| `Conversation` and 3 subclasses | Course `course_id` | Required | No |  |
+| `ConversationParticipant` | Conversation `conversation_id` and User `user_id` | Required (all) | No |  |
+| `Faq` | Course `course_id` | Required | No |  |
+| `ForwardedMessage` | Post `destination_post_id` or AnswerPost `destination_answer_id` | Required (check constraint) | No | `CHECK_DESTINATION_POST_OR_ANSWER`. |
+| `Post` | Conversation `conversation_id` or PlagiarismCase `plagiarism_case_id` | Optional (alternatives) | **Yes** | Both nullable; nothing enforces at least one. |
+| `Reaction` | Post `post_id` or AnswerPost `answer_post_id` | Required (check constraint) | No | `CHECK_REACTION_POST_OR_ANSWER`. |
+| `SavedPost` | User `user_id` | Required | No |  |
+
+### Core
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `CalendarSubscriptionTokenStore` | User `jhi_user_id` | Required | No | Cascades on user deletion. |
+| `FeatureUsageDaily` | TrackedFeature `feature_id` | Required | No | Cascades. |
+| `FileUpload` | — | Root | No | Tracks an uploaded file by path. |
+| `TrackedFeature` | — | Root | No | Reference data. |
+| `UserCourseRole` | Course `course_id` and User `user_id` | Required (all) | No | Cascades on both. |
+
+### Course
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `Course` | — | Root | No | The main aggregate root. |
+| `CourseAthenaConfig` | Course `course.athena_config_id` | Held by the parent | **Yes** | The course points at it; nothing points back. |
+| `CourseConfiguration` | Course `course.course_configuration_id` | Held by the parent | **Yes** | The course points at it; nothing points back. |
+| `CourseRequest` | User `requester_id` | Required | No | `created_course_id` is a result link, not a parent. |
+
+### Exam
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `Exam` | Course `course_id` | Required | No |  |
+| `ExamLiveEvent` and 4 subclasses | Exam `exam_id` | Required | No | Cascades on exam deletion. |
+| `ExamRoom` | — | Root | No | Shared infrastructure, reused across exams. |
+| `ExamRoomExamAssignment` | Exam `exam_id` and ExamRoom `exam_room_id` | Required (all) | No |  |
+| `ExamSession` | StudentExam `student_exam_id` | Required | No |  |
+| `ExamUser` | Exam `exam_id` | Required | No |  |
+| `ExerciseGroup` | Exam `exam_id` | Required | No |  |
+| `LayoutStrategy` | ExamRoom `exam_room_id` | Required | No |  |
+| `StudentExam` | Exam `exam_id` | Required | No | `user_id` is nullable for test runs. |
+
+### Exercise
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `Comment` | CommentThread `thread_id` | Required | No | Cascades on thread deletion. |
+| `CommentThread` | Exercise `exercise_id` | Required | No | Cascades on exercise deletion. |
+| `CommentThreadGroup` | Exercise `exercise_id` | Required | No | Cascades on exercise deletion. |
+| `Exercise` and 5 subclasses | Course `course_id` or ExerciseGroup `exercise_group_id` | Required (check constraint) | No | `CHECK_EXERCISE_COURSE_OR_EXERCISE_GROUP`. |
+| `ExerciseVariantGroup` | Course `course.exerciseVariantGroups` join column | Held by the parent | **Yes** | Required in the database; the course owns the join column, so the group has no field for it. |
+| `ExerciseVersion` | Exercise `exercise_id` | Required | No | Cascades on exercise deletion. |
+| `Participation` and 2 subclasses | Exercise `exercise_id` | Optional | **Yes** | Nullable. Template and solution participations are reached from the exercise instead. |
+| `Submission` and 5 subclasses | Participation `participation_id` | Optional | **Yes** | Nullable. |
+| `SubmissionVersion` | Submission `submission_id` | Required | No | Cascades on submission deletion. |
+| `Team` | Exercise `exercise_id` | Required | No |  |
+| `TeamAssignmentConfig` | Exercise `exercise.team_assignment_config_id` | Held by the parent | **Yes** | The exercise points at it; nothing points back. |
+
+### Iris
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `IrisCourseSettingsEntity` | Course `course_id` | Required | No | Cascades. |
+| `IrisJsonMessageContent` | IrisMessageContent, shared primary key | Required | No | Cascades. |
+| `IrisMessage` | IrisSession `session_id` | Required | No | Cascades. |
+| `IrisMessageContent` | IrisMessage `message_id` | Required | No | Cascades. |
+| `IrisSession` and 2 subclasses | User `user_id` | Required | No | Cascades. The course or post it also names varies by subclass. |
+| `IrisTextMessageContent` | IrisMessageContent, shared primary key | Required | No | Cascades. |
+
+### LTI
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `LtiPlatformConfiguration` | — | Root | No | Server-wide platform registration. |
+| `LtiResourceLaunch` | User `user_id` | Required | No | `exercise_id` is nullable. |
+| `OnlineCourseConfiguration` | Course `course.online_course_configuration_id` | Held by the parent | **Yes** | The course points at it; nothing points back. |
+| `UserLti` | User `user_id` | Required | No | Cascades. |
+
+### Lecture
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `Attachment` | AttachmentVideoUnit `attachment_unit_id` | Required | No |  |
+| `IrisLectureUnitSyncState` | LectureUnit `lecture_unit_id` | Required | No | Cascades. |
+| `Lecture` | Course `course_id` | Required | No |  |
+| `LectureTranscription` | LectureUnit `lecture_unit_id` | Required | No | Cascades. |
+| `LectureUnit` and 4 subclasses | Lecture `lecture_id` | Required | No |  |
+| `LectureUnitCompletion` | LectureUnit `lecture_unit_id` and User `user_id` | Required (all) | No |  |
+| `LectureUnitProcessingState` | LectureUnit `lecture_unit_id` | Required | No | Cascades. |
+| `Slide` | AttachmentVideoUnit `attachment_unit_id` | Optional | **Yes** | Nullable, and ON DELETE SET NULL actively creates orphans. |
+
+### Local CI
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `BuildJob` | — | Root | No | Build queue record; `result_id` is a reference, not a parent. |
+
+### Modeling
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `ApollonDiagram` | — | Root | No | Stores a course id as a plain column with no foreign key. |
+
+### Notification
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `CourseNotification` | Course `course_id` | Required | No |  |
+| `CourseNotificationParameter` | CourseNotification `course_notification_id` | Required | No |  |
+| `GlobalNotificationSetting` | User `user_id` | Required | No |  |
+| `PushNotificationDeviceConfiguration` | User `user_id` | Required | No |  |
+| `SystemNotification` | — | Root | No | Server-wide banner, belongs to nothing. |
+| `UserCourseNotificationSettingPreset` | Course `course_id` and User `user_id` | Required (all) | No |  |
+| `UserCourseNotificationSettingSpecification` | Course `course_id` and User `user_id` | Required (all) | No |  |
+| `UserCourseNotificationStatus` | CourseNotification `course_notification_id` and User `user_id` | Required (all) | No |  |
+
+### Plagiarism
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `PlagiarismCase` | Exercise `exercise_id` | Required | No |  |
+| `PlagiarismComparison` | PlagiarismResult `plagiarism_result_id` | Required | No |  |
+| `PlagiarismDetectionConfig` | Exercise `exercise.plagiarism_detection_config_id` | Held by the parent | **Yes** | The exercise points at it; nothing points back. |
+| `PlagiarismResult` | Exercise `exercise_id` | Required | No |  |
+| `PlagiarismSubmission` | PlagiarismComparison `plagiarism_comparison_id` or PlagiarismCase `plagiarism_case_id` | Optional (alternatives) | **Yes** | Both nullable: the comparison cleanup detaches the submission rather than removing it. |
+| `PlagiarismSubmissionElement` | PlagiarismSubmission `plagiarism_submission_id` | Optional | **Yes** | Nullable, though it cascades when set. |
+
+### Programming
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `AuxiliaryRepository` | ProgrammingExercise `exercise_id` | Optional | **Yes** | The exercise's collection owns the order column, so Hibernate dissociates a repository it removes instead of deleting it. |
+| `BuildLogEntry` | ProgrammingSubmission `programming_submission_id` | Required | No |  |
+| `BuildPlan` | Exercise `exercise.build_plan_id` | Held by the parent | **Yes** | The exercise points at it; nothing points back. |
+| `Ide` | — | Root | No | Reference data. |
+| `ParticipationVCSAccessToken` | Participation `participation_id` and User `user_id` | Required (all) | No |  |
+| `ProgrammingExerciseBuildConfig` | ProgrammingExercise, through the `programming_exercise_details` secondary table | Held by the parent | **Yes** | No foreign key in either direction. |
+| `ProgrammingExerciseBuildStatistics` | — | Root | No | Keyed by exercise id as a plain column with no foreign key. |
+| `ProgrammingExerciseTask` | ProgrammingExercise `exercise_id` | Required | No |  |
+| `ProgrammingExerciseTestCase` | ProgrammingExercise `exercise_id` | Required | No |  |
+| `RepositoryVCSAccessToken` | Exercise `exercise_id` and User `user_id` | Required | No |  |
+| `StaticCodeAnalysisCategory` | ProgrammingExercise `exercise_id` | Required | No |  |
+| `SubmissionPolicy` and 2 subclasses | Exercise `exercise.submission_policy_id` | Held by the parent | **Yes** | The exercise points at it; nothing points back. |
+| `UserIdeMapping` | Ide `ide_id` and User `user_id` | Required (all) | No |  |
+| `UserSshPublicKey` | User `user_id` | Required | No |  |
+| `UserVCSAccessToken` | User `user_id` | Required | No | Cascades on user deletion. |
+| `VcsAccessLog` | Participation `participation_id` | No foreign key | **Yes** | NOT NULL but carries no foreign key. |
+
+### Quiz
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `QuizBatch` | QuizExercise `quiz_id` | Required | No |  |
+| `QuizQuestion` and 3 subclasses | QuizExercise `exercise_id` | Optional | **Yes** | Nullable. |
+| `QuizQuestionProgress` | Course, QuizQuestion and User | Required (all) | No | Cascades on all three. |
+| `QuizTrainingLeaderboard` | Course `course_id` and User `user_id` | Required (all) | No | Cascades on both. |
+| `SubmittedAnswer` and 3 subclasses | Submission `submission_id` | Required | No |  |
+
+### Text
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `TextAssessmentEvent` | — | Root | No | Analytics event; ids are plain columns with no foreign key. |
+| `TextBlock` | TextSubmission `submission_id` | Required | No |  |
+
+### Tutorial group
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `TutorialGroup` | Course `course_id` | Required | No |  |
+| `TutorialGroupFreePeriod` | TutorialGroupsConfiguration `tutorial_groups_configuration_id` | Required | No |  |
+| `TutorialGroupRegistration` | TutorialGroup `tutorial_group_id` and User `student_id` | Required (all) | No |  |
+| `TutorialGroupSchedule` | TutorialGroup `tutorial_group_id` | Required | No |  |
+| `TutorialGroupSession` | TutorialGroup `tutorial_group_id` | Required | No |  |
+| `TutorialGroupsConfiguration` | Course `course.tutorial_groups_configuration_id` | Held by the parent | **Yes** | The course points at it; nothing points back. |
+
+## Where orphans are still possible
+
+Of the 147 tables behind the 186 entities, 79 have a required parent, 24 are roots by design, 18 are
+join entities whose parents are all required and four carry a check constraint over alternative
+parents. That leaves **22 tables where the schema permits an orphan**, in four shapes.
+
+### An owning foreign key that is nullable
+
+`Slide`, `Participation`, `Submission`, `Feedback`, `QuizQuestion`, `PlagiarismSubmissionElement`,
+`AuxiliaryRepository` and `KnowledgeArea`.
+
+Two of these are held open by the mapping rather than by old data. `KnowledgeArea` is a tree, so a
+null parent means a root node. `AuxiliaryRepository` sits in an ordered inverse collection: the
+exercise owns the `@OrderColumn`, so a repository cannot be written on its own without leaving its
+position null, and Hibernate dissociates one it removes from the list instead of deleting it.
+Requiring the column means giving the child an explicit position field the application maintains.
+The remaining six hold rows today that carry no evidence of which parent they belonged to, so a
+constraint needs a decision about those rows before a migration.
+
+### Alternative parents with nothing enforcing the choice
+
+`Post` may belong to a conversation or to a plagiarism case, and the database accepts a row naming
+neither. Nineteen such rows exist, all from 2019 and 2020, before conversations existed.
+
+`PlagiarismSubmission` names a comparison, a case, or both. Every stored row names a comparison, so
+the column looks required — but `PlagiarismResource#deletePlagiarismComparisons` detaches the
+submission when it cleans up comparisons rather than removing it, so requiring the column would turn
+a working cleanup into a failure. What that cleanup should do with the submissions comes first.
+
+### One-to-one where the parent holds the pointer
+
+Nine tables have no foreign key of their own. Nothing in the schema connects them to anything, and
+the only thing keeping them reachable is a nullable column on the parent: `CourseAthenaConfig`,
+`CourseConfiguration`, `OnlineCourseConfiguration`, `TutorialGroupsConfiguration`,
+`TeamAssignmentConfig`, `PlagiarismDetectionConfig`, `SubmissionPolicy`, `BuildPlan`,
+`ProgrammingExerciseBuildConfig` and `LearnerProfile`.
+
+### No foreign key at all
+
+`LearningPath` stores `course_id` and `user_id` as plain nullable columns, and `VcsAccessLog` stores
+a `NOT NULL participation_id` the same way. Nothing prevents them pointing at rows that no longer
+exist. `ScienceEvent.resourceId`, `ApollonDiagram.courseId` and `ProgrammingExerciseBuildStatistics`
+are untyped pointers of the same kind, which is why they are listed as roots above: there is no
+relationship to enforce.
+
+## What a production database contains
+
+Counted on a production dump from September 2026:
+
+| Orphan | Rows | Why |
+| --- | --- | --- |
+| `Submission` with no participation | 84,066 | 82,464 quiz, 1,221 modeling, 381 text. Historical rather than ongoing: of the quiz rows, 48,837 were never submitted at all and 33,624 date from 2019, leaving three that are newer. Across all 84,066, exactly one carries a result |
+| `Participation` with no exercise | 15,463 | 15,431 are template and solution participations, which the exercise points at instead, so only 32 are true orphans |
+| `Slide` with no attachment video unit | 12,380 | `SlideSplitterService` detaches superseded slides deliberately, and `ON DELETE SET NULL` detaches the rest when their unit is deleted |
+| `LearnerProfile` no user points at | 469 | Personal data, unreachable, outside every deletion path |
+| `Feedback` with no result | 34 | |
+| `Post` with neither a conversation nor a plagiarism case | 19 | User-authored content, all from 2019 and 2020 |
+| `QuizQuestion` with no exercise | 13 | 2,318 submitted answers still reference them |
+| `SubmissionPolicy`, `TeamAssignmentConfig`, `PlagiarismDetectionConfig` no exercise points at | 4, 3, 3 | |
+
+Every column that is now required came back with no violations before it was constrained. The counts
+are worth re-running before acting on any of the rest, since a shape that is empty today is only one
+unguarded write path away from not being.
+
+The `Slide` and `LearnerProfile` rows illustrate the two ends of the problem. Slides are detached by
+the application on purpose, so the schema cannot be fixed before that behaviour is decided. Learner
+profiles hold per-course study preferences for a named account and are reachable only from
+`jhi_user.learner_profile_id`; once that is null, nothing finds them again, including the routine
+that deletes an account's data.
+
+## Options for closing the rest
+
+**Make the owning column `NOT NULL`.** The strongest guarantee and the cheapest to enforce: one
+`ALTER TABLE`, and no runtime cost, since the check is part of writing the row. It needs the existing
+violations repaired first, and a repair is only writable where the parent can be derived.
+
+**Add a check constraint over alternative parents.** The right tool where an entity genuinely has two
+possible owners. It costs two null tests on INSERT and UPDATE, nothing on read, and it is the only
+way to express "exactly one of these".
+
+**Replace `ON DELETE SET NULL` with `CASCADE` on owning keys.** For `Slide` this converts a silent
+leak into the deletion that was intended. It has to be read carefully per column, because the same
+clause is correct on a reference: `answer_post.verified_by_id` should survive the verifier's account.
+
+**Give the child the foreign key in a one-to-one.** Moving the pointer from `course.athena_config_id`
+to `course_athena_config.course_id` makes the config deletable by cascade and countable by query. It
+is a migration with an application change attached, so it is worth doing where the child holds
+personal data — `LearnerProfile` first — and arguably not worth it for a build plan.
+
+**Add the missing foreign keys.** `LearningPath` and `VcsAccessLog` reference rows without declaring
+it. Declaring it is a small migration and turns two invisible relationships into enforced ones.
+
+**Let the child own its position.** `AuxiliaryRepository` cannot be required while the exercise's
+collection owns the `@OrderColumn`. Replacing it with a plain position column the application sets
+would make the repository writable on its own, and removal an explicit delete.
+
+**Remove a redundant second foreign key.** `PlagiarismSubmission` is reachable from its comparison
+through `submission_a_id` and `submission_b_id`, and points back through `plagiarism_comparison_id`.
+The two make a cycle, so deleting a comparison forces the database to null one of them, which is why
+the submission's parent cannot be required. Giving the submission a side column and dropping the
+comparison's two columns would leave one direction and one required parent, but it touches the
+plagiarism result payload and belongs in its own change.
+
+## When adding an entity
+
+- Give it a `NOT NULL` foreign key to its parent, or a check constraint if it has two possible ones.
+- Annotate that association with `@Parent`, or the entity with `@AggregateRoot` and the reason it
+  belongs to nothing.
+- Choose the delete rule deliberately: `CASCADE` when the child has no meaning without the parent,
+  `RESTRICT` when the application must clean up first, `SET NULL` only for references.
+- In a one-to-one, put the foreign key on the child.
+- If the entity holds personal data, say in the pull request how an account deletion reaches it.

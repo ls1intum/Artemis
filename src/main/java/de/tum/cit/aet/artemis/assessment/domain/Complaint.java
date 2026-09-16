@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 
@@ -52,6 +53,7 @@ public class Complaint extends DomainObject {
 
     @OneToOne
     @JoinColumn(unique = true, nullable = false)
+    @Parent
     private Result result;
 
     /**

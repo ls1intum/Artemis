@@ -1377,6 +1377,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         ExerciseVariantGroup group = new ExerciseVariantGroup();
         group.setTitle("Loop variants");
         group.setReleaseDate(GROUP_RELEASE_DATE);
+        // A variant group belongs to a course, which the database now requires.
+        group.setCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         group.setStartDate(GROUP_START_DATE);
         group.setDueDate(GROUP_DUE_DATE);
         group.setAssessmentDueDate(GROUP_ASSESSMENT_DUE_DATE);

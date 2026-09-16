@@ -169,6 +169,8 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     void getTextSubmissionWithResult_involved_allowed() throws Exception {
         textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
         PlagiarismComparison plagiarismComparison = new PlagiarismComparison();
+        // A comparison belongs to the plagiarism result it came out of, which the database now requires.
+        plagiarismComparison.setPlagiarismResult(textExerciseUtilService.createPlagiarismResultForExercise(finishedTextExercise));
         PlagiarismSubmission submissionA = new PlagiarismSubmission();
         submissionA.setStudentLogin(TEST_PREFIX + "student1");
         submissionA.setSubmissionId(this.textSubmission.getId());

@@ -679,6 +679,8 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         ExerciseVariantGroup group = new ExerciseVariantGroup();
         group.setTitle("Loop variants");
         group.setMaxPoints(100.0);
+        // A variant group belongs to a course, which the database now requires.
+        group.setCourse(course);
         quiz.setExerciseVariantGroup(exerciseVariantGroupRepository.save(group));
         return exerciseRepository.save(quiz);
     }

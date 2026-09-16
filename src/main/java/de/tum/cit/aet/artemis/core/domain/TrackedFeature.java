@@ -23,6 +23,7 @@ import jakarta.persistence.Table;
  */
 @Entity
 @Table(name = "tracked_feature")
+@AggregateRoot("Reference data.")
 public class TrackedFeature extends DomainObject {
 
     @Enumerated(EnumType.STRING)
