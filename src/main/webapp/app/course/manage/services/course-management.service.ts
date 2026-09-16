@@ -350,7 +350,7 @@ export class CourseManagementService implements OnDestroy {
     }
 
     /**
-     * Stores the score parts of a course payload. Shared by the (deprecated) for-dashboard response, the courses list
+     * Stores the score parts of a course payload. Shared by the for-dashboard response, the courses list
      * and the exercises-for-overview response, which all carry the same score fields.
      *
      * @param courseId the course the scores belong to
