@@ -102,6 +102,31 @@ describe('Course Admin Service', () => {
         req.flush(partialResponse);
     });
 
+    it('should enable complaints from the complaint period alone, as the server does', () => {
+        delete course.id;
+        const response: Partial<CourseUpdateDTO> = {
+            id: 1234,
+            title: 'Complaints without text limits',
+            shortName: 'complaints',
+            maxComplaints: 3,
+            maxComplaintTimeDays: 7,
+            maxRequestMoreFeedbackTimeDays: 0,
+            maxComplaintTextLimit: 0,
+            maxComplaintResponseTextLimit: 0,
+        };
+
+        courseAdminService
+            .create(deepClone(course))
+            .pipe(take(1))
+            .subscribe((res) => {
+                expect(res.body?.complaintsEnabled).toBe(true);
+                expect(res.body?.requestMoreFeedbackEnabled).toBe(false);
+            });
+
+        const req = httpMock.expectOne({ method: 'POST', url: resourceUrl });
+        req.flush(response);
+    });
+
     it('should delete a course', () => {
         courseAdminService
             .delete(course.id!)
