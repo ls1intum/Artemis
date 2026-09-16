@@ -18,9 +18,13 @@ Changelogs live in `src/main/resources/config/liquibase/changelog/` and are incl
 3. Add an `<include>` line for it at the end of `master.xml`, keeping chronological order
 
 Changeset ids are `<timestamp>-<sequence>-<slug>`, for example
-`20260827090000-02-result-submission-not-null`. The author is your username. Never edit a changeset
-that has already been merged: Liquibase records a checksum and the application refuses to start
-when it changes. Write a new changeset instead.
+`20260827090000-02-result-submission-not-null`. The author is your username. Never edit the *changes* of a changeset
+that has already been merged: Liquibase records a checksum over the forward change elements and any
+`modifySql`, and the application refuses to start when it no longer matches. Write a new changeset
+instead. Comments are not part of that checksum, so an XML comment, a `<comment>` element and a
+`<rollback>` body can be corrected on a merged changelog — and a `<rollback>` sometimes has to be,
+since it is read from the file when a rollback runs rather than from the database, so a stale one
+recovers nothing while appearing to work.
 
 Read `reference/migration-patterns.md` for the worked patterns. The rest of this file is the
 decision procedure.

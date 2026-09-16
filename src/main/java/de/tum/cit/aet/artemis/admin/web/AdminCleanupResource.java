@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.admin.dto.CleanupServiceExecutionRecordDTO;
 import de.tum.cit.aet.artemis.admin.dto.NonLatestNonRatedResultsCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.NonLatestRatedResultsCleanupCountDTO;
@@ -41,7 +40,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 @FeatureUsage("data-privacy/data-cleanup")
 @RestController
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/admin/cleanup/", LegacyAdminRestPaths.CORE_ADMIN_CLEANUP_PREFIX })
+@RequestMapping("api/admin/cleanup/")
 @EnforceAdmin
 public class AdminCleanupResource {
 

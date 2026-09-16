@@ -12,6 +12,7 @@ import jakarta.validation.constraints.Size;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Entity
@@ -46,12 +47,25 @@ public class Slide extends DomainObject {
         this.attachmentVideoUnit = attachmentVideoUnit;
     }
 
+    /**
+     * The filename of the rendered slide image, which is the whole of what is stored.
+     * <p>
+     * Unlike the other file references this one is never turned into a URL, because no endpoint serves a slide by its filename. A client asks for a slide image by id through
+     * {@code files/slides/{slideId}}, and the server locates the file from this slide's attachment video unit and slide number. The value is therefore a pure storage key.
+     *
+     * @return the filename of the slide image
+     */
     public String getSlideImagePath() {
         return slideImagePath;
     }
 
+    /**
+     * Stores the filename of the given value. See {@link FileSystemLocation#storedFilename}.
+     *
+     * @param slideImagePath the filename of the slide image
+     */
     public void setSlideImagePath(String slideImagePath) {
-        this.slideImagePath = slideImagePath;
+        this.slideImagePath = FileSystemLocation.storedFilename(slideImagePath);
     }
 
     public int getSlideNumber() {

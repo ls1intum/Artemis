@@ -531,6 +531,58 @@ These conventions follow widely adopted industry REST guidelines:
 - [Microsoft Azure REST API Guidelines — *Resource paths*](https://github.com/microsoft/api-guidelines/blob/vNext/azure/Guidelines.md)
 - [Google API Improvement Proposals — AIP-122 *Resource names*](https://google.aip.dev/122)
 
+### File Storage, Stored Values and REST Paths Are Independent
+
+A file in Artemis has three separate identities, and **none of them may be derived from another**:
+
+| identity | who owns it | example |
+|---|---|---|
+| where the bytes sit on disk | the storage layer | `uploads/images/course/icons/CourseIcon_2026-09-07_a3f2.png` |
+| what the database column holds | the entity | `CourseIcon_2026-09-07_a3f2.png` |
+| the path a client requests | the REST layer | `api/core/files/courses/42/icons/CourseIcon_2026-09-07_a3f2.png` |
+
+**A column stores the filename and nothing else.** Everything needed to build the other two comes from the owning entity, which already knows its own id, its course, or its lecture unit. Storing a path fragment instead couples all three together, and the coupling is not theoretical:
+
+- **Renaming a REST path becomes a schema change.** If the column holds the URL, a longer canonical spelling no longer fits, so the column and its `@Size` have to be widened to accommodate a naming decision.
+- **The storage layer starts parsing URLs.** Code that needs the owning id recovers it from the stored string by segment position, for example `path.getName(2)`. Any change to the path shape then silently resolves to the wrong directory, and a plain rename becomes a data migration.
+- **Business logic branches on path spellings.** A service deciding whether an attachment belongs to a lecture or to a unit by testing whether the stored value contains `/attachment-unit/` breaks the moment either spelling changes, and it fails by writing to the wrong place rather than by throwing.
+- **The stored value leaks into user content.** Markdown written by users can embed a fragment of the stored value, and that content is prose no migration can rewrite. Once a spelling reaches a post, it must be served forever.
+
+#### How to do it
+
+Two owners, one per direction, both taking the metadata explicitly:
+
+```java
+// URL direction: a hardcoded template per file type, filled from the entity.
+new PublicFileUrl.CourseIcon(course.getId(), filename).clientPath();
+
+// Storage direction: a fixed directory per file type, plus the id subdirectory the layout has.
+new FileSystemLocation.CourseIcon(filename).path();
+```
+
+Model the metadata so the type system requires it. A caller must not be able to ask for a lecture attachment URL without supplying a lecture id, and a file type that is never served (a temporary upload) must have no URL representation at all, so asking for one does not compile.
+
+The on-disk directory names are **not** required to match the REST path segments, and in Artemis they do not: course icons live under `images/course/icons/` while they are served from `files/courses/{courseId}/icons/`. That is correct. Keeping them in sync by hand is what recreates the coupling.
+
+<Callout type="warning">
+  If you find yourself writing a database migration in order to rename a REST path, stop. That migration is
+  evidence of this coupling rather than a consequence of the rename, and the fix is to remove the coupling.
+  The same applies to widening a column so a new path spelling fits.
+</Callout>
+
+#### Reading values written before this rule
+
+Existing rows may still hold a path-shaped value. Reduce every stored value to its last path segment on read, so a legacy value, a canonical value and a bare filename all resolve alike. The reduction is idempotent, so it costs nothing on a value that is already a filename.
+
+A migration that strips the prefixes does not make the tolerance redundant. An upgrade that carries database migrations is offline in this project: every node is stopped, the changesets run to completion, and the new version starts serving afterwards, so the tolerance is not there to cover a window in which two releases read the same row. It is there because a migration is a claim about the rows it reaches, and some values it does not reach:
+
+* A value inside user-authored prose. Post markdown embeds a fragment of the served path, and no changeset rewrites what an instructor wrote years ago.
+* A value handed out before the upgrade and sent back after it, out of an open browser tab or a cached response of a mobile client.
+
+A value that is not a column of its own is still reachable and should be migrated rather than tolerated. `DragItem.pictureFilePath` lives inside the `quiz_question.content` JSON document, so reducing it means rebuilding the `dragItems` array of every drag-and-drop question with engine-specific JSON surgery: `jsonb_agg` over `jsonb_array_elements` on PostgreSQL, an ordered window `JSON_ARRAYAGG` over `JSON_TABLE` on MySQL. Both formulations have to preserve the array order, because the authored order of the drag items is what a student sees. See the last changeset of `20260906221008_changelog.xml`.
+
+Keep the tolerance permanently for those, and say so where it is defined, so that a later reader does not delete it as a leftover of the migration.
+
 ### Controller Method Guidelines
 
 * The REST controller's route should end with a trailing "/" and not start with a "/" (e.g., `api/`); individual endpoint routes should not start or end with a "/" (e.g., `exercises/{exerciseId}`)
