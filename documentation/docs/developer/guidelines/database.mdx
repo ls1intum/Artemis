@@ -119,6 +119,12 @@ Please prepare for the meeting and enter your PR and a short description of the 
 - **Mandatory Review:** Every change affecting the database or configuration must be explicitly discussed and approved during the weekly meeting. Final approval is granted by [Stephan Krusche](https://github.com/krusche) or [Patrick Bassner](https://github.com/bassner).
 - **Deployment Restrictions:** Database-affecting deployments cannot proceed without prior approval from designated reviewers to ensure accountability and prevent unauthorized changes. For test server deployments, approval is required from [Benjamin Schmitz](https://github.com/bensofficial).
 
+### Values That Reference a Stored File
+
+A column that points at an uploaded file stores **the filename only**, never a path fragment and never a REST path. The request path and the location on disk are both derived from the owning entity instead, so that renaming an endpoint never becomes a schema change and the storage layer never parses a URL. See [File Storage, Stored Values and REST Paths Are Independent](rest-api.mdx#file-storage-stored-values-and-rest-paths-are-independent).
+
+A migration written in order to rename a REST path is a sign that this rule has been broken somewhere; fix the coupling rather than migrating the data.
+
 ### Database Review Guidelines
 
 - **Third Normal Form (3NF):** Database schema changes should adhere strictly to the third normal form to avoid redundancy and ensure data integrity.

@@ -1082,8 +1082,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     createParticipationForExercise(exercise: Exercise): Observable<StudentParticipation | undefined> {
         this.generateParticipationStatus.next('generating');
-        return this.courseExerciseService.startExercise(exercise.id!).pipe(
-            map((createdParticipation: StudentParticipation) => {
+        return this.courseExerciseService.startExercise(exercise.id!, exercise).pipe(
+            map((createdParticipation: StudentParticipation | null) => {
+                if (!createdParticipation) {
+                    throw new Error('Participation response body is empty');
+                }
                 // note: it is important that we exchange the existing student participation and that we do not push it
                 exercise.studentParticipations = [createdParticipation];
                 if (createdParticipation.submissions && createdParticipation.submissions.length > 0) {
