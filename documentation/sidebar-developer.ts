@@ -38,7 +38,6 @@ const sidebars: SidebarsConfig = {
                         'guidelines/rest-api',
                         'guidelines/server-tests',
                         'guidelines/database',
-                        'guidelines/entity-ownership',
                         'guidelines/database-migration-consolidation',
                         'guidelines/caching',
                         'guidelines/distributed-data',
