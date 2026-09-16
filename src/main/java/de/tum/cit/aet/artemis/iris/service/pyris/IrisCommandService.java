@@ -206,7 +206,7 @@ public class IrisCommandService {
     }
 
     private boolean isPositiveIntegral(JsonNode value) {
-        return value != null && value.isIntegralNumber() && value.asLong() > 0;
+        return value != null && value.isIntegralNumber() && value.canConvertToLong() && value.asLong() > 0;
     }
 
     private boolean isNonNegativeNumber(JsonNode value) {

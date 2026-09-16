@@ -10,6 +10,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.math.BigInteger;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -267,6 +268,10 @@ class IrisCommandServiceTest {
         parameters.put("lectureUnitId", JsonNodeFactory.instance.numberNode(LECTURE_UNIT_ID));
         parameters.put("page", JsonNodeFactory.instance.numberNode(0));
         parameters.put("timestamp", JsonNodeFactory.instance.numberNode(0));
+        assertThat(commandService.executeCommand(job, new PyrisCommandDTO("pointOut", parameters), null).applied()).isFalse();
+
+        parameters.put("lectureUnitId", JsonNodeFactory.instance.numberNode(new BigInteger("18446744073709551617")));
+        parameters.put("page", JsonNodeFactory.instance.numberNode(1));
         assertThat(commandService.executeCommand(job, new PyrisCommandDTO("pointOut", parameters), null).applied()).isFalse();
 
         verify(coordinationService, never()).register(anyString(), anyString());
