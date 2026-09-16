@@ -291,6 +291,7 @@ describe('PdfViewerComponent', () => {
         component.currentPageChange.subscribe(emitted);
 
         expect(component.getTotalPages()).toBe(3);
+        expect(component.canGoToPage(2)).toBe(true);
 
         expect(component.goToPage(2)).toBe(true);
         expect(component.getCurrentPage()).toBe(2);
@@ -306,6 +307,20 @@ describe('PdfViewerComponent', () => {
         component['pageInputValue'].set(42);
         component['confirmPageNavigation']();
         expect(component['pageInputValue']()).toBe(2);
+    });
+
+    it('should reject navigation while the target page element is not rendered', () => {
+        component['totalPages'].set(3);
+        const emitted = vi.fn();
+        component.currentPageChange.subscribe(emitted);
+        const scrollIntoViewSpy = vi.spyOn(HTMLElement.prototype, 'scrollIntoView');
+
+        expect(component.canGoToPage(2)).toBe(false);
+        expect(component.goToPage(2)).toBe(false);
+        expect(component.getCurrentPage()).toBe(1);
+        expect(component['programmaticScrollUntil']).toBe(0);
+        expect(emitted).not.toHaveBeenCalled();
+        expect(scrollIntoViewSpy).not.toHaveBeenCalled();
     });
 
     it('should emit currentPageChange when the current page changes', async () => {

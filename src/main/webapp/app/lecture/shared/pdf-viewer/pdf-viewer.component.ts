@@ -599,25 +599,32 @@ export class PdfViewerComponent {
 
     /** {@link goToPage}'s condition on its own, for a caller that has to know all its targets hold up before moving any. */
     canGoToPage(page: number): boolean {
-        return Number.isInteger(page) && page >= 1 && page <= this.totalPages();
+        return this.getPageElement(page) !== undefined;
+    }
+
+    private getPageElement(page: number): HTMLElement | undefined {
+        if (!Number.isInteger(page) || page < 1 || page > this.totalPages()) {
+            return undefined;
+        }
+        return this.pageElements().find((ref) => Number(ref.nativeElement.dataset['pageIndex']) === page - 1)?.nativeElement;
     }
 
     /**
      * Scrolls the given page into view.
      *
      * @param page the 1-based page to navigate to
-     * @return whether the page was accepted; {@code false} for a non-integral or out-of-range target, which leaves the
-     *         viewer where it was. Callers that report the outcome onwards (Iris point-out) must not treat the call as
-     *         navigation having happened.
+     * @return whether the page was accepted; {@code false} for a non-integral, out-of-range, or not-yet-rendered
+     *         target, which leaves the viewer where it was. Callers that report the outcome onwards (Iris point-out)
+     *         must not treat the call as navigation having happened.
      */
     goToPage(page: number): boolean {
-        if (!this.canGoToPage(page)) {
+        const element = this.getPageElement(page);
+        if (!element) {
             return false;
         }
-        const element = this.pageElements().find((ref) => Number(ref.nativeElement.dataset['pageIndex']) === page - 1);
         // Suppress observer-driven page tracking while the smooth-scroll animates past intermediate pages.
         this.programmaticScrollUntil = Date.now() + 700;
-        element?.nativeElement.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        element.scrollIntoView({ block: 'start', behavior: 'smooth' });
         // Emit the target page once via setCurrentPage; the observer suppression above prevents intermediate
         // pages from emitting during the scroll, and the same-page guard prevents a duplicate when it settles.
         this.setCurrentPage(page);

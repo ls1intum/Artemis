@@ -364,8 +364,15 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 return;
             }
             // A rendered viewer whose document is still loading reports 0 pages and would reject every target, so wait
-            // for the page count as well — otherwise a perfectly valid point-out would be reported as not applied.
-            const pdfReady = pointOut.page == undefined || (this.pdfViewer()?.getTotalPages() ?? 0) > 0;
+            // for the page count as well — otherwise a perfectly valid point-out would be reported as not applied. Once
+            // the count is known, an invalid target can be rejected immediately, while a valid target waits for its DOM
+            // element so goToPage can actually scroll it. Reading canGoToPage here makes the effect re-run when the
+            // viewChildren signal changes.
+            const pdfViewer = this.pdfViewer();
+            const pdfPageCount = pdfViewer?.getTotalPages() ?? 0;
+            const pdfReady =
+                pointOut.page == undefined ||
+                (pdfPageCount > 0 && (!Number.isInteger(pointOut.page) || pointOut.page < 1 || pointOut.page > pdfPageCount || (pdfViewer?.canGoToPage(pointOut.page) ?? false)));
             // Same for whichever video player is rendered: a seek is only judgeable once the player exists *and* knows
             // how long the video is — before that it accepts a target past the end and reports it back unchanged, so
             // acknowledging then would claim a jump the later clamp undoes. Reading the signal here re-runs this

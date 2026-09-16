@@ -1134,13 +1134,13 @@ describe('AttachmentVideoUnitComponent', () => {
          * inside seekTo. Without that echo neither pane could drag the other, which is what the synchronization
          * tests are about; where synchronization is off the component ignores the echo, as it does in production.
          *
-         * The page count comes from a signal so that "the document finished loading" re-runs the pending-point-out
-         * effect the same way it does in production.
+         * The page count and page-element readiness come from signals so that document and DOM rendering re-run the
+         * pending-point-out effect the same way they do in production.
          */
-        function mockViewers(totalPages: WritableSignal<number>, duration = 300) {
+        function mockViewers(totalPages: WritableSignal<number>, duration = 300, pageElementsReady: WritableSignal<boolean> = signal(true)) {
             let currentPage = 1;
             let currentSlideNumber: number | undefined;
-            const canGoToPage = (page: number) => page >= 1 && page <= totalPages();
+            const canGoToPage = (page: number) => page >= 1 && page <= totalPages() && pageElementsReady();
             const canSeekTo = (seconds: number) => seconds >= 0 && seconds <= duration;
             const goToPage = vi.fn((page: number) => {
                 if (!canGoToPage(page)) {
@@ -1275,6 +1275,26 @@ describe('AttachmentVideoUnitComponent', () => {
 
             expect(goToPage).toHaveBeenCalledWith(3);
             expect(ackSpy).toHaveBeenCalledWith('c9', true);
+        });
+
+        it('defers the ack until the target page element has rendered', () => {
+            const pageElementsReady = signal(false);
+            const { goToPage } = mockViewers(signal(10), 300, pageElementsReady);
+            component['fullscreenState'].set(true);
+
+            component['handlePointOut'](pointOutRequest({ correlationId: 'c18', page: 3 }));
+            fixture.detectChanges();
+
+            expect(goToPage).not.toHaveBeenCalled();
+            expect(ackSpy).not.toHaveBeenCalled();
+            expect(component['pendingPointOut']()).toBeDefined();
+
+            pageElementsReady.set(true);
+            fixture.detectChanges();
+
+            expect(goToPage).toHaveBeenCalledWith(3);
+            expect(ackSpy).toHaveBeenCalledWith('c18', true);
+            expect(component['pendingPointOut']()).toBeUndefined();
         });
 
         it('holds a marker click until the view it opens is up, and drops it when there is no view to open', () => {
