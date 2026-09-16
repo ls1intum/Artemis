@@ -182,6 +182,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private blobLoadSubscription?: Subscription;
     private pendingPdfTargetPage?: number;
     private isApplyingVideoSeek = false;
+    private loadGeneration = 0;
 
     /** Latches the one-off combined-view opening a deep link asks for, so a closed view stays closed. */
     private hasOpenedCombinedViewFromDeepLink = false;
@@ -593,6 +594,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     override toggleCollapse(isCollapsed: boolean): void {
         super.toggleCollapse(isCollapsed);
+        const loadGeneration = ++this.loadGeneration;
 
         if (!isCollapsed) {
             this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
@@ -615,7 +617,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
             // For YouTube sources, fetch transcript directly (no playlist URL needed)
             if (this.lectureUnit().youtubeVideoId) {
-                this.fetchTranscript();
+                this.fetchTranscript(loadGeneration);
                 this.isLoading.set(false);
                 if (this.hasPdf()) {
                     this.loadPdf();
@@ -629,13 +631,19 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 .pipe(takeUntilDestroyed(this.destroyRef))
                 .subscribe({
                     next: (resolvedUrl) => {
+                        if (loadGeneration !== this.loadGeneration) {
+                            return;
+                        }
                         if (resolvedUrl) {
                             this.playlistUrl.set(resolvedUrl);
-                            this.fetchTranscript();
+                            this.fetchTranscript(loadGeneration);
                         }
                         this.isLoading.set(false);
                     },
                     error: () => {
+                        if (loadGeneration !== this.loadGeneration) {
+                            return;
+                        }
                         // Failed to resolve playlist URL, will fall back to iframe
                         this.playlistUrl.set(undefined);
                         this.isLoading.set(false);
@@ -649,6 +657,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             // unit builds a fresh one, and a stale failure would make every later point-out for this unit be given up
             // on as unreachable.
             this.playerFailed.set(false);
+            this.isTranscriptLoading.set(false);
             this.cancelPdfLoad();
             this.isPdfLoading.set(false);
             this.clearPdfState();
@@ -657,7 +666,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
     }
 
-    private fetchTranscript(): void {
+    private fetchTranscript(loadGeneration = this.loadGeneration): void {
         const id = this.lectureUnit().id;
         if (id === undefined) {
             this.transcriptSegments.set([]);
@@ -673,10 +682,16 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             )
             .subscribe({
                 next: (segments) => {
+                    if (loadGeneration !== this.loadGeneration) {
+                        return;
+                    }
                     this.transcriptSegments.set(segments);
                     this.isTranscriptLoading.set(false);
                 },
                 error: () => {
+                    if (loadGeneration !== this.loadGeneration) {
+                        return;
+                    }
                     // Failed to fetch transcript, video player will work without it
                     this.transcriptSegments.set([]);
                     this.isTranscriptLoading.set(false);

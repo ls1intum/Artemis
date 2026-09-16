@@ -14,7 +14,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { ScienceService } from 'app/foundation/science/science.service';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { LectureTranscriptionDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/foundation/service/alert.service';
 import {
@@ -411,6 +411,31 @@ describe('AttachmentVideoUnitComponent', () => {
 
         expect(component.playerFailed()).toBe(false);
         expect(component['isPointOutUnreachable'](pointOut)).toBe(false);
+    });
+
+    it('ignores a stale transcript response after rapidly closing and reopening', () => {
+        const staleTranscript = new Subject<LectureTranscriptionDTO | undefined>();
+        const currentTranscript = new Subject<LectureTranscriptionDTO | undefined>();
+        component.lectureUnit().videoSource = 'https://www.youtube.com/watch?v=video';
+        component.lectureUnit().youtubeVideoId = 'video';
+        vi.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValueOnce(staleTranscript).mockReturnValueOnce(currentTranscript);
+
+        component.toggleCollapse(false);
+        component.toggleCollapse(true);
+        component.toggleCollapse(false);
+
+        staleTranscript.next({ lectureUnitId: 1, language: 'en', segments: [] });
+        staleTranscript.complete();
+
+        expect(component.transcriptSegments()).toEqual([]);
+        expect(component['isTranscriptLoading']()).toBe(true);
+
+        const currentSegments = [{ startTime: 0, endTime: 2, text: 'Current transcript', slideNumber: 3 }];
+        currentTranscript.next({ lectureUnitId: 1, language: 'en', segments: currentSegments });
+        currentTranscript.complete();
+
+        expect(component.transcriptSegments()).toEqual(currentSegments);
+        expect(component['isTranscriptLoading']()).toBe(false);
     });
 
     it('hasAttachment / hasVideo and getFileName() when no attachment', () => {
