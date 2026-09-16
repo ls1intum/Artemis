@@ -35,7 +35,6 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 @Profile(PROFILE_CORE)
 @FeatureUsage("analytics/course-statistics")
 @RestController
-@SuppressWarnings("deprecation")
 @RequestMapping("api/course/")
 @Lazy
 public class CourseStatsResource {

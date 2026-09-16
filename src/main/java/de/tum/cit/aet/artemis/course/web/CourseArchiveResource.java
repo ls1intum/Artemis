@@ -53,7 +53,6 @@ import de.tum.cit.aet.artemis.course.service.CourseArchiveService;
 @Profile(PROFILE_CORE)
 @FeatureUsage("management/archive")
 @RestController
-@SuppressWarnings("deprecation")
 @RequestMapping("api/course/")
 @Lazy
 public class CourseArchiveResource {

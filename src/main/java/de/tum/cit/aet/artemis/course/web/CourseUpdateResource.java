@@ -56,7 +56,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementAp
 @Lazy
 @FeatureUsage("management/course-management")
 @RestController
-@SuppressWarnings("deprecation")
 @RequestMapping("api/course/")
 public class CourseUpdateResource {
 

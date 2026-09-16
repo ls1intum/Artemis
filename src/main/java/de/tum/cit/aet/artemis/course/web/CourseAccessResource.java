@@ -65,7 +65,6 @@ import de.tum.cit.aet.artemis.course.service.CourseSearchService;
 @Profile(PROFILE_CORE)
 @FeatureUsage("student-view/enrollment")
 @RestController
-@SuppressWarnings("deprecation")
 @RequestMapping("api/course/")
 @Lazy
 public class CourseAccessResource {

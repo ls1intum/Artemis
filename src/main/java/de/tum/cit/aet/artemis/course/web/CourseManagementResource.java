@@ -53,7 +53,6 @@ import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 @Lazy
 @FeatureUsage("management/course-management")
 @RestController
-@SuppressWarnings("deprecation")
 @RequestMapping("api/course/")
 public class CourseManagementResource {
 

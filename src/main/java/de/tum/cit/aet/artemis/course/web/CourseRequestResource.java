@@ -27,7 +27,6 @@ import de.tum.cit.aet.artemis.course.service.CourseRequestService;
 @Lazy
 @FeatureUsage("management/course-requests")
 @RestController
-@SuppressWarnings("deprecation")
 @RequestMapping("api/course/")
 public class CourseRequestResource {
 

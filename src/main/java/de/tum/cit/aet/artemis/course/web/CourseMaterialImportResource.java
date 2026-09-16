@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.course.service.CourseMaterialImportService;
 @Profile(PROFILE_CORE)
 @FeatureUsage("management/material-import")
 @RestController
-@SuppressWarnings("deprecation")
 @RequestMapping("api/course/")
 @Lazy
 public class CourseMaterialImportResource {

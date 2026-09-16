@@ -57,7 +57,6 @@ import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 @Lazy
 @FeatureUsage("account/self-service")
 @RestController
-@SuppressWarnings("deprecation")
 @RequestMapping("api/account/")
 public class AccountResource {
 

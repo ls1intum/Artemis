@@ -94,7 +94,6 @@ import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 @Lazy
 @FeatureUsage("users/user-administration")
 @RestController
-@SuppressWarnings("deprecation")
 @RequestMapping("api/account/admin/")
 public class AdminUserResource {
 

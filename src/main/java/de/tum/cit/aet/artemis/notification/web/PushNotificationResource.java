@@ -54,7 +54,6 @@ import io.jsonwebtoken.ExpiredJwtException;
 @RestController
 // The legacy "api/communication/" prefix is kept for backwards compatibility with deployed clients and will be removed
 // once those clients have migrated. New clients should use the "api/notification/" prefix.
-@SuppressWarnings("deprecation")
 @RequestMapping("api/notification/push_notification/")
 public class PushNotificationResource {
 

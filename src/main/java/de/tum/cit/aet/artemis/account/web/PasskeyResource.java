@@ -43,7 +43,6 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 @Lazy
 @FeatureUsage("account/passkeys")
 @RestController
-@SuppressWarnings("deprecation")
 @RequestMapping("api/account/passkeys/")
 public class PasskeyResource {
 

@@ -28,9 +28,6 @@ import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingServ
 @Lazy
 @FeatureUsage("settings/course-settings")
 @RestController
-// The legacy "api/communication/notification/" prefix is kept because artemis-android still calls it; it will be removed once
-// artemis-android#694 has shipped. New clients should use the "api/notification/courses/" prefix.
-@SuppressWarnings("deprecation")
 @RequestMapping("api/notification/courses/")
 public class UserCourseNotificationSettingResource {
 

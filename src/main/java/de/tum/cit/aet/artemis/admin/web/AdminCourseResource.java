@@ -79,7 +79,6 @@ import de.tum.cit.aet.artemis.lti.api.LtiApi;
 @Lazy
 @FeatureUsage("courses/course-administration")
 @RestController
-@SuppressWarnings("deprecation")
 @RequestMapping("api/admin/")
 public class AdminCourseResource {
 

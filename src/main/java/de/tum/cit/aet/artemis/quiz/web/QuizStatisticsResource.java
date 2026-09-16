@@ -73,7 +73,6 @@ public class QuizStatisticsResource {
      * @param quizExerciseId the id of the quiz exercise
      * @return the quiz exercise with point statistics
      */
-    @SuppressWarnings("deprecation")
     @GetMapping("quiz-exercises/{quizExerciseId}/statistics/points")
     @EnforceAtLeastTutorInExercise(resourceIdFieldName = "quizExerciseId")
     public ResponseEntity<QuizPointStatisticsDTO> getQuizPointStatistic(@PathVariable long quizExerciseId) {
