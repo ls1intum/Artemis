@@ -109,7 +109,7 @@ test.describe('Course management', { tag: '@fast' }, () => {
             courseData.shortName = 'playwright' + uid;
         });
 
-        test('Creates a new course', async ({ page, navigationBar, courseManagement, courseCreation }) => {
+        test('Creates a new course', async ({ page, navigationBar, courseManagement, courseCreation, courseManagementAPIRequests }) => {
             await navigationBar.openCourseManagement();
             await courseManagement.openCourseCreation();
             await courseCreation.setTitle(courseData.title);
@@ -128,23 +128,26 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await courseCreation.setEnableMoreFeedback(courseData.enableMoreFeedback);
             await courseCreation.setMaxRequestMoreFeedbackTimeDays(courseData.maxRequestMoreFeedbackTimeDays);
 
+            // The create response only carries the new course's id; the client loads the rest by
+            // navigating to the detail page, so fetch it the same way to verify what was persisted.
             const courseBody = await courseCreation.submit();
             course = courseBody;
+            const createdCourse = await courseManagementAPIRequests.getCourse(courseBody.id);
 
-            expect(courseBody.title).toBe(courseData.title);
-            expect(courseBody.shortName).toBe(courseData.shortName);
-            expect(courseBody.description).toBe(courseData.description);
-            expect(courseBody.testCourse).toBe(courseData.testCourse);
-            expect(trimDate(courseBody.startDate)).toBe(trimDate(dayjsToString(courseData.startDate)));
-            expect(trimDate(courseBody.endDate)).toBe(trimDate(dayjsToString(courseData.endDate)));
-            expect(courseBody.semester).toBe(courseData.semester);
-            expect(courseBody.maxPoints).toBe(courseData.maxPoints);
-            expect(courseBody.defaultProgrammingLanguage).toBe(courseData.programmingLanguage);
-            expect(courseBody.complaintsEnabled).toBe(courseData.enableComplaints);
-            expect(courseBody.maxComplaints).toBe(courseData.maxComplaints);
-            expect(courseBody.maxTeamComplaints).toBe(courseData.maxTeamComplaints);
-            expect(courseBody.maxComplaintTimeDays).toBe(courseData.maxComplaintTimeDays);
-            expect(courseBody.requestMoreFeedbackEnabled).toBe(courseData.enableMoreFeedback);
+            expect(createdCourse.title).toBe(courseData.title);
+            expect(createdCourse.shortName).toBe(courseData.shortName);
+            expect(createdCourse.description).toBe(courseData.description);
+            expect(createdCourse.testCourse).toBe(courseData.testCourse);
+            expect(trimDate(createdCourse.startDate)).toBe(trimDate(dayjsToString(courseData.startDate)));
+            expect(trimDate(createdCourse.endDate)).toBe(trimDate(dayjsToString(courseData.endDate)));
+            expect(createdCourse.semester).toBe(courseData.semester);
+            expect(createdCourse.maxPoints).toBe(courseData.maxPoints);
+            expect(createdCourse.defaultProgrammingLanguage).toBe(courseData.programmingLanguage);
+            expect(createdCourse.complaintsEnabled).toBe(courseData.enableComplaints);
+            expect(createdCourse.maxComplaints).toBe(courseData.maxComplaints);
+            expect(createdCourse.maxTeamComplaints).toBe(courseData.maxTeamComplaints);
+            expect(createdCourse.maxComplaintTimeDays).toBe(courseData.maxComplaintTimeDays);
+            expect(createdCourse.requestMoreFeedbackEnabled).toBe(courseData.enableMoreFeedback);
 
             // After a successful create the app auto-navigates to the new course's detail page, but
             // under heavy multi-node load that client-side navigation occasionally does not fire (the

@@ -173,6 +173,17 @@ export class CourseManagementAPIRequests {
     }
 
     /**
+     * Fetches the current server-side state of a course.
+     *
+     * Used after an action whose own response is intentionally minimal (e.g. course creation
+     * returns only `{ id }`, since the client navigates to the detail page to load the rest).
+     */
+    async getCourse(courseId: number): Promise<Course> {
+        const response = await this.page.request.get(`api/course/courses/${courseId}`);
+        return response.json();
+    }
+
+    /**
      * Updates the maxComplaints setting for a course via API.
      * Useful for tests that file complaints on shared seed courses.
      */
