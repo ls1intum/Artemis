@@ -144,17 +144,17 @@ public interface AssessmentDataCleanupRepository extends ArtemisJpaRepository<Co
             """)
     int detachPresentationAssessmentInstanceStudents(@Param("userId") long userId);
 
+    @Query("""
+            SELECT instance.id FROM PresentationAssessmentInstance instance
+            JOIN instance.students student
+            WHERE student.id = :userId AND SIZE(instance.students) = 1
+            """)
+    List<Long> findSoleMemberPresentationAssessmentInstanceIds(@Param("userId") long userId);
+
     @Modifying
     @Transactional // ok because of delete
-    @Query("""
-            DELETE FROM PresentationAssessmentInstance instance
-            WHERE SIZE(instance.students) = 1
-                AND instance.id IN (
-                    SELECT assignedInstance.id FROM PresentationAssessmentInstance assignedInstance
-                    JOIN assignedInstance.students student WHERE student.id = :userId
-                )
-            """)
-    int deleteSoleMemberPresentationAssessmentInstances(@Param("userId") long userId);
+    @Query("DELETE FROM PresentationAssessmentInstance instance WHERE instance.id IN :instanceIds")
+    int deletePresentationAssessmentInstancesByIds(@Param("instanceIds") Collection<Long> instanceIds);
 
     /**
      * Removes individual instances with their sole presenter and only detaches the presenter from shared instances.
@@ -165,7 +165,9 @@ public interface AssessmentDataCleanupRepository extends ArtemisJpaRepository<Co
      */
     @Transactional
     default int deletePresentationAssessmentInstanceStudents(long userId) {
-        int individualInstances = deleteSoleMemberPresentationAssessmentInstances(userId);
+        // Materialize IDs before Hibernate removes the join rows, which would change the membership predicate.
+        List<Long> instanceIds = findSoleMemberPresentationAssessmentInstanceIds(userId);
+        int individualInstances = instanceIds.isEmpty() ? 0 : deletePresentationAssessmentInstancesByIds(instanceIds);
         return individualInstances + detachPresentationAssessmentInstanceStudents(userId);
     }
 
