@@ -38,22 +38,23 @@ import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
 import {
     CourseAssessmentDashboardDTO,
-    CourseDashboardDTO,
+    CourseDashboardExerciseResponseDTO,
     CourseManagementExerciseDTO,
-    CourseWithContentDTO,
     courseFromAssessmentDashboardDTO,
-    courseFromDashboardDTO,
-    courseFromWithContentDTO,
+    exerciseFromCourseDashboardDTO,
     exerciseFromCourseManagementDTO,
 } from 'app/course/shared/entities/course-content-response.dto';
-import {
-    CourseForEnrollmentDTO,
-    CourseForQuizSelectionDTO,
-    CourseManagementDTO,
-    courseFromEnrollmentDTO,
-    courseFromManagementDTO,
-    courseFromQuizSelectionDTO,
-} from 'app/course/shared/entities/course-management-response.dto';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { InitializationState, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
+import type { UMLDiagramType } from '@tumaet/apollon';
+import { CourseForEnrollmentDTO, CourseManagementDTO, courseFromEnrollmentDTO, courseFromManagementDTO } from 'app/course/shared/entities/course-management-response.dto';
 import type { LockedCourseSubmissionDTO } from 'app/course/shared/entities/locked-course-submission.dto';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
@@ -77,6 +78,7 @@ describe('Course Management Service', () => {
     let isAtLeastInstructorInCourseSpy: ReturnType<typeof vi.spyOn>;
     let convertExercisesDateFromServerSpy: ReturnType<typeof vi.spyOn>;
     let convertDatesForLecturesFromServerSpy: ReturnType<typeof vi.spyOn>;
+    let parseExerciseCategoriesSpy: ReturnType<typeof vi.spyOn>;
 
     const resourceUrl = 'api/course/courses';
 
@@ -144,6 +146,7 @@ describe('Course Management Service', () => {
         onlineCourseConfiguration.id = 234;
         returnedFromService = { ...course } as Course;
         convertExercisesDateFromServerSpy = vi.spyOn(ExerciseService, 'convertExercisesDateFromServer').mockReturnValue(exercises);
+        parseExerciseCategoriesSpy = vi.spyOn(ExerciseService, 'parseExerciseCategories');
     });
 
     afterEach(() => {
@@ -151,9 +154,10 @@ describe('Course Management Service', () => {
         vi.restoreAllMocks();
     });
 
-    const expectDateConversionToBeCalled = (courseForConversion: Course) => {
-        expect(convertExercisesDateFromServerSpy).toHaveBeenCalledWith(courseForConversion.exercises);
-        expect(convertDatesForLecturesFromServerSpy).toHaveBeenCalledWith(courseForConversion.lectures);
+    /** The response adapter owns the conversion, so the service must not run a second date or category pass over it. */
+    const expectNoSecondConversion = () => {
+        expect(convertExercisesDateFromServerSpy).not.toHaveBeenCalled();
+        expect(convertDatesForLecturesFromServerSpy).not.toHaveBeenCalled();
     };
 
     const expectAccessRightsToBeCalled = (tutorTimes: number, editorTimes: number, instructorTimes: number) => {
@@ -162,10 +166,10 @@ describe('Course Management Service', () => {
         expect(isAtLeastInstructorInCourseSpy).toHaveBeenCalledTimes(instructorTimes);
     };
 
-    const requestAndExpectDateConversion = (method: string, url: string, flushedObject: any = returnedFromService, courseToCheck: Course, checkAccessRights?: boolean) => {
+    const requestAndExpectSingleConversion = (method: string, url: string, flushedObject: any = returnedFromService, checkAccessRights?: boolean) => {
         const req = httpMock.expectOne({ method, url });
         req.flush(flushedObject);
-        expectDateConversionToBeCalled(courseToCheck);
+        expectNoSecondConversion();
         if (checkAccessRights) {
             expectAccessRightsToBeCalled(3, 3, 3);
         }
@@ -214,7 +218,7 @@ describe('Course Management Service', () => {
             .find(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}`, returnedFromService, course);
+        requestAndExpectSingleConversion('GET', `${resourceUrl}/${course.id}`);
     });
 
     it('should convert all course date fields from server ISO strings to dayjs on find', () => {
@@ -287,7 +291,7 @@ describe('Course Management Service', () => {
             .find(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}`, returnedFromService, course, true);
+        requestAndExpectSingleConversion('GET', `${resourceUrl}/${course.id}`, returnedFromService, true);
     });
 
     it('should find course with exercises', () => {
@@ -295,7 +299,16 @@ describe('Course Management Service', () => {
             .findWithExercises(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-exercises`, returnedFromService, course);
+        requestAndExpectSingleConversion('GET', `${resourceUrl}/${course.id}/with-exercises`);
+    });
+
+    it('lets the response adapter own the exercise conversion and runs it exactly once per exercise', () => {
+        courseManagementService.findWithExercises(course.id!).pipe(take(1)).subscribe();
+
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/with-exercises` }).flush(returnedFromService);
+
+        expect(parseExerciseCategoriesSpy).toHaveBeenCalledTimes(exercises.length);
+        expectNoSecondConversion();
     });
 
     it('should find course with organizations', () => {
@@ -311,16 +324,16 @@ describe('Course Management Service', () => {
     it('should find all courses for dashboard', () => {
         const courseStorageServiceSpy = vi.spyOn(courseStorageService, 'setCourses');
         returnedFromService = coursesForDashboard;
-        const mappedCourse = courseFromDashboardDTO(courseForDashboard.course as CourseDashboardDTO);
         courseManagementService
             .findAllForDashboard()
             .pipe(take(1))
             .subscribe((res) => {
-                expect(res.body!.courses[0].course).toMatchObject({ id: course.id, title: course.title, exercises });
+                expect(res.body!.courses[0].course).toMatchObject({ id: course.id, title: course.title });
+                expect(res.body!.courses[0].course.exercises?.map((exercise) => exercise.id)).toEqual(exercises.map((exercise) => exercise.id));
                 expect(res.body!.courses[0].course.lectures).toEqual([]);
                 expect(courseStorageServiceSpy).toHaveBeenCalledOnce();
             });
-        requestAndExpectDateConversion('GET', `${resourceUrl}/for-dashboard`, returnedFromService, mappedCourse);
+        requestAndExpectSingleConversion('GET', `${resourceUrl}/for-dashboard`);
     });
 
     it('should pass on an empty response body when fetching all courses for dashboard and there is no response body sent from the server', () => {
@@ -365,7 +378,7 @@ describe('Course Management Service', () => {
             .getCourseWithInterestingExercisesForTutors(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/for-assessment-dashboard`, returnedFromService, course);
+        requestAndExpectSingleConversion('GET', `${resourceUrl}/${course.id}/for-assessment-dashboard`);
     });
 
     it('should get stats of course', () => {
@@ -403,12 +416,11 @@ describe('Course Management Service', () => {
 
     it('should get all courses with quiz exercises', () => {
         returnedFromService = [{ ...course }];
-        const mappedCourse = courseFromQuizSelectionDTO(returnedFromService[0] as CourseForQuizSelectionDTO);
         courseManagementService
             .getAllCoursesWithQuizExercises()
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/courses-with-quiz`, returnedFromService, mappedCourse, true);
+        requestAndExpectSingleConversion('GET', `${resourceUrl}/courses-with-quiz`, returnedFromService, true);
     });
 
     it('should get all courses for overview', () => {
@@ -565,14 +577,13 @@ describe('Course Management Service', () => {
     });
 
     it('should fetch a course with exercises, lectures, and competencies through its dedicated endpoint', () => {
-        const mappedCourse = courseFromWithContentDTO(returnedFromService as CourseWithContentDTO);
         courseManagementService.findWithExercisesAndLecturesAndCompetencies(course.id!).subscribe((response) => {
             expect(response.body).toMatchObject({ id: course.id, title: course.title, exercises });
             expect(response.body?.lectures).toEqual([]);
             expect(response.body?.competencies).toEqual([]);
             expect(response.body?.prerequisites).toEqual([]);
         });
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-exercises-lectures-competencies`, returnedFromService, mappedCourse);
+        requestAndExpectSingleConversion('GET', `${resourceUrl}/${course.id}/with-exercises-lectures-competencies`);
     });
 
     it('should fetch the minimal course list for dropdowns', () => {
@@ -745,44 +756,176 @@ describe('Course DTO adapter boundary', () => {
 
     const exerciseCategoryJson = JSON.stringify({ category: 'Important', color: '#3e8acc' });
 
-    const rawExerciseFixture = (overrides: Record<string, unknown>): CourseManagementExerciseDTO & Record<string, unknown> =>
-        ({
+    const managementExerciseFixtures: Record<ExerciseType, CourseManagementExerciseDTO> = {
+        [ExerciseType.PROGRAMMING]: {
             id: 501,
-            title: 'Fixture exercise',
+            type: ExerciseType.PROGRAMMING,
+            title: 'Programming fixture',
             releaseDate: '2026-01-01T00:00:00Z',
             startDate: '2026-01-02T00:00:00Z',
             dueDate: '2026-02-01T00:00:00Z',
             assessmentDueDate: '2026-02-15T00:00:00Z',
             exampleSolutionPublicationDate: '2026-03-01T00:00:00Z',
-            maxPoints: 10,
-            bonusPoints: 0,
             categories: [exerciseCategoryJson],
             teamMode: true,
-            ...overrides,
-        }) as CourseManagementExerciseDTO & Record<string, unknown>;
-
-    const exerciseFixturesByType: Record<ExerciseType, { subtypeField: string; subtypeValue: unknown }> = {
-        [ExerciseType.PROGRAMMING]: { subtypeField: 'programmingLanguage', subtypeValue: 'JAVA' },
-        [ExerciseType.TEXT]: { subtypeField: 'exampleSolution', subtypeValue: 'sample solution' },
-        [ExerciseType.MODELING]: { subtypeField: 'diagramType', subtypeValue: 'ClassDiagram' },
-        [ExerciseType.FILE_UPLOAD]: { subtypeField: 'filePattern', subtypeValue: 'pdf,zip' },
-        [ExerciseType.QUIZ]: { subtypeField: 'quizMode', subtypeValue: 'SYNCHRONIZED' },
+            exerciseVariantGroup: { id: 9, title: 'Group', dueDate: '2026-02-05T00:00:00Z' },
+            programmingLanguage: ProgrammingLanguage.JAVA,
+        },
+        [ExerciseType.TEXT]: {
+            id: 502,
+            type: ExerciseType.TEXT,
+            title: 'Text fixture',
+            releaseDate: '2026-01-01T00:00:00Z',
+            startDate: '2026-01-02T00:00:00Z',
+            dueDate: '2026-02-01T00:00:00Z',
+            assessmentDueDate: '2026-02-15T00:00:00Z',
+            exampleSolutionPublicationDate: '2026-03-01T00:00:00Z',
+            categories: [exerciseCategoryJson],
+            teamMode: true,
+            exerciseVariantGroup: { id: 9, title: 'Group', dueDate: '2026-02-05T00:00:00Z' },
+            exampleSolution: 'sample solution',
+        },
+        [ExerciseType.MODELING]: {
+            id: 503,
+            type: ExerciseType.MODELING,
+            title: 'Modeling fixture',
+            releaseDate: '2026-01-01T00:00:00Z',
+            startDate: '2026-01-02T00:00:00Z',
+            dueDate: '2026-02-01T00:00:00Z',
+            assessmentDueDate: '2026-02-15T00:00:00Z',
+            exampleSolutionPublicationDate: '2026-03-01T00:00:00Z',
+            categories: [exerciseCategoryJson],
+            teamMode: true,
+            exerciseVariantGroup: { id: 9, title: 'Group', dueDate: '2026-02-05T00:00:00Z' },
+            diagramType: 'ClassDiagram' as UMLDiagramType,
+        },
+        [ExerciseType.FILE_UPLOAD]: {
+            id: 504,
+            type: ExerciseType.FILE_UPLOAD,
+            title: 'File upload fixture',
+            releaseDate: '2026-01-01T00:00:00Z',
+            startDate: '2026-01-02T00:00:00Z',
+            dueDate: '2026-02-01T00:00:00Z',
+            assessmentDueDate: '2026-02-15T00:00:00Z',
+            exampleSolutionPublicationDate: '2026-03-01T00:00:00Z',
+            categories: [exerciseCategoryJson],
+            teamMode: true,
+            exerciseVariantGroup: { id: 9, title: 'Group', dueDate: '2026-02-05T00:00:00Z' },
+            filePattern: 'pdf,zip',
+        },
+        [ExerciseType.QUIZ]: {
+            id: 505,
+            type: ExerciseType.QUIZ,
+            title: 'Quiz fixture',
+            releaseDate: '2026-01-01T00:00:00Z',
+            startDate: '2026-01-02T00:00:00Z',
+            dueDate: '2026-02-01T00:00:00Z',
+            assessmentDueDate: '2026-02-15T00:00:00Z',
+            exerciseVariantGroup: { id: 9, title: 'Group', dueDate: '2026-02-05T00:00:00Z' },
+            quizMode: QuizMode.SYNCHRONIZED,
+            quizBatches: [{ id: 3, startTime: '2026-02-01T09:00:00Z', started: true }],
+        },
     };
 
-    it.each(Object.values(ExerciseType))('converts dates, categories, teamMode and the %s subtype field at the adapter boundary', (type) => {
-        const { subtypeField, subtypeValue } = exerciseFixturesByType[type];
-        const dto = rawExerciseFixture({ type, [subtypeField]: subtypeValue });
+    const expectedModelClass: Record<ExerciseType, new (...args: never[]) => Exercise> = {
+        [ExerciseType.PROGRAMMING]: ProgrammingExercise,
+        [ExerciseType.TEXT]: TextExercise,
+        [ExerciseType.MODELING]: ModelingExercise,
+        [ExerciseType.FILE_UPLOAD]: FileUploadExercise,
+        [ExerciseType.QUIZ]: QuizExercise,
+    };
+
+    it.each(Object.values(ExerciseType))('hydrates the %s management payload into its concrete model with every date converted', (type) => {
+        const dto = managementExerciseFixtures[type];
 
         const exercise = exerciseFromCourseManagementDTO(dto);
 
+        expect(exercise).toBeInstanceOf(expectedModelClass[type]);
+        expect(exercise.type).toBe(type);
         expect(dayjs.isDayjs(exercise.releaseDate)).toBe(true);
         expect(dayjs.isDayjs(exercise.startDate)).toBe(true);
         expect(dayjs.isDayjs(exercise.dueDate)).toBe(true);
         expect(dayjs.isDayjs(exercise.assessmentDueDate)).toBe(true);
-        expect(dayjs.isDayjs(exercise.exampleSolutionPublicationDate)).toBe(true);
-        expect(exercise.categories).toEqual([new ExerciseCategory('Important', '#3e8acc')]);
+        expect(dayjs.isDayjs(exercise.exerciseVariantGroup?.dueDate)).toBe(true);
+    });
+
+    it.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD])(
+        'parses the categories and the example solution publication date of the %s management payload',
+        (type) => {
+            const exercise = exerciseFromCourseManagementDTO(managementExerciseFixtures[type]);
+
+            expect(exercise.categories).toEqual([new ExerciseCategory('Important', '#3e8acc')]);
+            expect(exercise.teamMode).toBe(true);
+            expect(dayjs.isDayjs(exercise.exampleSolutionPublicationDate)).toBe(true);
+        },
+    );
+
+    it('carries the subtype fields of each management payload onto the concrete model', () => {
+        expect((exerciseFromCourseManagementDTO(managementExerciseFixtures[ExerciseType.PROGRAMMING]) as ProgrammingExercise).programmingLanguage).toBe(ProgrammingLanguage.JAVA);
+        expect((exerciseFromCourseManagementDTO(managementExerciseFixtures[ExerciseType.TEXT]) as TextExercise).exampleSolution).toBe('sample solution');
+        expect((exerciseFromCourseManagementDTO(managementExerciseFixtures[ExerciseType.MODELING]) as ModelingExercise).diagramType).toBe('ClassDiagram');
+        expect((exerciseFromCourseManagementDTO(managementExerciseFixtures[ExerciseType.FILE_UPLOAD]) as FileUploadExercise).filePattern).toBe('pdf,zip');
+
+        const quiz = exerciseFromCourseManagementDTO(managementExerciseFixtures[ExerciseType.QUIZ]) as QuizExercise;
+        expect(quiz.quizMode).toBe(QuizMode.SYNCHRONIZED);
+        expect(dayjs.isDayjs(quiz.quizBatches?.[0].startTime)).toBe(true);
+    });
+
+    const dashboardExerciseFixture: CourseDashboardExerciseResponseDTO = {
+        id: 601,
+        type: ExerciseType.PROGRAMMING,
+        title: 'Dashboard fixture',
+        releaseDate: '2026-01-01T00:00:00Z',
+        startDate: '2026-01-02T00:00:00Z',
+        dueDate: '2026-02-01T00:00:00Z',
+        assessmentDueDate: '2026-02-15T00:00:00Z',
+        categories: [exerciseCategoryJson],
+        teamMode: true,
+        exerciseVariantGroup: { id: 9, title: 'Group', dueDate: '2026-02-05T00:00:00Z' },
+        studentParticipations: [
+            {
+                id: 701,
+                type: ParticipationType.PROGRAMMING,
+                initializationState: InitializationState.INITIALIZED,
+                initializationDate: '2026-01-03T00:00:00Z',
+                testRun: false,
+                repositoryUri: 'https://clone-me.git',
+                submissions: [
+                    {
+                        id: 801,
+                        submissionDate: '2026-01-20T00:00:00Z',
+                        submitted: true,
+                        submissionExerciseType: SubmissionExerciseType.PROGRAMMING,
+                        commitHash: 'abc123',
+                        results: [{ id: 901, completionDate: '2026-01-21T00:00:00Z', score: 80, rated: true, successful: true }],
+                    },
+                ],
+            },
+        ],
+    };
+
+    it('converts the whole dashboard participation graph and reconnects its back-references', () => {
+        const exercise = exerciseFromCourseDashboardDTO(dashboardExerciseFixture);
+
+        expect(exercise).toBeInstanceOf(ProgrammingExercise);
         expect(exercise.teamMode).toBe(true);
-        expect((exercise as unknown as Record<string, unknown>)[subtypeField]).toEqual(subtypeValue);
+        expect(exercise.categories).toEqual([new ExerciseCategory('Important', '#3e8acc')]);
+        expect(dayjs.isDayjs(exercise.dueDate)).toBe(true);
+        expect(dayjs.isDayjs(exercise.exerciseVariantGroup?.dueDate)).toBe(true);
+
+        const participation = exercise.studentParticipations![0];
+        expect(participation).toBeInstanceOf(ProgrammingExerciseStudentParticipation);
+        expect(dayjs.isDayjs(participation.initializationDate)).toBe(true);
+
+        const submission = participation.submissions![0];
+        expect(submission).toBeInstanceOf(ProgrammingSubmission);
+        expect(dayjs.isDayjs(submission.submissionDate)).toBe(true);
+        expect(submission.participation).toBe(participation);
+
+        const result = submission.results![0];
+        expect(result).toBeInstanceOf(Result);
+        expect(dayjs.isDayjs(result.completionDate)).toBe(true);
+        expect(result.submission).toBe(submission);
     });
 
     it('hydrates examMaxPoints onto the active exam, and leaves it undefined (not defaulted to 1) when the server omits it', () => {

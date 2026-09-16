@@ -7,7 +7,6 @@ import { filter, map, tap } from 'rxjs/operators';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { User, UserNameAndLoginDTO, UserPublicInfoDTO } from 'app/account/user/user.model';
-import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { createRequestOption } from 'app/foundation/util/request.util';
@@ -30,7 +29,6 @@ import { addPublicFilePrefix } from 'app/app.constants';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { convertTutorialGroupArrayDatesFromServer, convertTutorialGroupsConfigurationDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 import { toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import {
@@ -94,7 +92,6 @@ export class GradeScoreDTO {
 export class CourseManagementService implements OnDestroy {
     private http = inject(HttpClient);
     private courseStorageService = inject(CourseStorageService);
-    private lectureService = inject(LectureService);
     private accountService = inject(AccountService);
     private entityTitleService = inject(EntityTitleService);
     private scoresStorageService = inject(ScoresStorageService);
@@ -152,7 +149,7 @@ export class CourseManagementService implements OnDestroy {
         }
         return this.http.put<CourseManagementDTO>(`${this.resourceUrl}/${courseId}`, formData, { observe: 'response' }).pipe(
             map((res) => this.mapCourseDTOResponse(res, courseFromManagementDTO)),
-            map((res) => this.processCourseEntityResponseType(res)),
+            map((res) => this.applyCourseResponseSideEffects(res)),
         );
     }
 
@@ -177,7 +174,7 @@ export class CourseManagementService implements OnDestroy {
     find(courseId: number): Observable<EntityResponseType> {
         return this.http.get<CourseManagementDTO>(`${this.resourceUrl}/${courseId}`, { observe: 'response' }).pipe(
             map((res) => this.mapCourseDTOResponse(res, courseFromManagementDTO)),
-            map((res) => this.processCourseEntityResponseType(res)),
+            map((res) => this.applyCourseResponseSideEffects(res)),
         );
     }
 
@@ -221,7 +218,7 @@ export class CourseManagementService implements OnDestroy {
         return this.http
             .get<CourseWithExercisesDTO>(`${this.resourceUrl}/${courseId}/with-exercises`, { observe: 'response' })
             .pipe(map((res) => this.mapCourseDTOResponse(res, courseFromWithExercisesDTO)))
-            .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
+            .pipe(map((res: EntityResponseType) => this.applyCourseResponseSideEffects(res)));
     }
 
     /**
@@ -232,7 +229,7 @@ export class CourseManagementService implements OnDestroy {
         return this.http
             .get<CourseWithContentDTO>(`${this.resourceUrl}/${courseId}/with-exercises-lectures-competencies`, { observe: 'response' })
             .pipe(map((res) => this.mapCourseDTOResponse(res, courseFromWithContentDTO)))
-            .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
+            .pipe(map((res: EntityResponseType) => this.applyCourseResponseSideEffects(res)));
     }
 
     /**
@@ -242,7 +239,7 @@ export class CourseManagementService implements OnDestroy {
     findWithOrganizations(courseId: number): Observable<EntityResponseType> {
         return this.http.get<CourseWithOrganizationsDTO>(`${this.resourceUrl}/${courseId}/with-organizations`, { observe: 'response' }).pipe(
             map((res) => this.mapCourseDTOResponse(res, courseFromOrganizationsDTO)),
-            map((res) => this.processCourseEntityResponseType(res)),
+            map((res) => this.applyCourseResponseSideEffects(res)),
         );
     }
 
@@ -271,7 +268,7 @@ export class CourseManagementService implements OnDestroy {
                     });
                     // Replace the CourseForDashboardDTOs in the response body with the normal courses to enable further processing.
                     const courseResponse = res.clone({ body: courses });
-                    this.processCourseEntityArrayResponseType(courseResponse);
+                    this.applyCourseArrayResponseSideEffects(courseResponse);
                     this.setCoursesForNotifications(courseResponse, generation);
                     this.courseStorageService.setCourses(courseResponse.body !== null ? courseResponse.body : undefined);
                 }
@@ -317,7 +314,7 @@ export class CourseManagementService implements OnDestroy {
             }),
             // Still the shared post-processing: it derives the course icon path, the access-right flags and the title
             // service entries that consumers of the stored course read
-            map((res: EntityResponseType) => this.processCourseEntityResponseType(res)),
+            map((res: EntityResponseType) => this.applyCourseResponseSideEffects(res)),
             tap((res: EntityResponseType) => this.storeCoursePreservingLoadedContent(courseId, res.body ?? undefined)),
         );
     }
@@ -442,7 +439,7 @@ export class CourseManagementService implements OnDestroy {
         const url = `${this.resourceUrl}/${courseId}/for-assessment-dashboard`;
         return this.http.get<CourseAssessmentDashboardDTO>(url, { observe: 'response' }).pipe(
             map((res) => this.mapCourseDTOResponse(res, courseFromAssessmentDashboardDTO)),
-            map((res: EntityResponseType) => this.processCourseEntityResponseType(res)),
+            map((res: EntityResponseType) => this.applyCourseResponseSideEffects(res)),
         );
     }
 
@@ -460,7 +457,7 @@ export class CourseManagementService implements OnDestroy {
     findAllForRegistration(): Observable<EntityArrayResponseType> {
         return this.http.get<CourseForEnrollmentDTO[]>(`${this.resourceUrl}/for-enrollment`, { observe: 'response' }).pipe(
             map((res) => this.mapCourseDTOArrayResponse(res, courseFromEnrollmentDTO)),
-            map((res) => this.processCourseEntityArrayResponseType(res)),
+            map((res) => this.applyCourseArrayResponseSideEffects(res)),
         );
     }
 
@@ -470,7 +467,7 @@ export class CourseManagementService implements OnDestroy {
     findOneForRegistration(courseId: number): Observable<EntityResponseType> {
         return this.http.get<CourseForEnrollmentDTO>(`${this.resourceUrl}/${courseId}/for-enrollment`, { observe: 'response' }).pipe(
             map((res) => this.mapCourseDTOResponse(res, courseFromEnrollmentDTO)),
-            map((res) => this.processCourseEntityResponseType(res)),
+            map((res) => this.applyCourseResponseSideEffects(res)),
         );
     }
 
@@ -500,7 +497,7 @@ export class CourseManagementService implements OnDestroy {
         const generation = this.stateGeneration;
         return this.http.get<CourseForQuizSelectionDTO[]>(this.resourceUrl + '/courses-with-quiz', { observe: 'response' }).pipe(
             map((res) => this.mapCourseDTOArrayResponse(res, courseFromQuizSelectionDTO)),
-            map((res) => this.processCourseEntityArrayResponseType(res)),
+            map((res) => this.applyCourseArrayResponseSideEffects(res)),
             map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res, generation)),
         );
     }
@@ -685,17 +682,15 @@ export class CourseManagementService implements OnDestroy {
     }
 
     /**
-     * This method bundles recurring conversion steps for Course EntityResponses.
+     * Everything a converted course response still needs, on top of the model its adapter built: the derived icon
+     * path, the competency defaults, the access-right flags and the title-service entries. Dates and categories are
+     * the adapter's job, so nothing here touches them.
      * @param courseRes
      */
-    processCourseEntityResponseType(courseRes: EntityResponseType): EntityResponseType {
+    private applyCourseResponseSideEffects(courseRes: EntityResponseType): EntityResponseType {
         this.processCourseIcon(courseRes);
-        this.convertTutorialGroupDatesFromServer(courseRes);
-        this.convertTutorialGroupConfigurationDateFromServer(courseRes);
-        this.convertCourseResponseDateFromServer(courseRes);
         this.setCompetenciesIfNone(courseRes);
         this.setAccessRightsCourseEntityResponseType(courseRes);
-        this.convertExerciseCategoriesFromServer(courseRes);
         this.sendCourseTitleAndExerciseTitlesToTitleService(courseRes?.body);
         return courseRes;
     }
@@ -711,15 +706,8 @@ export class CourseManagementService implements OnDestroy {
         return courseRes;
     }
 
-    /**
-     * This method bundles recurring conversion steps for Course processCourseEntityArrayResponseType.
-     * @param courseRes
-     */
-    private processCourseEntityArrayResponseType(courseRes: EntityArrayResponseType): EntityArrayResponseType {
-        this.convertTutorialGroupsDatesFromServer(courseRes);
-        this.convertTutorialGroupConfigurationsDateFromServer(courseRes);
-        this.convertCourseArrayResponseDatesFromServer(courseRes);
-        this.convertExerciseCategoryArrayFromServer(courseRes);
+    /** The array counterpart of {@link applyCourseResponseSideEffects}. */
+    private applyCourseArrayResponseSideEffects(courseRes: EntityArrayResponseType): EntityArrayResponseType {
         this.setAccessRightsCourseEntityArrayResponseType(courseRes);
         courseRes?.body?.forEach(this.sendCourseTitleAndExerciseTitlesToTitleService.bind(this));
         return courseRes;
@@ -745,87 +733,6 @@ export class CourseManagementService implements OnDestroy {
             enrollmentEndDate: convertDateFromClient(course.enrollmentEndDate),
             unenrollmentEndDate: convertDateFromClient(course.unenrollmentEndDate),
         });
-    }
-
-    private convertTutorialGroupDatesFromServer(courseRes: EntityResponseType): EntityResponseType {
-        if (courseRes.body?.tutorialGroups) {
-            courseRes.body.tutorialGroups = convertTutorialGroupArrayDatesFromServer(courseRes.body.tutorialGroups);
-        }
-        return courseRes;
-    }
-
-    private convertTutorialGroupsDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        if (res.body) {
-            res.body.forEach((course: Course) => {
-                if (course.tutorialGroups) {
-                    course.tutorialGroups = convertTutorialGroupArrayDatesFromServer(course.tutorialGroups);
-                }
-            });
-        }
-        return res;
-    }
-
-    private convertTutorialGroupConfigurationDateFromServer(courseRes: EntityResponseType): EntityResponseType {
-        if (courseRes.body?.tutorialGroupsConfiguration) {
-            courseRes.body.tutorialGroupsConfiguration = convertTutorialGroupsConfigurationDatesFromServer(courseRes.body.tutorialGroupsConfiguration);
-        }
-        return courseRes;
-    }
-
-    private convertTutorialGroupConfigurationsDateFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        if (res.body) {
-            res.body.forEach((course: Course) => {
-                if (course.tutorialGroupsConfiguration) {
-                    course.tutorialGroupsConfiguration = convertTutorialGroupsConfigurationDatesFromServer(course.tutorialGroupsConfiguration);
-                }
-            });
-        }
-        return res;
-    }
-
-    private convertCourseResponseDateFromServer(res: EntityResponseType): EntityResponseType {
-        if (res.body) {
-            this.setCourseDates(res.body);
-        }
-        return res;
-    }
-
-    private convertCourseArrayResponseDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        if (res.body) {
-            res.body.forEach((course: Course) => this.setCourseDates(course));
-        }
-        return res;
-    }
-
-    /**
-     * Converts the exercise category json string into ExerciseCategory objects (if it exists).
-     * @param res the response
-     */
-    private convertExerciseCategoriesFromServer(res: EntityResponseType): EntityResponseType {
-        if (res.body && res.body.exercises) {
-            res.body.exercises.forEach((exercise) => ExerciseService.parseExerciseCategories(exercise));
-        }
-        return res;
-    }
-
-    /**
-     * Converts an array of exercise category json strings into ExerciseCategory objects (if it exists).
-     * @param res the response
-     */
-    private convertExerciseCategoryArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        if (res.body) {
-            res.body.forEach((course: Course) => {
-                if (course.exercises) {
-                    course.exercises.forEach((exercise) => ExerciseService.parseExerciseCategories(exercise));
-                }
-            });
-        }
-        return res;
-    }
-
-    private setCourseDates(course: Course) {
-        course.exercises = ExerciseService.convertExercisesDateFromServer(course.exercises);
-        course.lectures = this.lectureService.convertLectureArrayDatesFromServer(course.lectures);
     }
 
     /**

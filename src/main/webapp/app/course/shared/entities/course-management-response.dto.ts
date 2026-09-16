@@ -4,6 +4,7 @@ import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { Course, CourseInformationSharingConfiguration, Language } from 'app/course/shared/entities/course.model';
 import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
+import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import type { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -186,7 +187,18 @@ export function courseFromManagementDTO(dto: CourseManagementDTO): Course {
     course.enrollmentStartDate = convertDateStringFromServer(dto.enrollmentStartDate);
     course.enrollmentEndDate = convertDateStringFromServer(dto.enrollmentEndDate);
     course.unenrollmentEndDate = convertDateStringFromServer(dto.unenrollmentEndDate);
+    course.tutorialGroupsConfiguration = tutorialGroupsConfigurationFromDTO(dto.tutorialGroupsConfiguration);
     return course;
+}
+
+function tutorialGroupsConfigurationFromDTO(dto?: TutorialGroupsConfigurationResponseDTO): TutorialGroupsConfiguration | undefined {
+    if (!dto) {
+        return undefined;
+    }
+    return hydrate(new TutorialGroupsConfiguration(), dto, {
+        tutorialPeriodStartInclusive: convertDateStringFromServer(dto.tutorialPeriodStartInclusive),
+        tutorialPeriodEndInclusive: convertDateStringFromServer(dto.tutorialPeriodEndInclusive),
+    });
 }
 
 export function courseFromEnrollmentDTO(dto: CourseForEnrollmentDTO): Course {

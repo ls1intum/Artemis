@@ -195,7 +195,7 @@ function fromParticipationSubmissionDTO(dto: ParticipationSubmissionDTO): Submis
     return submission;
 }
 
-function createSubmission(type: SubmissionExerciseType): Submission {
+export function createSubmission(type: SubmissionExerciseType): Submission {
     switch (type) {
         case SubmissionExerciseType.PROGRAMMING:
             return new ProgrammingSubmission();
