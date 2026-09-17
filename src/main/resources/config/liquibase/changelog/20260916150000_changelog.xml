@@ -101,37 +101,72 @@
 
     <!--
     information_schema is portable but the "current schema" function is not, following 20260910212533_changelog.xml, so
-    the changeset that reads it carries dbms="mysql,postgresql". H2 gets the same constraints in its own changeset: it
+    the changesets that read it carry dbms="mysql,postgresql". H2 gets the same constraints in its own changesets: it
     is the no-Docker way of running the test suite, and a second engine that accepts what the other two reject is worse
     than no second engine. UPPER() on the name because PostgreSQL folds an unquoted identifier to lower case while
     MySQL keeps it as written.
+
+    One constraint per changeset, and each precondition names its own table and constraint. Two in one changeset would
+    share a single precondition and a single applied/not-applied record, so a run interrupted between them - MySQL
+    commits each DDL statement on its own - would leave the second constraint missing and mark the changeset as run,
+    which no later run would ever correct.
     -->
-    <changeSet id="20260916150000-03-exactly-one-parent" author="krusche" dbms="mysql,postgresql">
+    <changeSet id="20260916150000-03-a-reaction-has-exactly-one-parent" author="krusche" dbms="mysql,postgresql">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM information_schema.table_constraints
-                WHERE table_schema = ${lbSchema} AND UPPER(constraint_name) = 'CHECK_REACTION_POST_OR_ANSWER'
+                WHERE table_schema = ${lbSchema} AND LOWER(table_name) = 'reaction' AND UPPER(constraint_name) = 'CHECK_REACTION_POST_OR_ANSWER'
             </sqlCheck>
         </preConditions>
-        <comment>Require exactly one parent where an entity has two possible ones.</comment>
+        <comment>A reaction belongs to a post or to an answer post, never to both and never to neither.</comment>
         <sql>ALTER TABLE reaction ADD CONSTRAINT CHECK_REACTION_POST_OR_ANSWER
             CHECK ((post_id IS NOT NULL AND answer_post_id IS NULL) OR (post_id IS NULL AND answer_post_id IS NOT NULL));</sql>
+        <rollback>
+            <sql>ALTER TABLE reaction DROP CONSTRAINT CHECK_REACTION_POST_OR_ANSWER;</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260916150000-03-b-grading-scale-has-exactly-one-parent" author="krusche" dbms="mysql,postgresql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM information_schema.table_constraints
+                WHERE table_schema = ${lbSchema} AND LOWER(table_name) = 'grading_scale' AND UPPER(constraint_name) = 'CHECK_GRADING_SCALE_COURSE_OR_EXAM'
+            </sqlCheck>
+        </preConditions>
+        <comment>A grading scale belongs to a course or to an exam, never to both and never to neither.</comment>
         <sql>ALTER TABLE grading_scale ADD CONSTRAINT CHECK_GRADING_SCALE_COURSE_OR_EXAM
             CHECK ((course_id IS NOT NULL AND exam_id IS NULL) OR (course_id IS NULL AND exam_id IS NOT NULL));</sql>
         <rollback>
-            <sql>ALTER TABLE reaction DROP CONSTRAINT CHECK_REACTION_POST_OR_ANSWER;</sql>
             <sql>ALTER TABLE grading_scale DROP CONSTRAINT CHECK_GRADING_SCALE_COURSE_OR_EXAM;</sql>
         </rollback>
     </changeSet>
 
-    <changeSet id="20260916150000-04-exactly-one-parent-h2" author="krusche" dbms="h2">
-        <comment>The same two constraints on the in-process database the test suite can be pointed at.</comment>
+    <changeSet id="20260916150000-04-a-reaction-has-exactly-one-parent-h2" author="krusche" dbms="h2">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM information_schema.table_constraints
+                WHERE LOWER(table_name) = 'reaction' AND UPPER(constraint_name) = 'CHECK_REACTION_POST_OR_ANSWER'
+            </sqlCheck>
+        </preConditions>
+        <comment>The same constraint on the in-process database the test suite can be pointed at.</comment>
         <sql>ALTER TABLE reaction ADD CONSTRAINT CHECK_REACTION_POST_OR_ANSWER
             CHECK ((post_id IS NOT NULL AND answer_post_id IS NULL) OR (post_id IS NULL AND answer_post_id IS NOT NULL));</sql>
+        <rollback>
+            <sql>ALTER TABLE reaction DROP CONSTRAINT CHECK_REACTION_POST_OR_ANSWER;</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260916150000-04-b-grading-scale-has-exactly-one-parent-h2" author="krusche" dbms="h2">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM information_schema.table_constraints
+                WHERE LOWER(table_name) = 'grading_scale' AND UPPER(constraint_name) = 'CHECK_GRADING_SCALE_COURSE_OR_EXAM'
+            </sqlCheck>
+        </preConditions>
+        <comment>The same constraint on the in-process database the test suite can be pointed at.</comment>
         <sql>ALTER TABLE grading_scale ADD CONSTRAINT CHECK_GRADING_SCALE_COURSE_OR_EXAM
             CHECK ((course_id IS NOT NULL AND exam_id IS NULL) OR (course_id IS NULL AND exam_id IS NOT NULL));</sql>
         <rollback>
-            <sql>ALTER TABLE reaction DROP CONSTRAINT CHECK_REACTION_POST_OR_ANSWER;</sql>
             <sql>ALTER TABLE grading_scale DROP CONSTRAINT CHECK_GRADING_SCALE_COURSE_OR_EXAM;</sql>
         </rollback>
     </changeSet>

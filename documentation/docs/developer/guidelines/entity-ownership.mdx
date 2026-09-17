@@ -193,7 +193,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `CommentThread` | Exercise `exercise_id` | Required | No | Cascades on exercise deletion. |
 | `CommentThreadGroup` | Exercise `exercise_id` | Required | No | Cascades on exercise deletion. |
 | `Exercise` and 5 subclasses | Course `course_id` or ExerciseGroup `exercise_group_id` | Required (check constraint) | No | `CHECK_EXERCISE_COURSE_OR_EXERCISE_GROUP`. |
-| `ExerciseVariantGroup` | Course `course.exerciseVariantGroups` join column | Held by the parent | **Yes** | Required in the database; the course owns the join column, so the group has no field for it. |
+| `ExerciseVariantGroup` | Course `course_id` | Required | No | The key lives on the group, so a course-less group cannot be written. |
 | `ExerciseVersion` | Exercise `exercise_id` | Required | No | Cascades on exercise deletion. |
 | `Participation` and 2 subclasses | Exercise `exercise_id` | Optional | **Yes** | Nullable. Template and solution participations are reached from the exercise instead. |
 | `Submission` and 5 subclasses | Participation `participation_id` | Optional | **Yes** | Nullable. |
@@ -350,7 +350,7 @@ a working cleanup into a failure. What that cleanup should do with the submissio
 
 ### One-to-one where the parent holds the pointer
 
-Nine tables have no foreign key of their own. Nothing in the schema connects them to anything, and
+Ten tables have no foreign key of their own. Nothing in the schema connects them to anything, and
 the only thing keeping them reachable is a nullable column on the parent: `CourseAthenaConfig`,
 `CourseConfiguration`, `OnlineCourseConfiguration`, `TutorialGroupsConfiguration`,
 `TeamAssignmentConfig`, `PlagiarismDetectionConfig`, `SubmissionPolicy`, `BuildPlan`,

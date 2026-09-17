@@ -18,7 +18,9 @@ import java.lang.annotation.Target;
  * entity may belong to one of several parents, each of them carries {@link #enforcedBy()} naming the check constraint
  * that makes exactly one of them present, because no single column can express that on its own.
  * <p>
- * {@code EntityOwnershipArchitectureTest} enforces both, and holds the list of entities that do not satisfy it yet.
+ * {@code EntityOwnershipArchitectureTest} reads the mapping and holds the list of entities that do not satisfy this
+ * yet; {@code EntityOwnershipDatabaseTest} reads the migrated schema, so that a declaration cannot claim a guarantee
+ * only the mapping makes.
  *
  * @see AggregateRoot
  */
@@ -30,8 +32,8 @@ public @interface Parent {
     /**
      * The database check constraint that makes exactly one of several alternative parents present.
      * <p>
-     * Empty when this parent is required on its own. When set, the name must appear in a Liquibase changelog, so that
-     * an entity cannot claim a guarantee the schema does not make.
+     * Empty when this parent is required on its own. When set, a check constraint of that name has to exist on the
+     * entity's table, so that an entity cannot claim a guarantee the schema does not make.
      *
      * @return the constraint name, or an empty string for a parent that is required by itself
      */

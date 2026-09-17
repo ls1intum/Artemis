@@ -2,11 +2,6 @@ package de.tum.cit.aet.artemis.shared.architecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -20,7 +15,7 @@ import com.tngtech.archunit.core.domain.JavaField;
 
 /**
  * Holds every entity to one of two statements: it is an {@code @AggregateRoot} and belongs to nothing, or it declares a
- * {@code @Parent} that the database requires.
+ * {@code @Parent} the mapping requires.
  * <p>
  * The point is what an orphan costs. A row whose owning foreign key is null is unreachable from the application, so it
  * reads as deleted, and unreachable from the deletion routines, so it never is — which puts it outside account deletion
@@ -29,9 +24,14 @@ import com.tngtech.archunit.core.domain.JavaField;
  * annotations make the author say which, and this test holds them to it.
  * <p>
  * Both lists below are the work that is left, not permission to add more. They may only shrink.
+ * <p>
+ * This is a reading of the mapping, and a mapping cannot establish what the database does: Hibernate never checks
+ * {@code nullable = false} against the schema, so on its own this gate would pass for a parent no migration ever
+ * constrained. {@link EntityOwnershipDatabaseTest} closes that from the other end, by reading the migrated schema.
  *
  * @see de.tum.cit.aet.artemis.core.domain.AggregateRoot
  * @see de.tum.cit.aet.artemis.core.domain.Parent
+ * @see EntityOwnershipDatabaseTest
  */
 class EntityOwnershipArchitectureTest extends AbstractArchitectureTest {
 
@@ -48,8 +48,6 @@ class EntityOwnershipArchitectureTest extends AbstractArchitectureTest {
     private static final String COLUMN = "jakarta.persistence.Column";
 
     private static final Set<String> TO_ONE_ASSOCIATIONS = Set.of("jakarta.persistence.ManyToOne", "jakarta.persistence.OneToOne");
-
-    private static final Path LIQUIBASE_DIRECTORY = Path.of("src", "main", "resources", "config", "liquibase");
 
     /**
      * Entities that are neither a root nor able to name a parent, because the foreign key lives on the parent or does
@@ -112,20 +110,9 @@ class EntityOwnershipArchitectureTest extends AbstractArchitectureTest {
 
         assertThat(nullable).as("""
                 A parent has to be there. Declare it with optional = false on the association, or nullable = false on \
-                its @JoinColumn, and require it in the database with the matching Liquibase change. Where the entity \
-                has several possible parents, name the check constraint that makes exactly one of them present in \
-                @Parent(enforcedBy = ...) instead.""").isEmpty();
-    }
-
-    @Test
-    void everyAlternativeParentNamesAConstraintTheSchemaMakes() {
-        String changelogs = readLiquibaseChangelogs();
-        List<String> unbacked = entities().flatMap(EntityOwnershipArchitectureTest::parentsOf)
-                .filter(field -> enforcingConstraintOf(field).filter(constraint -> !changelogs.contains(constraint)).isPresent()).map(JavaField::getFullName).sorted().toList();
-
-        assertThat(unbacked).as("""
-                @Parent(enforcedBy = ...) claims the database makes exactly one of several parents present, so the \
-                constraint it names has to exist. Add it in a Liquibase changelog, or drop the claim.""").isEmpty();
+                its @JoinColumn, and require it in the database with the matching Liquibase change, which \
+                EntityOwnershipDatabaseTest then holds you to. Where the entity has several possible parents, name the \
+                check constraint that makes exactly one of them present in @Parent(enforcedBy = ...) instead.""").isEmpty();
     }
 
     @Test
@@ -176,19 +163,4 @@ class EntityOwnershipArchitectureTest extends AbstractArchitectureTest {
         return nonOptionalAssociation || nonNullableColumn || nonNullablePlainColumn;
     }
 
-    private static String readLiquibaseChangelogs() {
-        try (Stream<Path> files = Files.walk(LIQUIBASE_DIRECTORY)) {
-            return files.filter(Files::isRegularFile).filter(file -> file.toString().endsWith(".xml")).map(file -> {
-                try {
-                    return Files.readString(file, StandardCharsets.UTF_8);
-                }
-                catch (IOException exception) {
-                    throw new UncheckedIOException(exception);
-                }
-            }).reduce("", String::concat);
-        }
-        catch (IOException exception) {
-            throw new UncheckedIOException(exception);
-        }
-    }
 }
