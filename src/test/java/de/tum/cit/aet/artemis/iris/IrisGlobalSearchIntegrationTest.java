@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.LongStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -244,6 +245,21 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
 
         var requestDTO = new GlobalSearchLectureRequestDTO("machine learning", 5, List.of(course.getId()), null);
         request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
+    }
+
+    /**
+     * Both course lists are client-controlled, and an unrestricted caller's exclusions travel on to Pyris, where an
+     * unbounded list would become an unbounded query filter. The endpoint refuses an oversized list instead.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void search_withMoreCourseIdsThanAllowed_shouldReturnBadRequest() throws Exception {
+        var tooManyCourseIds = LongStream.rangeClosed(1, GlobalSearchLectureRequestDTO.MAX_COURSE_ID_FILTERS + 1).boxed().toList();
+
+        request.postListWithResponseBody("/api/iris/lecture-search", new GlobalSearchLectureRequestDTO("machine learning", 5, tooManyCourseIds, null),
+                PyrisLectureSearchResultDTO.class, HttpStatus.BAD_REQUEST);
+        request.postListWithResponseBody("/api/iris/lecture-search", new GlobalSearchLectureRequestDTO("machine learning", 5, null, tooManyCourseIds),
+                PyrisLectureSearchResultDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
