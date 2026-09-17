@@ -150,10 +150,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithHiddenPagesAndPageOrder() throws IOException {
-        // Create and save an Exercise
-        Exercise testExercise = new TextExercise();
-        testExercise.setTitle("Test Exercise");
-        exerciseRepository.save(testExercise);
+        Exercise testExercise = createAndSaveExercise("Test Exercise");
 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
@@ -329,10 +326,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentVideoUnitIntoSingleSlides_UpdateHiddenStatus() throws IOException {
-        // Create and save an Exercise1
-        Exercise testExercise = new TextExercise();
-        testExercise.setTitle("Test Exercise");
-        exerciseRepository.save(testExercise);
+        Exercise testExercise = createAndSaveExercise("Test Exercise");
 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
@@ -666,10 +660,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithExistingAndNewSlides() throws IOException {
-        // Create and save an Exercise
-        Exercise testExercise = new TextExercise();
-        testExercise.setTitle("Test Exercise for Mixed Slides");
-        exerciseRepository.save(testExercise);
+        Exercise testExercise = createAndSaveExercise("Test Exercise for Mixed Slides");
 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
@@ -777,10 +768,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithStrings() throws IOException, InterruptedException {
-        // Create and save an Exercise for testing
-        Exercise testExercise = new TextExercise();
-        testExercise.setTitle("Test Exercise");
-        exerciseRepository.save(testExercise);
+        Exercise testExercise = createAndSaveExercise("Test Exercise");
 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
@@ -975,10 +963,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithStringsJson() throws IOException, InterruptedException {
-        // Create and save an Exercise for testing
-        Exercise testExercise = new TextExercise();
-        testExercise.setTitle("Test Exercise");
-        exerciseRepository.save(testExercise);
+        Exercise testExercise = createAndSaveExercise("Test Exercise");
 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
@@ -1077,4 +1062,19 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     private static Path slideImageFile(Slide slide) {
         return new FileSystemLocation.Slide(slide.getAttachmentVideoUnit().getId(), slide.getSlideNumber(), slide.getSlideImagePath()).path();
     }
+
+    /**
+     * Creates and saves a text exercise that a hidden page can point at. It names a course because an exercise row
+     * belongs to a course or to an exercise group, never to neither.
+     *
+     * @param title the title of the exercise
+     * @return the saved exercise
+     */
+    private Exercise createAndSaveExercise(String title) {
+        Exercise testExercise = new TextExercise();
+        testExercise.setTitle(title);
+        testExercise.setCourse(courseUtilService.addEmptyCourse());
+        return exerciseRepository.save(testExercise);
+    }
+
 }

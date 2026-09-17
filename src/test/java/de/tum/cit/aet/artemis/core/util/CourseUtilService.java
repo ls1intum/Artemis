@@ -281,7 +281,7 @@ public class CourseUtilService {
     public Course createCourseWithExercisesAndLecturesAndCompetencies() {
         Course course = createCourse();
 
-        ProgrammingExercise programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise(course);
         course.addExercises(programmingExercise);
 
         Lecture lecture = lectureUtilService.createLecture(course);
@@ -1355,8 +1355,8 @@ public class CourseUtilService {
     public Course createEnrolledCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor(String userPrefix) {
         Course course = this.createCourse();
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, PAST_TIMESTAMP, PAST_TIMESTAMP, PAST_TIMESTAMP);
-        ProgrammingExercise programmingExercise1 = programmingExerciseUtilService.createSampleProgrammingExercise();
-        ProgrammingExercise programmingExercise2 = programmingExerciseUtilService.createSampleProgrammingExercise("Title1", "shortnameone");
+        ProgrammingExercise programmingExercise1 = programmingExerciseUtilService.createSampleProgrammingExercise(course);
+        ProgrammingExercise programmingExercise2 = programmingExerciseUtilService.createSampleProgrammingExercise(course, "Title1", "shortnameone");
 
         course.addExercises(textExercise);
         course.addExercises(programmingExercise1);
