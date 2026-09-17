@@ -363,6 +363,13 @@ public class ProgrammingExercise extends Exercise {
         forceNewProjectKey();
     }
 
+    /**
+     * Generates a project key from the course and exercise short names and sets it, replacing any key already there.
+     * <p>
+     * {@link #generateAndSetProjectKey()} is the entry point that keeps an existing key; this one is for the callers that deliberately want a new one.
+     *
+     * @throws IllegalStateException if no course is reachable from this exercise, which leaves no short name to build a key from
+     */
     public void forceNewProjectKey() {
         Course course = getCourseViaExerciseGroupOrCourseMember();
         if (course == null) {
