@@ -681,6 +681,43 @@ describe('GlobalSearchFilterService', () => {
         });
     });
 
+    describe('editing a chip', () => {
+        it('drops the chips the new value rules out, so a metadata chip cannot survive next to content search', () => {
+            // Two metadata type chips; the first is re-picked as slides and videos, which reads a different
+            // collection. Leaving the second behind would show a chip the search ignores.
+            service.searchQuery.set('');
+            applyTokens.mockClear();
+            service.tokens.set([
+                { facet: 'type', value: 'lecture' },
+                { facet: 'type', value: 'exam' },
+            ]);
+
+            service.onChipSelected(0);
+            const slidesIndex = service.menuOptions().findIndex((option) => option.id === 'lecture_content');
+            service.onOptionSelected(slidesIndex);
+
+            expect(applyTokens).toHaveBeenLastCalledWith([{ facet: 'type', value: 'lecture_content', negate: false }]);
+        });
+
+        it('keeps the chip in place when the new value rules nothing out', () => {
+            service.searchQuery.set('');
+            applyTokens.mockClear();
+            service.tokens.set([
+                { facet: 'type', value: 'lecture' },
+                { facet: 'type', value: 'exam' },
+            ]);
+
+            service.onChipSelected(0);
+            const faqIndex = service.menuOptions().findIndex((option) => option.id === 'faq');
+            service.onOptionSelected(faqIndex);
+
+            expect(applyTokens).toHaveBeenLastCalledWith([
+                { facet: 'type', value: 'faq', negate: false },
+                { facet: 'type', value: 'exam' },
+            ]);
+        });
+    });
+
     describe('reset', () => {
         it('clears all filter composition state', () => {
             service.tokens.set([{ facet: 'type', value: 'exercise' }]);

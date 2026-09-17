@@ -9,7 +9,16 @@ import { SearchCourseOptionsService } from './search-course-options.service';
 import { SearchEntityType } from '../models/searchable-entity.model';
 import { FilterToken, TypeFacetValue } from '../models/search-token.model';
 import { TYPE_FACETS, TYPE_FACET_ORDER } from '../models/facet-catalog';
-import { addOrToggleToken, excludedCourseIds, excludedTypeTokens, expandTypeTokens, hasContentTypeToken, removeTokenAt, selectedCourseIds } from '../models/search-token.util';
+import {
+    addOrToggleToken,
+    dropIncompatibleTokens,
+    excludedCourseIds,
+    excludedTypeTokens,
+    expandTypeTokens,
+    hasContentTypeToken,
+    removeTokenAt,
+    selectedCourseIds,
+} from '../models/search-token.util';
 import { IrisSearchAvailabilityService } from './iris-search-availability.service';
 import { appendOperator, parseOperator, stripOperator } from '../models/search-operator.util';
 
@@ -331,8 +340,11 @@ export class GlobalSearchFilterService {
         this.sideEffects.requestFocus();
         if (editing >= 0) {
             // Re-picking a chip: replace it in place so it keeps its position (the edit menu never offers a
-            // value already applied elsewhere, so this can't create a duplicate).
-            this.sideEffects.applyTokens(this.tokens().map((token, index) => (index === editing ? newToken : token)));
+            // value already applied elsewhere, so this can't create a duplicate). The compatibility rule still
+            // applies: editing a type chip into the slides and videos one (or back) drops the chips it rules out,
+            // which would otherwise stay visible next to a search that ignores them.
+            const replaced = this.tokens().map((token, index) => (index === editing ? newToken : token));
+            this.sideEffects.applyTokens(dropIncompatibleTokens(replaced, newToken));
             return;
         }
         this.sideEffects.applyTokens(addOrToggleToken(this.tokens(), newToken));

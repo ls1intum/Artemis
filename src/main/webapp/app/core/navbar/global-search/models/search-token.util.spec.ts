@@ -1,5 +1,6 @@
 import {
     addOrToggleToken,
+    dropIncompatibleTokens,
     excludedCourseIds,
     excludedTypeTokens,
     expandTypeTokens,
@@ -115,6 +116,23 @@ describe('search token utilities', () => {
 
         it('leaves the course scope alone when the collections swap', () => {
             expect(addOrToggleToken([course('5'), type('lecture')], type('lecture_content'))).toEqual([course('5'), type('lecture_content')]);
+        });
+    });
+
+    describe('dropIncompatibleTokens', () => {
+        it('keeps a token that is already in the list, dropping only what it rules out', () => {
+            const replacement = type('lecture_content');
+            expect(dropIncompatibleTokens([replacement, type('exam')], replacement)).toEqual([replacement]);
+        });
+
+        it('drops a content token when a metadata type replaces it', () => {
+            const replacement = type('exam');
+            expect(dropIncompatibleTokens([replacement, type('lecture_content')], replacement)).toEqual([replacement]);
+        });
+
+        it('leaves course tokens and same-collection type tokens alone', () => {
+            const replacement = type('exam');
+            expect(dropIncompatibleTokens([course('5'), replacement, type('faq')], replacement)).toEqual([course('5'), replacement, type('faq')]);
         });
     });
 
