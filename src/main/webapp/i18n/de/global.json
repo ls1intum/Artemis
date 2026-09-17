@@ -105,7 +105,18 @@
             "irisAnswerFailed": "Bei der Antwort von Iris ist ein Problem aufgetreten. Die Suchergebnisse sind davon nicht betroffen.",
             "irisAnswerRetry": "Erneut versuchen",
             "irisCollapseSources": "Weniger Quellen anzeigen",
-            "irisAiBadge": "KI"
+            "irisAiBadge": "KI",
+            "entityType": {
+                "exercise": "Aufgabe",
+                "lecture": "Vorlesung",
+                "lecture_unit": "Vorlesungseinheit",
+                "exam": "Klausur",
+                "faq": "FAQ",
+                "channel": "Kanal",
+                "course": "Kurs",
+                "post": "Beitrag",
+                "answer_post": "Antwort"
+            }
         },
         "menu": {
             "home": "Startseite",

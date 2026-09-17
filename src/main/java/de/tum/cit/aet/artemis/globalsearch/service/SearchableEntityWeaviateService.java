@@ -71,6 +71,52 @@ public class SearchableEntityWeaviateService {
     // ----- Search path -----
 
     /**
+     * Entity recall for the Iris ANSWER path. Unlike {@link #searchSearchableEntities(String, Filter, int)},
+     * which boosts titles for palette-style lookups, this search weights all searchable fields
+     * neutrally: the answer path's queries are question-shaped ("what are some quizzes ..."), title
+     * boosting drags in name-matches over meaning-matches, and the cross-encoder downstream is the
+     * component that judges relevance. Recall here should be broad and dumb.
+     *
+     * @param query  the user's question
+     * @param filter the compound access filter
+     * @param limit  the maximum number of candidates
+     * @return the raw property maps of the candidates
+     */
+    public List<Map<String, Object>> searchEntityCandidatesForAnswer(String query, Filter filter, int limit) {
+        try {
+            CollectionHandle<Map<String, Object>> collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+            List<WeaviateObject<Map<String, Object>>> objects;
+            if (useHybridSearch) {
+                var result = collection.query.hybrid(query, builder -> {
+                    builder.limit(limit);
+                    if (filter != null) {
+                        builder.filters(filter);
+                    }
+                    return builder;
+                });
+                objects = result.objects();
+            }
+            else {
+                var result = collection.query.bm25(query, builder -> {
+                    builder.limit(limit);
+                    if (filter != null) {
+                        builder.filters(filter);
+                    }
+                    return builder;
+                });
+                objects = result.objects();
+            }
+            List<Map<String, Object>> propertiesList = objects.stream().map(WeaviateObject::properties).toList();
+            propertiesList.forEach(WeaviateDateUtil::normalizeDateProperties);
+            return propertiesList;
+        }
+        catch (Exception e) {
+            log.error("Failed to search entity candidates (query length={}): {}", query != null ? query.length() : 0, e.getMessage(), e);
+            throw new WeaviateException("Failed to search entity candidates in Weaviate: " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * Performs a single unified search against the {@code SearchableEntities} collection.
      * <p>
      * Uses hybrid (semantic + keyword) search when a vectorizer is available, BM25-only otherwise.

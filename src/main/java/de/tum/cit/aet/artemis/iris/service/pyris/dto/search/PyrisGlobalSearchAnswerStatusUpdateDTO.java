@@ -23,10 +23,15 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState runState, @Nullable PyrisStatusErrorDTO error, @Nullable String answer,
-        @Nullable List<PyrisLectureSearchResultDTO> sources, @Nullable String partialResult, @Nullable Integer partialSeq) {
+        @Nullable List<PyrisLectureSearchResultDTO> sources, @Nullable String partialResult, @Nullable Integer partialSeq, @Nullable List<PyrisEntitySourceDTO> entitySources) {
 
     public PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState runState, @Nullable PyrisStatusErrorDTO error, @Nullable String answer,
             @Nullable List<PyrisLectureSearchResultDTO> sources) {
-        this(runState, error, answer, sources, null, null);
+        this(runState, error, answer, sources, null, null, null);
+    }
+
+    public PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState runState, @Nullable PyrisStatusErrorDTO error, @Nullable String answer,
+            @Nullable List<PyrisLectureSearchResultDTO> sources, @Nullable String partialResult, @Nullable Integer partialSeq) {
+        this(runState, error, answer, sources, partialResult, partialSeq, null);
     }
 }

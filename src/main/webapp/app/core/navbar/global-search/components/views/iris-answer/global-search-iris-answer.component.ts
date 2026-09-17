@@ -7,8 +7,11 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
+import { EntitySearchSource } from 'app/core/navbar/global-search/models/entity-search-source.model';
+import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
 import { IrisSearchResult } from 'app/core/navbar/global-search/models/iris-search-result.model';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
+import { iconForEntityType } from 'app/core/navbar/global-search/util/entity-type-icons.util';
 import { parseCitationNumbers, renderCitationMarkers } from 'app/core/navbar/global-search/util/iris-citation-markers.util';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { SEARCH_DEBOUNCE_MS } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
@@ -74,6 +77,8 @@ export class GlobalSearchIrisAnswerComponent {
     private readonly destroyRef = inject(DestroyRef);
 
     readonly searchQuery = input.required<string>();
+    /** Active course filter from the search modal; scopes the answer's retrieval to that course. */
+    readonly courseId = input<number | undefined>(undefined);
 
     private readonly answerBody = viewChild<ElementRef<HTMLElement>>('answerBody');
 
@@ -84,6 +89,8 @@ export class GlobalSearchIrisAnswerComponent {
     protected readonly isOverflowing = signal(false);
     protected readonly moreOpen = signal(false);
     protected readonly sources = computed(() => this.irisResult()?.sources ?? []);
+    /** Entity sources (course information); their citation numbers continue after the lecture sources. */
+    protected readonly entitySources = computed(() => this.irisResult()?.entitySources ?? []);
 
     /** Re-fires the pipeline for the same query when the reader retries after a failure. */
     private readonly retryAttempt = signal(0);
@@ -147,7 +154,7 @@ export class GlobalSearchIrisAnswerComponent {
      */
     protected readonly citationView = computed(() => {
         const text = this.displayedAnswer();
-        const bound = this.sources().length || (this.isSettled() ? 0 : PARTIAL_CITATION_MARKER_BOUND);
+        const bound = this.sources().length + this.entitySources().length || (this.isSettled() ? 0 : PARTIAL_CITATION_MARKER_BOUND);
         const start = this.revealStart();
         const tail = text.slice(start);
         const animated = this.isStreaming() && start > 0 && tail.length > 0 && !tail.includes('\n');
@@ -159,8 +166,8 @@ export class GlobalSearchIrisAnswerComponent {
     protected readonly shouldClamp = computed(() => this.isSettled() && this.isOverflowing() && !this.isExpanded());
     /** Source numbers currently highlighted, linking answer passages and source chips in both directions. */
     protected readonly activeCitations = signal<ReadonlySet<number>>(new Set());
-    /** Popover state for a hovered inline citation, positioned inside the answer region. */
-    protected readonly citationPopover = signal<{ sourceIndex: number; left: number; top: number } | undefined>(undefined);
+    /** Popover state for a hovered inline citation, resolved to display fields at show time. */
+    protected readonly citationPopover = signal<{ left: number; top: number; name: string; meta?: string; icon: IconDefinition; entityTypeKey?: string } | undefined>(undefined);
     /** Bumped when the lazily-rendered markdown lands, so the highlight effect re-runs over the new DOM. */
     private readonly markdownRenderTick = signal(0);
 
@@ -231,10 +238,11 @@ export class GlobalSearchIrisAnswerComponent {
         // WebSocket update from a superseded run can never reach the subscriber.
         // State is reset at the top of the outer switchMap — before the debounce window —
         // so the UI clears on every keystroke even if the request has not fired yet.
-        // A retry re-emits the same query, which is why the source carries the attempt.
-        toObservable(computed(() => ({ query: this.searchQuery(), attempt: this.retryAttempt() })))
+        // A retry re-emits the same query, which is why the source carries the attempt; the course scope
+        // rides along so a scoped palette re-asks when the user switches course.
+        toObservable(computed(() => ({ query: this.searchQuery(), courseId: this.courseId(), attempt: this.retryAttempt() })))
             .pipe(
-                switchMap(({ query }) => {
+                switchMap(({ query, courseId }) => {
                     this.resetRun();
                     if (!query.trim()) {
                         return of(undefined);
@@ -245,7 +253,7 @@ export class GlobalSearchIrisAnswerComponent {
                     // which would bypass the debounce window entirely.
                     return timer(IRIS_ANSWER_DEBOUNCE_MS).pipe(
                         switchMap(() =>
-                            this.irisSearchAnswerService.ask(query).pipe(
+                            this.irisSearchAnswerService.ask(query, 5, courseId).pipe(
                                 catchError(() => {
                                     // A failure is worth saying out loud: it is the one ending the reader can act on.
                                     this.phase.set('failed');
@@ -322,7 +330,7 @@ export class GlobalSearchIrisAnswerComponent {
         }
         this.phase.set('answering');
         this.streamComplete.set(true);
-        this.irisResult.set({ answer: update.answer, sources: update.sources ?? [] });
+        this.irisResult.set({ answer: update.answer, sources: update.sources ?? [], entitySources: update.entitySources ?? [] });
         if (this.progressiveReveal()) {
             this.scheduleReveal();
         }
@@ -429,11 +437,17 @@ export class GlobalSearchIrisAnswerComponent {
         if (!chip) {
             return;
         }
-        const source = this.sources()[(parseCitationNumbers(chip.dataset.n)[0] ?? 0) - 1];
-        if (!source) {
-            return; // streamed draft: sources arrive with the terminal update
+        const sourceNumber = parseCitationNumbers(chip.dataset.n)[0] ?? 0;
+        const lectureSource = this.citedLectureSource(sourceNumber);
+        if (lectureSource) {
+            void this.router.navigate([lectureSource.lectureUnit.link], { queryParams: lectureSource.lectureUnit.queryParams });
+            return;
         }
-        void this.router.navigate([source.lectureUnit.link], { queryParams: source.lectureUnit.queryParams });
+        const entitySource = sourceNumber > 0 ? this.citedEntitySource(sourceNumber) : undefined;
+        if (entitySource) {
+            this.openEntitySource(entitySource);
+        }
+        // Streamed draft: sources arrive with the terminal update, clicks are ignored until then.
     }
 
     protected clearCitationHighlight(): void {
@@ -451,21 +465,65 @@ export class GlobalSearchIrisAnswerComponent {
         this.activeCitations.set(new Set([sourceNumber]));
     }
 
-    private showCitationPopover(chip: HTMLElement, sourceNumber: number | undefined): void {
-        if (!sourceNumber || sourceNumber > this.sources().length) {
-            this.citationPopover.set(undefined);
-            return;
+    /** Resolves a citation number onto the combined numbering: lecture sources first, then entity sources. */
+    private citedLectureSource(sourceNumber: number): LectureSearchResult | undefined {
+        return this.sources()[sourceNumber - 1];
+    }
+
+    private citedEntitySource(sourceNumber: number): EntitySearchSource | undefined {
+        return this.entitySources()[sourceNumber - this.sources().length - 1];
+    }
+
+    /** The translation key for an entity type label, e.g. `global.search.entityType.exercise`. */
+    protected entityTypeLabelKey(entityType: string): string {
+        return 'global.search.entityType.' + entityType;
+    }
+
+    /** The palette's icon for an entity source, so the same entity looks the same everywhere. */
+    protected entityIcon(source: EntitySearchSource): IconDefinition {
+        return iconForEntityType(source.entityType, source.exerciseType);
+    }
+
+    /** Opens an entity source; the link may carry a query string, so plain URL navigation is used. */
+    protected openEntitySource(source: EntitySearchSource): void {
+        if (source.link) {
+            void this.router.navigateByUrl(source.link);
         }
+    }
+
+    private showCitationPopover(chip: HTMLElement, sourceNumber: number | undefined): void {
         const region = chip.closest('.iris-answer-region');
-        if (!(region instanceof HTMLElement)) {
+        if (!sourceNumber || !(region instanceof HTMLElement)) {
+            this.citationPopover.set(undefined);
             return;
         }
         const chipRect = chip.getBoundingClientRect();
         const regionRect = region.getBoundingClientRect();
-        this.citationPopover.set({
-            sourceIndex: sourceNumber - 1,
-            left: chipRect.left - regionRect.left + chipRect.width / 2,
-            top: chipRect.top - regionRect.top,
-        });
+        const left = chipRect.left - regionRect.left + chipRect.width / 2;
+        const top = chipRect.top - regionRect.top;
+        const lectureSource = this.citedLectureSource(sourceNumber);
+        if (lectureSource) {
+            this.citationPopover.set({
+                left,
+                top,
+                name: lectureSource.lectureUnit.name,
+                meta: lectureSource.lectureUnit.displayMeta,
+                icon: this.SOURCE_ICONS[lectureSource.lectureUnit.sourceType] ?? this.faFile,
+            });
+            return;
+        }
+        const entitySource = this.citedEntitySource(sourceNumber);
+        if (entitySource) {
+            this.citationPopover.set({
+                left,
+                top,
+                name: entitySource.title ?? '',
+                meta: entitySource.course?.name,
+                icon: this.entityIcon(entitySource),
+                entityTypeKey: this.entityTypeLabelKey(entitySource.entityType),
+            });
+            return;
+        }
+        this.citationPopover.set(undefined);
     }
 }
