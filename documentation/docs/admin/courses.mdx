@@ -10,33 +10,26 @@ import courseSettingsImg from "./assets/courses/course_settings.png";
 import courseOverviewImg from "./assets/courses/course_overview.png";
 import courseHeaderImg from "./assets/courses/course_header.png";
 import courseManagementImg from "./assets/courses/course_management.png";
-import btnCourseOverview from "./assets/courses/course_overview_button.png";
-import btnCourseCreate from "./assets/courses/course_create.png";
-import btnCourseDelete from "./assets/courses/course_delete.png";
-import btnCourseEdit from "./assets/courses/course_edit.png";
-import btnCourseManagement from "./assets/courses/course_management_button.png";
 
 Courses contain [exercises](/instructor/exercises/intro), [exams](/instructor/exams/intro) and lectures.
 Different roles can be attached to different sets of course participants: Instructors, Editors, Tutors and Users.
 You can find a detailed listing of the different roles and their corresponding permissions [here](/admin/access-rights).
 
----
-
 ## Creating courses
 
-Administrators can create new courses by clicking on <Image src={btnCourseManagement} alt={"Course Management"} size={ImageSize.small} inline /> in the header
-and then clicking on <Image src={btnCourseCreate} alt={"Create new course"} size={ImageSize.small} inline />
+Administrators can create new courses by clicking **Course Management** in the header
+and then **Create new course**.
 
 Administrators can then specify options in the creation form, Instructors can later change these values:
 
-- **Title** – Name of the course (shown in <Image src={btnCourseOverview} alt={"Course Overview"} size={ImageSize.small} inline />)
+- **Title** – Name of the course (shown in **Course Overview**)
 - **Short Name** – Unique identifier (cannot be changed later)
 - **Color** – Used throughout UI including overview
 - **Course Description** – Shown during registration & course header
 - **Course Organizations** – Restricts course visibility based on user organization
-- **Start/End** – Active registration window
+- **Start/End** (required) – The period the course runs for. The end date drives archival and the automatic data cleanup, so it cannot be left empty.
 - **Test Course** – Exercises/exams hidden from regular users
-- **Semester** – Used for grouping in dashboard
+- **Semester** (required) – Groups courses in the dashboard and in the archive. Selecting a semester fills the start and end dates with that semester's period, as long as you have not set them yourself.
 - **Maximum number of points** – Used for grading key calculations
 - **Decimal precision for scoring**
 - **Default Programming Language**
@@ -49,11 +42,9 @@ Administrators can then specify options in the creation form, Instructors can la
 
 <Image src={courseSettingsImg} alt={"Course Settings"} size={ImageSize.large} />
 
----
-
 ## Managing courses
 
-After a course is created, access it via <Image src={btnCourseManagement} alt={"Course Management"} size={ImageSize.small} inline />.
+After a course is created, access it via **Course Management**.
 
 Courses are grouped by semester, test courses listed separately.
 
@@ -61,7 +52,7 @@ Courses are grouped by semester, test courses listed separately.
 
 <Image src={courseHeaderImg} alt={"Course Header"} size={ImageSize.large} />
 
-Clicking the course header opens management view allowing to <Image src={btnCourseEdit} alt={"Edit course"} size={ImageSize.small} inline /> or <Image src={btnCourseDelete} alt={"Delete course"} size={ImageSize.small} inline /> a course, view statistics & administration options.
+Clicking the course header opens the management view, where **Edit** and **Delete** act on the course and the statistics and administration options are reachable.
 
 Students, Tutors, Editors and Instructors can be added via **Course Details**.
 

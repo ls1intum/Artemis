@@ -36,8 +36,8 @@ public interface MaintenanceEmailRecipientRepository extends ArtemisJpaRepositor
                     SELECT ucr FROM UserCourseRole ucr
                     WHERE ucr.user = u
                         AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR
-                        AND (ucr.course.startDate IS NULL OR ucr.course.startDate <= :now)
-                        AND (ucr.course.endDate IS NULL OR ucr.course.endDate >= :now)
+                        AND ucr.course.startDate <= :now
+                        AND ucr.course.endDate >= :now
                 )
                 AND NOT EXISTS (
                     SELECT 1 FROM GlobalNotificationSetting s
@@ -58,8 +58,8 @@ public interface MaintenanceEmailRecipientRepository extends ArtemisJpaRepositor
                     SELECT ucr FROM UserCourseRole ucr
                     WHERE ucr.user = u
                         AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR
-                        AND (ucr.course.startDate IS NULL OR ucr.course.startDate <= :now)
-                        AND (ucr.course.endDate IS NULL OR ucr.course.endDate >= :now)
+                        AND ucr.course.startDate <= :now
+                        AND ucr.course.endDate >= :now
                 )
                 AND NOT EXISTS (
                     SELECT 1 FROM GlobalNotificationSetting s

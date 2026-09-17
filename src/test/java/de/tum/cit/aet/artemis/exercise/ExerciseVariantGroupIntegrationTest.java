@@ -19,6 +19,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseManagementExerciseDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseWithExercisesDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -26,6 +28,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.dto.CreateExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseResponseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupAssignmentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.UpdateExerciseVariantGroupDTO;
@@ -142,10 +145,10 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         // The course-with-exercises endpoint (used by the scores management view) must serialize each exercise's variant
         // group including its maxPoints, so the client can cap the combined points of a group's variants at that maxPoints.
         // With open-in-view disabled this only works because the fetch graph eagerly loads the association.
-        Course loaded = request.get("/api/course/courses/" + course.getId() + "/with-exercises", HttpStatus.OK, Course.class);
-        Exercise loadedExercise = loaded.getExercises().stream().filter(candidate -> candidate.getId().equals(exercise.getId())).findFirst().orElseThrow();
-        assertThat(loadedExercise.getExerciseVariantGroup()).isNotNull();
-        assertThat(loadedExercise.getExerciseVariantGroup().getMaxPoints()).isEqualTo(100.0);
+        CourseWithExercisesDTO loaded = request.get("/api/course/courses/" + course.getId() + "/with-exercises", HttpStatus.OK, CourseWithExercisesDTO.class);
+        CourseManagementExerciseDTO loadedExercise = loaded.exercises().stream().filter(candidate -> candidate.id().equals(exercise.getId())).findFirst().orElseThrow();
+        assertThat(loadedExercise.exerciseVariantGroup()).isNotNull();
+        assertThat(loadedExercise.exerciseVariantGroup().maxPoints()).isEqualTo(100.0);
     }
 
     @Test
@@ -569,10 +572,10 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         ExerciseVariantGroupDTO created = createGroupAsEditor();
         assignToGroup(exercise.getId(), created.id());
 
-        Exercise loaded = request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.OK, Exercise.class);
+        ExerciseResponseDTO loaded = request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.OK, ExerciseResponseDTO.class);
 
-        assertThat(loaded.getExerciseVariantGroup()).isNotNull();
-        assertThat(loaded.getExerciseVariantGroup().getMaxPoints()).isEqualTo(100.0);
+        assertThat(loaded.exerciseVariantGroup()).isNotNull();
+        assertThat(loaded.exerciseVariantGroup().maxPoints()).isEqualTo(100.0);
     }
 
     @Test
@@ -582,8 +585,8 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
         ExerciseDetailsDTO details = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
 
-        assertThat(details.exercise().getExerciseVariantGroup()).isNotNull();
-        assertThat(details.exercise().getExerciseVariantGroup().getMaxPoints()).isEqualTo(100.0);
+        assertThat(details.exercise().exercise().exerciseVariantGroup()).isNotNull();
+        assertThat(details.exercise().exercise().exerciseVariantGroup().maxPoints()).isEqualTo(100.0);
     }
 
     /** The quiz edit DTO reads the association (maps title/maxPoints/dates off it), so an unfetched proxy would throw here. */
@@ -660,8 +663,8 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     void testCourseWithExercisesSerializesVariantGroupForQuiz() throws Exception {
         QuizExercise quiz = quizInGroup();
 
-        Course loaded = request.get("/api/course/courses/" + course.getId() + "/with-exercises", HttpStatus.OK, Course.class);
-        Exercise loadedQuiz = loaded.getExercises().stream().filter(candidate -> candidate.getId().equals(quiz.getId())).findFirst().orElseThrow();
+        CourseWithExercisesDTO loaded = request.get("/api/course/courses/" + course.getId() + "/with-exercises", HttpStatus.OK, CourseWithExercisesDTO.class);
+        CourseManagementExerciseDTO loadedQuiz = loaded.exercises().stream().filter(candidate -> candidate.id().equals(quiz.getId())).findFirst().orElseThrow();
 
         assertVariantGroupPresent(loadedQuiz);
     }
@@ -692,6 +695,12 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(loaded.getExerciseVariantGroup()).isNotNull();
         assertThat(loaded.getExerciseVariantGroup().getMaxPoints()).isEqualTo(100.0);
         assertThat(loaded.getExerciseVariantGroup().getTitle()).isEqualTo("Loop variants");
+    }
+
+    private static void assertVariantGroupPresent(CourseManagementExerciseDTO loaded) {
+        assertThat(loaded.exerciseVariantGroup()).isNotNull();
+        assertThat(loaded.exerciseVariantGroup().maxPoints()).isEqualTo(100.0);
+        assertThat(loaded.exerciseVariantGroup().title()).isEqualTo("Loop variants");
     }
 
     /** The text exercise edit page is a DTO, so unlike the entity-serializing pages it must map the group explicitly. */

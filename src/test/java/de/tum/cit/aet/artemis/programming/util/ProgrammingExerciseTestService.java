@@ -139,6 +139,7 @@ import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
@@ -1346,7 +1347,7 @@ public class ProgrammingExerciseTestService {
     // TEST
     public void resumeProgrammingExercise_doesNotExist(ExerciseMode exerciseMode) throws Exception {
         setupCourseWithProgrammingExercise(exerciseMode);
-        request.putWithResponseBody("/api/programming/exercises/" + exercise.getId() + "/resume-programming-participation/" + -1, null,
+        request.putWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/-1/resume-programming-participation", null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.NOT_FOUND);
     }
 
@@ -1362,7 +1363,8 @@ public class ProgrammingExerciseTestService {
         var participant = participation.getParticipant();
         mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
 
-        participation = request.putWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
+        participation = request.putWithResponseBody(
+                "/api/exercise/exercises/" + exercise.getId() + "/participations/" + participation.getId() + "/resume-programming-participation", null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
 
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
@@ -1440,12 +1442,13 @@ public class ProgrammingExerciseTestService {
 
         if (!buildPlanExists) {
             mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
-            participation = request.putWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
+            participation = request.putWithResponseBody(
+                    "/api/exercise/exercises/" + exercise.getId() + "/participations/" + participation.getId() + "/resume-programming-participation", null,
                     ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
         }
 
         // Construct trigger-build url and execute request
-        String url = "/api/programming/programming-submissions/" + participation.getId() + "/trigger-failed-build";
+        String url = "/api/programming/participations/" + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
 
         // Fetch updated participation and assert
@@ -1692,11 +1695,12 @@ public class ProgrammingExerciseTestService {
             var json = files.filter(Files::isRegularFile).filter(file -> file.getFileName().toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json")).findFirst();
             assertThat(json).isPresent();
 
-            var exportedExercise = objectMapper.readValue(json.get().toFile(), ProgrammingExercise.class);
-            assertThat(exportedExercise.getTeamAssignmentConfig()).isNotNull();
-            assertThat(exportedExercise.getTeamAssignmentConfig().getId()).isNull();
-            assertThat(exportedExercise.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(1);
-            assertThat(exportedExercise.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(10);
+            // read the file the way the import from file and the sharing import read it
+            var exportedExercise = objectMapper.readValue(json.get().toFile(), ImportProgrammingExerciseRequestDTO.class);
+            assertThat(exportedExercise.teamAssignmentConfig()).isNotNull();
+            assertThat(exportedExercise.teamAssignmentConfig().id()).isNull();
+            assertThat(exportedExercise.teamAssignmentConfig().minTeamSize()).isEqualTo(1);
+            assertThat(exportedExercise.teamAssignmentConfig().maxTeamSize()).isEqualTo(10);
         }
 
         RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDir);
@@ -1745,14 +1749,14 @@ public class ProgrammingExerciseTestService {
         await().until(zipFile::exists);
         Path extractedZipDir = zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
 
-        ProgrammingExercise exportedExercise;
+        ImportProgrammingExerciseRequestDTO exportedExercise;
         try (var files = Files.walk(extractedZipDir)) {
             var exerciseDetailsFile = files.filter(Files::isRegularFile).filter(file -> file.getFileName().toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*\\.json"))
                     .findFirst().orElseThrow();
-            exportedExercise = objectMapper.readValue(exerciseDetailsFile.toFile(), ProgrammingExercise.class);
+            exportedExercise = objectMapper.readValue(exerciseDetailsFile.toFile(), ImportProgrammingExerciseRequestDTO.class);
         }
 
-        assertThat(exportedExercise.getProblemStatement()).isEqualTo("[task][name](%s)".formatted(test.getTestName()));
+        assertThat(exportedExercise.problemStatement()).isEqualTo("[task][name](%s)".formatted(test.getTestName()));
 
         RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDir);
         FileUtils.delete(zipFile);

@@ -30,16 +30,17 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.dto.DomainObjectDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -79,8 +80,7 @@ import de.tum.cit.aet.artemis.lti.api.LtiApi;
 @Lazy
 @FeatureUsage("courses/course-administration")
 @RestController
-@SuppressWarnings("deprecation")
-@RequestMapping({ "api/admin/", LegacyAdminRestPaths.CORE_ADMIN_PREFIX })
+@RequestMapping("api/admin/")
 public class AdminCourseResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminCourseResource.class);
@@ -145,12 +145,12 @@ public class AdminCourseResource {
      *
      * @param courseDTO the DTO containing the course data to create (multipart form part "course")
      * @param file      the optional course icon file (PNG/JPG image)
-     * @return the ResponseEntity with status 201 (Created) and the new course in the body,
+     * @return the ResponseEntity with status 201 (Created) and the id of the new course in the body; the client loads the course itself,
      *         or status 400 (Bad Request) if validation fails
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping(value = "courses", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Course> createCourse(@RequestPart("course") @Valid CourseCreateDTO courseDTO, @RequestPart(required = false) MultipartFile file)
+    public ResponseEntity<DomainObjectDTO> createCourse(@RequestPart("course") @Valid CourseCreateDTO courseDTO, @RequestPart(required = false) MultipartFile file)
             throws URISyntaxException {
         log.debug("REST request to save Course : {}", courseDTO.title());
 
@@ -176,6 +176,7 @@ public class AdminCourseResource {
         CourseValidator.validateAccuracyOfScores(course);
         CourseValidator.validatePointBounds(course);
         CourseValidator.validateStartAndEndDate(course);
+        CourseValidator.validateSemester(course);
 
         if (course.isOnlineCourse() && ltiApi.isPresent()) {
             ltiApi.get().createOnlineCourseConfiguration(course);
@@ -186,7 +187,7 @@ public class AdminCourseResource {
         if (file != null) {
             Path basePath = FilePathConverter.getCourseIconFilePath();
             Path savePath = FileUtil.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
-            createdCourse.setCourseIcon(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.COURSE_ICON, createdCourse.getId()).toString());
+            createdCourse.setCourseIcon(savePath.getFileName().toString());
             createdCourse = courseRepository.save(createdCourse);
         }
 
@@ -195,7 +196,7 @@ public class AdminCourseResource {
         final Course finalCourse = createdCourse;
         searchableEntityWeaviateService.ifPresent(service -> service.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(finalCourse)));
 
-        return ResponseEntity.created(new URI("/api/admin/courses/" + createdCourse.getId())).body(createdCourse);
+        return ResponseEntity.created(new URI("/api/admin/courses/" + createdCourse.getId())).body(DomainObjectDTO.of(createdCourse));
     }
 
     /**
@@ -239,7 +240,7 @@ public class AdminCourseResource {
         courseDeletionService.delete(courseId);
 
         if (courseIcon != null) {
-            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(courseIcon), FilePathType.COURSE_ICON), 0);
+            fileService.schedulePathForDeletion(new FileSystemLocation.CourseIcon(courseIcon).path(), 0);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, Course.ENTITY_NAME, courseTitle)).build();
     }
