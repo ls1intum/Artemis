@@ -58,10 +58,13 @@ SEED_CONTEXTS = "prod,e2e"
 # created them is no longer in the repository. Liquibase does not mind a recorded row whose file is
 # gone, so these stay behind harmlessly -- but they are the one legitimate difference between the two
 # routes, and naming them individually is what keeps upgrade-from-floor able to report every other one.
+# Matched on the whole identity Liquibase records, not on the id alone: an id matches the row it names
+# and also any other row that happens to share it, which would wave through a changeset recorded under
+# an author or a path nobody expected.
 ORPHANED_ON_UPGRADE = {
     # The cleanup changeset of the old consolidation scheme, deleted by this layout. Every database that
     # has been through 9.0 recorded it; no fresh installation from the v10 baseline ever will.
-    "20260406120000",
+    ("20260406120000", "krusche", "config/liquibase/changelog/20240331151800_cleanup.xml"),
 }
 
 NAMESPACE = "{http://www.liquibase.org/xml/ns/dbchangelog}"
@@ -519,9 +522,10 @@ def check_upgrade_from_floor(engine: Engine, liquibase: Liquibase, port: int) ->
             # identity gives it away. Comparing what each side recorded is what notices.
             for identifier, author, filename in sorted(fresh.changelog_rows() - upgraded.changelog_rows()):
                 failures.append(f"changeset {identifier} ({author}, {filename}) is recorded only on the fresh installation")
-            for identifier, author, filename in sorted(upgraded.changelog_rows() - fresh.changelog_rows()):
-                if identifier in ORPHANED_ON_UPGRADE:
+            for row in sorted(upgraded.changelog_rows() - fresh.changelog_rows()):
+                if row in ORPHANED_ON_UPGRADE:
                     continue
+                identifier, author, filename = row
                 failures.append(f"changeset {identifier} ({author}, {filename}) is recorded only after upgrading from {version}")
 
             return failures
