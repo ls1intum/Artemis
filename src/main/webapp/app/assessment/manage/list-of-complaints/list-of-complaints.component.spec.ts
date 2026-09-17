@@ -412,6 +412,68 @@ describe('ListOfComplaintsComponent', () => {
         expect(sortKeyOf(foreignComplaint)).toBe('Alice Tutor');
     });
 
+    it('uses the more-feedback translation root when the route complaint type is MORE_FEEDBACK', () => {
+        activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.MORE_FEEDBACK });
+        comp.ngOnInit();
+
+        expect(comp.scopeTranslationKeyRoot()).toBe('artemisApp.moreFeedback.list');
+    });
+
+    it('resets mine/all caches when the route identity changes', () => {
+        findAllByCourseIdStub.mockReturnValue(of({ body: [complaint3] } as EntityResponseTypeArray));
+        activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.COMPLAINT });
+        comp.ngOnInit();
+        vi.spyOn(complaintService, 'findAllWithoutStudentInformationForCourseId').mockReturnValue(of(emptyComplaintResponse()));
+        comp.setComplaintScope('all');
+        expect(comp.allComplaintsForTutorLoaded()).toBe(true);
+
+        findAllByExerciseIdStub.mockReturnValue(of({ body: [complaint4] } as EntityResponseTypeArray));
+        activatedRoute.setParameters({ courseId: 12, exerciseId: 34, complaintType: ComplaintType.COMPLAINT });
+
+        expect(comp.allComplaintsForTutorLoaded()).toBe(false);
+        expect(comp.assessorFilter()).toBeUndefined();
+        expect(comp.loading()).toBe(false);
+        expect(comp.complaintsToShow()).toEqual([complaint4]);
+    });
+
+    it('switches between mine and all using the cached all list without a second request', () => {
+        findAllByCourseIdStub.mockReturnValue(of({ body: [complaint3] } as EntityResponseTypeArray));
+        activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.COMPLAINT });
+        comp.ngOnInit();
+
+        const findAllForCourseStub = vi
+            .spyOn(complaintService, 'findAllWithoutStudentInformationForCourseId')
+            .mockReturnValue(of({ body: [complaint3, complaint4] } as EntityResponseTypeArray));
+        comp.setComplaintScope('all');
+        expect(findAllForCourseStub).toHaveBeenCalledTimes(1);
+        expect(comp.allComplaintsForTutorLoaded()).toBe(true);
+        expect(comp.complaintsToShow().map((complaint) => complaint.id)).toEqual([3, 4]);
+
+        comp.setComplaintScope('mine');
+        expect(comp.allComplaintsForTutorLoaded()).toBe(false);
+        expect(comp.complaintsToShow()).toEqual([complaint3]);
+
+        // Same scope is a no-op; a second All uses the cache.
+        comp.setComplaintScope('mine');
+        comp.setComplaintScope('all');
+        expect(findAllForCourseStub).toHaveBeenCalledTimes(1);
+        expect(comp.complaintsToShow().map((complaint) => complaint.id)).toEqual([3, 4]);
+    });
+
+    it('restores the mine list when the all request fails', () => {
+        findAllByCourseIdStub.mockReturnValue(of({ body: [complaint3] } as EntityResponseTypeArray));
+        activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.COMPLAINT });
+        comp.ngOnInit();
+
+        vi.spyOn(complaintService, 'findAllWithoutStudentInformationForCourseId').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        comp.setComplaintScope('all');
+
+        expect(comp.isLoadingAllComplaints()).toBe(false);
+        expect(comp.allComplaintsForTutorLoaded()).toBe(false);
+        expect(comp.assessorFilter()).toBeUndefined();
+        expect(comp.complaintsToShow()).toEqual([complaint3]);
+    });
+
     function emptyComplaintResponse(): EntityResponseTypeArray {
         return new HttpResponse<ComplaintDTO[]>({ body: [] });
     }
