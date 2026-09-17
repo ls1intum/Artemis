@@ -59,6 +59,7 @@
                     role="button"
                     tabindex="0"
                     [attr.aria-label]="('global.search.editFilter' | artemisTranslate) + ': ' + chip.facetLabel + ' ' + chip.label"
+                    aria-keyshortcuts="Delete"
                     [class.tok--type]="chip.family === 'type' && !chip.negate"
                     [class.tok--course]="chip.family === 'course' && !chip.negate"
                     [class.tok--exclude]="chip.negate"
@@ -74,7 +75,7 @@
                     <span class="tok-value">
                         <span class="tok-value-text" [class.tok-strike]="chip.negate">{{ chip.label }}</span>
                     </span>
-                    <button type="button" class="tok-x" (click)="onChipRemove($index, $event)" [attr.aria-label]="'global.search.removeFilter' | artemisTranslate" tabindex="-1">
+                    <button type="button" class="tok-x" (click)="onChipRemove($index, $event)" tabindex="-1" aria-hidden="true">
                         <fa-icon [icon]="faTimes" />
                     </button>
                 </span>

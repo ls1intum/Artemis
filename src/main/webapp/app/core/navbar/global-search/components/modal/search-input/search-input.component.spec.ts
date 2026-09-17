@@ -133,6 +133,21 @@ describe('SearchInputComponent', () => {
         expect(stopPropagationSpy).toHaveBeenCalled();
     });
 
+    it.each(['Delete', 'Backspace'])('should emit chipRemoved when "%s" is pressed on a focused chip', (key) => {
+        // Each chip is a tab stop, and tabbing to one does not set the modal's arrow-selection, so the
+        // chip has to handle removal from its own focus or Delete does nothing there.
+        const removeSpy = vi.spyOn(component.chipRemoved, 'emit');
+        const selectSpy = vi.spyOn(component.chipSelected, 'emit');
+        const event = new KeyboardEvent('keydown', { key });
+        const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
+
+        component['onChipKeydown'](2, event);
+
+        expect(removeSpy).toHaveBeenCalledWith(2);
+        expect(selectSpy).not.toHaveBeenCalled();
+        expect(preventDefaultSpy).toHaveBeenCalled();
+    });
+
     it('should ignore other keys on a focused chip', () => {
         const spy = vi.spyOn(component.chipSelected, 'emit');
         component['onChipKeydown'](2, new KeyboardEvent('keydown', { key: 'a' }));

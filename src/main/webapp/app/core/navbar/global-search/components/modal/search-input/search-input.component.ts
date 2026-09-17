@@ -96,6 +96,14 @@ export class SearchInputComponent {
             event.preventDefault();
             event.stopPropagation();
             this.chipSelected.emit(index);
+            return;
+        }
+        // Each chip is its own tab stop, so removal has to work from the chip's own focus. The modal
+        // only removes the arrow-selected chip, and tabbing to a chip does not set that selection.
+        if (event.key === 'Delete' || event.key === 'Backspace') {
+            event.preventDefault();
+            event.stopPropagation();
+            this.chipRemoved.emit(index);
         }
     }
 }

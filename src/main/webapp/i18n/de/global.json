@@ -112,7 +112,6 @@
             "comingSoon": "Demnächst verfügbar",
             "enterToActivate": "Eingabetaste drücken zum Aktivieren",
             "courseFallbackLabel": "Kurs {{ id }}",
-            "removeFilter": "Filter entfernen",
             "editFilter": "Filter bearbeiten",
             "noFilterMatches": "Keine Treffer",
             "loadingCourses": "Deine Kurse werden geladen...",

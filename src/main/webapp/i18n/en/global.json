@@ -112,7 +112,6 @@
             "comingSoon": "Coming soon",
             "enterToActivate": "Press Enter to activate",
             "courseFallbackLabel": "Course {{ id }}",
-            "removeFilter": "Remove filter",
             "editFilter": "Edit filter",
             "noFilterMatches": "No matches",
             "loadingCourses": "Loading your courses...",
