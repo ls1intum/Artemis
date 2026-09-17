@@ -374,6 +374,20 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             assertThat(titles).doesNotContain(SEARCH_PREFIX + " Unreleased Exercise");
         }
 
+        /**
+         * An administrator keeps full visibility when the search is scoped to courses. Scoping routes the query through the role-based filters, and the role of an
+         * administrator in a course it has no membership in is resolved as at least editor, so the unreleased exercise a student is denied stays visible here.
+         */
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void testAdminSeesUnreleasedExercisesInAScopedSearch() throws Exception {
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var titles = getResultTitles(results);
+
+            assertThat(titles).contains(SEARCH_PREFIX + " Released Exercise");
+            assertThat(titles).contains(SEARCH_PREFIX + " Unreleased Exercise");
+        }
+
         @Test
         @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
         void testTutorCannotSeeNotEndedExamExercises() throws Exception {
