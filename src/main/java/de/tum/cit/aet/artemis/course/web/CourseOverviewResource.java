@@ -44,10 +44,13 @@ import de.tum.cit.aet.artemis.core.service.EnrollmentService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.ActiveExamForCourseDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseAvailableTabsDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseExercisesForOverviewDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseManagementDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseWithIdDTO;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseAvailableTabsService;
@@ -271,7 +274,7 @@ public class CourseOverviewResource {
             coursesForDashboard.add(courseForDashboardDTO);
         }
         logDuration(courses, user, timeNanoStart, "courses/for-dashboard (multiple courses)");
-        final var dto = new CoursesForDashboardDTO(coursesForDashboard, activeExams);
+        final var dto = new CoursesForDashboardDTO(coursesForDashboard, activeExams.stream().map(ActiveExamForCourseDashboardDTO::of).collect(Collectors.toSet()));
         return ResponseEntity.ok(dto);
     }
 
@@ -293,10 +296,10 @@ public class CourseOverviewResource {
      */
     @GetMapping("courses/for-notifications")
     @EnforceAtLeastStudent
-    public ResponseEntity<Set<Course>> getCoursesForNotifications() {
+    public ResponseEntity<Set<CourseWithIdDTO>> getCoursesForNotifications() {
         log.debug("REST request to get all Courses the user has access to");
         User user = userRepository.getUserWithCourseRolesAndAuthorities();
-        return ResponseEntity.ok(courseService.findAllActiveForUser(user));
+        return ResponseEntity.ok(courseService.findAllActiveForUser(user).stream().map(course -> new CourseWithIdDTO(course.getId())).collect(Collectors.toSet()));
     }
 
     /**
@@ -309,7 +312,7 @@ public class CourseOverviewResource {
     // configuration in such cases.
     @GetMapping("courses/{courseId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Course> getCourse(@PathVariable Long courseId) {
+    public ResponseEntity<CourseManagementDTO> getCourse(@PathVariable Long courseId) {
         log.debug("REST request to get course {} for students", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
 
@@ -327,7 +330,7 @@ public class CourseOverviewResource {
             userRepository.setUserCountsForCourse(course);
         }
 
-        return ResponseEntity.ok(course);
+        return ResponseEntity.ok(CourseManagementDTO.of(course));
     }
 
     @GetMapping("courses/{courseId}/title")
