@@ -24,9 +24,9 @@ import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
 /**
  * Unit tests for {@link GlobalSearchResultDTO} badge derivation.
  * <p>
- * The badge is a stable machine key the client resolves to a localised label via {@code global.search.results.badge.*}.
- * These tests pin the exact keys the server emits so a rename here can never silently desync from the client i18n keys
- * (which are asserted to be present and symmetric in the client spec).
+ * The badge key is a stable machine key the web client resolves to a localised label via {@code global.search.results.badge.*},
+ * while the badge itself stays the English label other clients display as is. These tests pin both, so a rename here can
+ * never silently desync from the client i18n keys or change what those other clients show.
  */
 class GlobalSearchResultDTOTest {
 
@@ -52,17 +52,43 @@ class GlobalSearchResultDTOTest {
     }
 
     @Test
-    void exerciseBadgeIsTheRawExerciseTypeKey() {
-        assertThat(fromProperties(exerciseRow(ExerciseType.PROGRAMMING.getValue())).badge()).isEqualTo("programming");
-        assertThat(fromProperties(exerciseRow(ExerciseType.MODELING.getValue())).badge()).isEqualTo("modeling");
-        assertThat(fromProperties(exerciseRow(ExerciseType.QUIZ.getValue())).badge()).isEqualTo("quiz");
-        assertThat(fromProperties(exerciseRow(ExerciseType.TEXT.getValue())).badge()).isEqualTo("text");
-        assertThat(fromProperties(exerciseRow(ExerciseType.FILE_UPLOAD.getValue())).badge()).isEqualTo("file-upload");
+    void exerciseBadgeKeyIsTheRawExerciseType() {
+        assertThat(fromProperties(exerciseRow(ExerciseType.PROGRAMMING.getValue())).badgeKey()).isEqualTo("programming");
+        assertThat(fromProperties(exerciseRow(ExerciseType.MODELING.getValue())).badgeKey()).isEqualTo("modeling");
+        assertThat(fromProperties(exerciseRow(ExerciseType.QUIZ.getValue())).badgeKey()).isEqualTo("quiz");
+        assertThat(fromProperties(exerciseRow(ExerciseType.TEXT.getValue())).badgeKey()).isEqualTo("text");
+        assertThat(fromProperties(exerciseRow(ExerciseType.FILE_UPLOAD.getValue())).badgeKey()).isEqualTo("file-upload");
+    }
+
+    /**
+     * The badge stays the English display label it has always been, because clients other than the web client, such as the iOS app, render it as is.
+     */
+    @Test
+    void exerciseBadgeIsTheEnglishLabel() {
+        assertThat(fromProperties(exerciseRow(ExerciseType.PROGRAMMING.getValue())).badge()).isEqualTo("Programming");
+        assertThat(fromProperties(exerciseRow(ExerciseType.MODELING.getValue())).badge()).isEqualTo("Modeling");
+        assertThat(fromProperties(exerciseRow(ExerciseType.QUIZ.getValue())).badge()).isEqualTo("Quiz");
+        assertThat(fromProperties(exerciseRow(ExerciseType.TEXT.getValue())).badge()).isEqualTo("Text");
+        assertThat(fromProperties(exerciseRow(ExerciseType.FILE_UPLOAD.getValue())).badge()).isEqualTo("File Upload");
+    }
+
+    /**
+     * A new exercise type without a badge label would silently fall back to the generic badge, so every type has to be known.
+     */
+    @Test
+    void everyExerciseTypeHasItsOwnBadge() {
+        for (ExerciseType exerciseType : ExerciseType.values()) {
+            GlobalSearchResultDTO result = fromProperties(exerciseRow(exerciseType.getValue()));
+            assertThat(result.badgeKey()).as("badge key for %s", exerciseType).isEqualTo(exerciseType.getValue());
+            assertThat(result.badge()).as("badge label for %s", exerciseType).isNotEqualTo("Exercise");
+        }
     }
 
     @Test
     void exerciseBadgeFallsBackToGenericExerciseWhenTypeIsMissing() {
-        assertThat(fromProperties(exerciseRow(null)).badge()).isEqualTo("exercise");
+        GlobalSearchResultDTO result = fromProperties(exerciseRow(null));
+        assertThat(result.badgeKey()).isEqualTo("exercise");
+        assertThat(result.badge()).isEqualTo("Exercise");
     }
 
     @Test
@@ -70,28 +96,44 @@ class GlobalSearchResultDTOTest {
         // The client builds the translation key by concatenation, so a value it has no catalogue entry for would
         // render the unresolved key in the result list. Indexing only writes ExerciseType values today, but the
         // store is external and the enum can grow, so the fallback has to cover more than null.
-        assertThat(fromProperties(exerciseRow("survey")).badge()).isEqualTo("exercise");
+        GlobalSearchResultDTO result = fromProperties(exerciseRow("survey"));
+        assertThat(result.badgeKey()).isEqualTo("exercise");
+        assertThat(result.badge()).isEqualTo("Exercise");
     }
 
     @Test
     void examBadgeDistinguishesTestExamFromExam() {
-        Map<String, Object> exam = row(SearchableEntitySchema.TypeValues.EXAM);
-        assertThat(fromProperties(exam).badge()).isEqualTo("exam");
+        GlobalSearchResultDTO exam = fromProperties(row(SearchableEntitySchema.TypeValues.EXAM));
+        assertThat(exam.badgeKey()).isEqualTo("exam");
+        assertThat(exam.badge()).isEqualTo("Exam");
 
-        Map<String, Object> testExam = row(SearchableEntitySchema.TypeValues.EXAM);
-        testExam.put(SearchableEntitySchema.Properties.TEST_EXAM, true);
-        assertThat(fromProperties(testExam).badge()).isEqualTo("test-exam");
+        Map<String, Object> testExamRow = row(SearchableEntitySchema.TypeValues.EXAM);
+        testExamRow.put(SearchableEntitySchema.Properties.TEST_EXAM, true);
+        GlobalSearchResultDTO testExam = fromProperties(testExamRow);
+        assertThat(testExam.badgeKey()).isEqualTo("test-exam");
+        assertThat(testExam.badge()).isEqualTo("Test Exam");
     }
 
     @Test
-    void nonExerciseBadgesAreStableTypeKeys() {
-        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.LECTURE)).badge()).isEqualTo("lecture");
-        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.LECTURE_UNIT)).badge()).isEqualTo("lecture-unit");
-        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.FAQ)).badge()).isEqualTo("faq");
-        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.CHANNEL)).badge()).isEqualTo("channel");
-        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.COURSE)).badge()).isEqualTo("course");
-        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.POST)).badge()).isEqualTo("message");
-        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.ANSWER_POST)).badge()).isEqualTo("message");
+    void nonExerciseBadgeKeysAreStableTypeKeys() {
+        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.LECTURE)).badgeKey()).isEqualTo("lecture");
+        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.LECTURE_UNIT)).badgeKey()).isEqualTo("lecture-unit");
+        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.FAQ)).badgeKey()).isEqualTo("faq");
+        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.CHANNEL)).badgeKey()).isEqualTo("channel");
+        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.COURSE)).badgeKey()).isEqualTo("course");
+        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.POST)).badgeKey()).isEqualTo("message");
+        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.ANSWER_POST)).badgeKey()).isEqualTo("message");
+    }
+
+    @Test
+    void nonExerciseBadgesAreEnglishLabels() {
+        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.LECTURE)).badge()).isEqualTo("Lecture");
+        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.LECTURE_UNIT)).badge()).isEqualTo("Lecture Unit");
+        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.FAQ)).badge()).isEqualTo("FAQ");
+        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.CHANNEL)).badge()).isEqualTo("Channel");
+        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.COURSE)).badge()).isEqualTo("Course");
+        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.POST)).badge()).isEqualTo("Message");
+        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.ANSWER_POST)).badge()).isEqualTo("Message");
     }
 
     /**
