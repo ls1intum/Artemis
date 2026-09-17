@@ -361,7 +361,8 @@ export class GlobalSearchModalComponent implements OnDestroy {
         const text = this.searchText();
         if (text !== this.lastSearchText) {
             this.lastSearchText = text;
-            const hasFilter = this.typesParam() !== undefined || this.courseIdsParam().length > 0 || this.excludeCourseIdsParam().length > 0;
+            const hasFilter =
+                this.typesParam() !== undefined || this.excludeTypesParam() !== undefined || this.courseIdsParam().length > 0 || this.excludeCourseIdsParam().length > 0;
             if (text.length > 0 || hasFilter) {
                 // Show the skeleton immediately while the debounce waits, for a responsive feel.
                 this.isLoading.set(true);
