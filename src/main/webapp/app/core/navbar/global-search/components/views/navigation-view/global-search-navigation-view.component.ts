@@ -237,13 +237,16 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     }
 
     private navigateToExamExerciseDetailsPage(courseId: string, examId: string, exerciseGroupId: string, result: GlobalSearchResult) {
-        // The badge is the canonical exercise-type key (e.g. "programming", "file-upload"), which is exactly the
-        // exam exercise-group route segment prefix. Guard against an unknown badge (e.g. the generic "exercise"
-        // fallback) so it can never build an invalid segment like "exercise-exercises".
+        // The badge key is the canonical exercise-type key (e.g. "programming", "file-upload"), which is exactly the
+        // exam exercise-group route segment prefix. A row without a recognisable type (the generic "exercise" fallback)
+        // carries no segment to build, and guessing one would open another type's detail page for this exercise id.
+        // The exam's exercise-group list is the closest page that is always right, and the exercise is one click away.
         const validExerciseSegments = new Set(['programming', 'modeling', 'text', 'file-upload', 'quiz']);
-        const segment = result.badge && validExerciseSegments.has(result.badge) ? result.badge : 'text';
-        const typeSegment = segment + '-exercises';
-        void this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, typeSegment, result.id]);
+        if (!result.badgeKey || !validExerciseSegments.has(result.badgeKey)) {
+            void this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups']);
+            return;
+        }
+        void this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, result.badgeKey + '-exercises', result.id]);
     }
 
     private navigateToStudentExamView(courseId: string, examId: string) {

@@ -117,7 +117,7 @@ describe('SearchResultItemComponent', () => {
         // The server-to-i18n contract (every emittable badge key has an en + de label) is guarded authoritatively in
         // the server test GlobalSearchResultDTOTest; here we only assert the computed namespaces the key correctly.
         it('namespaces the stable badge key under the results.badge i18n path', () => {
-            fixture.componentRef.setInput('result', { id: '1', title: 'T', type: 'exercise', badge: 'file-upload', metadata: {} } as GlobalSearchResult);
+            fixture.componentRef.setInput('result', { id: '1', title: 'T', type: 'exercise', badge: 'File Upload', badgeKey: 'file-upload', metadata: {} } as GlobalSearchResult);
             fixture.detectChanges();
 
             expect(component['badgeLabelKey']()).toBe('global.search.results.badge.file-upload');

@@ -24,9 +24,9 @@
             </div>
 
             <!-- Metadata Row -->
-            @if (result().badge || hasAnyMetadata()) {
+            @if (result().badgeKey || hasAnyMetadata()) {
                 <div class="result-metadata d-flex align-items-center gap-2 mb-2 text-secondary small">
-                    @if (result().badge) {
+                    @if (result().badgeKey) {
                         <span class="result-type">{{ badgeLabelKey() | artemisTranslate }}</span>
                         @if (hasAnyMetadata()) {
                             <span>•</span>

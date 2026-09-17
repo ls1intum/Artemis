@@ -193,17 +193,30 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 component['navigateToResult']({
                     type: 'exercise',
                     id: '42',
-                    badge: 'programming',
+                    badge: 'Programming',
+                    badgeKey: 'programming',
                     metadata: { courseId: 10, examId: 5, exerciseGroupId: 3, isAtLeastEditor: true },
                 } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/course-management', 10, 'exams', 5, 'exercise-groups', 3, 'programming-exercises', '42']);
+            });
+
+            it('should navigate to the exam exercise groups when the exam exercise has no recognisable type', () => {
+                component['navigateToResult']({
+                    type: 'exercise',
+                    id: '42',
+                    badge: 'Exercise',
+                    badgeKey: 'exercise',
+                    metadata: { courseId: 10, examId: 5, exerciseGroupId: 3, isAtLeastEditor: true },
+                } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/course-management', 10, 'exams', 5, 'exercise-groups']);
             });
 
             it('should navigate to assessment dashboard for exam exercise when user is tutor', () => {
                 component['navigateToResult']({
                     type: 'exercise',
                     id: '42',
-                    badge: 'programming',
+                    badge: 'Programming',
+                    badgeKey: 'programming',
                     metadata: { courseId: 10, examId: 5, isAtLeastTutor: true },
                 } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/course-management', 10, 'exams', 5, 'assessment-dashboard', '42']);

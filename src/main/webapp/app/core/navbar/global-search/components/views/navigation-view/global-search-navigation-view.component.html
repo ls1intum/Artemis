@@ -34,7 +34,7 @@
                 <div #selectableItem>
                     <jhi-global-search-result-item
                         [result]="result"
-                        [icon]="getIconForType(result.type, result.badge)"
+                        [icon]="getIconForType(result.type, result.badgeKey)"
                         [isSelected]="selectedIndex() === actionButtonCount() + i"
                         (resultClick)="navigateToResult($event)"
                     />
