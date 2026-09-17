@@ -30,10 +30,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.dto.DomainObjectDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
@@ -80,8 +80,7 @@ import de.tum.cit.aet.artemis.lti.api.LtiApi;
 @Lazy
 @FeatureUsage("courses/course-administration")
 @RestController
-@SuppressWarnings("deprecation")
-@RequestMapping({ "api/admin/", LegacyAdminRestPaths.CORE_ADMIN_PREFIX })
+@RequestMapping("api/admin/")
 public class AdminCourseResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminCourseResource.class);
@@ -146,12 +145,12 @@ public class AdminCourseResource {
      *
      * @param courseDTO the DTO containing the course data to create (multipart form part "course")
      * @param file      the optional course icon file (PNG/JPG image)
-     * @return the ResponseEntity with status 201 (Created) and the new course in the body,
+     * @return the ResponseEntity with status 201 (Created) and the id of the new course in the body; the client loads the course itself,
      *         or status 400 (Bad Request) if validation fails
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping(value = "courses", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Course> createCourse(@RequestPart("course") @Valid CourseCreateDTO courseDTO, @RequestPart(required = false) MultipartFile file)
+    public ResponseEntity<DomainObjectDTO> createCourse(@RequestPart("course") @Valid CourseCreateDTO courseDTO, @RequestPart(required = false) MultipartFile file)
             throws URISyntaxException {
         log.debug("REST request to save Course : {}", courseDTO.title());
 
@@ -197,7 +196,7 @@ public class AdminCourseResource {
         final Course finalCourse = createdCourse;
         searchableEntityWeaviateService.ifPresent(service -> service.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(finalCourse)));
 
-        return ResponseEntity.created(new URI("/api/admin/courses/" + createdCourse.getId())).body(createdCourse);
+        return ResponseEntity.created(new URI("/api/admin/courses/" + createdCourse.getId())).body(DomainObjectDTO.of(createdCourse));
     }
 
     /**
