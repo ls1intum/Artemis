@@ -7,7 +7,16 @@ describe('search menu builders', () => {
     const typeOp = (query = '', negate = false): ParsedOperator => ({ facet: 'type', negate, query, prefix: negate ? '-type:' : 'type:', start: 0, text: '' });
     const courseOp = (query = ''): ParsedOperator => ({ facet: 'course', negate: false, query, prefix: 'course:', start: 0, text: '' });
     const type = (value: string, negate = false): FilterToken => ({ facet: 'type', value, negate });
-    const base = { pickerOpen: false, excludeMode: false, searchQuery: '', tokens: [] as FilterToken[], editingChip: -1, courses: () => [] as MenuCourse[], translate };
+    const base = {
+        pickerOpen: false,
+        excludeMode: false,
+        searchQuery: '',
+        tokens: [] as FilterToken[],
+        editingChip: -1,
+        courses: () => [] as MenuCourse[],
+        contentSearchAvailable: true,
+        translate,
+    };
 
     describe('buildFilterMenuOptions - guided picker', () => {
         it('returns nothing when no operator and the picker is closed', () => {
@@ -34,9 +43,9 @@ describe('search menu builders', () => {
     });
 
     describe('buildFilterMenuOptions - value menu', () => {
-        it('lists all six type values for a type operator', () => {
+        it('lists every type value for a type operator', () => {
             const options = buildFilterMenuOptions({ ...base, operator: typeOp() });
-            expect(options).toHaveLength(6);
+            expect(options).toHaveLength(7);
             expect(options[0].action).toEqual({ kind: 'value', value: 'course' });
             // Include mode uses the entity descriptions.
             expect(options[0].description).toBe('global.search.entities.coursesDescription');
@@ -45,6 +54,15 @@ describe('search menu builders', () => {
         it('drops the include-flavoured description in exclude mode (avoids backwards / repetitive text)', () => {
             const options = buildFilterMenuOptions({ ...base, operator: typeOp('', true) });
             expect(options.every((option) => option.description === undefined)).toBe(true);
+        });
+
+        it('offers slides and videos only where content search can actually run', () => {
+            expect(buildFilterMenuOptions({ ...base, operator: typeOp() }).map((option) => option.id)).toContain('lecture_content');
+            expect(buildFilterMenuOptions({ ...base, operator: typeOp(), contentSearchAvailable: false }).map((option) => option.id)).not.toContain('lecture_content');
+        });
+
+        it('never offers slides and videos as an exclusion, which would say nothing about a collection it does not read', () => {
+            expect(buildFilterMenuOptions({ ...base, operator: typeOp('', true) }).map((option) => option.id)).not.toContain('lecture_content');
         });
 
         it('hides an already-applied type value', () => {
@@ -58,6 +76,7 @@ describe('search menu builders', () => {
         });
 
         it('never offers the last remaining type in exclude mode', () => {
+            // Slides and videos are not excludable, so the exclude menu counts down from the six metadata types.
             const excludedFive = ['course', 'exercise', 'lecture', 'communication', 'faq'].map((value) => type(value, true));
             expect(buildFilterMenuOptions({ ...base, operator: typeOp('', true), tokens: excludedFive })).toEqual([]);
         });

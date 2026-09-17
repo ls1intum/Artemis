@@ -57,21 +57,16 @@
             "tipDescription": "Search for exercises, lectures, and more. Use filters to narrow your results.",
             "arrowUpAriaLabel": "Arrow up",
             "arrowDownAriaLabel": "Arrow down",
-            "searchLectureContentHint": "Type to search through lecture transcripts and materials",
-            "lectureResultsAriaLabel": "Lecture search results",
-            "lectureSearchError": "Search failed. Please try again.",
             "pageAbbreviation": "pg.",
             "filterChipAriaLabel": "Filter: {{ filter }}",
             "actionBadge": "Action",
-            "actions": {
-                "lectureSearchTitle": "Lecture Search",
-                "lectureSearchDescription": "Search through lecture content and slides"
-            },
             "entities": {
                 "exercisesTitle": "Exercises",
                 "exercisesDescription": "View and complete course exercises",
-                "lecturesTitle": "Lecture Details",
-                "lecturesDescription": "View lecture content and units",
+                "lecturesTitle": "Lectures",
+                "lecturesDescription": "Search lectures and lecture units by title",
+                "slidesAndVideosTitle": "Slides & Videos",
+                "slidesAndVideosDescription": "Search lecture slides and video transcripts",
                 "communicationTitle": "Communication",
                 "communicationDescription": "Search channels and messages",
                 "faqsTitle": "FAQs",
@@ -92,6 +87,7 @@
                 "points": "points",
                 "examExercise": "Exam",
                 "reply": "Reply",
+                "video": "Video",
                 "badge": {
                     "programming": "Programming Exercise",
                     "modeling": "Modeling Exercise",
@@ -151,6 +147,9 @@
                 "course": "course"
             },
             "searchFailed": "Search failed. Please try again.",
+            "contentSearchPrompt": "Enter a search term to search lecture slides and videos.",
+            "contentSearchDisabled": "Slides and videos cannot be searched in these courses.",
+            "contentSearchUnavailable": "Searching slides and videos is currently unavailable. Please try again later.",
             "irisAnswerShowMore": "Show more",
             "irisAnswerShowLess": "Show less",
             "irisAnswerMore": "more",

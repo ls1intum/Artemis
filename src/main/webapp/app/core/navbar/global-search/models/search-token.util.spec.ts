@@ -3,6 +3,7 @@ import {
     excludedCourseIds,
     excludedTypeTokens,
     expandTypeTokens,
+    hasContentTypeToken,
     removeTokenAt,
     selectedCourseIds,
 } from 'app/core/navbar/global-search/models/search-token.util';
@@ -24,6 +25,10 @@ describe('search token utilities', () => {
             expect(expandTypeTokens([type('lecture')])).toBe('lecture,lecture_unit');
             expect(expandTypeTokens([type('faq')])).toBe('faq');
             expect(expandTypeTokens([type('exam')])).toBe('exam');
+        });
+
+        it('sends no server type for slides and videos, which is not a searchable entity', () => {
+            expect(expandTypeTokens([type('lecture_content')])).toBeUndefined();
         });
 
         it('expands communication to channel, post, answer_post', () => {
@@ -98,6 +103,26 @@ describe('search token utilities', () => {
 
         it('adding a course exclusion drops existing course inclusions (single-mode)', () => {
             expect(addOrToggleToken([course('5'), course('7')], course('9', true))).toEqual([course('9', true)]);
+        });
+
+        it('slides and videos replaces the entity type filters, which answer from a different collection', () => {
+            expect(addOrToggleToken([type('lecture'), type('exam')], type('lecture_content'))).toEqual([type('lecture_content')]);
+        });
+
+        it('an entity type filter replaces slides and videos, for the same reason in the other direction', () => {
+            expect(addOrToggleToken([type('lecture_content')], type('exercise'))).toEqual([type('exercise')]);
+        });
+
+        it('leaves the course scope alone when the collections swap', () => {
+            expect(addOrToggleToken([course('5'), type('lecture')], type('lecture_content'))).toEqual([course('5'), type('lecture_content')]);
+        });
+    });
+
+    describe('hasContentTypeToken', () => {
+        it('is true only while slides and videos is positively selected', () => {
+            expect(hasContentTypeToken([type('lecture_content')])).toBe(true);
+            expect(hasContentTypeToken([type('lecture')])).toBe(false);
+            expect(hasContentTypeToken([])).toBe(false);
         });
     });
 

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, computed, effect, inject, signal, untracked, viewChild, viewChildren } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { EMPTY, Subject, catchError, filter, of, switchMap, tap, timer } from 'rxjs';
+import { EMPTY, Observable, Subject, catchError, filter, map, of, switchMap, tap, timeout, timer } from 'rxjs';
 import { SearchOverlayService } from '../../services/search-overlay.service';
 import { OsDetectorService } from '../../services/os-detector.service';
 import { GlobalSearchFilterService } from '../../services/global-search-filter.service';
@@ -10,7 +10,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowDown, faArrowUp } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DialogModule } from 'primeng/dialog';
-import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { GlobalSearchNavigationViewComponent } from 'app/core/navbar/global-search/components/views/navigation-view/global-search-navigation-view.component';
 import { MIN_SEARCH_QUERY_LENGTH, SEARCH_DEBOUNCE_MS, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
@@ -20,7 +19,16 @@ import { GlobalSearchFilterMenuComponent } from './filter-menu/global-search-fil
 import { filterOptionDomId } from '../../models/search-menu.model';
 import { FilterToken } from '../../models/search-token.model';
 import { removeTokenAt } from '../../models/search-token.util';
-import { GlobalSearchLectureResultsComponent } from 'app/core/navbar/global-search/components/views/lecture-results/global-search-lecture-results.component';
+import { IrisSearchAvailabilityService } from '../../services/iris-search-availability.service';
+import { LectureSearchService } from '../../services/lecture-search.service';
+import { mapLectureContentResult } from '../../models/lecture-content-result.util';
+import { HttpErrorResponse } from '@angular/common/http';
+
+/** Iris content search is a vector search behind a network hop, so it gets its own, longer ceiling. */
+export const CONTENT_SEARCH_TIMEOUT_MS = 5_000;
+
+/** Number of content hits requested per search. */
+const CONTENT_SEARCH_LIMIT = 10;
 
 interface SearchState {
     query: string;
@@ -30,15 +38,7 @@ interface SearchState {
     selector: 'jhi-global-search-modal',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [
-        DialogModule,
-        FaIconComponent,
-        ArtemisTranslatePipe,
-        GlobalSearchNavigationViewComponent,
-        GlobalSearchLectureResultsComponent,
-        SearchInputComponent,
-        GlobalSearchFilterMenuComponent,
-    ],
+    imports: [DialogModule, FaIconComponent, ArtemisTranslatePipe, GlobalSearchNavigationViewComponent, SearchInputComponent, GlobalSearchFilterMenuComponent],
     providers: [GlobalSearchFilterService],
     templateUrl: './global-search-modal.component.html',
     styleUrls: ['./global-search-modal.component.scss'],
@@ -56,8 +56,8 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly faArrowUp = faArrowUp;
     protected readonly faArrowDown = faArrowDown;
     protected readonly searchInputComponent = viewChild<SearchInputComponent>(SearchInputComponent);
-    protected readonly currentView = signal(SearchView.Navigation);
-    protected readonly SearchView = SearchView;
+    private readonly availability = inject(IrisSearchAvailabilityService);
+    private readonly lectureSearchService = inject(LectureSearchService);
 
     // Filter composition state + derived views, owned by GlobalSearchFilterService and re-exposed by reference so the
     // template and existing tests address them on the component unchanged while the logic lives in the store.
@@ -82,6 +82,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly deadEndMessage = this.filter.deadEndMessage;
     protected readonly emptyMenuReasonKey = this.filter.emptyMenuReasonKey;
     protected readonly canGoBack = this.filter.canGoBack;
+    protected readonly contentSearchActive = this.filter.contentSearchActive;
 
     // OS-aware label for the filter-picker shortcut shown on the Filter button (⌘F on Mac, Ctrl+F elsewhere).
     protected readonly filterShortcutLabel = computed<string>(() => (this.osDetector.isMac() ? '⌘F' : 'Ctrl+F'));
@@ -108,12 +109,10 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected hasResults = computed(() => this.results().length > 0);
     protected showResults = computed(() => this.isLoading() || this.hasSearched());
     /**
-     * Whether a pane other than the filter menu can currently render: a result set, its loading skeleton, or a
-     * non-default view. This is exactly the negation of the state in which the navigation view falls back to its
-     * searchable-entity list, which the guided picker replaced as the home screen, so leaving the filter menu
-     * while this is true can never expose that list.
+     * Whether a pane other than the filter menu can currently render: a result set or its loading skeleton.
+     * On a fresh palette there is nothing behind the menu, so leaving it would land on a blank pane.
      */
-    protected readonly hasPaneBehindFilterMenu = computed(() => this.showResults() || this.currentView() !== SearchView.Navigation);
+    protected readonly hasPaneBehindFilterMenu = computed(() => this.showResults());
     /**
      * Where the filter menu's back control leads, or undefined when there is nowhere to go. One level deep it
      * returns to the filter root; at the root it returns to the results behind the menu; on a fresh palette
@@ -150,12 +149,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
     /**
      * Whether the Filter button has nothing left to do. It is a one-way control ("take me to filters"), so it is
      * dead exactly when the menu is already showing at its root, whatever sits behind that. One level deep, in a
-     * value list or the exclude chooser, it still returns to the root, so it stays live there. It is dead in the
-     * lecture view too, which cannot carry filters, matching the shortcut being ignored there.
+     * value list or the exclude chooser, it still returns to the root, so it stays live there.
      */
-    protected readonly filterTriggerDisabled = computed(
-        () => this.currentView() !== SearchView.Navigation || (this.filterMenuOpen() && !this.operator() && !this.filter.excludeMode()),
-    );
+    protected readonly filterTriggerDisabled = computed(() => this.filterMenuOpen() && !this.operator() && !this.filter.excludeMode());
     /**
      * i18n key for the footer's Escape hint, worded to match the back control it mirrors. Escape steps back a level
      * inside the filter menu, and also when leaving the menu reveals the pane behind it; only at the home screen, with
@@ -226,8 +222,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     const hasValidQuery = trimmedQuery.length >= MIN_SEARCH_QUERY_LENGTH;
                     const isTooShort = trimmedQuery.length > 0 && !hasValidQuery;
 
-                    // No input at all and no filter — clear results synchronously
-                    if (!trimmedQuery.length && !hasFilter) {
+                    // No input at all and no filter — clear results synchronously. The content filter carries no
+                    // server type, so it is named here explicitly to stay a filter.
+                    if (!trimmedQuery.length && !hasFilter && !this.contentSearchActive()) {
                         this.results.set([]);
                         this.hasSearched.set(false);
                         this.isLoading.set(false);
@@ -238,7 +235,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     // Query too short for server search (1-2 chars) — show loading skeleton
                     // while user is typing, then after debounce show the "too short" message
                     // without sending a request to the server (even when a filter is active).
-                    if (isTooShort) {
+                    if (isTooShort && !this.contentSearchActive()) {
                         this.isLoading.set(true);
                         this.searchError.set(undefined);
                         return timer(SEARCH_DEBOUNCE_MS).pipe(
@@ -248,6 +245,12 @@ export class GlobalSearchModalComponent implements OnDestroy {
                                 return of([]);
                             }),
                         );
+                    }
+
+                    // Slides and videos live in the Iris collections, not in the searchable entities, so that
+                    // filter never reaches the metadata search.
+                    if (this.contentSearchActive()) {
+                        return this.searchLectureContent(trimmedQuery, hasValidQuery);
                     }
 
                     this.searchError.set(undefined);
@@ -441,13 +444,11 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
     /**
      * Returns to the home screen once the search box is empty and no filter is left, so an emptied search lands on
-     * the guided picker rather than on the navigation view's searchable-entity list. Called from the individual
-     * gestures rather than from applyTokens on purpose: navigateTo(Lecture) strips the course filter through
-     * applyTokens, and the picker must not cover the lecture view; navigateTo calls this itself once the view has
-     * actually changed back.
+     * the guided picker rather than on an empty results pane. Called from the individual gestures rather than
+     * from applyTokens, which also runs for the context filters applied on open.
      */
     private returnHomeIfEmpty() {
-        if (this.currentView() === SearchView.Navigation && this.tokens().length === 0 && !this.searchQuery().trim()) {
+        if (this.tokens().length === 0 && !this.searchQuery().trim()) {
             this.filter.openFilterPicker();
         }
     }
@@ -462,14 +463,51 @@ export class GlobalSearchModalComponent implements OnDestroy {
      * value menu with the results pane unreachable behind it and no way out but closing the overlay.
      */
     private returnHomeIfNothingLeft() {
-        if (this.currentView() === SearchView.Navigation && this.tokens().length === 0 && !this.searchText()) {
+        if (this.tokens().length === 0 && !this.searchText()) {
             this.filter.openFilterPicker();
         }
     }
 
-    protected removeCourseFilter() {
-        this.placeholderCache.clear();
-        this.applyTokens(this.filter.tokensWithoutCourseFilter());
+    /**
+     * Runs Iris content search for the slides and videos filter. It never falls back to the metadata search, which
+     * covers a different collection and would answer with entities instead of slides or videos. A failure is
+     * reported instead: a 403 means Iris is switched off for every course in scope, anything else means content
+     * search is unavailable.
+     *
+     * @param query         the trimmed search term
+     * @param hasValidQuery whether the term is long enough to search; without one the view prompts for it
+     * @return the mapped content hits, or an empty list alongside a prompt or an error message
+     */
+    private searchLectureContent(query: string, hasValidQuery: boolean): Observable<GlobalSearchResult[]> {
+        this.searchError.set(undefined);
+        if (!hasValidQuery) {
+            this.isLoading.set(false);
+            return of([]);
+        }
+        if (!this.availability.contentSearchAvailable()) {
+            this.isLoading.set(false);
+            this.searchError.set('global.search.contentSearchUnavailable');
+            return of([]);
+        }
+        const courseIds = this.courseIdsParam();
+        const excludeCourseIds = this.excludeCourseIdsParam();
+        this.isLoading.set(true);
+        return timer(SEARCH_DEBOUNCE_MS).pipe(
+            switchMap(() =>
+                this.lectureSearchService
+                    .search(query, CONTENT_SEARCH_LIMIT, courseIds.length ? courseIds : undefined, excludeCourseIds.length ? excludeCourseIds : undefined)
+                    .pipe(
+                        timeout(CONTENT_SEARCH_TIMEOUT_MS),
+                        map((results) => results.map(mapLectureContentResult)),
+                        catchError((error: unknown) => {
+                            const irisDisabledForScope = error instanceof HttpErrorResponse && error.status === 403;
+                            this.isLoading.set(false);
+                            this.searchError.set(irisDisabledForScope ? 'global.search.contentSearchDisabled' : 'global.search.contentSearchUnavailable');
+                            return of([]);
+                        }),
+                    ),
+            ),
+        );
     }
 
     /** Stable cache key for placeholder (empty-query) results, keyed by the active filter set. */
@@ -504,7 +542,6 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.hasSearched.set(false);
         this.isLoading.set(false);
         this.searchError.set(undefined);
-        this.currentView.set(SearchView.Navigation);
         this.placeholderCache.clear();
     }
 
@@ -529,8 +566,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
         // on top of the modal; acting only on the initial press keeps auto-repeat quiet.
         if (event.key.toLowerCase() === 'f' && this.osDetector.isActionKey(event)) {
             event.preventDefault();
-            // Lecture search cannot carry filters yet (see navigateTo), so the picker must not cover its results.
-            if (!event.repeat && this.currentView() === SearchView.Navigation) {
+            if (!event.repeat) {
                 this.toggleFilterMenu();
             }
             return;
@@ -547,8 +583,6 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 event.preventDefault();
                 if (this.selectedChip() >= 0) {
                     this.exitChips();
-                } else if (this.currentView() !== SearchView.Navigation) {
-                    this.navigateTo(SearchView.Navigation);
                 } else {
                     this.overlay.close();
                 }
@@ -653,18 +687,5 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
     private isToggleShortcut(event: KeyboardEvent): boolean {
         return event.key.toLowerCase() === 'k' && this.osDetector.isActionKey(event) && this.accountService.isAuthenticated() && !event.repeat;
-    }
-
-    protected navigateTo(view: SearchView) {
-        if (view === SearchView.Lecture) {
-            // TODO lecture search should support filters aswell
-            this.removeCourseFilter();
-        }
-        this.currentView.set(view);
-        this.selectedIndex.set(-1);
-        // Coming back from the lecture view lands on the navigation view with whatever state was left behind.
-        // Entering that view strips the course filter, so an untyped search arrives back here with no query and
-        // no chips, which is exactly the empty state the guided picker replaced.
-        this.returnHomeIfEmpty();
     }
 }

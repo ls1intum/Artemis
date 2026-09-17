@@ -7,6 +7,7 @@ import { CourseStorageService } from 'app/course/manage/services/course-storage.
 import { Course } from 'app/course/shared/entities/course.model';
 import { Observable, Subject, of } from 'rxjs';
 import { GlobalSearchFilterService } from './global-search-filter.service';
+import { IrisSearchAvailabilityService } from './iris-search-availability.service';
 import { SearchCourseOptionsService } from './search-course-options.service';
 import { MenuCourse } from '../models/search-menu.util';
 import { FilterToken } from '../models/search-token.model';
@@ -23,6 +24,11 @@ describe('GlobalSearchFilterService', () => {
         getCourses: vi.fn<() => Course[]>().mockReturnValue([]),
     };
 
+    // The store only reads whether content search is available, so the spec stubs the flag instead of the
+    // profile and account services behind it.
+    const contentSearchAvailable = signal(true);
+    const mockAvailabilityService = { contentSearchAvailable: contentSearchAvailable.asReadonly() };
+
     const courseGeneration = signal(0);
     const mockCourseOptionsService = {
         getCourses: vi.fn<() => Observable<MenuCourse[]>>().mockReturnValue(of([])),
@@ -34,12 +40,14 @@ describe('GlobalSearchFilterService', () => {
         mockCourseStorageService.getCourses.mockReturnValue([]);
         mockCourseOptionsService.getCourses.mockReturnValue(of([]));
         courseGeneration.set(0);
+        contentSearchAvailable.set(true);
         TestBed.configureTestingModule({
             providers: [
                 GlobalSearchFilterService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: CourseStorageService, useValue: mockCourseStorageService },
                 { provide: SearchCourseOptionsService, useValue: mockCourseOptionsService },
+                { provide: IrisSearchAvailabilityService, useValue: mockAvailabilityService },
             ],
         });
         service = TestBed.inject(GlobalSearchFilterService);
@@ -600,7 +608,7 @@ describe('GlobalSearchFilterService', () => {
 
             expect(service.searchQuery()).toBe('deep learning type:');
             expect(service.deadEnd()).toBe(false);
-            expect(service.menuOptions()).toHaveLength(6);
+            expect(service.menuOptions()).toHaveLength(7);
             expect(service.searchText()).toBe('deep learning');
         });
 

@@ -1,7 +1,7 @@
 import { faBan, faGraduationCap, faLayerGroup, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { FilterToken, TypeFacetValue } from './search-token.model';
 import { ParsedOperator } from './search-operator.util';
-import { TYPE_FACETS, TYPE_FACET_ORDER } from './facet-catalog';
+import { TYPE_FACETS, TYPE_FACET_ORDER, isContentSearchValue } from './facet-catalog';
 import { FilterChipView, FilterMenuOption } from './search-menu.model';
 
 /** Translate function passed in from the component so these builders stay pure and framework-free. */
@@ -38,9 +38,11 @@ export function buildFilterMenuOptions(params: {
     editingChip: number;
     /** Lazily provides the accessible courses; only invoked for a `course:` menu, never for the picker or type menu. */
     courses: () => MenuCourse[];
+    /** Whether Iris content search is available to this user; when it is not, the slides and videos value is not offered. */
+    contentSearchAvailable: boolean;
     translate: Translate;
 }): FilterMenuOption[] {
-    const { operator, pickerOpen, excludeMode, searchQuery, tokens, editingChip, courses, translate } = params;
+    const { operator, pickerOpen, excludeMode, searchQuery, tokens, editingChip, courses, contentSearchAvailable, translate } = params;
     if (!operator) {
         if (!pickerOpen) {
             return [];
@@ -53,7 +55,7 @@ export function buildFilterMenuOptions(params: {
     const applied = new Set(
         tokens.filter((token, index) => index !== editingChip && token.facet === operator.facet && !!token.negate === !!operator.negate).map((token) => token.value),
     );
-    const values = operator.facet === 'type' ? typeOptions(operator, applied, query, translate) : courseOptions(courses(), applied, query, translate);
+    const values = operator.facet === 'type' ? typeOptions(operator, applied, query, contentSearchAvailable, translate) : courseOptions(courses(), applied, query, translate);
     // A value the user typed that matches nothing is not a filter, so offer the literal search instead. An
     // empty value with nothing left to offer is a different thing entirely: an exhausted list, which keeps
     // its way back rather than pushing the user into a search for a bare "type:".
@@ -167,8 +169,11 @@ function clearValueAction(operator: ParsedOperator, translate: Translate): Filte
     };
 }
 
-function typeOptions(operator: ParsedOperator, applied: Set<string>, query: string, translate: Translate): FilterMenuOption[] {
-    const remaining = TYPE_FACET_ORDER.filter((value) => !applied.has(value));
+function typeOptions(operator: ParsedOperator, applied: Set<string>, query: string, contentSearchAvailable: boolean, translate: Translate): FilterMenuOption[] {
+    // Slides and videos are only searchable through Iris, and only as an inclusion: excluding a collection
+    // the search does not read says nothing, so the value never appears in the exclude menu.
+    const offered = TYPE_FACET_ORDER.filter((value) => !isContentSearchValue(value) || (contentSearchAvailable && !operator.negate));
+    const remaining = offered.filter((value) => !applied.has(value));
     // In exclude mode, never offer the last remaining type: excluding every type is nonsensical
     // (the server would fall through to uncategorised results such as lecture slides).
     const selectable = operator.negate && remaining.length <= 1 ? [] : remaining;

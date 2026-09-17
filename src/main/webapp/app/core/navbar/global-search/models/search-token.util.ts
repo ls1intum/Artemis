@@ -1,5 +1,5 @@
 import { FilterToken } from './search-token.model';
-import { TYPE_FACETS } from './facet-catalog';
+import { TYPE_FACETS, isContentSearchValue } from './facet-catalog';
 import { SearchEntityType } from './searchable-entity.model';
 
 /**
@@ -10,11 +10,26 @@ export function addOrToggleToken(tokens: FilterToken[], token: FilterToken): Fil
     // Each facet is single-mode: inclusions and exclusions are mutually exclusive. "Only these types" and
     // "everything except these" (and the same for course scope) cannot coexist without leaving dead chips,
     // so adding a token in one mode first drops any tokens of the same facet in the other mode.
-    const base = tokens.filter((existing) => !(existing.facet === token.facet && !!existing.negate !== !!token.negate));
+    const base = tokens
+        .filter((existing) => !(existing.facet === token.facet && !!existing.negate !== !!token.negate))
+        // Lecture content and entity metadata are separate collections, so their type filters cannot stack:
+        // whichever the user picks last replaces the other rather than producing a list that mixes both.
+        .filter((existing) => !(token.facet === 'type' && existing.facet === 'type' && isContentSearchValue(existing.value) !== isContentSearchValue(token.value)));
     // After that drop, any surviving same-facet token has the same negate, so a matching facet+value is an
     // exact duplicate: toggle it off. Otherwise append.
     const index = base.findIndex((existing) => existing.facet === token.facet && existing.value === token.value);
     return index >= 0 ? base.filter((_, i) => i !== index) : [...base, token];
+}
+
+/**
+ * Whether the active filters select lecture content (slides and video transcripts). Such a search runs
+ * against the Iris collections instead of the metadata index, so the caller routes it elsewhere.
+ *
+ * @param tokens the active filter tokens
+ * @return true when a content type is positively selected
+ */
+export function hasContentTypeToken(tokens: FilterToken[]): boolean {
+    return tokens.some((token) => token.facet === 'type' && !token.negate && isContentSearchValue(token.value));
 }
 
 /** Removes the token at the given index. Returns a new array; never mutates the input. */

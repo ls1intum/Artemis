@@ -17,14 +17,17 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { GlobalSearchApi } from 'app/openapi/api/global-search-api';
-import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Router } from '@angular/router';
 import { GlobalSearchNavigationViewComponent } from '../views/navigation-view/global-search-navigation-view.component';
-import { GlobalSearchActionItemComponent } from '../action-item/global-search-action-item.component';
 import { GlobalSearchIrisAnswerComponent } from '../views/iris-answer/global-search-iris-answer.component';
+import { LectureSearchService } from '../../services/lecture-search.service';
+import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
+import { HttpErrorResponse } from '@angular/common/http';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { User } from 'app/account/user/user.model';
 
 describe('GlobalSearchModalComponent', () => {
     let component: GlobalSearchModalComponent;
@@ -113,12 +116,11 @@ describe('GlobalSearchModalComponent', () => {
             ],
         });
 
-        // GlobalSearchActionItemComponent uses CSS custom-property bindings ([style.--accent]) that
-        // JSDOM's CSSStyleDeclaration proxy rejects. Mock it (and GlobalSearchIrisAnswerComponent)
-        // inside the navigation view so the modal spec is isolated from their rendering details.
+        // Mock GlobalSearchIrisAnswerComponent inside the navigation view so the modal spec is isolated
+        // from its rendering details.
         TestBed.overrideComponent(GlobalSearchNavigationViewComponent, {
-            remove: { imports: [GlobalSearchActionItemComponent, GlobalSearchIrisAnswerComponent] },
-            add: { imports: [MockComponent(GlobalSearchActionItemComponent), MockComponent(GlobalSearchIrisAnswerComponent)] },
+            remove: { imports: [GlobalSearchIrisAnswerComponent] },
+            add: { imports: [MockComponent(GlobalSearchIrisAnswerComponent)] },
         });
 
         fixture = TestBed.createComponent(GlobalSearchModalComponent);
@@ -295,29 +297,6 @@ describe('GlobalSearchModalComponent', () => {
             expect(event.preventDefault).toHaveBeenCalled();
         });
 
-        it('returns to the guided picker when the lecture view is left with nothing to show', () => {
-            // The course-page path: the lecture view strips the course filter, so backing out of it arrives
-            // with no query and no chips, which used to expose the searchable-entity list.
-            (component as any).tokens.set([{ facet: 'course', value: '42' }]);
-            (component as any).filterPickerOpen.set(false);
-            (component as any).navigateTo(SearchView.Lecture);
-            expect((component as any).tokens()).toHaveLength(0);
-            expect((component as any).filterPickerOpen()).toBe(false);
-
-            (component as any).navigateTo(SearchView.Navigation);
-
-            expect((component as any).filterPickerOpen()).toBe(true);
-        });
-
-        it('does not cover the lecture view with the picker, which cannot carry filters', () => {
-            (component as any).navigateTo(SearchView.Lecture);
-            (component as any).filterPickerOpen.set(false);
-
-            pressFilterShortcut();
-
-            expect((component as any).filterPickerOpen()).toBe(false);
-        });
-
         it('closes the modal on Escape at the root picker, since nothing sits behind the home screen', () => {
             const event = new KeyboardEvent('keydown', { key: 'Escape' });
 
@@ -401,12 +380,6 @@ describe('GlobalSearchModalComponent', () => {
             expect((component as any).searchQuery()).toBe('nsjkfncs type:candle');
             expect((component as any).filterPickerOpen()).toBe(true);
             expect((component as any).deadEnd()).toBe(false);
-        });
-
-        it('disables the filter trigger in the lecture view, which cannot carry filters', () => {
-            (component as any).navigateTo(SearchView.Lecture);
-
-            expect((component as any).filterTriggerDisabled()).toBe(true);
         });
 
         it('drops a keyboard chip selection when the picker takes over', () => {
@@ -580,6 +553,82 @@ describe('GlobalSearchModalComponent', () => {
 
             const icons = fixture.nativeElement.querySelectorAll('.key-hint-small fa-icon');
             expect(icons.length).toBeGreaterThanOrEqual(2);
+        });
+    });
+
+    describe('Slides and videos filter', () => {
+        const contentHit = {
+            course: { id: 42, name: 'Intro to CS' },
+            lecture: { id: 7, name: 'Backpropagation' },
+            lectureUnit: { id: 9, name: 'Slide 12', link: '/courses/42/lectures/7', pageNumber: 12, sourceType: 'SLIDE', queryParams: { page: 12 } },
+            snippet: 'the chain rule applied backwards',
+        } as LectureSearchResult;
+        const contentToken = { facet: 'type' as const, value: 'lecture_content' };
+
+        let lectureSearch: LectureSearchService;
+
+        beforeEach(() => {
+            vi.useFakeTimers();
+            lectureSearch = TestBed.inject(LectureSearchService);
+            // Content search needs both the Iris module (stubbed in the providers) and the user's AI opt-in.
+            TestBed.inject(AccountService).userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('searches the Iris collections instead of the metadata index', () => {
+            const search = vi.spyOn(lectureSearch, 'search').mockReturnValue(of([contentHit]));
+            component['applyTokens']([contentToken]);
+
+            component['onSearchInput']('backpropagation');
+            vi.advanceTimersByTime(300);
+
+            expect(search).toHaveBeenCalledWith('backpropagation', 10, undefined, undefined);
+            expect(mockSearchService.globalSearch).not.toHaveBeenCalled();
+            expect(component['results']()[0].type).toBe('lecture_content');
+        });
+
+        it('scopes the content search to the courses the chips select', () => {
+            const search = vi.spyOn(lectureSearch, 'search').mockReturnValue(of([]));
+            component['applyTokens']([contentToken, { facet: 'course', value: '42' }]);
+
+            component['onSearchInput']('backpropagation');
+            vi.advanceTimersByTime(300);
+
+            expect(search).toHaveBeenCalledWith('backpropagation', 10, [42], undefined);
+        });
+
+        it('hides the courses an exclusion chip names, which content search would otherwise still read', () => {
+            const search = vi.spyOn(lectureSearch, 'search').mockReturnValue(of([]));
+            component['applyTokens']([contentToken, { facet: 'course', value: '42', negate: true }]);
+
+            component['onSearchInput']('backpropagation');
+            vi.advanceTimersByTime(300);
+
+            expect(search).toHaveBeenCalledWith('backpropagation', 10, undefined, [42]);
+        });
+
+        it('reports that Iris is off for the scope rather than falling back to the metadata search', () => {
+            vi.spyOn(lectureSearch, 'search').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+            component['applyTokens']([contentToken]);
+
+            component['onSearchInput']('backpropagation');
+            vi.advanceTimersByTime(300);
+
+            expect(component['searchError']()).toBe('global.search.contentSearchDisabled');
+            expect(mockSearchService.globalSearch).not.toHaveBeenCalled();
+        });
+
+        it('waits for a search term, which content search cannot run without', () => {
+            const search = vi.spyOn(lectureSearch, 'search').mockReturnValue(of([]));
+            component['applyTokens']([contentToken]);
+
+            vi.advanceTimersByTime(300);
+
+            expect(search).not.toHaveBeenCalled();
+            expect(component['contentSearchActive']()).toBe(true);
         });
     });
 
@@ -967,34 +1016,14 @@ describe('GlobalSearchModalComponent', () => {
         });
     });
 
-    describe('View Navigation', () => {
-        it('should navigate back to Navigation view on Escape when in Lecture view', () => {
-            (component as any).currentView.set(SearchView.Lecture);
-            mockSearchOverlayService.isOpen.set(true);
-
-            const event = new KeyboardEvent('keydown', { key: 'Escape' });
-            component.handleKeyboardEvent(event);
-
-            expect((component as any).currentView()).toBe(SearchView.Navigation);
-            expect(searchOverlayService.close).not.toHaveBeenCalled();
-        });
-
-        it('should close when Escape is pressed from Navigation view', () => {
-            (component as any).currentView.set(SearchView.Navigation);
+    describe('Escape', () => {
+        it('should close the overlay when Escape is pressed with nothing to step back from', () => {
             mockSearchOverlayService.isOpen.set(true);
 
             const event = new KeyboardEvent('keydown', { key: 'Escape' });
             component.handleKeyboardEvent(event);
 
             expect(searchOverlayService.close).toHaveBeenCalled();
-        });
-
-        it('should reset selectedIndex when navigating to a new view', () => {
-            (component as any).selectedIndex.set(2);
-
-            (component as any).navigateTo(SearchView.Lecture);
-
-            expect((component as any).selectedIndex()).toBe(-1);
         });
     });
 
@@ -1279,22 +1308,6 @@ describe('GlobalSearchModalComponent', () => {
 
             expect(component['tokens']().length).toBeGreaterThan(0);
             expect(component['filterPickerOpen']()).toBe(false);
-        });
-
-        it('should remove course filter via removeCourseFilter and re-trigger search', () => {
-            mockCourseStorageService.getCourse.mockReturnValue({ id: 42, title: 'Intro to CS' });
-            Object.defineProperty(router, 'url', { get: () => '/courses/42/statistics', configurable: true });
-            mockSearchService.globalSearch.mockReturnValue(of([]));
-
-            mockSearchOverlayService.isOpen.set(true);
-            fixture.detectChanges();
-
-            expect(component['courseIdsParam']()[0]).toBe(42);
-
-            component['removeCourseFilter']();
-
-            expect(component['courseIdsParam']()[0]).toBeUndefined();
-            expect(component['chips']().some((chip) => chip.family === 'course')).toBe(false);
         });
 
         it('should clear context filters when modal is closed', () => {

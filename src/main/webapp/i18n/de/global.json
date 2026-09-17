@@ -57,21 +57,16 @@
             "tipDescription": "Suche nach Aufgaben, Vorlesungen und mehr. Verwende Filter, um deine Ergebnisse einzugrenzen.",
             "arrowUpAriaLabel": "Pfeil nach oben",
             "arrowDownAriaLabel": "Pfeil nach unten",
-            "searchLectureContentHint": "Tippe, um Vorlesungstranskripte und Materialien zu durchsuchen",
-            "lectureResultsAriaLabel": "Vorlesungsergebnisse",
-            "lectureSearchError": "Suche fehlgeschlagen. Bitte versuche es erneut.",
             "pageAbbreviation": "S.",
             "filterChipAriaLabel": "Filter: {{ filter }}",
             "actionBadge": "Aktion",
-            "actions": {
-                "lectureSearchTitle": "Vorlesungssuche",
-                "lectureSearchDescription": "Vorlesungsinhalte und Folien durchsuchen"
-            },
             "entities": {
                 "exercisesTitle": "Aufgaben",
                 "exercisesDescription": "Kursaufgaben ansehen und bearbeiten",
-                "lecturesTitle": "Vorlesungsdetails",
-                "lecturesDescription": "Vorlesungsinhalte und Einheiten ansehen",
+                "lecturesTitle": "Vorlesungen",
+                "lecturesDescription": "Vorlesungen und Einheiten nach Titel durchsuchen",
+                "slidesAndVideosTitle": "Folien & Videos",
+                "slidesAndVideosDescription": "Vorlesungsfolien und Videotranskripte durchsuchen",
                 "communicationTitle": "Kommunikation",
                 "communicationDescription": "Kanäle und Nachrichten durchsuchen",
                 "faqsTitle": "FAQs",
@@ -92,6 +87,7 @@
                 "points": "Punkte",
                 "examExercise": "Klausur",
                 "reply": "Antwort",
+                "video": "Video",
                 "badge": {
                     "programming": "Programmieraufgabe",
                     "modeling": "Modellierungsaufgabe",
@@ -151,6 +147,9 @@
                 "course": "Kurs"
             },
             "searchFailed": "Suche fehlgeschlagen. Bitte versuche es erneut.",
+            "contentSearchPrompt": "Gib einen Suchbegriff ein, um Vorlesungsfolien und Videos zu durchsuchen.",
+            "contentSearchDisabled": "Folien und Videos können in diesen Kursen nicht durchsucht werden.",
+            "contentSearchUnavailable": "Die Suche in Folien und Videos ist gerade nicht verfügbar. Bitte versuche es später erneut.",
             "irisAnswerShowMore": "Mehr anzeigen",
             "irisAnswerShowLess": "Weniger anzeigen",
             "irisAnswerMore": "weitere",

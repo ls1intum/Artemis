@@ -9,7 +9,8 @@ import { SearchCourseOptionsService } from './search-course-options.service';
 import { SearchEntityType } from '../models/searchable-entity.model';
 import { FilterToken, TypeFacetValue } from '../models/search-token.model';
 import { TYPE_FACETS, TYPE_FACET_ORDER } from '../models/facet-catalog';
-import { addOrToggleToken, excludedCourseIds, excludedTypeTokens, expandTypeTokens, removeTokenAt, selectedCourseIds } from '../models/search-token.util';
+import { addOrToggleToken, excludedCourseIds, excludedTypeTokens, expandTypeTokens, hasContentTypeToken, removeTokenAt, selectedCourseIds } from '../models/search-token.util';
+import { IrisSearchAvailabilityService } from './iris-search-availability.service';
 import { appendOperator, parseOperator, stripOperator } from '../models/search-operator.util';
 
 /**
@@ -46,6 +47,7 @@ export class GlobalSearchFilterService {
     private readonly courseOptionsService = inject(SearchCourseOptionsService);
     private readonly translateService = inject(TranslateService);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly availability = inject(IrisSearchAvailabilityService);
 
     /** The courses the server says this user can filter by, once read. Empty until a course menu is first opened. */
     private readonly fetchedCourses: WritableSignal<MenuCourse[]> = signal([]);
@@ -90,6 +92,11 @@ export class GlobalSearchFilterService {
                 .flatMap((token) => TYPE_FACETS[token.value as TypeFacetValue]?.serverTypes ?? []),
         ),
     ]);
+    /**
+     * True while the slides and videos filter is active. That filter reads the Iris slide and transcript
+     * collections, so the host sends the search there instead of to the metadata endpoint.
+     */
+    readonly contentSearchActive: Signal<boolean> = computed(() => hasContentTypeToken(this.tokens()));
     // Fully-resolved chip view-models handed to the search-input for rendering.
     readonly chips: Signal<FilterChipView[]> = computed(() =>
         this.tokens().map((token, index) =>
@@ -131,6 +138,7 @@ export class GlobalSearchFilterService {
             tokens: this.tokens(),
             editingChip: this.editingChip(),
             courses: () => this.availableCourses(),
+            contentSearchAvailable: this.availability.contentSearchAvailable(),
             translate: (key, params) => this.translateService.instant(key, params),
         }),
     );
@@ -478,11 +486,6 @@ export class GlobalSearchFilterService {
      */
     onBackspaceRemoveFilter(): void {
         // no-op by design (see doc comment)
-    }
-
-    /** Returns the token set with every `course` token removed (used when a view cannot carry a course filter). */
-    tokensWithoutCourseFilter(): FilterToken[] {
-        return this.tokens().filter((token) => token.facet !== 'course');
     }
 
     /**
