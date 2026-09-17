@@ -1,4 +1,4 @@
-import { appendOperator, parseOperator, searchTextOf, stripOperator } from 'app/core/navbar/global-search/models/search-operator.util';
+import { appendOperator, parseOperator, stripOperator } from 'app/core/navbar/global-search/models/search-operator.util';
 
 describe('parseOperator', () => {
     it('returns undefined for plain text and empty input', () => {
@@ -57,16 +57,6 @@ describe('parseOperator', () => {
 
     it('needs a word boundary, so a colon inside a word is plain text', () => {
         expect(parseOperator('mistype:lecture')).toBeUndefined();
-    });
-});
-
-describe('searchTextOf', () => {
-    it('returns the whole input when there is no operator', () => {
-        expect(searchTextOf('  linear regression  ')).toBe('linear regression');
-    });
-
-    it('returns only the text in front of the operator', () => {
-        expect(searchTextOf('linear regression type:lec')).toBe('linear regression');
     });
 });
 

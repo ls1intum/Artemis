@@ -115,10 +115,6 @@ export class GlobalSearchModalComponent implements OnDestroy {
      */
     protected readonly hasPaneBehindFilterMenu = computed(() => this.showResults() || this.currentView() !== SearchView.Navigation);
     /**
-     * i18n key for the footer's Escape hint. Escape steps back a level inside the filter menu, and also when
-     * leaving the menu reveals the pane behind it; only at the home screen, with nothing behind, does it close.
-     */
-    /**
      * Where the filter menu's back control leads, or undefined when there is nowhere to go. One level deep it
      * returns to the filter root; at the root it returns to the results behind the menu; on a fresh palette
      * there is nothing behind it, so no back control is offered at all rather than one that does nothing.
@@ -160,7 +156,11 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly filterTriggerDisabled = computed(
         () => this.currentView() !== SearchView.Navigation || (this.filterMenuOpen() && !this.operator() && !this.filter.excludeMode()),
     );
-    /** i18n key for the footer's Escape hint, worded to match the back control it mirrors. */
+    /**
+     * i18n key for the footer's Escape hint, worded to match the back control it mirrors. Escape steps back a level
+     * inside the filter menu, and also when leaving the menu reveals the pane behind it; only at the home screen, with
+     * nothing behind, does it close.
+     */
     protected readonly escapeHintKey = computed(() => {
         if (this.deadEnd()) {
             // Escape cannot mean "cancel" here: the operator is not a filter, so backing out of it would

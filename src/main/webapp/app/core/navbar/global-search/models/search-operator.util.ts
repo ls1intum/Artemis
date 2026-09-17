@@ -53,11 +53,6 @@ export function parseOperator(input: string): ParsedOperator | undefined {
     };
 }
 
-/** The text the server should search for: everything before a trailing operator, or the whole input. */
-export function searchTextOf(input: string): string {
-    return (parseOperator(input)?.text ?? input).trim();
-}
-
 /** Removes a trailing operator from the input, leaving the search text the user typed before it. */
 export function stripOperator(input: string): string {
     const operator = parseOperator(input);
