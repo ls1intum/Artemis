@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -50,6 +52,10 @@ class LectureContentProcessingSchedulerTest {
 
     private static final int MAX_CONCURRENT_JOBS = 2;
 
+    private static final long PROCESSING_STATE_ID = 4242L;
+
+    private static final String JOB_TOKEN = "token-abc";
+
     private AttachmentVideoUnit testUnit;
 
     private LectureUnitProcessingState testState;
@@ -88,60 +94,47 @@ class LectureContentProcessingSchedulerTest {
         @Test
         void shouldReclaimRunWhoseLeaseLapsedWithoutSpendingRetryBudget() {
             // Given: an in-flight run whose worker stopped renewing its lease two minutes ago
+            testState.setId(PROCESSING_STATE_ID);
             testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(JOB_TOKEN);
             testState.setRetryEligibleAt(null);
             testState.setLastHeartbeatAt(ZonedDateTime.now().minusMinutes(2));
 
             when(processingStateRepository.findRunsWithLapsedLease(eq(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING)), any(ZonedDateTime.class)))
                     .thenReturn(List.of(testState));
-            when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
+            when(recoveryService.reclaimLapsedLease(eq(PROCESSING_STATE_ID), eq(JOB_TOKEN), eq(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING)),
+                    any(ZonedDateTime.class))).thenReturn(true);
 
             // When
             scheduler.processScheduledRetries();
 
-            // Then: reclaimed through the budget-preserving reset, never through the failure path
-            verify(recoveryService).resetToIdleForRecovery(testState);
+            // Then: reclaimed through the budget-preserving atomic reset, never through the failure path.
+            // The atomicity itself (a heartbeat renewal or a completion since the batch read cancels the
+            // reclaim) is enforced by the conditional UPDATE's WHERE clause, not by this service call.
+            verify(recoveryService).reclaimLapsedLease(eq(PROCESSING_STATE_ID), eq(JOB_TOKEN), eq(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING)),
+                    any(ZonedDateTime.class));
             verify(callbackService, never()).handleProcessingFailure(testState);
         }
 
         @Test
-        void shouldNotReclaimRunWhoseLeaseWasRenewedSinceTheBatchRead() {
-            // Given: the batch read returned the run, but a heartbeat arrived before the re-check
+        void shouldNotFailWhenTheAtomicReclaimFindsTheRunNoLongerLapsed() {
+            // Given: the batch read found a candidate, but the atomic reclaim reports it was no longer a
+            // match (a heartbeat renewed the lease, or the run completed, since the batch read)
+            testState.setId(PROCESSING_STATE_ID);
             testState.setPhase(ProcessingPhase.INGESTING);
-            testState.setRetryEligibleAt(null);
-            testState.setLastHeartbeatAt(ZonedDateTime.now());
-
-            when(processingStateRepository.findRunsWithLapsedLease(eq(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING)), any(ZonedDateTime.class)))
-                    .thenReturn(List.of(testState));
-            when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
-
-            // When
-            scheduler.processScheduledRetries();
-
-            // Then
-            verify(recoveryService, never()).resetToIdleForRecovery(any());
-        }
-
-        @Test
-        void shouldNotReclaimRunThatCompletedSinceTheBatchRead() {
-            // Given: the run finished between the batch read and the re-check
-            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(JOB_TOKEN);
             testState.setRetryEligibleAt(null);
             testState.setLastHeartbeatAt(ZonedDateTime.now().minusMinutes(2));
 
-            LectureUnitProcessingState finished = new LectureUnitProcessingState(testState.getLectureUnit());
-            finished.setPhase(ProcessingPhase.DONE);
-            finished.setLastHeartbeatAt(ZonedDateTime.now().minusMinutes(2));
-
             when(processingStateRepository.findRunsWithLapsedLease(eq(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING)), any(ZonedDateTime.class)))
                     .thenReturn(List.of(testState));
-            when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(finished));
+            when(recoveryService.reclaimLapsedLease(anyLong(), anyString(), any(), any(ZonedDateTime.class))).thenReturn(false);
 
             // When
             scheduler.processScheduledRetries();
 
-            // Then
-            verify(recoveryService, never()).resetToIdleForRecovery(any());
+            // Then: nothing else treats this candidate as failed or reclaimed; the next scan re-evaluates it
+            verify(callbackService, never()).handleProcessingFailure(any());
         }
     }
 

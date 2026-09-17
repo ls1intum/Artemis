@@ -433,6 +433,39 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     int transitionToIngestingIfTranscribing(@Param("id") long id, @Param("token") String token, @Param("now") ZonedDateTime now);
 
     /**
+     * Reclaim one lapsed-lease run atomically: reset it to IDLE, but only while it is still exactly the
+     * row the batch read found lapsed. A heartbeat can renew the lease, or a terminal callback can finish
+     * the run, in the window between {@link #findRunsWithLapsedLease} and this write; matching on the
+     * token and re-checking every field {@code stillLapsed} would have recomputed (phase, no pending retry,
+     * heartbeat still older than the cutoff) is what stops that write from overwriting either one. Fields
+     * mirror {@link de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState#requeue}.
+     *
+     * @param id     the processing state to reclaim
+     * @param token  the job token observed at batch-read time
+     * @param phases the in-flight phases eligible for reclaim
+     * @param cutoff the lease cutoff: a heartbeat at or after this time cancels the reclaim
+     * @param now    recorded as the new {@code lastUpdated}
+     * @return 1 when reclaimed, 0 when the run is no longer lapsed under this token
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, ps.ingestionJobToken = NULL, ps.startedAt = NULL,
+                ps.retryEligibleAt = NULL, ps.errorKey = NULL, ps.lastUpdated = :now,
+                ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL,
+                ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL
+            WHERE ps.id = :id
+            AND ps.ingestionJobToken = :token
+            AND ps.phase IN :phases
+            AND ps.retryEligibleAt IS NULL
+            AND ps.lastHeartbeatAt IS NOT NULL
+            AND ps.lastHeartbeatAt < :cutoff
+            """)
+    int reclaimLapsedLease(@Param("id") long id, @Param("token") String token, @Param("phases") List<ProcessingPhase> phases, @Param("cutoff") ZonedDateTime cutoff,
+            @Param("now") ZonedDateTime now);
+
+    /**
      * Activate a claim exactly once: turn a claimed row into an in-flight run, but only while it still holds the claim
      * that produced the activation. A claimed IDLE row carries {@code startedAt}; a claimed FAILED retry carries its
      * lease in {@code retryEligibleAt}. Neither has a job token yet. A row that was released by the abandoned-claim

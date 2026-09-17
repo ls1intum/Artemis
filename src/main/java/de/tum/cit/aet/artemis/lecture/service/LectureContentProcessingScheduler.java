@@ -210,18 +210,18 @@ public class LectureContentProcessingScheduler {
      * time so a heartbeat that arrived since the batch read cancels the reclaim.
      */
     private void reclaimLapsedLeases() {
+        List<ProcessingPhase> inFlightPhases = List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING);
         ZonedDateTime cutoff = ZonedDateTime.now().minus(LEASE_EXPIRY);
-        List<LectureUnitProcessingState> lapsed = processingStateRepository.findRunsWithLapsedLease(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING), cutoff);
+        List<LectureUnitProcessingState> lapsed = processingStateRepository.findRunsWithLapsedLease(inFlightPhases, cutoff);
         for (LectureUnitProcessingState candidate : lapsed) {
-            LectureUnitProcessingState freshState = processingStateRepository.findById(candidate.getId()).orElse(null);
-            boolean stillLapsed = freshState != null && freshState.isProcessing() && freshState.getRetryEligibleAt() == null && freshState.getLastHeartbeatAt() != null
-                    && freshState.getLastHeartbeatAt().isBefore(ZonedDateTime.now().minus(LEASE_EXPIRY));
-            if (!stillLapsed) {
-                continue;
+            // Atomic: a heartbeat renewing the lease, or a terminal callback finishing the run, in the window
+            // since the batch read above cancels this reclaim instead of being overwritten by it. See
+            // LectureUnitProcessingStateRepository#reclaimLapsedLease.
+            boolean reclaimed = recoveryService.reclaimLapsedLease(candidate.getId(), candidate.getIngestionJobToken(), inFlightPhases, cutoff);
+            if (reclaimed) {
+                log.warn("lease-lapsed unit={} locked_by={} last_heartbeat={} — worker stopped renewing, reclaiming the run (retry budget preserved)",
+                        candidate.getLectureUnit() != null ? candidate.getLectureUnit().getId() : null, candidate.getLockedBy(), candidate.getLastHeartbeatAt());
             }
-            log.warn("lease-lapsed unit={} locked_by={} last_heartbeat={} — worker stopped renewing, reclaiming the run (retry budget preserved)",
-                    freshState.getLectureUnit() != null ? freshState.getLectureUnit().getId() : null, freshState.getLockedBy(), freshState.getLastHeartbeatAt());
-            recoveryService.resetToIdleForRecovery(freshState);
         }
     }
 

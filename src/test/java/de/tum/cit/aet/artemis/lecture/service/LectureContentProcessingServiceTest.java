@@ -363,6 +363,31 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
+        void shouldRequeueWithoutFailingWhenTheFileStoreIsNotInitializedYet() {
+            // Given: the same read failure, but the file store path is not configured yet — a claim that
+            // raced application startup, not an actually-unreadable attachment
+            testState.setPhase(ProcessingPhase.IDLE);
+            when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(testState));
+            when(processingStateRepository.claimIdleForDispatch(anyLong(), any())).thenReturn(1);
+            when(processingStateRepository.findStatesReadyForRetry(anyString(), any(), anyInt())).thenReturn(List.of());
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(0L);
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(contentFingerprintService.computeFingerprint(any())).thenThrow(new IllegalStateException("Cannot read attachment file"));
+
+            // When: the file store is NOT initialized, so the failure is judged transient
+            try (MockedStatic<FilePathConverter> filePathConverter = mockStatic(FilePathConverter.class)) {
+                filePathConverter.when(FilePathConverter::getFileUploadPath).thenReturn(null);
+                callbackService.dispatchPendingJobs();
+            }
+
+            // Then: requeued to IDLE with no error key and no retry spent, not permanently failed
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(testState.getErrorKey()).isNull();
+            assertThat(testState.getRetryCount()).isZero();
+            verify(irisLectureApi, never()).addLectureUnitToPyrisDB(any(), anyString(), anyBoolean());
+        }
+
+        @Test
         void shouldFailOnMalformedAttachmentLinkWithoutAbortingTheBatch() {
             // A malformed link surfaces as IllegalArgumentException from URI.create, not IllegalStateException.
             // It must be caught (not escape and abort the batch) and the poison unit marked FAILED, while a

@@ -31,6 +31,9 @@ describe('IngestionStatusBadgeComponent', () => {
     });
 
     const badge = (): HTMLElement | null => fixture.nativeElement.querySelector('[data-testid="ingestion-status-badge"]');
+    afterEach(() => {
+        vi.useRealTimers();
+    });
 
     it('should render nothing without a status and without awaiting', () => {
         fixture.detectChanges();
@@ -169,6 +172,15 @@ describe('IngestionStatusBadgeComponent', () => {
     });
 
     it('should keep a running unit running while lease renewals are fresh', () => {
+        // The component's own clock (this.now()) is captured once, at construction, in a field
+        // initializer — so freezing time only from here on is not enough, it must already be frozen
+        // before TestBed.createComponent() runs, or the signal still captures a real timestamp that a
+        // slow CI machine could let drift more than LOST_CONTACT_AFTER_MS from receivedAt below.
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date());
+        fixture = TestBed.createComponent(IngestionStatusBadgeComponent);
+        component = fixture.componentInstance;
+
         fixture.componentRef.setInput(
             'status',
             status({
