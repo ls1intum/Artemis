@@ -134,7 +134,7 @@ describe('CourseIngestionCoverageTableComponent', () => {
 
         // Worst-first is cross-course, so it is served from the stored projection.
         component['toggleSort']('worstFirst');
-        expect(storedSpy).toHaveBeenCalledWith({ page: 0, size: 20, sort: 'coverageGapScore,desc', status: undefined, active: undefined });
+        expect(storedSpy).toHaveBeenCalledWith({ page: 0, size: 20, sort: 'coverageGapScore,desc', status: undefined, active: undefined, search: undefined });
     });
 
     it('filters by status and active state, and refreshes the projection', () => {
@@ -143,7 +143,7 @@ describe('CourseIngestionCoverageTableComponent', () => {
         // A status filter is a cross-course view, so it reads the stored projection.
         component['onStatusChange']('INCOMPLETE');
         expect(component.statusFilter()).toBe('INCOMPLETE');
-        expect(storedSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'courseTitle,asc', status: 'INCOMPLETE', active: undefined });
+        expect(storedSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'courseTitle,asc', status: 'INCOMPLETE', active: undefined, search: undefined });
 
         // Clearing the status returns to the live per-page view.
         liveSpy.mockClear();
@@ -156,7 +156,7 @@ describe('CourseIngestionCoverageTableComponent', () => {
         component['onActiveChange']('true');
         expect(component.activeFilter()).toBe(true);
         expect(component['activeFilterValue']()).toBe('true');
-        expect(storedSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'courseTitle,asc', status: undefined, active: true });
+        expect(storedSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'courseTitle,asc', status: undefined, active: true, search: undefined });
         component['onActiveChange']('false');
         expect(component['activeFilterValue']()).toBe('false');
         component['onActiveChange']('');
@@ -191,6 +191,19 @@ describe('CourseIngestionCoverageTableComponent', () => {
         expect(liveSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'title,asc', search: 'algo' });
     });
 
+    it('keeps the search when a filter switches the load to the stored projection', () => {
+        fixture.detectChanges();
+        vi.useFakeTimers();
+        component['onSearchInput']('algo');
+        vi.advanceTimersByTime(300);
+        vi.useRealTimers();
+
+        // A status filter moves the request to the stored projection; the typed search has to travel with it, or the
+        // search box silently stops filtering the moment a filter is set.
+        component['onStatusChange']('INCOMPLETE');
+        expect(storedSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'courseTitle,asc', status: 'INCOMPLETE', active: undefined, search: 'algo' });
+    });
+
     it('should rebuild the filter labels when the language changes', async () => {
         const translateService = TestBed.inject(TranslateService);
         vi.spyOn(translateService, 'instant').mockImplementation((key) => `de:${key}`);
@@ -205,5 +218,37 @@ describe('CourseIngestionCoverageTableComponent', () => {
 
         expect(component['statusOptions']()[0].label).toBe('de:artemisApp.courseIngestionDashboard.matrix.status.all');
         expect(component['activeOptions']()[1].label).toBe('de:artemisApp.courseIngestionDashboard.matrix.active.active');
+    });
+
+    it('should emit the course when its row is activated, so the page can open the browser', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const emitted: IngestionCoverage[] = [];
+        component.courseSelected.subscribe((course) => emitted.push(course));
+
+        // The title button carries the accessible name; its click bubbles to the row handler.
+        const openButton = fixture.nativeElement.querySelector('[data-testid="coverage-row-open"]') as HTMLButtonElement;
+        expect(openButton).toBeTruthy();
+        openButton.click();
+
+        expect(emitted).toEqual([rows[0]]);
+    });
+
+    it('should apply a page size change and reload from the first page', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        component['onPageChange'](2);
+        await fixture.whenStable();
+        liveSpy.mockClear();
+
+        // The paginator emits a size change separately from a page change, so it needs its own handler to take effect.
+        component['onPageSizeChange'](50);
+        await fixture.whenStable();
+
+        expect(component.pageSize()).toBe(50);
+        expect(component.page()).toBe(0);
+        expect(liveSpy).toHaveBeenCalledWith(expect.objectContaining({ page: 0, size: 50 }));
     });
 });
