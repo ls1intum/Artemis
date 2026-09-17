@@ -219,6 +219,22 @@ This happens _after_ the schema and the first few gigabytes have been written, s
 
 <Callout variant={CalloutVariant.info}>
 
+Both of those are properties of the image rather than of pgloader, so installing pgloader on the host avoids them: your build runs natively, and its heap is whatever your distribution compiled it with rather than the image's fixed 1 GB. Install it with your package manager (`brew install pgloader` on macOS) and run `pgloader pgloader.load` in place of the `docker run` line.
+
+The host is not on the `artemis-db-migration` network, so it reaches the two containers through their published ports instead of by container name. Change the two URLs in `pgloader.load` accordingly, and leave the rest of the file as it is:
+
+```
+   LOAD DATABASE
+        FROM     mysql://root@localhost/Artemis
+        INTO postgresql://root@localhost/Artemis
+```
+
+Keep the `WITH` settings even here. A larger heap raises the ceiling rather than removing it, and the batch sizes are what keep a run inside whatever that ceiling turns out to be.
+
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+
 Alternatively, you could use some temporary database on your PostgreSQL instance that can be deleted afterwards to migrate the data directly from your production MySQL into there. Use this temporary PostgreSQL database to create the `Artemis.pg.sql` dump that can be imported into the production database after merging with the proper schema. In that case the `pgloader` command in the steps above should work similarly without the `--network` flag and adapted database connection URLs. For `pg_dump`, add the necessary flags to connect to your database _in addition to_ `-Ox`.
 
 Note that pgloader names the target schema after the source database. The helper above passes `--lower_case_table_names=1`, so that schema is called `artemis`; a MySQL server started without it reports the database as `Artemis` and the schema is named accordingly. `merge.py` below detects the name rather than assuming it, so either works.
