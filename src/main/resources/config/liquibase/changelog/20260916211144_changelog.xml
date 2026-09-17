@@ -4,8 +4,8 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <!--
-    Drops eleven secondary indexes that cannot serve a query, measured on a copy of the production
-    database (2026-08-03 snapshot). Together they occupy 1.80 GB. On result, participation and
+    Drops ten secondary indexes that cannot serve a query, measured on a copy of the production
+    database (2026-08-03 snapshot). Together they occupy 1.78 GB. On result, participation and
     build_job the secondary indexes currently outweigh the rows they point at - 2,324 MB against
     1,177 MB on result, 791 MB against 345 MB on participation, 721 MB against 631 MB on build_job.
 
@@ -35,6 +35,11 @@
       DESC, and the control case (a foreign key whose only index is the one being dropped) fails
       with ERROR 1553 as expected. PostgreSQL never requires an index for a foreign key.
 
+      These four are restricted to MySQL and PostgreSQL. H2, which the bean-instantiation startup
+      check boots on, refuses to drop an index that backs a foreign key even when a suitable
+      replacement exists, so on H2 the redundant index stays - harmless, because H2 only ever holds
+      the startup smoke test's data. Changelog 20260410144433 restricts a drop for the same reason.
+
     Group 2 - too few distinct values to be selective (723 MB)
 
         result.result_rated (rated)                                          215 MB   2 distinct values
@@ -51,14 +56,7 @@
       participation_id or submission_id - and EXPLAIN on the production copy shows the optimizer
       choosing that index and applying these columns as a post-filter.
 
-    Group 3 - indexed but never used as a predicate (45 MB)
-
-        participation.participation_presentation_score (presentation_score)   45 MB
-
-      presentationScore appears only in JPQL select lists, never in a WHERE or JOIN clause. The
-      index also covers 2,775,708 rows to describe the 10,113 that are non-null.
-
-    Group 4 - selective in principle, unused in practice (340 MB)
+    Group 3 - selective in principle, unused in practice (340 MB)
 
         result.result_assessment_type (assessment_type)                      340 MB
 
@@ -91,7 +89,7 @@
     version writes, since an index is not part of any INSERT or UPDATE statement.
     -->
 
-    <changeSet id="20260916211144-01-drop-submission-participation-fk-index" author="krusche">
+    <changeSet id="20260916211144-01-drop-submission-participation-fk-index" author="krusche" dbms="mysql,postgresql">
         <preConditions onFail="MARK_RAN">
             <indexExists tableName="submission" indexName="FKeap67y7pxd6ffvwbs6d6sfhmq"/>
         </preConditions>
@@ -103,7 +101,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20260916211144-02-drop-result-submission-fk-index" author="krusche">
+    <changeSet id="20260916211144-02-drop-result-submission-fk-index" author="krusche" dbms="mysql,postgresql">
         <preConditions onFail="MARK_RAN">
             <indexExists tableName="result" indexName="fk_result_submission_id"/>
         </preConditions>
@@ -115,7 +113,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20260916211144-03-drop-participation-student-fk-index" author="krusche">
+    <changeSet id="20260916211144-03-drop-participation-student-fk-index" author="krusche" dbms="mysql,postgresql">
         <preConditions onFail="MARK_RAN">
             <indexExists tableName="participation" indexName="fk_participation_student_id"/>
         </preConditions>
@@ -127,7 +125,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20260916211144-04-drop-participation-team-fk-index" author="krusche">
+    <changeSet id="20260916211144-04-drop-participation-team-fk-index" author="krusche" dbms="mysql,postgresql">
         <preConditions onFail="MARK_RAN">
             <indexExists tableName="participation" indexName="fk_participation_team_id"/>
         </preConditions>
@@ -195,18 +193,6 @@
         <rollback>
             <createIndex tableName="participation" indexName="participation_discriminator">
                 <column name="discriminator"/>
-            </createIndex>
-        </rollback>
-    </changeSet>
-
-    <changeSet id="20260916211144-10-drop-participation-presentation-score-index" author="krusche">
-        <preConditions onFail="MARK_RAN">
-            <indexExists tableName="participation" indexName="participation_presentation_score"/>
-        </preConditions>
-        <dropIndex tableName="participation" indexName="participation_presentation_score"/>
-        <rollback>
-            <createIndex tableName="participation" indexName="participation_presentation_score">
-                <column name="presentation_score"/>
             </createIndex>
         </rollback>
     </changeSet>
