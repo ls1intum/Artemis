@@ -222,8 +222,8 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         var modelingPage = request.getSearchResult("/api/exercise/exercises/" + modelingExercise.getId() + "/submissions-for-import", HttpStatus.OK, JsonNode.class,
                 pageableSearchUtilService.searchMapping(search));
         assertThat(modelingPage.getResultsOnPage()).hasSize(1);
-        assertThat(modelingPage.getResultsOnPage().getFirst().path("submissionExerciseType").asText()).isEqualTo("modeling");
-        assertThat(modelingPage.getResultsOnPage().getFirst().path("model").asText()).isEqualTo(model);
+        assertThat(modelingPage.getResultsOnPage().getFirst().path("submissionExerciseType").asString()).isEqualTo("modeling");
+        assertThat(modelingPage.getResultsOnPage().getFirst().path("model").asString()).isEqualTo(model);
     }
 
     @Test

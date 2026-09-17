@@ -345,6 +345,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         TextExercise exercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
         exercise.setMaxPoints(1.0);
         exercise.setIncludedInOverallScore(includedInOverallScore);
+        // Save the exercise itself rather than letting the link write it, so the row carries the course the factory set.
+        exercise = exerciseRepository.save(exercise);
         CompetencyExerciseLink link = new CompetencyExerciseLink(newCompetency, exercise, 1);
         competencyExerciseLinkRepository.save(link);
 
