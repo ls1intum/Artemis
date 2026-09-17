@@ -116,28 +116,29 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         userUtilService.clearAiSelectionDecision(undecidedUser);
         userUtilService.setAiSelectionDecision(noAiUser, AiSelectionDecision.NO_AI);
 
-        var course = new Course();
+        var course = courseUtilService.createCourse();
         var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
         athenaConfig.setGradingFeedbackEnabled(true);
         athenaConfig.setFormativeFeedbackEnabled(false);
         course.setAthenaConfig(athenaConfig);
+        course = courseRepository.save(course);
 
+        // Only ever read off an exercise already in memory, so it does not need a row of its own.
         var autoConfig = new CourseAthenaConfig();
         autoConfig.setGradingFeedbackEnabled(false);
         autoConfig.setFormativeFeedbackEnabled(true);
         autoCourse = new Course();
         autoCourse.setAthenaConfig(autoConfig);
 
-        textExercise = textExerciseUtilService.createSampleTextExercise(null);
-        textExercise.setCourse(course);
+        textExercise = textExerciseUtilService.createSampleTextExercise(course);
         textSubmission = new TextSubmission(2L).text("This is a text submission");
         StudentParticipation textParticipation = new StudentParticipation().exercise(textExercise);
         textParticipation.setId(1L);
         textParticipation.setParticipant(textStudent);
         textSubmission.setParticipation(textParticipation);
 
-        programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
-        programmingExercise.setCourse(course);
+        programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise(course);
         // Graded Athena feedback is only offered for manually assessed programming exercises; automatically assessed
         // ones rely on unit-test feedback (see testProgrammingFeedbackSuggestionsReturnsEmptyForAutomaticAssessment).
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
