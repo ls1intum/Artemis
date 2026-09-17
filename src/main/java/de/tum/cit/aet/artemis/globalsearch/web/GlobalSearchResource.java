@@ -69,6 +69,13 @@ public class GlobalSearchResource {
             SearchableEntitySchema.TypeValues.CHANNEL, SearchableEntitySchema.TypeValues.COURSE, SearchableEntitySchema.TypeValues.POST,
             SearchableEntitySchema.TypeValues.ANSWER_POST);
 
+    /**
+     * Upper bound on the number of course ids honoured per {@code courseIds} / {@code excludeCourseIds} list. It bounds the
+     * {@code findAllById} and the Weaviate {@code containsAny} on the admin paths, and sits far above any realistic filter
+     * set, so only a crafted request can reach it.
+     */
+    private static final int MAX_COURSE_ID_FILTERS = 100;
+
     private final SearchableEntityWeaviateService searchableEntityWeaviateService;
 
     private final CourseRepository courseRepository;
@@ -121,7 +128,7 @@ public class GlobalSearchResource {
             globally across all courses the authenticated user has access to. Per-type access rules are
             enforced server-side via compound Weaviate filters.""")
     @ApiResponse(responseCode = "200", description = "Search results matching the query")
-    @ApiResponse(responseCode = "400", description = "Unsupported entity type requested")
+    @ApiResponse(responseCode = "400", description = "Unsupported entity type requested, or more course IDs than the endpoint accepts")
     public ResponseEntity<List<GlobalSearchResultDTO>> globalSearch(@RequestParam("q") @Parameter(description = "Search query; can be empty to retrieve recent items") String query,
             @RequestParam(value = "types", required = false) @Parameter(description = "Comma-separated entity type filter (exercise, lecture, lecture_unit, exam, faq, channel, course, post, answer_post) or 'all'; default 'all'") String types,
             @RequestParam(value = "excludeTypes", required = false) @Parameter(description = "Comma-separated entity types to hide from the results; applied after 'types'") String excludeTypes,
@@ -149,13 +156,19 @@ public class GlobalSearchResource {
         }
 
         int effectiveLimit = Math.clamp(limit, 1, 25);
-        User user = userRepository.getUserWithAuthorities();
+        // The course roles come along, so the per-course role checks below read them from memory instead of running one
+        // existence query per course and role.
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
 
-        // Defence-in-depth: bound the id lists so a crafted request cannot drive an unbounded findAllById /
-        // Weaviate containsAny on the admin paths. The cap sits far above any realistic UI use, so it never
-        // affects a normal filter set; excess ids are dropped (consistent with the lenient "drop, don't 4xx" contract).
-        FilterBuildResult filterResult = buildSearchableItemFilter(user, capCourseIds(withLegacyCourseId(courseIds, courseId)), capCourseIds(excludeCourseIds), requestedTypes,
-                hiddenTypes);
+        List<Long> includedCourseIds = withLegacyCourseId(courseIds, courseId);
+        // An over-long list is refused rather than truncated: dropping excess ids silently under-returns for `courseIds`
+        // and, worse, shows content the caller asked to hide for `excludeCourseIds`. Unknown and inaccessible ids stay
+        // lenient; only the bound itself is enforced.
+        if (exceedsCourseIdLimit(includedCourseIds) || exceedsCourseIdLimit(excludeCourseIds)) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        FilterBuildResult filterResult = buildSearchableItemFilter(user, includedCourseIds, excludeCourseIds, requestedTypes, hiddenTypes);
         if (!filterResult.hasAccess()) {
             return ResponseEntity.ok(List.of());
         }
@@ -194,12 +207,6 @@ public class GlobalSearchResource {
     }
 
     /**
-     * Parses the raw {@code types} query parameter into a set of valid type discriminators.
-     *
-     * @param types the raw query parameter value
-     * @return the parsed set, or {@code null} if any requested token is invalid
-     */
-    /**
      * Parses the types to hide. Unlike {@link #parseTypes}, a blank value means "hide nothing" rather than "all".
      *
      * @param excludeTypes the comma-separated parameter value, possibly null
@@ -223,6 +230,12 @@ public class GlobalSearchResource {
         return result;
     }
 
+    /**
+     * Parses the raw {@code types} query parameter into a set of valid type discriminators.
+     *
+     * @param types the raw query parameter value
+     * @return the parsed set, or {@code null} if any requested token is invalid
+     */
     private static Set<String> parseTypes(String types) {
         if (types == null || types.isBlank() || "all".equalsIgnoreCase(types.trim())) {
             return new LinkedHashSet<>(VALID_TYPES);
@@ -241,18 +254,9 @@ public class GlobalSearchResource {
         return result.isEmpty() ? null : result;
     }
 
-    /**
-     * Upper bound on the number of course ids honoured per {@code courseIds} / {@code excludeCourseIds} list.
-     * Sits far above any realistic filter set; excess ids are dropped rather than rejected.
-     */
-    private static final int MAX_COURSE_ID_FILTERS = 100;
-
-    /** Truncates a course-id list to {@link #MAX_COURSE_ID_FILTERS} so crafted requests cannot drive an unbounded query. */
-    private static List<Long> capCourseIds(List<Long> courseIds) {
-        if (courseIds == null || courseIds.size() <= MAX_COURSE_ID_FILTERS) {
-            return courseIds;
-        }
-        return courseIds.stream().limit(MAX_COURSE_ID_FILTERS).toList();
+    /** Whether the course-id list carries more ids than {@link #MAX_COURSE_ID_FILTERS}, which the endpoint refuses. */
+    private static boolean exceedsCourseIdLimit(List<Long> courseIds) {
+        return courseIds != null && courseIds.size() > MAX_COURSE_ID_FILTERS;
     }
 
     /**
@@ -418,8 +422,7 @@ public class GlobalSearchResource {
                 courseRepository.findAllById(requestedCourseIds).forEach(accessibleCourses::add);
             }
             else {
-                accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getId(), false).stream().filter(course -> requestedCourseIds.contains(course.getId()))
-                        .toList();
+                accessibleCourses = courseRepository.findAllAccessibleCoursesForUserAndIdIn(user.getId(), false, requestedCourseIds);
             }
             if (accessibleCourses.isEmpty()) {
                 return new FilterBuildResult(null, false, null, null, null);

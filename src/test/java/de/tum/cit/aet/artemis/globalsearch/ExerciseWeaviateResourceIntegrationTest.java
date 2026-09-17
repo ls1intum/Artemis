@@ -9,6 +9,8 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -295,6 +297,19 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
             assertThat(titles).contains(SEARCH_PREFIX + " Released Exercise");
             assertThat(titles).doesNotContain(secondCourseTitle);
+        }
+
+        /**
+         * Over-long id lists are refused rather than truncated: a partially applied exclusion would show content the caller asked to hide, without any signal that it did.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testTooManyCourseIdsAreRejected() throws Exception {
+            String tooManyIncludes = IntStream.rangeClosed(1, 101).mapToObj(id -> "&courseIds=" + id).collect(Collectors.joining());
+            request.getList("/api/search?q=" + SEARCH_PREFIX + tooManyIncludes, HttpStatus.BAD_REQUEST, GlobalSearchResultDTO.class);
+
+            String tooManyExcludes = IntStream.rangeClosed(1, 101).mapToObj(id -> "&excludeCourseIds=" + id).collect(Collectors.joining());
+            request.getList("/api/search?q=" + SEARCH_PREFIX + tooManyExcludes, HttpStatus.BAD_REQUEST, GlobalSearchResultDTO.class);
         }
 
         @Test
