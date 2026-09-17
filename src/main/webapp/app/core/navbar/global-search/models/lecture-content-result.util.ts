@@ -27,18 +27,18 @@ export function mapLectureContentResult(result: LectureSearchResult): GlobalSear
     return {
         id: `lecture-content-${unit.link}${location ? `?${location}` : ''}`,
         type: LECTURE_CONTENT_TYPE,
-        title: result.lectureUnit.name,
+        title: unit.name,
         description: result.snippet,
         metadata: {
             courseId: String(result.course.id),
             courseName: result.course.name,
             lectureId: String(result.lecture.id),
             lectureName: result.lecture.name,
-            pageNumber: result.lectureUnit.pageNumber,
-            sourceType: result.lectureUnit.sourceType,
-            link: result.lectureUnit.link,
-            queryParams: result.lectureUnit.queryParams,
-            displayMeta: result.lectureUnit.displayMeta,
+            pageNumber: unit.pageNumber,
+            sourceType: unit.sourceType,
+            link: unit.link,
+            queryParams: unit.queryParams,
+            displayMeta: unit.displayMeta,
         },
     };
 }
