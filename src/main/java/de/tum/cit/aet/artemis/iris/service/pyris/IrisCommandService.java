@@ -15,10 +15,12 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.exc.JsonNodeException;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
@@ -60,6 +62,8 @@ public class IrisCommandService {
      */
     private static final String POINT_OUT_TYPE = "pointOut";
 
+    private static final String MARKER_WRITE_LOCK_PREFIX = "iris-command-marker-write:";
+
     /**
      * How long to wait for the addressed tab to report back before treating a command as not carried out. The tab answers either way as soon as it has tried, and negatively at
      * once wherever it can already tell that it never will — a closed combined view, or a viewer that is not coming — so this is a backstop for a tab that went away (closed,
@@ -75,6 +79,8 @@ public class IrisCommandService {
 
     private final IrisCommandCoordinationService coordinationService;
 
+    private final DistributedDataProvider distributedDataProvider;
+
     private final IrisWebsocketService irisWebsocketService;
 
     private final IrisChatWebsocketService irisChatWebsocketService;
@@ -89,10 +95,11 @@ public class IrisCommandService {
 
     private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
-    public IrisCommandService(IrisCommandCoordinationService coordinationService, IrisWebsocketService irisWebsocketService, IrisChatWebsocketService irisChatWebsocketService,
-            IrisMessageService irisMessageService, IrisSessionRepository irisSessionRepository, UserRepository userRepository, JsonMapper objectMapper,
-            Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi) {
+    public IrisCommandService(IrisCommandCoordinationService coordinationService, DistributedDataProvider distributedDataProvider, IrisWebsocketService irisWebsocketService,
+            IrisChatWebsocketService irisChatWebsocketService, IrisMessageService irisMessageService, IrisSessionRepository irisSessionRepository, UserRepository userRepository,
+            JsonMapper objectMapper, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi) {
         this.coordinationService = coordinationService;
+        this.distributedDataProvider = distributedDataProvider;
         this.irisWebsocketService = irisWebsocketService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.irisMessageService = irisMessageService;
@@ -201,8 +208,9 @@ public class IrisCommandService {
      */
     private boolean isValidPointOut(Map<String, JsonNode> parameters) {
         var page = parameters.get("page");
-        return isPositiveIntegral(parameters.get("lectureUnitId")) && (page == null || isPositiveIntegral(page))
-                && (page != null || isNonNegativeNumber(parameters.get("timestamp")));
+        var timestamp = parameters.get("timestamp");
+        return isPositiveIntegral(parameters.get("lectureUnitId")) && (page != null || timestamp != null) && (page == null || isPositiveIntegral(page))
+                && (timestamp == null || isNonNegativeNumber(timestamp));
     }
 
     private boolean isPositiveIntegral(JsonNode value) {
@@ -210,7 +218,16 @@ public class IrisCommandService {
     }
 
     private boolean isNonNegativeNumber(JsonNode value) {
-        return value != null && value.isNumber() && value.asDouble() >= 0;
+        if (value == null || !value.isNumber()) {
+            return false;
+        }
+        try {
+            var number = value.asDouble();
+            return Double.isFinite(number) && number >= 0;
+        }
+        catch (JsonNodeException _) {
+            return false;
+        }
     }
 
     /**
@@ -225,7 +242,15 @@ public class IrisCommandService {
     private void persistAndPushMarker(IrisSession session, ObjectNode markerContent) {
         var message = new IrisMessage();
         message.addContent(new IrisJsonMessageContent(markerContent));
-        var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.COMMAND);
+        var markerWriteLock = distributedDataProvider.getLock(MARKER_WRITE_LOCK_PREFIX + session.getId());
+        IrisMessage savedMessage;
+        markerWriteLock.lock();
+        try {
+            savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.COMMAND);
+        }
+        finally {
+            markerWriteLock.unlock();
+        }
         irisChatWebsocketService.sendMessage(session, savedMessage, null, null);
     }
 

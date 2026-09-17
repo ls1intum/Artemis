@@ -10,6 +10,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,6 +33,8 @@ import tools.jackson.databind.node.JsonNodeFactory;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
@@ -72,6 +75,12 @@ class IrisCommandServiceTest {
     private IrisCommandCoordinationService coordinationService;
 
     @Mock
+    private DistributedDataProvider distributedDataProvider;
+
+    @Mock
+    private DistributedLock markerWriteLock;
+
+    @Mock
     private IrisWebsocketService irisWebsocketService;
 
     @Mock
@@ -101,8 +110,8 @@ class IrisCommandServiceTest {
 
     @BeforeEach
     void setUp() {
-        commandService = new IrisCommandService(coordinationService, irisWebsocketService, irisChatWebsocketService, irisMessageService, irisSessionRepository, userRepository,
-                JsonMapper.builder().build(), Optional.of(lectureUnitRepositoryApi));
+        commandService = new IrisCommandService(coordinationService, distributedDataProvider, irisWebsocketService, irisChatWebsocketService, irisMessageService,
+                irisSessionRepository, userRepository, JsonMapper.builder().build(), Optional.of(lectureUnitRepositoryApi));
         job = new ChatJob("job-1", COURSE_ID, SESSION_ID, null, null, null, null);
     }
 
@@ -142,10 +151,15 @@ class IrisCommandServiceTest {
         when(lectureUnit.getLecture()).thenReturn(lecture);
     }
 
+    private void stubMarkerWriteLock() {
+        when(distributedDataProvider.getLock("iris-command-marker-write:" + SESSION_ID)).thenReturn(markerWriteLock);
+    }
+
     @Test
     void executeCommand_appliedNavigatesPersistsMarkerAndReturnsSuccess() {
         stubSessionAndUser();
         stubLectureUnitInCourse(COURSE_ID);
+        stubMarkerWriteLock();
         when(coordinationService.register(anyString(), eq("student1"))).thenReturn(CompletableFuture.completedFuture(new IrisCommandAckDTO("corr", true)));
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.COMMAND))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -154,6 +168,8 @@ class IrisCommandServiceTest {
         assertThat(result.applied()).isTrue();
         verify(irisWebsocketService).send(eq("student1"), anyString(), any());
         verify(irisMessageService).saveMessage(any(), eq(session), eq(IrisMessageSender.COMMAND));
+        verify(markerWriteLock).lock();
+        verify(markerWriteLock).unlock();
         verify(irisChatWebsocketService).sendMessage(eq(session), any(), isNull(), isNull());
     }
 
@@ -161,6 +177,7 @@ class IrisCommandServiceTest {
     void executeCommand_persistsMarkerInTheSameShapeTheCommandArrivedIn() {
         stubSessionAndUser();
         stubLectureUnitInCourse(COURSE_ID);
+        stubMarkerWriteLock();
         when(coordinationService.register(anyString(), eq("student1"))).thenReturn(CompletableFuture.completedFuture(new IrisCommandAckDTO("corr", true)));
         when(lectureUnit.getName()).thenReturn("Sorting");
         var savedMarker = ArgumentCaptor.forClass(IrisMessage.class);
@@ -198,6 +215,7 @@ class IrisCommandServiceTest {
         // any tab may carry it out.
         stubSessionAndUser();
         stubLectureUnitInCourse(COURSE_ID);
+        stubMarkerWriteLock();
         when(coordinationService.register(anyString(), eq("student1"))).thenReturn(CompletableFuture.completedFuture(new IrisCommandAckDTO("corr", true)));
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.COMMAND))).thenAnswer(invocation -> invocation.getArgument(0));
         var payload = ArgumentCaptor.forClass(Object.class);
@@ -274,6 +292,14 @@ class IrisCommandServiceTest {
         parameters.put("page", JsonNodeFactory.instance.numberNode(1));
         assertThat(commandService.executeCommand(job, new PyrisCommandDTO("pointOut", parameters), null).applied()).isFalse();
 
+        parameters.put("lectureUnitId", JsonNodeFactory.instance.numberNode(LECTURE_UNIT_ID));
+        parameters.put("timestamp", JsonNodeFactory.instance.numberNode(-1));
+        assertThat(commandService.executeCommand(job, new PyrisCommandDTO("pointOut", parameters), null).applied()).isFalse();
+
+        parameters.remove("page");
+        parameters.put("timestamp", JsonNodeFactory.instance.numberNode(new BigDecimal("1e10000")));
+        assertThat(commandService.executeCommand(job, new PyrisCommandDTO("pointOut", parameters), null).applied()).isFalse();
+
         verify(coordinationService, never()).register(anyString(), anyString());
         verify(irisWebsocketService, never()).send(any(), any(), any());
     }
@@ -292,8 +318,8 @@ class IrisCommandServiceTest {
         assertThat(commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3), null).applied()).isFalse();
 
         // No lecture module at all, so there are no units to point into.
-        var serviceWithoutLectures = new IrisCommandService(coordinationService, irisWebsocketService, irisChatWebsocketService, irisMessageService, irisSessionRepository,
-                userRepository, JsonMapper.builder().build(), Optional.empty());
+        var serviceWithoutLectures = new IrisCommandService(coordinationService, distributedDataProvider, irisWebsocketService, irisChatWebsocketService, irisMessageService,
+                irisSessionRepository, userRepository, JsonMapper.builder().build(), Optional.empty());
         assertThat(serviceWithoutLectures.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3), null).applied()).isFalse();
 
         verify(coordinationService, never()).register(anyString(), anyString());
