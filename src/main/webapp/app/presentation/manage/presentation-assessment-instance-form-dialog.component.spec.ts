@@ -5,7 +5,8 @@ import dayjs from 'dayjs/esm';
 import { PresentationAssessmentInstanceFormDialogComponent } from 'app/presentation/manage/presentation-assessment-instance-form-dialog.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { TranslateService } from '@ngx-translate/core';
+import { LangChangeEvent, TranslateService, TranslationChangeEvent } from '@ngx-translate/core';
+import { Subject } from 'rxjs';
 import { User } from 'app/account/user/user.model';
 import { PresentationAssessmentInstance } from 'app/presentation/shared/entities/presentation-assessment.model';
 
@@ -13,18 +14,24 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     let fixture: ComponentFixture<PresentationAssessmentInstanceFormDialogComponent>;
     let component: PresentationAssessmentInstanceFormDialogComponent;
     let saved: Mock<(value: PresentationAssessmentInstance) => void>;
+    let languageChanges: Subject<LangChangeEvent>;
+    let translationChanges: Subject<TranslationChangeEvent>;
+    let translate: Mock<(key: string) => string>;
 
     const presentationDate = dayjs('2026-07-31T13:26:00');
 
     beforeEach(async () => {
         saved = vi.fn();
+        languageChanges = new Subject<LangChangeEvent>();
+        translationChanges = new Subject<TranslationChangeEvent>();
+        translate = vi.fn((key: string) => key);
         const course = Object.assign(new Course(), { id: 1, title: 'Test Course' });
 
         await TestBed.configureTestingModule({
             imports: [PresentationAssessmentInstanceFormDialogComponent],
             providers: [
                 { provide: CourseManagementService, useValue: {} },
-                { provide: TranslateService, useValue: { instant: (key: string) => key } },
+                { provide: TranslateService, useValue: { instant: translate, onLangChange: languageChanges, onTranslationChange: translationChanges } },
             ],
         })
             .overrideComponent(PresentationAssessmentInstanceFormDialogComponent, { set: { template: '' } })
@@ -52,6 +59,32 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
             { label: 'artemisApp.presentationAssessment.languageOptions.english', value: 'en' },
             { label: 'artemisApp.presentationAssessment.languageOptions.german', value: 'de' },
         ]);
+    });
+
+    it('should refresh both option lists when the active language changes', () => {
+        component.languageOptions();
+        component.modeOptions();
+        translate.mockImplementation((key) => `de:${key}`);
+        languageChanges.next({ lang: 'de', translations: {} });
+
+        expect(component.languageOptions().map((option) => option.label)).toEqual([
+            'de:artemisApp.presentationAssessment.languageOptions.english',
+            'de:artemisApp.presentationAssessment.languageOptions.german',
+        ]);
+        expect(component.modeOptions().map((option) => option.label)).toEqual([
+            'de:artemisApp.presentationAssessment.mode.online',
+            'de:artemisApp.presentationAssessment.mode.inPerson',
+        ]);
+    });
+
+    it('should refresh option labels when translations are loaded', () => {
+        component.languageOptions();
+        component.modeOptions();
+        translate.mockImplementation((key) => `loaded:${key}`);
+        translationChanges.next({ lang: 'en', translations: {} });
+
+        expect(component.languageOptions()[0].label).toBe('loaded:artemisApp.presentationAssessment.languageOptions.english');
+        expect(component.modeOptions()[0].label).toBe('loaded:artemisApp.presentationAssessment.mode.online');
     });
 
     it('should require a presentation date', () => {

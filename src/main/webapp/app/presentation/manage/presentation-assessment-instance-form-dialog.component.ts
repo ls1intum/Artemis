@@ -1,7 +1,8 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { HttpResponse } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, merge, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -53,6 +54,7 @@ export class PresentationAssessmentInstanceFormDialogComponent {
     private readonly formBuilder = inject(FormBuilder);
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly translateService = inject(TranslateService);
+    private readonly translationChanges = toSignal(merge(this.translateService.onLangChange, this.translateService.onTranslationChange));
 
     readonly courseId = input.required<number>();
     readonly course = input.required<Course>();
@@ -71,14 +73,20 @@ export class PresentationAssessmentInstanceFormDialogComponent {
     protected readonly hiddenStudentColumnFields = ['id', 'visibleRegistrationNumber', 'email'];
     protected readonly resultPointsUpperBound = RESULT_POINTS_UPPER_BOUND;
     protected readonly minPresentationDate = MIN_PRESENTATION_DATE;
-    readonly languageOptions = computed(() => [
-        { label: this.translateService.instant('artemisApp.presentationAssessment.languageOptions.english'), value: 'en' },
-        { label: this.translateService.instant('artemisApp.presentationAssessment.languageOptions.german'), value: 'de' },
-    ]);
-    readonly modeOptions = computed(() => [
-        { label: this.translateService.instant('artemisApp.presentationAssessment.mode.online'), value: PresentationAssessmentMode.ONLINE },
-        { label: this.translateService.instant('artemisApp.presentationAssessment.mode.inPerson'), value: PresentationAssessmentMode.IN_PERSON },
-    ]);
+    readonly languageOptions = computed(() => {
+        this.translationChanges();
+        return [
+            { label: this.translateService.instant('artemisApp.presentationAssessment.languageOptions.english'), value: 'en' },
+            { label: this.translateService.instant('artemisApp.presentationAssessment.languageOptions.german'), value: 'de' },
+        ];
+    });
+    readonly modeOptions = computed(() => {
+        this.translationChanges();
+        return [
+            { label: this.translateService.instant('artemisApp.presentationAssessment.mode.online'), value: PresentationAssessmentMode.ONLINE },
+            { label: this.translateService.instant('artemisApp.presentationAssessment.mode.inPerson'), value: PresentationAssessmentMode.IN_PERSON },
+        ];
+    });
 
     readonly assignedStudents = signal<User[]>([]);
     readonly filteredAssignedStudentsSize = signal(0);
