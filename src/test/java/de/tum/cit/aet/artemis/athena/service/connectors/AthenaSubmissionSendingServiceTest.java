@@ -82,8 +82,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
 
         textExercise = textExerciseUtilService.createSampleTextExercise(course);
 
-        programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
-        programmingExercise.setCourse(course);
+        programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise(course);
         // Athena grading feedback is only offered for manually assessed programming exercises; automatically
         // assessed ones rely on unit-test feedback.
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);

@@ -788,7 +788,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(complainedResultId).isEqualTo(complaint.getResult().getId());
         assertThat(listed.path("submission").path("results")).anySatisfy(result -> {
             assertThat(result.path("id").asLong()).isEqualTo(complainedResultId);
-            assertThat(result.path("assessmentType").asText()).isEqualTo(complaint.getResult().getAssessmentType().name());
+            assertThat(result.path("assessmentType").asString()).isEqualTo(complaint.getResult().getAssessmentType().name());
         });
     }
 

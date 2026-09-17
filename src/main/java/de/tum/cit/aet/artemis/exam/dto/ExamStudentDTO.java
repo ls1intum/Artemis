@@ -35,7 +35,8 @@ public record ExamStudentDTO(
      * Fetched via a JPQL constructor expression scoped to the current page's user IDs,
      * with {@code examSessionCount} returned as a {@code COUNT} aggregate rather than loading session entities.
      */
-    public record StudentExamSummary(Long userId, Long studentExamId, Integer workingTime, Boolean started, Boolean submitted, ZonedDateTime startedDate,
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record StudentExamSummaryDTO(Long userId, Long studentExamId, Integer workingTime, Boolean started, Boolean submitted, ZonedDateTime startedDate,
             ZonedDateTime submissionDate, Long examSessionCount) {
     }
 }
