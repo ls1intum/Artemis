@@ -108,7 +108,7 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
          * @return a copy with {@code assessor} set to {@code null}
          */
         public ResultSimpleDTO withoutAssessor() {
-            return new ResultSimpleDTO(id, completionDate, score, rated, assessmentType, submission, null, feedbacks, exerciseTitle);
+            return new ResultSimpleDTO(id, completionDate, score, rated, successful, assessmentType, submission, null, feedbacks, exerciseTitle);
         }
     }
 
