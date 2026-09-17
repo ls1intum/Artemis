@@ -50,6 +50,16 @@ export class SidebarCardMediumComponent {
         }
     }
 
+    onSelectionCardKeydown(event: Event): void {
+        if (!(event instanceof KeyboardEvent) || !this.sidebarItem().disableNavigation || event.target !== event.currentTarget) {
+            return;
+        }
+        event.preventDefault();
+        if (!event.repeat) {
+            this.onNonExamCardClicked();
+        }
+    }
+
     storeTargetComponentSubRoute() {
         const targetComponentSubRoute = this.sidebarItem().targetComponentSubRoute;
         const sidebarItemId = this.sidebarItem().id;

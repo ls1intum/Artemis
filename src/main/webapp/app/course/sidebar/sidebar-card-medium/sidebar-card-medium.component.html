@@ -29,6 +29,10 @@
                       : ['./', sidebarItem().id]
             "
             (click)="onNonExamCardClicked()"
+            [attr.role]="sidebarItem().disableNavigation ? 'button' : null"
+            [attr.tabindex]="sidebarItem().disableNavigation ? 0 : null"
+            (keydown.enter)="onSelectionCardKeydown($event)"
+            (keydown.space)="onSelectionCardKeydown($event)"
             [routerLinkActive]="'bg-selected border-selected'"
         >
             <jhi-sidebar-card-item
