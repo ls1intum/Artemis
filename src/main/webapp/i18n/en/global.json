@@ -7,6 +7,8 @@
             "no": "No",
             "you": "You",
             "emptyList": "No items available",
+            "filterOptions": "Filter options",
+            "noMatchingOptions": "No matching options",
             "unset": "Unset",
             "create": "Create",
             "start": "Start",
@@ -15,7 +17,9 @@
             "copied": "Copied",
             "new": "New",
             "expand": "Expand",
-            "collapse": "Collapse"
+            "collapse": "Collapse",
+            "enabled": "Enabled",
+            "disabled": "Disabled"
         },
         "weekdays": {
             "monday": "Monday",
@@ -187,6 +191,7 @@
             },
             "admin": {
                 "main": "Administration",
+                "short": "Admin",
                 "loginWithPasskeyToUseAdminFeatures": "Sign in with a passkey to use admin features",
                 "setupPasskey": "Setup passkey",
                 "passkeyRestrictionExplanation": "To protect student data and ensure platform reliability, administrator actions require strong authentication with a passkey.",
@@ -220,6 +225,7 @@
                     "logs": "Logs",
                     "metrics": "Metrics",
                     "statistics": "Statistics",
+                    "featureUsage": "Feature Usage",
                     "websocket": "Websocket",
                     "buildAgents": "Build Agents",
                     "buildQueue": "Build Overview",
@@ -280,7 +286,6 @@
             "cancel": "Cancel",
             "confirm": "Confirm",
             "refresh": "Refresh",
-            "invalidInput": "Invalid Input",
             "requiredLabel": "* required"
         },
         "messages": {
@@ -353,7 +358,11 @@
             "decrementHour": "Decrement hour",
             "incrementMinute": "Increment minute",
             "decrementMinute": "Decrement minute",
-            "invalid": "Please enter a valid date and time."
+            "invalid": "Please enter a valid date and time.",
+            "invalidTime": "Please enter a valid time.",
+            "openTime": "Open clock",
+            "timeDialog": "Choose time",
+            "timePlaceholder": "HH:mm"
         }
     },
     "entity": {
@@ -410,9 +419,6 @@
             "to-import": "Import",
             "export": "Export",
             "lecture": "Lectures",
-            "attachments": "Attachments",
-            "saveAttachment": "Save attachment",
-            "addAttachment": "Add attachment as lecture content",
             "assessmentDashboard": "Assessment",
             "instructorDashboard": "Instructor Dashboard",
             "exerciseDashboard": "Exercise Dashboard",

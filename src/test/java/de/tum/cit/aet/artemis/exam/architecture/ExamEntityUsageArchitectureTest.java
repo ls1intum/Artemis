@@ -15,26 +15,13 @@ class ExamEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitect
         return ARTEMIS_PACKAGE + ".exam";
     }
 
-    // TODO: Reduce this to 0 by returning DTOs instead of entities
     @Override
     protected int getExpectedEntityReturnViolations() {
-        return 10;
+        return 0;
     }
 
-    // TODO: Reduce this to 0 by accepting DTOs instead of entities in @RequestBody/@RequestPart
-    // Note: the import-exercise-group endpoint deliberately keeps its entity request body (see PR description); the
-    // shared exercise-import services copy basis fields off the incoming exercise graph, which the slim
-    // ExerciseImportDTO cannot carry, so switching it to a DTO would silently drop those fields.
     @Override
     protected int getExpectedEntityInputViolations() {
-        return 3;
-    }
-
-    // TODO: Reduce this to 0 by removing entity references from DTOs.
-    // StudentExamWithGradeDTO still wraps the full StudentExam entity alongside the computed grade summary; this
-    // remaining DTO-wrapped-entity field should be reduced to 0 eventually.
-    @Override
-    protected int getExpectedDtoEntityFieldViolations() {
-        return 1;
+        return 0;
     }
 }

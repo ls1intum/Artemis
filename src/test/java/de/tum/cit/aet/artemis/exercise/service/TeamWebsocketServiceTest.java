@@ -24,9 +24,10 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
-import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentPayload;
+import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentPayloadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportStrategyType;
 import de.tum.cit.aet.artemis.exercise.dto.TeamInputDTO;
+import de.tum.cit.aet.artemis.exercise.dto.TeamResponseDTO;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -92,10 +93,10 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentBatch
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSendTeamAssignmentUpdateOnTeamCreate() throws Exception {
         Team team = new Team().name("Team").shortName("team").exercise(modelingExercise).students(students);
-        team = request.postWithResponseBody(teamResourceUrl(), TeamInputDTO.of(team), Team.class, HttpStatus.CREATED);
+        TeamResponseDTO createdTeam = request.postWithResponseBody(teamResourceUrl(), TeamInputDTO.of(team), TeamResponseDTO.class, HttpStatus.CREATED);
 
-        TeamAssignmentPayload expectedPayload = new TeamAssignmentPayload(modelingExercise, team, List.of());
-        team.getStudents().forEach(user -> verify(websocketMessagingService, timeout(2000)).sendMessageToUser(user.getLogin(), assignmentTopic, expectedPayload));
+        TeamAssignmentPayloadDTO expectedPayload = new TeamAssignmentPayloadDTO(modelingExercise.getId(), createdTeam.id(), List.of());
+        createdTeam.students().forEach(student -> verify(websocketMessagingService, timeout(2000)).sendMessageToUser(student.login(), assignmentTopic, expectedPayload));
     }
 
     @Test
@@ -107,9 +108,9 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentBatch
 
         User studentToRemoveFromTeam = students.iterator().next();
         Team updatedTeam = new Team(team).id(team.getId()).removeStudents(studentToRemoveFromTeam);
-        request.putWithResponseBody(teamResourceUrl() + "/" + updatedTeam.getId(), TeamInputDTO.of(updatedTeam), Team.class, HttpStatus.OK);
+        request.putWithResponseBody(teamResourceUrl() + "/" + updatedTeam.getId(), TeamInputDTO.of(updatedTeam), TeamResponseDTO.class, HttpStatus.OK);
 
-        TeamAssignmentPayload expectedPayload = new TeamAssignmentPayload(modelingExercise, null, List.of());
+        TeamAssignmentPayloadDTO expectedPayload = new TeamAssignmentPayloadDTO(modelingExercise.getId(), null, List.of());
         verify(websocketMessagingService, timeout(2000)).sendMessageToUser(studentToRemoveFromTeam.getLogin(), assignmentTopic, expectedPayload);
     }
 
@@ -121,10 +122,10 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentBatch
         teamRepository.save(team);
 
         Team updatedTeam = new Team(team).id(team.getId()).students(students);
-        updatedTeam = request.putWithResponseBody(teamResourceUrl() + "/" + updatedTeam.getId(), TeamInputDTO.of(updatedTeam), Team.class, HttpStatus.OK);
+        TeamResponseDTO savedTeam = request.putWithResponseBody(teamResourceUrl() + "/" + updatedTeam.getId(), TeamInputDTO.of(updatedTeam), TeamResponseDTO.class, HttpStatus.OK);
 
-        TeamAssignmentPayload expectedPayload = new TeamAssignmentPayload(modelingExercise, updatedTeam, List.of());
-        team.getStudents().forEach(user -> verify(websocketMessagingService, timeout(2000)).sendMessageToUser(user.getLogin(), assignmentTopic, expectedPayload));
+        TeamAssignmentPayloadDTO expectedPayload = new TeamAssignmentPayloadDTO(modelingExercise.getId(), savedTeam.id(), List.of());
+        savedTeam.students().forEach(student -> verify(websocketMessagingService, timeout(2000)).sendMessageToUser(student.login(), assignmentTopic, expectedPayload));
     }
 
     @Test
@@ -135,7 +136,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentBatch
 
         request.delete(teamResourceUrl() + "/" + team.getId(), HttpStatus.OK);
 
-        TeamAssignmentPayload expectedPayload = new TeamAssignmentPayload(modelingExercise, null, List.of());
+        TeamAssignmentPayloadDTO expectedPayload = new TeamAssignmentPayloadDTO(modelingExercise.getId(), null, List.of());
         team.getStudents().forEach(user -> verify(websocketMessagingService, timeout(2000)).sendMessageToUser(user.getLogin(), assignmentTopic, expectedPayload));
     }
 
@@ -143,11 +144,11 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentBatch
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSendTeamAssignmentUpdateOnTeamImport() throws Exception {
         teamUtilService.addTeamsForExercise(textExercise, 2, null); // create teams in source exercise
-        List<Team> destinationTeams = request.putWithResponseBodyList(importFromExerciseUrl(textExercise), null, Team.class, HttpStatus.OK);
+        List<TeamResponseDTO> destinationTeams = request.putWithResponseBodyList(importFromExerciseUrl(textExercise), null, TeamResponseDTO.class, HttpStatus.OK);
 
         destinationTeams.forEach(team -> {
-            TeamAssignmentPayload expectedPayload = new TeamAssignmentPayload(modelingExercise, team, List.of());
-            team.getStudents().forEach(user -> verify(websocketMessagingService, timeout(2000)).sendMessageToUser(user.getLogin(), assignmentTopic, expectedPayload));
+            TeamAssignmentPayloadDTO expectedPayload = new TeamAssignmentPayloadDTO(modelingExercise.getId(), team.id(), List.of());
+            team.students().forEach(student -> verify(websocketMessagingService, timeout(2000)).sendMessageToUser(student.login(), assignmentTopic, expectedPayload));
         });
     }
 }

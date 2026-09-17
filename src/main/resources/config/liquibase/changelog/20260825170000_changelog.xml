@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Move the credential-change timestamp out of jhi_user, into the table that already holds the account's other
+        lifecycle timestamps.
+
+        It is written on a password change, a completed reset, an administrative password change and a deactivation, and
+        read in exactly one place: PasskeyTokenRenewalService, when deciding whether a passkey session may be extended.
+        As a column on jhi_user it was read as part of every single user load; as a row here it is read only by the one
+        caller that needs it.
+
+        Backfilled from the column, which is the only source of the value.
+
+        Dropped from jhi_user by the follow-up that drops the other vacated columns.
+    -->
+    <changeSet id="20260825170000-1-add-credentials-changed-date" author="krusche">
+        <addColumn tableName="user_activity">
+            <column name="credentials_changed_date" type="DATETIME(3)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260825170000-2-backfill" author="krusche">
+        <sql>
+            UPDATE user_activity
+            SET credentials_changed_date = (SELECT u.credentials_changed_date FROM jhi_user u WHERE u.id = user_activity.user_id)
+        </sql>
+        <rollback>
+            <sql>UPDATE user_activity SET credentials_changed_date = NULL</sql>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

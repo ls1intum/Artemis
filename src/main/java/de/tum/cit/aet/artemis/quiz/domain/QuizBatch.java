@@ -20,7 +20,6 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 /**
  * A QuizBatch.
  */
-// No @Cache here on purpose: written every time a student joins a BATCHED quiz. See #12574 / #12584.
 @Entity
 @Table(name = "quiz_batch")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

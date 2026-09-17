@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
@@ -39,6 +40,8 @@ public class IrisSessionService {
 
     private final UserRepository userRepository;
 
+    private final UserAiPreferenceService userAiPreferenceService;
+
     private final IrisChatSessionService irisChatSessionService;
 
     private final IrisTutorSuggestionSessionService irisTutorSuggestionSessionService;
@@ -48,8 +51,9 @@ public class IrisSessionService {
     private final IrisSettingsService irisSettingsService;
 
     public IrisSessionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisTutorSuggestionSessionService irisTutorSuggestionSessionService,
-            IrisChatSessionRepository irisChatSessionRepository, IrisSettingsService irisSettingsService) {
+            IrisChatSessionRepository irisChatSessionRepository, IrisSettingsService irisSettingsService, UserAiPreferenceService userAiPreferenceService) {
         this.userRepository = userRepository;
+        this.userAiPreferenceService = userAiPreferenceService;
         this.irisChatSessionService = irisChatSessionService;
         this.irisTutorSuggestionSessionService = irisTutorSuggestionSessionService;
         this.irisChatSessionRepository = irisChatSessionRepository;
@@ -80,7 +84,7 @@ public class IrisSessionService {
         }
         var wrapper = getIrisSessionSubService(session);
         if (session.shouldSelectLLMUsage()) {
-            user.hasOptedIntoLLMUsageElseThrow();
+            userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
         }
         wrapper.irisSubFeatureInterface.checkHasAccessTo(user, wrapper.irisSession);
     }

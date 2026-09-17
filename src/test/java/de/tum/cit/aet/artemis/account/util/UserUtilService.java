@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -25,9 +26,11 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.CalendarSubscriptionTokenStore;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
@@ -36,6 +39,7 @@ import de.tum.cit.aet.artemis.core.repository.CalendarSubscriptionTokenStoreRepo
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 
 /**
  * Service responsible for initializing the database with specific testdata related to Users for use in integration tests.
@@ -79,6 +83,12 @@ public class UserUtilService {
 
     @Autowired
     private UserTestRepository userTestRepository;
+
+    @Autowired
+    private UserVcsAccessTokenService userVcsAccessTokenService;
+
+    @Autowired
+    private UserAiPreferenceService userAiPreferenceService;
 
     @Autowired
     private CalendarSubscriptionTokenStoreRepository calendarSubscriptionTokenStoreRepository;
@@ -150,7 +160,7 @@ public class UserUtilService {
             // the following line either creates the user or resets and existing user to its original state
             User user = createOrReuseExistingUser(login, commonPasswordHash);
             user.setAuthorities(authorities);
-            user = userTestRepository.save(user);
+            user = saveWithDefaultAiPreference(user);
             generatedUsers.add(user);
         }
         return generatedUsers;
@@ -194,7 +204,7 @@ public class UserUtilService {
      */
     public User setRegistrationNumberOfUserAndSave(User user, String registrationNumber) {
         user.setRegistrationNumber(registrationNumber);
-        return userTestRepository.save(user);
+        return saveWithDefaultAiPreference(user);
     }
 
     /**
@@ -206,9 +216,9 @@ public class UserUtilService {
      * @return The updated User
      */
     public User setUserVcsAccessTokenAndExpiryDateAndSave(User user, String vcsAccessToken, ZonedDateTime expiryDate) {
-        user.setVcsAccessToken(vcsAccessToken);
-        user.setVcsAccessTokenExpiryDate(expiryDate);
-        return userTestRepository.save(user);
+        // The personal token lives in user_vcs_access_token, so it is seeded through its service rather than on the user row.
+        userVcsAccessTokenService.store(user.getId(), vcsAccessToken, expiryDate);
+        return user;
     }
 
     /**
@@ -231,9 +241,7 @@ public class UserUtilService {
      * @param userWithUserToken The user whose token gets deleted
      */
     public void deleteUserVcsAccessToken(User userWithUserToken) {
-        userWithUserToken.setVcsAccessTokenExpiryDate(null);
-        userWithUserToken.setVcsAccessToken(null);
-        userTestRepository.save(userWithUserToken);
+        userVcsAccessTokenService.revoke(userWithUserToken.getId());
     }
 
     /**
@@ -284,7 +292,7 @@ public class UserUtilService {
             // save the user with the newly created values (to override previous changes) with the same ID
             user.setId(getUserByLogin(login).getId());
         }
-        return userTestRepository.save(user);
+        return saveWithDefaultAiPreference(user);
     }
 
     /**
@@ -315,7 +323,7 @@ public class UserUtilService {
             // save the user with the newly created values (to override previous changes) with the same ID
             user.setId(getUserByLogin(login).getId());
         }
-        return userTestRepository.save(user);
+        return saveWithDefaultAiPreference(user);
     }
 
     /**
@@ -363,20 +371,7 @@ public class UserUtilService {
         usersToAdd.addAll(editors);
         usersToAdd.addAll(instructors);
 
-        if (!userExistsWithLogin("admin")) {
-            log.debug("Generate admin");
-            User admin = UserFactory.generateActivatedUser("admin", passwordService.hashPassword(UserFactory.USER_PASSWORD));
-            admin.setAuthorities(adminAuthorities);
-            usersToAdd.add(admin);
-            log.debug("Generate admin done");
-        }
-        if (!userExistsWithLogin("superadmin")) {
-            log.debug("Generate super admin");
-            User admin = UserFactory.generateActivatedUser("superadmin", passwordService.hashPassword(UserFactory.USER_PASSWORD));
-            admin.setAuthorities(superAdminAuthorities);
-            usersToAdd.add(admin);
-            log.debug("Generate super admin done");
-        }
+        usersToAdd.addAll(generateMissingAdminUsers());
 
         // Before adding new users, remove all user_course_role entries so AuthorizationCheckService sees no
         // stale roles from a previous test. Courses created afterwards re-populate via
@@ -385,10 +380,50 @@ public class UserUtilService {
             userCourseRoleTestRepository.deleteAllInBulk();
             log.debug("Save {} users to database...", usersToAdd.size());
             usersToAdd = new ArrayList<>(userTestRepository.saveAllOrUpdate(usersToAdd));
+            usersToAdd.forEach(this::seedDefaultAiPreference);
             log.debug("Save {} users to database. Done", usersToAdd.size());
         }
 
         return usersToAdd;
+    }
+
+    /**
+     * Builds the shared "admin" and "superadmin" accounts, skipping whichever already exists. The users are returned
+     * unsaved so that {@link #addUsers} can persist them in the same batch as the rest of its users.
+     *
+     * @return the admin accounts that are still missing from the database
+     */
+    private List<User> generateMissingAdminUsers() {
+        List<User> admins = new ArrayList<>();
+        if (!userExistsWithLogin("admin")) {
+            User admin = UserFactory.generateActivatedUser("admin", passwordService.hashPassword(UserFactory.USER_PASSWORD));
+            admin.setAuthorities(adminAuthorities);
+            admins.add(admin);
+        }
+        if (!userExistsWithLogin("superadmin")) {
+            User superAdmin = UserFactory.generateActivatedUser("superadmin", passwordService.hashPassword(UserFactory.USER_PASSWORD));
+            superAdmin.setAuthorities(superAdminAuthorities);
+            admins.add(superAdmin);
+        }
+        return admins;
+    }
+
+    /**
+     * Creates the shared "admin" and "superadmin" accounts if they are missing.
+     * <p>
+     * For test classes that authenticate as {@code admin} through {@code @WithMockUser} but create no users of their
+     * own. They used to rely on some other class in the same database having called {@link #addUsers} first, which
+     * only held because every bucket shared one database - it stops holding as soon as a bucket runs on its own.
+     * Unlike {@link #addUsers} this touches no course roles, so it is safe to call before every test.
+     */
+    public void ensureAdminUsersExist() {
+        if (authorityRepository.count() == 0) {
+            authorityRepository.saveAll(superAdminAuthorities);
+        }
+        List<User> admins = generateMissingAdminUsers();
+        if (!admins.isEmpty()) {
+            userTestRepository.saveAllOrUpdate(admins).forEach(this::seedDefaultAiPreference);
+        }
     }
 
     /**
@@ -400,7 +435,7 @@ public class UserUtilService {
      */
     public void addStudents(String prefix, int from, int to) {
         var students = generateActivatedUsers(prefix + "student", passwordService.hashPassword(UserFactory.USER_PASSWORD), studentAuthorities, from, to);
-        userTestRepository.saveAllOrUpdate(students);
+        userTestRepository.saveAllOrUpdate(students).forEach(this::seedDefaultAiPreference);
     }
 
     /**
@@ -431,7 +466,7 @@ public class UserUtilService {
     public void addInstructor(final String instructorName) {
         User instructor = createOrReuseExistingUser(instructorName, UserFactory.USER_PASSWORD);
         instructor.setAuthorities(instructorAuthorities);
-        instructor = userTestRepository.save(instructor);
+        instructor = saveWithDefaultAiPreference(instructor);
         assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
     }
 
@@ -446,7 +481,7 @@ public class UserUtilService {
     public void addEditor(final String editorName) {
         User editor = createOrReuseExistingUser(editorName, UserFactory.USER_PASSWORD);
         editor.setAuthorities(editorAuthorities);
-        editor = userTestRepository.save(editor);
+        editor = saveWithDefaultAiPreference(editor);
         assertThat(editor.getId()).as("Editor has been created").isNotNull();
     }
 
@@ -461,7 +496,7 @@ public class UserUtilService {
     public void addTeachingAssistant(final String taName) {
         User ta = createOrReuseExistingUser(taName, UserFactory.USER_PASSWORD);
         ta.setAuthorities(tutorAuthorities);
-        ta = userTestRepository.save(ta);
+        ta = saveWithDefaultAiPreference(ta);
         assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
     }
 
@@ -476,7 +511,7 @@ public class UserUtilService {
     public void addStudent(final String studentName) {
         User student = createOrReuseExistingUser(studentName, UserFactory.USER_PASSWORD);
         student.setAuthorities(studentAuthorities);
-        student = userTestRepository.save(student);
+        student = saveWithDefaultAiPreference(student);
         assertThat(student.getId()).as("Student has been created").isNotNull();
     }
 
@@ -579,7 +614,7 @@ public class UserUtilService {
         String superAdminLogin = prefix + "superadmin";
         User superAdmin = createOrReuseExistingUser(superAdminLogin, UserFactory.USER_PASSWORD);
         superAdmin.setAuthorities(superAdminAuthorities);
-        superAdmin = userTestRepository.save(superAdmin);
+        superAdmin = saveWithDefaultAiPreference(superAdmin);
         assertThat(superAdmin.getId()).as("Super admin has been created").isNotNull();
     }
 
@@ -592,8 +627,21 @@ public class UserUtilService {
         String adminLogin = prefix + "admin";
         User admin = createOrReuseExistingUser(adminLogin, UserFactory.USER_PASSWORD);
         admin.setAuthorities(adminAuthorities);
-        admin = userTestRepository.save(admin);
+        admin = saveWithDefaultAiPreference(admin);
         assertThat(admin.getId()).as("Admin has been created").isNotNull();
+    }
+
+    /**
+     * Grants the admin authorities to an account that already exists, so a test can authenticate as an account that is
+     * also part of the data it manipulates. {@link #addAdmin(String)} always uses the {@code <prefix>admin} login and
+     * cannot promote an arbitrary one.
+     *
+     * @param login the login of the account to promote
+     */
+    public void addAdminAuthorityTo(final String login) {
+        User user = getUserByLoginWithoutAuthorities(login);
+        user.setAuthorities(adminAuthorities);
+        saveWithDefaultAiPreference(user);
     }
 
     /**
@@ -617,7 +665,7 @@ public class UserUtilService {
      */
     public User getUserByLogin(String login) {
         // we convert to lowercase for convenience, because logins have to be lower case
-        return userTestRepository.findOneWithAuthoritiesByLogin(login.toLowerCase())
+        return userTestRepository.findOneWithAuthoritiesByLogin(login.toLowerCase(Locale.ENGLISH))
                 .orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
     }
 
@@ -689,5 +737,81 @@ public class UserUtilService {
         userVM.setLangKey(Constants.DEFAULT_LANGUAGE);
         userVM.setAuthorities(Set.of(Role.STUDENT.getAuthority()));
         return userVM;
+    }
+
+    /**
+     * Records an account's LLM usage decision. The preference lives in {@code user_ai_preference}, keyed on the user id, so
+     * the account has to be saved before it can be recorded.
+     *
+     * @param user     the account, which must already be saved
+     * @param decision the decision to record, or null to record only a timestamp
+     */
+    public void setAiSelectionDecision(User user, AiSelectionDecision decision) {
+        if (decision == null) {
+            return;
+        }
+        userAiPreferenceService.recordDecision(user.getId(), decision, ZonedDateTime.now());
+    }
+
+    /**
+     * Records when an account made its LLM usage decision, keeping whatever decision is already stored.
+     *
+     * @param user the account, which must already be saved
+     * @param when the timestamp to record
+     */
+    public void setAiSelectionDecisionDate(User user, ZonedDateTime when) {
+        AiSelectionDecision existing = userAiPreferenceService.findDecision(user.getId());
+        userAiPreferenceService.recordDecision(user.getId(), existing != null ? existing : AiSelectionDecision.CLOUD_AI, when);
+    }
+
+    /**
+     * Turns Memiris on or off for an account.
+     *
+     * @param user    the account, which must already be saved
+     * @param enabled whether Memiris may remember anything
+     */
+    public void setMemirisEnabled(User user, boolean enabled) {
+        userAiPreferenceService.setMemirisEnabled(user.getId(), enabled);
+    }
+
+    /**
+     * Records the fixture's default AI decision for a generated account. The preference is a row keyed on the user id, so
+     * it can only be recorded once the account is saved, which is why it is applied here rather than by UserFactory. The
+     * many Iris and Athena tests that rely on the fixture default depend on this.
+     *
+     * @param user a saved account
+     */
+    private void seedDefaultAiPreference(User user) {
+        if (user.getId() == null) {
+            return;
+        }
+        // Only when the account has no preference row at all. Checking the decision instead would re-seed an account whose
+        // decision a test cleared on purpose: clearAiSelectionDecision leaves the row behind when it still holds a Memiris
+        // choice, and a null decision then looks exactly like never having decided.
+        if (!userAiPreferenceService.hasPreferenceRow(user.getId())) {
+            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, ZonedDateTime.now());
+        }
+    }
+
+    /**
+     * Saves a generated account and records the fixture's default AI decision for it, which needs the saved account's id.
+     *
+     * @param user the generated account
+     * @return the saved account
+     */
+    private User saveWithDefaultAiPreference(User user) {
+        User saved = userTestRepository.save(user);
+        seedDefaultAiPreference(saved);
+        return saved;
+    }
+
+    /**
+     * Removes an account's recorded LLM usage decision, which the fixture seeds by default. Needed by tests that assert the
+     * behaviour of an account that has not decided yet, since the decision is a persisted row rather than in-memory state.
+     *
+     * @param user the account, which must already be saved
+     */
+    public void clearAiSelectionDecision(User user) {
+        userAiPreferenceService.clearDecision(user.getId());
     }
 }

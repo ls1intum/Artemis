@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Store the correction round of a manual result explicitly instead of deriving it from the position of the result
+        inside its submission's result list.
+
+        The list position came from the @OrderColumn "results_order" on Submission.results, which forced every write in
+        that area to load and re-save the whole submission so that Hibernate could maintain the column. On the path that
+        processes a build result that meant loading the submission together with its participation, exercise and course,
+        because those associations are eager, so the exercise's problem statement and the course's code of conduct
+        travelled over the wire for every single build.
+
+        Nothing reads results_order other than the mapping itself, so the correction round is the only piece of
+        information the ordering actually carried. It becomes a column on result: 0 for the first correction, 1 for the
+        second, null for automatic and Athena results, which are not correction rounds.
+
+        The column is left in place on purpose. Dropping it in the same release would make a rollback of the application
+        fail, because an older version would still try to write it. It is unused after this change and can be dropped in
+        a later release.
+    -->
+
+    <changeSet id="20260825-01-add-result-correction-round" author="krusche">
+        <addColumn tableName="result">
+            <!-- TINYINT on MySQL, SMALLINT on PostgreSQL, which Liquibase picks per database. -->
+            <column name="correction_round" type="TINYINT"/>
+        </addColumn>
+    </changeSet>
+
+    <!--
+        Backfill from the ordering that is being replaced: among the non-automatic results of one submission, the n-th in
+        results_order was correction round n. Results without a submission cannot belong to a correction round, and
+        automatic and Athena results never did.
+    -->
+    <changeSet id="20260825-02-backfill-result-correction-round" author="krusche">
+        <sql dbms="postgresql">
+            UPDATE result
+            SET correction_round = ranked.correction_round
+            FROM (SELECT id,
+                         ROW_NUMBER() OVER (PARTITION BY submission_id ORDER BY results_order, id) - 1 AS correction_round
+                  FROM result
+                  WHERE submission_id IS NOT NULL
+                    AND (assessment_type IS NULL OR assessment_type NOT IN ('AUTOMATIC', 'AUTOMATIC_ATHENA'))) AS ranked
+            WHERE result.id = ranked.id
+        </sql>
+        <sql dbms="mysql">
+            UPDATE result
+                JOIN (SELECT id,
+                             ROW_NUMBER() OVER (PARTITION BY submission_id ORDER BY results_order, id) - 1 AS correction_round
+                      FROM result
+                      WHERE submission_id IS NOT NULL
+                        AND (assessment_type IS NULL OR assessment_type NOT IN ('AUTOMATIC', 'AUTOMATIC_ATHENA'))) AS ranked
+                ON result.id = ranked.id
+            SET result.correction_round = ranked.correction_round
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

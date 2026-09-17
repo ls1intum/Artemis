@@ -22,15 +22,9 @@ fa-icon.exclamation-icon {
     background-color: var(--feedback-suggestions-input-background);
 }
 
-/* Slight opacity for suggestions until they are hovered */
-.is-suggestion .card-body > * {
-    opacity: 0.6; /* grey out the suggestion content to indicate that it is not saved yet */
-    transition: opacity 0.2s ease-in-out;
-}
-
-.is-suggestion:hover .card-body > * {
-    opacity: 1; /* make the suggestion more readable on hover */
-}
+/* A suggestion is rendered at full strength: it is there to be read and judged, and dimming it until the pointer
+   happens to be over it only made it harder to read. That it is not saved yet is already carried by the card's own
+   background, its badge, and its accept / discard buttons. */
 
 .suggestion-action-buttons button {
     width: fit-content;

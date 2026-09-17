@@ -3,25 +3,26 @@ package de.tum.cit.aet.artemis.lecture.service;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -35,6 +36,8 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 @Conditional(LectureEnabled.class)
 public class AttachmentService {
 
+    private static final Logger log = LoggerFactory.getLogger(AttachmentService.class);
+
     private final AttachmentRepository attachmentRepository;
 
     private final SlideRepository slideRepository;
@@ -45,50 +48,6 @@ public class AttachmentService {
         this.attachmentRepository = attachmentRepository;
         this.slideRepository = slideRepository;
         this.fileService = fileService;
-    }
-
-    /**
-     * Updates a lecture attachment while deriving its cache-busting version from the persisted state instead of trusting the client payload. Metadata-only updates preserve the
-     * stored version, while file replacements increment it.
-     *
-     * @param attachmentId     the attachment to update
-     * @param attachmentUpdate client-provided metadata
-     * @param file             replacement file, or {@code null} for a metadata-only update
-     * @return the updated attachment
-     */
-    public Attachment updateLectureAttachment(Long attachmentId, Attachment attachmentUpdate, MultipartFile file) {
-        Attachment existingAttachment = attachmentRepository.findByIdOrElseThrow(attachmentId);
-
-        existingAttachment.setName(attachmentUpdate.getName());
-        existingAttachment.setReleaseDate(attachmentUpdate.getReleaseDate());
-        existingAttachment.setUploadDate(attachmentUpdate.getUploadDate());
-        existingAttachment.setAttachmentType(attachmentUpdate.getAttachmentType());
-
-        if (file != null) {
-            if (existingAttachment.getLecture() == null || existingAttachment.getLecture().getId() == null || existingAttachment.getLink() == null
-                    || existingAttachment.getLink().isBlank()) {
-                throw new BadRequestAlertException("The attachment must belong to a persisted lecture and have an existing file", "attachment", "invalidLectureAttachment");
-            }
-
-            Path oldFilePath;
-            try {
-                URI oldPath = URI.create(existingAttachment.getLink());
-                oldFilePath = FilePathConverter.fileSystemPathForExternalUri(oldPath, FilePathType.LECTURE_ATTACHMENT);
-            }
-            catch (IllegalArgumentException exception) {
-                throw new BadRequestAlertException("The attachment has an invalid file link", "attachment", "invalidLectureAttachment");
-            }
-
-            Path basePath = FilePathConverter.getLectureAttachmentFileSystemPath().resolve(existingAttachment.getLecture().getId().toString());
-            Path savePath = FileUtil.saveFile(file, basePath, FilePathType.LECTURE_ATTACHMENT, true);
-            fileService.schedulePathForDeletion(oldFilePath, 0);
-            fileService.evictCacheForPath(oldFilePath);
-            existingAttachment
-                    .setLink(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.LECTURE_ATTACHMENT, existingAttachment.getLecture().getId()).toString());
-            existingAttachment.setVersion(existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1);
-        }
-
-        return attachmentRepository.save(existingAttachment);
     }
 
     /**
@@ -108,16 +67,25 @@ public class AttachmentService {
         // If no slides are marked as hidden, remove student version if it exists
         if (hiddenSlides.isEmpty()) {
             if (attachment.getStudentVersion() != null) {
-                deleteStudentVersionFile(attachment);
+                deleteStudentVersionFile(attachment, attachmentVideoUnit.getId());
                 attachment.setStudentVersion(null);
                 attachmentRepository.save(attachment);
             }
             return;
         }
 
+        // The attachment says where its file is; a unit created for an attachment that used to hang off a lecture still has it under that lecture's directory. An attachment
+        // that links to a document hosted elsewhere has no file here to redact, and slides are only ever split out of a stored PDF, so hidden slides on such an attachment are
+        // a data inconsistency rather than something to regenerate from.
+        Optional<FileSystemLocation> fileLocation = attachment.fileLocation();
+        if (fileLocation.isEmpty()) {
+            log.warn("Attachment {} links to a document this application does not store, so no student version can be regenerated for its {} hidden slide(s).", attachment.getId(),
+                    hiddenSlides.size());
+            return;
+        }
+
         try {
-            String originalPdfPath = attachment.getLink();
-            Path pdfPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(originalPdfPath), FilePathType.ATTACHMENT_UNIT);
+            Path pdfPath = fileLocation.get().path();
 
             byte[] studentVersionPdf = generateStudentVersionPdf(pdfPath.toFile(), hiddenSlides);
 
@@ -132,14 +100,15 @@ public class AttachmentService {
     /**
      * Deletes the student version file and cleans up associated resources.
      *
-     * @param attachment The attachment whose student version should be deleted
+     * @param attachment            The attachment whose student version should be deleted
+     * @param attachmentVideoUnitId The id of the attachment video unit the student version is stored under
      */
-    private void deleteStudentVersionFile(Attachment attachment) {
+    private void deleteStudentVersionFile(Attachment attachment, long attachmentVideoUnitId) {
         if (attachment.getStudentVersion() != null) {
             try {
-                URI oldStudentVersionPath = URI.create(attachment.getStudentVersion());
-                fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES), 0);
-                fileService.evictCacheForPath(FilePathConverter.fileSystemPathForExternalUri(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES));
+                Path oldStudentVersionPath = new FileSystemLocation.StudentVersionSlides(attachmentVideoUnitId, attachment.getStudentVersion()).path();
+                fileService.schedulePathForDeletion(oldStudentVersionPath, 0);
+                fileService.evictCacheForPath(oldStudentVersionPath);
             }
             catch (Exception e) {
                 throw new InternalServerErrorException("Failed to delete student version file: " + e.getMessage());
@@ -177,7 +146,7 @@ public class AttachmentService {
     private void handleStudentVersionFile(byte[] pdfData, Attachment attachment, Long attachmentVideoUnitId) throws IOException {
         // Delete the old student version if it exists
         if (attachment.getStudentVersion() != null) {
-            deleteStudentVersionFile(attachment);
+            deleteStudentVersionFile(attachment, attachmentVideoUnitId);
         }
 
         // Create the student version directory if it doesn't exist
@@ -190,6 +159,6 @@ public class AttachmentService {
 
         FileUtils.writeByteArrayToFile(savePath.toFile(), pdfData);
 
-        attachment.setStudentVersion(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentVideoUnitId).toString());
+        attachment.setStudentVersion(savePath.getFileName().toString());
     }
 }

@@ -2,13 +2,39 @@ import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
+import type { CourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
+import type { CourseManagementDTO } from 'app/course/shared/entities/course-management-response.dto';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { generateUUID, titleLowercase } from '../utils';
+import { asModelDate, generateUUID, titleLowercase } from '../utils';
 import lectureTemplate from '../../fixtures/lecture/template.json';
 import { COURSE_ADMIN_BASE, Exercise } from '../constants';
 import { UserCredentials } from '../users';
 import { Commands } from '../commands';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+
+/**
+ * Mirrors `getCurrentSemester` from `app/foundation/util/semester-utils`, generalised to any date. That helper
+ * cannot be imported here: it calls `dayjs()` as a runtime value (not just as a type), which forces a real load of
+ * the `dayjs/esm` build. That build's own internal `import * as C from './constant'` (no `.js` extension) is not
+ * resolvable under the strict native ESM resolution that Playwright's test-discovery pass uses, and breaks
+ * collection for the whole suite. Keep this in sync with `getCurrentSemester`'s WS/SS boundary rule (October to
+ * March is winter).
+ *
+ * It takes the date rather than always reading the clock so that a course created with custom dates gets the
+ * semester those dates fall in. Passing today's date reproduces `getCurrentSemester` exactly.
+ */
+function semesterOf(date: dayjs.Dayjs): string {
+    const month = date.month(); // 0-indexed (0 = January)
+    const yearShort = date.year() - 2000;
+
+    if (month >= 9) {
+        return `WS${yearShort}/${yearShort + 1}`;
+    } else if (month <= 2) {
+        return `WS${yearShort - 1}/${yearShort}`;
+    } else {
+        return `SS${yearShort}`;
+    }
+}
 
 /**
  * A class which encapsulates all API requests related to course management.
@@ -27,10 +53,12 @@ export class CourseManagementAPIRequests {
      *   - courseShortName: the short name (will generate default name if not provided)
      *   - start: the start date of the course (default: now() - 2 hours)
      *   - end: the end date of the course (default: now() + 2 hours)
+     *   - semester: the semester of the course (default: the semester the start date falls in, so a custom start stays consistent with it)
      *   - iconFileName: the course icon file name (default: undefined)
      *   - iconFile: the course icon file blob (default: undefined)
      *   - allowCommunication: if communication should be enabled for the course
      *   - allowMessaging: if messaging should be enabled for the course
+     *   - timeZone: the IANA time zone of the course (default: undefined; required before tutorial groups can be added)
      * @returns Promise<Course> representing the course created
      */
     async createCourse(
@@ -39,10 +67,12 @@ export class CourseManagementAPIRequests {
             courseShortName?: string;
             start?: dayjs.Dayjs;
             end?: dayjs.Dayjs;
+            semester?: string;
             iconFileName?: string;
             iconFile?: Blob;
             allowCommunication?: boolean;
             allowMessaging?: boolean;
+            timeZone?: string;
         } = {},
     ): Promise<Course> {
         const {
@@ -50,18 +80,24 @@ export class CourseManagementAPIRequests {
             courseShortName = 'playwright' + generateUUID(),
             start = dayjs().subtract(2, 'hours'),
             end = dayjs().add(2, 'hours'),
+            // Derived from the start date, which is already bound above: a caller that shifts the course into another
+            // semester should not have to restate the semester to keep the two consistent.
+            semester = semesterOf(start),
             iconFileName,
             iconFile,
             allowCommunication = true,
             allowMessaging = true,
+            timeZone,
         } = options;
 
         const course = new Course();
         course.title = courseName;
         course.shortName = courseShortName;
         course.testCourse = true;
-        course.startDate = start;
-        course.endDate = end;
+        course.startDate = asModelDate(start);
+        course.endDate = asModelDate(end);
+        course.semester = semester;
+        course.timeZone = timeZone;
 
         if (allowCommunication && allowMessaging) {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
@@ -92,7 +128,12 @@ export class CourseManagementAPIRequests {
         }
 
         const response = await this.page.request.post(COURSE_ADMIN_BASE, { multipart });
-        return response.json();
+        if (!response.ok()) {
+            throw new Error(`Failed to create course: ${response.status()} ${response.statusText()} - ${await response.text()}`);
+        }
+        const created: { id: number } = await response.json();
+        course.id = created.id;
+        return course;
     }
 
     /**
@@ -139,18 +180,69 @@ export class CourseManagementAPIRequests {
      */
     async updateCourseMaxComplaints(courseId: number, maxComplaints: number) {
         const courseResponse = await this.page.request.get(`api/course/courses/${courseId}`);
-        const courseData = await courseResponse.json();
+        const courseData: CourseManagementDTO = await courseResponse.json();
         courseData.maxComplaints = maxComplaints;
         const response = await this.page.request.put(`api/course/courses/${courseId}`, {
             multipart: {
                 course: {
                     name: 'course',
                     mimeType: 'application/json',
-                    buffer: Buffer.from(JSON.stringify(courseData)),
+                    buffer: Buffer.from(JSON.stringify(courseUpdateDTOFromManagementDTO(courseData))),
                 },
             },
         });
         return response;
+    }
+
+    /**
+     * Moves the end date of a course into the past.
+     *
+     * Archiving is refused while a course is still running, so a test that has to participate first and archive
+     * afterwards cannot simply create the course as finished.
+     *
+     * @param courseId the course to move
+     * @param end      the new end date, by default one hour ago
+     */
+    async setCourseEndDate(courseId: number, end: dayjs.Dayjs = dayjs().subtract(1, 'hour')) {
+        const courseResponse = await this.page.request.get(`api/course/courses/${courseId}`);
+        const courseData: CourseManagementDTO = await courseResponse.json();
+        courseData.endDate = end.toISOString();
+        const response = await this.page.request.put(`api/course/courses/${courseId}`, {
+            multipart: {
+                course: {
+                    name: 'course',
+                    mimeType: 'application/json',
+                    buffer: Buffer.from(JSON.stringify(courseUpdateDTOFromManagementDTO(courseData))),
+                },
+            },
+        });
+        if (!response.ok()) {
+            throw new Error(`Could not move the end date of course ${courseId}: ${response.status()} ${await response.text()}`);
+        }
+        return response;
+    }
+
+    /**
+     * Waits until the archive of a course can be downloaded.
+     *
+     * Archiving runs asynchronously, and the only externally visible signal that it finished is that the download
+     * endpoint stops answering 404, so that is what is polled.
+     *
+     * @param courseId the archived course
+     * @param timeout  how long to wait in milliseconds
+     */
+    async waitForCourseArchive(courseId: number, timeout = 120000) {
+        const startTime = Date.now();
+        let lastStatus = 0;
+        while (Date.now() - startTime < timeout) {
+            const response = await this.page.request.get(`api/course/courses/${courseId}/download-archive`);
+            if (response.ok()) {
+                return;
+            }
+            lastStatus = response.status();
+            await this.page.waitForTimeout(2000);
+        }
+        throw new Error(`The archive of course ${courseId} was not ready within ${timeout}ms (last status ${lastStatus})`);
     }
 
     /**
@@ -218,19 +310,89 @@ export class CourseManagementAPIRequests {
         await this.page.request.delete(`api/lecture/lectures/${lectureId}`);
     }
 
-    async createExamTestRun(exam: Exam, exercises: Array<Exercise>) {
-        // 1080s (18 min) matches ExamAPIRequests.createExamTestRun's default. The old 120s
-        // budget routinely expired mid-test under heavy parallel multi-node load — four
-        // sequential exercise submissions (TEXT + PROGRAMMING + QUIZ + MODELING) plus the
-        // navigation between them can easily exceed two minutes when the cluster is busy,
-        // causing the exam clock to hit zero before the test finishes submitting and
-        // dropping the page on the end-of-exam screen.
+    /**
+     * Creates an accepted FAQ, which is the only state students can see.
+     *
+     * @param course - The course the FAQ belongs to.
+     * @param questionTitle - The title of the FAQ.
+     * @param questionAnswer - The answer text (optional, default: a generic answer).
+     * @returns Promise<{ id: number; questionTitle: string }> the created FAQ.
+     */
+    async createFaq(course: Course, questionTitle: string, questionAnswer = 'The answer to the question.'): Promise<{ id: number; questionTitle: string }> {
+        const data = { courseId: course.id, questionTitle, questionAnswer, faqState: 'ACCEPTED', categories: [] };
+        const response = await this.page.request.post(`api/communication/courses/${course.id}/faqs`, { data });
+        if (!response.ok()) {
+            throw new Error(`Failed to create FAQ: ${response.status()} ${await response.text()}`);
+        }
+        return response.json();
+    }
+
+    /**
+     * Creates the tutorial groups configuration of a course, which has to exist before any tutorial group can be added.
+     * The course must have been created with a time zone, otherwise the server rejects the configuration.
+     *
+     * @param course - The course to configure.
+     */
+    async createTutorialGroupsConfiguration(course: Course) {
         const data = {
+            tutorialPeriodStartInclusive: dayjs().subtract(1, 'year').format('YYYY-MM-DD'),
+            tutorialPeriodEndInclusive: dayjs().add(1, 'year').format('YYYY-MM-DD'),
+            useTutorialGroupChannels: false,
+            usePublicTutorialGroupChannels: false,
+        };
+        const response = await this.page.request.post(`api/tutorialgroup/courses/${course.id}/tutorial-groups-configuration`, { data });
+        if (!response.ok()) {
+            throw new Error(`Failed to create tutorial groups configuration: ${response.status()} ${await response.text()}`);
+        }
+    }
+
+    /**
+     * Creates a tutorial group taught by the given tutor. Requires {@link createTutorialGroupsConfiguration} to have run.
+     *
+     * @param course - The course the tutorial group belongs to.
+     * @param title - The title of the tutorial group. The server only accepts alphanumerics, spaces, colons and dashes, max 20 characters.
+     * @param tutorId - The id of the tutor teaching the group.
+     * @returns Promise<number> the id of the created tutorial group.
+     */
+    async createTutorialGroup(course: Course, title: string, tutorId: number): Promise<number> {
+        const data = { title, tutorId, language: 'ENGLISH', isOnline: false, campus: 'Garching', capacity: 10 };
+        const response = await this.page.request.post(`api/tutorialgroup/courses/${course.id}/tutorial-groups`, { data });
+        if (!response.ok()) {
+            throw new Error(`Failed to create tutorial group: ${response.status()} ${await response.text()}`);
+        }
+        return response.json();
+    }
+
+    /**
+     * Registers students in a tutorial group. A student who is registered somewhere sees their groups in the expanded
+     * "my groups" section of the tutorial groups sidebar, which is where a real student finds them.
+     *
+     * @param course - The course the tutorial group belongs to.
+     * @param tutorialGroupId - The id of the tutorial group.
+     * @param users - The students to register.
+     */
+    async registerStudentsInTutorialGroup(course: Course, tutorialGroupId: number, users: UserCredentials[]) {
+        const data = users.map((user) => user.username);
+        const response = await this.page.request.post(`api/tutorialgroup/courses/${course.id}/tutorial-groups/${tutorialGroupId}/batch-register`, { data });
+        if (!response.ok()) {
+            throw new Error(`Failed to register students in tutorial group: ${response.status()} ${await response.text()}`);
+        }
+    }
+
+    async createExamTestRun(exam: Exam, exercises: Array<Exercise>) {
+        // 1080s (18 min) matches the previous default here. The old 120s budget routinely
+        // expired mid-test under heavy parallel multi-node load — four sequential exercise
+        // submissions (TEXT + PROGRAMMING + QUIZ + MODELING) plus the navigation between them
+        // can easily exceed two minutes when the cluster is busy, causing the exam clock to
+        // hit zero before the test finishes submitting and dropping the page on the
+        // end-of-exam screen.
+        // Flat CreateTestRunDTO(examId, exerciseIds, workingTime) — matches the server's
+        // request shape post-DTO-migration (StudentExamResource#createTestRun); the server
+        // never reads exam/exercise objects wholesale, only examId + exercise ids + workingTime.
+        const data = {
+            examId: exam.id,
+            exerciseIds: exercises.map((exercise) => exercise.id),
             workingTime: 1080,
-            exam,
-            exercises,
-            ended: false,
-            numberOfExamSessions: 0,
         };
         const response = await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/test-run`, { data });
         return response.json();
@@ -374,4 +536,48 @@ export class CourseManagementAPIRequests {
             throw new Error(`Failed to enable learning paths: ${response.status()} ${response.statusText()} - ${errorBody}`);
         }
     }
+}
+
+// Playwright runs this file under Node, which cannot resolve dayjs/esm; toCourseUpdateDTO pulls it in through date.utils, so the mapping stays local.
+function courseUpdateDTOFromManagementDTO(course: CourseManagementDTO): CourseUpdateDTO {
+    return {
+        id: course.id,
+        title: course.title,
+        shortName: course.shortName,
+        description: course.description,
+        semester: course.semester,
+        startDate: course.startDate,
+        endDate: course.endDate,
+        enrollmentStartDate: course.enrollmentStartDate,
+        enrollmentEndDate: course.enrollmentEndDate,
+        unenrollmentEndDate: course.unenrollmentEndDate,
+        testCourse: course.testCourse,
+        onlineCourse: course.onlineCourse,
+        language: course.language,
+        defaultProgrammingLanguage: course.defaultProgrammingLanguage,
+        maxComplaints: course.maxComplaints,
+        maxTeamComplaints: course.maxTeamComplaints,
+        maxComplaintTimeDays: course.maxComplaintTimeDays,
+        maxRequestMoreFeedbackTimeDays: course.maxRequestMoreFeedbackTimeDays,
+        maxComplaintTextLimit: course.maxComplaintTextLimit,
+        maxComplaintResponseTextLimit: course.maxComplaintResponseTextLimit,
+        color: course.color,
+        courseIcon: course.courseIcon,
+        enrollmentEnabled: course.enrollmentEnabled,
+        enrollmentConfirmationMessage: course.enrollmentConfirmationMessage,
+        unenrollmentEnabled: course.unenrollmentEnabled,
+        courseInformationSharingMessagingCodeOfConduct: course.courseInformationSharingMessagingCodeOfConduct,
+        learningPathsEnabled: course.learningPathsEnabled,
+        presentationScore: course.presentationScore,
+        maxPoints: course.maxPoints,
+        accuracyOfScores: course.accuracyOfScores,
+        timeZone: course.timeZone,
+        courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
+        onboardingDone: course.onboardingDone,
+        gradeRelevant: course.courseConfiguration?.gradeRelevant ?? true,
+        dataRetentionHold: course.courseConfiguration?.dataRetentionHold ?? false,
+        autoOrchestratorEnabled: course.courseConfiguration?.autoOrchestratorEnabled ?? false,
+        debounceWindowSecondsOverride: course.courseConfiguration?.debounceWindowSecondsOverride,
+        maxDailyOrchestrationOverride: course.courseConfiguration?.maxDailyOrchestrationOverride,
+    };
 }

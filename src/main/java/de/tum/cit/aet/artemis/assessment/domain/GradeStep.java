@@ -5,10 +5,10 @@ import java.util.regex.Pattern;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import org.apache.commons.math3.util.Precision;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 
 /**
  * The grade step of a grading scale
@@ -31,6 +32,7 @@ public class GradeStep extends DomainObject {
 
     @ManyToOne
     @JsonIgnoreProperties(value = "gradeSteps", allowSetters = true)
+    @JoinColumn(nullable = false)
     private GradingScale gradingScale;
 
     @Column(name = "lower_bound_percentage")
@@ -123,10 +125,10 @@ public class GradeStep extends DomainObject {
      */
     public boolean matchingGradePercentage(double percentage) {
         double epsilon = 0.01d;
-        if (Precision.equals(percentage, lowerBoundPercentage, epsilon)) {
+        if (RoundingUtil.equalsWithinEpsilon(percentage, lowerBoundPercentage, epsilon)) {
             return lowerBoundInclusive;
         }
-        else if (Precision.equals(percentage, upperBoundPercentage, epsilon)) {
+        else if (RoundingUtil.equalsWithinEpsilon(percentage, upperBoundPercentage, epsilon)) {
             return upperBoundInclusive;
         }
         else {

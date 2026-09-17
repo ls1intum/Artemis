@@ -21,6 +21,7 @@ import { Student } from 'app/openapi/model/student';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { readExamUserDTOsFromCSVFile, readStudentDTOsFromCSVFile } from 'app/shared-ui/user-import/util/read-users-from-csv';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-users-import-dialog',
@@ -164,14 +165,10 @@ export class UsersImportDialogComponent implements OnDestroy {
             });
         } else if (this.adminUserMode()) {
             // convert StudentDTO to User
-            const artemisUsers = this.usersToImport().map((student) => ({ ...student, visibleRegistrationNumber: student.registrationNumber }));
+            const artemisUsers = this.usersToImport().map((student) => cloneWith(student, { visibleRegistrationNumber: student.registrationNumber }));
             this.adminUserService.importAll(artemisUsers).subscribe({
                 next: (res) => {
-                    const convertedStudents =
-                        res.body?.map((user) => ({
-                            ...user,
-                            registrationNumber: user.visibleRegistrationNumber,
-                        })) || [];
+                    const convertedStudents = res.body?.map((user) => cloneWith(user, { registrationNumber: user.visibleRegistrationNumber })) || [];
                     this.onSaveSuccess(convertedStudents);
                 },
                 error: () => this.onSaveError(),

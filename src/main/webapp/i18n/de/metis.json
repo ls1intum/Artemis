@@ -53,7 +53,8 @@
                 "lecture": "Vortrag",
                 "channel": "Kanal",
                 "user": "Benutzer",
-                "faq": "FAQ"
+                "faq": "FAQ",
+                "emoji": "Emoji"
             },
             "channel": {
                 "noChannel": "Es ist kein Kanal verfügbar.",

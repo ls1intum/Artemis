@@ -9,12 +9,21 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
+import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
 
 @Component({
     selector: 'jhi-exam-general-information',
     styleUrls: ['./exam-general-information.component.scss'],
     templateUrl: './exam-general-information.component.html',
-    imports: [TranslateDirective, StudentExamWorkingTimeComponent, TestExamWorkingTimeComponent, ArtemisDatePipe, ArtemisTranslatePipe, ArtemisDurationFromSecondsPipe],
+    imports: [
+        TranslateDirective,
+        StudentExamWorkingTimeComponent,
+        TestExamWorkingTimeComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        ArtemisDurationFromSecondsPipe,
+        ExamModeBadgeComponent,
+    ],
 })
 export class ExamGeneralInformationComponent {
     readonly exam = input<Exam>(undefined!);

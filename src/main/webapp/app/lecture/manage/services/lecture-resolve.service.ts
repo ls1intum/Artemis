@@ -1,7 +1,5 @@
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { Attachment } from 'app/lecture/shared/entities/attachment.model';
-import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable, filter, map, of } from 'rxjs';
@@ -20,21 +18,5 @@ export class LectureResolve implements Resolve<Lecture> {
             );
         }
         return of(new Lecture());
-    }
-}
-
-@Injectable({ providedIn: 'root' })
-export class AttachmentResolve implements Resolve<Attachment> {
-    private attachmentService = inject(AttachmentService);
-
-    resolve(route: ActivatedRouteSnapshot): Observable<Attachment> {
-        const attachmentId = route.params['attachmentId'];
-        if (attachmentId) {
-            return this.attachmentService.find(attachmentId).pipe(
-                filter((response: HttpResponse<Attachment>) => response.ok),
-                map((attachment: HttpResponse<Attachment>) => attachment.body!),
-            );
-        }
-        return of(new Attachment());
     }
 }

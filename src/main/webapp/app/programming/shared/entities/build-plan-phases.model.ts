@@ -1,4 +1,5 @@
 import { parseJson } from 'app/foundation/util/json.util';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Supported execution conditions for a build phase.
@@ -52,15 +53,11 @@ export function parseBuildPlanPhases(json: string | undefined): BuildPlanPhases 
     if (!isBuildPlanPhases(data)) {
         return undefined;
     }
-    return {
-        ...data,
-        phases: data.phases.map((parsed: BuildPhase) => ({
-            ...parsed,
-            condition: parsed.condition ?? 'ALWAYS',
-            forceRun: parsed.forceRun ?? false,
-            resultPaths: parsed.resultPaths ?? [],
-        })),
-    };
+    return cloneWith(data, {
+        phases: data.phases.map((parsed: BuildPhase) =>
+            cloneWith(parsed, { condition: parsed.condition ?? 'ALWAYS', forceRun: parsed.forceRun ?? false, resultPaths: parsed.resultPaths ?? [] }),
+        ),
+    });
 }
 
 function isBuildPlanPhases(value: unknown): value is BuildPlanPhases {

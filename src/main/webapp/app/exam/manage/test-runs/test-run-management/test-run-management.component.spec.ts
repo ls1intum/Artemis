@@ -1,6 +1,6 @@
+import { EmbeddedViewRef } from '@angular/core';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
@@ -9,7 +9,8 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
+import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management/test-run-management.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -21,6 +22,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -35,10 +37,10 @@ describe('Test Run Management Component', () => {
     const course = { id: 1, isAtLeastInstructor: true } as Course;
     const exam = { id: 1, course, started: true } as Exam;
     const user = { id: 99 } as User;
-    const studentExams = [
-        { id: 1, user: { id: 99 } },
-        { id: 2, user: { id: 90 } },
-    ] as StudentExam[];
+    const studentExams: StudentExamDTO[] = [
+        { id: 1, testRun: true, user: { id: 99 } },
+        { id: 2, testRun: true, user: { id: 90 } },
+    ];
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }) } } as any as ActivatedRoute;
 
     beforeEach(() => {
@@ -68,8 +70,23 @@ describe('Test Run Management Component', () => {
             });
     });
 
+    const projectedViews: EmbeddedViewRef<unknown>[] = [];
+
+    function renderTitleBarActions(): HTMLElement {
+        const service = TestBed.inject(CourseTitleBarService);
+        const template = service.actionsTemplate();
+        expect(template, 'the test-run-management page does not project a title bar actions template').toBeDefined();
+        const view = template!.createEmbeddedView({});
+        projectedViews.push(view);
+        view.detectChanges();
+        const host = document.createElement('div');
+        view.rootNodes.forEach((node) => host.appendChild(node));
+        return host;
+    }
+
     afterEach(() => {
         vi.restoreAllMocks();
+        projectedViews.splice(0).forEach((view) => view.destroy());
     });
 
     describe('onInit', () => {
@@ -109,21 +126,26 @@ describe('Test Run Management Component', () => {
             const exerciseGroup = { id: 1, exercises: [exercise] } as ExerciseGroup;
             exam.exerciseGroups = [exerciseGroup];
 
-            const onCloseSubject = new Subject<StudentExam | undefined>();
+            const onCloseSubject = new Subject<CreateTestRunDTO | undefined>();
             vi.spyOn(dialogService, 'open').mockReturnValue({ onClose: onCloseSubject.asObservable() } as DynamicDialogRef);
-            vi.spyOn(examManagementService, 'createTestRun').mockReturnValue(of(new HttpResponse({ body: { id: 3, user: { id: 90 }, exercises: [exercise] } as StudentExam })));
+            const createdTestRun: StudentExamDTO = { id: 3, testRun: true, user: { id: 90 } };
+            const createTestRunSpy = vi.spyOn(examManagementService, 'createTestRun').mockReturnValue(of(new HttpResponse({ body: createdTestRun })));
             fixture.detectChanges();
 
             expect(component.examContainsExercises()).toBeTruthy();
-            const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton'));
+            const actionsHost = renderTitleBarActions();
+            const createTestRunButton = actionsHost.querySelector<HTMLButtonElement>('#createTestRunButton');
             expect(createTestRunButton).toBeTruthy();
-            expect(createTestRunButton.nativeElement.disabled).toBeFalsy();
-            createTestRunButton.nativeElement.click();
+            expect(createTestRunButton!.disabled).toBeFalsy();
+            createTestRunButton!.click();
 
-            onCloseSubject.next({} as StudentExam);
+            const testRunConfiguration: CreateTestRunDTO = { examId: exam.id!, exerciseIds: [exercise.id!], workingTime: 3600 };
+            onCloseSubject.next(testRunConfiguration);
 
             await Promise.resolve();
 
+            // the component must forward the dialog's configuration verbatim, not rebuild a request body of its own
+            expect(createTestRunSpy).toHaveBeenCalledWith(course.id!, exam.id!, testRunConfiguration);
             expect(component.testRuns()).toHaveLength(3);
         });
 
@@ -134,21 +156,24 @@ describe('Test Run Management Component', () => {
             exam.exerciseGroups = [exerciseGroup];
             const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
 
-            const onCloseSubject = new Subject<StudentExam | undefined>();
+            const onCloseSubject = new Subject<CreateTestRunDTO | undefined>();
             vi.spyOn(dialogService, 'open').mockReturnValue({ onClose: onCloseSubject.asObservable() } as DynamicDialogRef);
-            vi.spyOn(examManagementService, 'createTestRun').mockReturnValue(throwError(() => httpError));
+            const createTestRunSpy = vi.spyOn(examManagementService, 'createTestRun').mockReturnValue(throwError(() => httpError));
             vi.spyOn(alertService, 'error');
             fixture.detectChanges();
 
             expect(component.examContainsExercises()).toBeTruthy();
-            const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton'));
+            const actionsHost = renderTitleBarActions();
+            const createTestRunButton = actionsHost.querySelector<HTMLButtonElement>('#createTestRunButton');
             expect(createTestRunButton).toBeTruthy();
-            expect(createTestRunButton.nativeElement.disabled).toBeFalsy();
-            createTestRunButton.nativeElement.click();
+            expect(createTestRunButton!.disabled).toBeFalsy();
+            createTestRunButton!.click();
 
-            onCloseSubject.next({} as StudentExam);
+            const testRunConfiguration: CreateTestRunDTO = { examId: exam.id!, exerciseIds: [exercise.id!], workingTime: 3600 };
+            onCloseSubject.next(testRunConfiguration);
 
             await Promise.resolve();
+            expect(createTestRunSpy).toHaveBeenCalledWith(course.id!, exam.id!, testRunConfiguration);
             expect(alertService.error).toHaveBeenCalledOnce();
         });
 
@@ -157,13 +182,14 @@ describe('Test Run Management Component', () => {
             const exerciseGroup = { id: 1, exercises: [exercise] } as ExerciseGroup;
             exam.exerciseGroups = [exerciseGroup];
 
-            const onCloseSubject = new Subject<StudentExam | undefined>();
+            const onCloseSubject = new Subject<CreateTestRunDTO | undefined>();
             vi.spyOn(dialogService, 'open').mockReturnValue({ onClose: onCloseSubject.asObservable() } as DynamicDialogRef);
             const createTestRunSpy = vi.spyOn(examManagementService, 'createTestRun');
             fixture.detectChanges();
 
-            const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton'));
-            createTestRunButton.nativeElement.click();
+            const actionsHost = renderTitleBarActions();
+            const createTestRunButton = actionsHost.querySelector<HTMLButtonElement>('#createTestRunButton');
+            createTestRunButton!.click();
             onCloseSubject.next(undefined);
 
             await Promise.resolve();

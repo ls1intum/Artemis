@@ -1,8 +1,13 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, ChildrenOutletContexts, Router } from '@angular/router';
+import { ActivatedRoute, ChildrenOutletContexts, Router, RouterOutlet, convertToParamMap } from '@angular/router';
+import { Subject } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
+import { QuizParticipationBase } from 'app/quiz/overview/participation/quiz-participation.base';
+import { LiveQuizParticipationStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { User } from 'app/account/user/user.model';
@@ -18,6 +23,30 @@ class ResizeObserverMock {
     observe = vi.fn();
     unobserve = vi.fn();
     disconnect = vi.fn();
+}
+
+/**
+ * Stands in for the concrete QuizParticipationComponent, which the split panel must recognise through
+ * the {@link QuizParticipationBase} contract alone — it deliberately has no static import of it.
+ */
+class QuizParticipationStub extends QuizParticipationBase {
+    readonly isSubmitDisabled = signal(false);
+    readonly submitTitleKey = signal('entity.action.submit');
+    readonly liveHeaderInfo = signal(undefined);
+    readonly mode = signal('practice');
+    readonly practiceAttemptFinished = signal(false);
+    readonly restartPractice = vi.fn();
+    readonly quizStartedEvent = new Subject<void>();
+    readonly quizSubmittedEvent = new Subject<QuizSubmission>();
+    readonly liveQuizStatusChange = new Subject<LiveQuizParticipationStatus | undefined>();
+    readonly practiceParticipationChanged = new Subject<StudentParticipation>();
+    readonly liveQuizResultParticipation = new Subject<StudentParticipation>();
+}
+
+/** Attaches a stub component to the split panel's primary child outlet. */
+function activatePrimaryOutletWith(component: unknown): void {
+    const context = TestBed.inject(ChildrenOutletContexts).getOrCreateContext('primary');
+    context.outlet = { isActivated: true, component } as unknown as RouterOutlet;
 }
 
 describe('ExerciseSplitPanelComponent', () => {
@@ -41,12 +70,15 @@ describe('ExerciseSplitPanelComponent', () => {
             .overrideComponent(ExerciseSplitPanelComponent, {
                 set: {
                     template: `
-                        <jhi-resizable-panels>
+                        <jhi-resizable-panels [flushLeftPanel]="exercise().type === ExerciseType.MODELING && showEditorPanel()">
                             @if (showEditorPanel()) {
                                 <ng-template jhiPanel [label]="editorLabelKey()">Editor</ng-template>
                             }
                             @if (exercise().type !== ExerciseType.QUIZ) {
-                                <ng-template jhiPanel [label]="'problemStatement'">Problem Statement</ng-template>
+                                <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.details'">Details + Problem Statement</ng-template>
+                            }
+                            @if (exercise().type === ExerciseType.QUIZ) {
+                                <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.details'">Details</ng-template>
                             }
                             @if (showIris()) {
                                 <ng-template jhiPanel [label]="'iris'" [startsCollapsed]="irisPanelStartsCollapsed()">Iris</ng-template>
@@ -89,6 +121,25 @@ describe('ExerciseSplitPanelComponent', () => {
         expect(component.irisPanelStartsCollapsed()).toBe(false);
     });
 
+    it('should make the modeling editor panel full bleed', () => {
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.MODELING } as Exercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 5 } as StudentParticipation);
+        fixture.detectChanges();
+
+        const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+        expect(panels.flushLeftPanel()).toBe(true);
+    });
+
+    it('should not make the left panel full bleed while the modeling exercise has no editor panel, so the problem statement keeps its padding', () => {
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.MODELING } as Exercise);
+        fixture.componentRef.setInput('studentParticipation', undefined);
+        fixture.detectChanges();
+
+        const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+        expect(component.showEditorPanel()).toBe(false);
+        expect(panels.flushLeftPanel()).toBe(false);
+    });
+
     it('navigates only when the target route identity changes, not when the participation object is replaced (prevents the navigate-thrash loop on incoming results, #12976)', () => {
         const navigateSpy = vi.mocked(TestBed.inject(Router).navigate);
 
@@ -112,6 +163,62 @@ describe('ExerciseSplitPanelComponent', () => {
         expect(navigateSpy).toHaveBeenCalledWith(['programming-exercises', 1, 'code-editor', 6], expect.anything());
     });
 
+    describe('quiz practice navigation', () => {
+        let router: Router;
+        let route: ActivatedRoute;
+
+        beforeEach(() => {
+            router = TestBed.inject(Router);
+            route = TestBed.inject(ActivatedRoute);
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.QUIZ } as Exercise);
+            fixture.detectChanges();
+            vi.mocked(router.navigate).mockClear();
+        });
+
+        it('should show the latest practice result instead of starting a new attempt when toggling to practice', () => {
+            fixture.componentRef.setInput('studentParticipation', { id: 7, testRun: true } as StudentParticipation);
+            fixture.componentRef.setInput('participationMode', 'practice');
+            fixture.detectChanges();
+
+            expect(router.navigate).toHaveBeenCalledWith(['quiz-exercises', 1, 'practice', 7], { relativeTo: route.parent });
+        });
+
+        it('should start the first practice attempt when toggling to practice without an existing participation', () => {
+            fixture.componentRef.setInput('participationMode', 'practice');
+            fixture.detectChanges();
+
+            expect(router.navigate).toHaveBeenCalledWith(['quiz-exercises', 1, 'practice'], { relativeTo: route.parent });
+        });
+
+        it('should start a fresh attempt rather than reopen a graded participation surfaced as a fallback', () => {
+            // activeParticipation() falls back to the graded participation when no practice attempt exists yet.
+            fixture.componentRef.setInput('studentParticipation', { id: 42, testRun: false } as StudentParticipation);
+            fixture.componentRef.setInput('participationMode', 'practice');
+            fixture.detectChanges();
+
+            expect(router.navigate).toHaveBeenCalledWith(['quiz-exercises', 1, 'practice'], { relativeTo: route.parent });
+            expect(router.navigate).not.toHaveBeenCalledWith(['quiz-exercises', 1, 'practice', 42], { relativeTo: route.parent });
+        });
+
+        it('should not re-navigate while a fresh practice attempt is in progress (bare practice route)', () => {
+            (route as unknown as { firstChild: unknown }).firstChild = { snapshot: { url: [{ path: 'practice' }], paramMap: convertToParamMap({}) } };
+            fixture.componentRef.setInput('studentParticipation', { id: 9, testRun: true } as StudentParticipation);
+            fixture.componentRef.setInput('participationMode', 'practice');
+            fixture.detectChanges();
+
+            expect(router.navigate).not.toHaveBeenCalled();
+        });
+
+        it('should not navigate when already viewing a practice result (no reload / no new attempt)', () => {
+            (route as unknown as { firstChild: unknown }).firstChild = { snapshot: { url: [{ path: 'practice' }], paramMap: convertToParamMap({ participationId: '7' }) } };
+            fixture.componentRef.setInput('studentParticipation', { id: 7, testRun: true } as StudentParticipation);
+            fixture.componentRef.setInput('participationMode', 'practice');
+            fixture.detectChanges();
+
+            expect(router.navigate).not.toHaveBeenCalled();
+        });
+    });
+
     it('should keep the problem statement open for users who opted out of AI when an editor panel is shown', () => {
         accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
         fixture.componentRef.setInput('studentParticipation', { id: 1 } as StudentParticipation);
@@ -124,5 +231,181 @@ describe('ExerciseSplitPanelComponent', () => {
         expect(resizablePanels.activeRightIndex()).toBe(0);
         expect(fixture.nativeElement.querySelector('.collapsed-right-panel')).toBeNull();
         expect(fixture.nativeElement.textContent).toContain('Problem Statement');
+    });
+
+    describe('exercise details panel', () => {
+        /**
+         * Every type shows its details in one panel labelled "Exercise Details": for a quiz that panel holds only the
+         * details, for every other type it also holds the problem statement. It must never be panels()[0], because
+         * ResizablePanelsComponent makes the first panel the left pane and the rest the right-hand tabs.
+         */
+        function panelLabels(): string[] {
+            const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance.panels();
+            return panels.map((panel: PanelDirective) => panel.label());
+        }
+
+        it.each([ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD, ExerciseType.PROGRAMMING, ExerciseType.QUIZ])(
+            'should render exactly one details panel for %s',
+            (type) => {
+                fixture.componentRef.setInput('exercise', { id: 1, type } as Exercise);
+                fixture.detectChanges();
+
+                const labels = panelLabels();
+                expect(labels.filter((label) => label === 'artemisApp.courseOverview.exerciseDetails.details')).toHaveLength(1);
+            },
+        );
+
+        it('should never make the details panel the left pane', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.MODELING } as Exercise);
+            fixture.componentRef.setInput('studentParticipation', { id: 5 } as StudentParticipation);
+            fixture.detectChanges();
+
+            expect(panelLabels()[0]).not.toBe('artemisApp.courseOverview.exerciseDetails.details');
+        });
+
+        it('should no longer label a panel problem statement', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT } as Exercise);
+            fixture.detectChanges();
+
+            expect(panelLabels()).not.toContain('artemisApp.courseOverview.exerciseDetails.problemStatement');
+        });
+    });
+
+    describe('submit dispatch', () => {
+        it('should delegate to the participation component activated in the primary outlet', () => {
+            const submitExercise = vi.fn();
+            activatePrimaryOutletWith({ submitExercise });
+
+            component.submitExercise();
+
+            expect(submitExercise).toHaveBeenCalledOnce();
+        });
+
+        it('should do nothing when the activated component does not participate in submission', () => {
+            // Guards the ExerciseSubmission contract: every child route currently resolves to a component
+            // that implements it, so a future read-only child must stay a no-op rather than throw.
+            activatePrimaryOutletWith({});
+
+            expect(() => component.submitExercise()).not.toThrow();
+        });
+
+        it('should do nothing when no child route is activated', () => {
+            expect(() => component.submitExercise()).not.toThrow();
+        });
+    });
+
+    describe('quiz participation contract', () => {
+        it('should recognise a quiz component through QuizParticipationBase and follow its lifecycle events', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.QUIZ } as Exercise);
+            fixture.detectChanges();
+            const quizComponent = new QuizParticipationStub();
+
+            component.onOutletActivate(quizComponent);
+
+            // Before the batch starts, a quiz is not submittable.
+            expect(component.canSubmit()).toBe(false);
+
+            quizComponent.quizStartedEvent.next();
+            expect(component.canSubmit()).toBe(true);
+
+            const submission = { id: 7 } as QuizSubmission;
+            const submitted: QuizSubmission[] = [];
+            component.quizSubmitted.subscribe((value: QuizSubmission) => submitted.push(value));
+            quizComponent.quizSubmittedEvent.next(submission);
+            expect(submitted).toEqual([submission]);
+
+            // Practice restart is delegated to the quiz component rather than handled locally.
+            expect(component.restartPractice()).toBe(true);
+            expect(quizComponent.restartPractice).toHaveBeenCalledOnce();
+        });
+
+        it('should ignore an activated component that does not implement QuizParticipationBase', () => {
+            component.onOutletActivate({ quizStartedEvent: new Subject<void>() });
+
+            expect(component.restartPractice()).toBe(false);
+        });
+
+        it('should expose the quiz component mode and report a finished practice attempt from the quiz component', () => {
+            expect(component.quizComponentMode()).toBeUndefined();
+            expect(component.quizPracticeAttemptFinished()).toBe(false);
+
+            const quizComponent = new QuizParticipationStub();
+            component.onOutletActivate(quizComponent);
+
+            expect(component.quizComponentMode()).toBe('practice');
+            expect(component.quizPracticeAttemptFinished()).toBe(false);
+
+            // The quiz component owns the decision, since it also knows about an expired attempt that never submitted.
+            quizComponent.practiceAttemptFinished.set(true);
+            expect(component.quizPracticeAttemptFinished()).toBe(true);
+
+            // Its state is cached per tick, so a mode that has already moved on wins over it.
+            quizComponent.mode.set('live');
+            expect(component.quizComponentMode()).toBe('live');
+            expect(component.quizPracticeAttemptFinished()).toBe(false);
+        });
+
+        describe('restartPractice', () => {
+            let router: Router;
+            let route: ActivatedRoute;
+            let quizComponent: QuizParticipationStub;
+
+            beforeEach(() => {
+                router = TestBed.inject(Router);
+                route = TestBed.inject(ActivatedRoute);
+                fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.QUIZ } as Exercise);
+                fixture.detectChanges();
+                quizComponent = new QuizParticipationStub();
+                component.onOutletActivate(quizComponent);
+                vi.mocked(router.navigate).mockClear();
+            });
+
+            it('should restart in place on the bare practice route', () => {
+                (route as unknown as { firstChild: unknown }).firstChild = { snapshot: { url: [{ path: 'practice' }], paramMap: convertToParamMap({}) } };
+
+                expect(component.restartPractice()).toBe(true);
+                expect(quizComponent.restartPractice).toHaveBeenCalledOnce();
+                expect(router.navigate).not.toHaveBeenCalled();
+            });
+
+            it.each([{ participationId: '7' }, { participationId: '7', submissionId: '9' }])(
+                'should leave a practice result behind by routing back to the bare practice route (%o)',
+                (params) => {
+                    (route as unknown as { firstChild: unknown }).firstChild = { snapshot: { url: [{ path: 'practice' }], paramMap: convertToParamMap(params) } };
+
+                    expect(component.restartPractice()).toBe(true);
+                    // The component is re-created on the bare route and starts the attempt itself.
+                    expect(quizComponent.restartPractice).not.toHaveBeenCalled();
+                    expect(router.navigate).toHaveBeenCalledWith(['quiz-exercises', 1, 'practice'], { relativeTo: route.parent });
+                },
+            );
+
+            it('should not restart a quiz that is not in practice mode', () => {
+                quizComponent.mode.set('live');
+                (route as unknown as { firstChild: unknown }).firstChild = { snapshot: { url: [{ path: 'live' }], paramMap: convertToParamMap({}) } };
+
+                expect(component.restartPractice()).toBe(false);
+                expect(quizComponent.restartPractice).not.toHaveBeenCalled();
+                expect(router.navigate).not.toHaveBeenCalled();
+            });
+        });
+    });
+    it('should withdraw submit while the routed participation surface is read-only', () => {
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.MODELING } as Exercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 5 } as StudentParticipation);
+        fixture.detectChanges();
+
+        expect(component.canSubmit()).toBe(true);
+
+        const editable = signal(true);
+        component.onOutletActivate({ submitExercise: () => {}, canSubmitExercise: editable });
+        expect(component.canSubmit()).toBe(true);
+
+        editable.set(false);
+        expect(component.canSubmit()).toBe(false);
+
+        component.onOutletDeactivate();
+        component.onOutletActivate({ submitExercise: () => {} });
+        expect(component.canSubmit()).toBe(true);
     });
 });

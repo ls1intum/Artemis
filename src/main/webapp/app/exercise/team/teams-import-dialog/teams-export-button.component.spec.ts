@@ -1,13 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TeamService } from 'app/exercise/team/team.service';
 import { TeamsExportButtonComponent } from 'app/exercise/team/teams-import-dialog/teams-export-button.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
-import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { mockTeams } from 'test/helpers/mocks/service/mock-team.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -20,14 +19,7 @@ describe('TeamsExportButtonComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [
-                MockModule(NgbModule),
-                MockDirective(FeatureToggleDirective),
-                TeamsExportButtonComponent,
-                ButtonComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(TranslateDirective),
-            ],
+            imports: [MockDirective(FeatureToggleDirective), TeamsExportButtonComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [MockProvider(TeamService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 

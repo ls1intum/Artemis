@@ -11,7 +11,10 @@ import dayjs from 'dayjs/esm';
 import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
+import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -120,7 +123,9 @@ describe('Exam Management Service Tests', () => {
     it('should import an exercise group', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockExerciseGroup = [{ id: 2 } as ExerciseGroup];
+        const mockExerciseGroup = [
+            { id: 2, title: 'Group', isMandatory: false, exercises: [{ id: 3, type: ExerciseType.TEXT, title: 'Text', maxPoints: 5, bonusPoints: 1 }] } as ExerciseGroup,
+        ];
         const importId = 'import-2';
 
         // WHEN: the response carries the full ExerciseGroupImportResultDTO
@@ -130,7 +135,10 @@ describe('Exam Management Service Tests', () => {
         const req = httpMock.expectOne(
             (request) => request.method === 'POST' && request.url === `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/import-exercise-group`,
         );
-        expect(req.request.body).toEqual(mockExerciseGroup);
+        // The body is the slim import DTO shape (source id + type + overrides), not the loaded exercise group
+        expect(req.request.body).toEqual([
+            { title: 'Group', isMandatory: false, exercises: [{ id: 3, exerciseType: ExerciseType.TEXT, title: 'Text', maxPoints: 5, bonusPoints: 1 }] },
+        ]);
         expect(req.request.params.get('importId')).toBe(importId);
 
         // CLEANUP
@@ -448,16 +456,17 @@ describe('Exam Management Service Tests', () => {
     it('should create test run', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockStudentExam: StudentExam = { exam: mockExam, numberOfExamSessions: 0 };
-        const expected: StudentExam = { exam: { id: 1 }, numberOfExamSessions: 0 };
+        const testRunConfiguration: CreateTestRunDTO = { examId: mockExam.id!, exerciseIds: [11, 12], workingTime: 600 };
+        const expected: StudentExamDTO = { id: 2, workingTime: 600, testRun: true, user: { id: 42 } };
         // WHEN
-        service.createTestRun(course.id!, mockExam.id!, mockStudentExam).subscribe((res) => expect(res.body).toEqual(mockStudentExam));
+        service.createTestRun(course.id!, mockExam.id!, testRunConfiguration).subscribe((res) => expect(res.body).toEqual(expected));
 
         // THEN
         const req = httpMock.expectOne({
             method: 'POST',
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/test-runs`,
         });
+        expect(req.request.body).toEqual(testRunConfiguration);
         req.flush(expected);
         await Promise.resolve();
     });
@@ -482,8 +491,8 @@ describe('Exam Management Service Tests', () => {
     it('should find all test runs for exam', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockStudentExams: StudentExam[] = [{ exam: mockExam, id: 2, numberOfExamSessions: 0 }];
-        const expected: StudentExam[] = [{ exam: mockExam, id: 2, numberOfExamSessions: 0 }];
+        const mockStudentExams: StudentExamDTO[] = [{ id: 2, testRun: true, user: { id: 42 } }];
+        const expected: StudentExamDTO[] = [{ id: 2, testRun: true, user: { id: 42 } }];
         // WHEN
         service.findAllTestRunsForExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockStudentExams));
 

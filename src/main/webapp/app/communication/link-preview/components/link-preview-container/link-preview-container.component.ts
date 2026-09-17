@@ -82,11 +82,9 @@ export class LinkPreviewContainerComponent implements OnInit {
 
                     const existingLinkPreviewIndex = this.linkPreviews().findIndex((preview) => preview.url === linkPreview.url);
                     if (existingLinkPreviewIndex !== -1) {
-                        this.linkPreviews.update((previews) => {
-                            const existingLinkPreview = previews[existingLinkPreviewIndex];
-                            Object.assign(existingLinkPreview, linkPreview);
-                            return previews;
-                        });
+                        // Replace the entry in a new array: mutating the existing preview and returning the same array
+                        // left the signal emitting nothing, so a refreshed preview never rendered.
+                        this.linkPreviews.update((previews) => previews.map((preview, index) => (index === existingLinkPreviewIndex ? linkPreview : preview)));
                     } else {
                         this.linkPreviews.set([...this.linkPreviews(), linkPreview]);
                     }

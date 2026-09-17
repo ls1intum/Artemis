@@ -1,0 +1,18 @@
+{{- if .Values.broker.deploy }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "artemis.brokerName" . }}
+  labels:
+    {{- include "artemis.labels" . | nindent 4 }}
+    app.kubernetes.io/component: broker
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "artemis.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: broker
+  ports:
+    - name: stomp
+      port: {{ .Values.broker.stompPort }}
+      targetPort: stomp
+{{- end }}

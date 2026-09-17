@@ -7,46 +7,50 @@
         </div>
     </div>
 
-    <!-- Import / Export / Create sit on the title row, leaving the toolbar row to the view switch and search bar. -->
+    <!--
+        Everything that is always present sits on the title row, so the bar keeps its 40px height. The toolbar below is
+        reserved for the mass-action bar, which only appears while exercises are selected.
+    -->
     <ng-template titleBarActions>
+        <ng-template #viewItem let-item>
+            <fa-icon [icon]="item.icon" />
+            <span class="ms-1 title-bar-collapsible-label" [jhiTranslate]="item.labelKey"></span>
+        </ng-template>
+        <tum-ui-select-button
+            size="small"
+            [options]="viewOptions"
+            [ngModel]="view()"
+            (ngModelChange)="onViewChange($event)"
+            optionValue="value"
+            [allowEmpty]="false"
+            [itemTemplate]="viewItem"
+        />
+        <jhi-search-filter class="title-bar-optional-control" (newSearchEvent)="onSearchChange($event)" />
         <!-- These all route to editor-only workflows, so they stay hidden from tutors. -->
         @if (course()?.isAtLeastEditor) {
-            <tum-ui-button size="small" severity="secondary" [attr.data-testid]="'import-exercise-button'" (clicked)="openImportModal()">
+            <!-- Both of these are tabs of the "+" dialog as well, so a narrow bar can drop them. -->
+            <tum-ui-button class="title-bar-optional-control" size="small" severity="secondary" [attr.data-testid]="'import-exercise-button'" (clicked)="openImportModal()">
                 <fa-icon [icon]="faFileImport" />
-                <span class="ms-1" jhiTranslate="artemisApp.exerciseManagement.action.import"></span>
+                <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.exerciseManagement.action.import"></span>
             </tum-ui-button>
-            <tum-ui-button size="small" severity="secondary" [attr.data-testid]="'export-exercise-button'" (clicked)="openQuizExportDialog()">
+            <tum-ui-button class="title-bar-optional-control" size="small" severity="secondary" [attr.data-testid]="'export-exercise-button'" (clicked)="openQuizExportDialog()">
                 <fa-icon [icon]="faFileExport" />
-                <span class="ms-1" jhiTranslate="artemisApp.exerciseManagement.action.export"></span>
+                <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.exerciseManagement.action.export"></span>
             </tum-ui-button>
             <tum-ui-button size="small" [attr.data-testid]="'create-exercise-button'" (clicked)="openCreateModal()">
                 <fa-icon [icon]="faPlus" />
-                <span class="ms-1" jhiTranslate="global.generic.create"></span>
+                <span class="ms-1 title-bar-collapsible-label" jhiTranslate="global.generic.create"></span>
             </tum-ui-button>
         }
     </ng-template>
 
-    <ng-template titleBarToolbar>
-        <!-- Controls row -->
-        <div class="controls d-flex align-items-center gap-2">
-            <ng-template #viewItem let-item>
-                <fa-icon [icon]="item.icon" />
-                <span class="ms-1 d-none d-md-inline" [jhiTranslate]="item.labelKey"></span>
-            </ng-template>
-            <tum-ui-select-button
-                size="small"
-                [options]="viewOptions"
-                [ngModel]="view()"
-                (ngModelChange)="onViewChange($event)"
-                optionValue="value"
-                [allowEmpty]="false"
-                [itemTemplate]="viewItem"
-            />
-            <jhi-search-filter class="flex-grow-1" (newSearchEvent)="onSearchChange($event)" />
-        </div>
-
-        <!-- Mass actions row. All bulk actions target editor+ workflows, so tutors never see it. -->
-        @if (selectedCount() > 0 && course()?.isAtLeastEditor) {
+    <!--
+        Mass actions row. All bulk actions target editor+ workflows, so tutors never see it. The template is registered
+        only while it has content: the title bar draws a separator and padding around any registered toolbar, so an
+        empty one would still add height to a bar that is otherwise exactly 40px.
+    -->
+    @if (selectedCount() > 0 && course()?.isAtLeastEditor) {
+        <ng-template titleBarToolbar>
             <div class="selection-bar" animate.enter="selection-entering" animate.leave="selection-leaving">
                 <div class="d-flex align-items-center flex-wrap gap-3 mt-2 pt-2 border-top">
                     <div class="d-flex align-items-center gap-2">
@@ -116,8 +120,8 @@
                     }
                 </div>
             </div>
-        }
-    </ng-template>
+        </ng-template>
+    }
 
     @if (loaded() && cards().length === 0) {
         <tum-ui-message severity="secondary">

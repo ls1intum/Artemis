@@ -44,13 +44,10 @@ export class WebsocketAdminComponent implements OnInit, OnDestroy {
     nodes = signal<WebsocketNode[]>([]);
     loading = signal(false);
     reconnecting = signal(false);
-    coreNodes = computed(() => this.nodes().filter((node) => !node.liteMember));
+    coreNodes = computed(() => this.nodes());
     sortedNodes = computed(() => {
         const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
         return [...this.nodes()].sort((a, b) => {
-            if (a.liteMember !== b.liteMember) {
-                return a.liteMember ? 1 : -1; // core nodes first
-            }
             const nameA = (a.instanceId ?? a.host ?? a.memberId).trim();
             const nameB = (b.instanceId ?? b.host ?? b.memberId).trim();
             return collator.compare(nameA, nameB);

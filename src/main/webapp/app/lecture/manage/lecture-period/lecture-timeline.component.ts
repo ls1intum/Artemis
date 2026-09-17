@@ -1,18 +1,18 @@
 import { Component, effect, model, output } from '@angular/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { TimelineComponent, TimelineItem, TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { Dayjs } from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-lecture-timeline',
     templateUrl: './lecture-timeline.component.html',
-    imports: [TranslateDirective, ExerciseTimelineComponent],
+    imports: [TranslateDirective, TimelineComponent],
     styleUrl: './lecture-timeline.component.scss',
 })
 export class LectureTimelineComponent {
     startDate = model<Dayjs | undefined>();
     endDate = model<Dayjs | undefined>();
-    timelineStatusChange = output<ExerciseTimelineStatus>();
+    timelineStatusChange = output<TimelineStatus>();
     datesChanged = output<void>();
     timelineItems: TimelineItem[] = [
         {

@@ -79,20 +79,20 @@ export abstract class AbstractExerciseAssessmentPage {
     }
 
     async nextAssessment() {
-        await this.page.locator('#assessNextButton').click();
-        await this.page.locator('#assessNextButton').waitFor({ state: 'hidden' });
+        await this.page.locator('[data-testid="assessNextButton"]').click();
+        await this.page.locator('[data-testid="assessNextButton"]').waitFor({ state: 'hidden' });
     }
 
     private async handleComplaint(response: string, accept: boolean, exerciseType: ExerciseType, examMode: boolean, complaintExerciseTitle?: string) {
         if (exerciseType !== ExerciseType.MODELING && !examMode) {
             // The course-wide complaints list intermingles complaints from every assessment test that shares the seed
             // course (e.g. file-upload and modeling both use the exerciseAssessment course). Clicking the first
-            // #show-complaint therefore races those other tests and can open an unrelated — possibly different-type —
+            // [data-testid="show-complaint"] therefore races those other tests and can open an unrelated — possibly different-type —
             // complaint whose response editor never enables for this flow (the observed flake). When the caller knows
             // the exercise title, open that exercise's own complaint row instead of the first one.
             const showComplaintButton = complaintExerciseTitle
-                ? this.page.locator('tr', { hasText: complaintExerciseTitle }).locator('#show-complaint')
-                : this.page.locator('#show-complaint').first();
+                ? this.page.locator('tr', { hasText: complaintExerciseTitle }).locator('[data-testid="show-complaint"]')
+                : this.page.locator('[data-testid="show-complaint"]').first();
             await showComplaintButton.click();
         }
         // The response textarea starts as readonly/disabled while the complaint data loads.

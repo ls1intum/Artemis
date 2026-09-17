@@ -31,6 +31,7 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
 import { PdfDropZoneComponent } from '../pdf-drop-zone/pdf-drop-zone.component';
 import { PdfUploadTarget, PdfUploadTargetDialogComponent } from '../pdf-upload-target-dialog/pdf-upload-target-dialog.component';
 import { AttachmentVideoUnitService } from '../lecture-units/services/attachment-video-unit.service';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export enum LectureDateFilter {
     PAST = 'filterPast',
@@ -189,7 +190,7 @@ export class LectureComponent implements OnInit, OnDestroy {
                     this.lectures.set(
                         res.map((lectureData) => {
                             const lecture = new Lecture();
-                            Object.assign(lecture, lectureData);
+                            hydrate(lecture, lectureData);
                             return lecture;
                         }),
                     );

@@ -3,6 +3,9 @@ package de.tum.cit.aet.artemis.lecture.service;
 import java.util.List;
 import java.util.Objects;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
@@ -34,11 +37,10 @@ public record AttachmentVideoUnitSlideSplitJob(long attachmentVideoUnitId, long 
      * @param pageOrder           the slide order, or {@code null} when only new slides should be created
      * @return an immutable split job
      */
-    public static AttachmentVideoUnitSlideSplitJob of(AttachmentVideoUnit attachmentVideoUnit, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder) {
-        Objects.requireNonNull(attachmentVideoUnit, "attachmentVideoUnit");
-        Attachment attachment = Objects.requireNonNull(attachmentVideoUnit.getAttachment(), "attachmentVideoUnit.attachment");
-        return new AttachmentVideoUnitSlideSplitJob(Objects.requireNonNull(attachmentVideoUnit.getId(), "attachmentVideoUnit.id"),
-                Objects.requireNonNull(attachment.getId(), "attachment.id"), attachment.getVersion(), attachment.getSha256Hash(), hiddenPages, pageOrder);
+    public static AttachmentVideoUnitSlideSplitJob of(@NonNull AttachmentVideoUnit attachmentVideoUnit, @Nullable List<HiddenPageInfoDTO> hiddenPages,
+            @Nullable List<SlideOrderDTO> pageOrder) {
+        Attachment attachment = attachmentVideoUnit.getAttachment();
+        return new AttachmentVideoUnitSlideSplitJob(attachmentVideoUnit.getId(), attachment.getId(), attachment.getVersion(), attachment.getSha256Hash(), hiddenPages, pageOrder);
     }
 
     /**

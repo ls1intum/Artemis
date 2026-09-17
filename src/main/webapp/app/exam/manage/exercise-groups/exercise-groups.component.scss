@@ -1,11 +1,7 @@
-.exercise-group {
-    border: 1px solid var(--exercise-group-border-color);
+.opt-badge {
+    background-color: var(--exercise-group-header-badge-color);
+}
 
-    .header {
-        background-color: var(--exercise-group-header-background);
-
-        .opt-badge {
-            background-color: var(--exercise-group-header-badge-color);
-        }
-    }
+.group-move:disabled {
+    opacity: 0.4;
 }

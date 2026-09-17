@@ -12,12 +12,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
 
 @Conditional(LectureEnabled.class)
 @Lazy
+@FeatureUsage("ai/transcription")
 @RestController
 @RequestMapping("api/lecture/")
 public class LectureTranscriptionResource {
@@ -39,7 +41,7 @@ public class LectureTranscriptionResource {
      * @param lectureUnitId the ID of the lecture unit for which to retrieve the transcript
      * @return {@link ResponseEntity} containing the {@link LectureTranscriptionDTO} if found, or 404 Not Found if no transcript exists
      */
-    @GetMapping({ "lecture-units/{lectureUnitId}/transcript", "lecture-unit/{lectureUnitId}/transcript" })
+    @GetMapping("lecture-units/{lectureUnitId}/transcript")
     @EnforceAtLeastStudentInLectureUnit
     public ResponseEntity<LectureTranscriptionDTO> getTranscript(@PathVariable Long lectureUnitId) {
         Optional<LectureTranscriptionDTO> dtoOpt = lectureTranscriptionsRepositoryApi.getTranscript(lectureUnitId);
@@ -52,12 +54,12 @@ public class LectureTranscriptionResource {
     }
 
     /**
-     * GET /lecture-unit/{lectureUnitId}/transcript/status : Get the status of a transcription for a lecture unit.
+     * GET /lecture-units/{lectureUnitId}/transcript/status : Get the status of a transcription for a lecture unit.
      *
      * @param lectureUnitId the ID of the lecture unit to check
      * @return ResponseEntity with the transcription status (PENDING, COMPLETED, FAILED) or 404 if no transcription exists
      */
-    @GetMapping({ "lecture-units/{lectureUnitId}/transcript/status", "lecture-unit/{lectureUnitId}/transcript/status" })
+    @GetMapping("lecture-units/{lectureUnitId}/transcript/status")
     @EnforceAtLeastEditorInLectureUnit
     public ResponseEntity<String> getTranscriptStatus(@PathVariable Long lectureUnitId) {
         Optional<String> statusOpt = lectureTranscriptionsRepositoryApi.getTranscriptStatus(lectureUnitId);

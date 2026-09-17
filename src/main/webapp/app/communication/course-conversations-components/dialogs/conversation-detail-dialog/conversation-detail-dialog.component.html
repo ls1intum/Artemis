@@ -33,7 +33,7 @@
                     }
                 }
             </h4>
-            <button type="button" class="btn-close" (click)="clear()"></button>
+            <button type="button" class="btn-close" data-testid="conversation-detail-close-button" (click)="clear()"></button>
         </div>
         <div>
             <ul class="nav nav-tabs">
@@ -58,6 +58,7 @@
                     </li>
                     <li class="nav-item settings-tab">
                         <a
+                            data-testid="conversation-settings-tab"
                             class="nav-link"
                             [class.active]="selectedTab === Tabs.SETTINGS"
                             role="button"

@@ -14,6 +14,7 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -90,37 +91,37 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
     void initTestCase() throws GitAPIException, IOException, URISyntaxException {
         List<User> users = userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
         for (User user : users) {
-            user.setSelectedLLMUsageTimestamp(ZonedDateTime.parse("2025-12-11T00:00:00Z"));
-            user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+            userUtilService.setAiSelectionDecisionDate(user, ZonedDateTime.parse("2025-12-11T00:00:00Z"));
+            userUtilService.setAiSelectionDecision(user, AiSelectionDecision.CLOUD_AI);
             userTestRepository.save(user);
         }
 
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student1.setSelectedLLMUsageTimestamp(ZonedDateTime.now().minusDays(1));
+        userUtilService.setAiSelectionDecisionDate(student1, ZonedDateTime.now().minusDays(1));
         userTestRepository.save(student1);
         var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        student2.setSelectedLLMUsageTimestamp(ZonedDateTime.now().minusDays(1));
+        userUtilService.setAiSelectionDecisionDate(student2, ZonedDateTime.now().minusDays(1));
         userTestRepository.save(student2);
 
         course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = exercise.getProjectKey();
         exercise.setProjectType(ProjectType.PLAIN_GRADLE);
-        exercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
+        exercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase(Locale.ROOT) + "-tests.git");
         programmingExerciseRepository.save(exercise);
         exercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exercise.getId()).orElseThrow();
 
         // Set the correct repository URIs for the template and the solution participation.
-        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
+        String templateRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
         TemplateProgrammingExerciseParticipation templateParticipation = exercise.getTemplateParticipation();
         templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
+        String solutionRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-solution";
         SolutionProgrammingExerciseParticipation solutionParticipation = exercise.getSolutionParticipation();
         solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + solutionRepositorySlug + ".git");
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
 
-        String assignmentRepositorySlug = projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1";
+        String assignmentRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-" + TEST_PREFIX + "student1";
 
         // Add a participation for student1.
         studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
@@ -130,10 +131,10 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
         // Prepare the repositories.
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, projectKey.toLowerCase() + "-tests");
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, assignmentRepositorySlug);
+        localVCLocalCITestService.createRepository(projectKey, templateRepositorySlug);
+        localVCLocalCITestService.createRepository(projectKey, projectKey.toLowerCase(Locale.ROOT) + "-tests");
+        localVCLocalCITestService.createRepository(projectKey, solutionRepositorySlug);
+        localVCLocalCITestService.createRepository(projectKey, assignmentRepositorySlug);
 
         // Check that the repository folders were created in the file system for all base repositories.
         localVCLocalCITestService.verifyRepositoryFoldersExist(exercise, localVCBasePath);
@@ -189,7 +190,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         List<BuildLogEntry> logs = new ArrayList<>();
         logs.add(new BuildLogEntry(ZonedDateTime.now(), "compilation failed: cannot find symbol", submission));
-        submission.setBuildLogEntries(logs);
+        submission.setBuildLogEntries(new java.util.LinkedHashSet<>(logs));
         submission = submissionRepository.saveAndFlush(submission);
 
         Result result = ParticipationFactory.generateResult(true, 0);
@@ -209,7 +210,8 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
     private ProgrammingExerciseStudentParticipation createTeamParticipation(User owner) {
         var team = teamUtilService.addTeamForExercise(exercise, owner);
         var teamParticipation = participationUtilService.addTeamParticipationForProgrammingExercise(exercise, team);
-        teamParticipation.setRepositoryUri((localVCBaseUri + "/git/%s/%s-%s.git").formatted(exercise.getProjectKey(), exercise.getProjectKey().toLowerCase(), team.getShortName()));
+        teamParticipation.setRepositoryUri(
+                (localVCBaseUri + "/git/%s/%s-%s.git").formatted(exercise.getProjectKey(), exercise.getProjectKey().toLowerCase(Locale.ROOT), team.getShortName()));
         return programmingExerciseStudentParticipationRepository.save(teamParticipation);
     }
 

@@ -25,7 +25,7 @@ export class ExamParticipationActions {
     }
 
     async checkExerciseProblemStatementDifference(differenceSlices: TextDifferenceSlice[]) {
-        const problemStatementCard = this.page.locator('.card', { hasText: 'Problem Statement' });
+        const problemStatementCard = this.page.getByTestId('resizeable-container-right').filter({ hasText: 'Problem Statement' });
         const problemStatementText = problemStatementCard.locator('.markdown-preview').locator('p');
 
         if ((await problemStatementText.locator('.diffmod').count()) > 0) {
@@ -50,7 +50,7 @@ export class ExamParticipationActions {
     }
 
     async checkExamTitle(title: string) {
-        await expect(this.page.locator('#exam-title')).toContainText(title);
+        await expect(this.page.locator('[data-testid="exam-title"]')).toContainText(title);
     }
 
     async getResultScore(exerciseID?: number) {
@@ -72,7 +72,7 @@ export class ExamParticipationActions {
     }
 
     async checkExamFinishedTitle(title: string) {
-        await expect(this.page.locator('#exam-finished-title')).toContainText(title, { timeout: 40000 });
+        await expect(this.page.locator('[data-testid="exam-finished-title"]')).toContainText(title, { timeout: 40000 });
     }
 
     async checkExamFullnameInputExists() {
@@ -86,19 +86,18 @@ export class ExamParticipationActions {
     }
 
     async checkExamTimeLeft(timeLeft: string) {
-        await expect(this.page.locator('#displayTime').getByText(timeLeft)).toBeVisible();
+        await expect(this.page.locator('[data-testid="displayTime"]').getByText(timeLeft)).toBeVisible();
     }
 
     async checkExamTimeChangeDialog(previousWorkingTime: string, newWorkingTime: string, announcementTime: Dayjs, authorUsername: string, message: string) {
-        // Match either the legacy NgbModal (.modal-content) or the migrated PrimeNG dialog (.p-dialog-content).
-        const timeChangeDialog = this.page.locator('.p-dialog-content, .modal-content').first();
+        const timeChangeDialog = this.page.getByRole('dialog').first();
         await expect(timeChangeDialog.getByTestId('old-time').getByText(previousWorkingTime)).toBeVisible();
         await expect(timeChangeDialog.getByTestId('new-time').getByText(newWorkingTime)).toBeVisible();
         const timeFormat = 'MMM D, YYYY HH:mm';
         const announcementTimeFormatted = announcementTime.format(timeFormat);
         const announcementTimeAfterMinute = announcementTime.add(1, 'minute').format(timeFormat);
-        await expect(timeChangeDialog.locator('.date').getByText(new RegExp(`(${announcementTimeFormatted}|${announcementTimeAfterMinute})`))).toBeVisible();
-        await expect(timeChangeDialog.locator('.content').getByText(message)).toBeVisible();
+        await expect(timeChangeDialog.getByTestId('live-event-date').getByText(new RegExp(`(${announcementTimeFormatted}|${announcementTimeAfterMinute})`))).toBeVisible();
+        await expect(timeChangeDialog.getByTestId('live-event-content').getByText(message)).toBeVisible();
     }
 
     async closeDialog() {
@@ -110,10 +109,19 @@ export class ExamParticipationActions {
         await expect(exercise.locator(`#exercise-group-title-${exerciseID}`).getByText(exerciseTitle)).toBeVisible();
     }
 
-    async verifyTextExerciseOnFinalPage(exerciseID: number, textFixture: string): Promise<void> {
+    /**
+     * Verifies the submitted text of an exercise on the exam summary page.
+     *
+     * @param exerciseID the exercise whose submission is checked
+     * @param textFixture the fixture holding the expected submission text
+     * @param timeout optional override, in ms. Pass `RELOAD_RENDER_TIMEOUT` from `support/timeouts` for the first check after a
+     *                `page.reload()`, where the summary view has to re-bootstrap and lazy-load its chunks; omit it
+     *                otherwise so a genuine regression still fails on the default timeout.
+     */
+    async verifyTextExerciseOnFinalPage(exerciseID: number, textFixture: string, timeout?: number): Promise<void> {
         const exercise = getExercise(this.page, exerciseID);
         const submissionText = await Fixtures.get(textFixture);
-        await expect(exercise.locator('#text-editor')).toHaveValue(submissionText!);
+        await expect(exercise.locator('#text-editor')).toHaveValue(submissionText!, { timeout });
     }
 
     async verifyGradingKeyOnFinalPage(gradeName: string) {

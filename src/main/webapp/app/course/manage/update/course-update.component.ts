@@ -4,33 +4,42 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
-import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, firstValueFrom, forkJoin, map, merge, of, tap } from 'rxjs';
+import { Observable, firstValueFrom, forkJoin, of, tap } from 'rxjs';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
 import { integerValidator } from 'app/shared-ui/form/integer-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
-import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI } from 'app/app.constants';
+import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI } from 'app/app.constants';
 import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { COURSE_SHORT_NAME_MAX_LENGTH, MAX_GRADING_POINTS, SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
 import { Organization } from 'app/admin/organization-management/organization.model';
-import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService } from 'primeng/dynamicdialog';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
-import { TumUiDialogComponent } from '@tumaet/ui-angular';
-import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import {
+    TumUiAutoCompleteComponent,
+    TumUiAutoCompleteSearchEvent,
+    TumUiButtonDirective,
+    TumUiCheckboxComponent,
+    TumUiChipComponent,
+    TumUiDialogComponent,
+    TumUiInputDirective,
+    TumUiMessageComponent,
+    TumUiTooltipDirective,
+} from '@tumaet/ui-angular';
+import { faBan, faPen, faQuestionCircle, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/foundation/util/blob-util';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
-import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { onError } from 'app/foundation/util/global.utils';
-import { getSemesters } from 'app/foundation/util/semester-utils';
+import { applySemesterToDates, getSemesters } from 'app/foundation/util/semester-utils';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
 import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
@@ -45,7 +54,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { FileService } from 'app/foundation/service/file.service';
-import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
 
 @Component({
     selector: 'jhi-course-update',
@@ -59,12 +67,10 @@ import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants'
         TranslateDirective,
         NgStyle,
         ColorSelectorComponent,
-        NgbTooltip,
         FormDateTimePickerComponent,
         HelpIconComponent,
         MarkdownEditorMonacoComponent,
         FeatureToggleHideDirective,
-        NgbTypeahead,
         NgTemplateOutlet,
         KeyValuePipe,
         ArtemisTranslatePipe,
@@ -72,6 +78,14 @@ import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants'
         FeatureOverlayComponent,
         RouterLink,
         TumUiDialogComponent,
+        TumUiCheckboxComponent,
+        TumUiTooltipDirective,
+        TumUiButtonDirective,
+        TumUiMessageComponent,
+        TumUiChipComponent,
+        TumUiAutoCompleteComponent,
+        TumUiInputDirective,
+        ImageCropperModalComponent,
         OrganizationSelectorComponent,
     ],
 })
@@ -83,34 +97,30 @@ export class CourseUpdateComponent implements OnInit {
     private readonly fileService = inject(FileService);
     private readonly alertService = inject(AlertService);
     private readonly profileService = inject(ProfileService);
+    private readonly featureToggleService = inject(FeatureToggleService);
     private readonly organizationService = inject(OrganizationManagementService);
-    private readonly dialogService = inject(DialogService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly router = inject(Router);
     private readonly accountService = inject(AccountService);
+    private readonly competencyOrchestrationApiService = inject(CompetencyOrchestrationApiService);
     private readonly destroyRef = inject(DestroyRef);
 
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
-    protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
     protected readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     protected readonly COURSE_SHORT_NAME_MAX_LENGTH = COURSE_SHORT_NAME_MAX_LENGTH;
     protected readonly MAX_GRADING_POINTS = MAX_GRADING_POINTS;
 
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
-    protected readonly faTimes = faTimes;
     protected readonly faTrash = faTrash;
     protected readonly faQuestionCircle = faQuestionCircle;
-    protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly faPen = faPen;
 
     readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
     readonly colorSelector = viewChild.required(ColorSelectorComponent);
-    readonly tzTypeAhead = viewChild.required<NgbTypeahead>('timeZoneInput');
 
-    tzFocus$ = new Subject<string>();
-    tzClick$ = new Subject<string>();
     timeZones: string[] = [];
+    readonly filteredTimeZones = signal<string[]>([]);
     originalTimeZone?: string;
 
     courseForm!: FormGroup; // built in ngOnInit()
@@ -119,7 +129,7 @@ export class CourseUpdateComponent implements OnInit {
     // while the template (and specs) keep reading/writing `course` and `course.X` unchanged. After deep
     // mutations performed outside a synchronous template event handler (e.g. in a subscribe/promise),
     // call commitCourse() to rebuild the reference so the signal fires.
-    private readonly _course = signal<Course>(undefined!);
+    private readonly _course = signal<Course>(undefined!, { equal: () => false });
     get course(): Course {
         return this._course();
     }
@@ -127,7 +137,10 @@ export class CourseUpdateComponent implements OnInit {
         this._course.set(value);
     }
     private commitCourse(): void {
-        this._course.update((course) => Object.assign(new Course(), course));
+        // No copy: `_course` is declared with `equal: () => false`, so re-setting the same reference emits. Copying the
+        // course here would detach the nested associations (organizations, exercises, …) that are two-way bound into
+        // child components, and it would do so on every keystroke in a date field.
+        this._course.set(this._course());
     }
     readonly isSaving = signal<boolean>(undefined!);
     courseImageUploadFile?: File;
@@ -140,16 +153,26 @@ export class CourseUpdateComponent implements OnInit {
     /** Snapshot of the organization ids loaded from the server, used to diff add/remove on save. */
     private initialOrganizationIds = new Set<number>();
     readonly isAdmin = signal(false);
+    readonly isAtLeastInstructor = signal(false);
 
     communicationEnabled = true;
     messagingEnabled = true;
+    readonly athenaFeedbackEnabled = signal(false);
     readonly atlasEnabled = signal(false);
     readonly ltiEnabled = signal(false);
-    readonly isAthenaEnabled = signal(false);
+    // Global auto-orchestration defaults, fetched when Atlas is active, shown as the override-field
+    // placeholders so instructors see what an empty override resolves to. `undefined` until loaded
+    // (or if the fetch fails) — the template falls back to a plain "Use default" label.
+    readonly debounceWindowSecondsDefault = signal<number | undefined>(undefined);
+    readonly maxDailyOrchestrationDefault = signal<number | undefined>(undefined);
 
     private courseStorageService = inject(CourseStorageService);
 
-    readonly semesters = getSemesters();
+    // Bound directly in the template, so it must be a signal for zoneless change detection to pick up the
+    // ngOnInit assignment (the course, and therefore the semester list, is only known once ngOnInit runs).
+    readonly semesters = signal<string[]>([]);
+
+    private previousSemester?: string;
 
     // NOTE: These constants are used to define the maximum length of complaints and complaint responses.
     // This is the maximum value allowed in our database. These values must be the same as in Constants.java
@@ -195,10 +218,31 @@ export class CourseUpdateComponent implements OnInit {
 
         this.atlasEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS));
         this.ltiEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI));
-        this.isAthenaEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA));
+        // Load the global auto-orchestration defaults to display as override placeholders. Best-effort:
+        // if the feature toggle is off or the request fails, the placeholders stay on the plain
+        // "Use default" label.
+        if (this.atlasEnabled()) {
+            // The defaults endpoint is gated by FeatureToggle.AtlasAgent (and 403s when it is off), the same
+            // toggle that hides the override controls. Only fetch when the toggle is active to avoid a failing
+            // request on every course-edit load in deployments where the agent feature is disabled.
+            firstValueFrom(this.featureToggleService.getFeatureToggleActive(FeatureToggle.AtlasAgent))
+                .then((atlasAgentActive) => {
+                    if (!atlasAgentActive) {
+                        return undefined;
+                    }
+                    return this.competencyOrchestrationApiService.getDefaults().then((defaults) => {
+                        this.debounceWindowSecondsDefault.set(defaults.debounceWindowSeconds);
+                        this.maxDailyOrchestrationDefault.set(defaults.maxDailyOrchestrations);
+                    });
+                })
+                .catch(() => {
+                    // Defaults are non-essential; leave the placeholders on the generic label.
+                });
+        }
 
         this.communicationEnabled = isCommunicationEnabled(this.course);
         this.messagingEnabled = isMessagingEnabled(this.course);
+        this.athenaFeedbackEnabled.set(!!(this.course.athenaGradingFeedbackEnabled || this.course.athenaFormativeFeedbackEnabled));
 
         this.courseForm = new FormGroup(
             {
@@ -216,13 +260,21 @@ export class CourseUpdateComponent implements OnInit {
                 ),
                 description: new FormControl(this.course.description),
                 courseInformationSharingMessagingCodeOfConduct: new FormControl(this.course.courseInformationSharingMessagingCodeOfConduct),
-                startDate: new FormControl(this.course.startDate),
-                endDate: new FormControl(this.course.endDate),
-                semester: new FormControl(this.course.semester),
+                startDate: new FormControl(this.course.startDate, { validators: [Validators.required] }),
+                endDate: new FormControl(this.course.endDate, { validators: [Validators.required] }),
+                semester: new FormControl(this.course.semester, { validators: [Validators.required] }),
                 testCourse: new FormControl(this.course.testCourse),
                 gradeRelevant: new FormControl(this.course.courseConfiguration?.gradeRelevant ?? true),
                 dataRetentionHold: new FormControl(this.course.courseConfiguration?.dataRetentionHold ?? false),
                 learningPathsEnabled: new FormControl(this.course.learningPathsEnabled),
+                autoOrchestratorEnabled: new FormControl(this.course.courseConfiguration?.autoOrchestratorEnabled ?? false),
+                // Seconds / daily run counts: reject fractional values in addition to the lower bound.
+                debounceWindowSecondsOverride: new FormControl(this.course.courseConfiguration?.debounceWindowSecondsOverride, {
+                    validators: [Validators.min(1), Validators.pattern(/^\d+$/)],
+                }),
+                maxDailyOrchestrationOverride: new FormControl(this.course.courseConfiguration?.maxDailyOrchestrationOverride, {
+                    validators: [Validators.min(1), Validators.pattern(/^\d+$/)],
+                }),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled()),
                 requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled()),
@@ -251,7 +303,6 @@ export class CourseUpdateComponent implements OnInit {
                 maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
-                restrictedAthenaModulesAccess: new FormControl(this.course.restrictedAthenaModulesAccess),
                 enrollmentEnabled: new FormControl(this.course.enrollmentEnabled),
                 enrollmentStartDate: new FormControl(this.course.enrollmentStartDate),
                 enrollmentEndDate: new FormControl(this.course.enrollmentEndDate),
@@ -262,10 +313,16 @@ export class CourseUpdateComponent implements OnInit {
                 unenrollmentEndDate: new FormControl(this.course.unenrollmentEndDate),
                 color: new FormControl(this.course.color),
                 courseIcon: new FormControl(this.course.courseIcon),
-                timeZone: new FormControl(this.course.timeZone),
+                timeZone: new FormControl(this.course.timeZone, { validators: [this.validTimeZoneValidator] }),
             },
             { validators: CourseValidator },
         );
+
+        this.semesters.set(getSemesters(this.course.semester));
+        this.previousSemester = this.course.semester;
+        this.courseForm.controls['semester'].valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((semester) => {
+            this.applySemesterDateRange(semester ?? undefined);
+        });
 
         // Sync form date control values back to this.course so that validation getters
         // (isValidDate, isValidEnrollmentPeriod, isValidUnenrollmentEndDate) reflect
@@ -285,18 +342,17 @@ export class CourseUpdateComponent implements OnInit {
         }
 
         this.isAdmin.set(this.accountService.isAdmin());
+        this.isAtLeastInstructor.set(this.accountService.isAtLeastInstructorInCourse(this.course));
     }
-    tzResultFormatter = (timeZone: string) => timeZone;
-    tzInputFormatter = (timeZone: string) => timeZone;
+    onTimeZoneSearch(event: TumUiAutoCompleteSearchEvent): void {
+        const term = event.query;
+        this.filteredTimeZones.set(term.length < 3 ? [] : this.timeZones.filter((tz) => tz.toLowerCase().includes(term.toLowerCase())));
+    }
 
-    tzSearch: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
-        const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
-        const clicksWithClosedPopup$ = this.tzClick$.pipe(filter(() => !this.tzTypeAhead().isPopupOpen()));
-        const inputFocus$ = this.tzFocus$;
-
-        return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
-            map((term) => (term.length < 3 ? [] : this.timeZones.filter((tz) => tz.toLowerCase().indexOf(term.toLowerCase()) > -1))),
-        );
+    /** Rejects free-typed text that does not match one of the IANA time zones offered by the autocomplete. */
+    private readonly validTimeZoneValidator: ValidatorFn = (control: AbstractControl) => {
+        const value = control.value;
+        return !value || this.timeZones.includes(value) ? null : { invalidTimeZone: true };
     };
 
     get timeZoneChanged() {
@@ -309,7 +365,11 @@ export class CourseUpdateComponent implements OnInit {
      * Returns to the overview page if there is no previous state, and we created a new course
      */
     previousState() {
-        this.navigationUtilService.navigateBackWithOptional(['course-management'], this.course.id?.toString());
+        if (this.course.id) {
+            this.navigationUtilService.navigateBackWithOptional(['course-management'], this.course.id.toString());
+        } else {
+            this.navigationUtilService.navigateBackWithOptional(['courses'], undefined);
+        }
     }
 
     /**
@@ -331,11 +391,15 @@ export class CourseUpdateComponent implements OnInit {
         // TODO: move presentationScore to gradingScale to avoid this
         course.presentationScore = this.course.presentationScore;
 
-        // Map the flat data-privacy form controls into the nested course configuration expected by the update DTO mapper.
+        // Map the flat data-privacy and auto-orchestration form controls into the nested course configuration expected by
+        // the update DTO mapper.
         course.courseConfiguration = {
             id: this.course.courseConfiguration?.id,
             gradeRelevant: rawValue.gradeRelevant ?? true,
             dataRetentionHold: rawValue.dataRetentionHold ?? false,
+            autoOrchestratorEnabled: rawValue.autoOrchestratorEnabled ?? false,
+            debounceWindowSecondsOverride: rawValue.debounceWindowSecondsOverride ?? undefined,
+            maxDailyOrchestrationOverride: rawValue.maxDailyOrchestrationOverride ?? undefined,
         };
 
         if (this.communicationEnabled && this.messagingEnabled) {
@@ -352,9 +416,15 @@ export class CourseUpdateComponent implements OnInit {
         }
 
         if (this.course.id !== undefined) {
-            this.subscribeToSaveResponse(this.courseManagementService.update(this.course.id, course, file));
+            this.courseManagementService.update(this.course.id, course, file).subscribe({
+                next: (response) => this.completeSave(response.body?.id, response.body ?? undefined),
+                error: (res: HttpErrorResponse) => this.onSaveError(res),
+            });
         } else {
-            this.subscribeToSaveResponse(this.courseAdminService.create(course, file));
+            this.courseAdminService.create(course, file).subscribe({
+                next: (response) => this.completeSave(response.body?.id),
+                error: (res: HttpErrorResponse) => this.onSaveError(res),
+            });
         }
     }
 
@@ -367,29 +437,20 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
-     * Async response after saving a course, handles appropriate action in case of error
-     * @param result The Http response from the server
-     */
-    private subscribeToSaveResponse(result: Observable<HttpResponse<Course>>) {
-        result.subscribe({
-            next: (response: HttpResponse<Course>) => this.onSaveSuccess(response.body),
-            error: (res: HttpErrorResponse) => this.onSaveError(res),
-        });
-    }
-
-    /**
      * Action on successful course creation or edit.
-     * Organization assignments are persisted via dedicated admin endpoints (the course update payload
-     * intentionally does not carry organizations), so the diff is synced here before finalizing.
+     * Organization assignments are persisted via dedicated admin endpoints (the course payloads
+     * intentionally do not carry organizations), so the diff is synced here before finalizing.
+     * @param courseId the id of the saved course
+     * @param updatedCourse the course the update endpoint returned; absent after a create, which returns only the id
      */
-    private onSaveSuccess(updatedCourse: Course | null) {
-        if (updatedCourse?.id !== undefined && this.isAdmin()) {
-            this.syncCourseOrganizations(updatedCourse.id).subscribe({
-                next: () => this.finalizeSave(updatedCourse),
+    private completeSave(courseId: number | undefined, updatedCourse?: Course) {
+        if (courseId !== undefined && this.isAdmin()) {
+            this.syncCourseOrganizations(courseId).subscribe({
+                next: () => this.finalizeSave(courseId, updatedCourse),
                 error: (res: HttpErrorResponse) => this.onSaveError(res),
             });
         } else {
-            this.finalizeSave(updatedCourse);
+            this.finalizeSave(courseId, updatedCourse);
         }
     }
 
@@ -427,20 +488,19 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
-     * Broadcasts the modification, updates the local course store and navigates back to the course.
+     * Broadcasts the modification, updates the local course store when the server returned the course,
+     * and navigates to the course.
      */
-    private finalizeSave(updatedCourse: Course | null) {
+    private finalizeSave(courseId: number | undefined, updatedCourse?: Course) {
         this.isSaving.set(false);
 
-        if (this.course != updatedCourse) {
-            this.eventManager.broadcast({
-                name: 'courseModification',
-                content: 'Changed a course',
-            });
-            this.courseStorageService.updateCourse(updatedCourse!);
-        }
+        this.eventManager.broadcast({
+            name: 'courseModification',
+            content: 'Changed a course',
+        });
+        this.courseStorageService.updateCourse(updatedCourse);
 
-        void this.router.navigate(['course-management', updatedCourse?.id?.toString()]);
+        void this.router.navigate(['course-management', courseId?.toString()]);
         scrollToTopOfPage();
     }
 
@@ -588,9 +648,17 @@ export class CourseUpdateComponent implements OnInit {
         this.course.testCourse = !this.course.testCourse;
     }
 
-    changeRestrictedAthenaModulesEnabled() {
-        this.course.restrictedAthenaModulesAccess = !this.course.restrictedAthenaModulesAccess;
-        this.courseForm.controls['restrictedAthenaModulesAccess'].setValue(this.course.restrictedAthenaModulesAccess);
+    /**
+     * Reset the per-course override inputs when auto-orchestration is turned off. The override fields
+     * are hidden by an @if on the toggle, so without this they would retain stale values that
+     * getRawValue() would still carry into the update DTO. Clearing them keeps the saved config in
+     * sync with what the instructor can see.
+     */
+    changeAutoOrchestratorEnabled() {
+        if (!this.courseForm.controls['autoOrchestratorEnabled'].value) {
+            this.courseForm.controls['debounceWindowSecondsOverride'].setValue(undefined);
+            this.courseForm.controls['maxDailyOrchestrationOverride'].setValue(undefined);
+        }
     }
 
     /**
@@ -633,15 +701,24 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
-     * Returns whether the dates are valid or not
-     * @return true if the dats are valid
+     * Returns whether the dates are valid or not. Both dates are mandatory, so a missing one is invalid.
+     * @return true if the dates are valid
      */
     get isValidDate(): boolean {
-        // allow instructors to set startDate and endDate later
         if (this.atLeastOneDateNotExisting()) {
-            return true;
+            return false;
         }
         return dayjs(this.course.startDate).isBefore(this.course.endDate);
+    }
+
+    /**
+     * Whether both dates are set but in the wrong order. Kept separate from a missing date, which the date picker
+     * reports itself through its required-field message.
+     *
+     * @return true when both dates exist and the start date is not before the end date
+     */
+    get isDateOrderInvalid(): boolean {
+        return !this.atLeastOneDateNotExisting() && !dayjs(this.course.startDate).isBefore(this.course.endDate);
     }
 
     /**
@@ -654,8 +731,8 @@ export class CourseUpdateComponent implements OnInit {
             return true;
         }
 
-        // enrollment period requires configured start and end date of the course
-        if (this.atLeastOneDateNotExisting() || !this.isValidDate) {
+        // enrollment period requires a valid start and end date of the course
+        if (!this.isValidDate) {
             return false;
         }
 
@@ -688,6 +765,25 @@ export class CourseUpdateComponent implements OnInit {
         return !this.course.startDate || !this.course.endDate || !this.course.startDate.isValid() || !this.course.endDate.isValid();
     }
 
+    /**
+     * Applies the date range of the newly selected semester to the start and end date controls, unless the user has
+     * picked a date by hand. Once a date is set by hand, later semester changes leave it alone, so editing an
+     * existing course never discards its real dates.
+     *
+     * @param semester the newly selected semester
+     */
+    private applySemesterDateRange(semester: string | undefined): void {
+        const { startDate, endDate } = applySemesterToDates(
+            semester,
+            this.previousSemester,
+            this.courseForm.controls['startDate'].value,
+            this.courseForm.controls['endDate'].value,
+        );
+        this.previousSemester = semester;
+        this.courseForm.controls['startDate'].setValue(startDate);
+        this.courseForm.controls['endDate'].setValue(endDate);
+    }
+
     get isValidConfiguration(): boolean {
         return this.isValidDate && this.isValidEnrollmentPeriod && this.isValidUnenrollmentEndDate;
     }
@@ -707,19 +803,16 @@ export class CourseUpdateComponent implements OnInit {
         this.fileInput().nativeElement.click();
     }
 
+    /** File the cropper dialog is working on; the dialog is shown while it is set. */
+    readonly imageToCrop = signal<File | undefined>(undefined);
+
     openCropper(): void {
-        const dialogRef = this.dialogService.open(ImageCropperModalComponent, {
-            header: '',
-            width: '500px',
-            data: {
-                uploadFile: this.courseImageUploadFile,
-            },
-        });
-        dialogRef?.onClose.subscribe((result: string | undefined) => {
-            if (result) {
-                this.croppedImage.set(result);
-            }
-        });
+        this.imageToCrop.set(this.courseImageUploadFile);
+    }
+
+    onImageCropped(croppedImage: string): void {
+        this.imageToCrop.set(undefined);
+        this.croppedImage.set(croppedImage);
     }
 
     /**

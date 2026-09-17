@@ -3,7 +3,9 @@ package de.tum.cit.aet.artemis.exercise.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,12 +31,14 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionResponseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionVersionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithComplaintDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -42,14 +46,17 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 
 /**
  * REST controller for managing Submission.
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("submission/submissions")
 @RestController
 @RequestMapping("api/exercise/")
 public class SubmissionResource {
@@ -79,9 +86,12 @@ public class SubmissionResource {
 
     private final SubmissionVersionRepository submissionVersionRepository;
 
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     public SubmissionResource(SubmissionService submissionService, SubmissionRepository submissionRepository, BuildLogEntryService buildLogEntryService,
             ResultService resultService, StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExerciseRepository exerciseRepository, SubmissionVersionRepository submissionVersionRepository) {
+            ExerciseRepository exerciseRepository, SubmissionVersionRepository submissionVersionRepository,
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
         this.buildLogEntryService = buildLogEntryService;
@@ -91,6 +101,7 @@ public class SubmissionResource {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.submissionVersionRepository = submissionVersionRepository;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -113,12 +124,12 @@ public class SubmissionResource {
         }
 
         checkAccessPermissionAtInstructor(submission.get());
-        List<Result> results = submission.get().getResults();
+        Set<Result> results = submission.get().getResults();
         for (Result result : results) {
             resultService.deleteResult(result, true);
         }
         // We have to set the results to an empty list because otherwise clearing the build log entries does not work correctly
-        submission.get().setResults(List.of());
+        submission.get().setResults(Set.of());
         if (submission.get() instanceof ProgrammingSubmission programmingSubmission) {
             buildLogEntryService.deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission);
         }
@@ -137,7 +148,7 @@ public class SubmissionResource {
      */
     @GetMapping("exercises/{exerciseId}/test-run-submissions")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<Submission>> getTestRunSubmissionsForAssessment(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<SubmissionResponseDTO>> getTestRunSubmissionsForAssessment(@PathVariable Long exerciseId) {
         log.debug("REST request to get all test run submissions for exercise {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!exercise.isExamExercise()) {
@@ -156,7 +167,14 @@ public class SubmissionResource {
                 latestSubmission.addResult(submissionService.prepareTestRunSubmissionForAssessment(latestSubmission));
             }
             latestSubmission.removeAutomaticResults();
-            return ResponseEntity.ok().body(List.of(latestSubmission));
+            if (exercise instanceof ProgrammingExercise programmingExercise) {
+                // the draft's automatic test-case and SCA feedback lives in the JSON-ignored typed collections -
+                // attach the synthesized legacy views so the tutor sees the automatic feedback. The exercise
+                // context is passed explicitly: the test-run participation's exercise is a lazy proxy here.
+                latestSubmission.getResults().stream().filter(Objects::nonNull)
+                        .forEach(result -> programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, programmingExercise, false));
+            }
+            return ResponseEntity.ok().body(List.of(SubmissionResponseDTO.of(latestSubmission)));
         }
         else {
             return ResponseEntity.ok(List.of());
@@ -215,7 +233,7 @@ public class SubmissionResource {
      */
     @GetMapping("exercises/{exerciseId}/submissions-for-import")
     @EnforceAtLeastInstructor
-    public ResponseEntity<SearchResultPageDTO<Submission>> getSubmissionsOnPageWithSize(@PathVariable Long exerciseId, SearchTermPageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<SubmissionResponseDTO>> getSubmissionsOnPageWithSize(@PathVariable Long exerciseId, SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get all Submissions for import : {}", exerciseId);
 
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);

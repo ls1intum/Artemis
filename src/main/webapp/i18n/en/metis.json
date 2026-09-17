@@ -53,7 +53,8 @@
                 "lecture": "Lecture",
                 "channel": "Channel",
                 "user": "User",
-                "faq": "FAQ"
+                "faq": "FAQ",
+                "emoji": "Emoji"
             },
             "channel": {
                 "noChannel": "There is no channel available.",

@@ -114,7 +114,7 @@ describe('CourseManagementContainerComponent', () => {
     let route: ActivatedRoute;
 
     let findSpy: ReturnType<typeof vi.spyOn>;
-    let findOneForDashboardSpy: ReturnType<typeof vi.spyOn>;
+    let findCourseSpy: ReturnType<typeof vi.spyOn>;
     let getCourseSummarySpy: ReturnType<typeof vi.spyOn>;
     let deleteSpy: ReturnType<typeof vi.spyOn>;
     let courseSidebarService: CourseSidebarService;
@@ -186,7 +186,7 @@ describe('CourseManagementContainerComponent', () => {
         );
         metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
 
-        findOneForDashboardSpy = vi.spyOn(courseService, 'findOneForDashboard').mockReturnValue(
+        findCourseSpy = vi.spyOn(courseService, 'find').mockReturnValue(
             of(
                 new HttpResponse({
                     body: course1,
@@ -293,7 +293,7 @@ describe('CourseManagementContainerComponent', () => {
             expect(component.course()).toEqual(course1);
         });
 
-        expect(findOneForDashboardSpy).toHaveBeenCalledWith(1);
+        expect(findCourseSpy).toHaveBeenCalledWith(1);
     });
 
     it('should create sidebar items based on course properties', () => {
@@ -486,7 +486,7 @@ describe('CourseManagementContainerComponent', () => {
         component.closeProgress();
 
         expect(component.operationProgress()).toBeUndefined();
-        expect(router.navigate).toHaveBeenCalledExactlyOnceWith(['/course-management']);
+        expect(router.navigate).toHaveBeenCalledExactlyOnceWith(['/courses']);
     });
 
     it('should not navigate when closing non-delete progress', () => {
@@ -519,13 +519,64 @@ describe('CourseManagementContainerComponent', () => {
         expect(expectedButton).toBeNull();
     });
 
-    it('should set hasSidebar when onSubRouteActivate is called', () => {
+    it('should set hasSidebar when onSubRouteActivate is called on communication route', () => {
         vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/communication');
 
         component.onSubRouteActivate({});
 
         expect(component.communicationRouteLoaded()).toBe(true);
         expect(component.hasSidebar()).toBe(true);
+    });
+
+    it('should set hasSidebar to true when an intermediate route has hasSidebar: true', () => {
+        vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/exams/3/students');
+        route.snapshot = {
+            firstChild: {
+                data: { hasSidebar: true },
+                firstChild: {
+                    data: {},
+                },
+            },
+        } as any;
+
+        component.onSubRouteActivate({});
+
+        expect(component.communicationRouteLoaded()).toBe(false);
+        expect(component.hasSidebar()).toBe(true);
+    });
+
+    it('should set hasSidebar to true when a leaf route has hasSidebar: true', () => {
+        vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/exams');
+        route.snapshot = {
+            firstChild: {
+                data: {},
+                firstChild: {
+                    data: { hasSidebar: true },
+                },
+            },
+        } as any;
+
+        component.onSubRouteActivate({});
+
+        expect(component.communicationRouteLoaded()).toBe(false);
+        expect(component.hasSidebar()).toBe(true);
+    });
+
+    it('should set hasSidebar to false when no route in hierarchy has hasSidebar and not communication', () => {
+        vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/exercises');
+        route.snapshot = {
+            firstChild: {
+                data: {},
+                firstChild: {
+                    data: {},
+                },
+            },
+        } as any;
+
+        component.onSubRouteActivate({});
+
+        expect(component.communicationRouteLoaded()).toBe(false);
+        expect(component.hasSidebar()).toBe(false);
     });
 
     it('should set up conversation service if course has communication enabled', () => {

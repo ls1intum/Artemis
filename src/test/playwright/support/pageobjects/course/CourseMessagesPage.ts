@@ -21,7 +21,7 @@ export class CourseMessagesPage {
      * Clicks the button to initiate channel creation.
      */
     async createChannelButton() {
-        await this.page.locator('.btn-primary.btn-sm.square-button').click();
+        await this.page.getByTestId('sidebar-create-menu-button').click();
         const createBtn = this.page.locator('button', { hasText: 'Create channel' });
         await createBtn.waitFor({ state: 'visible', timeout: 5000 });
         await createBtn.click();
@@ -31,12 +31,12 @@ export class CourseMessagesPage {
      * Navigates to the channel overview section.
      */
     async browseChannelsButton() {
-        await this.page.locator('.btn-primary.btn-sm.square-button').click();
+        await this.page.getByTestId('sidebar-create-menu-button').click();
         const browseBtn = this.page.locator('button', { hasText: 'Browse channels' });
         await browseBtn.waitFor({ state: 'visible', timeout: 5000 });
         await browseBtn.click();
         // Wait for the channels overview to load
-        await this.page.locator('.channels-overview').waitFor({ state: 'visible', timeout: 10000 });
+        await this.page.getByTestId('channels-overview-dialog').waitFor({ state: 'visible', timeout: 10000 });
     }
 
     /**
@@ -44,7 +44,7 @@ export class CourseMessagesPage {
      * @param name - The name of the channel to check for existence.
      */
     async checkChannelsExists(name: string) {
-        await expect(this.page.locator('.channels-overview .list-group-item').getByText(name, { exact: true })).toBeVisible({ timeout: 15000 });
+        await expect(this.page.getByTestId('channel-overview-item').getByText(name, { exact: true })).toBeVisible({ timeout: 15000 });
     }
 
     /**
@@ -53,9 +53,8 @@ export class CourseMessagesPage {
      * @returns The ID of the channel.
      */
     async getChannelIdByName(name: string) {
-        const channelElement = this.page.locator('.channels-overview .list-group-item', { hasText: name });
-        const id = await channelElement.getAttribute('id');
-        return id?.replace('channel-', '');
+        const channelElement = this.page.getByTestId('channel-overview-item').filter({ hasText: name });
+        return (await channelElement.getAttribute('data-channel-id')) ?? undefined;
     }
 
     /**
@@ -64,7 +63,7 @@ export class CourseMessagesPage {
      */
     async joinChannel(channelID: number) {
         const responsePromise = this.page.waitForResponse(`api/communication/courses/*/channels/*/register`);
-        await this.page.locator(`#channel-${channelID} #register${channelID}`).click({ force: true });
+        await this.page.locator(`[data-channel-id="${channelID}"]`).locator(`#register${channelID}`).click({ force: true });
         await responsePromise;
     }
 
@@ -74,7 +73,7 @@ export class CourseMessagesPage {
      */
     async leaveChannel(channelID: number) {
         const responsePromise = this.page.waitForResponse(`api/communication/courses/*/channels/*/deregister`);
-        await this.page.locator(`#channel-${channelID} #deregister${channelID}`).click({ force: true });
+        await this.page.locator(`[data-channel-id="${channelID}"]`).locator(`#deregister${channelID}`).click({ force: true });
         await responsePromise;
     }
 
@@ -84,7 +83,7 @@ export class CourseMessagesPage {
      * @returns The locator for the badge element.
      */
     getJoinedBadge(channelID: number) {
-        return this.page.locator(`#channel-${channelID} .badge`);
+        return this.page.locator(`[data-channel-id="${channelID}"]`).getByTestId('channel-joined-badge');
     }
 
     /**
@@ -92,7 +91,7 @@ export class CourseMessagesPage {
      * @param name - The name to be set.
      */
     async setName(name: string) {
-        const locator = this.page.locator('.p-dialog-content #name');
+        const locator = this.page.getByRole('dialog').locator('#name');
         await locator.clear();
         await locator.fill(name);
     }
@@ -102,7 +101,7 @@ export class CourseMessagesPage {
      * @param description - The description to be set.
      */
     async setDescription(description: string) {
-        const locator = this.page.locator('.p-dialog-content #description');
+        const locator = this.page.getByRole('dialog').locator('#description');
         await locator.clear();
         await locator.fill(description);
     }
@@ -111,35 +110,35 @@ export class CourseMessagesPage {
      * Sets a channel to be private in the modal dialog (PrimeNG SelectButton).
      */
     async setPrivate() {
-        await this.page.locator('.p-dialog-content p-selectbutton').first().getByText('Private').click();
+        await this.page.getByTestId('channel-visibility-select').getByText('Private').click();
     }
 
     /**
      * Sets a channel to be public in the modal dialog (PrimeNG SelectButton).
      */
     async setPublic() {
-        await this.page.locator('.p-dialog-content p-selectbutton').first().getByText('Public').click();
+        await this.page.getByTestId('channel-visibility-select').getByText('Public').click();
     }
 
     /**
      * Marks a channel as course-wide in the modal dialog (PrimeNG SelectButton).
      */
     async setCourseWideChannel() {
-        await this.page.locator('.p-dialog-content p-selectbutton').nth(1).getByText('Course-wide Channel').click();
+        await this.page.getByTestId('channel-scope-select').getByText('Course-wide Channel').click();
     }
 
     /**
      * Marks a channel as an announcement channel in the modal dialog (PrimeNG SelectButton).
      */
     async setAnnouncementChannel() {
-        await this.page.locator('.p-dialog-content p-selectbutton').nth(2).getByText('Announcement Channel').click();
+        await this.page.getByTestId('channel-type-select').getByText('Announcement Channel').click();
     }
 
     /**
      * Marks a channel as unrestricted in the modal dialog (PrimeNG SelectButton).
      */
     async setUnrestrictedChannel() {
-        await this.page.locator('.p-dialog-content p-selectbutton').nth(2).getByText('Unrestricted Channel').click();
+        await this.page.getByTestId('channel-type-select').getByText('Unrestricted Channel').click();
     }
 
     /**
@@ -151,7 +150,7 @@ export class CourseMessagesPage {
         const responsePromise = this.page.waitForResponse(
             (resp) => resp.url().includes('api/communication/courses/') && resp.url().endsWith('/channels') && resp.request().method() === 'POST' && resp.status() === 201,
         );
-        await this.page.locator('.p-dialog-content #submitButton').click();
+        await this.page.getByRole('dialog').locator('#submitButton').click();
         const response = await responsePromise;
         const channel: ChannelDTO = await readResponseJson(response);
         await this.page.waitForURL(`**/communication?conversationId=${channel.id}`);
@@ -164,7 +163,7 @@ export class CourseMessagesPage {
      * @returns The locator for the error message element.
      */
     getError() {
-        return this.page.locator('.modal-body .alert');
+        return this.page.getByTestId('channel-name-error');
     }
 
     /**
@@ -172,7 +171,7 @@ export class CourseMessagesPage {
      * @returns The locator for the name element.
      */
     getName() {
-        return this.page.locator('h4.d-inline-block');
+        return this.page.getByTestId('conversation-name');
     }
 
     /**
@@ -180,7 +179,7 @@ export class CourseMessagesPage {
      * @returns The locator for the topic element.
      */
     getTopic() {
-        return this.page.locator('#conversation-topic');
+        return this.page.locator('[data-testid="conversation-topic"]');
     }
 
     /**
@@ -236,7 +235,7 @@ export class CourseMessagesPage {
      * Closes the edit panel in the conversation detail dialog.
      */
     async closeEditPanel() {
-        await this.page.locator('.conversation-detail-dialog .btn-close').click();
+        await this.page.getByTestId('conversation-detail-close-button').click();
     }
 
     /**
@@ -289,6 +288,68 @@ export class CourseMessagesPage {
     }
 
     /**
+     * Returns the Monaco editor of the main (non-thread) message input.
+     */
+    getMessageEditor() {
+        return this.page.locator('jhi-posting-markdown-editor .monaco-editor').first();
+    }
+
+    /**
+     * Focuses the main message editor and types the given text via real keystrokes rather than
+     * Monaco's `setValue` API (used by {@link writeMessage}). Behavior that only reacts to actual
+     * typing, such as the emoji shortcode suggest widget, requires this instead of `fill`/`setValue`.
+     * @param text - The text to type into the editor.
+     */
+    async typeInMessageEditor(text: string) {
+        const editor = this.getMessageEditor();
+        await editor.waitFor({ state: 'visible', timeout: 10000 });
+        await editor.click();
+        await this.page.keyboard.type(text);
+    }
+
+    /**
+     * Returns the locator for Monaco's suggest widget (the autocomplete popup shown while typing),
+     * scoped to its `visible` state class so a hidden (but still DOM-attached) widget from a
+     * previous session does not cause a strict-mode match with the currently open one.
+     *
+     * Monaco builds this overlay itself and offers no way to put attributes on it, so unlike the rest
+     * of the suite this locator has to name Monaco's own classes.
+     */
+    getSuggestWidget() {
+        return this.page.locator('.suggest-widget.visible');
+    }
+
+    /**
+     * Returns the locator for the rendered text content of the main message editor.
+     */
+    getMessageEditorText() {
+        return this.getMessageEditor().locator('.view-lines');
+    }
+
+    /**
+     * Waits until the send button becomes enabled. The editor propagates content to the send form
+     * with a debounce, so the button's enabled state only mirrors form validity a moment after typing.
+     */
+    async waitUntilSendEnabled() {
+        await expect(this.page.locator('#save')).toBeEnabled({ timeout: 10000 });
+    }
+
+    /**
+     * Sends the message currently in the main message editor by pressing Enter (rather than
+     * clicking the send button), and waits for the message to be persisted.
+     * @returns The created message.
+     */
+    async sendMessageWithEnterKey(): Promise<Post> {
+        const responsePromise = this.page.waitForResponse(
+            (resp) => resp.url().includes('api/communication/courses/') && resp.url().endsWith('/messages') && resp.request().method() === 'POST',
+        );
+        await this.page.keyboard.press('Enter');
+        const response = await responsePromise;
+        expect(response.status()).toBe(201);
+        return readResponseJson(response);
+    }
+
+    /**
      * Checks for the presence of a message by its ID and content.
      * @param messageId - The ID of the message to check.
      * @param message - The content of the message to verify.
@@ -331,18 +392,18 @@ export class CourseMessagesPage {
         for (let attempt = 0; attempt < 3; attempt++) {
             await postLocator.locator('.message-container').click({ button: 'right' });
             try {
-                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                await this.page.getByTestId('posting-context-menu').waitFor({ state: 'visible', timeout: 3000 });
                 break;
             } catch {
                 if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
             }
         }
 
-        const editButton = postLocator.locator('.dropdown-menu.show .editIcon');
+        const editButton = postLocator.getByTestId('posting-menu-edit');
         if (await editButton.isVisible()) {
             await editButton.click();
         } else {
-            await postLocator.locator('.reaction-button.edit').click();
+            await postLocator.getByTestId('posting-reaction-edit').click();
         }
 
         // Use the setMonacoEditorContentByLocator utility to set the content directly
@@ -365,7 +426,7 @@ export class CourseMessagesPage {
         for (let attempt = 0; attempt < 3; attempt++) {
             await postLocator.locator('.message-container').click({ button: 'right' });
             try {
-                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                await this.page.getByTestId('posting-context-menu').waitFor({ state: 'visible', timeout: 3000 });
                 break;
             } catch {
                 if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
@@ -373,11 +434,11 @@ export class CourseMessagesPage {
         }
 
         const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages/*`);
-        const deleteButton = postLocator.locator('.dropdown-menu.show .deleteIcon');
+        const deleteButton = postLocator.getByTestId('posting-menu-delete');
         if (await deleteButton.isVisible()) {
             await deleteButton.click();
         } else {
-            await postLocator.locator('.reaction-button.delete').click();
+            await postLocator.getByTestId('posting-reaction-delete').click();
         }
         await responsePromise;
     }
@@ -412,7 +473,7 @@ export class CourseMessagesPage {
      * Clicks the button to initiate group chat creation.
      */
     async createGroupChatButton() {
-        await this.page.locator('.btn-primary.btn-sm.square-button').click();
+        await this.page.getByTestId('sidebar-create-menu-button').click();
         const createBtn = this.page.locator('button', { hasText: 'Create group chat' });
         await createBtn.waitFor({ state: 'visible', timeout: 5000 });
         await createBtn.click();
@@ -467,7 +528,7 @@ export class CourseMessagesPage {
     async addUserToGroupChat(user: string) {
         // Use a flexible selector that matches any users-selector search input (the ID suffix is a global counter)
         const searchInput = this.page.locator('input[id$="-search-input"][id^="users-selector"]');
-        const dropdownItem = this.page.locator('.dropdown-item', { hasText: `(${user})` });
+        const dropdownItem = this.page.getByTestId('user-search-result').filter({ hasText: `(${user})` });
         for (let attempt = 0; attempt < 3; attempt++) {
             await searchInput.clear();
             await searchInput.fill(user);
@@ -494,90 +555,34 @@ export class CourseMessagesPage {
 
     /**
      * Navigates to a conversation and waits for it to become active.
-     * Angular's setActiveConversation() looks up the conversationId in a cached list.
-     * If the cache isn't ready when the route first processes, the conversation won't activate.
-     * We handle this by navigating to the full URL, waiting for the conversations API to respond
-     * (which populates the cache), then reloading if the conversation didn't activate.
+     * <p>
+     * A single navigation, deliberately. This used to retry twice, because `setActiveConversation` dropped the
+     * conversation the url asked for whenever the route emitted its query parameters before the request that loads the
+     * conversations had returned, which left the page empty. The service now remembers that request and applies it when
+     * the list arrives, so one navigation is enough and a retry would only hide the day that stops being true.
+     *
+     * @param courseID - The ID of the course the conversation belongs to.
+     * @param conversationID - The ID of the conversation to open.
      */
     async openConversation(courseID: number, conversationID: number) {
-        const fullUrl = `/courses/${courseID}/communication?conversationId=${conversationID}`;
-        const membersButton = this.page.locator('.members');
-
-        // Attempt 1: Navigate directly to the conversation URL
-        // Set up the response waiter BEFORE navigation so we don't miss the response
-        const conversationsApiPromise = this.page.waitForResponse(
-            (resp) =>
-                resp.url().includes('/api/communication/courses/') &&
-                resp.url().match(/\/conversations(\?|$)/) !== null &&
-                resp.request().method() === 'GET' &&
-                resp.status() === 200,
-        );
-        await this.page.goto(fullUrl);
-        // Wait for the conversations list API to complete (cache population)
-        await conversationsApiPromise.catch(() => {});
-
-        // Check if the conversation became active
-        try {
-            await membersButton.waitFor({ state: 'visible', timeout: 10000 });
-            return;
-        } catch {
-            // Conversation didn't activate — cache may not have been ready in time
-        }
-
-        // Attempt 2: Reload the page so Angular re-processes the route with a populated cache
-        await this.page.reload({ waitUntil: 'domcontentloaded' });
-        try {
-            await membersButton.waitFor({ state: 'visible', timeout: 10000 });
-            return;
-        } catch {
-            // Still not active
-        }
-
-        // Attempt 3: Full fresh navigation with wait for API
-        const apiPromise2 = this.page.waitForResponse(
-            (resp) =>
-                resp.url().includes('/api/communication/courses/') &&
-                resp.url().match(/\/conversations(\?|$)/) !== null &&
-                resp.request().method() === 'GET' &&
-                resp.status() === 200,
-        );
-        await this.page.goto(fullUrl);
-        await apiPromise2.catch(() => {});
-        await membersButton.waitFor({ state: 'visible', timeout: 10000 });
+        await this.page.goto(`/courses/${courseID}/communication?conversationId=${conversationID}`);
+        await this.page.locator('.members').waitFor({ state: 'visible' });
     }
 
     /**
      * Opens a conversation and waits until a specific post has rendered in the message list.
-     *
-     * {@link openConversation} only guarantees the conversation has *activated* (its members button
-     * is shown). Under heavy parallel multi-node load the initial message-list fetch/render occasionally
-     * races a freshly created post (or the activation itself), so the post is briefly absent from an
-     * otherwise-active conversation and the subsequent {@link checkMessage} times out. A full reload
-     * re-issues the message-list request — which, against the shared database, returns the persisted
-     * post — and re-renders the list. Retrying the reload before failing keeps callers testing their
-     * actual behavior rather than this load-induced rendering race (the same mitigation
-     * {@link openConversation} already uses for activation and the bookmark-persistence test uses after
-     * its reload).
+     * <p>
+     * Activation and rendering are two different things: {@link openConversation} returns once the conversation is
+     * active, which is before the message list has necessarily painted the post. Waiting for the post itself is what
+     * callers actually need, and it is a wait rather than a retry, so a post that never arrives still fails here.
      *
      * @param courseID - The ID of the course the conversation belongs to.
      * @param conversationID - The ID of the conversation to open.
      * @param postID - The ID of the post that must be visible before returning.
      */
     async openConversationAndWaitForPost(courseID: number, conversationID: number, postID: number) {
-        for (let attempt = 0; attempt < 3; attempt++) {
-            if (attempt === 0) {
-                await this.openConversation(courseID, conversationID);
-            } else {
-                await this.page.reload({ waitUntil: 'domcontentloaded' });
-            }
-            try {
-                await this.getSinglePost(postID).waitFor({ state: 'visible', timeout: 12000 });
-                return;
-            } catch {
-                // Post not rendered yet — fall through to a reload, which re-fetches the message list.
-            }
-        }
-        throw new Error(`Post #item-${postID} did not render in conversation ${conversationID} after activating and reloading`);
+        await this.openConversation(courseID, conversationID);
+        await this.getSinglePost(postID).waitFor({ state: 'visible' });
     }
 
     async listMembersButton(courseID: number, conversationID: number) {
@@ -605,14 +610,14 @@ export class CourseMessagesPage {
      * This is faster and more reliable than opening the member list dialog.
      */
     async checkConversationHeaderContains(name: string) {
-        await expect(this.page.locator('h4.d-inline-block')).toContainText(name, { timeout: 10000 });
+        await expect(this.page.getByTestId('conversation-name')).toContainText(name, { timeout: 10000 });
     }
 
     /**
      * Opens the settings tab within the conversation details.
      */
     async openSettingsTab() {
-        const settingsTab = this.page.locator('.settings-tab .nav-link');
+        const settingsTab = this.page.getByTestId('conversation-settings-tab');
         await settingsTab.waitFor({ state: 'visible', timeout: 10000 });
         await settingsTab.click();
     }
@@ -654,7 +659,7 @@ export class CourseMessagesPage {
         for (let attempt = 0; attempt < 3; attempt++) {
             await postLocator.locator('.message-container').click({ button: 'right' });
             try {
-                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                await this.page.getByTestId('posting-context-menu').waitFor({ state: 'visible', timeout: 3000 });
                 break;
             } catch {
                 if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
@@ -664,7 +669,7 @@ export class CourseMessagesPage {
         const responsePromise = this.page.waitForResponse(
             (resp) => resp.url().includes('/saved-posts') && (resp.request().method() === 'POST' || resp.request().method() === 'DELETE'),
         );
-        await postLocator.locator('.dropdown-menu.show .dropdown-item', { hasText: /bookmark|save/i }).click();
+        await postLocator.getByTestId('posting-menu-bookmark').click();
         await responsePromise;
     }
 
@@ -695,7 +700,7 @@ export class CourseMessagesPage {
         for (let attempt = 0; attempt < 3; attempt++) {
             await postLocator.locator('.message-container').click({ button: 'right' });
             try {
-                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                await this.page.getByTestId('posting-context-menu').waitFor({ state: 'visible', timeout: 3000 });
                 break;
             } catch {
                 if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
@@ -703,7 +708,7 @@ export class CourseMessagesPage {
         }
 
         // Click the "Add reaction" item — this opens the emoji picker at the click location
-        await this.page.locator('.dropdown-menu.show .dropdown-item', { hasText: /reaction/i }).click();
+        await this.page.getByTestId('posting-menu-react').click();
         // Search for the emoji and click it
         await this.page.locator('.emoji-mart').waitFor({ state: 'visible', timeout: 5000 });
         await this.page.locator('.emoji-mart').locator('.emoji-mart-search input').fill(emoji);
@@ -734,14 +739,14 @@ export class CourseMessagesPage {
         for (let attempt = 0; attempt < 3; attempt++) {
             await postLocator.locator('.message-container').click({ button: 'right' });
             try {
-                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                await this.page.getByTestId('posting-context-menu').waitFor({ state: 'visible', timeout: 3000 });
                 break;
             } catch {
                 if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
             }
         }
 
-        await postLocator.locator('.dropdown-menu.show .dropdown-item', { hasText: /reply/i }).click();
+        await postLocator.getByTestId('posting-menu-reply').click();
         // Wait for the thread sidebar to become visible
         await this.page.locator('.expanded-thread').waitFor({ state: 'visible', timeout: 10000 });
     }
@@ -776,7 +781,7 @@ export class CourseMessagesPage {
      * Clicks the "+" button and selects "Create direct message".
      */
     async createDirectMessageButton() {
-        await this.page.locator('.btn-primary.btn-sm.square-button').click();
+        await this.page.getByTestId('sidebar-create-menu-button').click();
         const createBtn = this.page.locator('button', { hasText: 'Direct message' });
         await createBtn.waitFor({ state: 'visible', timeout: 5000 });
         await createBtn.click();
@@ -794,14 +799,14 @@ export class CourseMessagesPage {
         for (let attempt = 0; attempt < 3; attempt++) {
             await postLocator.locator('.message-container').click({ button: 'right' });
             try {
-                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                await this.page.getByTestId('posting-context-menu').waitFor({ state: 'visible', timeout: 3000 });
                 break;
             } catch {
                 if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
             }
         }
 
-        await postLocator.locator('.dropdown-menu.show .forward').click();
+        await postLocator.getByTestId('posting-menu-forward').click();
         // Wait for the forward dialog to appear
         await this.page.locator('jhi-forward-message-dialog').waitFor({ state: 'visible', timeout: 10000 });
     }
@@ -815,7 +820,7 @@ export class CourseMessagesPage {
         const dialog = this.page.locator('jhi-forward-message-dialog');
         const input = dialog.locator('input.tag-input');
         // the dialog selects on (mousedown) so the option is chosen before the input blur closes the dropdown
-        const option = dialog.locator('.autocomplete-dropdown .list-group-item-action', { hasText: destinationName }).first();
+        const option = dialog.getByTestId('forward-destination-option').filter({ hasText: destinationName }).first();
         // The autocomplete dropdown re-renders as the debounced search resolves, so the matched option can detach between
         // becoming visible and the mousedown — an unbounded dispatchEvent then hangs until the test timeout. Re-type and
         // re-select as a unit with a bounded mousedown so a detach retries quickly instead of hanging.
@@ -837,7 +842,7 @@ export class CourseMessagesPage {
         }
         // forwarding first creates the container post, then the forwarded-message link(s)
         const forwardResponse = this.page.waitForResponse((resp) => resp.url().includes('/forwarded-messages') && resp.request().method() === 'POST');
-        await dialog.locator('.modal-footer button.btn-primary').click();
+        await dialog.getByTestId('forward-send-button').click();
         await forwardResponse;
         await dialog.waitFor({ state: 'hidden', timeout: 10000 });
     }
@@ -867,7 +872,7 @@ export class CourseMessagesPage {
         for (let attempt = 0; attempt < 3; attempt++) {
             await replyLocator.locator('.message-container').click({ button: 'right' });
             try {
-                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                await this.page.getByTestId('posting-context-menu').waitFor({ state: 'visible', timeout: 3000 });
                 break;
             } catch {
                 if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
@@ -875,7 +880,7 @@ export class CourseMessagesPage {
         }
         // jhi-answer-post renders its context dropdown as a sibling of the #item-<id> div (not inside it),
         // so scope the click to the surrounding jhi-answer-post host instead of the #item-<id> element
-        await this.page.locator(`jhi-answer-post:has(#item-${replyId})`).locator('.dropdown-menu.show .forward').click();
+        await this.page.locator(`jhi-answer-post:has(#item-${replyId})`).getByTestId('posting-menu-forward').click();
         await this.completeForwardDialog(destinationName, extraContent);
     }
 
@@ -933,7 +938,7 @@ export class CourseMessagesPage {
         for (let attempt = 0; attempt < 3; attempt++) {
             await postLocator.locator('.message-container').click({ button: 'right' });
             try {
-                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                await this.page.getByTestId('posting-context-menu').waitFor({ state: 'visible', timeout: 3000 });
                 break;
             } catch {
                 if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
@@ -941,7 +946,7 @@ export class CourseMessagesPage {
         }
 
         const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/messages/') && resp.request().method() === 'PUT');
-        await postLocator.locator('.dropdown-menu.show .dropdown-item', { hasText: /pin/i }).click();
+        await postLocator.getByTestId('posting-menu-pin').click();
         await responsePromise;
     }
 
@@ -972,7 +977,7 @@ export class CourseMessagesPage {
         for (let attempt = 0; attempt < 3; attempt++) {
             await replyLocator.locator('.message-container').click({ button: 'right' });
             try {
-                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                await this.page.getByTestId('posting-context-menu').waitFor({ state: 'visible', timeout: 3000 });
                 break;
             } catch {
                 if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
@@ -980,7 +985,7 @@ export class CourseMessagesPage {
         }
 
         // Click "Edit Message" from the dropdown by matching translated text
-        await this.page.locator('.dropdown-menu.show .dropdown-item', { hasText: /edit/i }).click();
+        await this.page.getByTestId('posting-menu-edit').click();
 
         await setMonacoEditorContentByLocator(this.page, replyLocator, newContent);
         const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/answer-messages/') && resp.request().method() === 'PUT');
@@ -1000,7 +1005,7 @@ export class CourseMessagesPage {
         for (let attempt = 0; attempt < 3; attempt++) {
             await replyLocator.locator('.message-container').click({ button: 'right' });
             try {
-                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                await this.page.getByTestId('posting-context-menu').waitFor({ state: 'visible', timeout: 3000 });
                 break;
             } catch {
                 if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
@@ -1009,7 +1014,7 @@ export class CourseMessagesPage {
 
         const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/answer-messages/') && resp.request().method() === 'DELETE');
         // Click "Delete Message" from the dropdown by matching translated text
-        await this.page.locator('.dropdown-menu.show .dropdown-item', { hasText: /delete/i }).click();
+        await this.page.getByTestId('posting-menu-delete').click();
         await responsePromise;
     }
 
@@ -1022,7 +1027,7 @@ export class CourseMessagesPage {
      * If the user has already accepted the code of conduct, the button won't be present.
      */
     async acceptCodeOfConductButton() {
-        const button = this.page.locator('#acceptCodeOfConductButton');
+        const button = this.page.locator('[data-testid="acceptCodeOfConductButton"]');
         // Wait a short time for the page to load and determine if the button should be shown
         await this.page.waitForLoadState('domcontentloaded');
         if (await button.isVisible()) {

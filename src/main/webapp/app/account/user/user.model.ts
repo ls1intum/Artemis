@@ -18,6 +18,7 @@ export class User extends Account {
     public lastModifiedDate?: Date;
     public visibleRegistrationNumber?: string;
     public password?: string;
+    public revokeCredentials?: boolean;
     public vcsAccessToken?: string;
     public vcsAccessTokenExpiryDate?: string;
     public selectedLLMUsage?: LLMSelectionDecision;

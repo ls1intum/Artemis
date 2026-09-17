@@ -46,6 +46,14 @@ public class LtiApi extends AbstractLtiApi {
         return ltiService.isLtiCreatedUser(user);
     }
 
+    public boolean needsInitialization(User user) {
+        return ltiService.needsInitialization(user);
+    }
+
+    public boolean claimInitialization(User user) {
+        return ltiService.claimInitialization(user);
+    }
+
     public void createOnlineCourseConfiguration(Course course) {
         onlineCourseConfigurationService.createOnlineCourseConfiguration(course);
     }

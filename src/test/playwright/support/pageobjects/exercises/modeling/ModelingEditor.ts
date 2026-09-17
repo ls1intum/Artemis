@@ -164,7 +164,7 @@ export class ModelingEditor {
     }
 
     async clickCreateNewExampleSubmission() {
-        await this.page.locator('#new-modeling-example-submission').click();
+        await this.page.locator('[data-testid="new-modeling-example-submission"]').click();
     }
 
     async clickCreateExampleSubmission() {
@@ -172,6 +172,10 @@ export class ModelingEditor {
     }
 
     async showExampleAssessment() {
-        await this.page.locator('#show-modeling-example-assessment').click();
+        await this.page.locator('[data-testid="show-modeling-example-assessment"]').click();
+    }
+
+    async saveExampleSubmission() {
+        await this.page.locator('button:has([jhitranslate="artemisApp.modelingExercise.saveExampleSubmission"])').click();
     }
 }

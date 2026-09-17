@@ -1,8 +1,65 @@
 @import 'src/main/webapp/content/scss/artemis-mixins';
 
-// Must match or exceed the quiz participation bar's z-index (1030)
 #course-title-bar {
+    display: flex;
+    flex-direction: column;
+
+    // Must match or exceed the quiz participation bar's z-index (1030)
     z-index: 1030;
+
+    /* Grey dividers: to the sidebar on the left, to the viewport edge on the right, to the content below. */
+    margin: 0 var(--spacing-divider) var(--spacing-divider);
+
+    /*
+     * The frame sits on the row rather than the bar, because a page may also project a toolbar. That renders as a
+     * second row underneath, so the bar itself is intentionally taller than `--title-bar-height` in that case while
+     * the title row keeps its exact height.
+     */
+    .course-title-bar-row {
+        @include title-bar-frame;
+        @include title-bar-size-container;
+    }
+
+    /*
+     * A flex item refuses to shrink below its content unless told to, and that automatic minimum is what made a
+     * crowded action row overflow the bar rather than squeeze: the pages whose controls can give way (the calendar
+     * filter and its chips) could not, because this wrapper held the row open. Both children may shrink; each decides
+     * for itself what happens then, by ellipsis, by clipping, or by collapsing a label.
+     */
+    .title-bar-actions {
+        /*
+         * `min-content` rather than 0: the controls that can give way (the calendar's filter caps its width and clips
+         * its chips) contribute nothing to it, so they still shrink, while the ones that cannot — a select button
+         * clips its options rather than narrowing — hold their size and let the title truncate instead.
+         */
+        min-width: min-content;
+
+        /*
+         * A select button has nothing left to give: squeezed below the width of its options, it clips them instead of
+         * getting narrower. Hold it at its size and let the title, which truncates cleanly, absorb the shrinking.
+         */
+        tum-ui-select-button {
+            flex: 0 0 auto;
+        }
+    }
+}
+
+/*
+ * A crowded action row squeezes the title; without this the text wraps to a second line and the bar grows past its
+ * 40px. Keep it on one line with an ellipsis instead.
+ */
+.title-bar-title {
+    min-width: 0;
+
+    > div {
+        min-width: 0;
+    }
+
+    :where(h1, h2, h3, h4, h5, h6, span, div) {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 }
 
 /* The action controls are projected from page templates, so their styling requires piercing encapsulation. */

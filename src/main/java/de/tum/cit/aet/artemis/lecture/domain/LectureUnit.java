@@ -42,7 +42,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue("L")
 @ConcreteProxy
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 // Annotation necessary to distinguish between concrete implementations of lecture-content when deserializing from JSON
 // @formatter:off
@@ -80,7 +80,6 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     @JoinColumn(name = "lecture_id", nullable = false)
     private Lecture lecture;
 
-    // No @Cache here on purpose: mutated whenever competencies are linked / unlinked. See #12574 / #12584.
     @OneToMany(mappedBy = "lectureUnit", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("lectureUnit")
     protected Set<CompetencyLectureUnitLink> competencyLinks = new HashSet<>();

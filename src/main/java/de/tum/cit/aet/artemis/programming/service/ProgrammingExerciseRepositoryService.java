@@ -14,10 +14,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -55,6 +57,12 @@ public class ProgrammingExerciseRepositoryService {
 
     private static final String BUILD_GRADLE = "build.gradle";
 
+    private static final String SETTINGS_GRADLE = "settings.gradle";
+
+    private static final String MAVEN_DIR = ".mvn";
+
+    private static final String MAVEN_LOCAL_SETTINGS = "local-settings.xml";
+
     private static final String PACKAGE_NAME_FOLDER_PLACEHOLDER = "${packageNameFolder}";
 
     private static final String PACKAGE_NAME_FILE_PLACEHOLDER = "${packageNameFile}";
@@ -65,6 +73,12 @@ public class ProgrammingExerciseRepositoryService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseRepositoryService.class);
 
+    /** Everything that is neither a letter nor a digit, which a package name may not contain. */
+    private static final Pattern NON_PACKAGE_NAME_CHARACTER = Pattern.compile("[^a-zA-Z\\d]");
+
+    /** A space in a repository name, which the Maven artifact id spells as a hyphen. */
+    private static final Pattern SPACE = Pattern.compile(" ");
+
     private final GitService gitService;
 
     private final UserRepository userRepository;
@@ -73,8 +87,11 @@ public class ProgrammingExerciseRepositoryService {
 
     private final Optional<VersionControlService> versionControlService;
 
+    private final MavenCentralMirrorService mavenCentralMirrorService;
+
     public ProgrammingExerciseRepositoryService(GitService gitService, UserRepository userRepository, ResourceLoaderService resourceLoaderService,
-            Optional<VersionControlService> versionControlService) {
+            Optional<VersionControlService> versionControlService, MavenCentralMirrorService mavenCentralMirrorService) {
+        this.mavenCentralMirrorService = mavenCentralMirrorService;
         this.gitService = gitService;
         this.userRepository = userRepository;
         this.resourceLoaderService = resourceLoaderService;
@@ -215,7 +232,7 @@ public class ProgrammingExerciseRepositoryService {
             // Get path, files and prefix for the project-type dependent files. They are copied last and can overwrite the resources from the programming language.
             final Path programmingLanguageProjectTypePath = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(),
                     projectType);
-            final String projectTypePath = projectType.name().toLowerCase();
+            final String projectTypePath = projectType.name().toLowerCase(Locale.ROOT);
             final Path generalProjectTypePrefix = Path.of(programmingLanguage, projectTypePath);
             final Path projectTypeSpecificPrefix = generalProjectTypePrefix.resolve(repositoryTypeTemplateDir);
             final Path projectTypeTemplatePath = programmingLanguageProjectTypePath.resolve(repositoryTypeTemplateDir);
@@ -421,7 +438,7 @@ public class ProgrammingExerciseRepositoryService {
         commitAndPushRepository(resources.repository, templateName + "-Template pushed by Artemis", true, user);
     }
 
-    private static Path getRepoAbsoluteLocalPath(final Repository repository) {
+    private static Path getRepoAbsoluteLocalPath(@NonNull final Repository repository) {
         return repository.getLocalPath().toAbsolutePath();
     }
 
@@ -482,6 +499,8 @@ public class ProgrammingExerciseRepositoryService {
         final Map<String, Boolean> sectionsMap = new HashMap<>();
         // Keep or delete static code analysis configuration in the build configuration file
         sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
+        // Keep or delete the Maven Central mirror declarations, depending on whether this instance configured one
+        mavenCentralMirrorService.addTemplateSections(sectionsMap);
 
         if (programmingExercise.getBuildConfig().hasSequentialTestRuns()) {
             setupTestTemplateSequentialTestRuns(resources, templatePath, projectTemplatePath, projectType, sectionsMap);
@@ -573,13 +592,14 @@ public class ProgrammingExerciseRepositoryService {
     }
 
     /**
-     * Fills in placeholders in the build tool project definition file based on the enabled exercise features.
+     * Fills in the optional sections of the build tool project files, based on the enabled exercise features and the
+     * instance configuration. Package-private for testing.
      *
      * @param repoLocalPath  The local path to the repository.
      * @param projectType    The exercise project type.
      * @param activeFeatures The active features in the exercise.
      */
-    private void setupBuildToolProjectFile(final Path repoLocalPath, final ProjectType projectType, final Map<String, Boolean> activeFeatures) {
+    void setupBuildToolProjectFile(final Path repoLocalPath, final ProjectType projectType, final Map<String, Boolean> activeFeatures) {
         final String projectFileFileName;
         if (projectType != null && projectType.isGradle()) {
             projectFileFileName = BUILD_GRADLE;
@@ -589,6 +609,22 @@ public class ProgrammingExerciseRepositoryService {
         }
 
         FileUtil.replacePlaceholderSections(repoLocalPath.resolve(projectFileFileName).toAbsolutePath(), activeFeatures);
+
+        // Gradle resolves plugins through settings.gradle rather than build.gradle, so its optional sections have to be
+        // resolved as well. The file only exists for Gradle project types.
+        final Path settingsGradlePath = repoLocalPath.resolve(SETTINGS_GRADLE).toAbsolutePath();
+        if (Files.exists(settingsGradlePath)) {
+            FileUtil.replacePlaceholderSections(settingsGradlePath, activeFeatures);
+        }
+
+        // The Maven black-box template pins Maven to its own .mvn/local-settings.xml, which mirrors "*" and therefore
+        // overrides the repositories declared in the pom. Its optional sections decide whether that mirror points at the
+        // configured mirror or stays on Maven Central, so they have to be resolved too. The file only exists for the
+        // black-box project type.
+        final Path mavenLocalSettingsPath = repoLocalPath.resolve(MAVEN_DIR).resolve(MAVEN_LOCAL_SETTINGS).toAbsolutePath();
+        if (Files.exists(mavenLocalSettingsPath)) {
+            FileUtil.replacePlaceholderSections(mavenLocalSettingsPath, activeFeatures);
+        }
     }
 
     private void setupStaticCodeAnalysisConfigFiles(final RepositoryResources resources, final Path templatePath, final Path repoLocalPath) throws IOException {
@@ -642,17 +678,10 @@ public class ProgrammingExerciseRepositoryService {
         // maven configuration should be set for kotlin and older exercises where no project type has been introduced where no project type is defined
         final boolean isMaven = isMavenProject(projectType);
 
-        final String projectFileName;
-        if (isMaven) {
-            projectFileName = POM_XML;
-        }
-        else {
-            projectFileName = BUILD_GRADLE;
-        }
-
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
 
-        FileUtil.replacePlaceholderSections(repoLocalPath.resolve(projectFileName).toAbsolutePath(), sectionsMap);
+        // Shared with the non-sequential path so that both resolve settings.gradle, and not just the main project file.
+        setupBuildToolProjectFile(repoLocalPath, projectType, sectionsMap);
 
         final Optional<Resource> stagePomXml = getStagePomXml(templatePath, projectTemplatePath, isMaven);
 
@@ -753,6 +782,7 @@ public class ProgrammingExerciseRepositoryService {
             case JAVA, KOTLIN -> {
                 FileUtil.replaceVariablesInDirectoryName(getRepoAbsoluteLocalPath(repository), PACKAGE_NAME_FOLDER_PLACEHOLDER, programmingExercise.getPackageFolderName());
                 replacements.put(PACKAGE_NAME_PLACEHOLDER, programmingExercise.getPackageName());
+                mavenCentralMirrorService.addUrlReplacement(replacements);
             }
             case SWIFT -> replaceSwiftPlaceholders(replacements, programmingExercise, repository);
             case GO, DART -> replacements.put(PACKAGE_NAME_PLACEHOLDER, programmingExercise.getPackageName());
@@ -806,7 +836,7 @@ public class ProgrammingExerciseRepositoryService {
         final String packageName = programmingExercise.getPackageName();
         // The client already provides a clean package name, but we have to make sure that no one abuses the API for injection.
         // So usually, the name should not change.
-        final String cleanPackageName = packageName.replaceAll("[^a-zA-Z\\d]", "");
+        final String cleanPackageName = NON_PACKAGE_NAME_CHARACTER.matcher(packageName).replaceAll("");
 
         if (ProjectType.PLAIN.equals(programmingExercise.getProjectType())) {
             FileUtil.replaceVariablesInDirectoryName(repositoryLocalPath, PACKAGE_NAME_FOLDER_PLACEHOLDER, cleanPackageName);
@@ -888,8 +918,8 @@ public class ProgrammingExerciseRepositoryService {
      * @return a map of replacements that should be applied
      */
     private static Map<String, String> replacementMapping(String oldRepositoryName, String newRepositoryName, ProgrammingLanguage programmingLanguage) {
-        String oldRepositoryNamePomXml = oldRepositoryName.replaceAll(" ", "-");
-        String newRepositoryNamePomXml = newRepositoryName.replaceAll(" ", "-");
+        String oldRepositoryNamePomXml = SPACE.matcher(oldRepositoryName).replaceAll("-");
+        String newRepositoryNamePomXml = SPACE.matcher(newRepositoryName).replaceAll("-");
 
         Map<String, String> replacements = new HashMap<>();
 

@@ -45,7 +45,7 @@ import com.hazelcast.core.Hazelcast;
  * The class avoids connection logic in test environments and handles potential split-brain scenarios
  * by periodically verifying and initiating connections to all expected cluster members.
  */
-@Conditional(CoreOrHazelcastBuildAgent.class)
+@Conditional(HazelcastDistributedDataCondition.class)
 @Lazy
 @Configuration
 public class HazelcastClusterManager {

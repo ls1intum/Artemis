@@ -26,6 +26,9 @@ import {
     CourseExamArchiveOverwriteDialogComponent,
     CourseExamArchiveWarningDialogComponent,
 } from 'app/shared-ui/components/buttons/course-exam-archive-button/course-exam-archive-dialog.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export type CourseExamArchiveState = {
     exportState: 'COMPLETED' | 'RUNNING' | 'COMPLETED_WITH_WARNINGS' | 'COMPLETED_WITH_ERRORS';
@@ -38,7 +41,7 @@ export type CourseExamArchiveState = {
     templateUrl: './course-exam-archive-button.component.html',
     styleUrls: ['./course-exam-archive-button.component.scss'],
     styles: [':host {display: contents}'],
-    imports: [TranslateDirective, FeatureToggleDirective, FaIconComponent, DeleteButtonDirective],
+    imports: [ArtemisTranslatePipe, TranslateDirective, FeatureToggleDirective, FaIconComponent, DeleteButtonDirective, TumUiButtonDirective],
 })
 export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     private courseService = inject(CourseManagementService);
@@ -300,12 +303,10 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
                 closable: false,
                 closeOnEscape: true,
                 dismissableMask: false,
-                data: {
-                    archiveMode: this.archiveMode(),
-                    courseTitle: this.currentCourse()?.title,
-                    examTitle: this.currentExam()?.title,
-                    ...data,
-                } satisfies CourseExamArchiveDialogData,
+                data: cloneWith(
+                    { archiveMode: this.archiveMode(), courseTitle: this.currentCourse()?.title, examTitle: this.currentExam()?.title },
+                    data,
+                ) satisfies CourseExamArchiveDialogData,
             }) ?? undefined;
         return this.dialogRef;
     }

@@ -11,7 +11,7 @@ import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Params, Router, RouterModule, RouterOutlet, provideRouter } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseFilterModalComponent } from 'app/exercise/exercise-filter/exercise-filter-modal.component';
@@ -21,6 +21,10 @@ import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { Component } from '@angular/core';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -34,9 +38,13 @@ import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar
 describe('SidebarComponent', () => {
     let component: SidebarComponent;
     let fixture: ComponentFixture<SidebarComponent>;
+    let router: MockRouter;
+    let activatedRoute: MockActivatedRoute;
     let modalService: NgbModal;
 
     beforeEach(() => {
+        router = new MockRouter();
+        activatedRoute = new MockActivatedRoute();
         TestBed.configureTestingModule({
             imports: [
                 MockModule(FormsModule),
@@ -56,7 +64,8 @@ describe('SidebarComponent', () => {
             ],
             providers: [
                 MockProvider(NgbModal),
-                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: ActivatedRoute, useValue: activatedRoute },
+                { provide: Router, useValue: router },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: ProfileService, useClass: MockProfileService },
@@ -73,6 +82,45 @@ describe('SidebarComponent', () => {
         } as SidebarData);
         fixture.componentRef.setInput('collapseState', {});
         fixture.componentRef.setInput('sidebarItemAlwaysShow', {});
+    });
+
+    describe('selected entity params', () => {
+        /**
+         * The sidebar renders on the list route ('exercises'), which carries no entity id of its own. The id lives on
+         * the activated child route — which also inherits every ancestor param, so the course id rides along and has
+         * to be filtered out.
+         */
+        const setRoute = (ownParams: Params, childParams?: Params): void => {
+            (activatedRoute.snapshot as unknown as { params: Params }).params = ownParams;
+            Object.defineProperty(activatedRoute, 'firstChild', {
+                configurable: true,
+                get: () => (childParams ? ({ snapshot: { params: childParams } } as unknown as ActivatedRoute) : undefined),
+            });
+        };
+
+        it('should keep only the params the child route adds on top of the inherited ones', () => {
+            setRoute({ courseId: '1' }, { courseId: '1', exerciseId: '42' });
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(component.routeParams()).toEqual({ exerciseId: '42' });
+        });
+
+        it('should re-read them after a navigation, since the child route is swapped out rather than re-emitting', () => {
+            setRoute({ courseId: '1' }, { courseId: '1', exerciseId: '42' });
+            fixture.changeDetectorRef.detectChanges();
+
+            setRoute({ courseId: '1' }, { courseId: '1', groupId: '7' });
+            router.eventSubject.next(new NavigationEnd(1, '/courses/1/exercises/group/7', '/courses/1/exercises/group/7'));
+
+            expect(component.routeParams()).toEqual({ groupId: '7' });
+        });
+
+        it('should fall back to no params when no child route is activated', () => {
+            setRoute({ courseId: '1' }, undefined);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(component.routeParams()).toEqual({});
+        });
     });
 
     it('should display the optional page title in the sidebar header', () => {
@@ -356,5 +404,133 @@ describe('SidebarComponent', () => {
             const createChannelButton = fixture.debugElement.query(By.css('.createChannel'));
             expect(createChannelButton).toBeFalsy();
         });
+    });
+});
+
+/**
+ * Exercises the variant-group highlight against the REAL router, outlet and `routerLinkActive`. The mocked
+ * `RouterModule` used above cannot catch this: it stubs out `routerLinkActive`, whose class bookkeeping is exactly what
+ * the highlight has to coexist with.
+ */
+describe('SidebarComponent variant group selection', () => {
+    @Component({ template: '', standalone: true })
+    class DetailStubComponent {}
+
+    /** Stands in for the course-overview shell that hosts the 'exercises' route. */
+    @Component({ template: '<router-outlet />', standalone: true, imports: [RouterOutlet] })
+    class RootComponent {}
+
+    /**
+     * Stands in for CourseExercisesComponent: the component of the 'exercises' route, holding the sidebar next to the
+     * outlet its children render into. The sidebar must sit inside the routed component, since that is what gives it
+     * the ActivatedRoute whose child carries the selected entity's id.
+     */
+    @Component({
+        template: `
+            <jhi-sidebar [sidebarData]="sidebarData" [collapseState]="{}" [sidebarItemAlwaysShow]="{}" [courseId]="1" />
+            <router-outlet />
+        `,
+        standalone: true,
+        imports: [SidebarComponent, RouterOutlet],
+    })
+    class ExercisesHostComponent {
+        // One variant-group card, exactly as CourseOverviewService.buildGroupedExerciseData emits it: the same card
+        // object in both the time-category accordion and the flat list the sidebar uses for its empty-state check.
+        private readonly groupCard = {
+            title: 'Sorting variants',
+            id: 10,
+            trackId: 'group-10',
+            targetComponentSubRoute: 'group',
+            size: 'M',
+            groupedItems: [
+                { title: 'Variant A', id: 11, size: 'M' },
+                { title: 'Variant B', id: 12, size: 'M' },
+            ],
+        };
+
+        sidebarData: SidebarData = {
+            sidebarType: 'exercise',
+            storageId: 'exercise',
+            groupByCategory: true,
+            groupedData: { current: { entityData: [this.groupCard] } },
+            ungroupedData: [this.groupCard],
+        } as unknown as SidebarData;
+    }
+
+    let hostFixture: ComponentFixture<RootComponent>;
+    let harnessRouter: Router;
+
+    /** The single rendered group card, or undefined while the sidebar has not rendered one. */
+    const groupCardClasses = (): string => (hostFixture.nativeElement.querySelector('#test-sidebar-card-medium') as HTMLElement).className;
+
+    beforeEach(async () => {
+        localStorage.clear();
+        await TestBed.configureTestingModule({
+            imports: [RootComponent],
+            providers: [
+                // Mirrors the real depth from courses.route.ts: the sidebar's route is a child of 'courses/:courseId',
+                // so it carries no id of its own and neither inherits one (paramsInheritanceStrategy is 'emptyOnly').
+                provideRouter([
+                    {
+                        path: 'courses/:courseId',
+                        component: RootComponent,
+                        children: [
+                            {
+                                path: 'exercises',
+                                component: ExercisesHostComponent,
+                                children: [
+                                    { path: 'group/:groupId', component: DetailStubComponent },
+                                    { path: ':exerciseId', component: DetailStubComponent, pathMatch: 'full' },
+                                ],
+                            },
+                        ],
+                    },
+                ]),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(NgbModal),
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
+            ],
+        }).compileComponents();
+
+        harnessRouter = TestBed.inject(Router);
+        hostFixture = TestBed.createComponent(RootComponent);
+    });
+
+    it('should highlight the group card while the detail outlet shows one of its members', async () => {
+        await harnessRouter.navigateByUrl('/courses/1/exercises/12');
+        hostFixture.detectChanges();
+        await hostFixture.whenStable();
+        hostFixture.detectChanges();
+
+        expect(groupCardClasses()).toContain('bg-group-selected');
+    });
+
+    it('should keep highlighting the group card after navigating from the group page to a member', async () => {
+        // The regression the mocked router hid: on the group page routerLinkActive owns the highlight, and on the way
+        // out it removes the classes it manages — so the member highlight must not reuse one of those class names.
+        await harnessRouter.navigateByUrl('/courses/1/exercises/group/10');
+        hostFixture.detectChanges();
+        await hostFixture.whenStable();
+        hostFixture.detectChanges();
+        expect(groupCardClasses()).toContain('bg-selected');
+
+        await harnessRouter.navigateByUrl('/courses/1/exercises/12');
+        hostFixture.detectChanges();
+        await hostFixture.whenStable();
+        hostFixture.detectChanges();
+
+        expect(groupCardClasses()).toContain('bg-group-selected');
+    });
+
+    it('should not highlight the group card for an unrelated exercise', async () => {
+        await harnessRouter.navigateByUrl('/courses/1/exercises/999');
+        hostFixture.detectChanges();
+        await hostFixture.whenStable();
+        hostFixture.detectChanges();
+
+        expect(groupCardClasses()).not.toContain('bg-group-selected');
     });
 });

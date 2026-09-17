@@ -30,7 +30,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Entity
 @Table(name = "jhi_persistent_audit_event")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class PersistentAuditEvent implements Serializable {
+public class PersistentAuditEvent implements Serializable, PersistedAuditEvent {
 
     @Serial
     private static final long serialVersionUID = 1L;

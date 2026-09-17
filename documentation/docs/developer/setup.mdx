@@ -1,8 +1,12 @@
+---
+id: setup
+title: Setup Guide
+sidebar_label: Setup Guide
+---
+
 import TumLiveVideo from "../../src/components/TumLiveVideo/TumLiveVideo";
 import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
-
-# Setup Guide
 
 This guide explains how to set up Artemis in your development environment or a demo production environment. For production setups, you would need to additionally consider topics discussed in the [Administration Setup](/admin/intro).
 
@@ -17,8 +21,6 @@ Artemis is based on [JHipster](https://jhipster.github.io), combining:
 - [Angular 22](https://angular.dev) (TypeScript) for the web application that serves the user interface.
 
 To get an overview of the technology stack, visit the [JHipster Technology Stack](https://jhipster.github.io/tech-stack) and refer to other tutorials on the JHipster homepage.
-
----
 
 ## Development Environment Setup
 
@@ -76,8 +78,6 @@ Before installing Artemis, install and configure the following dependencies:
     Missing Graphviz in production may cause rendering errors for exercise descriptions.
 </Callout>
 
----
-
 ### IDE Setup
 
 We recommend using [IntelliJ IDEA Ultimate](https://www.jetbrains.com/idea) for development.
@@ -87,15 +87,11 @@ Refer to JHipster's guide on configuring an IDE: [JHipster IDE Setup](https://jh
     The Community Edition of IntelliJ IDEA lacks Spring Boot support. See the [comparison matrix](https://www.jetbrains.com/idea/features/editions_comparison_matrix.html) for details.
 </Callout>
 
----
-
 ## Set up Artemis
 
 Once the development environment is set up, the next step is to configure the Artemis server. This includes optional features such as programming exercises, which require a version control and build system.
 
 Start by following the [Database Setup](#database-setup) guide, then proceed with [Server Setup](#server-setup) and [Client Setup](#client-setup).
-
----
 
 ## Database Setup
 
@@ -105,7 +101,7 @@ Artemis supports MySQL and PostgreSQL databases. The required Artemis schema is 
 
 You can set up a MySQL database for Artemis using one of the following methods:
 
-#### 1. Using Docker (Recommended)
+#### Using Docker (Recommended)
 
 The easiest way to set up a MySQL database for development is by using Docker.
 Run the following command to start a MySQL database using the provided Docker Compose file:
@@ -116,7 +112,7 @@ docker compose --env-file .env -f docker/mysql.yml up
 
 This method simplifies setup and management, making it ideal for development environments.
 
-#### 2. Using a Local MySQL Installation
+#### Using a Local MySQL Installation
 
 If you prefer to install MySQL locally, download and install the [MySQL Community Server (9.2.x)](https://dev.mysql.com/downloads/mysql) from the official MySQL website.
 
@@ -179,8 +175,6 @@ spring:
 <Callout variant={CalloutVariant.info}>
     This example assumes that you use the mentioned Docker Compose file on your localhost, leading to a database called `Artemis` that runs on port `5432` and where no password is necessary. You might have to update `spring.datasource.url` if you use another configuration and set the password in `spring.datasource.password`.
 </Callout>
-
----
 
 ## Server Setup
 
@@ -445,13 +439,13 @@ The Artemis server should startup by running the main class `de.tum.cit.aet.arte
 
 If you use IntelliJ (Community or Ultimate) you can set the active profiles by:
 
-- Choosing `Run | Edit Configurations...`
-- Going to the `Configuration Tab`
-- Expanding the `Environment` section to reveal `VM Options` and setting them to `-Dspring.profiles.active=dev,jenkins,localvc,artemis,scheduling`
+- Choosing **Run | Edit Configurations...**
+- Going to the **Configuration** tab
+- Expanding the **Environment** section to reveal **VM Options** and setting them to `-Dspring.profiles.active=dev,jenkins,localvc,artemis,scheduling`
 
 #### Set Spring profiles with IntelliJ Ultimate
 
-If you use IntelliJ Ultimate, add the following entry to the section `Active Profiles` (within `Spring Boot`) in the server run configuration:
+If you use IntelliJ Ultimate, add the following entry to the **Active Profiles** field (within **Spring Boot**) in the server run configuration:
 
 ```
 dev,jenkins,localvc,artemis,scheduling
@@ -475,18 +469,16 @@ Hyperion provides AI-assisted exercise creation features via Spring AI. No exter
 
 For production setup, see [Hyperion Service](/admin/hyperion) in the Administration Guide for instructions on enabling the module in production and configuring LLM credentials.
 
----
-
 ## Client Setup
 
 You need Node.js on your local machine, plus pnpm activated via Corepack (`corepack enable`). The pnpm version is pinned in `package.json` via the `packageManager` field. If you haven't activated pnpm yet, see [step 4 of Required Dependencies](#required-dependencies) above for the full first-time setup and troubleshooting tips.
 
 ### Using IntelliJ
 
-If you are using [IntelliJ](https://www.jetbrains.com/idea/download/) you can use the pre-configured `Artemis (Client)` run configuration that will be delivered with this repository:
+If you are using [IntelliJ](https://www.jetbrains.com/idea/download/) you can use the pre-configured **Artemis (Client)** run configuration that will be delivered with this repository:
 
-- Choose `Run | Edit Configurations...`
-- Select the `Artemis (Client)` configuration from the `npm section` (IntelliJ groups `package.json` scripts under "npm" even though we run pnpm)
+- Choose **Run | Edit Configurations...**
+- Select the **Artemis (Client)** configuration from the **npm** section (IntelliJ groups `package.json` scripts under "npm" even though we run pnpm)
 - Now you can run the configuration in the upper right corner of IntelliJ
 
 ### Using the command line
@@ -525,8 +517,6 @@ If you have configured `application-artemis.yml` correctly, then you should be a
 For more information, review [Working with Angular](https://angular.dev/tutorials).
 For further instructions on how to develop with JHipster, have a look at [Using JHipster in development](http://www.jhipster.tech/development).
 
----
-
 ## Common Setup Problems
 
 ### General Setup Problems
@@ -553,8 +543,6 @@ For further instructions on how to develop with JHipster, have a look at [Using 
 - **Accidentally ran `npm install` and got a `package-lock.json`:** delete `package-lock.json` and `node_modules`, then run `pnpm install`. The repository's `.gitignore` blocks `package-lock.json` from being committed, but a stray copy still confuses tooling.
 - **`pnpm install` complains the lockfile is out of date:** the lockfile is authoritative; running `pnpm install` locally without `--frozen-lockfile` updates it. If your edit was intentional (e.g. you bumped a dependency in `package.json`), commit the updated `pnpm-lock.yaml`. If not, run `git checkout pnpm-lock.yaml` and rerun `pnpm install --frozen-lockfile`.
 
----
-
 ## Production Setup and Extension Services
 
 ### Production Setup
@@ -572,8 +560,6 @@ Artemis allows extension with several additional services, such as:
 
 The setup for these additional services is described as part of the [Extension Service Setup](/admin/extensions-setup).
 
----
-
 ## Setup with Helios
 
 [Helios](https://helios.aet.cit.tum.de/) is an application that provides a well-designed UI for deploying various services the AET is building using GitHub Actions.
@@ -590,14 +576,11 @@ For detailed instructions on setting up Artemis with Helios, refer to the offici
     If the above link is unavailable, go to the [Helios documentation homepage](https://ls1intum.github.io/Helios/) and navigate to **User Guide → Helios User Guide**.
 </Callout>
 
----
-
 ## Additional Setup Guides
 
 For more advanced setup scenarios and development tools, see the following guides:
 
 - **[Jenkins and LocalVC Setup](/admin/jenkins-localvc)** - Alternative CI/CD setup using Jenkins with LocalVC
-- **[Aeolus Setup](/developer/aeolus)** - Custom build plans for Jenkins and Integrated Code Lifecycle
 - **[OpenAPI and API-driven Development](/developer/openapi)** - Working with OpenAPI specifications
 - **[Docker Compose Setup](/developer/docker-compose)** - Alternative Docker Compose-based deployment
 - **[Docker Debugging](/developer/docker-debugging)** - Debugging Artemis in Docker containers

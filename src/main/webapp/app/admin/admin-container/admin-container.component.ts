@@ -19,6 +19,7 @@ import { IS_AT_LEAST_SUPER_ADMIN } from 'app/foundation/constants/authority.cons
 @Component({
     selector: 'jhi-admin-container',
     templateUrl: './admin-container.component.html',
+    styleUrl: './admin-container.component.scss',
     imports: [RouterOutlet, AdminSidebarComponent, AdminTitleBarComponent],
     host: {
         '(window:resize)': 'onResize()',

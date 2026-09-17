@@ -17,6 +17,7 @@ import {
     MODULE_FEATURE_APOLLON,
     MODULE_FEATURE_ATHENA,
     MODULE_FEATURE_ATLAS,
+    MODULE_FEATURE_DEIMOS,
     MODULE_FEATURE_EXAM,
     MODULE_FEATURE_FILEUPLOAD,
     MODULE_FEATURE_HYPERION,
@@ -39,6 +40,7 @@ import {
     PROFILE_LOCALCI,
     ProfileFeature,
 } from 'app/app.constants';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type FeatureToggleInfo = {
     feature: FeatureToggle;
@@ -98,6 +100,19 @@ export class AdminFeatureToggleComponent implements OnInit {
     /** Icons */
     protected readonly faExternalLinkAlt = faExternalLinkAlt;
 
+    /**
+     * Tint and border for a feature card: light green when the feature is active, muted grey when it is not.
+     *
+     * The contrast comes from the active state being tinted at all — the shades this replaces (`bg-surface-50` vs
+     * `bg-surface-100`) were one step apart and indistinguishable at a glance. Red is reserved for states that need
+     * attention, so a switched-off feature stays neutral rather than reading as a failure.
+     *
+     * The success token carries its own light/dark values; the surface shades need explicit `dark:` variants.
+     */
+    protected featureCardClasses(isActive: boolean): string {
+        return isActive ? 'bg-state-success/10 border-state-success/40' : 'bg-surface-100 border-surface-300 dark:bg-surface-800 dark:border-surface-600';
+    }
+
     /** Profiles to display (excluding internal profiles like dev, prod, test) */
     private readonly displayedProfiles: ProfileFeature[] = [PROFILE_LOCALCI, PROFILE_BUILDAGENT, PROFILE_JENKINS];
 
@@ -106,6 +121,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         MODULE_FEATURE_IRIS,
         MODULE_FEATURE_ATLAS,
         MODULE_FEATURE_HYPERION,
+        MODULE_FEATURE_DEIMOS,
         MODULE_FEATURE_EXAM,
         MODULE_FEATURE_PLAGIARISM,
         MODULE_FEATURE_TEXT,
@@ -127,38 +143,40 @@ export class AdminFeatureToggleComponent implements OnInit {
     /** Documentation links for runtime feature toggles */
     private readonly documentationLinks: Partial<Record<FeatureToggle, string>> = {
         [FeatureToggle.ProgrammingExercises]: 'https://docs.artemis.tum.de/instructor/exercises/programming-exercise',
-        [FeatureToggle.PlagiarismChecks]: 'https://docs.artemis.tum.de/instructor/plagiarism-check',
-        [FeatureToggle.Exports]: 'https://docs.artemis.tum.de/instructor/exports',
-        [FeatureToggle.LearningPaths]: 'https://docs.artemis.tum.de/instructor/adaptive-learning',
+        [FeatureToggle.PlagiarismChecks]: 'https://docs.artemis.tum.de/instructor/assessment-grading/plagiarism-check',
+        [FeatureToggle.Exports]: 'https://docs.artemis.tum.de/instructor/course-management/exports',
+        [FeatureToggle.LearningPaths]: 'https://docs.artemis.tum.de/instructor/analytics/adaptive-learning',
         [FeatureToggle.StandardizedCompetencies]: 'https://docs.artemis.tum.de/admin/adaptive-learning',
-        [FeatureToggle.TutorSuggestions]: 'https://docs.artemis.tum.de/instructor/communication#tutor-suggestions',
+        [FeatureToggle.TutorSuggestions]: 'https://docs.artemis.tum.de/instructor/communication-support/communication#tutor-suggestions',
         [FeatureToggle.AtlasML]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
         [FeatureToggle.AtlasAgent]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
-        [FeatureToggle.Memiris]: 'https://docs.artemis.tum.de/admin/extensions-setup#iris--pyris-setup-guide',
+        [FeatureToggle.Memiris]: 'https://docs.artemis.tum.de/admin/extensions-setup#edutelligence--iris',
         [FeatureToggle.RateLimit]: 'https://docs.artemis.tum.de/admin/production-setup/security/#rate-limiting',
+        [FeatureToggle.Deimos]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
     };
 
     /** Documentation links for profile-based features */
     private readonly profileDocumentationLinks: Partial<Record<ProfileFeature, string>> = {
-        [PROFILE_LOCALCI]: 'https://docs.artemis.tum.de/developer/setup#integrated-code-lifecycle-setup',
-        [PROFILE_BUILDAGENT]: 'https://docs.artemis.tum.de/developer/setup#integrated-code-lifecycle-setup',
-        [PROFILE_JENKINS]: 'https://docs.artemis.tum.de/developer/jenkins-localvc',
+        [PROFILE_LOCALCI]: 'https://docs.artemis.tum.de/admin/production-setup/integrated-code-lifecycle-setup',
+        [PROFILE_BUILDAGENT]: 'https://docs.artemis.tum.de/admin/production-setup/integrated-code-lifecycle-setup',
+        [PROFILE_JENKINS]: 'https://docs.artemis.tum.de/admin/jenkins-localvc',
     };
 
     /** Documentation links for module features */
     private readonly moduleDocumentationLinks: Partial<Record<ModuleFeature, string>> = {
-        [MODULE_FEATURE_IRIS]: 'https://docs.artemis.tum.de/admin/extensions-setup#iris--pyris-setup-guide',
-        [MODULE_FEATURE_ATLAS]: 'https://docs.artemis.tum.de/instructor/adaptive-learning',
+        [MODULE_FEATURE_IRIS]: 'https://docs.artemis.tum.de/admin/extensions-setup#edutelligence--iris',
+        [MODULE_FEATURE_ATLAS]: 'https://docs.artemis.tum.de/instructor/analytics/adaptive-learning',
         [MODULE_FEATURE_HYPERION]: 'https://docs.artemis.tum.de/admin/hyperion',
+        [MODULE_FEATURE_DEIMOS]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
         [MODULE_FEATURE_EXAM]: 'https://docs.artemis.tum.de/instructor/exams/intro',
-        [MODULE_FEATURE_PLAGIARISM]: 'https://docs.artemis.tum.de/instructor/plagiarism-check',
+        [MODULE_FEATURE_PLAGIARISM]: 'https://docs.artemis.tum.de/instructor/assessment-grading/plagiarism-check',
         [MODULE_FEATURE_TEXT]: 'https://docs.artemis.tum.de/instructor/exercises/text-exercise',
         [MODULE_FEATURE_MODELING]: 'https://docs.artemis.tum.de/instructor/exercises/modeling-exercise',
         [MODULE_FEATURE_FILEUPLOAD]: 'https://docs.artemis.tum.de/instructor/exercises/file-upload-exercise',
         [MODULE_FEATURE_LECTURE]: 'https://docs.artemis.tum.de/instructor/lectures',
-        [MODULE_FEATURE_TUTORIALGROUP]: 'https://docs.artemis.tum.de/instructor/tutorial-groups',
+        [MODULE_FEATURE_TUTORIALGROUP]: 'https://docs.artemis.tum.de/instructor/communication-support/tutorial-groups',
         [MODULE_FEATURE_SHARING]: 'https://docs.artemis.tum.de/admin/extensions-setup#setup-guide-for-exchange-with-the-sharing-platform',
-        [MODULE_FEATURE_LTI]: 'https://docs.artemis.tum.de/instructor/lti-configuration',
+        [MODULE_FEATURE_LTI]: 'https://docs.artemis.tum.de/instructor/integrations/lti-configuration',
         [MODULE_FEATURE_ATHENA]: 'https://docs.artemis.tum.de/admin/extensions-setup#athena-service',
         [MODULE_FEATURE_APOLLON]: 'https://docs.artemis.tum.de/instructor/exercises/modeling-exercise',
         [MODULE_FEATURE_LDAP]: 'https://docs.artemis.tum.de/admin/production-setup/security#ldap-authentication',
@@ -238,7 +256,7 @@ export class AdminFeatureToggleComponent implements OnInit {
     }
 
     private setToggleState(feature: FeatureToggle, isActive: boolean): void {
-        this.featureToggles.update((toggles) => toggles.map((toggle) => (toggle.feature === feature ? { ...toggle, isActive } : toggle)));
+        this.featureToggles.update((toggles) => toggles.map((toggle) => (toggle.feature === feature ? cloneWith(toggle, { isActive }) : toggle)));
     }
 
     private setPending(feature: FeatureToggle, pending: boolean): void {

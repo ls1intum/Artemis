@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.localci.config.LocalCILegacyRestPaths;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
@@ -32,8 +32,9 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
  */
 @Profile(PROFILE_LOCALCI)
 @Lazy
+@FeatureUsage("build-system/build-phase-templates")
 @RestController
-@RequestMapping({ "api/localci/phases/", LocalCILegacyRestPaths.PROGRAMMING_PHASES_PREFIX })
+@RequestMapping("api/localci/phases/")
 public class BuildPhasesTemplateResource {
 
     private static final Logger log = LoggerFactory.getLogger(BuildPhasesTemplateResource.class);

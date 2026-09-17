@@ -7,6 +7,7 @@ import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { FitTextDirective } from 'app/quiz/shared/fit-text/fit-text.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { dragItemPicturePath } from 'app/quiz/shared/util/drag-and-drop-file-url.util';
 import { getIsMobileSignal } from 'app/foundation/util/global.utils';
 
 @Component({
@@ -33,6 +34,9 @@ export class DragItemComponent {
     /**
      * Builds the image source for the drag item. A locally uploaded, not-yet-saved image is shown from its client-side preview (a data URL) if present; otherwise the saved picture is
      * served via the question-scoped file URL {@code files/drag-and-drop/questions/{questionId}/drag-items/{dragItemId}/{filename}}.
+     *
+     * `pictureFilePath` already carries that path on a current response; the rebuild is what keeps a value that does not carry it reachable, since a drag item id is only unique
+     * within its question. {@link dragItemPicturePath} owns that template and explains when such a value still turns up.
      */
     protected imageSrc(): string | undefined {
         const picturePath = this.dragItem().pictureFilePath;
@@ -46,8 +50,7 @@ export class DragItemComponent {
         const questionId = this.questionId();
         const dragItemId = this.dragItem().id;
         if (questionId !== undefined && dragItemId !== undefined) {
-            const filename = picturePath.substring(picturePath.lastIndexOf('/') + 1);
-            return addPublicFilePrefix(`drag-and-drop/questions/${questionId}/drag-items/${dragItemId}/${filename}`);
+            return addPublicFilePrefix(dragItemPicturePath(questionId, dragItemId, picturePath));
         }
         return addPublicFilePrefix(picturePath);
     }

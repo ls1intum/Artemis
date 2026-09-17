@@ -7,6 +7,7 @@ import { of } from 'rxjs';
 import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { CourseOverviewRoutePath } from 'app/course/overview/courses.route';
+import { SidebarView } from 'app/course/shared/sidebar-view.interface';
 
 @Component({
     selector: 'jhi-course-iris',
@@ -15,7 +16,7 @@ import { CourseOverviewRoutePath } from 'app/course/overview/courses.route';
     imports: [CourseChatbotComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CourseIrisComponent {
+export class CourseIrisComponent implements SidebarView {
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly irisChatService = inject(IrisChatService);

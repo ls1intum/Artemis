@@ -25,6 +25,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * @deprecated Use {@link CompetencySelectionPrimengComponent} instead.
@@ -170,7 +171,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
             }
 
             const competencyId = newValue.competency.id;
-            this.checkboxStates.update((states) => ({ ...states, [competencyId]: !states[competencyId] }));
+            this.checkboxStates.update((states) => cloneWith(states, { [competencyId]: !states[competencyId] }));
 
             // make sure to do not send an empty list to server
             if (!this.selectedCompetencyLinks?.length) {
@@ -209,7 +210,11 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         }
     }
 
-    /** Merges new competencies from the given links into the available list and rebuilds selection/checkbox state. */
+    /**
+     * Merges new competencies from the given links into the available list and rebuilds selection/checkbox state.
+     * This is a programmatic refresh, so it must not emit valueChange: the caller already knows the links, and
+     * echoing them back to a parent that refreshes on valueChange loops forever.
+     */
     refreshWithLinks(links: CompetencyLearningObjectLink[]): void {
         if (!links) return;
 
@@ -239,7 +244,6 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         if (this._onChange) {
             this._onChange(this.selectedCompetencyLinks);
         }
-        this.valueChange.emit(this.selectedCompetencyLinks);
 
         // Rebuild checkbox states to match the current selection
         const selectedIds = new Set((this.selectedCompetencyLinks ?? []).map((l) => l.competency?.id).filter(Boolean));

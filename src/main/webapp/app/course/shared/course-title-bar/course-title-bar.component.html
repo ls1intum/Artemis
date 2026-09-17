@@ -1,6 +1,10 @@
-<div id="course-title-bar" class="module-bg m-2 mt-0 px-3 py-2 rounded rounded-3 sticky-top flex-column" [style.display]="displayStyle()">
-    <div class="d-flex justify-content-between">
-        <div class="align-self-center d-flex">
+<!-- Height, vertical padding, action-control sizing and the surrounding dividers come from
+     `title-bar-frame` / `title-bar-compact-controls` in the component stylesheet, so this bar stays identical
+     to the admin title bar. The frame applies to the row below, not to this element: a page may also project a
+     toolbar, which renders as a second row and makes the bar taller than `--title-bar-height` by design. -->
+<div id="course-title-bar" class="module-bg px-3 rounded rounded-3 sticky-top" [style.display]="displayStyle()">
+    <div class="course-title-bar-row">
+        <div class="title-bar-title align-self-center d-flex">
             <div class="align-self-center">
                 @if (customTitleTemplate()) {
                     <ng-container *ngTemplateOutlet="customTitleTemplate()!" />
@@ -10,7 +14,7 @@
             </div>
         </div>
 
-        <div class="d-flex gap-2 align-items-center">
+        <div class="title-bar-actions d-flex gap-2 align-items-center">
             @if (customActionsTemplate()) {
                 <ng-container *ngTemplateOutlet="customActionsTemplate()!" />
             }

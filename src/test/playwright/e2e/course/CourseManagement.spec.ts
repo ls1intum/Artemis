@@ -128,35 +128,41 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await courseCreation.setEnableMoreFeedback(courseData.enableMoreFeedback);
             await courseCreation.setMaxRequestMoreFeedbackTimeDays(courseData.maxRequestMoreFeedbackTimeDays);
 
-            const courseBody = await courseCreation.submit();
-            course = courseBody;
+            // The creation endpoint answers with the new course's id only, so the stored course is read back to
+            // check that every field the form submitted arrived. The id is recorded first, so that a failing
+            // assertion below still leaves the course for afterEach to delete.
+            const { id: courseId } = await courseCreation.submit();
+            course = new Course();
+            course.id = courseId;
 
-            expect(courseBody.title).toBe(courseData.title);
-            expect(courseBody.shortName).toBe(courseData.shortName);
-            expect(courseBody.description).toBe(courseData.description);
-            expect(courseBody.testCourse).toBe(courseData.testCourse);
-            expect(trimDate(courseBody.startDate)).toBe(trimDate(dayjsToString(courseData.startDate)));
-            expect(trimDate(courseBody.endDate)).toBe(trimDate(dayjsToString(courseData.endDate)));
-            expect(courseBody.semester).toBe(courseData.semester);
-            expect(courseBody.maxPoints).toBe(courseData.maxPoints);
-            expect(courseBody.defaultProgrammingLanguage).toBe(courseData.programmingLanguage);
-            expect(courseBody.complaintsEnabled).toBe(courseData.enableComplaints);
-            expect(courseBody.maxComplaints).toBe(courseData.maxComplaints);
-            expect(courseBody.maxTeamComplaints).toBe(courseData.maxTeamComplaints);
-            expect(courseBody.maxComplaintTimeDays).toBe(courseData.maxComplaintTimeDays);
-            expect(courseBody.requestMoreFeedbackEnabled).toBe(courseData.enableMoreFeedback);
+            const storedCourse = await (await page.request.get(`api/course/courses/${courseId}`)).json();
+
+            expect(storedCourse.title).toBe(courseData.title);
+            expect(storedCourse.shortName).toBe(courseData.shortName);
+            expect(storedCourse.description).toBe(courseData.description);
+            expect(storedCourse.testCourse).toBe(courseData.testCourse);
+            expect(trimDate(storedCourse.startDate)).toBe(trimDate(dayjsToString(courseData.startDate)));
+            expect(trimDate(storedCourse.endDate)).toBe(trimDate(dayjsToString(courseData.endDate)));
+            expect(storedCourse.semester).toBe(courseData.semester);
+            expect(storedCourse.maxPoints).toBe(courseData.maxPoints);
+            expect(storedCourse.defaultProgrammingLanguage).toBe(courseData.programmingLanguage);
+            expect(storedCourse.complaintsEnabled).toBe(courseData.enableComplaints);
+            expect(storedCourse.maxComplaints).toBe(courseData.maxComplaints);
+            expect(storedCourse.maxTeamComplaints).toBe(courseData.maxTeamComplaints);
+            expect(storedCourse.maxComplaintTimeDays).toBe(courseData.maxComplaintTimeDays);
+            expect(storedCourse.requestMoreFeedbackEnabled).toBe(courseData.enableMoreFeedback);
 
             // After a successful create the app auto-navigates to the new course's detail page, but
             // under heavy multi-node load that client-side navigation occasionally does not fire (the
             // create form stays mounted). Wait for the expected URL and fall back to an explicit goto
             // so the detail assertions below test the rendered course instead of racing the navigation.
-            const courseDetailUrl = new RegExp(`/course-management/${courseBody.id}(/|$)`);
+            const courseDetailUrl = new RegExp(`/course-management/${courseId}(/|$)`);
             const navigated = await page
                 .waitForURL(courseDetailUrl, { timeout: 15_000 })
                 .then(() => true)
                 .catch(() => false);
             if (!navigated) {
-                await page.goto(`/course-management/${courseBody.id}`);
+                await page.goto(`/course-management/${courseId}`);
                 await page.waitForURL(courseDetailUrl, { timeout: 30_000 });
             }
 
@@ -249,7 +255,7 @@ test.describe('Course management', { tag: '@fast' }, () => {
         }) => {
             // Course delete with summary spawns ~15 API requests to populate the course +
             // a slow DELETE on a course that has exercises/exam/messages attached, then
-            // re-loads course-management-overview which is a heavy aggregation. Even the
+            // re-loads the consolidated course dashboard. Even the
             // tripled @slow budget (180s) routinely overruns under heavy multi-node load.
             test.setTimeout(360_000);
             // Use API calls instead of UI navigation for faster user creation

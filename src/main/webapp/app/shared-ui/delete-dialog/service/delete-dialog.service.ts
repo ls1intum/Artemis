@@ -5,6 +5,7 @@ import { DeleteDialogData } from 'app/shared-ui/delete-dialog/delete-dialog.mode
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Injectable({ providedIn: 'root' })
 export class DeleteDialogService {
@@ -35,7 +36,7 @@ export class DeleteDialogService {
             data: {
                 entityTitle: deleteDialogData.entityTitle,
                 deleteQuestion: deleteDialogData.deleteQuestion,
-                translateValues: { ...deleteDialogData.translateValues, title: deleteDialogData.entityTitle },
+                translateValues: cloneWith(deleteDialogData.translateValues, { title: deleteDialogData.entityTitle }),
                 deleteConfirmationText: deleteDialogData.deleteConfirmationText,
                 additionalChecks: deleteDialogData.additionalChecks,
                 entitySummaryTitle: deleteDialogData.entitySummaryTitle,

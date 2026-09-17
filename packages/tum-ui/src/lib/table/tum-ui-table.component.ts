@@ -21,10 +21,11 @@ import {
 import { get } from 'lodash-es';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faMagnifyingGlass, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
+import { faCircleQuestion, faMagnifyingGlass, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 import { TumUiPaginatorComponent } from '../paginator/tum-ui-paginator.component';
 import { CellRendererParams, ColumnDef, TumUiSortDirection, TumUiSortState, TumUiTableQueryEvent } from './tum-ui-table.types';
 import { TumUiTranslatePipe } from '../i18n/tum-ui-translate.pipe';
+import { TumUiTooltipDirective } from '../tooltip/tum-ui-tooltip.directive';
 
 const ACTIONS_COLUMN = '__tum_ui_actions__';
 const SEARCH_DEBOUNCE_MS = 300;
@@ -42,7 +43,7 @@ const HIDE_BELOW_CLASSES: Record<NonNullable<ColumnDef<unknown>['hideBelow']>, s
     selector: 'tum-ui-table',
     templateUrl: './tum-ui-table.component.html',
     styleUrl: './tum-ui-table.component.scss',
-    imports: [CdkTableModule, NgTemplateOutlet, FaIconComponent, TumUiTranslatePipe, TumUiPaginatorComponent],
+    imports: [CdkTableModule, NgTemplateOutlet, FaIconComponent, TumUiTranslatePipe, TumUiPaginatorComponent, TumUiTooltipDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiTableComponent<T> {
@@ -76,6 +77,7 @@ export class TumUiTableComponent<T> {
     readonly dataRequest = output<TumUiTableQueryEvent>();
 
     protected readonly ACTIONS_COLUMN = ACTIONS_COLUMN;
+    protected readonly faCircleQuestion = faCircleQuestion;
     protected readonly faMagnifyingGlass = faMagnifyingGlass;
     protected readonly faSort = faSort;
     protected readonly faSortDown = faSortDown;
@@ -130,6 +132,15 @@ export class TumUiTableComponent<T> {
         this.destroyRef.onDestroy(() => clearTimeout(this.searchTimer));
     }
 
+    /** Jump back to the first page and re-request. For consumers that own filtering themselves (`showSearch` off). */
+    resetPage(): void {
+        if (this.page() === 0) {
+            return;
+        }
+        this.page.set(0);
+        this.emitDataRequest();
+    }
+
     protected columnName(col: ColumnDef<T>, index: number): string {
         return col.field ?? col.headerKey ?? col.header ?? `col-${index}`;
     }
@@ -144,6 +155,15 @@ export class TumUiTableComponent<T> {
 
     protected columnVisibilityClasses(col: ColumnDef<T>): string {
         return col.hideBelow ? HIDE_BELOW_CLASSES[col.hideBelow] : '';
+    }
+
+    /**
+     * A header that cannot wrap is a floor the column can never go below, so a long one costs its full width in every
+     * layout however little the cells under it hold. `wrapHeader` trades a two-line heading for that width.
+     */
+    protected headerCellClasses(col: ColumnDef<T>): string {
+        const whitespace = col.wrapHeader ? '' : 'tum:whitespace-nowrap';
+        return `${this.columnVisibilityClasses(col)} ${whitespace}`.trim();
     }
 
     protected ariaSortFor(col: ColumnDef<T>): 'ascending' | 'descending' | 'none' | undefined {

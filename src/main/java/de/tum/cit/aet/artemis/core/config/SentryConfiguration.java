@@ -1,8 +1,10 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
@@ -33,6 +35,16 @@ public class SentryConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(SentryConfiguration.class);
 
+    /**
+     * The user data a Sentry message may carry, scrubbed before it leaves the server: {@code user=barney_young},
+     * {@code User{...}} and email addresses.
+     */
+    private static final List<Pattern> PERSONAL_DATA_PATTERNS = List.of(Pattern.compile("user=\\S+"), Pattern.compile("User\\{[^}]*}"),
+            Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"));
+
+    /** The part of a repository URI between the last hyphen and the git suffix, which is a user login. */
+    private static final Pattern LOGIN_IN_REPOSITORY_URI = Pattern.compile("\\/git\\/([A-Z0-9]+)\\/([^/]+)-[^/]+\\.git");
+
     @Value("${artemis.version}")
     private String artemisVersion;
 
@@ -44,6 +56,16 @@ public class SentryConfiguration {
 
     @Value("${sentry.environment}")
     private Optional<String> environment;
+
+    /**
+     * The configured performance-trace sampling rate, if the deployment sets one.
+     * <p>
+     * Empty falls back to {@link #environmentTracesSampleRate()}. The property existed and was rendered into every
+     * deployment's configuration long before it was read here, so a deployment that had set it was silently getting
+     * the hard-coded rate instead.
+     */
+    @Value("${sentry.traces-sample-rate:#{null}}")
+    private Optional<Double> configuredTracesSampleRate;
 
     /**
      * init sentry with the correct package name and Artemis version
@@ -133,9 +155,8 @@ public class SentryConfiguration {
         // - user=barney_young => user=\S+
         // - User{...} => User{[^}]*}
         // - emails => [A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}
-        List<String> piiPatterns = List.of("user=\\S+", "User{[^}]*}", "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}");
-        for (String pattern : piiPatterns) {
-            unscrubbed = unscrubbed.replaceAll(pattern, "");
+        for (Pattern pattern : PERSONAL_DATA_PATTERNS) {
+            unscrubbed = pattern.matcher(unscrubbed).replaceAll("");
         }
         return unscrubbed;
     }
@@ -145,7 +166,7 @@ public class SentryConfiguration {
         // To ensure we're not accidentally transmitting them,
         // we use a heuristic to filter out this part of the URL.
         // We assume the part between the last dash and .git to contain a username.
-        String scrubbed = unscrubbed.replaceAll("\\/git\\/([A-Z0-9]+)\\/([^/]+)-[^/]+\\.git", "/git/$1/$2.git");
+        String scrubbed = LOGIN_IN_REPOSITORY_URI.matcher(unscrubbed).replaceAll("/git/$1/$2.git");
         // False positives: tests, exercise & solution repositories
         if (unscrubbed.contains("-tests.git") || unscrubbed.contains("-exercise.git") || unscrubbed.contains("-solution.git")) {
             return unscrubbed;
@@ -211,7 +232,7 @@ public class SentryConfiguration {
             }
 
             if (request.getHeaders() != null) {
-                request.setHeaders(request.getHeaders().entrySet().stream().filter((entry) -> !entry.getKey().toLowerCase().startsWith("x-artemis-client-"))
+                request.setHeaders(request.getHeaders().entrySet().stream().filter((entry) -> !entry.getKey().toLowerCase(Locale.ROOT).startsWith("x-artemis-client-"))
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
             }
         }
@@ -221,7 +242,7 @@ public class SentryConfiguration {
 
     private String getEnvironment() {
         if (environment.isPresent() && !environment.get().isBlank()) {
-            return environment.get().trim().toLowerCase();
+            return environment.get().trim().toLowerCase(Locale.ROOT);
         }
         if (isTestServer.isPresent()) {
             if (isTestServer.get()) {
@@ -237,11 +258,25 @@ public class SentryConfiguration {
     }
 
     /**
-     * Get the traces sample rate based on the environment.
+     * The rate at which whole requests are traced for Sentry Performance.
+     * <p>
+     * A deployment that configures {@code sentry.traces-sample-rate} gets exactly that; otherwise the environment
+     * decides. Honouring the property matters because the cost is not small: a benchmark of 1000 simulated students
+     * against a staging server spent 14% of the Artemis nodes' on-CPU samples in Sentry's sender threads, nearly all
+     * of it in the TLS handshake each envelope opens, and there was no way to turn that down from the deployment.
+     *
+     * @return the configured rate, or the environment's default when none is configured
+     */
+    private double getTracesSampleRate() {
+        return configuredTracesSampleRate.orElseGet(this::environmentTracesSampleRate);
+    }
+
+    /**
+     * The default traces sample rate for a deployment that does not configure one.
      *
      * @return 0% for local, 100% for test and staging, 5% for production environments
      */
-    private double getTracesSampleRate() {
+    private double environmentTracesSampleRate() {
         String env = getEnvironment();
         // All test/staging environments get 1.0 sample rate
         if (env.contains("test") || env.contains("staging")) {

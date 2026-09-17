@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    Drops idx_reference on feedback.reference, the largest piece of dead schema on the biggest table.
+
+    On a production copy (36.1M feedback rows) the index occupies 716 MB (45,824 pages per
+    mysql.innodb_index_stats) - 19% of the table's 3.7 GB of secondary indexes - and 82% of its
+    entries are NULL keys, because only 3.9M rows have a reference at all.
+
+    No query has ever used it at runtime: an exhaustive search of every @Query/native query in
+    src/main/java finds no WHERE/JOIN predicate on feedback.reference. The column is only read in
+    Java after the entity is loaded (text/modeling assessment element matching, Athena DTO
+    conversion). The single SQL statement that ever filtered on it was the one-shot test_case_id
+    backfill migration in changelog 20230810100000 (feedback.reference IS NULL as an SCA exclusion),
+    long since consolidated away. The column has no foreign key, so no constraint requires the index.
+
+    Besides the space, every one of the ~36M inserts and deletes on this table currently maintains
+    the index for nothing.
+
+    The initial schema (00000000000000_initial_schema.xml) still creates the index for fresh
+    installations and cannot be edited without invalidating recorded checksums, so - as with
+    changelog 20260728223939 - fresh installations create it and drop it again here, which costs
+    milliseconds on an empty table. DROP INDEX is an INPLACE metadata-only operation on MySQL 8.0+
+    and PostgreSQL, so this migration is instant regardless of table size; the freed pages return to
+    the tablespace immediately (file shrink, as always, only on the next table rebuild).
+    -->
+
+    <changeSet id="20260816213553-01-drop-feedback-idx-reference" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="feedback" indexName="idx_reference"/>
+        </preConditions>
+        <dropIndex tableName="feedback" indexName="idx_reference"/>
+    </changeSet>
+
+</databaseChangeLog>

@@ -107,8 +107,14 @@ export class PlaywrightUserManagement {
 
 export const users = new PlaywrightUserManagement();
 
-// Fixed user credentials — passwords equal usernames
-export const admin: UserCredentials = { username: 'artemis_admin', password: 'artemis_admin' };
+// Fixed user credentials — passwords equal usernames, except for the admin account: a prod-profile stack cannot use
+// `artemis_admin` as its password, because ConfigurationValidator rejects both that published value and a password equal
+// to the username. The harness passes the stack's actual credentials in ADMIN_USERNAME / ADMIN_PASSWORD (see
+// docker/playwright.yml and the multi-node runner scripts); the fallbacks are what the dev-profile stacks use.
+export const admin: UserCredentials = {
+    username: process.env.ADMIN_USERNAME || 'artemis_admin',
+    password: process.env.ADMIN_PASSWORD || 'artemis_admin',
+};
 export const studentOne: UserCredentials = { username: 'artemis_test_user_1', password: 'artemis_test_user_1', displayName: 'Student One' };
 export const studentTwo: UserCredentials = { username: 'artemis_test_user_2', password: 'artemis_test_user_2', displayName: 'Student Two' };
 export const studentThree: UserCredentials = { username: 'artemis_test_user_3', password: 'artemis_test_user_3', displayName: 'Student Three' };

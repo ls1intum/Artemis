@@ -22,6 +22,7 @@ import { CourseDescriptionFormComponent } from 'app/atlas/manage/generate-compet
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CompetencyRecommendationDetailComponent } from 'app/atlas/manage/generate-competencies/competency-recommendation-detail.component';
 import { IrisRunState, IrisStatusError } from 'app/iris/shared/entities/iris-activity.model';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export type CompetencyFormControlsWithViewed = {
     competency: FormGroup<CompetencyFormControls>;
@@ -236,7 +237,7 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
      * Saves the competency recommendations as competencies and navigates back
      */
     save() {
-        const competenciesToSave = this.competencies.getRawValue().map((c) => Object.assign(new Competency(), c.competency));
+        const competenciesToSave = this.competencies.getRawValue().map((c) => hydrate(new Competency(), c.competency));
         this.competencyService.createBulk(competenciesToSave, this.courseId).subscribe({
             next: () => {
                 this.submitted = true;

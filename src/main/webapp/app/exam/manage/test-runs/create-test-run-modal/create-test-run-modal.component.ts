@@ -1,12 +1,12 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
 
 @Component({
     selector: 'jhi-create-test-run-modal',
@@ -51,14 +51,16 @@ export class CreateTestRunModalComponent implements OnInit {
         const currentExam = this.exam();
         if (!currentExam) return;
         if (this.testRunConfigured) {
-            const testRun = new StudentExam();
-            testRun.exam = currentExam;
-            testRun.exercises = [];
-            // add exercises one by one to maintain exerciseGroup order
+            const exerciseIds: number[] = [];
+            // add exercise ids one by one to maintain exerciseGroup order (the server persists them in this exact order)
             for (const exerciseGroup of currentExam.exerciseGroups!) {
-                testRun.exercises.push(this.testRunConfiguration[exerciseGroup.id!]);
+                exerciseIds.push(this.testRunConfiguration[exerciseGroup.id!].id!);
             }
-            testRun.workingTime = this.workingTimeForm.controls.minutes.value * 60 + this.workingTimeForm.controls.seconds.value;
+            const testRun: CreateTestRunDTO = {
+                examId: currentExam.id!,
+                exerciseIds,
+                workingTime: this.workingTimeForm.controls.minutes.value * 60 + this.workingTimeForm.controls.seconds.value,
+            };
             this.dialogRef.close(testRun);
         }
     }

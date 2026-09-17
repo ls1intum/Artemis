@@ -4,13 +4,21 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -19,8 +27,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
-
-import net.lingala.zip4j.ZipFile;
 
 /**
  * A service class to create zip files
@@ -47,22 +53,79 @@ public class ZipFileService {
     /**
      * Create a zip file of the given paths and save it in the zipFilePath
      *
+     * <p>
+     * Files whose content is already compressed are stored rather than deflated again (see
+     * {@link AlreadyCompressedFiles}), and each entry keeps the POSIX permissions of the file it came from.
+     *
      * @param zipFilePath path where the zip file should be saved
      * @param paths       multiple paths that should be zipped
      * @throws IOException if an error occurred while zipping
      */
     public void createZipFile(Path zipFilePath, List<Path> paths) throws IOException {
         log.debug("Creating zip file at {} for paths: {}", zipFilePath, paths);
-        try (ZipFile zipFile = new ZipFile(zipFilePath.toFile())) {
+        try (ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(zipFilePath.toFile())) {
             for (var path : paths) {
-                if (Files.isReadable(path) && !Files.isDirectory(path)) {
-                    zipFile.addFile(path.toFile());
+                if (!Files.isReadable(path) || isIgnoredZipFileName(path)) {
+                    continue;
                 }
-                else if (Files.isReadable(path) && Files.isDirectory(path)) {
-                    zipFile.addFolder(path.toFile());
+                if (Files.isDirectory(path)) {
+                    addDirectoryToZip(zipOutputStream, path);
+                }
+                else {
+                    // A single file is stored at the zip root under its file name (matching the previous zip4j addFile).
+                    addFileToZip(zipOutputStream, path, path.getFileName().toString());
                 }
             }
         }
+    }
+
+    /**
+     * Recursively adds a directory to the zip stream. Entries are prefixed with the directory name so the directory
+     * itself appears as the top-level entry, matching the previous zip4j addFolder behaviour.
+     */
+    private static void addDirectoryToZip(ZipArchiveOutputStream zipOutputStream, Path directory) throws IOException {
+        String prefix = directory.getFileName().toString();
+        Files.walkFileTree(directory, new SimpleFileVisitor<>() {
+
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                String relativePath = directory.relativize(dir).toString().replace('\\', '/');
+                String entryName = relativePath.isEmpty() ? prefix + "/" : prefix + "/" + relativePath + "/";
+                ZipArchiveEntry directoryEntry = new ZipArchiveEntry(entryName);
+                FileModeUtil.applyUnixMode(directoryEntry, dir);
+                zipOutputStream.putArchiveEntry(directoryEntry);
+                zipOutputStream.closeArchiveEntry();
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                if (Files.isReadable(file) && !isIgnoredZipFileName(file)) {
+                    addFileToZip(zipOutputStream, file, prefix + "/" + directory.relativize(file).toString().replace('\\', '/'));
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    }
+
+    private static boolean isIgnoredZipFileName(Path path) {
+        return IGNORED_ZIP_FILE_NAMES.contains(path.getFileName().toString());
+    }
+
+    /**
+     * Writes a single file into the zip stream under the given entry name. Uses {@link FileUtils#copyFile} so that a
+     * read/copy failure surfaces as an {@link IOException} (preserving this class's checked-exception contract) rather
+     * than the unchecked exception the streaming helper raises.
+     */
+    private static void addFileToZip(ZipArchiveOutputStream zipOutputStream, Path file, String entryName) throws IOException {
+        ZipArchiveEntry entry = new ZipArchiveEntry(entryName);
+        FileModeUtil.applyUnixMode(entry, file);
+        if (AlreadyCompressedFiles.matches(file)) {
+            entry.setMethod(ZipEntry.STORED);
+        }
+        zipOutputStream.putArchiveEntry(entry);
+        FileUtils.copyFile(file.toFile(), zipOutputStream);
+        zipOutputStream.closeArchiveEntry();
     }
 
     /**
@@ -136,9 +199,7 @@ public class ZipFileService {
      */
     public void extractZipFileRecursively(Path zipPath) throws IOException {
         var dirToUnzip = Files.createDirectory(zipPath.toAbsolutePath().getParent().resolve(FilenameUtils.getBaseName(zipPath.toString())));
-        try (ZipFile zipFile = new ZipFile(zipPath.toFile())) {
-            zipFile.extractAll(dirToUnzip.toString());
-        }
+        extractZipFile(zipPath, dirToUnzip);
         List<Path> zipFilesInDirList;
         try (var zipFilesInDir = Files.list(dirToUnzip).filter(path -> "zip".equalsIgnoreCase(FilenameUtils.getExtension(path.toString())))) {
             zipFilesInDirList = zipFilesInDir.toList();
@@ -146,6 +207,37 @@ public class ZipFileService {
         for (Path path : zipFilesInDirList) {
             extractZipFileRecursively(path);
         }
+    }
 
+    /**
+     * Extracts all entries of a zip file into the target directory, preserving the directory structure. Entries that
+     * would resolve outside the target directory (zip slip / path traversal) are rejected.
+     *
+     * @param zipPath   the zip file to extract
+     * @param targetDir the directory to extract into (must already exist)
+     * @throws IOException if an entry escapes the target directory or extraction fails
+     */
+    private static void extractZipFile(Path zipPath, Path targetDir) throws IOException {
+        Path normalizedTarget = targetDir.toAbsolutePath().normalize();
+        try (ZipFile zipFile = new ZipFile(zipPath.toFile())) {
+            var entries = zipFile.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+                Path resolved = normalizedTarget.resolve(entry.getName()).normalize();
+                if (!resolved.startsWith(normalizedTarget)) {
+                    throw new IOException("Blocked zip entry outside the target directory (zip slip): " + entry.getName());
+                }
+                if (entry.isDirectory()) {
+                    Files.createDirectories(resolved);
+                }
+                else {
+                    try (var inputStream = zipFile.getInputStream(entry)) {
+                        // FileUtils.copyInputStreamToFile creates missing parent directories; java.nio Files.copy is
+                        // forbidden by ArchitectureTest.testFileWriteUsage precisely because it does not.
+                        FileUtils.copyInputStreamToFile(inputStream, resolved.toFile());
+                    }
+                }
+            }
+        }
     }
 }

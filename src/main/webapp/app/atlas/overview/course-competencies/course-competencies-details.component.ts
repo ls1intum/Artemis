@@ -41,6 +41,7 @@ import { MarkdownDirective } from 'app/foundation/directives/markdown.directive'
 import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
 import { ScienceEventType } from 'app/foundation/science/science.model';
 import { ScienceService } from 'app/foundation/science/science.service';
+import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-course-competencies-details',
@@ -195,7 +196,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
                     this.competencyProgress.set(resp.body!);
                     // Publish a new competency reference (a same-reference update would not notify zoneless change detection).
                     this.competency.update((competency) =>
-                        competency ? Object.assign(Object.create(Object.getPrototypeOf(competency)), competency, { userProgress: [resp.body!] }) : competency,
+                        competency ? hydrate(Object.create(Object.getPrototypeOf(competency)), competency, { userProgress: [resp.body!] }) : competency,
                     );
                     this.showFireworksIfMastered();
                 },
@@ -214,10 +215,10 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
             }
             const lectureUnitLinks = competency.lectureUnitLinks.map((link) =>
                 link.lectureUnit?.id === lectureUnitId
-                    ? Object.assign(Object.create(Object.getPrototypeOf(link)), link, { lectureUnit: Object.assign({}, link.lectureUnit, { completed }) })
+                    ? hydrate(Object.create(Object.getPrototypeOf(link)), link, { lectureUnit: cloneWith(link.lectureUnit, { completed }) })
                     : link,
             );
-            return Object.assign(Object.create(Object.getPrototypeOf(competency)), competency, { lectureUnitLinks });
+            return hydrate(Object.create(Object.getPrototypeOf(competency)), competency, { lectureUnitLinks });
         });
     }
 

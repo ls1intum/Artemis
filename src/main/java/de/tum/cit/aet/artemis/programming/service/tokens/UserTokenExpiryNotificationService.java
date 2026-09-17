@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
@@ -34,11 +35,14 @@ public class UserTokenExpiryNotificationService {
 
     private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
 
+    private final UserVcsAccessTokenService userVcsAccessTokenService;
+
     public UserTokenExpiryNotificationService(UserRepository userRepository, MailSendingService mailSendingService,
-            GlobalNotificationSettingRepository globalNotificationSettingRepository) {
+            GlobalNotificationSettingRepository globalNotificationSettingRepository, UserVcsAccessTokenService userVcsAccessTokenService) {
         this.userRepository = userRepository;
         this.mailSendingService = mailSendingService;
         this.globalNotificationSettingRepository = globalNotificationSettingRepository;
+        this.userVcsAccessTokenService = userVcsAccessTokenService;
     }
 
     /**
@@ -66,7 +70,8 @@ public class UserTokenExpiryNotificationService {
      * @param notifyFunction a function to handle user notification
      */
     private void notifyUsersForKeyExpiryWindow(ZonedDateTime fromDate, ZonedDateTime toDate, Consumer<User> notifyFunction) {
-        userRepository.findByVcsAccessTokenExpiryDateBetween(fromDate, toDate).forEach(notifyFunction);
+        var userIds = userVcsAccessTokenService.findUserIdsWithTokenExpiringBetween(fromDate, toDate);
+        userRepository.findAllById(userIds).forEach(notifyFunction);
     }
 
     /**

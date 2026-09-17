@@ -33,4 +33,40 @@ public record UpdateProgrammingExerciseBuildConfigDTO(Long id, Boolean sequentia
                 buildConfig.getAssignmentCheckoutPath(), buildConfig.getSolutionCheckoutPath(), buildConfig.getTimeoutSeconds(), buildConfig.getDockerFlags(),
                 buildConfig.getTheiaImage(), buildConfig.isAllowBranching(), buildConfig.getBranchRegex());
     }
+
+    /**
+     * Returns the same build configuration without the row id, for payloads that are written to a file and read back
+     * by another instance, whose import copies the id onto the configuration it creates.
+     *
+     * @return a copy of this DTO with a {@code null} id
+     */
+    public UpdateProgrammingExerciseBuildConfigDTO withoutId() {
+        return new UpdateProgrammingExerciseBuildConfigDTO(null, sequentialTestRuns, branch, buildPlanConfiguration, buildScript, checkoutSolutionRepository, testCheckoutPath,
+                assignmentCheckoutPath, solutionCheckoutPath, timeoutSeconds, dockerFlags, theiaImage, allowBranching, branchRegex);
+    }
+
+    /**
+     * Builds a transient {@link ProgrammingExerciseBuildConfig} from this DTO, copying the id through so an existing
+     * configuration keeps its identity. The back-reference to the programming exercise is never set.
+     *
+     * @return the build configuration entity described by this DTO
+     */
+    public ProgrammingExerciseBuildConfig toEntity() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setId(id);
+        buildConfig.setSequentialTestRuns(sequentialTestRuns);
+        buildConfig.setBranch(branch);
+        buildConfig.setBuildPlanConfiguration(buildPlanConfiguration);
+        buildConfig.setBuildScript(buildScript);
+        buildConfig.setCheckoutSolutionRepository(checkoutSolutionRepository);
+        buildConfig.setTestCheckoutPath(testCheckoutPath);
+        buildConfig.setAssignmentCheckoutPath(assignmentCheckoutPath);
+        buildConfig.setSolutionCheckoutPath(solutionCheckoutPath);
+        buildConfig.setTimeoutSeconds(timeoutSeconds);
+        buildConfig.setDockerFlags(dockerFlags);
+        buildConfig.setTheiaImage(theiaImage);
+        buildConfig.setAllowBranching(allowBranching);
+        buildConfig.setBranchRegex(branchRegex);
+        return buildConfig;
+    }
 }

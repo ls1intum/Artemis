@@ -1,4 +1,4 @@
-<div class="d-flex justify-content-between">
+<div class="flex justify-between">
     @let currentCourseId = courseId();
     @let currentSidebarData = sidebarData();
     @if (currentCourseId && currentSidebarData) {
@@ -17,17 +17,18 @@
         </div>
 
         @if (itemSelected()) {
-            <div class="vw-100 module-bg rounded-3">
+            <!-- flex-1 min-w-0 rather than a viewport width: the panel shares the row with the sidebar. -->
+            <div class="module-bg min-w-0 flex-1 rounded-lg">
                 <router-outlet (activate)="onSubRouteActivate($event)" />
             </div>
         } @else {
-            <div class="vw-100 module-bg rounded-3 p-3 d-flex flex-column">
+            <div class="module-bg flex min-w-0 flex-1 flex-col rounded-lg p-3">
                 @if (isCollapsed()) {
                     <div>
                         <jhi-course-sidebar-toggle-button [isCollapsed]="isCollapsed()" (toggleSidebar)="toggleSidebar()" />
                     </div>
                 }
-                <div class="col-12 text-center my-auto" jhiTranslate="artemisApp.courseOverview.tutorialGroups.selectTutorialGroup"></div>
+                <div class="my-auto w-full text-center" jhiTranslate="artemisApp.courseOverview.tutorialGroups.selectTutorialGroup"></div>
             </div>
         }
     }

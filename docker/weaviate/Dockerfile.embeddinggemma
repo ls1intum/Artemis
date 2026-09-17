@@ -1,4 +1,4 @@
-FROM semitechnologies/transformers-inference:custom
+FROM semitechnologies/transformers-inference:custom@sha256:a4b990d92e94854e7bf6cf4b56ec67fcdfac3b74a14f5f638644e6f7c2ba4cbc
 
 # embeddinggemma-300m is a gated model requiring Hugging Face authentication
 # Pass HF_TOKEN as a BuildKit secret: docker buildx build --secret id=hf_token,src=path/to/token ...

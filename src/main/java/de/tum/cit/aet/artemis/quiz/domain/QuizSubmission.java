@@ -29,7 +29,6 @@ public class QuizSubmission extends Submission {
     @Column(name = "score_in_points")
     private Double scoreInPoints;
 
-    // No @Cache: actively mutated on every autosave / submit / evaluation; NONSTRICT reads caused #12574.
     @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private Set<@Valid SubmittedAnswer> submittedAnswers = new HashSet<>();
 

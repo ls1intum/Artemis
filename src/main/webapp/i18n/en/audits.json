@@ -1,6 +1,11 @@
 {
     "audits": {
         "title": "Audits",
+        "logType": {
+            "general": "Login",
+            "security": "Security",
+            "application": "Application"
+        },
         "notFound": "No audit found",
         "filter": {
             "title": "Filter per date",

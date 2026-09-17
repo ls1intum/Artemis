@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -25,8 +24,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.PrerequisitesApi;
-import de.tum.cit.aet.artemis.communication.domain.FaqState;
-import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -45,7 +42,6 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.lecture.api.LectureApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 
 /**
@@ -62,45 +58,24 @@ public class CourseService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final Optional<LectureApi> lectureApi;
-
     private final Optional<ExerciseGroupApi> exerciseGroupApi;
 
-    private final Optional<ExamRepositoryApi> examRepositoryApi;
-
     private final CourseRepository courseRepository;
-
-    private final Optional<CompetencyApi> competencyApi;
-
-    private final Optional<PrerequisitesApi> prerequisitesApi;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final ExerciseRepository exerciseRepository;
 
-    private final Optional<TutorialGroupApi> tutorialGroupApi;
-
-    private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
-
-    private final FaqRepository faqRepository;
-
-    public CourseService(Optional<LectureApi> lectureApi, CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
-            Optional<CompetencyApi> competencyApi, Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExerciseGroupApi> exerciseGroupApi,
-            StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, Optional<TutorialGroupApi> tutorialGroupApi,
-            Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<PrerequisitesApi> prerequisitesApi, FaqRepository faqRepository) {
-        this.lectureApi = lectureApi;
+    public CourseService(Optional<LectureApi> ignoredLectureApi, CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
+            Optional<CompetencyApi> ignoredCompetencyApi, Optional<ExamRepositoryApi> ignoredExamRepositoryApi, Optional<ExerciseGroupApi> exerciseGroupApi,
+            StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, Optional<TutorialGroupApi> ignoredTutorialGroupApi,
+            Optional<PlagiarismCaseApi> ignoredPlagiarismCaseApi, Optional<PrerequisitesApi> ignoredPrerequisitesApi) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.exerciseGroupApi = exerciseGroupApi;
-        this.competencyApi = competencyApi;
-        this.examRepositoryApi = examRepositoryApi;
         this.studentParticipationRepository = studentParticipationRepository;
         this.exerciseRepository = exerciseRepository;
-        this.tutorialGroupApi = tutorialGroupApi;
-        this.plagiarismCaseApi = plagiarismCaseApi;
-        this.prerequisitesApi = prerequisitesApi;
-        this.faqRepository = faqRepository;
     }
 
     /**
@@ -115,7 +90,7 @@ public class CourseService {
 
         final var searchTerm = search.getSearchTerm();
         final Page<Course> coursePage;
-        if (authCheckService.isAdmin(user)) {
+        if (authCheckService.isCurrentUserAdminAccessEnabled()) {
             coursePage = courseRepository.findByTitleIgnoreCaseContaining(searchTerm, pageable);
         }
         else {
@@ -151,63 +126,6 @@ public class CourseService {
     }
 
     /**
-     * Add plagiarism cases to each exercise.
-     *
-     * @param exercises the course exercises for which the plagiarism cases should be fetched.
-     * @param userId    the user for which the plagiarism cases should be fetched.
-     */
-    public void fetchPlagiarismCasesForCourseExercises(Set<Exercise> exercises, Long userId) {
-        if (plagiarismCaseApi.isEmpty()) {
-            return;
-        }
-
-        PlagiarismCaseApi api = plagiarismCaseApi.get();
-        Set<Long> exerciseIds = exercises.stream().map(Exercise::getId).collect(Collectors.toSet());
-        List<PlagiarismCase> plagiarismCasesOfUserInCourseExercises = api.findByStudentIdAndExerciseIds(userId, exerciseIds);
-        for (Exercise exercise : exercises) {
-            // Add plagiarism cases to each exercise.
-            Set<PlagiarismCase> plagiarismCasesForExercise = plagiarismCasesOfUserInCourseExercises.stream()
-                    .filter(plagiarismCase -> plagiarismCase.getExercise().getId().equals(exercise.getId())).collect(Collectors.toSet());
-            exercise.setPlagiarismCases(plagiarismCasesForExercise);
-        }
-    }
-
-    /**
-     * Get one course with exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
-     *
-     * @param courseId the course to fetch
-     * @param user     the user entity
-     * @return the course including exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
-     */
-    public Course findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsAndFaqForUser(Long courseId, User user) {
-        Course course = courseRepository.findByIdWithLecturesElseThrow(courseId);
-        // Load exercises with categories separately because this is faster than loading them with lectures and exam above (the query would become too complex)
-        course.setExercises(exerciseRepository.findByCourseIdWithCategories(courseId));
-        course.setExercises(exerciseService.filterExercisesForCourse(course, user, true));
-        exerciseService.loadExerciseDetailsIfNecessary(course, user, true);
-        examRepositoryApi.ifPresent(api -> course.setExams(api.findByCourseIdForUser(courseId, user.getId(), ZonedDateTime.now())));
-        // TODO: in the future, we only want to know if lectures exist, the actual lectures will be loaded when the user navigates into the lecture
-        lectureApi.ifPresent(api -> course.setLectures(api.filterLecturesWithActiveAttachments(course, course.getLectures(), user)));
-        // NOTE: in this call we only want to know if competencies exist in the course, we will load them when the user navigates into them
-        competencyApi.ifPresent(api -> course.setNumberOfCompetencies(api.countByCourseId(courseId)));
-        // NOTE: in this call we only want to know if prerequisites exist in the course, we will load them when the user navigates into them
-        prerequisitesApi.ifPresent(api -> course.setNumberOfPrerequisites(api.countByCourseId(courseId)));
-        // NOTE: in this call we only want to know if tutorial groups exist in the course, we will load them when the user navigates into them
-        if (tutorialGroupApi.isPresent()) {
-            course.setNumberOfTutorialGroups(tutorialGroupApi.get().countByCourseId(courseId));
-        }
-        else {
-            course.setNumberOfTutorialGroups(0L);
-        }
-        course.setNumberOfAcceptedFaqs(faqRepository.countByCourseIdAndFaqState(courseId, FaqState.ACCEPTED));
-        if (authCheckService.isOnlyStudentInCourse(course, user) && examRepositoryApi.isPresent()) {
-            var examRepoApi = examRepositoryApi.get();
-            course.setExams(examRepoApi.filterVisibleExams(course.getExams()));
-        }
-        return course;
-    }
-
-    /**
      * Get all courses for the given user
      *
      * @param user the user entity
@@ -216,7 +134,7 @@ public class CourseService {
     public Set<Course> findAllActiveForUser(User user) {
         ZonedDateTime now = ZonedDateTime.now();
         // Admins see every active course — no per-course visibility check needed since isAdmin always returns true.
-        if (authCheckService.isAdmin(user)) {
+        if (authCheckService.isCurrentUserAdminAccessEnabled()) {
             return new HashSet<>(courseRepository.findAllActive(now));
         }
         // Non-admins only see courses they are a member of: push that filter into the query (indexed join) so we load
@@ -225,17 +143,20 @@ public class CourseService {
     }
 
     /**
-     * Get all courses with exercises (filtered for given user)
+     * Gets the courses displayed on the consolidated dashboard, including their exercises. Active courses are visible
+     * to every enrolled user; courses that have not started yet are additionally visible to their management users.
      *
-     * @param user the user entity
-     * @return an unmodifiable list of all courses including exercises for the user
+     * @param user the user for whom dashboard visibility is evaluated
+     * @return the dashboard courses including their exercises
      */
-    public Set<Course> findAllActiveWithExercisesForUser(User user) {
+    public Set<Course> findAllForDashboardWithExercisesForUser(User user) {
         long start = System.nanoTime();
+        var now = ZonedDateTime.now();
 
-        // Admins see every active course — no per-course visibility check needed since isAdmin always returns true.
-        var userVisibleCourses = (authCheckService.isAdmin(user) ? courseRepository.findAllActive().stream()
-                : courseRepository.findAllActiveWhereUserHasAnyRole(user.getId(), ZonedDateTime.now()).stream()).filter(Objects::nonNull).collect(Collectors.toSet());
+        // Management users must be able to prepare courses before their start date. Students continue to see only active courses.
+        // Admins can manage every course, while non-admins only receive future courses in which they hold a management role.
+        var userVisibleCourses = (authCheckService.isCurrentUserAdminAccessEnabled() ? courseRepository.findAllNotEnded(now).stream()
+                : courseRepository.findAllForDashboardWhereUserHasAnyRole(user.getId(), now).stream()).filter(Objects::nonNull).collect(Collectors.toSet());
 
         if (log.isDebugEnabled()) {
             log.debug("Find user visible courses finished after {}", TimeLogUtil.formatDurationFrom(start));

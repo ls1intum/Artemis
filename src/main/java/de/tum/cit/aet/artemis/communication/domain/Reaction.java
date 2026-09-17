@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -31,6 +32,7 @@ public class Reaction extends DomainObject {
     @ManyToOne
     // Avoid to leak too much information, only the name (for display) and the id (for comparison) is needed)
     @JsonIncludeProperties({ "id", "name" })
+    @JoinColumn(nullable = false)
     private User user;
 
     @CreatedDate

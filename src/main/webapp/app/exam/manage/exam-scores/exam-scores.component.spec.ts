@@ -14,7 +14,6 @@ import { MockProvider } from 'ng-mocks';
 import { ExamScoresComponent, MedianType } from 'app/exam/manage/exam-scores/exam-scores.component';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ParticipantScoresService, ScoresDTO } from 'app/course/participant-scores/participant-scores.service';
-import { cloneDeep } from 'lodash-es';
 import { EMPTY, of } from 'rxjs';
 import { DialogService } from 'primeng/dynamicdialog';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
@@ -49,6 +48,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { GradingScaleDTO, toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
@@ -330,11 +330,11 @@ describe('ExamScoresComponent', () => {
 
     it('should log error on sentry when wrong points calculation', () => {
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
-        const cs1 = cloneDeep(examScoreStudent1);
+        const cs1 = deepClone(examScoreStudent1);
         cs1.pointsAchieved = 99;
-        const cs2 = cloneDeep(examScoreStudent2);
+        const cs2 = deepClone(examScoreStudent2);
         cs2.pointsAchieved = 99;
-        const cs3 = cloneDeep(examScoreStudent3);
+        const cs3 = deepClone(examScoreStudent3);
         cs3.pointsAchieved = 99;
         findExamScoresSpy.mockReturnValue(of(new HttpResponse({ body: [cs1, cs2, cs3] })));
         const errorSpy = vi.spyOn(comp, 'logErrorOnSentry');
@@ -344,11 +344,11 @@ describe('ExamScoresComponent', () => {
 
     it('should log error on sentry when wrong score calculation', () => {
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
-        const cs1 = cloneDeep(examScoreStudent1);
+        const cs1 = deepClone(examScoreStudent1);
         cs1.scoreAchieved = 99;
-        const cs2 = cloneDeep(examScoreStudent2);
+        const cs2 = deepClone(examScoreStudent2);
         cs2.scoreAchieved = 99;
-        const cs3 = cloneDeep(examScoreStudent3);
+        const cs3 = deepClone(examScoreStudent3);
         cs3.scoreAchieved = 99;
         findExamScoresSpy.mockReturnValue(of(new HttpResponse({ body: [cs1, cs2, cs3] })));
         const errorSpy = vi.spyOn(comp, 'logErrorOnSentry');

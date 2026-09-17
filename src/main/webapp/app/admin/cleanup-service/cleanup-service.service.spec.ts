@@ -35,6 +35,7 @@ describe('DataCleanupService', () => {
         orphanTextBlockForOrphanResults: 0,
         orphanRating: 2,
         orphanResultsWithoutParticipation: 0,
+        orphanFeedbackMessage: 0,
     };
 
     const mockPlagiarismCount: PlagiarismComparisonCleanupCountDTO = {

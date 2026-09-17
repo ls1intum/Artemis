@@ -1,6 +1,5 @@
 {
     "allowComplaintsForAutomaticAssessments": false,
-    "allowFeedbackRequests": false,
     "allowOfflineIde": true,
     "allowOnlineEditor": true,
     "assessmentDueDateError": false,
@@ -8,7 +7,6 @@
     "bonusPoints": 0,
     "dueDateError": false,
     "exampleSolutionPublicationDateError": false,
-    "exampleSolutionPublicationDateWarning": false,
     "includedInOverallScore": "INCLUDED_COMPLETELY",
     "isAtLeastEditor": false,
     "isAtLeastInstructor": false,

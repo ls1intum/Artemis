@@ -59,7 +59,7 @@ describe('LearningPathInstructorPageComponent', () => {
         alertService = TestBed.inject(AlertService);
         courseManagementService = TestBed.inject(CourseManagementService);
 
-        getCourseSpy = vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(
+        getCourseSpy = vi.spyOn(courseManagementService, 'find').mockReturnValue(
             of(
                 new HttpResponse({
                     body: course,

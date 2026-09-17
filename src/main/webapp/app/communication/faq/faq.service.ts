@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 import { CreateFaqDTO, Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { parseJson } from 'app/foundation/util/json.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 type EntityResponseType = HttpResponse<Faq>;
 type EntityArrayResponseType = HttpResponse<Faq[]>;
@@ -118,7 +119,7 @@ export class FaqService {
      * @param { CreateFaqDTO } createFaq - faq that will be modified
      */
     static convertCreateFaqFromClient<F extends CreateFaqDTO>(createFaq: F): CreateFaqDTO {
-        const copy = Object.assign({}, createFaq);
+        const copy = deepClone(createFaq);
         copy.categories = FaqService.stringifyFaqCategories(copy);
         return copy;
     }
@@ -128,7 +129,7 @@ export class FaqService {
      * @param { UpdateFaqDTO } updateFaq - faq that will be modified
      */
     static convertUpdateFaqFromClient<F extends UpdateFaqDTO>(updateFaq: F): UpdateFaqDTO {
-        const copy = Object.assign({}, updateFaq);
+        const copy = deepClone(updateFaq);
         copy.categories = FaqService.stringifyFaqCategories(copy);
         return copy;
     }

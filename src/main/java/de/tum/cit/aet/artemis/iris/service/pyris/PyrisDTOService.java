@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
 @Lazy
@@ -38,8 +40,11 @@ public class PyrisDTOService {
 
     private final RepositoryService repositoryService;
 
-    public PyrisDTOService(RepositoryService repositoryService) {
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
+    public PyrisDTOService(RepositoryService repositoryService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.repositoryService = repositoryService;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -77,7 +82,7 @@ public class PyrisDTOService {
      * @param uncommittedFiles the uncommitted files from the client
      * @return the converted PyrisSubmissionDTO
      */
-    public PyrisSubmissionDTO toPyrisSubmissionDTO(ProgrammingSubmission submission, Map<String, String> uncommittedFiles) {
+    public PyrisSubmissionDTO toPyrisSubmissionDTO(@NonNull ProgrammingSubmission submission, Map<String, String> uncommittedFiles) {
         var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog()))
                 .toList();
         Map<String, String> committedFiles = getFilteredRepositoryContents((ProgrammingExerciseParticipation) submission.getParticipation());
@@ -108,6 +113,11 @@ public class PyrisDTOService {
         var latestResult = submission.getLatestResult();
         if (latestResult == null) {
             return null;
+        }
+        if (submission.getParticipation() != null && submission.getParticipation().getExercise() instanceof ProgrammingExercise programmingExercise) {
+            // the automatic test-case and SCA feedback lives in typed tables - attach the synthesized legacy
+            // views so the Iris context keeps containing it (explicit exercise context, the graph is detached)
+            programmingFeedbackSynthesizerService.attachSynthesizedFeedback(latestResult, programmingExercise, false);
         }
         var feedbacks = latestResult.getFeedbacks().stream().map(feedback -> {
             var text = feedback.getDetailText();

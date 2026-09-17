@@ -61,13 +61,6 @@ public class ConversationService {
 
     private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/communication/";
 
-    // Legacy STOMP destination kept in parallel during the migration to /topic/communication/...
-    // Deployed mobile and external clients may still be subscribed here.
-    // TODO: Remove once external clients have migrated. Target sunset: 2026-09-30 — keep in sync with
-    // LegacyApiPathDeprecationInterceptor.SUNSET_DATE.
-    @Deprecated(forRemoval = true, since = "9.3")
-    private static final String LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
-
     private final ConversationDTOService conversationDTOService;
 
     private final UserRepository userRepository;
@@ -225,7 +218,9 @@ public class ConversationService {
         Stream<ConversationSummary> conversationSummaries = conversationsOfUser.stream()
                 .map(conversation -> new ConversationSummary(conversation, userConversationInfos.get(conversation.getId()), generalConversationInfos.get(conversation.getId())));
 
-        return conversationSummaries.map(summary -> conversationDTOService.convertToDTO(summary, requestingUser)).toList();
+        List<ConversationDTO> conversationDTOs = conversationSummaries.map(summary -> conversationDTOService.convertToDTO(summary, requestingUser)).toList();
+        conversationDTOService.fillSubTypeReferenceDates(conversationDTOs);
+        return conversationDTOs;
     }
 
     /**
@@ -359,12 +354,9 @@ public class ConversationService {
      * @param recipients      the users to be messaged
      */
     // TODO: this should be Async
-    @SuppressWarnings("deprecation")
     public void broadcastOnConversationMembershipChannel(Course course, MetisCrudAction metisCrudAction, Conversation conversation, Set<User> recipients) {
         String conversationParticipantTopicName = getConversationParticipantTopicName(course.getId());
-        String legacyConversationParticipantTopicName = getLegacyConversationParticipantTopicName(course.getId());
-        recipients.forEach(
-                user -> sendToConversationMembershipChannel(metisCrudAction, conversation, user, conversationParticipantTopicName, legacyConversationParticipantTopicName));
+        recipients.forEach(user -> sendToConversationMembershipChannel(metisCrudAction, conversation, user, conversationParticipantTopicName));
     }
 
     @NonNull
@@ -372,20 +364,7 @@ public class ConversationService {
         return METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId + "/conversations/user/";
     }
 
-    /**
-     * Legacy variant of {@link #getConversationParticipantTopicName(Long)} kept for the deprecation window.
-     *
-     * @param courseId the id of the course
-     * @return the legacy STOMP destination prefix that the server still mirrors notifications onto
-     */
-    @Deprecated(forRemoval = true, since = "9.3")
-    @NonNull
-    public static String getLegacyConversationParticipantTopicName(Long courseId) {
-        return LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId + "/conversations/user/";
-    }
-
-    private void sendToConversationMembershipChannel(MetisCrudAction metisCrudAction, Conversation conversation, User user, String conversationParticipantTopicName,
-            String legacyConversationParticipantTopicName) {
+    private void sendToConversationMembershipChannel(MetisCrudAction metisCrudAction, Conversation conversation, User user, String conversationParticipantTopicName) {
         ConversationDTO dto;
         if (metisCrudAction.equals(MetisCrudAction.NEW_MESSAGE)) {
             // we do not want to recalculate the whole dto for a new message, just the information needed for updating the unread messages
@@ -393,12 +372,12 @@ public class ConversationService {
         }
         else {
             dto = conversationDTOService.convertToDTO(conversation, user);
+            // Without these the updated channel would replace the sidebar's copy and silently lose its current marker
+            conversationDTOService.fillSubTypeReferenceDates(List.of(dto));
         }
 
         var websocketDTO = new ConversationWebsocketDTO(dto, metisCrudAction);
         websocketMessagingService.sendMessageToUser(user.getLogin(), conversationParticipantTopicName + user.getId(), websocketDTO);
-        // Mirror to the legacy destination so older subscribers still receive updates during the migration window.
-        websocketMessagingService.sendMessageToUser(user.getLogin(), legacyConversationParticipantTopicName + user.getId(), websocketDTO);
     }
 
     /**
@@ -498,7 +477,9 @@ public class ConversationService {
         ZonedDateTime now = ZonedDateTime.now();
         var userId = requestingUser.getId();
         List<Long> conversationIds = conversationParticipantRepository.findConversationIdsByUserIdAndCourseId(userId, courseId);
-        conversationParticipantRepository.updateMultipleLastReadAsync(userId, conversationIds, now);
+        if (!conversationIds.isEmpty()) {
+            conversationParticipantRepository.updateMultipleLastReadAsync(userId, conversationIds, now);
+        }
 
         log.debug("Marking all conversations with existing participants as read took {} ms", TimeLogUtil.formatDurationFrom(start));
         start = System.nanoTime();

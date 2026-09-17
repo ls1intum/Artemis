@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.lecture.domain;
 
 import java.time.ZonedDateTime;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -56,15 +55,6 @@ public class Lecture extends DomainObject {
     private boolean isTutorialLecture;
 
     /**
-     * @deprecated Use attachments in attachment units instead (as part of lecture units)
-     *             Attachment units have various advantages over direct attachments to lectures, e.g. Pyris ingestion, competencies, better slide support, etc.
-     */
-    @Deprecated
-    @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true)
-    @JsonIgnoreProperties(value = "lecture", allowSetters = true)
-    private Set<Attachment> attachments = new HashSet<>();
-
-    /**
      * The lecture units of this lecture.
      * <p>
      * Note: We use a Set here to avoid issues with Hibernate and JPA when managing the collection.
@@ -79,8 +69,6 @@ public class Lecture extends DomainObject {
      * long as they use the provided methods to add/remove/reorder lecture units.
      *
      */
-    // No @Cache here on purpose: mutated whenever lecture units are added / reordered / removed.
-    // Clustered NONSTRICT_READ_WRITE on an actively mutated collection is the #12574 bug class.
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("lectureUnitOrder ASC") // DB → Java: always ordered by that column
     @JsonIgnoreProperties("lecture")
@@ -129,34 +117,6 @@ public class Lecture extends DomainObject {
 
     public void setIsTutorialLecture(boolean isTutorialLecture) {
         this.isTutorialLecture = isTutorialLecture;
-    }
-
-    /**
-     * @deprecated Use attachments in attachment units instead (as part of lecture units)
-     * @return the attachments
-     */
-    @Deprecated
-    public Set<Attachment> getAttachments() {
-        return attachments;
-    }
-
-    /**
-     * @deprecated Use attachments in attachment units instead (as part of lecture units)
-     * @param attachment the attachment to add
-     */
-    @Deprecated
-    public void addAttachments(Attachment attachment) {
-        this.attachments.add(attachment);
-        attachment.setLecture(this);
-    }
-
-    /**
-     * @deprecated Use attachments in attachment units instead (as part of lecture units)
-     * @param attachments the attachments to set
-     */
-    @Deprecated
-    public void setAttachments(Set<Attachment> attachments) {
-        this.attachments = attachments;
     }
 
     /**

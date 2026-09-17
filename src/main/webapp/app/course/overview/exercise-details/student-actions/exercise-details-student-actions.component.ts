@@ -65,6 +65,7 @@ export class ExerciseDetailsStudentActionsComponent {
     protected readonly ExerciseType = ExerciseType;
     protected readonly InitializationState = InitializationState;
     protected readonly ButtonType = ButtonType;
+    protected readonly AssessmentType = AssessmentType;
 
     private alertService = inject(AlertService);
     private courseExerciseService = inject(CourseExerciseService);
@@ -198,7 +199,7 @@ export class ExerciseDetailsStudentActionsComponent {
         this._isLoading.set(true);
         const programmingExercise = this._programmingExercise();
         this.courseExerciseService
-            .startExercise(this.exercise().id!)
+            .startExercise(this.exercise().id!, this.exercise())
             .pipe(finalize(() => this._isLoading.set(false)))
             .subscribe({
                 next: (participation) => {
@@ -233,10 +234,10 @@ export class ExerciseDetailsStudentActionsComponent {
         this._isLoading.set(true);
         const participation = testRun ? this._practiceParticipation() : this._gradedParticipation();
         this.courseExerciseService
-            .resumeProgrammingExercise(this.exercise().id!, participation!.id!)
+            .resumeProgrammingExercise(this.exercise().id!, participation!.id!, this.exercise())
             .pipe(finalize(() => this._isLoading.set(false)))
             .subscribe({
-                next: (resumedParticipation: StudentParticipation) => {
+                next: (resumedParticipation: StudentParticipation | null) => {
                     if (resumedParticipation) {
                         // Otherwise the client would think that all results are loaded, but there would not be any (=> no graded result).
                         const currentParticipations = this._studentParticipations();
@@ -303,7 +304,9 @@ export class ExerciseDetailsStudentActionsComponent {
      */
     get assignedTeamId(): number | undefined {
         const participations = this._studentParticipations();
-        return participations?.length ? participations[0].team?.id : this.exercise().studentAssignedTeamId;
+        // Fall through rather than branch: the course overview projects the participation without its team, and even
+        // before that a team-mode participation could arrive without one. The exercise carries the resolved team id.
+        return participations?.[0]?.team?.id ?? this.exercise().studentAssignedTeamId;
     }
 
     get allowEditing(): boolean {

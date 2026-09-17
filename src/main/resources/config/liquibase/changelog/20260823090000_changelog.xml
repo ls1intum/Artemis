@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Gives the LTI launch its own "already initialised" marker, so that jhi_user.activated stops carrying two
+        unrelated meanings.
+
+        The launch used `activated = false` to mean "this account still has to complete initialisation", while an
+        administrator uses the same flag to mean "this account is disabled". PUT api/account/users/initialize could
+        therefore not tell the two apart: an LTI-provisioned account that an administrator had deactivated looked
+        exactly like one that had never been initialised, so the endpoint activated it again and handed out a working
+        password.
+
+        Backfilled from `activated`, which is the only signal the old flow left behind: an activated LTI account had
+        completed initialisation, an unactivated one had not - and the latter must still be able to finish, which is
+        why the marker is not simply set to true everywhere.
+    -->
+    <changeSet id="20260823090000-1-add-initialized" author="krusche">
+        <addColumn tableName="user_lti">
+            <column name="initialized" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260823090000-2-backfill-initialized" author="krusche">
+        <sql>
+            UPDATE user_lti
+            SET initialized = TRUE
+            WHERE user_id IN (SELECT id FROM jhi_user WHERE activated = TRUE)
+        </sql>
+        <rollback>
+            <sql>UPDATE user_lti SET initialized = FALSE</sql>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

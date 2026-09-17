@@ -7,7 +7,7 @@ import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 import { ExerciseAPIRequests } from '../../../support/requests/ExerciseAPIRequests';
 import { Commands } from '../../../support/commands';
-import { newBrowserPage } from '../../../support/utils';
+import { expectNoScrollPastApollonCanvas, newBrowserPage } from '../../../support/utils';
 import { SEED_COURSES } from '../../../support/seedData';
 
 const course = { id: SEED_COURSES.exerciseAssessment.id } as any;
@@ -32,8 +32,8 @@ test.describe('Modeling Exercise Assessment', { tag: '@slow' }, () => {
     });
 
     test.describe.serial('Handling complaints', () => {
-        test('Tutor can assess a submission', async ({ login, courseManagement, exerciseAssessment, modelingExerciseAssessment, toggleSidebar }) => {
-            await login(tutor, '/course-management');
+        test('Tutor can assess a submission', async ({ login, page, courseManagement, exerciseAssessment, modelingExerciseAssessment, toggleSidebar }) => {
+            await login(tutor, '/courses');
             await courseManagement.openSubmissionsForExerciseAndCourse(course.id!, modelingExercise.id!);
             await toggleSidebar();
             await courseManagement.checkIfStudentSubmissionExists(studentOne.displayName!);
@@ -41,6 +41,7 @@ test.describe('Modeling Exercise Assessment', { tag: '@slow' }, () => {
             await exerciseAssessment.clickHaveReadInstructionsButton();
             await exerciseAssessment.clickStartNewAssessment();
             await expect(exerciseAssessment.getLockedMessage()).toBeVisible();
+            await expectNoScrollPastApollonCanvas(page);
             await modelingExerciseAssessment.addNewFeedback(1, 'Thanks, good job.');
             await modelingExerciseAssessment.openAssessmentForComponent(1);
             await modelingExerciseAssessment.assessComponent(-1, 'False');
@@ -51,7 +52,14 @@ test.describe('Modeling Exercise Assessment', { tag: '@slow' }, () => {
             await modelingExerciseAssessment.submit();
         });
 
-        test('Student can view the assessment and complain', async ({ login, exerciseAPIRequests, courseManagementAPIRequests, exerciseResult, modelingExerciseFeedback }) => {
+        test('Student can view the assessment and complain', async ({
+            login,
+            page,
+            exerciseAPIRequests,
+            courseManagementAPIRequests,
+            exerciseResult,
+            modelingExerciseFeedback,
+        }) => {
             await login(admin);
             const response = await exerciseAPIRequests.updateModelingExerciseAssessmentDueDate(modelingExercise, dayjs());
             modelingExercise = await response.json();
@@ -63,7 +71,9 @@ test.describe('Modeling Exercise Assessment', { tag: '@slow' }, () => {
             await modelingExerciseFeedback.shouldShowScore(20);
             await modelingExerciseFeedback.shouldShowAdditionalFeedback(1, 'Thanks, good job.');
             await modelingExerciseFeedback.shouldShowComponentFeedback(1, 2, 'Good');
+            await expectNoScrollPastApollonCanvas(page);
             await modelingExerciseFeedback.complain('I am not happy with your assessment.');
+            await expectNoScrollPastApollonCanvas(page);
         });
 
         test('Instructor can see complaint and reject it', async ({ login, courseAssessment, modelingExerciseAssessment }) => {

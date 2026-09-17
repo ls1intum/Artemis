@@ -37,8 +37,15 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
             """)
     List<ModelingExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
+    // plagiarismDetectionConfig is LAZY and open-in-view is off. The edit form reads it from this endpoint, so without
+    // it here the response omits a stored config, the form falls back to its defaults, and the next save overwrites
+    // the instructor's settings. The nested exampleSubmissions.submission.results path already fetches
+    // exampleSubmissions, so it is not listed on its own.
+    // exerciseVariantGroup is deliberately not listed: a sixth path would cross the query-quality over-fetch threshold.
+    // The single caller sets it from ExerciseVariantGroupService.findOwningGroup instead, the same by-id resolution the
+    // write path uses.
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencyLinks.competency", "exampleSubmissions.submission.results",
-            "exerciseVariantGroup" })
+            "plagiarismDetectionConfig" })
     Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "competencyLinks.competency" })

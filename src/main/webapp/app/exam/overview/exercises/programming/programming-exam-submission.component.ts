@@ -28,6 +28,7 @@ import { CodeEditorConflictStateService } from 'app/programming/shared/code-edit
 import { CodeEditorRepositoryIsLockedComponent } from 'app/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { CommitState, DomainType, EditorState } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-programming-submission-exam',
@@ -128,7 +129,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
      * Updates the domain to set the active student participation
      */
     updateDomain() {
-        const participation = { ...this.studentParticipation(), exercise: this.exercise() } satisfies StudentParticipation;
+        const participation = cloneWith(this.studentParticipation(), { exercise: this.exercise() }) satisfies StudentParticipation;
         this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
     }
 

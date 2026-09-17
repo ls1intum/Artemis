@@ -4,7 +4,10 @@ import { MockDirective, MockPipe } from 'ng-mocks';
 import { WritableSignal, signal } from '@angular/core';
 import { ContextSelectionComponent } from './context-selection.component';
 import { ChatServiceMode, IrisChatService, SessionContext } from 'app/iris/overview/services/iris-chat.service';
-import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { Subject, of, throwError } from 'rxjs';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -20,26 +23,21 @@ describe('ContextSelectionComponent', () => {
         displayContext: WritableSignal<SessionContext | undefined>;
         stagePendingContext: ReturnType<typeof vi.fn>;
     };
-    let courseStorageServiceMock: { getCourse: ReturnType<typeof vi.fn> };
+    let lectureServiceMock: { findAllByCourseIdForOverview: ReturnType<typeof vi.fn> };
+    let exerciseServiceMock: { getTitlesForCourse: ReturnType<typeof vi.fn> };
+    let entityTitleServiceMock: { getTitle: ReturnType<typeof vi.fn> };
 
     const courseId = 42;
 
-    function buildCachedCourse(overrides = {}) {
-        return {
-            id: courseId,
-            title: 'Test Course',
-            lectures: [
-                { id: 1, title: 'Lecture 1' },
-                { id: 2, title: 'Lecture 2' },
-            ],
-            exercises: [
-                { id: 10, title: 'Programming Ex', type: ExerciseType.PROGRAMMING },
-                { id: 11, title: 'Text Ex', type: ExerciseType.TEXT },
-                { id: 12, title: 'File Upload Ex', type: ExerciseType.FILE_UPLOAD },
-            ],
-            ...overrides,
-        };
-    }
+    const lectures = [
+        { id: 1, title: 'Lecture 1' },
+        { id: 2, title: 'Lecture 2' },
+    ];
+    const exercises = [
+        { id: 10, title: 'Programming Ex', type: ExerciseType.PROGRAMMING },
+        { id: 11, title: 'Text Ex', type: ExerciseType.TEXT },
+        { id: 12, title: 'File Upload Ex', type: ExerciseType.FILE_UPLOAD },
+    ];
 
     beforeEach(async () => {
         chatServiceMock = {
@@ -48,15 +46,17 @@ describe('ContextSelectionComponent', () => {
             stagePendingContext: vi.fn(),
         };
 
-        courseStorageServiceMock = {
-            getCourse: vi.fn().mockReturnValue(buildCachedCourse()),
-        };
+        lectureServiceMock = { findAllByCourseIdForOverview: vi.fn().mockReturnValue(of(lectures)) };
+        exerciseServiceMock = { getTitlesForCourse: vi.fn().mockReturnValue(of(exercises)) };
+        entityTitleServiceMock = { getTitle: vi.fn().mockReturnValue(of('Resolved Title')) };
 
         await TestBed.configureTestingModule({
             imports: [ContextSelectionComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
                 { provide: IrisChatService, useValue: chatServiceMock },
-                { provide: CourseStorageService, useValue: courseStorageServiceMock },
+                { provide: LectureService, useValue: lectureServiceMock },
+                { provide: ExerciseService, useValue: exerciseServiceMock },
+                { provide: EntityTitleService, useValue: entityTitleServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
@@ -71,46 +71,136 @@ describe('ContextSelectionComponent', () => {
     });
 
     describe('data loading', () => {
-        it('should read course data from cache', () => {
-            expect(courseStorageServiceMock.getCourse).toHaveBeenCalledWith(courseId);
-            expect(component.courseName()).toBe('Test Course');
+        it('should not load any options until the picker is opened', () => {
+            expect(lectureServiceMock.findAllByCourseIdForOverview).not.toHaveBeenCalled();
+            expect(exerciseServiceMock.getTitlesForCourse).not.toHaveBeenCalled();
+            expect(component.lectures()).toHaveLength(0);
+            expect(component.exercises()).toHaveLength(0);
+        });
+
+        it('should load lectures and exercises when the picker is opened', () => {
+            component.loadContextOptions();
+
+            expect(lectureServiceMock.findAllByCourseIdForOverview).toHaveBeenCalledExactlyOnceWith(courseId);
+            expect(exerciseServiceMock.getTitlesForCourse).toHaveBeenCalledExactlyOnceWith(courseId);
             expect(component.lectures()).toHaveLength(2);
             expect(component.exercises()).toHaveLength(3);
         });
 
-        it('should return empty data when cache has no course', () => {
-            courseStorageServiceMock.getCourse.mockReturnValue(undefined);
-            fixture = TestBed.createComponent(ContextSelectionComponent);
-            component = fixture.componentInstance;
+        it('should load the options only once per course', () => {
+            component.loadContextOptions();
+            component.loadContextOptions();
 
-            expect(component.courseName()).toBe('');
+            expect(lectureServiceMock.findAllByCourseIdForOverview).toHaveBeenCalledOnce();
+            expect(exerciseServiceMock.getTitlesForCourse).toHaveBeenCalledOnce();
+        });
+
+        it('should leave the options empty when loading fails', () => {
+            lectureServiceMock.findAllByCourseIdForOverview.mockReturnValue(throwError(() => new Error('network')));
+            exerciseServiceMock.getTitlesForCourse.mockReturnValue(throwError(() => new Error('network')));
+
+            component.loadContextOptions();
+
             expect(component.lectures()).toHaveLength(0);
             expect(component.exercises()).toHaveLength(0);
         });
 
-        it('should handle cached course with empty lectures and exercises', () => {
-            courseStorageServiceMock.getCourse.mockReturnValue({ id: courseId, title: 'Empty Course', lectures: [], exercises: [] });
-            fixture = TestBed.createComponent(ContextSelectionComponent);
-            component = fixture.componentInstance;
+        it.each(['lectures', 'exercises'] as const)('should retry both option requests after loading %s fails', (failedRequest) => {
+            if (failedRequest === 'lectures') {
+                lectureServiceMock.findAllByCourseIdForOverview.mockReturnValue(throwError(() => new Error('lecture network')));
+            } else {
+                exerciseServiceMock.getTitlesForCourse.mockReturnValue(throwError(() => new Error('exercise network')));
+            }
 
-            expect(component.courseName()).toBe('Empty Course');
-            expect(component.lectures()).toHaveLength(0);
-            expect(component.exercises()).toHaveLength(0);
+            component.loadContextOptions();
+
+            expect(component.lectures()).toEqual([]);
+            expect(component.exercises()).toEqual([]);
+            lectureServiceMock.findAllByCourseIdForOverview.mockReturnValue(of(lectures));
+            exerciseServiceMock.getTitlesForCourse.mockReturnValue(of(exercises));
+
+            component.loadContextOptions();
+
+            expect(lectureServiceMock.findAllByCourseIdForOverview).toHaveBeenCalledTimes(2);
+            expect(exerciseServiceMock.getTitlesForCourse).toHaveBeenCalledTimes(2);
+            expect(component.lectures()).toEqual(lectures);
+            expect(component.exercises()).toEqual(exercises);
         });
 
-        it('should return empty data when courseId is undefined', () => {
+        it('should not load anything when no course is known', () => {
             chatServiceMock.getCourseId.mockReturnValue(undefined);
-
             fixture = TestBed.createComponent(ContextSelectionComponent);
             component = fixture.componentInstance;
 
-            expect(component.courseName()).toBe('');
-            expect(component.lectures()).toHaveLength(0);
-            expect(component.exercises()).toHaveLength(0);
+            component.loadContextOptions();
+
+            expect(lectureServiceMock.findAllByCourseIdForOverview).not.toHaveBeenCalled();
+            expect(exerciseServiceMock.getTitlesForCourse).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('active context chip', () => {
+        it('should render a chip for a page-set context without loading the picker options', async () => {
+            // A page can set a context carrying no name; the chip must still label it.
+            chatServiceMock.displayContext.set({ mode: ChatServiceMode.LECTURE, entityId: 1 });
+            fixture = TestBed.createComponent(ContextSelectionComponent);
+            component = fixture.componentInstance;
+            await fixture.whenStable();
+
+            expect(entityTitleServiceMock.getTitle).toHaveBeenCalled();
+            expect(component.activeChip()?.label).toBe('Resolved Title');
+            expect(lectureServiceMock.findAllByCourseIdForOverview).not.toHaveBeenCalled();
+        });
+
+        it('should prefer the name the context already carries', async () => {
+            chatServiceMock.displayContext.set({ mode: ChatServiceMode.LECTURE, entityId: 1, entityName: 'Named Lecture' });
+            fixture = TestBed.createComponent(ContextSelectionComponent);
+            component = fixture.componentInstance;
+            await fixture.whenStable();
+
+            expect(component.activeChip()?.label).toBe('Named Lecture');
+        });
+
+        it('should label a tutor suggestion without resolving its post id as an exercise', async () => {
+            // The tutor suggestion context is keyed by the id of the communication post it was raised from. Resolving
+            // that as an exercise title labelled the chip with whichever unrelated exercise shared the number, and left
+            // it blank when none did.
+            chatServiceMock.displayContext.set({ mode: ChatServiceMode.TUTOR_SUGGESTION, entityId: 1 });
+            fixture = TestBed.createComponent(ContextSelectionComponent);
+            component = fixture.componentInstance;
+            await fixture.whenStable();
+
+            expect(entityTitleServiceMock.getTitle).not.toHaveBeenCalled();
+            expect(component.activeChip()?.label).toBe('artemisApp.iris.contextSelection.tutorSuggestionContext');
+        });
+
+        it('should cancel an old title lookup so it cannot overwrite a newer context', () => {
+            const firstLookup = new Subject<string>();
+            const secondLookup = new Subject<string>();
+            entityTitleServiceMock.getTitle.mockReturnValueOnce(firstLookup).mockReturnValueOnce(secondLookup);
+
+            chatServiceMock.displayContext.set({ mode: ChatServiceMode.LECTURE, entityId: 1 });
+            fixture.detectChanges();
+            chatServiceMock.displayContext.set({ mode: ChatServiceMode.TEXT_EXERCISE, entityId: 11 });
+            fixture.detectChanges();
+
+            firstLookup.next('Stale lecture title');
+            expect(component.activeChip()?.label).toBe('');
+
+            secondLookup.next('Current exercise title');
+            expect(component.activeChip()?.label).toBe('Current exercise title');
+            expect(entityTitleServiceMock.getTitle).toHaveBeenNthCalledWith(1, EntityType.LECTURE, [1]);
+            expect(entityTitleServiceMock.getTitle).toHaveBeenNthCalledWith(2, EntityType.EXERCISE, [11]);
+        });
+
+        it('should render no chip for the course context', () => {
+            expect(component.activeChip()).toBeUndefined();
         });
     });
 
     describe('supportedExercises', () => {
+        beforeEach(() => component.loadContextOptions());
+
         it('should only include TEXT and PROGRAMMING exercise types', () => {
             const supported = component.supportedExercises();
             expect(supported).toHaveLength(2);
@@ -139,6 +229,8 @@ describe('ContextSelectionComponent', () => {
     });
 
     describe('allGroups', () => {
+        beforeEach(() => component.loadContextOptions());
+
         it('should include a lectures group', () => {
             const groups = component.allGroups();
             const lecturesGroup = groups.find((g) => g.label === 'artemisApp.iris.contextSelection.lecturesGroup');
@@ -166,9 +258,10 @@ describe('ContextSelectionComponent', () => {
         });
 
         it('should not include lectures group when there are no lectures', () => {
-            courseStorageServiceMock.getCourse.mockReturnValue({ id: courseId, title: 'Course', lectures: [], exercises: [] });
+            lectureServiceMock.findAllByCourseIdForOverview.mockReturnValue(of([]));
             fixture = TestBed.createComponent(ContextSelectionComponent);
             component = fixture.componentInstance;
+            component.loadContextOptions();
 
             const groups = component.allGroups();
             const lecturesGroup = groups.find((g) => g.label === 'artemisApp.iris.contextSelection.lecturesGroup');
@@ -176,14 +269,11 @@ describe('ContextSelectionComponent', () => {
         });
 
         it('should not include exercises group when there are no supported exercises', () => {
-            courseStorageServiceMock.getCourse.mockReturnValue({
-                id: courseId,
-                title: 'Course',
-                lectures: [],
-                exercises: [{ id: 99, type: ExerciseType.FILE_UPLOAD }],
-            });
+            lectureServiceMock.findAllByCourseIdForOverview.mockReturnValue(of([]));
+            exerciseServiceMock.getTitlesForCourse.mockReturnValue(of([{ id: 99, type: ExerciseType.FILE_UPLOAD }]));
             fixture = TestBed.createComponent(ContextSelectionComponent);
             component = fixture.componentInstance;
+            component.loadContextOptions();
 
             const groups = component.allGroups();
             const exercisesGroup = groups.find((g) => g.label === 'artemisApp.iris.contextSelection.exercisesGroup');
@@ -199,6 +289,8 @@ describe('ContextSelectionComponent', () => {
     });
 
     describe('onSelectionChange', () => {
+        beforeEach(() => component.loadContextOptions());
+
         it('should call chatService.stagePendingContext with the correct mode, entityId and label', () => {
             const value = `${ChatServiceMode.TEXT_EXERCISE}:11`;
             component.onSelectionChange(value);

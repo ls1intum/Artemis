@@ -32,11 +32,11 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.SliceUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
-import de.tum.cit.aet.artemis.localci.config.LocalCILegacyRestPaths;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
@@ -44,8 +44,9 @@ import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
 
 @Profile(PROFILE_LOCALCI)
 @Lazy
+@FeatureUsage("build-system/build-queue")
 @RestController
-@RequestMapping({ "api/localci/", LocalCILegacyRestPaths.PROGRAMMING_PREFIX })
+@RequestMapping("api/localci/")
 public class BuildJobQueueResource {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobQueueResource.class);
@@ -77,7 +78,7 @@ public class BuildJobQueueResource {
      * @param buildJobId the id of the build job
      * @return the build job, or 404 if not found or does not belong to the course
      */
-    @GetMapping({ "courses/{courseId}/build-jobs/{buildJobId}", "courses/{courseId}/build-job/{buildJobId}" })
+    @GetMapping("courses/{courseId}/build-jobs/{buildJobId}")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<BuildJobDTO> getBuildJobById(@PathVariable long courseId, @PathVariable String buildJobId) {
         if (buildJobId == null || buildJobId.isBlank()) {
@@ -147,7 +148,7 @@ public class BuildJobQueueResource {
      * @param buildJobId the id of the build job to cancel
      * @return the ResponseEntity with the result of the cancellation
      */
-    @DeleteMapping({ "courses/{courseId}/build-jobs/{buildJobId}/cancel", "courses/{courseId}/cancel-job/{buildJobId}" })
+    @DeleteMapping("courses/{courseId}/build-jobs/{buildJobId}/cancel")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> cancelBuildJob(@PathVariable long courseId, @PathVariable String buildJobId) {
         log.debug("REST request to cancel the build job for course {} and with id {}", courseId, buildJobId);
@@ -155,11 +156,30 @@ public class BuildJobQueueResource {
         if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
             throw new AccessForbiddenException("You are not allowed to cancel the build job of this course!");
         }
+        // Build job ids are not course scoped, so being an instructor of the course in the path says nothing about this job.
+        // Without this check an instructor could stop the build of any other course whose job id they know.
+        if (!belongsToCourse(buildJobId, courseId)) {
+            throw new AccessForbiddenException("You are not allowed to cancel the build job of this course!");
+        }
 
         // Call the cancelBuildJob method in LocalCIBuildJobManagementService
         localCIBuildJobQueueService.cancelBuildJob(buildJobId);
 
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * @param buildJobId the build job a course wants to cancel
+     * @param courseId   the course the request was made for
+     * @return whether the job may be cancelled from that course: it either belongs to it, or it is neither queued nor
+     *         running any more, in which case cancelling it does nothing at all and there is nothing to protect
+     */
+    private boolean belongsToCourse(String buildJobId, long courseId) {
+        BuildJobQueueItem processingJob = distributedDataAccessService.getDistributedProcessingJobs().get(buildJobId);
+        if (processingJob != null) {
+            return processingJob.courseId() == courseId;
+        }
+        return distributedDataAccessService.getQueuedJobs().stream().filter(queuedJob -> buildJobId.equals(queuedJob.id())).allMatch(queuedJob -> queuedJob.courseId() == courseId);
     }
 
     /**
@@ -230,7 +250,7 @@ public class BuildJobQueueResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<BuildJobsStatisticsDTO> getBuildJobStatistics(@PathVariable long courseId, @RequestParam(required = false, defaultValue = "7") int span) {
         log.debug("REST request to get the build job statistics");
-        List<BuildJobResultCountDTO> buildJobResultCountDtos = buildJobRepository.getBuildJobsResultsStatistics(ZonedDateTime.now().minusDays(span), courseId);
+        List<BuildJobResultCountDTO> buildJobResultCountDtos = buildJobRepository.getBuildJobsResultsStatisticsForCourse(ZonedDateTime.now().minusDays(span), courseId);
         BuildJobsStatisticsDTO buildJobStatistics = BuildJobsStatisticsDTO.of(buildJobResultCountDtos);
         return ResponseEntity.ok(buildJobStatistics);
     }

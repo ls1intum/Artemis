@@ -480,6 +480,25 @@ describe('ComplaintsStudentViewComponent', () => {
         expect(component.timeOfComplaintValid()).toBe(false);
     });
 
+    it('should hide the section for a practice participation, which is not graded and cannot be complained about', () => {
+        fixture.componentRef.setInput('exercise', courseExercise);
+        fixture.componentRef.setInput('participation', { ...participation, testRun: true } as Participation);
+        fixture.componentRef.setInput('result', result);
+
+        fixture.detectChanges();
+
+        expect(component.showSection()).toBe(false);
+    });
+
+    it('should hide the section for preliminary Athena feedback, which is a suggestion rather than an assessment', () => {
+        fixture.componentRef.setInput('exercise', courseExercise);
+        fixture.componentRef.setInput('result', { ...result, assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
+
+        fixture.detectChanges();
+
+        expect(component.showSection()).toBe(false);
+    });
+
     it('complaint should be possible with long assessment periods', () => {
         fixture.componentRef.setInput('exercise', { ...courseExercise, assessmentDueDate: dayjs().subtract(3, 'day') });
         fixture.componentRef.setInput('result', { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 2, 'day') });

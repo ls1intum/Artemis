@@ -11,6 +11,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 /**
  * An abstract component used to import course competencies. Its concrete implementations are
@@ -138,7 +139,7 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
      */
     performSearch() {
         this.isLoading.set(true);
-        this.courseCompetencyService.getForImport({ ...this.filter, ...this.search }).subscribe({
+        this.courseCompetencyService.getForImport(cloneWith(this.filter, deepClone(this.search))).subscribe({
             next: (res) => {
                 this.searchedCourseCompetencies.set(res);
                 this.isLoading.set(false);

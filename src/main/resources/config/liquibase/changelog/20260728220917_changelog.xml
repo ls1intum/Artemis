@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    Reconciles long-lived installations with the consolidated initial schema.
+
+    The consolidated initial schema (00000000000000_initial_schema.xml) describes what a *fresh*
+    installation gets. Installations that predate the consolidations (ed4696bcb3, 8723fc7290,
+    5c7250b2a6, 15e2f9f3e1) drifted in ways no changeset ever reconciled. These changesets close
+    that gap. Every one is precondition-guarded, so it is a no-op where the state is already correct
+    (which includes fresh installations and the TUM production database, where the equivalent DDL was
+    applied manually on 2026-07-28).
+
+    Sections:
+      1. Temporal precision  - six columns declared datetime(3) but created with precision 0 or 6
+      2. Redundant indexes   - three indexes that exactly duplicate another index on the same table
+      3. Constraint names    - four unique constraints declared without a name, so each engine and
+                               era auto-named them differently
+      4. result_rating       - a unique constraint the consolidation lost; Rating.result is @OneToOne
+    -->
+
+    <!--
+    information_schema is portable but the "current schema" function is not. Because the property is
+    only defined for these two engines, every changeset below that interpolates ${lbSchema} must carry
+    dbms="mysql,postgresql" - otherwise the placeholder reaches H2 verbatim and the precondition fails
+    with a syntax error instead of being skipped, which aborts startup.
+    -->
+    <property name="lbSchema" value="DATABASE()" dbms="mysql"/>
+    <property name="lbSchema" value="current_schema()" dbms="postgresql"/>
+
+    <!-- ===================================================================== -->
+    <!-- 1. Temporal precision                                                 -->
+    <!-- ===================================================================== -->
+    <!--
+    These columns are declared datetime(3) in the initial schema but were created by pre-2024
+    changelogs with precision 0 (silently truncating milliseconds on write) or 6. The precondition
+    inspects the actual precision, so this runs only where it is wrong.
+    -->
+
+    <changeSet id="20260728220917-01-science-event-timestamp-precision" author="krusche" dbms="mysql,postgresql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM information_schema.columns
+                WHERE table_schema = ${lbSchema} AND table_name = 'science_event'
+                  AND column_name = 'timestamp' AND datetime_precision = 3
+            </sqlCheck>
+        </preConditions>
+        <comment>science_event is large (~15M rows); this rebuilds the table on MySQL.</comment>
+        <modifyDataType tableName="science_event" columnName="timestamp" newDataType="datetime(3)"/>
+        <addNotNullConstraint tableName="science_event" columnName="timestamp" columnDataType="datetime(3)"/>
+    </changeSet>
+
+    <changeSet id="20260728220917-02-llm-token-usage-trace-time-precision" author="krusche" dbms="mysql,postgresql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM information_schema.columns
+                WHERE table_schema = ${lbSchema} AND table_name = 'llm_token_usage_trace'
+                  AND column_name = 'time' AND datetime_precision = 3
+            </sqlCheck>
+        </preConditions>
+        <modifyDataType tableName="llm_token_usage_trace" columnName="time" newDataType="datetime(3)"/>
+    </changeSet>
+
+    <changeSet id="20260728220917-03-file-upload-creation-date-precision" author="krusche" dbms="mysql,postgresql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM information_schema.columns
+                WHERE table_schema = ${lbSchema} AND table_name = 'file_upload'
+                  AND column_name = 'creation_date' AND datetime_precision = 3
+            </sqlCheck>
+        </preConditions>
+        <modifyDataType tableName="file_upload" columnName="creation_date" newDataType="datetime(3)"/>
+    </changeSet>
+
+    <changeSet id="20260728220917-04-saved-post-completed-at-precision" author="krusche" dbms="mysql,postgresql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM information_schema.columns
+                WHERE table_schema = ${lbSchema} AND table_name = 'saved_post'
+                  AND column_name = 'completed_at' AND datetime_precision = 3
+            </sqlCheck>
+        </preConditions>
+        <modifyDataType tableName="saved_post" columnName="completed_at" newDataType="datetime(3)"/>
+    </changeSet>
+
+    <changeSet id="20260728220917-05-push-notification-expiration-date-precision" author="krusche" dbms="mysql,postgresql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM information_schema.columns
+                WHERE table_schema = ${lbSchema} AND table_name = 'push_notification_device_configuration'
+                  AND column_name = 'expiration_date' AND datetime_precision = 3
+            </sqlCheck>
+        </preConditions>
+        <modifyDataType tableName="push_notification_device_configuration" columnName="expiration_date" newDataType="datetime(3)"/>
+    </changeSet>
+
+    <changeSet id="20260728220917-06-migration-changelog-date-executed-precision" author="krusche" dbms="mysql,postgresql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM information_schema.columns
+                WHERE table_schema = ${lbSchema} AND table_name = 'migration_changelog'
+                  AND column_name = 'date_executed' AND datetime_precision = 3
+            </sqlCheck>
+        </preConditions>
+        <modifyDataType tableName="migration_changelog" columnName="date_executed" newDataType="datetime(3)"/>
+        <addNotNullConstraint tableName="migration_changelog" columnName="date_executed" columnDataType="datetime(3)"/>
+    </changeSet>
+
+    <!-- ===================================================================== -->
+    <!-- 2. Redundant indexes                                                  -->
+    <!-- ===================================================================== -->
+    <!--
+    Each of these exactly duplicates another index on the same table with the same leading columns,
+    so no query plan can regress. They come from changelogs deleted during the consolidations, which
+    never added a matching drop for existing installations. Never created on fresh installations.
+    -->
+
+    <changeSet id="20260728220917-07-drop-redundant-idx-user-login" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="jhi_user" indexName="idx_user_login"/>
+        </preConditions>
+        <comment>Duplicates the unique index "login" on the same column.</comment>
+        <dropIndex tableName="jhi_user" indexName="idx_user_login"/>
+    </changeSet>
+
+    <!-- Unlike the other two, this one was created with addUniqueConstraint (on the table's former
+         name learning_goal_user), so on PostgreSQL the index is owned by a constraint and DROP INDEX
+         is rejected. Dropping the constraint removes the index with it on both databases. -->
+    <changeSet id="20260728220917-08-drop-redundant-uc-learning-goal-user" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="competency_user" indexName="uc_learning_goal_user"/>
+        </preConditions>
+        <comment>Duplicates the primary key (competency_id, user_id) exactly.</comment>
+        <dropUniqueConstraint tableName="competency_user" constraintName="uc_learning_goal_user"/>
+    </changeSet>
+
+    <changeSet id="20260728220917-09-drop-redundant-participation-vcs-token-index" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="participation_vcs_access_token"
+                         indexName="idx_participation_vcs_access_token_user_participation"/>
+        </preConditions>
+        <comment>Duplicates the unique index "user-participation_unique" on the same columns.</comment>
+        <dropIndex tableName="participation_vcs_access_token"
+                   indexName="idx_participation_vcs_access_token_user_participation"/>
+    </changeSet>
+
+    <!-- ===================================================================== -->
+    <!-- 3. Constraint names                                                   -->
+    <!-- ===================================================================== -->
+    <!--
+    The initial schema declares these four unique constraints with <constraints unique="true"/> and
+    no name, so each environment auto-named them differently:
+
+      constraint                                 MySQL (fresh)               PostgreSQL (fresh)                             legacy MySQL
+      course.short_name                          short_name                  course_short_name_key                          UC_COURSE_SHORT_NAME
+      exercise.quiz_point_statistic_id           quiz_point_statistic_id     exercise_quiz_point_statistic_id_key           UC_EXERCISEQUIZ_POINT_STATISTIC_ID_COL
+      exercise.solution_participation_id         solution_participation_id   exercise_solution_participation_id_key         UC_EXERCISESOLUTION_PARTICIPATION_ID_COL
+      tutorial_group.tutorial_group_channel_id   tutorial_group_channel_id   tutorial_group_tutorial_group_channel_id_key   tutorial_group_channel_uq
+
+    A future dropUniqueConstraint would therefore succeed in one environment and fail in another.
+    Each constraint converges on a single explicit uk_* name.
+
+    ORDER MATTERS: the new constraint is added *before* the old one is dropped. Three of these
+    columns back a foreign key, and MySQL refuses to drop the only index supporting an FK
+    ("Cannot drop index '...': needed in a foreign key constraint"). Adding first means the new index
+    can serve the FK, which makes the old one droppable.
+    -->
+
+    <!-- course.short_name -->
+    <changeSet id="20260728220917-10-add-uk-course-short-name" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="course" indexName="uk_course_short_name"/></not>
+        </preConditions>
+        <addUniqueConstraint tableName="course" columnNames="short_name" constraintName="uk_course_short_name"/>
+    </changeSet>
+    <changeSet id="20260728220917-11-drop-course-short-name-autoname-mysql" author="krusche" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="course" indexName="short_name"/>
+        </preConditions>
+        <dropUniqueConstraint tableName="course" constraintName="short_name"/>
+    </changeSet>
+    <changeSet id="20260728220917-12-drop-course-short-name-legacy-mysql" author="krusche" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="course" indexName="UC_COURSE_SHORT_NAME"/>
+        </preConditions>
+        <dropUniqueConstraint tableName="course" constraintName="UC_COURSE_SHORT_NAME"/>
+    </changeSet>
+    <changeSet id="20260728220917-13-drop-course-short-name-autoname-postgresql" author="krusche" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="course" indexName="course_short_name_key"/>
+        </preConditions>
+        <dropUniqueConstraint tableName="course" constraintName="course_short_name_key"/>
+    </changeSet>
+
+    <!-- exercise.quiz_point_statistic_id -->
+    <changeSet id="20260728220917-14-add-uk-exercise-quiz-point-statistic" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="exercise" indexName="uk_exercise_quiz_point_statistic"/></not>
+        </preConditions>
+        <addUniqueConstraint tableName="exercise" columnNames="quiz_point_statistic_id"
+                             constraintName="uk_exercise_quiz_point_statistic"/>
+    </changeSet>
+    <changeSet id="20260728220917-15-drop-exercise-quiz-point-statistic-autoname-mysql" author="krusche" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="exercise" indexName="quiz_point_statistic_id"/>
+        </preConditions>
+        <dropUniqueConstraint tableName="exercise" constraintName="quiz_point_statistic_id"/>
+    </changeSet>
+    <changeSet id="20260728220917-16-drop-exercise-quiz-point-statistic-legacy-mysql" author="krusche" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="exercise" indexName="UC_EXERCISEQUIZ_POINT_STATISTIC_ID_COL"/>
+        </preConditions>
+        <dropUniqueConstraint tableName="exercise" constraintName="UC_EXERCISEQUIZ_POINT_STATISTIC_ID_COL"/>
+    </changeSet>
+    <changeSet id="20260728220917-17-drop-exercise-quiz-point-statistic-autoname-postgresql" author="krusche" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="exercise" indexName="exercise_quiz_point_statistic_id_key"/>
+        </preConditions>
+        <dropUniqueConstraint tableName="exercise" constraintName="exercise_quiz_point_statistic_id_key"/>
+    </changeSet>
+
+    <!-- exercise.solution_participation_id -->
+    <changeSet id="20260728220917-18-add-uk-exercise-solution-participation" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="exercise" indexName="uk_exercise_solution_participation"/></not>
+        </preConditions>
+        <addUniqueConstraint tableName="exercise" columnNames="solution_participation_id"
+                             constraintName="uk_exercise_solution_participation"/>
+    </changeSet>
+    <changeSet id="20260728220917-19-drop-exercise-solution-participation-autoname-mysql" author="krusche" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="exercise" indexName="solution_participation_id"/>
+        </preConditions>
+        <dropUniqueConstraint tableName="exercise" constraintName="solution_participation_id"/>
+    </changeSet>
+    <changeSet id="20260728220917-20-drop-exercise-solution-participation-legacy-mysql" author="krusche" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="exercise" indexName="UC_EXERCISESOLUTION_PARTICIPATION_ID_COL"/>
+        </preConditions>
+        <dropUniqueConstraint tableName="exercise" constraintName="UC_EXERCISESOLUTION_PARTICIPATION_ID_COL"/>
+    </changeSet>
+    <changeSet id="20260728220917-21-drop-exercise-solution-participation-autoname-postgresql" author="krusche" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="exercise" indexName="exercise_solution_participation_id_key"/>
+        </preConditions>
+        <dropUniqueConstraint tableName="exercise" constraintName="exercise_solution_participation_id_key"/>
+    </changeSet>
+
+    <!-- tutorial_group.tutorial_group_channel_id -->
+    <changeSet id="20260728220917-22-add-uk-tutorial-group-channel" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="tutorial_group" indexName="uk_tutorial_group_channel"/></not>
+        </preConditions>
+        <addUniqueConstraint tableName="tutorial_group" columnNames="tutorial_group_channel_id"
+                             constraintName="uk_tutorial_group_channel"/>
+    </changeSet>
+    <changeSet id="20260728220917-23-drop-tutorial-group-channel-autoname-mysql" author="krusche" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="tutorial_group" indexName="tutorial_group_channel_id"/>
+        </preConditions>
+        <dropUniqueConstraint tableName="tutorial_group" constraintName="tutorial_group_channel_id"/>
+    </changeSet>
+    <changeSet id="20260728220917-24-drop-tutorial-group-channel-legacy-mysql" author="krusche" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="tutorial_group" indexName="tutorial_group_channel_uq"/>
+        </preConditions>
+        <dropUniqueConstraint tableName="tutorial_group" constraintName="tutorial_group_channel_uq"/>
+    </changeSet>
+    <changeSet id="20260728220917-25-drop-tutorial-group-channel-autoname-postgresql" author="krusche" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="tutorial_group" indexName="tutorial_group_tutorial_group_channel_id_key"/>
+        </preConditions>
+        <dropUniqueConstraint tableName="tutorial_group" constraintName="tutorial_group_tutorial_group_channel_id_key"/>
+    </changeSet>
+
+    <!-- ===================================================================== -->
+    <!-- 4. result_rating unique constraint                                    -->
+    <!-- ===================================================================== -->
+    <!--
+    Rating.result is @OneToOne, so result_rating.result_id must be unique. Long-lived installations
+    have this constraint (auto-named "result_id"); the consolidated initial schema lost it, so fresh
+    installations and every test environment do not enforce it. Verified against production, which
+    retained the constraint: 10,818 rows / 10,818 distinct result_id.
+
+    The FK on this column is backed by the separate non-unique index fk_result_rating_result_id, so
+    dropping the old unique index does not leave the FK unsupported.
+    -->
+
+    <!--
+    Production is verified clean because it kept the old constraint, but that says nothing about the
+    installations that lost it: RatingService.saveRating inserts unconditionally, so repeated or
+    concurrent requests can have left several ratings for one result there, and the constraint below
+    would abort their upgrade. Reduce every duplicate group to its newest row first, i.e. the rating
+    the student gave last, which is the one the application would show. This is a no-op wherever the
+    constraint was retained. The derived-table wrapper is required by MySQL, which rejects a subquery
+    reading the table that is being deleted from, and is accepted by PostgreSQL as well.
+    -->
+    <changeSet id="20260728220917-26-deduplicate-result-rating" author="krusche">
+        <sql>
+            DELETE FROM result_rating
+            WHERE id NOT IN (SELECT keep_id FROM (SELECT MAX(id) AS keep_id FROM result_rating GROUP BY result_id) AS newest_per_result)
+        </sql>
+        <!-- Deleting the superseded duplicates cannot be undone, so there is nothing to roll back. -->
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20260728220917-27-add-uk-result-rating-result-id" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="result_rating" indexName="uk_result_rating_result_id"/></not>
+        </preConditions>
+        <addUniqueConstraint tableName="result_rating" columnNames="result_id"
+                             constraintName="uk_result_rating_result_id"/>
+    </changeSet>
+    <changeSet id="20260728220917-28-drop-result-rating-result-id-autoname-mysql" author="krusche" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="result_rating" indexName="result_id"/>
+        </preConditions>
+        <dropUniqueConstraint tableName="result_rating" constraintName="result_id"/>
+    </changeSet>
+
+</databaseChangeLog>

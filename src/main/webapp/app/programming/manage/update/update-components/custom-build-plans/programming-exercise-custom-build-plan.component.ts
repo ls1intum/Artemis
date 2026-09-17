@@ -1,4 +1,4 @@
-import { Component, DoCheck, OnInit, computed, inject, input, viewChild } from '@angular/core';
+import { Component, DoCheck, OnInit, computed, inject, input, model, viewChild } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
@@ -9,6 +9,7 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor.component';
 import { BUILD_PHASE_NAME_PATTERN, BUILD_PHASE_RESERVED_NAMES, BuildPhase, parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 import { LegacyBuildPlanConverterService } from 'app/programming/shared/services/legacy-build-plan-converter.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-build-plan',
@@ -20,7 +21,8 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements DoCheck, OnI
     private buildPhasesTemplateService = inject(BuildPhasesTemplateService);
     private legacyBuildPlanConverterService = inject(LegacyBuildPlanConverterService);
 
-    readonly programmingExercise = input.required<ProgrammingExercise>();
+    readonly programmingExercise = model.required<ProgrammingExercise>();
+
     readonly programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
     readonly isExamMode = input(false);
 
@@ -69,6 +71,10 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements DoCheck, OnI
         if (this.shouldReloadTemplate()) {
             this.loadBuildPhasesTemplate(this.programmingExerciseCreationConfig().isImportFromFile);
         }
+    }
+
+    onCustomizeBuildPlanChange(customizeBuildPlan: boolean) {
+        this.programmingExercise.update((exercise) => cloneWith(exercise, { customizeBuildPlan }));
     }
 
     shouldReloadTemplate(): boolean {
@@ -129,7 +135,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements DoCheck, OnI
      * Called when the build phases editor emits a change.
      */
     onPhasesChange(phases: BuildPhase[]) {
-        this.buildPhasesTemplateService.buildPlan.update((state) => (state ? { ...state, phases } : { phases }));
+        this.buildPhasesTemplateService.buildPlan.update((state) => (state ? cloneWith(state, { phases }) : { phases }));
     }
 
     /**
@@ -138,7 +144,9 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements DoCheck, OnI
      * @param dockerImage the selected Docker image
      */
     setDockerImage(dockerImage: string) {
-        this.buildPhasesTemplateService.buildPlan.update((state) => (state ? { ...state, dockerImage: dockerImage.trim() } : { dockerImage: dockerImage.trim(), phases: [] }));
+        this.buildPhasesTemplateService.buildPlan.update((state) =>
+            state ? cloneWith(state, { dockerImage: dockerImage.trim() }) : { dockerImage: dockerImage.trim(), phases: [] },
+        );
     }
 
     /**

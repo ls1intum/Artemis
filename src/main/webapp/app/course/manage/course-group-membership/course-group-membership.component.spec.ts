@@ -216,7 +216,7 @@ describe('Course Group Membership Component', () => {
 
             newFixture.detectChanges();
 
-            expect(newNavigateSpy).toHaveBeenCalledWith(['/course-management']);
+            expect(newNavigateSpy).toHaveBeenCalledWith(['/courses']);
         });
     });
 

@@ -39,6 +39,7 @@ import { CategoryIssuesChartComponent } from '../charts/category-issues-chart.co
 import { ScaCategoryDistributionChartComponent } from '../charts/sca-category-distribution-chart.component';
 import { FeedbackAnalysisComponent } from '../feedback-analysis/feedback-analysis.component';
 import { Message } from 'primeng/message';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Describes the editableField
@@ -129,7 +130,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     // Backed by a signal but exposed via a getter/setter facade: the template binds `programmingExercise.prop`
     // directly and several subscribe handlers mutate nested properties in place, so we rebuild the reference
     // via commitProgrammingExercise() after deep mutations to keep template reads reactive under zoneless CD.
-    private readonly _programmingExercise = signal<ProgrammingExercise>(undefined!);
+    private readonly _programmingExercise = signal<ProgrammingExercise>(undefined!, { equal: () => false });
     get programmingExercise(): ProgrammingExercise {
         return this._programmingExercise();
     }
@@ -137,7 +138,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this._programmingExercise.set(value);
     }
     private commitProgrammingExercise(): void {
-        this._programmingExercise.update((exercise) => Object.assign(new ProgrammingExercise(undefined, undefined), exercise));
+        // No copy: the signal is declared with `equal: () => false`, so re-setting the same reference emits. This
+        // component edits the test cases and static-code-analysis categories in place, so a copy would discard them.
+        this._programmingExercise.set(this._programmingExercise());
     }
     testCaseSubscription?: Subscription;
     testCaseChangedSubscription?: Subscription;
@@ -458,7 +461,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this.isSaving.set(true);
 
         this.backupStaticCodeAnalysisCategories = this.backupStaticCodeAnalysisCategories.map((category) =>
-            category.state === StaticCodeAnalysisCategoryState.Graded ? category : { ...category, penalty: 0, maxPenalty: 0 },
+            category.state === StaticCodeAnalysisCategoryState.Graded ? category : cloneWith(category, { penalty: 0, maxPenalty: 0 }),
         );
 
         const categoriesToUpdate = _intersectionWith(
@@ -674,7 +677,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 this.testCasePointsRelative[testCase.testName!] = roundValueSpecifiedByCourseSettings(relativePoints, this.course());
             });
         } else {
-            const editedTestCaseNewValue = { ...editedTestCase, [field]: newValue };
+            const editedTestCaseNewValue = cloneWith(editedTestCase, { [field]: newValue });
             const points =
                 (this.totalWeight > 0 ? (editedTestCaseNewValue.weight! * editedTestCaseNewValue.bonusMultiplier!) / this.totalWeight : 0) * maxPoints +
                 (editedTestCaseNewValue.bonusPoints ?? 0);
@@ -842,7 +845,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      */
     private updateTestCases(editedTestCase: ProgrammingExerciseTestCase, field: EditableField, newValue: EditableFieldValue, displayType: TestCaseView): void {
         const mapFunction = (testCase: ProgrammingExerciseTestCase): ProgrammingExerciseTestCase =>
-            testCase.id !== editedTestCase.id ? testCase : { ...testCase, [field]: newValue };
+            testCase.id !== editedTestCase.id ? testCase : cloneWith(testCase, { [field]: newValue });
         switch (displayType) {
             case TestCaseView.TABLE:
                 this.filteredTestCasesForTable = this.filteredTestCasesForTable.map(mapFunction);
@@ -867,7 +870,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      */
     private updateStaticCodeAnalysisCategories(editedCategory: StaticCodeAnalysisCategory, field: EditableField, newValue: EditableFieldValue): void {
         const filterFunction = (category: StaticCodeAnalysisCategory): StaticCodeAnalysisCategory =>
-            category.id !== editedCategory.id ? category : { ...category, [field]: newValue };
+            category.id !== editedCategory.id ? category : cloneWith(category, { [field]: newValue });
 
         this.staticCodeAnalysisCategoriesForTable.set(this.staticCodeAnalysisCategoriesForTable().map(filterFunction));
         this.backupStaticCodeAnalysisCategories = this.backupStaticCodeAnalysisCategories.map(filterFunction);

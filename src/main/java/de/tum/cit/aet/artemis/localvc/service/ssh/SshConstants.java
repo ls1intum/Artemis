@@ -15,6 +15,14 @@ public class SshConstants {
 
     public static final AttributeRepository.AttributeKey<Boolean> IS_BUILD_AGENT_KEY = new AttributeRepository.AttributeKey<>();
 
+    /**
+     * The short name of the build agent whose public key authenticated this session.
+     * <p>
+     * Derived from the key match rather than claimed by the client, and it is what lets the repository check ask which
+     * build jobs this particular agent is running instead of treating every agent as interchangeable.
+     */
+    public static final AttributeRepository.AttributeKey<String> BUILD_AGENT_NAME_KEY = new AttributeRepository.AttributeKey<>();
+
     public static final AttributeRepository.AttributeKey<User> USER_KEY = new AttributeRepository.AttributeKey<>();
 
     public static final AttributeRepository.AttributeKey<ProgrammingExercise> REPOSITORY_EXERCISE_KEY = new AttributeRepository.AttributeKey<>();

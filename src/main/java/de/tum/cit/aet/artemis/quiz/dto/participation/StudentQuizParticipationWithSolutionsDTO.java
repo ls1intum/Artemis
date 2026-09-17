@@ -15,7 +15,11 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionAfterEvaluationDTO;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
 
+@Schema(requiredProperties = { "quizQuestionsType" })
+@SchemaProperty(name = "quizQuestionsType", schema = @Schema(type = "string", allowableValues = { "after-quiz-end" }, defaultValue = "after-quiz-end"))
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record StudentQuizParticipationWithSolutionsDTO(@JsonUnwrapped StudentQuizParticipationBaseDTO studentQuizParticipationBaseDTO, QuizExerciseWithSolutionDTO exercise,
         Set<QuizSubmissionAfterEvaluationDTO> submissions) implements StudentQuizParticipationDTO {

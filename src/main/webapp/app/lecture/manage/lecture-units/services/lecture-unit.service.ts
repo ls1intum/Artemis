@@ -12,6 +12,7 @@ import { AttachmentService } from 'app/lecture/manage/services/attachment.servic
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type EntityArrayResponseType = HttpResponse<LectureUnit[]>;
 
@@ -72,7 +73,7 @@ export class LectureUnitService {
                 return lectureUnit;
             }
         }
-        return Object.assign({}, lectureUnit, {
+        return cloneWith(lectureUnit, {
             releaseDate: convertDateFromClient(lectureUnit.releaseDate),
         });
     }

@@ -24,12 +24,14 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.localvc.service.sshuserkeys.UserSshPublicKeyService;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.dto.UserSshPublicKeyDTO;
 
 @Profile(PROFILE_LOCALVC)
 @Lazy
+@FeatureUsage("access/ssh-keys")
 @RestController
 @RequestMapping("api/programming/ssh-settings/")
 public class SshPublicKeysResource {
@@ -53,8 +55,8 @@ public class SshPublicKeysResource {
     @GetMapping("public-keys")
     @EnforceAtLeastStudent
     public ResponseEntity<List<UserSshPublicKeyDTO>> getSshPublicKeys() {
-        User user = userRepository.getUser();
-        List<UserSshPublicKeyDTO> keys = userSshPublicKeyService.getAllSshKeysForUser(user);
+        // The service only reads the id off the user, so the id-only lookup is enough.
+        List<UserSshPublicKeyDTO> keys = userSshPublicKeyService.getAllSshKeysForUser(userRepository.getUserIdElseThrow());
         return ResponseEntity.ok(keys);
     }
 
@@ -66,7 +68,7 @@ public class SshPublicKeysResource {
      * @return the ResponseEntity containing the requested public SSH key of a user with status 200 (OK), or with status 403 (Access Forbidden) if the key does not exist or is not
      *         owned by the requesting user
      */
-    @GetMapping({ "public-keys/{keyId}", "public-key/{keyId}" })
+    @GetMapping("public-keys/{keyId}")
     @EnforceAtLeastStudent
     public ResponseEntity<UserSshPublicKeyDTO> getSshPublicKey(@PathVariable Long keyId) {
         User user = userRepository.getUser();

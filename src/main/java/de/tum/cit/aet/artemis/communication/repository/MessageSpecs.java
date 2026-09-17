@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.communication.repository;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
@@ -59,7 +60,7 @@ public class MessageSpecs {
             }
 
             List<Long> authorIdList = Arrays.stream(authorIds).boxed().toList();
-            Expression<String> searchTextLiteral = criteriaBuilder.literal("%" + searchText.toLowerCase() + "%");
+            Expression<String> searchTextLiteral = criteriaBuilder.literal("%" + searchText.toLowerCase(Locale.ROOT) + "%");
             Predicate baseTextPredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get(Post_.CONTENT)), searchTextLiteral);
             Predicate baseAuthorPredicate = root.get(Post_.AUTHOR).get(User_.ID).in(authorIdList);
             Predicate baseCombined = criteriaBuilder.and(baseTextPredicate, baseAuthorPredicate);
@@ -93,7 +94,7 @@ public class MessageSpecs {
             }
             else {
                 // regular search on content
-                Expression<String> searchTextLiteral = criteriaBuilder.literal("%" + searchText.toLowerCase() + "%");
+                Expression<String> searchTextLiteral = criteriaBuilder.literal("%" + searchText.toLowerCase(Locale.ROOT) + "%");
 
                 Predicate searchInMessageContent = criteriaBuilder.like(criteriaBuilder.lower(root.get(Post_.CONTENT)), searchTextLiteral);
                 Join<Post, AnswerPost> answersJoin = root.join(Post_.ANSWERS, JoinType.LEFT);
@@ -273,6 +274,11 @@ public class MessageSpecs {
                 }
 
                 orderList.add(sortingOrder == SortingOrder.ASCENDING ? criteriaBuilder.asc(sortCriterion) : criteriaBuilder.desc(sortCriterion));
+                // Break ties on the id, so paging is stable. Two messages posted in the same millisecond have no
+                // defined order otherwise, and a page boundary falling between them lets the database return one of
+                // them on two consecutive pages (the client then renders it twice) or on neither (it disappears).
+                // Same reasoning as the answer ordering in PostResponseDTO.
+                orderList.add(sortingOrder == SortingOrder.ASCENDING ? criteriaBuilder.asc(root.get(Post_.ID)) : criteriaBuilder.desc(root.get(Post_.ID)));
                 query.orderBy(orderList);
             }
 

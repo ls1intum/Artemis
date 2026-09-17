@@ -5,10 +5,12 @@ import { GradingInstruction } from 'app/exercise/structured-grading-criterion/gr
 import { convertToHtmlLinebreaks, escapeString } from 'app/foundation/util/text.utils';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { GradingInstructionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export enum FeedbackHighlightColor {
     RED = 'rgba(219, 53, 69, 0.6)',
-    CYAN = 'rgba(23, 162, 184, 0.3)',
+    // Apollon paints this behind an element's own white body, so a low alpha washed out to nothing on the canvas.
+    CYAN = 'rgba(23, 162, 184, 0.6)',
     BLUE = 'rgba(0, 123, 255, 0.6)',
     YELLOW = 'rgba(255, 193, 7, 0.6)',
     GREEN = 'rgba(40, 167, 69, 0.6)',
@@ -285,7 +287,7 @@ export class Feedback implements BaseEntity {
     }
 
     public static fromServerResponse(response: Feedback): Feedback {
-        return Object.assign(new Feedback(), response);
+        return hydrate(new Feedback(), response);
     }
 
     public static updateFeedbackTypeOnChange(feedback: Feedback) {

@@ -60,6 +60,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
+        userUtilService.addAdmin(TEST_PREFIX);
         createdTestFiles.clear();
         // Clean up any data exports from previous test runs for these specific users
         // This is more isolated than deleteAll() which would affect parallel test classes
@@ -342,7 +343,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRequestForAnotherUserInstructor_forbidden() throws Exception {
-        request.post("/api/core/admin/data-exports/" + TEST_PREFIX + "student1", null, HttpStatus.FORBIDDEN);
+        request.post("/api/admin/data-exports/" + TEST_PREFIX + "student1", null, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -350,7 +351,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     void testRequestForAnotherUserAsAdmin_success() throws Exception {
         var usernameToRequest = TEST_PREFIX + "student1";
         dataExportRepository.deleteAll();
-        var response = request.postWithResponseBody("/api/core/admin/data-exports/" + usernameToRequest, null, RequestDataExportDTO.class, HttpStatus.OK);
+        var response = request.postWithResponseBody("/api/admin/data-exports/" + usernameToRequest, null, RequestDataExportDTO.class, HttpStatus.OK);
         assertThat(response.dataExportState()).isEqualTo(DataExportState.REQUESTED);
         assertThat(response.createdDate()).isNotNull();
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(response.id());
@@ -383,7 +384,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         dataExport2.setCreationFinishedDate(ZonedDateTime.now());
         dataExportRepository.save(dataExport2);
 
-        var response = request.getList("/api/core/admin/data-exports", HttpStatus.OK, DataExportAdminDTO.class);
+        var response = request.getList("/api/admin/data-exports", HttpStatus.OK, DataExportAdminDTO.class);
         assertThat(response).hasSize(2);
         // Verify ordering (newest first)
         assertThat(response.get(0).dataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
@@ -396,13 +397,13 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllDataExportsAsStudent_forbidden() throws Exception {
-        request.getList("/api/core/admin/data-exports", HttpStatus.FORBIDDEN, DataExportAdminDTO.class);
+        request.getList("/api/admin/data-exports", HttpStatus.FORBIDDEN, DataExportAdminDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllDataExportsAsInstructor_forbidden() throws Exception {
-        request.getList("/api/core/admin/data-exports", HttpStatus.FORBIDDEN, DataExportAdminDTO.class);
+        request.getList("/api/admin/data-exports", HttpStatus.FORBIDDEN, DataExportAdminDTO.class);
     }
 
     @Test
@@ -413,7 +414,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         var params = new LinkedMultiValueMap<String, String>();
         params.add("executeNow", "false");
 
-        var response = request.postWithResponseBody("/api/core/admin/data-exports/" + usernameToRequest, null, RequestDataExportDTO.class, params, HttpStatus.OK);
+        var response = request.postWithResponseBody("/api/admin/data-exports/" + usernameToRequest, null, RequestDataExportDTO.class, params, HttpStatus.OK);
         assertThat(response.dataExportState()).isEqualTo(DataExportState.REQUESTED);
 
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(response.id());
@@ -427,7 +428,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExport = dataExportRepository.save(dataExport);
 
-        var dataExportFile = request.getFile("/api/core/admin/data-exports/" + dataExport.getId() + "/download", HttpStatus.OK, new LinkedMultiValueMap<>());
+        var dataExportFile = request.getFile("/api/admin/data-exports/" + dataExport.getId() + "/download", HttpStatus.OK, new LinkedMultiValueMap<>());
         assertThat(dataExportFile).isNotNull();
 
         var dataExportAfterDownload = dataExportRepository.findByIdElseThrow(dataExport.getId());
@@ -437,7 +438,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testDownloadDataExportAsAdmin_notFound() throws Exception {
-        request.get("/api/core/admin/data-exports/999999/download", HttpStatus.NOT_FOUND, Resource.class);
+        request.get("/api/admin/data-exports/999999/download", HttpStatus.NOT_FOUND, Resource.class);
     }
 
     @Test
@@ -449,7 +450,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         dataExport.setFilePath(null); // File path is null (already deleted)
         dataExport = dataExportRepository.save(dataExport);
 
-        request.get("/api/core/admin/data-exports/" + dataExport.getId() + "/download", HttpStatus.FORBIDDEN, Resource.class);
+        request.get("/api/admin/data-exports/" + dataExport.getId() + "/download", HttpStatus.FORBIDDEN, Resource.class);
     }
 
     @Test
@@ -461,14 +462,14 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         dataExport.setFilePath("path");
         dataExport = dataExportRepository.save(dataExport);
 
-        request.get("/api/core/admin/data-exports/" + dataExport.getId() + "/download", HttpStatus.FORBIDDEN, Resource.class);
+        request.get("/api/admin/data-exports/" + dataExport.getId() + "/download", HttpStatus.FORBIDDEN, Resource.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDownloadDataExportAsStudent_forbidden() throws Exception {
         var dataExport = initDataExport(DataExportState.EMAIL_SENT);
-        request.get("/api/core/admin/data-exports/" + dataExport.getId() + "/download", HttpStatus.FORBIDDEN, Resource.class);
+        request.get("/api/admin/data-exports/" + dataExport.getId() + "/download", HttpStatus.FORBIDDEN, Resource.class);
     }
 
     @Test
@@ -490,7 +491,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         nonDownloadableExport.setFilePath(null);
         dataExportRepository.save(nonDownloadableExport);
 
-        var response = request.getList("/api/core/admin/data-exports", HttpStatus.OK, DataExportAdminDTO.class);
+        var response = request.getList("/api/admin/data-exports", HttpStatus.OK, DataExportAdminDTO.class);
         assertThat(response).hasSize(2);
 
         var downloadable = response.stream().filter(e -> e.userLogin().equals(TEST_PREFIX + "student1")).findFirst().orElseThrow();

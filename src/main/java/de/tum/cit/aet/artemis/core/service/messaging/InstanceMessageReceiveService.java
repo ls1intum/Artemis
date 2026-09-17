@@ -8,12 +8,9 @@ import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -21,6 +18,7 @@ import de.tum.cit.aet.artemis.account.service.UserScheduleService;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.api.SlideUnhideScheduleApi;
@@ -59,14 +57,14 @@ public class InstanceMessageReceiveService {
 
     private final Optional<SlideUnhideScheduleApi> slideUnhideScheduleApi;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
     private final QuizScheduleService quizScheduleService;
 
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
-            ExerciseRepository exerciseRepository, Optional<AthenaApi> athenaApi, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
-            UserRepository userRepository, UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService,
-            ParticipantScoreScheduleService participantScoreScheduleService, QuizScheduleService quizScheduleService, Optional<SlideUnhideScheduleApi> slideUnhideScheduleApi) {
+            ExerciseRepository exerciseRepository, Optional<AthenaApi> athenaApi, DistributedDataProvider distributedDataProvider, UserRepository userRepository,
+            UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService, ParticipantScoreScheduleService participantScoreScheduleService,
+            QuizScheduleService quizScheduleService, Optional<SlideUnhideScheduleApi> slideUnhideScheduleApi) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.athenaApi = athenaApi;
@@ -75,71 +73,84 @@ public class InstanceMessageReceiveService {
         this.userScheduleService = userScheduleService;
         this.notificationScheduleService = notificationScheduleService;
         this.participantScoreScheduleService = participantScoreScheduleService;
-        this.hazelcastInstance = hazelcastInstance;
+        this.distributedDataProvider = distributedDataProvider;
         this.quizScheduleService = quizScheduleService;
         this.slideUnhideScheduleApi = slideUnhideScheduleApi;
     }
 
     /**
-     * Initialize all topic listeners from hazelcast
+     * Initialize all topic listeners on the distributed data provider
      */
     @PostConstruct
     public void init() {
-        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_SCHEDULE.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleProgrammingExercise((message.getMessageObject()));
-            processSchedulePotentialAthenaExercise((message.getMessageObject()));
+        distributedDataProvider.<Long>getReliableTopic(MessageTopic.PROGRAMMING_EXERCISE_SCHEDULE.toString()).addMessageListener(payload -> {
+            SecurityUtils.runAsSystem(() -> {
+                processScheduleProgrammingExercise((payload));
+                processSchedulePotentialAthenaExercise((payload));
+            });
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_SCHEDULE_CANCEL.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleProgrammingExerciseCancel(message.getMessageObject());
-            processPotentialAthenaExerciseScheduleCancel(message.getMessageObject());
+        distributedDataProvider.<Long>getReliableTopic(MessageTopic.PROGRAMMING_EXERCISE_SCHEDULE_CANCEL.toString()).addMessageListener(payload -> {
+            SecurityUtils.runAsSystem(() -> {
+                processScheduleProgrammingExerciseCancel(payload);
+                processPotentialAthenaExerciseScheduleCancel(payload);
+            });
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.TEXT_EXERCISE_SCHEDULE.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processSchedulePotentialAthenaExercise(message.getMessageObject());
+        distributedDataProvider.<Long>getReliableTopic(MessageTopic.TEXT_EXERCISE_SCHEDULE.toString()).addMessageListener(payload -> {
+            SecurityUtils.runAsSystem(() -> {
+                processSchedulePotentialAthenaExercise(payload);
+            });
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.TEXT_EXERCISE_SCHEDULE_CANCEL.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processPotentialAthenaExerciseScheduleCancel(message.getMessageObject());
+        distributedDataProvider.<Long>getReliableTopic(MessageTopic.TEXT_EXERCISE_SCHEDULE_CANCEL.toString()).addMessageListener(payload -> {
+            SecurityUtils.runAsSystem(() -> {
+                processPotentialAthenaExerciseScheduleCancel(payload);
+            });
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.USER_MANAGEMENT_REMOVE_NON_ACTIVATED_USERS.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processRemoveNonActivatedUser((message.getMessageObject()));
+        distributedDataProvider.<Long>getReliableTopic(MessageTopic.USER_MANAGEMENT_REMOVE_NON_ACTIVATED_USERS.toString()).addMessageListener(payload -> {
+            SecurityUtils.runAsSystem(() -> {
+                processRemoveNonActivatedUser((payload));
+            });
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.USER_MANAGEMENT_CANCEL_REMOVE_NON_ACTIVATED_USERS.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processCancelRemoveNonActivatedUser((message.getMessageObject()));
+        distributedDataProvider.<Long>getReliableTopic(MessageTopic.USER_MANAGEMENT_CANCEL_REMOVE_NON_ACTIVATED_USERS.toString()).addMessageListener(payload -> {
+            SecurityUtils.runAsSystem(() -> {
+                processCancelRemoveNonActivatedUser((payload));
+            });
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.EXERCISE_RELEASED_SCHEDULE.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleExerciseReleasedNotification((message.getMessageObject()));
+        distributedDataProvider.<Long>getReliableTopic(MessageTopic.EXERCISE_RELEASED_SCHEDULE.toString()).addMessageListener(payload -> {
+            SecurityUtils.runAsSystem(() -> {
+                processScheduleExerciseReleasedNotification((payload));
+            });
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.ASSESSED_EXERCISE_SUBMISSION_SCHEDULE.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleAssessedExerciseSubmittedNotification((message.getMessageObject()));
+        distributedDataProvider.<Long>getReliableTopic(MessageTopic.ASSESSED_EXERCISE_SUBMISSION_SCHEDULE.toString()).addMessageListener(payload -> {
+            SecurityUtils.runAsSystem(() -> {
+                processScheduleAssessedExerciseSubmittedNotification((payload));
+            });
         });
-        hazelcastInstance.<Long[]>getTopic(MessageTopic.PARTICIPANT_SCORE_SCHEDULE.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleParticipantScore(message.getMessageObject()[0], message.getMessageObject()[1], message.getMessageObject()[2]);
+        distributedDataProvider.<Long[]>getReliableTopic(MessageTopic.PARTICIPANT_SCORE_SCHEDULE.toString()).addMessageListener(payload -> {
+            SecurityUtils.runAsSystem(() -> {
+                processScheduleParticipantScore(payload[0], payload[1], payload[2]);
+            });
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.QUIZ_EXERCISE_START_SCHEDULE.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleQuizStart(message.getMessageObject());
+        distributedDataProvider.<Long>getReliableTopic(MessageTopic.QUIZ_EXERCISE_START_SCHEDULE.toString()).addMessageListener(payload -> {
+            SecurityUtils.runAsSystem(() -> {
+                processScheduleQuizStart(payload);
+            });
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.QUIZ_EXERCISE_START_CANCEL.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processCancelQuizStart(message.getMessageObject());
+        distributedDataProvider.<Long>getReliableTopic(MessageTopic.QUIZ_EXERCISE_START_CANCEL.toString()).addMessageListener(payload -> {
+            SecurityUtils.runAsSystem(() -> {
+                processCancelQuizStart(payload);
+            });
         });
 
         // Add listeners for slide unhide messages
-        hazelcastInstance.<Long>getTopic(MessageTopic.SLIDE_UNHIDE_SCHEDULE.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleSlideUnhide(message.getMessageObject());
+        distributedDataProvider.<Long>getReliableTopic(MessageTopic.SLIDE_UNHIDE_SCHEDULE.toString()).addMessageListener(payload -> {
+            SecurityUtils.runAsSystem(() -> {
+                processScheduleSlideUnhide(payload);
+            });
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.SLIDE_UNHIDE_SCHEDULE_CANCEL.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processCancelSlideUnhide(message.getMessageObject());
+        distributedDataProvider.<Long>getReliableTopic(MessageTopic.SLIDE_UNHIDE_SCHEDULE_CANCEL.toString()).addMessageListener(payload -> {
+            SecurityUtils.runAsSystem(() -> {
+                processCancelSlideUnhide(payload);
+            });
         });
     }
 

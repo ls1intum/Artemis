@@ -5,6 +5,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,19 +33,24 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExamExerciseGroupAssignmentDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupCreateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupUpdateDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.ExamImportService;
+import de.tum.cit.aet.artemis.exam.service.ExerciseGroupService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 
 /**
@@ -51,6 +58,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
  */
 @Conditional(ExamEnabled.class)
 @Lazy
+@FeatureUsage("authoring/exercise-groups")
 @RestController
 @RequestMapping("api/exam/")
 public class ExerciseGroupResource {
@@ -76,8 +84,13 @@ public class ExerciseGroupResource {
 
     private final ExamImportService examImportService;
 
+    private final ExerciseRepository exerciseRepository;
+
+    private final ExerciseGroupService exerciseGroupService;
+
     public ExerciseGroupResource(ExerciseGroupRepository exerciseGroupRepository, ExamAccessService examAccessService, UserRepository userRepository,
-            ExerciseDeletionService exerciseDeletionService, AuditEventRepository auditEventRepository, ExamRepository examRepository, ExamImportService examImportService) {
+            ExerciseDeletionService exerciseDeletionService, AuditEventRepository auditEventRepository, ExamRepository examRepository, ExamImportService examImportService,
+            ExerciseRepository exerciseRepository, ExerciseGroupService exerciseGroupService) {
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.examRepository = examRepository;
         this.examAccessService = examAccessService;
@@ -85,6 +98,8 @@ public class ExerciseGroupResource {
         this.exerciseDeletionService = exerciseDeletionService;
         this.auditEventRepository = auditEventRepository;
         this.examImportService = examImportService;
+        this.exerciseRepository = exerciseRepository;
+        this.exerciseGroupService = exerciseGroupService;
     }
 
     /**
@@ -162,21 +177,55 @@ public class ExerciseGroupResource {
     }
 
     /**
+     * PUT /courses/{courseId}/exams/{examId}/exercises/{exerciseId}/exercise-group : Move an exam exercise into a
+     * different exercise group of the same exam.
+     * <p>
+     * Blocked once a student exam exists: generation has already picked one exercise per group, so a later move would
+     * desync those selections and the exam's point totals.
+     *
+     * @param courseId      the course to which the exam belongs to
+     * @param examId        the exam to which the exercise and both exercise groups belong to
+     * @param exerciseId    the id of the exercise to move
+     * @param assignmentDTO the target exercise group
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PutMapping("courses/{courseId}/exams/{examId}/exercises/{exerciseId}/exercise-group")
+    @EnforceAtLeastEditor
+    public ResponseEntity<Void> moveExerciseToGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseId,
+            @Valid @RequestBody ExamExerciseGroupAssignmentDTO assignmentDTO) {
+        log.debug("REST request to move exercise {} in exam {} to exercise group {}", exerciseId, examId, assignmentDTO.exerciseGroupId());
+
+        ExerciseGroup targetGroup = exerciseGroupRepository.findByIdElseThrow(assignmentDTO.exerciseGroupId());
+        examAccessService.checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.EDITOR, courseId, examId, targetGroup);
+
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        if (exercise.getExam() == null || !examId.equals(exercise.getExam().getId())) {
+            throw new BadRequestAlertException("The exercise does not belong to this exam", ENTITY_NAME, "examIdMismatch");
+        }
+        exerciseGroupService.moveExerciseToGroup(examId, exerciseId, targetGroup.getId());
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * POST /courses/{courseId}/exams/{examId}/import-exercise-group : Imports exercise groups to the specified exam
      *
-     * @param courseId             the course to which the exam belongs
-     * @param examId               the exam to which the exercise groups should be added
-     * @param updatedExerciseGroup the list of Exercise Groups to be imported
-     * @param importId             an optional client-supplied id; when present, live import progress is sent to the importing user over a websocket
+     * @param courseId               the course to which the exam belongs
+     * @param examId                 the exam to which the exercise groups should be added
+     * @param exerciseGroupsToImport the exercise groups to import: each carries its title, mandatory flag and the source exercises (by id) with optional overrides
+     * @param importId               an optional client-supplied id; when present, live import progress is sent to the importing user over a websocket
      * @return the ResponseEntity with status 201 (Created) and with body the newly imported exercise groups, or with status 400 (Bad Request)
      */
     @PostMapping("courses/{courseId}/exams/{examId}/import-exercise-group")
     @EnforceAtLeastEditor
     public ResponseEntity<ExerciseGroupImportResultDTO> importExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId,
-            @RequestBody List<ExerciseGroup> updatedExerciseGroup, @RequestParam(required = false) String importId) throws IOException {
-        log.debug("REST request to import {} exercise group(s) to exam {}", updatedExerciseGroup.size(), examId);
+            @RequestBody List<ExerciseGroupImportDTO> exerciseGroupsToImport, @RequestParam(required = false) String importId) throws IOException {
+        log.debug("REST request to import {} exercise group(s) to exam {}", exerciseGroupsToImport.size(), examId);
 
         examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
+
+        // The DTOs become skeleton entities (title, mandatory flag, source exercise ids + overrides); the import service
+        // loads the source exercises by id and copies their content, exactly like the full exam import.
+        List<ExerciseGroup> updatedExerciseGroup = exerciseGroupsToImport.stream().map(ExerciseGroupImportDTO::toEntity).toList();
 
         // When the client supplies an importId, live progress is reported to the importing user over a websocket so the UI
         // can show a progress dialog while this (synchronous) request runs.

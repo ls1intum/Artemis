@@ -21,6 +21,8 @@ import { faRobot, faSync } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Subscription } from 'rxjs';
 import { IrisKpiCardComponent } from './iris-kpi-card/iris-kpi-card.component';
+import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
+import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 
 type TimeSpanOption = { label: string; value: IrisDashboardTimeSpan; days: number };
 
@@ -43,6 +45,8 @@ type TimeSpanOption = { label: string; value: IrisDashboardTimeSpan; days: numbe
         ArtemisTranslatePipe,
         FaIconComponent,
         IrisKpiCardComponent,
+        AdminTitleBarTitleDirective,
+        AdminTitleBarActionsDirective,
     ],
     templateUrl: './iris-dashboard.component.html',
     styleUrls: ['./iris-dashboard.component.scss'],

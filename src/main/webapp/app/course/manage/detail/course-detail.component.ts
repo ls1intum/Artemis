@@ -39,6 +39,7 @@ import { ControlCenterComponent } from 'app/course/manage/control-center/control
 import { OnboardingExploreComponent } from 'app/course/manage/onboarding/pages/onboarding-explore.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -222,23 +223,9 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         return [];
     }
 
-    getAthenaDetails(): Detail[] {
-        const currentCourse = this.course();
-        const athenaDetails: Detail[] = [];
-        if (this.isAthenaEnabled()) {
-            athenaDetails.push({
-                type: DetailType.Boolean,
-                title: 'artemisApp.course.restrictedAthenaModulesAccess.label',
-                data: { boolean: currentCourse?.restrictedAthenaModulesAccess },
-            });
-        }
-        return athenaDetails;
-    }
-
     getModeDetailSection(): DetailOverviewSection {
         const currentCourse = this.course();
         const complaintsDetails = this.getComplaintsDetails();
-        const athenaDetails = this.getAthenaDetails();
 
         const details: Detail[] = [
             {
@@ -264,7 +251,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
                 data: { boolean: currentCourse?.testCourse },
             },
             ...complaintsDetails,
-            ...athenaDetails,
         ];
 
         // inserting optional details in reversed order, so that no index calculation is needed
@@ -406,7 +392,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         this.organizationService.getOrganizationsByCourse(courseId).subscribe((organizations) => {
             const currentCourse = this.course();
             if (currentCourse) {
-                this.course.set(Object.assign(new Course(), currentCourse, { organizations }));
+                this.course.set(hydrate(new Course(), currentCourse, { organizations }));
                 this.getCourseDetailSections();
             }
         });

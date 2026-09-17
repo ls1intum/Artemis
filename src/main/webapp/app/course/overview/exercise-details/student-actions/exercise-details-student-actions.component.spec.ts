@@ -36,8 +36,9 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { RequestFeedbackButtonComponent } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -107,17 +108,18 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 add: { imports: [MockComponent(CodeButtonComponent), MockComponent(RequestFeedbackButtonComponent)] },
             })
             .compileComponents();
+        courseExerciseService = TestBed.inject(CourseExerciseService);
+        profileService = TestBed.inject(ProfileService);
+        getProfileInfoSub = vi.spyOn(profileService, 'getProfileInfo');
+        // Set up before createComponent: ExerciseDetailsStudentActionsComponent.athenaEnabled reads this at construction time, not reactively.
+        getProfileInfoSub.mockReturnValue({
+            sshCloneURLTemplate: 'ssh://git@testserver.com:1234/',
+            activeModuleFeatures: [MODULE_FEATURE_TEXT, MODULE_FEATURE_ATHENA],
+        } as unknown as ProfileInfo);
         fixture = TestBed.createComponent(ExerciseDetailsStudentActionsComponent);
         comp = fixture.componentInstance;
         debugElement = fixture.debugElement;
-        courseExerciseService = TestBed.inject(CourseExerciseService);
-        profileService = TestBed.inject(ProfileService);
         router = TestBed.inject(Router) as unknown as MockRouter;
-        getProfileInfoSub = vi.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoSub.mockReturnValue({
-            sshCloneURLTemplate: 'ssh://git@testserver.com:1234/',
-            activeModuleFeatures: [MODULE_FEATURE_TEXT],
-        } as unknown as ProfileInfo);
         startExerciseStub = vi.spyOn(courseExerciseService, 'startExercise');
         resumeStub = vi.spyOn(courseExerciseService, 'resumeProgrammingExercise');
     });
@@ -331,7 +333,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         const exerciseData = {
             id: 3,
             type: ExerciseType.PROGRAMMING,
-            allowFeedbackRequests: true,
+            course: { athenaFormativeFeedbackEnabled: true },
+            assessmentType: AssessmentType.SEMI_AUTOMATIC,
             allowOfflineIde: true,
             studentParticipations: [gradedParticipation],
         } as ProgrammingExercise;
@@ -343,8 +346,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
         const feedbackButton = debugElement.query(By.css('jhi-request-feedback-button'));
         expect(feedbackButton).not.toBeNull();
-        expect(feedbackButton.componentInstance.isSubmitted).toBe(true);
-        expect(feedbackButton.componentInstance.participationId).toBe(gradedParticipation.id);
+        expect(feedbackButton.componentInstance.isSubmitted()).toBe(true);
+        expect(feedbackButton.componentInstance.participationId()).toBe(gradedParticipation.id);
     });
 
     it('should show correct buttons in exam mode', async () => {
@@ -429,6 +432,28 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             expect(startExerciseButton.componentInstance.overwriteDisabled()).toBe(true);
         },
     );
+
+    describe('assignedTeamId', () => {
+        it('should fall back to the exercise when the participation carries no team', () => {
+            // The course overview projects participations without their team, so branching on the participation
+            // produced undefined and the view-team link became /teams/undefined
+            fixture.componentRef.setInput('courseId', 1);
+            const exercise = { ...teamExerciseWithTeamAssigned, studentParticipations: [{ id: 7 } as StudentParticipation] };
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.detectChanges();
+
+            expect(comp.assignedTeamId).toBe(team.id);
+        });
+
+        it('should prefer the team on the participation when it has one', () => {
+            fixture.componentRef.setInput('courseId', 1);
+            const exercise = { ...teamExerciseWithTeamAssigned, studentParticipations: [{ id: 7, team: { id: 99 } } as StudentParticipation] };
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.detectChanges();
+
+            expect(comp.assignedTeamId).toBe(99);
+        });
+    });
 
     describe('effect on input changes', () => {
         it.each([

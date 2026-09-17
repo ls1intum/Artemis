@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -50,9 +51,12 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.EnrollmentService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
-import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseAccessStateDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseForEnrollmentDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseMemberDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseAccessService;
 import de.tum.cit.aet.artemis.course.service.CourseSearchService;
@@ -61,9 +65,9 @@ import de.tum.cit.aet.artemis.course.service.CourseSearchService;
  * REST controller for managing access to courses and searching members in courses.
  */
 @Profile(PROFILE_CORE)
+@FeatureUsage("student-view/enrollment")
 @RestController
-@SuppressWarnings("deprecation")
-@RequestMapping({ "api/course/", CourseLegacyRestPaths.CORE_PREFIX })
+@RequestMapping("api/course/")
 @Lazy
 public class CourseAccessResource {
 
@@ -133,14 +137,35 @@ public class CourseAccessResource {
      */
     @GetMapping("courses/{courseId}/for-enrollment")
     @EnforceAtLeastStudent
-    public ResponseEntity<Course> getCourseForEnrollment(@PathVariable long courseId) {
+    public ResponseEntity<CourseForEnrollmentDTO> getCourseForEnrollment(@PathVariable long courseId) {
         log.debug("REST request to get a currently active course for enrollment");
         User user = userRepository.getUserWithAuthoritiesAndOrganizations();
 
         Course course = courseRepository.findSingleWithOrganizationsAndPrerequisitesElseThrow(courseId);
         enrollmentService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
 
-        return ResponseEntity.ok(course);
+        return ResponseEntity.ok(CourseForEnrollmentDTO.of(course));
+    }
+
+    /**
+     * GET /courses/{courseId}/access-state : whether the requesting user already has access to the course.
+     * <p>
+     * Deliberately the cheapest endpoint that can answer this: one indexed EXISTS query, no entity hydration, and a
+     * response of a single boolean. The enrollment page uses it to decide whether to redirect into the course instead
+     * of requesting the course dashboard purely to inspect its status code.
+     * <p>
+     * Any authenticated user may ask, and a user without access gets {@code false} rather than a 403 — the answer is
+     * the point of the request, not an error, and a 403 here would raise a global error alert on a page where being
+     * unenrolled is the expected case.
+     *
+     * @param courseId the id of the course to check
+     * @return whether the user is at least a student in the course
+     */
+    @GetMapping("courses/{courseId}/access-state")
+    @EnforceAtLeastStudent
+    public ResponseEntity<CourseAccessStateDTO> getCourseAccessState(@PathVariable long courseId) {
+        log.debug("REST request to check whether the current user has access to course {}", courseId);
+        return ResponseEntity.ok(new CourseAccessStateDTO(authCheckService.isAtLeastStudentInCourse(courseId)));
     }
 
     /**
@@ -151,12 +176,12 @@ public class CourseAccessResource {
      */
     @GetMapping("courses/for-enrollment")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<Course>> getCoursesForEnrollment() {
+    public ResponseEntity<List<CourseForEnrollmentDTO>> getCoursesForEnrollment() {
         log.debug("REST request to get all currently active courses that are not online courses");
         User user = userRepository.getUserWithCourseRolesAndAuthoritiesAndOrganizations();
         final var courses = courseAccessService.findAllEnrollableForUser(user).stream().filter(course -> enrollmentService.isUserAllowedToSelfEnrollInCourse(user, course))
                 .toList();
-        return ResponseEntity.ok(courses);
+        return ResponseEntity.ok(courses.stream().map(CourseForEnrollmentDTO::of).toList());
     }
 
     /**
@@ -167,10 +192,10 @@ public class CourseAccessResource {
      */
     @GetMapping("courses/{courseId}/students")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Set<User>> getStudentsInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<CourseMemberDTO>> getStudentsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all students in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        return courseAccessService.getUsersWithRole(course, CourseRole.STUDENT);
+        return ResponseEntity.ok(courseAccessService.getUsersWithRole(course, CourseRole.STUDENT).stream().map(CourseMemberDTO::of).collect(Collectors.toSet()));
     }
 
     /**
@@ -258,10 +283,10 @@ public class CourseAccessResource {
      */
     @GetMapping("courses/{courseId}/tutors")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<Set<User>> getTutorsInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<CourseMemberDTO>> getTutorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        return courseAccessService.getUsersWithRole(course, CourseRole.TEACHING_ASSISTANT);
+        return ResponseEntity.ok(courseAccessService.getUsersWithRole(course, CourseRole.TEACHING_ASSISTANT).stream().map(CourseMemberDTO::of).collect(Collectors.toSet()));
     }
 
     /**
@@ -272,10 +297,10 @@ public class CourseAccessResource {
      */
     @GetMapping("courses/{courseId}/editors")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Set<User>> getEditorsInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<CourseMemberDTO>> getEditorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all editors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        return courseAccessService.getUsersWithRole(course, CourseRole.EDITOR);
+        return ResponseEntity.ok(courseAccessService.getUsersWithRole(course, CourseRole.EDITOR).stream().map(CourseMemberDTO::of).collect(Collectors.toSet()));
     }
 
     /**
@@ -286,10 +311,10 @@ public class CourseAccessResource {
      */
     @GetMapping("courses/{courseId}/instructors")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Set<User>> getInstructorsInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<CourseMemberDTO>> getInstructorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all instructors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        return courseAccessService.getUsersWithRole(course, CourseRole.INSTRUCTOR);
+        return ResponseEntity.ok(courseAccessService.getUsersWithRole(course, CourseRole.INSTRUCTOR).stream().map(CourseMemberDTO::of).collect(Collectors.toSet()));
     }
 
     /**
@@ -301,7 +326,7 @@ public class CourseAccessResource {
      */
     @GetMapping("courses/{courseId}/search-other-users")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<User>> searchOtherUsersInCourse(@PathVariable long courseId, @RequestParam("nameOfUser") String nameOfUser) {
+    public ResponseEntity<List<CourseMemberDTO>> searchOtherUsersInCourse(@PathVariable long courseId, @RequestParam("nameOfUser") String nameOfUser) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
@@ -310,7 +335,7 @@ public class CourseAccessResource {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'name' must be three characters or longer.");
         }
 
-        return ResponseEntity.ok().body(courseSearchService.searchOtherUsersNameInCourse(course, nameOfUser));
+        return ResponseEntity.ok(courseSearchService.searchOtherUsersNameInCourse(course, nameOfUser).stream().map(CourseMemberDTO::of).toList());
     }
 
     /**
@@ -328,7 +353,7 @@ public class CourseAccessResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
-        var searchTerm = loginOrName != null ? loginOrName.toLowerCase().trim() : "";
+        var searchTerm = loginOrName != null ? loginOrName.toLowerCase(Locale.ROOT).trim() : "";
         List<UserNameAndLoginDTO> searchResults = userRepository.searchAllWithCourseRolesByLoginOrNameInCourseAndReturnPage(Pageable.ofSize(10), searchTerm, course.getId())
                 .getContent().stream().map(UserNameAndLoginDTO::of).toList();
 

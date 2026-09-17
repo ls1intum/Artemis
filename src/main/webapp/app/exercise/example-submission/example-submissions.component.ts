@@ -9,16 +9,18 @@ import { ExampleSubmissionImportComponent } from 'app/exercise/example-submissio
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import { faExclamationTriangle, faFont, faPlus, faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faFont, faPlus, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ResultComponent } from '../result/result.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 
 @Component({
     templateUrl: 'example-submissions.component.html',
-    imports: [TranslateDirective, RouterLink, FaIconComponent, NgbTooltip, ResultComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, RouterLink, FaIconComponent, NgbTooltip, ResultComponent, ArtemisTranslatePipe, TumUiButtonDirective, DeleteButtonDirective],
 })
 export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
@@ -27,14 +29,16 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     private dialogService = inject(DialogService);
     private accountService = inject(AccountService);
 
-    readonly exercise = signal<Exercise>(undefined!);
+    // `equal: () => false` so re-setting the same reference emits after the example submissions are spliced in place;
+    // copying the exercise would detach the nested associations from the parent that supplied it.
+    readonly exercise = signal<Exercise>(undefined!, { equal: () => false });
     readonly exerciseType = ExerciseType;
     readonly createdExampleAssessment = signal<boolean[]>([]);
     private importDialogRef?: DynamicDialogRef | null;
 
     // Icons
     faPlus = faPlus;
-    faTimes = faTimes;
+    faTrash = faTrash;
     faFont = faFont;
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
@@ -77,8 +81,8 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
         this.exampleSubmissionService.delete(submissionId).subscribe({
             next: () => {
                 exercise.exampleSubmissions!.splice(index, 1);
-                // Re-set with a fresh reference so the signal notifies consumers (same-reference set is a no-op).
-                this.exercise.set(Object.assign(Object.create(Object.getPrototypeOf(exercise)), exercise));
+                // Re-set the same reference so the signal notifies consumers; `equal: () => false` makes that emit.
+                this.exercise.set(exercise);
                 this.createdExampleAssessment.update((created) => {
                     const updated = [...created];
                     updated.splice(index, 1);

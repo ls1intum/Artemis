@@ -12,11 +12,9 @@ import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
@@ -299,9 +297,10 @@ public class SubmissionPolicyService {
         // When the user submits while the result for the previous submission is not yet available, the previous submission will not be counted.
         // This means that the user is able to submit more often than the allowed number of submissions, if a lock repository policy is configured.
         // As these submissions have to happen in quick succession, this does not constitute an advantage for the student and the behavior is acceptable.
-        return (int) programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId).stream()
-                .filter(submission -> submission.getType() == SubmissionType.MANUAL && !submission.getResults().isEmpty()).map(ProgrammingSubmission::getCommitHash).distinct()
-                .count() + submissionCompensation;
+        // Counted in the database. Loading the submissions to count them meant loading each one's participation,
+        // exercise and course, because those are eager associations, so counting a student's pushes shipped the
+        // exercise's problem statement once per push.
+        return programmingSubmissionRepository.findDistinctManualCommitHashesWithResultByParticipationId(participationId).size() + submissionCompensation;
     }
 
     /**

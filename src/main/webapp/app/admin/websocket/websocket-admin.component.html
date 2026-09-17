@@ -1,7 +1,6 @@
 <div class="websocket-admin">
     <h5 *adminTitleBarTitle id="websocket-admin-heading" class="mb-0" jhiTranslate="artemisApp.websocketAdmin.title"></h5>
     <p class="text-muted-color" jhiTranslate="artemisApp.websocketAdmin.description"></p>
-    <p class="text-muted-color" jhiTranslate="artemisApp.websocketAdmin.buildAgentInfo"></p>
     <p class="text-muted-color">
         <span jhiTranslate="artemisApp.websocketAdmin.autoRefreshInfo"></span>
         <span class="ms-2">
@@ -59,26 +58,24 @@
                         <td>{{ node.instanceId || node.host }}</td>
                         <td class="font-mono">{{ node.memberId }}</td>
                         <td>{{ node.host }}</td>
-                        <td>{{ node.port }}</td>
+                        <!-- Not every distributed data provider identifies a node by an endpoint: the Redis provider uses a client name and reports no port. -->
                         <td>
-                            <tum-ui-tag
-                                class="whitespace-nowrap"
-                                [severity]="node.liteMember ? 'secondary' : 'info'"
-                                [value]="(node.liteMember ? 'artemisApp.websocketAdmin.buildAgent' : 'artemisApp.websocketAdmin.coreNode') | artemisTranslate"
-                                data-testid="node-type-tag"
-                            />
-                        </td>
-                        <td>
-                            @if (!node.liteMember) {
-                                <tum-ui-tag
-                                    class="whitespace-nowrap"
-                                    [severity]="node.brokerConnected ? 'success' : 'warn'"
-                                    [value]="(node.brokerConnected ? 'artemisApp.websocketAdmin.connected' : 'artemisApp.websocketAdmin.disconnected') | artemisTranslate"
-                                    data-testid="broker-status-tag"
-                                />
+                            @if (node.port) {
+                                {{ node.port }}
                             } @else {
                                 <span class="text-muted-color">—</span>
                             }
+                        </td>
+                        <td>
+                            <tum-ui-tag class="whitespace-nowrap" severity="info" [value]="'artemisApp.websocketAdmin.coreNode' | artemisTranslate" data-testid="node-type-tag" />
+                        </td>
+                        <td>
+                            <tum-ui-tag
+                                class="whitespace-nowrap"
+                                [severity]="node.brokerConnected ? 'success' : 'warn'"
+                                [value]="(node.brokerConnected ? 'artemisApp.websocketAdmin.connected' : 'artemisApp.websocketAdmin.disconnected') | artemisTranslate"
+                                data-testid="broker-status-tag"
+                            />
                         </td>
                         <td>
                             @if (node.local) {
@@ -91,33 +88,29 @@
                             }
                         </td>
                         <td>
-                            @if (!node.liteMember) {
-                                <tum-ui-button-group data-testid="node-actions">
-                                    <tum-ui-button
-                                        size="small"
-                                        severity="danger"
-                                        variant="outlined"
-                                        (clicked)="disconnect(node.memberId)"
-                                        [disabled]="reconnecting() || loading()"
-                                        data-testid="disconnect-node-button"
-                                    >
-                                        <fa-icon [icon]="faPowerOff" />
-                                        <span class="ms-1" jhiTranslate="artemisApp.websocketAdmin.disconnect"></span>
-                                    </tum-ui-button>
-                                    <tum-ui-button
-                                        size="small"
-                                        variant="outlined"
-                                        (clicked)="connect(node.memberId)"
-                                        [disabled]="reconnecting() || loading()"
-                                        data-testid="connect-node-button"
-                                    >
-                                        <fa-icon [icon]="faPlug" />
-                                        <span class="ms-1" jhiTranslate="artemisApp.websocketAdmin.connect"></span>
-                                    </tum-ui-button>
-                                </tum-ui-button-group>
-                            } @else {
-                                <span class="text-muted-color">—</span>
-                            }
+                            <tum-ui-button-group data-testid="node-actions">
+                                <tum-ui-button
+                                    size="small"
+                                    severity="danger"
+                                    variant="outlined"
+                                    (clicked)="disconnect(node.memberId)"
+                                    [disabled]="reconnecting() || loading()"
+                                    data-testid="disconnect-node-button"
+                                >
+                                    <fa-icon [icon]="faPowerOff" />
+                                    <span class="ms-1" jhiTranslate="artemisApp.websocketAdmin.disconnect"></span>
+                                </tum-ui-button>
+                                <tum-ui-button
+                                    size="small"
+                                    variant="outlined"
+                                    (clicked)="connect(node.memberId)"
+                                    [disabled]="reconnecting() || loading()"
+                                    data-testid="connect-node-button"
+                                >
+                                    <fa-icon [icon]="faPlug" />
+                                    <span class="ms-1" jhiTranslate="artemisApp.websocketAdmin.connect"></span>
+                                </tum-ui-button>
+                            </tum-ui-button-group>
                         </td>
                     </tr>
                 }

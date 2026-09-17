@@ -1,5 +1,6 @@
 import { EditorOptions } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
 import { MonacoEditorOptionPreset } from 'app/editor/monaco-editor/model/monaco-editor-option-preset.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export const SHORT_ANSWER_QUIZ_QUESTION_EDITOR_OPTIONS = new MonacoEditorOptionPreset({
     // Hide the gutter
@@ -47,8 +48,19 @@ const defaultMarkdownOptions: EditorOptions = {
 
 export const DEFAULT_MARKDOWN_EDITOR_OPTIONS = new MonacoEditorOptionPreset(defaultMarkdownOptions);
 
-export const COMMUNICATION_MARKDOWN_EDITOR_OPTIONS = new MonacoEditorOptionPreset({
-    ...defaultMarkdownOptions,
-    // Separates the editor suggest widget from the editor's layout. It will stick to the page, but it won't interfere with other elements.
-    fixedOverflowWidgets: true,
-});
+export const COMMUNICATION_MARKDOWN_EDITOR_OPTIONS = new MonacoEditorOptionPreset(
+    cloneWith(defaultMarkdownOptions, {
+        // Separates the editor suggest widget from the editor's layout. It will stick to the page, but it won't interfere with other elements.
+        fixedOverflowWidgets: true,
+        // Explicitly enable suggestions while typing regular text: the emoji completion relies on quick suggestions
+        // to reopen the suggest widget for the first letter typed after ':'. Comments and strings are excluded on purpose.
+        quickSuggestions: { other: 'on', comments: 'off', strings: 'off' },
+        suggest: {
+            // Inherited from the default markdown options: word suggestions are shared between editors of the same language.
+            showWords: false,
+            // The chat completions carry their own visuals (user names, channel names, emoji glyphs in the label);
+            // Monaco's kind icons only add noise in this context.
+            showIcons: false,
+        },
+    }),
+);
