@@ -129,7 +129,7 @@ public class SearchableEntityOrphanSweep {
         // A LinkedHashMap keeps type processing order reproducible (scan order) rather than left to HashMap's
         // unspecified iteration, which matters now that log lines and the delete/repair caps are order-sensitive.
         Map<String, List<IndexedRow>> rowsByType = rows.stream().filter(row -> row.entityType() != null && row.entityId() != null)
-                .collect(Collectors.groupingBy(IndexedRow::entityType, LinkedHashMap::new, Collectors.toList()));
+                .collect(Collectors.groupingBy(IndexedRow::entityType, LinkedHashMap::new, Collectors.toCollection(ArrayList::new)));
 
         List<TypeBatch> batches = new ArrayList<>();
         for (var entry : rowsByType.entrySet()) {
