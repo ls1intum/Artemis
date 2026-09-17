@@ -45,6 +45,8 @@ class SearchableEntityOrphanSweepTest {
 
     private static final int DELETE_CAP = 3;
 
+    private static final int REPAIR_CAP = 3;
+
     private final SearchableEntityIndexScanService indexScanService = mock(SearchableEntityIndexScanService.class);
 
     private final SearchableEntityIdEnumerator idEnumerator = mock(SearchableEntityIdEnumerator.class);
@@ -66,7 +68,7 @@ class SearchableEntityOrphanSweepTest {
     }
 
     private void configure(double abortRatio, String... types) {
-        var properties = new WeaviateReconcileProperties(true, true, true, List.of(types), 500, 5000, 200, 10, 1, DELETE_CAP, abortRatio);
+        var properties = new WeaviateReconcileProperties(true, true, true, List.of(types), 500, 100, 200, 10, 1, DELETE_CAP, REPAIR_CAP, abortRatio);
         sweep = new SearchableEntityOrphanSweep(indexScanService, idEnumerator, syncStateRepository, reconcileStateRepository, enqueueService, properties);
     }
 
@@ -173,6 +175,26 @@ class SearchableEntityOrphanSweepTest {
     }
 
     @Test
+    void testAnAbortForOneTypeAlsoBlocksAnEarlierTypeThatWouldHaveLookedFine() {
+        // Every type's ratio is validated before any type is acted on. Without that ordering, course's single
+        // orphan — a plausible, everyday 12.5% — would already be durably queued for deletion by the time
+        // lecture's 75% trips the abort, silently defeating the guard for course and making the "nothing was
+        // removed" log line false for what already went through.
+        configure(0.25, COURSE, LECTURE);
+        scanReturns(row(COURSE, 1L, "v1:a"), row(COURSE, 2L, "v1:b"), row(COURSE, 3L, "v1:c"), row(COURSE, 4L, "v1:d"), row(COURSE, 5L, "v1:e"), row(COURSE, 6L, "v1:f"),
+                row(COURSE, 7L, "v1:g"), row(COURSE, 8L, "v1:h"), row(LECTURE, 101L, "v1:a"), row(LECTURE, 102L, "v1:b"), row(LECTURE, 103L, "v1:c"), row(LECTURE, 104L, "v1:d"));
+        // course: 1 of 8 orphaned (12.5%), safely under the 25% threshold on its own.
+        when(idEnumerator.indexableIdsAmong(eq(COURSE), any())).thenReturn(Optional.of(Set.of(2L, 3L, 4L, 5L, 6L, 7L, 8L)));
+        // lecture: 3 of 4 orphaned (75%), well above the threshold.
+        when(idEnumerator.indexableIdsAmong(eq(LECTURE), any())).thenReturn(Optional.of(Set.of(104L)));
+
+        sweep.sweep();
+
+        verify(enqueueService, never()).enqueueDelete(anyString(), anyLong(), any());
+        verify(reconcileStateRepository, never()).save(any());
+    }
+
+    @Test
     void testRemovalsAreCappedPerTick() {
         // Deliberately kept under the abort threshold, because the circuit breaker is checked first: a slice where
         // everything looks orphaned aborts outright rather than removing up to the cap.
@@ -184,6 +206,23 @@ class SearchableEntityOrphanSweepTest {
         sweep.sweep();
 
         verify(enqueueService, times(DELETE_CAP)).enqueueDelete(eq(COURSE), anyLong(), eq(WeaviateOutboxOrigin.RECONCILE_ORPHAN));
+    }
+
+    @Test
+    void testRepairsAreCappedPerTick() {
+        // The delete cap has always bounded removal, but repairing a content mismatch was unbounded: a tick could
+        // queue a rewrite for every live row in the scanned page. This mirrors that same missing-guard shape for
+        // deletes, now closed the same way.
+        configure(0.9, COURSE);
+        IndexedRow[] rows = IntStream.rangeClosed(1, 10).mapToObj(id -> row(COURSE, id, "v1:stale")).toArray(IndexedRow[]::new);
+        scanReturns(rows);
+        when(idEnumerator.indexableIdsAmong(eq(COURSE), any())).thenReturn(Optional.of(Set.of(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L)));
+        when(syncStateRepository.findAllByEntityTypeAndEntityIdIn(eq(COURSE), any()))
+                .thenReturn(IntStream.rangeClosed(1, 10).mapToObj(id -> ledgerRow(COURSE, id, "v1:current")).toList());
+
+        sweep.sweep();
+
+        verify(enqueueService, times(REPAIR_CAP)).enqueueUpsert(eq(COURSE), anyLong(), eq(WeaviateOutboxOrigin.RECONCILE_ORPHAN));
     }
 
     @Test

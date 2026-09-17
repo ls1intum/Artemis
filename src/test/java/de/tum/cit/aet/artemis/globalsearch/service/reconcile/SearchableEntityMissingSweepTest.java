@@ -43,7 +43,7 @@ class SearchableEntityMissingSweepTest {
     private SearchableEntityMissingSweep sweep;
 
     private void configureTypes(String... types) {
-        var properties = new WeaviateReconcileProperties(true, true, true, List.of(types), 500, 100, 200, 1000, 5, 100, 0.25);
+        var properties = new WeaviateReconcileProperties(true, true, true, List.of(types), 500, 100, 200, 1000, 5, 100, 100, 0.25);
         sweep = new SearchableEntityMissingSweep(idEnumerator, syncStateRepository, reconcileStateRepository, enqueueService, properties);
     }
 

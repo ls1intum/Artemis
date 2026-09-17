@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.globalsearch.repository;
 
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -96,4 +97,28 @@ public interface SearchableEntitySyncStateRepository extends ArtemisJpaRepositor
     @Modifying(flushAutomatically = true)
     @Query("DELETE FROM SearchableEntitySyncState s WHERE s.entityType = :entityType AND s.entityId = :entityId")
     void deleteByEntityTypeAndEntityId(@Param("entityType") String entityType, @Param("entityId") Long entityId);
+
+    /**
+     * Records that a ledger row was checked, without touching its {@code contentHash} or {@code syncedAt}.
+     * <p>
+     * The drift pass loads a batch of rows, then resolves and hashes each entity before deciding what to write —
+     * real work that takes real time, so by the time it writes back, the row it is holding can already be stale.
+     * A save of the whole entity would write that stale snapshot's {@code contentHash}/{@code syncedAt} back over
+     * whatever the dispatcher wrote for the same row in the meantime, and — since this entity uses
+     * {@code GenerationType.IDENTITY} — a save of a row the dispatcher has since deleted would not simply fail:
+     * Hibernate cannot tell "existing, concurrently modified" apart from "new" for an identity-generated id it
+     * cannot find, so it inserts a fresh row carrying the stale data back into a ledger entry whose entity is gone.
+     * <p>
+     * Scoping the write to this one column removes both failure modes. It can never overwrite a newer
+     * {@code contentHash}/{@code syncedAt}, and because an {@code UPDATE} never inserts, a row already deleted
+     * simply matches nothing rather than being recreated.
+     *
+     * @param entityType the {@code SearchableEntitySchema.TypeValues} discriminator
+     * @param entityId   the database id of the entity
+     * @param verifiedAt when the drift pass looked at this entity
+     */
+    @Transactional // ok because of the modifying update
+    @Modifying(flushAutomatically = true)
+    @Query("UPDATE SearchableEntitySyncState s SET s.verifiedAt = :verifiedAt WHERE s.entityType = :entityType AND s.entityId = :entityId")
+    void markVerified(@Param("entityType") String entityType, @Param("entityId") Long entityId, @Param("verifiedAt") ZonedDateTime verifiedAt);
 }

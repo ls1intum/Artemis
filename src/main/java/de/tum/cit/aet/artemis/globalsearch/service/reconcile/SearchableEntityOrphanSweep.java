@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.globalsearch.service.reconcile;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -115,15 +117,21 @@ public class SearchableEntityOrphanSweep {
     /**
      * Decides what to do with each scanned row, grouping by type so each type costs one lookup rather than one per
      * row.
+     * <p>
+     * Validating every type's orphan ratio happens as its own pass, strictly before any enqueueing: a type
+     * processed early must never get its deletes durably queued only for a later type in the same tick to then
+     * trip the abort. That ordering would both defeat the abort's purpose for the type it did catch in time, and
+     * make its "nothing was removed" log line false for what an earlier type already had enqueued.
      *
      * @return what was queued, or {@code null} if the pass aborted and nothing should be recorded
      */
     private Outcome repair(String runId, List<IndexedRow> rows) {
+        // A LinkedHashMap keeps type processing order reproducible (scan order) rather than left to HashMap's
+        // unspecified iteration, which matters now that log lines and the delete/repair caps are order-sensitive.
         Map<String, List<IndexedRow>> rowsByType = rows.stream().filter(row -> row.entityType() != null && row.entityId() != null)
-                .collect(Collectors.groupingBy(IndexedRow::entityType));
+                .collect(Collectors.groupingBy(IndexedRow::entityType, LinkedHashMap::new, Collectors.toList()));
 
-        long repaired = 0;
-        long removed = 0;
+        List<TypeBatch> batches = new ArrayList<>();
         for (var entry : rowsByType.entrySet()) {
             String entityType = entry.getKey();
             if (!reconcileProperties.managesEntityType(entityType)) {
@@ -142,14 +150,30 @@ public class SearchableEntityOrphanSweep {
             }
 
             List<IndexedRow> orphans = candidates.stream().filter(row -> !shouldBeIndexed.get().contains(row.entityId())).toList();
-            if (abortsOnOrphanRatio(runId, entityType, orphans.size(), candidates.size())) {
+            batches.add(new TypeBatch(entityType, candidates, orphans));
+        }
+
+        for (TypeBatch batch : batches) {
+            if (abortsOnOrphanRatio(runId, batch.entityType(), batch.orphans().size(), batch.candidates().size())) {
                 return null;
             }
+        }
 
-            removed += remove(runId, entityType, orphans, removed);
-            repaired += repairDivergent(entityType, candidates, orphans);
+        long repaired = 0;
+        long removed = 0;
+        for (TypeBatch batch : batches) {
+            removed += remove(runId, batch.entityType(), batch.orphans(), removed);
+            repaired += repairDivergent(runId, batch.entityType(), batch.candidates(), batch.orphans(), repaired);
         }
         return new Outcome(repaired, removed);
+    }
+
+    /**
+     * One scanned type's candidates and the subset of them that no longer have an entity behind them, computed
+     * once and shared between the validation pass and the acting pass so the lookup that produced it is not
+     * repeated.
+     */
+    private record TypeBatch(String entityType, List<IndexedRow> candidates, List<IndexedRow> orphans) {
     }
 
     /**
@@ -188,7 +212,7 @@ public class SearchableEntityOrphanSweep {
      * Queues a rewrite for rows whose stored content disagrees with what the ledger says was last written, and for
      * rows carrying no hash at all, which are simply ones nothing has verified yet.
      */
-    private long repairDivergent(String entityType, List<IndexedRow> candidates, List<IndexedRow> orphans) {
+    private long repairDivergent(String runId, String entityType, List<IndexedRow> candidates, List<IndexedRow> orphans, long alreadyRepaired) {
         Set<Long> orphanIds = orphans.stream().map(IndexedRow::entityId).collect(Collectors.toSet());
         List<IndexedRow> live = candidates.stream().filter(row -> !orphanIds.contains(row.entityId())).toList();
         if (live.isEmpty()) {
@@ -202,6 +226,10 @@ public class SearchableEntityOrphanSweep {
 
         long repaired = 0;
         for (IndexedRow row : live) {
+            if (alreadyRepaired + repaired >= reconcileProperties.orphanRepairCapPerTick()) {
+                log.warn("[index {}] stopped at its per-tick repair limit of {}; the rest is left for the next tick", runId, reconcileProperties.orphanRepairCapPerTick());
+                break;
+            }
             String ledgerHash = ledgerHashes.get(row.entityId());
             if (ledgerHash == null) {
                 // Nothing was ever confirmed written for this row. The pass that finds never-indexed entities owns

@@ -27,12 +27,16 @@ import org.springframework.validation.annotation.Validated;
  *                                   dominate the corpus and would stretch every other type's revisit period. A type left out
  *                                   here is never repaired and never deleted
  * @param maxOutboxDepth         how much queued work is allowed before the passes stop adding more; the only bound on how
- *                                   long a live metadata write can wait behind reconcile work
+ *                                   long a live metadata write can wait behind reconcile work. Each pass checks this once per
+ *                                   tick, not per row, so every per-tick batch below is sized to stay well under it even in
+ *                                   the worst case (an empty ledger, where every examined row turns out to need a write) —
+ *                                   the check is a circuit breaker between ticks, not a hard cap within one
  * @param missingBatchSize       entity ids examined per tick by the missing pass (identity only, no entity is loaded)
  * @param driftBatchSize         entities re-derived per tick by the drift pass; far smaller, since each check loads an entity
  * @param orphanPageSize         index rows read per page by the orphan pass
  * @param orphanPagesPerTick     pages read per tick by the orphan pass
  * @param orphanDeleteCapPerTick the most rows a single tick may queue for deletion
+ * @param orphanRepairCapPerTick the most rows a single tick may queue for a content rewrite
  * @param orphanAbortRatio       the share of scanned rows looking orphaned that aborts the pass instead; a high proportion
  *                                   indicates a bug or a stale read rather than real orphans
  */
@@ -41,9 +45,9 @@ import org.springframework.validation.annotation.Validated;
 public record WeaviateReconcileProperties(@DefaultValue("false") boolean missingSweepEnabled, @DefaultValue("false") boolean driftSweepEnabled,
         @DefaultValue("false") boolean orphanSweepEnabled, @DefaultValue( {
                 "course", "lecture", "lecture_unit", "exam", "exercise", "faq", "channel" }) List<String> entityTypes,
-        @DefaultValue("500") @Positive int maxOutboxDepth, @DefaultValue("5000") @Positive int missingBatchSize, @DefaultValue("200") @Positive int driftBatchSize,
+        @DefaultValue("500") @Positive int maxOutboxDepth, @DefaultValue("100") @Positive int missingBatchSize, @DefaultValue("200") @Positive int driftBatchSize,
         @DefaultValue("1000") @Positive int orphanPageSize, @DefaultValue("5") @Positive int orphanPagesPerTick, @DefaultValue("100") @Positive int orphanDeleteCapPerTick,
-        @DefaultValue("0.25") @Positive @DecimalMax("1.0") double orphanAbortRatio){
+        @DefaultValue("100") @Positive int orphanRepairCapPerTick, @DefaultValue("0.25") @Positive @DecimalMax("1.0") double orphanAbortRatio){
 
     /**
      * Returns whether a type is managed by the reconcile passes.

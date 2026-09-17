@@ -153,8 +153,8 @@ public class SearchableEntityDriftSweep {
      */
     private CheckResult check(SearchableEntitySyncState state, ZonedDateTime checkedAt) {
         Optional<Map<String, Object>> desired = resolver.resolve(state.getEntityType(), state.getEntityId());
-        state.setVerifiedAt(checkedAt);
-        syncStateRepository.save(state);
+        // A scoped update, not a save of the whole (possibly now stale) entity: see markVerified's javadoc.
+        syncStateRepository.markVerified(state.getEntityType(), state.getEntityId(), checkedAt);
 
         if (desired.isEmpty()) {
             return enqueueService.enqueueDelete(state.getEntityType(), state.getEntityId(), WeaviateOutboxOrigin.RECONCILE_DRIFT) ? CheckResult.GONE : CheckResult.AWAITING_REPAIR;

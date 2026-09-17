@@ -54,7 +54,7 @@ class SearchableEntityDriftSweepTest {
     private final SearchableEntityReconcileStateRepository reconcileStateRepository = mock(SearchableEntityReconcileStateRepository.class);
 
     private final SearchableEntityDriftSweep sweep = new SearchableEntityDriftSweep(syncStateRepository, reconcileStateRepository, resolver, contentHasher, idEnumerator,
-            enqueueService, new WeaviateReconcileProperties(true, true, true, List.of(COURSE, LECTURE), 500, 5000, 200, 1000, 5, 100, 0.25));
+            enqueueService, new WeaviateReconcileProperties(true, true, true, List.of(COURSE, LECTURE), 500, 100, 200, 1000, 5, 100, 100, 0.25));
 
     private static SearchableEntitySyncState ledgerRow(String entityType, long entityId, String contentHash) {
         var state = new SearchableEntitySyncState(entityType, entityId, contentHash, ZonedDateTime.now().minusDays(7));
@@ -75,7 +75,6 @@ class SearchableEntityDriftSweepTest {
     void testAnEntityThatStillMatchesIsMarkedVerifiedAndQueuesNothing() {
         // The ledger hash is produced by the same hasher the write path uses, so a match here proves the two agree.
         var state = ledgerRow(COURSE, 42L, contentHasher.hash(PROPERTIES));
-        ZonedDateTime verifiedBefore = state.getVerifiedAt();
         when(syncStateRepository.findLeastRecentlyVerified(any(), any())).thenReturn(List.of(state));
         when(resolver.resolve(COURSE, 42L)).thenReturn(Optional.of(PROPERTIES));
 
@@ -83,8 +82,23 @@ class SearchableEntityDriftSweepTest {
 
         verify(enqueueService, never()).enqueueUpsert(anyString(), anyLong(), any());
         verify(enqueueService, never()).enqueueDelete(anyString(), anyLong(), any());
-        assertThat(state.getVerifiedAt()).as("checking a row moves it to the back of the queue").isAfter(verifiedBefore);
-        verify(syncStateRepository).save(state);
+        // Checking a row moves it to the back of the queue for the next cycle.
+        verify(syncStateRepository).markVerified(eq(COURSE), eq(42L), any());
+    }
+
+    @Test
+    void testCheckingARowNeverSavesTheWholeStaleEntity() {
+        // A save of the batch-loaded snapshot would overwrite a newer contentHash/syncedAt the dispatcher wrote
+        // for this same row in the meantime, or resurrect it after a concurrent delete (see markVerified's
+        // javadoc). Only a scoped verifiedAt update is allowed; the full entity must never be saved.
+        var state = ledgerRow(COURSE, 42L, contentHasher.hash(PROPERTIES));
+        when(syncStateRepository.findLeastRecentlyVerified(any(), any())).thenReturn(List.of(state));
+        when(resolver.resolve(COURSE, 42L)).thenReturn(Optional.of(PROPERTIES));
+
+        sweep.sweep();
+
+        verify(syncStateRepository, never()).save(any());
+        verify(syncStateRepository).markVerified(eq(COURSE), eq(42L), any());
     }
 
     @Test
@@ -152,14 +166,12 @@ class SearchableEntityDriftSweepTest {
         // Otherwise it stays at the front of the queue and every tick re-derives it until the dispatcher applies
         // the removal, spending the slice on work already in flight.
         var state = ledgerRow(COURSE, 42L, contentHasher.hash(PROPERTIES));
-        ZonedDateTime verifiedBefore = state.getVerifiedAt();
         when(syncStateRepository.findLeastRecentlyVerified(any(), any())).thenReturn(List.of(state));
         when(resolver.resolve(COURSE, 42L)).thenReturn(Optional.empty());
 
         sweep.sweep();
 
-        assertThat(state.getVerifiedAt()).isAfter(verifiedBefore);
-        verify(syncStateRepository).save(state);
+        verify(syncStateRepository).markVerified(eq(COURSE), eq(42L), any());
     }
 
     @Test

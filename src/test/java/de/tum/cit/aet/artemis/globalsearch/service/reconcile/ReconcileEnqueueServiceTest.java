@@ -26,7 +26,7 @@ class ReconcileEnqueueServiceTest {
     private final SearchableEntityWeaviateService searchableEntityWeaviateService = mock(SearchableEntityWeaviateService.class);
 
     private final ReconcileEnqueueService enqueueService = new ReconcileEnqueueService(outboxRepository, searchableEntityWeaviateService,
-            new WeaviateReconcileProperties(true, true, true, List.of(COURSE), MAX_DEPTH, 5000, 200, 1000, 5, 100, 0.25));
+            new WeaviateReconcileProperties(true, true, true, List.of(COURSE), MAX_DEPTH, 100, 200, 1000, 5, 100, 100, 0.25));
 
     @Test
     void testCanEnqueueWhileTheQueueIsBelowItsDepthLimit() {

@@ -17,7 +17,7 @@ class SearchableEntityReconcileSchedulerTest {
     private static final List<String> DEFAULT_TYPES = List.of("course", "lecture", "lecture_unit", "exam", "exercise", "faq", "channel");
 
     private static WeaviateReconcileProperties properties(boolean missing, boolean drift, boolean orphan) {
-        return new WeaviateReconcileProperties(missing, drift, orphan, DEFAULT_TYPES, 500, 5000, 200, 1000, 5, 100, 0.25);
+        return new WeaviateReconcileProperties(missing, drift, orphan, DEFAULT_TYPES, 500, 100, 200, 1000, 5, 100, 100, 0.25);
     }
 
     @Test
