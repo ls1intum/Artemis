@@ -280,6 +280,23 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             assertThat(titles).contains(SEARCH_PREFIX + " Released Exercise", secondCourseTitle);
         }
 
+        /**
+         * Clients released before multi-course filtering, such as the iOS app, still send a single {@code courseId}. It has to keep scoping the search, otherwise their course
+         * search silently widens to every course the user can access.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testLegacyCourseIdStillScopesTheSearch() throws Exception {
+            Course secondCourse = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+            String secondCourseTitle = indexReleasedTextExercise(secondCourse, " C2 Legacy Scope Exercise");
+
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var titles = getResultTitles(results);
+
+            assertThat(titles).contains(SEARCH_PREFIX + " Released Exercise");
+            assertThat(titles).doesNotContain(secondCourseTitle);
+        }
+
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testExcludeCourseIdsHidesResultsFromTheExcludedCourse() throws Exception {

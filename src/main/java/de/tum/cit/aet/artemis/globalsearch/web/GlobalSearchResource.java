@@ -11,6 +11,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,6 +109,7 @@ public class GlobalSearchResource {
      * @param courseIds        optional course ids to scope the search to one or more courses (OR); inaccessible or unknown ids are ignored
      * @param excludeCourseIds optional course ids to hide from the results (OR); inaccessible or unknown ids are ignored
      * @param limit            maximum number of results (default 10, max 25)
+     * @param courseId         deprecated single course id sent by clients that predate {@code courseIds}; merged into {@code courseIds}
      * @return status 200 with a list of unified search results; empty list if the user has no access
      *         or all requested types are invalid
      */
@@ -125,7 +127,8 @@ public class GlobalSearchResource {
             @RequestParam(value = "excludeTypes", required = false) @Parameter(description = "Comma-separated entity types to hide from the results; applied after 'types'") String excludeTypes,
             @RequestParam(value = "courseIds", required = false) @Parameter(description = "Course IDs to restrict the search to one or more courses (OR); inaccessible IDs are ignored") List<Long> courseIds,
             @RequestParam(value = "excludeCourseIds", required = false) @Parameter(description = "Course IDs to exclude from the search; results in these courses are hidden") List<Long> excludeCourseIds,
-            @RequestParam(value = "limit", defaultValue = "10") @Parameter(description = "Maximum number of results (1–25, default 10)") int limit) {
+            @RequestParam(value = "limit", defaultValue = "10") @Parameter(description = "Maximum number of results (1–25, default 10)") int limit,
+            @RequestParam(value = "courseId", required = false) @Parameter(description = "Deprecated, use courseIds. A single course ID, still honored for clients that predate courseIds", deprecated = true) Long courseId) {
         log.debug("REST request for global search with query: '{}', types: {}, courseIds: {}, excludeCourseIds: {}, limit: {}", query, types, courseIds, excludeCourseIds, limit);
 
         Set<String> requestedTypes = parseTypes(types);
@@ -151,7 +154,8 @@ public class GlobalSearchResource {
         // Defence-in-depth: bound the id lists so a crafted request cannot drive an unbounded findAllById /
         // Weaviate containsAny on the admin paths. The cap sits far above any realistic UI use, so it never
         // affects a normal filter set; excess ids are dropped (consistent with the lenient "drop, don't 4xx" contract).
-        FilterBuildResult filterResult = buildSearchableItemFilter(user, capCourseIds(courseIds), capCourseIds(excludeCourseIds), requestedTypes, hiddenTypes);
+        FilterBuildResult filterResult = buildSearchableItemFilter(user, capCourseIds(withLegacyCourseId(courseIds, courseId)), capCourseIds(excludeCourseIds), requestedTypes,
+                hiddenTypes);
         if (!filterResult.hasAccess()) {
             return ResponseEntity.ok(List.of());
         }
@@ -249,6 +253,20 @@ public class GlobalSearchResource {
             return courseIds;
         }
         return courseIds.stream().limit(MAX_COURSE_ID_FILTERS).toList();
+    }
+
+    /**
+     * Folds the deprecated single {@code courseId} parameter into {@code courseIds}. Clients released before multi-course
+     * filtering still send it, and ignoring it would silently widen their course-scoped search to every accessible course.
+     */
+    private static List<Long> withLegacyCourseId(List<Long> courseIds, Long courseId) {
+        if (courseId == null) {
+            return courseIds;
+        }
+        if (courseIds == null) {
+            return List.of(courseId);
+        }
+        return Stream.concat(courseIds.stream(), Stream.of(courseId)).toList();
     }
 
     /**
