@@ -66,6 +66,14 @@ class GlobalSearchResultDTOTest {
     }
 
     @Test
+    void exerciseBadgeFallsBackToGenericExerciseWhenTypeIsUnknown() {
+        // The client builds the translation key by concatenation, so a value it has no catalogue entry for would
+        // render the unresolved key in the result list. Indexing only writes ExerciseType values today, but the
+        // store is external and the enum can grow, so the fallback has to cover more than null.
+        assertThat(fromProperties(exerciseRow("survey")).badge()).isEqualTo("exercise");
+    }
+
+    @Test
     void examBadgeDistinguishesTestExamFromExam() {
         Map<String, Object> exam = row(SearchableEntitySchema.TypeValues.EXAM);
         assertThat(fromProperties(exam).badge()).isEqualTo("exam");

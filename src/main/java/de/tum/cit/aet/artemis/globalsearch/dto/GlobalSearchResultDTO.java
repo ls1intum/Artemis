@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.globalsearch.dto;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -24,6 +25,9 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
         @Schema(description = "Short description or body text excerpt") String description,
         @Schema(description = "Stable badge key the client resolves to a localised label, e.g. 'programming', 'quiz', 'lecture'") String badge,
         @Schema(description = "Additional type-specific metadata such as courseId, dueDate, or points") Map<String, Object> metadata) {
+
+    /** Badge key used when the indexed exercise type is absent or not one the client can localise. */
+    private static final String GENERIC_EXERCISE_BADGE = "exercise";
 
     /**
      * Creates a search result DTO from a raw Weaviate property map returned by the unified
@@ -55,13 +59,26 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
         };
     }
 
+    /**
+     * Resolves the badge key for an indexed exercise. The badge is a stable machine key the client turns into a
+     * localised label by concatenation (global.search.results.badge.*), and for exercises it is the raw exercise
+     * type (e.g. "programming", "file-upload"), which also matches the exam exercise-group route segment.
+     * <p>
+     * A value outside {@link ExerciseType} degrades to the generic key rather than being passed through: the client
+     * has no catalogue entry for it, so it would render the unresolved key in place of a readable badge.
+     *
+     * @param exerciseType the indexed exercise type, or null when the row carries none
+     * @return a badge key the client's localisation catalogue defines
+     */
+    private static String badgeForExerciseType(String exerciseType) {
+        boolean isKnownType = exerciseType != null && Arrays.stream(ExerciseType.values()).anyMatch(type -> type.getValue().equals(exerciseType));
+        return isKnownType ? exerciseType : GENERIC_EXERCISE_BADGE;
+    }
+
     private static GlobalSearchResultDTO fromExerciseRow(Map<String, Object> properties, Map<Long, String> courseNameById, Map<Long, Long> exerciseGroupIdByExerciseId,
             Set<Long> staffCourseIds, Set<Long> editorCourseIds) {
         String exerciseType = getString(properties, SearchableEntitySchema.Properties.EXERCISE_TYPE);
-        // The badge is a stable machine key the client resolves to a localised label (global.search.results.badge.*).
-        // For exercises it is the raw exercise type (e.g. "programming", "file-upload"), which also matches the exam
-        // exercise-group route segment, with a generic "exercise" fallback for unknown types.
-        String badge = exerciseType != null ? exerciseType : "exercise";
+        String badge = badgeForExerciseType(exerciseType);
         String title = getString(properties, SearchableEntitySchema.Properties.TITLE);
         String description = getString(properties, SearchableEntitySchema.Properties.DESCRIPTION);
 

@@ -242,8 +242,11 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
      * until it is searchable. Returns the exercise title so tests can assert on its presence/absence.
      */
     private String indexReleasedTextExercise(Course targetCourse, String titleSuffix) {
-        TextExercise exercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2),
-                targetCourse);
+        // One reference instant, so release/due/assessment are consistent with each other. The offsets stay
+        // relative on purpose: "released" and "not yet due" are defined against the present, and absolute
+        // dates would invert this fixture's meaning once they passed.
+        ZonedDateTime now = ZonedDateTime.now();
+        TextExercise exercise = TextExerciseFactory.generateTextExercise(now.minusDays(1), now.plusDays(1), now.plusDays(2), targetCourse);
         String title = SEARCH_PREFIX + titleSuffix;
         exercise.setTitle(title);
         TextExercise indexed = exerciseRepository.save(exercise);
