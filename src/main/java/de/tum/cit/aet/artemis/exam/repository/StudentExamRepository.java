@@ -165,7 +165,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     Set<StudentExam> findByExamIdWithSessions(@Param("examId") long examId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO$StudentExamSummary(
+            SELECT new de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO$StudentExamSummaryDTO(
                 se.user.id, se.id, se.workingTime, se.started, se.submitted,
                 se.startedDate, se.submissionDate, COUNT(sess.id)
             )
@@ -178,14 +178,14 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
                      se.startedDate, se.submissionDate
             """)
     /**
-     * Returns a {@link ExamStudentDTO.StudentExamSummary} for each non-test-run {@link StudentExam} whose user is in {@code userIds}.
+     * Returns a {@link ExamStudentDTO.StudentExamSummaryDTO} for each non-test-run {@link StudentExam} whose user is in {@code userIds}.
      * The number of exam sessions is returned as a {@code COUNT} aggregate, avoiding the cost of loading session entities.
      *
      * @param examId  the exam to query
      * @param userIds the user IDs to restrict the query to (typically the current page's users)
      * @return one summary per matching student exam, in unspecified order
      */
-    List<ExamStudentDTO.StudentExamSummary> findSummaryByExamIdAndUserIds(@Param("examId") long examId, @Param("userIds") List<Long> userIds);
+    List<ExamStudentDTO.StudentExamSummaryDTO> findSummaryByExamIdAndUserIds(@Param("examId") long examId, @Param("userIds") List<Long> userIds);
 
     @Query("""
             SELECT se
