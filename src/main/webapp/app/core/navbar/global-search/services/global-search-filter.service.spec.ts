@@ -64,6 +64,34 @@ describe('GlobalSearchFilterService', () => {
             expect(service.menuOptions().map((option) => option.label)).toEqual(['Databases']);
         });
 
+        it('names a chip from the server list, not only from the courses this page loaded', () => {
+            // The menu offers courses from the fetched list, so picking one by name there and then seeing
+            // the chip render the numeric fallback was a visible contradiction.
+            mockCourseStorageService.getCourse.mockReturnValue(undefined);
+            mockCourseStorageService.getCourses.mockReturnValue([]);
+            mockCourseOptionsService.getCourses.mockReturnValue(of([{ id: 16, title: 'Databases' }]));
+
+            service.searchQuery.set('course:');
+            TestBed.tick();
+            service.tokens.set([{ facet: 'course', value: '16' }]);
+            TestBed.tick();
+
+            expect(service.chips().map((chip) => chip.label)).toEqual(['Databases']);
+        });
+
+        it('accepts the exact title of a course only the server list knows', () => {
+            // The menu offers it, so typing its title verbatim must not be treated as an unknown value.
+            mockCourseStorageService.getCourses.mockReturnValue([]);
+            mockCourseOptionsService.getCourses.mockReturnValue(of([{ id: 16, title: 'Databases' }]));
+
+            service.searchQuery.set('course:');
+            TestBed.tick();
+            service.searchQuery.set('course:Databases');
+            TestBed.tick();
+
+            expect(service.operatorValueValid()).toBe(true);
+        });
+
         it('does not read the course list until a course menu is opened', () => {
             service.searchQuery.set('type:');
             TestBed.tick();

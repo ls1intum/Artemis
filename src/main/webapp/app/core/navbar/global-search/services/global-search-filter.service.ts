@@ -98,7 +98,10 @@ export class GlobalSearchFilterService {
                 index,
                 this.selectedChip(),
                 (key, params) => this.translateService.instant(key, params),
-                (id) => this.courseStorageService.getCourse(id)?.title,
+                // The menu offers courses from the fetched list, so a chip picked by name there must be
+                // nameable here too. The store stays as a second source: it can hold a course the dropdown
+                // read does not return, and dropping it would trade one numeric fallback for another.
+                (id) => this.availableCourses().find((course) => course.id === id)?.title ?? this.courseStorageService.getCourse(id)?.title,
             ),
         ),
     );
@@ -163,7 +166,11 @@ export class GlobalSearchFilterService {
         if (op.facet === 'type') {
             return TYPE_FACET_ORDER.some((facetValue) => facetValue === value || this.translateService.instant(TYPE_FACETS[facetValue].labelKey).toLowerCase() === value);
         }
-        return this.courseStorageService.getCourses().some((course) => (course.title ?? '').toLowerCase() === value);
+        // Read both sources for the same reason the chip label does: the fetched list can omit a course the
+        // page already stored, and the store can omit one only the fetched list knows. Checking one alone
+        // rejects a title the course menu itself just offered.
+        const matchesTitle = (title: string | undefined) => (title ?? '').toLowerCase() === value;
+        return this.availableCourses().some((course) => matchesTitle(course.title)) || this.courseStorageService.getCourses().some((course) => matchesTitle(course.title));
     });
     // Whether the menu panel (value menu or filter picker) should be shown.
     readonly filterMenuOpen: Signal<boolean> = computed(() => !!this.operator() || this.filterPickerOpen());
