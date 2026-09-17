@@ -24,6 +24,7 @@ import {
     faFont,
     faHashtag,
     faKeyboard,
+    faPhotoFilm,
     faProjectDiagram,
     faQuestion,
     faQuestionCircle,
@@ -78,8 +79,8 @@ describe('GlobalSearchNavigationViewComponent', () => {
 
         describe('itemCount', () => {
             it('should equal the searchable entity count when not searching', () => {
-                // searchableEntities.length = 6 (no action button)
-                expect(component.itemCount()).toBe(6);
+                // six entity filters plus slides and videos, which content search makes available
+                expect(component.itemCount()).toBe(7);
             });
 
             it('should equal the result count when searching', () => {
@@ -87,6 +88,49 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 fixture.componentRef.setInput('results', [{ id: '1' }, { id: '2' }] as GlobalSearchResult[]);
                 fixture.detectChanges();
                 expect(component.itemCount()).toBe(2);
+            });
+        });
+
+        describe('slides and videos filter', () => {
+            it('should offer the slides and videos filter right after the lecture filter', () => {
+                const entities = component['searchableEntities']();
+                const lecturesIndex = entities.findIndex((entity) => entity.id === 'lectures');
+
+                expect(entities[lecturesIndex + 1].filterTags).toEqual(['lecture_content']);
+                expect(entities[lecturesIndex + 1].icon).toBe(faPhotoFilm);
+            });
+
+            it('should emit the slides and videos filter when it is selected with Enter', () => {
+                const spy = vi.fn();
+                component.entityClick.subscribe(spy);
+                const index = component['searchableEntities']().findIndex((entity) => entity.filterTags?.includes('lecture_content'));
+
+                fixture.componentRef.setInput('selectedIndex', index);
+                fixture.detectChanges();
+                component.handleKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
+
+                expect(spy).toHaveBeenCalledWith(expect.objectContaining({ filterTags: ['lecture_content'] }));
+            });
+
+            it('should prompt for a search term instead of reporting no results when the filter has no query', () => {
+                fixture.componentRef.setInput('activeFilters', ['lecture_content']);
+                fixture.componentRef.setInput('showResults', true);
+                fixture.componentRef.setInput('results', []);
+                fixture.detectChanges();
+
+                expect(fixture.nativeElement.textContent).toContain('global.search.contentSearchPrompt');
+                expect(fixture.nativeElement.textContent).not.toContain('global.search.noResultsFound');
+            });
+
+            it('should report no results once the filter has a query', () => {
+                fixture.componentRef.setInput('activeFilters', ['lecture_content']);
+                fixture.componentRef.setInput('showResults', true);
+                fixture.componentRef.setInput('results', []);
+                fixture.componentRef.setInput('searchQuery', 'recursion');
+                fixture.detectChanges();
+
+                expect(fixture.nativeElement.textContent).toContain('global.search.noResultsFound');
+                expect(fixture.nativeElement.textContent).not.toContain('global.search.contentSearchPrompt');
             });
         });
 
@@ -101,7 +145,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 const event = new KeyboardEvent('keydown', { key: 'Enter' });
                 component.handleKeydown(event);
 
-                expect(spy).toHaveBeenCalledWith(component['searchableEntities'][0]);
+                expect(spy).toHaveBeenCalledWith(component['searchableEntities']()[0]);
             });
 
             it('should emit entityClick for a later entity index on Enter', () => {
@@ -114,7 +158,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 const event = new KeyboardEvent('keydown', { key: 'Enter' });
                 component.handleKeydown(event);
 
-                expect(spy).toHaveBeenCalledWith(component['searchableEntities'][1]);
+                expect(spy).toHaveBeenCalledWith(component['searchableEntities']()[1]);
             });
 
             it('should call preventDefault on Enter', () => {
@@ -182,7 +226,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
             it('should return correct icons for other types', () => {
                 expect(component['getIconForType']('lecture')).toBe(faBook);
                 expect(component['getIconForType']('lecture_unit')).toBe(faBook);
-                expect(component['getIconForType']('lecture_content')).toBe(faBook);
+                expect(component['getIconForType']('lecture_content')).toBe(faPhotoFilm);
                 expect(component['getIconForType']('channel')).toBe(faHashtag);
                 expect(component['getIconForType']('faq')).toBe(faQuestionCircle);
                 expect(component['getIconForType']('exam')).toBe(faCalendarCheck);
@@ -367,8 +411,12 @@ describe('GlobalSearchNavigationViewComponent', () => {
         });
 
         it('itemCount should equal the searchable entity count when iris is disabled', () => {
-            // no action button; searchableEntities.length = 6
+            // the six entity filters; slides and videos needs content search
             expect(component.itemCount()).toBe(6);
+        });
+
+        it('should not offer the slides and videos filter when iris is disabled', () => {
+            expect(component['searchableEntities']().some((entity) => entity.filterTags?.includes('lecture_content'))).toBe(false);
         });
     });
 
@@ -383,8 +431,12 @@ describe('GlobalSearchNavigationViewComponent', () => {
         });
 
         it('itemCount should equal the searchable entity count', () => {
-            // searchableEntities.length = 6
+            // the six entity filters; slides and videos needs the AI opt-in
             expect(component.itemCount()).toBe(6);
+        });
+
+        it('should not offer the slides and videos filter', () => {
+            expect(component['searchableEntities']().some((entity) => entity.filterTags?.includes('lecture_content'))).toBe(false);
         });
     });
 });

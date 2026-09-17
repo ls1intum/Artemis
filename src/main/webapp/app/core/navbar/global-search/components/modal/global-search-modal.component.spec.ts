@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Dialog } from 'primeng/dialog';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { signal } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -512,7 +512,7 @@ describe('GlobalSearchModalComponent', () => {
         });
     });
 
-    describe('Content search source-swap', () => {
+    describe('Slides and videos filter', () => {
         const contentResult: LectureSearchResult = {
             course: { id: 42, name: 'Advanced Web Development' },
             lecture: { id: 20, name: 'Angular Basics' },
@@ -536,8 +536,10 @@ describe('GlobalSearchModalComponent', () => {
             vi.useRealTimers();
         });
 
-        it('should call LectureSearchService with (query, 10, undefined) and NOT globalSearch when lecture chip + iris + valid query', () => {
-            component['activeFilters'].set(['lecture']);
+        it('routes the slides and videos filter to content search and never to the metadata search', () => {
+            component['addFilter'](['lecture_content']);
+            vi.advanceTimersByTime(300);
+
             component['onSearchInput']('signals');
             vi.advanceTimersByTime(300);
 
@@ -545,10 +547,8 @@ describe('GlobalSearchModalComponent', () => {
             expect(mockSearchService.globalSearch).not.toHaveBeenCalled();
         });
 
-        it('routes the grouped Lectures selection to content search, which is what the UI actually applies', () => {
-            // Selecting "Lecture Details" (or opening the palette on a lectures route) applies both lecture
-            // types. A predicate that accepted only ['lecture'] left this branch unreachable in the product
-            // while every test still passed, because the tests set a filter state the UI never produces.
+        it('keeps the Lectures filter on the metadata search even when content search is available', () => {
+            // The grouped selection is what the UI applies for "Lectures" and for the lectures route context.
             component['addFilter'](['lecture', 'lecture_unit']);
             vi.advanceTimersByTime(300);
             mockSearchService.globalSearch.mockClear();
@@ -556,23 +556,35 @@ describe('GlobalSearchModalComponent', () => {
             component['onSearchInput']('signals');
             vi.advanceTimersByTime(300);
 
-            expect(mockLectureSearchService.search).toHaveBeenCalledWith('signals', 10, undefined);
-            expect(mockSearchService.globalSearch).not.toHaveBeenCalled();
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('signals', 'lecture,lecture_unit', undefined);
+            expect(mockLectureSearchService.search).not.toHaveBeenCalled();
         });
 
         it('should pass [courseId] to LectureSearchService when a course filter is set', () => {
             component['activeCourseId'].set(42);
-            component['activeFilters'].set(['lecture']);
+            component['activeFilters'].set(['lecture_content']);
             component['onSearchInput']('signals');
             vi.advanceTimersByTime(300);
 
             expect(mockLectureSearchService.search).toHaveBeenCalledWith('signals', 10, [42]);
         });
 
+        it('prompts for a search term without any request when the slides and videos filter has no query', () => {
+            component['addFilter'](['lecture_content']);
+            vi.advanceTimersByTime(300);
+
+            expect(mockLectureSearchService.search).not.toHaveBeenCalled();
+            expect(mockSearchService.globalSearch).not.toHaveBeenCalled();
+            expect(component['results']()).toEqual([]);
+            expect(component['hasSearched']()).toBe(true);
+            expect(component['isLoading']()).toBe(false);
+            expect(component['searchError']()).toBeUndefined();
+        });
+
         it('should render mapped results with type lecture_content', () => {
             mockLectureSearchService.search.mockReturnValue(of<LectureSearchResult[]>([contentResult]));
 
-            component['activeFilters'].set(['lecture']);
+            component['activeFilters'].set(['lecture_content']);
             component['onSearchInput']('signals');
             vi.advanceTimersByTime(300);
 
@@ -583,60 +595,56 @@ describe('GlobalSearchModalComponent', () => {
             expect(results[0].id).toBe('lecture-content-/courses/42/lectures/20/units/30?page=4&unit=30');
         });
 
-        it('should fall back to globalSearch with the lecture type filter when iris is unavailable', () => {
-            mockAvailability.contentSearchAvailable.set(false);
+        it('reports Iris as switched off for the courses on a 403, without falling back to the metadata search', () => {
+            mockLectureSearchService.search.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
 
-            component['activeFilters'].set(['lecture']);
+            component['activeFilters'].set(['lecture_content']);
             component['onSearchInput']('signals');
             vi.advanceTimersByTime(300);
 
-            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('signals', 'lecture', undefined);
-            expect(mockLectureSearchService.search).not.toHaveBeenCalled();
-        });
-
-        it('should fall back to the metadata lecture search when content search errors', () => {
-            const metadataResults: GlobalSearchResult[] = [{ id: 'm1', type: 'lecture', title: 'Lecture hit', metadata: {} }];
-            mockLectureSearchService.search.mockReturnValue(throwError(() => new Error('content search failed')));
-            mockSearchService.globalSearch.mockReturnValue(of(metadataResults));
-
-            component['activeFilters'].set(['lecture']);
-            component['onSearchInput']('signals');
-            vi.advanceTimersByTime(300);
-
-            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('signals', 'lecture', undefined);
-            expect(component['results']()).toEqual(metadataResults);
-            expect(component['searchError']()).toBeUndefined();
-            expect(component['isLoading']()).toBe(false);
-        });
-
-        it('should fall back to the metadata lecture search when content search exceeds the timeout', () => {
-            const metadataResults: GlobalSearchResult[] = [{ id: 'm1', type: 'lecture', title: 'Lecture hit', metadata: {} }];
-            mockLectureSearchService.search.mockReturnValue(NEVER); // never emits -> triggers the rxjs timeout
-            mockSearchService.globalSearch.mockReturnValue(of(metadataResults));
-
-            component['activeFilters'].set(['lecture']);
-            component['onSearchInput']('signals');
-            vi.advanceTimersByTime(300); // debounce elapses, content search is subscribed and hangs
+            expect(component['searchError']()).toBe('global.search.contentSearchDisabled');
             expect(mockSearchService.globalSearch).not.toHaveBeenCalled();
-
-            vi.advanceTimersByTime(CONTENT_SEARCH_TIMEOUT_MS + 1); // timeout fires -> metadata fallback
-            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('signals', 'lecture', undefined);
-            expect(component['results']()).toEqual(metadataResults);
-            expect(component['searchError']()).toBeUndefined();
-            expect(component['isLoading']()).toBe(false);
-        });
-
-        it('should show the searchFailed error state when both content search and the metadata fallback fail', () => {
-            mockLectureSearchService.search.mockReturnValue(throwError(() => new Error('content search failed')));
-            mockSearchService.globalSearch.mockReturnValue(throwError(() => new Error('metadata failed')));
-
-            component['activeFilters'].set(['lecture']);
-            component['onSearchInput']('signals');
-            vi.advanceTimersByTime(300);
-
-            expect(component['searchError']()).toBe('global.search.searchFailed');
             expect(component['results']()).toEqual([]);
             expect(component['isLoading']()).toBe(false);
+        });
+
+        it('reports content search as unavailable when it fails, without falling back to the metadata search', () => {
+            mockLectureSearchService.search.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            component['activeFilters'].set(['lecture_content']);
+            component['onSearchInput']('signals');
+            vi.advanceTimersByTime(300);
+
+            expect(component['searchError']()).toBe('global.search.contentSearchUnavailable');
+            expect(mockSearchService.globalSearch).not.toHaveBeenCalled();
+            expect(component['results']()).toEqual([]);
+            expect(component['isLoading']()).toBe(false);
+        });
+
+        it('reports content search as unavailable when it exceeds the timeout', () => {
+            mockLectureSearchService.search.mockReturnValue(NEVER); // never emits -> triggers the rxjs timeout
+
+            component['activeFilters'].set(['lecture_content']);
+            component['onSearchInput']('signals');
+            vi.advanceTimersByTime(300); // debounce elapses, content search is subscribed and hangs
+            expect(component['searchError']()).toBeUndefined();
+
+            vi.advanceTimersByTime(CONTENT_SEARCH_TIMEOUT_MS + 1);
+            expect(component['searchError']()).toBe('global.search.contentSearchUnavailable');
+            expect(mockSearchService.globalSearch).not.toHaveBeenCalled();
+            expect(component['isLoading']()).toBe(false);
+        });
+
+        it('reports content search as unavailable without any request when the user cannot use it', () => {
+            mockAvailability.contentSearchAvailable.set(false);
+
+            component['activeFilters'].set(['lecture_content']);
+            component['onSearchInput']('signals');
+            vi.advanceTimersByTime(300);
+
+            expect(component['searchError']()).toBe('global.search.contentSearchUnavailable');
+            expect(mockLectureSearchService.search).not.toHaveBeenCalled();
+            expect(mockSearchService.globalSearch).not.toHaveBeenCalled();
         });
 
         it('should keep the empty-query lecture chip on the metadata placeholder path with cache reuse', () => {

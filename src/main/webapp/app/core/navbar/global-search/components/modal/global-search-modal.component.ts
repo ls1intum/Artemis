@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, computed, effect, inject, signal, untracked, viewChild, viewChildren } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { EMPTY, Subject, catchError, defer, filter, map, of, switchMap, tap, timeout, timer } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { EMPTY, Observable, Subject, catchError, filter, map, of, switchMap, tap, timeout, timer } from 'rxjs';
 import { SearchOverlayService } from '../../services/search-overlay.service';
 import { OsDetectorService } from '../../services/os-detector.service';
 import { IrisSearchAvailabilityService } from '../../services/iris-search-availability.service';
 import { LectureSearchService } from '../../services/lecture-search.service';
-import { mapLectureContentResult } from '../../models/lecture-content-result.util';
+import { LECTURE_CONTENT_TYPE, mapLectureContentResult } from '../../models/lecture-content-result.util';
 import { AccountService } from 'app/core/auth/account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowDown, faArrowUp } from '@fortawesome/free-solid-svg-icons';
@@ -17,16 +18,16 @@ import { MIN_SEARCH_QUERY_LENGTH, SEARCH_DEBOUNCE_MS, SearchResultView } from 'a
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { GlobalSearchApi } from 'app/openapi/api/global-search-api';
 import { SearchInputComponent } from './search-input/search-input.component';
-import { SearchEntityType, SearchableEntity } from '../../models/searchable-entity.model';
+import { SearchEntityType, SearchFilterTag, SearchableEntity } from '../../models/searchable-entity.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { TranslateService } from '@ngx-translate/core';
 
 interface SearchState {
     query: string;
-    filters: SearchEntityType[];
+    filters: SearchFilterTag[];
 }
 
-/** Max time to wait for Iris content search before falling back to the standard metadata lecture search. */
+/** Max time to wait for Iris content search before reporting it as unavailable. */
 export const CONTENT_SEARCH_TIMEOUT_MS = 5_000;
 
 @Component({
@@ -51,7 +52,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly faArrowDown = faArrowDown;
     protected readonly searchInputComponent = viewChild<SearchInputComponent>(SearchInputComponent);
     protected readonly searchQuery = signal('');
-    protected readonly activeFilters = signal<SearchEntityType[]>([]);
+    protected readonly activeFilters = signal<SearchFilterTag[]>([]);
     protected readonly activeCourseId = signal<number | undefined>(undefined);
     protected readonly activeCourseLabel = signal<string | undefined>(undefined);
     protected readonly results = signal<GlobalSearchResult[]>([]);
@@ -128,6 +129,11 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     }
 
                     this.searchError.set(undefined);
+                    // Slides and videos live in the Iris collections, not in the searchable entities, so that filter
+                    // never reaches the metadata search.
+                    if (filters.includes(LECTURE_CONTENT_TYPE)) {
+                        return this.searchLectureContent(trimmedQuery, hasValidQuery);
+                    }
                     const typeFilter = hasFilter ? filters.join(',') : undefined;
                     const searchQuery = hasValidQuery ? trimmedQuery : '';
                     const courseId = this.activeCourseId();
@@ -142,47 +148,23 @@ export class GlobalSearchModalComponent implements OnDestroy {
                         }
                     }
 
-                    // Network search — debounce, then fire HTTP request.
-                    // When the lecture chip is the only active filter, Iris content search is available,
-                    // and the query is valid, route to Iris content search. If that request fails or
-                    // exceeds CONTENT_SEARCH_TIMEOUT_MS, fall back to the standard metadata lecture search
-                    // so the user still gets results. Every other path is the metadata search as before.
-                    // The lecture filter is a group, not a single type: selecting "Lecture Details" applies
-                    // ['lecture', 'lecture_unit'], and the lectures route context applies the same pair. Asking
-                    // whether every active type belongs to that group is what makes this reachable from the UI;
-                    // requiring exactly ['lecture'] described a state nothing produces.
-                    const lectureFilterOnly = filters.length > 0 && filters.every((type) => type === 'lecture' || type === 'lecture_unit');
-                    const useContentSearch = lectureFilterOnly && this.availability.contentSearchAvailable() && hasValidQuery;
+                    // Network search: debounce, then fire the HTTP request
                     this.isLoading.set(true);
                     return timer(SEARCH_DEBOUNCE_MS).pipe(
-                        switchMap(() => {
-                            // Deferred so globalSearch is only invoked when this observable is actually
-                            // subscribed (the metadata path or the content-search fallback), never eagerly.
-                            const metadataSearch$ = defer(() =>
-                                this.searchService.globalSearch(searchQuery, typeFilter, courseId).pipe(
-                                    tap((results) => {
-                                        if (!hasValidQuery && (hasFilter || hasCourseFilter)) {
-                                            this.placeholderCache.set(cacheKey, results);
-                                        }
-                                    }),
-                                ),
-                            );
-                            const search$ = useContentSearch
-                                ? this.lectureSearchService.search(searchQuery, 10, courseId ? [courseId] : undefined).pipe(
-                                      timeout(CONTENT_SEARCH_TIMEOUT_MS),
-                                      map((rs) => rs.map(mapLectureContentResult)),
-                                      // Content search failed or timed out: fall back to the metadata lecture search.
-                                      catchError(() => metadataSearch$),
-                                  )
-                                : metadataSearch$;
-                            return search$.pipe(
+                        switchMap(() =>
+                            this.searchService.globalSearch(searchQuery, typeFilter, courseId).pipe(
+                                tap((results) => {
+                                    if (!hasValidQuery && (hasFilter || hasCourseFilter)) {
+                                        this.placeholderCache.set(cacheKey, results);
+                                    }
+                                }),
                                 catchError(() => {
                                     this.isLoading.set(false);
                                     this.searchError.set('global.search.searchFailed');
                                     return of([]);
                                 }),
-                            );
-                        }),
+                            ),
+                        ),
                     );
                 }),
                 takeUntilDestroyed(),
@@ -222,11 +204,6 @@ export class GlobalSearchModalComponent implements OnDestroy {
     }
 
     /**
-     * Maps route segments (e.g. 'exercises') to search filter tags (e.g. ['exercise']).
-     * Includes both student view segments (e.g. 'faq') and instructor view segments (e.g. 'faqs').
-     * Exams include 'exercise' because exams contain exercises.
-     */
-    /**
      * Matches course URLs in both student view (`/courses/:courseId`) and instructor view (`/course-management/:courseId`),
      * optionally capturing a tab segment (e.g. `exercises`, `lectures`).
      *
@@ -236,10 +213,14 @@ export class GlobalSearchModalComponent implements OnDestroy {
      */
     private static readonly COURSE_URL_PATTERN = /\/(?:courses|course-management)\/(\d+)(?:\/([^/?#]+))?/;
 
-    private static readonly COMMUNICATION_FILTER_TYPES: ReadonlySet<SearchEntityType> = new Set(['channel', 'post', 'answer_post']);
+    private static readonly COMMUNICATION_FILTER_TYPES: ReadonlySet<SearchFilterTag> = new Set(['channel', 'post', 'answer_post']);
 
-    private static readonly LECTURE_FILTER_TYPES: ReadonlySet<SearchEntityType> = new Set(['lecture', 'lecture_unit']);
+    private static readonly LECTURE_FILTER_TYPES: ReadonlySet<SearchFilterTag> = new Set(['lecture', 'lecture_unit']);
 
+    /**
+     * Maps route segments (e.g. 'exercises') to search filter tags (e.g. ['exercise']).
+     * Includes both student view segments (e.g. 'faq') and instructor view segments (e.g. 'faqs').
+     */
     private static readonly ROUTE_TO_FILTER_TAG: Record<string, SearchEntityType[]> = {
         exercises: ['exercise'],
         lectures: ['lecture', 'lecture_unit'],
@@ -248,6 +229,43 @@ export class GlobalSearchModalComponent implements OnDestroy {
         faq: ['faq'],
         faqs: ['faq'],
     };
+
+    /**
+     * Runs Iris content search for the slides and videos filter. It never falls back to the metadata search, which covers
+     * a different collection and would answer with entities instead of slides or videos. A failure is reported instead:
+     * a 403 means Iris is switched off for every course in scope, anything else means content search is unavailable.
+     *
+     * @param query         the trimmed search term
+     * @param hasValidQuery whether the term is long enough to search; without one the view prompts for it
+     * @return the mapped content hits, or an empty list alongside a prompt or an error message
+     */
+    private searchLectureContent(query: string, hasValidQuery: boolean): Observable<GlobalSearchResult[]> {
+        if (!hasValidQuery) {
+            this.isLoading.set(false);
+            return of([]);
+        }
+        if (!this.availability.contentSearchAvailable()) {
+            this.isLoading.set(false);
+            this.searchError.set('global.search.contentSearchUnavailable');
+            return of([]);
+        }
+        const courseId = this.activeCourseId();
+        this.isLoading.set(true);
+        return timer(SEARCH_DEBOUNCE_MS).pipe(
+            switchMap(() =>
+                this.lectureSearchService.search(query, 10, courseId ? [courseId] : undefined).pipe(
+                    timeout(CONTENT_SEARCH_TIMEOUT_MS),
+                    map((results) => results.map(mapLectureContentResult)),
+                    catchError((error: unknown) => {
+                        const irisDisabledForScope = error instanceof HttpErrorResponse && error.status === 403;
+                        this.isLoading.set(false);
+                        this.searchError.set(irisDisabledForScope ? 'global.search.contentSearchDisabled' : 'global.search.contentSearchUnavailable');
+                        return of([]);
+                    }),
+                ),
+            ),
+        );
+    }
 
     /**
      * Parses the current URL to detect course context and tab,
@@ -314,7 +332,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
         }
     }
 
-    protected addFilter(filterTypes: SearchEntityType[]) {
+    protected addFilter(filterTypes: SearchFilterTag[]) {
         // For now, only one filter group at a time (can be extended later)
         const current = this.activeFilters();
         if (filterTypes.length !== current.length || filterTypes.some((t) => !current.includes(t))) {
@@ -333,7 +351,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
         }
     }
 
-    protected removeFilter(filterType: SearchEntityType) {
+    protected removeFilter(filterType: SearchFilterTag) {
         // Grouped filters (communication, lectures) are shown as a single chip, so removing that chip
         // must clear every underlying type in the group, not just the one the chip is labelled with.
         const group = GlobalSearchModalComponent.filterGroupFor(filterType);
@@ -346,7 +364,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
      * Returns the grouped filter-type set that {@link filterType} belongs to (communication or lectures),
      * or {@code undefined} for a standalone type. Grouped types are collapsed into a single chip in the UI.
      */
-    private static filterGroupFor(filterType: SearchEntityType): ReadonlySet<SearchEntityType> | undefined {
+    private static filterGroupFor(filterType: SearchFilterTag): ReadonlySet<SearchFilterTag> | undefined {
         if (GlobalSearchModalComponent.COMMUNICATION_FILTER_TYPES.has(filterType)) {
             return GlobalSearchModalComponent.COMMUNICATION_FILTER_TYPES;
         }

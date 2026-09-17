@@ -12,6 +12,7 @@ import {
     faGraduationCap,
     faHashtag,
     faKeyboard,
+    faPhotoFilm,
     faProjectDiagram,
     faQuestion,
     faQuestionCircle,
@@ -109,8 +110,8 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     protected readonly faQuestion = faQuestion;
     protected readonly faCalendarCheck = faCalendarCheck;
 
-    // Searchable entities for initial view
-    protected searchableEntities: SearchableEntity[] = [
+    // Every searchable entity the initial view can offer
+    private readonly allSearchableEntities: SearchableEntity[] = [
         {
             id: 'courses',
             title: 'global.search.entities.coursesTitle',
@@ -137,6 +138,15 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             type: 'filter',
             enabled: true,
             filterTags: ['lecture', 'lecture_unit'],
+        },
+        {
+            id: 'slides-and-videos',
+            title: 'global.search.entities.slidesAndVideosTitle',
+            description: 'global.search.entities.slidesAndVideosDescription',
+            icon: faPhotoFilm,
+            type: 'filter',
+            enabled: true,
+            filterTags: [LECTURE_CONTENT_TYPE],
         },
         {
             id: 'communication',
@@ -167,8 +177,19 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         },
     ];
 
+    /**
+     * The searchable entities the initial view shows. The slides and videos filter only works through Iris content search,
+     * so it is offered only to users who can use that search.
+     */
+    protected readonly searchableEntities = computed(() =>
+        this.irisEnabled() ? this.allSearchableEntities : this.allSearchableEntities.filter((entity) => !entity.filterTags?.includes(LECTURE_CONTENT_TYPE)),
+    );
+
+    /** True when the slides and videos filter is active without a search term, which content search cannot run without. */
+    protected readonly isContentSearchPrompt = computed(() => this.activeFilters().includes(LECTURE_CONTENT_TYPE) && this.searchQuery().trim().length === 0);
+
     // Total selectable items reported to the modal to bound ArrowDown/ArrowUp.
-    readonly itemCount = computed(() => (this.showResults() ? this.results().length : this.searchableEntities.length));
+    readonly itemCount = computed(() => (this.showResults() ? this.results().length : this.searchableEntities().length));
 
     protected readonly faHashtag = faHashtag;
 
@@ -186,8 +207,11 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             if (normalizedBadge === 'quiz') return this.faCheckDouble;
             return this.faQuestion;
         }
-        if (type === 'lecture' || type === 'lecture_unit' || type === LECTURE_CONTENT_TYPE) {
+        if (type === 'lecture' || type === 'lecture_unit') {
             return faBook;
+        }
+        if (type === LECTURE_CONTENT_TYPE) {
+            return faPhotoFilm;
         }
         if (type === 'channel') {
             return faHashtag;
@@ -343,7 +367,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             }
         } else {
             event.preventDefault();
-            const entity = this.searchableEntities[idx];
+            const entity = this.searchableEntities()[idx];
             if (entity && entity.enabled) {
                 this.entityClick.emit(entity);
             }

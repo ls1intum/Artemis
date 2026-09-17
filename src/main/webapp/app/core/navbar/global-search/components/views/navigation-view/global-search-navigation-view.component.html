@@ -27,7 +27,9 @@
         </div>
     } @else {
         <div class="no-results-state p-3 text-center text-secondary" [class.mt-3]="irisEnabled()">
-            @if (isTooShortQuery()) {
+            @if (isContentSearchPrompt()) {
+                <p>{{ 'global.search.contentSearchPrompt' | artemisTranslate }}</p>
+            } @else if (isTooShortQuery()) {
                 <p>{{ 'global.search.tooShortQueryHint' | artemisTranslate }}</p>
             } @else {
                 <p>{{ 'global.search.noResultsFound' | artemisTranslate }}</p>
@@ -61,7 +63,7 @@
 } @else {
     <!-- Searchable entities list (initial state) -->
     <div class="entity-list">
-        @for (entity of searchableEntities; track entity.id; let i = $index) {
+        @for (entity of searchableEntities(); track entity.id; let i = $index) {
             <div #selectableItem>
                 <jhi-global-search-entity-item [entity]="entity" [isSelected]="selectedIndex() === i" (entityClick)="onEntityItemClick($event)" />
             </div>
