@@ -193,7 +193,16 @@ function courseOptions(courses: MenuCourse[], applied: Set<string>, query: strin
             // Sorted before the cap, so the visible rows are the first N by title rather than an arbitrary N: the server
             // returns an unordered set, and the fallback store's order is whatever the pages visited happened to produce.
             // Untitled courses sort last, being the least useful thing to spend one of the rows on.
-            .sort((a, b) => (a.title ?? '').localeCompare(b.title ?? '') || Number(a.id) - Number(b.id))
+            .sort((a, b) => {
+                const titleA = a.title ?? '';
+                const titleB = b.title ?? '';
+                if (!titleA !== !titleB) {
+                    // An untitled course renders as its fallback label, so it is the least useful row to spend one of the
+                    // capped slots on. Comparing the empty title directly would sort it first, since '' precedes every name.
+                    return titleA ? -1 : 1;
+                }
+                return titleA.localeCompare(titleB) || Number(a.id) - Number(b.id);
+            })
             .slice(0, MAX_COURSE_OPTIONS)
             .map((course): FilterMenuOption => ({
                 id: String(course.id),

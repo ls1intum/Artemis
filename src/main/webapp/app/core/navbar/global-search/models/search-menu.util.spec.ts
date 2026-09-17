@@ -80,6 +80,13 @@ describe('search menu builders', () => {
             expect(buildFilterMenuOptions({ ...base, operator: typeOp('', true), tokens: excludedFive, searchQuery: '-type:' })).toEqual([]);
         });
 
+        it('sorts untitled courses last, so they never take the capped slots from named ones', () => {
+            const courseList: MenuCourse[] = [{ id: 3, title: 'Zoology' }, { id: 1 }, { id: 2, title: 'Algorithms' }, { id: 4 }];
+            const options = buildFilterMenuOptions({ ...base, operator: courseOp(), courses: () => courseList });
+
+            expect(options.map((option) => option.id)).toEqual(['2', '3', '1', '4']);
+        });
+
         it('filters course options by title and caps the list at eight', () => {
             const courseList: MenuCourse[] = Array.from({ length: 12 }, (_, i) => ({ id: i + 1, title: `Course ${i + 1}` }));
             const courses = () => courseList;
