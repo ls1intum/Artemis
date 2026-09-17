@@ -62,6 +62,7 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { LectureUnitFullscreenLayoutComponent } from 'app/lecture/shared/lecture-unit-fullscreen-layout/lecture-unit-fullscreen-layout.component';
 import { FormsModule } from '@angular/forms';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { LectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 type SplitSizes = [number, number];
 
@@ -104,8 +105,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly translateService = inject(TranslateService);
     private readonly themeService = inject(ThemeService);
 
-    targetTimestamp = input<number | undefined>(undefined); // For video deeplinking
-    targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking
     irisSettings = input<IrisCourseSettingsWithRateLimitDTO | undefined>(undefined);
     contextsProvider = input<LectureContextsProvider | undefined>(undefined); // For collecting context from visible units
 
@@ -159,10 +158,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private pendingPdfTargetPage?: number;
     private isApplyingVideoSeek = false;
 
-    readonly validatedPdfPage = computed(() => {
-        const page = this.targetPdfPage();
-        return page && Number.isInteger(page) && page > 0 ? page : undefined;
-    });
+    readonly targetTimestamp = computed(() => this.matchedDeepLink()?.timestamp);
+    readonly targetPdfPage = computed(() => this.matchedDeepLink()?.page);
 
     readonly showPdfSpinner = computed(() => this.isPdfLoading() && !!this.pdfUrl() && !this.pdfLoadError());
 
@@ -298,6 +295,30 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 this.clearSynchronizationTargets();
             }
         });
+
+        effect(() => {
+            const deepLink = this.matchedDeepLink();
+            if (deepLink) {
+                untracked(() => this.applyDeepLink(deepLink));
+            }
+        });
+    }
+
+    private applyDeepLink(deepLink: LectureDeepLink): void {
+        if (deepLink.timestamp !== undefined) {
+            const videoPlayer = this.videoPlayer();
+            if (videoPlayer) {
+                videoPlayer.seekTo(deepLink.timestamp, false);
+            } else {
+                this.youtubePlayer()?.seekTo(deepLink.timestamp, false);
+            }
+        }
+
+        const pdfViewer = this.pdfViewer();
+        if (deepLink.page !== undefined && pdfViewer && pdfViewer.getCurrentPage() !== deepLink.page) {
+            this.pendingPdfTargetPage = deepLink.page;
+            pdfViewer.goToPage(deepLink.page);
+        }
     }
 
     protected onPdfLoadError(event: { pdfUrl: string }): void {
