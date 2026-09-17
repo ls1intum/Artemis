@@ -14,6 +14,11 @@
         Each column is handled by its own pair of changesets, one clearing the rows that have no parent and one adding
         the constraint, so a single column can be left out without touching the rest.
 
+        A clearing changeset has to name every table holding a foreign key to the one it deletes from, including tables
+        added earlier in the same upgrade. An empty database hides a missing one: with no rows to reference the parent,
+        the delete succeeds either way, and the omission only shows up where the data is actually there. Checking
+        information_schema.KEY_COLUMN_USAGE for the parent table is a quicker way to be sure than reading the entities.
+
         The constraint changesets are guarded by a precondition that no such row is left. Adding a not-null constraint to
         a column that still holds a null fails, and a failing changeset stops the application from starting, which is a
         far worse outcome than the column staying nullable.
@@ -52,6 +57,28 @@
         programming exercise.
     -->
 
+    <changeSet id="20260827090000-00-delete-generated-feedback-of-results-without-submission" author="krusche">
+        <comment>
+            Clear the two feedback tables that 20260817090000 introduces, for the results that the next changeset
+            removes.
+
+            These belong with the deletes in 20260827090000-01, but they cannot be added there: that changeset has
+            already been applied on installations tracking this branch, and editing it would change its checksum and
+            stop those servers from starting. Hence a separate changeset, placed before it so that a fresh installation
+            runs the two in the right order. On an installation that already ran -01 this deletes nothing.
+
+            test_case_feedback.result_id and sca_feedback.result_id are both ON DELETE RESTRICT. Both tables are created
+            and filled by 20260817090000, earlier in this same upgrade, so they do not exist in the schema -01 was
+            written against. Where the backfill has put rows in them, DELETE FROM result then fails with "Cannot delete
+            or update a parent row" and the upgrade stops part way. Where those tables are empty, which is the case for
+            a database with no feedback in it, nothing references the results and -01 succeeds on its own. That is why
+            the ordering holds in tests and not necessarily elsewhere.
+        </comment>
+        <sql>
+            DELETE FROM test_case_feedback WHERE result_id IN (SELECT id FROM result WHERE submission_id IS NULL);
+            DELETE FROM sca_feedback WHERE result_id IN (SELECT id FROM result WHERE submission_id IS NULL);
+        </sql>
+    </changeSet>
     <changeSet id="20260827090000-01-delete-results-without-submission" author="krusche">
         <comment>Remove results that belong to no submission, along with everything that hangs off them.</comment>
         <sql>
