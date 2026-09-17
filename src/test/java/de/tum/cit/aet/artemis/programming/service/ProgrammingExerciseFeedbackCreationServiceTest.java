@@ -311,6 +311,8 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
     @Test
     void shouldGenerateNewTestCasesWithVisibilityAfterDueDate() {
         ExerciseGroup exerciseGroup1 = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        // Moving the exercise into an exam means giving up its own course: an exercise belongs to one or the other.
+        programmingExercise.setCourse(null);
         programmingExercise.setExerciseGroup(exerciseGroup1);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
