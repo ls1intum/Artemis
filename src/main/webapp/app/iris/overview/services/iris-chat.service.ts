@@ -1154,6 +1154,9 @@ export class IrisChatService implements OnDestroy {
             if (pointOut.page != undefined) {
                 queryParams.page = pointOut.page;
             }
+            if (pointOut.displayPage != undefined) {
+                queryParams.displayPage = pointOut.displayPage;
+            }
             if (pointOut.timestamp != undefined) {
                 queryParams.timestamp = pointOut.timestamp;
             }

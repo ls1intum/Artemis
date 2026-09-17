@@ -320,7 +320,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         // still being resolved when this unit is first built, so the effect waits for it rather than giving up.
         // It fires once: the student closing the view again must not be overruled by it reopening on the next run.
         effect(() => {
-            if (!this.targetCombinedView() || this.hasOpenedCombinedViewFromDeepLink || !this.hasFullscreenContent()) {
+            if (!this.targetCombinedView()) {
+                this.hasOpenedCombinedViewFromDeepLink = false;
+                return;
+            }
+            if (this.hasOpenedCombinedViewFromDeepLink || !this.hasFullscreenContent()) {
                 return;
             }
             this.hasOpenedCombinedViewFromDeepLink = true;

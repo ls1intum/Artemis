@@ -466,10 +466,11 @@ describe('CourseLectureDetailsComponent', () => {
             fixture.detectChanges();
             courseLecturesDetailsComponent.lectureUnits.set([targetUnit]);
 
-            queryParams.next({ unit: '100', page: '3', timestamp: '42', combined: 'true' });
+            queryParams.next({ unit: '100', page: '3', displayPage: '8', timestamp: '42', combined: 'true' });
 
             expect(courseLecturesDetailsComponent.targetUnitId()).toBe(100);
             expect(courseLecturesDetailsComponent.targetPdfPage()).toBe(3);
+            expect(courseLecturesDetailsComponent.targetDisplayPage()).toBe(8);
             expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(42);
             expect(courseLecturesDetailsComponent.targetCombinedView()).toBe(true);
 
@@ -702,34 +703,38 @@ describe('CourseLectureDetailsComponent', () => {
             courseLecturesDetailsComponent.ngOnInit();
         };
 
-        it('should read unit, timestamp and page from the query params', () => {
+        it('should read unit, timestamp and page numbers from the query params', () => {
             setupUnitWithBoth();
-            reInitWithQueryParams({ unit: '7', timestamp: '30', page: '4' });
+            reInitWithQueryParams({ unit: '7', timestamp: '30', page: '4', displayPage: '12' });
 
             expect(courseLecturesDetailsComponent.targetUnitId()).toBe(7);
             expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(30);
             expect(courseLecturesDetailsComponent.targetPdfPage()).toBe(4);
+            expect(courseLecturesDetailsComponent.targetDisplayPage()).toBe(12);
         });
 
-        it('should ignore an invalid timestamp and page while keeping the unit', () => {
+        it('should ignore invalid timestamp and page numbers while keeping the unit', () => {
             setupUnitWithBoth();
-            reInitWithQueryParams({ unit: '7', timestamp: '-5', page: '0' });
+            reInitWithQueryParams({ unit: '7', timestamp: '-5', page: '0', displayPage: '0' });
 
             expect(courseLecturesDetailsComponent.targetUnitId()).toBe(7);
             expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBeUndefined();
             expect(courseLecturesDetailsComponent.targetPdfPage()).toBeUndefined();
+            expect(courseLecturesDetailsComponent.targetDisplayPage()).toBeUndefined();
         });
 
         it('should clear all deep-link targets when the unit param is not a positive integer', () => {
             courseLecturesDetailsComponent.targetUnitId.set(99);
             courseLecturesDetailsComponent.targetVideoTimestamp.set(10);
             courseLecturesDetailsComponent.targetPdfPage.set(2);
+            courseLecturesDetailsComponent.targetDisplayPage.set(8);
 
             reInitWithQueryParams({ unit: 'not-a-number' });
 
             expect(courseLecturesDetailsComponent.targetUnitId()).toBeUndefined();
             expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBeUndefined();
             expect(courseLecturesDetailsComponent.targetPdfPage()).toBeUndefined();
+            expect(courseLecturesDetailsComponent.targetDisplayPage()).toBeUndefined();
         });
 
         it('should re-validate deep-link targets when units are already loaded before the query params emit', () => {

@@ -646,11 +646,11 @@ describe('IrisChatService', () => {
         const emitted = vi.fn();
         service.pointOut$.subscribe(emitted);
 
-        service.navigateToPointOut({ lectureUnitId: 7, lectureId: 27, page: 2, timestamp: 42, forceOpen: true });
+        service.navigateToPointOut({ lectureUnitId: 7, lectureId: 27, page: 2, displayPage: 8, timestamp: 42, forceOpen: true });
 
         // combined asks for the view Iris pointed in, so the click lands the same way from either page.
         expect(routerMock.navigate).toHaveBeenCalledWith(['/courses', courseId, 'lectures', 27], {
-            queryParams: { unit: 7, combined: true, page: 2, timestamp: 42 },
+            queryParams: { unit: 7, combined: true, page: 2, displayPage: 8, timestamp: 42 },
         });
         // Nothing is emitted, so a lecture page opened later does not act on a stale target as well.
         expect(emitted).not.toHaveBeenCalled();

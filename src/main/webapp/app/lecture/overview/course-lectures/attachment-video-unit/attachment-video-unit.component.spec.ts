@@ -967,6 +967,14 @@ describe('AttachmentVideoUnitComponent', () => {
             fixture.detectChanges();
 
             expect(openFullscreen).toHaveBeenCalledOnce();
+
+            // Once the deep-link request clears, a later request for the same component instance may open it again.
+            fixture.componentRef.setInput('targetCombinedView', false);
+            fixture.detectChanges();
+            fixture.componentRef.setInput('targetCombinedView', true);
+            fixture.detectChanges();
+
+            expect(openFullscreen).toHaveBeenCalledTimes(2);
         });
 
         it('openFullscreen: expands collapsed card before activating fullscreen', () => {
