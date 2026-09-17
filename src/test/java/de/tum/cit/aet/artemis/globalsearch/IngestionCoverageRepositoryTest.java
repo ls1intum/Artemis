@@ -100,7 +100,7 @@ class IngestionCoverageRepositoryTest extends AbstractSpringIntegrationIndepende
         ingestionCoverageRepository.save(entry(2L, 0, IngestionCoverageStatus.COMPLETE, ZonedDateTime.now(), ZonedDateTime.now()));
         ingestionCoverageRepository.save(entry(3L, 4, IngestionCoverageStatus.INCOMPLETE, ZonedDateTime.now(), ZonedDateTime.now()));
 
-        var incompletePage = ingestionCoverageRepository.findFiltered(IngestionCoverageStatus.INCOMPLETE, null, null,
+        var incompletePage = ingestionCoverageRepository.findFiltered(IngestionCoverageStatus.INCOMPLETE, null, "",
                 PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "coverageGapScore")));
 
         assertThat(incompletePage.getTotalElements()).isEqualTo(2);
@@ -117,15 +117,15 @@ class IngestionCoverageRepositoryTest extends AbstractSpringIntegrationIndepende
         PageRequest byGapScore = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "coverageGapScore"));
 
         // A null status keeps both filters "any"; the active flag alone selects the inactive courses.
-        var inactive = ingestionCoverageRepository.findFiltered(null, false, null, byGapScore);
+        var inactive = ingestionCoverageRepository.findFiltered(null, false, "", byGapScore);
         assertThat(inactive.getContent()).extracting(IngestionCoverageEntry::getCourseId).containsExactly(2L, 3L);
 
         // Status and active combine: only the inactive INCOMPLETE course remains.
-        var inactiveIncomplete = ingestionCoverageRepository.findFiltered(IngestionCoverageStatus.INCOMPLETE, false, null, byGapScore);
+        var inactiveIncomplete = ingestionCoverageRepository.findFiltered(IngestionCoverageStatus.INCOMPLETE, false, "", byGapScore);
         assertThat(inactiveIncomplete.getContent()).extracting(IngestionCoverageEntry::getCourseId).containsExactly(2L);
 
-        // Both filters null returns every row.
-        assertThat(ingestionCoverageRepository.findFiltered(null, null, null, byGapScore).getTotalElements()).isEqualTo(3);
+        // Both filters null and no search term returns every row.
+        assertThat(ingestionCoverageRepository.findFiltered(null, null, "", byGapScore).getTotalElements()).isEqualTo(3);
     }
 
     @Test

@@ -232,7 +232,8 @@ public class CoverageRecomputeService {
      * @return the requested page of stored coverage rows as DTOs
      */
     public Page<IngestionCoverageDTO> readStoredCoverage(IngestionCoverageStatus status, Boolean active, String search, Pageable pageable) {
-        String titleSearch = search == null || search.isBlank() ? null : search.trim();
+        // The repository takes the empty string, not null, for "no search"; see its javadoc for why.
+        String titleSearch = search == null || search.isBlank() ? "" : search.trim();
         return coverageRepository.findFiltered(status, active, titleSearch, pageable).map(this::toDto);
     }
 

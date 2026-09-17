@@ -67,10 +67,16 @@ public interface IngestionCoverageRepository extends ArtemisJpaRepository<Ingest
      * The title search is applied here rather than only on the live path because the two are used together: filtering by
      * status and typing a course name is one question, and answering it by ignoring half of it returns the wrong rows.
      * {@code %} and {@code _} in the term are escaped so a typed wildcard searches for itself.
+     * <p>
+     * "No search" is the empty string, not {@code null}: the term is passed through {@code REPLACE}, and PostgreSQL cannot
+     * infer a type for a {@code null} parameter inside a function call (it resolves to {@code bytea} and the query fails),
+     * whereas a bound empty string is typed as text on every database. The same guard is used by the participation
+     * search in {@code StudentParticipationRepository}.
      *
      * @param status   the coverage status to filter by, or {@code null} for any status
      * @param active   {@code true}/{@code false} to keep only active/inactive courses, or {@code null} for either
-     * @param search   a case-insensitive substring of the course title, or {@code null}/blank for any title
+     * @param search   a case-insensitive substring of the course title, or the empty string for any title (never
+     *                     {@code null})
      * @param pageable the page and sort
      * @return the matching page of coverage rows
      */
@@ -79,7 +85,7 @@ public interface IngestionCoverageRepository extends ArtemisJpaRepository<Ingest
             FROM IngestionCoverageEntry e
             WHERE (:status IS NULL OR e.status = :status)
                 AND (:active IS NULL OR e.active = :active)
-                AND (:search IS NULL OR LOWER(e.courseTitle) LIKE LOWER(CONCAT('%', REPLACE(REPLACE(:search, '%', '\\%'), '_', '\\_'), '%')) ESCAPE '\\')
+                AND (:search = '' OR LOWER(e.courseTitle) LIKE LOWER(CONCAT('%', REPLACE(REPLACE(:search, '%', '\\%'), '_', '\\_'), '%')) ESCAPE '\\')
             """)
     Page<IngestionCoverageEntry> findFiltered(@Param("status") IngestionCoverageStatus status, @Param("active") Boolean active, @Param("search") String search, Pageable pageable);
 }
