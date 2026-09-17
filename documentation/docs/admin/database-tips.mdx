@@ -420,8 +420,11 @@ SELECT relname AS table_name,
               query_to_xml(format('SELECT COUNT(*) AS cnt FROM public.%I', relname),
                            false, true, '')))[1]::text::bigint AS row_count
 FROM pg_stat_user_tables
+WHERE schemaname = 'public'
 ORDER BY relname;
 ```
+
+`pg_stat_user_tables` lists every non-system schema, so the filter matters here: if the pgloader staging schema is still present in the same database, its tables would otherwise be counted as though they were in `public`, which either fails or counts the same table twice.
 
 ```bash
 # MySQL, before the migration, for the same comparison
