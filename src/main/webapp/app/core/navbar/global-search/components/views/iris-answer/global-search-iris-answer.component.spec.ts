@@ -475,6 +475,39 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             expect(component['irisResult']()?.answer).toBe('Longer draft text.');
         });
 
+        it('accepts a shorter draft when its partialSeq is newer, ordering by sequence rather than length', () => {
+            // A provider retry mid-stream restarts the draft from empty with a HIGHER partialSeq
+            // (Iris's PartialResultSender sends an empty partial specifically to clear a stale one);
+            // a length comparison would wrongly reject this as stale.
+            startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'A fairly long draft before the retry.', partialSeq: 3 });
+            fixture.detectChanges();
+            expect(component['irisResult']()?.answer).toBe('A fairly long draft before the retry.');
+
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: '', partialSeq: 4 });
+            fixture.detectChanges();
+            expect(component['irisResult']()?.answer).toBe('');
+
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'Restarted', partialSeq: 5 });
+            fixture.detectChanges();
+            expect(component['irisResult']()?.answer).toBe('Restarted');
+        });
+
+        it('falls back to length ordering when an older Iris omits partialSeq', () => {
+            startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'Signals are' });
+            fixture.detectChanges();
+            expect(component['irisResult']()?.answer).toBe('Signals are');
+
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'Short' });
+            fixture.detectChanges();
+            expect(component['irisResult']()?.answer).toBe('Signals are');
+
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'Signals are reactive.' });
+            fixture.detectChanges();
+            expect(component['irisResult']()?.answer).toBe('Signals are reactive.');
+        });
+
         it('does not re-show the thinking bubble after a draft started', () => {
             startQuery();
             askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'Draft', partialSeq: 1 });
@@ -811,6 +844,19 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
             expect(component['isDismissed']()).toBe(true);
             expect(fixture.nativeElement.querySelector('.iris-inline-answer').classList).toContain('is-dismissed');
+        });
+
+        it('clears a pending reveal timer when the stream fails after a partial already arrived', () => {
+            startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'A draft that was mid-reveal.', partialSeq: 1 });
+            fixture.detectChanges();
+            expect(component['revealTimeout']).toBeDefined();
+
+            askSubject.error(new Error('pipeline down'));
+            fixture.detectChanges();
+
+            expect(component['phase']()).toBe('failed');
+            expect(component['revealTimeout']).toBeUndefined();
         });
 
         it('offers a retry when the pipeline fails', () => {

@@ -6,6 +6,8 @@ import java.util.Optional;
 
 import jakarta.validation.Valid;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
@@ -21,6 +24,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.globalsearch.api.SearchableEntityPrefetchApi;
+import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.IrisAccessContextService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
@@ -44,6 +48,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRe
 @RestController
 @RequestMapping("api/iris/")
 public class IrisGlobalSearchResource {
+
+    private static final Logger log = LoggerFactory.getLogger(IrisGlobalSearchResource.class);
 
     private final PyrisConnectorService pyrisConnectorService;
 
@@ -108,11 +114,26 @@ public class IrisGlobalSearchResource {
         // Entity candidates are pre-fetched with the palette's access filtering, because channel
         // membership, exam registrations and role-dependent release rules only exist in the Artemis
         // database; Pyris renders them into cards and reranks them against the lecture content.
-        List<PyrisEntityCandidateDTO> entityCandidates = searchableEntityPrefetchApi
-                .map(api -> api.prefetchCandidates(user, requestDTO.query(), ENTITY_CANDIDATE_LIMIT, requestDTO.courseId()).stream().map(PyrisEntityCandidateDTO::of).toList())
-                .orElse(List.of());
+        // A Weaviate hiccup here must not fail the whole answer: the job token above is already
+        // registered, so surfacing a 500 would strand it until the Hazelcast TTL clears it and give
+        // the student nothing, when the lecture-content-only answer could still have succeeded.
+        List<PyrisEntityCandidateDTO> entityCandidates = fetchEntityCandidates(user, requestDTO);
         pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), selectedLlmUsage, accessContext,
                 entityCandidates, requestDTO.courseId());
         return ResponseEntity.accepted().build();
+    }
+
+    private List<PyrisEntityCandidateDTO> fetchEntityCandidates(User user, GlobalSearchAskRequestDTO requestDTO) {
+        if (searchableEntityPrefetchApi.isEmpty()) {
+            return List.of();
+        }
+        try {
+            return searchableEntityPrefetchApi.get().prefetchCandidates(user, requestDTO.query(), ENTITY_CANDIDATE_LIMIT, requestDTO.courseId()).stream()
+                    .map(PyrisEntityCandidateDTO::of).toList();
+        }
+        catch (WeaviateException e) {
+            log.warn("Entity candidate prefetch failed for global search run {}; answering from lecture content only: {}", requestDTO.runId(), e.getMessage());
+            return List.of();
+        }
     }
 }

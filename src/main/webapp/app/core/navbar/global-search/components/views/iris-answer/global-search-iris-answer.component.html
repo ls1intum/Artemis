@@ -124,26 +124,22 @@
                                     </a>
                                 }
                                 <!-- Entity sources (course information): few by construction, numbered after the lecture sources -->
-                                @for (entitySource of entitySources(); track $index) {
+                                @for (chip of entityChipViews(); track $index) {
                                     <button
                                         class="iris-chip d-inline-flex align-items-center text-nowrap rounded-pill"
                                         type="button"
                                         data-testid="iris-entity-chip"
                                         [class.iris-chip-lit]="activeCitations().has(sources().length + $index + 1)"
                                         (mouseenter)="setChipHighlight(sources().length + $index + 1)"
-                                        (click)="openEntitySource(entitySource)"
+                                        (click)="openEntitySource(chip.source)"
                                     >
                                         @if (hasCitations()) {
                                             <span class="iris-chip-n flex-shrink-0" data-testid="iris-chip-number">{{ sources().length + $index + 1 }}</span>
                                         }
-                                        <fa-icon
-                                            [icon]="entityIcon(entitySource)"
-                                            class="iris-chip-icon flex-shrink-0"
-                                            [attr.aria-label]="entityTypeLabelKey(entitySource.entityType) | artemisTranslate"
-                                        />
-                                        <span class="iris-chip-name text-truncate">{{ entitySource.title }}</span>
-                                        @if (entitySource.course?.name) {
-                                            <span class="iris-chip-meta text-body-secondary">· {{ entitySource.course?.name }}</span>
+                                        <fa-icon [icon]="chip.icon" class="iris-chip-icon flex-shrink-0" [attr.aria-label]="chip.typeLabelKey | artemisTranslate" />
+                                        <span class="iris-chip-name text-truncate">{{ chip.source.title }}</span>
+                                        @if (chip.source.course?.name) {
+                                            <span class="iris-chip-meta text-body-secondary">· {{ chip.source.course?.name }}</span>
                                         }
                                     </button>
                                 }

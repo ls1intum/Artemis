@@ -55,6 +55,21 @@ describe('renderCitationMarkers', () => {
         expect(result.html).toBe('Claim.[1]');
         expect(result.citedNumbers.size).toBe(0);
     });
+
+    it('leaves a bracketed index inside an inline code span untouched', () => {
+        const result = renderCitationMarkers('Access the first element with `list[0]`.[2]', 2);
+        expect(result.html).toBe('Access the first element with `list[0]`.<sup class="iris-cite" data-n="2">2</sup>');
+        expect([...result.citedNumbers]).toEqual([2]);
+    });
+
+    it('leaves a fenced code block untouched, including a real citation-shaped marker after it', () => {
+        const answer = ['See the loop below.[1]', '```python', 'for i in range(3):', '    print(items[i])', '```', 'Iteration order matches the list.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('```python\nfor i in range(3):\n    print(items[i])\n```');
+        expect(result.html).toContain('See the loop below.<sup class="iris-cite" data-n="1">1</sup>');
+        expect(result.html).toContain('Iteration order matches the list.<sup class="iris-cite" data-n="2">2</sup>');
+        expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
 });
 
 describe('parseCitationNumbers', () => {

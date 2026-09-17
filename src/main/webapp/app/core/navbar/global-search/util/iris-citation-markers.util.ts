@@ -22,6 +22,14 @@ const MARKER_RUN_REGEX = /(?:\[\d+\]){1,}/g;
 /** Digits of one marker inside a run. */
 const SINGLE_MARKER_REGEX = /\[(\d+)\]/g;
 
+/**
+ * A fenced code block (```...```` incl. language tag, possibly spanning lines) or an inline code span
+ * (`...`, single backtick, no line breaks). Content matched here is left untouched: a bracketed
+ * expression like an array index (`list[0]`) is common in course content and must render as code, not
+ * as a citation chip.
+ */
+const CODE_SEGMENT_REGEX = /```[\s\S]*?```|`[^`\n]*`/g;
+
 export interface CitationRenderResult {
     /** The answer markdown with marker runs replaced by `<sup>` chip elements. */
     html: string | undefined;
@@ -45,20 +53,33 @@ export function renderCitationMarkers(answer: string | undefined, sourceCount: n
         return { html: answer, citedNumbers: new Set() };
     }
     const cited = new Set<number>();
-    const html = answer.replace(MARKER_RUN_REGEX, (run) => {
-        const numbers: number[] = [];
-        for (const match of run.matchAll(SINGLE_MARKER_REGEX)) {
-            const value = Number(match[1]);
-            if (value >= 1 && value <= sourceCount && !numbers.includes(value)) {
-                numbers.push(value);
+    const replaceMarkers = (prose: string): string =>
+        prose.replace(MARKER_RUN_REGEX, (run) => {
+            const numbers: number[] = [];
+            for (const match of run.matchAll(SINGLE_MARKER_REGEX)) {
+                const value = Number(match[1]);
+                if (value >= 1 && value <= sourceCount && !numbers.includes(value)) {
+                    numbers.push(value);
+                }
             }
-        }
-        if (numbers.length === 0) {
-            return '';
-        }
-        numbers.forEach((n) => cited.add(n));
-        return numbers.map((n) => `<sup class="iris-cite" data-n="${n}">${n}</sup>`).join('');
-    });
+            if (numbers.length === 0) {
+                return '';
+            }
+            numbers.forEach((n) => cited.add(n));
+            return numbers.map((n) => `<sup class="iris-cite" data-n="${n}">${n}</sup>`).join('');
+        });
+
+    // Walk the code segments in order, replacing markers only in the prose between them; code
+    // segments themselves (and any bracketed text inside them) pass through unchanged.
+    let html = '';
+    let cursor = 0;
+    for (const match of answer.matchAll(CODE_SEGMENT_REGEX)) {
+        const index = match.index ?? 0;
+        html += replaceMarkers(answer.slice(cursor, index));
+        html += match[0];
+        cursor = index + match[0].length;
+    }
+    html += replaceMarkers(answer.slice(cursor));
     return { html, citedNumbers: cited };
 }
 

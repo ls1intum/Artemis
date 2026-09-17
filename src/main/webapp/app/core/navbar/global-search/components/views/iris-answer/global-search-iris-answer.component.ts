@@ -91,6 +91,10 @@ export class GlobalSearchIrisAnswerComponent {
     protected readonly sources = computed(() => this.irisResult()?.sources ?? []);
     /** Entity sources (course information); their citation numbers continue after the lecture sources. */
     protected readonly entitySources = computed(() => this.irisResult()?.entitySources ?? []);
+    /** Per-chip display fields precomputed once per change, so the template's `@for` does not call methods on every render. */
+    protected readonly entityChipViews = computed(() =>
+        this.entitySources().map((source) => ({ source, icon: this.entityIcon(source), typeLabelKey: this.entityTypeLabelKey(source.entityType) })),
+    );
 
     /** Re-fires the pipeline for the same query when the reader retries after a failure. */
     private readonly retryAttempt = signal(0);
@@ -125,6 +129,8 @@ export class GlobalSearchIrisAnswerComponent {
     private readonly progressiveReveal = signal(false);
     private revealTimeout?: ReturnType<typeof setTimeout>;
     private dismissTimeout?: ReturnType<typeof setTimeout>;
+    /** Highest `partialSeq` accepted for the active run; undefined until the first seq-carrying partial. */
+    private lastPartialSeq?: number;
 
     /** The part of the answer the reader can currently see. */
     protected readonly displayedAnswer = computed(() => {
@@ -256,6 +262,9 @@ export class GlobalSearchIrisAnswerComponent {
                             this.irisSearchAnswerService.ask(query, 5, courseId).pipe(
                                 catchError(() => {
                                     // A failure is worth saying out loud: it is the one ending the reader can act on.
+                                    // A reveal timer scheduled by an earlier partial on this same run must not keep
+                                    // firing against a run the UI has already moved past.
+                                    this.clearTimers();
                                     this.phase.set('failed');
                                     return of(undefined);
                                 }),
@@ -290,6 +299,7 @@ export class GlobalSearchIrisAnswerComponent {
         this.isDismissed.set(false);
         this.activeCitations.set(new Set());
         this.citationPopover.set(undefined);
+        this.lastPartialSeq = undefined;
     }
 
     private clearTimers(): void {
@@ -307,14 +317,37 @@ export class GlobalSearchIrisAnswerComponent {
             }
             return;
         }
-        // A streamed draft is a snapshot of everything written so far, so a shorter one is stale.
-        if (update.partialResult.length <= (this.irisResult()?.answer?.length ?? 0)) {
+        if (!this.isNewerPartial(update)) {
             return;
+        }
+        const previousLength = this.irisResult()?.answer?.length ?? 0;
+        if (update.partialResult.length < previousLength) {
+            // A provider retry legitimately restarts shorter (even empty) than what was already shown,
+            // to wipe the stale draft; the old reveal progress no longer describes this text.
+            this.revealedLength.set(0);
+            this.revealStart.set(0);
         }
         this.phase.set('answering');
         this.progressiveReveal.set(true);
         this.irisResult.set({ answer: update.partialResult, sources: [] });
         this.scheduleReveal();
+    }
+
+    /**
+     * Whether a streamed draft is newer than what is currently shown. Ordered by the server's
+     * monotonic `partialSeq` when present: a provider retry sends a SHORTER or empty draft with a
+     * HIGHER seq to clear a stale one, which a plain length comparison would wrongly reject as
+     * stale. An older Iris that omits `partialSeq` falls back to length, the previous behavior.
+     */
+    private isNewerPartial(update: IrisSearchStatusUpdate): boolean {
+        if (update.partialSeq === undefined) {
+            return update.partialResult!.length > (this.irisResult()?.answer?.length ?? 0);
+        }
+        if (this.lastPartialSeq !== undefined && update.partialSeq <= this.lastPartialSeq) {
+            return false;
+        }
+        this.lastPartialSeq = update.partialSeq;
+        return true;
     }
 
     private onTerminalUpdate(update: IrisSearchStatusUpdate): void {
