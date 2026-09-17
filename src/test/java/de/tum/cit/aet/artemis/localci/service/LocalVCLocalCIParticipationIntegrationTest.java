@@ -13,7 +13,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
@@ -62,16 +62,16 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
 
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
-                StudentParticipation.class, HttpStatus.CREATED);
+        StudentParticipationDTO participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
+                StudentParticipationDTO.class, HttpStatus.CREATED);
         assertThat(participation).isNotNull();
-        assertThat(participation.isPracticeMode()).isFalse();
-        assertThat(participation.getStudent()).contains(user);
+        assertThat(participation.testRun()).isFalse();
+        assertThat(participation.student().getId()).isEqualTo(user.getId());
         LocalVCRepositoryUri studentAssignmentRepositoryUri = new LocalVCRepositoryUri(localVCBaseUri, projectKey,
                 projectKey.toLowerCase(Locale.ROOT) + "-" + TEST_PREFIX + "student1");
         assertThat(studentAssignmentRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
 
-        var vcsAccessToken = request.get("/api/account/participation-vcs-access-token?participationId=" + participation.getId(), HttpStatus.OK, String.class);
+        var vcsAccessToken = request.get("/api/account/participation-vcs-access-token?participationId=" + participation.id(), HttpStatus.OK, String.class);
         assertThat(vcsAccessToken).isNotNull();
         assertThat(vcsAccessToken).startsWith("vcpat");
 
@@ -95,8 +95,8 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         LocalVCTestRepository templateRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug);
 
-        StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
-                StudentParticipation.class, HttpStatus.CREATED);
+        StudentParticipationDTO participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
+                StudentParticipationDTO.class, HttpStatus.CREATED);
         assertThat(participation).isNotNull();
 
         // The stored template repository URI should have been repaired to the canonical local VC format
@@ -123,8 +123,8 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         LocalVCTestRepository templateRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug);
 
-        StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
-                StudentParticipation.class, HttpStatus.CREATED);
+        StudentParticipationDTO participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
+                StudentParticipationDTO.class, HttpStatus.CREATED);
         assertThat(participation).isNotNull();
 
         // The stored template repository URI should have been repaired to point to the existing repository
@@ -155,8 +155,8 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + foreignProjectKey + "/" + foreignRepositorySlug + ".git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
 
-        StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
-                StudentParticipation.class, HttpStatus.CREATED);
+        StudentParticipationDTO participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
+                StudentParticipationDTO.class, HttpStatus.CREATED);
         assertThat(participation).isNotNull();
 
         // The URI must be repaired to the conventional repository of this exercise, not left pointing at the other project
