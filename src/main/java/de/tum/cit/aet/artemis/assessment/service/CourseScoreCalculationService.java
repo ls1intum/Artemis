@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.assessment.dto.MaxAndReachablePointsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoresDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseScoresDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -312,9 +313,10 @@ public class CourseScoreCalculationService {
             studentParticipation.setExercise(null);
         }
 
-        return new CourseForDashboardDTO(course, totalScores, scoresPerExerciseType.get(ExerciseType.TEXT), scoresPerExerciseType.get(ExerciseType.PROGRAMMING),
-                scoresPerExerciseType.get(ExerciseType.MODELING), scoresPerExerciseType.get(ExerciseType.FILE_UPLOAD), scoresPerExerciseType.get(ExerciseType.QUIZ),
-                participationResults, userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(userId, course.getId()), achievedPointsPerVariantGroup);
+        return new CourseForDashboardDTO(CourseDashboardDTO.of(course), totalScores, scoresPerExerciseType.get(ExerciseType.TEXT),
+                scoresPerExerciseType.get(ExerciseType.PROGRAMMING), scoresPerExerciseType.get(ExerciseType.MODELING), scoresPerExerciseType.get(ExerciseType.FILE_UPLOAD),
+                scoresPerExerciseType.get(ExerciseType.QUIZ), participationResults,
+                userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(userId, course.getId()), achievedPointsPerVariantGroup);
     }
 
     /**
