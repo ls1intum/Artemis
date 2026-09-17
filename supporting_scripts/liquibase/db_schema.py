@@ -13,7 +13,6 @@ a difference on nearly every table, which is noise that hides the one table that
 
 from __future__ import annotations
 
-import json
 import subprocess
 from dataclasses import dataclass, field
 
@@ -27,9 +26,6 @@ class SchemaModel:
     """A whole schema, keyed by table name. Compare with ``==`` and describe a failure with :func:`diff`."""
 
     tables: dict[str, dict] = field(default_factory=dict)
-
-    def to_json(self) -> str:
-        return json.dumps(self.tables, indent=2, sort_keys=True)
 
 
 def _run_sql(container: str, argv: list[str], sql: str) -> str:

@@ -138,6 +138,8 @@ Liquibase records every changeset it applied or recorded in `DATABASECHANGELOG`.
 
 A failing changeset stops the startup and the instance does not serve requests. The log names the changeset that failed and the statement it was running.
 
+The steps below are for a migration failing on an existing database. A **fresh installation** failing while it records the folded history is a different case and needs nothing from you: the log reads *"Recording the folded changelog history left N changeset(s) unrecorded"*, Artemis discards what it had recorded, and the next start repeats the whole step from the empty database it began with. Only if that message is followed by one saying the partial history could **not** be discarded do you have to act — drop the database and start again, because a half-recorded history would otherwise make the next start run the folded changelogs as ordinary migrations.
+
 1. Do not start the remaining instances. Only the first instance migrates, so the others are still stopped at this point.
 2. Read the failing changeset identifier from the log. Every changeset before it is committed and recorded; the failing one is not recorded.
 3. Resolve the underlying cause. A migration that adds a constraint usually fails because existing data violates it, and the log names the table and column.

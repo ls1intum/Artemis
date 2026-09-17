@@ -54,6 +54,16 @@ HISTORY_MASTER = "config/liquibase/history/master.xml"
 # The contexts an end-to-end stack starts with; see docker/artemis/config/playwright.env.
 SEED_CONTEXTS = "prod,e2e"
 
+# Changesets an upgraded database has recorded that a fresh one never will, because the changelog that
+# created them is no longer in the repository. Liquibase does not mind a recorded row whose file is
+# gone, so these stay behind harmlessly -- but they are the one legitimate difference between the two
+# routes, and naming them individually is what keeps upgrade-from-floor able to report every other one.
+ORPHANED_ON_UPGRADE = {
+    # The cleanup changeset of the old consolidation scheme, deleted by this layout. Every database that
+    # has been through 9.0 recorded it; no fresh installation from the v10 baseline ever will.
+    "20260406120000",
+}
+
 NAMESPACE = "{http://www.liquibase.org/xml/ns/dbchangelog}"
 CHANGESET_TAG = f"{NAMESPACE}changeSet"
 
@@ -501,7 +511,20 @@ def check_upgrade_from_floor(engine: Engine, liquibase: Liquibase, port: int) ->
             liquibase.apply(fresh, HISTORY_MASTER, command="changelog-sync")
             liquibase.apply(fresh, MASTER)
 
-            return db_schema.diff(fresh.schema(), upgraded.schema(), "fresh", f"upgraded from {version}")
+            failures = db_schema.diff(fresh.schema(), upgraded.schema(), "fresh", f"upgraded from {version}")
+
+            # The schemas matching is not enough. A changelog whose logicalFilePath, id or author is
+            # wrong is not recognised as already applied, so the upgrade runs it again; where its
+            # preconditions make that harmless the schema still comes out right and only the recorded
+            # identity gives it away. Comparing what each side recorded is what notices.
+            for identifier, author, filename in sorted(fresh.changelog_rows() - upgraded.changelog_rows()):
+                failures.append(f"changeset {identifier} ({author}, {filename}) is recorded only on the fresh installation")
+            for identifier, author, filename in sorted(upgraded.changelog_rows() - fresh.changelog_rows()):
+                if identifier in ORPHANED_ON_UPGRADE:
+                    continue
+                failures.append(f"changeset {identifier} ({author}, {filename}) is recorded only after upgrading from {version}")
+
+            return failures
 
 
 def seed_expectations() -> list[tuple[str, int]]:
