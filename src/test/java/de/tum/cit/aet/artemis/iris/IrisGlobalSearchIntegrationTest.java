@@ -133,6 +133,26 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     /**
+     * When every accessible course has Iris switched off, the narrowed scope is empty. An empty list is omitted on the wire and Pyris reads an absent list as unscoped, which
+     * would search exactly the disabled courses through the access context, so the request has to be refused before it reaches Pyris.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "allirisoff", roles = "USER")
+    void search_whenUnscopedAndEveryAccessibleCourseHasIrisDisabled_shouldNotReachPyris() throws Exception {
+        var firstDisabledCourse = courseUtilService.addEmptyCourse();
+        var secondDisabledCourse = courseUtilService.addEmptyCourse();
+        disableIrisFor(firstDisabledCourse);
+        disableIrisFor(secondDisabledCourse);
+
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "allirisoff");
+        userUtilService.enrollUserInCourse(user, firstDisabledCourse, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(user, secondDisabledCourse, CourseRole.STUDENT);
+
+        var requestDTO = new GlobalSearchLectureRequestDTO("machine learning", 5, null);
+        request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.FORBIDDEN);
+    }
+
+    /**
      * A course that never saved Iris settings has no row at all, and the default settings enable Iris. Narrowing must therefore drop only the courses that were explicitly
      * switched off, otherwise content search would silently stop working for every course that never opened the Iris settings page.
      */

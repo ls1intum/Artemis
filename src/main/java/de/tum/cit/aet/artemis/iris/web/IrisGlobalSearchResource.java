@@ -96,6 +96,9 @@ public class IrisGlobalSearchResource {
      * course list, and that context is built from course roles alone, so lecture content belonging to a course whose
      * instructor switched Iris off would still be searchable. Disabling never removes what was already ingested, which
      * is why the scope has to be narrowed here rather than relying on an empty index.
+     * <p>
+     * The narrowed scope is never forwarded empty: {@code PyrisLectureSearchRequestDTO} omits an empty list on the wire and
+     * Pyris reads an absent list as unscoped, so a caller whose courses all have Iris switched off is refused instead.
      *
      * @param requestedCourseIds the course IDs the client asked for, {@code null} or empty for an unscoped search
      * @param accessContext      the caller's resolved access context
@@ -108,16 +111,14 @@ public class IrisGlobalSearchResource {
             // An unrestricted caller carries no course list to narrow, so Pyris keeps its own no-ceiling behaviour.
             return null;
         }
-        if (isUnscoped) {
-            // Nothing was asked for, so there is nothing to refuse: a caller with no Iris-enabled courses simply
-            // searches an empty scope. Only an explicit request for courses that are all disabled is forbidden.
-            var accessibleCourseIds = accessContext.courseIds();
-            return accessibleCourseIds == null ? List.of() : irisSettingsService.filterCourseIdsWithIrisEnabled(accessibleCourseIds);
-        }
-        var enabledCourseIds = irisSettingsService.filterCourseIdsWithIrisEnabled(requestedCourseIds);
-        if (enabledCourseIds.isEmpty()) {
+        // An unscoped request is narrowed from every course the caller can access, a scoped one from what it asked for.
+        var candidateCourseIds = isUnscoped ? accessContext.courseIds() : requestedCourseIds;
+        var enabledCourseIds = irisSettingsService.filterCourseIdsWithIrisEnabled(candidateCourseIds);
+        // A caller without any course has nothing to narrow; its access context is empty too, so Pyris searches nothing.
+        if (enabledCourseIds.isEmpty() && !candidateCourseIds.isEmpty()) {
             // suppress the error alert with skipAlert: true so that the client can fall back to its standard metadata search
-            throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "Iris is disabled for the requested courses", ENTITY_NAME, "iris.course_disabled", true);
+            throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "Iris is disabled for every course in the search scope", ENTITY_NAME, "iris.course_disabled",
+                    true);
         }
         return enabledCourseIds;
     }
