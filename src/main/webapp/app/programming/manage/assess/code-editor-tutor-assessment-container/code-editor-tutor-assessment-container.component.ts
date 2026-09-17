@@ -157,6 +157,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readonly hasAcceptedFeedbackSuggestions = signal(false);
     totalScoreBeforeAssessment!: number; // set in handleFeedback() before any read
 
+    /**
+     * Referenced (manual + automatic) feedback bound to CodeEditorContainerComponent's `referencedFeedback` input
+     * for its file badges: manual on its own would omit automatic feedback (e.g. static analysis findings) that
+     * the file badges counted before this feedback list was split into per-type signals.
+     */
+    readonly referencedFeedbackForBadges = computed(() => [...this.referencedFeedback(), ...this.automaticFeedback()]);
+
     /** Full assessment feedback for the unreferenced-feedback score summary. */
     allAssessmentFeedbacks(): Feedback[] {
         return [...this.referencedFeedback(), ...this.unreferencedFeedback(), ...this.automaticFeedback()];

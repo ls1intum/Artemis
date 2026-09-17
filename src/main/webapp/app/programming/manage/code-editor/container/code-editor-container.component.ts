@@ -95,9 +95,11 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      * (re)compute file badges. Passed as its own signal input rather than derived only from `participation()`:
      * the parent updates it via `.set()` with a fresh array reference on every change, including merges that
      * mutate the existing participation object in place and would therefore not otherwise be picked up by the
-     * badge-update effect below.
+     * badge-update effect below. Left `undefined` (not just an empty array, which is a legitimate "no feedback"
+     * value) for every consumer besides the tutor assessment container, which is the only one that needs this
+     * extra reactivity; {@link collectFeedbackSuggestionBadges} falls back to {@link feedbackForSubmission} then.
      */
-    referencedFeedback = input<Feedback[]>([]);
+    referencedFeedback = input<Feedback[] | undefined>(undefined);
     readOnlyManualFeedback = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
     disableAutoSave = input<boolean>(false);
@@ -217,10 +219,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     }
 
     private collectFeedbackSuggestionBadges(fileBadgesByType: Map<string, Map<FileBadgeType, number>>): void {
-        for (const feedback of this.referencedFeedback()) {
-            if (!Feedback.isFeedbackSuggestion(feedback)) {
-                continue;
-            }
+        // Every referenced feedback counts here, not only AI suggestions: the badge's own tooltip says "Number of
+        // feedback in this file/folder", and every consumer besides the tutor assessment container relies on this
+        // to reflect regular manual and automatic feedback too.
+        for (const feedback of this.referencedFeedback() ?? this.feedbackForSubmission()) {
             const filePath = Feedback.getReferenceFilePath(feedback);
             if (!filePath) {
                 continue;
