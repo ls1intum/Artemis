@@ -40,6 +40,10 @@ class SearchableEntityIndexScanIntegrationTest extends AbstractProgrammingIntegr
     @Autowired
     private WeaviateService weaviateService;
 
+    static boolean isWeaviateEnabled() {
+        return weaviateContainer != null && weaviateContainer.isRunning();
+    }
+
     @BeforeEach
     void seedCollection() throws Exception {
         for (int index = 0; index < SEEDED_ROWS; index++) {
