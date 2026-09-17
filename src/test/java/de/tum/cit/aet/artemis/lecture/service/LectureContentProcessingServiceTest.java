@@ -408,6 +408,7 @@ class LectureContentProcessingServiceTest {
         @Test
         void shouldSaveRawTranscriptionAndStayInTranscribing() {
             // Given: State is TRANSCRIBING with valid token
+            testState.setId(PROCESSING_STATE_ID);
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
 
@@ -415,6 +416,7 @@ class LectureContentProcessingServiceTest {
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
             when(transcriptionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.touchLastUpdated(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
 
             // Raw transcript: all slideNumber=0
             String rawJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":0}]}";
@@ -430,6 +432,7 @@ class LectureContentProcessingServiceTest {
         @Test
         void shouldSaveEnrichedTranscriptionAndTransitionToIngesting() {
             // Given: State is TRANSCRIBING with valid token
+            testState.setId(PROCESSING_STATE_ID);
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             testState.setRetryCount(2); // Had retries during transcription
@@ -438,6 +441,7 @@ class LectureContentProcessingServiceTest {
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
             when(transcriptionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
 
             // Enriched transcript: some slideNumber≠0
             String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
@@ -1221,10 +1225,12 @@ class LectureContentProcessingServiceTest {
 
         @Test
         void shouldBroadcastLiveStageProgressWhenTheCounterAdvances() {
+            testState.setId(PROCESSING_STATE_ID);
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.applyHeartbeat(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any(), any(), any(), any())).thenReturn(1);
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
 
             callbackService.handleHeartbeat(testUnit.getId(), TEST_JOB_TOKEN, "chunking", 5, 64);
@@ -1237,10 +1243,12 @@ class LectureContentProcessingServiceTest {
 
         @Test
         void shouldNotBroadcastWhenTheHeartbeatCarriesNoNewProgress() {
+            testState.setId(PROCESSING_STATE_ID);
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.applyHeartbeat(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any(), any(), any(), any())).thenReturn(1);
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
 
             callbackService.handleHeartbeat(testUnit.getId(), TEST_JOB_TOKEN, "chunking", 5, 64);

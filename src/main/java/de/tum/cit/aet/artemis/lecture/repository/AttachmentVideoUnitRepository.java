@@ -148,6 +148,13 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
     /**
      * Find the next course ids that hold attachment video units, ordered by id, starting after the given cursor.
      * Drives the ingestion reconciler's round-robin walk over all courses, including inactive and archived ones.
+     * <p>
+     * Deliberately does NOT filter out tutorial lectures, unlike {@link #findAllWithAttachmentByCourseId}: a
+     * course whose only attachment video units are on a tutorial lecture (or became one after content was
+     * already ingested) still needs to be walked so {@code deleteOrphanedIndexRows} can garbage-collect its
+     * Iris rows. Without this, such a course drops off the walk entirely and its orphaned rows are never
+     * cleaned up. The per-unit reconcile loop still excludes tutorial units from active re-ingestion via
+     * {@link #findAllWithAttachmentByCourseId}; only the course-level cleanup traversal is unfiltered here.
      *
      * @param courseId the course id to continue after (exclusive); pass 0 to start from the beginning
      * @param pageable pagination to limit the number of courses per walk
@@ -159,7 +166,6 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
             JOIN l.course c
             WHERE c.id > :courseId
                 AND c.testCourse = FALSE
-                AND l.isTutorialLecture = FALSE
             ORDER BY c.id
             """)
     List<Long> findCourseIdsWithAttachmentVideoUnitsAfter(@Param("courseId") long courseId, Pageable pageable);

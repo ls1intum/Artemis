@@ -455,6 +455,25 @@ class LectureContentProcessingSchedulerTest {
         }
 
         @Test
+        void shouldNotFailACounterlessStageNoMatterHowLongItRunsWhileAlive() {
+            // The stage was entered (lastProgressAt set once) but never reports a counter — an audit
+            // stage, say. Without the guard, lastProgressAt freezes at stage entry and this run would
+            // eventually read as stalled no matter how long it legitimately takes.
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken("token");
+            testState.recordStageProgress("audit", null, null);
+            ReflectionTestUtils.setField(testState, "lastProgressAt", ZonedDateTime.now().minusMinutes(40));
+            testState.setLastUpdated(ZonedDateTime.now().minusMinutes(1));
+
+            when(processingStateRepository.findByPhaseIn(any())).thenReturn(List.of(testState));
+            when(processingStateRepository.findStuckStates(any(), any(ZonedDateTime.class), any(ZonedDateTime.class))).thenReturn(List.of());
+
+            scheduler.processScheduledRetries();
+
+            verify(callbackService, never()).handleProcessingFailure(any());
+        }
+
+        @Test
         void shouldIgnoreRunsWithoutStageReporting() {
             // Older Iris versions report no stage; only the plain heartbeat timeout applies
             testState.setPhase(ProcessingPhase.INGESTING);

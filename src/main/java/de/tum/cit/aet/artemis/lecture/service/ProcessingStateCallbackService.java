@@ -699,9 +699,18 @@ public class ProcessingStateCallbackService {
             return;
         }
 
-        state.setLastUpdated(ZonedDateTime.now());
+        ZonedDateTime now = ZonedDateTime.now();
+        state.setLastUpdated(now);
         boolean stageAdvanced = state.recordStageProgress(stageName, stageProgress, stageTotal);
-        processingStateRepository.save(state);
+        // Conditional on the token and an in-flight phase, not a blind save: a terminal callback for this
+        // run may have landed between the read above and this write, and would have cleared the token.
+        // Matching on it here is what stops this heartbeat from reviving a run that already finished.
+        int applied = processingStateRepository.applyHeartbeat(state.getId(), jobToken, now, state.getCurrentStage(), state.getStageStartedAt(), state.getStageProgress(),
+                state.getStageTotal(), state.getLastProgressAt());
+        if (applied == 0) {
+            log.debug("Ignoring heartbeat for unit {}: the run is no longer in flight under this token", lectureUnitId);
+            return;
+        }
 
         // Push the live stage counter to the client only when the stage or the number actually moved.
         // Bare heartbeats still refresh liveness above, but do not spam the WebSocket every few seconds.
@@ -757,12 +766,21 @@ public class ProcessingStateCallbackService {
 
             transcriptionRepository.save(transcription);
 
-            // Transition: TRANSCRIBING → INGESTING (keep same job token — Iris continues the pipeline)
+            // Transition: TRANSCRIBING → INGESTING (keep same job token — Iris continues the pipeline).
+            // Conditional on the token and TRANSCRIBING, not a blind save: see the comment on
+            // LectureUnitProcessingStateRepository#transitionToIngestingIfTranscribing.
+            String jobToken = state.getIngestionJobToken();
+            ZonedDateTime now = ZonedDateTime.now();
+            if (processingStateRepository.transitionToIngestingIfTranscribing(state.getId(), jobToken, now) == 0) {
+                log.debug("Ignoring enriched checkpoint for unit {}: the run is no longer TRANSCRIBING under this token", lectureUnitId);
+                return;
+            }
+
+            // Notify UI via WebSocket. The in-memory entity is stale by design (its own write was skipped
+            // in favor of the conditional update above); mirror the same fields onto it purely to report
+            // the state that was just written, without a second read.
             state.resetRetryCount();
             state.transitionTo(ProcessingPhase.INGESTING);
-            processingStateRepository.save(state);
-
-            // Notify UI via WebSocket
             notifyProcessingStateChange(state, TranscriptionStatus.COMPLETED);
         }
         else {
@@ -770,9 +788,11 @@ public class ProcessingStateCallbackService {
             log.info("Raw transcription checkpoint saved for unit {}, staying in TRANSCRIBING", lectureUnitId);
             transcriptionRepository.save(transcription);
 
-            // Update lastUpdated as heartbeat (prevents stuck detection)
-            state.setLastUpdated(ZonedDateTime.now());
-            processingStateRepository.save(state);
+            // Update lastUpdated as heartbeat (prevents stuck detection). Conditional for the same reason
+            // as the enriched branch above.
+            if (processingStateRepository.touchLastUpdated(state.getId(), state.getIngestionJobToken(), ZonedDateTime.now()) == 0) {
+                log.debug("Ignoring raw checkpoint for unit {}: the run is no longer in flight under this token", lectureUnitId);
+            }
         }
     }
 

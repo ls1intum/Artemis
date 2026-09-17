@@ -258,7 +258,11 @@ public class LectureContentProcessingScheduler {
             boolean callbacksRecent = state.getLastUpdated() != null && state.getLastUpdated().isAfter(now.minusMinutes(NO_CALLBACK_TIMEOUT_MINUTES));
             boolean leaseHeld = state.getLastHeartbeatAt() != null && state.getLastHeartbeatAt().isAfter(now.minus(LEASE_EXPIRY));
             boolean heartbeatsAlive = callbacksRecent || leaseHeld;
-            boolean progressFrozen = state.getLastProgressAt().isBefore(now.minus(stallWindow));
+            // A stage that never reports a counter still sets lastProgressAt once, on entry (see
+            // recordStageProgress), and then never again — so without this guard a healthy counterless
+            // stage would eventually read as frozen no matter how long it legitimately runs. Such a stage
+            // is judged by the no-callback arm above instead, exactly as the class doc describes.
+            boolean progressFrozen = state.getStageProgress() != null && state.getLastProgressAt().isBefore(now.minus(stallWindow));
             if (heartbeatsAlive && progressFrozen) {
                 failStalledState(state);
             }

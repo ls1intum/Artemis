@@ -398,7 +398,10 @@ public class LectureUnitProcessingState extends DomainObject {
         }
         ZonedDateTime now = ZonedDateTime.now();
         boolean stageChanged = !stageName.equals(this.currentStage);
-        boolean progressAdvanced = stageProgress != null && !stageProgress.equals(this.stageProgress);
+        // An equal-or-lower value is not progress: an out-of-order or retried callback (e.g. 41, 40, 41)
+        // must not refresh the stall clock, or a genuinely wedged stage could hide behind noise on the
+        // counter forever. The first report for a stage (this.stageProgress still null) always counts.
+        boolean progressAdvanced = stageProgress != null && (this.stageProgress == null || stageProgress > this.stageProgress);
         if (stageChanged) {
             this.currentStage = stageName;
             this.stageStartedAt = now;

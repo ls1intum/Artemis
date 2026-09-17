@@ -358,6 +358,81 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     int releaseAbandonedIdleClaims(@Param("cutoffTime") ZonedDateTime cutoffTime, @Param("now") ZonedDateTime now);
 
     /**
+     * Apply a heartbeat's stage/progress fields, but only while the run is still in flight under the
+     * token that reported them. A terminal callback (success or failure) clears the token before this
+     * runs; matching on it here is what stops a heartbeat whose read raced ahead of that terminal write
+     * from reviving a row the terminal callback already finished, since the predicate then matches no
+     * row and the write is silently dropped instead of overwriting the DONE/FAILED state.
+     *
+     * @param id             the processing state to update
+     * @param token          the job token the heartbeat carried
+     * @param now            recorded as the new {@code lastUpdated}
+     * @param currentStage   the stage name to store
+     * @param stageStartedAt when the current stage began
+     * @param stageProgress  the stage's progress counter, may be null
+     * @param stageTotal     the stage's total work items, may be null
+     * @param lastProgressAt when the progress clock was last advanced
+     * @return 1 when applied, 0 when the run is no longer in flight under this token
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.lastUpdated = :now, ps.currentStage = :currentStage, ps.stageStartedAt = :stageStartedAt,
+                ps.stageProgress = :stageProgress, ps.stageTotal = :stageTotal, ps.lastProgressAt = :lastProgressAt
+            WHERE ps.id = :id
+            AND ps.ingestionJobToken = :token
+            AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.TRANSCRIBING, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING)
+            """)
+    int applyHeartbeat(@Param("id") long id, @Param("token") String token, @Param("now") ZonedDateTime now, @Param("currentStage") String currentStage,
+            @Param("stageStartedAt") ZonedDateTime stageStartedAt, @Param("stageProgress") Integer stageProgress, @Param("stageTotal") Integer stageTotal,
+            @Param("lastProgressAt") ZonedDateTime lastProgressAt);
+
+    /**
+     * Refresh liveness only, for a raw (non-enriched) transcription checkpoint that reports no stage
+     * progress of its own. Same token-and-phase guard as {@link #applyHeartbeat}, for the same reason.
+     *
+     * @param id    the processing state to update
+     * @param token the job token the checkpoint carried
+     * @param now   recorded as the new {@code lastUpdated}
+     * @return 1 when applied, 0 when the run is no longer in flight under this token
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.lastUpdated = :now
+            WHERE ps.id = :id
+            AND ps.ingestionJobToken = :token
+            AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.TRANSCRIBING, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING)
+            """)
+    int touchLastUpdated(@Param("id") long id, @Param("token") String token, @Param("now") ZonedDateTime now);
+
+    /**
+     * Transition TRANSCRIBING to INGESTING for an enriched transcription checkpoint, atomically: same
+     * token-and-phase guard as {@link #applyHeartbeat}, and the same field set {@link
+     * de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState#transitionTo} applies, so a
+     * checkpoint racing a terminal callback cannot revive a run the terminal callback already finished.
+     *
+     * @param id    the processing state to update
+     * @param token the job token the checkpoint carried
+     * @param now   recorded as the new {@code startedAt} and {@code lastUpdated}
+     * @return 1 when applied, 0 when the run is no longer in flight under this token
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING, ps.startedAt = :now, ps.lastUpdated = :now,
+                ps.errorKey = NULL, ps.retryEligibleAt = NULL, ps.retryCount = 0,
+                ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL
+            WHERE ps.id = :id
+            AND ps.ingestionJobToken = :token
+            AND ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.TRANSCRIBING
+            """)
+    int transitionToIngestingIfTranscribing(@Param("id") long id, @Param("token") String token, @Param("now") ZonedDateTime now);
+
+    /**
      * Activate a claim exactly once: turn a claimed row into an in-flight run, but only while it still holds the claim
      * that produced the activation. A claimed IDLE row carries {@code startedAt}; a claimed FAILED retry carries its
      * lease in {@code retryEligibleAt}. Neither has a job token yet. A row that was released by the abandoned-claim
