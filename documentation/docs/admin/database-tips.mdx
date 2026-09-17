@@ -300,12 +300,19 @@ Use the following script like `python3 ./merge.py > merged.pg.sql` to create the
                    return match.group("schema")
        raise SystemExit(f"{data_file_path} contains no COPY statement")
 
-   def _to_public(line: str, schema: str) -> str:
-       return line.replace(f"COPY {schema}.", "COPY public.", 1).replace(
-           f"setval('{schema}.", "setval('public.", 1
-       )
+   def _to_public(line: str, schema_prefix: "re.Pattern[str]") -> str:
+       return schema_prefix.sub(r"\1public.", line, count=1)
 
-   def _extract_data(data_file_path: Path, schema: str) -> None:
+   def _schema_prefix(schema: str) -> "re.Pattern[str]":
+       """Matches the schema qualifier pgloader wrote, quoted or not.
+
+       pg_dump quotes an identifier that would not survive being folded to lower
+       case, so a database left under the default lower_case_table_names=0 gives
+       COPY "Artemis".feedback while the helper's setting gives COPY artemis.feedback.
+       """
+       return re.compile(r"(COPY |setval\(')\"?" + re.escape(schema) + r"\"?\.")
+
+   def _extract_data(data_file_path: Path, schema_prefix: "re.Pattern[str]") -> None:
        """Print the table data and the sequence positions from the pgloader dump.
 
        COPY blocks are tracked explicitly, because in PostgreSQL's text format
@@ -333,14 +340,14 @@ Use the following script like `python3 ./merge.py > merged.pg.sql` to create the
                    inside_block = True
                    skipping = table in SCHEMA_OWNED_TABLES
                    if not skipping:
-                       print(_to_public(line, schema), end="")
+                       print(_to_public(line, schema_prefix), end="")
                    continue
 
                if not data_started:
                    continue
                if line.startswith("ALTER TABLE "):
                    break
-               print(_to_public(line, schema), end="")
+               print(_to_public(line, schema_prefix), end="")
 
    def _extract_schema_owned_data(schema_file_path: Path) -> None:
        """Print databasechangelog and databasechangeloglock from the schema dump."""
@@ -357,7 +364,7 @@ Use the following script like `python3 ./merge.py > merged.pg.sql` to create the
                    print(line, end="")
 
    def _merge_files(*, schema_file_path: Path, data_file_path: Path) -> None:
-       schema = _detect_schema(data_file_path)
+       schema_prefix = _schema_prefix(_detect_schema(data_file_path))
 
        with open(schema_file_path, encoding="utf-8") as schema_file:
            schema_file_iter: Iterator[str] = iter(schema_file)
@@ -366,7 +373,7 @@ Use the following script like `python3 ./merge.py > merged.pg.sql` to create the
                    break
                print(line, end="")
 
-           _extract_data(data_file_path, schema)
+           _extract_data(data_file_path, schema_prefix)
            _extract_schema_owned_data(schema_file_path)
 
            alter_table_found = False
@@ -402,13 +409,33 @@ The schema `public` of the target database will be deleted and completely overwr
 
 <Callout variant={CalloutVariant.info}>
 
-Two checks are worth running once before the instance is handed back to users, because both failure modes are quiet:
+Two checks are worth running once before the instance is handed back to users, because both failure modes are quiet.
+
+**Every table's row count**, to compare against the same figures taken from MySQL before the migration. These have to be exact counts. `pg_stat_user_tables.n_live_tup` and MySQL's `information_schema.TABLES.TABLE_ROWS` are both estimates that a freshly restored database has not updated yet, so neither of them detects a transfer that lost rows.
 
 ```sql
--- every table's row count, to compare against the MySQL side
-SELECT relname, n_live_tup FROM pg_stat_user_tables ORDER BY relname;
+-- PostgreSQL, after the migration
+SELECT relname AS table_name,
+       (xpath('/row/cnt/text()',
+              query_to_xml(format('SELECT COUNT(*) AS cnt FROM public.%I', relname),
+                           false, true, '')))[1]::text::bigint AS row_count
+FROM pg_stat_user_tables
+ORDER BY relname;
+```
 
--- any identity sequence that would hand out an id already in use
+```bash
+# MySQL, before the migration, for the same comparison
+mysql -N -B -D Artemis -e "SHOW TABLES" | while read -r table; do
+    printf '%s\t%s\n' "$table" \
+        "$(mysql -N -B -D Artemis -e "SELECT COUNT(*) FROM \`$table\`")"
+done | sort
+```
+
+Every table has to match, with one expected exception: `databasechangelog` and `databasechangeloglock` differ on purpose, because `merge.py` takes them from the PostgreSQL side. If Artemis has already started and created its internal admin account, the tables holding that account and its audit trail differ by those few rows as well.
+
+**Every identity sequence**, which has to sit above the largest id already in its table:
+
+```sql
 SELECT c.relname AS table_name, a.attname AS column_name
 FROM pg_class c
   JOIN pg_namespace n ON n.oid = c.relnamespace
@@ -417,7 +444,7 @@ WHERE n.nspname = 'public' AND c.relkind = 'r'
   AND pg_get_serial_sequence(c.oid::regclass::text, a.attname) IS NOT NULL;
 ```
 
-For each sequence the second query returns, `nextval` has to be greater than the largest id in the table. pgloader repositions the sequences and `merge.py` carries the new positions over, so this should hold everywhere; if it does not, the first write to that table after go-live fails with a duplicate key error.
+For each sequence this returns, `nextval` has to be greater than the largest id in the table. pgloader repositions the sequences and `merge.py` carries the new positions over, so this should hold everywhere; if it does not, the first write to that table after go-live fails with a duplicate key error.
 
 </Callout>
 
