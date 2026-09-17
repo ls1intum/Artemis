@@ -3,7 +3,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
-import { SearchEntityType } from '../../../models/searchable-entity.model';
+import { SearchFilterTag } from '../../../models/searchable-entity.model';
+import { LECTURE_CONTENT_TYPE } from '../../../models/lecture-content-result.util';
 
 @Component({
     selector: 'jhi-global-search-input',
@@ -22,30 +23,31 @@ export class SearchInputComponent {
         channel: 'global.search.entities.communicationTitle',
         faq: 'global.search.entities.faqsTitle',
         exam: 'global.search.entities.examsTitle',
+        [LECTURE_CONTENT_TYPE]: 'global.search.entities.slidesAndVideosTitle',
     };
 
     /**
      * Communication-related filter types that are grouped under a single "Communication" chip.
      */
-    private static readonly COMMUNICATION_FILTER_TYPES: Set<SearchEntityType> = new Set(['channel', 'post', 'answer_post']);
+    private static readonly COMMUNICATION_FILTER_TYPES: ReadonlySet<SearchFilterTag> = new Set(['channel', 'post', 'answer_post']);
 
     /**
      * Lecture-related filter types that are grouped under a single "Lectures" chip.
      */
-    private static readonly LECTURE_FILTER_TYPES: Set<SearchEntityType> = new Set(['lecture', 'lecture_unit']);
+    private static readonly LECTURE_FILTER_TYPES: ReadonlySet<SearchFilterTag> = new Set(['lecture', 'lecture_unit']);
 
     private readonly translateService = inject(TranslateService);
     protected readonly faSearch = faSearch;
     protected readonly faTimes = faTimes;
 
     searchQuery = input.required<string>();
-    activeFilters = input.required<SearchEntityType[]>();
+    activeFilters = input.required<SearchFilterTag[]>();
     courseFilterLabel = input<string | undefined>(undefined);
     isLoading = input.required<boolean>();
 
     searchInput = output<string>();
     searchKeyDown = output<KeyboardEvent>();
-    filterRemoved = output<SearchEntityType>();
+    filterRemoved = output<SearchFilterTag>();
     courseFilterRemoved = output<void>();
     /** Emitted when Backspace is pressed while the cursor is at the beginning of the input. */
     backspaceOnEmpty = output<void>();
@@ -63,7 +65,7 @@ export class SearchInputComponent {
         const filters = this.activeFilters();
         let hasCommunication = false;
         let hasLecture = false;
-        const result: SearchEntityType[] = [];
+        const result: SearchFilterTag[] = [];
         for (const f of filters) {
             if (SearchInputComponent.COMMUNICATION_FILTER_TYPES.has(f)) {
                 if (!hasCommunication) {
@@ -103,7 +105,7 @@ export class SearchInputComponent {
         this.searchKeyDown.emit(event);
     }
 
-    protected onFilterRemove(filter: SearchEntityType) {
+    protected onFilterRemove(filter: SearchFilterTag) {
         this.filterRemoved.emit(filter);
     }
 

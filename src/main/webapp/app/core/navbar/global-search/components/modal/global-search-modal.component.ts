@@ -1,35 +1,40 @@
 import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, computed, effect, inject, signal, untracked, viewChild, viewChildren } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { EMPTY, Subject, catchError, filter, of, switchMap, tap, timer } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { EMPTY, Observable, Subject, catchError, filter, map, of, switchMap, tap, timeout, timer } from 'rxjs';
 import { SearchOverlayService } from '../../services/search-overlay.service';
 import { OsDetectorService } from '../../services/os-detector.service';
+import { IrisSearchAvailabilityService } from '../../services/iris-search-availability.service';
+import { LectureSearchService } from '../../services/lecture-search.service';
+import { LECTURE_CONTENT_TYPE, mapLectureContentResult } from '../../models/lecture-content-result.util';
 import { AccountService } from 'app/core/auth/account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowDown, faArrowUp } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DialogModule } from 'primeng/dialog';
-import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { GlobalSearchNavigationViewComponent } from 'app/core/navbar/global-search/components/views/navigation-view/global-search-navigation-view.component';
 import { MIN_SEARCH_QUERY_LENGTH, SEARCH_DEBOUNCE_MS, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { GlobalSearchApi } from 'app/openapi/api/global-search-api';
 import { SearchInputComponent } from './search-input/search-input.component';
-import { SearchEntityType, SearchableEntity } from '../../models/searchable-entity.model';
-import { GlobalSearchLectureResultsComponent } from 'app/core/navbar/global-search/components/views/lecture-results/global-search-lecture-results.component';
+import { SearchEntityType, SearchFilterTag, SearchableEntity } from '../../models/searchable-entity.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { TranslateService } from '@ngx-translate/core';
 
 interface SearchState {
     query: string;
-    filters: SearchEntityType[];
+    filters: SearchFilterTag[];
 }
+
+/** Max time to wait for Iris content search before reporting it as unavailable. */
+export const CONTENT_SEARCH_TIMEOUT_MS = 5_000;
 
 @Component({
     selector: 'jhi-global-search-modal',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [DialogModule, FaIconComponent, ArtemisTranslatePipe, GlobalSearchNavigationViewComponent, GlobalSearchLectureResultsComponent, SearchInputComponent],
+    imports: [DialogModule, FaIconComponent, ArtemisTranslatePipe, GlobalSearchNavigationViewComponent, SearchInputComponent],
     templateUrl: './global-search-modal.component.html',
     styleUrls: ['./global-search-modal.component.scss'],
 })
@@ -41,13 +46,13 @@ export class GlobalSearchModalComponent implements OnDestroy {
     private readonly searchService = inject(GlobalSearchApi);
     private readonly courseStorageService = inject(CourseStorageService);
     private readonly translateService = inject(TranslateService);
+    private readonly availability = inject(IrisSearchAvailabilityService);
+    private readonly lectureSearchService = inject(LectureSearchService);
     protected readonly faArrowUp = faArrowUp;
     protected readonly faArrowDown = faArrowDown;
     protected readonly searchInputComponent = viewChild<SearchInputComponent>(SearchInputComponent);
-    protected readonly currentView = signal(SearchView.Navigation);
-    protected readonly SearchView = SearchView;
     protected readonly searchQuery = signal('');
-    protected readonly activeFilters = signal<SearchEntityType[]>([]);
+    protected readonly activeFilters = signal<SearchFilterTag[]>([]);
     protected readonly activeCourseId = signal<number | undefined>(undefined);
     protected readonly activeCourseLabel = signal<string | undefined>(undefined);
     protected readonly results = signal<GlobalSearchResult[]>([]);
@@ -124,6 +129,11 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     }
 
                     this.searchError.set(undefined);
+                    // Slides and videos live in the Iris collections, not in the searchable entities, so that filter
+                    // never reaches the metadata search.
+                    if (filters.includes(LECTURE_CONTENT_TYPE)) {
+                        return this.searchLectureContent(trimmedQuery, hasValidQuery);
+                    }
                     const typeFilter = hasFilter ? filters.join(',') : undefined;
                     const searchQuery = hasValidQuery ? trimmedQuery : '';
                     const courseId = this.activeCourseId();
@@ -138,7 +148,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
                         }
                     }
 
-                    // Network search — debounce, then fire HTTP request
+                    // Network search: debounce, then fire the HTTP request
                     this.isLoading.set(true);
                     return timer(SEARCH_DEBOUNCE_MS).pipe(
                         switchMap(() =>
@@ -194,11 +204,6 @@ export class GlobalSearchModalComponent implements OnDestroy {
     }
 
     /**
-     * Maps route segments (e.g. 'exercises') to search filter tags (e.g. ['exercise']).
-     * Includes both student view segments (e.g. 'faq') and instructor view segments (e.g. 'faqs').
-     * Exams include 'exercise' because exams contain exercises.
-     */
-    /**
      * Matches course URLs in both student view (`/courses/:courseId`) and instructor view (`/course-management/:courseId`),
      * optionally capturing a tab segment (e.g. `exercises`, `lectures`).
      *
@@ -208,10 +213,14 @@ export class GlobalSearchModalComponent implements OnDestroy {
      */
     private static readonly COURSE_URL_PATTERN = /\/(?:courses|course-management)\/(\d+)(?:\/([^/?#]+))?/;
 
-    private static readonly COMMUNICATION_FILTER_TYPES: ReadonlySet<SearchEntityType> = new Set(['channel', 'post', 'answer_post']);
+    private static readonly COMMUNICATION_FILTER_TYPES: ReadonlySet<SearchFilterTag> = new Set(['channel', 'post', 'answer_post']);
 
-    private static readonly LECTURE_FILTER_TYPES: ReadonlySet<SearchEntityType> = new Set(['lecture', 'lecture_unit']);
+    private static readonly LECTURE_FILTER_TYPES: ReadonlySet<SearchFilterTag> = new Set(['lecture', 'lecture_unit']);
 
+    /**
+     * Maps route segments (e.g. 'exercises') to search filter tags (e.g. ['exercise']).
+     * Includes both student view segments (e.g. 'faq') and instructor view segments (e.g. 'faqs').
+     */
     private static readonly ROUTE_TO_FILTER_TAG: Record<string, SearchEntityType[]> = {
         exercises: ['exercise'],
         lectures: ['lecture', 'lecture_unit'],
@@ -220,6 +229,43 @@ export class GlobalSearchModalComponent implements OnDestroy {
         faq: ['faq'],
         faqs: ['faq'],
     };
+
+    /**
+     * Runs Iris content search for the slides and videos filter. It never falls back to the metadata search, which covers
+     * a different collection and would answer with entities instead of slides or videos. A failure is reported instead:
+     * a 403 means Iris is switched off for every course in scope, anything else means content search is unavailable.
+     *
+     * @param query         the trimmed search term
+     * @param hasValidQuery whether the term is long enough to search; without one the view prompts for it
+     * @return the mapped content hits, or an empty list alongside a prompt or an error message
+     */
+    private searchLectureContent(query: string, hasValidQuery: boolean): Observable<GlobalSearchResult[]> {
+        if (!hasValidQuery) {
+            this.isLoading.set(false);
+            return of([]);
+        }
+        if (!this.availability.contentSearchAvailable()) {
+            this.isLoading.set(false);
+            this.searchError.set('global.search.contentSearchUnavailable');
+            return of([]);
+        }
+        const courseId = this.activeCourseId();
+        this.isLoading.set(true);
+        return timer(SEARCH_DEBOUNCE_MS).pipe(
+            switchMap(() =>
+                this.lectureSearchService.search(query, 10, courseId ? [courseId] : undefined).pipe(
+                    timeout(CONTENT_SEARCH_TIMEOUT_MS),
+                    map((results) => results.map(mapLectureContentResult)),
+                    catchError((error: unknown) => {
+                        const irisDisabledForScope = error instanceof HttpErrorResponse && error.status === 403;
+                        this.isLoading.set(false);
+                        this.searchError.set(irisDisabledForScope ? 'global.search.contentSearchDisabled' : 'global.search.contentSearchUnavailable');
+                        return of([]);
+                    }),
+                ),
+            ),
+        );
+    }
 
     /**
      * Parses the current URL to detect course context and tab,
@@ -286,7 +332,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
         }
     }
 
-    protected addFilter(filterTypes: SearchEntityType[]) {
+    protected addFilter(filterTypes: SearchFilterTag[]) {
         // For now, only one filter group at a time (can be extended later)
         const current = this.activeFilters();
         if (filterTypes.length !== current.length || filterTypes.some((t) => !current.includes(t))) {
@@ -305,7 +351,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
         }
     }
 
-    protected removeFilter(filterType: SearchEntityType) {
+    protected removeFilter(filterType: SearchFilterTag) {
         // Grouped filters (communication, lectures) are shown as a single chip, so removing that chip
         // must clear every underlying type in the group, not just the one the chip is labelled with.
         const group = GlobalSearchModalComponent.filterGroupFor(filterType);
@@ -318,7 +364,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
      * Returns the grouped filter-type set that {@link filterType} belongs to (communication or lectures),
      * or {@code undefined} for a standalone type. Grouped types are collapsed into a single chip in the UI.
      */
-    private static filterGroupFor(filterType: SearchEntityType): ReadonlySet<SearchEntityType> | undefined {
+    private static filterGroupFor(filterType: SearchFilterTag): ReadonlySet<SearchFilterTag> | undefined {
         if (GlobalSearchModalComponent.COMMUNICATION_FILTER_TYPES.has(filterType)) {
             return GlobalSearchModalComponent.COMMUNICATION_FILTER_TYPES;
         }
@@ -360,7 +406,6 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.hasSearched.set(false);
         this.isLoading.set(false);
         this.searchError.set(undefined);
-        this.currentView.set(SearchView.Navigation);
         this.placeholderCache.clear();
     }
 
@@ -383,11 +428,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
         switch (event.key) {
             case 'Escape':
                 event.preventDefault();
-                if (this.currentView() !== SearchView.Navigation) {
-                    this.navigateTo(SearchView.Navigation);
-                } else {
-                    this.overlay.close();
-                }
+                this.overlay.close();
                 break;
             case 'ArrowDown':
                 event.preventDefault();
@@ -402,14 +443,5 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
     private isToggleShortcut(event: KeyboardEvent): boolean {
         return event.key.toLowerCase() === 'k' && this.osDetector.isActionKey(event) && this.accountService.isAuthenticated() && !event.repeat;
-    }
-
-    protected navigateTo(view: SearchView) {
-        if (view === SearchView.Lecture) {
-            // TODO lecture search should support filters aswell
-            this.removeCourseFilter();
-        }
-        this.currentView.set(view);
-        this.selectedIndex.set(-1);
     }
 }
