@@ -159,6 +159,21 @@ public final class SearchableEntitySchema {
          */
         public static final String SOURCE_SEQ = "source_seq";
 
+        /**
+         * Operational (non-display): the content hash of the property map this row was written from, carrying the
+         * version of the algorithm that produced it (see {@code SearchableEntityContentHasher}).
+         * <p>
+         * Every other consistency check compares the database against the sync-state ledger, and both of those live
+         * in Postgres, so none of them ever reads what the index actually holds. Storing the hash on the row itself
+         * is what lets a reconcile pass detect that Weaviate diverged from what we believe we wrote, for example
+         * after a restore from an older snapshot, a write that reported success without persisting, or a manual
+         * edit. Deliberately excluded from the hash it stores, which would otherwise be self-referential.
+         * <p>
+         * Absent (null) on rows written before this property existed. Such a row is not corrupt, it is simply
+         * unverified, and a reconcile pass rewrites it once to bring it under verification.
+         */
+        public static final String CONTENT_HASH = "content_hash";
+
         private Properties() {
         }
     }
@@ -215,5 +230,9 @@ public final class SearchableEntitySchema {
             filterable(Properties.POST_ID, INT, "The ID of the parent post (only set for type 'answer_post', null for all other types)"),
 
             // Operational field (present on every upserted row): the outbox write id, used to fence bulk deletes against newer writes
-            filterable(Properties.SOURCE_SEQ, INT, "The outbox write id that produced this row; a bulk delete only removes rows written before it")));
+            filterable(Properties.SOURCE_SEQ, INT, "The outbox write id that produced this row; a bulk delete only removes rows written before it"),
+
+            // Operational field (present on every upserted row): stored, but never indexed or filtered on. A reconcile pass
+            // reads it back by projection while scanning the collection, so it needs no inverted index of its own.
+            nonSearchable(Properties.CONTENT_HASH, TEXT, "The versioned content hash of the data this row was written from; a reconcile pass compares it to detect index drift")));
 }

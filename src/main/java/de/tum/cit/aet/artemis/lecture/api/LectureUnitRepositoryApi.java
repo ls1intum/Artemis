@@ -8,6 +8,7 @@ import java.util.Set;
 import org.hibernate.NonUniqueResultException;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -44,6 +45,27 @@ public class LectureUnitRepositoryApi extends AbstractLectureApi {
 
     public Optional<LectureUnit> findByNameAndLectureTitleAndCourseIdWithCompetencies(String name, String lectureTitle, long courseId) throws NonUniqueResultException {
         return lectureUnitRepository.findByNameAndLectureTitleAndCourseIdWithCompetencies(name, lectureTitle, courseId);
+    }
+
+    /**
+     * Checks which of the given ids is currently indexable, for the pass that removes index rows with no backing entity.
+     *
+     * @param entityIds the ids to check
+     * @return the subset that is currently indexable
+     */
+    public Set<Long> findIndexableUnitIds(Collection<Long> entityIds) {
+        return lectureUnitRepository.findIndexableUnitIds(entityIds);
+    }
+
+    /**
+     * Walks the ids expected to be indexed, one page at a time, for the reconcile passes.
+     *
+     * @param afterId the id the previous page stopped at
+     * @param limit   the page size
+     * @return the next indexable lecture unit ids in ascending order
+     */
+    public List<Long> findIndexableUnitIdsAfter(long afterId, int limit) {
+        return lectureUnitRepository.findIndexableUnitIdsAfter(afterId, PageRequest.ofSize(limit));
     }
 
     public LectureUnit findByIdElseThrow(long lectureUnitId) {

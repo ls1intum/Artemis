@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOperation;
+import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
@@ -54,11 +55,13 @@ class SearchableEntityWeaviateServiceEnqueueTest {
 
     private final SearchableEntityResolver resolver = mock(SearchableEntityResolver.class);
 
+    private final SearchableEntityContentHasher contentHasher = new SearchableEntityContentHasher(objectMapper);
+
     private SearchableEntityWeaviateService service;
 
     @BeforeEach
     void setUp() {
-        service = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, objectMapper, eventPublisher);
+        service = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, objectMapper, contentHasher, eventPublisher);
     }
 
     @Test
@@ -71,6 +74,7 @@ class SearchableEntityWeaviateServiceEnqueueTest {
         assertThat(entry.getOperation()).isEqualTo(WeaviateOutboxOperation.UPSERT);
         assertThat(entry.getEntityType()).isEqualTo(SearchableEntitySchema.TypeValues.COURSE);
         assertThat(entry.getEntityId()).isEqualTo(42L);
+        assertThat(entry.getOrigin()).as("the request path is the live origin").isEqualTo(WeaviateOutboxOrigin.LIVE);
         // The row stores only the entity identity; the dispatcher re-derives the property map at apply time.
         assertThat(entry.getParams()).isNull();
         // No write must reach Weaviate from the request path; the only Weaviate entry point is getCollection.
@@ -157,6 +161,43 @@ class SearchableEntityWeaviateServiceEnqueueTest {
         Map<String, Object> params = objectMapper.readValue(entry.getParams(), new TypeReference<>() {
         });
         assertThat(((Number) params.get(paramKey)).longValue()).isEqualTo(paramValue);
+    }
+
+    @Test
+    void testEnqueueUpsert_recordsTheCallersOrigin() {
+        // A reconcile pass has no DTO in hand, only a (type, id) pair it read from the database or the index.
+        service.enqueueUpsert(SearchableEntitySchema.TypeValues.LECTURE, 7L, WeaviateOutboxOrigin.RECONCILE_MISSING);
+
+        WeaviateOutboxEntry entry = captureSavedEntry();
+        assertThat(entry.getOperation()).isEqualTo(WeaviateOutboxOperation.UPSERT);
+        assertThat(entry.getEntityType()).isEqualTo(SearchableEntitySchema.TypeValues.LECTURE);
+        assertThat(entry.getEntityId()).isEqualTo(7L);
+        assertThat(entry.getOrigin()).isEqualTo(WeaviateOutboxOrigin.RECONCILE_MISSING);
+        verify(weaviateService, never()).getCollection(any());
+        verify(eventPublisher).publishEvent(any(WeaviateOutboxEnqueuedEvent.class));
+    }
+
+    @Test
+    void testEnqueueDeleteEntity_recordsTheCallersOrigin() {
+        service.enqueueDeleteEntity(SearchableEntitySchema.TypeValues.FAQ, 9L, WeaviateOutboxOrigin.RECONCILE_ORPHAN);
+
+        WeaviateOutboxEntry entry = captureSavedEntry();
+        assertThat(entry.getOperation()).isEqualTo(WeaviateOutboxOperation.DELETE_ENTITY);
+        assertThat(entry.getEntityType()).isEqualTo(SearchableEntitySchema.TypeValues.FAQ);
+        assertThat(entry.getEntityId()).isEqualTo(9L);
+        assertThat(entry.getOrigin()).isEqualTo(WeaviateOutboxOrigin.RECONCILE_ORPHAN);
+        verify(weaviateService, never()).getCollection(any());
+    }
+
+    @Test
+    void testDeleteAllForCourse_recordsTheLiveOrigin() {
+        // Bulk deletes only ever come from the request path; a reconcile pass works entity by entity.
+        service.deleteAllForCourseAsync(3L);
+
+        WeaviateOutboxEntry entry = captureSavedEntry();
+        assertThat(entry.getOperation()).isEqualTo(WeaviateOutboxOperation.DELETE_ALL_FOR_COURSE);
+        assertThat(entry.getOrigin()).isEqualTo(WeaviateOutboxOrigin.LIVE);
+        assertThat(entry.getEntityId()).as("a bulk delete has no single entity").isNull();
     }
 
     private WeaviateOutboxEntry captureSavedEntry() {
