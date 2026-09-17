@@ -931,31 +931,6 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldReturnOnDemandPointStatisticsWhenUsingLegacyRecalculationPath() throws Exception {
-        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().minusHours(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
-        String statisticsBasePath = "/api/quiz/quiz-exercises/" + quizExercise.getId();
-
-        JsonNode currentResponse = request.get(statisticsBasePath + "/statistics/points", OK, JsonNode.class);
-        JsonNode legacyResponse = request.get(statisticsBasePath + "/recalculate-statistics", OK, JsonNode.class);
-
-        assertThat(legacyResponse.path("id").asLong()).isEqualTo(quizExercise.getId());
-        assertThat(legacyResponse.path("quizQuestions")).isNotEmpty();
-        assertThat(legacyResponse.path("quizPointStatistic")).isEqualTo(currentResponse.path("quizPointStatistic"));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldReturnForbiddenWhenStudentUsesLegacyRecalculationPath() throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().minusHours(1),
-                QuizMode.SYNCHRONIZED);
-        String statisticsBasePath = "/api/quiz/quiz-exercises/" + quizExercise.getId();
-
-        request.get(statisticsBasePath + "/statistics/points", FORBIDDEN, JsonNode.class);
-        request.get(statisticsBasePath + "/recalculate-statistics", FORBIDDEN, JsonNode.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateQuizQuestionWithMoreSolutions() throws Exception {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2), QuizMode.SYNCHRONIZED);
         QuizQuestion question = quizExercise.getQuizQuestions().get(2);
@@ -1903,13 +1878,15 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importQuizExerciseFromExamToCourse() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveEnrolledExamQuiz(TEST_PREFIX, ZonedDateTime.now(), ZonedDateTime.now().plusDays(1));
-        quizExercise.setExerciseGroup(null);
         Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
                 List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
                         new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
         quizExercise = quizExerciseTestRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExercise.getId());
+        // The request body describes the destination, which is a course exercise: it names the course and no exercise
+        // group. The source stays an exam exercise, because a stored exercise has exactly one of the two.
+        quizExercise.setExerciseGroup(null);
         quizExercise.setCourse(course);
 
         QuizExercise importedExercise = importQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.CREATED);

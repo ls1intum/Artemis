@@ -159,7 +159,7 @@
                         @if (!submission().submitted && !showingResult() && remainingTimeSeconds() >= 0) {
                             <p jhiTranslate="artemisApp.quizExercise.quizInstructions.live"></p>
                         }
-                        @if (!showingResult() && !waitingForQuizStart() && (submission().submitted || remainingTimeSeconds() < 0) && hasAnyAnswer()) {
+                        @if (mode() !== 'practice' && !showingResult() && !waitingForQuizStart() && (submission().submitted || remainingTimeSeconds() < 0) && hasAnyAnswer()) {
                             <p jhiTranslate="artemisApp.quizExercise.quizInstructions.wait"></p>
                         }
                         @if (showingResult() && mode() !== 'solution') {
@@ -295,7 +295,7 @@
                         </div>
                     }
                 }
-                @if (quizExercise()?.quizMode === QuizMode.SYNCHRONIZED && !waitingForQuizStart() && !showingResult() && submission().submitted) {
+                @if (mode() !== 'practice' && quizExercise()?.quizMode === QuizMode.SYNCHRONIZED && !waitingForQuizStart() && !showingResult() && submission().submitted) {
                     <div class="quiz-submitted-overlay alert alert-success">
                         <span jhiTranslate="artemisApp.quizExercise.successfullySubmittedText"></span>
                     </div>

@@ -33,11 +33,14 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.DetailedParticipationDTO;
+import de.tum.cit.aet.artemis.exercise.dto.DetailedSubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationNameExportDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -90,12 +93,12 @@ public class ParticipationRetrievalResource {
      */
     @GetMapping("participations/{participationId}/with-latest-result")
     @EnforceAtLeastStudent
-    public ResponseEntity<StudentParticipation> getParticipationWithLatestResult(@PathVariable Long participationId) {
+    public ResponseEntity<StudentParticipationDTO> getParticipationWithLatestResult(@PathVariable Long participationId) {
         log.debug("REST request to get Participation : {}", participationId);
         StudentParticipation participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
-        return new ResponseEntity<>(participation, HttpStatus.OK);
+        return new ResponseEntity<>(StudentParticipationDTO.ofWithLatestResult(participation), HttpStatus.OK);
     }
 
     /**
@@ -106,12 +109,12 @@ public class ParticipationRetrievalResource {
      */
     @GetMapping("participations/{participationId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<StudentParticipation> getParticipationForCurrentUser(@PathVariable Long participationId) {
+    public ResponseEntity<StudentParticipationDTO> getParticipationForCurrentUser(@PathVariable Long participationId) {
         log.debug("REST request to get participation : {}", participationId);
         StudentParticipation participation = studentParticipationRepository.findByIdWithEagerTeamStudentsElseThrow(participationId);
         User user = userRepository.getUserWithAuthorities();
         checkAccessPermissionOwner(participation, user);
-        return new ResponseEntity<>(participation, HttpStatus.OK);
+        return new ResponseEntity<>(StudentParticipationDTO.ofForCurrentUser(participation), HttpStatus.OK);
     }
 
     private void checkAccessPermissionAtLeastInstructor(StudentParticipation participation, User user) {
@@ -142,12 +145,13 @@ public class ParticipationRetrievalResource {
      */
     @GetMapping("participations/{participationId}/submissions")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<Submission>> getSubmissionsOfParticipation(@PathVariable Long participationId) {
+    public ResponseEntity<List<DetailedSubmissionDTO>> getSubmissionsOfParticipation(@PathVariable Long participationId) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         User user = userRepository.getUserWithAuthorities();
         checkAccessPermissionAtLeastInstructor(participation, user);
         List<Submission> submissions = submissionRepository.findAllWithResultsAndAssessorByParticipationId(participationId);
-        return ResponseEntity.ok(submissions);
+        DetailedParticipationDTO participationWithExercise = DetailedParticipationDTO.withExercise(participation);
+        return ResponseEntity.ok(submissions.stream().map(submission -> DetailedSubmissionDTO.of(submission, participationWithExercise)).toList());
     }
 
     /**

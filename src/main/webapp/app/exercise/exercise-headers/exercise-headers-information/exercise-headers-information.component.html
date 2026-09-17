@@ -39,6 +39,8 @@
                                     class="text-truncate result"
                                     [exercise]="informationBoxItem.content.value"
                                     [studentParticipation]="studentParticipation()"
+                                    [result]="displayedResult()"
+                                    [quizPracticeInProgress]="quizPracticeInProgress()"
                                     [quizLiveStatusOverride]="quizLiveStatus()"
                                     [isPractice]="isPractice()"
                                     [triggerLastGraded]="!isPractice()"
@@ -55,6 +57,7 @@
                                 [studentParticipation]="studentParticipation()"
                                 [showUngradedResults]="isPractice()"
                                 (viewingSubmissionChange)="viewingSubmissionChange.emit($event)"
+                                (displayedResultChange)="displayedResult.set($event)"
                             />
                         </span>
                     </jhi-information-box>
