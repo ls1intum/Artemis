@@ -74,7 +74,7 @@ class IrisCommandCoordinationServiceTest {
 
     @Test
     void register_completesFutureWhenMatchingAckArrivesAndKeepsThatResult() throws Exception {
-        CompletableFuture<IrisCommandAckDTO> future = coordinationService.register(CORRELATION_ID, "student1");
+        CompletableFuture<IrisCommandAckDTO> future = coordinationService.register(CORRELATION_ID, "student1", true);
 
         coordinationService.handleAck(new IrisCommandAckDTO(CORRELATION_ID, true), "student1");
 
@@ -91,12 +91,34 @@ class IrisCommandCoordinationServiceTest {
 
     @Test
     void handleAck_thatMatchesNoPendingRegistrationIsIgnored() {
-        CompletableFuture<IrisCommandAckDTO> future = coordinationService.register(CORRELATION_ID, "student1");
+        CompletableFuture<IrisCommandAckDTO> future = coordinationService.register(CORRELATION_ID, "student1", true);
 
         coordinationService.handleAck(new IrisCommandAckDTO(CORRELATION_ID, true), "attacker");
         // No pending registration on this node for that id: the broadcast must be ignored without throwing.
         coordinationService.handleAck(new IrisCommandAckDTO(UNREGISTERED_CORRELATION_ID, true), "student1");
 
         assertThat(future).isNotDone();
+    }
+
+    @Test
+    void handleAck_forUntargetedCommandIgnoresNegativeAckUntilPositiveAckArrives() throws Exception {
+        CompletableFuture<IrisCommandAckDTO> future = coordinationService.register(CORRELATION_ID, "student1", false);
+
+        coordinationService.handleAck(new IrisCommandAckDTO(CORRELATION_ID, false), "student1");
+
+        assertThat(future).isNotDone();
+
+        coordinationService.handleAck(new IrisCommandAckDTO(CORRELATION_ID, true), "student1");
+
+        assertThat(future.get(1, TimeUnit.SECONDS).applied()).isTrue();
+    }
+
+    @Test
+    void handleAck_forTargetedCommandCompletesWithNegativeAck() throws Exception {
+        CompletableFuture<IrisCommandAckDTO> future = coordinationService.register(CORRELATION_ID, "student1", true);
+
+        coordinationService.handleAck(new IrisCommandAckDTO(CORRELATION_ID, false), "student1");
+
+        assertThat(future.get(1, TimeUnit.SECONDS).applied()).isFalse();
     }
 }

@@ -166,13 +166,12 @@ public class IrisCommandService {
     /**
      * Pushes a command to the session's user and blocks until the browser reports back whether it carried it out. Type-agnostic, so every command type shares one transport.
      * <p>
-     * The send goes to the user, so every tab with the session open receives it and carries it out. What the request restricts is not who acts but who <em>answers</em>: it names
-     * the tab the chat run was started from, and only that one acknowledges. Exactly one reply therefore comes back, which is what makes the first ack authoritative — a bystanding
-     * tab can neither claim success nor deny it on behalf of the tab the student is actually looking at.
+     * The request is delivered user-wide, but a target makes only that tab act and answer. Without a target every subscribed tab may try the command; negative replies are ignored
+     * because another tab may still succeed, so the first positive reply wins and the timeout reports failure if none arrives.
      *
      * @param session        the chat session whose user should execute the command
      * @param command        the command to push
-     * @param targetClientId the browser tab expected to answer, or null to let any tab of the user answer (runs started without a client, e.g. event-triggered ones)
+     * @param targetClientId the browser tab that should act and answer, or null to let every subscribed tab try (runs started without a client, e.g. event-triggered ones)
      * @return whether the client applied it; {@code false} on rejection as well as on timeout
      */
     private boolean dispatchToClient(IrisSession session, PyrisCommandDTO command, @Nullable String targetClientId) {
@@ -181,7 +180,7 @@ public class IrisCommandService {
         // Registered before the send so an ack cannot arrive before there is a future to complete. The registration is
         // cleaned up by that future settling, which the ack or the timeout below always does — IrisWebsocketService#send
         // reports delivery failures through its own future rather than throwing, so it cannot skip past them.
-        var ackFuture = coordinationService.register(correlationId, userLogin);
+        var ackFuture = coordinationService.register(correlationId, userLogin, targetClientId != null);
 
         var request = new IrisCommandRequestWebsocketDTO(correlationId, command.type(), command.parameters(), targetClientId);
         irisWebsocketService.send(userLogin, session.getId() + COMMAND_TOPIC_SUFFIX, request);

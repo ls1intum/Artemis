@@ -1168,35 +1168,34 @@ export class IrisChatService implements OnDestroy {
      * case here. Anything else — including a command whose parameters do not hold up — is acknowledged as not applied
      * right away, so the waiting pipeline learns the outcome instead of running into its ack timeout.
      *
-     * A command addressed to a different tab is still carried out here, but never acknowledged: answering for it would
-     * let a bystanding tab report failure while the addressed one is still navigating.
+     * Commands addressed to another tab are ignored completely. The WebSocket destination is user-wide, while the
+     * client id selects the one tab that should act.
+     *
      * @param command the command pushed by the server
      */
     private handleCommand(command: IrisCommand): void {
-        // Delivery is per user, so this arrives in every tab with the session open. All of them carry the command out —
-        // the student should find the same position in whichever tab they look at next — but only the tab the run was
-        // started from answers for it. The others drop the correlation id and then navigate without saying anything.
-        //
+        if (command.targetClientId && command.targetClientId !== this.irisWebsocketService.clientId) {
+            return;
+        }
+
+        // Untargeted commands are tried by every subscribed tab; the server accepts the first successful acknowledgement.
         // Unlike a marker click this never routes a tab elsewhere, even where the lecture unit is not on screen to
         // receive it: a click is the student asking to be taken somewhere, while this arrives on its own and would
-        // pull them out of whatever they were doing. Such a tab therefore does nothing, and where it was also the one
-        // answering, the pipeline is released by the server-side ack timeout.
-        const answersForCommand = !command.targetClientId || command.targetClientId === this.irisWebsocketService.clientId;
+        // pull them out of whatever they were doing. Such a tab therefore does nothing and the pipeline is released
+        // by the server-side ack timeout.
         switch (command.type) {
             case 'pointOut': {
                 const pointOut = parsePointOut(command.parameters);
                 if (pointOut) {
-                    if (answersForCommand) {
-                        // The pipeline is waiting on this one; the combined view acknowledges once it has actually moved.
-                        pointOut.correlationId = command.correlationId;
-                    }
+                    // The pipeline is waiting on this one; the combined view acknowledges once it has actually moved.
+                    pointOut.correlationId = command.correlationId;
                     this.pointOutSubject.next(pointOut);
                     return;
                 }
                 break;
             }
         }
-        if (answersForCommand && typeof command.correlationId === 'string') {
+        if (typeof command.correlationId === 'string') {
             this.sendCommandAck(command.correlationId, false);
         }
     }

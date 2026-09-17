@@ -1444,6 +1444,18 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component['pendingPointOut']()).toBeUndefined();
         });
 
+        it('gives up on a timestamp target immediately when the player failed while the transcript is still loading', () => {
+            component['fullscreenState'].set(true);
+            component['isTranscriptLoading'].set(true);
+            component.onPlayerFailed();
+
+            component['handlePointOut'](pointOutRequest({ correlationId: 'c19', timestamp: 42 }));
+            fixture.detectChanges();
+
+            expect(ackSpy).toHaveBeenCalledWith('c19', false);
+            expect(component['pendingPointOut']()).toBeUndefined();
+        });
+
         it('keeps a timestamp target pending while the video source and its transcript are still being resolved', () => {
             // The playlist is only known once loading has finished, and the transcript is requested just before the
             // loading flag clears and settles only after it — so an empty transcript is not an answer at either point.

@@ -11,6 +11,7 @@ button[tumUiButton] {
 
     // Kit buttons are single-line, which clipped long labels (they embed the lecture unit name).
     max-width: 100%;
+    white-space: normal;
     text-align: left;
 
     fa-icon {

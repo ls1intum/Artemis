@@ -48,16 +48,17 @@ public class IrisCommandCoordinationService {
     }
 
     /**
-     * Registers a pending command awaiting a client ack. The returned future completes when the matching ack arrives on any node, or is completed exceptionally by the caller on
-     * timeout. The pending entry is cleaned up automatically once the future settles.
+     * Registers a pending command awaiting a client ack. The returned future completes when an authoritative matching ack arrives on any node, or is completed exceptionally by
+     * the caller on timeout. The pending entry is cleaned up automatically once the future settles.
      *
-     * @param correlationId the unique id correlating request and ack
-     * @param userLogin     the login of the user expected to send the ack (guards against acks from other users)
+     * @param correlationId         the unique id correlating request and ack
+     * @param userLogin             the login of the user expected to send the ack (guards against acks from other users)
+     * @param completeOnNegativeAck whether a negative ack is authoritative; false when any subscribed tab may still report success
      * @return a future that completes with the client's ack
      */
-    public CompletableFuture<IrisCommandAckDTO> register(String correlationId, String userLogin) {
+    public CompletableFuture<IrisCommandAckDTO> register(String correlationId, String userLogin, boolean completeOnNegativeAck) {
         var future = new CompletableFuture<IrisCommandAckDTO>();
-        pendingCommands.put(correlationId, new PendingCommand(future, userLogin));
+        pendingCommands.put(correlationId, new PendingCommand(future, userLogin, completeOnNegativeAck));
         future.whenComplete((_, _) -> pendingCommands.remove(correlationId));
         return future;
     }
@@ -83,11 +84,15 @@ public class IrisCommandCoordinationService {
             log.warn("Ignoring Iris command ack for correlationId {} from unexpected user", message.correlationId());
             return;
         }
+        if (!message.applied() && !pending.completeOnNegativeAck()) {
+            log.debug("Ignoring negative Iris command ack {} because another client may still apply it", message.correlationId());
+            return;
+        }
         log.debug("Completing pending Iris command {} with client ack (applied={})", message.correlationId(), message.applied());
         pending.future().complete(new IrisCommandAckDTO(message.correlationId(), message.applied()));
     }
 
-    private record PendingCommand(CompletableFuture<IrisCommandAckDTO> future, String userLogin) {
+    private record PendingCommand(CompletableFuture<IrisCommandAckDTO> future, String userLogin, boolean completeOnNegativeAck) {
     }
 
     private record AckMessage(String correlationId, boolean applied, String userLogin) implements Serializable {

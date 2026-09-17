@@ -676,7 +676,7 @@ describe('IrisChatService', () => {
         expect(emitted).not.toHaveBeenCalled();
     });
 
-    it('should forward incoming point-out commands to point-out navigation, whether or not they name this tab', async () => {
+    it('should forward point-out commands addressed to this tab or to any tab', async () => {
         const commandSubject = new Subject<IrisCommand>();
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
@@ -688,18 +688,13 @@ describe('IrisChatService', () => {
         service.openChat(ChatServiceMode.LECTURE, id);
         await waitForSessionId();
         commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 3 }, correlationId: 'corr-1' });
-        commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 3 }, correlationId: 'corr-4', targetClientId: wsMock.clientId });
+        commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 4 }, correlationId: 'corr-2', targetClientId: wsMock.clientId });
 
-        // The correlation id travels along, so whoever carries the target out is the one that answers for it.
         expect(navigated).toHaveBeenNthCalledWith(1, { lectureUnitId: 42, page: 3, correlationId: 'corr-1' });
-        expect(navigated).toHaveBeenNthCalledWith(2, { lectureUnitId: 42, page: 3, correlationId: 'corr-4' });
+        expect(navigated).toHaveBeenNthCalledWith(2, { lectureUnitId: 42, page: 4, correlationId: 'corr-2' });
     });
 
-    it('should answer only for the commands addressed to it, while carrying out every one it receives', async () => {
-        // The server pushes to the user, so every tab receives the command and navigates — the student should find the
-        // same position whichever tab they look at next. Only the addressed tab reports the outcome, so the navigation
-        // in a bystanding tab arrives without a correlation id, exactly like a marker click. The negative ack for an
-        // unusable command belongs to the addressed tab too; otherwise every tab of the user would answer the request.
+    it('should ignore commands addressed to another tab', async () => {
         const commandSubject = new Subject<IrisCommand>();
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
@@ -708,21 +703,27 @@ describe('IrisChatService', () => {
         const ackSpy = vi.spyOn(wsMock, 'sendCommandAck');
         const navigated = vi.fn();
         service.pointOut$.subscribe(navigated);
-
         service.openChat(ChatServiceMode.LECTURE, id);
         await waitForSessionId();
         commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 3 }, correlationId: 'corr-3', targetClientId: 'another-tab' });
-        commandSubject.next({ type: 'highlightTerm', parameters: { slide: 4 }, correlationId: 'corr-5', targetClientId: 'another-tab' });
+        commandSubject.next({ type: 'highlightTerm', parameters: { slide: 4 }, correlationId: 'corr-4', targetClientId: 'another-tab' });
 
-        expect(navigated).toHaveBeenCalledExactlyOnceWith({ lectureUnitId: 42, page: 3 });
+        expect(navigated).not.toHaveBeenCalled();
         expect(ackSpy).not.toHaveBeenCalled();
+    });
 
-        // The same unsupported command addressed to this tab: nobody can carry it out, and this tab is the one that
-        // has to say so, or the pipeline waits out its full ack timeout.
-        commandSubject.next({ type: 'highlightTerm', parameters: { slide: 4 }, correlationId: 'corr-2' });
+    it('should acknowledge an unsupported command for this tab as not applied', async () => {
+        const commandSubject = new Subject<IrisCommand>();
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValueOnce(commandSubject.asObservable());
+        const ackSpy = vi.spyOn(wsMock, 'sendCommandAck');
+        service.openChat(ChatServiceMode.LECTURE, id);
+        await waitForSessionId();
+        commandSubject.next({ type: 'highlightTerm', parameters: { slide: 4 }, correlationId: 'corr-5', targetClientId: wsMock.clientId });
 
-        expect(navigated).toHaveBeenCalledOnce();
-        expect(ackSpy).toHaveBeenCalledExactlyOnceWith({ correlationId: 'corr-2', applied: false });
+        expect(ackSpy).toHaveBeenCalledExactlyOnceWith({ correlationId: 'corr-5', applied: false });
     });
 
     it('should send the tab client id along with a user message', async () => {

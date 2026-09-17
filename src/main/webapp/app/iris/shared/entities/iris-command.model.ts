@@ -13,11 +13,7 @@ export interface IrisCommand {
     correlationId?: string;
     /** Command-specific fields forwarded from Pyris. */
     parameters?: Record<string, unknown>;
-    /**
-     * The browser tab that answers for this command — the one the chat run was started from. Delivery is per user, so
-     * every tab with the session open receives the command and carries it out; all but this one stay silent about the
-     * outcome. Absent means no tab was named and any of them may answer.
-     */
+    /** The browser tab that should act and answer. Absent means every subscribed tab may try the command. */
     targetClientId?: string;
 }
 
