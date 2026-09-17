@@ -113,6 +113,36 @@ and run the following commands to convert the `Artemis.sql` dump into `Artemis.p
 
 <Callout variant={CalloutVariant.info}>
 
+  Instead of the containerised `pgloader`, you can run it on the host against the two helper
+  containers, which lets you hand it a configuration file. Install it with your package manager
+  (`brew install pgloader` on macOS), write the following `migrate.load` next to the dump, and run
+  `pgloader migrate.load` in place of the `docker run` line above. The two databases are reached
+  through the published ports on `localhost` rather than over the `artemis-db-migration` network, so
+  the container names are not used here.
+
+  **migrate.load pgloader configuration:**
+  ```
+     LOAD DATABASE
+          FROM mysql://root@localhost/Artemis
+          INTO postgresql://root@localhost/Artemis
+
+      WITH workers = 2,
+           concurrency = 1,
+           batch rows = 500,
+           batch size = 512kB,
+           prefetch rows = 50;
+  ```
+
+  The `WITH` settings lower `pgloader`'s parallelism and the amount of data it keeps in memory per
+  batch, well below its defaults. A large Artemis database — in particular the tables holding
+  submissions, results and build logs — can otherwise exhaust the memory of the `pgloader` process
+  and abort the transfer. The migration takes longer with these settings, so only reduce them
+  further if a run still fails.
+
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+
   Alternatively, you could use some temporary database on your PostgreSQL instance that can be deleted afterwards to migrate the data directly from your production MySQL into there. Use this temporary PostgreSQL database to create the `Artemis.pg.sql` dump that can be imported into the production database after merging with the proper schema. In that case the `pgloader` command in the steps above should work similarly without the `--network` flag and adapted database connection URLs. For `pg_dump`, add the necessary flags to connect to your database *in addition to* `-Ox`.
 
 </Callout>
