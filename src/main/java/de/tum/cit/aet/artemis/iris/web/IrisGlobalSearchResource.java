@@ -5,6 +5,7 @@ import java.util.List;
 
 import jakarta.validation.Valid;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
@@ -25,7 +28,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchAskRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchLectureRequestDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisAccessContextDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
 /**
  * REST controller for Iris global search.
@@ -42,6 +47,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRe
 @RequestMapping("api/iris/")
 public class IrisGlobalSearchResource {
 
+    private static final String ENTITY_NAME = "iris";
+
     private final PyrisConnectorService pyrisConnectorService;
 
     private final PyrisJobService pyrisJobService;
@@ -52,17 +59,23 @@ public class IrisGlobalSearchResource {
 
     private final IrisAccessContextService irisAccessContextService;
 
+    private final IrisSettingsService irisSettingsService;
+
     public IrisGlobalSearchResource(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, UserRepository userRepository,
-            UserAiPreferenceService userAiPreferenceService, IrisAccessContextService irisAccessContextService) {
+            UserAiPreferenceService userAiPreferenceService, IrisAccessContextService irisAccessContextService, IrisSettingsService irisSettingsService) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.userAiPreferenceService = userAiPreferenceService;
         this.pyrisJobService = pyrisJobService;
         this.userRepository = userRepository;
         this.irisAccessContextService = irisAccessContextService;
+        this.irisSettingsService = irisSettingsService;
     }
 
     /**
      * POST api/iris/lecture-search: Search for lecture units using Pyris.
+     * <p>
+     * Courses with Iris switched off in the course settings are dropped from the requested scope, so content search respects the same toggle as every other Iris feature.
+     * Disabling a course does not remove what was already ingested, which is why the scope has to be narrowed here rather than relying on an empty index.
      *
      * @param requestDTO the search request containing query, limit, and optional courseIds filter
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of search results
@@ -72,7 +85,42 @@ public class IrisGlobalSearchResource {
     public ResponseEntity<List<PyrisLectureSearchResultDTO>> search(@RequestBody @Valid GlobalSearchLectureRequestDTO requestDTO) {
         var user = userRepository.getUserWithCourseRolesAndAuthorities();
         var accessContext = irisAccessContextService.resolveAccessContext(user);
-        return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit(), requestDTO.courseIds(), accessContext));
+        var courseIds = irisEnabledScope(requestDTO.courseIds(), accessContext);
+        return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit(), courseIds, accessContext));
+    }
+
+    /**
+     * Narrows a search to the courses whose Iris course settings are enabled.
+     * <p>
+     * An unscoped request cannot be forwarded untouched. Pyris falls back to the access context when it receives no
+     * course list, and that context is built from course roles alone, so lecture content belonging to a course whose
+     * instructor switched Iris off would still be searchable. Disabling never removes what was already ingested, which
+     * is why the scope has to be narrowed here rather than relying on an empty index.
+     * <p>
+     * The narrowed scope is never forwarded empty: {@code PyrisLectureSearchRequestDTO} omits an empty list on the wire and
+     * Pyris reads an absent list as unscoped, so a caller whose courses all have Iris switched off is refused instead.
+     *
+     * @param requestedCourseIds the course IDs the client asked for, {@code null} or empty for an unscoped search
+     * @param accessContext      the caller's resolved access context
+     * @return the enabled subset to search, or {@code null} to leave an unrestricted caller unscoped
+     */
+    @Nullable
+    private List<Long> irisEnabledScope(@Nullable List<Long> requestedCourseIds, PyrisAccessContextDTO accessContext) {
+        boolean isUnscoped = requestedCourseIds == null || requestedCourseIds.isEmpty();
+        if (isUnscoped && accessContext.unrestricted()) {
+            // An unrestricted caller carries no course list to narrow, so Pyris keeps its own no-ceiling behaviour.
+            return null;
+        }
+        // An unscoped request is narrowed from every course the caller can access, a scoped one from what it asked for.
+        var candidateCourseIds = isUnscoped ? accessContext.courseIds() : requestedCourseIds;
+        var enabledCourseIds = irisSettingsService.filterCourseIdsWithIrisEnabled(candidateCourseIds);
+        // A caller without any course has nothing to narrow; its access context is empty too, so Pyris searches nothing.
+        if (enabledCourseIds.isEmpty() && !candidateCourseIds.isEmpty()) {
+            // suppress the error alert with skipAlert: true so that the client can fall back to its standard metadata search
+            throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "Iris is disabled for every course in the search scope", ENTITY_NAME, "iris.course_disabled",
+                    true);
+        }
+        return enabledCourseIds;
     }
 
     /**
