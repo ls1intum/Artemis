@@ -109,7 +109,7 @@ test.describe('Course management', { tag: '@fast' }, () => {
             courseData.shortName = 'playwright' + uid;
         });
 
-        test('Creates a new course', async ({ page, navigationBar, courseManagement, courseCreation, courseManagementAPIRequests }) => {
+        test('Creates a new course', async ({ page, navigationBar, courseManagement, courseCreation }) => {
             await navigationBar.openCourseManagement();
             await courseManagement.openCourseCreation();
             await courseCreation.setTitle(courseData.title);
@@ -128,38 +128,41 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await courseCreation.setEnableMoreFeedback(courseData.enableMoreFeedback);
             await courseCreation.setMaxRequestMoreFeedbackTimeDays(courseData.maxRequestMoreFeedbackTimeDays);
 
-            // The create response only carries the new course's id; the client loads the rest by
-            // navigating to the detail page, so fetch it the same way to verify what was persisted.
-            const courseBody = await courseCreation.submit();
-            course = courseBody;
-            const createdCourse = await courseManagementAPIRequests.getCourse(courseBody.id);
+            // The creation endpoint answers with the new course's id only, so the stored course is read back to
+            // check that every field the form submitted arrived. The id is recorded first, so that a failing
+            // assertion below still leaves the course for afterEach to delete.
+            const { id: courseId } = await courseCreation.submit();
+            course = new Course();
+            course.id = courseId;
 
-            expect(createdCourse.title).toBe(courseData.title);
-            expect(createdCourse.shortName).toBe(courseData.shortName);
-            expect(createdCourse.description).toBe(courseData.description);
-            expect(createdCourse.testCourse).toBe(courseData.testCourse);
-            expect(trimDate(createdCourse.startDate)).toBe(trimDate(dayjsToString(courseData.startDate)));
-            expect(trimDate(createdCourse.endDate)).toBe(trimDate(dayjsToString(courseData.endDate)));
-            expect(createdCourse.semester).toBe(courseData.semester);
-            expect(createdCourse.maxPoints).toBe(courseData.maxPoints);
-            expect(createdCourse.defaultProgrammingLanguage).toBe(courseData.programmingLanguage);
-            expect(createdCourse.complaintsEnabled).toBe(courseData.enableComplaints);
-            expect(createdCourse.maxComplaints).toBe(courseData.maxComplaints);
-            expect(createdCourse.maxTeamComplaints).toBe(courseData.maxTeamComplaints);
-            expect(createdCourse.maxComplaintTimeDays).toBe(courseData.maxComplaintTimeDays);
-            expect(createdCourse.requestMoreFeedbackEnabled).toBe(courseData.enableMoreFeedback);
+            const storedCourse = await (await page.request.get(`api/course/courses/${courseId}`)).json();
+
+            expect(storedCourse.title).toBe(courseData.title);
+            expect(storedCourse.shortName).toBe(courseData.shortName);
+            expect(storedCourse.description).toBe(courseData.description);
+            expect(storedCourse.testCourse).toBe(courseData.testCourse);
+            expect(trimDate(storedCourse.startDate)).toBe(trimDate(dayjsToString(courseData.startDate)));
+            expect(trimDate(storedCourse.endDate)).toBe(trimDate(dayjsToString(courseData.endDate)));
+            expect(storedCourse.semester).toBe(courseData.semester);
+            expect(storedCourse.maxPoints).toBe(courseData.maxPoints);
+            expect(storedCourse.defaultProgrammingLanguage).toBe(courseData.programmingLanguage);
+            expect(storedCourse.complaintsEnabled).toBe(courseData.enableComplaints);
+            expect(storedCourse.maxComplaints).toBe(courseData.maxComplaints);
+            expect(storedCourse.maxTeamComplaints).toBe(courseData.maxTeamComplaints);
+            expect(storedCourse.maxComplaintTimeDays).toBe(courseData.maxComplaintTimeDays);
+            expect(storedCourse.requestMoreFeedbackEnabled).toBe(courseData.enableMoreFeedback);
 
             // After a successful create the app auto-navigates to the new course's detail page, but
             // under heavy multi-node load that client-side navigation occasionally does not fire (the
             // create form stays mounted). Wait for the expected URL and fall back to an explicit goto
             // so the detail assertions below test the rendered course instead of racing the navigation.
-            const courseDetailUrl = new RegExp(`/course-management/${courseBody.id}(/|$)`);
+            const courseDetailUrl = new RegExp(`/course-management/${courseId}(/|$)`);
             const navigated = await page
                 .waitForURL(courseDetailUrl, { timeout: 15_000 })
                 .then(() => true)
                 .catch(() => false);
             if (!navigated) {
-                await page.goto(`/course-management/${courseBody.id}`);
+                await page.goto(`/course-management/${courseId}`);
                 await page.waitForURL(courseDetailUrl, { timeout: 30_000 });
             }
 
