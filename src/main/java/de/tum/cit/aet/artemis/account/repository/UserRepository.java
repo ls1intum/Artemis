@@ -835,7 +835,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND ucr.role IN :roles
             WHERE user.deleted = FALSE
                 AND (
-                    LOWER(user.login) LIKE LOWER(CONCAT('%', :loginOrName, '%'))
+                    user.login LIKE CONCAT(LOWER(:loginOrName), '%')
                     OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE LOWER(CONCAT('%', :loginOrName, '%'))
                 )
             """)
@@ -850,7 +850,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND ucr.role IN :roles
             WHERE user.deleted = FALSE
                 AND (
-                    LOWER(user.login) LIKE LOWER(CONCAT('%', :loginOrName, '%'))
+                    user.login LIKE CONCAT(LOWER(:loginOrName), '%')
                     OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE LOWER(CONCAT('%', :loginOrName, '%'))
                 )
             """)
@@ -905,7 +905,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE user.deleted = FALSE
                 AND user.id <> :idOfUser
                 AND (
-                    LOWER(user.login) LIKE LOWER(CONCAT('%', :loginOrName, '%'))
+                    user.login LIKE CONCAT(LOWER(:loginOrName), '%')
                     OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE LOWER(CONCAT('%', :loginOrName, '%'))
                 )
             """)
@@ -921,7 +921,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE user.deleted = FALSE
                 AND user.id <> :idOfUser
                 AND (
-                    LOWER(user.login) LIKE LOWER(CONCAT('%', :loginOrName, '%'))
+                    user.login LIKE CONCAT(LOWER(:loginOrName), '%')
                     OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE LOWER(CONCAT('%', :loginOrName, '%'))
                 )
             """)

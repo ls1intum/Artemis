@@ -1,7 +1,8 @@
 import { Component, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, merge } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 import { faArrowUpRightFromSquare, faLink, faPencilAlt, faPlus, faSearch, faTrash, faUsers } from '@fortawesome/free-solid-svg-icons';
@@ -105,6 +106,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     private readonly alertService = inject(AlertService);
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly translateService = inject(TranslateService);
+    private readonly translationChanges = toSignal(merge(this.translateService.onLangChange, this.translateService.onTranslationChange));
 
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faPlus = faPlus;
@@ -179,8 +181,11 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             sortOrder: this.studentSortOrder(),
         });
     });
+    readonly effectiveOverviewPage = computed(() =>
+        Math.min(Math.max(0, this.overviewPage()), Math.max(0, Math.ceil(this.filteredStudentRows().length / this.overviewPageSize()) - 1)),
+    );
     readonly paginatedStudentRows = computed(() => {
-        const start = this.overviewPage() * this.overviewPageSize();
+        const start = this.effectiveOverviewPage() * this.overviewPageSize();
         const expandedRows = this.expandedStudentRows();
         return this.filteredStudentRows()
             .slice(start, start + this.overviewPageSize())
@@ -191,25 +196,32 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     });
     readonly assessedStudentCount = computed(() => this.studentRows().filter((row) => hasResultPoints(row.instance.resultPoints)).length);
     readonly pendingStudentCount = computed(() => this.studentRows().length - this.assessedStudentCount());
-    readonly presentationFilterOptions = computed<FilterOption<number | 'all'>[]>(() => [
-        { label: this.translateService.instant('artemisApp.presentationAssessment.filter.allPresentations'), value: 'all' },
-        ...this.presentationAssessments().map((assessment) => ({ label: assessment.title ?? '-', value: assessment.id! })),
-    ]);
-    readonly typeFilterOptions = computed<FilterOption<PresentationTypeFilter>[]>(() => [
-        { label: this.translateService.instant('artemisApp.presentationAssessment.filter.allTypes'), value: 'all' },
-        { label: this.translateService.instant('artemisApp.presentationAssessment.standalone'), value: 'standalone' },
-        { label: this.translateService.instant('artemisApp.presentationAssessment.linkedToExercise'), value: 'exercise' },
-    ]);
-    readonly sidebarData = computed(() =>
-        createPresentationSidebarData(
+    readonly presentationFilterOptions = computed<FilterOption<number | 'all'>[]>(() => {
+        this.translationChanges();
+        return [
+            { label: this.translateService.instant('artemisApp.presentationAssessment.filter.allPresentations'), value: 'all' },
+            ...this.presentationAssessments().map((assessment) => ({ label: assessment.title ?? '-', value: assessment.id! })),
+        ];
+    });
+    readonly typeFilterOptions = computed<FilterOption<PresentationTypeFilter>[]>(() => {
+        this.translationChanges();
+        return [
+            { label: this.translateService.instant('artemisApp.presentationAssessment.filter.allTypes'), value: 'all' },
+            { label: this.translateService.instant('artemisApp.presentationAssessment.standalone'), value: 'standalone' },
+            { label: this.translateService.instant('artemisApp.presentationAssessment.linkedToExercise'), value: 'exercise' },
+        ];
+    });
+    readonly sidebarData = computed(() => {
+        this.translationChanges();
+        return createPresentationSidebarData(
             this.presentationAssessments(),
             this.viewMode(),
             this.selectedPresentationId(),
             (key) => this.translateService.instant(key),
             this.faUsers,
             this.faLink,
-        ),
-    );
+        );
+    });
     private readonly studentViewExerciseId = computed(() => (this.viewMode() === 'presentations' ? this.selectedPresentation()?.exerciseId : undefined));
 
     private dialogErrorSource = new Subject<string>();
@@ -355,7 +367,14 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                 next: () => {
                     this.dialogErrorSource.next('');
                     this.presentationDialogVisible.set(false);
-                    this.presentationAssessments.set(this.presentationAssessments().filter((assessment) => assessment.id !== presentationAssessment.id));
+                    const remainingAssessments = this.presentationAssessments().filter((assessment) => assessment.id !== presentationAssessment.id);
+                    this.presentationAssessments.set(remainingAssessments);
+                    if (this.selectedPresentationId() === presentationAssessment.id) {
+                        this.selectedPresentationId.set(remainingAssessments[0]?.id);
+                    }
+                    if (this.presentationFilter() === presentationAssessment.id) {
+                        this.presentationFilter.set('all');
+                    }
                     this.alertService.success('artemisApp.presentationAssessment.deleted', { title: presentationAssessment.title });
                 },
                 error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),

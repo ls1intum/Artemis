@@ -16,9 +16,12 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -61,6 +64,9 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Autowired
     private FeatureToggleService featureToggleService;
 
+    @Autowired
+    private UserRepository searchUserRepository;
+
     private Course course;
 
     private Course otherCourse;
@@ -83,6 +89,22 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         presentationAssessment.setDescription("Initial description");
         presentationAssessment.setMaxPoints(20.0);
         presentationAssessment = presentationAssessmentRepository.save(presentationAssessment);
+    }
+
+    @Test
+    void studentSearch_shouldMatchCaseInsensitiveLoginPrefixesWithConsistentCounts() {
+        var pageable = PageRequest.of(0, 10);
+        var roles = Set.of(CourseRole.STUDENT);
+        long firstStudentId = userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId();
+        long secondStudentId = userUtilService.getUserByLogin(TEST_PREFIX + "student2").getId();
+        String prefix = "PRESENTATIONASSESSMENTstudent";
+
+        assertThat(searchUserRepository.findUserIdsByLoginOrNameInCourseWithRoles(prefix, course.getId(), roles, pageable)).containsExactlyInAnyOrder(firstStudentId,
+                secondStudentId);
+        assertThat(searchUserRepository.countUsersByLoginOrNameInCourseWithRoles(prefix, course.getId(), roles)).isEqualTo(2);
+        assertThat(searchUserRepository.findUserIdsByLoginOrNameInCourseWithRolesNotUserId(prefix, course.getId(), roles, firstStudentId, pageable))
+                .containsExactly(secondStudentId);
+        assertThat(searchUserRepository.countUsersByLoginOrNameInCourseWithRolesNotUserId(prefix, course.getId(), roles, firstStudentId)).isEqualTo(1);
     }
 
     @Test
@@ -223,12 +245,13 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         instance.setPresentationDate(FIXED_DATE.plusDays(7));
         instance.setLanguage("en");
         instance.setMode(PresentationAssessmentMode.IN_PERSON);
+        instance.setStudents(Set.of(userUtilService.getUserByLogin(TEST_PREFIX + "student1")));
         instance = presentationAssessmentInstanceRepository.save(instance);
         long instanceId = instance.getId();
         PresentationAssessmentDTO assessmentDto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", "Updated description", 10.0, course.getId(),
                 null, null, List.of());
-        PresentationAssessmentInstanceDTO instanceDto = new PresentationAssessmentInstanceDTO(instanceId, instance.getPresentationDate(), 18.0, List.of(), "en",
-                PresentationAssessmentMode.IN_PERSON, "Room 1", null, null);
+        PresentationAssessmentInstanceDTO instanceDto = new PresentationAssessmentInstanceDTO(instanceId, instance.getPresentationDate(), 18.0, List.of(TEST_PREFIX + "student1"),
+                "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, null);
 
         CountDownLatch ready = new CountDownLatch(2);
         CountDownLatch start = new CountDownLatch(1);
@@ -458,7 +481,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     void savePresentationAssessmentInstances_shouldSplitSharedInstanceAtomically() throws Exception {
         PresentationAssessmentInstanceDTO sharedInstance = createLegacySharedInstance();
         PresentationAssessmentInstanceDTO assessedStudent = new PresentationAssessmentInstanceDTO(sharedInstance.id(), sharedInstance.presentationDate(), 18.5,
-                List.of(TEST_PREFIX + "student1"), sharedInstance.language(), sharedInstance.mode(), sharedInstance.location(), sharedInstance.meetingLink(), "Assessed");
+                List.of(" " + TEST_PREFIX + "student1 "), sharedInstance.language(), sharedInstance.mode(), sharedInstance.location(), sharedInstance.meetingLink(), "Assessed");
 
         List<PresentationAssessmentInstanceDTO> result = request.postListWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/batch", assessedStudent,
                 PresentationAssessmentInstanceDTO.class, HttpStatus.OK);

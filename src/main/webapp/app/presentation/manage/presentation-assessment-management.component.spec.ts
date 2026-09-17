@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -12,8 +12,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { PresentationAssessment } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { LangChangeEvent, TranslateService, TranslationChangeEvent } from '@ngx-translate/core';
 
 describe('PresentationAssessmentManagementComponent', () => {
     let fixture: ComponentFixture<PresentationAssessmentManagementComponent>;
@@ -31,6 +30,8 @@ describe('PresentationAssessmentManagementComponent', () => {
     };
     let alertService: { success: ReturnType<typeof vi.fn>; addAlert: ReturnType<typeof vi.fn> };
     let router: { navigate: ReturnType<typeof vi.fn> };
+    let languageChanges: Subject<LangChangeEvent>;
+    let translationChanges: Subject<TranslationChangeEvent>;
 
     const courseId = 1;
     const course = { id: courseId, title: 'Test Course', isAtLeastInstructor: true } as Course;
@@ -56,6 +57,8 @@ describe('PresentationAssessmentManagementComponent', () => {
     };
 
     beforeEach(async () => {
+        languageChanges = new Subject<LangChangeEvent>();
+        translationChanges = new Subject<TranslationChangeEvent>();
         presentationAssessmentService = {
             findAllByCourseId: vi.fn().mockReturnValue(of(new HttpResponse({ body: [presentationAssessment] }))),
             create: vi.fn(),
@@ -85,7 +88,7 @@ describe('PresentationAssessmentManagementComponent', () => {
                 { provide: PresentationAssessmentService, useValue: presentationAssessmentService },
                 { provide: AlertService, useValue: alertService },
                 { provide: Router, useValue: router },
-                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: TranslateService, useValue: { instant: (key: string) => key, onLangChange: languageChanges, onTranslationChange: translationChanges } },
                 {
                     provide: CourseManagementService,
                     useValue: { findWithExercises: vi.fn().mockReturnValue(of(new HttpResponse({ body: { ...course, exercises: [] } }))) },
@@ -110,6 +113,34 @@ describe('PresentationAssessmentManagementComponent', () => {
         fixture = TestBed.createComponent(PresentationAssessmentManagementComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
+    });
+
+    it.each(['language', 'translations'])('should refresh management labels on %s changes', (eventType) => {
+        component.presentationFilterOptions();
+        component.typeFilterOptions();
+        component.sidebarData();
+        vi.spyOn(TestBed.inject(TranslateService), 'instant').mockImplementation((key) => `updated:${key}`);
+        if (eventType === 'language') {
+            languageChanges.next({ lang: 'de', translations: {} });
+        } else {
+            translationChanges.next({ lang: 'de', translations: {} });
+        }
+        expect(component.presentationFilterOptions()[0].label).toBe('updated:artemisApp.presentationAssessment.filter.allPresentations');
+        expect(component.typeFilterOptions()[0].label).toBe('updated:artemisApp.presentationAssessment.filter.allTypes');
+        expect(component.sidebarData().pinnedData?.[0].title).toBe('updated:artemisApp.presentationAssessment.overallOverview');
+    });
+
+    it('should clamp the displayed page after the last page disappears', () => {
+        component.overviewPageSize.set(1);
+        component.overviewPage.set(1);
+        expect(component.effectiveOverviewPage()).toBe(1);
+        const remaining = { ...presentationAssessment, instances: [{ ...presentationAssessment.instances![0], studentLogins: ['student1'] }] };
+        component.presentationAssessments.set([remaining]);
+        expect(component.effectiveOverviewPage()).toBe(0);
+        expect(component.paginatedStudentRows()).toHaveLength(1);
+        component.presentationAssessments.set([]);
+        expect(component.effectiveOverviewPage()).toBe(0);
+        expect(component.paginatedStudentRows()).toEqual([]);
     });
 
     it('should load presentation assessments for the course', () => {
@@ -361,5 +392,31 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(presentationAssessmentService.delete).toHaveBeenCalledWith(courseId, presentationAssessment.id);
         expect(component.presentationAssessments()).toEqual([]);
         expect(alertService.success).toHaveBeenCalledWith('artemisApp.presentationAssessment.deleted', { title: presentationAssessment.title });
+    });
+
+    it('should reset selection and filter referencing a deleted assessment', () => {
+        const remaining = { ...presentationAssessment, id: 99 };
+        component.presentationAssessments.set([presentationAssessment, remaining]);
+        component.selectedPresentationId.set(presentationAssessment.id);
+        component.presentationFilter.set(presentationAssessment.id!);
+        presentationAssessmentService.delete.mockReturnValue(of(new HttpResponse<void>()));
+
+        component.deletePresentationAssessment(presentationAssessment);
+
+        expect(component.selectedPresentationId()).toBe(99);
+        expect(component.presentationFilter()).toBe('all');
+    });
+
+    it('should preserve selection and filter referencing another assessment', () => {
+        const remaining = { ...presentationAssessment, id: 99 };
+        component.presentationAssessments.set([presentationAssessment, remaining]);
+        component.selectedPresentationId.set(99);
+        component.presentationFilter.set(99);
+        presentationAssessmentService.delete.mockReturnValue(of(new HttpResponse<void>()));
+
+        component.deletePresentationAssessment(presentationAssessment);
+
+        expect(component.selectedPresentationId()).toBe(99);
+        expect(component.presentationFilter()).toBe(99);
     });
 });

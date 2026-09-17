@@ -181,7 +181,7 @@ public class PresentationAssessmentService {
                 throw new BadRequestAlertException("Exactly one student must be selected when splitting a shared instance", PresentationAssessmentInstance.ENTITY_NAME,
                         "invalidStudentCountForSplit");
             }
-            String editedStudentLogin = dto.studentLogins().getFirst();
+            String editedStudentLogin = resolveAssignedCourseStudents(course, dto.studentLogins()).iterator().next().getLogin();
             User editedStudent = existingInstance.getStudents().stream().filter(student -> editedStudentLogin.equals(student.getLogin())).findFirst()
                     .orElseThrow(() -> new BadRequestAlertException("The selected student does not belong to the shared instance", PresentationAssessmentInstance.ENTITY_NAME,
                             "studentNotInInstance"));
