@@ -5,6 +5,7 @@ import java.util.List;
 
 import jakarta.validation.Valid;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchAskRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchLectureRequestDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisAccessContextDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
@@ -81,17 +83,43 @@ public class IrisGlobalSearchResource {
     @PostMapping("lecture-search")
     @EnforceAtLeastStudent
     public ResponseEntity<List<PyrisLectureSearchResultDTO>> search(@RequestBody @Valid GlobalSearchLectureRequestDTO requestDTO) {
-        var courseIds = requestDTO.courseIds();
-        if (courseIds != null && !courseIds.isEmpty()) {
-            courseIds = irisSettingsService.filterCourseIdsWithIrisEnabled(courseIds);
-            if (courseIds.isEmpty()) {
-                // suppress the error alert with skipAlert: true so that the client can fall back to its standard metadata search
-                throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "Iris is disabled for the requested courses", ENTITY_NAME, "iris.course_disabled", true);
-            }
-        }
         var user = userRepository.getUserWithCourseRolesAndAuthorities();
         var accessContext = irisAccessContextService.resolveAccessContext(user);
+        var courseIds = irisEnabledScope(requestDTO.courseIds(), accessContext);
         return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit(), courseIds, accessContext));
+    }
+
+    /**
+     * Narrows a search to the courses whose Iris course settings are enabled.
+     * <p>
+     * An unscoped request cannot be forwarded untouched. Pyris falls back to the access context when it receives no
+     * course list, and that context is built from course roles alone, so lecture content belonging to a course whose
+     * instructor switched Iris off would still be searchable. Disabling never removes what was already ingested, which
+     * is why the scope has to be narrowed here rather than relying on an empty index.
+     *
+     * @param requestedCourseIds the course IDs the client asked for, {@code null} or empty for an unscoped search
+     * @param accessContext      the caller's resolved access context
+     * @return the enabled subset to search, or {@code null} to leave an unrestricted caller unscoped
+     */
+    @Nullable
+    private List<Long> irisEnabledScope(@Nullable List<Long> requestedCourseIds, PyrisAccessContextDTO accessContext) {
+        boolean isUnscoped = requestedCourseIds == null || requestedCourseIds.isEmpty();
+        if (isUnscoped && accessContext.unrestricted()) {
+            // An unrestricted caller carries no course list to narrow, so Pyris keeps its own no-ceiling behaviour.
+            return null;
+        }
+        if (isUnscoped) {
+            // Nothing was asked for, so there is nothing to refuse: a caller with no Iris-enabled courses simply
+            // searches an empty scope. Only an explicit request for courses that are all disabled is forbidden.
+            var accessibleCourseIds = accessContext.courseIds();
+            return accessibleCourseIds == null ? List.of() : irisSettingsService.filterCourseIdsWithIrisEnabled(accessibleCourseIds);
+        }
+        var enabledCourseIds = irisSettingsService.filterCourseIdsWithIrisEnabled(requestedCourseIds);
+        if (enabledCourseIds.isEmpty()) {
+            // suppress the error alert with skipAlert: true so that the client can fall back to its standard metadata search
+            throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "Iris is disabled for the requested courses", ENTITY_NAME, "iris.course_disabled", true);
+        }
+        return enabledCourseIds;
     }
 
     /**

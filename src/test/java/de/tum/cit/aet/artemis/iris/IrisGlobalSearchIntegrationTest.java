@@ -106,6 +106,33 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     /**
+     * The normal Lectures selection sends no course filter at all. Pyris then falls back to the access context, which is
+     * built from course roles and knows nothing about Iris settings, so an unscoped search has to be narrowed here or a
+     * course whose instructor switched Iris off would still return its already-ingested content.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "unscoped", roles = "USER")
+    void search_whenUnscopedAndAnAccessibleCourseHasIrisDisabled_shouldNotForwardThatCourse() throws Exception {
+        var enabledCourse = courseUtilService.addEmptyCourse();
+        var disabledCourse = courseUtilService.addEmptyCourse();
+        enableIrisFor(enabledCourse);
+        disableIrisFor(disabledCourse);
+
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "unscoped");
+        userUtilService.enrollUserInCourse(user, enabledCourse, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(user, disabledCourse, CourseRole.STUDENT);
+
+        AtomicReference<List<Long>> forwardedCourseIds = new AtomicReference<>();
+        irisRequestMockProvider.mockSearchLectures(List.of(), dto -> forwardedCourseIds.set(dto.courseIds()));
+
+        var requestDTO = new GlobalSearchLectureRequestDTO("machine learning", 5, null);
+        request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
+
+        assertThat(forwardedCourseIds.get()).as("an unscoped search must carry an explicit, Iris-enabled scope instead of null").isNotNull().contains(enabledCourse.getId())
+                .doesNotContain(disabledCourse.getId());
+    }
+
+    /**
      * A course that never saved Iris settings has no row at all, and the default settings enable Iris. Narrowing must therefore drop only the courses that were explicitly
      * switched off, otherwise content search would silently stop working for every course that never opened the Iris settings page.
      */
