@@ -34,7 +34,7 @@ import { LiveQuizParticipationStatus, QuizExercise, QuizStatus } from 'app/quiz/
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
-import { Submission, getAllResultsOfAllSubmissions, getFirstResultWithComplaintFromResults } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getAllResultsOfAllSubmissions, getFirstResultWithComplaintFromResults, getNewestResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
@@ -512,7 +512,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     ) {
                         this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
                     }
-                    const lastAthenaResult = getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last();
+                    // By id, not by position: the server holds a submission's results in a set, so the response order is arbitrary.
+                    const lastAthenaResult = getNewestResult(getAllResultsOfAllSubmissions(changedParticipation.submissions));
                     // The result's own submission back-reference is not reliably populated at this point (sortResults(), further
                     // below, is what normally attaches it), so resolve the containing submission explicitly for dedup purposes.
                     const lastAthenaResultSubmissionId = changedParticipation.submissions?.find((submission) => submission.results?.includes(lastAthenaResult!))?.id;

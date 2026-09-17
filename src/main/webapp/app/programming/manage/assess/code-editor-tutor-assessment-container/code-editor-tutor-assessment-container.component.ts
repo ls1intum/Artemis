@@ -393,9 +393,17 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Load the feedback suggestions for the current submission from Athena.
      */
     private async loadFeedbackSuggestions(): Promise<void> {
+        // The container is reused across assessments, so a still-pending request for a previous submission must not
+        // apply its outcome (result, error alert, or loading state) once a newer submission has been loaded.
+        const submissionId = this.submission()!.id!;
+        const isStale = () => this.submission()?.id !== submissionId;
+
         this.loadingFeedbackSuggestions.set(true);
         try {
-            const feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise(), this.submission()!.id!))) ?? [];
+            const feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise(), submissionId))) ?? [];
+            if (isStale()) {
+                return;
+            }
             const allFeedback = [...this.referencedFeedback, ...this.unreferencedFeedback()];
             this.feedbackSuggestions.set(
                 feedbackSuggestions.filter((suggestion) =>
@@ -403,9 +411,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 ),
             );
         } catch {
-            this.onError('artemisApp.programmingAssessment.loadFeedbackSuggestionsFailed');
+            if (!isStale()) {
+                this.onError('artemisApp.programmingAssessment.loadFeedbackSuggestionsFailed');
+            }
         } finally {
-            this.loadingFeedbackSuggestions.set(false);
+            if (!isStale()) {
+                this.loadingFeedbackSuggestions.set(false);
+            }
         }
     }
 
