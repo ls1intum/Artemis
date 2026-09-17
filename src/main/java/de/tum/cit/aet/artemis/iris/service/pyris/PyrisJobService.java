@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
-import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitProcessingStateRepositoryApi;
 
 /**
  * The PyrisJobService class is responsible for managing Pyris jobs in the Artemis system.
@@ -53,7 +53,7 @@ public class PyrisJobService {
 
     private final DistributedDataProvider distributedDataProvider;
 
-    private final Optional<ProcessingStateCallbackApi> processingStateCallbackApi;
+    private final Optional<LectureUnitProcessingStateRepositoryApi> processingStateRepositoryApi;
 
     @Nullable
     private DistributedMap<String, PyrisJob> jobMap;
@@ -70,9 +70,9 @@ public class PyrisJobService {
     @Value("${artemis.iris.jobs.ingestion.timeout:10800}")
     private int ingestionJobTimeout; // in seconds (default 3h: covers transcription + ingestion of long lectures)
 
-    public PyrisJobService(DistributedDataProvider distributedDataProvider, Optional<ProcessingStateCallbackApi> processingStateCallbackApi) {
+    public PyrisJobService(DistributedDataProvider distributedDataProvider, Optional<LectureUnitProcessingStateRepositoryApi> processingStateRepositoryApi) {
         this.distributedDataProvider = distributedDataProvider;
-        this.processingStateCallbackApi = processingStateCallbackApi;
+        this.processingStateRepositoryApi = processingStateRepositoryApi;
     }
 
     /**
@@ -278,7 +278,7 @@ public class PyrisJobService {
      */
     @Nullable
     private PyrisJob recoverIngestionJobFromDatabase(String token) {
-        return processingStateCallbackApi.flatMap(api -> api.findIngestionJobIdentityByToken(token)).map(identity -> {
+        return processingStateRepositoryApi.flatMap(api -> api.findIngestionJobIdentityByToken(token)).map(identity -> {
             log.info("Authenticated ingestion callback for unit {} from the processing state after job map expiry", identity.lectureUnitId());
             return (PyrisJob) new LectureIngestionWebhookJob(token, identity.courseId(), identity.lectureId(), identity.lectureUnitId());
         }).orElse(null);

@@ -28,10 +28,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
-import org.springframework.beans.factory.ObjectProvider;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -93,20 +93,6 @@ class LectureContentProcessingServiceTest {
     private LectureUnitProcessingState testState;
 
     /**
-     * Builds an {@link ObjectProvider} around the given API mock, mirroring how Spring resolves the
-     * deferred {@code irisLectureApi} dependency at runtime. Pass {@code null} for the Iris-disabled case.
-     */
-    @SuppressWarnings("unchecked")
-    private static ObjectProvider<IrisLectureApi> providerOf(IrisLectureApi api) {
-        ObjectProvider<IrisLectureApi> provider = mock(ObjectProvider.class);
-        when(provider.getIfAvailable()).thenReturn(api);
-        if (api != null) {
-            when(provider.getObject()).thenReturn(api);
-        }
-        return provider;
-    }
-
-    /**
      * A distributed data provider whose maps are plain mocks: worker-mode lookups read null (no
      * worker seen), which keeps these tests on the push-dispatch path they exercise.
      */
@@ -114,6 +100,7 @@ class LectureContentProcessingServiceTest {
     private static DistributedDataProvider distributedDataProviderMock() {
         DistributedDataProvider provider = mock(DistributedDataProvider.class);
         when(provider.getMap(anyString())).thenReturn(mock(DistributedMap.class));
+        when(provider.getLock(anyString())).thenReturn(mock(DistributedLock.class));
         return provider;
     }
 
@@ -133,8 +120,8 @@ class LectureContentProcessingServiceTest {
         when(contentFingerprintService.computeFingerprint(any())).thenReturn("v1:test-fingerprint");
         // The atomic terminal-callback claim succeeds by default; duplicate-claim tests override this
         when(processingStateRepository.clearIngestionJobTokenIfMatches(anyLong(), anyString())).thenReturn(1);
-        callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository, providerOf(irisLectureApi),
-                websocketMessagingService, contentFingerprintService, distributedDataProviderMock(), 2);
+        callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository, Optional.of(irisLectureApi),
+                websocketMessagingService, contentFingerprintService, distributedDataProviderMock(), featureToggleService, 2);
         recoveryService = new ProcessingStateRecoveryService(processingStateRepository, transcriptionRepository, websocketMessagingService);
 
         service = new LectureContentProcessingService(processingStateRepository, Optional.of(irisLectureApi), featureToggleService, callbackService, attachmentRepository);
@@ -202,7 +189,7 @@ class LectureContentProcessingServiceTest {
             FeatureToggleService fts = mock(FeatureToggleService.class);
             when(fts.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
             ProcessingStateCallbackService noIrisCallback = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository,
-                    providerOf(null), mock(WebsocketMessagingService.class), contentFingerprintService, distributedDataProviderMock(), 2);
+                    Optional.empty(), mock(WebsocketMessagingService.class), contentFingerprintService, distributedDataProviderMock(), fts, 2);
             service = new LectureContentProcessingService(processingStateRepository, Optional.empty(), fts, noIrisCallback, attachmentRepository);
 
             service.triggerProcessing(testUnit);

@@ -357,4 +357,35 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             """)
     int releaseAbandonedIdleClaims(@Param("cutoffTime") ZonedDateTime cutoffTime, @Param("now") ZonedDateTime now);
 
+    /**
+     * Activate a claim exactly once: turn a claimed row into an in-flight run, but only while it still holds the claim
+     * that produced the activation. A claimed IDLE row carries {@code startedAt}; a claimed FAILED retry carries its
+     * lease in {@code retryEligibleAt}. Neither has a job token yet. A row that was released by the abandoned-claim
+     * sweep, re-claimed, or already activated no longer matches, so a late activation matches nothing instead of
+     * overwriting the newer claim. Applies {@link LectureUnitProcessingState#transitionTo}, the token, the fingerprint
+     * and {@link LectureUnitProcessingState#renewLease} in one statement.
+     *
+     * @param lectureUnitId      the claimed unit
+     * @param phase              the in-flight phase to enter
+     * @param token              the registered Pyris job token
+     * @param contentFingerprint the fingerprint computed at claim time
+     * @param workerBootId       boot id of the worker that owns the lease
+     * @param now                the activation time, recorded as start, last update and first heartbeat
+     * @return 1 when the claim was activated, 0 when the row no longer holds a claim
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = :phase, ps.startedAt = :now, ps.lastUpdated = :now, ps.errorKey = NULL, ps.retryEligibleAt = NULL,
+                ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL,
+                ps.ingestionJobToken = :token, ps.contentFingerprint = :contentFingerprint, ps.lastHeartbeatAt = :now, ps.lockedBy = :workerBootId
+            WHERE ps.lectureUnit.id = :lectureUnitId
+            AND ps.ingestionJobToken IS NULL
+            AND ((ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE AND ps.startedAt IS NOT NULL)
+                OR (ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED AND ps.retryEligibleAt IS NOT NULL))
+            """)
+    int activateClaimedJob(@Param("lectureUnitId") long lectureUnitId, @Param("phase") ProcessingPhase phase, @Param("token") String token,
+            @Param("contentFingerprint") String contentFingerprint, @Param("workerBootId") String workerBootId, @Param("now") ZonedDateTime now);
+
 }

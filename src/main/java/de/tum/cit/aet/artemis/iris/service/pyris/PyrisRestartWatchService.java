@@ -60,8 +60,10 @@ public class PyrisRestartWatchService {
      * Record the boot id from a Pyris health response and reset in-flight jobs when it changed.
      * <p>
      * A missing boot id (older Pyris version) is a no-op. The first observed boot id is only stored,
-     * because there is no previous value to compare against. When the reset fails, the previous boot
-     * id is restored so the next observation retries the reset instead of losing the restart signal.
+     * because there is no previous value to compare against. Detection, recovery and publication happen
+     * under one cluster-wide lock, and the new boot id is published only after the recovery succeeded:
+     * a node that dies or fails mid-reset leaves the previous id in place, so the next observation on
+     * any node retries the reset instead of losing the restart signal.
      *
      * @param bootId the boot id reported by Pyris, may be null
      */
@@ -72,10 +74,23 @@ public class PyrisRestartWatchService {
 
         var map = getBootIdMap();
         map.lock(BOOT_ID_KEY);
-        String previousBootId;
         try {
-            previousBootId = map.get(BOOT_ID_KEY);
+            String previousBootId = map.get(BOOT_ID_KEY);
             if (bootId.equals(previousBootId)) {
+                return;
+            }
+            if (previousBootId == null) {
+                map.put(BOOT_ID_KEY, bootId);
+                log.info("Observed Pyris boot id for the first time");
+                return;
+            }
+
+            log.warn("Pyris boot id changed — the process restarted, resetting in-flight ingestion jobs");
+            try {
+                processingStateRecoveryApi.ifPresent(api -> api.handleIrisReset());
+            }
+            catch (Exception e) {
+                log.error("Failed to reset in-flight jobs after a Pyris boot id change; keeping the previous boot id so the next observation retries", e);
                 return;
             }
             map.put(BOOT_ID_KEY, bootId);
@@ -83,27 +98,5 @@ public class PyrisRestartWatchService {
         finally {
             map.unlock(BOOT_ID_KEY);
         }
-
-        if (previousBootId == null) {
-            log.info("Observed Pyris boot id for the first time");
-            return;
-        }
-
-        log.warn("Pyris boot id changed — the process restarted, resetting in-flight ingestion jobs");
-        processingStateRecoveryApi.ifPresent(api -> {
-            try {
-                api.handleIrisReset();
-            }
-            catch (Exception e) {
-                log.error("Failed to reset in-flight jobs after a Pyris boot id change", e);
-                map.lock(BOOT_ID_KEY);
-                try {
-                    map.put(BOOT_ID_KEY, previousBootId);
-                }
-                finally {
-                    map.unlock(BOOT_ID_KEY);
-                }
-            }
-        });
     }
 }

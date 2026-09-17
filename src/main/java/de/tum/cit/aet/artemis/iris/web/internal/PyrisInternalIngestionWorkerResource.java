@@ -111,7 +111,13 @@ public class PyrisInternalIngestionWorkerResource {
                 processingStateCallbackApi.get().markClaimedUnitSkipped(claim.lectureUnitId());
                 continue;
             }
-            processingStateCallbackApi.get().activateClaimedJob(claim.lectureUnitId(), prepared.jobToken(), claim.targetPhase(), claim.contentFingerprint(), request.bootId());
+            if (!processingStateCallbackApi.get().activateClaimedJob(claim.lectureUnitId(), prepared.jobToken(), claim.targetPhase(), claim.contentFingerprint(),
+                    request.bootId())) {
+                // The claim lapsed between claiming and preparing (released, re-claimed by a newer request, or already
+                // activated). A job the ledger does not track must not be handed to the worker.
+                log.info("Claimed unit {} lost its claim before activation, not handing it to the worker", claim.lectureUnitId());
+                continue;
+            }
             jobs.add(prepared.executionDTO());
         }
         return ResponseEntity.ok(new PyrisWorkerClaimResponseDTO(jobs));

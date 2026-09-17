@@ -85,6 +85,13 @@ public class PyrisHealthIndicator implements HealthIndicator {
      * startup is NOT treated as a restart — only a genuine DOWN → UP transition triggers a reset.
      * AtomicBoolean ensures that concurrent health checks cannot both observe the same
      * DOWN → UP transition and trigger duplicate resets.
+     * <p>
+     * This transition is only a proxy for a restart, and a wrong one whenever Pyris reports DOWN because a
+     * dependency (Weaviate, an LLM gateway) is unavailable while the process itself keeps running its jobs:
+     * resetting those live runs re-dispatches them, Pyris skips the duplicates, and the originals' terminal
+     * callbacks are then rejected as stale. A Pyris that reports a boot id is therefore left to
+     * {@link PyrisRestartWatchService}, which detects real restarts exactly; the transition heuristic remains
+     * only for an older Pyris without a boot id.
      */
     private final AtomicBoolean previouslyUp = new AtomicBoolean(true);
 
@@ -125,6 +132,7 @@ public class PyrisHealthIndicator implements HealthIndicator {
         URI healthUri = UriComponentsBuilder.fromUri(irisUrl).path("/api/v1/health/").build(true).toUri();
         var additionalInfo = new HashMap<String, Object>();
         additionalInfo.put(IRIS_URL_KEY, irisUrl);
+        boolean restartWatchedByBootId = false;
 
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -139,6 +147,7 @@ public class PyrisHealthIndicator implements HealthIndicator {
                 try {
                     PyrisHealthStatusDTO body = objectMapper.readValue(json, PyrisHealthStatusDTO.class);
                     flattenModulesInto(additionalInfo, body.modules());
+                    restartWatchedByBootId = body.bootId() != null && !body.bootId().isBlank();
                     restartWatchService.observeBootId(body.bootId());
                     connectorHealth = new ConnectorHealth(body.isHealthy(), additionalInfo, null);
                 }
@@ -157,7 +166,10 @@ public class PyrisHealthIndicator implements HealthIndicator {
         var newHealth = connectorHealth.asActuatorHealth();
         boolean currentlyUp = newHealth.getStatus() == Status.UP;
         boolean wasUp = previouslyUp.getAndSet(currentlyUp);
-        if (currentlyUp && !wasUp) {
+        if (currentlyUp && !wasUp && restartWatchedByBootId) {
+            log.info("Iris is UP again and reports a boot id; leaving restart detection to the boot id watch");
+        }
+        else if (currentlyUp && !wasUp) {
             log.info("Iris restarted (DOWN → UP) — resetting in-flight ingestion jobs");
             processingStateRecoveryApi.ifPresent(api -> {
                 try {

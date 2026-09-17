@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.api;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
@@ -11,7 +10,6 @@ import org.springframework.stereotype.Controller;
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO;
-import de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO;
 import de.tum.cit.aet.artemis.lecture.service.ProcessingStateCallbackService;
 
 /**
@@ -79,8 +77,8 @@ public class ProcessingStateCallbackApi extends AbstractLectureApi {
      * @param contentFingerprint the fingerprint computed at claim time
      * @param workerBootId       boot id of the worker executing the run
      */
-    public void activateClaimedJob(long lectureUnitId, String jobToken, ProcessingPhase targetPhase, String contentFingerprint, String workerBootId) {
-        processingStateCallbackService.activateClaimedJob(lectureUnitId, jobToken, targetPhase, contentFingerprint, workerBootId);
+    public boolean activateClaimedJob(long lectureUnitId, String jobToken, ProcessingPhase targetPhase, String contentFingerprint, String workerBootId) {
+        return processingStateCallbackService.activateClaimedJob(lectureUnitId, jobToken, targetPhase, contentFingerprint, workerBootId);
     }
 
     /**
@@ -116,17 +114,5 @@ public class ProcessingStateCallbackApi extends AbstractLectureApi {
      */
     public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success, @Nullable String errorCode, @Nullable List<Integer> displayPageNumbers) {
         processingStateCallbackService.handleIngestionComplete(lectureUnitId, jobToken, success, errorCode, displayPageNumbers);
-    }
-
-    /**
-     * Resolve the identity of the ingestion job currently associated with the given token.
-     * Backs the database fallback for authenticating Iris ingestion callbacks after the
-     * distributed job map entry expired.
-     *
-     * @param token the ingestion job token from the callback
-     * @return the job identity if a processing state currently carries this token
-     */
-    public Optional<IngestionJobIdentityDTO> findIngestionJobIdentityByToken(String token) {
-        return processingStateCallbackService.findIngestionJobIdentityByToken(token);
     }
 }

@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.lecture.api.ProcessingStateRecoveryApi;
 
 /**
  * Unit tests for {@link PyrisRestartWatchService}: boot id observation, restart detection,
- * and the restore-on-failed-reset behavior that keeps the restart signal alive.
+ * and the publish-only-after-recovery ordering that keeps the restart signal alive when a reset fails.
  */
 class PyrisRestartWatchServiceTest {
 
@@ -86,17 +86,30 @@ class PyrisRestartWatchServiceTest {
     }
 
     @Test
-    void shouldRestorePreviousBootIdWhenTheResetFails() {
+    void shouldPublishTheNewBootIdOnlyAfterTheResetSucceeded() {
+        when(bootIdMap.get(BOOT_ID_KEY)).thenReturn("boot-1");
+
+        service.observeBootId("boot-2");
+
+        // Detection, recovery and publication happen under one lock, and the reset runs before the new id
+        // becomes visible: a node that dies mid-reset leaves the old id for the next observer to retry.
+        var order = inOrder(bootIdMap, recoveryApi);
+        order.verify(bootIdMap).lock(BOOT_ID_KEY);
+        order.verify(recoveryApi).handleIrisReset();
+        order.verify(bootIdMap).put(BOOT_ID_KEY, "boot-2");
+        order.verify(bootIdMap).unlock(BOOT_ID_KEY);
+    }
+
+    @Test
+    void shouldKeepThePreviousBootIdWhenTheResetFails() {
         when(bootIdMap.get(BOOT_ID_KEY)).thenReturn("boot-1");
         when(recoveryApi.handleIrisReset()).thenThrow(new RuntimeException("database unavailable"));
 
         service.observeBootId("boot-2");
 
-        // The new id is stored first; after the failed reset the previous id is restored,
-        // so the next health observation sees the change again and retries the reset.
-        var order = inOrder(bootIdMap);
-        order.verify(bootIdMap).put(BOOT_ID_KEY, "boot-2");
-        order.verify(bootIdMap).put(BOOT_ID_KEY, "boot-1");
+        // Nothing is published, so the next health observation on any node sees the change again and retries.
+        verify(bootIdMap, never()).put(anyString(), anyString());
+        verify(bootIdMap).unlock(BOOT_ID_KEY);
     }
 
     @Test

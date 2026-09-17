@@ -10,12 +10,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -27,7 +25,10 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
@@ -41,7 +42,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO;
-import de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
@@ -84,11 +84,10 @@ public class ProcessingStateCallbackService {
     private static final int RETRY_CLAIM_LEASE_MINUTES = 20;
 
     /**
-     * Lock to serialize dispatch so the count check + dispatch are atomic.
-     * Without this, concurrent calls to dispatchPendingJobs() can each see the
-     * same activeCount and over-dispatch beyond MAX_CONCURRENT_PROCESSING.
+     * Name of the cluster-wide lock that serializes push dispatch, so that count + claim + send is atomic across
+     * all nodes and two nodes cannot both fill the same free capacity.
      */
-    private final ReentrantLock dispatchLock = new ReentrantLock();
+    private static final String DISPATCH_LOCK_NAME = "lecture-ingestion-dispatch";
 
     private static final JsonMapper objectMapper = JsonObjectMapper.get();
 
@@ -100,17 +99,15 @@ public class ProcessingStateCallbackService {
 
     private final AttachmentRepository attachmentRepository;
 
-    // ObjectProvider rather than Optional: this service sits on the cycle
-    // irisLectureApi -> pyrisWebhookService -> pyrisJobService -> processingStateCallbackApi -> this,
-    // and Optional (like @Lazy on a final type) is resolved eagerly at construction.
-    // The provider defers resolution to dispatch time, when all beans exist.
-    private final ObjectProvider<IrisLectureApi> irisLectureApi;
+    private final Optional<IrisLectureApi> irisLectureApi;
 
     private final WebsocketMessagingService websocketMessagingService;
 
     private final LectureUnitContentFingerprintService contentFingerprintService;
 
     private final DistributedDataProvider distributedDataProvider;
+
+    private final FeatureToggleService featureToggleService;
 
     /**
      * How long after the last claim or heartbeat call a pulling Pyris worker still counts as present.
@@ -132,8 +129,8 @@ public class ProcessingStateCallbackService {
     private DistributedMap<String, String> workerMap;
 
     public ProcessingStateCallbackService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            AttachmentRepository attachmentRepository, ObjectProvider<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService,
-            LectureUnitContentFingerprintService contentFingerprintService, DistributedDataProvider distributedDataProvider,
+            AttachmentRepository attachmentRepository, Optional<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService,
+            LectureUnitContentFingerprintService contentFingerprintService, DistributedDataProvider distributedDataProvider, FeatureToggleService featureToggleService,
             @Value("${artemis.iris.ingestion.max-concurrent-jobs:2}") int maxConcurrentJobs) {
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
@@ -142,6 +139,7 @@ public class ProcessingStateCallbackService {
         this.websocketMessagingService = websocketMessagingService;
         this.contentFingerprintService = contentFingerprintService;
         this.distributedDataProvider = distributedDataProvider;
+        this.featureToggleService = featureToggleService;
         this.maxConcurrentJobs = maxConcurrentJobs;
     }
 
@@ -181,12 +179,12 @@ public class ProcessingStateCallbackService {
      * </ol>
      * <p>
      * Cluster safety comes from the conditional claim on each candidate rather than from a transaction spanning the
-     * read and the write: see {@link LectureUnitProcessingStateRepository#claimIdleForDispatch}. The local
-     * {@code dispatchLock} still serializes dispatch within this node so the capacity check cannot be raced by two of
-     * its own threads.
+     * read and the write: see {@link LectureUnitProcessingStateRepository#claimIdleForDispatch}. The cluster-wide
+     * dispatch lock serializes the capacity check with the claims, so two nodes cannot both see the same free slots
+     * and together exceed the configured maximum.
      */
     public void dispatchPendingJobs() {
-        if (irisLectureApi.getIfAvailable() == null) {
+        if (irisLectureApi.isEmpty()) {
             log.debug("Iris API not available, skipping dispatch");
             return;
         }
@@ -199,9 +197,10 @@ public class ProcessingStateCallbackService {
             return;
         }
 
-        // Serialize dispatch so count + claim + dispatch are atomic per node.
-        // Without this lock, concurrent @Async calls can each see the same
-        // activeCount and dispatch beyond the configured maximum.
+        // Serialize dispatch cluster-wide so count + claim + dispatch are atomic. Without this lock, concurrent
+        // callers (async triggers on one node, or two nodes at once) can each see the same activeCount and
+        // together dispatch beyond the configured maximum.
+        DistributedLock dispatchLock = distributedDataProvider.getLock(DISPATCH_LOCK_NAME);
         dispatchLock.lock();
         try {
             long activeCount = processingStateRepository.countByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING));
@@ -294,7 +293,7 @@ public class ProcessingStateCallbackService {
         String contentFingerprint = prepared.contentFingerprint();
 
         try {
-            String jobToken = irisLectureApi.getObject().addLectureUnitToPyrisDB(attachmentUnit, contentFingerprint, state.isForceReingest());
+            String jobToken = irisLectureApi.get().addLectureUnitToPyrisDB(attachmentUnit, contentFingerprint, state.isForceReingest());
 
             if (jobToken == null) {
                 log.info("Processing not applicable for unit {} (course settings or content type), marking as SKIPPED", unit.getId());
@@ -401,6 +400,12 @@ public class ProcessingStateCallbackService {
      */
     public List<ClaimedIngestionUnitDTO> claimUnitsForWorker(String workerBootId, int maxJobs) {
         markWorkerSeen(workerBootId);
+        if (!featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)) {
+            // The toggle is the operator's kill switch for new work; the push path, retries, backfill and reconcile
+            // all honor it, so a pulling worker must not become a way around it.
+            log.debug("LectureContentProcessing feature is disabled, handing out no jobs to worker {}", workerBootId);
+            return List.of();
+        }
         int jobs = Math.clamp(maxJobs, 0, MAX_JOBS_PER_CLAIM);
         if (jobs == 0) {
             return List.of();
@@ -448,28 +453,31 @@ public class ProcessingStateCallbackService {
      * worker: transition into the target phase, record token and fingerprint, and open the worker
      * lease. From here on the run is alive exactly as long as the worker keeps renewing the lease.
      *
+     * <p>
+     * The activation is bound to the claim that produced it: the conditional update only matches a row that still
+     * holds a claim and no token, so an activation that arrives after the claim was released and possibly re-claimed
+     * matches nothing instead of overwriting the newer run's token.
+     *
      * @param lectureUnitId      the claimed unit
      * @param jobToken           the registered Pyris job token
      * @param targetPhase        the in-flight phase determined at claim time
      * @param contentFingerprint the fingerprint computed at claim time
      * @param workerBootId       boot id of the worker executing the run
+     * @return whether the claim was activated; false when the unit no longer holds the claim
      */
-    public void activateClaimedJob(long lectureUnitId, String jobToken, ProcessingPhase targetPhase, String contentFingerprint, String workerBootId) {
-        Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByLectureUnit_Id(lectureUnitId);
-        if (stateOpt.isEmpty()) {
-            log.warn("Cannot activate claimed job for unit {}: no processing state", lectureUnitId);
-            return;
+    public boolean activateClaimedJob(long lectureUnitId, String jobToken, ProcessingPhase targetPhase, String contentFingerprint, String workerBootId) {
+        int activated = processingStateRepository.activateClaimedJob(lectureUnitId, targetPhase, jobToken, contentFingerprint, workerBootId, ZonedDateTime.now());
+        if (activated == 0) {
+            log.warn("Ignoring activation of unit {} by worker {}: the unit no longer holds the claim (released, re-claimed, or already activated)", lectureUnitId, workerBootId);
+            return false;
         }
-        LectureUnitProcessingState state = stateOpt.get();
-        state.transitionTo(targetPhase);
-        state.setIngestionJobToken(jobToken);
-        state.setContentFingerprint(contentFingerprint);
-        state.renewLease(workerBootId);
-        processingStateRepository.save(state);
         log.info("Worker {} activated unit {} as {} with token {}", workerBootId, lectureUnitId, targetPhase, maskToken(jobToken));
 
-        TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
-        notifyProcessingStateChange(state, txStatus);
+        processingStateRepository.findByLectureUnit_Id(lectureUnitId).ifPresent(state -> {
+            TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
+            notifyProcessingStateChange(state, txStatus);
+        });
+        return true;
     }
 
     /**
@@ -660,18 +668,6 @@ public class ProcessingStateCallbackService {
         catch (JacksonException e) {
             log.warn("Failed to parse checkpoint data for unit {}: {}", lectureUnitId, e.getMessage());
         }
-    }
-
-    /**
-     * Resolve the identity of the ingestion job currently associated with the given token.
-     * Backs the database fallback for authenticating Iris ingestion callbacks after the
-     * distributed job map entry expired.
-     *
-     * @param token the ingestion job token from the callback
-     * @return the job identity if a processing state currently carries this token
-     */
-    public Optional<IngestionJobIdentityDTO> findIngestionJobIdentityByToken(String token) {
-        return processingStateRepository.findIngestionJobIdentityByToken(token);
     }
 
     /**

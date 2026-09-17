@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
-import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitProcessingStateRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO;
 
 /**
@@ -38,7 +38,7 @@ class PyrisJobServiceDatabaseFallbackTest {
 
     private DistributedMap<String, PyrisJob> jobMap;
 
-    private ProcessingStateCallbackApi callbackApi;
+    private LectureUnitProcessingStateRepositoryApi callbackApi;
 
     private HttpServletRequest request;
 
@@ -53,7 +53,7 @@ class PyrisJobServiceDatabaseFallbackTest {
         DistributedDataProvider distributedDataProvider = mock(DistributedDataProvider.class);
         jobMap = mock(PyrisJobMap.class);
         when(distributedDataProvider.<String, PyrisJob>getExpiringMap(eq("pyris-job-map"), any())).thenReturn(jobMap);
-        callbackApi = mock(ProcessingStateCallbackApi.class);
+        callbackApi = mock(LectureUnitProcessingStateRepositoryApi.class);
         jobService = new PyrisJobService(distributedDataProvider, Optional.of(callbackApi));
 
         request = mock(HttpServletRequest.class);

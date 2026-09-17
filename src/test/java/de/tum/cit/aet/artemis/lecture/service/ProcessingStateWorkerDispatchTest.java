@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lecture.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -20,11 +21,13 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.ObjectProvider;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -50,6 +53,8 @@ class ProcessingStateWorkerDispatchTest {
 
     private LectureTranscriptionRepository transcriptionRepository;
 
+    private FeatureToggleService featureToggleService;
+
     private Map<String, String> workerMapBacking;
 
     private AttachmentVideoUnit testUnit;
@@ -72,12 +77,14 @@ class ProcessingStateWorkerDispatchTest {
         doAnswer(invocation -> workerMapBacking.put(invocation.getArgument(0), invocation.getArgument(1))).when(workerMap).put(anyString(), anyString());
         DistributedDataProvider distributedDataProvider = mock(DistributedDataProvider.class);
         doReturn(workerMap).when(distributedDataProvider).getMap(anyString());
+        doReturn(mock(DistributedLock.class)).when(distributedDataProvider).getLock(anyString());
 
-        ObjectProvider<IrisLectureApi> irisLectureApi = mock(ObjectProvider.class);
-        when(irisLectureApi.getIfAvailable()).thenReturn(mock(IrisLectureApi.class));
+        Optional<IrisLectureApi> irisLectureApi = Optional.of(mock(IrisLectureApi.class));
+        featureToggleService = mock(FeatureToggleService.class);
+        when(featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
 
         callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository, irisLectureApi, websocketMessagingService,
-                contentFingerprintService, distributedDataProvider, 2);
+                contentFingerprintService, distributedDataProvider, featureToggleService, 2);
 
         Lecture lecture = new Lecture();
         lecture.setId(1L);
@@ -146,17 +153,35 @@ class ProcessingStateWorkerDispatchTest {
     }
 
     @Test
-    void activateClaimedJobOpensTheWorkerLease() {
+    void claimUnitsForWorkerHandsOutNothingWhileTheFeatureIsDisabled() {
+        when(featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(false);
+
+        assertThat(callbackService.claimUnitsForWorker(WORKER_BOOT_ID, 2)).isEmpty();
+
+        verify(processingStateRepository, never()).findIdleForDispatch(any(), anyInt());
+        assertThat(workerMapBacking).containsKey("lastSeenAt");
+    }
+
+    @Test
+    void activateClaimedJobActivatesTheClaimAtomically() {
+        when(processingStateRepository.activateClaimedJob(eq(100L), eq(ProcessingPhase.INGESTING), eq("token-abc"), eq("v1:test-fingerprint"), eq(WORKER_BOOT_ID), any()))
+                .thenReturn(1);
         when(processingStateRepository.findByLectureUnit_Id(100L)).thenReturn(Optional.of(testState));
 
-        callbackService.activateClaimedJob(100L, "token-abc", ProcessingPhase.INGESTING, "v1:test-fingerprint", WORKER_BOOT_ID);
+        assertThat(callbackService.activateClaimedJob(100L, "token-abc", ProcessingPhase.INGESTING, "v1:test-fingerprint", WORKER_BOOT_ID)).isTrue();
 
-        assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
-        assertThat(testState.getIngestionJobToken()).isEqualTo("token-abc");
-        assertThat(testState.getContentFingerprint()).isEqualTo("v1:test-fingerprint");
-        assertThat(testState.getLastHeartbeatAt()).isNotNull();
-        assertThat(testState.getLockedBy()).isEqualTo(WORKER_BOOT_ID);
-        verify(processingStateRepository).save(testState);
+        verify(processingStateRepository).activateClaimedJob(eq(100L), eq(ProcessingPhase.INGESTING), eq("token-abc"), eq("v1:test-fingerprint"), eq(WORKER_BOOT_ID), any());
+        verify(processingStateRepository, never()).save(any());
+    }
+
+    @Test
+    void activateClaimedJobIgnoresAnActivationWhoseClaimLapsed() {
+        when(processingStateRepository.activateClaimedJob(anyLong(), any(), anyString(), anyString(), anyString(), any())).thenReturn(0);
+
+        assertThat(callbackService.activateClaimedJob(100L, "token-late", ProcessingPhase.INGESTING, "v1:test-fingerprint", WORKER_BOOT_ID)).isFalse();
+
+        verify(processingStateRepository, never()).save(any());
+        verify(processingStateRepository, never()).findByLectureUnit_Id(anyLong());
     }
 
     @Test
