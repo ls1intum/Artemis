@@ -8,11 +8,11 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
 class SearchableEntityContentHasherTest {
 
-    private final SearchableEntityContentHasher contentHasher = new SearchableEntityContentHasher(new ObjectMapper());
+    private final SearchableEntityContentHasher contentHasher = new SearchableEntityContentHasher(JsonObjectMapper.get());
 
     @Test
     void testHash_isStableAcrossKeyInsertionOrder() {

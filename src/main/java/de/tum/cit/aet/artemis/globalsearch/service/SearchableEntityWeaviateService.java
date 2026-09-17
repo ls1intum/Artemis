@@ -15,9 +15,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
@@ -91,7 +91,7 @@ public class SearchableEntityWeaviateService {
 
     private final SearchableEntityResolver resolver;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final SearchableEntityContentHasher contentHasher;
 
@@ -99,7 +99,7 @@ public class SearchableEntityWeaviateService {
 
     private final boolean useHybridSearch;
 
-    public SearchableEntityWeaviateService(WeaviateService weaviateService, WeaviateOutboxRepository outboxRepository, SearchableEntityResolver resolver, ObjectMapper objectMapper,
+    public SearchableEntityWeaviateService(WeaviateService weaviateService, WeaviateOutboxRepository outboxRepository, SearchableEntityResolver resolver, JsonMapper objectMapper,
             SearchableEntityContentHasher contentHasher, ApplicationEventPublisher eventPublisher) {
         this.weaviateService = weaviateService;
         this.outboxRepository = outboxRepository;
@@ -481,7 +481,7 @@ public class SearchableEntityWeaviateService {
         try {
             return objectMapper.writeValueAsString(new TreeMap<>(map));
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new WeaviateException("Failed to serialize Weaviate outbox data: " + e.getMessage(), e);
         }
     }
@@ -565,7 +565,7 @@ public class SearchableEntityWeaviateService {
             return objectMapper.readValue(json, new TypeReference<Map<String, Object>>() {
             });
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new WeaviateException("Failed to deserialize Weaviate outbox data: " + e.getMessage(), e);
         }
     }

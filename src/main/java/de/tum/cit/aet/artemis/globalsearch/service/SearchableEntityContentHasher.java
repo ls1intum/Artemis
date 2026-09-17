@@ -11,8 +11,8 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
  * <p>
  * The hash is recorded in the {@code searchable_entity_sync_state} ledger on every confirmed write, and a later
  * reconcile pass re-derives an entity and compares against it to detect drift. Both sides must produce identical
- * output for an unchanged entity, so this is a shared bean holding the one {@link ObjectMapper} rather than a
+ * output for an unchanged entity, so this is a shared bean holding the one {@link JsonMapper} rather than a
  * static helper with a mapper of its own: a second implementation that merely agrees today would, on its first
  * divergence, report every entity as drifted and rewrite the whole index continuously.
  * <p>
@@ -38,9 +38,9 @@ public class SearchableEntityContentHasher {
     /** Prefix stamped on every hash this class produces. */
     public static final String CURRENT_VERSION_PREFIX = "v1:";
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
-    public SearchableEntityContentHasher(ObjectMapper objectMapper) {
+    public SearchableEntityContentHasher(JsonMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
@@ -76,7 +76,7 @@ public class SearchableEntityContentHasher {
         try {
             return objectMapper.writeValueAsString(new TreeMap<>(properties));
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new WeaviateException("Failed to serialize a searchable entity property map for hashing: " + e.getMessage(), e);
         }
     }

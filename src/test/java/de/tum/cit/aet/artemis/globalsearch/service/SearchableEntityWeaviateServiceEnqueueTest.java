@@ -17,9 +17,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.context.ApplicationEventPublisher;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOperation;
@@ -48,7 +49,7 @@ class SearchableEntityWeaviateServiceEnqueueTest {
 
     private final WeaviateOutboxRepository outboxRepository = mock(WeaviateOutboxRepository.class);
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     private final ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
 

@@ -15,7 +15,7 @@ import org.springframework.validation.annotation.Validated;
  * @param initialDelaySeconds delay before the first attempt, so the migration does not compete with application
  *                                startup. It runs on a background thread either way, so this only affects when
  *                                the work begins.
- * @param maxAttempts         bounded in-process retries. An attempt can fail when the embedding backend is cold
+ * @param maxAttempts         bounded in-process retries. An attempt can fail when the embedding service is cold
  *                                or briefly unavailable, and retrying in process lets it self-heal rather than
  *                                waiting for the next restart of the scheduling node.
  * @param retryDelaySeconds   delay between attempts.

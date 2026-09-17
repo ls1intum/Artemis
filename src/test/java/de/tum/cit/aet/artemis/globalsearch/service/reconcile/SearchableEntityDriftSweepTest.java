@@ -20,8 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateReconcileProperties;
 import de.tum.cit.aet.artemis.globalsearch.domain.ReconcilePass;
 import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntityReconcileState;
@@ -46,7 +45,7 @@ class SearchableEntityDriftSweepTest {
 
     // The real hasher, not a mock: the point of this pass is that its hash agrees with the write path's, and a
     // stubbed hash would assert nothing about that.
-    private final SearchableEntityContentHasher contentHasher = new SearchableEntityContentHasher(new ObjectMapper());
+    private final SearchableEntityContentHasher contentHasher = new SearchableEntityContentHasher(JsonObjectMapper.get());
 
     private final SearchableEntityIdEnumerator idEnumerator = mock(SearchableEntityIdEnumerator.class);
 

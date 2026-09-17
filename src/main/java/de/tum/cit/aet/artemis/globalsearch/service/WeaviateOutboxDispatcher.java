@@ -13,13 +13,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
@@ -36,10 +33,15 @@ import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
  * It runs only on the scheduling node ({@code @Profile(PROFILE_SCHEDULING)}), which Artemis requires to be
  * exactly one instance, so it is the single writer to the collection. It reads due rows in id (enqueue) order
  * with a plain query and processes them sequentially. Each Weaviate write happens outside any transaction, so a
- * slow or hung write never holds a database connection; the outcome is then recorded in a short transaction: on
- * success the row is deleted and, for an upsert, the {@code searchable_entity_sync_state} ledger is refreshed;
- * on failure the row survives with an incremented attempt count and an exponentially backed-off
+ * slow or hung write never holds a database connection; the outcome is then recorded with plain repository calls:
+ * on success the {@code searchable_entity_sync_state} ledger is refreshed for an upsert and the row is deleted; on
+ * failure the row survives with an incremented attempt count and an exponentially backed-off
  * {@code next_attempt_at}, so a Weaviate outage self-heals when Weaviate recovers.
+ * <p>
+ * No transaction spans the outcome writes either: Artemis keeps transaction boundaries inside repositories (see
+ * {@code ArchitectureTest.testNoProgrammaticTransactionManagement}), so {@link #confirmWrite} orders its statements
+ * so that a crash between them is harmless. The row delete comes last and is the acknowledgement; every statement
+ * before it is idempotent, and a row that survives a crash is simply re-read and re-applied on the next drain.
  * <p>
  * A confirmed per-entity write drops all older outbox rows for that entity ({@link #collapseSupersededRows}),
  * so a failed older row deferred by backoff cannot wake up after a newer row for the same entity succeeded and
@@ -51,12 +53,11 @@ import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
  * reconcile pass remains the backstop for writes lost before they reached the outbox and for content drift.
  * <p>
  * A drain is triggered two ways: a periodic {@link #scheduledDrain()} tick (the cross-node path and safety
- * net) and an after-commit {@link #onOutboxEnqueued(WeaviateOutboxEnqueuedEvent)} nudge for the freshness of
+ * net) and an asynchronous {@link #onOutboxEnqueued(WeaviateOutboxEnqueuedEvent)} nudge for the freshness of
  * enqueues made on this node. A {@link ReentrantLock} guarantees only one drain runs at a time on this node.
  * <p>
  * Being the single writer, it needs no lock or lease to protect a row during processing: the read does not
  * mutate the row, so a crash mid-batch simply leaves it to be re-read and re-applied (writes are idempotent).
- * Only the short outcome writes use a transaction, via a {@link TransactionTemplate}.
  */
 @Lazy
 @Component
@@ -83,25 +84,22 @@ public class WeaviateOutboxDispatcher {
 
     private final SearchableEntityWeaviateService searchableEntityWeaviateService;
 
-    private final TransactionTemplate transactionTemplate;
-
     /**
      * Serializes drains on this node so the scheduled tick and the after-commit nudge never overlap.
      */
     private final ReentrantLock drainLock = new ReentrantLock();
 
     public WeaviateOutboxDispatcher(WeaviateOutboxRepository outboxRepository, SearchableEntitySyncStateRepository syncStateRepository,
-            SearchableEntityWeaviateService searchableEntityWeaviateService, PlatformTransactionManager transactionManager, WeaviateOutboxProperties outboxProperties) {
+            SearchableEntityWeaviateService searchableEntityWeaviateService, WeaviateOutboxProperties outboxProperties) {
         this.outboxRepository = outboxRepository;
         this.syncStateRepository = syncStateRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
-        this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.outboxProperties = outboxProperties;
     }
 
     /**
      * Periodic safety-net drain, and the path by which enqueues made on non-scheduling nodes reach Weaviate. On the
-     * scheduling node the after-commit nudge already makes local enqueues fresh, so this tick primarily drains
+     * scheduling node the enqueue nudge already makes local enqueues fresh, so this tick primarily drains
      * enqueues made on other nodes and covers any missed nudge.
      * <p>
      * The cadence defaults to 5 seconds and is overridable via {@code artemis.weaviate.outbox.drain-interval-seconds}.
@@ -113,14 +111,16 @@ public class WeaviateOutboxDispatcher {
     }
 
     /**
-     * After-commit nudge so an enqueue made on this node is applied promptly, keeping freshness comparable to
-     * the previous fire-and-forget write. Runs asynchronously off the caller's thread. {@code fallbackExecution}
-     * covers enqueues made outside any transaction (REST resources), which commit immediately on save.
+     * Nudge so an enqueue made on this node is applied promptly, keeping freshness comparable to the previous
+     * fire-and-forget write. Runs asynchronously off the caller's thread. The enqueue saves its outbox row through
+     * a repository call, whose transaction has committed by the time the call returns and the event is published,
+     * so the row is already visible to {@link #drainBatch} when this listener runs. Should a caller ever publish
+     * from inside a transaction of its own, the nudge simply sees no row yet and the scheduled tick drains it.
      *
      * @param event the marker event published by {@code SearchableEntityWeaviateService} after an enqueue
      */
     @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    @EventListener
     public void onOutboxEnqueued(WeaviateOutboxEnqueuedEvent event) {
         drain();
     }
@@ -167,8 +167,8 @@ public class WeaviateOutboxDispatcher {
     }
 
     /**
-     * Applies a single outbox entry to Weaviate outside any transaction, then records the outcome in a short
-     * transaction: {@link #confirmWrite} on success, {@link #scheduleRetry} on failure.
+     * Applies a single outbox entry to Weaviate outside any transaction, then records the outcome:
+     * {@link #confirmWrite} on success, {@link #scheduleRetry} on failure.
      */
     private void processEntry(WeaviateOutboxEntry entry, ZonedDateTime now) {
         try {
@@ -177,13 +177,13 @@ public class WeaviateOutboxDispatcher {
             if (entry.getAttempts() > 0) {
                 log.info("Weaviate outbox entry {} succeeded after {} failed attempt(s)", entry.getId(), entry.getAttempts());
             }
-            transactionTemplate.executeWithoutResult(status -> confirmWrite(entry, now, writtenContentHash));
+            confirmWrite(entry, now, writtenContentHash);
         }
         catch (Exception e) {
             int attempt = entry.getAttempts() + 1;
             // Compute the retry time now, not from the batch-start timestamp: a slow write could otherwise make the backoff already due.
             ZonedDateTime nextAttempt = ZonedDateTime.now().plusSeconds(backoffSeconds(attempt));
-            transactionTemplate.executeWithoutResult(status -> scheduleRetry(entry, nextAttempt));
+            scheduleRetry(entry, nextAttempt);
             if (attempt <= MAX_WARN_ATTEMPTS) {
                 log.warn("Failed to apply Weaviate outbox entry {} (attempt {}), retrying after {}: {}", entry.getId(), attempt, nextAttempt, e.getMessage());
             }
@@ -215,8 +215,10 @@ public class WeaviateOutboxDispatcher {
     }
 
     /**
-     * Records a confirmed write in one short transaction: collapses superseded rows, refreshes the ledger, and
-     * removes the row.
+     * Records a confirmed write as three independent statements, ordered so a crash between them is harmless:
+     * collapse superseded rows, refresh the ledger, then remove the row. The delete is the acknowledgement. If the
+     * process dies before it, the row is re-read and re-applied on the next drain, and the two statements before it
+     * are idempotent, so nothing is lost or duplicated.
      */
     private void confirmWrite(WeaviateOutboxEntry entry, ZonedDateTime now, Optional<String> writtenContentHash) {
         collapseSupersededRows(entry);
@@ -225,7 +227,7 @@ public class WeaviateOutboxDispatcher {
     }
 
     /**
-     * Records a failed write in one short transaction: increments the attempt count and backs off.
+     * Records a failed write with a single statement: increments the attempt count and backs off.
      */
     private void scheduleRetry(WeaviateOutboxEntry entry, ZonedDateTime nextAttempt) {
         entry.recordFailedAttempt(nextAttempt);
