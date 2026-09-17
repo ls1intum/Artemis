@@ -1,7 +1,8 @@
 import { Component, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { User } from 'app/account/user/user.model';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -42,6 +43,7 @@ import { CourseRoleMember } from 'app/course/shared/course-group/course-role-mem
 })
 export class CourseGroupComponent {
     private readonly courseManagementService = inject(CourseManagementService);
+    private readonly alertService = inject(AlertService);
 
     private readonly tableViewRef = viewChild(TableViewComponent);
     private lazyLoadGeneration = 0;
@@ -79,8 +81,6 @@ export class CourseGroupComponent {
 
     readonly rows = signal<CourseRoleMember[]>([]);
     readonly totalRows = signal<number>(0);
-    /** Unfiltered total — only updated when no search term is active, so the export button stays visible during searches. */
-    readonly totalMembers = signal<number>(0);
     readonly isLoading = signal<boolean>(false);
 
     /** searchFn passed to the registration modal — searches all Artemis users, marks already-enrolled ones. */
@@ -99,21 +99,15 @@ export class CourseGroupComponent {
             // login is enough to resolve the user server-side; the rest are ignored.
             const dtos: StudentDTO[] = users.map((u) => ({ login: u.login, firstName: '', lastName: '', registrationNumber: '', email: '' }));
             return this.courseManagementService.addUsersToCourseRole(courseId, dtos, slug).pipe(
-                map((response) => {
+                tap((response) => {
                     // response.body lists the users that were NOT registered.
-                    const notFoundCount = response.body?.length ?? 0;
-                    const registeredCount = users.length - notFoundCount;
-                    if (registeredCount > 0) {
-                        this.totalMembers.update((n) => n + registeredCount);
-                    }
-                    if (notFoundCount > 0) {
-                        if (registeredCount > 0) {
-                            // must reload here: on error, the modal itself never calls reload().
-                            this.tableViewRef()?.reload();
-                        }
-                        throw new Error('Not all selected users could be registered');
+                    const notFound = response.body ?? [];
+                    if (notFound.length > 0) {
+                        const logins = notFound.map((u) => u.login).join(', ');
+                        this.alertService.error('artemisApp.course.courseGroup.notFoundUsers', { logins });
                     }
                 }),
+                map(() => void 0),
             );
         };
     });
@@ -172,9 +166,6 @@ export class CourseGroupComponent {
                 }
                 this.rows.set(result.content);
                 this.totalRows.set(result.totalElements);
-                if (!search.searchTerm) {
-                    this.totalMembers.set(result.totalElements);
-                }
                 this.isLoading.set(false);
             },
             error: () => {
@@ -188,15 +179,9 @@ export class CourseGroupComponent {
         });
     }
 
-    /** registerUsersFn() already updated totalMembers, so this only reloads the table. */
-    onUsersRegistered(): void {
+    /** Called after a new member was added, whether via the registration modal or CSV import. */
+    onMembersAdded(): void {
         this.tableViewRef()?.reload();
-    }
-
-    /** numberOfUsersImported() is still valid here — the dialog only resets it on the next open(). */
-    onImportDone(): void {
-        this.tableViewRef()?.reload();
-        this.totalMembers.update((n) => n + (this.importDialog()?.numberOfUsersImported ?? 0));
     }
 
     openAddUsersModal(): void {
@@ -218,8 +203,7 @@ export class CourseGroupComponent {
             this.removeUserFromGroup()(member.login).subscribe({
                 next: () => {
                     this.dialogErrorSource.next('');
-                    this.tableViewRef()?.reload();
-                    this.totalMembers.update((n) => Math.max(0, n - 1));
+                    this.tableViewRef()?.reloadAfterRemoval();
                 },
                 error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
             });

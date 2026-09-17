@@ -19,6 +19,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseAccessService;
@@ -183,6 +184,23 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
             assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), templateUri)).isEmpty();
             assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), exercise.getSolutionRepositoryUri())).isEmpty();
             assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), exercise.getTestRepositoryUri())).isEmpty();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void registerUsersForCourse_asynchronouslyProvisionsTokensForStaff() {
+        // A dedicated user, added the same way the course-member registration modal and CSV import add staff (the bulk endpoint), not the single-user add endpoint.
+        User joiningStaff = userUtilService.createAndSaveUser(TEST_PREFIX + "bulkjoiningstaff");
+        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), templateUri)).isEmpty();
+
+        List<StudentDTO> notFound = courseAccessService.registerUsersForCourse(course.getId(), List.of(new StudentDTO(joiningStaff.getLogin(), null, null, null, null)),
+                "instructors");
+        assertThat(notFound).isEmpty();
+
+        await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), templateUri)).isPresent();
+            assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), exercise.getSolutionRepositoryUri())).isPresent();
         });
     }
 

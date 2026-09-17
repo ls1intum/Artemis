@@ -391,6 +391,9 @@ public class CourseTestService {
 
     private static final int NUMBER_OF_INSTRUCTORS = 1;
 
+    // Registration numbers are capped at 20 characters; a per-prefix value would overflow that under long test-class prefixes.
+    private static final String TEST_REGISTRATION_NUMBER = "REG-0001";
+
     private MockDelegate mockDelegate;
 
     private String userPrefix;
@@ -3621,9 +3624,9 @@ public class CourseTestService {
      */
     public void getPagedUsersInCourseRole_searchByRegistrationNumber_returnsMatchingUser() throws Exception {
         var course = courseUtilService.createEnrolledCourse(userPrefix);
-        userUtilService.setRegistrationNumberOfUserAndSave(userPrefix + "student1", "REG-" + userPrefix);
+        userUtilService.setRegistrationNumberOfUserAndSave(userPrefix + "student1", TEST_REGISTRATION_NUMBER);
         List<CourseRoleMemberDTO> result = request.getList("/api/course/courses/" + course.getId() + "/students/paged", HttpStatus.OK, CourseRoleMemberDTO.class,
-                pagedMembersParams("0", "10", "REG-" + userPrefix));
+                pagedMembersParams("0", "10", TEST_REGISTRATION_NUMBER));
         assertThat(result).extracting(CourseRoleMemberDTO::login).containsExactly(userPrefix + "student1");
     }
 
@@ -3732,7 +3735,7 @@ public class CourseTestService {
      */
     public void getPagedUsersInCourseRole_returnsCorrectDtoFields() throws Exception {
         var course = courseUtilService.createEnrolledCourse(userPrefix);
-        userUtilService.setRegistrationNumberOfUserAndSave(userPrefix + "student1", "REG-" + userPrefix);
+        userUtilService.setRegistrationNumberOfUserAndSave(userPrefix + "student1", TEST_REGISTRATION_NUMBER);
 
         List<CourseRoleMemberDTO> result = request.getList("/api/course/courses/" + course.getId() + "/students/paged", HttpStatus.OK, CourseRoleMemberDTO.class,
                 pagedMembersParams("0", "10", userPrefix + "student1"));
@@ -3742,7 +3745,7 @@ public class CourseTestService {
         assertThat(dto.login()).isEqualTo(userPrefix + "student1");
         assertThat(dto.name()).isEqualTo(userPrefix + "student1First " + userPrefix + "student1Last");
         assertThat(dto.email()).isEqualTo(userPrefix + "student1@test.de");
-        assertThat(dto.visibleRegistrationNumber()).isEqualTo("REG-" + userPrefix);
+        assertThat(dto.visibleRegistrationNumber()).isEqualTo(TEST_REGISTRATION_NUMBER);
     }
 
     /**
@@ -3837,9 +3840,9 @@ public class CourseTestService {
      */
     public void searchUsersForCourseRole_searchByRegistrationNumber_returnsMatchingUser() throws Exception {
         var course = courseUtilService.createEnrolledCourse(userPrefix);
-        userUtilService.setRegistrationNumberOfUserAndSave(userPrefix + "student1", "REG-" + userPrefix);
+        userUtilService.setRegistrationNumberOfUserAndSave(userPrefix + "student1", TEST_REGISTRATION_NUMBER);
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("searchTerm", "REG-" + userPrefix);
+        params.add("searchTerm", TEST_REGISTRATION_NUMBER);
         List<UserForRegistrationDTO> result = request.getList("/api/course/courses/" + course.getId() + "/students/users/search", HttpStatus.OK, UserForRegistrationDTO.class,
                 params);
         assertThat(result).extracting(UserForRegistrationDTO::login).containsExactly(userPrefix + "student1");

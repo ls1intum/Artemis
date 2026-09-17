@@ -80,6 +80,16 @@ describe('Course Group Membership Component', () => {
             comp.removeFromRole('testLogin');
             expect(removeUserSpy).toHaveBeenCalledWith(123, CourseRoleSlug.STUDENTS, 'testLogin');
         });
+
+        it('should short-circuit without calling courseService when course or role slug is not yet loaded', () => {
+            const courseService = TestBed.inject(CourseManagementService);
+            const removeUserSpy = vi.spyOn(courseService, 'removeUserFromCourseRole');
+            // Before ngOnInit/loadAll has resolved the route, course() and courseRoleSlug() are still undefined.
+
+            comp.removeFromRole('testLogin');
+
+            expect(removeUserSpy).not.toHaveBeenCalled();
+        });
     });
 
     describe('route reused across role tabs', () => {
@@ -135,11 +145,15 @@ describe('Course Group Membership Component', () => {
 
             await TestBed.compileComponents();
             const newFixture = TestBed.createComponent(CourseGroupMembershipComponent);
+            const newComp = newFixture.componentInstance;
             const newRouter = TestBed.inject(Router);
             const newNavigateSpy = vi.spyOn(newRouter, 'navigate').mockResolvedValue(true);
 
             newFixture.detectChanges();
             expect(newNavigateSpy).toHaveBeenCalledWith(['/courses']);
+            // courseRoleSlug must never be set for an invalid slug — the template mounts jhi-course-group as soon as
+            // it is set, which would fire a request for the bad slug (400) before the redirect above takes effect.
+            expect(newComp.courseRoleSlug()).toBeUndefined();
         });
     });
 });

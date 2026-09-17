@@ -146,6 +146,7 @@ public class CourseAccessService {
         if (course.getLearningPathsEnabled()) {
             course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(course.getId());
         }
+        final Course finalCourse = course;
         CourseRole courseRole = CourseRole.fromRole(Role.fromString(courseRoleSlug));
         List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
         List<User> foundUsers = new ArrayList<>();
@@ -160,14 +161,16 @@ public class CourseAccessService {
         }
 
         // Batch-enroll all found users in a single round trip instead of one existsBy query + insert per user.
-        userService.addUsersToCourse(foundUsers, course, courseRole);
+        userService.addUsersToCourse(foundUsers, finalCourse, courseRole);
 
-        if (courseRole == CourseRole.STUDENT && course.getLearningPathsEnabled()) {
-            final Course finalCourse = course;
+        if (courseRole == CourseRole.STUDENT && finalCourse.getLearningPathsEnabled()) {
             foundUsers.forEach(user -> {
                 learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfile(finalCourse, user));
                 learningPathApi.ifPresent(api -> api.generateLearningPathForUser(finalCourse, user));
             });
+        }
+        if (isStaffRole(courseRole)) {
+            foundUsers.forEach(user -> repositoryVcsAccessTokenService.ensureTokensForStaffUserInCourseAsync(user, finalCourse));
         }
 
         return notFoundStudentsDTOs;

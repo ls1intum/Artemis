@@ -21,12 +21,10 @@
                 <i class="pi pi-file-import"></i>
                 <span jhiTranslate="artemisApp.importUsers.buttonLabel"></span>
             </p-button>
-            @if (totalMembers() > 0) {
-                <p-button size="small" severity="secondary" (onClick)="exportUserInformation()">
-                    <i class="pi pi-download"></i>
-                    <span jhiTranslate="artemisApp.instructorDashboard.exportCSV"></span>
-                </p-button>
-            }
+            <p-button size="small" severity="secondary" (onClick)="exportUserInformation()">
+                <i class="pi pi-download"></i>
+                <span jhiTranslate="artemisApp.instructorDashboard.exportCSV"></span>
+            </p-button>
         </div>
     }
 </ng-template>
@@ -72,11 +70,6 @@
     </button>
 </ng-template>
 
-<jhi-user-registration-modal
-    [titleKey]="'artemisApp.course.courseGroup.addUsers'"
-    [searchFn]="searchUsersFn()"
-    [registerFn]="registerUsersFn()"
-    (registered)="onUsersRegistered()"
-/>
+<jhi-user-registration-modal [titleKey]="'artemisApp.course.courseGroup.addUsers'" [searchFn]="searchUsersFn()" [registerFn]="registerUsersFn()" (registered)="onMembersAdded()" />
 
-<jhi-users-import-dialog [courseId]="course().id!" [courseRoleSlug]="courseRoleSlug()" [tutorialGroup]="tutorialGroup()" (importCompleted)="onImportDone()" />
+<jhi-users-import-dialog [courseId]="course().id!" [courseRoleSlug]="courseRoleSlug()" [tutorialGroup]="tutorialGroup()" (importCompleted)="onMembersAdded()" />

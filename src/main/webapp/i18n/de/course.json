@@ -374,7 +374,7 @@
             "courseDashboard": "Kurs-Dashboard",
             "instructorDashboard": "Dashboard für Lehrende",
             "courseGroup": {
-                "searchForUsers": "Nutzer:innen nach Login oder Namen suchen",
+                "searchForUsers": "Nutzer:innen nach Login, Namen, E-Mail oder Matrikelnummer suchen",
                 "login": "Login",
                 "registrationNumber": "Matrikelnummer",
                 "name": "Name",
@@ -383,7 +383,8 @@
                     "modalQuestion": "Soll der Login <strong>{{ title }}</strong> wirklich aus dieser Kursgruppe entfernt werden?"
                 },
                 "addUsers": "Nutzer:innen hinzufügen",
-                "profilePicture": "Profilbild"
+                "profilePicture": "Profilbild",
+                "notFoundUsers": "Die folgenden Nutzer:innen konnten nicht registriert werden, da sie nicht gefunden wurden: {{ logins }}"
             },
             "averageScore": "Durchschnittliche Punktzahl",
             "assessmentProgress": "Bewertungen",

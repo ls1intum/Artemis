@@ -22,11 +22,13 @@ import { TableViewComponent } from 'app/shared-ui/table-view/table-view';
 import { CourseRoleMember } from 'app/course/shared/course-group/course-role-member.model';
 import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('CourseGroupComponent', () => {
     let comp: CourseGroupComponent;
     let fixture: ComponentFixture<CourseGroupComponent>;
     let courseManagementService: CourseManagementService;
+    let mockAlertService: { error: ReturnType<typeof vi.fn> };
 
     const courseGroup = CourseRoleSlug.STUDENTS;
     const course: Course = {
@@ -46,7 +48,22 @@ describe('CourseGroupComponent', () => {
 
     const mockLazyEvent: TableLazyLoadEvent = { first: 0, rows: 50 };
 
+    // Uses the real TableViewComponent (only its internal `dt` PrimeNG viewChild is mocked, matching TableViewComponent's
+    // own spec) instead of a plain-object stub, so reactive reads inside methods like reset() are part of the test.
+    function createRealTableView(): TableViewComponent<CourseRoleMember> {
+        const tableViewFixture = TestBed.createComponent(TableViewComponent<CourseRoleMember>);
+        const tableView = tableViewFixture.componentInstance;
+        tableViewFixture.componentRef.setInput('cols', []);
+        tableViewFixture.componentRef.setInput('vals', []);
+        const mockTable = { first: 0, filters: {}, sortField: undefined, sortOrder: undefined };
+        vi.spyOn(tableView, 'dt').mockReturnValue(mockTable as any);
+        tableViewFixture.detectChanges();
+        (comp as any).tableViewRef = () => tableView;
+        return tableView;
+    }
+
     beforeEach(async () => {
+        mockAlertService = { error: vi.fn() };
         TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -54,6 +71,7 @@ describe('CourseGroupComponent', () => {
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(CourseManagementService),
+                { provide: AlertService, useValue: mockAlertService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -150,41 +168,9 @@ describe('CourseGroupComponent', () => {
 
             expect(getSpy).not.toHaveBeenCalled();
         });
-
-        it('should update totalMembers only when no search term is active', () => {
-            const mockResult = { content: [user1], totalElements: 42 };
-            vi.spyOn(courseManagementService, 'getPagedUsersInCourseRole').mockReturnValue(of(mockResult));
-
-            comp.onLazyLoad(mockLazyEvent);
-
-            expect(comp.totalMembers()).toBe(42);
-        });
-
-        it('should not update totalMembers when a search term is active', () => {
-            const mockResult = { content: [user1], totalElements: 1 };
-            vi.spyOn(courseManagementService, 'getPagedUsersInCourseRole').mockReturnValue(of(mockResult));
-            const eventWithSearch: TableLazyLoadEvent = { ...mockLazyEvent, globalFilter: 'alice' };
-
-            comp.onLazyLoad(eventWithSearch);
-
-            expect(comp.totalMembers()).toBe(0); // unchanged from initial
-        });
     });
 
     describe('role change (route reused across role tabs)', () => {
-        // Uses the real TableViewComponent so reset()'s internal signal reads are part of the test.
-        function createRealTableView(): TableViewComponent<CourseRoleMember> {
-            const tableViewFixture = TestBed.createComponent(TableViewComponent<CourseRoleMember>);
-            const tableView = tableViewFixture.componentInstance;
-            tableViewFixture.componentRef.setInput('cols', []);
-            tableViewFixture.componentRef.setInput('vals', []);
-            const mockTable = { first: 0, filters: {}, sortField: undefined, sortOrder: undefined };
-            vi.spyOn(tableView, 'dt').mockReturnValue(mockTable as any);
-            tableViewFixture.detectChanges();
-            (comp as any).tableViewRef = () => tableView;
-            return tableView;
-        }
-
         it('should not reset the table on the initial render', () => {
             const tableView = createRealTableView();
             const resetSpy = vi.spyOn(tableView, 'reset');
@@ -241,17 +227,6 @@ describe('CourseGroupComponent', () => {
             expect(removeFn).toHaveBeenCalledWith(user1.login);
         });
 
-        it('should not decrement totalMembers below zero', () => {
-            const removeFn = vi.fn().mockReturnValue(of(new HttpResponse<void>()));
-            fixture.componentRef.setInput('removeUserFromGroup', removeFn);
-            fixture.detectChanges();
-            comp.totalMembers.set(0);
-
-            comp.removeFromGroup(user1);
-
-            expect(comp.totalMembers()).toBe(0);
-        });
-
         it('should not call removeUserFromGroup when user has no login', () => {
             const removeFn = vi.fn();
             fixture.componentRef.setInput('removeUserFromGroup', removeFn);
@@ -275,39 +250,28 @@ describe('CourseGroupComponent', () => {
 
             expect(dialogErrors).toHaveLength(1);
         });
-    });
 
-    describe('onUsersRegistered', () => {
-        it('should reload the table without an extra request — registerUsersFn already updated totalMembers locally', () => {
-            const getPagedSpy = vi.spyOn(courseManagementService, 'getPagedUsersInCourseRole');
-            fixture.detectChanges();
+        it('should reload the table via reloadAfterRemoval, so a page that is now empty steps back automatically', () => {
+            const tableView = createRealTableView();
+            const reloadAfterRemovalSpy = vi.spyOn(tableView, 'reloadAfterRemoval');
+            const removeFn = vi.fn().mockReturnValue(of(new HttpResponse<void>()));
+            fixture.componentRef.setInput('removeUserFromGroup', removeFn);
 
-            expect(() => comp.onUsersRegistered()).not.toThrow();
+            comp.removeFromGroup(user1);
 
-            expect(getPagedSpy).not.toHaveBeenCalled();
+            expect(reloadAfterRemovalSpy).toHaveBeenCalledOnce();
         });
     });
 
-    describe('onImportDone', () => {
-        it('should add the dialog-reported imported count to totalMembers, without an extra request', () => {
-            const getPagedSpy = vi.spyOn(courseManagementService, 'getPagedUsersInCourseRole');
+    describe('onMembersAdded', () => {
+        it('should reload the table at the current page', () => {
+            const tableView = createRealTableView();
+            const reloadSpy = vi.spyOn(tableView, 'reload');
             fixture.detectChanges();
-            comp.totalMembers.set(5);
-            (comp as any).importDialog = () => ({ numberOfUsersImported: 3 });
 
-            comp.onImportDone();
+            comp.onMembersAdded();
 
-            expect(comp.totalMembers()).toBe(8);
-            expect(getPagedSpy).not.toHaveBeenCalled();
-        });
-
-        it('should leave totalMembers unchanged when the import dialog is not available', () => {
-            fixture.detectChanges();
-            comp.totalMembers.set(5);
-
-            comp.onImportDone();
-
-            expect(comp.totalMembers()).toBe(5);
+            expect(reloadSpy).toHaveBeenCalledOnce();
         });
     });
 
@@ -403,7 +367,6 @@ describe('CourseGroupComponent', () => {
         it('should complete successfully when every user is registered (empty not-found body)', async () => {
             vi.spyOn(courseManagementService, 'addUsersToCourseRole').mockReturnValue(of(new HttpResponse<StudentDTO[]>({ body: [] })));
             fixture.detectChanges();
-            comp.totalMembers.set(5);
 
             await expect(firstValueFrom(comp.registerUsersFn()([userToRegister]))).resolves.toBeUndefined();
 
@@ -412,37 +375,28 @@ describe('CourseGroupComponent', () => {
                 [{ login: 'user1', firstName: '', lastName: '', registrationNumber: '', email: '' }],
                 courseGroup,
             );
-            expect(comp.totalMembers()).toBe(6);
+            expect(mockAlertService.error).not.toHaveBeenCalled();
         });
 
-        it('should error when nobody was registered, without touching totalMembers', async () => {
+        it('should complete successfully but alert with the login when nobody was registered', async () => {
             const notFound: StudentDTO = { login: 'user1', firstName: '', lastName: '', registrationNumber: '', email: '' };
             vi.spyOn(courseManagementService, 'addUsersToCourseRole').mockReturnValue(of(new HttpResponse<StudentDTO[]>({ body: [notFound] })));
-            const reloadSpy = vi.fn();
-            (comp as any).tableViewRef = () => ({ reload: reloadSpy });
             fixture.detectChanges();
-            comp.totalMembers.set(5);
 
-            await expect(firstValueFrom(comp.registerUsersFn()([userToRegister]))).rejects.toBeDefined();
+            await expect(firstValueFrom(comp.registerUsersFn()([userToRegister]))).resolves.toBeUndefined();
 
-            expect(comp.totalMembers()).toBe(5);
-            expect(reloadSpy).not.toHaveBeenCalled();
+            expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.course.courseGroup.notFoundUsers', { logins: 'user1' });
         });
 
-        it('should still count and show the users that were registered on a partial failure', async () => {
+        it('should complete successfully but alert with the logins that were not found on a partial failure', async () => {
             const secondUser: UserForRegistration = { id: 2, login: 'user2', name: 'User Two', isRegistered: false };
             const notFound: StudentDTO = { login: 'user2', firstName: '', lastName: '', registrationNumber: '', email: '' };
             vi.spyOn(courseManagementService, 'addUsersToCourseRole').mockReturnValue(of(new HttpResponse<StudentDTO[]>({ body: [notFound] })));
-            const reloadSpy = vi.fn();
-            (comp as any).tableViewRef = () => ({ reload: reloadSpy });
             fixture.detectChanges();
-            comp.totalMembers.set(5);
 
-            await expect(firstValueFrom(comp.registerUsersFn()([userToRegister, secondUser]))).rejects.toBeDefined();
+            await expect(firstValueFrom(comp.registerUsersFn()([userToRegister, secondUser]))).resolves.toBeUndefined();
 
-            // user1 registered, user2 was not found
-            expect(comp.totalMembers()).toBe(6);
-            expect(reloadSpy).toHaveBeenCalledOnce();
+            expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.course.courseGroup.notFoundUsers', { logins: 'user2' });
         });
 
         it('should short-circuit without calling the API when course id is missing', async () => {
