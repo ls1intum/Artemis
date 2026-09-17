@@ -3,7 +3,7 @@ import { AfterViewInit, Component, OnDestroy, OnInit, computed, effect, inject, 
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { BUILD_PLAN_CONFIGURATION_MAX_LENGTH, DOCKER_FLAGS_MAX_LENGTH, ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
-import { Observable, Subject, Subscription } from 'rxjs';
+import { Observable, Subject, Subscription, of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingForImport } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -45,6 +45,7 @@ import { SharingInfo } from 'app/sharing/sharing.model';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
+import { ProgrammingExerciseSecurityComponent } from 'app/programming/manage/update/update-components/security/programming-exercise-security.component';
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
@@ -101,6 +102,7 @@ const GRADING_FIELD_REASON_KEYS = new Set([
         ProgrammingExerciseInformationComponent,
         ProgrammingExerciseModeComponent,
         ProgrammingExerciseLanguageComponent,
+        ProgrammingExerciseSecurityComponent,
         ProgrammingExerciseProblemComponent,
         ProgrammingExerciseVersionControlComponent,
         ProgrammingExerciseGradingComponent,
@@ -150,6 +152,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     exerciseDifficultyComponent = viewChild(ProgrammingExerciseModeComponent);
     exerciseLanguageComponent = viewChild(ProgrammingExerciseLanguageComponent);
     exerciseGradingComponent = viewChild(ProgrammingExerciseGradingComponent);
+    securityComponent = viewChild(ProgrammingExerciseSecurityComponent);
     exercisePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
 
     packageNamePattern = '';
@@ -1009,14 +1012,18 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private onSaveSuccess(exercise: ProgrammingExercise) {
         this.isSaving.set(false);
 
-        if (this.goBackAfterSaving) {
-            this.navigationUtilService.navigateBack();
+        // A Security Framework activation staged during create mode is persisted now that the exercise
+        // exists, before navigating away. No-op in edit mode or when nothing was staged.
+        const commitStagedSecurity = this.securityComponent()?.commitStagedActivation(exercise.id) ?? of(undefined);
+        commitStagedSecurity.subscribe(() => {
+            if (this.goBackAfterSaving) {
+                this.navigationUtilService.navigateBack();
+                return;
+            }
 
-            return;
-        }
-
-        this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
-        this.calendarService.reloadEvents();
+            this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
+            this.calendarService.reloadEvents();
+        });
     }
 
     /**

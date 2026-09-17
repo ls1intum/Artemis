@@ -268,6 +268,39 @@
                 "noImageAvailable": "Die Online IDE ist für diese Programmiersprache noch nicht verfügbar.",
                 "alert": "Es muss eine gültige Konfiguration für die Online IDE ausgewählt werden."
             },
+            "security": {
+                "title": "Sicherheit",
+                "description": "Aktivieren Sie die Security-Framework-Sandbox für diese Aufgabe. Feingranulare Pfadberechtigungen werden im erweiterten Modus konfiguriert.",
+                "activateLabel": "Security Framework aktivieren",
+                "subtitle": "Sicherheitsframework für Programmieraufgaben",
+                "frameworkVersion": "Framework-Version",
+                "frameworkVersionHelp": "Welche Security-Framework-Version die Richtlinie dieser Aufgabe erzeugt und durchsetzt. Wählen Sie eine ältere Version nur, wenn die Aufgabe ein älteres Sandbox-Verhalten reproduzieren muss.",
+                "status": {
+                    "inactive": "Inaktiv",
+                    "generating": "Wird erstellt",
+                    "active": "Aktiv",
+                    "deleting": "Wird entfernt",
+                    "error": "Fehler"
+                },
+                "desc": {
+                    "inactive": "Für diese Aufgabe nicht aktiviert. Der Code der Studierenden läuft ohne Sandbox.",
+                    "generating": "Eine implizite Standard-Sicherheitsrichtlinie wird erstellt – keine manuelle Richtliniendatei nötig.",
+                    "activeEdit": "Sicherheitsrichtlinie in das exercise-tests-Repository committet.",
+                    "activeCreate": "Die Sicherheitsrichtlinie wird beim Generieren der Aufgabe committet.",
+                    "deleting": "Das Security Framework wird aus dieser Aufgabe entfernt.",
+                    "error": "Die Sicherheitsrichtlinie konnte nicht synchronisiert werden. Die Sandbox ist noch nicht aktiv."
+                },
+                "sync": {
+                    "inactive": "Nicht synchronisiert – eine Richtlinie wird beim Aktivieren committet.",
+                    "generating": "Richtlinie wird in das exercise-tests-Repository committet …",
+                    "active": "Synchronisiert · Commit {{hash}}",
+                    "activeCreate": "Noch nicht synchronisiert – die Richtlinie wird beim Generieren der Aufgabe committet.",
+                    "deleting": "Sandbox-Effekte werden im exercise-tests-Repository zurückgenommen …",
+                    "error": "Synchronisierung fehlgeschlagen · exercise-tests-Repository nicht erreichbar."
+                },
+                "retry": "Erneut versuchen",
+                "deactivateWarning": "Beim Deaktivieren wird ein neuer Commit erstellt, der die Sicherheitsrichtlinie und die Enforcement-Hooks aus dem exercise-tests-Repository entfernt."
+            },
             "appName": "App-Name",
             "templateResult": "Ergebnis der Vorlage",
             "solutionResult": "Ergebnis der Musterlösung",

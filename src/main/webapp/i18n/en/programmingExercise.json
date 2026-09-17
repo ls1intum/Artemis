@@ -268,6 +268,39 @@
                 "noImageAvailable": "The Online IDE is not yet available for this programming language.",
                 "alert": "A valid configuration for the Online IDE must be selected."
             },
+            "security": {
+                "title": "Security",
+                "description": "Turn on the Security Framework sandbox for this exercise. Fine-grained path permissions are configured in advanced mode.",
+                "activateLabel": "Activate Security Framework",
+                "subtitle": "Programming Exercise Security Framework",
+                "frameworkVersion": "Framework version",
+                "frameworkVersionHelp": "Which Security Framework release generates and enforces this exercise's policy. Pin an older version only if the exercise must reproduce an older sandbox behavior.",
+                "status": {
+                    "inactive": "Inactive",
+                    "generating": "Generating",
+                    "active": "Active",
+                    "deleting": "Deleting",
+                    "error": "Error"
+                },
+                "desc": {
+                    "inactive": "Not activated for this exercise. Student code runs without a sandbox.",
+                    "generating": "Generating an implicit default security policy — no manual policy file needed.",
+                    "activeEdit": "Security policy committed to the exercise-tests repository.",
+                    "activeCreate": "The security policy will be committed when you generate the exercise.",
+                    "deleting": "Removing the Security Framework from this exercise.",
+                    "error": "Couldn't sync the security policy. The sandbox is not enforcing yet."
+                },
+                "sync": {
+                    "inactive": "Not synced — a policy will be committed when you activate.",
+                    "generating": "Committing policy to the exercise-tests repository…",
+                    "active": "Synced · commit {{hash}}",
+                    "activeCreate": "Not synced yet — the policy is committed when you generate the exercise.",
+                    "deleting": "Reverting sandbox effects in the exercise-tests repository…",
+                    "error": "Sync failed · couldn't reach the exercise-tests repository."
+                },
+                "retry": "Retry",
+                "deactivateWarning": "Deactivating creates a new commit that removes the security policy and enforcement hooks from the exercise-tests repository."
+            },
             "appName": "App Name",
             "templateResult": "Template Result",
             "solutionResult": "Solution Result",

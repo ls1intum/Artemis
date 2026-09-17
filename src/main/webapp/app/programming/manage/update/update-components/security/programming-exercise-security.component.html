@@ -1,0 +1,122 @@
+@if (isSupportedLanguage()) {
+    <div class="mb-3">
+        <h4 class="mb-1 text-lg font-semibold" jhiTranslate="artemisApp.programmingExercise.security.title"></h4>
+        <p class="mb-3 text-sm text-muted-color" jhiTranslate="artemisApp.programmingExercise.security.description"></p>
+
+        <div class="sf-card" [class]="'sf-card--' + statusVariant()" data-testid="security-card">
+            <div class="sf-card__main">
+                <div class="sf-card__left">
+                    <tum-ui-toggle-switch
+                        inputId="securityActivateToggle"
+                        [ngModel]="isToggleOn()"
+                        [ngModelOptions]="{ standalone: true }"
+                        [disabled]="isBusy()"
+                        (changed)="onToggleChanged($event)"
+                        [ariaLabel]="'artemisApp.programmingExercise.security.activateLabel' | artemisTranslate"
+                        data-testid="security-activate-toggle"
+                    />
+                    <div>
+                        <div class="sf-title-row">
+                            <span class="font-medium" jhiTranslate="artemisApp.programmingExercise.security.activateLabel"></span>
+                            <span class="text-sm font-normal text-muted-color" jhiTranslate="artemisApp.programmingExercise.security.subtitle"></span>
+                            <span class="sf-pill" [class]="'sf-pill--' + statusVariant()" data-testid="security-status-pill">
+                                @if (isBusy()) {
+                                    <fa-icon [icon]="faCircleNotch" class="sf-spin text-[10px]" />
+                                } @else if (status() === SecurityActivationStatus.ERROR) {
+                                    <fa-icon [icon]="faTriangleExclamation" class="text-[10px]" />
+                                } @else {
+                                    <span class="sf-dot"></span>
+                                }
+                                <span [jhiTranslate]="'artemisApp.programmingExercise.security.status.' + statusVariant()"></span>
+                            </span>
+                        </div>
+                        <div class="sf-desc text-sm" data-testid="security-status-text">
+                            @switch (status()) {
+                                @case (SecurityActivationStatus.GENERATING) {
+                                    <span jhiTranslate="artemisApp.programmingExercise.security.desc.generating"></span>
+                                }
+                                @case (SecurityActivationStatus.DELETING) {
+                                    <span jhiTranslate="artemisApp.programmingExercise.security.desc.deleting"></span>
+                                }
+                                @case (SecurityActivationStatus.ERROR) {
+                                    <span jhiTranslate="artemisApp.programmingExercise.security.desc.error"></span>
+                                }
+                                @case (SecurityActivationStatus.ACTIVE) {
+                                    @if (isEditMode()) {
+                                        <span jhiTranslate="artemisApp.programmingExercise.security.desc.activeEdit"></span>
+                                    } @else {
+                                        <span jhiTranslate="artemisApp.programmingExercise.security.desc.activeCreate"></span>
+                                    }
+                                }
+                                @default {
+                                    <span jhiTranslate="artemisApp.programmingExercise.security.desc.inactive"></span>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sf-version">
+                    <label for="securityFrameworkVersion" class="sf-caps">
+                        <span jhiTranslate="artemisApp.programmingExercise.security.frameworkVersion"></span>
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            class="cursor-help text-[10px]"
+                            [tumUiTooltip]="'artemisApp.programmingExercise.security.frameworkVersionHelp' | artemisTranslate"
+                            data-testid="security-framework-version-help"
+                        />
+                    </label>
+                    <tum-ui-select
+                        inputId="securityFrameworkVersion"
+                        [options]="frameworkVersions"
+                        optionLabel="label"
+                        optionValue="version"
+                        [ngModel]="config().frameworkVersion"
+                        [ngModelOptions]="{ standalone: true }"
+                        [disabled]="isBusy()"
+                        (selectionChange)="onFrameworkVersionChanged($event)"
+                        size="small"
+                        data-testid="security-framework-version-select"
+                    />
+                </div>
+            </div>
+
+            <div class="sf-syncline" data-testid="security-sync-line">
+                @switch (status()) {
+                    @case (SecurityActivationStatus.GENERATING) {
+                        <fa-icon [icon]="faCircleNotch" class="sf-spin" />
+                        <span jhiTranslate="artemisApp.programmingExercise.security.sync.generating"></span>
+                    }
+                    @case (SecurityActivationStatus.DELETING) {
+                        <fa-icon [icon]="faCircleNotch" class="sf-spin" />
+                        <span jhiTranslate="artemisApp.programmingExercise.security.sync.deleting"></span>
+                    }
+                    @case (SecurityActivationStatus.ACTIVE) {
+                        @if (isEditMode()) {
+                            <span>{{ 'artemisApp.programmingExercise.security.sync.active' | artemisTranslate: { hash: config().lastCommitHash } }}</span>
+                        } @else {
+                            <span jhiTranslate="artemisApp.programmingExercise.security.sync.activeCreate"></span>
+                        }
+                    }
+                    @case (SecurityActivationStatus.ERROR) {
+                        <fa-icon [icon]="faTriangleExclamation" />
+                        <span jhiTranslate="artemisApp.programmingExercise.security.sync.error"></span>
+                        <button type="button" class="sf-retry" (click)="onRetry()" data-testid="security-retry">
+                            <fa-icon [icon]="faRotateRight" />
+                            <span jhiTranslate="artemisApp.programmingExercise.security.retry"></span>
+                        </button>
+                    }
+                    @default {
+                        <span jhiTranslate="artemisApp.programmingExercise.security.sync.inactive"></span>
+                    }
+                }
+            </div>
+
+            @if (showDeactivateWarning()) {
+                <tum-ui-message severity="warn" class="sf-warning block" data-testid="security-deactivate-warning">
+                    {{ 'artemisApp.programmingExercise.security.deactivateWarning' | artemisTranslate }}
+                </tum-ui-message>
+            }
+        </div>
+    </div>
+}

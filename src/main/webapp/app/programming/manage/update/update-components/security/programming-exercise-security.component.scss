@@ -1,0 +1,137 @@
+// One base colour per lifecycle state. The card tint, pill and sync line all derive from it, so the
+// five states stay visually consistent. color-mix over `transparent` keeps the tint subtle and lets
+// the parent surface (light or dark theme) show through, so these read correctly in both themes.
+$sf-states: (
+    'inactive': #868e96,
+    'generating': #2f7de1,
+    'active': #2f9e54,
+    'deleting': #d9a520,
+    'error': #dc3545,
+);
+
+.sf-card {
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: 0.5rem;
+    overflow: hidden;
+
+    &__main {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1.5rem;
+        padding: 0.95rem 1.1rem;
+    }
+
+    &__left {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.85rem;
+    }
+}
+
+.sf-title-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+}
+
+.sf-desc {
+    margin-top: 0.3rem;
+    color: var(--bs-secondary-color, #6c757d);
+}
+
+.sf-version {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.35rem;
+}
+
+.sf-caps {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.3rem;
+    margin: 0;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--bs-secondary-color, #6c757d);
+}
+
+.sf-syncline {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 1.1rem;
+    border-top: 1px solid var(--bs-border-color, #e9ecef);
+    font-size: 0.78rem;
+    color: var(--bs-secondary-color, #6c757d);
+}
+
+.sf-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.12rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.sf-dot {
+    display: inline-block;
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+.sf-retry {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    font-weight: 600;
+    color: var(--bs-primary, #0d6efd);
+    cursor: pointer;
+}
+
+.sf-warning {
+    margin: 0 1.1rem 0.9rem;
+}
+
+@each $name, $colour in $sf-states {
+    .sf-card--#{$name} {
+        background: color-mix(in srgb, #{$colour} 9%, transparent);
+        border-color: color-mix(in srgb, #{$colour} 30%, var(--bs-border-color, #dee2e6));
+
+        .sf-pill {
+            background: color-mix(in srgb, #{$colour} 18%, transparent);
+            color: #{$colour};
+        }
+
+        @if $name != 'inactive' {
+            .sf-syncline {
+                color: #{$colour};
+            }
+        }
+    }
+}
+
+.sf-spin {
+    animation: sf-rotate 0.9s linear infinite;
+}
+
+@keyframes sf-rotate {
+    to {
+        transform: rotate(360deg);
+    }
+}
