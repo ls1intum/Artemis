@@ -47,6 +47,7 @@ class SearchableEntityIndexScanIntegrationTest extends AbstractProgrammingIntegr
 
     @BeforeEach
     void seedCollection() throws Exception {
+        clearCollection();
         for (int index = 0; index < SEEDED_ROWS; index++) {
             Map<String, Object> properties = new HashMap<>();
             properties.put(SearchableEntitySchema.Properties.TYPE, COURSE_TYPE);
@@ -55,6 +56,26 @@ class SearchableEntityIndexScanIntegrationTest extends AbstractProgrammingIntegr
             properties.put(SearchableEntitySchema.Properties.SOURCE_SEQ, (long) index);
             properties.put(SearchableEntitySchema.Properties.CONTENT_HASH, "v1:hash-" + index);
             seedRow(weaviateService, COURSE_TYPE, index, properties);
+        }
+    }
+
+    /**
+     * Other Weaviate integration tests share this collection and the inherited lifecycle does not clear it between
+     * classes, so a size- or cursor-sensitive assertion here would otherwise depend on what ran before it. Walk
+     * every existing row and delete it before seeding this class's own {@value #SEEDED_ROWS} rows, so the
+     * collection holds exactly what this test put there.
+     */
+    private void clearCollection() {
+        List<String> uuids = new ArrayList<>();
+        String cursor = null;
+        do {
+            var slice = indexScanService.scanFrom(cursor, 1_000, 1);
+            slice.rows().forEach(row -> uuids.add(row.uuid()));
+            cursor = slice.nextCursor();
+        }
+        while (cursor != null);
+        if (!uuids.isEmpty()) {
+            weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME).data.deleteMany(uuids.toArray(new String[0]));
         }
     }
 
@@ -122,17 +143,8 @@ class SearchableEntityIndexScanIntegrationTest extends AbstractProgrammingIntegr
         withoutOperationalProperties.put(SearchableEntitySchema.Properties.TITLE, "Legacy course");
         seedRow(weaviateService, COURSE_TYPE, 9_000L, withoutOperationalProperties);
 
-        // Other Weaviate tests in this context leave rows behind, so walk every cursor rather than trust one page.
-        List<SearchableEntityIndexScanService.IndexedRow> rows = new ArrayList<>();
-        String cursor = null;
-        do {
-            var slice = indexScanService.scanFrom(cursor, 1_000, 1);
-            rows.addAll(slice.rows());
-            cursor = slice.nextCursor();
-        }
-        while (cursor != null);
-
-        assertThat(rows).anySatisfy(row -> {
+        var slice = indexScanService.scanFrom(null, 1_000, 1);
+        assertThat(slice.rows()).anySatisfy(row -> {
             assertThat(row.entityId()).isEqualTo(9_000L);
             assertThat(row.contentHash()).isNull();
             assertThat(row.sourceSeq()).isNull();
