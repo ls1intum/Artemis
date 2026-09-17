@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -21,6 +22,7 @@ import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateReconcileProperties;
 import de.tum.cit.aet.artemis.globalsearch.domain.ReconcilePass;
@@ -150,6 +152,10 @@ class SearchableEntityOrphanSweepTest {
 
         verify(enqueueService, never()).enqueueDelete(anyString(), anyLong(), any());
         verify(enqueueService, never()).enqueueUpsert(anyString(), anyLong(), any());
+        // Skipping the type must not stall the scan: the slice is still consumed and the cursor still advances.
+        ArgumentCaptor<SearchableEntityReconcileState> saved = ArgumentCaptor.forClass(SearchableEntityReconcileState.class);
+        verify(reconcileStateRepository, atLeastOnce()).save(saved.capture());
+        assertThat(saved.getValue().getPositionCursor()).isEqualTo("next-cursor");
     }
 
     @Test

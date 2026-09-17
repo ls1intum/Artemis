@@ -75,7 +75,9 @@ public class SearchableEntityDriftSweep {
      */
     public void sweep() {
         String runId = ReconcileRunId.next();
-        List<String> types = reconcileProperties.entityTypes();
+        // Only types whose module is available are read. A skipped row keeps its old verifiedAt, so rows of a disabled
+        // module's type would otherwise lead every slice and stall the pass for every other type.
+        List<String> types = reconcileProperties.entityTypes().stream().filter(idEnumerator::isTypeAvailable).toList();
         if (types.isEmpty() || !enqueueService.canEnqueue()) {
             return;
         }
@@ -96,8 +98,7 @@ public class SearchableEntityDriftSweep {
         long removed = 0;
         for (SearchableEntitySyncState state : candidates) {
             if (!idEnumerator.isTypeAvailable(state.getEntityType())) {
-                // Resolving anything from a disabled module yields nothing, which here is indistinguishable from the
-                // entity having been deleted. Acting on it would queue a delete for every indexed row of the type.
+                // Safety net behind the filtered query: a module going away mid-pass must never turn into deletes.
                 log.debug("[drift {}] skipping {} {}: its module is disabled", runId, state.getEntityType(), state.getEntityId());
                 continue;
             }

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.globalsearch.config;
 
 import java.util.List;
 
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.Positive;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -42,7 +43,7 @@ public record WeaviateReconcileProperties(@DefaultValue("false") boolean missing
                 "course", "lecture", "lecture_unit", "exam", "exercise", "faq", "channel" }) List<String> entityTypes,
         @DefaultValue("500") @Positive int maxOutboxDepth, @DefaultValue("5000") @Positive int missingBatchSize, @DefaultValue("200") @Positive int driftBatchSize,
         @DefaultValue("1000") @Positive int orphanPageSize, @DefaultValue("5") @Positive int orphanPagesPerTick, @DefaultValue("100") @Positive int orphanDeleteCapPerTick,
-        @DefaultValue("0.25") @Positive double orphanAbortRatio){
+        @DefaultValue("0.25") @Positive @DecimalMax("1.0") double orphanAbortRatio){
 
     /**
      * Returns whether a type is managed by the reconcile passes.

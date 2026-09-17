@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.globalsearch;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.seedRow;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -121,9 +122,17 @@ class SearchableEntityIndexScanIntegrationTest extends AbstractProgrammingIntegr
         withoutOperationalProperties.put(SearchableEntitySchema.Properties.TITLE, "Legacy course");
         seedRow(weaviateService, COURSE_TYPE, 9_000L, withoutOperationalProperties);
 
-        var slice = indexScanService.scanFrom(null, 1_000, 1);
+        // Other Weaviate tests in this context leave rows behind, so walk every cursor rather than trust one page.
+        List<SearchableEntityIndexScanService.IndexedRow> rows = new ArrayList<>();
+        String cursor = null;
+        do {
+            var slice = indexScanService.scanFrom(cursor, 1_000, 1);
+            rows.addAll(slice.rows());
+            cursor = slice.nextCursor();
+        }
+        while (cursor != null);
 
-        assertThat(slice.rows()).anySatisfy(row -> {
+        assertThat(rows).anySatisfy(row -> {
             assertThat(row.entityId()).isEqualTo(9_000L);
             assertThat(row.contentHash()).isNull();
             assertThat(row.sourceSeq()).isNull();

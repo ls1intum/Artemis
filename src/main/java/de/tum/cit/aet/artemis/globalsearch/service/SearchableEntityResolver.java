@@ -97,11 +97,11 @@ public class SearchableEntityResolver {
             case SearchableEntitySchema.TypeValues.COURSE -> courseRepository.findById(entityId).map(course -> CourseSearchableEntityDTO.fromCourse(course).toPropertyMap());
             case SearchableEntitySchema.TypeValues.EXERCISE -> exerciseLoadService.loadExerciseDtoForResolve(entityId).map(ExerciseSearchableEntityDTO::toPropertyMap);
             case SearchableEntitySchema.TypeValues.LECTURE ->
-                lectureRepositoryApi.flatMap(api -> api.findById(entityId)).map(lecture -> LectureSearchableEntityDTO.fromLecture(lecture).toPropertyMap());
-            case SearchableEntitySchema.TypeValues.LECTURE_UNIT -> lectureUnitRepositoryApi.map(api -> api.findAllByIdsWithLecture(List.of(entityId))).orElseGet(List::of).stream()
-                    .findFirst().filter(LectureUnitSearchableEntityDTO::isIndexable).map(unit -> LectureUnitSearchableEntityDTO.fromLectureUnit(unit).toPropertyMap());
+                requireModule(lectureRepositoryApi, "lecture", type, entityId).findById(entityId).map(lecture -> LectureSearchableEntityDTO.fromLecture(lecture).toPropertyMap());
+            case SearchableEntitySchema.TypeValues.LECTURE_UNIT -> requireModule(lectureUnitRepositoryApi, "lecture", type, entityId).findAllByIdsWithLecture(List.of(entityId))
+                    .stream().findFirst().filter(LectureUnitSearchableEntityDTO::isIndexable).map(unit -> LectureUnitSearchableEntityDTO.fromLectureUnit(unit).toPropertyMap());
             case SearchableEntitySchema.TypeValues.EXAM ->
-                examRepositoryApi.flatMap(api -> api.findById(entityId)).map(exam -> ExamSearchableEntityDTO.fromExam(exam).toPropertyMap());
+                requireModule(examRepositoryApi, "exam", type, entityId).findById(entityId).map(exam -> ExamSearchableEntityDTO.fromExam(exam).toPropertyMap());
             case SearchableEntitySchema.TypeValues.FAQ -> faqRepository.findById(entityId).map(faq -> FaqSearchableEntityDTO.fromFaq(faq).toPropertyMap());
             case SearchableEntitySchema.TypeValues.CHANNEL -> channelRepository.findById(entityId).filter(ChannelSearchableEntityDTO::isIndexable)
                     .map(channel -> ChannelSearchableEntityDTO.fromChannel(channel).toPropertyMap());
@@ -109,6 +109,16 @@ public class SearchableEntityResolver {
             case SearchableEntitySchema.TypeValues.ANSWER_POST -> answerPostRepository.findById(entityId).flatMap(SearchableEntityResolver::resolveAnswerPost);
             default -> throw new IllegalStateException("Unknown searchable entity type for re-derivation: " + type);
         };
+    }
+
+    /**
+     * An absent module is not a deleted entity. Answering {@link Optional#empty()} here would make the dispatcher
+     * remove the row and acknowledge the outbox entry, so a scheduling node running without the module would erase
+     * valid index data. Failing instead leaves the entry to be retried with backoff until a node that has the module
+     * picks it up.
+     */
+    private static <A> A requireModule(Optional<A> api, String module, String type, long entityId) {
+        return api.orElseThrow(() -> new IllegalStateException("Cannot re-derive " + type + " " + entityId + ": the " + module + " module is not available on this node"));
     }
 
     /**

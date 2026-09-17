@@ -111,6 +111,18 @@ class SearchableEntityDriftSweepTest {
     }
 
     @Test
+    void testATypeWhoseModuleIsDisabledIsLeftOutOfTheCandidateQuery() {
+        // A skipped row keeps its old verifiedAt and would lead every following slice, so the type must not be read
+        // at all while its module is away; otherwise the pass stalls for every other type too.
+        when(idEnumerator.isTypeAvailable(LECTURE)).thenReturn(false);
+        when(syncStateRepository.findLeastRecentlyVerified(any(), any())).thenReturn(List.of());
+
+        sweep.sweep();
+
+        verify(syncStateRepository).findLeastRecentlyVerified(eq(List.of(COURSE)), any());
+    }
+
+    @Test
     void testADisabledModuleQueuesNothingForItsType() {
         // Resolving anything from a disabled module yields nothing, which is indistinguishable from the entity
         // having been deleted. Without this guard the pass would queue a delete for every indexed row of the type.

@@ -109,12 +109,10 @@ public interface SearchableEntityIdRepository extends ArtemisJpaRepository<Cours
     @Query("""
             SELECT post.id
             FROM Post post
+                JOIN TREAT (post.conversation AS Channel) channel
             WHERE post.id > :afterId
-                AND post.conversation.id IN (
-                    SELECT channel.id
-                    FROM Channel channel
-                    WHERE channel.isArchived = FALSE AND channel.isPublic = TRUE
-                )
+                AND channel.isArchived = FALSE
+                AND channel.isPublic = TRUE
             ORDER BY post.id ASC
             """)
     List<Long> findIndexablePostIdsAfter(@Param("afterId") long afterId, Pageable pageable);
@@ -129,12 +127,11 @@ public interface SearchableEntityIdRepository extends ArtemisJpaRepository<Cours
     @Query("""
             SELECT answerPost.id
             FROM AnswerPost answerPost
+                JOIN answerPost.post post
+                JOIN TREAT (post.conversation AS Channel) channel
             WHERE answerPost.id > :afterId
-                AND answerPost.post.conversation.id IN (
-                    SELECT channel.id
-                    FROM Channel channel
-                    WHERE channel.isArchived = FALSE AND channel.isPublic = TRUE
-                )
+                AND channel.isArchived = FALSE
+                AND channel.isPublic = TRUE
             ORDER BY answerPost.id ASC
             """)
     List<Long> findIndexableAnswerPostIdsAfter(@Param("afterId") long afterId, Pageable pageable);
@@ -196,12 +193,10 @@ public interface SearchableEntityIdRepository extends ArtemisJpaRepository<Cours
     @Query("""
             SELECT post.id
             FROM Post post
+                JOIN TREAT (post.conversation AS Channel) channel
             WHERE post.id IN :entityIds
-                AND post.conversation.id IN (
-                    SELECT channel.id
-                    FROM Channel channel
-                    WHERE channel.isArchived = FALSE AND channel.isPublic = TRUE
-                )
+                AND channel.isArchived = FALSE
+                AND channel.isPublic = TRUE
             """)
     Set<Long> findIndexablePostIds(@Param("entityIds") Collection<Long> entityIds);
 
@@ -212,12 +207,11 @@ public interface SearchableEntityIdRepository extends ArtemisJpaRepository<Cours
     @Query("""
             SELECT answerPost.id
             FROM AnswerPost answerPost
+                JOIN answerPost.post post
+                JOIN TREAT (post.conversation AS Channel) channel
             WHERE answerPost.id IN :entityIds
-                AND answerPost.post.conversation.id IN (
-                    SELECT channel.id
-                    FROM Channel channel
-                    WHERE channel.isArchived = FALSE AND channel.isPublic = TRUE
-                )
+                AND channel.isArchived = FALSE
+                AND channel.isPublic = TRUE
             """)
     Set<Long> findIndexableAnswerPostIds(@Param("entityIds") Collection<Long> entityIds);
 }
