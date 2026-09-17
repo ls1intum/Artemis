@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.DirectoryStream;
@@ -15,6 +16,8 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import jakarta.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,6 +84,7 @@ public class FailedBuildLogService {
      * @param submissionId the programming submission the logs belong to
      * @param buildLogs    the entries to store
      * @return the entries as they were stored, which is what a subsequent read returns
+     * @throws UncheckedIOException if the logs could not be written. The caller has to know, because that is what decides whether the rows this file replaces may go.
      */
     public List<BuildLogEntry> saveBuildLogs(long submissionId, List<BuildLogEntry> buildLogs) {
         List<BuildLogEntry> normalized = splitIntoLines(buildLogs);
@@ -91,11 +95,13 @@ public class FailedBuildLogService {
             content.append(entry.getTime() == null ? "" : TIMESTAMP_FORMAT.format(entry.getTime())).append(SEPARATOR).append(entry.getLog()).append('\n');
         }
 
+        Path temporaryPath = null;
         try {
             Files.createDirectories(logPath.getParent());
             // Written beside the target and moved into place, so that a reader never sees half a file: this store is parsed rather than streamed, and a build that is rebuilt
-            // while its logs are being read would otherwise truncate the file under the reader.
-            Path temporaryPath = logPath.resolveSibling(logPath.getFileName() + ".tmp");
+            // while its logs are being read would otherwise truncate the file under the reader. The temporary name is unique per call rather than derived from the submission,
+            // because two builds of one submission finishing together would otherwise share it and move each other's half of it into place.
+            temporaryPath = Files.createTempFile(logPath.getParent(), submissionId + "-", ".tmp");
             Files.writeString(temporaryPath, content.toString(), StandardCharsets.UTF_8);
             try {
                 Files.move(temporaryPath, logPath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
@@ -105,14 +111,31 @@ public class FailedBuildLogService {
                 // window in which the file is incomplete is a rename rather than the whole write.
                 Files.move(temporaryPath, logPath, StandardCopyOption.REPLACE_EXISTING);
             }
+            temporaryPath = null;
         }
         catch (IOException e) {
-            // A build result must not fail because its logs could not be written. The result itself is already stored and the panel simply shows nothing.
-            log.error("Could not write the failed build logs of submission {} to {}", submissionId, logPath, e);
-            return normalized;
+            throw new UncheckedIOException("Could not write the failed build logs of submission " + submissionId + " to " + logPath, e);
+        }
+        finally {
+            deleteTemporaryFile(temporaryPath);
         }
 
         return normalized;
+    }
+
+    /**
+     * Removes a temporary file that never made it into place, so that a run of failed writes does not leave one behind for each attempt.
+     */
+    private static void deleteTemporaryFile(@Nullable Path path) {
+        if (path == null) {
+            return;
+        }
+        try {
+            Files.deleteIfExists(path);
+        }
+        catch (IOException e) {
+            log.warn("Could not remove the temporary build log file {}", path, e);
+        }
     }
 
     /**
@@ -152,6 +175,8 @@ public class FailedBuildLogService {
      * Removes the stored build logs of a submission, if there are any.
      *
      * @param submissionId the programming submission to delete the logs of
+     * @throws UncheckedIOException if the file is there and cannot be removed. Swallowing that would delete a submission while the build logs of its student stay on disk
+     *                                  until the retention period expires, which is the one outcome a deletion path must not produce quietly.
      */
     public void deleteBuildLogs(long submissionId) {
         Path logPath = pathFor(submissionId);
@@ -159,7 +184,7 @@ public class FailedBuildLogService {
             Files.deleteIfExists(logPath);
         }
         catch (IOException e) {
-            log.error("Could not delete the failed build logs of submission {} at {}", submissionId, logPath, e);
+            throw new UncheckedIOException("Could not delete the failed build logs of submission " + submissionId + " at " + logPath, e);
         }
     }
 

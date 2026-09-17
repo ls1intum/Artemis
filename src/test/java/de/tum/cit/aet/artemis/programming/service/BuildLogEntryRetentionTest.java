@@ -30,7 +30,8 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionT
  * Unit tests for the job that drains what is left of {@code build_log_entry}.
  * <p>
  * Nothing writes to that table any more, so this job is the only thing that makes it shrink, and it is the reason the fallback read and the entity can eventually be deleted.
- * It runs against a backlog of millions of rows, so the behaviour that matters is that it works in batches and gives up its turn rather than issuing one enormous delete.
+ * It runs against a backlog of millions of rows, so the behaviour that matters is that it works in batches, deletes each batch in one statement, and gives up its turn
+ * rather than holding the database for as long as the whole backlog takes.
  */
 @ExtendWith(MockitoExtension.class)
 class BuildLogEntryRetentionTest {
@@ -79,8 +80,8 @@ class BuildLogEntryRetentionTest {
 
         buildLogEntryService.deleteExpiredBuildLogEntryRows();
 
-        verify(buildLogEntryRepository).deleteAllById(ids(BATCH_SIZE));
-        verify(buildLogEntryRepository).deleteAllById(ids(120));
+        verify(buildLogEntryRepository).deleteAllByIdIn(ids(BATCH_SIZE));
+        verify(buildLogEntryRepository).deleteAllByIdIn(ids(120));
         verify(buildLogEntryRepository, org.mockito.Mockito.times(3)).findExpiredIds(any(), any());
     }
 
@@ -108,7 +109,7 @@ class BuildLogEntryRetentionTest {
         buildLogEntryService.deleteExpiredBuildLogEntryRows();
 
         verify(buildLogEntryRepository, org.mockito.Mockito.times(MAX_BATCHES)).findExpiredIds(any(), any());
-        verify(buildLogEntryRepository, org.mockito.Mockito.times(MAX_BATCHES)).deleteAllById(any());
+        verify(buildLogEntryRepository, org.mockito.Mockito.times(MAX_BATCHES)).deleteAllByIdIn(any());
     }
 
     @Test
@@ -118,6 +119,6 @@ class BuildLogEntryRetentionTest {
         buildLogEntryService.deleteExpiredBuildLogEntryRows();
 
         verifyNoInteractions(buildLogEntryRepository);
-        verify(buildLogEntryRepository, never()).deleteAllById(any());
+        verify(buildLogEntryRepository, never()).deleteAllByIdIn(any());
     }
 }

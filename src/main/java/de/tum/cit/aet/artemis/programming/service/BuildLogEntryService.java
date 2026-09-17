@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -91,10 +92,21 @@ public class BuildLogEntryService {
      * @return the entries as they were stored, which is what a subsequent read returns
      */
     public List<BuildLogEntry> saveBuildLogs(List<BuildLogEntry> buildLogs, ProgrammingSubmission programmingSubmission) {
-        // Rows of a build that predates the file store are removed here rather than left behind, so that a submission is never represented in both stores and the read below
-        // never has to decide which of the two is newer. Once the table has drained this is a delete that matches nothing.
+        List<BuildLogEntry> stored;
+        try {
+            stored = failedBuildLogService.saveBuildLogs(programmingSubmission.getId(), buildLogs);
+        }
+        catch (UncheckedIOException e) {
+            // A build result must not fail because its logs could not be written, and the rows below are deliberately left alone: a submission that still has them keeps
+            // showing the logs of its previous build, which is more use than the nothing it would otherwise be left with.
+            log.error("Could not store the build logs of submission {}; any rows it still has are kept", programmingSubmission.getId(), e);
+            return List.of();
+        }
+
+        // Only now that the replacement exists. Rows of a build that predates the file store are removed rather than left behind, so that a submission is never represented in
+        // both stores and the read below never has to decide which of the two is newer. Once the table has drained this is a delete that matches nothing.
         buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
-        return failedBuildLogService.saveBuildLogs(programmingSubmission.getId(), buildLogs);
+        return stored;
     }
 
     /**
@@ -133,7 +145,7 @@ public class BuildLogEntryService {
                 }
                 return;
             }
-            buildLogEntryRepository.deleteAllById(expiredIds);
+            buildLogEntryRepository.deleteAllByIdIn(expiredIds);
             deleted += expiredIds.size();
         }
         log.info("Deleted {} build log entry rows older than {} days and reached the per-run limit; the remainder follows on the next run", deleted, failedBuildRetentionDays);

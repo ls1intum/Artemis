@@ -1,9 +1,11 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
@@ -208,5 +210,40 @@ class FailedBuildLogServiceTest {
 
     private static void ageFile(Path file, int days) throws IOException {
         Files.setLastModifiedTime(file, FileTime.from(Instant.now().minus(days, ChronoUnit.DAYS)));
+    }
+
+    /**
+     * A write that fails has to say so. The caller deletes the rows this file replaces, and doing that after a silent failure leaves the submission with neither.
+     */
+    @Test
+    void shouldReportAFailedWriteRatherThanReturnNormally() throws IOException {
+        // a regular file where the bucket directory belongs, so that creating the directory cannot succeed
+        Files.createFile(failedBuildLogsPath.resolve("0"));
+
+        assertThatExceptionOfType(UncheckedIOException.class).isThrownBy(() -> failedBuildLogService.saveBuildLogs(SUBMISSION_ID, List.of(new BuildLogEntry(TIME, "lost"))));
+    }
+
+    @Test
+    void shouldNotLeaveATemporaryFileBehindWhenTheWriteSucceeds() throws IOException {
+        failedBuildLogService.saveBuildLogs(SUBMISSION_ID, List.of(new BuildLogEntry(TIME, "kept")));
+
+        try (var files = Files.list(failedBuildLogsPath.resolve("0"))) {
+            assertThat(files.map(Path::toString)).containsExactly(failedBuildLogsPath.resolve("0").resolve(SUBMISSION_ID + ".log").toString());
+        }
+    }
+
+    /**
+     * Deleting a submission whose build logs stay on disk is the one outcome this path must not produce quietly, so a failure has to reach the caller.
+     */
+    @Test
+    void shouldReportAFailedDeleteRatherThanReturnNormally() throws IOException {
+        failedBuildLogService.saveBuildLogs(SUBMISSION_ID, List.of(new BuildLogEntry(TIME, "to be deleted")));
+        Path bucket = failedBuildLogsPath.resolve("0");
+        // a directory in place of the file: deleteIfExists refuses it rather than reporting that nothing was there
+        Files.delete(bucket.resolve(SUBMISSION_ID + ".log"));
+        Files.createDirectory(bucket.resolve(SUBMISSION_ID + ".log"));
+        Files.createFile(bucket.resolve(SUBMISSION_ID + ".log").resolve("occupied"));
+
+        assertThatExceptionOfType(UncheckedIOException.class).isThrownBy(() -> failedBuildLogService.deleteBuildLogs(SUBMISSION_ID));
     }
 }

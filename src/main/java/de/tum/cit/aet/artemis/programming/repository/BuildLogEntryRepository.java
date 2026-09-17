@@ -39,6 +39,22 @@ public interface BuildLogEntryRepository extends ArtemisJpaRepository<BuildLogEn
      * @param pageable how many ids to return in one batch
      * @return the ids of expired entries, at most one page of them
      */
+    /**
+     * Deletes the given build log entries in one statement.
+     * <p>
+     * {@code deleteAllById} inherited from Spring Data loads and removes one entity at a time, which over a full cleanup run is a million statements rather than two
+     * hundred.
+     *
+     * @param ids the ids to delete
+     */
+    @Transactional // ok because of delete
+    @Modifying
+    @Query("""
+            DELETE FROM BuildLogEntry buildLogEntry
+            WHERE buildLogEntry.id IN :ids
+            """)
+    void deleteAllByIdIn(@Param("ids") List<Long> ids);
+
     @Query("""
             SELECT buildLogEntry.id
             FROM BuildLogEntry buildLogEntry
