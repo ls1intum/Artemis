@@ -62,6 +62,14 @@ describe('SearchInputComponent', () => {
         expect(spy).toHaveBeenCalledWith(event);
     });
 
+    it('should label the slides and videos filter chip with its own title', () => {
+        fixture.componentRef.setInput('activeFilters', ['lecture_content']);
+        fixture.detectChanges();
+
+        expect(component['displayFilters']()).toEqual(['lecture_content']);
+        expect(component['getFilterLabel']('lecture_content')).toContain('global.search.entities.slidesAndVideosTitle');
+    });
+
     it('should emit filterRemoved on filter remove', () => {
         const spy = vi.spyOn(component.filterRemoved, 'emit');
         component['onFilterRemove']('exercise');
