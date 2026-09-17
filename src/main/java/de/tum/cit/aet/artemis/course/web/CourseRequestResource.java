@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
-import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.dto.CourseRequestCreateDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseRequestDTO;
 import de.tum.cit.aet.artemis.course.service.CourseRequestService;
@@ -28,8 +27,7 @@ import de.tum.cit.aet.artemis.course.service.CourseRequestService;
 @Lazy
 @FeatureUsage("management/course-requests")
 @RestController
-@SuppressWarnings("deprecation")
-@RequestMapping({ "api/course/", CourseLegacyRestPaths.CORE_PREFIX })
+@RequestMapping("api/course/")
 public class CourseRequestResource {
 
     private static final Logger log = LoggerFactory.getLogger(CourseRequestResource.class);
