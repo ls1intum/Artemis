@@ -204,7 +204,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 const results = changedParticipation.submissions?.flatMap((submission) => submission.results ?? []) || [];
                 // By id, not by position: the server holds a submission's results in a set, so the response order is arbitrary.
                 const lastResult = getNewestResult(results);
-                if (this.athenaResultNotificationTracker.shouldNotify(lastResult)) {
+                // The result's own submission back-reference is not reliably populated on this path, so resolve the
+                // containing submission explicitly for dedup purposes.
+                const lastResultSubmissionId = changedParticipation.submissions?.find((submission) => submission.results?.includes(lastResult!))?.id;
+                if (this.athenaResultNotificationTracker.shouldNotify(lastResult, lastResultSubmissionId)) {
                     if (lastResult?.successful === false) {
                         this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                     } else {

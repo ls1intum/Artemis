@@ -165,16 +165,22 @@ export class AthenaResultNotificationTracker {
     /**
      * Call once per incoming result.
      *
+     * @param result the result to evaluate
+     * @param submissionId id of the submission the result belongs to. Callers should pass this explicitly rather
+     * than relying on `result.submission?.id`, which is not reliably populated on every code path that reaches
+     * this method (e.g. before a defensive re-attachment step such as `sortResults()` has run). Falls back to
+     * `result.submission?.id` when omitted.
      * @return whether a success/failure notification should be shown for this result
      */
-    shouldNotify(result: Result | undefined): boolean {
+    shouldNotify(result: Result | undefined, submissionId?: number): boolean {
         if (!result || !isAthenaAIResult(result)) {
             return false;
         }
+        const resolvedSubmissionId = submissionId ?? result.submission?.id;
         if (result.successful === undefined) {
             // Pending broadcast for a fresh request: allow the next failure for this submission to be shown again.
-            if (result.submission?.id !== undefined) {
-                this.notifiedFailureSubmissionIds.delete(result.submission.id);
+            if (resolvedSubmissionId !== undefined) {
+                this.notifiedFailureSubmissionIds.delete(resolvedSubmissionId);
             }
             return false;
         }
@@ -185,12 +191,11 @@ export class AthenaResultNotificationTracker {
             this.notifiedResultIds.add(result.id);
             return true;
         }
-        const submissionId = result.submission?.id;
-        if (submissionId !== undefined) {
-            if (this.notifiedFailureSubmissionIds.has(submissionId)) {
+        if (resolvedSubmissionId !== undefined) {
+            if (this.notifiedFailureSubmissionIds.has(resolvedSubmissionId)) {
                 return false;
             }
-            this.notifiedFailureSubmissionIds.add(submissionId);
+            this.notifiedFailureSubmissionIds.add(resolvedSubmissionId);
         }
         return true;
     }

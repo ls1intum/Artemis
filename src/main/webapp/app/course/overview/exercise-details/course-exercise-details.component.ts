@@ -513,7 +513,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                         this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
                     }
                     const lastAthenaResult = getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last();
-                    if (this.athenaResultNotificationTracker.shouldNotify(lastAthenaResult)) {
+                    // The result's own submission back-reference is not reliably populated at this point (sortResults(), further
+                    // below, is what normally attaches it), so resolve the containing submission explicitly for dedup purposes.
+                    const lastAthenaResultSubmissionId = changedParticipation.submissions?.find((submission) => submission.results?.includes(lastAthenaResult!))?.id;
+                    if (this.athenaResultNotificationTracker.shouldNotify(lastAthenaResult, lastAthenaResultSubmissionId)) {
                         if (lastAthenaResult?.successful === true) {
                             this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.exercise?.title ?? '' });
                         } else if (lastAthenaResult?.successful === false) {

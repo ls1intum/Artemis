@@ -504,5 +504,25 @@ describe('ResultUtils', () => {
             expect(tracker.shouldNotify(athenaResult({ submission: { id: 1 } as Submission, successful: false }))).toBe(true);
             expect(tracker.shouldNotify(athenaResult({ submission: { id: 2 } as Submission, successful: false }))).toBe(true);
         });
+
+        it('uses the explicit submissionId argument when the result has no populated submission back-reference', () => {
+            const tracker = new AthenaResultNotificationTracker();
+            const failedResult = athenaResult({ successful: false });
+
+            expect(tracker.shouldNotify(failedResult, 7)).toBe(true);
+            // Same submission id passed explicitly again: still a stale replay, must not re-notify.
+            expect(tracker.shouldNotify(failedResult, 7)).toBe(false);
+            // A fresh pending request for that submission id resets the dedup.
+            expect(tracker.shouldNotify(athenaResult({ successful: undefined }), 7)).toBe(false);
+            expect(tracker.shouldNotify(failedResult, 7)).toBe(true);
+        });
+
+        it('prefers the explicit submissionId argument over the result.submission back-reference', () => {
+            const tracker = new AthenaResultNotificationTracker();
+
+            expect(tracker.shouldNotify(athenaResult({ submission: { id: 1 } as Submission, successful: false }), 2)).toBe(true);
+            // Same explicit id 2 again, despite a different result.submission.id: still deduped.
+            expect(tracker.shouldNotify(athenaResult({ submission: { id: 1 } as Submission, successful: false }), 2)).toBe(false);
+        });
     });
 });
