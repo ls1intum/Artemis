@@ -4,7 +4,11 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
@@ -32,10 +36,15 @@ public interface SearchableEntitySyncStateRepository extends ArtemisJpaRepositor
 
     /**
      * Deletes the ledger row for a single entity, if present. Called when an entity is deleted so the ledger
-     * stays truthful (a later reconcile pass must not treat a deleted entity as still synced).
+     * stays truthful (a later reconcile pass must not treat a deleted entity as still synced). A single
+     * modifying statement rather than a derived delete: the dispatcher calls this outside any transaction, and a
+     * derived delete loads and removes the entity, which needs one.
      *
      * @param entityType the {@code SearchableEntitySchema.TypeValues} discriminator
      * @param entityId   the database id of the entity
      */
-    void deleteByEntityTypeAndEntityId(String entityType, Long entityId);
+    @Transactional // ok because of the modifying delete
+    @Modifying(flushAutomatically = true)
+    @Query("DELETE FROM SearchableEntitySyncState s WHERE s.entityType = :entityType AND s.entityId = :entityId")
+    void deleteByEntityTypeAndEntityId(@Param("entityType") String entityType, @Param("entityId") Long entityId);
 }

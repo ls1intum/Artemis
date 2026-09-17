@@ -26,7 +26,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
-import org.springframework.transaction.PlatformTransactionManager;
 
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntitySyncState;
@@ -40,8 +39,8 @@ import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
  * <p>
  * The dispatcher must apply a claimed row to Weaviate, refresh the sync ledger and delete the row on success,
  * keep the row with an incremented attempt count and a backed-off next attempt on failure, and process rows
- * in id order so multiple pending rows for the same entity apply latest-wins. A real {@code TransactionTemplate}
- * backed by a mock transaction manager runs the drain callbacks so the orchestration is exercised directly.
+ * in id order so multiple pending rows for the same entity apply latest-wins. The outcome writes are plain
+ * repository calls, so the orchestration is exercised directly against the mocked repositories.
  */
 class WeaviateOutboxDispatcherTest {
 
@@ -56,14 +55,12 @@ class WeaviateOutboxDispatcherTest {
 
     private final SearchableEntityWeaviateService searchableEntityWeaviateService = mock(SearchableEntityWeaviateService.class);
 
-    private final PlatformTransactionManager transactionManager = mock(PlatformTransactionManager.class);
-
     private WeaviateOutboxDispatcher dispatcher;
 
     @BeforeEach
     void setUp() {
         // Construct with the production default tuning values (batch size, base and max backoff seconds).
-        dispatcher = new WeaviateOutboxDispatcher(outboxRepository, syncStateRepository, searchableEntityWeaviateService, transactionManager, 100, 10, 300);
+        dispatcher = new WeaviateOutboxDispatcher(outboxRepository, syncStateRepository, searchableEntityWeaviateService, 100, 10, 300);
     }
 
     @Test

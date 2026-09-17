@@ -144,7 +144,8 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
         })).isInstanceOf(IllegalStateException.class);
 
         assertThat(hasOutboxRowFor(COURSE_TYPE, course.getId())).as("rolled-back enqueue leaves no outbox row").isFalse();
-        // The after-commit dispatch never fires on rollback, so nothing reaches Weaviate either.
+        // The enqueue nudge runs before the rollback and sees no committed row, and the rollback leaves none for the
+        // scheduled tick, so nothing reaches Weaviate either.
         assertCourseNotInWeaviate(weaviateService, course.getId());
     }
 
