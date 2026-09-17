@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
@@ -58,8 +57,7 @@ import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 @Lazy
 @FeatureUsage("account/self-service")
 @RestController
-@SuppressWarnings("deprecation")
-@RequestMapping({ "api/account/", AccountLegacyRestPaths.CORE_ACCOUNT_PREFIX })
+@RequestMapping("api/account/")
 public class AccountResource {
 
     public static final String ENTITY_NAME = "user";
