@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
-import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
+import de.tum.cit.aet.artemis.core.dto.UserNameDTO;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
@@ -309,7 +309,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 HttpStatus.CREATED);
 
         assertThat(participation.team()).isNotNull();
-        assertThat(participation.team().students()).extracting(UserPublicInfoDTO::getId).containsExactlyInAnyOrder(student1.getId(), student2.getId());
+        assertThat(participation.team().students()).extracting(UserNameDTO::id).containsExactlyInAnyOrder(student1.getId(), student2.getId());
     }
 
     @Test
@@ -1401,7 +1401,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 StudentParticipationDTO.class, HttpStatus.OK);
 
         assertThat(updatedParticipation.team()).isNotNull();
-        assertThat(updatedParticipation.team().students()).extracting(UserPublicInfoDTO::getId).containsExactlyInAnyOrder(student1.getId(), student2.getId());
+        assertThat(updatedParticipation.team().students()).extracting(UserNameDTO::id).containsExactlyInAnyOrder(student1.getId(), student2.getId());
     }
 
     @Test
