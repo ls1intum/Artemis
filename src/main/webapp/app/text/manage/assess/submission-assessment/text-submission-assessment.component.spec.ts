@@ -14,7 +14,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { TextSubmissionAssessmentComponent } from 'app/text/manage/assess/submission-assessment/text-submission-assessment.component';
 import { By } from '@angular/platform-browser';
-import { ReplaySubject, of, throwError } from 'rxjs';
+import { ReplaySubject, Subject, of, throwError } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -630,6 +630,25 @@ describe('TextSubmissionAssessmentComponent', () => {
         await fixture.whenStable();
         expect(athenaServiceFeedbackSuggestionsStub).toHaveBeenCalled();
         expect(component.textBlockRefs[0].feedback?.text).toEqual(feedbackSuggestionTextBlockRef.feedback!.text);
+    });
+
+    it('should cancel a pending feedback-suggestions request when the component is reused for a new submission', async () => {
+        component.textBlockRefs = [];
+        component.unreferencedFeedback.set([]);
+        const subject = new Subject<(TextBlockRef | Feedback)[]>();
+        vi.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(subject.asObservable());
+
+        component.loadFeedbackSuggestions();
+        // The component is reused for a new assessment before the stale request resolves.
+        component['resetComponent']();
+
+        const feedbackSuggestionTextBlockRef = createTextBlockRefWithFeedbackFromTo(0, 10);
+        subject.next([feedbackSuggestionTextBlockRef]);
+        subject.complete();
+        await fixture.whenStable();
+
+        // The stale response must not leak into the reused component's state.
+        expect(component.textBlockRefs).toHaveLength(0);
     });
 
     it.each([

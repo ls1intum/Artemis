@@ -154,6 +154,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * All properties MUST be set to a default value (e.g. null) to prevent data corruption by state leaking into following new assessments.
      */
     private resetComponent(): void {
+        // Cancel a still-pending feedback-suggestion request for the previous submission: the component is reused
+        // for the next one, and its eventual response/error must not apply to the assessment now being shown.
+        this.feedbackSuggestionsObservable?.unsubscribe();
+
         this.participation = undefined;
         this.submission = undefined;
         this.exercise = undefined;
@@ -408,7 +412,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 this.hasAutomaticFeedback.set(feedbackSuggestions.length > 0);
                 this.loadingFeedbackSuggestions.set(false);
             },
-            error: () => this.loadingFeedbackSuggestions.set(false),
+            error: () => {
+                this.loadingFeedbackSuggestions.set(false);
+                this.alertService.error('artemisApp.textAssessment.error.loadFeedbackSuggestionsFailed');
+            },
         });
     }
 

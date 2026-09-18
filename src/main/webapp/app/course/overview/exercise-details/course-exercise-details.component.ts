@@ -34,7 +34,7 @@ import { LiveQuizParticipationStatus, QuizExercise, QuizStatus } from 'app/quiz/
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
-import { Submission, getAllResultsOfAllSubmissions, getFirstResultWithComplaintFromResults } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getAllResultsOfAllSubmissions, getFirstResultWithComplaintFromResults, getNewestResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
@@ -52,6 +52,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseHeaderComponent } from 'app/exercise/exercise-headers/exercise-header/exercise-header.component';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { hasResults } from 'app/exercise/participation/participation.utils';
+import { AthenaResultNotificationTracker } from 'app/exercise/result/result.utils';
 import { ExerciseSplitPanelComponent } from './exercise-split-panel/exercise-split-panel.component';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { participationChildRouteSegments } from 'app/course/overview/exercise-details/participation-child-route';
@@ -244,6 +245,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     // Subscription tracking for methods called on each exercise load
     private participationUpdateListener?: Subscription;
     private teamAssignmentUpdateListener?: Subscription;
+
+    private readonly athenaResultNotificationTracker = new AthenaResultNotificationTracker();
 
     // Icons
     faBook = faBook;
@@ -509,15 +512,15 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     ) {
                         this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
                     }
-                    if (
-                        (getAllResultsOfAllSubmissions(changedParticipation.submissions)?.length > getAllResultsOfAllSubmissions(currentGraded?.submissions).length ||
-                            getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.completionDate === undefined) &&
-                        getAllResultsOfAllSubmissions(changedParticipation.submissions).last()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
-                        getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.successful !== undefined
-                    ) {
-                        if (getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.successful === true) {
+                    // By id, not by position: the server holds a submission's results in a set, so the response order is arbitrary.
+                    const lastAthenaResult = getNewestResult(getAllResultsOfAllSubmissions(changedParticipation.submissions));
+                    // The result's own submission back-reference is not reliably populated at this point (sortResults(), further
+                    // below, is what normally attaches it), so resolve the containing submission explicitly for dedup purposes.
+                    const lastAthenaResultSubmissionId = changedParticipation.submissions?.find((submission) => submission.results?.includes(lastAthenaResult!))?.id;
+                    if (this.athenaResultNotificationTracker.shouldNotify(lastAthenaResult, lastAthenaResultSubmissionId)) {
+                        if (lastAthenaResult?.successful === true) {
                             this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.exercise?.title ?? '' });
-                        } else if (getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.successful === false) {
+                        } else if (lastAthenaResult?.successful === false) {
                             this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                         }
                     }
