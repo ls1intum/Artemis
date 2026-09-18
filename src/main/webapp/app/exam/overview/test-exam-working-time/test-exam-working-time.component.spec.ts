@@ -5,6 +5,7 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { TestExamWorkingTimeComponent } from 'app/exam/overview/test-exam-working-time/test-exam-working-time.component';
 import { round } from 'app/foundation/util/utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 describe('TestExamWorkingTimeComponent', () => {
     let fixture: ComponentFixture<TestExamWorkingTimeComponent>;
@@ -27,7 +28,7 @@ describe('TestExamWorkingTimeComponent', () => {
                 exam.startDate = currentDate.subtract(4, 'hour');
                 exam.endDate = currentDate;
                 exam.workingTime = 3 * 3600;
-                exam.testExam = true;
+                exam.examMode = ExamMode.TEST;
 
                 studentExam = new StudentExam();
                 studentExam.exam = exam;
@@ -52,7 +53,7 @@ describe('TestExamWorkingTimeComponent', () => {
     });
 
     it('should have a difference of 0 if the studentExam is linked to a RealExam', () => {
-        studentExam.exam!.testExam = false;
+        studentExam.exam!.examMode = ExamMode.REAL;
         fixture.componentRef.setInput('studentExam', studentExam);
         comp.ngOnInit();
         expect(comp.percentUsedWorkingTime()).toBe(0);

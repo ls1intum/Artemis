@@ -1024,11 +1024,11 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         // The exercises of the group are absent on purpose: the collection is lazy, never fetched here, and it would
         // re-enter the very exercise this group hangs under.
         Map<String, Object> exam = mapOf(exerciseGroup, "exam");
-        assertThat(exam).containsOnlyKeys("id", "title", "testExam", "examWithAttendanceCheck", "visibleDate", "startDate", "endDate", "publishResultsDate",
+        assertThat(exam).containsOnlyKeys("id", "title", "examMode", "examWithAttendanceCheck", "visibleDate", "startDate", "endDate", "publishResultsDate",
                 "examStudentReviewStart", "examStudentReviewEnd", "examSummaryPublicationDate", "exampleSolutionPublicationDate", "gracePeriod", "workingTime", "startText",
                 "endText", "confirmationStartText", "confirmationEndText", "examMaxPoints", "numberOfExercisesInExam", "numberOfCorrectionRoundsInExam", "randomizeExerciseOrder",
                 "examiner", "moduleNumber", "courseName", "examArchivePath", "course");
-        assertThat(exam.get("testExam")).isEqualTo(false);
+        assertThat(exam.get("examMode")).isEqualTo("REAL");
         assertThat(exam.get("examWithAttendanceCheck")).isEqualTo(true);
         assertThat(exam.get("gracePeriod")).isEqualTo(210);
         assertThat(exam.get("workingTime")).isEqualTo(7200);

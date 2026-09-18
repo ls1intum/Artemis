@@ -3,7 +3,7 @@ import type { ExerciseType } from 'app/exercise/shared/entities/exercise/exercis
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import type { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import type { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
 

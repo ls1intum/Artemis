@@ -8,6 +8,8 @@ import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercis
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ExamLiveEventsOverlayComponent', () => {
     let component: ExamLiveEventsOverlayComponent;
@@ -31,6 +33,7 @@ describe('ExamLiveEventsOverlayComponent', () => {
                 provideHttpClientTesting(),
                 { provide: DynamicDialogRef, useValue: mockDialogRef },
                 { provide: DynamicDialogConfig, useValue: { data: {} } },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
     });

@@ -1,9 +1,11 @@
+import { isRealExam } from 'app/exam/overview/exam.utils';
 import { ChangeDetectionStrategy, Component, ElementRef, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { faClipboard, faEye, faFlaskVial, faGraduationCap, faInfoCircle, faListAlt, faThList, faUser, faVial, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
@@ -33,6 +35,9 @@ import { TumUiPanelComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
     ],
 })
 export class ExamManagementNavigationSidebarComponent {
+    protected readonly isRealExam = isRealExam;
+    protected readonly ExamMode = ExamMode;
+
     private router = inject(Router);
 
     readonly isCollapsed = input<boolean>(false);

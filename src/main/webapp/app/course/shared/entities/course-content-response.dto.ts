@@ -1,3 +1,4 @@
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import type { CompetencyTaxonomy, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
@@ -18,7 +19,9 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { createSubmission } from 'app/exercise/shared/entities/participation/student-participation.dto';
 import type { TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import type { Submission, SubmissionExerciseType, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
+import type { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import type { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
+import type { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -332,7 +335,7 @@ export interface CourseDashboardDTO {
 export interface CourseDashboardExamDTO {
     id: number;
     title: string;
-    testExam?: boolean;
+    examMode?: ExamMode;
     examWithAttendanceCheck?: boolean;
     visibleDate?: string;
     startDate?: string;

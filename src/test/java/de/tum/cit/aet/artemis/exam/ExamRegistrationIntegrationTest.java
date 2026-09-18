@@ -78,6 +78,8 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     private Exam testExam1;
 
+    private Exam testExamWithSimulation1;
+
     private static final int NUMBER_OF_STUDENTS = 3;
 
     private static final int NUMBER_OF_TUTORS = 1;
@@ -99,7 +101,9 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         exam1 = examUtilService.addExam(course1);
         examUtilService.addExamChannel(exam1, "exam1 channel");
         testExam1 = examUtilService.addTestExam(course1);
+        testExamWithSimulation1 = examUtilService.addTestExamWithSimulation(course1);
         examUtilService.addStudentExamForTestExam(testExam1, student1);
+        examUtilService.addStudentExamForTestExam(testExamWithSimulation1, student1);
 
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
     }
@@ -175,6 +179,21 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRemoveStudentToExam_testExam() throws Exception {
         request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students/" + OTHER_PREFIX + "student1", HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testAddStudentToSimulationExam() throws Exception {
+        var student = new StudentDTO(TEST_PREFIX + "student42", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation1.getId() + "/students", List.of(student), HttpStatus.OK, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRemoveStudentFromSimulationExam() throws Exception {
+        var student = new StudentDTO(TEST_PREFIX + "student1", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation1.getId() + "/students", List.of(student), HttpStatus.OK, null);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation1.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.OK);
     }
 
     @Test
@@ -309,13 +328,47 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         StudentDTO studentDto1 = UserFactory.generateStudentDTOWithRegistrationNumber("1111111");
         List<StudentDTO> studentDTOS = List.of(studentDto1);
-        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students", studentDTOS, StudentDTO.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students", studentDTOS, ExamRegistrationResultDTO.class,
+                HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testAddStudentsToSimulationExam() throws Exception {
+        userUtilService.setRegistrationNumberOfUserAndSave(TEST_PREFIX + "student1", "1111111");
+
+        StudentDTO studentDto1 = UserFactory.generateStudentDTOWithRegistrationNumber("1111111");
+        List<StudentDTO> studentDTOS = List.of(studentDto1);
+        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation1.getId() + "/students", studentDTOS,
+                ExamRegistrationResultDTO.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testAddStudentsToSimulationExam_simulationPhaseEnded() throws Exception {
+        userUtilService.setRegistrationNumberOfUserAndSave(TEST_PREFIX + "student1", "1111111");
+
+        testExamWithSimulation1.setStartDate(ZonedDateTime.now().minusHours(2));
+        testExamWithSimulation1.setEndDate(ZonedDateTime.now().minusHours(1));
+        testExamWithSimulation1.setWorkingTime(3600);
+        examRepository.save(testExamWithSimulation1);
+
+        StudentDTO studentDto1 = UserFactory.generateStudentDTOWithRegistrationNumber("1111111");
+        List<StudentDTO> studentDTOS = List.of(studentDto1);
+        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation1.getId() + "/students", studentDTOS,
+                ExamRegistrationResultDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRemoveAllStudentsFromExam_testExam() throws Exception {
         request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students", HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRemoveAllStudentsFromSimulationExam() throws Exception {
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation1.getId() + "/students", HttpStatus.OK);
     }
 
     @Test
@@ -368,6 +421,12 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRegisterCourseStudents_testExam() throws Exception {
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/register-course-students", null, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRegisterCourseStudents_simulationExam() throws Exception {
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation1.getId() + "/register-course-students", null, HttpStatus.OK, null);
     }
 
     @Test

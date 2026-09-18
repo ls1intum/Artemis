@@ -19,7 +19,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
-import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 
 describe('Participation Service', () => {
     let service: ParticipationService;

@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.course.dto.CourseWithOrganizationsDTO;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.LockedCourseSubmissionDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -68,7 +69,7 @@ class CourseDtoSerializationTest {
         exam.setTitle("Active Midterm");
         exam.setStartDate(ZonedDateTime.parse("2026-09-16T12:00:00Z"));
         exam.setEndDate(ZonedDateTime.parse("2026-09-16T13:00:00Z"));
-        exam.setTestExam(false);
+        exam.setExamMode(ExamMode.REAL);
         exam.setExamMaxPoints(80);
         exam.setCourse(course);
 
@@ -84,6 +85,8 @@ class CourseDtoSerializationTest {
         assertThat(tree.has("courses")).isTrue();
         assertThat(tree.has("activeExams")).isTrue();
         JsonNode activeExam = tree.get("activeExams").get(0);
+        assertThat(activeExam.get("examMode").asString()).isEqualTo(ExamMode.REAL.name());
+        assertThat(activeExam.has("testExam")).isFalse();
         assertThat(activeExam.get("title").asString()).isEqualTo("Active Midterm");
         assertThat(activeExam.get("course").get("title").asString()).isEqualTo("Active Exam Course");
         assertThat(activeExam.get("examMaxPoints").asInt()).isEqualTo(80);

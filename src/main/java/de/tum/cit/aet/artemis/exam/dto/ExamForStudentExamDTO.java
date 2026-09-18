@@ -3,14 +3,15 @@ package de.tum.cit.aet.artemis.exam.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 
 /**
  * Minimal projection of an {@link Exam}, nested inside {@link StudentExamDTO} where the client needs exam-level
- * context (course access rights, the exam-level default working time, and whether it is a test exam) alongside
+ * context (course access rights, the exam-level default working time, and the exam mode) alongside
  * the student exam itself.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExamForStudentExamDTO(long id, String title, boolean testExam, int workingTime, CourseForStudentExamDTO course) {
+public record ExamForStudentExamDTO(long id, String title, ExamMode examMode, int workingTime, CourseForStudentExamDTO course) {
 
     /**
      * Converts an Exam into an ExamForStudentExamDTO.
@@ -22,6 +23,6 @@ public record ExamForStudentExamDTO(long id, String title, boolean testExam, int
         if (exam == null) {
             return null;
         }
-        return new ExamForStudentExamDTO(exam.getId(), exam.getTitle(), exam.isTestExam(), exam.getWorkingTime(), CourseForStudentExamDTO.of(exam.getCourse()));
+        return new ExamForStudentExamDTO(exam.getId(), exam.getTitle(), exam.getExamMode(), exam.getWorkingTime(), CourseForStudentExamDTO.of(exam.getCourse()));
     }
 }
