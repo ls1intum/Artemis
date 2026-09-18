@@ -1,0 +1,42 @@
+{
+    "artemisApp": {
+        "assessmentUpload": {
+            "title": "Manuelle Bewertungen hochladen",
+            "openButton": "Manuelle Bewertungen hochladen",
+            "description": "Lade eine ZIP-Datei hoch, die eine Datei \"assessment-scores.csv\" und pro Teilnehmer eine \".txt\"-Datei enthält. Die CSV-Datei muss in der ersten Spalte die Teilnehmerkennung (<participationId>-<login>, wie beim Repository-Export) und eine Spalte \"Overall points\" enthalten. Jede \".txt\"-Datei ist nach dem exportierten Repository-Ordner des Teilnehmers benannt und ihr Inhalt wird als Feedback gespeichert.",
+            "overwriteWarning": "Vorhandene manuelle Bewertungen der aufgeführten Teilnehmer werden überschrieben: Punkte und Feedback werden durch die hochgeladenen ersetzt. Automatische Bewertungen bleiben erhalten, und Teilnehmer, die nicht in der CSV-Datei stehen, werden nicht verändert. Teilnehmer, deren aktuelle Bewertung eine offene Beschwerde hat, werden abgelehnt statt überschrieben.",
+            "overwriteConfirmation": "Mir ist bewusst, dass die vorhandenen manuellen Bewertungen der Teilnehmer in dieser Datei überschrieben werden.",
+            "downloadTemplateButton": "Vorlage herunterladen",
+            "dropZoneTitle": "ZIP-Datei hierher ziehen oder zum Auswählen klicken",
+            "dropZoneHint": "Es werden nur .zip-Dateien unterstützt",
+            "uploadButton": "Hochladen",
+            "importFailed": "Der Upload wurde abgelehnt und es wurde nichts gespeichert. Bitte behebe die folgenden Probleme und versuche es erneut:",
+            "success": "{{ count }} manuelle Bewertung(en) erfolgreich gespeichert.",
+            "errorTable": {
+                "identifier": "Eintrag",
+                "problem": "Problem"
+            },
+            "error": {
+                "fileTypeNotSupported": "Die ausgewählte Datei ist keine .zip-Datei.",
+                "fileTooLarge": "Die Datei {{ fileName }} ist zu groß.",
+                "MISSING_CSV": "Die ZIP-Datei enthält keine Datei \"assessment-scores.csv\".",
+                "MULTIPLE_CSV": "Die ZIP-Datei enthält mehr als eine Datei \"assessment-scores.csv\".",
+                "EMPTY_CSV": "Die Datei \"assessment-scores.csv\" ist leer oder konnte nicht gelesen werden.",
+                "MALFORMED_CSV": "Die Datei \"assessment-scores.csv\" enthält ungültige CSV-Daten.",
+                "MISSING_OVERALL_POINTS_COLUMN": "Die Datei \"assessment-scores.csv\" enthält keine Spalte \"Overall points\".",
+                "MISSING_IDENTIFIER": "Eine Zeile enthält in der ersten Spalte keine Teilnehmerkennung.",
+                "INVALID_IDENTIFIER_FORMAT": "Die Kennung entspricht nicht dem erwarteten Format <participationId>-<login>.",
+                "DUPLICATE_IDENTIFIER": "Die Kennung kommt in mehreren Zeilen vor.",
+                "PARTICIPATION_NOT_FOUND": "Für diese Kennung existiert keine Teilnahme.",
+                "PARTICIPATION_WRONG_EXERCISE": "Die Teilnahme gehört zu einer anderen Aufgabe.",
+                "IDENTIFIER_MISMATCH": "Der Login stimmt nicht mit dem Teilnehmer der ermittelten Teilnahme überein.",
+                "EXISTING_COMPLAINT": "Die aktuelle manuelle Bewertung dieses Teilnehmers hat eine offene Beschwerde. Ein Überschreiben würde die Bewertung ändern, gegen die sich die Beschwerde richtet, daher wurde der Upload abgelehnt. Bitte bearbeite zuerst die Beschwerde.",
+                "INVALID_POINTS": "Der Wert \"Overall points\" fehlt, ist ungültig, negativ oder überschreitet die maximalen Punkte einschließlich Bonuspunkten.",
+                "DUPLICATE_TEXT_FILE": "Mehr als eine .txt-Datei hat diesen Basisnamen.",
+                "AMBIGUOUS_TEXT_FILE": "Diese .txt-Datei passt zu mehr als einer CSV-Zeile oder mehrere .txt-Dateien passen zu dieser Zeile.",
+                "MISSING_TEXT_FILE": "Keine .txt-Datei in der ZIP-Datei passt zu dieser Kennung.",
+                "UNMATCHED_TEXT_FILE": "Diese .txt-Datei passt zu keiner Zeile der CSV-Datei."
+            }
+        }
+    }
+}
