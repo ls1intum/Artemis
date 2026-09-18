@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSch
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.RELEASE_KEY;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.UNVERSIONED;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.V1_TO_V2_STRUCTURES;
+import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.V2_TO_V3_STRUCTURES;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.VERSION;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.VERSION_KEY;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.keyFor;
@@ -28,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema;
 import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.CarriedOverStructure;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
 
 /**
  * Brings the distributed store up to {@link DistributedDataSchema#VERSION} before anything reads from it.
@@ -228,8 +230,24 @@ class RedissonDistributedDataMigrator {
      * decision and a custom old-format decoder when a required representation is no longer wire-compatible.
      */
     private List<MigrationStep> migrationSteps() {
-        return List.of(new MigrationStep(UNVERSIONED, 1, () -> migrateWireCompatibleStructures(UNVERSIONED, 1, LEGACY_TO_V1_STRUCTURES)),
-                new MigrationStep(1, 2, () -> migrateWireCompatibleStructures(1, 2, V1_TO_V2_STRUCTURES)));
+        return List.of(new MigrationStep(UNVERSIONED, 1, () -> migrateWireCompatibleStructures(UNVERSIONED, 1, LEGACY_TO_V1_STRUCTURES)), new MigrationStep(1, 2, () -> {
+            migrateV1IrisFeatureKey();
+            migrateWireCompatibleStructures(1, 2, V1_TO_V2_STRUCTURES);
+        }), new MigrationStep(2, 3, () -> migrateWireCompatibleStructures(2, 3, V2_TO_V3_STRUCTURES)));
+    }
+
+    /**
+     * V1 on develop stored IrisProactiveStruggle at the ordinal now occupied by PresentationAssessments.
+     * Decode that legacy key using its current ordinal, then write its intended meaning before deleting it.
+     * V2 stores already use PresentationAssessments at that position and must not take this step.
+     */
+    private void migrateV1IrisFeatureKey() {
+        RMap<Feature, Boolean> features = redissonClient.getMap(keyFor(1, "features"));
+        Boolean enabled = features.get(Feature.PresentationAssessments);
+        if (enabled != null) {
+            features.put(Feature.IrisProactiveStruggle, enabled);
+            features.remove(Feature.PresentationAssessments);
+        }
     }
 
     private void migrateWireCompatibleStructures(int fromVersion, int toVersion, List<CarriedOverStructure> structures) {

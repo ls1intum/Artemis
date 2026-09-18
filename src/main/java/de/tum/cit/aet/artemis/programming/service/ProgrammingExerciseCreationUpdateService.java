@@ -10,9 +10,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -318,15 +317,10 @@ public class ProgrammingExerciseCreationUpdateService {
     }
 
     private void connectAuxiliaryRepositoriesToExercise(ProgrammingExercise exercise) {
-        List<AuxiliaryRepository> savedRepositories = new ArrayList<>(exercise.getAuxiliaryRepositories().stream().filter(repo -> repo.getId() != null).toList());
+        Set<AuxiliaryRepository> savedRepositories = new LinkedHashSet<>(exercise.getAuxiliaryRepositories().stream().filter(repo -> repo.getId() != null).toList());
         exercise.getAuxiliaryRepositories().stream().filter(repository -> repository.getId() == null).forEach(repository -> {
-            // We have to disconnect the exercise from the auxiliary repository
-            // since the auxiliary repositories of an exercise are represented as
-            // a sorted collection (list).
-            repository.setExercise(null);
-            repository = auxiliaryRepositoryRepository.save(repository);
             repository.setExercise(exercise);
-            savedRepositories.add(repository);
+            savedRepositories.add(auxiliaryRepositoryRepository.save(repository));
         });
         exercise.setAuxiliaryRepositories(savedRepositories);
     }

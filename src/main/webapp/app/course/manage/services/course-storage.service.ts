@@ -70,6 +70,11 @@ export class CourseStorageService implements OnDestroy {
         this.currentCourseId.set(undefined);
     }
 
+    /** All courses currently stored for the logged-in user. */
+    getCourses(): Course[] {
+        return [...this.storedCourses()];
+    }
+
     /**
      * Stores (or replaces) a course and notifies subscribers of {@link subscribeToCourseUpdates}.
      *

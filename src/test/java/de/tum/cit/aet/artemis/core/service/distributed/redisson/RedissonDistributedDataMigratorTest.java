@@ -160,6 +160,30 @@ class RedissonDistributedDataMigratorTest {
         assertThat(storedVersion()).isEqualTo(String.valueOf(VERSION));
     }
 
+    @Test
+    void testPreservesV1IrisToggleWithoutEnablingPresentationAssessments() {
+        redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set("1");
+        // The current PresentationAssessments ordinal encodes the legacy v1 IrisProactiveStruggle key.
+        redissonClient.<Feature, Boolean>getMap(keyFor(1, "features")).put(Feature.PresentationAssessments, Boolean.FALSE);
+
+        migrationService().migrateToCurrentVersion();
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(redissonClient.<Feature, Boolean>getMap(keyFor(VERSION, "features"))).containsOnlyKeys(Feature.IrisProactiveStruggle)
+                .containsEntry(Feature.IrisProactiveStruggle, Boolean.FALSE);
+    }
+
+    @Test
+    void testPreservesV2PresentationToggleWithoutEnablingIris() {
+        redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set("2");
+        redissonClient.<Feature, Boolean>getMap(keyFor(2, "features")).put(Feature.PresentationAssessments, Boolean.TRUE);
+
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(redissonClient.<Feature, Boolean>getMap(keyFor(VERSION, "features"))).containsOnlyKeys(Feature.PresentationAssessments)
+                .containsEntry(Feature.PresentationAssessments, Boolean.TRUE);
+    }
+
     /**
      * The unversioned namespace is the whole keyspace, so the pattern delete that empties a numbered one would take
      * the new namespace and the version key with it. What is not carried over is therefore left where it is.
@@ -280,7 +304,7 @@ class RedissonDistributedDataMigratorTest {
         redissonClient.getQueue(keyFor(UNVERSIONED, "buildResultQueue")).add("must-remain-unversioned");
 
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> migrationServiceFor(VERSION + 1).migrateToCurrentVersion())
-                .withMessageContaining("no migration step from 2").withMessageContaining("explicit adjacent-version migration");
+                .withMessageContaining("no migration step from " + VERSION).withMessageContaining("explicit adjacent-version migration");
         assertThat(storedVersion()).isNull();
         assertThat(redissonClient.getQueue(keyFor(UNVERSIONED, "buildResultQueue")).readAll()).containsExactly("must-remain-unversioned");
         assertThat(redissonClient.getQueue(keyFor(VERSION, "buildResultQueue"))).isEmpty();

@@ -23,7 +23,7 @@ public final class DistributedDataSchema {
     /**
      * The version of the distributed data written by this build. See the class documentation for when to bump it.
      */
-    public static final int VERSION = 2;
+    public static final int VERSION = 3;
 
     /**
      * The store as it was before schema versions existed, with every structure under its plain name. A deployment that
@@ -100,6 +100,14 @@ public final class DistributedDataSchema {
      * written after the migration. The remaining durable structures are unchanged and remain wire-compatible.
      */
     public static final List<CarriedOverStructure> V1_TO_V2_STRUCTURES = List.of(new CarriedOverStructure("buildJobQueue", StructureKind.PRIORITY_QUEUE),
+            new CarriedOverStructure("processingJobs", StructureKind.MAP), new CarriedOverStructure("buildResultQueue", StructureKind.QUEUE),
+            new CarriedOverStructure("features", StructureKind.MAP), new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP));
+
+    /**
+     * V3 appends IrisProactiveStruggle after PresentationAssessments, preserving all v2 enum ordinals.
+     * A separate namespace prevents older v2 nodes from reading the newly introduced enum value.
+     */
+    public static final List<CarriedOverStructure> V2_TO_V3_STRUCTURES = List.of(new CarriedOverStructure("buildJobQueue", StructureKind.PRIORITY_QUEUE),
             new CarriedOverStructure("processingJobs", StructureKind.MAP), new CarriedOverStructure("buildResultQueue", StructureKind.QUEUE),
             new CarriedOverStructure("features", StructureKind.MAP), new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP));
 

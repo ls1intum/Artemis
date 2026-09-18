@@ -14,6 +14,7 @@ import jakarta.persistence.Table;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 
 /**
@@ -36,6 +37,7 @@ public class ScaFeedback extends DomainObject {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "result_id")
     @JsonIgnore
+    @Parent
     private Result result;
 
     @Enumerated(EnumType.STRING)
