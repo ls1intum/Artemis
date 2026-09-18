@@ -168,8 +168,8 @@ class LocalVCRepositoryCopyTest {
                 boolean healthy = super.isBareRepositoryHealthy(repositoryUri);
                 try {
                     bothFoundItBroken.await(10, TimeUnit.SECONDS);
-                    if (healthChecks.incrementAndGet() == 2) {
-                        studentPushed.await(10, TimeUnit.SECONDS);
+                    if (healthChecks.incrementAndGet() == 2 && !studentPushed.await(10, TimeUnit.SECONDS)) {
+                        throw new IllegalStateException("Timed out waiting for the student push");
                     }
                 }
                 catch (Exception e) {
