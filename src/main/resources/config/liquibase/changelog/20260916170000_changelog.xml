@@ -10,19 +10,19 @@
     LearnerProfile is the one with a privacy argument. It holds per-course study preferences for a named account and
     was reachable only from jhi_user.learner_profile_id, so once that column was null nothing found the row again,
     including the routine that deletes an account's data. The key moves onto the profile, which makes a profile
-    without an account impossible to write and deletable by cascade. The 469 profiles a production database had
-    already lost are deleted here, with the 1,194 course profiles hanging off them: nothing names the account they
+    without an account impossible to write and deletable by cascade. The profiles that have already lost their
+    account are deleted here, along with the course profiles hanging off them: nothing names the account they
     described any more, so there is nothing to reattach them to.
 
     LearningPath and VcsAccessLog referenced rows without declaring it. Their columns are there and their entities map
     them, but no foreign key existed, so nothing stopped them pointing at a course, account or participation that had
-    been deleted. VcsAccessLog had 7,478 rows doing exactly that.
+    been deleted. VcsAccessLog holds rows doing exactly that.
 
     Slide stops being detached. SlideSplitterService cleared attachment_unit_id on superseded slides and on slides
     dropped from the page order, and slide.attachment_unit_id was ON DELETE SET NULL, so a deleted unit detached its
-    slides rather than removing them. Nothing references a slide row, and nothing ever cleaned the detached ones up:
-    a production database held 12,380, none of them reachable. They are now marked superseded and keep their unit, so
-    the history stays readable and the unit still owns them.
+    slides rather than removing them. Nothing references a slide row, and nothing ever cleaned the detached ones up,
+    so a detached slide has been unreachable from the moment it was detached. They are now marked superseded and keep
+    their unit, so the history stays readable and the unit still owns them.
 
     PlagiarismSubmission and PlagiarismComparison referenced each other: the comparison named its two submissions and
     each submission named the comparison back. The comparison's pointers were what the code read, so a submission the
@@ -110,8 +110,9 @@
         <comment>An access log entry records what happened to one participation, and now says so in the schema.</comment>
         <!--
         Rows naming a participation that no longer exists are removed rather than kept: the entry records an action on
-        a repository that has been deleted, and nothing can read it back through the participation it names. A
-        production database held 7,478 of them.
+        a repository that has been deleted, and nothing can read it back through the participation it names. The
+        orphan section of documentation/docs/developer/guidelines/entity-ownership.mdx counts them for an installation
+        before the upgrade runs.
         -->
         <sql>DELETE FROM vcs_access_log WHERE participation_id NOT IN (SELECT id FROM participation);</sql>
         <!-- An entry naming an account that no longer exists keeps the rest of what it recorded, so the name is cleared rather than the row removed. -->
@@ -137,8 +138,7 @@
         <!--
         The slides already detached cannot be marked: they name no unit, and the row carries no evidence of which one
         it left. Nothing references a slide and nothing lists one without a unit, so they have been unreachable since
-        the moment they were detached. A production database held 12,380. Their image files stay on disk, which is
-        the state they were already in.
+        the moment they were detached. Their image files stay on disk, which is the state they were already in.
         -->
         <sql>DELETE FROM slide WHERE attachment_unit_id IS NULL;</sql>
         <!--
