@@ -307,17 +307,10 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         assertThat(slides).isNotNull();
         assertThat(slides.size()).isEqualTo(2); // Should only have 2 slides attached to unit
 
-        // Slide 3 is out of the deck: either removed outright, or kept as a superseded row that still names its unit
-        Long thirdSlideId = slideIds.get(2);
-        Slide slide3 = slideRepository.findById(thirdSlideId).orElse(null);
-
-        if (slide3 == null) {
-            assertThat(slideRepository.existsById(thirdSlideId)).isFalse();
-        }
-        else {
-            assertThat(slide3.isSuperseded()).isTrue();
-            assertThat(slide3.getAttachmentVideoUnit()).isEqualTo(testAttachmentVideoUnit);
-        }
+        // Slide 3 is out of the deck, which keeps the row and marks it rather than deleting it
+        Slide slide3 = slideRepository.findById(slideIds.get(2)).orElseThrow();
+        assertThat(slide3.isSuperseded()).isTrue();
+        assertThat(slide3.getAttachmentVideoUnit()).isEqualTo(testAttachmentVideoUnit);
     }
 
     @Test
