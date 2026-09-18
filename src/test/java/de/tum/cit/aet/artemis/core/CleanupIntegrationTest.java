@@ -210,9 +210,6 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         var nonOrphanFeedback = createFeedbackWithLinkedLongFeedback(nonOrphanResult);
         var nonOrphanTextBlock = createTextBlockForFeedback(nonOrphanFeedback);
 
-        nonOrphanFeedback.setResult(nonOrphanResult);
-        nonOrphanFeedback = feedbackRepository.save(nonOrphanFeedback);
-
         StudentScore nonOrphanStudentScore = new StudentScore();
         nonOrphanStudentScore.setUser(student);
         nonOrphanStudentScore.setExercise(oldExercise);
@@ -797,8 +794,8 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     private TextBlock createTextBlockForFeedback(Feedback feedback) {
         TextBlock textBlock = new TextBlock();
         textBlock.setFeedback(feedback);
-        // A text block is a range of some submission's text, and the row names which. The feedback these blocks hang
-        // off is linked to its result later, so the block gets a submission of its own rather than the result's.
+        // A text block is a range of some submission's text, and the row names which. These blocks are only ever read
+        // through their feedback, so the block gets a submission of its own rather than the one behind the result.
         textBlock.setSubmission(submissionRepository.save(new TextSubmission()));
         // Use the persisted feedback id (not feedback.hashCode(), which is now a constant for HashSet stability)
         // so each TextBlock has a unique text → unique computeId() → no PK collisions on save.

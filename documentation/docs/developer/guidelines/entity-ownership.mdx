@@ -107,7 +107,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `Complaint` | Result `result_id` | Required | No | Complainant is a student or a team; both columns are nullable. |
 | `ComplaintResponse` | Complaint `complaint_id` | Required | No |  |
 | `ExampleSubmission` | Exercise `exercise_id` | Required | No |  |
-| `Feedback` | Result `result_id` | Required | No |  |
+| `Feedback` | Result `result_id` | Required | No | Cascades. |
 | `FeedbackMessage` | — | Root | No | Reference data. |
 | `GradeStep` | GradingScale `grading_scale_id` | Required | No |  |
 | `GradingCriterion` | Exercise `exercise_id` | Required | No |  |
@@ -297,7 +297,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | Entity | Belongs to | Parent required | Orphan possible | Notes |
 | --- | --- | --- | --- | --- |
 | `QuizBatch` | QuizExercise `quiz_id` | Required | No |  |
-| `QuizQuestion` and 3 subclasses | QuizExercise `exercise_id` | Required | No |  |
+| `QuizQuestion` and 3 subclasses | QuizExercise `exercise_id` | Required | No | Cascades. |
 | `QuizQuestionProgress` | Course, QuizQuestion and User | Required (all) | No | Cascades on all three. |
 | `QuizTrainingLeaderboard` | Course `course_id` and User `user_id` | Required (all) | No | Cascades on both. |
 | `SubmittedAnswer` and 3 subclasses | Submission `submission_id` | Required | No |  |
@@ -403,24 +403,23 @@ name.
 
 ## Where orphans are still possible
 
-Of the 147 tables behind the 186 entities, 85 have a required parent, 24 are roots by design, 18 are
+Of the 147 tables behind the 186 entities, 87 have a required parent, 24 are roots by design, 18 are
 join entities whose parents are all required and five carry a check constraint over alternative
-parents. That leaves **15 tables where the schema permits an orphan**, in two shapes.
+parents. That leaves **13 tables where the schema permits an orphan**, in two shapes.
 
 ### An owning foreign key that is nullable
 
-`Participation`, `Submission`, `Feedback`, `QuizQuestion`, `PlagiarismSubmissionElement` and
-`KnowledgeArea`.
+`Participation`, `Submission`, `PlagiarismSubmissionElement` and `KnowledgeArea`.
 
 `KnowledgeArea` is held open by the model rather than by old data: it is a tree, so a null parent
-means a root node. The other five hold rows today that carry no evidence of which parent they
+means a root node. The other three hold rows today that carry no evidence of which parent they
 belonged to, so a constraint needs a decision about those rows before a migration.
 
-Two of them come with a decision beyond the rows. Requiring `Feedback.result` would mean feedback
-can no longer be orphaned at all, which retires the cleanup that removes orphaned feedback rather
-than only constraining a column. `QuizQuestion.exercise` cannot be settled on its own either: the
-questions without an exercise are reachable through submitted answers whose submissions have
-themselves lost their participation, so they go with `Submission.participation`.
+`Feedback.result` and `QuizQuestion.exercise` used to be here and are now required. Both needed a
+decision beyond the rows: requiring `Feedback.result` means feedback can no longer be orphaned at
+all, which retires the cleanup that removed orphaned feedback rather than only constraining a
+column, and the questions without an exercise were reachable through submitted answers whose
+submissions had themselves lost their participation, so settling them meant settling those rows too.
 
 ### One-to-one where the parent holds the pointer
 
