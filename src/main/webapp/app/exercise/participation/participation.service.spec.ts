@@ -17,7 +17,7 @@ import { Router } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
 import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 
