@@ -108,6 +108,32 @@ spells them with — `TIMESTAMP(3) WITHOUT TIME ZONE`, `FLOAT8` — and those do
     `verify_schema.py` afterwards is part of cutting a baseline and not an optional extra.
 </Callout>
 
+### Cut a new generation rather than re-cutting the current one
+
+Re-running the cut for the generation that is already in `baseline/` rewrites the contents of
+changesets a database may have recorded. Liquibase stores a checksum over those contents and refuses
+to start when it no longer matches, so that database is stuck until someone clears the checksum by
+hand — the failure mode this whole layout exists to remove.
+
+So the rule is about who has recorded the baseline, not about which release it belongs to:
+
+- **Nothing has recorded it yet.** Re-cut freely. This is the normal state of a baseline on a branch
+  that has not been deployed anywhere, and it is how a branch absorbs changelogs that arrived on
+  `develop` while it was open: merge, re-cut, run the checks.
+- **Anything has recorded it.** Never re-cut. Cut the next generation instead, which needs no
+  migration path and leaves every recorded changeset exactly as it is.
+
+"Anything" includes a test server. A Helios deployment from a branch records that branch's baseline,
+so re-cutting afterwards makes the next deployment to the same server fail validation. That is a
+stale database rather than a broken changelog, and recreating it is the fix — but it is worth knowing
+before reading the failure as a fault in the mechanism.
+
+Adding a changelog before a release does not require a re-cut at all. A changelog under `changelog/`
+runs on a fresh installation and on an upgrade alike, and `converge` compares the baseline only
+against the history it folded, so nothing there can invalidate it. Re-cutting before a release is a
+tidiness choice: it empties `changelog/` again and lets a fresh installation create the whole schema
+in one step, which is worth a few milliseconds and no more.
+
 ### Retiring a generation
 
 Delete the directory under `history/` and its include in `history/master.xml`. Liquibase does not
@@ -171,6 +197,7 @@ filed in the wrong directory is exactly the mistake these catch.
 
 ## Checklist
 
+- [ ] Nothing has recorded the generation being cut, or a new generation is being cut instead
 - [ ] `cut_baseline.py` run, and it reported no refusals
 - [ ] The generated baseline committed unedited
 - [ ] `verify_schema.py` green on both databases

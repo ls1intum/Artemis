@@ -17,6 +17,13 @@ New changelogs live in `src/main/resources/config/liquibase/changelog/` and are 
 2. Create `src/main/resources/config/liquibase/changelog/<timestamp>_changelog.xml`
 3. Add an `<include>` line for it at the end of `master.xml`, keeping chronological order
 
+That is the whole job. **Adding a changelog never means touching the baseline**, however close a
+release is: a changelog under `changelog/` runs on a fresh installation and on an upgrade alike. Do not
+re-run `cut_baseline.py` to fold it in either — re-cutting a generation any database has already
+recorded, a deployed test server included, changes checksums those databases refuse to start against.
+Cutting is described in
+[database-migration-consolidation](../../documentation/docs/developer/guidelines/database-migration-consolidation.mdx).
+
 `master.xml` also lists three directories you do not write into by hand. `baseline/` holds the
 generated schema as of the last consolidation, `history/` the changelogs that baseline already folded,
 and `data/` the seed data. **Seed data never goes in `changelog/`**: a folded changeset is recorded
