@@ -148,7 +148,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `ConversationParticipant` | Conversation `conversation_id` and User `user_id` | Required (all) | No |  |
 | `Faq` | Course `course_id` | Required | No |  |
 | `ForwardedMessage` | Post `destination_post_id` or AnswerPost `destination_answer_id` | Required (check constraint) | No | `CHECK_DESTINATION_POST_OR_ANSWER`. |
-| `Post` | Conversation `conversation_id` or PlagiarismCase `plagiarism_case_id` | Optional (alternatives) | **Yes** | Both nullable; nothing enforces at least one. |
+| `Post` | Conversation `conversation_id` or PlagiarismCase `plagiarism_case_id` | Required (alternatives) | No | `CK_POST_HAS_A_PARENT` requires one of the two. |
 | `Reaction` | Post `post_id` or AnswerPost `answer_post_id` | Required (check constraint) | No | `CHECK_REACTION_POST_OR_ANSWER`. |
 | `SavedPost` | User `user_id` | Required | No |  |
 
@@ -167,8 +167,8 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | Entity | Belongs to | Parent required | Orphan possible | Notes |
 | --- | --- | --- | --- | --- |
 | `Course` | — | Root | No | The main aggregate root. |
-| `CourseAthenaConfig` | Course `course.athena_config_id` | Held by the parent | **Yes** | The course points at it; nothing points back. |
-| `CourseConfiguration` | Course `course.course_configuration_id` | Held by the parent | **Yes** | The course points at it; nothing points back. |
+| `CourseAthenaConfig` | Course `course_id` | Required | No |  |
+| `CourseConfiguration` | Course `course_id` | Required | No |  |
 | `CourseRequest` | User `requester_id` | Required | No | `created_course_id` is a result link, not a parent. |
 
 ### Exam
@@ -199,7 +199,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `Submission` and 5 subclasses | Participation `participation_id` | Optional | **Yes** | Nullable. |
 | `SubmissionVersion` | Submission `submission_id` | Required | No | Cascades on submission deletion. |
 | `Team` | Exercise `exercise_id` | Required | No |  |
-| `TeamAssignmentConfig` | Exercise `exercise.team_assignment_config_id` | Held by the parent | **Yes** | The exercise points at it; nothing points back. |
+| `TeamAssignmentConfig` | Exercise `exercise_id` | Required | No |  |
 
 ### Iris
 
@@ -218,7 +218,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | --- | --- | --- | --- | --- |
 | `LtiPlatformConfiguration` | — | Root | No | Server-wide platform registration. |
 | `LtiResourceLaunch` | User `user_id` | Required | No | `exercise_id` is nullable. |
-| `OnlineCourseConfiguration` | Course `course.online_course_configuration_id` | Held by the parent | **Yes** | The course points at it; nothing points back. |
+| `OnlineCourseConfiguration` | Course `course_id` | Required | No |  |
 | `UserLti` | User `user_id` | Required | No | Cascades. |
 
 ### Lecture
@@ -265,7 +265,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | --- | --- | --- | --- | --- |
 | `PlagiarismCase` | Exercise `exercise_id` | Required | No |  |
 | `PlagiarismComparison` | PlagiarismResult `plagiarism_result_id` | Required | No |  |
-| `PlagiarismDetectionConfig` | Exercise `exercise.plagiarism_detection_config_id` | Held by the parent | **Yes** | The exercise points at it; nothing points back. |
+| `PlagiarismDetectionConfig` | Exercise `exercise_id` | Required | No |  |
 | `PlagiarismResult` | Exercise `exercise_id` | Required | No |  |
 | `PlagiarismSubmission` | PlagiarismComparison `plagiarism_comparison_id` | Required | No | Cascades. `comparison_side` says which half of the pair it is; the plagiarism case is a reference, not a parent. |
 | `PlagiarismSubmissionElement` | PlagiarismSubmission `plagiarism_submission_id` | Optional | **Yes** | Nullable, though it cascades when set. |
@@ -317,7 +317,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `TutorialGroupRegistration` | TutorialGroup `tutorial_group_id` and User `student_id` | Required (all) | No |  |
 | `TutorialGroupSchedule` | TutorialGroup `tutorial_group_id` | Required | No |  |
 | `TutorialGroupSession` | TutorialGroup `tutorial_group_id` | Required | No |  |
-| `TutorialGroupsConfiguration` | Course `course.tutorial_groups_configuration_id` | Held by the parent | **Yes** | The course points at it; nothing points back. |
+| `TutorialGroupsConfiguration` | Course `course_id` | Required | No |  |
 
 ## Finding orphans
 
@@ -403,8 +403,8 @@ name.
 ## Where orphans are still possible
 
 Of the 147 tables behind the 186 entities, 85 have a required parent, 24 are roots by design, 18 are
-join entities whose parents are all required and four carry a check constraint over alternative
-parents. That leaves **16 tables where the schema permits an orphan**, in three shapes.
+join entities whose parents are all required and five carry a check constraint over alternative
+parents. That leaves **15 tables where the schema permits an orphan**, in two shapes.
 
 ### An owning foreign key that is nullable
 
@@ -415,10 +415,11 @@ parents. That leaves **16 tables where the schema permits an orphan**, in three 
 means a root node. The other five hold rows today that carry no evidence of which parent they
 belonged to, so a constraint needs a decision about those rows before a migration.
 
-### Alternative parents with nothing enforcing the choice
-
-`Post` may belong to a conversation or to a plagiarism case, and the database accepts a row naming
-neither. The rows that do this predate conversations entirely.
+Two of them come with a decision beyond the rows. Requiring `Feedback.result` would mean feedback
+can no longer be orphaned at all, which retires the cleanup that removes orphaned feedback rather
+than only constraining a column. `QuizQuestion.exercise` cannot be settled on its own either: the
+questions without an exercise are reachable through submitted answers whose submissions have
+themselves lost their participation, so they go with `Submission.participation`.
 
 ### One-to-one where the parent holds the pointer
 
@@ -427,6 +428,21 @@ the only thing keeping them reachable is a nullable column on the parent: `Cours
 `CourseConfiguration`, `OnlineCourseConfiguration`, `TutorialGroupsConfiguration`,
 `TeamAssignmentConfig`, `PlagiarismDetectionConfig`, `SubmissionPolicy`, `BuildPlan` and
 `ProgrammingExerciseBuildConfig`.
+
+Moving the key onto the configuration is the fix, and it costs more than the migration. **The
+parent-side association has to go with it**, not merely become `mappedBy`: the non-owning side of a
+`@OneToOne` cannot be lazy, so Hibernate issues a select per configuration to decide between null
+and a proxy. Leaving four such associations on `Course` turns one query for a course into five,
+which is what `CourseConfigurationLoadProfileTest` measures. So each configuration moves together
+with its readers, onto its own repository read at the decision point — the shape
+`CourseConfigurationRepository` and `CourseAthenaConfigRepository` already have.
+
+Three of them carry a further constraint. `BuildPlan` is shared rather than owned: several
+programming exercises point at one build plan, so there is no single parent for it to name, and "at
+least one exercise still points at this row" is not a foreign key — it needs a cleanup instead.
+`SubmissionPolicy` and `ProgrammingExerciseBuildConfig` are written while a programming exercise is
+being created, before the exercise row exists, so moving their key means the exercise has to be
+saved first, reversing an order the creation path relies on in roughly a hundred places.
 
 `ScienceEvent.resourceId`, `ApollonDiagram.courseId` and `ProgrammingExerciseBuildStatistics` hold
 untyped pointers with no foreign key, which is why they are listed as roots above: there is no

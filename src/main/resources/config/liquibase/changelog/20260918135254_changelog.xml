@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    An analysis of the database structure found that a post is the one entity with two possible parents and nothing
+    requiring either. It is written in a conversation or it belongs to a plagiarism case, and the schema accepted a row
+    naming neither.
+    -->
+
+    <changeSet id="20260918135254-01-a-post-belongs-to-a-conversation-or-a-plagiarism-case" author="krusche">
+        <comment>Remove the posts that belong to neither, so that the rule below can be stated.</comment>
+        <!--
+        A post that names neither predates conversations entirely. Nothing lists it: the conversation view reads posts
+        through the conversation and the plagiarism view through the case, so such a post has been invisible since the
+        column that used to place it was removed. Its answers and reactions go with it, for the same reason.
+        -->
+        <sql>DELETE FROM reaction WHERE answer_post_id IN
+            (SELECT id FROM answer_post WHERE post_id IN (SELECT id FROM post WHERE conversation_id IS NULL AND plagiarism_case_id IS NULL));</sql>
+        <sql>DELETE FROM reaction WHERE post_id IN (SELECT id FROM post WHERE conversation_id IS NULL AND plagiarism_case_id IS NULL);</sql>
+        <sql>DELETE FROM answer_post WHERE post_id IN (SELECT id FROM post WHERE conversation_id IS NULL AND plagiarism_case_id IS NULL);</sql>
+        <sql>DELETE FROM post WHERE conversation_id IS NULL AND plagiarism_case_id IS NULL;</sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20260918135254-02-post-parent-check" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM post WHERE conversation_id IS NULL AND plagiarism_case_id IS NULL</sqlCheck>
+        </preConditions>
+        <!-- Two alternative parents cannot be expressed as a NOT NULL, so the rule is a check constraint instead. -->
+        <sql>ALTER TABLE post ADD CONSTRAINT CK_POST_HAS_A_PARENT CHECK (conversation_id IS NOT NULL OR plagiarism_case_id IS NOT NULL);</sql>
+        <rollback>
+            <sql dbms="mysql">ALTER TABLE post DROP CHECK CK_POST_HAS_A_PARENT;</sql>
+            <sql dbms="postgresql">ALTER TABLE post DROP CONSTRAINT CK_POST_HAS_A_PARENT;</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
