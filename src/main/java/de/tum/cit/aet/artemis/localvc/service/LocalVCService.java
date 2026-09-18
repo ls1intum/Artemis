@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -171,12 +172,49 @@ public class LocalVCService extends AbstractVersionControlService {
         catch (IOException e) {
             throw new LocalVCInternalException("Could not move the broken repository at " + repositoryPath + " aside", e);
         }
+        // The rename takes whatever is at the path now, which is not necessarily what the caller found broken: a concurrent request may have repaired the path and published
+        // a finished repository in between, and the student may already have pushed to it. That repository is healthy, the leftover never is, so a healthy one goes back.
+        boolean tookAHealthyRepository;
+        try {
+            tookAHealthyRepository = gitService.isBareRepositoryHealthy(quarantinePath);
+        }
+        catch (RuntimeException e) {
+            // Unknown health: it might be a published repository, so it must not stay hidden under the quarantine name.
+            restoreRepositoryMovedAside(quarantinePath, repositoryPath);
+            throw e;
+        }
+        if (tookAHealthyRepository) {
+            restoreRepositoryMovedAside(quarantinePath, repositoryPath);
+            return false;
+        }
         // Only this call can reach the quarantined directory, so deleting it can never take a repository another request owns. A leftover here costs disk space and nothing
         // else, which is why a failure to remove it does not fail the copy that is about to succeed.
         if (!FileUtils.deleteQuietly(quarantinePath.toFile())) {
             log.warn("Could not delete the broken repository moved aside to {}", quarantinePath);
         }
         return true;
+    }
+
+    /**
+     * Moves a healthy repository that {@link #quarantineBrokenRepository} took by mistake back to its path.
+     * <p>
+     * If yet another request published a repository at that path in the meantime, the one that is there stays and the one moved aside is kept where it is: it may hold
+     * pushed work, so it is never deleted, and it cannot be served under its quarantine name.
+     */
+    private void restoreRepositoryMovedAside(Path quarantinePath, Path repositoryPath) {
+        try {
+            FileUtil.publishAtomically(quarantinePath, repositoryPath);
+            log.info("Repository {} was published by a concurrent request after it was found broken, keeping it", repositoryPath);
+        }
+        catch (FileSystemException pathTakenAgain) {
+            if (!Files.exists(repositoryPath)) {
+                throw new LocalVCInternalException("Could not move the repository at " + quarantinePath + " back to " + repositoryPath, pathTakenAgain);
+            }
+            log.warn("Repository {} was published twice by concurrent requests, keeping the one moved aside at {}", repositoryPath, quarantinePath);
+        }
+        catch (IOException e) {
+            throw new LocalVCInternalException("Could not move the repository at " + quarantinePath + " back to " + repositoryPath, e);
+        }
     }
 
     @Override

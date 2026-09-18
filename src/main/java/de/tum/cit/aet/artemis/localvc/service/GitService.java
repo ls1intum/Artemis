@@ -786,7 +786,17 @@ public class GitService extends AbstractGitService {
      * @throws GitException if the health of the repository could not be determined
      */
     public boolean isBareRepositoryHealthy(LocalVCRepositoryUri repositoryUri) {
-        var localPath = repositoryUri.getLocalRepositoryPath(localVCBasePath);
+        return isBareRepositoryHealthy(repositoryUri.getLocalRepositoryPath(localVCBasePath));
+    }
+
+    /**
+     * Checks whether the bare repository at the given path is healthy, see {@link #isBareRepositoryHealthy(LocalVCRepositoryUri)}.
+     *
+     * @param localPath the path of the bare repository to check
+     * @return true if the repository can be opened and has at least one branch (loose or packed), false if it is definitively unborn or corrupt
+     * @throws GitException if the health of the repository could not be determined
+     */
+    public boolean isBareRepositoryHealthy(Path localPath) {
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
         builder.setBare().setGitDir(localPath.toFile()).setMustExist(true);
         try (org.eclipse.jgit.lib.Repository repository = builder.build()) {
