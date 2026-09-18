@@ -390,6 +390,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         course.setCourseArchivePath("Course_archive.zip");
         course.setOnboardingDone(true);
         course.setLearningPathsEnabled(true);
+        course.setPresentationAssessmentsEnabled(true);
         courseRepository.save(course);
 
         Map<String, Object> courseNode = mapOf(getJsonMap("/api/exercise/exercises/" + exercise.getId()), "course");
@@ -402,6 +403,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         assertThat(courseNode.get("maxPoints")).isEqualTo(42);
         assertThat(courseNode.get("courseArchivePath")).isEqualTo("Course_archive.zip");
         assertThat(courseNode.get("learningPathsEnabled")).isEqualTo(true);
+        assertThat(courseNode.get("presentationAssessmentsEnabled")).isEqualTo(true);
     }
 
     /**

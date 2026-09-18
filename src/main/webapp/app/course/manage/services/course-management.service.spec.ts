@@ -751,6 +751,7 @@ describe('Course DTO adapter boundary', () => {
         athenaGradingFeedbackEnabled: false,
         athenaFormativeFeedbackEnabled: false,
         learningPathsEnabled: false,
+        presentationAssessmentsEnabled: false,
         trainingEnabled: false,
     };
 
@@ -978,6 +979,11 @@ describe('Course DTO adapter boundary', () => {
 
         expect(courseFromManagementDTO(withArchive).courseArchivePath).toBe('archives/course-1.zip');
         expect(courseFromManagementDTO(minimalCourseManagementDTO).courseArchivePath).toBeUndefined();
+    });
+
+    it.each([true, false])('preserves presentationAssessmentsEnabled=%s when hydrating a management response', (enabled) => {
+        const dto: CourseManagementDTO = { ...minimalCourseManagementDTO, presentationAssessmentsEnabled: enabled };
+        expect(courseFromManagementDTO(dto).presentationAssessmentsEnabled).toBe(enabled);
     });
 
     it('hydrates title, semester, description and prerequisites from the enrollment DTO', () => {

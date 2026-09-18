@@ -29,6 +29,7 @@ import org.testcontainers.DockerClientFactory;
 
 import com.redis.testcontainers.RedisContainer;
 
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.shared.ValkeyTestContainerFactory;
 
 /**
@@ -131,7 +132,7 @@ class RedissonDistributedDataMigratorTest {
         redissonClient.getQueue("buildResultQueue").add("result-1");
         redissonClient.getPriorityQueue("buildJobQueue").add("job-1");
         redissonClient.getMap("processingJobs").put("running", "agent-1");
-        redissonClient.getMap("features").put("Science", Boolean.FALSE);
+        redissonClient.<Feature, Boolean>getMap("features").put(Feature.Science, Boolean.FALSE);
 
         migrationService().migrateToCurrentVersion();
 
@@ -139,10 +140,48 @@ class RedissonDistributedDataMigratorTest {
         assertThat(redissonClient.getQueue(keyFor(current, "buildResultQueue")).readAll()).containsExactly("result-1");
         assertThat(redissonClient.getPriorityQueue(keyFor(current, "buildJobQueue")).readAll()).containsExactly("job-1");
         assertThat(redissonClient.getMap(keyFor(current, "processingJobs"))).containsEntry("running", "agent-1");
-        assertThat(redissonClient.getMap(keyFor(current, "features")).get("Science")).isEqualTo(Boolean.FALSE);
+        assertThat(redissonClient.<Feature, Boolean>getMap(keyFor(current, "features"))).containsOnlyKeys(Feature.Science).containsEntry(Feature.Science, Boolean.FALSE);
         // Drained rather than copied, so the plain keys are gone even though no pattern delete ran over them.
         assertThat(redissonClient.getQueue("buildResultQueue").isEmpty()).isTrue();
         assertThat(storedVersion()).isEqualTo(String.valueOf(VERSION));
+    }
+
+    @Test
+    void testCarriesTheFirstNamespaceOverAfterFeatureEnumExtension() {
+        redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set("1");
+        redissonClient.getQueue(keyFor(1, "buildResultQueue")).add("result-1");
+        redissonClient.<Feature, Boolean>getMap(keyFor(1, "features")).put(Feature.Science, Boolean.FALSE);
+
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(redissonClient.getQueue(keyFor(VERSION, "buildResultQueue")).readAll()).containsExactly("result-1");
+        assertThat(redissonClient.<Feature, Boolean>getMap(keyFor(VERSION, "features"))).containsOnlyKeys(Feature.Science).containsEntry(Feature.Science, Boolean.FALSE);
+        assertThat(redissonClient.getQueue(keyFor(1, "buildResultQueue"))).isEmpty();
+        assertThat(storedVersion()).isEqualTo(String.valueOf(VERSION));
+    }
+
+    @Test
+    void testPreservesV1IrisToggleWithoutEnablingPresentationAssessments() {
+        redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set("1");
+        // The current PresentationAssessments ordinal encodes the legacy v1 IrisProactiveStruggle key.
+        redissonClient.<Feature, Boolean>getMap(keyFor(1, "features")).put(Feature.PresentationAssessments, Boolean.FALSE);
+
+        migrationService().migrateToCurrentVersion();
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(redissonClient.<Feature, Boolean>getMap(keyFor(VERSION, "features"))).containsOnlyKeys(Feature.IrisProactiveStruggle)
+                .containsEntry(Feature.IrisProactiveStruggle, Boolean.FALSE);
+    }
+
+    @Test
+    void testPreservesV2PresentationToggleWithoutEnablingIris() {
+        redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set("2");
+        redissonClient.<Feature, Boolean>getMap(keyFor(2, "features")).put(Feature.PresentationAssessments, Boolean.TRUE);
+
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(redissonClient.<Feature, Boolean>getMap(keyFor(VERSION, "features"))).containsOnlyKeys(Feature.PresentationAssessments)
+                .containsEntry(Feature.PresentationAssessments, Boolean.TRUE);
     }
 
     /**

@@ -57,6 +57,19 @@ class CourseDtoSerializationTest {
     private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     @Test
+    void shouldPreservePresentationAssessmentFlagInCourseManagementResponse() {
+        Course course = new Course();
+        course.setId(42L);
+        for (boolean enabled : new boolean[] { true, false }) {
+            course.setPresentationAssessmentsEnabled(enabled);
+            CourseManagementDTO dto = CourseManagementDTO.of(course);
+            assertThat(dto.presentationAssessmentsEnabled()).isEqualTo(enabled);
+            JsonNode json = objectMapper.valueToTree(dto);
+            assertThat(json.get("presentationAssessmentsEnabled").asBoolean()).isEqualTo(enabled);
+        }
+    }
+
+    @Test
     void shouldSerializeIsoDatesAndExamMaxPointsWhenActiveExamExistsForDashboard() {
         Course course = new Course();
         course.setId(10L);

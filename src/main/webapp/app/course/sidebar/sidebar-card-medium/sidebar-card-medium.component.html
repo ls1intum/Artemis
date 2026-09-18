@@ -13,6 +13,7 @@
             id="test-sidebar-card-medium"
             class="pointer rounded-3 col-12 px-1 py-2 border-start border-5 highlight-card bg-module hover-effect"
             [ngClass]="{
+                'bg-selected border-selected': sidebarItem().active,
                 'border-success': sidebarItem()?.difficulty === DifficultyLevel.EASY,
                 'border-warning': sidebarItem()?.difficulty === DifficultyLevel.MEDIUM,
                 'border-danger': sidebarItem()?.difficulty === DifficultyLevel.HARD,
@@ -20,8 +21,18 @@
                 'border-module': !sidebarItem()?.difficulty && !isVariantGroup(),
                 'bg-group-selected': containsActiveVariant(),
             }"
-            [routerLink]="sidebarItem()?.targetComponentSubRoute ? ['./', sidebarItem().targetComponentSubRoute, sidebarItem().id] : ['./', sidebarItem().id]"
+            [routerLink]="
+                sidebarItem().disableNavigation
+                    ? null
+                    : sidebarItem()?.targetComponentSubRoute
+                      ? ['./', sidebarItem().targetComponentSubRoute, sidebarItem().id]
+                      : ['./', sidebarItem().id]
+            "
             (click)="onNonExamCardClicked()"
+            [attr.role]="sidebarItem().disableNavigation ? 'button' : null"
+            [attr.tabindex]="sidebarItem().disableNavigation ? 0 : null"
+            (keydown.enter)="onSelectionCardKeydown($event)"
+            (keydown.space)="onSelectionCardKeydown($event)"
             [routerLinkActive]="'bg-selected border-selected'"
         >
             <jhi-sidebar-card-item
