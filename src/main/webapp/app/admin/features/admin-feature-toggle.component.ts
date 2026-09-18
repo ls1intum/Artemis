@@ -153,6 +153,8 @@ export class AdminFeatureToggleComponent implements OnInit {
         [FeatureToggle.Memiris]: 'https://docs.artemis.tum.de/admin/extensions-setup#edutelligence--iris',
         [FeatureToggle.RateLimit]: 'https://docs.artemis.tum.de/admin/production-setup/security/#rate-limiting',
         [FeatureToggle.Deimos]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
+        [FeatureToggle.GlobalSearchReconcile]: 'https://docs.artemis.tum.de/admin/global-search-weaviate',
+        [FeatureToggle.GlobalSearchReconcileOrphan]: 'https://docs.artemis.tum.de/admin/global-search-weaviate',
     };
 
     /** Documentation links for profile-based features */
