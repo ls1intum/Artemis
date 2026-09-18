@@ -222,6 +222,7 @@ overrides:
 
 patchedDependencies:
   eslint@10.10.0: 19b47d956993254d1aa65b78cf56f3610dcc1b47812cbe4f7eb39ec71f894424
+  katex: 23807b388aedb4278512d7a79ff9a052279498ca22867ad10daf1c1044589d28
   y-monaco@0.1.6: 1a00e34927c55b253e6e6b255e784e82ec872964b52270523a1b085f442fc69e
 
 importers:
@@ -347,7 +348,7 @@ importers:
         version: 1.4.2
       katex:
         specifier: 0.18.7
-        version: 0.18.7
+        version: 0.18.7(patch_hash=23807b388aedb4278512d7a79ff9a052279498ca22867ad10daf1c1044589d28)
       lodash-es:
         specifier: 'catalog:'
         version: 4.18.1
@@ -9876,7 +9877,7 @@ snapshots:
 
   '@vscode/markdown-it-katex@1.1.2':
     dependencies:
-      katex: 0.18.7
+      katex: 0.18.7(patch_hash=23807b388aedb4278512d7a79ff9a052279498ca22867ad10daf1c1044589d28)
 
   '@vue/compiler-core@3.5.42':
     dependencies:
@@ -11280,7 +11281,7 @@ snapshots:
       html2canvas: 1.4.1
     optional: true
 
-  katex@0.18.7:
+  katex@0.18.7(patch_hash=23807b388aedb4278512d7a79ff9a052279498ca22867ad10daf1c1044589d28):
     dependencies:
       commander: 15.0.0
 
