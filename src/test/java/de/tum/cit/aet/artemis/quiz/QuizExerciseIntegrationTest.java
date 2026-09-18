@@ -549,6 +549,8 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         ExerciseVariantGroup group = new ExerciseVariantGroup();
         group.setTitle("Loop variants");
         group.setReleaseDate(groupRelease);
+        // A variant group belongs to a course, which the database now requires.
+        group.setCourse(quizExercise.getCourseViaExerciseGroupOrCourseMember());
         group.setDueDate(groupDue);
         quizExercise.setExerciseVariantGroup(exerciseVariantGroupRepository.save(group));
         quizExerciseTestRepository.save(quizExercise);
@@ -927,31 +929,6 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         quizExerciseUtilService.renameAndSaveQuiz(examQuizExercise, searchTerm + "-Morpork");
 
         exerciseIntegrationTestService.testCourseAndExamFilters("/api/quiz/quiz-exercises", searchTerm);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldReturnOnDemandPointStatisticsWhenUsingLegacyRecalculationPath() throws Exception {
-        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().minusHours(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
-        String statisticsBasePath = "/api/quiz/quiz-exercises/" + quizExercise.getId();
-
-        JsonNode currentResponse = request.get(statisticsBasePath + "/statistics/points", OK, JsonNode.class);
-        JsonNode legacyResponse = request.get(statisticsBasePath + "/recalculate-statistics", OK, JsonNode.class);
-
-        assertThat(legacyResponse.path("id").asLong()).isEqualTo(quizExercise.getId());
-        assertThat(legacyResponse.path("quizQuestions")).isNotEmpty();
-        assertThat(legacyResponse.path("quizPointStatistic")).isEqualTo(currentResponse.path("quizPointStatistic"));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldReturnForbiddenWhenStudentUsesLegacyRecalculationPath() throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().minusHours(1),
-                QuizMode.SYNCHRONIZED);
-        String statisticsBasePath = "/api/quiz/quiz-exercises/" + quizExercise.getId();
-
-        request.get(statisticsBasePath + "/statistics/points", FORBIDDEN, JsonNode.class);
-        request.get(statisticsBasePath + "/recalculate-statistics", FORBIDDEN, JsonNode.class);
     }
 
     @Test

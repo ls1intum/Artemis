@@ -46,7 +46,7 @@ public class IrisLectureSearchApi extends AbstractIrisApi {
     public List<IrisLectureSnippetDTO> searchLectures(String query, int limit, @Nullable List<Long> courseIds) {
         var user = userRepository.getUserWithCourseRolesAndAuthorities();
         var accessContext = irisAccessContextService.resolveAccessContext(user);
-        return pyrisConnectorService.searchLectures(query, limit, courseIds, accessContext).stream()
+        return pyrisConnectorService.searchLectures(query, limit, courseIds, null, accessContext).stream()
                 .map(r -> new IrisLectureSnippetDTO(r.lecture().name(), r.lectureUnit().name(), r.snippet())).toList();
     }
 }

@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * A data export for user data
@@ -34,7 +35,8 @@ public class DataExport extends AbstractAuditingEntity {
     private ZonedDateTime downloadDate;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
+    @Parent
     private User user;
 
     @Column(name = "file_path")

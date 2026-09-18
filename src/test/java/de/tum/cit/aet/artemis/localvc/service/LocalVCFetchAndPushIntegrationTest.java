@@ -198,7 +198,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         auxRepo.setName("testaux");
         auxRepo.setCheckoutDirectory("aux");
         auxRepo.setDescription("Auxiliary repository for testing");
-        newExercise.setAuxiliaryRepositories(List.of(auxRepo));
+        newExercise.setAuxiliaryRepositories(Set.of(auxRepo));
 
         return request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
     }
@@ -454,7 +454,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
 
             // Get the auxiliary repository slug from the created exercise
             assertThat(exercise.getAuxiliaryRepositories()).hasSize(1);
-            AuxiliaryRepository auxRepo = exercise.getAuxiliaryRepositories().getFirst();
+            AuxiliaryRepository auxRepo = exercise.getAuxiliaryRepositories().iterator().next();
             String auxRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + auxRepo.getName().toLowerCase(Locale.ROOT);
 
             // First, push an initial commit as instructor to populate the aux repo (empty repos cause DetachedHeadException on push)

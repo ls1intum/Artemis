@@ -70,6 +70,7 @@ export class ExerciseHeaderComponent {
     readonly onRestartPractice = input<() => boolean>();
     readonly submitDisabled = input<boolean>(false);
     readonly submitLabel = input<string>('entity.action.submit');
+    readonly quizPracticeAttemptFinished = input<boolean>(false);
     readonly plagiarismCaseInfo = input<PlagiarismCaseInfo>();
     readonly participationMode = model<ParticipationMode>('graded');
     readonly athenaEnabled = input<boolean>(false);
@@ -158,6 +159,10 @@ export class ExerciseHeaderComponent {
         return this.participationMode() === 'practice' ? this.effectivePracticeParticipation() : this.studentParticipation();
     });
 
+    readonly quizPracticeInProgress = computed(() => {
+        return this.exercise().type === ExerciseType.QUIZ && this.participationMode() === 'practice' && !this.quizPracticeAttemptFinished();
+    });
+
     /**
      * Whether the student is looking at an earlier submission. Reported by the details panel, which now owns the
      * information boxes that know it; the header only reacts to it.
@@ -179,6 +184,9 @@ export class ExerciseHeaderComponent {
         }
         // Hide submit for graded quiz after student has already submitted (practice allows multiple submissions)
         if (exercise.type === ExerciseType.QUIZ && this.participationMode() === 'graded' && participation?.submissions?.some((s) => s.submitted)) {
+            return undefined;
+        }
+        if (exercise.type === ExerciseType.QUIZ && this.participationMode() === 'practice' && this.quizPracticeAttemptFinished()) {
             return undefined;
         }
         return this.onSubmitExercise();

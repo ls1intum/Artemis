@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.programming.dto;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -139,7 +139,7 @@ public record ImportProgrammingExerciseRequestDTO(@Nullable Long id, String titl
         // row. The entities are distinct even without ids, so they only go into a set once they are built.
         exercise.setGradingCriteria(
                 gradingCriteria == null ? new HashSet<>() : gradingCriteria.stream().map(GradingCriterionDTO::toEntity).collect(Collectors.toCollection(HashSet::new)));
-        exercise.setAuxiliaryRepositories(new ArrayList<>());
+        exercise.setAuxiliaryRepositories(new LinkedHashSet<>());
         if (auxiliaryRepositories != null) {
             List<AuxiliaryRepository> repositories = auxiliaryRepositories.stream().map(AuxiliaryRepositoryDTO::toEntity).toList();
             repositories.forEach(exercise::addAuxiliaryRepository);

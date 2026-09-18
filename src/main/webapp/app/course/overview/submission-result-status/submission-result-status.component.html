@@ -1,21 +1,39 @@
 <div>
     @if (shouldShowResult()) {
-        <!-- Updating result -->
         <span>
-            <jhi-updating-result
-                id="submission-result-graded"
-                [exercise]="exercise()"
-                [participation]="studentParticipation()!"
-                [class]="updatingResultClass()"
-                [showUngradedResults]="showUngradedResults()"
-                [showBadge]="showBadge()"
-                [showIcon]="showIcon()"
-                [isInSidebarCard]="isInSidebarCard()"
-                [showCompletion]="showCompletion()"
-                [short]="short()"
-                [personalParticipation]="true"
-                [showProgressBar]="showProgressBar()"
-            />
+            @if (result()) {
+                <!-- A specific previous result selected in the history dropdown: shown statically, without live updates. -->
+                <jhi-result
+                    id="submission-result-selected"
+                    [exercise]="exercise()"
+                    [result]="result()"
+                    [participation]="studentParticipation()!"
+                    [class]="updatingResultClass()"
+                    [showUngradedResults]="showUngradedResults()"
+                    [showBadge]="showBadge()"
+                    [showIcon]="showIcon()"
+                    [isInSidebarCard]="isInSidebarCard()"
+                    [showCompletion]="showCompletion()"
+                    [short]="short()"
+                    [showProgressBar]="showProgressBar()"
+                />
+            } @else {
+                <!-- Updating result -->
+                <jhi-updating-result
+                    id="submission-result-graded"
+                    [exercise]="exercise()"
+                    [participation]="studentParticipation()!"
+                    [class]="updatingResultClass()"
+                    [showUngradedResults]="showUngradedResults()"
+                    [showBadge]="showBadge()"
+                    [showIcon]="showIcon()"
+                    [isInSidebarCard]="isInSidebarCard()"
+                    [showCompletion]="showCompletion()"
+                    [short]="short()"
+                    [personalParticipation]="true"
+                    [showProgressBar]="showProgressBar()"
+                />
+            }
         </span>
     } @else if (quizLiveStatusOverride()) {
         <div>

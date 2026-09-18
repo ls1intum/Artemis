@@ -442,6 +442,8 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
         ExerciseVariantGroup group = new ExerciseVariantGroup();
         group.setTitle("Loop variants");
         group.setMaxPoints(12.0);
+        // A variant group belongs to a course, which the database now requires.
+        group.setCourse(exercise.getCourseViaExerciseGroupOrCourseMember());
         group.setReleaseDate(ZonedDateTime.now().minusDays(3));
         group.setDueDate(ZonedDateTime.now().plusDays(3));
         ExerciseVariantGroup savedGroup = exerciseVariantGroupRepository.save(group);

@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.hibernate.Hibernate;
-import org.hibernate.collection.spi.PersistentBag;
 import org.hibernate.collection.spi.PersistentSet;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
@@ -166,7 +165,7 @@ class ProgrammingExerciseDtoMappingTest {
         exercise.setCategories(uninitializedSet());
         exercise.setCompetencyLinks(uninitializedSet());
         exercise.setStudentParticipations(uninitializedSet());
-        exercise.setAuxiliaryRepositories(uninitializedList());
+        exercise.setAuxiliaryRepositories(uninitializedSet());
 
         // A missing guard would throw here: every lazy slot above reports itself as not initialized.
         ProgrammingExerciseResponseDTO dto = ProgrammingExerciseResponseDTO.of(exercise);
@@ -533,7 +532,7 @@ class ProgrammingExerciseDtoMappingTest {
         auxiliaryRepository.setId(7L);
         auxiliaryRepository.setName("hints");
         auxiliaryRepository.setCheckoutDirectory("hints");
-        exercise.setAuxiliaryRepositories(List.of(auxiliaryRepository));
+        exercise.setAuxiliaryRepositories(Set.of(auxiliaryRepository));
 
         TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
         templateParticipation.setId(8L);
@@ -823,12 +822,6 @@ class ProgrammingExerciseDtoMappingTest {
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> List<T> uninitializedList() {
-        PersistentBag<T> bag = mock(PersistentBag.class);
-        when(bag.wasInitialized()).thenReturn(false);
-        return bag;
-    }
-
     /**
      * An entity proxy that reports itself as not initialized, the state every lazy to-one relation is in on a
      * detached entity. A mapper that reads through it instead of guarding produces a blank sub-object, which the

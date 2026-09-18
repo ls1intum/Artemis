@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.FileSystemException;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -24,6 +25,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
@@ -73,6 +75,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -90,6 +93,9 @@ public class GitService extends AbstractGitService {
 
     /** The exercise name inside a repository folder name, which a JPlag checkout replaces with the participation id. */
     private static final Pattern EXERCISE_NAME_IN_FOLDER_NAME = Pattern.compile("/[a-zA-Z0-9]*-");
+
+    /** Marks the directory a repository copy is built in before it is published at its final path, see {@link #buildAndPublishBareRepository}. */
+    private static final String BUILD_DIRECTORY_SUFFIX = ".building-";
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCBasePath;
@@ -818,57 +824,55 @@ public class GitService extends AbstractGitService {
 
         logCommits(sourceRepoUri, sourceBranch, sourceRepo);
 
-        // Initialize new bare repository
-        var localTargetRepoUri = new LocalVCRepositoryUri(targetRepoUri.toString());
-        var localTargetPath = localTargetRepoUri.getLocalRepositoryPath(localVCBasePath);
-        try (org.eclipse.jgit.lib.Repository targetRepo = FileRepositoryBuilder.create(localTargetPath.toFile())) {
+        return buildAndPublishBareRepository(targetRepoUri, buildPath -> {
+            try (org.eclipse.jgit.lib.Repository targetRepo = FileRepositoryBuilder.create(buildPath.toFile())) {
 
-            targetRepo.create(true); // true for bare
+                targetRepo.create(true); // true for bare
 
-            // Get the HEAD tree of the source
-            ObjectId commitId = sourceRepo.resolve("refs/heads/" + sourceBranch + "^{commit}");
-            if (commitId == null) {
-                throw new IOException("Branch " + sourceBranch + " not found in " + sourceRepoUri);
+                // Get the HEAD tree of the source
+                ObjectId commitId = sourceRepo.resolve("refs/heads/" + sourceBranch + "^{commit}");
+                if (commitId == null) {
+                    throw new IOException("Branch " + sourceBranch + " not found in " + sourceRepoUri);
+                }
+
+                // Both the inserter and the walk hold open pack files and buffers, so they belong in the try-with-resources
+                // rather than being left to the garbage collector: this method runs once per exercise creation on the git
+                // server, and a leaked descriptor there accumulates for the lifetime of the node.
+                try (ObjectInserter inserter = targetRepo.newObjectInserter(); RevWalk walk = new RevWalk(sourceRepo)) {
+                    RevCommit headCommit = walk.parseCommit(commitId);
+                    walk.markStart(headCommit);
+
+                    RevTree headTree = headCommit.getTree();
+
+                    // Get PersonIdent from the very first commit
+                    ObjectId branchHead = sourceRepo.resolve("refs/heads/" + sourceBranch);
+                    // TODO: consider to have a back up here, e.g. the first instructor of the course
+                    PersonIdent personIdent = getFirstCommitPersonIdent(sourceRepo, branchHead);
+
+                    // Walk the tree, insert blobs into target repo, and build a new tree
+                    ObjectId newTreeId = buildCleanTreeFromSource(sourceRepo, inserter, headTree);
+                    log.debug("found newTreeId {} for target repository {}", newTreeId, targetRepoUri);
+                    inserter.flush();
+
+                    // Create commit with the clean tree
+                    CommitBuilder commitBuilder = new CommitBuilder();
+                    commitBuilder.setTreeId(newTreeId);
+                    commitBuilder.setMessage(de.tum.cit.aet.artemis.core.config.Constants.SET_UP_TEMPLATE_FOR_EXERCISE);
+
+                    // Set author and committer information based on the first commit in the source repo
+                    commitBuilder.setAuthor(personIdent);
+                    commitBuilder.setCommitter(personIdent);
+                    ObjectId newCommitId = inserter.insert(commitBuilder);
+                    inserter.flush();
+
+                    // Update refs/heads/main in new bare repo
+                    RefUpdate refUpdate = targetRepo.updateRef("refs/heads/" + sourceBranch);
+                    refUpdate.setNewObjectId(newCommitId);
+                    refUpdate.setForceUpdate(true);
+                    verifyRefUpdateResult(refUpdate.update(), "refs/heads/" + sourceBranch, targetRepoUri);
+                }
             }
-
-            // Both the inserter and the walk hold open pack files and buffers, so they belong in the try-with-resources
-            // rather than being left to the garbage collector: this method runs once per exercise creation on the git
-            // server, and a leaked descriptor there accumulates for the lifetime of the node.
-            try (ObjectInserter inserter = targetRepo.newObjectInserter(); RevWalk walk = new RevWalk(sourceRepo)) {
-                RevCommit headCommit = walk.parseCommit(commitId);
-                walk.markStart(headCommit);
-
-                RevTree headTree = headCommit.getTree();
-
-                // Get PersonIdent from the very first commit
-                ObjectId branchHead = sourceRepo.resolve("refs/heads/" + sourceBranch);
-                // TODO: consider to have a back up here, e.g. the first instructor of the course
-                PersonIdent personIdent = getFirstCommitPersonIdent(sourceRepo, branchHead);
-
-                // Walk the tree, insert blobs into target repo, and build a new tree
-                ObjectId newTreeId = buildCleanTreeFromSource(sourceRepo, inserter, headTree);
-                log.debug("found newTreeId {} for target repository {}", newTreeId, targetRepoUri);
-                inserter.flush();
-
-                // Create commit with the clean tree
-                CommitBuilder commitBuilder = new CommitBuilder();
-                commitBuilder.setTreeId(newTreeId);
-                commitBuilder.setMessage(de.tum.cit.aet.artemis.core.config.Constants.SET_UP_TEMPLATE_FOR_EXERCISE);
-
-                // Set author and committer information based on the first commit in the source repo
-                commitBuilder.setAuthor(personIdent);
-                commitBuilder.setCommitter(personIdent);
-                ObjectId newCommitId = inserter.insert(commitBuilder);
-                inserter.flush();
-
-                // Update refs/heads/main in new bare repo
-                RefUpdate refUpdate = targetRepo.updateRef("refs/heads/" + sourceBranch);
-                refUpdate.setNewObjectId(newCommitId);
-                refUpdate.setForceUpdate(true);
-                verifyRefUpdateResult(refUpdate.update(), "refs/heads/" + sourceBranch, targetRepoUri);
-                return getBareRepository(targetRepoUri, true);
-            }
-        }
+        });
     }
 
     /**
@@ -898,59 +902,116 @@ public class GitService extends AbstractGitService {
             throw new IOException("Source branch " + sourceBranch + " not found in " + sourceRepoUri);
         }
 
-        // Create new bare repository
-        var localTargetRepoUri = new LocalVCRepositoryUri(targetRepoUri.toString());
-        var localTargetPath = localTargetRepoUri.getLocalRepositoryPath(localVCBasePath);
-        try (org.eclipse.jgit.lib.Repository targetRepo = FileRepositoryBuilder.create(localTargetPath.toFile())) {
-            targetRepo.create(true); // bare = true
+        return buildAndPublishBareRepository(targetRepoUri, buildPath -> {
+            try (org.eclipse.jgit.lib.Repository targetRepo = FileRepositoryBuilder.create(buildPath.toFile())) {
+                targetRepo.create(true); // bare = true
 
-            try (ObjectInserter inserter = targetRepo.newObjectInserter(); RevWalk revWalk = new RevWalk(sourceRepo)) {
+                try (ObjectInserter inserter = targetRepo.newObjectInserter(); RevWalk revWalk = new RevWalk(sourceRepo)) {
 
-                Set<ObjectId> copiedObjects = new HashSet<>();
-                Deque<ObjectId> toProcess = new ArrayDeque<>();
-                toProcess.add(headCommitId);
+                    Set<ObjectId> copiedObjects = new HashSet<>();
+                    Deque<ObjectId> toProcess = new ArrayDeque<>();
+                    toProcess.add(headCommitId);
 
-                while (!toProcess.isEmpty()) {
-                    ObjectId current = toProcess.poll();
-                    if (!copiedObjects.add(current)) {
-                        continue; // already processed
-                    }
-
-                    ObjectLoader loader = sourceRepo.open(current);
-                    inserter.insert(loader.getType(), loader.getSize(), loader.openStream());
-
-                    // If this is a commit, enqueue parents and tree
-                    if (loader.getType() == Constants.OBJ_COMMIT) {
-                        RevCommit commit = revWalk.parseCommit(current);
-                        toProcess.add(commit.getTree().getId());
-                        for (RevCommit parent : commit.getParents()) {
-                            toProcess.add(parent.getId());
+                    while (!toProcess.isEmpty()) {
+                        ObjectId current = toProcess.poll();
+                        if (!copiedObjects.add(current)) {
+                            continue; // already processed
                         }
-                    }
 
-                    // If this is a tree, enqueue its entries (subtrees and blobs)
-                    if (loader.getType() == Constants.OBJ_TREE) {
-                        try (TreeWalk treeWalk = new TreeWalk(sourceRepo)) {
-                            treeWalk.addTree(current);
-                            treeWalk.setRecursive(false);
-                            while (treeWalk.next()) {
-                                toProcess.add(treeWalk.getObjectId(0));
+                        ObjectLoader loader = sourceRepo.open(current);
+                        inserter.insert(loader.getType(), loader.getSize(), loader.openStream());
+
+                        // If this is a commit, enqueue parents and tree
+                        if (loader.getType() == Constants.OBJ_COMMIT) {
+                            RevCommit commit = revWalk.parseCommit(current);
+                            toProcess.add(commit.getTree().getId());
+                            for (RevCommit parent : commit.getParents()) {
+                                toProcess.add(parent.getId());
+                            }
+                        }
+
+                        // If this is a tree, enqueue its entries (subtrees and blobs)
+                        if (loader.getType() == Constants.OBJ_TREE) {
+                            try (TreeWalk treeWalk = new TreeWalk(sourceRepo)) {
+                                treeWalk.addTree(current);
+                                treeWalk.setRecursive(false);
+                                while (treeWalk.next()) {
+                                    toProcess.add(treeWalk.getObjectId(0));
+                                }
                             }
                         }
                     }
+
+                    inserter.flush();
+
+                    // Update target HEAD ref
+                    RefUpdate refUpdate = targetRepo.updateRef("refs/heads/" + sourceBranch);
+                    refUpdate.setNewObjectId(headCommitId);
+                    refUpdate.setForceUpdate(true);
+                    verifyRefUpdateResult(refUpdate.update(), "refs/heads/" + sourceBranch, targetRepoUri);
                 }
-
-                inserter.flush();
-
-                // Update target HEAD ref
-                RefUpdate refUpdate = targetRepo.updateRef("refs/heads/" + sourceBranch);
-                refUpdate.setNewObjectId(headCommitId);
-                refUpdate.setForceUpdate(true);
-                verifyRefUpdateResult(refUpdate.update(), "refs/heads/" + sourceBranch, targetRepoUri);
             }
+        });
+    }
 
-            return getBareRepository(targetRepoUri, true);
+    /**
+     * Builds a bare repository in a directory of its own and moves it to the target path in a single atomic rename.
+     * <p>
+     * Two requests can ask for the same student repository at the same time, and a repository that is built at its final path is visible there while it is still being
+     * written: it has no branch yet, which is indistinguishable from the broken leftover of an earlier failed copy. The second request would classify it as such and delete
+     * the directory the first one is writing into, which fails both requests (issue #13870). Building elsewhere and publishing with one rename removes that state entirely:
+     * the target path either does not exist or holds a complete repository, whatever the interleaving and whichever node the request is served by. The request that renames
+     * second finds the target taken and keeps the repository that is already there, since both copies have the same content.
+     *
+     * @param targetRepoUri the URI the finished repository is published at
+     * @param build         builds the bare repository at the path it is given
+     * @return the published repository, which is the one this call built or the one a concurrent call published first
+     * @throws IOException if the repository could not be built or published
+     */
+    private Repository buildAndPublishBareRepository(LocalVCRepositoryUri targetRepoUri, BareRepositoryBuilder build) throws IOException {
+        Path targetPath = new LocalVCRepositoryUri(targetRepoUri.toString()).getLocalRepositoryPath(localVCBasePath);
+        // A sibling of the target so that the rename stays within one file system, and without the ".git" suffix that the git server resolves a repository URL to, so that
+        // the repository cannot be served while it is incomplete.
+        Path buildPath = targetPath.resolveSibling(targetPath.getFileName() + BUILD_DIRECTORY_SUFFIX + UUID.randomUUID());
+        try {
+            Files.createDirectories(buildPath);
+            build.buildInto(buildPath);
+            // Apply the repository configuration while the repository is still private to this call. Doing it through the published path instead would have every request
+            // that copied the same participation write config.lock in the same repository at the same time, which JGit refuses with a LockFailedException.
+            try {
+                linkRepositoryForExistingGit(buildPath, targetRepoUri, defaultBranch, true, true).close();
+            }
+            catch (InvalidRefNameException e) {
+                throw new IOException("Could not configure the copy of repository " + targetRepoUri, e);
+            }
+            try {
+                FileUtil.publishAtomically(buildPath, targetPath);
+            }
+            catch (FileSystemException renameFailed) {
+                // A rename onto a path that is taken reports "directory not empty" or "file exists", depending on the platform, so what the target looks like now decides
+                // rather than the exception type: anything at the target path is a repository another request published, and reporting that one is what the caller needs.
+                if (!Files.exists(targetPath)) {
+                    throw renameFailed;
+                }
+                log.info("Repository {} was published by a concurrent request while this copy was running, keeping the repository that is already there", targetRepoUri);
+            }
         }
+        finally {
+            // Nothing is left to delete once the repository was published, and a copy that failed or lost the race must not leave its build directory behind.
+            FileUtils.deleteQuietly(buildPath.toFile());
+        }
+        // Read-only: the configuration is already written, and the caller only reads the repository's URI off this handle. Opening for writing would put the config write
+        // back into the published repository, where concurrent requests collide on it.
+        return getBareRepository(targetRepoUri, false);
+    }
+
+    /**
+     * Builds a bare repository at the given path, which is not the path the repository is finally published at.
+     */
+    @FunctionalInterface
+    private interface BareRepositoryBuilder {
+
+        void buildInto(Path buildPath) throws IOException;
     }
 
     /**
@@ -980,6 +1041,9 @@ public class GitService extends AbstractGitService {
                 ObjectId debugCommitId = sourceRepo.resolve("refs/heads/" + sourceBranch + "^{commit}");
                 if (debugCommitId == null) {
                     log.error("Source repo [{}] has no head commit in branch [{}]", sourceRepoUri, sourceBranch);
+                    // Walking from a commit that is not there fails with a NullPointerException, which would replace the copy's own report of the missing branch with an
+                    // error that says nothing - and only when debug logging happens to be on.
+                    return;
                 }
                 RevCommit headCommit = walk.parseCommit(debugCommitId);
                 walk.markStart(headCommit);
