@@ -8,14 +8,18 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -28,6 +32,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 
 /**
  * Stores the build logs of failed builds on disk, one file per programming submission.
@@ -58,9 +63,18 @@ public class FailedBuildLogService {
 
     private static final char SEPARATOR = '\t';
 
+    private static final String LOG_SUFFIX = ".log";
+
+    /**
+     * How many submission ids the cleanup asks about at once. A bucket holds up to {@link #SUBMISSIONS_PER_BUCKET} files and the query names every id it is given.
+     */
+    private static final int SUBMISSION_LOOKUP_BATCH_SIZE = 1_000;
+
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
     private final ProfileService profileService;
+
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     @Value("${artemis.failed-build-logs-path:./failed-build-logs}")
     private Path failedBuildLogsPath;
@@ -68,8 +82,9 @@ public class FailedBuildLogService {
     @Value("${artemis.continuous-integration.build-log.failed-build-retention-days:365}")
     private int retentionDays;
 
-    public FailedBuildLogService(ProfileService profileService) {
+    public FailedBuildLogService(ProfileService profileService, ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.profileService = profileService;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
     }
 
     /**
@@ -230,7 +245,7 @@ public class FailedBuildLogService {
     }
 
     private Path pathFor(long submissionId) {
-        return failedBuildLogsPath.resolve(String.valueOf(submissionId / SUBMISSIONS_PER_BUCKET)).resolve(submissionId + ".log");
+        return failedBuildLogsPath.resolve(String.valueOf(submissionId / SUBMISSIONS_PER_BUCKET)).resolve(submissionId + LOG_SUFFIX);
     }
 
     /**
@@ -266,13 +281,14 @@ public class FailedBuildLogService {
         }
 
         int deleted = 0;
+        Map<Long, Path> survivingFilesBySubmissionId = new HashMap<>();
         try (DirectoryStream<Path> files = Files.newDirectoryStream(bucket)) {
             for (Path file : files) {
-                ZonedDateTime lastModified = ZonedDateTime.ofInstant(Files.getLastModifiedTime(file).toInstant(), cutoff.getZone());
-                if (Files.isRegularFile(file) && lastModified.isBefore(cutoff)) {
-                    Files.deleteIfExists(file);
+                if (deleteIfExpired(file, cutoff)) {
                     deleted++;
+                    continue;
                 }
+                submissionIdOf(file).ifPresent(submissionId -> survivingFilesBySubmissionId.put(submissionId, file));
             }
         }
         catch (IOException e) {
@@ -280,6 +296,88 @@ public class FailedBuildLogService {
             return deleted;
         }
 
+        deleted += deleteLogsOfDeletedSubmissions(survivingFilesBySubmissionId);
+        deleteBucketIfEmpty(bucket);
+        return deleted;
+    }
+
+    /**
+     * Deletes one file if it is a regular file whose build failed before the cutoff.
+     * <p>
+     * A file that disappears while the bucket is walked is not an error: the submission it belongs to can be deleted at any time, and letting that abort the walk would leave
+     * the rest of a bucket, up to {@link #SUBMISSIONS_PER_BUCKET} files, unexamined until the next run.
+     *
+     * @return whether the file was deleted
+     */
+    private boolean deleteIfExpired(Path file, ZonedDateTime cutoff) {
+        try {
+            if (!Files.isRegularFile(file)) {
+                return false;
+            }
+            ZonedDateTime lastModified = ZonedDateTime.ofInstant(Files.getLastModifiedTime(file).toInstant(), cutoff.getZone());
+            return lastModified.isBefore(cutoff) && Files.deleteIfExists(file);
+        }
+        catch (NoSuchFileException e) {
+            return false;
+        }
+        catch (IOException e) {
+            log.warn("Could not delete the expired failed build log file {}", file, e);
+            return false;
+        }
+    }
+
+    /**
+     * Deletes the log files of submissions that no longer exist.
+     * <p>
+     * Nothing deletes such a file at the moment its submission goes: the store is keyed by submission id but has no foreign key, so a build result that is still being
+     * processed can write the file back after {@link #deleteBuildLogs} removed it. Without this sweep that file would hold the build output of a deleted submission for the
+     * rest of the retention period. It runs on the scheduling node only, once per bucket, against ids alone.
+     *
+     * @param logFilesBySubmissionId the unexpired files of this bucket, by the submission they belong to
+     * @return how many files were deleted
+     */
+    private int deleteLogsOfDeletedSubmissions(Map<Long, Path> logFilesBySubmissionId) {
+        int deleted = 0;
+        List<Long> submissionIds = List.copyOf(logFilesBySubmissionId.keySet());
+        for (int start = 0; start < submissionIds.size(); start += SUBMISSION_LOOKUP_BATCH_SIZE) {
+            Set<Long> batch = Set.copyOf(submissionIds.subList(start, Math.min(start + SUBMISSION_LOOKUP_BATCH_SIZE, submissionIds.size())));
+            Set<Long> existing = programmingSubmissionRepository.findExistingIds(batch);
+            for (Long submissionId : batch) {
+                if (existing.contains(submissionId)) {
+                    continue;
+                }
+                Path file = logFilesBySubmissionId.get(submissionId);
+                try {
+                    if (Files.deleteIfExists(file)) {
+                        log.debug("Deleted the failed build logs of submission {}, which no longer exists", submissionId);
+                        deleted++;
+                    }
+                }
+                catch (IOException e) {
+                    log.warn("Could not delete the failed build log file {} of the deleted submission {}", file, submissionId, e);
+                }
+            }
+        }
+        return deleted;
+    }
+
+    /**
+     * The submission a log file belongs to, or empty for anything this store did not write, such as a temporary file left behind by a write that was interrupted.
+     */
+    private static Optional<Long> submissionIdOf(Path file) {
+        String name = file.getFileName().toString();
+        if (!name.endsWith(LOG_SUFFIX)) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(Long.parseLong(name.substring(0, name.length() - LOG_SUFFIX.length())));
+        }
+        catch (NumberFormatException e) {
+            return Optional.empty();
+        }
+    }
+
+    private static void deleteBucketIfEmpty(Path bucket) {
         try (DirectoryStream<Path> remaining = Files.newDirectoryStream(bucket)) {
             if (!remaining.iterator().hasNext()) {
                 Files.deleteIfExists(bucket);
@@ -288,6 +386,5 @@ public class FailedBuildLogService {
         catch (IOException e) {
             log.error("Error occurred while removing the empty bucket directory {}", bucket, e);
         }
-        return deleted;
     }
 }

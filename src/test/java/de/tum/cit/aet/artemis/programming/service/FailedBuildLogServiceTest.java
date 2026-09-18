@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -14,6 +15,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +27,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 
 /**
  * Unit tests for the build logs of failed builds, which are kept on disk under {@code <failedBuildLogsPath>/<submissionId / 10000>/<submissionId>.log} rather than in the
@@ -46,6 +49,9 @@ class FailedBuildLogServiceTest {
     @Mock
     private ProfileService profileService;
 
+    @Mock
+    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+
     @TempDir
     Path failedBuildLogsPath;
 
@@ -53,7 +59,7 @@ class FailedBuildLogServiceTest {
 
     @BeforeEach
     void setUp() {
-        failedBuildLogService = new FailedBuildLogService(profileService);
+        failedBuildLogService = new FailedBuildLogService(profileService, programmingSubmissionRepository);
         ReflectionTestUtils.setField(failedBuildLogService, "failedBuildLogsPath", failedBuildLogsPath);
         ReflectionTestUtils.setField(failedBuildLogService, "retentionDays", RETENTION_DAYS);
     }
@@ -169,11 +175,47 @@ class FailedBuildLogServiceTest {
         failedBuildLogService.saveBuildLogs(SUBMISSION_ID + 1, List.of(new BuildLogEntry(TIME, "still within retention")));
         ageFile(failedBuildLogsPath.resolve("0").resolve(SUBMISSION_ID + ".log"), RETENTION_DAYS + 1);
         when(profileService.isSchedulingActive()).thenReturn(true);
+        when(programmingSubmissionRepository.findExistingIds(anySet())).thenAnswer(invocation -> invocation.getArgument(0));
 
         failedBuildLogService.deleteOldFailedBuildLogs();
 
         assertThat(failedBuildLogService.getBuildLogs(SUBMISSION_ID)).isEmpty();
         assertThat(failedBuildLogService.getBuildLogs(SUBMISSION_ID + 1)).isPresent();
+    }
+
+    /**
+     * The store is keyed by submission id but has no foreign key to hold it to one, so a build result that is still being processed can write the file back after the
+     * submission was deleted. Nothing else would then remove the build output of a deleted submission before the retention period expires.
+     */
+    @Test
+    void shouldDeleteTheLogsOfASubmissionThatNoLongerExists() {
+        failedBuildLogService.saveBuildLogs(SUBMISSION_ID, List.of(new BuildLogEntry(TIME, "belongs to a deleted submission")));
+        failedBuildLogService.saveBuildLogs(SUBMISSION_ID + 1, List.of(new BuildLogEntry(TIME, "belongs to a live submission")));
+        when(profileService.isSchedulingActive()).thenReturn(true);
+        when(programmingSubmissionRepository.findExistingIds(anySet())).thenReturn(Set.of(SUBMISSION_ID + 1));
+
+        failedBuildLogService.deleteOldFailedBuildLogs();
+
+        assertThat(failedBuildLogService.getBuildLogs(SUBMISSION_ID)).isEmpty();
+        assertThat(failedBuildLogService.getBuildLogs(SUBMISSION_ID + 1)).isPresent();
+    }
+
+    /**
+     * A temporary file left behind by a write that was interrupted names no submission, so the sweep must not read one out of it and must not delete it as an orphan either:
+     * only the expiry rule applies to it.
+     */
+    @Test
+    void shouldLeaveAFileThatNamesNoSubmissionToTheExpiryRule() throws IOException {
+        failedBuildLogService.saveBuildLogs(SUBMISSION_ID, List.of(new BuildLogEntry(TIME, "a real log")));
+        Path stray = failedBuildLogsPath.resolve("0").resolve("42-17681234.tmp");
+        Files.writeString(stray, "half a write");
+        when(profileService.isSchedulingActive()).thenReturn(true);
+        when(programmingSubmissionRepository.findExistingIds(anySet())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        failedBuildLogService.deleteOldFailedBuildLogs();
+
+        assertThat(stray).exists();
+        assertThat(failedBuildLogService.getBuildLogs(SUBMISSION_ID)).isPresent();
     }
 
     @Test
