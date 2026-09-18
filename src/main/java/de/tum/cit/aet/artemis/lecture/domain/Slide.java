@@ -12,6 +12,7 @@ import jakarta.validation.constraints.Size;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
@@ -22,6 +23,7 @@ public class Slide extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "attachment_unit_id")
+    @Parent
     private AttachmentVideoUnit attachmentVideoUnit;
 
     @Size(max = 150)

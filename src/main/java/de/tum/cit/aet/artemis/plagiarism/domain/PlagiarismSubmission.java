@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.jplag.Submission;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Entity
@@ -70,6 +71,7 @@ public class PlagiarismSubmission extends DomainObject {
     @JsonIgnoreProperties({ "submissionA", "submissionB" })
     @OneToOne
     @JoinColumn(name = "plagiarism_comparison_id")
+    @Parent
     private PlagiarismComparison plagiarismComparison;
 
     /**
