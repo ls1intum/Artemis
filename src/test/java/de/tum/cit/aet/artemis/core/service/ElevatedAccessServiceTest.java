@@ -36,7 +36,7 @@ class ElevatedAccessServiceTest {
     }
 
     private ElevatedAccessService serviceRequiringPasskey() {
-        return new ElevatedAccessService(userRepository, true);
+        return new ElevatedAccessService(userRepository, true, false);
     }
 
     @Test
@@ -99,7 +99,7 @@ class ElevatedAccessServiceTest {
         authenticate("admin", Role.ADMIN);
         when(userRepository.isAdmin("admin")).thenReturn(true);
 
-        assertThat(new ElevatedAccessService(userRepository, false).isAdminElevationActive()).isTrue();
+        assertThat(new ElevatedAccessService(userRepository, false, false).isAdminElevationActive()).isTrue();
     }
 
     @Test
@@ -163,7 +163,7 @@ class ElevatedAccessServiceTest {
     void shouldNotEnableElevationForTheSystemStandIn() {
         SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(null));
 
-        assertThat(new ElevatedAccessService(userRepository, false).isAdminElevationActive()).isFalse();
+        assertThat(new ElevatedAccessService(userRepository, false, false).isAdminElevationActive()).isFalse();
         verifyNoInteractions(userRepository);
     }
 

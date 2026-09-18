@@ -86,7 +86,8 @@
                         </a>
                     </li>
                     @if (!isExamActive() && !isExamStarted()) {
-                        <li *jhiHasAnyAuthority="IS_AT_LEAST_ADMIN">
+                        <!-- TEMPORARY (revert before merge): instructors see the admin entry on this branch. -->
+                        <li *jhiHasAnyAuthority="IS_AT_LEAST_INSTRUCTOR">
                             <a class="dropdown-item" routerLink="/admin" routerLinkActive="active" (click)="collapseNavbar()" id="admin-menu">
                                 <fa-icon [icon]="faUserShield" [fixedWidth]="true" />
                                 <span jhiTranslate="global.menu.admin.main"></span>

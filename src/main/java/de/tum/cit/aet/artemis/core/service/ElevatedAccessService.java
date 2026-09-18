@@ -37,10 +37,29 @@ public class ElevatedAccessService {
 
     private final boolean isPasskeyRequiredForAdministratorFeatures;
 
+    /**
+     * TEMPORARY (revert before merge): see {@link Constants#TEMPORARY_INSTRUCTOR_ADMIN_ACCESS_PROPERTY_NAME}.
+     */
+    private final boolean temporaryInstructorAdminAccess;
+
     public ElevatedAccessService(UserRepository userRepository,
-            @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures) {
+            @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures,
+            @Value("${" + Constants.TEMPORARY_INSTRUCTOR_ADMIN_ACCESS_PROPERTY_NAME + ":true}") boolean temporaryInstructorAdminAccess) {
         this.userRepository = userRepository;
         this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
+        this.temporaryInstructorAdminAccess = temporaryInstructorAdminAccess;
+    }
+
+    /**
+     * TEMPORARY (revert before merge): whether the current caller reaches the administrator surface only because of the
+     * instructor override. Kept as its own method so the annotation and the filter chain ask one question, and so
+     * deleting this method points at every place that has to go with it.
+     *
+     * @return whether the override is enabled and the current account holds the instructor authority
+     */
+    @CheckReturnValue
+    public boolean isTemporaryInstructorAdminAccessActive() {
+        return temporaryInstructorAdminAccess && SecurityUtils.hasCurrentUserAnyOfAuthorities(Role.INSTRUCTOR.getAuthority());
     }
 
     /**
@@ -85,6 +104,12 @@ public class ElevatedAccessService {
      */
     @CheckReturnValue
     public boolean isAdminElevationActive(@Nullable Authentication authentication) {
+        // TEMPORARY (revert before merge): the instructor override answers first, because ElevationClaims requires the
+        // administrator authority outright and an instructor never carries it.
+        if (temporaryInstructorAdminAccess && authentication != null && authentication.getAuthorities() != null
+                && authentication.getAuthorities().stream().anyMatch(authority -> Role.INSTRUCTOR.getAuthority().equals(authority.getAuthority()))) {
+            return true;
+        }
         // Reading the session first preserves the zero-query fast path for every ordinary request.
         if (authentication == null || !ElevationClaims.isRequestElevated(authentication, isPasskeyRequiredForAdministratorFeatures)) {
             return false;

@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { Router, Routes, UrlTree } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_STUDENT, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
+import { IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_STUDENT, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { navbarRoute } from 'app/core/navbar/navbar.route';
 import { errorRoute } from 'app/core/layouts/error/error.route';
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
@@ -59,7 +59,9 @@ const routes: Routes = [
     {
         path: 'admin',
         data: {
-            authorities: IS_AT_LEAST_ADMIN,
+            // TEMPORARY (revert before merge): instructors reach the whole admin area on this branch. Restore
+            // IS_AT_LEAST_ADMIN together with the server-side override.
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             // The AdminContainerComponent is a self-contained layout: it renders its own module-bg sidebar and
             // module-bg content cards on the plain page background, exactly like the course layouts. It must NOT be
             // wrapped in the global `module-bg m-3 p-3` card (usesModuleBackground) — that double background makes

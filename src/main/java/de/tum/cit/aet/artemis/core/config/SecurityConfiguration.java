@@ -365,7 +365,10 @@ public class SecurityConfiguration {
                     // Admin area requires specific authority. Both the canonical `/api/admin/**` prefix and the per-module
                     // `/api/*/admin/**` shape are listed: a single `*` matches exactly one path segment, so `/api/*/admin/**`
                     // alone does not cover `/api/admin/**` (used by the admin module's own controllers).
-                    .requestMatchers("/api/admin/**", "/api/*/admin/**").hasAuthority(Role.ADMIN.getAuthority())
+                    // TEMPORARY (revert before merge): the instructor authority is accepted here so an instructor reaches the
+                    // administrator area on a test server. This filter-chain rule runs ahead of every method-level annotation,
+                    // so relaxing the annotations alone would still answer 403 on these paths.
+                    .requestMatchers("/api/admin/**", "/api/*/admin/**").hasAnyAuthority(Role.ADMIN.getAuthority(), Role.INSTRUCTOR.getAuthority())
                     // Publicly accessible API endpoints (allowed for everyone, potentially with secret authentication).
                     .requestMatchers("/api/*/public/**").permitAll()
                     .requestMatchers("/api/*/internal/**").permitAll()

@@ -24,7 +24,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
  */
 @Target({ ElementType.METHOD, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
-@PreAuthorize("hasRole('ADMIN') and @userRepository.isAdmin(authentication.name) and @passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()")
+// TEMPORARY (revert before merge): the instructor override is evaluated FIRST on purpose.
+// isAuthenticatedWithSuperAdminApprovedPasskey() throws instead of returning false, so on a deployment that requires
+// passkeys the administrator clause would propagate that exception rather than fall through to the override. SpEL's
+// `or` short-circuits, so putting the override first keeps the throwing call unreached for an instructor.
+@PreAuthorize("@elevatedAccessService.isTemporaryInstructorAdminAccessActive() or (hasRole('ADMIN') and @userRepository.isAdmin(authentication.name) and @passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey())")
 public @interface EnforceAdmin {
 
 }

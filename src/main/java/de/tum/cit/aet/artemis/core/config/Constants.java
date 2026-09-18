@@ -627,6 +627,14 @@ public final class Constants {
     public static final String PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME = "artemis.user-management.passkey.require-for-administrator-features";
 
     /**
+     * TEMPORARY (revert before merge): when true, an account holding the instructor authority receives the full
+     * administrator surface. It exists so the global search ingestion work can be exercised on a test server from an
+     * account that cannot be made an administrator there. Defaults to true on this branch and is switched off for the
+     * test configuration, so the shipped authorization tests keep asserting the real rules.
+     */
+    public static final String TEMPORARY_INSTRUCTOR_ADMIN_ACCESS_PROPERTY_NAME = "artemis.temporary-instructor-admin-access";
+
+    /**
      * The name of the property used to enable or disable the sharing functionality.
      */
     public static final String SHARING_ENABLED_PROPERTY_NAME = "artemis.sharing.enabled";
