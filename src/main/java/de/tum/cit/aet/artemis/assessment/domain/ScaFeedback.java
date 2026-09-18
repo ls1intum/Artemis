@@ -22,9 +22,9 @@ import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
  * <p>
  * Successor of the former SCA rows in the {@code feedback} table, which serialized a whole
  * {@code StaticCodeAnalysisIssue} as JSON into {@code detail_text}. Splitting the positional fields
- * (file, lines, columns) into columns makes the rule message deduplicable via {@link FeedbackMessage}
- * (on production data, 2.5M SCA JSON blobs contain only ~105k distinct messages), and the category
- * penalty can be updated without rewriting a JSON blob.
+ * (file, lines, columns) into columns makes the rule message deduplicable via {@link FeedbackMessage}, since
+ * the same rule message recurs across a great many issues, and the category penalty can be updated without
+ * rewriting a JSON blob.
  * <p>
  * SCA feedback is always negative; credits are {@code -penalty} (already capped per category when the row
  * is created). Rows of one result are found through the index on {@code result_id}, which also supports the
