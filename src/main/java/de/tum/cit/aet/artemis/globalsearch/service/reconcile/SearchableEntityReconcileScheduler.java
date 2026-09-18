@@ -13,6 +13,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateReconcileProperties;
 import de.tum.cit.aet.artemis.globalsearch.domain.ReconcilePass;
@@ -21,9 +23,15 @@ import de.tum.cit.aet.artemis.globalsearch.domain.ReconcilePass;
  * Ticks the reconcile passes that keep the {@code SearchableEntities} index in step with the database. Runs on
  * the scheduling node only, matching the dispatcher that drains what these passes queue.
  * <p>
- * Each pass is scheduled, enabled and isolated separately: they cost different things, the one that deletes
- * should be switched on last, and one failing is no reason for the others to stop. A tick that finds nothing
- * logs nothing, since these run forever and a noisy quiet tick would bury the ticks that matter.
+ * Each pass is scheduled and isolated separately: they cost different things, and one failing is no reason for the
+ * others to stop. A tick that finds nothing logs nothing, since these run forever and a noisy quiet tick would bury
+ * the ticks that matter.
+ * <p>
+ * Whether a pass actually runs is a runtime {@link FeatureToggleService} check, not the static
+ * {@link WeaviateReconcileProperties} flags — those only seed the toggle's first-ever value (see
+ * {@code FeatureToggleService.initFeatures}), so an admin can switch reconcile on or off live, with no restart.
+ * Missing and drift share {@link Feature#GlobalSearchReconcile}, since neither deletes; orphan is gated separately
+ * by {@link Feature#GlobalSearchReconcileOrphan} and should be switched on last, being the one that does.
  */
 @Lazy
 @Service
@@ -35,35 +43,36 @@ public class SearchableEntityReconcileScheduler {
 
     private final WeaviateReconcileProperties reconcileProperties;
 
+    private final FeatureToggleService featureToggleService;
+
     private final SearchableEntityMissingSweep missingSweep;
 
     private final SearchableEntityDriftSweep driftSweep;
 
     private final SearchableEntityOrphanSweep orphanSweep;
 
-    public SearchableEntityReconcileScheduler(WeaviateReconcileProperties reconcileProperties, SearchableEntityMissingSweep missingSweep, SearchableEntityDriftSweep driftSweep,
-            SearchableEntityOrphanSweep orphanSweep) {
+    public SearchableEntityReconcileScheduler(WeaviateReconcileProperties reconcileProperties, FeatureToggleService featureToggleService, SearchableEntityMissingSweep missingSweep,
+            SearchableEntityDriftSweep driftSweep, SearchableEntityOrphanSweep orphanSweep) {
         this.reconcileProperties = reconcileProperties;
+        this.featureToggleService = featureToggleService;
         this.missingSweep = missingSweep;
         this.driftSweep = driftSweep;
         this.orphanSweep = orphanSweep;
     }
 
     /**
-     * Records the effective configuration once, so what a node was doing is answerable from its log alone. Silent
-     * while every pass is disabled, which is the default.
+     * Records the effective tuning once, so what a node is configured to do is answerable from its log alone. The
+     * on/off state is a live toggle, not logged here since it can change at any time after this line runs; check
+     * the admin feature toggle page for the current state.
      */
     @PostConstruct
     public void logEffectiveConfiguration() {
-        if (!reconcileProperties.anyPassEnabled()) {
-            log.debug("Global search reconcile is disabled");
-            return;
-        }
         log.info(
-                "Global search reconcile enabled (missing={}, drift={}, orphan={}); types={}, maxOutboxDepth={}, budgets: missing={}, drift={}, orphan={}x{} rows, deleteCap={}, abortRatio={}",
-                reconcileProperties.missingSweepEnabled(), reconcileProperties.driftSweepEnabled(), reconcileProperties.orphanSweepEnabled(), reconcileProperties.entityTypes(),
-                reconcileProperties.maxOutboxDepth(), reconcileProperties.missingBatchSize(), reconcileProperties.driftBatchSize(), reconcileProperties.orphanPagesPerTick(),
-                reconcileProperties.orphanPageSize(), reconcileProperties.orphanDeleteCapPerTick(), reconcileProperties.orphanAbortRatio());
+                "Global search reconcile configured; types={}, maxOutboxDepth={}, budgets: missing={}, drift={}, orphan={}x{} rows, deleteCap={}, repairCap={}, abortRatio={}. "
+                        + "Missing/drift and orphan are switched on independently via the admin feature toggle page.",
+                reconcileProperties.entityTypes(), reconcileProperties.maxOutboxDepth(), reconcileProperties.missingBatchSize(), reconcileProperties.driftBatchSize(),
+                reconcileProperties.orphanPagesPerTick(), reconcileProperties.orphanPageSize(), reconcileProperties.orphanDeleteCapPerTick(),
+                reconcileProperties.orphanRepairCapPerTick(), reconcileProperties.orphanAbortRatio());
     }
 
     /**
@@ -71,7 +80,7 @@ public class SearchableEntityReconcileScheduler {
      */
     @Scheduled(cron = "${artemis.scheduling.weaviate-reconcile-drift-time:0 */5 * * * *}")
     public void reconcileDrift() {
-        runPass(ReconcilePass.DRIFT, reconcileProperties.driftSweepEnabled(), driftSweep::sweep);
+        runPass(ReconcilePass.DRIFT, featureToggleService.isFeatureEnabled(Feature.GlobalSearchReconcile), driftSweep::sweep);
     }
 
     /**
@@ -79,7 +88,7 @@ public class SearchableEntityReconcileScheduler {
      */
     @Scheduled(cron = "${artemis.scheduling.weaviate-reconcile-missing-time:0 */10 * * * *}")
     public void reconcileMissing() {
-        runPass(ReconcilePass.MISSING, reconcileProperties.missingSweepEnabled(), missingSweep::sweep);
+        runPass(ReconcilePass.MISSING, featureToggleService.isFeatureEnabled(Feature.GlobalSearchReconcile), missingSweep::sweep);
     }
 
     /**
@@ -88,7 +97,7 @@ public class SearchableEntityReconcileScheduler {
      */
     @Scheduled(cron = "${artemis.scheduling.weaviate-reconcile-orphan-time:0 0 3 * * *}")
     public void reconcileOrphans() {
-        runPass(ReconcilePass.ORPHAN, reconcileProperties.orphanSweepEnabled(), orphanSweep::sweep);
+        runPass(ReconcilePass.ORPHAN, featureToggleService.isFeatureEnabled(Feature.GlobalSearchReconcileOrphan), orphanSweep::sweep);
     }
 
     /**

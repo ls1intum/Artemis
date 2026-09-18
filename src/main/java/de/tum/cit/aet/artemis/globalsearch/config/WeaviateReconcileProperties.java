@@ -13,16 +13,20 @@ import org.springframework.validation.annotation.Validated;
  * Configuration properties for the reconcile passes that keep the {@code SearchableEntities} index in step with
  * the database. Uses a Java record for immutable configuration.
  * <p>
- * All passes are disabled by default: the missing pass queues the entire corpus the first time it runs, and the
- * orphan pass deletes, so enabling them is an operational decision rather than a deployment side effect.
+ * The three {@code *SweepEnabled} flags only seed the runtime feature toggle's first-ever value (see
+ * {@code FeatureToggleService.initFeatures}); once that toggle exists, it — not these flags — decides whether a
+ * pass runs, live, from the admin feature toggle page, no restart needed. They default to false because the
+ * missing pass queues the entire corpus the first time it runs, and the orphan pass deletes, so enabling either
+ * is an operational decision rather than a deployment side effect; the same caution applies to switching the
+ * matching toggle on.
  * <p>
  * The two throttles protect different resources. {@code maxOutboxDepth} limits work handed to Weaviate; the
  * per-pass budgets limit queries against the database. A healthy system queues nothing, so the depth limit never
  * engages and the budgets are the only active protection.
  *
- * @param missingSweepEnabled    whether the pass that finds never-indexed entities runs
- * @param driftSweepEnabled      whether the pass that re-derives entities and compares content runs
- * @param orphanSweepEnabled     whether the pass that scans the index runs; the only one that deletes
+ * @param missingSweepEnabled    seeds the toggle covering the pass that finds never-indexed entities
+ * @param driftSweepEnabled      seeds the toggle covering the pass that re-derives entities and compares content
+ * @param orphanSweepEnabled     seeds the toggle covering the pass that scans the index; the only one that deletes
  * @param entityTypes            the entity types all three passes manage; posts and answer posts are excluded because they
  *                                   dominate the corpus and would stretch every other type's revisit period. A type left out
  *                                   here is never repaired and never deleted
@@ -57,14 +61,5 @@ public record WeaviateReconcileProperties(@DefaultValue("false") boolean missing
      */
     public boolean managesEntityType(String entityType) {
         return entityTypes.contains(entityType);
-    }
-
-    /**
-     * Returns whether at least one pass is enabled.
-     *
-     * @return true if any pass runs
-     */
-    public boolean anyPassEnabled() {
-        return missingSweepEnabled || driftSweepEnabled || orphanSweepEnabled;
     }
 }

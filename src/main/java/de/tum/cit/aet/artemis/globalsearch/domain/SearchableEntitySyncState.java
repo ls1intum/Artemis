@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
@@ -21,6 +22,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @Entity
 @Table(name = "searchable_entity_sync_state", uniqueConstraints = @UniqueConstraint(name = "uc_searchable_entity_sync_state_type_entity", columnNames = { "entity_type",
         "entity_id" }))
+@AggregateRoot("Sync ledger; keyed by (entityType, entityId) across many source entity tables, not owned by any single one of them.")
 public class SearchableEntitySyncState extends DomainObject {
 
     @Column(name = "entity_type", nullable = false, length = 64)

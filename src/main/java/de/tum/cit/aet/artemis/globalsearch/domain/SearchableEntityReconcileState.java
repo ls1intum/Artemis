@@ -8,6 +8,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
  */
 @Entity
 @Table(name = "searchable_entity_reconcile_state")
+@AggregateRoot("Operational log; one row per reconcile pass, not owned by anything the pass processes.")
 public class SearchableEntityReconcileState extends DomainObject {
 
     @Enumerated(EnumType.STRING)

@@ -30,7 +30,8 @@ class FeatureToggleServiceDegradationTest {
      * @return a service wired with mocked collaborators
      */
     private FeatureToggleService serviceWith(DistributedDataProvider provider) {
-        return new FeatureToggleService(mock(WebsocketMessagingService.class), provider, mock(ProfileService.class), mock(RateLimitConfigurationService.class), false);
+        return new FeatureToggleService(mock(WebsocketMessagingService.class), provider, mock(ProfileService.class), mock(RateLimitConfigurationService.class), false, false, false,
+                false);
     }
 
     @Test
