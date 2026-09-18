@@ -75,8 +75,7 @@ class FailedBuildLogServiceTest {
     }
 
     /**
-     * The reason the store exists in this shape. On production data 31% of entries carry a line break, so an entry that is written as one line per line is the only way a
-     * newline-delimited file can be read back without the log forging an entry boundary.
+     * The reason the store exists in this shape: an entry whose log carries a line break would otherwise forge an entry boundary when the file is read back.
      */
     @Test
     void shouldSplitAMultiLineEntryIntoOneEntryPerLineKeepingTheTimestamp() {

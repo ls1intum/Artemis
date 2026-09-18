@@ -126,8 +126,8 @@ public class BuildLogEntryService {
      * Drains what is left of build_log_entry.
      * <p>
      * Nothing writes to the table any more, so it only shrinks: rows expire on the same retention period as the files that replaced them, and once the last one is gone the
-     * entity, this job and the fallback in {@link #getLatestBuildLogs} can all be deleted together with the table. The work is batched because the backlog is large - on
-     * production 13.1M of 16.9M rows are already past a one-year cutoff on the day this ships - and a single delete of that size is not something to hand a live database.
+     * entity, this job and the fallback in {@link #getLatestBuildLogs} can all be deleted together with the table. The work is batched because the backlog is large - on a
+     * long-lived instance most of the table is already past a one-year cutoff on the day this ships - and a single delete of that size is not something to hand a live database.
      */
     @Scheduled(cron = "${artemis.continuous-integration.build-log.failed-build-cleanup-schedule:0 30 3 * * ?}")
     public void deleteExpiredBuildLogEntryRows() {

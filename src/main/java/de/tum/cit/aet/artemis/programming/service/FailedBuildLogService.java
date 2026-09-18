@@ -32,20 +32,17 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 /**
  * Stores the build logs of failed builds on disk, one file per programming submission.
  * <p>
- * This is deliberately <b>not</b> the store behind {@code artemis.build-logs-path}. That one keeps the complete log of every build job for
- * {@code artemis.continuous-integration.build-log.file-expiry-days} days, is keyed by build job id, and is only ever streamed to the browser as a download. This one keeps the
- * logs of <b>failed</b> builds for a year, is keyed by submission id because that is all its readers have, and is parsed back into entries to serve the build output panel,
- * Iris and Hyperion. Sharing one store would force one retention period onto both use cases.
+ * This is deliberately not the store behind {@code artemis.build-logs-path}. That one keeps the complete log of every build job for a short period, is keyed by build job id,
+ * and is only ever streamed to the browser as a download. This one keeps the logs of failed builds for a year, is keyed by submission id because that is all its readers have,
+ * and is parsed back into entries to serve the build output panel, Iris and Hyperion. Sharing one store would force one retention period onto both.
  * <p>
- * <b>Layout.</b> {@code <root>/<submissionId / 10000>/<submissionId>.log}. The bucket keeps a directory to roughly ten thousand files without needing anything but the
- * submission id to find a file again, which matters because none of the readers have the course or the exercise at hand.
+ * <b>Layout.</b> {@code <root>/<submissionId / 10000>/<submissionId>.log}. The bucket bounds the size of a directory while still finding a file from nothing but a submission
+ * id, which is all the readers have.
  * <p>
- * <b>Format.</b> One entry per line, {@code <ISO-8601 timestamp>\t<log>}. That is the shape the build agent already produces, and it is only unambiguous because
- * {@link #splitIntoLines} guarantees no stored log value contains a line break: an entry whose log spans several lines is written as several entries sharing its timestamp.
- * On production data 31% of entries need that, overwhelmingly composed error messages carrying a stack trace. The alternative, keeping multi-line entries intact, needs an
- * escaping or framing layer for a difference no reader can observe - the build output panel groups consecutive entries and prints a timestamp only when it changes, so
- * several lines under one timestamp render exactly as one entry containing those lines did. A tab inside a log value is harmless because only the first one separates.
- * {@code BuildLogParseUtils} applies the same rule to Jenkins logs, for the same reason.
+ * <b>Format.</b> One entry per line, {@code <ISO-8601 timestamp>\t<log>}, which is unambiguous only because {@link #splitIntoLines} guarantees no stored value contains a line
+ * break: an entry whose log spans several lines is written as several entries sharing its timestamp. Nothing observes the difference, because the build output panel groups
+ * consecutive entries and prints a timestamp only when it changes. A tab inside a log value is harmless because only the first one separates. {@code BuildLogParseUtils}
+ * applies the same rule to Jenkins logs, for the same reason.
  */
 @Profile(PROFILE_CORE)
 @Lazy
