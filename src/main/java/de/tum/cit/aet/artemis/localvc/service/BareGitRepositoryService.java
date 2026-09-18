@@ -27,6 +27,7 @@ import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectInserter;
 import org.eclipse.jgit.lib.ObjectLoader;
+import org.eclipse.jgit.lib.ObjectStream;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.TreeFormatter;
@@ -295,7 +296,11 @@ public class BareGitRepositoryService extends AbstractGitService {
                             }
 
                             ObjectLoader loader = sourceRepo.open(current);
-                            inserter.insert(loader.getType(), loader.getSize(), loader.openStream());
+                            // The stream belongs to this loop rather than to the inserter, which reads it but does not close it. A full-history copy opens one per
+                            // reachable object, so leaving them to the garbage collector holds the whole repository's worth of readers open at once.
+                            try (ObjectStream objectStream = loader.openStream()) {
+                                inserter.insert(loader.getType(), loader.getSize(), objectStream);
+                            }
 
                             // If this is a commit, enqueue parents and tree
                             if (loader.getType() == Constants.OBJ_COMMIT) {
