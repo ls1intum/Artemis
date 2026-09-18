@@ -224,7 +224,7 @@ Artemis supports both **MySQL** and **PostgreSQL**. The migration system works i
 - One for MySQL and H2, covering the columns those spell differently, such as `enum` and `varbinary`.
 - One for PostgreSQL, covering the same columns as `varchar`, `text` and `bytea`.
 
-Every Artemis pull request applies the baseline and the changelogs it summarises to empty MySQL and PostgreSQL databases and compares the two resulting schemas, so a difference between the databases cannot reach a release.
+Every Artemis pull request applies the baseline and the changelogs it summarises to empty MySQL and PostgreSQL databases, and on each of them compares the baseline against the history it folds. A baseline that has drifted from its changelogs on either database therefore cannot reach a release.
 
 <Callout variant={CalloutVariant.info}>
   Ensure your database is backed up before performing any major version upgrade. Reverting to the previous release does not revert the schema, so a backup taken immediately before the migration is the only reliable way back.
