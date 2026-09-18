@@ -7,6 +7,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 
 /**
@@ -35,7 +36,7 @@ public record ExerciseGroupContextDTO(long id, @Nullable String title, @Nullable
      *
      * @param id                             the id of the exam
      * @param title                          the title of the exam
-     * @param testExam                       whether the exam is a test exam
+     * @param examMode                       the mode of the exam
      * @param examWithAttendanceCheck        whether the exam requires an attendance check
      * @param numberOfCorrectionRoundsInExam the number of correction rounds the assessment dashboard iterates over
      * @param numberOfExercisesInExam        the number of exercises each student exam draws
@@ -62,7 +63,7 @@ public record ExerciseGroupContextDTO(long id, @Nullable String title, @Nullable
      * @param course                         the course the exam belongs to
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ExamContextDTO(long id, @Nullable String title, boolean testExam, boolean examWithAttendanceCheck, @Nullable Integer numberOfCorrectionRoundsInExam,
+    public record ExamContextDTO(long id, @Nullable String title, ExamMode examMode, boolean examWithAttendanceCheck, @Nullable Integer numberOfCorrectionRoundsInExam,
             @Nullable Integer numberOfExercisesInExam, @Nullable ZonedDateTime visibleDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate,
             @Nullable ZonedDateTime publishResultsDate, @Nullable ZonedDateTime examStudentReviewStart, @Nullable ZonedDateTime examStudentReviewEnd,
             @Nullable ZonedDateTime examSummaryPublicationDate, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable Integer gracePeriod, int workingTime,
@@ -77,7 +78,7 @@ public record ExerciseGroupContextDTO(long id, @Nullable String title, @Nullable
          * @return the exam context
          */
         public static ExamContextDTO of(Exam exam) {
-            return new ExamContextDTO(exam.getId(), exam.getTitle(), !exam.getExamMode().isReal(), exam.isExamWithAttendanceCheck(), exam.getNumberOfCorrectionRoundsInExam(),
+            return new ExamContextDTO(exam.getId(), exam.getTitle(), exam.getExamMode(), exam.isExamWithAttendanceCheck(), exam.getNumberOfCorrectionRoundsInExam(),
                     exam.getNumberOfExercisesInExam(), exam.getVisibleDate(), exam.getStartDate(), exam.getEndDate(), exam.getPublishResultsDate(),
                     exam.getExamStudentReviewStart(), exam.getExamStudentReviewEnd(), exam.getExamSummaryPublicationDate(), exam.getExampleSolutionPublicationDate(),
                     exam.getGracePeriod(), exam.getWorkingTime(), exam.getExamMaxPoints(), exam.getRandomizeExerciseOrder(), exam.getStartText(), exam.getEndText(),

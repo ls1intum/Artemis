@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
@@ -410,6 +411,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     void testGetExamExerciseCarriesTheExamKeySetTheEntityUsedToSerialize() throws Exception {
         TextExercise exercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
         Exam exam = exercise.getExerciseGroup().getExam();
+        exam.setExamMode(ExamMode.REAL);
         exam.setExamWithAttendanceCheck(true);
         exam.setNumberOfExercisesInExam(3);
         exam.setExamMaxPoints(90);
@@ -436,6 +438,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         assertThat(groupNode.keySet()).containsExactlyInAnyOrder("id", "title", "isMandatory", "exam");
         Map<String, Object> examNode = mapOf(groupNode, "exam");
         assertThat(examNode.keySet()).containsExactlyInAnyOrderElementsOf(serializedKeysOf(examRepository.findByIdElseThrow(exam.getId())));
+        assertThat(examNode.get("examMode")).isEqualTo(ExamMode.REAL.name());
         assertThat(examNode.get("examWithAttendanceCheck")).isEqualTo(true);
         assertThat(examNode.get("numberOfExercisesInExam")).isEqualTo(3);
         assertThat(examNode.get("examMaxPoints")).isEqualTo(90);
