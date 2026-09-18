@@ -187,7 +187,7 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         seed(UserDeletionReferencePolicy.ASSESSMENT_NOTE_CREATOR, userId, values("result_id", resultId));
         seed(UserDeletionReferencePolicy.COMPLAINT_STUDENT, userId, values("result_id", resultId, "complaint_type", "COMPLAINT", "exercise_id", exerciseId));
         seed(UserDeletionReferencePolicy.COMPLAINT_REVIEWER, userId, values("complaint_id", complaintId));
-        seed(UserDeletionReferencePolicy.TUTOR_PARTICIPATION, userId, values());
+        seed(UserDeletionReferencePolicy.TUTOR_PARTICIPATION, userId, values("assessed_exercise_id", exerciseId));
         seed(UserDeletionReferencePolicy.SUBMISSION_VERSION_AUTHOR, userId, values("submission_id", submissionId));
         seed(UserDeletionReferencePolicy.EXERCISE_VERSION_AUTHOR, userId,
                 values("exercise_id", exerciseId, "exercise_snapshot", new Json("{}"), "created_by", "test", "created_date", now));

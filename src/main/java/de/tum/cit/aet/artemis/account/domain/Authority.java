@@ -15,6 +15,7 @@ import org.jspecify.annotations.NonNull;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.core.security.Role;
 
 /**
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 @Entity
 @Table(name = "jhi_authority")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@AggregateRoot("Reference data.")
 public class Authority implements Serializable {
 
     @Serial
