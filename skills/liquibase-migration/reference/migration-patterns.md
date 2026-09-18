@@ -52,7 +52,7 @@ other tables, deleting it in a changelog is the wrong place; that belongs in the
 service. Leave the column nullable and say why in the comment.
 
 Full example, including the reasoning for each column that was deliberately left out:
-`src/main/resources/config/liquibase/changelog/20260827090000_changelog.xml`.
+`src/main/resources/config/liquibase/history/v10/20260827090000_changelog.xml`.
 
 ### When the entity mapping blocks it
 
@@ -86,7 +86,7 @@ Rollback deserves thought here. Re-creating a dropped column without its values 
 having no rollback, because code would silently read empty columns. Where the data now lives
 elsewhere, say so in the rollback comment and rely on rolling the predecessor back instead.
 
-Worked example: `src/main/resources/config/liquibase/changelog/20260826080000_changelog.xml`.
+Worked example: `src/main/resources/config/liquibase/history/v10/20260826080000_changelog.xml`.
 
 ## Rollbacks
 
