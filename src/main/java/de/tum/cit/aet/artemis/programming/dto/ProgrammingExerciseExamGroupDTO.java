@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * Several unchanged Angular views read this nested shape: exam mode is detected from the presence of
  * {@code exercise.exerciseGroup}; the detail page and the navigation utils read
  * {@code exerciseGroup.exam.course.id}; the update form reads {@code exam.course.defaultProgrammingLanguage}; the
- * grading tab reads {@code exerciseGroup.exam.exampleSolutionPublicationDate}; {@code exam.testExam} gates the
+ * grading tab reads {@code exerciseGroup.exam.exampleSolutionPublicationDate}; {@code exam.examMode} gates the
  * feedback-suggestion options and {@code exam.numberOfCorrectionRoundsInExam} drives the assessment controls. Flat
  * exam ids are not enough.
  * <p>
@@ -51,7 +51,7 @@ public record ProgrammingExerciseExamGroupDTO(Long id, String title, Boolean isM
      *
      * @param id                             the exam id
      * @param title                          the exam title (detail-page exam link)
-     * @param examMode                       whether this is a test exam (gates feedback-suggestion options)
+     * @param examMode                       the mode of the exam (gates feedback-suggestion options)
      * @param examWithAttendanceCheck        whether attendance is checked during the exam
      * @param visibleDate                    when the exam becomes visible to students
      * @param startDate                      when students may start working on the exam

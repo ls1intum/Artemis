@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
  * this nested shape: exam mode is detected from the presence of {@code exercise.exerciseGroup}; the student editor reads
  * {@code exam.publishResultsDate} (and {@code exam.exampleSolutionPublicationDate}) for post-publish behavior; the
  * management screens read {@code exam.course} for course context and access rights, {@code exam.title} for the detail
- * exam link, {@code exam.testExam} to gate feedback-suggestion options, and {@code exam.numberOfCorrectionRoundsInExam}
+ * exam link, {@code exam.examMode} to gate feedback-suggestion options, and {@code exam.numberOfCorrectionRoundsInExam}
  * for the assessment controls. Flat exam ids are not enough.
  *
  * @param id   the exercise group id

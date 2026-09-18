@@ -181,7 +181,7 @@ describe('ExamStudentsComponent', () => {
             expect(component.isTestExam()).toBe(false);
         });
 
-        it('isTestExam should be true when exam.testExam is set', () => {
+        it('isTestExam should be true when examMode is TEST', () => {
             fixture.detectChanges();
             component.exam.set({ ...examWithCourse, examMode: ExamMode.TEST });
             expect(component.isTestExam()).toBe(true);

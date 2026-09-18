@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
  * {@code title} is rendered (modeling-exam-submission component, {@code EntityTitleService.setExerciseTitle}); the student
  * editor reads {@code exam.publishResultsDate} (and {@code exam.exampleSolutionPublicationDate}) for post-publish
  * behavior; the management screens read {@code exam.course} for course context and access rights, {@code exam.title} for
- * the detail exam link, {@code exam.testExam} to gate feedback-suggestion options, and
+ * the detail exam link, {@code exam.examMode} to gate feedback-suggestion options, and
  * {@code exam.numberOfCorrectionRoundsInExam} for the assessment controls. Flat exam ids are not enough.
  *
  * @param id          the exercise group id
@@ -34,7 +34,7 @@ public record ModelingExerciseExamGroupDTO(Long id, String title, Boolean isMand
      *
      * @param id                             the exam id
      * @param title                          the exam title (detail-page exam link)
-     * @param examMode                       whether this is a test exam (gates feedback-suggestion options)
+     * @param examMode                       the mode of the exam (gates feedback-suggestion options)
      * @param publishResultsDate             when exam results are published (post-publish behavior)
      * @param exampleSolutionPublicationDate when the example solution becomes visible
      * @param numberOfCorrectionRoundsInExam number of correction rounds (assessment controls)
