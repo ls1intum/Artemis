@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.DetailedResultDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -169,6 +170,8 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     void getTextSubmissionWithResult_involved_allowed() throws Exception {
         textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
         PlagiarismComparison plagiarismComparison = new PlagiarismComparison();
+        // A comparison belongs to the plagiarism result it came out of, which the database now requires.
+        plagiarismComparison.setPlagiarismResult(textExerciseUtilService.createPlagiarismResultForExercise(finishedTextExercise));
         PlagiarismSubmission submissionA = new PlagiarismSubmission();
         submissionA.setStudentLogin(TEST_PREFIX + "student1");
         submissionA.setSubmissionId(this.textSubmission.getId());
@@ -355,8 +358,8 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(finishedTextExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
         ExerciseDetailsDTO returnedExerciseDetails = request.get("/api/exercise/exercises/" + finishedTextExercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
-        StudentParticipation studentParticipation = returnedExerciseDetails.exercise().getStudentParticipations().iterator().next();
-        assertThat(participationUtilService.getResultsForParticipation(studentParticipation).iterator().next().getAssessor()).as("assessor is null").isNull();
+        DetailedResultDTO result = returnedExerciseDetails.exercise().studentParticipations().getFirst().submissions().getFirst().results().getFirst();
+        assertThat(result.assessor()).as("assessor is null").isNull();
     }
 
     @Test

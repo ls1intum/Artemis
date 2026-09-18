@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategy;
 
 /**
@@ -74,6 +75,7 @@ public abstract class QuizQuestion extends DomainObject {
     @ManyToOne
     @JoinColumn(name = "exercise_id")
     @JsonIgnore
+    @Parent
     private QuizExercise exercise;
 
     // The question type-specific "correct answer" content (drop locations / drag items / correct mappings for DnD, answer options for MC, spots / solutions / correct mappings for

@@ -15,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Entity
@@ -33,6 +34,7 @@ public class ExerciseGroup extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "exam_id", nullable = false)
+    @Parent
     private Exam exam;
 
     @OneToMany(mappedBy = "exerciseGroup", fetch = FetchType.LAZY)

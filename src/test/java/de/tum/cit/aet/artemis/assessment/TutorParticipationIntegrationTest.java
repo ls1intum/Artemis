@@ -261,6 +261,8 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
 
             var feedback = ParticipationFactory.createManualTextFeedback(1D, textBlockIds.getFirst());
             var gradingCriterion = ExerciseFactory.generateGradingCriterion("criterion");
+            // A grading criterion belongs to the exercise it grades, which the database now requires.
+            gradingCriterion.setExercise(textExercise);
             gradingCriterion = gradingCriterionRepository.save(gradingCriterion);
 
             var instructions = ExerciseFactory.generateGradingInstructions(gradingCriterion, 1, 1);

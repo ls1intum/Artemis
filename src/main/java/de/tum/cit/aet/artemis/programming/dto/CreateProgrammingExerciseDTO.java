@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.programming.dto;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -120,7 +120,7 @@ public record CreateProgrammingExerciseDTO(@Nullable Long id, String title, Stri
         }
         if (auxiliaryRepositories != null) {
             List<AuxiliaryRepository> repositories = auxiliaryRepositories.stream().map(AuxiliaryRepositoryDTO::toEntity).toList();
-            exercise.setAuxiliaryRepositories(new ArrayList<>());
+            exercise.setAuxiliaryRepositories(new LinkedHashSet<>());
             repositories.forEach(exercise::addAuxiliaryRepository);
         }
         return exercise;
