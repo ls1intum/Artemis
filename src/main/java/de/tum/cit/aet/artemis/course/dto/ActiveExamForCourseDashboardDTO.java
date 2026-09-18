@@ -7,15 +7,16 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 
 /** Active exam shown above the course dashboard. */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ActiveExamForCourseDashboardDTO(long id, String title, ZonedDateTime startDate, ZonedDateTime endDate, boolean testExam, @Nullable Integer examMaxPoints,
+public record ActiveExamForCourseDashboardDTO(long id, String title, ZonedDateTime startDate, ZonedDateTime endDate, ExamMode examMode, @Nullable Integer examMaxPoints,
         ActiveExamCourseReferenceDTO course) {
 
     /** Maps an active exam without exposing its exercise groups or registered users. */
     public static ActiveExamForCourseDashboardDTO of(Exam exam) {
-        return new ActiveExamForCourseDashboardDTO(exam.getId(), exam.getTitle(), exam.getStartDate(), exam.getEndDate(), exam.isTestExam(), exam.getExamMaxPoints(),
+        return new ActiveExamForCourseDashboardDTO(exam.getId(), exam.getTitle(), exam.getStartDate(), exam.getEndDate(), exam.getExamMode(), exam.getExamMaxPoints(),
                 new ActiveExamCourseReferenceDTO(exam.getCourse().getId(), exam.getCourse().getTitle()));
     }
 
