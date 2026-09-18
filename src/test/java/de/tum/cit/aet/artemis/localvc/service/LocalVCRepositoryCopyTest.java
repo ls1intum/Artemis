@@ -110,6 +110,44 @@ class LocalVCRepositoryCopyTest {
         assertThat(readFileFromBranchHead("abc-student1")).as("the broken leftover is replaced by a working copy of the template").isEqualTo("template");
     }
 
+    @Test
+    void copyRepositoryWithoutHistory_repairingTheSameBrokenRepositoryTwiceConcurrently_keepsTheRepairedOne() throws Exception {
+        // Both requests find the same unborn leftover and both set out to repair it. Repairing by deleting it where it lies would let the slower request delete the
+        // repository the faster one has published at that path in the meantime; moving it aside has one winner, so the repaired repository survives.
+        seedRepository("abc-exercise", "template");
+        Path unborn = pathFor("abc-student1");
+        Files.createDirectories(unborn);
+        Git.init().setDirectory(unborn.toFile()).setBare(true).setInitialBranch(DEFAULT_BRANCH).call().close();
+        CyclicBarrier bothRequestsReady = new CyclicBarrier(2);
+        Callable<LocalVCRepositoryUri> startExercise = () -> {
+            bothRequestsReady.await(10, TimeUnit.SECONDS);
+            return localVCService.copyRepositoryWithoutHistory(PROJECT_KEY, "abc-exercise", DEFAULT_BRANCH, PROJECT_KEY, "student1", null);
+        };
+
+        List<Future<LocalVCRepositoryUri>> responses = executor.invokeAll(List.of(startExercise, startExercise));
+
+        for (Future<LocalVCRepositoryUri> response : responses) {
+            assertThat(response.get().toString()).as("both requests are told about the same repository").isEqualTo(uriFor("abc-student1").toString());
+        }
+        assertThat(readFileFromBranchHead("abc-student1")).as("the repository that replaced the leftover is still there").isEqualTo("template");
+    }
+
+    @Test
+    void copyRepositoryWithoutHistory_withABrokenRepository_leavesNoLeftoverBesideTheRepairedOne() throws Exception {
+        seedRepository("abc-exercise", "template");
+        Path corrupt = pathFor("abc-student1");
+        Files.createDirectories(corrupt.resolve("refs").resolve("heads"));
+        Files.createDirectories(corrupt.resolve("objects"));
+
+        localVCService.copyRepositoryWithoutHistory(PROJECT_KEY, "abc-exercise", DEFAULT_BRANCH, PROJECT_KEY, "student1", null);
+
+        try (var entries = Files.list(baseDir.resolve(PROJECT_KEY))) {
+            assertThat(entries.map(entry -> entry.getFileName().toString())).as("the repository moved aside is removed rather than left next to the repaired one")
+                    .containsExactlyInAnyOrder("abc-exercise.git", "abc-student1.git");
+        }
+        assertThat(readFileFromBranchHead("abc-student1")).as("the corrupt leftover is replaced by a working copy of the template").isEqualTo("template");
+    }
+
     private LocalVCRepositoryUri uriFor(String repositorySlug) {
         return new LocalVCRepositoryUri(BASE_URI, PROJECT_KEY, repositorySlug);
     }

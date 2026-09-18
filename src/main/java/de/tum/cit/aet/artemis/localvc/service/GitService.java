@@ -976,6 +976,14 @@ public class GitService extends AbstractGitService {
         try {
             Files.createDirectories(buildPath);
             build.buildInto(buildPath);
+            // Apply the repository configuration while the repository is still private to this call. Doing it through the published path instead would have every request
+            // that copied the same participation write config.lock in the same repository at the same time, which JGit refuses with a LockFailedException.
+            try {
+                linkRepositoryForExistingGit(buildPath, targetRepoUri, defaultBranch, true, true).close();
+            }
+            catch (InvalidRefNameException e) {
+                throw new IOException("Could not configure the copy of repository " + targetRepoUri, e);
+            }
             try {
                 FileUtil.publishAtomically(buildPath, targetPath);
             }
@@ -992,7 +1000,9 @@ public class GitService extends AbstractGitService {
             // Nothing is left to delete once the repository was published, and a copy that failed or lost the race must not leave its build directory behind.
             FileUtils.deleteQuietly(buildPath.toFile());
         }
-        return getBareRepository(targetRepoUri, true);
+        // Read-only: the configuration is already written, and the caller only reads the repository's URI off this handle. Opening for writing would put the config write
+        // back into the published repository, where concurrent requests collide on it.
+        return getBareRepository(targetRepoUri, false);
     }
 
     /**

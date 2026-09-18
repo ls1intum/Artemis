@@ -91,12 +91,18 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             }
             // Self-healing: a previous failed copy or a partially failed deletion left a broken target repository behind
             // (unborn or corrupt, without any branch, so no student data can be lost). Copying onto it would fail forever,
-            // so delete it and copy as if it never existed. If this deletion fails, it intentionally surfaces as a
-            // LocalVCInternalException (a VersionControlException), since the copy could not have succeeded either way.
-            // A copy that is still running is never mistaken for such a leftover: it is built next to the target path and
-            // published with a single atomic rename, so the target path only ever holds a finished repository.
-            log.warn("Target repository {} exists but is unborn or corrupt; deleting it so the copy can recreate it", targetRepoUri);
-            deleteRepository(targetRepoUri);
+            // so it has to go. A copy that is still running is never mistaken for such a leftover: it is built next to the
+            // target path and published with a single atomic rename, so the target path only ever holds a finished
+            // repository.
+            //
+            // It is moved aside rather than deleted where it lies, because the health check above and the repair are not
+            // one step: two requests can both find the same leftover broken. Only one of them can win the rename, so
+            // neither can delete what the other has since put there. The loser copies like any other request and settles
+            // it at publication time, which keeps whichever repository was published first.
+            log.warn("Target repository {} exists but is unborn or corrupt; moving it aside so the copy can recreate it", targetRepoUri);
+            if (!quarantineBrokenRepository(targetRepoUri)) {
+                log.debug("Target repository {} was already repaired by a concurrent request", targetRepoUri);
+            }
         }
         // A failed copy needs no cleanup here: the repository is built next to the target path and only moved there once it is complete, so a copy that failed leaves the
         // target path as it found it. Deleting it would be actively harmful, since it may hold the repository that a concurrent copy of the same participation published.
@@ -122,6 +128,19 @@ public abstract class AbstractVersionControlService implements VersionControlSer
      * @return true if the repository exists, false otherwise
      */
     protected abstract boolean repositoryExists(LocalVCRepositoryUri repositoryUri);
+
+    /**
+     * Moves a broken (unborn or corrupt) repository out of the way in one atomic step and discards it, so that a copy can recreate it at its path.
+     * <p>
+     * Claiming the repository and removing it are the same step on purpose. Two requests can both find the same leftover broken, and deleting it where it lies would let the
+     * slower one delete whatever the faster one has published at that path since. A rename has exactly one winner, and it takes the broken repository with it, so the loser
+     * finds the path free or taken by a finished repository and never removes either.
+     *
+     * @param repositoryUri the repository to move aside
+     * @return true if this call moved the broken repository aside, false if it was already gone, i.e. a concurrent request repaired the path first
+     * @throws VersionControlException if the repository is there but could not be moved aside, since the copy could not have succeeded either way
+     */
+    protected abstract boolean quarantineBrokenRepository(LocalVCRepositoryUri repositoryUri);
 
     /**
      * checks for a specific exception that we would like to ignore
