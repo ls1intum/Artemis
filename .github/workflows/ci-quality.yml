@@ -196,15 +196,12 @@ jobs:
         run: |
           set -Eeuo pipefail
           # Thresholds are technical debt; lower them as violations are fixed.
-          # NOTE on max_large_classes: #13864 ("Require a parent for six more entities") grew
-          # LearningPathRecommendationService past the 1000-line cutoff, on develop itself, unrelated to this PR.
-          # Bumped the count by exactly the one class it added; not a general loosening.
           # NOTE on max_complex_beans: splitting the automatic feedback into typed tables gave ExerciseService and
           # ProgrammingExerciseGradingService one collaborator each for the typed feedback and the derived test case
           # points, which put both over the ten-dependency line. Pushing them back under it means extracting
           # ExerciseService.reEvaluateExercise and the grading service's score calculation into services of their own,
           # which is a refactoring of its own rather than part of the table split.
-          max_large_classes=18
+          max_large_classes=17
           max_complex_beans=20
 
           python supporting_scripts/analyze_java_files.py \
