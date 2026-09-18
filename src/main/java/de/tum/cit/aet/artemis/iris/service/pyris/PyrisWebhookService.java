@@ -276,6 +276,17 @@ public class PyrisWebhookService {
         return prepareLectureAdditionJob(processAttachmentVideoUnitForUpdate(attachmentVideoUnit, contentFingerprint, forceReingest), attachmentVideoUnit.getLecture().getCourse());
     }
 
+    /**
+     * Release a job token registered by {@link #prepareLectureUnitIngestion} whose claim lapsed before it
+     * could be activated: the worker never received it, so nothing will use the token, and leaving it in
+     * the job map would just hold an unusable entry until {@code ingestionJobTimeout} expires.
+     *
+     * @param jobToken the token to release, from {@link PyrisPreparedLectureIngestionJobDTO#jobToken()}
+     */
+    public void revokePreparedIngestionJob(String jobToken) {
+        pyrisJobService.removeJobByToken(jobToken);
+    }
+
     private PyrisPreparedLectureIngestionJobDTO prepareLectureAdditionJob(PyrisLectureUnitWebhookDTO toUpdateAttachmentVideoUnit, Course course) {
         String jobToken = pyrisJobService.addLectureIngestionWebhookJob(toUpdateAttachmentVideoUnit.courseId(), toUpdateAttachmentVideoUnit.lectureId(),
                 toUpdateAttachmentVideoUnit.lectureUnitId());

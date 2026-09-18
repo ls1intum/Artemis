@@ -77,11 +77,12 @@ public class ProcessingStateCallbackApi extends AbstractLectureApi {
      * @param targetPhase        the in-flight phase determined at claim time
      * @param contentFingerprint the fingerprint computed at claim time
      * @param workerBootId       boot id of the worker executing the run
-     * @return true if the unit still held this claim and was activated; false if the claim was already
+     * @param claimedAt          the claim marker observed at claim time, from {@link ClaimedIngestionUnitDTO#claimedAt()}
+     * @return true if the unit still held this exact claim and was activated; false if the claim was already
      *         released, re-claimed, or activated by another call, in which case nothing was changed
      */
-    public boolean activateClaimedJob(long lectureUnitId, String jobToken, ProcessingPhase targetPhase, String contentFingerprint, String workerBootId) {
-        return processingStateCallbackService.activateClaimedJob(lectureUnitId, jobToken, targetPhase, contentFingerprint, workerBootId);
+    public boolean activateClaimedJob(long lectureUnitId, String jobToken, ProcessingPhase targetPhase, String contentFingerprint, String workerBootId, ZonedDateTime claimedAt) {
+        return processingStateCallbackService.activateClaimedJob(lectureUnitId, jobToken, targetPhase, contentFingerprint, workerBootId, claimedAt);
     }
 
     /**

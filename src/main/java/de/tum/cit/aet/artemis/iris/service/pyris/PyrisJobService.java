@@ -435,6 +435,17 @@ public class PyrisJobService {
     }
 
     /**
+     * Remove a job from the job map by its token alone, for a caller that registered the job but never
+     * built (or no longer holds) the {@link PyrisJob} object itself — e.g. releasing a prepared job whose
+     * claim lapsed before it could be handed to a worker.
+     *
+     * @param token the job token to remove
+     */
+    public void removeJobByToken(String token) {
+        getPyrisJobMap().remove(token);
+    }
+
+    /**
      * Store a job in the job map, preserving the appropriate TTL for the job type.
      * Ingestion jobs use a longer TTL since pipelines can run for over an hour.
      *

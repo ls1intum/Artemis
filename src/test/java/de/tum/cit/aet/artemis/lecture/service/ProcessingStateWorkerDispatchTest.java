@@ -166,21 +166,39 @@ class ProcessingStateWorkerDispatchTest {
 
     @Test
     void activateClaimedJobActivatesTheClaimAtomically() {
-        when(processingStateRepository.activateClaimedJob(eq(100L), eq(ProcessingPhase.INGESTING), eq("token-abc"), eq("v1:test-fingerprint"), eq(WORKER_BOOT_ID), any()))
-                .thenReturn(1);
+        ZonedDateTime claimedAt = ZonedDateTime.now();
+        when(processingStateRepository.activateClaimedJob(eq(100L), eq(ProcessingPhase.INGESTING), eq("token-abc"), eq("v1:test-fingerprint"), eq(WORKER_BOOT_ID), eq(claimedAt),
+                any())).thenReturn(1);
         when(processingStateRepository.findByLectureUnit_Id(100L)).thenReturn(Optional.of(testState));
 
-        assertThat(callbackService.activateClaimedJob(100L, "token-abc", ProcessingPhase.INGESTING, "v1:test-fingerprint", WORKER_BOOT_ID)).isTrue();
+        assertThat(callbackService.activateClaimedJob(100L, "token-abc", ProcessingPhase.INGESTING, "v1:test-fingerprint", WORKER_BOOT_ID, claimedAt)).isTrue();
 
-        verify(processingStateRepository).activateClaimedJob(eq(100L), eq(ProcessingPhase.INGESTING), eq("token-abc"), eq("v1:test-fingerprint"), eq(WORKER_BOOT_ID), any());
+        verify(processingStateRepository).activateClaimedJob(eq(100L), eq(ProcessingPhase.INGESTING), eq("token-abc"), eq("v1:test-fingerprint"), eq(WORKER_BOOT_ID), eq(claimedAt),
+                any());
         verify(processingStateRepository, never()).save(any());
     }
 
     @Test
     void activateClaimedJobIgnoresAnActivationWhoseClaimLapsed() {
-        when(processingStateRepository.activateClaimedJob(anyLong(), any(), anyString(), anyString(), anyString(), any())).thenReturn(0);
+        when(processingStateRepository.activateClaimedJob(anyLong(), any(), anyString(), anyString(), anyString(), any(), any())).thenReturn(0);
 
-        assertThat(callbackService.activateClaimedJob(100L, "token-late", ProcessingPhase.INGESTING, "v1:test-fingerprint", WORKER_BOOT_ID)).isFalse();
+        assertThat(callbackService.activateClaimedJob(100L, "token-late", ProcessingPhase.INGESTING, "v1:test-fingerprint", WORKER_BOOT_ID, ZonedDateTime.now())).isFalse();
+
+        verify(processingStateRepository, never()).save(any());
+        verify(processingStateRepository, never()).findByLectureUnit_Id(anyLong());
+    }
+
+    @Test
+    void activateClaimedJobIgnoresALateActivationForAClaimThatHasBeenSupersededByANewerOne() {
+        // Worker A's claim of this unit lapsed (its request stalled without crashing); the unit was
+        // re-claimed and is now sitting IDLE with a NEW claim marker, not yet activated. Worker A's
+        // stale activation for its OLD claim arrives late. The atomic guard matches on the exact claim
+        // marker, so the stale activation cannot be conflated with the newer, still-unactivated claim:
+        // it matches nothing instead of activating that newer claim with worker A's stale job token.
+        ZonedDateTime staleClaimedAt = ZonedDateTime.now().minusMinutes(25);
+        when(processingStateRepository.activateClaimedJob(eq(100L), any(), anyString(), anyString(), anyString(), eq(staleClaimedAt), any())).thenReturn(0);
+
+        assertThat(callbackService.activateClaimedJob(100L, "token-from-lapsed-claim", ProcessingPhase.INGESTING, "v1:test-fingerprint", WORKER_BOOT_ID, staleClaimedAt)).isFalse();
 
         verify(processingStateRepository, never()).save(any());
         verify(processingStateRepository, never()).findByLectureUnit_Id(anyLong());

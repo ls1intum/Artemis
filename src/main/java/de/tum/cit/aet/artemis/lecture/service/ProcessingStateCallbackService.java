@@ -463,19 +463,21 @@ public class ProcessingStateCallbackService {
      * lease. From here on the run is alive exactly as long as the worker keeps renewing the lease.
      *
      * <p>
-     * The activation is bound to the claim that produced it: the conditional update only matches a row that still
-     * holds a claim and no token, so an activation that arrives after the claim was released and possibly re-claimed
-     * matches nothing instead of overwriting the newer run's token.
+     * The activation is bound to the exact claim that produced it (matching {@code claimedAt}, not just claim
+     * shape): an activation that arrives after the claim was released and possibly re-claimed by a newer,
+     * still-unactivated claim for the same unit matches nothing instead of activating that newer claim with this
+     * stale job token.
      *
      * @param lectureUnitId      the claimed unit
      * @param jobToken           the registered Pyris job token
      * @param targetPhase        the in-flight phase determined at claim time
      * @param contentFingerprint the fingerprint computed at claim time
      * @param workerBootId       boot id of the worker executing the run
-     * @return whether the claim was activated; false when the unit no longer holds the claim
+     * @param claimedAt          the claim marker observed at claim time, from {@link ClaimedIngestionUnitDTO#claimedAt()}
+     * @return whether the claim was activated; false when the unit no longer holds this exact claim
      */
-    public boolean activateClaimedJob(long lectureUnitId, String jobToken, ProcessingPhase targetPhase, String contentFingerprint, String workerBootId) {
-        int activated = processingStateRepository.activateClaimedJob(lectureUnitId, targetPhase, jobToken, contentFingerprint, workerBootId, ZonedDateTime.now());
+    public boolean activateClaimedJob(long lectureUnitId, String jobToken, ProcessingPhase targetPhase, String contentFingerprint, String workerBootId, ZonedDateTime claimedAt) {
+        int activated = processingStateRepository.activateClaimedJob(lectureUnitId, targetPhase, jobToken, contentFingerprint, workerBootId, claimedAt, ZonedDateTime.now());
         if (activated == 0) {
             log.warn("Ignoring activation of unit {} by worker {}: the unit no longer holds the claim (released, re-claimed, or already activated)", lectureUnitId, workerBootId);
             return false;

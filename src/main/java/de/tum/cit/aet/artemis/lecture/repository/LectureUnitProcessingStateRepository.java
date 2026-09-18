@@ -549,20 +549,24 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             @Param("errorKey") String errorKey, @Param("retryEligibleAt") ZonedDateTime retryEligibleAt, @Param("now") ZonedDateTime now);
 
     /**
-     * Activate a claim exactly once: turn a claimed row into an in-flight run, but only while it still holds the claim
-     * that produced the activation. A claimed IDLE row carries {@code startedAt}; a claimed FAILED retry carries its
-     * lease in {@code retryEligibleAt}. Neither has a job token yet. A row that was released by the abandoned-claim
-     * sweep, re-claimed, or already activated no longer matches, so a late activation matches nothing instead of
-     * overwriting the newer claim. Applies {@link LectureUnitProcessingState#transitionTo}, the token, the fingerprint
-     * and {@link LectureUnitProcessingState#renewLease} in one statement.
+     * Activate a claim exactly once: turn a claimed row into an in-flight run, but only while it still holds exactly
+     * the claim that produced the activation. A claimed IDLE row carries {@code startedAt}; a claimed FAILED retry
+     * carries its lease in {@code retryEligibleAt}. Neither has a job token yet. Matching {@code claimedAt} against
+     * that exact marker (not just its presence) is what stops a late activation from a lapsed, re-claimed claim from
+     * activating a newer, still-unactivated claim for the same unit with the wrong job token: two different claims
+     * can pass through this same generic shape one after another, so presence alone cannot tell them apart. Same
+     * guard as {@link #markSkippedIfStillClaimed}. Applies {@link LectureUnitProcessingState#transitionTo}, the
+     * token, the fingerprint and {@link LectureUnitProcessingState#renewLease} in one statement.
      *
      * @param lectureUnitId      the claimed unit
      * @param phase              the in-flight phase to enter
      * @param token              the registered Pyris job token
      * @param contentFingerprint the fingerprint computed at claim time
      * @param workerBootId       boot id of the worker that owns the lease
+     * @param claimedAt          the claim marker observed at claim time, from
+     *                               {@link de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO#claimedAt()}
      * @param now                the activation time, recorded as start, last update and first heartbeat
-     * @return 1 when the claim was activated, 0 when the row no longer holds a claim
+     * @return 1 when the claim was activated, 0 when the row no longer holds this exact claim
      */
     @Modifying
     @Transactional // ok because of modifying query
@@ -573,11 +577,12 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
                 ps.ingestionJobToken = :token, ps.contentFingerprint = :contentFingerprint, ps.lastHeartbeatAt = :now, ps.lockedBy = :workerBootId
             WHERE ps.lectureUnit.id = :lectureUnitId
             AND ps.ingestionJobToken IS NULL
-            AND ((ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE AND ps.startedAt IS NOT NULL)
-                OR (ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED AND ps.retryEligibleAt IS NOT NULL))
+            AND ((ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE AND ps.startedAt = :claimedAt)
+                OR (ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED AND ps.retryEligibleAt = :claimedAt))
             """)
     int activateClaimedJob(@Param("lectureUnitId") long lectureUnitId, @Param("phase") ProcessingPhase phase, @Param("token") String token,
-            @Param("contentFingerprint") String contentFingerprint, @Param("workerBootId") String workerBootId, @Param("now") ZonedDateTime now);
+            @Param("contentFingerprint") String contentFingerprint, @Param("workerBootId") String workerBootId, @Param("claimedAt") ZonedDateTime claimedAt,
+            @Param("now") ZonedDateTime now);
 
     /**
      * Mark a claimed unit SKIPPED, but only while it still holds exactly the claim that decided it was not

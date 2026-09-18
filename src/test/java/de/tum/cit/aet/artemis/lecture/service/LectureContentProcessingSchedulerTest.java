@@ -228,6 +228,7 @@ class LectureContentProcessingSchedulerTest {
 
             // Then: Should not attempt recovery
             verify(callbackService, never()).handleProcessingFailure(any());
+            verify(callbackService, never()).handleProcessingFailureIfStillLive(any());
         }
 
         @Test
@@ -247,6 +248,7 @@ class LectureContentProcessingSchedulerTest {
 
             // Then: Should skip (already scheduled)
             verify(callbackService, never()).handleProcessingFailure(any());
+            verify(callbackService, never()).handleProcessingFailureIfStillLive(any());
         }
 
         @Test
@@ -267,6 +269,7 @@ class LectureContentProcessingSchedulerTest {
 
             // Then: The failure path (which burns a retry) must not run
             verify(callbackService, never()).handleProcessingFailure(any());
+            verify(callbackService, never()).handleProcessingFailureIfStillLive(any());
         }
 
         @Test
@@ -325,6 +328,7 @@ class LectureContentProcessingSchedulerTest {
 
             // Then: Should NOT attempt recovery because phase changed
             verify(callbackService, never()).handleProcessingFailure(any());
+            verify(callbackService, never()).handleProcessingFailureIfStillLive(any());
         }
     }
 
@@ -570,6 +574,7 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             verify(callbackService, never()).handleProcessingFailure(any());
+            verify(callbackService, never()).handleProcessingFailureIfStillLive(any());
         }
 
         @Test
@@ -589,6 +594,7 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             verify(callbackService, never()).handleProcessingFailure(any());
+            verify(callbackService, never()).handleProcessingFailureIfStillLive(any());
         }
 
         @Test
@@ -603,6 +609,7 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             verify(callbackService, never()).handleProcessingFailure(any());
+            verify(callbackService, never()).handleProcessingFailureIfStillLive(any());
         }
 
         @Test
