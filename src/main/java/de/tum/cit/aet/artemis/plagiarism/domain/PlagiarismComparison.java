@@ -130,10 +130,6 @@ public class PlagiarismComparison extends DomainObject implements Comparable<Pla
         return submissions;
     }
 
-    public void setSubmissions(Set<PlagiarismSubmission> submissions) {
-        this.submissions = submissions;
-    }
-
     private void setSubmission(PlagiarismComparisonSide side, PlagiarismSubmission submission) {
         submissions.removeIf(existing -> existing.getSide() == side);
         if (submission != null) {
