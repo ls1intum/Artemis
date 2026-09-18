@@ -9,11 +9,12 @@ import java.util.stream.Collectors;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import org.slf4j.Logger;
@@ -24,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.jplag.Submission;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Entity
@@ -65,12 +67,21 @@ public class PlagiarismSubmission extends DomainObject {
     private PlagiarismCase plagiarismCase;
 
     /**
-     * We maintain a bidirectional relationship manually with submissionA and submissionB
+     * The comparison this submission is one half of. The submission holds the key, so it cannot be left behind when
+     * the comparison stops pointing at it.
      */
-    @JsonIgnoreProperties({ "submissionA", "submissionB" })
-    @OneToOne
-    @JoinColumn(name = "plagiarism_comparison_id")
+    @JsonIgnoreProperties("submissions")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "plagiarism_comparison_id", nullable = false)
+    @Parent
     private PlagiarismComparison plagiarismComparison;
+
+    /**
+     * Which of the two submissions of the comparison this is.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "comparison_side", nullable = false)
+    private PlagiarismComparisonSide side;
 
     /**
      * Size of the related submission.
@@ -177,6 +188,14 @@ public class PlagiarismSubmission extends DomainObject {
 
     public void setPlagiarismComparison(PlagiarismComparison plagiarismComparison) {
         this.plagiarismComparison = plagiarismComparison;
+    }
+
+    public PlagiarismComparisonSide getSide() {
+        return side;
+    }
+
+    public void setSide(PlagiarismComparisonSide side) {
+        this.side = side;
     }
 
     @Override

@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchAskRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisEntityCandidateDTO;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
 /**
  * Isolated Mockito test for {@link IrisGlobalSearchResource#ask}, in particular the entity-candidate
@@ -58,6 +59,9 @@ class IrisGlobalSearchResourceTest {
     @Mock
     private SearchableEntityPrefetchApi searchableEntityPrefetchApi;
 
+    @Mock
+    private IrisSettingsService irisSettingsService;
+
     private IrisGlobalSearchResource resource;
 
     private User testUser;
@@ -68,7 +72,7 @@ class IrisGlobalSearchResourceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         resource = new IrisGlobalSearchResource(pyrisConnectorService, pyrisJobService, userRepository, userAiPreferenceService, irisAccessContextService,
-                Optional.of(searchableEntityPrefetchApi));
+                Optional.of(searchableEntityPrefetchApi), irisSettingsService);
 
         testUser = new User();
         testUser.setId(1L);
@@ -109,7 +113,8 @@ class IrisGlobalSearchResourceTest {
 
     @Test
     void ask_whenNoPrefetchApiIsConfigured_answersFromLectureContentOnly() {
-        resource = new IrisGlobalSearchResource(pyrisConnectorService, pyrisJobService, userRepository, userAiPreferenceService, irisAccessContextService, Optional.empty());
+        resource = new IrisGlobalSearchResource(pyrisConnectorService, pyrisJobService, userRepository, userAiPreferenceService, irisAccessContextService, Optional.empty(),
+                irisSettingsService);
 
         var requestDTO = new GlobalSearchAskRequestDTO("what is backpropagation", 5, UUID.randomUUID());
         ResponseEntity<Void> response = resource.ask(requestDTO, principal);

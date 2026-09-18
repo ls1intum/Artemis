@@ -14,7 +14,7 @@ import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iri
 import { iconForEntityType } from 'app/core/navbar/global-search/util/entity-type-icons.util';
 import { parseCitationNumbers, renderCitationMarkers } from 'app/core/navbar/global-search/util/iris-citation-markers.util';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { SEARCH_DEBOUNCE_MS } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
+import { SEARCH_DEBOUNCE_MS, SHORT_QUERY_MAX_LENGTH } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { catchError, of, switchMap, timer } from 'rxjs';
 
 /** Number of lines shown before the answer is clamped. Must match the CSS `max-height` on `.iris-answer-text.is-clamped`. */
@@ -59,6 +59,13 @@ const REVEAL_DELAY_MS = { sprint: 14, fast: 24, steady: 38, slow: 58, idle: 50 }
 
 /** Backlog thresholds in characters, paired with {@link REVEAL_DELAY_MS}. */
 const REVEAL_BACKLOG = { large: 90, medium: 50, small: 25 } as const;
+
+/**
+ * Minimum trimmed query length before the (expensive) Iris LLM answer pipeline is triggered.
+ * Queries up to the "quite short" band (<= SHORT_QUERY_MAX_LENGTH) yield poor answers and are
+ * not worth an LLM call, so the card stays idle until the query is longer than that band.
+ */
+const IRIS_ANSWER_MIN_QUERY_LENGTH = SHORT_QUERY_MAX_LENGTH + 1;
 
 /** What the card is currently showing. Everything the template renders follows from this. */
 export type IrisAnswerPhase = 'idle' | 'thinking' | 'answering' | 'noAnswer' | 'failed';
@@ -250,7 +257,7 @@ export class GlobalSearchIrisAnswerComponent {
             .pipe(
                 switchMap(({ query, courseId }) => {
                     this.resetRun();
-                    if (!query.trim()) {
+                    if (query.trim().length < IRIS_ANSWER_MIN_QUERY_LENGTH) {
                         return of(undefined);
                     }
                     // timer(X) waits X ms before emitting, giving the outer switchMap time to cancel

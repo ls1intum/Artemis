@@ -562,7 +562,6 @@ public class UserService {
             globalNotificationSettingService.deleteAllByUserId(user.getId());
             userCourseRoleRepository.deleteByUser_Id(user.getId());
             user.setDeleted(true);
-            user.setLearnerProfile(null);
             anonymizeUser(user);
             log.warn("Soft Deleted User: {}", user);
         });

@@ -10,10 +10,10 @@ import static org.mockito.Mockito.verify;
 
 import java.lang.reflect.RecordComponent;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -297,7 +297,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         try {
             newProgrammingExercise = programmingExerciseRepository.findForVersioningById(newProgrammingExercise.getId()).orElseThrow();
 
-            newProgrammingExercise.setAuxiliaryRepositories(new ArrayList<>());
+            newProgrammingExercise.setAuxiliaryRepositories(new LinkedHashSet<>());
 
             RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, newProgrammingExercise);
             templateProgrammingExerciseParticipationRepository.save(newProgrammingExercise.getTemplateParticipation());

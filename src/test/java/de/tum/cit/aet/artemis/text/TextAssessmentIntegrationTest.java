@@ -1176,7 +1176,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
                 HttpStatus.OK, CourseAssessmentDashboardDTO.class);
         CourseAssessmentDashboardDTO.AssessmentExerciseDTO exercise = dashboard.exercises().iterator().next();
         assertThat(exercise.numberOfAssessmentsOfCorrectionRounds()).hasSize(1);
-        assertThat(exercise.numberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(1L);
+        assertThat(exercise.numberOfAssessmentsOfCorrectionRounds().getFirst().inTime()).isEqualTo(1L);
     }
 
     @Test
