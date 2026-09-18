@@ -72,11 +72,7 @@ class EntityOwnershipArchitectureTest extends AbstractArchitectureTest {
             "de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea.parent",
             // rows exist today that carry no evidence of which parent they belonged to
             "de.tum.cit.aet.artemis.exercise.domain.Submission.participation", "de.tum.cit.aet.artemis.exercise.domain.participation.Participation.exercise",
-            "de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmissionElement.plagiarismSubmission",
-            // requiring it would also retire the orphan-feedback cleanup, which is a decision of its own
-            "de.tum.cit.aet.artemis.assessment.domain.Feedback.result",
-            // reachable only through submissions that have themselves lost their participation, so it goes with those
-            "de.tum.cit.aet.artemis.quiz.domain.QuizQuestion.exercise");
+            "de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmissionElement.plagiarismSubmission");
 
     @Test
     void everyEntityIsARootOrDeclaresItsParent() {
@@ -115,7 +111,7 @@ class EntityOwnershipArchitectureTest extends AbstractArchitectureTest {
         // The two lists are the backlog this test exists to shrink. Pinning their size makes an addition a deliberate
         // edit with a reviewer attached, rather than the path of least resistance when a new entity does not fit.
         assertThat(ENTITIES_WITHOUT_A_DECLARED_PARENT).as("entities that cannot name a parent: move the foreign key onto the entity instead of adding to this list").hasSize(11);
-        assertThat(PARENTS_THAT_ARE_STILL_NULLABLE).as("parents the database still lets be null: require them instead of adding to this list").hasSize(6);
+        assertThat(PARENTS_THAT_ARE_STILL_NULLABLE).as("parents the database still lets be null: require them instead of adding to this list").hasSize(4);
     }
 
     private static Stream<JavaClass> entities() {

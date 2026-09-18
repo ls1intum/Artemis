@@ -181,9 +181,6 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     void testDeleteOrphans() throws Exception {
         var oldExercise = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
 
-        var orphanFeedback = createFeedbackWithLinkedLongFeedback();
-        var orphanTextBlock = createTextBlockForFeedback(orphanFeedback);
-
         StudentScore orphanStudentScore = new StudentScore();
         orphanStudentScore.setExercise(oldExercise);
         orphanStudentScore = studentScoreRepository.save(orphanStudentScore);
@@ -199,20 +196,19 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         orphanResult.setSubmission(submissionWithoutParticipation);
         orphanResult = resultRepository.save(orphanResult);
 
-        orphanFeedback.setResult(orphanResult);
-        orphanFeedback = feedbackRepository.save(orphanFeedback);
+        var orphanFeedback = createFeedbackWithLinkedLongFeedback(orphanResult);
+        var orphanTextBlock = createTextBlockForFeedback(orphanFeedback);
 
         var submission = participationUtilService.addSubmission(textExerciseRepository.findByCourseIdWithCategories(newCourse.getId()).getFirst(), new ProgrammingSubmission(),
                 student.getLogin());
 
-        var nonOrphanFeedback = createFeedbackWithLinkedLongFeedback();
-        var nonOrphanTextBlock = createTextBlockForFeedback(nonOrphanFeedback);
-
         Result nonOrphanResult = new Result();
         nonOrphanResult.setSubmission(submission);
         nonOrphanResult.setExerciseId(submission.getParticipation().getExercise().getId());
-        nonOrphanFeedback.setResult(nonOrphanResult);
         nonOrphanResult = resultRepository.save(nonOrphanResult);
+
+        var nonOrphanFeedback = createFeedbackWithLinkedLongFeedback(nonOrphanResult);
+        var nonOrphanTextBlock = createTextBlockForFeedback(nonOrphanFeedback);
 
         nonOrphanFeedback.setResult(nonOrphanResult);
         nonOrphanFeedback = feedbackRepository.save(nonOrphanFeedback);
@@ -377,13 +373,13 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         var oldResult2 = participationUtilService.generateResult(oldSubmission, instructor);
         oldResult2.setRated(false);
 
-        var oldFeedback1 = createFeedbackWithLinkedLongFeedback();
-        var oldTextBlock1 = createTextBlockForFeedback(oldFeedback1);
+        var oldFeedback1 = createFeedbackWithLinkedLongFeedback(oldResult1);
         participationUtilService.addFeedbackToResult(oldFeedback1, oldResult1);
+        var oldTextBlock1 = createTextBlockForFeedback(oldFeedback1);
 
-        var oldFeedback2 = createFeedbackWithLinkedLongFeedback();
-        var oldTextBlock2 = createTextBlockForFeedback(oldFeedback2);
+        var oldFeedback2 = createFeedbackWithLinkedLongFeedback(oldResult2);
         participationUtilService.addFeedbackToResult(oldFeedback2, oldResult2);
+        var oldTextBlock2 = createTextBlockForFeedback(oldFeedback2);
 
         StudentScore oldParticipantScore1 = new StudentScore();
         oldParticipantScore1.setExercise(oldExercise);
@@ -406,13 +402,13 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         var newResult2 = participationUtilService.generateResult(newSubmission, instructor);
         newResult2.setRated(false);
 
-        var newFeedback1 = createFeedbackWithLinkedLongFeedback();
-        var newTextBlock1 = createTextBlockForFeedback(newFeedback1);
+        var newFeedback1 = createFeedbackWithLinkedLongFeedback(newResult1);
         participationUtilService.addFeedbackToResult(newFeedback1, newResult1);
+        var newTextBlock1 = createTextBlockForFeedback(newFeedback1);
 
-        var newFeedback2 = createFeedbackWithLinkedLongFeedback();
-        var newTextBlock2 = createTextBlockForFeedback(newFeedback2);
+        var newFeedback2 = createFeedbackWithLinkedLongFeedback(newResult2);
         participationUtilService.addFeedbackToResult(newFeedback2, newResult2);
+        var newTextBlock2 = createTextBlockForFeedback(newFeedback2);
 
         StudentScore newParticipantScore1 = new StudentScore();
         newParticipantScore1.setUser(student);
@@ -470,13 +466,13 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         var oldResult1 = participationUtilService.generateResult(oldSubmission, instructor); // should be deleted, with all associated entities
         var oldResult2 = participationUtilService.generateResult(oldSubmission, instructor);
 
-        var oldFeedback1 = createFeedbackWithLinkedLongFeedback();
-        var oldTextBlock1 = createTextBlockForFeedback(oldFeedback1);
+        var oldFeedback1 = createFeedbackWithLinkedLongFeedback(oldResult1);
         participationUtilService.addFeedbackToResult(oldFeedback1, oldResult1);
+        var oldTextBlock1 = createTextBlockForFeedback(oldFeedback1);
 
-        var oldFeedback2 = createFeedbackWithLinkedLongFeedback();
-        var oldTextBlock2 = createTextBlockForFeedback(oldFeedback2);
+        var oldFeedback2 = createFeedbackWithLinkedLongFeedback(oldResult2);
         participationUtilService.addFeedbackToResult(oldFeedback2, oldResult2);
+        var oldTextBlock2 = createTextBlockForFeedback(oldFeedback2);
 
         StudentScore oldParticipantScore1 = new StudentScore();
         oldParticipantScore1.setUser(student);
@@ -497,13 +493,13 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         var newResult1 = participationUtilService.generateResult(newSubmission, instructor); // should not be deleted, with all associated entities
         var newResult2 = participationUtilService.generateResult(newSubmission, instructor);
 
-        var newFeedback1 = createFeedbackWithLinkedLongFeedback();
-        var newTextBlock1 = createTextBlockForFeedback(newFeedback1);
+        var newFeedback1 = createFeedbackWithLinkedLongFeedback(newResult1);
         participationUtilService.addFeedbackToResult(newFeedback1, newResult1);
+        var newTextBlock1 = createTextBlockForFeedback(newFeedback1);
 
-        var newFeedback2 = createFeedbackWithLinkedLongFeedback();
-        var newTextBlock2 = createTextBlockForFeedback(newFeedback2);
+        var newFeedback2 = createFeedbackWithLinkedLongFeedback(newResult2);
         participationUtilService.addFeedbackToResult(newFeedback2, newResult2);
+        var newTextBlock2 = createTextBlockForFeedback(newFeedback2);
 
         StudentScore newParticipantScore1 = new StudentScore();
         newParticipantScore1.setUser(student);
@@ -604,23 +600,23 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
 
         var nonLatestNonRated = participationUtilService.generateResult(submission, instructor);
         nonLatestNonRated.setRated(false);
-        var feedbackNonLatestNonRated = createFeedbackWithLinkedLongFeedback();
+        var feedbackNonLatestNonRated = createFeedbackWithLinkedLongFeedback(nonLatestNonRated);
         createTextBlockForFeedback(feedbackNonLatestNonRated);
         participationUtilService.addFeedbackToResult(feedbackNonLatestNonRated, nonLatestNonRated);
 
         var nonLatestRated = participationUtilService.generateResult(submission, instructor); // rated by default
-        var feedbackNonLatestRated = createFeedbackWithLinkedLongFeedback();
+        var feedbackNonLatestRated = createFeedbackWithLinkedLongFeedback(nonLatestRated);
         createTextBlockForFeedback(feedbackNonLatestRated);
         participationUtilService.addFeedbackToResult(feedbackNonLatestRated, nonLatestRated);
 
         var latestNonRated = participationUtilService.generateResult(submission, instructor);
         latestNonRated.setRated(false);
-        var feedbackLatestNonRated = createFeedbackWithLinkedLongFeedback();
+        var feedbackLatestNonRated = createFeedbackWithLinkedLongFeedback(latestNonRated);
         createTextBlockForFeedback(feedbackLatestNonRated);
         participationUtilService.addFeedbackToResult(feedbackLatestNonRated, latestNonRated);
 
         var latestRated = participationUtilService.generateResult(submission, instructor); // rated, overall newest id
-        var feedbackLatestRated = createFeedbackWithLinkedLongFeedback();
+        var feedbackLatestRated = createFeedbackWithLinkedLongFeedback(latestRated);
         createTextBlockForFeedback(feedbackLatestRated);
         participationUtilService.addFeedbackToResult(feedbackLatestRated, latestRated);
 
@@ -694,11 +690,11 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateProgrammingSubmission(true));
         // Two rated results: the first is non-latest (a deletion candidate for an OLD course), the second is latest.
         var nonLatestRated = participationUtilService.generateResult(submission, instructor);
-        var feedbackNonLatest = createFeedbackWithLinkedLongFeedback();
+        var feedbackNonLatest = createFeedbackWithLinkedLongFeedback(nonLatestRated);
         createTextBlockForFeedback(feedbackNonLatest);
         participationUtilService.addFeedbackToResult(feedbackNonLatest, nonLatestRated);
         var latestRated = participationUtilService.generateResult(submission, instructor);
-        var feedbackLatest = createFeedbackWithLinkedLongFeedback();
+        var feedbackLatest = createFeedbackWithLinkedLongFeedback(latestRated);
         participationUtilService.addFeedbackToResult(feedbackLatest, latestRated);
 
         // The not-yet-ended course contributes nothing to the count, even though it has a non-latest result.
@@ -783,8 +779,9 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         assertThat(request.get("/api/admin/cleanup/plagiarism-cases/count", HttpStatus.OK, PlagiarismCasesCleanupCountDTO.class)).isNotNull();
     }
 
-    private Feedback createFeedbackWithLinkedLongFeedback() {
+    private Feedback createFeedbackWithLinkedLongFeedback(Result result) {
         Feedback feedback = new Feedback();
+        result.addFeedback(feedback);
         feedback = feedbackRepository.save(feedback);
 
         LongFeedbackText longFeedback = new LongFeedbackText();

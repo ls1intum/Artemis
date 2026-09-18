@@ -37,4 +37,67 @@
         </rollback>
     </changeSet>
 
+    <changeSet id="20260918135254-03-feedback-names-its-result" author="krusche">
+        <comment>A piece of feedback belongs to one result, and a deleted result now takes its feedback with it.</comment>
+        <!--
+        Feedback that names no result is reachable from nowhere: it is only ever listed through the result that owns
+        it, and the row carries no evidence of which result it was written for. The cleanup that used to remove these
+        rows goes with this changeset, because the schema no longer lets them appear.
+        -->
+        <sql>DELETE FROM feedback WHERE result_id IS NULL;</sql>
+        <!--
+        The delete rule goes first, and the column is required in the next changeset: RESTRICT made deleting a result
+        depend on the application clearing its feedback beforehand, and a key that can refuse the delete is not what a
+        required parent means.
+        -->
+        <dropForeignKeyConstraint baseTableName="feedback" constraintName="feedback_ibfk_1"/>
+        <addForeignKeyConstraint baseTableName="feedback" baseColumnNames="result_id" constraintName="feedback_ibfk_1"
+                                 referencedTableName="result" referencedColumnNames="id" onDelete="CASCADE"/>
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="feedback" constraintName="feedback_ibfk_1"/>
+            <addForeignKeyConstraint baseTableName="feedback" baseColumnNames="result_id" constraintName="feedback_ibfk_1"
+                                     referencedTableName="result" referencedColumnNames="id" onDelete="RESTRICT"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260918135254-04-feedback-result-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM feedback WHERE result_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="feedback" columnName="result_id" columnDataType="BIGINT"/>
+        <rollback>
+            <dropNotNullConstraint tableName="feedback" columnName="result_id" columnDataType="BIGINT"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260918135254-05-quiz-questions-name-their-exercise" author="krusche">
+        <comment>A quiz question belongs to one quiz exercise, and a deleted exercise now takes its questions with it.</comment>
+        <!--
+        A question naming no exercise is reachable from nowhere. No exercise lists it, and the only rows that still
+        point at it are submitted answers whose submissions have themselves lost their participation, so no participant
+        lists those either. Both sides go together; a question that is still part of an exercise keeps its answers.
+        -->
+        <sql>DELETE FROM submitted_answer WHERE quiz_question_id IN (SELECT id FROM quiz_question WHERE exercise_id IS NULL);</sql>
+        <sql>DELETE FROM quiz_question WHERE exercise_id IS NULL;</sql>
+        <!-- RESTRICT made deleting a quiz exercise depend on the application clearing its questions beforehand. -->
+        <dropForeignKeyConstraint baseTableName="quiz_question" constraintName="FKcw89k10abejup8p3hif0kjpw"/>
+        <addForeignKeyConstraint baseTableName="quiz_question" baseColumnNames="exercise_id" constraintName="FKcw89k10abejup8p3hif0kjpw"
+                                 referencedTableName="exercise" referencedColumnNames="id" onDelete="CASCADE"/>
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="quiz_question" constraintName="FKcw89k10abejup8p3hif0kjpw"/>
+            <addForeignKeyConstraint baseTableName="quiz_question" baseColumnNames="exercise_id" constraintName="FKcw89k10abejup8p3hif0kjpw"
+                                     referencedTableName="exercise" referencedColumnNames="id" onDelete="RESTRICT"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260918135254-06-quiz-question-exercise-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM quiz_question WHERE exercise_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="quiz_question" columnName="exercise_id" columnDataType="BIGINT"/>
+        <rollback>
+            <dropNotNullConstraint tableName="quiz_question" columnName="exercise_id" columnDataType="BIGINT"/>
+        </rollback>
+    </changeSet>
+
 </databaseChangeLog>

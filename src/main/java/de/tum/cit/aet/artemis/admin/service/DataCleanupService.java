@@ -166,9 +166,6 @@ public class DataCleanupService {
         int deletedTextBlocks = textBlockCleanupRepository.deleteTextBlockForEmptyFeedback();
         log.info("Deleted {} text blocks for empty feedback", deletedTextBlocks);
 
-        int deletedOrphanFeedback = feedbackCleanupRepository.deleteOrphanFeedback();
-        log.info("Deleted {} orphaned feedback entries", deletedOrphanFeedback);
-
         int deletedOrphanStudentScores = studentScoreCleanupRepository.deleteOrphanStudentScore();
         log.info("Deleted {} orphaned student scores", deletedOrphanStudentScores);
 
