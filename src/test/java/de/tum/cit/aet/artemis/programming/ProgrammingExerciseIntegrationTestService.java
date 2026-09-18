@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -2008,11 +2009,11 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testGetAuxiliaryRepositoriesOk() throws Exception {
         programmingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
-        AuxiliaryRepository first = auxiliaryRepositoryRepository.save(AuxiliaryRepositoryBuilder.defaults().get());
-        AuxiliaryRepository second = auxiliaryRepositoryRepository.save(AuxiliaryRepositoryBuilder.defaults().withDifferentName().withDifferentCheckoutDirectory().get());
+        AuxiliaryRepository first = AuxiliaryRepositoryBuilder.defaults().get();
+        AuxiliaryRepository second = AuxiliaryRepositoryBuilder.defaults().withDifferentName().withDifferentCheckoutDirectory().get();
         programmingExercise.addAuxiliaryRepository(first);
         programmingExercise.addAuxiliaryRepository(second);
-        programmingExerciseRepository.save(programmingExercise);
+        auxiliaryRepositoryRepository.saveAll(List.of(first, second));
         var returnedAuxiliaryRepositories = request.getList(defaultGetAuxReposEndpoint(), HttpStatus.OK, AuxiliaryRepositoryDTO.class);
         assertThat(returnedAuxiliaryRepositories).hasSize(2);
         assertThat(returnedAuxiliaryRepositories).extracting(AuxiliaryRepositoryDTO::id).containsExactlyInAnyOrder(first.getId(), second.getId());
@@ -2101,20 +2102,16 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     private AuxiliaryRepository addAuxiliaryRepositoryToExercise() {
-        AuxiliaryRepository repository = AuxiliaryRepositoryBuilder.defaults().get();
-        auxiliaryRepositoryRepository.save(repository);
-        programmingExercise.setAuxiliaryRepositories(new ArrayList<>());
-        programmingExercise.addAuxiliaryRepository(repository);
-        programmingExerciseRepository.save(programmingExercise);
-        return repository;
+        addAuxiliaryRepositoryToExercise(programmingExercise);
+        return programmingExercise.getAuxiliaryRepositories().iterator().next();
     }
 
     public void addAuxiliaryRepositoryToExercise(ProgrammingExercise exercise) {
         AuxiliaryRepository repository = AuxiliaryRepositoryBuilder.defaults().get();
-        auxiliaryRepositoryRepository.save(repository);
-        exercise.setAuxiliaryRepositories(new ArrayList<>());
+        exercise.setAuxiliaryRepositories(new LinkedHashSet<>());
+        // Attach it first: a repository names the exercise it belongs to, and cannot be written without one.
         exercise.addAuxiliaryRepository(repository);
-        programmingExerciseRepository.save(exercise);
+        auxiliaryRepositoryRepository.save(repository);
     }
 
     private String defaultAuxiliaryRepositoryEndpoint() {
@@ -2150,7 +2147,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     private void testAuxRepo(List<AuxiliaryRepository> body, HttpStatus expectedStatus) throws Exception {
-        programmingExercise.setAuxiliaryRepositories(body);
+        programmingExercise.setAuxiliaryRepositories(new LinkedHashSet<>(body));
         var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise);
         request.putWithResponseBody(defaultAuxiliaryRepositoryEndpoint(), updateDTO, ProgrammingExercise.class, expectedStatus);
     }

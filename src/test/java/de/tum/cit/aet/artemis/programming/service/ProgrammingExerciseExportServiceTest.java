@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -453,7 +454,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         auxiliaryRepository.setExercise(programmingExercise);
         // The association is an ordered list, so the child has to be saved through the exercise: persisting it on its
         // own leaves the order column null and every later read of the exercise fails.
-        programmingExercise.setAuxiliaryRepositories(new ArrayList<>(List.of(auxiliaryRepository)));
+        programmingExercise.setAuxiliaryRepositories(new LinkedHashSet<>(List.of(auxiliaryRepository)));
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
     }
 
@@ -759,8 +760,8 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
                 .as("the shared exercise passes the validation the creation runs").doesNotThrowAnyException();
         // the repository itself survives, only the identity is gone
         assertThat(imported.getAuxiliaryRepositories()).hasSize(1);
-        assertThat(imported.getAuxiliaryRepositories().getFirst().getName()).isEqualTo("solutionhints");
-        assertThat(imported.getAuxiliaryRepositories().getFirst().getCheckoutDirectory()).isEqualTo("solutionhints");
+        assertThat(imported.getAuxiliaryRepositories().iterator().next().getName()).isEqualTo("solutionhints");
+        assertThat(imported.getAuxiliaryRepositories().iterator().next().getCheckoutDirectory()).isEqualTo("solutionhints");
     }
 
     /**

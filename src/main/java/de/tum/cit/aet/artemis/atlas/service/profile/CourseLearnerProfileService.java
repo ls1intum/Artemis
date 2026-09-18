@@ -50,10 +50,9 @@ public class CourseLearnerProfileService {
             return existingProfile.get();
         }
 
-        // Ensure that the user has a learner profile (lazy creation)
-        if (user.getLearnerProfile() == null) {
-            learnerProfileService.createProfile(user);
-        }
+        // Ask the database rather than the association: User#learnerProfile is lazy, so a user loaded without it looks
+        // profile-less even when a profile exists, and creating a second one leaves the first reachable from nowhere.
+        var learnerProfile = learnerProfileService.getOrCreateLearnerProfile(user);
 
         var courseProfile = new CourseLearnerProfile();
         courseProfile.setCourse(course);
@@ -63,7 +62,6 @@ public class CourseLearnerProfileService {
         courseProfile.setRepetitionIntensity(3);
         courseProfile.setTimeInvestment(3);
 
-        var learnerProfile = learnerProfileRepository.findByUserElseThrow(user);
         courseProfile.setLearnerProfile(learnerProfile);
 
         return courseLearnerProfileRepository.save(courseProfile);
@@ -77,8 +75,8 @@ public class CourseLearnerProfileService {
      */
     public void createCourseLearnerProfiles(Course course, Set<User> users) {
 
-        // Ensure that all users have a learner profile (lazy creation)
-        users.stream().filter(user -> user.getLearnerProfile() == null).forEach(learnerProfileService::createProfile);
+        // Ask the database per user rather than reading the lazy association, for the reason given above.
+        users.forEach(learnerProfileService::getOrCreateLearnerProfile);
 
         Set<LearnerProfile> learnerProfiles = learnerProfileRepository.findAllByUserIn(users);
 
@@ -86,7 +84,7 @@ public class CourseLearnerProfileService {
 
             CourseLearnerProfile courseProfile = new CourseLearnerProfile();
             courseProfile.setCourse(course);
-            LearnerProfile learnerProfile = learnerProfiles.stream().filter(profile -> profile.getUser().equals(user)).findFirst()
+            LearnerProfile learnerProfile = learnerProfiles.stream().filter(profile -> profile.getUser().getId().equals(user.getId())).findFirst()
                     .orElseThrow(() -> new IllegalStateException("Learner profile for user " + user.getLogin() + " not found"));
 
             courseProfile.setLearnerProfile(learnerProfile);

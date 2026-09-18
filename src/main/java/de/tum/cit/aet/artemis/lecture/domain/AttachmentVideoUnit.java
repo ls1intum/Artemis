@@ -32,6 +32,11 @@ public class AttachmentVideoUnit extends LectureUnit {
     @JsonIgnoreProperties(value = "attachmentVideoUnit", allowSetters = true)
     private Attachment attachment;
 
+    /**
+     * Every slide row this unit has, including the superseded ones. {@link AttachmentVideoUnitDTO} leaves those out,
+     * and it is the only thing that reads this collection; everything else reads the deck through
+     * {@code SlideRepository}, whose queries filter them.
+     */
     @OneToMany(mappedBy = "attachmentVideoUnit", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("attachmentVideoUnit")
     @OrderBy("slideNumber ASC")
