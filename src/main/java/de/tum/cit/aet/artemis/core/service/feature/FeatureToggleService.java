@@ -39,9 +39,9 @@ public class FeatureToggleService {
     // The reconcile passes have their own static config (artemis.weaviate.reconcile.*) precisely because their
     // numeric tuning (batch sizes, the outbox depth limit) still needs a deliberate, restart-time decision — see
     // WeaviateReconcileProperties. These two booleans exist only to seed the runtime toggle's very first value, the
-    // same role globalSearchEnabledOnStart plays for Feature.GlobalSearch: whoever already had missing and drift
-    // enabled in YAML keeps that state on upgrade, but from here on the toggle is the live, restart-free switch.
-    // missing and drift share one toggle because neither deletes; orphan stays separate because it does.
+    // same role globalSearchEnabledOnStart plays for Feature.GlobalSearch; from then on the toggle is the live,
+    // restart-free switch. missing and drift share one toggle because neither deletes; orphan stays separate
+    // because it does.
     private final boolean globalSearchReconcileEnabledOnStart;
 
     private final boolean globalSearchReconcileOrphanEnabledOnStart;
@@ -66,8 +66,10 @@ public class FeatureToggleService {
         this.profileService = profileService;
         this.rateLimitConfigurationService = rateLimitConfigurationService;
         this.globalSearchEnabledOnStart = globalSearchEnabledOnStart;
-        // Both had to be independently on before to be equivalent to the combined toggle now; seeding true off just
-        // one of them would silently switch the other on for an operator who never asked for it.
+        // A single combined toggle can't honor two conflicting YAML values, so an asymmetric seed (one true, one
+        // false) resolves to off rather than guessing which pass the operator actually meant to enable; that
+        // matches WeaviateReconcileProperties' own stance that enabling a pass is an operational decision, not
+        // something a deployment should do on its behalf.
         this.globalSearchReconcileEnabledOnStart = missingSweepEnabledOnStart && driftSweepEnabledOnStart;
         this.globalSearchReconcileOrphanEnabledOnStart = orphanSweepEnabledOnStart;
     }
