@@ -409,7 +409,12 @@ public class LectureUnitProcessingState extends DomainObject {
         if (stageChanged || progressAdvanced) {
             this.lastProgressAt = now;
         }
-        this.stageProgress = stageProgress;
+        // Only move the stored counter on genuine progress: overwriting it on a regression would shift the
+        // baseline the next call compares against, so a later repeat of an already-seen peak (e.g. 41, 40,
+        // 41) would look like new progress and incorrectly refresh the stall clock.
+        if (stageChanged || progressAdvanced) {
+            this.stageProgress = stageProgress;
+        }
         this.stageTotal = stageTotal;
         return stageChanged || progressAdvanced;
     }

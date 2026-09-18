@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.lecture.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
+
 import org.junit.jupiter.api.Test;
 
 /**
@@ -52,9 +54,25 @@ class LectureUnitProcessingStateTest {
         boolean advanced = state.recordStageProgress("embedding", 40, 64);
 
         assertThat(advanced).isFalse();
-        // The stored counter still reflects whatever Iris most recently reported, for display purposes;
-        // only the stall clock ignores the regression.
-        assertThat(state.getStageProgress()).isEqualTo(40);
+        // The stored counter stays at the last genuinely-advanced value: overwriting it with the regressed
+        // report would shift the baseline the next call compares against (see the test below).
+        assertThat(state.getStageProgress()).isEqualTo(41);
+    }
+
+    @Test
+    void repeatingAnAlreadySeenPeakAfterARegressionDoesNotAdvance() {
+        // 41, 40, 41: the regression at 40 is stored for display (see the test above), but that must not
+        // shift the baseline the stall clock compares against. The third call repeats a value already seen
+        // at the first call, so it must not count as progress even though 41 > 40.
+        LectureUnitProcessingState state = new LectureUnitProcessingState();
+        state.recordStageProgress("embedding", 41, 64);
+        state.recordStageProgress("embedding", 40, 64);
+        ZonedDateTime lastProgressAfterRegression = state.getLastProgressAt();
+
+        boolean advanced = state.recordStageProgress("embedding", 41, 64);
+
+        assertThat(advanced).isFalse();
+        assertThat(state.getLastProgressAt()).isEqualTo(lastProgressAfterRegression);
     }
 
     @Test
