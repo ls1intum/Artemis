@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, viewChildren } from '@angular/core';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SkeletonModule } from 'primeng/skeleton';
 import {
     faBook,
@@ -8,23 +7,19 @@ import {
     faComment,
     faComments,
     faCube,
-    faFileLines,
     faFileUpload,
     faFont,
     faGraduationCap,
     faHashtag,
     faKeyboard,
+    faPhotoFilm,
     faProjectDiagram,
     faQuestion,
     faQuestionCircle,
 } from '@fortawesome/free-solid-svg-icons';
-import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
 import { MIN_SEARCH_QUERY_LENGTH, SHORT_QUERY_MAX_LENGTH, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
-import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
-import { MODULE_FEATURE_IRIS } from 'app/app.constants';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LECTURE_CONTENT_TYPE } from 'app/core/navbar/global-search/models/lecture-content-result.util';
+import { IrisSearchAvailabilityService } from 'app/core/navbar/global-search/services/iris-search-availability.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
 import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
@@ -35,34 +30,17 @@ import { SearchOverlayService } from 'app/core/navbar/global-search/services/sea
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/components/views/iris-answer/global-search-iris-answer.component';
 
-// Number of fixed action buttons rendered above the search results.
-// Arrow-key indices 0..NAV_ACTION_COUNT-1 map to these buttons in template order.
-// Increment this constant when adding a new action button.
-export const NAV_ACTION_COUNT = 1;
-
-/** Keyboard-navigation index of the lecture-search action button. */
-export const LECTURE_SEARCH_ACTION_INDEX = 0;
-
 @Component({
     selector: 'jhi-global-search-navigation-view',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [
-        GlobalSearchActionItemComponent,
-        GlobalSearchIrisAnswerComponent,
-        FaIconComponent,
-        SearchableEntityItemComponent,
-        SearchResultItemComponent,
-        SkeletonModule,
-        ArtemisTranslatePipe,
-    ],
+    imports: [GlobalSearchIrisAnswerComponent, SearchableEntityItemComponent, SearchResultItemComponent, SkeletonModule, ArtemisTranslatePipe],
     templateUrl: './global-search-navigation-view.component.html',
     styleUrls: ['./global-search-navigation-view.component.scss'],
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchNavigationViewComponent) }],
 })
 export class GlobalSearchNavigationViewComponent extends SearchResultView {
-    private readonly profileService = inject(ProfileService);
-    private readonly accountService = inject(AccountService);
+    private readonly availability = inject(IrisSearchAvailabilityService);
 
     readonly searchQuery = input.required<string>();
     readonly selectedIndex = input<number>(-1);
@@ -94,34 +72,16 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     // Skeleton placeholder array for loading animation
     protected readonly skeletonItems = Array(5);
 
-    // Emits when an action button is activated (click or Enter); the modal navigates to that view.
-    readonly viewSelected = output<SearchView>();
     readonly entityClick = output<SearchableEntity>();
 
     private readonly router = inject(Router);
     private readonly overlay = inject(SearchOverlayService);
 
-    protected readonly NAV_ACTION_COUNT = NAV_ACTION_COUNT;
-    protected readonly LECTURE_SEARCH_ACTION_INDEX = LECTURE_SEARCH_ACTION_INDEX;
-
     // Query all selectable items for auto-scroll functionality
     private readonly selectableItems = viewChildren<ElementRef<HTMLElement>>('selectableItem');
 
-    // False when artemis.iris.enabled = false in the server config.
-    private readonly irisModuleEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
-    // True only when the module is enabled AND the user has opted into AI usage (LOCAL_AI or CLOUD_AI).
-    protected readonly irisEnabled = computed(() => {
-        if (!this.irisModuleEnabled) return false;
-        const usage = this.accountService.userIdentity()?.selectedLLMUsage;
-        return usage === LLMSelectionDecision.LOCAL_AI || usage === LLMSelectionDecision.CLOUD_AI;
-    });
-    // Lecture search button is only visible when no filter is active
-    protected readonly showLectureButton = computed(() => this.activeFilters().length === 0);
-    // Number of action buttons currently visible (only the lecture search button now)
-    protected readonly actionButtonCount = computed(() => {
-        if (!this.irisEnabled()) return 0;
-        return this.showLectureButton() ? 1 : 0;
-    });
+    // True only when the Iris module is enabled AND the user has opted into AI usage (LOCAL_AI or CLOUD_AI).
+    protected readonly irisEnabled = this.availability.contentSearchAvailable;
 
     constructor() {
         super();
@@ -150,8 +110,8 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     protected readonly faQuestion = faQuestion;
     protected readonly faCalendarCheck = faCalendarCheck;
 
-    // Searchable entities for initial view
-    protected searchableEntities: SearchableEntity[] = [
+    // Every searchable entity the initial view can offer
+    private readonly allSearchableEntities: SearchableEntity[] = [
         {
             id: 'courses',
             title: 'global.search.entities.coursesTitle',
@@ -178,6 +138,15 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             type: 'filter',
             enabled: true,
             filterTags: ['lecture', 'lecture_unit'],
+        },
+        {
+            id: 'slides-and-videos',
+            title: 'global.search.entities.slidesAndVideosTitle',
+            description: 'global.search.entities.slidesAndVideosDescription',
+            icon: faPhotoFilm,
+            type: 'filter',
+            enabled: true,
+            filterTags: [LECTURE_CONTENT_TYPE],
         },
         {
             id: 'communication',
@@ -208,20 +177,20 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         },
     ];
 
-    // Total selectable items reported to the modal to bound ArrowDown/ArrowUp.
-    readonly itemCount = computed(() => {
-        const buttonCount = this.actionButtonCount();
-        if (this.showResults()) {
-            // When showing results, action buttons may be visible + results
-            return buttonCount + this.results().length;
-        } else {
-            // When showing entities, count action buttons + entities
-            return buttonCount + this.searchableEntities.length;
-        }
-    });
+    /**
+     * The searchable entities the initial view shows. The slides and videos filter only works through Iris content search,
+     * so it is offered only to users who can use that search.
+     */
+    protected readonly searchableEntities = computed(() =>
+        this.irisEnabled() ? this.allSearchableEntities : this.allSearchableEntities.filter((entity) => !entity.filterTags?.includes(LECTURE_CONTENT_TYPE)),
+    );
 
-    protected readonly SearchView = SearchView;
-    protected readonly faFileLines = faFileLines;
+    /** True when the slides and videos filter is active without a search term, which content search cannot run without. */
+    protected readonly isContentSearchPrompt = computed(() => this.activeFilters().includes(LECTURE_CONTENT_TYPE) && this.searchQuery().trim().length === 0);
+
+    // Total selectable items reported to the modal to bound ArrowDown/ArrowUp.
+    readonly itemCount = computed(() => (this.showResults() ? this.results().length : this.searchableEntities().length));
+
     protected readonly faHashtag = faHashtag;
 
     protected onEntityItemClick(entity: SearchableEntity) {
@@ -240,6 +209,9 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         }
         if (type === 'lecture' || type === 'lecture_unit') {
             return faBook;
+        }
+        if (type === LECTURE_CONTENT_TYPE) {
+            return faPhotoFilm;
         }
         if (type === 'channel') {
             return faHashtag;
@@ -260,6 +232,16 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     }
 
     protected navigateToResult(result: GlobalSearchResult) {
+        if (result.type === LECTURE_CONTENT_TYPE) {
+            const link = result.metadata?.['link'];
+            const queryParams = result.metadata?.['queryParams'];
+            if (link) {
+                void this.router.navigate([link], { queryParams });
+            }
+            this.overlay.close();
+            return;
+        }
+
         const courseId = result.metadata?.['courseId'];
         if (!courseId) {
             this.overlay.close();
@@ -376,29 +358,16 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         if (event.key !== 'Enter') return;
         const idx = this.selectedIndex();
         if (idx < 0) return;
-        const buttonCount = this.actionButtonCount();
-
-        // Lecture search button at index 0 when iris is enabled and no filter active
-        if (this.showLectureButton() && this.irisEnabled() && idx === LECTURE_SEARCH_ACTION_INDEX) {
-            event.preventDefault();
-            this.viewSelected.emit(SearchView.Lecture);
-            return;
-        }
-
-        // Handle items after action buttons
-        const itemIndex = idx - buttonCount;
 
         if (this.showResults()) {
-            // When showing results
             event.preventDefault();
-            const result = this.results()[itemIndex];
+            const result = this.results()[idx];
             if (result) {
                 this.navigateToResult(result);
             }
         } else {
-            // When showing entities
             event.preventDefault();
-            const entity = this.searchableEntities[itemIndex];
+            const entity = this.searchableEntities()[idx];
             if (entity && entity.enabled) {
                 this.entityClick.emit(entity);
             }
