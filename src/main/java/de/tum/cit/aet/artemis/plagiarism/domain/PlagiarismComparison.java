@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.jplag.JPlagComparison;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
@@ -35,6 +36,8 @@ public class PlagiarismComparison extends DomainObject implements Comparable<Pla
      * The result this comparison belongs to.
      */
     @ManyToOne(targetEntity = PlagiarismResult.class)
+    @JoinColumn(nullable = false)
+    @Parent
     private PlagiarismResult plagiarismResult;
 
     /**

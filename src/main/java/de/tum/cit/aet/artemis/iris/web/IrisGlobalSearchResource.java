@@ -77,7 +77,7 @@ public class IrisGlobalSearchResource {
      * Courses with Iris switched off in the course settings are dropped from the requested scope, so content search respects the same toggle as every other Iris feature.
      * Disabling a course does not remove what was already ingested, which is why the scope has to be narrowed here rather than relying on an empty index.
      *
-     * @param requestDTO the search request containing query, limit, and optional courseIds filter
+     * @param requestDTO the search request containing query, limit, and the optional course filters
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of search results
      */
     @PostMapping("lecture-search")
@@ -85,8 +85,30 @@ public class IrisGlobalSearchResource {
     public ResponseEntity<List<PyrisLectureSearchResultDTO>> search(@RequestBody @Valid GlobalSearchLectureRequestDTO requestDTO) {
         var user = userRepository.getUserWithCourseRolesAndAuthorities();
         var accessContext = irisAccessContextService.resolveAccessContext(user);
-        var courseIds = irisEnabledScope(requestDTO.courseIds(), accessContext);
-        return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit(), courseIds, accessContext));
+        var excludedCourseIds = requestDTO.excludeCourseIds() == null ? List.<Long>of() : requestDTO.excludeCourseIds();
+        var scope = lectureSearchScope(requestDTO.courseIds(), excludedCourseIds, accessContext);
+        if (scope.searchesNothing()) {
+            return ResponseEntity.ok(List.of());
+        }
+        return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit(), scope.courseIds(), scope.excludeCourseIds(), accessContext));
+    }
+
+    /**
+     * The resolved search scope: the courses to search, the exclusions Pyris still has to apply, and whether there is anything left to search at all.
+     *
+     * @param courseIds        the courses to search, or {@code null} to leave an unrestricted caller unscoped
+     * @param excludeCourseIds the courses Pyris has to hide itself, or {@code null} when Artemis already removed them from {@link #courseIds}
+     * @param searchesNothing  whether the caller's own exclusions left no course to search, which is answered without asking Pyris
+     */
+    private record LectureSearchScope(@Nullable List<Long> courseIds, @Nullable List<Long> excludeCourseIds, boolean searchesNothing) {
+
+        static LectureSearchScope nothing() {
+            return new LectureSearchScope(null, null, true);
+        }
+
+        static LectureSearchScope of(@Nullable List<Long> courseIds, @Nullable List<Long> excludeCourseIds) {
+            return new LectureSearchScope(courseIds, excludeCourseIds, false);
+        }
     }
 
     /**
@@ -101,26 +123,34 @@ public class IrisGlobalSearchResource {
      * Pyris reads an absent list as unscoped, so a caller whose courses all have Iris switched off is refused instead.
      *
      * @param requestedCourseIds the course IDs the client asked for, {@code null} or empty for an unscoped search
+     * @param excludedCourseIds  the course IDs the client asked to hide, empty when nothing is hidden
      * @param accessContext      the caller's resolved access context
-     * @return the enabled subset to search, or {@code null} to leave an unrestricted caller unscoped
+     * @return the scope to search, see {@link LectureSearchScope}
      */
-    @Nullable
-    private List<Long> irisEnabledScope(@Nullable List<Long> requestedCourseIds, PyrisAccessContextDTO accessContext) {
+    private LectureSearchScope lectureSearchScope(@Nullable List<Long> requestedCourseIds, List<Long> excludedCourseIds, PyrisAccessContextDTO accessContext) {
         boolean isUnscoped = requestedCourseIds == null || requestedCourseIds.isEmpty();
         if (isUnscoped && accessContext.unrestricted()) {
-            // An unrestricted caller carries no course list to narrow, so Pyris keeps its own no-ceiling behaviour.
-            return null;
+            // An unrestricted caller carries no course list to narrow, so Pyris keeps its own no-ceiling behaviour. With no
+            // ceiling to subtract from, it is also the only caller whose exclusions have to be applied by the query itself.
+            return LectureSearchScope.of(null, excludedCourseIds.isEmpty() ? null : excludedCourseIds);
         }
         // An unscoped request is narrowed from every course the caller can access, a scoped one from what it asked for.
         var candidateCourseIds = isUnscoped ? accessContext.courseIds() : requestedCourseIds;
-        var enabledCourseIds = irisSettingsService.filterCourseIdsWithIrisEnabled(candidateCourseIds);
+        // Every other caller travels with a ceiling, so a hidden course is subtracted here and never named to Pyris.
+        var scopedCourseIds = candidateCourseIds.stream().filter(courseId -> !excludedCourseIds.contains(courseId)).toList();
+        if (scopedCourseIds.isEmpty() && !candidateCourseIds.isEmpty()) {
+            // The exclusions removed every course in scope. An empty list is dropped on the wire and read as unscoped, so
+            // answering here is what keeps "hide all of them" from searching all of them.
+            return LectureSearchScope.nothing();
+        }
+        var enabledCourseIds = irisSettingsService.filterCourseIdsWithIrisEnabled(scopedCourseIds);
         // A caller without any course has nothing to narrow; its access context is empty too, so Pyris searches nothing.
-        if (enabledCourseIds.isEmpty() && !candidateCourseIds.isEmpty()) {
+        if (enabledCourseIds.isEmpty() && !scopedCourseIds.isEmpty()) {
             // suppress the error alert with skipAlert: true so that the client can fall back to its standard metadata search
             throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "Iris is disabled for every course in the search scope", ENTITY_NAME, "iris.course_disabled",
                     true);
         }
-        return enabledCourseIds;
+        return LectureSearchScope.of(enabledCourseIds, null);
     }
 
     /**

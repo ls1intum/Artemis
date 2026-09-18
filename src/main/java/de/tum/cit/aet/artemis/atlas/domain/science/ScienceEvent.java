@@ -10,6 +10,7 @@ import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
@@ -19,6 +20,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @Entity
 @Table(name = "science_event")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@AggregateRoot("Analytics event; `resource_id` is an untyped pointer with no foreign key.")
 public class ScienceEvent extends DomainObject {
 
     @Column(name = "identity", nullable = false)
