@@ -42,7 +42,7 @@
                 "empty": "Keine Kurse vorhanden.",
                 "error": "Die Kursabdeckung konnte nicht geladen werden. Bitte versuche es erneut.",
                 "courseFallback": "Kurs",
-                "legend": "Jede Zelle zeigt indexiert / erwartet pro Typ. Grün = vollständig, rot = fehlend, grau = nichts erwartet.",
+                "legend": "Jede Zelle zeigt indexiert / erwartet pro Typ. Grün = vollständig, rot = fehlend oder verwaist, grau = nichts erwartet.",
                 "sort": {
                     "name": "Name",
                     "release": "Startdatum",

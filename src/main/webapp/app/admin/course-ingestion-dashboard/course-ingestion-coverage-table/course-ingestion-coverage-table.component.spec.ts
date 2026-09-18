@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
@@ -251,6 +251,45 @@ describe('CourseIngestionCoverageTableComponent', () => {
         expect(labels[0]).toContain('Algorithms');
         expect(labels[1]).toContain('2');
         expect(new Set(labels).size).toBe(labels.length);
+    });
+
+    it('should not let a slower superseded coverage request repaint the table', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const first = new Subject<PageableResult<IngestionCoverage>>();
+        const second = new Subject<PageableResult<IngestionCoverage>>();
+        liveSpy.mockReturnValueOnce(first.asObservable());
+        liveSpy.mockReturnValueOnce(second.asObservable());
+
+        // Two loads in flight: the user sorts, then sorts again before the first response comes back.
+        component['toggleSort']('release');
+        component['toggleSort']('release');
+
+        const newer: IngestionCoverage[] = [{ ...rows[0], courseId: 99, courseTitle: 'Newer' }];
+        second.next({ content: newer, totalElements: 1 });
+        first.next({ content: [{ ...rows[0], courseId: 1, courseTitle: 'Stale' }], totalElements: 42 });
+        fixture.detectChanges();
+
+        // The superseded request was cancelled, so its late response changes neither the rows nor the total.
+        expect(component.rows().map((row) => row.courseTitle)).toEqual(['Newer']);
+        expect(component.totalRecords()).toBe(1);
+    });
+
+    it('should mark a type with orphaned objects as incomplete, the way the browser does', () => {
+        const orphanOnly: IngestionCoverage = {
+            ...rows[0],
+            typeCounts: [{ type: 'exercise', expected: 5, indexed: 5, missing: 0, orphaned: 3 }],
+        };
+
+        // Nothing is missing, so the count still reads 5/5, but stale objects remain in the index. The browser tree
+        // counts that type as incomplete, so a green cell here would have the two views disagreeing about one number.
+        const cell = component['cell'](orphanOnly, 'exercise');
+        expect(cell.text).toBe('5/5');
+        expect(cell.class).toBe('text-state-danger');
+
+        const clean = component['cell'](rows[0], 'lecture');
+        expect(clean.class).toBe('text-state-success');
     });
 
     it('should expose the active sort state through aria-sort and leave inactive headers without it', async () => {

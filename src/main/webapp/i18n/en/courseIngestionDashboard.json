@@ -42,7 +42,7 @@
                 "empty": "No courses to show.",
                 "error": "Failed to load course coverage. Please try again.",
                 "courseFallback": "Course",
-                "legend": "Each cell shows indexed / expected per type. Green = complete, red = missing, grey = none expected.",
+                "legend": "Each cell shows indexed / expected per type. Green = complete, red = missing or orphaned, grey = none expected.",
                 "sort": {
                     "name": "Name",
                     "release": "Release date",

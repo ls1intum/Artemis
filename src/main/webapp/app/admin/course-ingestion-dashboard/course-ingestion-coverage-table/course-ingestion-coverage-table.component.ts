@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, output, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -116,6 +116,13 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
     readonly refreshing = signal(false);
     readonly lastUpdated = signal<string | undefined>(undefined);
 
+    /**
+     * The in-flight coverage request, if any. Every sort, filter, search, page and refresh calls load() again, so
+     * without cancelling here a slower earlier response can land after a newer one and repaint the table with rows for
+     * a query the user has already moved off.
+     */
+    private pendingRequest?: Subscription;
+
     readonly page = signal(0);
     readonly pageSize = signal(20);
     readonly sortMode = signal<SortMode>('name');
@@ -170,6 +177,7 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
     }
 
     private load(): void {
+        this.pendingRequest?.unsubscribe();
         this.loading.set(true);
         this.error.set(false);
         const page = this.page();
@@ -185,7 +193,7 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
             ? this.dashboardService.getStoredCoverage({ page, size, sort: `${config.storedField},${direction}`, status: this.statusFilter(), active: this.activeFilter(), search })
             : this.dashboardService.getLiveCoveragePage({ page, size, sort: `${config.liveField},${direction}`, search });
 
-        request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        this.pendingRequest = request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
             next: (result) => {
                 this.rows.set(result.content);
                 this.totalRecords.set(result.totalElements);
@@ -283,9 +291,12 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
         if (!count || (count.expected === 0 && count.indexed === 0)) {
             return { text: '–', class: 'text-muted-color' };
         }
+        // Orphaned counts as incomplete here too, the way the browser tree and its incomplete-type count already treat
+        // it. A cell that reads green while the drill-down for the same course calls the type incomplete is the two
+        // views disagreeing about one number.
         return {
             text: `${count.indexed}/${count.expected}`,
-            class: count.missing > 0 ? 'text-state-danger' : 'text-state-success',
+            class: count.missing > 0 || count.orphaned > 0 ? 'text-state-danger' : 'text-state-success',
         };
     }
 
