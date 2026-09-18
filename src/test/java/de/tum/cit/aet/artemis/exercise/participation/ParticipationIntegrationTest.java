@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
-import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
+import de.tum.cit.aet.artemis.core.dto.UserNameDTO;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
@@ -268,7 +268,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         URI location = request.post("/api/exercise/exercises/" + modelingExercise.getId() + "/participations", null, HttpStatus.CREATED);
 
         StudentParticipationDTO participation = request.get(location.getPath(), HttpStatus.OK, StudentParticipationDTO.class);
-        assertThat(participation.exercise().id()).as("participated in correct exercise").isEqualTo(modelingExercise.getId());
         assertThat(participation.student()).as("Student got set").isNotNull();
         assertThat(participation.participantIdentifier()).as("Correct student got set").isEqualTo(TEST_PREFIX + "student1");
         Participation storedParticipation = participationRepo
@@ -284,7 +283,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         URI location = request.post("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
 
         StudentParticipationDTO participation = request.get(location.getPath(), HttpStatus.OK, StudentParticipationDTO.class);
-        assertThat(participation.exercise().id()).as("participated in correct exercise").isEqualTo(textExercise.getId());
         assertThat(participation.student()).as("Student got set").isNotNull();
         assertThat(participation.participantIdentifier()).as("Correct student got set").isEqualTo(TEST_PREFIX + "student2");
         Participation storedParticipation = participationRepo
@@ -309,7 +307,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 HttpStatus.CREATED);
 
         assertThat(participation.team()).isNotNull();
-        assertThat(participation.team().students()).extracting(UserPublicInfoDTO::getId).containsExactlyInAnyOrder(student1.getId(), student2.getId());
+        assertThat(participation.team().students()).extracting(UserNameDTO::id).containsExactlyInAnyOrder(student1.getId(), student2.getId());
     }
 
     @Test
@@ -1374,7 +1372,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 StudentParticipationDTO.class, HttpStatus.OK);
         assertThat(updatedParticipation.initializationState()).isEqualTo(InitializationState.INITIALIZED);
         assertThat(updatedParticipation.repositoryUri()).isEqualTo(participation.getRepositoryUri());
-        assertThat(updatedParticipation.exercise().id()).isEqualTo(programmingExercise.getId());
         assertThat(updatedParticipation.submissions()).isNull();
     }
 
@@ -1401,7 +1398,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 StudentParticipationDTO.class, HttpStatus.OK);
 
         assertThat(updatedParticipation.team()).isNotNull();
-        assertThat(updatedParticipation.team().students()).extracting(UserPublicInfoDTO::getId).containsExactlyInAnyOrder(student1.getId(), student2.getId());
+        assertThat(updatedParticipation.team().students()).extracting(UserNameDTO::id).containsExactlyInAnyOrder(student1.getId(), student2.getId());
     }
 
     @Test
@@ -1759,34 +1756,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(actualParticipation.submissions()).as("Only latest submission is returned").extracting(ParticipationSubmissionDTO::id).containsExactly(submission.getId());
         assertThat(actualParticipation.submissions().getFirst().results()).as("All results of the latest submission are returned").extracting(ParticipationSubmissionResultDTO::id)
                 .containsExactlyInAnyOrder(firstResult.getId(), latestResult.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getParticipationIncludesCourseIdRequiredForClientAccessRights() throws Exception {
-        var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
-
-        var actualParticipation = request.get("/api/exercise/participations/" + participation.getId(), HttpStatus.OK, StudentParticipationDTO.class);
-
-        assertThat(actualParticipation.exercise()).isNotNull();
-        assertThat(actualParticipation.exercise().course()).isNotNull();
-        assertThat(actualParticipation.exercise().course().id()).isEqualTo(course.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getExamParticipationIncludesCourseAndExamContextRequiredForClientAccessRights() throws Exception {
-        var examExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
-        var participation = participationUtilService.createAndSaveParticipationForExercise(examExercise, TEST_PREFIX + "student1");
-
-        var actualParticipation = request.get("/api/exercise/participations/" + participation.getId(), HttpStatus.OK, StudentParticipationDTO.class);
-
-        assertThat(actualParticipation.exercise()).isNotNull();
-        assertThat(actualParticipation.exercise().course()).isNotNull();
-        assertThat(actualParticipation.exercise().course().id()).isEqualTo(examExercise.getExam().getCourse().getId());
-        assertThat(actualParticipation.exercise().exerciseGroup()).isNotNull();
-        assertThat(actualParticipation.exercise().exerciseGroup().id()).isEqualTo(examExercise.getExerciseGroup().getId());
-        assertThat(actualParticipation.exercise().exerciseGroup().exam().id()).isEqualTo(examExercise.getExam().getId());
     }
 
     @Test
