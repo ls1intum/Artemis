@@ -34,7 +34,8 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
 
     private static final String TEST_PREFIX = "ingcovres";
 
-    private static final String BASE = "/api/global-search/admin/";
+    // TEMPORARY (revert before merge): the resource is relaxed to instructor and served outside the /admin/ segment.
+    private static final String BASE = "/api/global-search/ingestion-dashboard/";
 
     @Autowired
     private IngestionCoverageRepository ingestionCoverageRepository;

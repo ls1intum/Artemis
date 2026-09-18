@@ -28,7 +28,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateHealthIndicator;
@@ -44,14 +44,18 @@ import de.tum.cit.aet.artemis.iris.api.IrisHealthApi;
 /**
  * Admin-only, read-only endpoints for the ingestion-observability dashboard: the index overview, the stored per-course
  * coverage projection (cross-course views), a live-per-page coverage view (default matrix view), and a manual refresh.
- * Only available when Weaviate is enabled; every endpoint requires admin.
+ * Only available when Weaviate is enabled.
+ * <p>
+ * TEMPORARY (revert before merge): normally admin-only under {@code api/global-search/admin/} with a class-level
+ * {@code @EnforceAdmin}. Relaxed to instructor and moved out of the {@code /admin/} segment so the page can be
+ * exercised on the test server without an admin account: {@code SecurityConfiguration} maps every per-module admin
+ * path to {@code ROLE_ADMIN} in the filter chain, ahead of any method-level annotation.
  */
 @Profile(PROFILE_CORE)
 @Conditional(WeaviateEnabled.class)
-@EnforceAdmin
 @Lazy
 @RestController
-@RequestMapping("api/global-search/admin/")
+@RequestMapping("api/global-search/ingestion-dashboard/")
 @FeatureUsage("monitoring/ingestion-dashboard")
 public class IngestionCoverageResource {
 
@@ -100,6 +104,7 @@ public class IngestionCoverageResource {
      *
      * @return the index overview
      */
+    @EnforceAtLeastInstructor
     @GetMapping("index/overview")
     public ResponseEntity<IndexOverviewDTO> getIndexOverview() {
         Health health = weaviateHealthIndicator.health();
@@ -131,6 +136,7 @@ public class IngestionCoverageResource {
      * @param pageable the page and sort
      * @return the requested page of stored coverage rows
      */
+    @EnforceAtLeastInstructor
     @GetMapping("coverage")
     public ResponseEntity<List<IngestionCoverageDTO>> getStoredCoverage(@RequestParam(required = false) IngestionCoverageStatus status,
             @RequestParam(required = false) Boolean active, @RequestParam(required = false) String search, Pageable pageable) {
@@ -150,6 +156,7 @@ public class IngestionCoverageResource {
      * @return the requested page of live-computed coverage
      * @throws ResponseStatusException 400 if the page size exceeds {@link #MAX_LIVE_PAGE_SIZE}
      */
+    @EnforceAtLeastInstructor
     @GetMapping("coverage/page")
     public ResponseEntity<List<IngestionCoverageDTO>> getLiveCoveragePage(@RequestParam(required = false) String search, Pageable pageable) {
         if (pageable.getPageSize() > MAX_LIVE_PAGE_SIZE) {
@@ -166,6 +173,7 @@ public class IngestionCoverageResource {
      *
      * @return 200 once the recompute has been triggered
      */
+    @EnforceAtLeastInstructor
     @PostMapping("coverage/refresh")
     public ResponseEntity<Void> refreshCoverage() {
         coverageRecomputeService.forceRecompute();
