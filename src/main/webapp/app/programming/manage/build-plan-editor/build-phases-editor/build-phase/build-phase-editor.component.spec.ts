@@ -106,15 +106,16 @@ describe('BuildPhaseEditorComponent', () => {
             expect(component.nameValidationMessageKey()).toBe('artemisApp.programmingExercise.buildPhasesEditor.phaseNameInvalidCharacters');
         });
 
-        it('should report reserved names as invalid', () => {
-            component.phase.set({ ...component.phase(), name: 'main' });
+        it.each(['main', 'Main'])('should report the reserved name %j with its own message', (reservedName) => {
+            component.phase.set({ ...component.phase(), name: reservedName });
             fixture.detectChanges();
 
             expect(component.isNamePatternValid()).toBe(true);
             expect(component.isNameReserved()).toBe(true);
             expect(component.isNameValid()).toBe(false);
             expect(component.shouldShowNameValidationError()).toBe(true);
-            expect(component.nameValidationMessageKey()).toBe('artemisApp.programmingExercise.buildPhasesEditor.phaseNameInvalidCharacters');
+            // a reserved name obeys every character rule, so the message must name the actual reason
+            expect(component.nameValidationMessageKey()).toBe('artemisApp.programmingExercise.buildPhasesEditor.phaseNameReserved');
         });
 
         it('should show validation error for empty phase name', () => {
