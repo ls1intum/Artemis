@@ -130,6 +130,35 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void liveCoveragePageTrimsTheSearchTermLikeTheStoredView() throws Exception {
+        // Incidental leading/trailing whitespace (e.g. pasted from elsewhere) must match here exactly as it already does
+        // on the stored-coverage endpoint, not silently return nothing because the padded term was searched verbatim.
+        // %20 rather than URLEncoder: the raw path is parsed as a java.net.URI, which expects RFC 3986 percent-encoding,
+        // not the '+'-for-space form-encoding URLEncoder produces (the same convention ExerciseWeaviateResourceIntegrationTest
+        // already uses in this module).
+        List<IngestionCoverageDTO> page = request.getList(BASE + "coverage/page?search=%20%20" + course.getTitle() + "%20%20", HttpStatus.OK, IngestionCoverageDTO.class);
+
+        assertThat(page).extracting(IngestionCoverageDTO::courseId).contains(course.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void liveCoveragePageStillServesTheLargestPageSizeThePaginatorOffers() throws Exception {
+        // The dashboard's paginator offers 10/20/50/100/200 rows and the default (unfiltered, sort-by-name) view reads
+        // this endpoint, so the cap must sit at or above 200 or picking "200 rows per page" would fail the whole table.
+        request.getList(BASE + "coverage/page?size=200", HttpStatus.OK, IngestionCoverageDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void liveCoveragePageRejectsAPageSizeAboveTheLiveCap() throws Exception {
+        // Each course with lecture units on this page costs four external Weaviate content aggregations, unlike the
+        // stored-coverage endpoint above which reads one local table and is allowed the shared resolver's full range.
+        request.getList(BASE + "coverage/page?size=201", HttpStatus.BAD_REQUEST, IngestionCoverageDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void refreshIsAccepted() throws Exception {
         request.postWithoutResponseBody(BASE + "coverage/refresh", null, HttpStatus.OK);
     }

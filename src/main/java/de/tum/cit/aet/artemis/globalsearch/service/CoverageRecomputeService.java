@@ -246,7 +246,9 @@ public class CoverageRecomputeService {
      * @return the requested page of live-computed coverage DTOs
      */
     public Page<IngestionCoverageDTO> computeLiveCoveragePage(String search, Pageable pageable) {
-        Page<Course> courses = search == null || search.isBlank() ? courseRepository.findAll(pageable) : courseRepository.findByTitleIgnoreCaseContaining(search, pageable);
+        // Trimmed the same way as readStoredCoverage, so a search with incidental leading/trailing whitespace (e.g.
+        // pasted from elsewhere) matches the same courses whichever view is currently active.
+        Page<Course> courses = search == null || search.isBlank() ? courseRepository.findAll(pageable) : courseRepository.findByTitleIgnoreCaseContaining(search.trim(), pageable);
         return new PageImpl<>(computeCoverageLive(courses.getContent()), pageable, courses.getTotalElements());
     }
 

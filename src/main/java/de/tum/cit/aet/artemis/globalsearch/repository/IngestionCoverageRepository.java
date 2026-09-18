@@ -66,7 +66,8 @@ public interface IngestionCoverageRepository extends ArtemisJpaRepository<Ingest
      * <p>
      * The title search is applied here rather than only on the live path because the two are used together: filtering by
      * status and typing a course name is one question, and answering it by ignoring half of it returns the wrong rows.
-     * {@code %} and {@code _} in the term are escaped so a typed wildcard searches for itself.
+     * {@code \}, {@code %}, and {@code _} in the term are escaped, in that order, so a typed backslash or wildcard
+     * searches for itself instead of altering the pattern.
      * <p>
      * "No search" is the empty string, not {@code null}: the term is passed through {@code REPLACE}, and PostgreSQL cannot
      * infer a type for a {@code null} parameter inside a function call (it resolves to {@code bytea} and the query fails),
@@ -85,7 +86,7 @@ public interface IngestionCoverageRepository extends ArtemisJpaRepository<Ingest
             FROM IngestionCoverageEntry e
             WHERE (:status IS NULL OR e.status = :status)
                 AND (:active IS NULL OR e.active = :active)
-                AND (:search = '' OR LOWER(e.courseTitle) LIKE LOWER(CONCAT('%', REPLACE(REPLACE(:search, '%', '\\%'), '_', '\\_'), '%')) ESCAPE '\\')
+                AND (:search = '' OR LOWER(e.courseTitle) LIKE LOWER(CONCAT('%', REPLACE(REPLACE(REPLACE(:search, '\\', '\\\\'), '%', '\\%'), '_', '\\_'), '%')) ESCAPE '\\')
             """)
     Page<IngestionCoverageEntry> findFiltered(@Param("status") IngestionCoverageStatus status, @Param("active") Boolean active, @Param("search") String search, Pageable pageable);
 }

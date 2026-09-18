@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideTranslateService } from '@ngx-translate/core';
@@ -250,6 +250,54 @@ describe('CourseIngestionBrowserDetailComponent', () => {
 
         component.select(component.breadcrumbs()[0].selection);
         expect(component.selection()).toEqual({ kind: 'lecture', lectureId: 20 });
+    });
+
+    it('should give an untitled lecture/unit a translated fallback breadcrumb rather than a blank button', async () => {
+        const untitledData: CourseBrowserData = {
+            entities: [
+                { type: 'lecture', entityId: 30 },
+                { type: 'lecture_unit', entityId: 12, lectureId: 30 },
+            ],
+            contentPresence: [{ key: 'slides', unitIds: [12] }],
+            missingEntities: [],
+            contentGaps: [],
+        };
+        fixture.componentRef.setInput('data', untitledData);
+        component.selection.set({ kind: 'collection', unitId: 12, key: 'slides' });
+        await settle();
+
+        const crumbs = component.breadcrumbs();
+        expect(crumbs.map((crumb) => crumb.label)).toEqual([undefined, undefined]);
+        expect(crumbs.map((crumb) => crumb.fallbackKey)).toEqual([
+            'artemisApp.courseIngestionDashboard.browser.untitledLecture',
+            'artemisApp.courseIngestionDashboard.browser.untitledUnit',
+        ]);
+
+        // The template must render the translated fallback, not leave the breadcrumb button with no visible text.
+        const breadcrumbButtons: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('[data-testid="detail-breadcrumb"]');
+        expect(breadcrumbButtons).toHaveLength(2);
+        breadcrumbButtons.forEach((button) => expect(button.textContent?.trim()).not.toBe(''));
+    });
+
+    it('should not let a slower response for an earlier selection overwrite a newer one', async () => {
+        const exerciseRecords = new Subject<IndexedEntityRecord[]>();
+        const lectureRecords = new Subject<IndexedEntityRecord[]>();
+        const spy = vi.spyOn(service, 'getIndexedEntityRecords');
+        spy.mockReturnValueOnce(exerciseRecords.asObservable());
+        spy.mockReturnValueOnce(lectureRecords.asObservable());
+
+        component.selection.set({ kind: 'type', type: 'exercise' });
+        await settle();
+        component.selection.set({ kind: 'type', type: 'lecture' });
+        await settle();
+
+        // The newer (lecture) request resolves first here; the older (exercise) one arrives after it, but must be
+        // ignored since it no longer matches the current selection.
+        lectureRecords.next([{ type: 'lecture', entityId: 20, title: 'Week 1', properties: {} }]);
+        exerciseRecords.next([{ type: 'exercise', entityId: 5, title: 'Sorting', properties: {} }]);
+        fixture.detectChanges();
+
+        expect(component.records()).toEqual([{ type: 'lecture', entityId: 20, title: 'Week 1', properties: {} }]);
     });
 
     it('should page long content lists rather than rendering every chunk', async () => {

@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
@@ -53,6 +54,19 @@ import de.tum.cit.aet.artemis.iris.api.IrisHealthApi;
 @RequestMapping("api/global-search/admin/")
 @FeatureUsage("monitoring/ingestion-dashboard")
 public class IngestionCoverageResource {
+
+    /**
+     * Upper bound on the page size for the live per-page view. Every course on the page that has lecture units costs
+     * four external Weaviate aggregations, one per content collection, because
+     * {@link de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService#readPresentContentUnitIds}
+     * groups per course rather than per page. The request cost therefore grows with the page size, and the shared
+     * {@link Pageable} resolver's default ceiling of 2000 would let one request issue thousands of external calls.
+     * <p>
+     * The value is the largest page size the dashboard's paginator actually offers, so every choice a user can make in
+     * the UI stays valid and only out-of-band requests are rejected. The stored-projection endpoint below reads one
+     * local table and is deliberately not bounded by this constant.
+     */
+    private static final int MAX_LIVE_PAGE_SIZE = 200;
 
     /** The Iris content collections shown in the overview, addressed by their exact (unprefixed) names. */
     private static final List<String> IRIS_CONTENT_COLLECTIONS = List.of(IngestionCoverageWeaviateReadService.LECTURES_COLLECTION,
@@ -134,9 +148,13 @@ public class IngestionCoverageResource {
      * @param search   an optional case-insensitive course-title search
      * @param pageable the page and sort (on course columns)
      * @return the requested page of live-computed coverage
+     * @throws ResponseStatusException 400 if the page size exceeds {@link #MAX_LIVE_PAGE_SIZE}
      */
     @GetMapping("coverage/page")
     public ResponseEntity<List<IngestionCoverageDTO>> getLiveCoveragePage(@RequestParam(required = false) String search, Pageable pageable) {
+        if (pageable.getPageSize() > MAX_LIVE_PAGE_SIZE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The page size must not be greater than " + MAX_LIVE_PAGE_SIZE);
+        }
         Page<IngestionCoverageDTO> page = coverageRecomputeService.computeLiveCoveragePage(search, pageable);
         HttpHeaders headers = generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);

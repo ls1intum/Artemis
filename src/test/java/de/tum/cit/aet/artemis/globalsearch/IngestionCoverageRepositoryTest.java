@@ -148,6 +148,20 @@ class IngestionCoverageRepositoryTest extends AbstractSpringIntegrationIndepende
         assertThat(ingestionCoverageRepository.findFiltered(null, null, "%", byTitle).getTotalElements()).isZero();
     }
 
+    @Test
+    void aLiteralBackslashInTheSearchTermMatchesItselfRatherThanCorruptingThePattern() {
+        ZonedDateTime now = ZonedDateTime.now();
+        ingestionCoverageRepository.save(titled(entry(1L, 0, IngestionCoverageStatus.COMPLETE, now, now), "C:\\Windows\\Course"));
+        ingestionCoverageRepository.save(titled(entry(2L, 0, IngestionCoverageStatus.COMPLETE, now, now), "Algorithms"));
+
+        PageRequest byTitle = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "courseTitle"));
+
+        // A backslash must be escaped before % and _ are, or it starts an escape sequence for whatever follows it in the
+        // generated pattern instead of matching a literal backslash in the title.
+        assertThat(ingestionCoverageRepository.findFiltered(null, null, "C:\\Windows", byTitle).getContent()).extracting(IngestionCoverageEntry::getCourseId).containsExactly(1L);
+        assertThat(ingestionCoverageRepository.findFiltered(null, null, "\\", byTitle).getContent()).extracting(IngestionCoverageEntry::getCourseId).containsExactly(1L);
+    }
+
     /** Overrides the default "Course N" title, for the cases that search on it. */
     private IngestionCoverageEntry titled(IngestionCoverageEntry entry, String courseTitle) {
         entry.setCourseTitle(courseTitle);

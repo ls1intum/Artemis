@@ -9,14 +9,18 @@
                         class="mb-1 flex flex-wrap items-center gap-1 text-sm text-muted-color"
                         [attr.aria-label]="'artemisApp.courseIngestionDashboard.browser.breadcrumb' | artemisTranslate"
                     >
-                        @for (crumb of breadcrumbs(); track crumb.label; let last = $last) {
+                        @for (crumb of breadcrumbs(); track $index; let last = $last) {
                             <button
                                 type="button"
                                 class="bg-transparent border-0 p-0 underline cursor-pointer text-inherit"
                                 (click)="select(crumb.selection)"
                                 data-testid="detail-breadcrumb"
                             >
-                                {{ crumb.label }}
+                                @if (crumb.label) {
+                                    {{ crumb.label }}
+                                } @else {
+                                    <span [jhiTranslate]="crumb.fallbackKey"></span>
+                                }
                             </button>
                             @if (!last) {
                                 <span aria-hidden="true">/</span>

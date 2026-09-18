@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, model, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { TumUiButtonComponent, TumUiMessageComponent, TumUiPaginatorComponent } from '@tumaet/ui-angular';
 import { faArrowUpRightFromSquare, faChevronDown, faChevronRight } from '@fortawesome/free-solid-svg-icons';
@@ -26,7 +27,10 @@ const DEFAULT_PAGE_SIZE = 10;
 
 /** A breadcrumb step back up the tree. */
 interface Crumb {
-    label: string;
+    /** The entity's title; undefined falls back to fallbackKey (an untitled lecture/unit), same as heading(). */
+    label?: string;
+    /** Translated fallback shown when the entity has no title. */
+    fallbackKey: string;
     selection: BrowserSelection;
 }
 
@@ -223,10 +227,14 @@ export class CourseIngestionBrowserDetailComponent {
             const crumbs: Crumb[] = [];
             if (unit?.lectureId !== undefined) {
                 const lecture = this.entityOf('lecture', unit.lectureId);
-                crumbs.push({ label: lecture?.title ?? '', selection: { kind: 'lecture', lectureId: unit.lectureId } });
+                crumbs.push({
+                    label: lecture?.title,
+                    fallbackKey: 'artemisApp.courseIngestionDashboard.browser.untitledLecture',
+                    selection: { kind: 'lecture', lectureId: unit.lectureId },
+                });
             }
             if (current.kind === 'collection') {
-                crumbs.push({ label: unit?.title ?? '', selection: { kind: 'unit', unitId } });
+                crumbs.push({ label: unit?.title, fallbackKey: 'artemisApp.courseIngestionDashboard.browser.untitledUnit', selection: { kind: 'unit', unitId } });
             }
             return crumbs;
         }
@@ -251,6 +259,13 @@ export class CourseIngestionBrowserDetailComponent {
 
     /** Which stored records are expanded, by their row key. Reset whenever a new selection loads. */
     private readonly expandedRows = signal<ReadonlySet<string>>(new Set());
+
+    /**
+     * The in-flight records/content request, if any. loadRecords and loadContentObjects are mutually exclusive per
+     * selection but a fast reselection can start a new one before the previous resolves; without cancelling it here, a
+     * slower earlier response can arrive after a newer one and overwrite it with data for the wrong selection.
+     */
+    private pendingRequest?: Subscription;
 
     protected isExpanded(key: string): boolean {
         return this.expandedRows().has(key);
@@ -296,12 +311,13 @@ export class CourseIngestionBrowserDetailComponent {
     }
 
     private loadRecords(type: string): void {
+        this.pendingRequest?.unsubscribe();
         this.loading.set(true);
         this.error.set(false);
         this.expandedRows.set(new Set());
         this.recordsPage.set(0);
         this.contentObjects.set([]);
-        this.dashboardService
+        this.pendingRequest = this.dashboardService
             .getIndexedEntityRecords(this.courseId(), type)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
@@ -318,11 +334,12 @@ export class CourseIngestionBrowserDetailComponent {
     }
 
     private loadContentObjects(unitId: number, key: string): void {
+        this.pendingRequest?.unsubscribe();
         this.loading.set(true);
         this.error.set(false);
         this.expandedRows.set(new Set());
         this.contentPage.set(0);
-        this.dashboardService
+        this.pendingRequest = this.dashboardService
             .getUnitContent(this.courseId(), unitId, key)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({

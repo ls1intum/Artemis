@@ -236,6 +236,34 @@ describe('CourseIngestionCoverageTableComponent', () => {
         expect(emitted).toEqual([rows[0]]);
     });
 
+    it('should give the search input and each row a distinguishing accessible name', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const searchInput: HTMLInputElement = fixture.nativeElement.querySelector('[data-testid="coverage-search"]');
+        expect(searchInput.getAttribute('aria-label')).toBeTruthy();
+
+        const rowButtons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('[data-testid="coverage-row-open"]');
+        const labels = Array.from(rowButtons).map((button) => button.getAttribute('aria-label'));
+        // Row 1 has a title, row 2 does not and falls back to its id; either way the two names must not be identical,
+        // or a screen-reader user navigating the rows cannot tell them apart.
+        expect(labels[0]).toContain('Algorithms');
+        expect(labels[1]).toContain('2');
+        expect(new Set(labels).size).toBe(labels.length);
+    });
+
+    it('should make the sortable column headers real, keyboard-focusable buttons', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        // A <th> alone cannot receive keyboard focus; the sort trigger must be a real button inside it.
+        const headerButtons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('thead button');
+        expect(headerButtons.length).toBeGreaterThanOrEqual(3);
+        headerButtons.forEach((button) => expect(button.tagName).toBe('BUTTON'));
+    });
+
     it('should apply a page size change and reload from the first page', async () => {
         fixture.detectChanges();
         await fixture.whenStable();

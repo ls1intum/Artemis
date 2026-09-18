@@ -7,6 +7,7 @@
             type="text"
             class="w-64"
             [placeholder]="'artemisApp.courseIngestionDashboard.matrix.search' | artemisTranslate"
+            [attr.aria-label]="'artemisApp.courseIngestionDashboard.matrix.search' | artemisTranslate"
             (input)="onSearchInput(searchBox.value)"
             data-testid="coverage-search"
         />
@@ -74,26 +75,38 @@
                         <th></th>
                     </tr>
                     <tr>
-                        <th class="cursor-pointer select-none" (click)="toggleSort('name')">
-                            <span class="inline-flex items-center gap-1">
+                        <th>
+                            <button
+                                type="button"
+                                class="inline-flex items-center gap-1 bg-transparent border-0 p-0 font-inherit text-inherit cursor-pointer select-none"
+                                (click)="toggleSort('name')"
+                            >
                                 <span jhiTranslate="artemisApp.courseIngestionDashboard.matrix.column.course"></span>
                                 <fa-icon [icon]="sortIcon('name')" class="text-xs text-muted-color" />
-                            </span>
+                            </button>
                         </th>
-                        <th class="cursor-pointer select-none" (click)="toggleSort('release')">
-                            <span class="inline-flex items-center gap-1">
+                        <th>
+                            <button
+                                type="button"
+                                class="inline-flex items-center gap-1 bg-transparent border-0 p-0 font-inherit text-inherit cursor-pointer select-none"
+                                (click)="toggleSort('release')"
+                            >
                                 <span jhiTranslate="artemisApp.courseIngestionDashboard.matrix.column.release"></span>
                                 <fa-icon [icon]="sortIcon('release')" class="text-xs text-muted-color" />
-                            </span>
+                            </button>
                         </th>
                         @for (type of allTypes; track type; let i = $index) {
                             <th class="text-center text-xs {{ dividerAt(i) }}" [jhiTranslate]="'artemisApp.courseIngestionDashboard.matrix.type.' + type"></th>
                         }
-                        <th class="cursor-pointer select-none" (click)="toggleSort('worstFirst')">
-                            <span class="inline-flex items-center gap-1">
+                        <th>
+                            <button
+                                type="button"
+                                class="inline-flex items-center gap-1 bg-transparent border-0 p-0 font-inherit text-inherit cursor-pointer select-none"
+                                (click)="toggleSort('worstFirst')"
+                            >
                                 <span jhiTranslate="artemisApp.courseIngestionDashboard.matrix.column.status"></span>
                                 <fa-icon [icon]="sortIcon('worstFirst')" class="text-xs text-muted-color" />
-                            </span>
+                            </button>
                         </th>
                     </tr>
                 </thead>
@@ -108,7 +121,7 @@
                                     type="button"
                                     class="max-w-xs truncate font-medium bg-transparent border-0 p-0 text-start text-inherit cursor-pointer"
                                     [title]="row.courseTitle"
-                                    [attr.aria-label]="'artemisApp.courseIngestionDashboard.matrix.openBrowser' | artemisTranslate"
+                                    [attr.aria-label]="('artemisApp.courseIngestionDashboard.matrix.openBrowser' | artemisTranslate) + ': ' + (row.courseTitle || row.courseId)"
                                     data-testid="coverage-row-open"
                                 >
                                     @if (row.courseTitle) {
