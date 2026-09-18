@@ -259,16 +259,19 @@ public class PyrisConnectorService {
     /**
      * Searches for lecture units in Pyris using a query string.
      *
-     * @param query         the search query
-     * @param limit         the maximum number of results to return
-     * @param courseIds     optional list of course IDs to restrict the search scope; null means global search across all courses
-     * @param accessContext the requesting user's role-grouped course access, applied by Pyris as an opaque filter; null for old clients
+     * @param query            the search query
+     * @param limit            the maximum number of results to return
+     * @param courseIds        optional list of course IDs to restrict the search scope; null means global search across all courses
+     * @param excludeCourseIds optional list of course IDs Pyris has to hide itself; only needed for a caller sent without a course ceiling, since every other
+     *                             exclusion is already subtracted from {@code courseIds}
+     * @param accessContext    the requesting user's role-grouped course access, applied by Pyris as an opaque filter; null for old clients
      * @return list of matching lecture search results
      */
-    public List<PyrisLectureSearchResultDTO> searchLectures(String query, int limit, @Nullable List<Long> courseIds, @Nullable PyrisAccessContextDTO accessContext) {
+    public List<PyrisLectureSearchResultDTO> searchLectures(String query, int limit, @Nullable List<Long> courseIds, @Nullable List<Long> excludeCourseIds,
+            @Nullable PyrisAccessContextDTO accessContext) {
         var endpoint = "/api/v1/search/lectures";
         try {
-            var requestDTO = new PyrisLectureSearchRequestDTO(query, limit, courseIds, accessContext);
+            var requestDTO = new PyrisLectureSearchRequestDTO(query, limit, courseIds, excludeCourseIds, accessContext);
             var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, PyrisLectureSearchResultDTO[].class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody() || response.getBody() == null) {
                 return List.of();

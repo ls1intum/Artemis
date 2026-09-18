@@ -252,11 +252,11 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
 
         request.postWithResponseBody("/api/course/courses/" + course.getId() + "/enroll", null, Set.class, HttpStatus.OK);
-        final var user = userTestRepository.findOneWithLearningPathsAndLearnerProfileByLogin(NOT_STUDENT_OF_COURSE).orElseThrow();
+        final var user = userTestRepository.findOneWithLearningPathsByLogin(NOT_STUDENT_OF_COURSE).orElseThrow();
 
         assertThat(user.getLearningPaths()).isNotNull();
         assertThat(user.getLearningPaths()).as("should create LearningPath for student").hasSize(1);
-        assertThat(user.getLearnerProfile().getCourseLearnerProfiles()).hasSize(1);
+        assertThat(courseLearnerProfileRepository.findByUserIdAndCourseId(user.getId(), course.getId())).as("should create a course learner profile for the student").isPresent();
     }
 
     @Test
@@ -543,7 +543,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningPathNavigation() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneWithAuthoritiesAndLearnerProfileByLogin(STUDENT1_OF_COURSE, course.getId()).orElseThrow();
+        final var student = userTestRepository.getUserWithAuthorities(STUDENT1_OF_COURSE);
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
 
         competencyProgressService.updateProgressByLearningObjectSync(textUnit, Set.of(student));
@@ -569,9 +569,8 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     void testGetLearningPathNavigationPreferences(int aimForGradeOrBonus, int timeInvestment, int repetitionIntensity) throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
 
-        final var student = userTestRepository.findOneWithAuthoritiesAndLearnerProfileByLogin(STUDENT1_OF_COURSE, course.getId()).orElseThrow();
-        CourseLearnerProfile learnerProfile = student.getLearnerProfile().getCourseLearnerProfiles().stream().filter(clp -> clp.getCourse().getId().equals(course.getId()))
-                .findFirst().orElseThrow();
+        final var student = userTestRepository.getUserWithAuthorities(STUDENT1_OF_COURSE);
+        CourseLearnerProfile learnerProfile = courseLearnerProfileRepository.findByUserIdAndCourseId(student.getId(), course.getId()).orElseThrow();
         learnerProfile.setAimForGradeOrBonus(aimForGradeOrBonus);
         learnerProfile.setTimeInvestment(timeInvestment);
         learnerProfile.setRepetitionIntensity(repetitionIntensity);

@@ -32,6 +32,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.assessment.config.FeedbackConfiguration;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 
 /**
@@ -106,6 +107,7 @@ public class Feedback extends DomainObject {
 
     @ManyToOne
     @JsonIgnoreProperties("feedbacks")
+    @Parent
     private Result result;
 
     @ManyToOne

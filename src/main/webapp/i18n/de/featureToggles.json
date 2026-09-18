@@ -197,6 +197,11 @@
                     "name": "Deimos Analyse",
                     "description": "Aktiviert manuelle Analysen von potenziell bösartigen Teilnahmen an Programmieraufgaben.",
                     "disableWarning": "Lehrende können keine Deimos-Analysen starten."
+                },
+                "IrisProactiveStruggle": {
+                    "name": "Iris Proaktive Schwierigkeitserkennung",
+                    "description": "Iris erkennt von sich aus, wenn Studierende in einer Programmieraufgabe nicht weiterkommen, und bietet Hilfe an. Lehrende schalten das pro Kurs ein; dieser Schalter entscheidet, ob sie das können.",
+                    "disableWarning": "Iris bietet in keinem Kurs mehr von sich aus Hilfe an. Studierende können weiterhin selbst einen Chat starten, und ein Kurs behält seine eigene Einstellung für den Fall, dass wieder eingeschaltet wird."
                 }
             }
         }
