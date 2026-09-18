@@ -90,33 +90,60 @@ public interface LearningDataCleanupRepository extends ArtemisJpaRepository<Quiz
             """)
     int deleteLectureUnitCompletions(@Param("userId") long userId);
 
+    @Query("""
+            SELECT path.user.id AS userId, COUNT(path) AS count
+            FROM LearningPath path
+            WHERE path.user.id IN :userIds
+            GROUP BY path.user.id
+            """)
+    List<UserReferenceCount> countLearningPaths(@Param("userIds") Collection<Long> userIds);
+
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("""
+            DELETE FROM LearningPath path
+            WHERE path.user.id = :userId
+            """)
+    int deleteLearningPaths(@Param("userId") long userId);
+
+    @Query("""
+            SELECT profile.user.id AS userId, COUNT(profile) AS count
+            FROM LearnerProfile profile
+            WHERE profile.user.id IN :userIds
+            GROUP BY profile.user.id
+            """)
+    List<UserReferenceCount> countLearnerProfiles(@Param("userIds") Collection<Long> userIds);
+
     /**
-     * Deletes the per-course parts of a learner profile, so that the profile itself can be removed.
+     * Deletes the learner profile of an account, its per-course parts first so that nothing still points at it.
      *
-     * @param learnerProfileId the profile of the account being deleted
-     * @return how many per-course profiles were deleted
+     * @param userId the account being deleted
+     * @return how many profiles were deleted
      */
+    default int deleteLearnerProfile(long userId) {
+        deleteCourseLearnerProfiles(userId);
+        return deleteLearnerProfileRow(userId);
+    }
+
     @Modifying
     @Transactional // ok because of delete
     @Query("""
             DELETE FROM CourseLearnerProfile profile
-            WHERE profile.learnerProfile.id = :learnerProfileId
+            WHERE profile.learnerProfile IN (
+                SELECT learnerProfile
+                FROM LearnerProfile learnerProfile
+                WHERE learnerProfile.user.id = :userId
+            )
             """)
-    int deleteCourseLearnerProfiles(@Param("learnerProfileId") long learnerProfileId);
+    int deleteCourseLearnerProfiles(@Param("userId") long userId);
 
-    /**
-     * Deletes a learner profile once the account no longer points at it.
-     *
-     * @param learnerProfileId the profile of the account being deleted
-     * @return how many profiles were deleted
-     */
     @Modifying
     @Transactional // ok because of delete
     @Query("""
             DELETE FROM LearnerProfile profile
-            WHERE profile.id = :learnerProfileId
+            WHERE profile.user.id = :userId
             """)
-    int deleteLearnerProfile(@Param("learnerProfileId") long learnerProfileId);
+    int deleteLearnerProfileRow(@Param("userId") long userId);
 
     /**
      * Renames the account behind the research events it produced. Those events record a login rather than a foreign

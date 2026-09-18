@@ -16,6 +16,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 
@@ -39,7 +40,7 @@ class PyrisJobServiceTest {
             default -> throw new AssertionError("Unexpected distributed map: " + invocation.getArgument(0));
         }).when(distributedDataProvider).getExpiringMap(anyString(), any(Duration.class));
 
-        service = new PyrisJobService(distributedDataProvider);
+        service = new PyrisJobService(distributedDataProvider, mock(IrisProactiveProperties.class));
         ReflectionTestUtils.setField(service, "serverUrl", "https://artemis.example");
         ReflectionTestUtils.setField(service, "instanceId", "node-1");
         ReflectionTestUtils.setField(service, "jobTimeout", 300);

@@ -432,7 +432,7 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         oldSubmission.setStudentLogin(student.getLogin());
         oldSubmission.setSubmissionId(123L);
         // A plagiarism submission belongs to the comparison it came out of; the case is the secondary link this test is about.
-        oldSubmission.setPlagiarismComparison(oldComparison);
+        oldComparison.setSubmissionA(oldSubmission);
         oldSubmission.setPlagiarismCase(oldCasesBefore.getFirst());
         long oldSubmissionId = plagiarismSubmissionRepository.save(oldSubmission).getId();
 

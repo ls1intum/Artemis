@@ -18,7 +18,7 @@
                 <div #selectableItem>
                     <jhi-global-search-result-item
                         [result]="result"
-                        [icon]="getIconForType(result.type, result.badge)"
+                        [icon]="getIconForType(result.type, result.badgeKey)"
                         [isSelected]="selectedIndex() === i"
                         (resultClick)="navigateToResult($event)"
                     />
@@ -57,15 +57,6 @@
                         <p-skeleton width="80%" height="0.75rem" borderRadius="0.25rem" />
                     </div>
                 </div>
-            </div>
-        }
-    </div>
-} @else {
-    <!-- Searchable entities list (initial state) -->
-    <div class="entity-list">
-        @for (entity of searchableEntities(); track entity.id; let i = $index) {
-            <div #selectableItem>
-                <jhi-global-search-entity-item [entity]="entity" [isSelected]="selectedIndex() === i" (entityClick)="onEntityItemClick($event)" />
             </div>
         }
     </div>

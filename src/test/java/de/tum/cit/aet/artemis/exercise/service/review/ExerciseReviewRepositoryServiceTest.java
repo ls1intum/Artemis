@@ -9,9 +9,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -203,7 +203,7 @@ class ExerciseReviewRepositoryServiceTest {
         auxiliaryRepository.setId(77L);
         auxiliaryRepository.setRepositoryUri("http://localhost/git/EX1/ex1-aux.git");
         auxiliaryRepository.setExercise(exercise);
-        exercise.setAuxiliaryRepositories(List.of(auxiliaryRepository));
+        exercise.setAuxiliaryRepositories(Set.of(auxiliaryRepository));
 
         when(programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(10L)).thenReturn(Optional.of(exercise));
 

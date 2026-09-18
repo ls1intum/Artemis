@@ -6,9 +6,15 @@ name: Sonar
 # "The code quality analyses".
 #
 # ADVISORY BY CONSTRUCTION. Never in another job's `needs:` and never gating: the job is
-# `continue-on-error`, so a Sonar outage, an expired token, or a missing project cannot turn develop
-# red. It publishes a grade; it does not decide whether code is mergeable — the enforcing gates are
+# `continue-on-error`, so a Sonar outage, an expired token, or a missing project cannot fail the run.
+# It publishes a grade; it does not decide whether code is mergeable — the enforcing gates are
 # `ci-quality.yml` and `ci-test.yml`.
+#
+# That guarantee covers this workflow and not the commit status. SonarQube Cloud's GitHub App posts
+# its own `SonarCloud Code Analysis` check with the quality gate verdict, which no job here produces
+# and `continue-on-error` cannot reach, so a failed gate is a red X on develop beside a green job.
+# It blocks nothing (branch protection requires only `All required CI Passed`), and the conditions
+# it applies live in the quality gate the project is assigned in SonarQube Cloud, not in this file.
 
 # Two entry points on purpose:
 #   workflow_call     — from ci.yml on develop pushes, after a green `test`, importing its coverage.

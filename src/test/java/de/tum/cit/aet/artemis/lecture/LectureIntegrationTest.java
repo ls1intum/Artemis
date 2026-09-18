@@ -437,7 +437,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         attachmentRepository.save(unit.getAttachment());
 
         // Hide slide 2 (display page 5) → it is removed from the student PDF and must disappear from the mapping.
-        Slide hiddenSlide = slideRepository.findSlideByAttachmentVideoUnitIdAndSlideNumber(unit.getId(), 2);
+        Slide hiddenSlide = slideRepository.findSlideByAttachmentVideoUnitIdAndSlideNumberAndSupersededIsFalse(unit.getId(), 2);
         hiddenSlide.setHidden(ZonedDateTime.now().plusDays(1));
         slideRepository.save(hiddenSlide);
 
