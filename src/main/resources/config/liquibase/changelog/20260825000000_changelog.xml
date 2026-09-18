@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Convert the date columns of user_public_ssh_key (creation_date, last_used_date, expiry_date) from
+        TIMESTAMP to DATETIME(3) on MySQL. MySQL TIMESTAMP cannot represent values after 2038-01-19 03:14:07 UTC,
+        so an SSH key whose expiry date reaches that point fails to store and the insert errors out. DATETIME has
+        no such ceiling and matches the type already used by every other date column in the schema.
+
+        MySQL only: on PostgreSQL these columns are "timestamp without time zone", which has no 2038 ceiling and
+        needs no change. The ALTER intentionally runs under the ambient session time zone and does not override it.
+        MySQL renders a TIMESTAMP through the session time zone, and the ALTER writes that session rendering into the
+        time-zone-less DATETIME literal. Artemis then interprets the DATETIME literal through a UTC calendar
+        (Hibernate with hibernate.jdbc.time_zone=UTC), the same calendar it applied to the TIMESTAMP's session
+        rendering, so converting under the session time zone the application uses keeps the application-visible value
+        unchanged. Forcing the session to UTC would instead write the UTC rendering into DATETIME and shift every
+        existing value by the session offset on non-UTC servers. Spring Liquibase uses the application DataSource, so
+        the migration and the runtime share the same session time zone. A MySQL MODIFY drops NOT NULL unless it is
+        restated, so creation_date keeps it explicitly.
+    -->
+    <changeSet id="20260825000000-1" author="harbeck">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="mysql"/>
+        </preConditions>
+        <sql>
+            ALTER TABLE user_public_ssh_key
+                MODIFY creation_date DATETIME(3) NOT NULL,
+                MODIFY last_used_date DATETIME(3) NULL,
+                MODIFY expiry_date DATETIME(3) NULL;
+        </sql>
+    </changeSet>
+</databaseChangeLog>
