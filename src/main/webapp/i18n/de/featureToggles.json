@@ -174,9 +174,9 @@
                     "disableWarning": "Iris speichert keinen Gesprächsverlauf zwischen Sitzungen, was zu weniger personalisierter KI-Unterstützung führt."
                 },
                 "LectureContentProcessing": {
-                    "name": "Videotranskription",
-                    "description": "Aktiviert die automatische Verarbeitung von Vorlesungsinhalten: Transkription, Folien-Extraktion und Pyris-Ingestion.",
-                    "disableWarning": "Das Deaktivieren der Vorlesungsinhalt-Verarbeitung stoppt alle laufenden Transkriptions- und Ingestion-Aufträge für neue Vorlesungen."
+                    "name": "Indexierung von Vorlesungseinheiten",
+                    "description": "Indexiert Vorlesungseinheiten für Iris: transkribiert Videos, extrahiert Folieninhalte aus PDFs und nimmt beides in die Vektordatenbank auf, damit Iris Fragen dazu beantworten kann.",
+                    "disableWarning": "Das Deaktivieren stoppt die Indexierung neuer Vorlesungseinheiten, einschließlich Wiederholungen, Nachindexierung und Abgleich. Laufende Aufträge werden abgeschlossen, und bereits indexierte Inhalte bleiben erhalten."
                 },
                 "RateLimit": {
                     "name": "API-Rate-Limiting",

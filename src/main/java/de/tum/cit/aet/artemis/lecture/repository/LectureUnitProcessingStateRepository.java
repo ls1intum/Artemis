@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
+import de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO;
 
 /**
  * Spring Data JPA repository for the LectureUnitProcessingState entity.
@@ -35,24 +36,86 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     Optional<LectureUnitProcessingState> findByLectureUnit_Id(Long lectureUnitId);
 
     /**
-     * Find processing states that are stuck (no callback received recently).
+     * Find processing states that are stuck (no callback received recently) or past the absolute deadline.
      * Uses {@code lastUpdated} instead of {@code startedAt} so that heartbeat callbacks
      * from Iris keep resetting the clock — a healthy job is never considered stuck.
+     * <p>
+     * A leased run ({@code lastHeartbeatAt} set) that has reported a stage ({@code lastProgressAt} set) is
+     * excluded from the no-callback arm: its liveness is judged by the stall detector and the much tighter
+     * lease expiry in {@link #findRunsWithLapsedLease}. A leased run that has NOT reported a stage — the
+     * whole transcription phase, which sends no stage name — stays in the no-callback arm, because
+     * {@code lastUpdated} (bumped by every raw transcription checkpoint) is its only liveness signal, just
+     * as in push mode; otherwise a silently wedged transcription would hide behind its fresh lease until
+     * the absolute deadline. The absolute deadline on {@code startedAt} is the backstop for jobs that keep
+     * sending heartbeats without ever terminating: no single ingestion run may exceed it.
      * <p>
      * Only finds states that are NOT already scheduled for retry (retryEligibleAt IS NULL).
      * This prevents stuck detection from interfering with states waiting for their backoff period.
      *
-     * @param phases     the phases to check
-     * @param cutoffTime the time before which states are considered stuck (no callback since)
+     * @param phases             the phases to check
+     * @param cutoffTime         the time before which states are considered stuck (no callback since)
+     * @param absoluteCutoffTime the time before which a started job is considered stuck regardless of heartbeats
      * @return list of stuck processing states
      */
     @Query("""
             SELECT ps FROM LectureUnitProcessingState ps
             WHERE ps.phase IN :phases
-            AND ps.lastUpdated < :cutoffTime
+            AND (((ps.lastHeartbeatAt IS NULL OR ps.lastProgressAt IS NULL) AND ps.lastUpdated < :cutoffTime) OR ps.startedAt < :absoluteCutoffTime)
             AND ps.retryEligibleAt IS NULL
             """)
-    List<LectureUnitProcessingState> findStuckStates(@Param("phases") List<ProcessingPhase> phases, @Param("cutoffTime") ZonedDateTime cutoffTime);
+    List<LectureUnitProcessingState> findStuckStates(@Param("phases") List<ProcessingPhase> phases, @Param("cutoffTime") ZonedDateTime cutoffTime,
+            @Param("absoluteCutoffTime") ZonedDateTime absoluteCutoffTime);
+
+    /**
+     * Find in-flight runs whose worker lease has lapsed: the run was claimed by a Pyris worker
+     * (proven by at least one recorded heartbeat) and that worker has not renewed the lease since
+     * the cutoff. A lapsed lease is a strong infrastructure signal — the fixed-interval heartbeat is
+     * a timer, not the pipeline's work, so its silence means the worker process is gone, not that a
+     * stage is slow. Recovery therefore preserves the retry budget, unlike {@link #findStuckStates}.
+     * <p>
+     * Runs without any recorded heartbeat (legacy push dispatch, or an Iris without worker support)
+     * never match here and stay under the timeout-based stuck detection.
+     *
+     * @param phases      the in-flight phases to check
+     * @param leaseCutoff the time before which an unrenewed lease counts as lapsed
+     * @return runs whose lease has lapsed
+     */
+    @Query("""
+            SELECT ps FROM LectureUnitProcessingState ps
+            WHERE ps.phase IN :phases
+            AND ps.lastHeartbeatAt IS NOT NULL
+            AND ps.lastHeartbeatAt < :leaseCutoff
+            AND ps.retryEligibleAt IS NULL
+            """)
+    List<LectureUnitProcessingState> findRunsWithLapsedLease(@Param("phases") List<ProcessingPhase> phases, @Param("leaseCutoff") ZonedDateTime leaseCutoff);
+
+    /**
+     * Find the processing state currently carrying the given ingestion job token. Backs worker lease
+     * renewal: each heartbeat lists the tokens of the runs the worker is executing.
+     *
+     * @param token the ingestion job token
+     * @return the state currently associated with this token, if any
+     */
+    Optional<LectureUnitProcessingState> findByIngestionJobToken(String token);
+
+    /**
+     * Resolve the identity of the ingestion job currently associated with the given token.
+     * <p>
+     * Backs the database fallback for authenticating Iris ingestion callbacks: the distributed job map
+     * entry expires after a TTL, but the token stays valid in the processing state row for as long as
+     * the job is in flight, so a late terminal callback is never rejected for a job Artemis still tracks.
+     *
+     * @param token the ingestion job token from the callback's Authorization header
+     * @return the job identity if a processing state currently carries this token
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO(l.course.id, l.id, lu.id)
+            FROM LectureUnitProcessingState ps
+            JOIN ps.lectureUnit lu
+            JOIN lu.lecture l
+            WHERE ps.ingestionJobToken = :token
+            """)
+    Optional<IngestionJobIdentityDTO> findIngestionJobIdentityByToken(@Param("token") String token);
 
     /**
      * Find processing states that are ready for retry (backoff period has passed).
@@ -96,6 +159,42 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             WHERE l.course.id = :courseId
             """)
     List<LectureUnitProcessingState> findByCourseId(@Param("courseId") Long courseId);
+
+    /**
+     * Atomically clear the ingestion job token of a state, but only when it still carries the expected token.
+     * <p>
+     * This is the claim step for terminal callbacks: exactly one caller wins the update, so two concurrent
+     * callbacks for the same run (for example a success and a failure racing each other) cannot both write
+     * a terminal state. A return value of 0 means another callback already claimed the token.
+     *
+     * @param id    the id of the processing state row
+     * @param token the job token the callback carried
+     * @return the number of updated rows: 1 if this call claimed the token, 0 if it was already claimed or changed
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.ingestionJobToken = NULL
+            WHERE ps.id = :id AND ps.ingestionJobToken = :token
+            """)
+    int clearIngestionJobTokenIfMatches(@Param("id") long id, @Param("token") String token);
+
+    /**
+     * Find all processing states for a course with their lecture units fetched.
+     * Used by the ingestion reconciler, which touches every unit of the course and
+     * would otherwise lazy-load them one by one.
+     *
+     * @param courseId the ID of the course
+     * @return list of processing states with initialized lecture units
+     */
+    @Query("""
+            SELECT ps FROM LectureUnitProcessingState ps
+            JOIN FETCH ps.lectureUnit lu
+            JOIN lu.lecture l
+            WHERE l.course.id = :courseId
+            """)
+    List<LectureUnitProcessingState> findWithLectureUnitByCourseId(@Param("courseId") long courseId);
 
     /**
      * Find all processing states for a lecture.
@@ -152,6 +251,9 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      *
      * @param now   the current time for backoff comparison
      * @param limit maximum number of candidates to list
+     *                  Fresh work (priority 0: user- and content-triggered) lists before backlog work (backfill and
+     *                  reconcile requeues, priority > 0), so a large backfill can never starve a fresh upload.
+     *
      * @return list of candidate IDLE states; a caller must claim one before dispatching it
      */
     @Query(value = """
@@ -159,7 +261,7 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             WHERE phase = 'IDLE'
             AND started_at IS NULL
             AND (retry_eligible_at IS NULL OR retry_eligible_at <= :now)
-            ORDER BY id ASC
+            ORDER BY COALESCE(dispatch_priority, 0) ASC, id ASC
             LIMIT :limit
             """, nativeQuery = true)
     List<LectureUnitProcessingState> findIdleForDispatch(@Param("now") ZonedDateTime now, @Param("limit") int limit);
@@ -254,5 +356,258 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             AND ps.startedAt < :cutoffTime
             """)
     int releaseAbandonedIdleClaims(@Param("cutoffTime") ZonedDateTime cutoffTime, @Param("now") ZonedDateTime now);
+
+    /**
+     * Apply a heartbeat's stage/progress fields, but only while the run is still in flight under the
+     * token that reported them. A terminal callback (success or failure) clears the token before this
+     * runs; matching on it here is what stops a heartbeat whose read raced ahead of that terminal write
+     * from reviving a row the terminal callback already finished, since the predicate then matches no
+     * row and the write is silently dropped instead of overwriting the DONE/FAILED state.
+     *
+     * @param id             the processing state to update
+     * @param token          the job token the heartbeat carried
+     * @param now            recorded as the new {@code lastUpdated}
+     * @param currentStage   the stage name to store
+     * @param stageStartedAt when the current stage began
+     * @param stageProgress  the stage's progress counter, may be null
+     * @param stageTotal     the stage's total work items, may be null
+     * @param lastProgressAt when the progress clock was last advanced
+     * @return 1 when applied, 0 when the run is no longer in flight under this token
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.lastUpdated = :now, ps.currentStage = :currentStage, ps.stageStartedAt = :stageStartedAt,
+                ps.stageProgress = :stageProgress, ps.stageTotal = :stageTotal, ps.lastProgressAt = :lastProgressAt
+            WHERE ps.id = :id
+            AND ps.ingestionJobToken = :token
+            AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.TRANSCRIBING, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING)
+            """)
+    int applyHeartbeat(@Param("id") long id, @Param("token") String token, @Param("now") ZonedDateTime now, @Param("currentStage") String currentStage,
+            @Param("stageStartedAt") ZonedDateTime stageStartedAt, @Param("stageProgress") Integer stageProgress, @Param("stageTotal") Integer stageTotal,
+            @Param("lastProgressAt") ZonedDateTime lastProgressAt);
+
+    /**
+     * Refresh liveness only, for a raw (non-enriched) transcription checkpoint that reports no stage
+     * progress of its own. Same token-and-phase guard as {@link #applyHeartbeat}, for the same reason.
+     *
+     * @param id    the processing state to update
+     * @param token the job token the checkpoint carried
+     * @param now   recorded as the new {@code lastUpdated}
+     * @return 1 when applied, 0 when the run is no longer in flight under this token
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.lastUpdated = :now
+            WHERE ps.id = :id
+            AND ps.ingestionJobToken = :token
+            AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.TRANSCRIBING, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING)
+            """)
+    int touchLastUpdated(@Param("id") long id, @Param("token") String token, @Param("now") ZonedDateTime now);
+
+    /**
+     * Renew a run's worker lease atomically, for a heartbeat batch. Same token-and-phase guard as
+     * {@link #applyHeartbeat}: a terminal callback that finishes the run in the window between the
+     * heartbeat's read and this write clears the token first, so this predicate then matches no row and
+     * the stale lease-renewal is silently dropped instead of overwriting the DONE/FAILED state back to
+     * the in-flight phase and token it read.
+     *
+     * @param id           the processing state to update
+     * @param token        the job token the heartbeat carried
+     * @param now          recorded as the new {@code lastHeartbeatAt}
+     * @param workerBootId boot id of the worker renewing the lease
+     * @return 1 when applied, 0 when the run is no longer in flight under this token
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.lastHeartbeatAt = :now, ps.lockedBy = :workerBootId
+            WHERE ps.id = :id
+            AND ps.ingestionJobToken = :token
+            AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.TRANSCRIBING, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING)
+            """)
+    int renewLease(@Param("id") long id, @Param("token") String token, @Param("now") ZonedDateTime now, @Param("workerBootId") String workerBootId);
+
+    /**
+     * Transition TRANSCRIBING to INGESTING for an enriched transcription checkpoint, atomically: same
+     * token-and-phase guard as {@link #applyHeartbeat}, and the same field set {@link
+     * de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState#transitionTo} applies, so a
+     * checkpoint racing a terminal callback cannot revive a run the terminal callback already finished.
+     *
+     * @param id    the processing state to update
+     * @param token the job token the checkpoint carried
+     * @param now   recorded as the new {@code startedAt} and {@code lastUpdated}
+     * @return 1 when applied, 0 when the run is no longer in flight under this token
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING, ps.startedAt = :now, ps.lastUpdated = :now,
+                ps.errorKey = NULL, ps.retryEligibleAt = NULL, ps.retryCount = 0,
+                ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL
+            WHERE ps.id = :id
+            AND ps.ingestionJobToken = :token
+            AND ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.TRANSCRIBING
+            """)
+    int transitionToIngestingIfTranscribing(@Param("id") long id, @Param("token") String token, @Param("now") ZonedDateTime now);
+
+    /**
+     * Reclaim one lapsed-lease run atomically: reset it to IDLE, but only while it is still exactly the
+     * row the batch read found lapsed. A heartbeat can renew the lease, or a terminal callback can finish
+     * the run, in the window between {@link #findRunsWithLapsedLease} and this write; matching on the
+     * token and re-checking every field {@code stillLapsed} would have recomputed (phase, no pending retry,
+     * heartbeat still older than the cutoff) is what stops that write from overwriting either one. Fields
+     * mirror {@link de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState#requeue}.
+     *
+     * @param id     the processing state to reclaim
+     * @param token  the job token observed at batch-read time
+     * @param phases the in-flight phases eligible for reclaim
+     * @param cutoff the lease cutoff: a heartbeat at or after this time cancels the reclaim
+     * @param now    recorded as the new {@code lastUpdated}
+     * @return 1 when reclaimed, 0 when the run is no longer lapsed under this token
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, ps.ingestionJobToken = NULL, ps.startedAt = NULL,
+                ps.retryEligibleAt = NULL, ps.errorKey = NULL, ps.lastUpdated = :now,
+                ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL,
+                ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL
+            WHERE ps.id = :id
+            AND ps.ingestionJobToken = :token
+            AND ps.phase IN :phases
+            AND ps.retryEligibleAt IS NULL
+            AND ps.lastHeartbeatAt IS NOT NULL
+            AND ps.lastHeartbeatAt < :cutoff
+            """)
+    int reclaimLapsedLease(@Param("id") long id, @Param("token") String token, @Param("phases") List<ProcessingPhase> phases, @Param("cutoff") ZonedDateTime cutoff,
+            @Param("now") ZonedDateTime now);
+
+    /**
+     * Requeue a stuck INGESTING run without charging its retry budget, atomically: only while it is still
+     * exactly the run whose census evidence justified skipping the failure penalty. The census lookup that
+     * precedes this call is a slow external round-trip; a terminal callback finishing (or otherwise
+     * changing) this run in that window clears its token first, so this predicate then matches no row and
+     * the stuck-recovery requeue is silently dropped instead of overwriting whatever the terminal callback
+     * wrote. Same field set as {@link #reclaimLapsedLease}, since both put the run back to a fresh IDLE
+     * state.
+     *
+     * @param id    the processing state to requeue
+     * @param token the job token observed when the census evidence was decided
+     * @param now   recorded as the new {@code lastUpdated}
+     * @return 1 when requeued, 0 when the run is no longer in flight under this token
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, ps.ingestionJobToken = NULL, ps.startedAt = NULL,
+                ps.retryEligibleAt = NULL, ps.errorKey = NULL, ps.lastUpdated = :now,
+                ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL,
+                ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL
+            WHERE ps.id = :id
+            AND ps.ingestionJobToken = :token
+            AND ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING
+            """)
+    int requeueStuckIngestionWithoutPenalty(@Param("id") long id, @Param("token") String token, @Param("now") ZonedDateTime now);
+
+    /**
+     * Fail a stalled or stuck run atomically, but only while it is still exactly the run that was judged
+     * stalled/stuck: same id, phase, and job token observed at that decision. A terminal callback
+     * finishing (or otherwise changing) this run in the window between that observation and this write
+     * clears its token first, so this predicate then matches no row and the failure write is silently
+     * dropped instead of overwriting whatever the callback wrote. Same guard shape as
+     * {@link #requeueStuckIngestionWithoutPenalty}.
+     *
+     * @param id              the processing state to fail
+     * @param phase           the phase observed when the run was judged stalled/stuck
+     * @param token           the job token observed at the same time
+     * @param retryCount      the new retry count to persist
+     * @param errorKey        the i18n error key to persist
+     * @param retryEligibleAt when the retry becomes eligible, or {@code null} for a permanent failure
+     * @param now             recorded as the new {@code lastUpdated}
+     * @return 1 when the failure was applied, 0 when the run is no longer the one that was judged stalled/stuck
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED, ps.errorKey = :errorKey,
+                ps.ingestionJobToken = NULL, ps.startedAt = NULL, ps.retryCount = :retryCount,
+                ps.retryEligibleAt = :retryEligibleAt, ps.lastUpdated = :now
+            WHERE ps.id = :id
+            AND ps.phase = :phase
+            AND ps.ingestionJobToken = :token
+            """)
+    int failIfStillLive(@Param("id") long id, @Param("phase") ProcessingPhase phase, @Param("token") String token, @Param("retryCount") int retryCount,
+            @Param("errorKey") String errorKey, @Param("retryEligibleAt") ZonedDateTime retryEligibleAt, @Param("now") ZonedDateTime now);
+
+    /**
+     * Activate a claim exactly once: turn a claimed row into an in-flight run, but only while it still holds exactly
+     * the claim that produced the activation. A claimed IDLE row carries {@code startedAt}; a claimed FAILED retry
+     * carries its lease in {@code retryEligibleAt}. Neither has a job token yet. Matching {@code claimedAt} against
+     * that exact marker (not just its presence) is what stops a late activation from a lapsed, re-claimed claim from
+     * activating a newer, still-unactivated claim for the same unit with the wrong job token: two different claims
+     * can pass through this same generic shape one after another, so presence alone cannot tell them apart. Same
+     * guard as {@link #markSkippedIfStillClaimed}. Applies {@link LectureUnitProcessingState#transitionTo}, the
+     * token, the fingerprint and {@link LectureUnitProcessingState#renewLease} in one statement.
+     *
+     * @param lectureUnitId      the claimed unit
+     * @param phase              the in-flight phase to enter
+     * @param token              the registered Pyris job token
+     * @param contentFingerprint the fingerprint computed at claim time
+     * @param workerBootId       boot id of the worker that owns the lease
+     * @param claimedAt          the claim marker observed at claim time, from
+     *                               {@link de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO#claimedAt()}
+     * @param now                the activation time, recorded as start, last update and first heartbeat
+     * @return 1 when the claim was activated, 0 when the row no longer holds this exact claim
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = :phase, ps.startedAt = :now, ps.lastUpdated = :now, ps.errorKey = NULL, ps.retryEligibleAt = NULL,
+                ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL,
+                ps.ingestionJobToken = :token, ps.contentFingerprint = :contentFingerprint, ps.lastHeartbeatAt = :now, ps.lockedBy = :workerBootId
+            WHERE ps.lectureUnit.id = :lectureUnitId
+            AND ps.ingestionJobToken IS NULL
+            AND ((ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE AND ps.startedAt = :claimedAt)
+                OR (ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED AND ps.retryEligibleAt = :claimedAt))
+            """)
+    int activateClaimedJob(@Param("lectureUnitId") long lectureUnitId, @Param("phase") ProcessingPhase phase, @Param("token") String token,
+            @Param("contentFingerprint") String contentFingerprint, @Param("workerBootId") String workerBootId, @Param("claimedAt") ZonedDateTime claimedAt,
+            @Param("now") ZonedDateTime now);
+
+    /**
+     * Mark a claimed unit SKIPPED, but only while it still holds exactly the claim that decided it was not
+     * processable: same claim-shape check as {@link #activateClaimedJob}, plus the specific claim marker
+     * ({@code claimedAt}, echoed back from {@link de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO})
+     * so that two different claims passing through the same generic unactivated shape one after another are
+     * not conflated the way a shape-only check would allow. Without this, a superseded claim's stale result
+     * could cancel a newer claim that has since been legitimately activated.
+     *
+     * @param lectureUnitId the claimed unit
+     * @param claimedAt     the claim marker observed at claim time (startedAt for an IDLE claim, retryEligibleAt
+     *                          for a retry claim)
+     * @param now           recorded as the new {@code lastUpdated}
+     * @return 1 when marked SKIPPED, 0 when the row no longer holds this exact claim
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.SKIPPED, ps.startedAt = NULL, ps.retryEligibleAt = NULL, ps.lastUpdated = :now
+            WHERE ps.lectureUnit.id = :lectureUnitId
+            AND ps.ingestionJobToken IS NULL
+            AND ((ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE AND ps.startedAt = :claimedAt)
+                OR (ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED AND ps.retryEligibleAt = :claimedAt))
+            """)
+    int markSkippedIfStillClaimed(@Param("lectureUnitId") long lectureUnitId, @Param("claimedAt") ZonedDateTime claimedAt, @Param("now") ZonedDateTime now);
 
 }

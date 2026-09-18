@@ -94,6 +94,33 @@ public class ProcessingStateRecoveryService {
      *
      * @param state the stuck processing state to reset
      */
+    /**
+     * Reclaim one lapsed-lease run, atomically: see {@link LectureUnitProcessingStateRepository#reclaimLapsedLease}
+     * for why this cannot be a re-fetch-then-save like {@link #resetToIdleForRecovery}. Re-fetches only on
+     * success, purely to notify with the row the write actually produced.
+     *
+     * @param id     the processing state to reclaim
+     * @param token  the job token observed at batch-read time
+     * @param phases the in-flight phases eligible for reclaim
+     * @param cutoff the lease cutoff: a heartbeat at or after this time cancels the reclaim
+     * @return true when reclaimed, false when the run is no longer lapsed under this token
+     */
+    public boolean reclaimLapsedLease(long id, String token, List<ProcessingPhase> phases, ZonedDateTime cutoff) {
+        if (processingStateRepository.reclaimLapsedLease(id, token, phases, cutoff, ZonedDateTime.now()) == 0) {
+            return false;
+        }
+        processingStateRepository.findById(id).ifPresent(state -> {
+            LectureUnit lectureUnit = state.getLectureUnit();
+            if (lectureUnit == null) {
+                return;
+            }
+            TranscriptionStatus transcriptionStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnit.getId()).map(LectureTranscription::getTranscriptionStatus)
+                    .orElse(null);
+            notifyProcessingStateChange(state, transcriptionStatus);
+        });
+        return true;
+    }
+
     boolean resetToIdleForRecovery(LectureUnitProcessingState state) {
         LectureUnit lectureUnit = state.getLectureUnit();
         if (lectureUnit == null) {
@@ -107,6 +134,7 @@ public class ProcessingStateRecoveryService {
         state.setStartedAt(null);
         state.setRetryEligibleAt(null);
         state.setLastUpdated(ZonedDateTime.now());
+        state.clearStageProgress();
         processingStateRepository.save(state);
 
         notifyProcessingStateChange(state, transcriptionStatus);
