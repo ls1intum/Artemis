@@ -1323,8 +1323,8 @@ public class ProgrammingExerciseTestService {
     public void startProgrammingExercise(Boolean offlineIde) throws Exception {
         exercise.setAllowOnlineEditor(true);
         exercise.setAllowOfflineIde(offlineIde);
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(exercise);
 
         startProgrammingExercise_correctInitializationState(INDIVIDUAL);
     }
@@ -1332,8 +1332,8 @@ public class ProgrammingExerciseTestService {
     private Course setupCourseWithProgrammingExercise(ExerciseMode exerciseMode) {
         final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         exercise.setMode(exerciseMode);
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         programmingExerciseRepository.save(exercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(exercise);
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         return course;
@@ -1672,8 +1672,8 @@ public class ProgrammingExerciseTestService {
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
         exercise.setTeamAssignmentConfig(teamAssignmentConfig);
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(exercise);
 
         var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, false, false, false);
         // Assure, that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
@@ -1727,8 +1727,8 @@ public class ProgrammingExerciseTestService {
     // Test
     public void exportProgrammingExerciseInstructorMaterial_problemStatementShouldContainTestNames() throws Exception {
         generateProgrammingExerciseForExport(false, false);
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(exercise);
         var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
         var test = tests.getFirst();
         exercise.setProblemStatement("[task][name](<testid>%s</testid>)".formatted(test.getId()));
@@ -1999,8 +1999,8 @@ public class ProgrammingExerciseTestService {
         courseRepository.save(course);
 
         // Create a programming exercise with solution, template, tests participation and build config
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(exercise);
         exercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise.setProblemStatement("Lorem Ipsum");
@@ -2412,8 +2412,8 @@ public class ProgrammingExerciseTestService {
 
     private void setupTeamExercise() {
         exercise.setMode(TEAM);
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         programmingExerciseRepository.save(exercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(exercise);
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
     }
@@ -2438,24 +2438,24 @@ public class ProgrammingExerciseTestService {
         // Otherwise participations with an unexpected buildPlanId are retrieved when calling cleanupBuildPlansOnContinuousIntegrationServer() below
         programmingExerciseParticipationTestRepository.updateBuildPlanIdOfAll(null);
 
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
-        examExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(examExercise.getBuildConfig()));
+        programmingExerciseBuildConfigRepository.saveForExercise(exercise);
         examExercise = programmingExerciseRepository.save(examExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(examExercise);
 
         var exercise2 = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), course);
         exercise2.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(1));
-        exercise2.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise2.getBuildConfig()));
         exercise2 = programmingExerciseRepository.save(exercise2);
+        programmingExerciseBuildConfigRepository.saveForExercise(exercise2);
 
         var exercise3 = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), course);
         exercise3.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(3));
-        exercise3.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise3.getBuildConfig()));
         exercise3 = programmingExerciseRepository.save(exercise3);
+        programmingExerciseBuildConfigRepository.saveForExercise(exercise3);
 
         var exercise4 = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), course);
-        exercise4.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise4.getBuildConfig()));
         exercise4 = programmingExerciseRepository.save(exercise4);
+        programmingExerciseBuildConfigRepository.saveForExercise(exercise4);
 
         // Note participationXa will always be cleaned up, while participationXb will NOT be cleaned up
 
@@ -2532,14 +2532,14 @@ public class ProgrammingExerciseTestService {
         var endDate = startDate.plusDays(5L);
         exercise.setReleaseDate(startDate);
         exercise.setDueDate(endDate);
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(exercise);
         exercise.getCourseViaExerciseGroupOrCourseMember().setStartDate(startDate);
         exercise.getCourseViaExerciseGroupOrCourseMember().setEndDate(endDate);
         courseRepository.save(exercise.getCourseViaExerciseGroupOrCourseMember());
 
-        examExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(examExercise.getBuildConfig()));
         examExercise = programmingExerciseRepository.save(examExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(examExercise);
         examExercise.getExerciseGroup().getExam().setStartDate(startDate);
         examExercise.getExerciseGroup().getExam().setEndDate(endDate);
         examTestRepository.save(examExercise.getExerciseGroup().getExam());
@@ -2713,8 +2713,8 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void updateProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(exercise);
 
         // Test updating with invalid plagiarism config
         var config = new PlagiarismDetectionConfig();
@@ -2738,8 +2738,8 @@ public class ProgrammingExerciseTestService {
     public void exportSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
         // Test example solution publication date not set.
         exercise.setExampleSolutionPublicationDate(null);
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         programmingExerciseRepository.save(exercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(exercise);
 
         exportStudentRequestedRepository(HttpStatus.FORBIDDEN, false);
 
@@ -2791,8 +2791,8 @@ public class ProgrammingExerciseTestService {
 
         // Test include tests
         exercise.setReleaseTestsWithExampleSolution(true);
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         programmingExerciseRepository.save(exercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(exercise);
 
         zip = exportStudentRequestedRepository(HttpStatus.OK, true);
         assertThat(zip).isNotNull();

@@ -241,8 +241,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exerciseRepository.save(modelingExercise);
 
         programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), course);
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExercise = exerciseRepository.save(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise);
         course.addExercises(programmingExercise);
         course = courseRepository.save(course);
 
@@ -1415,8 +1415,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void resumeProgrammingExerciseParticipation_forbidden() throws Exception {
         var exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1), course);
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = exerciseRepository.save(exercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(exercise);
         var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, exercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         participationRepo.save(participation);
@@ -2239,8 +2239,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exam = examRepository.save(exam);
         ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
         ProgrammingExercise examExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
-        examExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(examExercise.getBuildConfig()));
         examExercise = exerciseRepository.save(examExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(examExercise);
 
         MockHttpServletResponse response = request.postWithoutResponseBody("/api/exercise/exercises/" + examExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN, null);
         assertThat(response.getContentAsString()).contains("Assignment repositories are not allowed for exam exercises. Please use the Test Run feature instead");

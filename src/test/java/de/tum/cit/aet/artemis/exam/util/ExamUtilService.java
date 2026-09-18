@@ -747,8 +747,8 @@ public class ExamUtilService {
         ExerciseGroup programmingGroup = exam.getExerciseGroups().get(4);
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(programmingGroup);
         Set<GradingCriterion> gradingCriteria = ProgrammingExerciseFactory.generateGradingCriteria(programmingExercise);
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         exerciseRepository.save(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
 
         programmingGroup.addExercise(programmingExercise);
@@ -977,8 +977,8 @@ public class ExamUtilService {
             var exerciseGroup6 = exam.getExerciseGroups().get(6);
             // Programming exercises need a proper setup for 'prepare exam start' to work
             ProgrammingExercise programmingExercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup6, "Programming");
-            programmingExerciseBuildConfigRepository.save(programmingExercise1.getBuildConfig());
             exerciseRepository.save(programmingExercise1);
+            programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise1);
             programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise1);
             programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise1);
 
@@ -1025,8 +1025,8 @@ public class ExamUtilService {
             var exerciseGroup2 = exam.getExerciseGroups().get(2);
             // Programming exercises need a proper setup for 'prepare exam start' to work
             ProgrammingExercise programmingExercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup2);
-            programmingExerciseBuildConfigRepository.save(programmingExercise1.getBuildConfig());
             exerciseRepository.save(programmingExercise1);
+            programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise1);
             programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise1);
             programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise1);
             exerciseGroup2.setExercises(Set.of(programmingExercise1));

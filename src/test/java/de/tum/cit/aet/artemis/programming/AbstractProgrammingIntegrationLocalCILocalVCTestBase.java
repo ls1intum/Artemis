@@ -200,6 +200,8 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setAllowOfflineIde(true);
         programmingExercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase(Locale.ROOT) + "-tests.git");
+        // The configuration is not loaded with the exercise, so it is read before it is changed.
+        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(programmingExercise);
         var defaultPhases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise);
         var defaultDockerImage = buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise);
         var buildPlanPhasesDTO = new BuildPlanPhasesDTO(defaultPhases, defaultDockerImage);

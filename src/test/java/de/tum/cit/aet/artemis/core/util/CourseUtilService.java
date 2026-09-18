@@ -460,8 +460,8 @@ public class CourseUtilService {
         modelingExercise = exerciseRepository.save(modelingExercise);
         textExercise = exerciseRepository.save(textExercise);
         exerciseRepository.save(fileUploadExercise);
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         exerciseRepository.save(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise);
         exerciseRepository.save(quizExercise);
 
         if (withParticipations) {
@@ -593,8 +593,8 @@ public class CourseUtilService {
         modelingExercise = exerciseRepository.save(modelingExercise);
         textExercise = exerciseRepository.save(textExercise);
         fileUploadExercise = exerciseRepository.save(fileUploadExercise);
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExercise = exerciseRepository.save(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise);
         quizExercise = exerciseRepository.save(quizExercise);
 
         // Get user and setup participations
@@ -766,8 +766,8 @@ public class CourseUtilService {
         modelingExercise = exerciseRepository.save(modelingExercise);
         textExercise = exerciseRepository.save(textExercise);
         fileUploadExercise = exerciseRepository.save(fileUploadExercise);
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExercise = exerciseRepository.save(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise);
         quizExercise = exerciseRepository.save(quizExercise);
 
         // Get user and setup participations
@@ -960,9 +960,8 @@ public class CourseUtilService {
             ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, "TSTEXC", "Programming", false);
             programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
-            var savedBuildConfig = programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-            programmingExercise.setBuildConfig(savedBuildConfig);
             programmingExercise = programmingExerciseRepository.save(programmingExercise);
+            programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise);
             course.addExercises(programmingExercise);
             programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
             programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);

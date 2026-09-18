@@ -104,8 +104,8 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     void testCreateDefaultCategories(ProgrammingLanguage programmingLanguage) {
         var testExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(1),
                 programmingExerciseSCAEnabled.getCourseViaExerciseGroupOrCourseMember(), programmingLanguage);
-        testExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(testExercise.getBuildConfig()));
         testExercise = programmingExerciseRepository.save(testExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(testExercise);
         staticCodeAnalysisService.createDefaultCategories(testExercise);
         // Swift has only one default category at the time of creation of this test
         var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(testExercise.getId());

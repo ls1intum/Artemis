@@ -33,7 +33,6 @@ public interface BuildPlanRepository extends ArtemisJpaRepository<BuildPlan, Lon
             SELECT buildPlan
             FROM BuildPlan buildPlan
                 INNER JOIN FETCH buildPlan.programmingExercises programmingExercises
-                LEFT JOIN FETCH programmingExercises.buildConfig buildConfig
             WHERE programmingExercises.id = :exerciseId
             """)
     Optional<BuildPlan> findByProgrammingExercises_IdWithProgrammingExercisesWithBuildConfig(@Param("exerciseId") long exerciseId);

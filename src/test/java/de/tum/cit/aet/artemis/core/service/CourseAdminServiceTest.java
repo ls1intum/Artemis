@@ -53,8 +53,8 @@ class CourseAdminServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest
         Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         var programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(7), course);
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise);
 
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 

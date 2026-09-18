@@ -28,6 +28,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.SecondaryTable;
+import jakarta.persistence.Transient;
 
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.TimeZoneStorage;
@@ -173,8 +174,16 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details", nullable = false)
     private boolean releaseTestsWithExampleSolution = false;
 
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(unique = true, name = "programming_exercise_build_config_id", table = "programming_exercise_details")
+    /**
+     * The build configuration of this exercise, which is not part of the exercise row.
+     * <p>
+     * The configuration holds the exercise key, and a {@code @OneToOne} is lazily proxyable only on the side that owns
+     * the key: mapping it here would make Hibernate issue a select on every exercise read, whether or not the caller
+     * wants the configuration. So it is read where it is needed, through
+     * {@link de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository}, which fills this
+     * field in. A caller that has not asked for it finds it null.
+     */
+    @Transient
     @JsonIgnoreProperties("programmingExercise")
     private ProgrammingExerciseBuildConfig buildConfig;
 
@@ -455,8 +464,17 @@ public class ProgrammingExercise extends Exercise {
         return buildConfig;
     }
 
+    /**
+     * Attaches the build configuration and names this exercise on it.
+     *
+     * @param buildConfig the build configuration to attach
+     */
     public void setBuildConfig(ProgrammingExerciseBuildConfig buildConfig) {
         this.buildConfig = buildConfig;
+        // The configuration holds the key, so this is what stores the link once the configuration is written.
+        if (buildConfig != null) {
+            buildConfig.setProgrammingExercise(this);
+        }
     }
 
     /**

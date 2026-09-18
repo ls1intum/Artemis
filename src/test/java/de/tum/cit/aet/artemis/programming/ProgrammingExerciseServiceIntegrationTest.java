@@ -189,8 +189,8 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         final var now = ZonedDateTime.now();
         ProgrammingExercise exercise = ProgrammingExerciseFactory.generateProgrammingExercise(now.minusDays(1), now.minusHours(2), course);
         exercise.setTitle("LoremIpsum");
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(exercise);
         var exerciseId = exercise.getId();
 
         final var searchTerm = pageableSearchUtilService.configureSearch(exerciseId.toString());

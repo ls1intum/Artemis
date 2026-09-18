@@ -53,7 +53,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @Repository
 public interface ProgrammingExerciseRepository extends DynamicSpecificationRepository<ProgrammingExercise, Long, ProgrammingExerciseFetchOptions> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "buildConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation" })
     Optional<ProgrammingExercise> findWithTemplateParticipationAndBuildConfigById(long exerciseId);
 
     /**
@@ -66,7 +66,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * @param exerciseId the id of the programming exercise
      * @return the exercise with its build config and auxiliary repositories
      */
-    @EntityGraph(type = LOAD, attributePaths = { "buildConfig", "auxiliaryRepositories" })
+    @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories" })
     Optional<ProgrammingExercise> findWithBuildConfigAndAuxiliaryRepositoriesById(long exerciseId);
 
     /**
@@ -126,7 +126,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "auxiliaryRepositories",
-            "submissionPolicy", "buildConfig" })
+            "submissionPolicy" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencyLinks.competency",
@@ -134,27 +134,27 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencyLinks.competency",
-            "auxiliaryRepositories", "submissionPolicy", "buildConfig", "exerciseVariantGroup" })
+            "auxiliaryRepositories", "submissionPolicy", "exerciseVariantGroup" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencyLinks.competency",
-            "auxiliaryRepositories", "submissionPolicy", "plagiarismDetectionConfig", "buildConfig", "exerciseVariantGroup" })
+            "auxiliaryRepositories", "submissionPolicy", "plagiarismDetectionConfig", "exerciseVariantGroup" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigById(
             long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories", "buildConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesAndBuildConfigById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "buildConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndBuildConfigById(long exerciseId);
 
-    @Query("SELECT COALESCE(bc.timeoutSeconds, 0) FROM ProgrammingExercise pe LEFT JOIN pe.buildConfig bc WHERE pe.id = :exerciseId")
+    @Query("SELECT COALESCE(bc.timeoutSeconds, 0) FROM ProgrammingExercise pe LEFT JOIN ProgrammingExerciseBuildConfig bc ON bc.programmingExercise = pe WHERE pe.id = :exerciseId")
     Optional<Integer> findBuildTimeoutSecondsByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
@@ -165,7 +165,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * @return the programming exercise without its grading criteria and competency links
      */
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
-            "auxiliaryRepositories", "plagiarismDetectionConfig", "templateParticipation", "solutionParticipation", "buildConfig", "submissionPolicy" })
+            "auxiliaryRepositories", "plagiarismDetectionConfig", "templateParticipation", "solutionParticipation", "submissionPolicy" })
     Optional<ProgrammingExercise> findForCreationMainGraphById(long exerciseId);
 
     /**
@@ -216,14 +216,13 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = "auxiliaryRepositories")
     Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories", "competencyLinks.competency", "buildConfig",
-            "categories", "plagiarismDetectionConfig", "gradingCriteria", "gradingCriteria.structuredGradingInstructions", "exampleSubmissions" })
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories", "competencyLinks.competency", "categories",
+            "plagiarismDetectionConfig", "gradingCriteria", "gradingCriteria.structuredGradingInstructions", "exampleSubmissions" })
     Optional<ProgrammingExercise> findForUpdateById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
     Optional<ProgrammingExercise> findWithSubmissionPolicyById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = "buildConfig")
     Optional<ProgrammingExercise> findWithBuildConfigById(long exerciseId);
 
     List<ProgrammingExercise> findAllByProjectKey(String projectKey);
@@ -293,10 +292,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     List<GitRepositoryAccessDTO> findAccessProjectionByProjectKey(@Param("projectKey") String projectKey);
 
-    @EntityGraph(type = LOAD, attributePaths = "buildConfig")
     List<ProgrammingExercise> findWithBuildConfigByProjectKey(String projectKey);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissionPolicy", "buildConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "submissionPolicy" })
     List<ProgrammingExercise> findWithSubmissionPolicyAndBuildConfigByProjectKey(String projectKey);
 
     /**
@@ -364,8 +362,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         return Optional.of(exercise);
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "submissionPolicy", "buildConfig", "teamAssignmentConfig",
-            "plagiarismDetectionConfig", "auxiliaryRepositories", "competencyLinks", "categories", "gradingCriteria" })
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "submissionPolicy", "teamAssignmentConfig", "plagiarismDetectionConfig",
+            "auxiliaryRepositories", "competencyLinks", "categories", "gradingCriteria" })
     Optional<ProgrammingExercise> findForVersioningBaseById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "testCases")
@@ -529,7 +527,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(@Param("exerciseId") long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students", "buildConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students" })
     Optional<ProgrammingExercise> findWithAllParticipationsAndBuildConfigById(long exerciseId);
 
     @Query("""
@@ -550,7 +548,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @Query("""
             SELECT pe
             FROM ProgrammingExercise pe
-                LEFT JOIN FETCH pe.buildConfig
             WHERE pe.solutionParticipation.id = :participationId
             """)
     Optional<ProgrammingExercise> findBySolutionParticipationIdWithBuildConfig(@Param("participationId") long participationId);
@@ -559,7 +556,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             SELECT pe
             FROM ProgrammingExercise pe
                 LEFT JOIN pe.studentParticipations spep
-                LEFT JOIN FETCH pe.buildConfig
             WHERE spep.id = :participationId
             """)
     Optional<ProgrammingExercise> findByStudentParticipationIdWithBuildConfig(@Param("participationId") long participationId);
@@ -567,7 +563,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @Query("""
             SELECT pe
             FROM ProgrammingExercise pe
-                LEFT JOIN FETCH pe.buildConfig
             WHERE pe.templateParticipation.id = :participationId
             """)
     Optional<ProgrammingExercise> findByTemplateParticipationIdWithBuildConfig(@Param("participationId") long participationId);
@@ -596,7 +591,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 LEFT JOIN FETCH p.templateParticipation
                 LEFT JOIN FETCH p.solutionParticipation
                 LEFT JOIN FETCH p.auxiliaryRepositories
-                LEFT JOIN FETCH p.buildConfig
                 LEFT JOIN FETCH p.categories
             WHERE p.id = :exerciseId
             """)
@@ -611,7 +605,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 LEFT JOIN FETCH p.templateParticipation
                 LEFT JOIN FETCH p.solutionParticipation
                 LEFT JOIN FETCH p.auxiliaryRepositories
-                LEFT JOIN FETCH p.buildConfig
                 LEFT JOIN FETCH p.gradingCriteria
             WHERE p.id = :exerciseId
             """)
@@ -626,7 +619,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 LEFT JOIN FETCH p.templateParticipation
                 LEFT JOIN FETCH p.solutionParticipation
                 LEFT JOIN FETCH p.auxiliaryRepositories
-                LEFT JOIN FETCH p.buildConfig
                 LEFT JOIN FETCH p.plagiarismDetectionConfig
                 LEFT JOIN FETCH p.gradingCriteria
             WHERE p.id = :exerciseId
@@ -812,7 +804,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     Set<Long> findProgrammingExerciseIdsByExamId(@Param("examId") long examId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig", "teamAssignmentConfig", "buildConfig", "gradingCriteria" })
+    @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig", "teamAssignmentConfig", "gradingCriteria" })
     Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(long exerciseId);
 
     /**
@@ -825,7 +817,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * @return an {@link Optional} containing the programming exercise with all related configurations if found,
      *         or an empty {@link Optional} otherwise
      */
-    @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig", "teamAssignmentConfig", "buildConfig", "gradingCriteria", "categories" })
+    @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig", "teamAssignmentConfig", "gradingCriteria", "categories" })
     Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesById(long exerciseId);
 
     long countByShortNameAndCourse(String shortName, Course course);

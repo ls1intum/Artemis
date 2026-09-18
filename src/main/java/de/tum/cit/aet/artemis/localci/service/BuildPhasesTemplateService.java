@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 
 /**
  * Handles the request to {@link BuildPhasesTemplateResource} and Artemis internal
@@ -52,13 +53,16 @@ public class BuildPhasesTemplateService {
 
     private final BuildScriptProviderService buildScriptProviderService;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     private static final YAMLMapper yamlMapper = new YAMLMapper();
 
     public BuildPhasesTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService,
-            BuildScriptProviderService buildScriptProviderService) {
+            BuildScriptProviderService buildScriptProviderService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.resourceLoaderService = resourceLoaderService;
         this.buildScriptProviderService = buildScriptProviderService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     /**
@@ -179,7 +183,8 @@ public class BuildPhasesTemplateService {
      */
     public List<BuildPhaseDTO> getDefaultBuildPlanPhasesFor(ProgrammingExercise exercise) {
         try {
-            ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
+            // Read through the repository: the configuration holds the exercise key, so it is not loaded with the exercise.
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise);
             return getBuildPlanPhasesFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
                     buildConfig.hasSequentialTestRuns());
         }

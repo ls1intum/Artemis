@@ -570,8 +570,8 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     void testProjectTypeIsNull() {
         ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         programmingExercise.setProjectType(null);
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise);
 
         processNewPush(commitHash, studentAssignmentRepository.bareRepository().getRepository(), userTestRepository.getUserWithAuthorities());
         localVCLocalCITestService.testLatestSubmission(participation.getId(), commitHash, 1, false);
@@ -665,8 +665,8 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStaticCodeAnalysis() throws IOException {
         programmingExercise.setStaticCodeAnalysisEnabled(true);
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise);
 
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 

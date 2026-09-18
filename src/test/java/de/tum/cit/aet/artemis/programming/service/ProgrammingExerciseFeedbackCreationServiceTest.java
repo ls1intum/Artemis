@@ -44,8 +44,8 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
         programmingExercise = (ProgrammingExercise) course.getExercises().iterator().next();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
     }
 
@@ -105,8 +105,8 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
                     something else""";
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.KOTLIN);
         programmingExercise.setProjectType(null);
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise);
         String actualFeedback = createFeedbackFromTestCase("test2", List.of(msgMatchMultiple), false);
         assertThat(actualFeedback).isEqualTo("""
                 expected:

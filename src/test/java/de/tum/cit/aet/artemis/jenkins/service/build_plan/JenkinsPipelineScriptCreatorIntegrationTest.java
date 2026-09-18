@@ -31,9 +31,8 @@ class JenkinsPipelineScriptCreatorIntegrationTest extends AbstractProgrammingInt
         programmingExercise.setReleaseDate(null);
         course.addExercises(programmingExercise);
 
-        var savedBuildConfig = programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-        programmingExercise.setBuildConfig(savedBuildConfig);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise);
     }
 
     @Test

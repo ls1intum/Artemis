@@ -960,8 +960,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
         exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().getFirst();
         ProgrammingExercise exercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(exercise);
         exerciseGroup1.addExercise(exercise);
 
         // add three user submissions with automatic results to student participation

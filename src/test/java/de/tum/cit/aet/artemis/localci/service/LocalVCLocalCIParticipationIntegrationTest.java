@@ -49,8 +49,8 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         programmingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
         // Set the branch to null to force the usage of LocalVCService#getDefaultBranch().
         programmingExercise.getBuildConfig().setBranch(null);
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         // Prepare the template repository to copy the student assignment repository from.
