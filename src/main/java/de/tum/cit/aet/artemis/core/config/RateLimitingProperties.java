@@ -79,6 +79,12 @@ public class RateLimitingProperties {
      */
     private Integer buildAgentCloneTokenRequestsPerMinute;
 
+    /**
+     * Requests per minute for the git-backed online-editor endpoints, counted per user.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#REPOSITORY_EDITOR}.
+     */
+    private Integer repositoryEditorRequestsPerMinute;
+
     public List<String> getExemptAddresses() {
         return exemptAddresses;
     }
@@ -141,5 +147,13 @@ public class RateLimitingProperties {
 
     public void setAiSearchPipelineRequestsPerMinute(Integer aiSearchPipelineRequestsPerMinute) {
         this.aiSearchPipelineRequestsPerMinute = aiSearchPipelineRequestsPerMinute;
+    }
+
+    public Integer getRepositoryEditorRequestsPerMinute() {
+        return repositoryEditorRequestsPerMinute;
+    }
+
+    public void setRepositoryEditorRequestsPerMinute(Integer repositoryEditorRequestsPerMinute) {
+        this.repositoryEditorRequestsPerMinute = repositoryEditorRequestsPerMinute;
     }
 }
