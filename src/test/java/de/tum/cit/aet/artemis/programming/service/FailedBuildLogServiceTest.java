@@ -27,7 +27,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 
 /**
  * Unit tests for the build logs of failed builds, which are kept on disk under {@code <failedBuildLogsPath>/<submissionId / 10000>/<submissionId>.log} rather than in the
@@ -50,7 +50,7 @@ class FailedBuildLogServiceTest {
     private ProfileService profileService;
 
     @Mock
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     @TempDir
     Path failedBuildLogsPath;
