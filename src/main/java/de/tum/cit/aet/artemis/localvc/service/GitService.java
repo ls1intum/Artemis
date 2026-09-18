@@ -13,7 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -76,6 +75,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -977,7 +977,7 @@ public class GitService extends AbstractGitService {
             Files.createDirectories(buildPath);
             build.buildInto(buildPath);
             try {
-                Files.move(buildPath, targetPath, StandardCopyOption.ATOMIC_MOVE);
+                FileUtil.publishAtomically(buildPath, targetPath);
             }
             catch (FileSystemException renameFailed) {
                 // A rename onto a path that is taken reports "directory not empty" or "file exists", depending on the platform, so what the target looks like now decides
