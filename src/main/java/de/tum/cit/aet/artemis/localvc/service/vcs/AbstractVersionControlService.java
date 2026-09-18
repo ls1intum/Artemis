@@ -72,8 +72,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         final String targetRepoSlug = targetProjectKeyLowerCase + "-" + targetRepositoryName;
         final var sourceRepoUri = getCloneRepositoryUri(sourceProjectKey, sourceRepositoryName);
         final var targetRepoUri = getCloneRepositoryUri(targetProjectKey, targetRepoSlug);
-        boolean targetRepositoryExistedBeforeCopy = repositoryExists(targetRepoUri);
-        if (targetRepositoryExistedBeforeCopy) {
+        if (repositoryExists(targetRepoUri)) {
             boolean targetRepositoryHealthy;
             try {
                 targetRepositoryHealthy = gitService.isBareRepositoryHealthy(targetRepoUri);
@@ -83,31 +82,29 @@ public abstract class AbstractVersionControlService implements VersionControlSer
                 // abort the copy instead of risking the deletion of a healthy repository.
                 throw new VersionControlException("Could not check the health of the target repository " + targetRepoSlug + " before copying", ex);
             }
-            if (!targetRepositoryHealthy) {
-                // Self-healing: a previous failed copy or a partially failed deletion left a broken target repository behind
-                // (unborn or corrupt, without any branch, so no student data can be lost). Copying onto it would fail forever,
-                // so delete it and copy as if it never existed. If this deletion fails, it intentionally surfaces as a
-                // LocalVCInternalException (a VersionControlException), since the copy could not have succeeded either way.
-                log.warn("Target repository {} exists but is unborn or corrupt; deleting it so the copy can recreate it", targetRepoUri);
-                deleteRepository(targetRepoUri);
-                targetRepositoryExistedBeforeCopy = false;
+            if (targetRepositoryHealthy) {
+                // The repository has already been copied, either by an earlier call that got this far or by a request that is
+                // starting the same participation concurrently. Both would produce the same content, and overwriting it would
+                // throw away whatever has been pushed to it since, so the repository that is there is the answer.
+                log.debug("Target repository {} already exists and is usable, keeping it instead of copying again", targetRepoUri);
+                return targetRepoUri;
             }
+            // Self-healing: a previous failed copy or a partially failed deletion left a broken target repository behind
+            // (unborn or corrupt, without any branch, so no student data can be lost). Copying onto it would fail forever,
+            // so delete it and copy as if it never existed. If this deletion fails, it intentionally surfaces as a
+            // LocalVCInternalException (a VersionControlException), since the copy could not have succeeded either way.
+            // A copy that is still running is never mistaken for such a leftover: it is built next to the target path and
+            // published with a single atomic rename, so the target path only ever holds a finished repository.
+            log.warn("Target repository {} exists but is unborn or corrupt; deleting it so the copy can recreate it", targetRepoUri);
+            deleteRepository(targetRepoUri);
         }
+        // A failed copy needs no cleanup here: the repository is built next to the target path and only moved there once it is complete, so a copy that failed leaves the
+        // target path as it found it. Deleting it would be actively harmful, since it may hold the repository that a concurrent copy of the same participation published.
         try (Repository targetRepo = withHistory ? gitService.copyBareRepositoryWithHistory(sourceRepoUri, targetRepoUri, sourceBranch)
                 : gitService.copyBareRepositoryWithoutHistory(sourceRepoUri, targetRepoUri, sourceBranch)) {
             return targetRepo.getRemoteRepositoryUri(); // should be the same as targetRepoUri
         }
         catch (IOException | RuntimeException ex) {
-            // Clean up only repositories created during this copy attempt. If a repository already existed before, it must not be removed.
-            if (!targetRepositoryExistedBeforeCopy) {
-                try {
-                    deleteRepository(targetRepoUri);
-                }
-                catch (RuntimeException cleanupException) {
-                    // ignore
-                    log.error("Could not delete directory of the failed copied repository: {}", targetRepoUri, cleanupException);
-                }
-            }
             if (ex instanceof LargeObjectException) {
                 throw new VersionControlException(
                         "Could not copy repository " + sourceRepositoryName + " to the target repository " + targetRepositoryName + " because a file in the repo is too large.",
@@ -119,7 +116,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     /**
      * Checks if a repository already exists before a copy operation starts. In contrast to {@link #isValidGitRepository}, this is a pure existence check:
-     * a corrupt pre-existing repository must still count as existing here, so that the cleanup after a failed copy does not delete it.
+     * a corrupt pre-existing repository must still count as existing here, so that the copy inspects its health and repairs it rather than copying onto it.
      *
      * @param repositoryUri the repository URI to check
      * @return true if the repository exists, false otherwise
