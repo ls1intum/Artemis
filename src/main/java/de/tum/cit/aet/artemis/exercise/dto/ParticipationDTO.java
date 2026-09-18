@@ -53,8 +53,8 @@ public record ParticipationDTO(Long id, boolean testRun, String type, Initializa
          * Maps an {@link Exercise} to a {@link ParticipationExerciseDTO}.
          * <p>
          * Student-facing endpoints mask exam exercises by stripping {@code exerciseGroup.exam} before mapping (the
-         * masked-exam state). In that state {@link Exercise#getCourseViaExerciseGroupOrCourseMember()} would dereference the
-         * now-missing exam and throw, so the course and the exercise group are omitted instead.
+         * masked-exam state). {@link Exercise#getCourseViaExerciseGroupOrCourseMember()} resolves a masked exam to a
+         * {@code null} course, and the exercise group is omitted with it.
          *
          * @param exercise the exercise to convert (may be {@code null})
          * @return the corresponding DTO, or {@code null} if the input was {@code null}
@@ -64,7 +64,7 @@ public record ParticipationDTO(Long id, boolean testRun, String type, Initializa
             return Optional.ofNullable(exercise).map(e -> {
                 ExerciseGroup exerciseGroup = e.getExerciseGroup();
                 Exam exam = exerciseGroup != null ? exerciseGroup.getExam() : null;
-                Course course = e.isExamExercise() && exam == null ? null : e.getCourseViaExerciseGroupOrCourseMember();
+                Course course = e.getCourseViaExerciseGroupOrCourseMember();
                 ParticipationExerciseGroupDTO exerciseGroupDTO = exam != null ? new ParticipationExerciseGroupDTO(exerciseGroup.getId(), new ParticipationExamDTO(exam.getId()))
                         : null;
                 return new ParticipationExerciseDTO(e.getId(), e.getExerciseType(), e.getType(), e.getAssessmentType(), e.getDueDate(), e.getAssessmentDueDate(), e.getMaxPoints(),

@@ -55,6 +55,8 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
      * @param name       the visible participant name
      * @param identifier the visible participant identifier
      */
+    // A mapping helper, never serialized: the name and the annotation only satisfy ExerciseCodeStyleArchitectureTest.testDTOImplementations,
+    // which requires every class in a dto package to be a *DTO record carrying @JsonInclude.
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private record ParticipantViewDTO(@Nullable UserPublicInfoDTO student, @Nullable TeamDTO team, @Nullable String name, @Nullable String identifier) {
 
@@ -112,7 +114,8 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
         if (participation == null) {
             return null;
         }
-        return build(participation, includeStudent ? ParticipantViewDTO.of(initializedParticipant(participation)) : ParticipantViewDTO.HIDDEN, exerciseOf(participation), null);
+        return build(participation, includeStudent ? ParticipantViewDTO.of(initializedParticipant(participation)) : ParticipantViewDTO.HIDDEN,
+                ParticipationExerciseDTO.of(participation.getExercise()), null);
     }
 
     /**
@@ -123,7 +126,7 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
      * @return the participation response
      */
     public static StudentParticipationDTO ofAfterStart(StudentParticipation participation, Participant participant) {
-        return build(participation, ParticipantViewDTO.of(participant), exerciseOf(participation), submissionsOf(participation, true));
+        return build(participation, ParticipantViewDTO.of(participant), ParticipationExerciseDTO.of(participation.getExercise()), submissionsOf(participation, true));
     }
 
     /**
@@ -137,14 +140,16 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
     }
 
     /**
-     * Maps a participation for its current owner, including safe participant and exercise information.
+     * Maps a participation for its current owner when the participation no longer carries a usable participant: a route
+     * that saves the participation first gets a merged instance back, whose team no longer has its students loaded, so
+     * it passes the participant it read before the save.
      *
      * @param participation the authorized participation
      * @param participant   the student or team the participation belongs to, loaded for this request
      * @return the current-user participation response
      */
     public static StudentParticipationDTO ofForCurrentUser(StudentParticipation participation, @Nullable Participant participant) {
-        return build(participation, ParticipantViewDTO.of(participant), exerciseOf(participation), null);
+        return build(participation, ParticipantViewDTO.of(participant), ParticipationExerciseDTO.of(participation.getExercise()), null);
     }
 
     /**
@@ -164,10 +169,6 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
     private static @Nullable Participant initializedParticipant(StudentParticipation participation) {
         User student = participation.getStudent().filter(Hibernate::isInitialized).orElse(null);
         return student != null ? student : participation.getTeam().filter(Hibernate::isInitialized).orElse(null);
-    }
-
-    private static @Nullable ParticipationExerciseDTO exerciseOf(StudentParticipation participation) {
-        return ParticipationExerciseDTO.of(participation.getExercise());
     }
 
     private static @Nullable List<ParticipationSubmissionDTO> submissionsOf(StudentParticipation participation, boolean includeContent) {

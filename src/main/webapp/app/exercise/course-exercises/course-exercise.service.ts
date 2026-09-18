@@ -127,13 +127,9 @@ export class CourseExerciseService {
      * @param exercise - the complete exercise already loaded by the caller
      */
     handleParticipation(participation: StudentParticipation, exercise: Exercise): StudentParticipation {
-        if (participation) {
-            // convert date
-            participation.initializationDate = convertDateFromServer(participation.initializationDate);
-            // the caller's exercise replaces the wire context, which lacks fields components read (access rights, programming settings)
-            participation.exercise = this.convertExerciseDatesFromServer(cloneWith(exercise, { studentParticipations: [participation] }));
-            this.participationWebsocketService.addParticipation(participation);
-        }
+        // the caller's exercise replaces the wire context, which lacks fields components read (access rights, programming settings)
+        participation.exercise = this.convertExerciseDatesFromServer(cloneWith(exercise, { studentParticipations: [participation] }));
+        this.participationWebsocketService.addParticipation(participation);
         return participation;
     }
 

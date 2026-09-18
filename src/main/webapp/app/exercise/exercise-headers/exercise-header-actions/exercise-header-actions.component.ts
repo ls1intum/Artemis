@@ -340,11 +340,9 @@ export class ExerciseHeaderActionsComponent {
             .pipe(finalize(() => this._isLoading.set(false)))
             .subscribe({
                 next: (participation) => {
-                    if (participation) {
-                        this.receiveNewParticipation(participation);
-                    }
+                    this.receiveNewParticipation(participation);
                     if (programmingExercise) {
-                        if (participation?.initializationState === InitializationState.INITIALIZED) {
+                        if (participation.initializationState === InitializationState.INITIALIZED) {
                             if (programmingExercise.allowOfflineIde) {
                                 this.alertService.success('artemisApp.exercise.personalRepositoryClone');
                             } else {
@@ -372,10 +370,8 @@ export class ExerciseHeaderActionsComponent {
             .pipe(finalize(() => this._isLoading.set(false)))
             .subscribe({
                 next: (resumedParticipation: StudentParticipation) => {
-                    if (resumedParticipation) {
-                        this.receiveNewParticipation(resumedParticipation);
-                        this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
-                    }
+                    this.receiveNewParticipation(resumedParticipation);
+                    this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
                 },
                 error: (error) => {
                     this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
