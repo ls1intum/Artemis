@@ -209,6 +209,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `IrisJsonMessageContent` | IrisMessageContent, shared primary key | Required | No | Cascades. |
 | `IrisMessage` | IrisSession `session_id` | Required | No | Cascades. |
 | `IrisMessageContent` | IrisMessage `message_id` | Required | No | Cascades. |
+| `IrisProactiveEpisode` | User `user_id` and Exercise `exercise_id` | Required (all) | No | Cascades on both. Carries the ids directly rather than associations, because a session cannot identify the episode. |
 | `IrisSession` and 2 subclasses | User `user_id` | Required | No | Cascades. The course or post it also names varies by subclass. |
 | `IrisTextMessageContent` | IrisMessageContent, shared primary key | Required | No | Cascades. |
 
