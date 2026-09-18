@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -233,12 +234,27 @@ class ProcessingStateWorkerDispatchTest {
     }
 
     @Test
-    void markClaimedUnitSkippedTransitionsToSkipped() {
-        when(processingStateRepository.findByLectureUnit_Id(100L)).thenReturn(Optional.of(testState));
+    void markClaimedUnitSkippedMarksSkippedWhenTheClaimIsStillCurrent() {
+        ZonedDateTime claimedAt = ZonedDateTime.now();
+        when(processingStateRepository.markSkippedIfStillClaimed(eq(100L), eq(claimedAt), any())).thenReturn(1);
 
-        callbackService.markClaimedUnitSkipped(100L);
+        assertThat(callbackService.markClaimedUnitSkipped(100L, claimedAt)).isTrue();
 
-        assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.SKIPPED);
-        verify(processingStateRepository).save(testState);
+        verify(processingStateRepository).markSkippedIfStillClaimed(eq(100L), eq(claimedAt), any());
+    }
+
+    @Test
+    void markClaimedUnitSkippedIgnoresAResultWhoseClaimIsNoLongerCurrent() {
+        // Worker A's original claim of this unit lapsed; the unit was re-claimed and already
+        // activated into a live run before worker A's stale "not applicable" result for its OLD,
+        // now-defunct claim finally arrives. The atomic guard matches on the exact claim marker
+        // (unlike a phase-only check, which two different claims could pass through one after
+        // another), so the stale result cannot be conflated with the newer claim: it matches nothing
+        // instead of cancelling the newer claim's run. This is finding 3: without the claim-marker
+        // match, the previous unconditional save would have overwritten an active run with SKIPPED.
+        ZonedDateTime staleClaimedAt = ZonedDateTime.now().minusMinutes(25);
+        when(processingStateRepository.markSkippedIfStillClaimed(eq(100L), eq(staleClaimedAt), any())).thenReturn(0);
+
+        assertThat(callbackService.markClaimedUnitSkipped(100L, staleClaimedAt)).isFalse();
     }
 }

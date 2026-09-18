@@ -123,6 +123,11 @@ public class LectureContentProcessingScheduler {
             @Value("${artemis.iris.ingestion.slow-stage-warning-after:45m}") Duration slowStageWarningAfter,
             @Value("${artemis.iris.ingestion.no-callback-timeout-minutes:20}") int noCallbackTimeoutMinutes,
             @Value("${artemis.iris.ingestion.lease-expiry:30s}") Duration leaseExpiry, @Value("${artemis.iris.ingestion.absolute-timeout-hours:12}") int absoluteTimeoutHours) {
+        requirePositive(stallWindow, "artemis.iris.ingestion.stall-window");
+        requirePositive(slowStageWarningAfter, "artemis.iris.ingestion.slow-stage-warning-after");
+        requirePositive(noCallbackTimeoutMinutes, "artemis.iris.ingestion.no-callback-timeout-minutes");
+        requirePositive(leaseExpiry, "artemis.iris.ingestion.lease-expiry");
+        requirePositive(absoluteTimeoutHours, "artemis.iris.ingestion.absolute-timeout-hours");
         this.processingStateRepository = processingStateRepository;
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.processingService = processingService;
@@ -135,6 +140,22 @@ public class LectureContentProcessingScheduler {
         this.noCallbackTimeoutMinutes = noCallbackTimeoutMinutes;
         this.leaseExpiry = leaseExpiry;
         this.absoluteTimeoutHours = absoluteTimeoutHours;
+    }
+
+    /**
+     * Rejects a non-positive recovery threshold at startup rather than letting it silently make every
+     * live run immediately eligible for stall/timeout/lease-reclaim handling once scheduling starts.
+     */
+    private static void requirePositive(Duration value, String property) {
+        if (value.isZero() || value.isNegative()) {
+            throw new IllegalArgumentException(property + " must be strictly positive, but was " + value);
+        }
+    }
+
+    private static void requirePositive(int value, String property) {
+        if (value <= 0) {
+            throw new IllegalArgumentException(property + " must be strictly positive, but was " + value);
+        }
     }
 
     /**
@@ -283,7 +304,9 @@ public class LectureContentProcessingScheduler {
      * still stalled. The batch read that found this candidate may be stale: a terminal success callback
      * can land between the read and this write, and because the entity has no optimistic-lock version, an
      * unconditional {@code save} would revert a just-completed unit to FAILED and wipe its confirmed
-     * fingerprint. Re-fetching mirrors {@link #recoverStuckState} and closes that race.
+     * fingerprint. Re-fetching mirrors {@link #recoverStuckState} and narrows that race; committing
+     * through {@link ProcessingStateCallbackService#handleProcessingFailureIfStillLive} instead of a
+     * plain save closes the remaining gap between this re-fetch and the failure write itself.
      *
      * @param staleState the stalled candidate from the batch read (used only for its id)
      */
@@ -301,7 +324,7 @@ public class LectureContentProcessingScheduler {
         }
         log.warn("stalled-progress unit={} stage={} progress={}/{} frozen_since={} — heartbeats alive but no progress, failing the run for retry",
                 freshState.getLectureUnit().getId(), freshState.getCurrentStage(), freshState.getStageProgress(), freshState.getStageTotal(), freshState.getLastProgressAt());
-        callbackService.handleProcessingFailure(freshState);
+        callbackService.handleProcessingFailureIfStillLive(freshState);
     }
 
     /**
@@ -368,7 +391,10 @@ public class LectureContentProcessingScheduler {
         // Treat stuck jobs as failures: the content itself may cause Iris to hang or crash
         // silently (e.g. malformed PDF, OOM during transcription). Incrementing retryCount
         // ensures poison-pill jobs eventually fail permanently instead of looping forever.
-        callbackService.handleProcessingFailure(freshState);
+        // Committed through handleProcessingFailureIfStillLive, not a plain save: the phase/token
+        // re-checks above narrow the race against a concurrent terminal callback but do not close the
+        // remaining gap between this re-fetch and the write itself.
+        callbackService.handleProcessingFailureIfStillLive(freshState);
     }
 
     /**

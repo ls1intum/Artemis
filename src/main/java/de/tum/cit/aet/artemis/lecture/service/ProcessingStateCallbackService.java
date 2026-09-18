@@ -445,7 +445,10 @@ public class ProcessingStateCallbackService {
         for (LectureUnitProcessingState state : claimed) {
             PreparedDispatch prepared = prepareClaimedState(state);
             if (prepared != null) {
-                result.add(new ClaimedIngestionUnitDTO(prepared.unit().getId(), prepared.contentFingerprint(), state.isForceReingest(), prepared.targetPhase()));
+                // Exactly one of these is set at claim time: startedAt for an IDLE claim, retryEligibleAt for a
+                // retry claim (mirrors activateClaimedJob's own claim-shape check just above).
+                ZonedDateTime claimedAt = state.getStartedAt() != null ? state.getStartedAt() : state.getRetryEligibleAt();
+                result.add(new ClaimedIngestionUnitDTO(prepared.unit().getId(), prepared.contentFingerprint(), state.isForceReingest(), prepared.targetPhase(), claimedAt));
             }
         }
         if (!result.isEmpty()) {
@@ -489,15 +492,24 @@ public class ProcessingStateCallbackService {
     /**
      * Mark a claimed unit SKIPPED because preparation on the iris side found it not processable
      * (course settings or content type). Mirrors the push path's null-token branch.
+     * <p>
+     * Bound to the claim that produced it, the same way {@link #activateClaimedJob} is: a claim whose
+     * lease lapsed and was re-claimed, and possibly already activated, before this result arrived no
+     * longer matches, so a stale result matches nothing instead of cancelling the newer claim's run.
      *
      * @param lectureUnitId the claimed unit
+     * @param claimedAt     the claim marker observed at claim time, from
+     *                          {@link de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO#claimedAt()}
+     * @return true when marked SKIPPED, false when the claim was no longer current
      */
-    public void markClaimedUnitSkipped(long lectureUnitId) {
-        processingStateRepository.findByLectureUnit_Id(lectureUnitId).ifPresent(state -> {
-            log.info("Processing not applicable for claimed unit {} (course settings or content type), marking as SKIPPED", lectureUnitId);
-            state.transitionTo(ProcessingPhase.SKIPPED);
-            processingStateRepository.save(state);
-        });
+    public boolean markClaimedUnitSkipped(long lectureUnitId, ZonedDateTime claimedAt) {
+        int updated = processingStateRepository.markSkippedIfStillClaimed(lectureUnitId, claimedAt, ZonedDateTime.now());
+        if (updated == 0) {
+            log.info("Not marking unit {} SKIPPED: its claim is no longer current (released, re-claimed, or already activated)", lectureUnitId);
+            return false;
+        }
+        log.info("Processing not applicable for claimed unit {} (course settings or content type), marking as SKIPPED", lectureUnitId);
+        return true;
     }
 
     /**
@@ -828,6 +840,13 @@ public class ProcessingStateCallbackService {
     }
 
     /**
+     * @see #handleProcessingFailureIfStillLive(LectureUnitProcessingState, String)
+     */
+    boolean handleProcessingFailureIfStillLive(LectureUnitProcessingState state) {
+        return handleProcessingFailureIfStillLive(state, null);
+    }
+
+    /**
      * Handle processing failure with retry logic, forwarding an optional machine-readable error code.
      * <p>
      * Transitions to FAILED immediately so the UI reflects the error. The raw Pyris {@code errorCode}
@@ -842,15 +861,69 @@ public class ProcessingStateCallbackService {
      * @param errorCode machine-readable error code from Pyris (e.g. {@code YOUTUBE_PRIVATE}); may be {@code null}
      */
     void handleProcessingFailure(LectureUnitProcessingState state, @Nullable String errorCode) {
+        // Preserve existing transcription status in the WebSocket notification so the UI
+        // does not lose it when a failure occurs after transcription already completed.
+        TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(state.getLectureUnit().getId()).map(LectureTranscription::getTranscriptionStatus).orElse(null);
+
+        FailureComputation computation = computeFailure(state, errorCode);
+        processingStateRepository.save(state);
+        notifyProcessingStateChange(state, txStatus);
+
+        if (computation.backoffMinutes() != null) {
+            log.info("Unit {} failed, scheduled for retry in {} minutes (attempt {}/{})", state.getLectureUnit().getId(), computation.backoffMinutes(), computation.retryCount(),
+                    MAX_PROCESSING_RETRIES);
+        }
+    }
+
+    /**
+     * Fail a stalled or stuck run, but only while it is still exactly the run that was judged
+     * stalled/stuck: same id, phase, and job token as the caller's re-fetch observed. The scheduler's
+     * re-fetch-then-fail paths ({@code failStalledState}, {@code recoverStuckState}) re-read the row
+     * right before deciding to fail it specifically to close the race against a concurrent terminal
+     * callback, but the read-then-decide-then-write sequence still leaves a gap between that read and
+     * this write: a callback finishing in that gap must not be reverted. Committing the computed
+     * failure through one atomic conditional update, instead of the plain {@code save} above, closes
+     * it completely. Ordinary dispatch-failure call sites don't need this: they act on a state they
+     * just atomically claimed themselves, synchronously, in the same call.
+     *
+     * @param state     the state read just before this call decided to fail it
+     * @param errorCode machine-readable error code from Pyris; may be {@code null}
+     * @return true when the failure was applied, false when the run had already moved on since the read
+     */
+    boolean handleProcessingFailureIfStillLive(LectureUnitProcessingState state, @Nullable String errorCode) {
+        ProcessingPhase phaseAtRead = state.getPhase();
+        String tokenAtRead = state.getIngestionJobToken();
+
+        FailureComputation computation = computeFailure(state, errorCode);
+
+        int updated = processingStateRepository.failIfStillLive(state.getId(), phaseAtRead, tokenAtRead, computation.retryCount(), computation.errorKey(),
+                computation.retryEligibleAt(), computation.now());
+        if (updated == 0) {
+            log.debug("Unit {} already moved on since it was read as stalled/stuck (phase {}), dropping the stale failure", state.getLectureUnit().getId(), phaseAtRead);
+            return false;
+        }
+
+        TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(state.getLectureUnit().getId()).map(LectureTranscription::getTranscriptionStatus).orElse(null);
+        notifyProcessingStateChange(state, txStatus);
+        if (computation.backoffMinutes() != null) {
+            log.info("Unit {} failed, scheduled for retry in {} minutes (attempt {}/{})", state.getLectureUnit().getId(), computation.backoffMinutes(), computation.retryCount(),
+                    MAX_PROCESSING_RETRIES);
+        }
+        return true;
+    }
+
+    /**
+     * Compute the field changes a failure applies to {@code state} (retry count, error key, backoff),
+     * without persisting them, so both the unconditional and the claim-checked failure writers commit
+     * the exact same values through their own storage path.
+     */
+    private FailureComputation computeFailure(LectureUnitProcessingState state, @Nullable String errorCode) {
+        ZonedDateTime now = ZonedDateTime.now();
         state.incrementRetryCount();
         state.setIngestionJobToken(null);
         // Undo the dispatch attempt, including the claim that started it: startedAt is what marks a job as taken, so
         // leaving it set would keep this unit out of the idle queue for good.
         state.setStartedAt(null);
-
-        // Preserve existing transcription status in the WebSocket notification so the UI
-        // does not lose it when a failure occurs after transcription already completed.
-        TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(state.getLectureUnit().getId()).map(LectureTranscription::getTranscriptionStatus).orElse(null);
 
         ProcessingErrorClassification classification = classifyIngestionFailure(errorCode);
         state.markFailed(classification.errorKey());
@@ -863,18 +936,24 @@ public class ProcessingStateCallbackService {
             else {
                 log.warn("Max retries reached for unit {}, marking as permanently failed", state.getLectureUnit().getId());
             }
-            processingStateRepository.save(state);
-            notifyProcessingStateChange(state, txStatus);
-            return;
+            return new FailureComputation(state.getRetryCount(), classification.errorKey(), null, null, now);
         }
 
         long backoffMinutes = calculateBackoffMinutes(state.getRetryCount());
         state.scheduleRetry(backoffMinutes);
-        processingStateRepository.save(state);
-        notifyProcessingStateChange(state, txStatus);
+        return new FailureComputation(state.getRetryCount(), classification.errorKey(), state.getRetryEligibleAt(), backoffMinutes, now);
+    }
 
-        log.info("Unit {} failed, scheduled for retry in {} minutes (attempt {}/{})", state.getLectureUnit().getId(), backoffMinutes, state.getRetryCount(),
-                MAX_PROCESSING_RETRIES);
+    /**
+     * The field changes a failure applies, computed once and shared by both failure writers.
+     *
+     * @param retryCount      the new retry count
+     * @param errorKey        the i18n error key to persist
+     * @param retryEligibleAt when the retry becomes eligible, or {@code null} for a permanent failure
+     * @param backoffMinutes  the backoff applied, or {@code null} for a permanent failure (log-only, not persisted)
+     * @param now             the timestamp this computation was performed at
+     */
+    private record FailureComputation(int retryCount, String errorKey, @Nullable ZonedDateTime retryEligibleAt, @Nullable Long backoffMinutes, ZonedDateTime now) {
     }
 
     /**

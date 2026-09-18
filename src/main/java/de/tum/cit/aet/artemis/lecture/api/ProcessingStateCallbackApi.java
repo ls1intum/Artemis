@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.api;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.jspecify.annotations.Nullable;
@@ -84,12 +85,16 @@ public class ProcessingStateCallbackApi extends AbstractLectureApi {
     }
 
     /**
-     * Mark a claimed unit SKIPPED because preparation found it not processable.
+     * Mark a claimed unit SKIPPED because preparation found it not processable, but only while it
+     * still holds exactly the claim that decided it was not processable.
      *
      * @param lectureUnitId the claimed unit
+     * @param claimedAt     the claim marker observed at claim time, from {@link ClaimedIngestionUnitDTO#claimedAt()}
+     * @return true if the unit still held this claim and was marked SKIPPED; false if the claim was
+     *         already released, re-claimed, or activated, in which case nothing was changed
      */
-    public void markClaimedUnitSkipped(long lectureUnitId) {
-        processingStateCallbackService.markClaimedUnitSkipped(lectureUnitId);
+    public boolean markClaimedUnitSkipped(long lectureUnitId, ZonedDateTime claimedAt) {
+        return processingStateCallbackService.markClaimedUnitSkipped(lectureUnitId, claimedAt);
     }
 
     /**

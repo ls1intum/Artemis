@@ -108,7 +108,7 @@ public class PyrisInternalIngestionWorkerResource {
             }
             PyrisPreparedLectureIngestionJobDTO prepared = pyrisWebhookService.prepareLectureUnitIngestion(unit, claim.contentFingerprint(), claim.forceReingest());
             if (prepared == null) {
-                processingStateCallbackApi.get().markClaimedUnitSkipped(claim.lectureUnitId());
+                processingStateCallbackApi.get().markClaimedUnitSkipped(claim.lectureUnitId(), claim.claimedAt());
                 continue;
             }
             if (!processingStateCallbackApi.get().activateClaimedJob(claim.lectureUnitId(), prepared.jobToken(), claim.targetPhase(), claim.contentFingerprint(),

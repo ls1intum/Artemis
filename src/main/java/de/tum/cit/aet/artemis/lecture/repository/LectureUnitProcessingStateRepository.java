@@ -518,6 +518,37 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     int requeueStuckIngestionWithoutPenalty(@Param("id") long id, @Param("token") String token, @Param("now") ZonedDateTime now);
 
     /**
+     * Fail a stalled or stuck run atomically, but only while it is still exactly the run that was judged
+     * stalled/stuck: same id, phase, and job token observed at that decision. A terminal callback
+     * finishing (or otherwise changing) this run in the window between that observation and this write
+     * clears its token first, so this predicate then matches no row and the failure write is silently
+     * dropped instead of overwriting whatever the callback wrote. Same guard shape as
+     * {@link #requeueStuckIngestionWithoutPenalty}.
+     *
+     * @param id              the processing state to fail
+     * @param phase           the phase observed when the run was judged stalled/stuck
+     * @param token           the job token observed at the same time
+     * @param retryCount      the new retry count to persist
+     * @param errorKey        the i18n error key to persist
+     * @param retryEligibleAt when the retry becomes eligible, or {@code null} for a permanent failure
+     * @param now             recorded as the new {@code lastUpdated}
+     * @return 1 when the failure was applied, 0 when the run is no longer the one that was judged stalled/stuck
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED, ps.errorKey = :errorKey,
+                ps.ingestionJobToken = NULL, ps.startedAt = NULL, ps.retryCount = :retryCount,
+                ps.retryEligibleAt = :retryEligibleAt, ps.lastUpdated = :now
+            WHERE ps.id = :id
+            AND ps.phase = :phase
+            AND ps.ingestionJobToken = :token
+            """)
+    int failIfStillLive(@Param("id") long id, @Param("phase") ProcessingPhase phase, @Param("token") String token, @Param("retryCount") int retryCount,
+            @Param("errorKey") String errorKey, @Param("retryEligibleAt") ZonedDateTime retryEligibleAt, @Param("now") ZonedDateTime now);
+
+    /**
      * Activate a claim exactly once: turn a claimed row into an in-flight run, but only while it still holds the claim
      * that produced the activation. A claimed IDLE row carries {@code startedAt}; a claimed FAILED retry carries its
      * lease in {@code retryEligibleAt}. Neither has a job token yet. A row that was released by the abandoned-claim
@@ -547,5 +578,31 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             """)
     int activateClaimedJob(@Param("lectureUnitId") long lectureUnitId, @Param("phase") ProcessingPhase phase, @Param("token") String token,
             @Param("contentFingerprint") String contentFingerprint, @Param("workerBootId") String workerBootId, @Param("now") ZonedDateTime now);
+
+    /**
+     * Mark a claimed unit SKIPPED, but only while it still holds exactly the claim that decided it was not
+     * processable: same claim-shape check as {@link #activateClaimedJob}, plus the specific claim marker
+     * ({@code claimedAt}, echoed back from {@link de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO})
+     * so that two different claims passing through the same generic unactivated shape one after another are
+     * not conflated the way a shape-only check would allow. Without this, a superseded claim's stale result
+     * could cancel a newer claim that has since been legitimately activated.
+     *
+     * @param lectureUnitId the claimed unit
+     * @param claimedAt     the claim marker observed at claim time (startedAt for an IDLE claim, retryEligibleAt
+     *                          for a retry claim)
+     * @param now           recorded as the new {@code lastUpdated}
+     * @return 1 when marked SKIPPED, 0 when the row no longer holds this exact claim
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.SKIPPED, ps.startedAt = NULL, ps.retryEligibleAt = NULL, ps.lastUpdated = :now
+            WHERE ps.lectureUnit.id = :lectureUnitId
+            AND ps.ingestionJobToken IS NULL
+            AND ((ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE AND ps.startedAt = :claimedAt)
+                OR (ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED AND ps.retryEligibleAt = :claimedAt))
+            """)
+    int markSkippedIfStillClaimed(@Param("lectureUnitId") long lectureUnitId, @Param("claimedAt") ZonedDateTime claimedAt, @Param("now") ZonedDateTime now);
 
 }

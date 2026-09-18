@@ -1,6 +1,10 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -14,6 +18,7 @@ import static org.mockito.Mockito.when;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,12 +26,16 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 
@@ -86,6 +95,51 @@ class LectureContentProcessingSchedulerTest {
 
         testState = new LectureUnitProcessingState(testUnit);
         testState.setId(1L);
+    }
+
+    @Nested
+    class ConstructorValidation {
+
+        private LectureContentProcessingScheduler buildScheduler(Duration stallWindow, Duration slowStageWarningAfter, int noCallbackTimeoutMinutes, Duration leaseExpiry,
+                int absoluteTimeoutHours) {
+            return new LectureContentProcessingScheduler(processingStateRepository, attachmentVideoUnitRepository, processingService, callbackService, reconcileService,
+                    recoveryService, mock(FeatureToggleService.class), stallWindow, slowStageWarningAfter, noCallbackTimeoutMinutes, leaseExpiry, absoluteTimeoutHours);
+        }
+
+        @Test
+        void shouldRejectNonPositiveStallWindow() {
+            assertThrows(IllegalArgumentException.class, () -> buildScheduler(Duration.ZERO, Duration.ofMinutes(45), 20, Duration.ofSeconds(30), 12));
+            assertThrows(IllegalArgumentException.class, () -> buildScheduler(Duration.ofMinutes(-1), Duration.ofMinutes(45), 20, Duration.ofSeconds(30), 12));
+        }
+
+        @Test
+        void shouldRejectNonPositiveSlowStageWarningAfter() {
+            assertThrows(IllegalArgumentException.class, () -> buildScheduler(Duration.ofMinutes(30), Duration.ZERO, 20, Duration.ofSeconds(30), 12));
+        }
+
+        @Test
+        void shouldRejectNonPositiveNoCallbackTimeoutMinutes() {
+            assertThrows(IllegalArgumentException.class, () -> buildScheduler(Duration.ofMinutes(30), Duration.ofMinutes(45), 0, Duration.ofSeconds(30), 12));
+            assertThrows(IllegalArgumentException.class, () -> buildScheduler(Duration.ofMinutes(30), Duration.ofMinutes(45), -5, Duration.ofSeconds(30), 12));
+        }
+
+        @Test
+        void shouldRejectNonPositiveLeaseExpiry() {
+            assertThrows(IllegalArgumentException.class, () -> buildScheduler(Duration.ofMinutes(30), Duration.ofMinutes(45), 20, Duration.ZERO, 12));
+        }
+
+        @Test
+        void shouldRejectNonPositiveAbsoluteTimeoutHours() {
+            assertThrows(IllegalArgumentException.class, () -> buildScheduler(Duration.ofMinutes(30), Duration.ofMinutes(45), 20, Duration.ofSeconds(30), 0));
+            assertThrows(IllegalArgumentException.class, () -> buildScheduler(Duration.ofMinutes(30), Duration.ofMinutes(45), 20, Duration.ofSeconds(30), -1));
+        }
+
+        @Test
+        void shouldAcceptAllStrictlyPositiveThresholds() {
+            LectureContentProcessingScheduler validScheduler = buildScheduler(Duration.ofMinutes(30), Duration.ofMinutes(45), 20, Duration.ofSeconds(30), 12);
+
+            assertNotNull(validScheduler);
+        }
     }
 
     @Nested
@@ -157,8 +211,8 @@ class LectureContentProcessingSchedulerTest {
             // When
             scheduler.processScheduledRetries();
 
-            // Then: Should delegate to callbackService.handleProcessingFailure
-            verify(callbackService).handleProcessingFailure(testState);
+            // Then: Should delegate to callbackService.handleProcessingFailureIfStillLive
+            verify(callbackService).handleProcessingFailureIfStillLive(testState);
         }
 
         @Test
@@ -230,7 +284,7 @@ class LectureContentProcessingSchedulerTest {
 
             scheduler.processScheduledRetries();
 
-            verify(callbackService).handleProcessingFailure(testState);
+            verify(callbackService).handleProcessingFailureIfStillLive(testState);
         }
 
         @Test
@@ -248,7 +302,7 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             verify(reconcileService, never()).resolveStuckIngestionWithoutRetryPenalty(any());
-            verify(callbackService).handleProcessingFailure(testState);
+            verify(callbackService).handleProcessingFailureIfStillLive(testState);
         }
 
         @Test
@@ -384,7 +438,7 @@ class LectureContentProcessingSchedulerTest {
 
             scheduler.processScheduledRetries();
 
-            verify(callbackService).handleProcessingFailure(testState);
+            verify(callbackService).handleProcessingFailureIfStillLive(testState);
         }
 
         @Test
@@ -405,7 +459,7 @@ class LectureContentProcessingSchedulerTest {
 
             scheduler.processScheduledRetries();
 
-            verify(callbackService).handleProcessingFailure(testState);
+            verify(callbackService).handleProcessingFailureIfStillLive(testState);
         }
 
         @Test
@@ -428,6 +482,78 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             verify(callbackService, never()).handleProcessingFailure(any());
+            verify(callbackService, never()).handleProcessingFailureIfStillLive(any());
+        }
+
+        @Test
+        void reproducesStaleFailureOverwritingACompletionThatLandsAfterTheReFetch() {
+            // shouldNotFailAStalledRunThatCompletedSinceTheBatchRead above covers a completion landing
+            // BEFORE failStalledState's re-fetch: the re-fetch itself already sees DONE, so it correctly
+            // skips. This exercises the window that re-fetch alone does NOT close: a completion landing
+            // AFTER the re-fetch has already decided "still stalled" but BEFORE the failure write commits.
+            // callbackService is real here (not mocked), with a repository double that acts as an
+            // authoritative "backing row" so failIfStillLive's atomic guard can be observed directly.
+            LectureUnitProcessingState backingRow = new LectureUnitProcessingState(testUnit);
+            backingRow.setId(PROCESSING_STATE_ID);
+            backingRow.setPhase(ProcessingPhase.INGESTING);
+            backingRow.setIngestionJobToken(JOB_TOKEN);
+            backingRow.recordStageProgress("vision", 41, 180);
+            ReflectionTestUtils.setField(backingRow, "lastProgressAt", ZonedDateTime.now().minusMinutes(40));
+            backingRow.setLastUpdated(ZonedDateTime.now().minusMinutes(1));
+
+            LectureUnitProcessingStateRepository raceRepository = mock(LectureUnitProcessingStateRepository.class);
+            when(raceRepository.findByPhaseIn(any())).thenReturn(List.of(backingRow));
+            when(raceRepository.findStuckStates(any(), any(ZonedDateTime.class), any(ZonedDateTime.class))).thenReturn(List.of());
+            when(raceRepository.findRunsWithLapsedLease(any(), any())).thenReturn(List.of());
+            // The re-fetch returns a detached snapshot of the pre-callback row, then — simulating a
+            // terminal callback landing in the window right after this read returns — the authoritative
+            // backing row is concurrently completed to DONE.
+            when(raceRepository.findById(PROCESSING_STATE_ID)).thenAnswer(invocation -> {
+                LectureUnitProcessingState snapshot = new LectureUnitProcessingState(testUnit);
+                snapshot.setId(PROCESSING_STATE_ID);
+                snapshot.setPhase(backingRow.getPhase());
+                snapshot.setIngestionJobToken(backingRow.getIngestionJobToken());
+                snapshot.recordStageProgress("vision", 41, 180);
+                ReflectionTestUtils.setField(snapshot, "lastProgressAt", ZonedDateTime.now().minusMinutes(40));
+                snapshot.setLastUpdated(ZonedDateTime.now().minusMinutes(1));
+
+                backingRow.transitionTo(ProcessingPhase.DONE);
+                backingRow.setConfirmedFingerprint("confirmed-fp");
+
+                return Optional.of(snapshot);
+            });
+            // Mimics the real UPDATE ... WHERE id AND phase AND token guard against the backing row: applies
+            // the failure only while the row still matches what the caller observed at read time.
+            when(raceRepository.failIfStillLive(eq(PROCESSING_STATE_ID), any(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+                ProcessingPhase phase = invocation.getArgument(1);
+                String token = invocation.getArgument(2);
+                if (backingRow.getPhase() != phase || !Objects.equals(backingRow.getIngestionJobToken(), token)) {
+                    return 0;
+                }
+                backingRow.setPhase(ProcessingPhase.FAILED);
+                backingRow.setIngestionJobToken(null);
+                return 1;
+            });
+
+            LectureTranscriptionRepository transcriptionRepository = mock(LectureTranscriptionRepository.class);
+            when(transcriptionRepository.findByLectureUnit_Id(anyLong())).thenReturn(Optional.empty());
+
+            ProcessingStateCallbackService realCallbackService = new ProcessingStateCallbackService(raceRepository, transcriptionRepository, mock(AttachmentRepository.class),
+                    Optional.empty(), mock(WebsocketMessagingService.class), mock(LectureUnitContentFingerprintService.class), mock(DistributedDataProvider.class),
+                    mock(FeatureToggleService.class), MAX_CONCURRENT_JOBS, 20, Duration.ofSeconds(90), 8);
+
+            FeatureToggleService raceFeatureToggleService = mock(FeatureToggleService.class);
+            when(raceFeatureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
+            LectureContentProcessingScheduler raceScheduler = new LectureContentProcessingScheduler(raceRepository, attachmentVideoUnitRepository, processingService,
+                    realCallbackService, reconcileService, recoveryService, raceFeatureToggleService, Duration.ofMinutes(30), Duration.ofMinutes(45), 20, Duration.ofSeconds(30),
+                    12);
+
+            raceScheduler.processScheduledRetries();
+
+            // A legitimate terminal callback completed the run to DONE in the window between
+            // failStalledState's re-fetch and the failure write; that completion must survive:
+            // failIfStillLive's atomic guard sees the phase no longer matches and drops the stale write.
+            assertEquals(ProcessingPhase.DONE, backingRow.getPhase());
         }
 
         @Test
