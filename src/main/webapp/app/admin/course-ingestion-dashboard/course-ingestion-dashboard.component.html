@@ -1,0 +1,16 @@
+<div class="course-ingestion-dashboard" data-testid="course-ingestion-dashboard">
+    <div class="flex items-center gap-2 mb-3">
+        <fa-icon [icon]="faMagnifyingGlassChart" />
+        <h3 class="mb-0" jhiTranslate="artemisApp.courseIngestionDashboard.title"></h3>
+    </div>
+    <p class="text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.subtitle"></p>
+
+    <jhi-course-ingestion-overview class="block mb-4" />
+
+    <jhi-course-ingestion-coverage-table class="block" (courseSelected)="openBrowser($event)" />
+
+    <!-- Rendered only once a course has been chosen, so the modal never loads for a course nobody opened. -->
+    @if (selectedCourse(); as course) {
+        <jhi-course-ingestion-browser [course]="course" [(visible)]="browserVisible" />
+    }
+</div>
