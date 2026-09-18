@@ -7,67 +7,68 @@
         <div class="spacer"></div>
         @if (currentTutorialLectureId) {
             <a
+                tumUiButton
+                size="small"
+                severity="secondary"
+                variant="outlined"
                 [routerLink]="['../tutorial-lectures', currentTutorialLectureId]"
                 [relativeTo]="activatedRoute"
-                pButton
-                class="p-button-secondary p-button-sm"
-                jhiTranslate="artemisApp.pages.tutorialGroupDetail.currentTutorialLectureLinkLabel"
                 data-testid="tutorial-lecture-link"
-            ></a>
+            >
+                <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.currentTutorialLectureLinkLabel"></span>
+            </a>
         }
         @if (isMessagingEnabled()) {
             @let chatLink = tutorChatLink();
             @if (chatLink) {
                 <a
+                    tumUiButton
+                    size="small"
+                    severity="secondary"
+                    variant="outlined"
                     [routerLink]="chatLink.routerLink"
                     [queryParams]="chatLink.queryParameters"
-                    pButton
-                    class="p-button-secondary p-button-sm"
-                    jhiTranslate="artemisApp.pages.tutorialGroupDetail.tutorChatLinkLabel"
                     data-testid="tutor-chat-link"
-                ></a>
+                >
+                    <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.tutorChatLinkLabel"></span>
+                </a>
             } @else if (userIsNotTutor()) {
-                <button
-                    pButton
-                    class="p-button-secondary p-button-sm"
-                    (click)="createTutorChat()"
-                    jhiTranslate="artemisApp.pages.tutorialGroupDetail.tutorChatLinkLabel"
-                    data-testid="tutor-chat-button"
-                ></button>
+                <button tumUiButton size="small" severity="secondary" variant="outlined" type="button" data-testid="tutor-chat-button" (click)="createTutorChat()">
+                    <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.tutorChatLinkLabel"></span>
+                </button>
             }
             @let channelLink = groupChannelLink();
             @if (channelLink) {
                 <a
+                    tumUiButton
+                    size="small"
+                    severity="secondary"
+                    variant="outlined"
                     [routerLink]="channelLink.routerLink"
                     [queryParams]="channelLink.queryParameters"
-                    pButton
-                    class="p-button-secondary p-button-sm"
-                    jhiTranslate="artemisApp.pages.tutorialGroupDetail.groupChannelLinkLabel"
                     data-testid="group-channel-link"
-                ></a>
+                >
+                    <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.groupChannelLinkLabel"></span>
+                </a>
             }
         }
         @if (loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.TUTOR_OF_OTHER_GROUP_OR_EDITOR_OR_INSTRUCTOR_OF_OTHER_COURSE) {
-            <a
-                [routerLink]="['registrations']"
-                pButton
-                class="p-button-secondary p-button-sm"
-                data-testid="registrations-link"
-                jhiTranslate="artemisApp.pages.tutorialGroupDetail.registrationsLinkLabel"
-            ></a>
+            <a tumUiButton size="small" severity="secondary" variant="outlined" [routerLink]="['registrations']" data-testid="registrations-link">
+                <fa-icon [icon]="faUsers" />
+                <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.registrationsLinkLabel"></span>
+            </a>
         }
         @if (loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.EDITOR_OF_GROUP) {
-            <a [routerLink]="['edit']" pButton class="p-button-primary p-button-sm" data-testid="edit-button" jhiTranslate="entity.action.edit"></a>
+            <a tumUiButton size="small" severity="secondary" variant="outlined" [routerLink]="['edit']" data-testid="edit-button">
+                <fa-icon [icon]="faPenToSquare" />
+                <span jhiTranslate="entity.action.edit"></span>
+            </a>
         }
         @if (loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN) {
-            <button
-                pButton
-                severity="danger"
-                class="p-button-primary p-button-sm"
-                data-testid="delete-button"
-                (click)="confirmTutorialGroupDeletion($event)"
-                jhiTranslate="entity.action.delete"
-            ></button>
+            <button tumUiButton size="small" severity="danger" variant="outlined" type="button" data-testid="delete-button" (click)="confirmTutorialGroupDeletion($event)">
+                <fa-icon [icon]="faTrash" />
+                <span jhiTranslate="entity.action.delete"></span>
+            </button>
         }
     </div>
     <hr />
@@ -190,21 +191,19 @@
         <h2 jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionsListTitle"></h2>
         <div class="spacer"></div>
         @if (loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.TUTOR_OF_GROUP) {
-            <button
-                pButton
-                class="p-button-primary p-button-sm"
-                data-testid="new-session-button"
-                jhiTranslate="artemisApp.pages.tutorialGroupDetail.newSessionButtonLabel"
-                (click)="openSessionModal()"
-            ></button>
+            <button tumUiButton size="small" type="button" data-testid="new-session-button" (click)="openSessionModal()">
+                <fa-icon [icon]="faPlus" />
+                <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.newSessionButtonLabel"></span>
+            </button>
         }
-        <p-selectbutton
+        <tum-ui-select-button
+            size="small"
             [options]="sessionListOptions()"
             [ngModel]="selectedSessionListOption()"
             (ngModelChange)="selectedSessionListOption.set($event)"
             optionLabel="label"
             optionValue="value"
-            unselectable="true"
+            [allowEmpty]="false"
         />
     </div>
     @let sessions = tutorialGroupSessions();
@@ -261,8 +260,15 @@
                         @if (loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.TUTOR_OF_GROUP) {
                             <td>
                                 <div class="session-actions">
+                                    <!-- Icon-only, so the tooltip label doubles as the accessible name the icon itself cannot carry. -->
                                     <button
+                                        tumUiButton
+                                        size="small"
+                                        severity="secondary"
+                                        variant="text"
+                                        type="button"
                                         [pTooltip]="editSessionButtonTooltipLabel()"
+                                        [attr.aria-label]="editSessionButtonTooltipLabel()"
                                         tooltipPosition="left"
                                         data-testid="edit-session-button"
                                         (click)="openSessionModal(session.id)"
@@ -271,7 +277,13 @@
                                     </button>
                                     @if (session.isCancelled && !session.isCancelledByFreePeriod) {
                                         <button
+                                            tumUiButton
+                                            size="small"
+                                            severity="secondary"
+                                            variant="text"
+                                            type="button"
                                             [pTooltip]="activateSessionButtonTooltipLabel()"
+                                            [attr.aria-label]="activateSessionButtonTooltipLabel()"
                                             tooltipPosition="left"
                                             data-testid="activate-session-button"
                                             (click)="activateTutorialGroupSession(session.id)"
@@ -280,7 +292,13 @@
                                         </button>
                                     } @else if (!session.isCancelled) {
                                         <button
+                                            tumUiButton
+                                            size="small"
+                                            severity="secondary"
+                                            variant="text"
+                                            type="button"
                                             [pTooltip]="cancelSessionButtonTooltipLabel()"
+                                            [attr.aria-label]="cancelSessionButtonTooltipLabel()"
                                             tooltipPosition="left"
                                             data-testid="cancel-session-button"
                                             (click)="cancelTutorialGroupSession(session.id)"
@@ -289,10 +307,15 @@
                                         </button>
                                     }
                                     <button
+                                        tumUiButton
+                                        size="small"
+                                        severity="danger"
+                                        variant="text"
+                                        type="button"
                                         [pTooltip]="deleteSessionButtonTooltipLabel()"
-                                        class="danger"
-                                        data-testid="delete-session-button"
+                                        [attr.aria-label]="deleteSessionButtonTooltipLabel()"
                                         tooltipPosition="left"
+                                        data-testid="delete-session-button"
                                         (click)="confirmSessionDeletion($event, session.id)"
                                     >
                                         <fa-icon [icon]="faTrash" aria-hidden="true" />
