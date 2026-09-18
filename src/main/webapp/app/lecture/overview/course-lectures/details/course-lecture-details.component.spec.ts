@@ -762,12 +762,14 @@ describe('CourseLectureDetailsComponent', () => {
             courseLecturesDetailsComponent.targetUnitId.set(9999);
             courseLecturesDetailsComponent.targetVideoTimestamp.set(12);
             courseLecturesDetailsComponent.targetPdfPage.set(3);
+            courseLecturesDetailsComponent.targetCombinedView.set(true);
 
             courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
 
             expect(courseLecturesDetailsComponent.targetUnitId()).toBeUndefined();
             expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBeUndefined();
             expect(courseLecturesDetailsComponent.targetPdfPage()).toBeUndefined();
+            expect(courseLecturesDetailsComponent.targetCombinedView()).toBe(false);
         });
 
         it('should clear timestamp and page for a non attachment/video target unit', () => {

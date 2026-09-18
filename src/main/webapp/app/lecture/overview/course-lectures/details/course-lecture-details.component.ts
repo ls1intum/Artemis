@@ -322,6 +322,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             this.targetUnitId.set(undefined);
             this.targetVideoTimestamp.set(undefined);
             this.targetPdfPage.set(undefined);
+            this.targetCombinedView.set(false);
             return;
         }
 
