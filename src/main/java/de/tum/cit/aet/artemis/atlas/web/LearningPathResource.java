@@ -256,7 +256,7 @@ public class LearningPathResource {
             @RequestParam LearningObjectType learningObjectType, @RequestParam long competencyId, @RequestParam(defaultValue = "false") boolean repeatedTest) {
         log.debug("REST request to get navigation for learning path with id: {} relative to learning object with id: {} and type: {} in competency with id: {}", learningPathId,
                 learningObjectId, learningObjectType, competencyId);
-        var learningPath = learningPathService.findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersAndLearnerProfileById(learningPathId);
+        var learningPath = learningPathService.findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersById(learningPathId);
         checkLearningPathAccessElseThrow(Optional.empty(), learningPath, Optional.empty());
 
         return ResponseEntity
@@ -274,7 +274,7 @@ public class LearningPathResource {
     @EnforceAtLeastStudent
     public ResponseEntity<LearningPathNavigationDTO> getLearningPathNavigation(@PathVariable long learningPathId) {
         log.debug("REST request to get navigation for learning path with id: {}", learningPathId);
-        var learningPath = learningPathService.findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersAndLearnerProfileById(learningPathId);
+        var learningPath = learningPathService.findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersById(learningPathId);
         checkLearningPathAccessElseThrow(Optional.empty(), learningPath, Optional.empty());
         return ResponseEntity.ok(learningPathNavigationService.getNavigation(learningPath));
     }
@@ -367,7 +367,7 @@ public class LearningPathResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<CompetencyNameDTO>> getCompetencyOrderForLearningPath(@PathVariable long learningPathId) {
         log.debug("REST request to get competency order for learning path: {}", learningPathId);
-        final var learningPath = learningPathService.findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersAndLearnerProfileById(learningPathId);
+        final var learningPath = learningPathService.findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersById(learningPathId);
 
         checkLearningPathAccessElseThrow(Optional.of(learningPath.getCourse()), learningPath, Optional.empty());
 
@@ -390,7 +390,7 @@ public class LearningPathResource {
     public ResponseEntity<List<LearningPathNavigationObjectDTO>> getLearningObjectsForCompetency(@PathVariable long learningPathId, @PathVariable long competencyId) {
         log.debug("REST request to get learning objects for competency: {} in learning path: {}", competencyId, learningPathId);
         final var learningPath = learningPathRepositoryService.findWithEagerUserAndCourseAndCompetenciesByIdElseThrow(learningPathId);
-        final var user = userRepository.getUserWithAuthoritiesAndLearnerProfile(learningPath.getCourse().getId());
+        final var user = userRepository.getUserWithAuthorities();
 
         checkLearningPathAccessElseThrow(Optional.of(learningPath.getCourse()), learningPath, Optional.of(user));
 

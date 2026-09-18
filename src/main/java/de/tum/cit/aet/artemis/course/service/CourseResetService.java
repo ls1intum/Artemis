@@ -257,7 +257,7 @@ public class CourseResetService {
 
             // Step 8: Delete Iris data
             double irisWeight = summary.numberOfIrisChatSessions() * CourseOperationWeights.getWeightPerIrisSession();
-            progressService.updateProgress(courseId, CourseOperationType.RESET, "Deleting Iris chat sessions", stepsCompleted, TOTAL_RESET_STEPS, startedAt,
+            progressService.updateProgress(courseId, CourseOperationType.RESET, "Deleting Iris data", stepsCompleted, TOTAL_RESET_STEPS, startedAt,
                     calculateProgressPercent(completedWeight, totalWeight));
             deleteIrisData(courseId);
             completedWeight += irisWeight;
@@ -460,13 +460,22 @@ public class CourseResetService {
     }
 
     /**
-     * Deletes all Iris AI tutor chat sessions for the course.
-     * This removes the conversation history between students and the AI tutor.
+     * Deletes the students' Iris AI tutor data for the course: the chat sessions carrying the conversation history,
+     * and the proactive struggle episodes of the course's own exercises.
      *
-     * @param courseId the ID of the course whose Iris chat sessions should be deleted
+     * <p>
+     * Episodes need their own call. They are keyed on the exercise rather than on a session, and the reset preserves
+     * the course's exercises, so neither the session delete above nor the episode table's exercise foreign key would
+     * reach them. Each row carries a {@code user_id} and the shape of one student's struggle, so leaving them behind
+     * would keep student data past the reset that exists to remove it.
+     *
+     * @param courseId the ID of the course whose Iris data should be deleted
      */
     private void deleteIrisData(long courseId) {
-        irisSettingsApi.ifPresent(api -> api.deleteCourseChatSessions(courseId));
+        irisSettingsApi.ifPresent(api -> {
+            api.deleteCourseChatSessions(courseId);
+            api.deleteCourseProactiveEpisodes(courseId);
+        });
     }
 
     /**

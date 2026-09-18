@@ -18,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
 
@@ -34,6 +35,8 @@ public class TutorParticipation extends DomainObject {
     private TutorParticipationStatus status;
 
     @ManyToOne
+    @JoinColumn(nullable = false)
+    @Parent
     private Exercise assessedExercise;
 
     @ManyToOne
