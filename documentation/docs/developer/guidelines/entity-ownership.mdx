@@ -321,10 +321,20 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 
 ## Finding orphans
 
-A migration that makes a parent required refuses to run while a row without one is still there, and
-names the columns it checked. This query answers the same question in advance, on any installation,
-and is read-only. A column with a count above zero is one that has to be dealt with before the
-migration will apply.
+A migration that makes a parent required does one of two things with the orphans it finds, and which
+one decides what you need to know before running it.
+
+Where an orphan carries no evidence of which parent it belonged to, the migration **halts** rather
+than guessing, because deleting it would lose work to save a migration. Where a row has been
+unreachable from the moment it lost its parent — nothing references it and nothing lists it — the
+migration **removes** it, and says so in the comment above the statement that does it.
+
+Both queries below are read-only and run on any installation.
+
+### Rows that would stop a migration
+
+A column with a count above zero has to be attached to its parent, or deliberately removed, before
+the migration will apply.
 
 ```sql
 SELECT 'attachment.attachment_unit_id'              AS column_checked, COUNT(*) AS orphans FROM attachment                     WHERE attachment_unit_id IS NULL
@@ -357,6 +367,38 @@ drop the other branches. Attach each row to its parent where the parent can be e
 delete it only when it cannot: an orphan carries no evidence of which parent it belonged to, and
 these tables own submissions, feedback, slides and messages, so a guess loses work rather than saving
 a migration.
+
+### Rows a migration removes
+
+These have no parent to be attached to, so the migration deletes them rather than halting. Counting
+them first is how you find out what an upgrade will take with it, and it is worth doing even when the
+counts are expected to be small: the files behind a deleted slide stay on disk, and a removed access
+log entry is not recoverable from anywhere else.
+
+```sql
+SELECT 'learner_profile with no account'                    AS what, COUNT(*) AS rows_affected
+  FROM learner_profile lp WHERE NOT EXISTS (SELECT 1 FROM jhi_user u WHERE u.learner_profile_id = lp.id)
+UNION ALL SELECT 'course_learner_profile of those profiles', COUNT(*)
+  FROM course_learner_profile clp WHERE clp.learner_profile_id IN
+       (SELECT lp.id FROM learner_profile lp WHERE NOT EXISTS (SELECT 1 FROM jhi_user u WHERE u.learner_profile_id = lp.id))
+UNION ALL SELECT 'vcs_access_log naming a missing participation', COUNT(*)
+  FROM vcs_access_log WHERE participation_id NOT IN (SELECT id FROM participation)
+UNION ALL SELECT 'vcs_access_log naming a missing account (cleared, not deleted)', COUNT(*)
+  FROM vcs_access_log WHERE user_id IS NOT NULL AND user_id NOT IN (SELECT id FROM jhi_user)
+UNION ALL SELECT 'slide with no unit', COUNT(*)
+  FROM slide WHERE attachment_unit_id IS NULL
+UNION ALL SELECT 'auxiliary repository with no exercise', COUNT(*)
+  FROM programming_exercise_auxiliary_repositories WHERE exercise_id IS NULL
+UNION ALL SELECT 'plagiarism_submission with no comparison', COUNT(*)
+  FROM plagiarism_submission WHERE plagiarism_comparison_id IS NULL
+UNION ALL SELECT 'plagiarism_submission_element of those submissions', COUNT(*)
+  FROM plagiarism_submission_element WHERE plagiarism_submission_id IN
+       (SELECT id FROM plagiarism_submission WHERE plagiarism_comparison_id IS NULL);
+```
+
+Only the account row is cleared rather than deleted: an access log entry that names an account that
+no longer exists still records what happened to the repository, so it keeps everything except the
+name.
 
 ## Where orphans are still possible
 
