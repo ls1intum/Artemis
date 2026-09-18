@@ -136,18 +136,22 @@
                     @let labelKey = 'artemisApp.course.athenaConfig.' + feature.key;
                     <div class="mb-3">
                         <strong [jhiTranslate]="labelKey + '.label'"></strong>
-                        @if (feature.enabled()) {
-                            <p class="text-muted-color text-sm mb-2" [jhiTranslate]="labelKey + '.enabledHint'"></p>
+                        @if (isAthenaLoaded()) {
+                            @if (feature.enabled()) {
+                                <p class="text-muted-color text-sm mb-2" [jhiTranslate]="labelKey + '.enabledHint'"></p>
+                            } @else {
+                                <p class="text-muted-color text-sm mb-2" [jhiTranslate]="labelKey + '.disabledHint'"></p>
+                            }
+                            <jhi-enabled-toggle
+                                class="max-w-fit"
+                                [enabled]="feature.enabled()"
+                                [ariaLabel]="labelKey + '.label' | artemisTranslate"
+                                [testId]="feature.testId"
+                                (enabledChange)="setAthenaFeatureEnabled(feature.key, $event)"
+                            />
                         } @else {
-                            <p class="text-muted-color text-sm mb-2" [jhiTranslate]="labelKey + '.disabledHint'"></p>
+                            <p-skeleton [attr.data-testid]="feature.testId + '-loading'" height="2.375rem" borderRadius="0.625rem" />
                         }
-                        <jhi-enabled-toggle
-                            class="max-w-fit"
-                            [enabled]="feature.enabled()"
-                            [ariaLabel]="labelKey + '.label' | artemisTranslate"
-                            [testId]="feature.testId"
-                            (enabledChange)="setAthenaFeatureEnabled(feature.key, $event)"
-                        />
                     </div>
                 }
             </div>
