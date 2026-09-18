@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.BadRequestException;
 
 import org.springframework.context.annotation.Conditional;
@@ -183,7 +184,8 @@ public class IrisMessageResource {
     @PostMapping("sessions/{sessionId}/messages/{messageId}/resend")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<IrisMessageResponseDTO> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestParam(required = false) String clientId) {
+    public ResponseEntity<IrisMessageResponseDTO> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId,
+            @RequestParam(required = false) @Size(max = 64) String clientId) {
         var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();

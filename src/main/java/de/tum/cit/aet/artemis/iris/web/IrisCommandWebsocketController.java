@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.web;
 
 import java.security.Principal;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,9 +39,10 @@ public class IrisCommandWebsocketController {
      */
     @MessageMapping("topic/iris/command-ack")
     public void acknowledgeCommand(@Payload IrisCommandAckDTO ack, Principal principal) {
-        if (ack == null || ack.correlationId() == null) {
-            // Without a correlation id the ack cannot be matched to a pending command; drop it before it reaches the coordination service.
-            log.warn("Ignoring malformed Iris command ack without a correlation id");
+        if (ack == null || !isUuid(ack.correlationId())) {
+            // Only server-generated UUIDs can match a command. Reject arbitrary client input before it is amplified
+            // over the reliable cluster topic, and do not include a potentially oversized value in the log.
+            log.warn("Ignoring Iris command ack with an invalid correlation id");
             return;
         }
         if (principal == null) {
@@ -50,5 +52,17 @@ public class IrisCommandWebsocketController {
         }
         log.debug("Received client command ack {} from user {} (applied={})", ack.correlationId(), principal.getName(), ack.applied());
         coordinationService.handleAck(ack, principal.getName());
+    }
+
+    private static boolean isUuid(String value) {
+        if (value == null) {
+            return false;
+        }
+        try {
+            return UUID.fromString(value).toString().equals(value);
+        }
+        catch (IllegalArgumentException _) {
+            return false;
+        }
     }
 }

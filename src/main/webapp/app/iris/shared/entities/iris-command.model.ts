@@ -15,6 +15,8 @@ export interface IrisCommand {
     parameters?: Record<string, unknown>;
     /** The browser tab that should act and answer. Absent means every subscribed tab may try the command. */
     targetClientId?: string;
+    /** Server-defined epoch-millisecond deadline after which this command must not start executing. */
+    expiresAt?: number;
 }
 
 /**

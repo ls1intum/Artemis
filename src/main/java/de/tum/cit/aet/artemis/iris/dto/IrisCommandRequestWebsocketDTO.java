@@ -16,9 +16,10 @@ import tools.jackson.databind.JsonNode;
  * @param type           command type discriminator
  * @param parameters     command-specific parameters
  * @param targetClientId the browser tab that should act and answer; null means any subscribed tab may
+ * @param expiresAt      epoch-millisecond deadline after which the client must not start executing the command
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisCommandRequestWebsocketDTO(String correlationId, String type, Map<String, JsonNode> parameters, String targetClientId) {
+public record IrisCommandRequestWebsocketDTO(String correlationId, String type, Map<String, JsonNode> parameters, String targetClientId, long expiresAt) {
 
     public IrisCommandRequestWebsocketDTO {
         parameters = parameters != null ? Map.copyOf(parameters) : Map.of();

@@ -51,6 +51,13 @@ class IrisCommandWebsocketControllerTest {
     }
 
     @Test
+    void acknowledgeCommand_withInvalidCorrelationIdIsDroppedBeforeClusterBroadcast() {
+        controller.acknowledgeCommand(new IrisCommandAckDTO("not-a-uuid", true), principal);
+
+        verifyNoInteractions(coordinationService);
+    }
+
+    @Test
     void acknowledgeCommand_withNullPayloadIsDropped() {
         // An empty or null STOMP body deserializes to a null payload; it must not be dereferenced.
         controller.acknowledgeCommand(null, principal);

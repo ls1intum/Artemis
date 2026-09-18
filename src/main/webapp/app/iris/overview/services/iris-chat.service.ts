@@ -45,10 +45,6 @@ export interface IrisRunInfo {
     error?: IrisStatusError;
 }
 
-// Leave enough time for the ack to reach the server before its five-second timeout. A command still waiting
-// for a viewer after this deadline must not move the view after Pyris has already been told it failed.
-const POINT_OUT_CLIENT_TIMEOUT_MS = 4_000;
-
 /**
  * The IrisSessionService is responsible for managing Iris sessions and retrieving their associated messages.
  */
@@ -1158,9 +1154,8 @@ export class IrisChatService implements OnDestroy {
             if (pointOut.page != undefined) {
                 queryParams.page = pointOut.page;
             }
-            if (pointOut.displayPage != undefined) {
-                queryParams.displayPage = pointOut.displayPage;
-            }
+            // displayPage labels the marker but is not a navigation coordinate. A routed combined view starts with
+            // synchronization disabled, so it also cannot need the in-place mismatch notice that uses this label.
             if (pointOut.timestamp != undefined) {
                 queryParams.timestamp = pointOut.timestamp;
             }
@@ -1193,10 +1188,10 @@ export class IrisChatService implements OnDestroy {
         switch (command.type) {
             case 'pointOut': {
                 const pointOut = parsePointOut(command.parameters);
-                if (pointOut) {
+                if (pointOut && typeof command.expiresAt === 'number' && Number.isFinite(command.expiresAt) && command.expiresAt > Date.now()) {
                     // The pipeline is waiting on this one; the combined view acknowledges once it has actually moved.
                     pointOut.correlationId = command.correlationId;
-                    pointOut.expiresAt = Date.now() + POINT_OUT_CLIENT_TIMEOUT_MS;
+                    pointOut.expiresAt = command.expiresAt;
                     this.pointOutSubject.next(pointOut);
                     return;
                 }

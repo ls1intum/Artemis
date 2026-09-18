@@ -207,8 +207,8 @@ class IrisCommandServiceTest {
 
         // Pyris requires "applied" in the response body; NON_EMPTY must not drop the primitive false.
         assertThat(mapper.writeValueAsString(PyrisCommandResultDTO.notApplied())).isEqualTo("{\"applied\":false}");
-        assertThat(mapper.writeValueAsString(new IrisCommandRequestWebsocketDTO("corr-1", "pointOut", parameters, null)))
-                .isEqualTo("{\"correlationId\":\"corr-1\",\"type\":\"pointOut\",\"parameters\":{\"lectureUnitId\":42}}");
+        assertThat(mapper.writeValueAsString(new IrisCommandRequestWebsocketDTO("corr-1", "pointOut", parameters, null, 12_345L)))
+                .isEqualTo("{\"correlationId\":\"corr-1\",\"type\":\"pointOut\",\"parameters\":{\"lectureUnitId\":42},\"expiresAt\":12345}");
     }
 
     @Test
@@ -226,6 +226,7 @@ class IrisCommandServiceTest {
         verify(irisWebsocketService, times(2)).send(eq("student1"), eq(SESSION_ID + "/commands"), payload.capture());
         assertThat(((IrisCommandRequestWebsocketDTO) payload.getAllValues().getFirst()).targetClientId()).isEqualTo(CLIENT_ID);
         assertThat(((IrisCommandRequestWebsocketDTO) payload.getAllValues().getLast()).targetClientId()).isNull();
+        assertThat(((IrisCommandRequestWebsocketDTO) payload.getAllValues().getFirst()).expiresAt()).isGreaterThan(System.currentTimeMillis());
     }
 
     @Test

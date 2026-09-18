@@ -650,7 +650,7 @@ describe('IrisChatService', () => {
 
         // combined asks for the view Iris pointed in, so the click lands the same way from either page.
         expect(routerMock.navigate).toHaveBeenCalledWith(['/courses', courseId, 'lectures', 27], {
-            queryParams: { unit: 7, combined: true, page: 2, displayPage: 8, timestamp: 42 },
+            queryParams: { unit: 7, combined: true, page: 2, timestamp: 42 },
         });
         // Nothing is emitted, so a lecture page opened later does not act on a stale target as well.
         expect(emitted).not.toHaveBeenCalled();
@@ -688,11 +688,32 @@ describe('IrisChatService', () => {
 
         service.openChat(ChatServiceMode.LECTURE, id);
         await waitForSessionId();
-        commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 3 }, correlationId: 'corr-1' });
-        commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 4 }, correlationId: 'corr-2', targetClientId: wsMock.clientId });
+        commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 3 }, correlationId: 'corr-1', expiresAt: 5_000 });
+        commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 4 }, correlationId: 'corr-2', targetClientId: wsMock.clientId, expiresAt: 5_000 });
 
         expect(navigated).toHaveBeenNthCalledWith(1, { lectureUnitId: 42, page: 3, correlationId: 'corr-1', expiresAt: 5_000 });
         expect(navigated).toHaveBeenNthCalledWith(2, { lectureUnitId: 42, page: 4, correlationId: 'corr-2', expiresAt: 5_000 });
+    });
+
+    it('should reject a point-out whose server deadline is missing or expired', async () => {
+        vi.spyOn(Date, 'now').mockReturnValue(5_000);
+        const commandSubject = new Subject<IrisCommand>();
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValueOnce(commandSubject.asObservable());
+        const ackSpy = vi.spyOn(wsMock, 'sendCommandAck');
+        const navigated = vi.fn();
+        service.pointOut$.subscribe(navigated);
+
+        service.openChat(ChatServiceMode.LECTURE, id);
+        await waitForSessionId();
+        commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 3 }, correlationId: 'missing' });
+        commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 4 }, correlationId: 'expired', expiresAt: 5_000 });
+
+        expect(navigated).not.toHaveBeenCalled();
+        expect(ackSpy).toHaveBeenNthCalledWith(1, { correlationId: 'missing', applied: false });
+        expect(ackSpy).toHaveBeenNthCalledWith(2, { correlationId: 'expired', applied: false });
     });
 
     it('should ignore commands addressed to another tab', async () => {

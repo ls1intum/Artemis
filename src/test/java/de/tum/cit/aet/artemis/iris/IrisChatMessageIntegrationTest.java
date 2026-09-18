@@ -402,6 +402,15 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(session.getId()), statusDTO(RUNNING), messageDTO("Hello World"));
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void resendMessage_rejectsOversizedClientId() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        IrisMessage userMessage = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
+
+        request.postWithoutResponseBody(messagesUrl(session) + "/" + userMessage.getId() + "/resend?clientId=" + "x".repeat(65), null, HttpStatus.BAD_REQUEST);
+    }
+
     @ParameterizedTest
     @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")

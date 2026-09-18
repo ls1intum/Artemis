@@ -148,7 +148,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     readonly targetUnitId = signal<number | undefined>(undefined);
     readonly targetVideoTimestamp = signal<number | undefined>(undefined);
     readonly targetPdfPage = signal<number | undefined>(undefined);
-    readonly targetDisplayPage = signal<number | undefined>(undefined);
     /**
      * Whether the deep link asks for the combined view rather than the unit on the page. Set by the Iris point-out
      * markers, which point at a position Iris named in that view; a lecture citation leaves it off and stays inline.
@@ -210,14 +209,11 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                 this.targetVideoTimestamp.set(Number.isFinite(timestamp) && timestamp >= 0 ? timestamp : undefined);
                 const pageNum = Number(params['page']);
                 this.targetPdfPage.set(Number.isInteger(pageNum) && pageNum > 0 ? pageNum : undefined);
-                const displayPageNum = Number(params['displayPage']);
-                this.targetDisplayPage.set(Number.isInteger(displayPageNum) && displayPageNum > 0 ? displayPageNum : undefined);
                 this.targetCombinedView.set(params['combined'] === 'true');
             } else {
                 this.targetUnitId.set(undefined);
                 this.targetVideoTimestamp.set(undefined);
                 this.targetPdfPage.set(undefined);
-                this.targetDisplayPage.set(undefined);
                 this.targetCombinedView.set(false);
             }
 

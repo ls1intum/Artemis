@@ -65,17 +65,13 @@ public class IrisCommandService {
     private static final String MARKER_WRITE_LOCK_PREFIX = "iris-command-marker-write:";
 
     /**
-     * How long to wait for the addressed tab to report back before treating a command as not carried out. The tab answers either way as soon as it has tried, and negatively at
-     * once wherever it can already tell that it never will — a closed combined view, or a viewer that is not coming — so this is a backstop for a tab that went away (closed,
-     * reloaded, connection lost) rather than a budget the normal case spends. What it has to cover is the path node to broker to browser and back, plus the slow part: a viewer
-     * that is rendered but whose document is still loading, which the client deliberately waits out before answering. Opening the combined view is not part of it — only a marker
-     * click does that, and no pipeline waits on those.
-     * <p>
-     * Sized by that wait, and not to be trimmed against it. A budget that expires while the client is still loading its document reports the point-out as not applied and writes
-     * no marker, and the client then navigates anyway: its late ack finds no pending future and is dropped, so the student's view moves while the answer says it did not. Pyris'
-     * own timeout on the command call must stay above this value, so a client that really is gone surfaces as "not applied" rather than as a transport error.
+     * The client may start executing for four seconds from dispatch. This absolute deadline travels with the command,
+     * so delayed delivery does not start a fresh client-side window after the server has already given up. The server
+     * waits one additional second for an ack that was sent before the action deadline to make the return trip.
      */
-    private static final long ACK_TIMEOUT_SECONDS = 5;
+    private static final long CLIENT_ACTION_TIMEOUT_MILLIS = 4_000;
+
+    private static final long ACK_TIMEOUT_MILLIS = 5_000;
 
     private final IrisCommandCoordinationService coordinationService;
 
@@ -182,7 +178,11 @@ public class IrisCommandService {
         // reports delivery failures through its own future rather than throwing, so it cannot skip past them.
         var ackFuture = coordinationService.register(correlationId, userLogin, targetClientId != null);
 
-        var request = new IrisCommandRequestWebsocketDTO(correlationId, command.type(), command.parameters(), targetClientId);
+        // The action deadline is generated here, from the same clock and timeline as the server timeout. Starting a
+        // fresh client-side timeout only when the frame is eventually processed would allow a delayed browser to move
+        // the view after this request has already returned "not applied" to Pyris.
+        var expiresAt = System.currentTimeMillis() + CLIENT_ACTION_TIMEOUT_MILLIS;
+        var request = new IrisCommandRequestWebsocketDTO(correlationId, command.type(), command.parameters(), targetClientId, expiresAt);
         irisWebsocketService.send(userLogin, session.getId() + COMMAND_TOPIC_SUFFIX, request);
         log.debug("Iris command {} of type {} sent to user {} (session {}, client {}), awaiting client ack", correlationId, command.type(), userLogin, session.getId(),
                 targetClientId);
@@ -190,10 +190,10 @@ public class IrisCommandService {
         // orTimeout completes the pending future exceptionally, which also unregisters it in the coordination service.
         boolean applied;
         try {
-            applied = ackFuture.orTimeout(ACK_TIMEOUT_SECONDS, TimeUnit.SECONDS).join().applied();
+            applied = ackFuture.orTimeout(ACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS).join().applied();
         }
         catch (Exception e) {
-            log.debug("Iris command {} received no client ack within {}s", correlationId, ACK_TIMEOUT_SECONDS);
+            log.debug("Iris command {} received no client ack within {}ms", correlationId, ACK_TIMEOUT_MILLIS);
             return false;
         }
         if (!applied) {
