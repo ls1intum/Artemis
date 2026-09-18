@@ -20,8 +20,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.globalsearch.api.SearchableEntityPrefetchApi;
 import de.tum.cit.aet.artemis.globalsearch.dto.SearchableEntityCandidateDTO;
@@ -48,7 +48,7 @@ class IrisGlobalSearchResourceTest {
     private PyrisJobService pyrisJobService;
 
     @Mock
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     @Mock
     private UserAiPreferenceService userAiPreferenceService;
