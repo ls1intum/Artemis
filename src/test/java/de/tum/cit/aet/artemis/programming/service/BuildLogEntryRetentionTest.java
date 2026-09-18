@@ -89,13 +89,17 @@ class BuildLogEntryRetentionTest {
     void shouldCutOffAtTheRetentionPeriod() {
         when(profileService.isSchedulingActive()).thenReturn(true);
         when(buildLogEntryRepository.findExpiredIds(any(), any())).thenReturn(List.of());
-        ZonedDateTime before = ZonedDateTime.now().minusDays(RETENTION_DAYS);
+        // Bracketing the call rather than allowing a tolerance around a single reading: the cutoff the service computes
+        // is taken from a clock reading that must fall between these two, so the assertion is exact and cannot become
+        // flaky on a loaded runner the way a fixed one-minute window can.
+        ZonedDateTime before = ZonedDateTime.now();
 
         buildLogEntryService.deleteExpiredBuildLogEntryRows();
 
+        ZonedDateTime after = ZonedDateTime.now();
         ArgumentCaptor<ZonedDateTime> cutoff = ArgumentCaptor.forClass(ZonedDateTime.class);
         verify(buildLogEntryRepository).findExpiredIds(cutoff.capture(), any(Pageable.class));
-        assertThat(cutoff.getValue()).isBetween(before.minusMinutes(1), ZonedDateTime.now().minusDays(RETENTION_DAYS).plusMinutes(1));
+        assertThat(cutoff.getValue()).isBetween(before.minusDays(RETENTION_DAYS), after.minusDays(RETENTION_DAYS));
     }
 
     /**

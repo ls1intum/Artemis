@@ -36,6 +36,9 @@ class ParticipationDeletionServiceTest extends AbstractSpringIntegrationJenkinsL
 
     private static final String TEST_PREFIX = "participationdeletionservice";
 
+    /** Fixed so the stored log line does not depend on when the test runs; nothing here reads the value back. */
+    private static final ZonedDateTime BUILD_LOG_TIME = ZonedDateTime.parse("2026-01-15T10:00:00Z");
+
     @Autowired
     private ParticipationDeletionService participationDeletionService;
 
@@ -80,15 +83,15 @@ class ParticipationDeletionServiceTest extends AbstractSpringIntegrationJenkinsL
         // Setup: create a participation and a submission with the build logs of a failed build for template, solution and student
         var templateParticipation = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise).getTemplateParticipation();
         var templateSubmission = programmingExerciseUtilService.createProgrammingSubmission(templateParticipation, true);
-        buildLogEntryService.saveBuildLogs(List.of(new BuildLogEntry(ZonedDateTime.now(), "Some sample build log")), templateSubmission);
+        buildLogEntryService.saveBuildLogs(List.of(new BuildLogEntry(BUILD_LOG_TIME, "Some sample build log")), templateSubmission);
 
         var solutionParticipation = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise).getSolutionParticipation();
         var solutionSubmission = programmingExerciseUtilService.createProgrammingSubmission(solutionParticipation, true);
-        buildLogEntryService.saveBuildLogs(List.of(new BuildLogEntry(ZonedDateTime.now(), "Some sample build log")), solutionSubmission);
+        buildLogEntryService.saveBuildLogs(List.of(new BuildLogEntry(BUILD_LOG_TIME, "Some sample build log")), solutionSubmission);
 
         var studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         var studentSubmission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, true);
-        buildLogEntryService.saveBuildLogs(List.of(new BuildLogEntry(ZonedDateTime.now(), "Some sample build log")), studentSubmission);
+        buildLogEntryService.saveBuildLogs(List.of(new BuildLogEntry(BUILD_LOG_TIME, "Some sample build log")), studentSubmission);
 
         // Delete and assert removal. The logs live on disk now, so the service is what says whether they are still there.
         assertThat(buildLogEntryService.getLatestBuildLogs(templateSubmission)).isNotEmpty();
