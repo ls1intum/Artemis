@@ -11,10 +11,12 @@ import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
 @Table(name = "source")
+@AggregateRoot("Reference data.")
 public class Source extends DomainObject {
 
     @Column(name = "title", nullable = false)

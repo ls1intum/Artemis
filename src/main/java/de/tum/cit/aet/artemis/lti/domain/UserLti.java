@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import de.tum.cit.aet.artemis.core.domain.Parent;
+
 /**
  * What the lti module knows about an account: that a launch provisioned it, and whether that account has already
  * completed the one-time initialisation a launch-provisioned account goes through.
@@ -19,6 +21,7 @@ public class UserLti {
 
     @Id
     @Column(name = "user_id")
+    @Parent
     private long userId;
 
     @Column(name = "created_by_launch", nullable = false)
