@@ -47,7 +47,7 @@
                   AND column_name = 'timestamp' AND datetime_precision = 3
             </sqlCheck>
         </preConditions>
-        <comment>science_event is large (~15M rows); this rebuilds the table on MySQL.</comment>
+        <comment>science_event is one of the larger tables; this rebuilds it on MySQL.</comment>
         <modifyDataType tableName="science_event" columnName="timestamp" newDataType="datetime(3)"/>
         <addNotNullConstraint tableName="science_event" columnName="timestamp" columnDataType="datetime(3)"/>
     </changeSet>
@@ -281,8 +281,8 @@
     <!--
     Rating.result is @OneToOne, so result_rating.result_id must be unique. Long-lived installations
     have this constraint (auto-named "result_id"); the consolidated initial schema lost it, so fresh
-    installations and every test environment do not enforce it. Verified against production, which
-    retained the constraint: 10,818 rows / 10,818 distinct result_id.
+    installations and every test environment do not enforce it. Verified on an installation that retained
+    the constraint: result_id is distinct across every row.
 
     The FK on this column is backed by the separate non-unique index fk_result_rating_result_id, so
     dropping the old unique index does not leave the FK unsupported.

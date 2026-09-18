@@ -322,7 +322,7 @@
     <!-- ===================================================================== -->
 
     <!-- One DDL statement per changeset: on MySQL every DDL auto-commits, so a multi-statement changeset
-         that fails halfway (FK validation over ~34M rows can hit lock/disk limits) would leave committed
+         that fails halfway (FK validation over a table this size can hit lock/disk limits) would leave committed
          objects behind while staying unrecorded, and the automatic re-run would die on the duplicate.
          The existence preconditions make a re-run after any partial failure self-healing. -->
     <changeSet id="20260817090000-08a-index-test-case" author="krusche">
@@ -420,7 +420,7 @@
     </changeSet>
 
     <!-- ===================================================================== -->
-    <!-- Drop the now-unused feedback.test_case_id (column + FK + 1.3 GB index) -->
+    <!-- Drop the now-unused feedback.test_case_id (column + foreign key + index) -->
     <!-- ===================================================================== -->
 
     <changeSet id="20260817090000-10a-drop-feedback-test-case-fk" author="krusche">
