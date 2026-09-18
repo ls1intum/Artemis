@@ -549,6 +549,8 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         ExerciseVariantGroup group = new ExerciseVariantGroup();
         group.setTitle("Loop variants");
         group.setReleaseDate(groupRelease);
+        // A variant group belongs to a course, which the database now requires.
+        group.setCourse(quizExercise.getCourseViaExerciseGroupOrCourseMember());
         group.setDueDate(groupDue);
         quizExercise.setExerciseVariantGroup(exerciseVariantGroupRepository.save(group));
         quizExerciseTestRepository.save(quizExercise);
