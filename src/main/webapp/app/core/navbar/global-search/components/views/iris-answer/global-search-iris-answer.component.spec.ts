@@ -859,6 +859,23 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             expect(component['revealTimeout']).toBeUndefined();
         });
 
+        it('ignores a partial that arrives after the terminal update instead of reopening the finished answer', () => {
+            // Iris's own partial sender documents this as a race it cannot fully close on
+            // its own side (a POST already in flight when it stops can still land after the
+            // terminal one), and the terminal message carries no partialSeq for the client's
+            // usual ordering check to catch it — this guard is what actually closes the gap.
+            startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: false, answer: 'Final answer.[1]', sources: SOURCES });
+            expect(component['irisResult']()).toEqual({ answer: 'Final answer.[1]', sources: SOURCES, entitySources: [] });
+            expect(component['isSettled']()).toBe(true);
+
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'stale draft', partialSeq: 1 });
+            fixture.detectChanges();
+
+            expect(component['irisResult']()).toEqual({ answer: 'Final answer.[1]', sources: SOURCES, entitySources: [] });
+            expect(component['isSettled']()).toBe(true);
+        });
+
         it('offers a retry when the pipeline fails', () => {
             mockAsk.mockReturnValueOnce(throwError(() => new Error('pipeline down')));
             startQuery();

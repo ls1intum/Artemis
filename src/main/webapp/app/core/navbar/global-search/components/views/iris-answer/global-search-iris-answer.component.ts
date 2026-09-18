@@ -310,6 +310,14 @@ export class GlobalSearchIrisAnswerComponent {
     }
 
     private onThinkingUpdate(update: IrisSearchStatusUpdate): void {
+        // A RUNNING update that lands after the terminal one — Iris's own partial sender
+        // documents this as a best-effort race it cannot fully close on its own side — must
+        // never reopen a run that has already settled: the terminal message carries no
+        // partialSeq of its own for isNewerPartial() to compare against, so this is the only
+        // guard standing between a late partial and silently overwriting the finished answer.
+        if (this.streamComplete()) {
+            return;
+        }
         this.currentRunId.set(update.runId);
         if (update.partialResult === undefined) {
             if (this.phase() === 'idle') {
