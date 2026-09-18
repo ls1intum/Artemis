@@ -15,6 +15,7 @@ import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.globalsearch.dto.IngestionTypeCountDTO;
 
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.globalsearch.dto.IngestionTypeCountDTO;
  * {@code course}. There is intentionally no foreign key to the course: the recompute inserts, updates, and deletes rows
  * to keep the projection in step with the current set of courses.
  */
+@AggregateRoot("Derived read model keyed by a plain course id with no foreign key; the recompute reconciles it with the current courses.")
 @Entity
 @Table(name = "ingestion_coverage")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

@@ -96,6 +96,11 @@
                 "toggleUnit": "Inhalte dieser Einheit ein- oder ausblenden",
                 "untitledLecture": "Vorlesung ohne Titel",
                 "untitledUnit": "Einheit ohne Titel",
+                "contentLabel": {
+                    "page": "Seite {{ page }}",
+                    "segment": "Segment @ {{ seconds }}s",
+                    "position": "#{{ position }}"
+                },
                 "lectureNotIndexed": "nicht indexiert",
                 "content_slides": "Folien",
                 "content_transcript": "Transkript",

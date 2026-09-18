@@ -96,6 +96,11 @@
                 "toggleUnit": "Show or hide this unit's content",
                 "untitledLecture": "Untitled lecture",
                 "untitledUnit": "Untitled unit",
+                "contentLabel": {
+                    "page": "Page {{ page }}",
+                    "segment": "Segment @ {{ seconds }}s",
+                    "position": "#{{ position }}"
+                },
                 "lectureNotIndexed": "not indexed",
                 "content_slides": "Slides",
                 "content_transcript": "Transcript",

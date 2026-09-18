@@ -253,6 +253,28 @@ describe('CourseIngestionCoverageTableComponent', () => {
         expect(new Set(labels).size).toBe(labels.length);
     });
 
+    it('should expose the active sort state through aria-sort and leave inactive headers without it', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        // The sort icons carry the state visually only, so the active column has to say it to assistive technology.
+        const headers = (): HTMLElement[] => Array.from(fixture.nativeElement.querySelectorAll('thead tr:last-child th'));
+        const sorted = () => headers().map((th) => th.getAttribute('aria-sort'));
+
+        // Name sorts ascending by default, and exactly one header may claim the sort at a time.
+        expect(sorted().filter(Boolean)).toEqual(['ascending']);
+
+        component['toggleSort']('name');
+        fixture.detectChanges();
+        expect(sorted().filter(Boolean)).toEqual(['descending']);
+
+        component['toggleSort']('release');
+        fixture.detectChanges();
+        expect(sorted().filter(Boolean)).toHaveLength(1);
+        expect(headers()[0].getAttribute('aria-sort')).toBeNull();
+    });
+
     it('should make the sortable column headers real, keyboard-focusable buttons', async () => {
         fixture.detectChanges();
         await fixture.whenStable();

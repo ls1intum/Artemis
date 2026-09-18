@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, model, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { TumUiButtonComponent, TumUiMessageComponent, TumUiPaginatorComponent } from '@tumaet/ui-angular';
 import { faArrowUpRightFromSquare, faChevronDown, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -67,6 +68,13 @@ export class CourseIngestionBrowserDetailComponent {
     private readonly dashboardService = inject(CourseIngestionDashboardService);
     private readonly destroyRef = inject(DestroyRef);
     private readonly router = inject(Router);
+    private readonly translateService = inject(TranslateService);
+
+    /**
+     * Rebuilds the content labels when the language changes. They are translated inside a computed rather than in the
+     * template, because identical labels are numbered against each other and that counting needs the resolved text.
+     */
+    private readonly languageChange = toSignal(this.translateService.onLangChange);
 
     readonly courseId = input.required<number>();
     readonly data = input.required<CourseBrowserData>();
@@ -138,8 +146,9 @@ export class CourseIngestionBrowserDetailComponent {
      * carry its number, so repeated labels are numbered to tell the chunks apart.
      */
     readonly labelledContent = computed<LabelledContentObject[]>(() => {
+        this.languageChange();
         const sorted = [...this.contentObjects()].sort((a, b) => (positionOf(a) ?? Number.MAX_VALUE) - (positionOf(b) ?? Number.MAX_VALUE));
-        const labels = sorted.map((object, index) => label(object, index));
+        const labels = sorted.map((object, index) => this.labelOf(object, index));
         const totals = new Map<string, number>();
         for (const text of labels) {
             totals.set(text, (totals.get(text) ?? 0) + 1);
@@ -267,6 +276,23 @@ export class CourseIngestionBrowserDetailComponent {
      */
     private pendingRequest?: Subscription;
 
+    /**
+     * A compact label for a stored content object, per the design record: a page number where the object has one,
+     * otherwise a segment start time, otherwise its position in the list. Translated here rather than in the template
+     * because labelledContent numbers repeated labels against each other and needs the resolved text to compare.
+     */
+    private labelOf(object: IndexedContentObject, index: number): string {
+        const page = object.properties['page_number'] ?? object.properties['display_page_number'];
+        if (typeof page === 'number') {
+            return this.translateService.instant('artemisApp.courseIngestionDashboard.browser.contentLabel.page', { page });
+        }
+        const segmentStart = object.properties['segment_start_time'];
+        if (typeof segmentStart === 'number') {
+            return this.translateService.instant('artemisApp.courseIngestionDashboard.browser.contentLabel.segment', { seconds: segmentStart });
+        }
+        return this.translateService.instant('artemisApp.courseIngestionDashboard.browser.contentLabel.position', { position: index + 1 });
+    }
+
     protected isExpanded(key: string): boolean {
         return this.expandedRows().has(key);
     }
@@ -373,20 +399,4 @@ function positionOf(object: IndexedContentObject): number | undefined {
     }
     const segmentStart = object.properties['segment_start_time'];
     return typeof segmentStart === 'number' ? segmentStart : undefined;
-}
-
-/**
- * A compact label for a stored content object, per the design record: a page number where the object has one, otherwise
- * a segment start time, otherwise its position in the list.
- */
-function label(object: IndexedContentObject, index: number): string {
-    const page = object.properties['page_number'] ?? object.properties['display_page_number'];
-    if (typeof page === 'number') {
-        return `Page ${page}`;
-    }
-    const segmentStart = object.properties['segment_start_time'];
-    if (typeof segmentStart === 'number') {
-        return `Segment @ ${segmentStart}s`;
-    }
-    return `#${index + 1}`;
 }

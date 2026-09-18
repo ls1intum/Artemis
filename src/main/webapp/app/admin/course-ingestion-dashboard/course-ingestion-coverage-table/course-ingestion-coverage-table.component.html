@@ -75,7 +75,7 @@
                         <th></th>
                     </tr>
                     <tr>
-                        <th>
+                        <th [attr.aria-sort]="ariaSort('name')">
                             <button
                                 type="button"
                                 class="inline-flex items-center gap-1 bg-transparent border-0 p-0 font-inherit text-inherit cursor-pointer select-none"
@@ -85,7 +85,7 @@
                                 <fa-icon [icon]="sortIcon('name')" class="text-xs text-muted-color" />
                             </button>
                         </th>
-                        <th>
+                        <th [attr.aria-sort]="ariaSort('release')">
                             <button
                                 type="button"
                                 class="inline-flex items-center gap-1 bg-transparent border-0 p-0 font-inherit text-inherit cursor-pointer select-none"
@@ -98,7 +98,7 @@
                         @for (type of allTypes; track type; let i = $index) {
                             <th class="text-center text-xs {{ dividerAt(i) }}" [jhiTranslate]="'artemisApp.courseIngestionDashboard.matrix.type.' + type"></th>
                         }
-                        <th>
+                        <th [attr.aria-sort]="ariaSort('worstFirst')">
                             <button
                                 type="button"
                                 class="inline-flex items-center gap-1 bg-transparent border-0 p-0 font-inherit text-inherit cursor-pointer select-none"

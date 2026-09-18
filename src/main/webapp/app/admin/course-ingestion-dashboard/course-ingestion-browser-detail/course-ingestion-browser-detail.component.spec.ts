@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject, of, throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideTranslateService } from '@ngx-translate/core';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { provideRouter } from '@angular/router';
 
 import { CourseIngestionBrowserDetailComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-browser-detail/course-ingestion-browser-detail.component';
@@ -44,6 +44,18 @@ describe('CourseIngestionBrowserDetailComponent', () => {
             imports: [CourseIngestionBrowserDetailComponent],
             providers: [provideHttpClient(), provideHttpClientTesting(), provideTranslateService(), provideRouter([])],
         });
+        // Real translations for the content labels, so the ordering and numbering assertions below keep checking the
+        // text a user sees rather than a raw key.
+        const translateService = TestBed.inject(TranslateService);
+        translateService.setTranslation('en', {
+            artemisApp: {
+                courseIngestionDashboard: {
+                    browser: { contentLabel: { page: 'Page {{ page }}', segment: 'Segment @ {{ seconds }}s', position: '#{{ position }}' } },
+                },
+            },
+        });
+        translateService.use('en');
+
         service = TestBed.inject(CourseIngestionDashboardService);
         vi.spyOn(service, 'getIndexedEntityRecords').mockReturnValue(of(records));
         vi.spyOn(service, 'getUnitContent').mockReturnValue(of([{ ingestedAt: '2026-08-26T09:00:00Z', properties: { page_number: 3, page_text_content: 'Hello' } }]));
