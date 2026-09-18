@@ -216,12 +216,6 @@ describe('Course Management Service', () => {
             id: 12345,
             testRun: false,
             type: ParticipationType.STUDENT,
-            exercise: {
-                id: exerciseId,
-                title: 'Text exercise',
-                exerciseType: ExerciseType.TEXT,
-                teamMode: false,
-            },
             submissions: [
                 {
                     id: 23456,
@@ -250,12 +244,6 @@ describe('Course Management Service', () => {
             id: 12345,
             testRun: false,
             type: ParticipationType.STUDENT,
-            exercise: {
-                id: exerciseId,
-                title: 'File upload exercise',
-                exerciseType: ExerciseType.FILE_UPLOAD,
-                teamMode: false,
-            },
             submissions: [
                 {
                     id: 23456,
@@ -351,15 +339,6 @@ describe('Course Management Service', () => {
         repositoryUri: 'repository-uri',
         buildPlanId: 'build-plan-id',
         branch: 'main',
-        exercise: {
-            id: exerciseId,
-            title: 'Programming exercise',
-            exerciseType: ExerciseType.PROGRAMMING,
-            teamMode: false,
-            releaseDate: releaseDateString,
-            dueDate: dueDateString,
-            assessmentDueDate: assessmentDueDateString,
-        },
     });
 
     afterEach(() => {

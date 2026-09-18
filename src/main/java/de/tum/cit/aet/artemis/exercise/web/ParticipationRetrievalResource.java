@@ -114,7 +114,7 @@ public class ParticipationRetrievalResource {
         StudentParticipation participation = studentParticipationRepository.findByIdWithEagerTeamStudentsElseThrow(participationId);
         User user = userRepository.getUserWithAuthorities();
         checkAccessPermissionOwner(participation, user);
-        return new ResponseEntity<>(StudentParticipationDTO.of(participation, true), HttpStatus.OK);
+        return new ResponseEntity<>(StudentParticipationDTO.ofForCurrentUser(participation), HttpStatus.OK);
     }
 
     private void checkAccessPermissionAtLeastInstructor(StudentParticipation participation, User user) {

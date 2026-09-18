@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
  * @param participantIdentifier the visible participant identifier, if authorized
  * @param student               safe public student information, if authorized and initialized
  * @param team                  safe team information, if authorized and initialized
- * @param exercise              the minimal exercise context, if requested
+ * @param exercise              the minimal exercise context, only on submit-path responses
  * @param submissions           initialized lean submissions, or absent when submissions were not loaded
  * @param repositoryUri         the programming repository URI, if applicable
  * @param buildPlanId           the programming build-plan identifier, if applicable
@@ -94,16 +94,6 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
     }
 
     /**
-     * Maps a participation for an enclosing response without exposing its participant.
-     *
-     * @param participation the participation to map
-     * @return the participation response, or {@code null} when the input is {@code null}
-     */
-    public static @Nullable StudentParticipationDTO of(@Nullable StudentParticipation participation) {
-        return of(participation, false);
-    }
-
-    /**
      * Maps a participation for an enclosing response, optionally including its visible participant.
      *
      * @param participation  the participation to map
@@ -119,14 +109,15 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
     }
 
     /**
-     * Maps a newly started participation including its participant, exercise, and initialized submissions with subtype content.
+     * Maps a newly started participation including its participant and its initialized submissions with subtype content.
+     * No exercise is reported: every client uses the exercise it already holds.
      *
      * @param participation the newly started participation
      * @param participant   the student or team the participation was started for, loaded for this request
      * @return the participation response
      */
     public static StudentParticipationDTO ofAfterStart(StudentParticipation participation, Participant participant) {
-        return build(participation, ParticipantViewDTO.of(participant), ParticipationExerciseDTO.of(participation.getExercise()), submissionsOf(participation, true));
+        return build(participation, ParticipantViewDTO.of(participant), null, submissionsOf(participation, true));
     }
 
     /**
@@ -140,16 +131,27 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
     }
 
     /**
-     * Maps a participation for its current owner when the participation no longer carries a usable participant: a route
-     * that saves the participation first gets a merged instance back, whose team no longer has its students loaded, so
-     * it passes the participant it read before the save.
+     * Maps a resumed participation. The resume route saves the participation first and gets a merged instance back,
+     * whose team no longer has its students loaded, so it passes the participant it read before the save. No exercise
+     * is reported: every client uses the exercise it already holds.
+     *
+     * @param participation the resumed participation
+     * @param participant   the student or team the participation belongs to, read before the save
+     * @return the resumed participation response
+     */
+    public static StudentParticipationDTO ofAfterResume(StudentParticipation participation, @Nullable Participant participant) {
+        return build(participation, ParticipantViewDTO.of(participant), null, null);
+    }
+
+    /**
+     * Maps a participation for its current owner. The participant comes from the eagerly loaded student or team; no
+     * exercise is reported, because every client uses the exercise it already holds.
      *
      * @param participation the authorized participation
-     * @param participant   the student or team the participation belongs to, loaded for this request
      * @return the current-user participation response
      */
-    public static StudentParticipationDTO ofForCurrentUser(StudentParticipation participation, @Nullable Participant participant) {
-        return build(participation, ParticipantViewDTO.of(participant), ParticipationExerciseDTO.of(participation.getExercise()), null);
+    public static StudentParticipationDTO ofForCurrentUser(StudentParticipation participation) {
+        return build(participation, ParticipantViewDTO.of(initializedParticipant(participation)), null, null);
     }
 
     /**

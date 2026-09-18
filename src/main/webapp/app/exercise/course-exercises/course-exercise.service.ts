@@ -127,7 +127,7 @@ export class CourseExerciseService {
      * @param exercise - the complete exercise already loaded by the caller
      */
     handleParticipation(participation: StudentParticipation, exercise: Exercise): StudentParticipation {
-        // the caller's exercise replaces the wire context, which lacks fields components read (access rights, programming settings)
+        // the client uses the exercise it already holds; the server sends none on these routes
         participation.exercise = this.convertExerciseDatesFromServer(cloneWith(exercise, { studentParticipations: [participation] }));
         this.participationWebsocketService.addParticipation(participation);
         return participation;

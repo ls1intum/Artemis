@@ -277,7 +277,7 @@ public class ParticipationResource {
         }
 
         participation = participationService.resumeProgrammingExercise(participation);
-        return ResponseEntity.ok().body(StudentParticipationDTO.ofForCurrentUser(participation, participant));
+        return ResponseEntity.ok().body(StudentParticipationDTO.ofAfterResume(participation, participant));
     }
 
     /**

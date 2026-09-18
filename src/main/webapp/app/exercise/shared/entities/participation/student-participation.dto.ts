@@ -1,10 +1,7 @@
 import { User, type UserPublicInfoDTO } from 'app/account/user/user.model';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { Course, type Language } from 'app/course/shared/entities/course.model';
-import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { type Language } from 'app/course/shared/entities/course.model';
 import { InitializationState, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -45,39 +42,17 @@ export interface ParticipationSubmissionDTO {
     results?: ParticipationSubmissionResultDTO[];
 }
 
+export interface UserNameDTO {
+    id: number;
+    login?: string;
+    name?: string;
+}
+
 export interface TeamDTO {
     id: number;
     name?: string;
     shortName?: string;
-    image?: string;
-    students?: UserPublicInfoDTO[];
-}
-
-export interface ParticipationCourseDTO {
-    id: number;
-    title?: string;
-    shortName?: string;
-    accuracyOfScores?: number;
-}
-
-export interface ParticipationExerciseDTO {
-    id: number;
-    title?: string;
-    exerciseType: ExerciseType;
-    teamMode: boolean;
-    assessmentType?: AssessmentType;
-    releaseDate?: string;
-    startDate?: string;
-    dueDate?: string;
-    assessmentDueDate?: string;
-    maxPoints?: number;
-    course?: ParticipationCourseDTO;
-    exerciseGroup?: {
-        id: number;
-        exam: {
-            id: number;
-        };
-    };
+    students?: UserNameDTO[];
 }
 
 export interface StudentParticipationDTO {
@@ -93,17 +68,10 @@ export interface StudentParticipationDTO {
     participantIdentifier?: string;
     student?: UserPublicInfoDTO;
     team?: TeamDTO;
-    exercise?: ParticipationExerciseDTO;
     submissions?: ParticipationSubmissionDTO[];
     repositoryUri?: string;
     buildPlanId?: string;
     branch?: string;
-}
-
-class ParticipationExerciseContext extends Exercise {
-    constructor(type: ExerciseType) {
-        super(type);
-    }
 }
 
 /**
@@ -122,7 +90,6 @@ export function fromStudentParticipationDTO(dto: StudentParticipationDTO): Stude
     participation.participantIdentifier = dto.participantIdentifier;
     participation.student = dto.student ? hydrate(new User(), dto.student) : undefined;
     participation.team = dto.team ? fromTeamDTO(dto.team) : undefined;
-    participation.exercise = dto.exercise ? fromParticipationExerciseDTO(dto.exercise) : undefined;
 
     if (participation instanceof ProgrammingExerciseStudentParticipation) {
         participation.repositoryUri = dto.repositoryUri;
@@ -143,35 +110,8 @@ function fromTeamDTO(dto: TeamDTO): Team {
     team.id = dto.id;
     team.name = dto.name;
     team.shortName = dto.shortName;
-    team.image = dto.image;
     team.students = dto.students?.map((student) => hydrate(new User(), student));
     return team;
-}
-
-function fromParticipationExerciseDTO(dto: ParticipationExerciseDTO): Exercise {
-    const exercise = new ParticipationExerciseContext(dto.exerciseType);
-    exercise.id = dto.id;
-    exercise.title = dto.title;
-    exercise.teamMode = dto.teamMode;
-    exercise.assessmentType = dto.assessmentType;
-    exercise.releaseDate = convertDateStringFromServer(dto.releaseDate);
-    exercise.startDate = convertDateStringFromServer(dto.startDate);
-    exercise.dueDate = convertDateStringFromServer(dto.dueDate);
-    exercise.assessmentDueDate = convertDateStringFromServer(dto.assessmentDueDate);
-    exercise.maxPoints = dto.maxPoints;
-    const course = dto.course ? hydrate(new Course(), dto.course) : undefined;
-    exercise.course = dto.exerciseGroup ? undefined : course;
-    exercise.exerciseGroup = dto.exerciseGroup ? fromExerciseGroupDTO(dto.exerciseGroup, course) : undefined;
-    return exercise;
-}
-
-function fromExerciseGroupDTO(dto: NonNullable<ParticipationExerciseDTO['exerciseGroup']>, course: Course | undefined): ExerciseGroup {
-    const exerciseGroup = new ExerciseGroup();
-    exerciseGroup.id = dto.id;
-    exerciseGroup.exam = new Exam();
-    exerciseGroup.exam.id = dto.exam.id;
-    exerciseGroup.exam.course = course;
-    return exerciseGroup;
 }
 
 function fromParticipationSubmissionDTO(dto: ParticipationSubmissionDTO): Submission {
