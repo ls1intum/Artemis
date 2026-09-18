@@ -524,11 +524,24 @@ public class LectureIngestionReconcileService {
         // The census lookup above is a slow external round-trip; a terminal callback can finish this run
         // (or it can otherwise move on) while it is in flight. Requeue atomically, guarded on the same
         // token this decision was made against: 0 rows affected means the run already moved on in that
-        // window, and in that case the caller must not fall back to the normal failure path with this
-        // now-stale snapshot either -- whatever actually happened to the run is already correctly
-        // reflected in the database, so either outcome here means "do not act on it again".
+        // window. What "moved on" means still needs one more check below -- it is usually a completed
+        // callback (already correctly reflected in the database, nothing to do), but it can also be a
+        // callback that only half-finished, which this guard's null-bound "= :token" can never match.
         int updated = processingStateRepository.requeueStuckIngestionWithoutPenalty(state.getId(), state.getIngestionJobToken(), ZonedDateTime.now());
         if (updated == 0) {
+            // 0 rows can mean the run already moved on to a state written elsewhere (nothing more to
+            // do here) -- but it can also mean handleIngestionComplete's own token-clear-then-save
+            // crashed in between, leaving the row stuck INGESTING with a null token that this guard's
+            // "= :token" can never match (SQL equality against NULL is never true, even when the
+            // column itself is NULL). Re-check for that specific broken shape before treating this as
+            // resolved: if it's still there, fall through to normal failure handling instead of
+            // abandoning it.
+            LectureUnitProcessingState reloaded = processingStateRepository.findById(state.getId()).orElse(null);
+            if (reloaded != null && reloaded.getPhase() == ProcessingPhase.INGESTING && reloaded.getIngestionJobToken() == null) {
+                log.warn("Reconcile: unit {} is stuck INGESTING with an already-cleared token (an interrupted completion callback); falling through to normal failure handling",
+                        unitId);
+                return false;
+            }
             log.debug("Reconcile: unit {} moved on before the stuck-recovery requeue could apply; leaving it as-is", unitId);
         }
         else {

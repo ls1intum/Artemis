@@ -745,6 +745,29 @@ class LectureIngestionReconcileServiceTest {
         }
 
         @Test
+        void shouldFallBackToNormalFailureHandlingWhenATerminalCallbackCrashedMidWrite() {
+            // handleIngestionComplete clears the ingestion job token and saves the terminal state as two
+            // separate writes. A crash between them leaves the row stuck INGESTING with a null token --
+            // a shape the atomic requeue's "ingestionJobToken = :token" guard can never match (SQL
+            // equality against NULL is never true), so it reports 0 rows just like a clean hand-off would.
+            // Unlike that clean hand-off, this row is not "already correctly reflected in the database":
+            // nothing else is coming for it, so it must fall through to normal failure handling instead
+            // of being reported resolved and abandoned.
+            LectureUnitProcessingState reloaded = new LectureUnitProcessingState(unit);
+            reloaded.setId(state.getId());
+            reloaded.setPhase(ProcessingPhase.INGESTING);
+            reloaded.setIngestionJobToken(null);
+            when(processingStateRepository.findById(state.getId())).thenReturn(Optional.of(reloaded));
+            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
+            when(processingStateRepository.requeueStuckIngestionWithoutPenalty(eq(state.getId()), eq("token-123"), any())).thenReturn(0);
+
+            boolean resolved = reconcileService.resolveStuckIngestionWithoutRetryPenalty(state);
+
+            assertThat(resolved).isFalse();
+            verify(processingStateRepository, never()).save(any());
+        }
+
+        @Test
         void shouldNotResolveWhenStampDiffers() {
             givenCensus(censusEntry(unit.getId(), "v1:previous-run", 1));
 
