@@ -45,7 +45,7 @@ export interface ParticipationSubmissionDTO {
     results?: ParticipationSubmissionResultDTO[];
 }
 
-export interface ParticipationTeamDTO {
+export interface TeamDTO {
     id: number;
     name?: string;
     shortName?: string;
@@ -53,14 +53,14 @@ export interface ParticipationTeamDTO {
     students?: UserPublicInfoDTO[];
 }
 
-export interface ParticipationCourseContextDTO {
+export interface ParticipationCourseDTO {
     id: number;
     title?: string;
     shortName?: string;
     accuracyOfScores?: number;
 }
 
-export interface ParticipationExerciseContextDTO {
+export interface ParticipationExerciseDTO {
     id: number;
     title?: string;
     exerciseType: ExerciseType;
@@ -71,7 +71,7 @@ export interface ParticipationExerciseContextDTO {
     dueDate?: string;
     assessmentDueDate?: string;
     maxPoints?: number;
-    course?: ParticipationCourseContextDTO;
+    course?: ParticipationCourseDTO;
     exerciseGroup?: {
         id: number;
         exam: {
@@ -92,8 +92,8 @@ export interface StudentParticipationDTO {
     participantName?: string;
     participantIdentifier?: string;
     student?: UserPublicInfoDTO;
-    team?: ParticipationTeamDTO;
-    exercise?: ParticipationExerciseContextDTO;
+    team?: TeamDTO;
+    exercise?: ParticipationExerciseDTO;
     submissions?: ParticipationSubmissionDTO[];
     repositoryUri?: string;
     buildPlanId?: string;
@@ -121,8 +121,8 @@ export function fromStudentParticipationDTO(dto: StudentParticipationDTO): Stude
     participation.participantName = dto.participantName;
     participation.participantIdentifier = dto.participantIdentifier;
     participation.student = dto.student ? hydrate(new User(), dto.student) : undefined;
-    participation.team = dto.team ? fromParticipationTeamDTO(dto.team) : undefined;
-    participation.exercise = dto.exercise ? fromParticipationExerciseContextDTO(dto.exercise) : undefined;
+    participation.team = dto.team ? fromTeamDTO(dto.team) : undefined;
+    participation.exercise = dto.exercise ? fromParticipationExerciseDTO(dto.exercise) : undefined;
 
     if (participation instanceof ProgrammingExerciseStudentParticipation) {
         participation.repositoryUri = dto.repositoryUri;
@@ -138,7 +138,7 @@ export function fromStudentParticipationDTO(dto: StudentParticipationDTO): Stude
     return participation;
 }
 
-function fromParticipationTeamDTO(dto: ParticipationTeamDTO): Team {
+function fromTeamDTO(dto: TeamDTO): Team {
     const team = new Team();
     team.id = dto.id;
     team.name = dto.name;
@@ -148,7 +148,7 @@ function fromParticipationTeamDTO(dto: ParticipationTeamDTO): Team {
     return team;
 }
 
-function fromParticipationExerciseContextDTO(dto: ParticipationExerciseContextDTO): Exercise {
+function fromParticipationExerciseDTO(dto: ParticipationExerciseDTO): Exercise {
     const exercise = new ParticipationExerciseContext(dto.exerciseType);
     exercise.id = dto.id;
     exercise.title = dto.title;
@@ -165,7 +165,7 @@ function fromParticipationExerciseContextDTO(dto: ParticipationExerciseContextDT
     return exercise;
 }
 
-function fromExerciseGroupDTO(dto: NonNullable<ParticipationExerciseContextDTO['exerciseGroup']>, course: Course | undefined): ExerciseGroup {
+function fromExerciseGroupDTO(dto: NonNullable<ParticipationExerciseDTO['exerciseGroup']>, course: Course | undefined): ExerciseGroup {
     const exerciseGroup = new ExerciseGroup();
     exerciseGroup.id = dto.id;
     exerciseGroup.exam = new Exam();
