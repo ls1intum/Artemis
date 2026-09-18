@@ -45,6 +45,10 @@ export interface IrisRunInfo {
     error?: IrisStatusError;
 }
 
+// Leave enough time for the ack to reach the server before its five-second timeout. A command still waiting
+// for a viewer after this deadline must not move the view after Pyris has already been told it failed.
+const POINT_OUT_CLIENT_TIMEOUT_MS = 4_000;
+
 /**
  * The IrisSessionService is responsible for managing Iris sessions and retrieving their associated messages.
  */
@@ -425,7 +429,7 @@ export class IrisChatService implements OnDestroy {
 
         const generation = this.stateGeneration;
         this.openPendingRunGeneration();
-        return this.irisChatHttpService.resendMessage(this.sessionId, message).pipe(
+        return this.irisChatHttpService.resendMessage(this.sessionId, message, this.irisWebsocketService.clientId).pipe(
             map((r: HttpResponse<IrisMessageResponseDTO>) => this.mapMessageDTO(r.body!)),
             tap((m) => {
                 if (this.stateGeneration !== generation) return;
@@ -1192,6 +1196,7 @@ export class IrisChatService implements OnDestroy {
                 if (pointOut) {
                     // The pipeline is waiting on this one; the combined view acknowledges once it has actually moved.
                     pointOut.correlationId = command.correlationId;
+                    pointOut.expiresAt = Date.now() + POINT_OUT_CLIENT_TIMEOUT_MS;
                     this.pointOutSubject.next(pointOut);
                     return;
                 }

@@ -534,6 +534,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
      * @return whether it can be given up on
      */
     private isPointOutUnreachable(pointOut: IrisPointOut): boolean {
+        if (pointOut.expiresAt != undefined && Date.now() >= pointOut.expiresAt) {
+            return true;
+        }
         if (pointOut.page != undefined && (!this.hasPdf() || this.pdfLoadError())) {
             return true;
         }

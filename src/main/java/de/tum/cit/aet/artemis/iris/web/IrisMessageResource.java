@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.web;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import tools.jackson.databind.JsonNode;
@@ -174,13 +176,14 @@ public class IrisMessageResource {
      *
      * @param sessionId of the session
      * @param messageId of the message
+     * @param clientId  optional id of the browser tab initiating the resend
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the existing message, or with
      *         status {@code 404 (Not Found)} if the session or message could not be found.
      */
     @PostMapping("sessions/{sessionId}/messages/{messageId}/resend")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<IrisMessageResponseDTO> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId) {
+    public ResponseEntity<IrisMessageResponseDTO> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestParam(required = false) String clientId) {
         var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();
@@ -194,7 +197,7 @@ public class IrisMessageResource {
         if (message.getSender() != IrisMessageSender.USER) {
             throw new BadRequestException("Only user messages can be resent");
         }
-        irisSessionService.requestMessageFromIris(session);
+        irisSessionService.requestMessageFromIris(session, Map.of(), List.of(), clientId);
 
         return ResponseEntity.ok(IrisMessageResponseDTO.of(message));
     }

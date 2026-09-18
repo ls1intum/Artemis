@@ -28,6 +28,8 @@ export interface IrisPointOut {
     timestamp?: number;
     /** Set when a pipeline is waiting on this point-out; the ack must carry the same id. */
     correlationId?: string;
+    /** Local deadline after which a pending server command must no longer move the view. */
+    expiresAt?: number;
     /** True for a marker click: (re)open the combined view if the student closed it. */
     forceOpen?: boolean;
     /** Display name of the lecture unit, stored on history markers so they can be labelled. */

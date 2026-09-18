@@ -1256,6 +1256,18 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component['pendingPointOut']()).toBeUndefined();
         });
 
+        it('does not navigate after a pending command has expired', () => {
+            const { goToPage } = mockViewers(signal(4));
+            component['fullscreenState'].set(true);
+
+            component['handlePointOut'](pointOutRequest({ correlationId: 'expired', page: 3, expiresAt: Date.now() - 1 }));
+            fixture.detectChanges();
+
+            expect(goToPage).not.toHaveBeenCalled();
+            expect(ackSpy).toHaveBeenCalledWith('expired', false);
+            expect(component['pendingPointOut']()).toBeUndefined();
+        });
+
         // A point-out naming both a page and a timestamp is all or nothing. Applying the half that holds up would
         // move one pane and leave the other where it was, while the whole thing is reported as not applied and gets
         // no marker — so the student sits in a half-position that nothing in the chat leads back to and that Iris'

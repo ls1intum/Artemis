@@ -44,7 +44,7 @@ public class IrisCommandCoordinationService {
 
     @PostConstruct
     public void init() {
-        distributedDataProvider.<AckMessage>getTopic(ACK_TOPIC).addMessageListener(this::applyAck);
+        distributedDataProvider.<AckMessage>getReliableTopic(ACK_TOPIC).addMessageListener(this::applyAck);
     }
 
     /**
@@ -70,7 +70,7 @@ public class IrisCommandCoordinationService {
      * @param userLogin the login of the authenticated user that sent the ack
      */
     public void handleAck(IrisCommandAckDTO ack, String userLogin) {
-        distributedDataProvider.<AckMessage>getTopic(ACK_TOPIC).publish(new AckMessage(ack.correlationId(), ack.applied(), userLogin));
+        distributedDataProvider.<AckMessage>getReliableTopic(ACK_TOPIC).publish(new AckMessage(ack.correlationId(), ack.applied(), userLogin));
     }
 
     private void applyAck(AckMessage message) {

@@ -54,7 +54,7 @@ class IrisCommandCoordinationServiceTest {
     @BeforeEach
     @SuppressWarnings({ "unchecked", "rawtypes" })
     void setUp() {
-        when(distributedDataProvider.getTopic(any())).thenReturn((DistributedTopic) ackTopic);
+        when(distributedDataProvider.getReliableTopic(any())).thenReturn((DistributedTopic) ackTopic);
         doAnswer(invocation -> {
             listenerRef.set(invocation.getArgument(0));
             return LISTENER_REGISTRATION_ID;

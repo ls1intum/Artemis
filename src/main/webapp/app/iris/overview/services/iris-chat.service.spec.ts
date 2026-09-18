@@ -436,7 +436,7 @@ describe('IrisChatService', () => {
         await waitForSessionId();
         await firstValueFrom(service.resendMessage(message));
 
-        expect(httpService.resendMessage).toHaveBeenCalledWith(mockConversation.id, message);
+        expect(httpService.resendMessage).toHaveBeenCalledWith(mockConversation.id, message, wsMock.clientId);
         const messages = await firstValueFrom(service.currentMessages());
         expect(messages).toHaveLength(mockConversation.messages!.length);
         expect(messages.first()).toEqual(message);
@@ -677,6 +677,7 @@ describe('IrisChatService', () => {
     });
 
     it('should forward point-out commands addressed to this tab or to any tab', async () => {
+        vi.spyOn(Date, 'now').mockReturnValue(1_000);
         const commandSubject = new Subject<IrisCommand>();
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
@@ -690,8 +691,8 @@ describe('IrisChatService', () => {
         commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 3 }, correlationId: 'corr-1' });
         commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 4 }, correlationId: 'corr-2', targetClientId: wsMock.clientId });
 
-        expect(navigated).toHaveBeenNthCalledWith(1, { lectureUnitId: 42, page: 3, correlationId: 'corr-1' });
-        expect(navigated).toHaveBeenNthCalledWith(2, { lectureUnitId: 42, page: 4, correlationId: 'corr-2' });
+        expect(navigated).toHaveBeenNthCalledWith(1, { lectureUnitId: 42, page: 3, correlationId: 'corr-1', expiresAt: 5_000 });
+        expect(navigated).toHaveBeenNthCalledWith(2, { lectureUnitId: 42, page: 4, correlationId: 'corr-2', expiresAt: 5_000 });
     });
 
     it('should ignore commands addressed to another tab', async () => {

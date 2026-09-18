@@ -45,13 +45,14 @@ describe('IrisChatHttpService', () => {
             const returnedFromService = { ...mockClientMessage, id: 0 };
             const expected = returnedFromService;
             service
-                .resendMessage(mockConversation.id, returnedFromService)
+                .resendMessage(mockConversation.id, returnedFromService, 'client-1')
                 .pipe(take(1))
                 .subscribe((resp) => {
                     expect(resp.body).toEqual(expected);
                     expect(resp.body!.id).toEqual(expected.id);
                 });
             const req = httpMock.expectOne({ method: 'POST' });
+            expect(req.request.params.get('clientId')).toBe('client-1');
             req.flush(returnedFromService);
         });
 
