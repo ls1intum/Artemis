@@ -134,7 +134,7 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         long lectureId = insert("lecture", values("course_id", courseId, "title", "Lecture"));
         long lectureUnitId = insert("lecture_unit", values("discriminator", "T", "lecture_id", lectureId, "lecture_unit_order", 0));
         long competencyId = insert("competency", values("discriminator", "C", "title", "Competency", "course_id", courseId, "mastery_threshold", 50));
-        long quizQuestionId = insert("quiz_question", values("discriminator", "SA", "title", "Question"));
+        long quizQuestionId = insert("quiz_question", values("discriminator", "SA", "title", "Question", "exercise_id", exerciseId));
         long organizationId = insert("organization", values("email_pattern", ".*", "name", TEST_PREFIX + "org", "short_name", TEST_PREFIX));
         long ideId = insert("ide", values("name", "IDE", "deep_link", "ide://open"));
         long courseNotificationId = insert("course_notification", values("course_id", courseId, "type", 1, "creation_date", now, "deletion_date", now));

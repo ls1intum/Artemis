@@ -107,7 +107,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `Complaint` | Result `result_id` | Required | No | Complainant is a student or a team; both columns are nullable. |
 | `ComplaintResponse` | Complaint `complaint_id` | Required | No |  |
 | `ExampleSubmission` | Exercise `exercise_id` | Required | No |  |
-| `Feedback` | Result `result_id` | Optional | **Yes** | Nullable. |
+| `Feedback` | Result `result_id` | Required | No |  |
 | `FeedbackMessage` | — | Root | No | Reference data. |
 | `GradeStep` | GradingScale `grading_scale_id` | Required | No |  |
 | `GradingCriterion` | Exercise `exercise_id` | Required | No |  |
@@ -297,7 +297,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | Entity | Belongs to | Parent required | Orphan possible | Notes |
 | --- | --- | --- | --- | --- |
 | `QuizBatch` | QuizExercise `quiz_id` | Required | No |  |
-| `QuizQuestion` and 3 subclasses | QuizExercise `exercise_id` | Optional | **Yes** | Nullable. |
+| `QuizQuestion` and 3 subclasses | QuizExercise `exercise_id` | Required | No |  |
 | `QuizQuestionProgress` | Course, QuizQuestion and User | Required (all) | No | Cascades on all three. |
 | `QuizTrainingLeaderboard` | Course `course_id` and User `user_id` | Required (all) | No | Cascades on both. |
 | `SubmittedAnswer` and 3 subclasses | Submission `submission_id` | Required | No |  |
