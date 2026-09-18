@@ -167,8 +167,8 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | Entity | Belongs to | Parent required | Orphan possible | Notes |
 | --- | --- | --- | --- | --- |
 | `Course` | — | Root | No | The main aggregate root. |
-| `CourseAthenaConfig` | Course `course_id` | Required | No |  |
-| `CourseConfiguration` | Course `course_id` | Required | No |  |
+| `CourseAthenaConfig` | Course `course.athena_config_id` | Held by the parent | **Yes** | The course points at it; nothing points back. |
+| `CourseConfiguration` | Course `course.course_configuration_id` | Held by the parent | **Yes** | The course points at it; nothing points back. |
 | `CourseRequest` | User `requester_id` | Required | No | `created_course_id` is a result link, not a parent. |
 
 ### Exam
@@ -199,7 +199,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `Submission` and 5 subclasses | Participation `participation_id` | Optional | **Yes** | Nullable. |
 | `SubmissionVersion` | Submission `submission_id` | Required | No | Cascades on submission deletion. |
 | `Team` | Exercise `exercise_id` | Required | No |  |
-| `TeamAssignmentConfig` | Exercise `exercise_id` | Required | No |  |
+| `TeamAssignmentConfig` | Exercise `exercise.team_assignment_config_id` | Held by the parent | **Yes** | The exercise points at it; nothing points back. |
 
 ### Iris
 
@@ -219,7 +219,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | --- | --- | --- | --- | --- |
 | `LtiPlatformConfiguration` | — | Root | No | Server-wide platform registration. |
 | `LtiResourceLaunch` | User `user_id` | Required | No | `exercise_id` is nullable. |
-| `OnlineCourseConfiguration` | Course `course_id` | Required | No |  |
+| `OnlineCourseConfiguration` | Course `course.online_course_configuration_id` | Held by the parent | **Yes** | The course points at it; nothing points back. |
 | `UserLti` | User `user_id` | Required | No | Cascades. |
 
 ### Lecture
@@ -266,7 +266,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | --- | --- | --- | --- | --- |
 | `PlagiarismCase` | Exercise `exercise_id` | Required | No |  |
 | `PlagiarismComparison` | PlagiarismResult `plagiarism_result_id` | Required | No |  |
-| `PlagiarismDetectionConfig` | Exercise `exercise_id` | Required | No |  |
+| `PlagiarismDetectionConfig` | Exercise `exercise.plagiarism_detection_config_id` | Held by the parent | **Yes** | The exercise points at it; nothing points back. |
 | `PlagiarismResult` | Exercise `exercise_id` | Required | No |  |
 | `PlagiarismSubmission` | PlagiarismComparison `plagiarism_comparison_id` | Required | No | Cascades. `comparison_side` says which half of the pair it is; the plagiarism case is a reference, not a parent. |
 | `PlagiarismSubmissionElement` | PlagiarismSubmission `plagiarism_submission_id` | Optional | **Yes** | Nullable, though it cascades when set. |
@@ -318,7 +318,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `TutorialGroupRegistration` | TutorialGroup `tutorial_group_id` and User `student_id` | Required (all) | No |  |
 | `TutorialGroupSchedule` | TutorialGroup `tutorial_group_id` | Required | No |  |
 | `TutorialGroupSession` | TutorialGroup `tutorial_group_id` | Required | No |  |
-| `TutorialGroupsConfiguration` | Course `course_id` | Required | No |  |
+| `TutorialGroupsConfiguration` | Course `course.tutorial_groups_configuration_id` | Held by the parent | **Yes** | The course points at it; nothing points back. |
 
 ## Finding orphans
 
