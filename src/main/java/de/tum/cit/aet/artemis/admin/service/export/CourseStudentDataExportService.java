@@ -731,7 +731,7 @@ public class CourseStudentDataExportService {
             headerParts.add("Submitted");
 
             // Add exercise group columns
-            for (ExamScoresDTO.ExerciseGroup exerciseGroup : examScores.exerciseGroups()) {
+            for (ExamScoresDTO.ExerciseGroupDTO exerciseGroup : examScores.exerciseGroups()) {
                 headerParts.add(escapeCSV(exerciseGroup.title()) + " Exercise");
                 headerParts.add(escapeCSV(exerciseGroup.title()) + " Points");
                 headerParts.add(escapeCSV(exerciseGroup.title()) + " Score");
@@ -778,7 +778,7 @@ public class CourseStudentDataExportService {
 
             // Build data rows for each student
             final var points = examScores.maxPoints() != null ? String.valueOf(examScores.maxPoints()) : "";
-            for (ExamScoresDTO.StudentResult studentResult : examScores.studentResults()) {
+            for (ExamScoresDTO.StudentResultDTO studentResult : examScores.studentResults()) {
                 List<String> rowParts = new ArrayList<>();
                 rowParts.add(escapeCSV(studentResult.name()));
                 rowParts.add(studentResult.login() != null ? studentResult.login() : "");
@@ -787,8 +787,8 @@ public class CourseStudentDataExportService {
                 rowParts.add(studentResult.submitted() != null ? String.valueOf(studentResult.submitted()) : "false");
 
                 // Add exercise group columns
-                for (ExamScoresDTO.ExerciseGroup exerciseGroup : examScores.exerciseGroups()) {
-                    ExamScoresDTO.ExerciseResult exerciseResult = studentResult.exerciseGroupIdToExerciseResult() != null
+                for (ExamScoresDTO.ExerciseGroupDTO exerciseGroup : examScores.exerciseGroups()) {
+                    ExamScoresDTO.ExerciseResultDTO exerciseResult = studentResult.exerciseGroupIdToExerciseResult() != null
                             ? studentResult.exerciseGroupIdToExerciseResult().get(exerciseGroup.id())
                             : null;
 
@@ -874,9 +874,9 @@ public class CourseStudentDataExportService {
             }
 
             // Prepare data for statistics rows
-            List<Long> exerciseGroupIds = examScores.exerciseGroups().stream().map(ExamScoresDTO.ExerciseGroup::id).toList();
+            List<Long> exerciseGroupIds = examScores.exerciseGroups().stream().map(ExamScoresDTO.ExerciseGroupDTO::id).toList();
             Map<Long, Double> maxPointsByGroup = examScores.exerciseGroups().stream()
-                    .collect(Collectors.toMap(ExamScoresDTO.ExerciseGroup::id, eg -> eg.maxPoints() != null ? eg.maxPoints() : 0.0));
+                    .collect(Collectors.toMap(ExamScoresDTO.ExerciseGroupDTO::id, eg -> eg.maxPoints() != null ? eg.maxPoints() : 0.0));
 
             // Max row
             lines.add(String.join(",", createExamMaxRow(examScores, points, course)));
@@ -932,7 +932,7 @@ public class CourseStudentDataExportService {
         List<String> maxRow = new ArrayList<>();
         maxRow.add("Max");
         maxRow.addAll(Collections.nCopies(4, ""));
-        for (ExamScoresDTO.ExerciseGroup exerciseGroup : examScores.exerciseGroups()) {
+        for (ExamScoresDTO.ExerciseGroupDTO exerciseGroup : examScores.exerciseGroups()) {
             maxRow.add("");
             maxRow.add(exerciseGroup.maxPoints() != null ? formatValue(exerciseGroup.maxPoints(), course) : "");
             maxRow.add(formatValue(100.0, course));
@@ -1075,7 +1075,7 @@ public class CourseStudentDataExportService {
             // Count students per grade using the grade from the DTO (more accurate than recalculating)
             Map<String, Integer> gradeCountMap = new LinkedHashMap<>();
             gradingScale.getGradeSteps().forEach(step -> gradeCountMap.put(step.getGradeName(), 0));
-            for (ExamScoresDTO.StudentResult studentResult : examScores.studentResults()) {
+            for (ExamScoresDTO.StudentResultDTO studentResult : examScores.studentResults()) {
                 if (studentResult.overallGrade() != null && !studentResult.overallGrade().isEmpty()) {
                     gradeCountMap.merge(studentResult.overallGrade(), 1, Integer::sum);
                 }
