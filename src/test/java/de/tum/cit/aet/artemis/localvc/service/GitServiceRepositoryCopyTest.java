@@ -52,6 +52,8 @@ class GitServiceRepositoryCopyTest {
     void setUp() {
         gitService = new GitService();
         ReflectionTestUtils.setField(gitService, "localVCBasePath", baseDir);
+        // Spring injects this in production, and the copy writes the repository configuration and HEAD from it.
+        ReflectionTestUtils.setField(gitService, "defaultBranch", DEFAULT_BRANCH);
     }
 
     @Test
@@ -63,6 +65,8 @@ class GitServiceRepositoryCopyTest {
         }
 
         assertThat(readFileFromBranchHead("abc-student1")).as("the copy carries the content of the source").isEqualTo("template");
+        // The configuration is applied to the copy before it is published, so a repository that arrives at its final path is already usable.
+        assertThat(headTargetOf("abc-student1")).as("the copy is configured, so HEAD names the default branch").isEqualTo(Constants.R_HEADS + DEFAULT_BRANCH);
     }
 
     @Test
@@ -142,6 +146,12 @@ class GitServiceRepositoryCopyTest {
             clone.push().setRefSpecs(new RefSpec("HEAD:" + Constants.R_HEADS + DEFAULT_BRANCH)).call();
         }
         FileUtils.deleteDirectory(seed.toFile());
+    }
+
+    private String headTargetOf(String repositorySlug) throws IOException {
+        try (org.eclipse.jgit.lib.Repository repository = open(repositorySlug)) {
+            return repository.getRefDatabase().exactRef(Constants.HEAD).getTarget().getName();
+        }
     }
 
     private ObjectId branchHeadOf(String repositorySlug) throws IOException {
