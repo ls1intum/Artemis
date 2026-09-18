@@ -53,7 +53,6 @@ import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.FeedbackRequestService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationService;
@@ -101,8 +100,6 @@ public class ParticipationResource {
 
     private final UserRepository userRepository;
 
-    private final TeamRepository teamRepository;
-
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
@@ -114,7 +111,7 @@ public class ParticipationResource {
     private final FeedbackRequestService feedbackRequestService;
 
     public ParticipationResource(ParticipationService participationService, ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            AuthorizationCheckService authCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, TeamRepository teamRepository,
+            AuthorizationCheckService authCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
             FeatureToggleService featureToggleService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             SubmissionRepository submissionRepository, ExerciseDateService exerciseDateService, ParticipationAuthorizationService participationAuthorizationService,
             Optional<StudentExamApi> studentExamApi, ModuleFeatureService moduleFeatureService, FeedbackRequestService feedbackRequestService,
@@ -125,7 +122,6 @@ public class ParticipationResource {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
-        this.teamRepository = teamRepository;
         this.featureToggleService = featureToggleService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -159,11 +155,10 @@ public class ParticipationResource {
         }
         checkIfParticipationCanBeStartedElseThrow(exercise, user);
 
-        // if this is a team-based exercise, set the participant to the team that the user belongs to
-        Participant participant = user;
-        if (exercise.isTeamMode()) {
-            participant = teamRepository.findOneWithStudentsByExerciseIdAndUserId(exercise.getId(), user.getId())
-                    .orElseThrow(() -> new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "teamExercise.cannotStart"));
+        // for a team-based exercise this is the team the user belongs to, otherwise the user
+        Participant participant = participationService.findSubmitParticipant(exercise, user);
+        if (participant == null) {
+            throw new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "teamExercise.cannotStart");
         }
         StudentParticipation participation;
         try {
