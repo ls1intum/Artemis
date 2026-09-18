@@ -1071,11 +1071,11 @@ class LectureContentProcessingServiceTest {
 
         @Test
         void shouldCalculateCorrectBackoffMinutes() {
-            assertThat(ProcessingStateCallbackService.calculateBackoffMinutes(1)).isEqualTo(2);
-            assertThat(ProcessingStateCallbackService.calculateBackoffMinutes(2)).isEqualTo(4);
-            assertThat(ProcessingStateCallbackService.calculateBackoffMinutes(3)).isEqualTo(8);
-            assertThat(ProcessingStateCallbackService.calculateBackoffMinutes(4)).isEqualTo(16);
-            assertThat(ProcessingStateCallbackService.calculateBackoffMinutes(5)).isEqualTo(32);
+            assertThat(LectureIngestionFailureClassifier.calculateBackoffMinutes(1)).isEqualTo(2);
+            assertThat(LectureIngestionFailureClassifier.calculateBackoffMinutes(2)).isEqualTo(4);
+            assertThat(LectureIngestionFailureClassifier.calculateBackoffMinutes(3)).isEqualTo(8);
+            assertThat(LectureIngestionFailureClassifier.calculateBackoffMinutes(4)).isEqualTo(16);
+            assertThat(LectureIngestionFailureClassifier.calculateBackoffMinutes(5)).isEqualTo(32);
         }
 
         @Test

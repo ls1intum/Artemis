@@ -490,16 +490,12 @@ public class ProcessingStateCallbackService {
     }
 
     /**
-     * Mark a claimed unit SKIPPED because preparation on the iris side found it not processable
-     * (course settings or content type). Mirrors the push path's null-token branch.
-     * <p>
-     * Bound to the claim that produced it, the same way {@link #activateClaimedJob} is: a claim whose
-     * lease lapsed and was re-claimed, and possibly already activated, before this result arrived no
-     * longer matches, so a stale result matches nothing instead of cancelling the newer claim's run.
+     * Mark a claimed unit SKIPPED (not processable) and, like {@link #activateClaimedJob}, bound to the
+     * claim that produced it: a stale result from a lapsed, re-claimed (possibly already activated)
+     * claim matches nothing instead of cancelling the newer claim's run.
      *
      * @param lectureUnitId the claimed unit
-     * @param claimedAt     the claim marker observed at claim time, from
-     *                          {@link de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO#claimedAt()}
+     * @param claimedAt     the claim marker from {@link de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO#claimedAt()}
      * @return true when marked SKIPPED, false when the claim was no longer current
      */
     public boolean markClaimedUnitSkipped(long lectureUnitId, ZonedDateTime claimedAt) {
@@ -865,7 +861,7 @@ public class ProcessingStateCallbackService {
         // does not lose it when a failure occurs after transcription already completed.
         TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(state.getLectureUnit().getId()).map(LectureTranscription::getTranscriptionStatus).orElse(null);
 
-        FailureComputation computation = computeFailure(state, errorCode);
+        LectureIngestionFailureClassifier.FailureComputation computation = LectureIngestionFailureClassifier.computeFailure(state, errorCode);
         processingStateRepository.save(state);
         notifyProcessingStateChange(state, txStatus);
 
@@ -876,15 +872,10 @@ public class ProcessingStateCallbackService {
     }
 
     /**
-     * Fail a stalled or stuck run, but only while it is still exactly the run that was judged
-     * stalled/stuck: same id, phase, and job token as the caller's re-fetch observed. The scheduler's
-     * re-fetch-then-fail paths ({@code failStalledState}, {@code recoverStuckState}) re-read the row
-     * right before deciding to fail it specifically to close the race against a concurrent terminal
-     * callback, but the read-then-decide-then-write sequence still leaves a gap between that read and
-     * this write: a callback finishing in that gap must not be reverted. Committing the computed
-     * failure through one atomic conditional update, instead of the plain {@code save} above, closes
-     * it completely. Ordinary dispatch-failure call sites don't need this: they act on a state they
-     * just atomically claimed themselves, synchronously, in the same call.
+     * Fail a stalled/stuck run atomically, matching the id, phase and job token the caller observed at
+     * read time, so a terminal callback landing in the gap before this write is never reverted. Only
+     * the scheduler's re-fetch-then-fail paths need this; ordinary dispatch-failure call sites act on a
+     * state they just atomically claimed themselves, synchronously, in the same call.
      *
      * @param state     the state read just before this call decided to fail it
      * @param errorCode machine-readable error code from Pyris; may be {@code null}
@@ -894,7 +885,7 @@ public class ProcessingStateCallbackService {
         ProcessingPhase phaseAtRead = state.getPhase();
         String tokenAtRead = state.getIngestionJobToken();
 
-        FailureComputation computation = computeFailure(state, errorCode);
+        LectureIngestionFailureClassifier.FailureComputation computation = LectureIngestionFailureClassifier.computeFailure(state, errorCode);
 
         int updated = processingStateRepository.failIfStillLive(state.getId(), phaseAtRead, tokenAtRead, computation.retryCount(), computation.errorKey(),
                 computation.retryEligibleAt(), computation.now());
@@ -910,88 +901,6 @@ public class ProcessingStateCallbackService {
                     MAX_PROCESSING_RETRIES);
         }
         return true;
-    }
-
-    /**
-     * Compute the field changes a failure applies to {@code state} (retry count, error key, backoff),
-     * without persisting them, so both the unconditional and the claim-checked failure writers commit
-     * the exact same values through their own storage path.
-     */
-    private FailureComputation computeFailure(LectureUnitProcessingState state, @Nullable String errorCode) {
-        ZonedDateTime now = ZonedDateTime.now();
-        state.incrementRetryCount();
-        state.setIngestionJobToken(null);
-        // Undo the dispatch attempt, including the claim that started it: startedAt is what marks a job as taken, so
-        // leaving it set would keep this unit out of the idle queue for good.
-        state.setStartedAt(null);
-
-        ProcessingErrorClassification classification = classifyIngestionFailure(errorCode);
-        state.markFailed(classification.errorKey());
-
-        boolean maxRetriesReached = state.getRetryCount() >= MAX_PROCESSING_RETRIES;
-        if (maxRetriesReached || !classification.retryable()) {
-            if (!classification.retryable()) {
-                log.warn("Unit {} failed with permanent error code '{}', no retry scheduled", state.getLectureUnit().getId(), errorCode);
-            }
-            else {
-                log.warn("Max retries reached for unit {}, marking as permanently failed", state.getLectureUnit().getId());
-            }
-            return new FailureComputation(state.getRetryCount(), classification.errorKey(), null, null, now);
-        }
-
-        long backoffMinutes = calculateBackoffMinutes(state.getRetryCount());
-        state.scheduleRetry(backoffMinutes);
-        return new FailureComputation(state.getRetryCount(), classification.errorKey(), state.getRetryEligibleAt(), backoffMinutes, now);
-    }
-
-    /**
-     * The field changes a failure applies, computed once and shared by both failure writers.
-     *
-     * @param retryCount      the new retry count
-     * @param errorKey        the i18n error key to persist
-     * @param retryEligibleAt when the retry becomes eligible, or {@code null} for a permanent failure
-     * @param backoffMinutes  the backoff applied, or {@code null} for a permanent failure (log-only, not persisted)
-     * @param now             the timestamp this computation was performed at
-     */
-    private record FailureComputation(int retryCount, String errorKey, @Nullable ZonedDateTime retryEligibleAt, @Nullable Long backoffMinutes, ZonedDateTime now) {
-    }
-
-    /**
-     * Translate a raw Pyris {@code error_code} into a specific, instructor-readable i18n key plus a
-     * retryability flag. Unknown and blank codes fall back to the generic key with retryable = true.
-     */
-    static ProcessingErrorClassification classifyIngestionFailure(@Nullable String rawCode) {
-        if (rawCode == null || rawCode.isBlank()) {
-            return new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.processingFailed", true);
-        }
-        return switch (rawCode) {
-            case "YOUTUBE_PRIVATE" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.youtubePrivate", false);
-            case "YOUTUBE_LIVE" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.youtubeLive", false);
-            case "YOUTUBE_TOO_LONG" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.youtubeTooLong", false);
-            case "YOUTUBE_UNAVAILABLE" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.youtubeUnavailable", false);
-            case "YOUTUBE_DOWNLOAD_FAILED" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.youtubeDownloadFailed", true);
-            default -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.processingFailed", true);
-        };
-    }
-
-    /**
-     * Result of classifying a raw Pyris failure code at the state-write boundary.
-     *
-     * @param errorKey  i18n key stored on the processing state; shown to instructors via the status tooltip
-     * @param retryable whether the failure is eligible for automatic retry (permanent input errors are not)
-     */
-    record ProcessingErrorClassification(String errorKey, boolean retryable) {
-    }
-
-    /**
-     * Calculate exponential backoff delay in minutes.
-     * Formula: 2^retryCount minutes (2, 4, 8, 16, 32 minutes for retries 1-5).
-     *
-     * @param retryCount current retry attempt number
-     * @return backoff delay in minutes
-     */
-    static long calculateBackoffMinutes(int retryCount) {
-        return (long) Math.pow(2, retryCount);
     }
 
     // -------------------- Utility --------------------
