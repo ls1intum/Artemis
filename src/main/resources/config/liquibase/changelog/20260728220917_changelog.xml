@@ -10,8 +10,8 @@
     installation gets. Installations that predate the consolidations (ed4696bcb3, 8723fc7290,
     5c7250b2a6, 15e2f9f3e1) drifted in ways no changeset ever reconciled. These changesets close
     that gap. Every one is precondition-guarded, so it is a no-op where the state is already correct
-    (which includes fresh installations and the TUM production database, where the equivalent DDL was
-    applied manually on 2026-07-28).
+    (which includes fresh installations and any long-lived deployment where the equivalent DDL was applied
+    manually).
 
     Sections:
       1. Temporal precision  - six columns declared datetime(3) but created with precision 0 or 6

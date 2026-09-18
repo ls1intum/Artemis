@@ -4,89 +4,63 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <!--
-    Drops ten secondary indexes that cannot serve a query. An analysis of the database structure
-    found that together they take about 1.8 GB on a large instance, and that on result, participation
-    and build_job the secondary indexes outweigh the rows they point at.
+    Drops ten secondary indexes that no query can use. An analysis of the database structure found
+    each of them redundant for one of three reasons, none of which depends on how much data an
+    instance holds.
 
-    Sizes below are page counts from mysql.innodb_index_stats after ANALYZE on a large instance, on a
-    freshly rebuilt schema so they are live pages rather than fragmentation. They say how much each
-    index costs; what makes it droppable is the structural argument beside it, which does not depend
-    on any one instance.
+    Group 1 - a leftmost prefix of a composite index that already exists
 
-    Group 1 - a leftmost prefix of a composite index that already exists (717 MB)
-
-      Each of these indexes a single column that is already the first column of a wider index.
-      Verified with EXPLAIN: with the narrow index ignored, every lookup falls through to the
-      composite as the same "Covering index lookup", and the estimated cost barely moves
-      (0.53 -> 0.91 in the worst of the four).
-
-        submission.FKeap67y7pxd6ffvwbs6d6sfhmq (participation_id)            306 MB
+        submission.FKeap67y7pxd6ffvwbs6d6sfhmq (participation_id)
           -> idx_submission_participation_submission_date (participation_id, submission_date DESC)
-        result.fk_result_submission_id (submission_id)                       297 MB
+        result.fk_result_submission_id (submission_id)
           -> idx_result_submission_completion_date (submission_id, completion_date DESC)
-        participation.fk_participation_student_id (student_id)                68 MB
+        participation.fk_participation_student_id (student_id)
           -> UK6skuc03gvp2gw5lyji5lu0v0v (student_id, exercise_id, initialization_state, attempt)
-        participation.fk_participation_team_id (team_id)                      46 MB
+        participation.fk_participation_team_id (team_id)
           -> UC_PARTICIPATION_TEAM_ID_EXERCISE_ID_INITIALIZATION_STATE_COLS (team_id, exercise_id, initialization_state)
 
-      All four back a foreign key, and in each case the index carries the same name as the
-      constraint. MySQL requires an index for a foreign key but accepts any index that has the
-      referencing column leftmost, so these drops succeed and the constraint survives; this was
-      confirmed against MySQL directly, including the case where the composite's second column is
-      DESC, and the control case (a foreign key whose only index is the one being dropped) fails
-      with ERROR 1553 as expected. PostgreSQL never requires an index for a foreign key.
+      With the narrow index ignored, EXPLAIN shows every lookup falling through to the composite as
+      the same covering index lookup, at practically the same cost.
 
-      These four are restricted to MySQL and PostgreSQL. H2, which the bean-instantiation startup
-      check boots on, refuses to drop an index that backs a foreign key even when a suitable
-      replacement exists, so on H2 the redundant index stays - harmless, because H2 only ever holds
-      the startup smoke test's data. Changelog 20260410144433 restricts a drop for the same reason.
+      All four back a foreign key and carry its name. MySQL accepts any index with the referencing
+      column leftmost, so the drops succeed and the constraint survives; a foreign key whose only
+      index is the one being dropped fails with ERROR 1553 instead. PostgreSQL never requires one.
 
-    Group 2 - too few distinct values to be selective (723 MB)
+      They are restricted to MySQL and PostgreSQL because H2, which the bean-instantiation startup
+      check boots on, refuses the drop even when a replacement exists. Changelog 20260410144433
+      restricts a drop for the same reason.
 
-        result.result_rated (rated)                                          215 MB   2 distinct values
-        submission.jhi_type (jhi_type)                                       212 MB   6 distinct values
-        submission.submission_discriminator (discriminator)                  198 MB   4 distinct values
-        build_job.idx_build_job_result (build_job_result)                     53 MB   4 distinct values
-        participation.participation_discriminator (discriminator)             45 MB   3 distinct values
+    Group 2 - too few distinct values to be selective
 
-      Note that build_job.idx_build_job_result indexes the build_job_result status column. It is not
-      idx_build_job_result_id, which indexes result_id and backs the fk_build_job_result constraint;
-      that index is kept.
+        result.result_rated (rated)                                 2 distinct values
+        submission.jhi_type (jhi_type)                              6 distinct values
+        submission.submission_discriminator (discriminator)         4 distinct values
+        build_job.idx_build_job_result (build_job_result)           4 distinct values
+        participation.participation_discriminator (discriminator)   3 distinct values
 
-      Every query that filters on these columns also filters on a selective one - exercise_id,
-      participation_id or submission_id - and EXPLAIN shows the optimizer choosing that index and
-      applying these columns as a post-filter.
+      Every query filtering on these also filters on exercise_id, participation_id or submission_id,
+      and EXPLAIN shows the optimizer choosing that index and applying these columns as a post-filter.
 
-    Group 3 - selective in principle, unused in practice (340 MB)
+      Note that idx_build_job_result indexes the build_job_result status column. The index backing
+      fk_build_job_result is idx_build_job_result_id, which is kept.
 
-        result.result_assessment_type (assessment_type)                      340 MB
+    Group 3 - selective, but no query has the shape that would use it
 
-      This one is listed separately because the usual cardinality argument does not settle it:
-      assessment_type has four values, but the manual ones are a small enough share of the table to
-      be selective, and the optimizer does pick the index for a query that filters on assessment_type
-      alone and selects only indexed columns.
+        result.result_assessment_type (assessment_type)
 
-      No such query exists in Artemis. Every JPQL query that mentions assessmentType pairs it with a
-      selective driver (p.exercise.id, result.submission.id IN ...) or with a date range that has its
-      own index, and each of them projects columns the index does not carry. EXPLAIN confirms the
-      optimizer chooses idx_result_exercise_id, fk_result_submission_id or result_completion_date for
-      those shapes and never result_assessment_type. If a reviewer prefers to confirm this against
-      real query plans first, this changeset can be removed without touching the other nine.
+      The optimizer does pick this index for a query that filters on assessment_type alone and
+      selects only indexed columns. Artemis has no such query: every JPQL query mentioning
+      assessmentType pairs it with a selective driver or with a date range that has its own index,
+      and projects columns the index does not carry.
 
-    All ten indexes are created by 00000000000000_initial_schema.xml, which cannot be edited
-    without invalidating recorded checksums, so - as with changelog 20260816213553 - fresh
-    installations create them and drop them again here, which costs milliseconds on empty tables.
-    Each changeset is a single DDL statement guarded by an indexExists precondition, so a schema that
-    has already lost an index (or never had it, since index names can differ between the two
-    databases) marks the changeset as run instead of failing startup.
+    All ten are created by 00000000000000_initial_schema.xml, which cannot be edited without
+    invalidating recorded checksums, so - as with changelog 20260816213553 - fresh installations
+    create them and drop them again here. Each changeset is one DDL guarded by an indexExists
+    precondition, so a schema that never had an index marks it as run instead of failing startup,
+    and each carries an explicit rollback because Liquibase cannot infer one for dropIndex.
 
-    DROP INDEX is an INPLACE metadata-only operation on MySQL 8.0+ and on PostgreSQL, so this
-    migration is instant regardless of table size. The freed pages return to the tablespace
-    immediately; the files themselves shrink only on the next table rebuild.
-
-    Rollback recreates each index with its original name and column, so reverting to the previous
-    WAR finds a schema it can read and write either way - nothing here is dropped that the previous
-    version writes, since an index is not part of any INSERT or UPDATE statement.
+    DROP INDEX is an INPLACE metadata-only operation on MySQL 8.0+ and PostgreSQL, so this runs in
+    milliseconds regardless of table size.
     -->
 
     <changeSet id="20260916211144-01-drop-submission-participation-fk-index" author="krusche" dbms="mysql,postgresql">
