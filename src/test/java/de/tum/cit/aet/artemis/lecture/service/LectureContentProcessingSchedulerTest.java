@@ -1,8 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -108,37 +107,37 @@ class LectureContentProcessingSchedulerTest {
 
         @Test
         void shouldRejectNonPositiveStallWindow() {
-            assertThrows(IllegalArgumentException.class, () -> buildScheduler(Duration.ZERO, Duration.ofMinutes(45), 20, Duration.ofSeconds(30), 12));
-            assertThrows(IllegalArgumentException.class, () -> buildScheduler(Duration.ofMinutes(-1), Duration.ofMinutes(45), 20, Duration.ofSeconds(30), 12));
+            assertThatThrownBy(() -> buildScheduler(Duration.ZERO, Duration.ofMinutes(45), 20, Duration.ofSeconds(30), 12)).isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> buildScheduler(Duration.ofMinutes(-1), Duration.ofMinutes(45), 20, Duration.ofSeconds(30), 12)).isInstanceOf(IllegalArgumentException.class);
         }
 
         @Test
         void shouldRejectNonPositiveSlowStageWarningAfter() {
-            assertThrows(IllegalArgumentException.class, () -> buildScheduler(Duration.ofMinutes(30), Duration.ZERO, 20, Duration.ofSeconds(30), 12));
+            assertThatThrownBy(() -> buildScheduler(Duration.ofMinutes(30), Duration.ZERO, 20, Duration.ofSeconds(30), 12)).isInstanceOf(IllegalArgumentException.class);
         }
 
         @Test
         void shouldRejectNonPositiveNoCallbackTimeoutMinutes() {
-            assertThrows(IllegalArgumentException.class, () -> buildScheduler(Duration.ofMinutes(30), Duration.ofMinutes(45), 0, Duration.ofSeconds(30), 12));
-            assertThrows(IllegalArgumentException.class, () -> buildScheduler(Duration.ofMinutes(30), Duration.ofMinutes(45), -5, Duration.ofSeconds(30), 12));
+            assertThatThrownBy(() -> buildScheduler(Duration.ofMinutes(30), Duration.ofMinutes(45), 0, Duration.ofSeconds(30), 12)).isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> buildScheduler(Duration.ofMinutes(30), Duration.ofMinutes(45), -5, Duration.ofSeconds(30), 12)).isInstanceOf(IllegalArgumentException.class);
         }
 
         @Test
         void shouldRejectNonPositiveLeaseExpiry() {
-            assertThrows(IllegalArgumentException.class, () -> buildScheduler(Duration.ofMinutes(30), Duration.ofMinutes(45), 20, Duration.ZERO, 12));
+            assertThatThrownBy(() -> buildScheduler(Duration.ofMinutes(30), Duration.ofMinutes(45), 20, Duration.ZERO, 12)).isInstanceOf(IllegalArgumentException.class);
         }
 
         @Test
         void shouldRejectNonPositiveAbsoluteTimeoutHours() {
-            assertThrows(IllegalArgumentException.class, () -> buildScheduler(Duration.ofMinutes(30), Duration.ofMinutes(45), 20, Duration.ofSeconds(30), 0));
-            assertThrows(IllegalArgumentException.class, () -> buildScheduler(Duration.ofMinutes(30), Duration.ofMinutes(45), 20, Duration.ofSeconds(30), -1));
+            assertThatThrownBy(() -> buildScheduler(Duration.ofMinutes(30), Duration.ofMinutes(45), 20, Duration.ofSeconds(30), 0)).isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> buildScheduler(Duration.ofMinutes(30), Duration.ofMinutes(45), 20, Duration.ofSeconds(30), -1)).isInstanceOf(IllegalArgumentException.class);
         }
 
         @Test
         void shouldAcceptAllStrictlyPositiveThresholds() {
             LectureContentProcessingScheduler validScheduler = buildScheduler(Duration.ofMinutes(30), Duration.ofMinutes(45), 20, Duration.ofSeconds(30), 12);
 
-            assertNotNull(validScheduler);
+            assertThat(validScheduler).isNotNull();
         }
     }
 
@@ -553,7 +552,7 @@ class LectureContentProcessingSchedulerTest {
             // A legitimate terminal callback completed the run to DONE in the window between
             // failStalledState's re-fetch and the failure write; that completion must survive:
             // failIfStillLive's atomic guard sees the phase no longer matches and drops the stale write.
-            assertEquals(ProcessingPhase.DONE, backingRow.getPhase());
+            assertThat(backingRow.getPhase()).isEqualTo(ProcessingPhase.DONE);
         }
 
         @Test
