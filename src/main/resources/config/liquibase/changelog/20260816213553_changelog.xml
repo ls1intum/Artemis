@@ -6,9 +6,8 @@
     <!--
     Drops idx_reference on feedback.reference, the largest piece of dead schema on the biggest table.
 
-    On a production copy (36.1M feedback rows) the index occupies 716 MB (45,824 pages per
-    mysql.innodb_index_stats) - 19% of the table's 3.7 GB of secondary indexes - and 82% of its
-    entries are NULL keys, because only 3.9M rows have a reference at all.
+    It is a large share of the secondary index footprint of the table, and most of its entries are NULL
+    keys, because only a minority of rows have a reference at all.
 
     No query has ever used it at runtime: an exhaustive search of every @Query/native query in
     src/main/java finds no WHERE/JOIN predicate on feedback.reference. The column is only read in
