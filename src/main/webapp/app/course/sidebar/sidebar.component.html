@@ -82,6 +82,7 @@
 
                     @if (
                         !sidebarDataInternal().groupByCategory &&
+                        !sidebarDataInternal().pinnedData?.length &&
                         (!sidebarDataInternal()?.ungroupedData ||
                             !(sidebarDataInternal()?.ungroupedData | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems')?.length)
                     ) {

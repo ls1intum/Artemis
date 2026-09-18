@@ -198,6 +198,20 @@ describe('SidebarComponent', () => {
         expect(directiveInstance.jhiTranslate()).toBe('artemisApp.courseOverview.general.noDataFound');
     });
 
+    it('should not show an empty state when only pinned cards exist', () => {
+        fixture.componentRef.setInput('sidebarData', {
+            groupByCategory: false,
+            ungroupedData: [],
+            pinnedData: [{ title: 'Pinned presentation', id: 1, size: 'M' }],
+        });
+        fixture.changeDetectorRef.detectChanges();
+        const emptyMessages = fixture.debugElement.queryAll(By.directive(TranslateDirective)).filter((element) => {
+            const key = element.injector.get(TranslateDirective).jhiTranslate();
+            return key === 'artemisApp.courseOverview.general.noDataFound' || key === 'artemisApp.courseOverview.general.noElementFoundWithAppliedFilter';
+        });
+        expect(emptyMessages).toHaveLength(0);
+    });
+
     it('should give the correct size for exercises', () => {
         fixture.componentRef.setInput('sidebarData', {
             groupByCategory: true,

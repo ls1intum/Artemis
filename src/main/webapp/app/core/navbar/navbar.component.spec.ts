@@ -352,6 +352,11 @@ describe('NavbarComponent', () => {
             expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123']);
         });
 
+        it.each(['invalid', '0', '-1', '1.5', '01', '1e3', '42%20', ''])('should ignore an invalid presentation exercise ID %s', (id) => {
+            router.setUrl(`/course-management/123/presentations?presentationExerciseId=${id}`);
+            expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123']);
+        });
+
         it('should not infer a presentation route from query parameters', () => {
             router.setUrl('/course-management/123/exercises?returnUrl=/presentations&presentationExerciseId=42');
 

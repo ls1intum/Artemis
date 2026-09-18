@@ -17,7 +17,7 @@ export interface PresentationAssessmentInstance {
     presentationDate?: dayjs.Dayjs;
     resultPoints?: number | null;
     studentLogins?: string[];
-    students?: Pick<User, 'login' | 'name' | 'firstName' | 'lastName' | 'email' | 'imageUrl'>[];
+    students?: Pick<User, 'login' | 'name' | 'firstName' | 'lastName' | 'email'>[];
     language?: string;
     mode?: PresentationAssessmentMode;
     location?: string;

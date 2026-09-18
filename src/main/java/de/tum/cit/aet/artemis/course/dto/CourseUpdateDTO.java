@@ -64,7 +64,8 @@ public record CourseUpdateDTO(
         boolean unenrollmentEnabled, @Nullable String courseInformationSharingMessagingCodeOfConduct,
 
         // Course features
-        boolean learningPathsEnabled, boolean presentationAssessmentsEnabled, @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
+        boolean learningPathsEnabled, @Nullable Boolean presentationAssessmentsEnabled,
+        @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
         @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Nullable @Min(0) @Max(5) Integer accuracyOfScores, @Nullable String timeZone,
         @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone,
 
@@ -127,7 +128,9 @@ public record CourseUpdateDTO(
 
         // Course features
         course.setLearningPathsEnabled(learningPathsEnabled);
-        course.setPresentationAssessmentsEnabled(presentationAssessmentsEnabled);
+        if (presentationAssessmentsEnabled != null) {
+            course.setPresentationAssessmentsEnabled(presentationAssessmentsEnabled);
+        }
         course.setPresentationScore(presentationScore);
         course.setMaxPoints(maxPoints);
         course.setAccuracyOfScores(accuracyOfScores);
