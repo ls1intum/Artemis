@@ -528,16 +528,19 @@ describe('NavbarComponent', () => {
     });
 
     describe('Special Cases for Breadcrumbs', () => {
-        it('translates the presentation breadcrumb', () => {
-            router.setUrl('/course-management/1/presentations');
-            fixture.detectChanges();
+        it.each(['', '#details', '?presentationExerciseId=42#details', '#details?presentationExerciseId=42', '/#details'])(
+            'translates the presentation breadcrumb with suffix %s',
+            (suffix) => {
+                router.setUrl(`/course-management/1/presentations${suffix}`);
+                fixture.detectChanges();
 
-            expect(component.breadcrumbs().at(-1)).toEqual({
-                label: 'artemisApp.presentationAssessment.home.title',
-                translate: true,
-                uri: '/course-management/1/presentations/',
-            });
-        });
+                expect(component.breadcrumbs().at(-1)).toEqual({
+                    label: 'artemisApp.presentationAssessment.home.title',
+                    translate: true,
+                    uri: '/course-management/1/presentations/',
+                });
+            },
+        );
 
         it('programming exercise import', () => {
             const testUrl = '/course-management/1/programming-exercises/import/2';

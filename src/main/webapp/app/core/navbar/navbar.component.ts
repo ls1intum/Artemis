@@ -398,7 +398,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const path = fullURI.split('?')[0].replace(/\/+$/, '');
+        const path = fullURI.split(/[?#]/)[0].replace(/\/+$/, '');
         if (!path.startsWith('/course-management/') || path === '/course-management/new') {
             return;
         }
