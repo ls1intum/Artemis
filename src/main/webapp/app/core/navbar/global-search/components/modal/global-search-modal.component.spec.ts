@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Dialog } from 'primeng/dialog';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { signal } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { of, throwError } from 'rxjs';
-import { GlobalSearchModalComponent } from './global-search-modal.component';
+import { NEVER, of, throwError } from 'rxjs';
+import { CONTENT_SEARCH_TIMEOUT_MS, GlobalSearchModalComponent } from './global-search-modal.component';
 import { SearchOverlayService } from '../../services/search-overlay.service';
 import { OsDetectorService } from '../../services/os-detector.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -17,13 +17,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { GlobalSearchApi } from 'app/openapi/api/global-search-api';
-import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
+import { LectureSearchService } from '../../services/lecture-search.service';
+import { IrisSearchAvailabilityService } from '../../services/iris-search-availability.service';
+import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Router } from '@angular/router';
 import { GlobalSearchNavigationViewComponent } from '../views/navigation-view/global-search-navigation-view.component';
-import { GlobalSearchActionItemComponent } from '../action-item/global-search-action-item.component';
 import { GlobalSearchIrisAnswerComponent } from '../views/iris-answer/global-search-iris-answer.component';
 
 describe('GlobalSearchModalComponent', () => {
@@ -90,9 +91,20 @@ describe('GlobalSearchModalComponent', () => {
         getCourse: vi.fn<(courseId: number) => Course | undefined>().mockReturnValue(undefined),
     };
 
+    const mockLectureSearchService = {
+        search: vi.fn(() => of<LectureSearchResult[]>([])),
+    };
+
+    // Controllable stand-in for the root availability computed; the modal reads contentSearchAvailable().
+    const mockAvailability = {
+        contentSearchAvailable: signal(true),
+    };
+
     beforeEach(() => {
         vi.clearAllMocks();
         mockSearchService.globalSearch.mockReturnValue(of<GlobalSearchResult[]>([]));
+        mockLectureSearchService.search.mockReturnValue(of<LectureSearchResult[]>([]));
+        mockAvailability.contentSearchAvailable.set(true);
         TestBed.configureTestingModule({
             imports: [GlobalSearchModalComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
@@ -105,15 +117,17 @@ describe('GlobalSearchModalComponent', () => {
                 { provide: GlobalSearchApi, useValue: mockSearchService },
                 { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(true) } },
                 { provide: CourseStorageService, useValue: mockCourseStorageService },
+                { provide: LectureSearchService, useValue: mockLectureSearchService },
+                { provide: IrisSearchAvailabilityService, useValue: mockAvailability },
             ],
         });
 
-        // GlobalSearchActionItemComponent uses CSS custom-property bindings ([style.--accent]) that
-        // JSDOM's CSSStyleDeclaration proxy rejects. Mock it (and GlobalSearchIrisAnswerComponent)
-        // inside the navigation view so the modal spec is isolated from their rendering details.
+        // GlobalSearchIrisAnswerComponent uses CSS custom-property bindings that JSDOM's
+        // CSSStyleDeclaration proxy rejects. Mock it inside the navigation view so the modal
+        // spec is isolated from its rendering details.
         TestBed.overrideComponent(GlobalSearchNavigationViewComponent, {
-            remove: { imports: [GlobalSearchActionItemComponent, GlobalSearchIrisAnswerComponent] },
-            add: { imports: [MockComponent(GlobalSearchActionItemComponent), MockComponent(GlobalSearchIrisAnswerComponent)] },
+            remove: { imports: [GlobalSearchIrisAnswerComponent] },
+            add: { imports: [MockComponent(GlobalSearchIrisAnswerComponent)] },
         });
 
         fixture = TestBed.createComponent(GlobalSearchModalComponent);
@@ -498,34 +512,172 @@ describe('GlobalSearchModalComponent', () => {
         });
     });
 
-    describe('View Navigation', () => {
-        it('should navigate back to Navigation view on Escape when in Lecture view', () => {
-            (component as any).currentView.set(SearchView.Lecture);
-            mockSearchOverlayService.isOpen.set(true);
+    describe('Slides and videos filter', () => {
+        const contentResult: LectureSearchResult = {
+            course: { id: 42, name: 'Advanced Web Development' },
+            lecture: { id: 20, name: 'Angular Basics' },
+            lectureUnit: {
+                id: 30,
+                name: 'Introduction to Signals',
+                link: '/courses/42/lectures/20/units/30',
+                pageNumber: 4,
+                sourceType: 'lecture_unit_slide',
+                queryParams: { unit: 30, page: 4 },
+                displayMeta: 'Slide 4',
+            },
+            snippet: 'Signals are a reactive primitive...',
+        };
 
-            const event = new KeyboardEvent('keydown', { key: 'Escape' });
-            component.handleKeyboardEvent(event);
-
-            expect((component as any).currentView()).toBe(SearchView.Navigation);
-            expect(searchOverlayService.close).not.toHaveBeenCalled();
+        beforeEach(() => {
+            vi.useFakeTimers();
         });
 
-        it('should close when Escape is pressed from Navigation view', () => {
-            (component as any).currentView.set(SearchView.Navigation);
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('routes the slides and videos filter to content search and never to the metadata search', () => {
+            component['addFilter'](['lecture_content']);
+            vi.advanceTimersByTime(300);
+
+            component['onSearchInput']('signals');
+            vi.advanceTimersByTime(300);
+
+            expect(mockLectureSearchService.search).toHaveBeenCalledWith('signals', 10, undefined);
+            expect(mockSearchService.globalSearch).not.toHaveBeenCalled();
+        });
+
+        it('keeps the Lectures filter on the metadata search even when content search is available', () => {
+            // The grouped selection is what the UI applies for "Lectures" and for the lectures route context.
+            component['addFilter'](['lecture', 'lecture_unit']);
+            vi.advanceTimersByTime(300);
+            mockSearchService.globalSearch.mockClear();
+
+            component['onSearchInput']('signals');
+            vi.advanceTimersByTime(300);
+
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('signals', 'lecture,lecture_unit', undefined);
+            expect(mockLectureSearchService.search).not.toHaveBeenCalled();
+        });
+
+        it('should pass [courseId] to LectureSearchService when a course filter is set', () => {
+            component['activeCourseId'].set(42);
+            component['activeFilters'].set(['lecture_content']);
+            component['onSearchInput']('signals');
+            vi.advanceTimersByTime(300);
+
+            expect(mockLectureSearchService.search).toHaveBeenCalledWith('signals', 10, [42]);
+        });
+
+        it('prompts for a search term without any request when the slides and videos filter has no query', () => {
+            component['addFilter'](['lecture_content']);
+            vi.advanceTimersByTime(300);
+
+            expect(mockLectureSearchService.search).not.toHaveBeenCalled();
+            expect(mockSearchService.globalSearch).not.toHaveBeenCalled();
+            expect(component['results']()).toEqual([]);
+            expect(component['hasSearched']()).toBe(true);
+            expect(component['isLoading']()).toBe(false);
+            expect(component['searchError']()).toBeUndefined();
+        });
+
+        it('should render mapped results with type lecture_content', () => {
+            mockLectureSearchService.search.mockReturnValue(of<LectureSearchResult[]>([contentResult]));
+
+            component['activeFilters'].set(['lecture_content']);
+            component['onSearchInput']('signals');
+            vi.advanceTimersByTime(300);
+
+            const results = component['results']();
+            expect(results).toHaveLength(1);
+            expect(results[0].type).toBe('lecture_content');
+            expect(results[0].title).toBe('Introduction to Signals');
+            expect(results[0].id).toBe('lecture-content-/courses/42/lectures/20/units/30?page=4&unit=30');
+        });
+
+        it('reports Iris as switched off for the courses on a 403, without falling back to the metadata search', () => {
+            mockLectureSearchService.search.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+
+            component['activeFilters'].set(['lecture_content']);
+            component['onSearchInput']('signals');
+            vi.advanceTimersByTime(300);
+
+            expect(component['searchError']()).toBe('global.search.contentSearchDisabled');
+            expect(mockSearchService.globalSearch).not.toHaveBeenCalled();
+            expect(component['results']()).toEqual([]);
+            expect(component['isLoading']()).toBe(false);
+        });
+
+        it('reports content search as unavailable when it fails, without falling back to the metadata search', () => {
+            mockLectureSearchService.search.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            component['activeFilters'].set(['lecture_content']);
+            component['onSearchInput']('signals');
+            vi.advanceTimersByTime(300);
+
+            expect(component['searchError']()).toBe('global.search.contentSearchUnavailable');
+            expect(mockSearchService.globalSearch).not.toHaveBeenCalled();
+            expect(component['results']()).toEqual([]);
+            expect(component['isLoading']()).toBe(false);
+        });
+
+        it('reports content search as unavailable when it exceeds the timeout', () => {
+            mockLectureSearchService.search.mockReturnValue(NEVER); // never emits -> triggers the rxjs timeout
+
+            component['activeFilters'].set(['lecture_content']);
+            component['onSearchInput']('signals');
+            vi.advanceTimersByTime(300); // debounce elapses, content search is subscribed and hangs
+            expect(component['searchError']()).toBeUndefined();
+
+            vi.advanceTimersByTime(CONTENT_SEARCH_TIMEOUT_MS + 1);
+            expect(component['searchError']()).toBe('global.search.contentSearchUnavailable');
+            expect(mockSearchService.globalSearch).not.toHaveBeenCalled();
+            expect(component['isLoading']()).toBe(false);
+        });
+
+        it('reports content search as unavailable without any request when the user cannot use it', () => {
+            mockAvailability.contentSearchAvailable.set(false);
+
+            component['activeFilters'].set(['lecture_content']);
+            component['onSearchInput']('signals');
+            vi.advanceTimersByTime(300);
+
+            expect(component['searchError']()).toBe('global.search.contentSearchUnavailable');
+            expect(mockLectureSearchService.search).not.toHaveBeenCalled();
+            expect(mockSearchService.globalSearch).not.toHaveBeenCalled();
+        });
+
+        it('should keep the empty-query lecture chip on the metadata placeholder path with cache reuse', () => {
+            const placeholder: GlobalSearchResult[] = [{ id: 'p1', type: 'lecture', title: 'Placeholder', metadata: {} }];
+            mockSearchService.globalSearch.mockReturnValue(of(placeholder));
+
+            // Empty query + lecture chip -> metadata placeholder browse (content search requires a valid query)
+            component['addFilter'](['lecture']);
+            vi.advanceTimersByTime(300);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('', 'lecture', undefined);
+            expect(mockLectureSearchService.search).not.toHaveBeenCalled();
+            expect(component['results']()).toEqual(placeholder);
+
+            // Remove then re-add -> served from cache, no new HTTP call, content search still untouched
+            component['removeFilter']('lecture');
+            vi.advanceTimersByTime(300);
+            component['addFilter'](['lecture']);
+            vi.advanceTimersByTime(300);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
+            expect(mockLectureSearchService.search).not.toHaveBeenCalled();
+            expect(component['results']()).toEqual(placeholder);
+        });
+    });
+
+    describe('View Navigation', () => {
+        it('should close the overlay when Escape is pressed', () => {
             mockSearchOverlayService.isOpen.set(true);
 
             const event = new KeyboardEvent('keydown', { key: 'Escape' });
             component.handleKeyboardEvent(event);
 
             expect(searchOverlayService.close).toHaveBeenCalled();
-        });
-
-        it('should reset selectedIndex when navigating to a new view', () => {
-            (component as any).selectedIndex.set(2);
-
-            (component as any).navigateTo(SearchView.Lecture);
-
-            expect((component as any).selectedIndex()).toBe(-1);
         });
     });
 

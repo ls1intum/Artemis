@@ -10,8 +10,8 @@
     installation gets. Installations that predate the consolidations (ed4696bcb3, 8723fc7290,
     5c7250b2a6, 15e2f9f3e1) drifted in ways no changeset ever reconciled. These changesets close
     that gap. Every one is precondition-guarded, so it is a no-op where the state is already correct
-    (which includes fresh installations and the TUM production database, where the equivalent DDL was
-    applied manually on 2026-07-28).
+    (which includes fresh installations and any long-lived deployment where the equivalent DDL was applied
+    manually).
 
     Sections:
       1. Temporal precision  - six columns declared datetime(3) but created with precision 0 or 6
@@ -47,7 +47,7 @@
                   AND column_name = 'timestamp' AND datetime_precision = 3
             </sqlCheck>
         </preConditions>
-        <comment>science_event is large (~15M rows); this rebuilds the table on MySQL.</comment>
+        <comment>science_event is one of the larger tables; this rebuilds it on MySQL.</comment>
         <modifyDataType tableName="science_event" columnName="timestamp" newDataType="datetime(3)"/>
         <addNotNullConstraint tableName="science_event" columnName="timestamp" columnDataType="datetime(3)"/>
     </changeSet>
@@ -281,8 +281,8 @@
     <!--
     Rating.result is @OneToOne, so result_rating.result_id must be unique. Long-lived installations
     have this constraint (auto-named "result_id"); the consolidated initial schema lost it, so fresh
-    installations and every test environment do not enforce it. Verified against production, which
-    retained the constraint: 10,818 rows / 10,818 distinct result_id.
+    installations and every test environment do not enforce it. Verified on an installation that retained
+    the constraint: result_id is distinct across every row.
 
     The FK on this column is backed by the separate non-unique index fk_result_rating_result_id, so
     dropping the old unique index does not leave the FK unsupported.
