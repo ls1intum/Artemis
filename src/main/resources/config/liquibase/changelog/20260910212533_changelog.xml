@@ -9,10 +9,10 @@
     ForwardedMessage carries @Check(constraints = "((destination_post_id IS NOT NULL AND
     destination_answer_id IS NULL) OR (destination_post_id IS NULL AND destination_answer_id IS NOT
     NULL))"), but ddl-auto is none in every profile, so Hibernate never emits it and no changeset
-    ever created it. The TUM production database has it as CHECK_DESTINATION_POST_OR_ANSWER, applied
-    outside Liquibase in the same way as the reconciliations in 20260728220917_changelog.xml. A
-    database built from these changelogs does not, so the invariant is enforced in production and
-    unenforced everywhere else, including every test environment.
+    ever created it. Long-lived deployments have it as CHECK_DESTINATION_POST_OR_ANSWER, applied outside
+    Liquibase in the same way as the reconciliations in 20260728220917_changelog.xml. A database built
+    from these changelogs does not, so the invariant is enforced on some installations and unenforced on
+    others, including every test environment.
 
     Liquibase's addCheckConstraint is a Pro change type, so the DDL is raw SQL. It is the same
     statement on both engines and was checked against MySQL 26.7.0 and PostgreSQL 18.6: a row with
@@ -47,7 +47,7 @@
     <!--
     MARK_RAN rather than the CONTINUE this project normally prefers: the condition guarded here is
     "the constraint already exists", which is a permanent and correct end state, not a transient one
-    worth retrying. CONTINUE would log a warning on every startup of the production database for
+    worth retrying. CONTINUE would log a warning on every startup of an already-correct installation for
     good. The changeset above removes the only violation an installation can have accumulated, so
     the constraint cannot be skipped for want of clean data.
 

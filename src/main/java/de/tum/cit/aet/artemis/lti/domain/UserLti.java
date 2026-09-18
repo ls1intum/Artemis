@@ -11,8 +11,8 @@ import de.tum.cit.aet.artemis.core.domain.Parent;
  * What the lti module knows about an account: that a launch provisioned it, and whether that account has already
  * completed the one-time initialisation a launch-provisioned account goes through.
  * <p>
- * State the lti module owns, so it lives here rather than as columns on the account module's central table, where only
- * three of 34,354 accounts set them. A row exists only for an account the launch created, so the absence of a row means
+ * State the lti module owns, so it lives here rather than as columns on the account module's central table, where almost
+ * no account sets them. A row exists only for an account the launch created, so the absence of a row means
  * "not launch-created".
  */
 @Entity

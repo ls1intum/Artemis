@@ -377,8 +377,21 @@ public class ProgrammingExercise extends Exercise {
         forceNewProjectKey();
     }
 
+    /**
+     * Generates a project key from the course and exercise short names and sets it, replacing any key already there.
+     * <p>
+     * {@link #generateAndSetProjectKey()} is the entry point that keeps an existing key; this one is for the callers that deliberately want a new one.
+     *
+     * @throws IllegalStateException if no course is reachable from this exercise, which leaves no short name to build a key from
+     */
     public void forceNewProjectKey() {
         Course course = getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            // Reachable only on a masked exam graph: student-facing exam payloads clear exerciseGroup.exam before serialization, which leaves no course to take a short
+            // name from. There is nothing to fall back on, so name the exercise that cannot be keyed instead of dereferencing null for a NullPointerException that says
+            // nothing about which one it was.
+            throw new IllegalStateException("Cannot generate a project key for exercise " + getId() + ": no course is reachable from it.");
+        }
         this.projectKey = WHITESPACE_RUN.matcher((course.getShortName() + this.getShortName()).toUpperCase(Locale.ROOT)).replaceAll("");
     }
 

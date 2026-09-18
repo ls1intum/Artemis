@@ -319,6 +319,45 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `TutorialGroupSession` | TutorialGroup `tutorial_group_id` | Required | No |  |
 | `TutorialGroupsConfiguration` | Course `course.tutorial_groups_configuration_id` | Held by the parent | **Yes** | The course points at it; nothing points back. |
 
+## Finding orphans
+
+A migration that makes a parent required refuses to run while a row without one is still there, and
+names the columns it checked. This query answers the same question in advance, on any installation,
+and is read-only. A column with a count above zero is one that has to be dealt with before the
+migration will apply.
+
+```sql
+SELECT 'attachment.attachment_unit_id'              AS column_checked, COUNT(*) AS orphans FROM attachment                     WHERE attachment_unit_id IS NULL
+UNION ALL SELECT 'data_export.user_id',                        COUNT(*) FROM data_export                    WHERE user_id IS NULL
+UNION ALL SELECT 'example_submission.exercise_id',             COUNT(*) FROM example_submission             WHERE exercise_id IS NULL
+UNION ALL SELECT 'exercise_variant_group.course_id',           COUNT(*) FROM exercise_variant_group         WHERE course_id IS NULL
+UNION ALL SELECT 'grading_criterion.exercise_id',              COUNT(*) FROM grading_criterion              WHERE exercise_id IS NULL
+UNION ALL SELECT 'grading_instruction.grading_criterion_id',   COUNT(*) FROM grading_instruction            WHERE grading_criterion_id IS NULL
+UNION ALL SELECT 'iris_message.session_id',                    COUNT(*) FROM iris_message                   WHERE session_id IS NULL
+UNION ALL SELECT 'iris_session.user_id',                       COUNT(*) FROM iris_session                   WHERE user_id IS NULL
+UNION ALL SELECT 'lecture.course_id',                          COUNT(*) FROM lecture                        WHERE course_id IS NULL
+UNION ALL SELECT 'llm_token_usage_request.trace_id',           COUNT(*) FROM llm_token_usage_request        WHERE trace_id IS NULL
+UNION ALL SELECT 'plagiarism_comparison.plagiarism_result_id', COUNT(*) FROM plagiarism_comparison          WHERE plagiarism_result_id IS NULL
+UNION ALL SELECT 'programming_exercise_task.exercise_id',      COUNT(*) FROM programming_exercise_task      WHERE exercise_id IS NULL
+UNION ALL SELECT 'programming_exercise_test_case.exercise_id', COUNT(*) FROM programming_exercise_test_case WHERE exercise_id IS NULL
+UNION ALL SELECT 'static_code_analysis_category.exercise_id',  COUNT(*) FROM static_code_analysis_category  WHERE exercise_id IS NULL
+UNION ALL SELECT 'text_block.submission_id',                   COUNT(*) FROM text_block                     WHERE submission_id IS NULL
+UNION ALL SELECT 'tutor_participation.assessed_exercise_id',   COUNT(*) FROM tutor_participation            WHERE assessed_exercise_id IS NULL
+UNION ALL SELECT 'tutorial_group.course_id',                   COUNT(*) FROM tutorial_group                 WHERE course_id IS NULL
+UNION ALL SELECT 'grading_scale (exactly one parent)',         COUNT(*) FROM grading_scale                  WHERE (course_id IS NULL) = (exam_id IS NULL)
+UNION ALL SELECT 'reaction (exactly one parent)',              COUNT(*) FROM reaction                       WHERE (post_id IS NULL) = (answer_post_id IS NULL);
+```
+
+The last two rows are the alternative-parent shape: the check constraint requires exactly one of the
+two columns to be set, so both set and neither set are equally wrong, which is what comparing the two
+`IS NULL` tests finds.
+
+To list the rows themselves rather than count them, replace `COUNT(*)` with the columns you need and
+drop the other branches. Attach each row to its parent where the parent can be established, and
+delete it only when it cannot: an orphan carries no evidence of which parent it belonged to, and
+these tables own submissions, feedback, slides and messages, so a guess loses work rather than saving
+a migration.
+
 ## Where orphans are still possible
 
 Of the 147 tables behind the 186 entities, 85 have a required parent, 24 are roots by design, 18 are
@@ -337,7 +376,7 @@ belonged to, so a constraint needs a decision about those rows before a migratio
 ### Alternative parents with nothing enforcing the choice
 
 `Post` may belong to a conversation or to a plagiarism case, and the database accepts a row naming
-neither. Nineteen such rows exist, all from 2019 and 2020, before conversations existed.
+neither. The rows that do this predate conversations entirely.
 
 ### One-to-one where the parent holds the pointer
 

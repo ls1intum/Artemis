@@ -12,8 +12,8 @@
     object graph downwards, and a row nobody points at is not on that walk. See
     documentation/docs/developer/guidelines/entity-ownership.mdx for the full survey this is the first instalment of.
 
-    Every column here was counted across a production database before being constrained, and every one came back with
-    no violations. The precondition below re-runs those counts on the database being upgraded, because another
+    Every column here was checked for orphans against a populated database before being constrained, and every one came
+    back clean. The precondition below re-runs those counts on the database being upgraded, because another
     installation is not obliged to look the same. It halts rather than repairing: an orphan carries no evidence of
     which parent it belonged to, and these entities own submissions, feedback, slides and messages, so guessing or
     deleting would lose work to save a migration. The query in the failure message names the rows to fix.
