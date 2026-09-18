@@ -70,11 +70,10 @@
 
             SELECT id, title, semester, start_date, end_date FROM course WHERE semester IS NULL OR TRIM(semester) = '' OR start_date IS NULL OR end_date IS NULL;
 
-        Measured on a restore of the TUM production database: of 500 courses, 117 had no start date, 76 had no end
-        date and 2 had no semester. The semester steps resolved 116 of the 117 and 75 of the 76; exactly one course
-        reached the S6 sentinel, and it reached it because it holds no exercises, lectures or exams either. Of 41
-        course requests, 9 had no start date and 7 had no end date, all resolved by S1 and S2. The three dialect
-        blocks below were each run against that data and produced identical results.
+        Checked against a realistic data set: the semester steps resolve nearly every course that is missing a start
+        or end date, and a course only reaches the S6 sentinel when it holds no exercises, lectures or exams either.
+        Course requests missing a date are all resolved by S1 and S2. The three dialect blocks below were each run
+        against that data and produced identical results.
     -->
 
     <!--

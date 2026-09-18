@@ -26,6 +26,12 @@ class UserDeletionReferencePolicyTest {
     private static final Pattern DROPPED_COLUMN = Pattern.compile("<dropColumn\\b[^>]*tableName=\"([^\"]+)\"[^>]*columnName=\"([^\"]+)\"");
 
     /**
+     * A rollback describes how to undo a changeset, not what the schema has. Reading it as if it did made the column a
+     * changeset adds and its rollback drops look like a column that is not there.
+     */
+    private static final Pattern ROLLBACK = Pattern.compile("<rollback\\b[^>]*(?<!/)>.*?</rollback>", Pattern.DOTALL);
+
+    /**
      * Every foreign key to {@code jhi_user} that the schema still has needs exactly one policy, and no policy may
      * name a reference the schema no longer has.
      *
@@ -49,7 +55,7 @@ class UserDeletionReferencePolicyTest {
         Path changelogDirectory = Path.of("src/main/resources/config/liquibase");
         try (Stream<Path> paths = Files.walk(changelogDirectory)) {
             for (Path path : paths.filter(file -> file.toString().endsWith(".xml")).toList()) {
-                String changelog = Files.readString(path);
+                String changelog = ROLLBACK.matcher(Files.readString(path)).replaceAll("");
                 Matcher matcher = USER_FOREIGN_KEY.matcher(changelog);
                 while (matcher.find()) {
                     schemaReferences.add(attribute(BASE_TABLE, matcher.group(1)) + "." + attribute(BASE_COLUMN, matcher.group(1)));

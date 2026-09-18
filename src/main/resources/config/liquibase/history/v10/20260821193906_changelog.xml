@@ -4,8 +4,8 @@
                    logicalFilePath="config/liquibase/changelog/20260821193906_changelog.xml">
 
     <!--
-        Move the account recovery keys out of jhi_user. An activation key is set on 6.9% of accounts and a reset key on
-        0.5%, both short-lived: issued, redeemed, cleared. They share one row because an account is never meaningfully
+        Move the account recovery keys out of jhi_user. Both are set on a small minority of accounts and both are
+        short-lived: issued, redeemed, cleared. They share one row because an account is never meaningfully
         mid-activation and mid-reset at once.
 
         Both keys are looked up by value, so each gets an index here - the lookup moves off jhi_user with the columns.

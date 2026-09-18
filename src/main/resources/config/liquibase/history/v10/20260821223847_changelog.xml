@@ -4,8 +4,8 @@
                    logicalFilePath="config/liquibase/changelog/20260821223847_changelog.xml">
 
     <!--
-        Move the AI preferences out of jhi_user. The selection decision is set on 22% of accounts and only 60 of 34,354
-        have turned Memiris off, and both are state the iris module cares about rather than the account module.
+        Move the AI preferences out of jhi_user. The selection decision is set on a minority of accounts and hardly
+        anyone turns Memiris off, and both are state the iris module cares about rather than the account module.
 
         The decision is stored as a varchar rather than repeating the DB-specific ENUM the original column needed, which
         also removes the divergence between the MySQL and PostgreSQL definitions of that column.

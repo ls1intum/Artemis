@@ -51,9 +51,11 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismSubmissionRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -125,6 +127,9 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private PlagiarismSubmissionRepository plagiarismSubmissionRepository;
+
+    @Autowired
+    private PlagiarismComparisonRepository plagiarismComparisonRepository;
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -420,9 +425,14 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         // Attach a plagiarism submission whose plagiarism_case_id FK is RESTRICT. The delete must null this FK (via the
         // per-submission modifying query) BEFORE removing the case; without that null-out the case delete would throw an
         // FK violation. This makes the test fail if that null-out loop is ever removed.
+        PlagiarismComparison oldComparison = new PlagiarismComparison();
+        oldComparison.setPlagiarismResult(textExerciseUtilService.createPlagiarismResultForExercise(oldExercise));
+        oldComparison = plagiarismComparisonRepository.save(oldComparison);
         PlagiarismSubmission oldSubmission = new PlagiarismSubmission();
         oldSubmission.setStudentLogin(student.getLogin());
         oldSubmission.setSubmissionId(123L);
+        // A plagiarism submission belongs to the comparison it came out of; the case is the secondary link this test is about.
+        oldComparison.setSubmissionA(oldSubmission);
         oldSubmission.setPlagiarismCase(oldCasesBefore.getFirst());
         long oldSubmissionId = plagiarismSubmissionRepository.save(oldSubmission).getId();
 

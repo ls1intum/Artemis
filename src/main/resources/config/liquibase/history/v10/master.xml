@@ -61,6 +61,7 @@
     <include file="config/liquibase/history/v10/20260825202411_changelog.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/history/v10/20260826080000_changelog.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/history/v10/20260827090000_changelog.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/history/v10/20260827160638_changelog.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/history/v10/20260828100000_changelog.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/history/v10/20260901233830_changelog.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/history/v10/20260905190000_changelog.xml" relativeToChangelogFile="false"/>
@@ -71,4 +72,7 @@
     <include file="config/liquibase/history/v10/20260910120000_changelog.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/history/v10/20260910212533_changelog.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/history/v10/20260916083344_changelog.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/history/v10/20260916150000_changelog.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/history/v10/20260916170000_changelog.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/history/v10/20260916211144_changelog.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>

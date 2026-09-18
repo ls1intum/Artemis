@@ -337,9 +337,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * The required data spans several independent {@code @OneToMany} collections (testCases, tasks with their
      * test cases, staticCodeAnalysisCategories, auxiliaryRepositories, competencyLinks, categories, gradingCriteria).
      * Fetching the large ones with a single {@code @EntityGraph} produces a Cartesian product: the number of rows the
-     * database has to materialize is the product of the collection sizes (e.g. 76 test cases * 62 task-test-case
-     * links * 11 SCA categories = 51,832 rows for a single exercise in production), which Hibernate then de-duplicates
-     * in memory. That was the dominant application slow query in production.
+     * database has to materialize is the product of the collection sizes, so an exercise with a few dozen test cases,
+     * as many task-test-case links and a handful of SCA categories already reaches tens of thousands of rows, which
+     * Hibernate then de-duplicates in memory. That made this the dominant application slow query.
      * <p>
      * Instead, the large independent collections (testCases, tasks with their test cases, staticCodeAnalysisCategories)
      * are each loaded with their own query and merged into the base exercise in Java. This avoids the Cartesian product
