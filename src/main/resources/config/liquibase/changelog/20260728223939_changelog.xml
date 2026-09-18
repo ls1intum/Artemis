@@ -21,8 +21,8 @@
     installation. Fresh installations therefore create these tables and drop them again here, which
     costs milliseconds. Same reasoning for the dropped columns.
 
-    DROP COLUMN is INSTANT on MySQL 8.0.29+, so table size is irrelevant - feedback (42.8M rows /
-    8.5GB) drops as quickly as a small table. No space is reclaimed until a table is next rebuilt.
+    DROP COLUMN is INSTANT on MySQL 8.0.29+, so table size is irrelevant - the largest table in the schema
+    drops a column as quickly as a small one. No space is reclaimed until a table is next rebuilt.
     -->
 
     <!-- ===================================================================== -->
@@ -139,11 +139,10 @@
     the actual dropColumn happens in a later release once we are confident no rollback is needed").
     That release is this one.
 
-    Verified against production before dropping: of 359,948 rows with legacy_exercise_id, 359,947 have
-    entity_id equal to it; of 75,346 with legacy_lecture_id, 75,345 match. The two exceptions are
-    pre-existing inconsistencies where the discriminator disagreed with the populated legacy column,
-    so the migration derived entity_id from the other one. Their values are recorded here so the
-    information survives the drop:
+    Verified before dropping: every row with a legacy_exercise_id or a legacy_lecture_id has entity_id
+    equal to it, apart from two. Those two are pre-existing inconsistencies where the discriminator
+    disagreed with the populated legacy column, so the migration derived entity_id from the other one.
+    Their values are recorded here so the information survives the drop:
 
       iris_session 634671  chat_mode=COURSE_CHAT   entity_id=531   legacy_lecture_id=1824
       iris_session 676908  chat_mode=LECTURE_CHAT  entity_id=1824  legacy_exercise_id=19195
