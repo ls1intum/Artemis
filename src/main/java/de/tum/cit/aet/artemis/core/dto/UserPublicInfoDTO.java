@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.dto;
 
+import java.io.Serializable;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -15,7 +16,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
  * A DTO representing a user with the minimal information allowed to be seen by other users in a course
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class UserPublicInfoDTO {
+public class UserPublicInfoDTO implements Serializable {
 
     @SuppressWarnings("PMD.ShortVariable")
     private Long id;

@@ -15,7 +15,9 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
  * Minimal DTO identifying the team participant of a team participation (id, name, short name, image) plus the team
  * members. The members are required client-side to verify participation ownership for the owning student (the client
  * matches the logged-in login against {@code team.students[*].login}); without them the text editor cannot confirm
- * ownership. Simple DTO: only scalar values and other DTOs, no entity references.
+ * ownership. The team box in the text editor also renders each member's name and avatar from the same list, which is
+ * why the members are {@link UserPublicInfoDTO} and the team carries {@code image}. Simple DTO: only scalar values and
+ * other DTOs, no entity references.
  *
  * @param id        the team id
  * @param name      the team name

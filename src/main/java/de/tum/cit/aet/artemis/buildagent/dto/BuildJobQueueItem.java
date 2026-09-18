@@ -70,6 +70,16 @@ public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNu
                 queueItem.buildConfig(), null, queueItem.cloneToken());
     }
 
+    /**
+     * Copies a build job and attaches a submission result. No caller exists today, so every stored item carries a
+     * {@code null} {@code submissionResult} and Kryo writes only a null marker for it. That is why the records behind
+     * {@link ResultDTO}, such as {@code ParticipationDTO.ParticipationExerciseDTO}, can change shape without a bump of
+     * {@code DistributedDataSchema.VERSION}. The first caller must bump the version, see
+     * {@code documentation/docs/developer/guidelines/distributed-data.mdx}.
+     *
+     * @param queueItem        the build job to copy
+     * @param submissionResult the result to attach
+     */
     public BuildJobQueueItem(BuildJobQueueItem queueItem, ResultDTO submissionResult) {
         this(queueItem.id(), queueItem.name(), queueItem.buildAgent(), queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(), queueItem.retryCount(),
                 queueItem.priority(), queueItem.status(), queueItem.repositoryInfo(), queueItem.jobTimingInfo(), queueItem.buildConfig(), submissionResult, queueItem.cloneToken());
