@@ -111,6 +111,8 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     private DataExport prepareDataExportForDownload() throws IOException {
         var dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
+        // An export is the export of somebody's data, and the row names whose.
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExport.setCreationFinishedDate(ZonedDateTime.now().minusDays(1));
         // Copy file to a unique location to support parallel test execution
         // Use UUID for guaranteed uniqueness across parallel executions

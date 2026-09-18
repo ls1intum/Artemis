@@ -70,13 +70,8 @@ import de.tum.cit.aet.artemis.exercise.dto.StudentDTO;
 @Repository
 public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
-    @Query("SELECT DISTINCT user FROM User user LEFT JOIN FETCH user.authorities LEFT JOIN FETCH user.learnerProfile WHERE user.id = :userId")
+    @Query("SELECT DISTINCT user FROM User user LEFT JOIN FETCH user.authorities WHERE user.id = :userId")
     Optional<User> findByIdForDeletion(@Param("userId") long userId);
-
-    @Transactional // ok because of modifying query
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("UPDATE User user SET user.learnerProfile = NULL WHERE user.id = :userId")
-    void clearLearnerProfileForDeletion(@Param("userId") long userId);
 
     /**
      * Takes an account out of use before its deletion begins. A deactivated account is refused by every authentication
@@ -208,17 +203,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     Optional<User> findOneWithCourseRolesAndAuthoritiesAndOrganizationsByLogin(String login);
 
     @Query("""
-            SELECT DISTINCT u
-            FROM User u
-            LEFT JOIN FETCH u.authorities
-            LEFT JOIN FETCH u.learnerProfile lp
-            LEFT JOIN FETCH lp.courseLearnerProfiles clp
-            WHERE u.login = :login
-                AND clp.course.id = :courseId
-            """)
-    Optional<User> findOneWithAuthoritiesAndLearnerProfileByLogin(@Param("login") String login, @Param("courseId") long courseId);
-
-    @Query("""
             SELECT u FROM User u
                 JOIN u.courseRoles ucr
             WHERE u.login = :login
@@ -290,23 +274,21 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     List<User> findAllByEmailOrUsernameIgnoreCase(@Param("searchInput") String searchInput);
 
     /**
-     * Fetches all non-deleted users enrolled in a course with the given role, eagerly loading their
-     * authorities and learner profile (including course learner profiles).
+     * Fetches all non-deleted users enrolled in a course with the given role, eagerly loading their authorities.
      *
      * @param courseId the ID of the course
      * @param role     the course role to filter by
-     * @return set of matching users (authorities and learner profile initialized)
+     * @return set of matching users (authorities initialized)
      */
     @Query("""
             SELECT DISTINCT user
             FROM User user
                 LEFT JOIN FETCH user.authorities
-                LEFT JOIN FETCH user.learnerProfile
             WHERE user.deleted = FALSE
                 AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user
                     AND ucr.course.id = :courseId AND ucr.role = :role)
             """)
-    Set<User> findAllWithAuthoritiesAndLearnerProfileByCourseIdAndRole(@Param("courseId") long courseId, @Param("role") CourseRole role);
+    Set<User> findAllWithAuthoritiesByCourseIdAndRole(@Param("courseId") long courseId, @Param("role") CourseRole role);
 
     @Query("""
             SELECT DISTINCT new de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary (
@@ -1268,18 +1250,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return getValueElseThrow(findOneWithCourseRolesAndAuthoritiesAndOrganizationsByLogin(currentUserLogin));
     }
 
-    /**
-     * Get user with authorities and learner profile of currently logged-in user (no courseRoles loaded).
-     *
-     * @param courseId the id of the course for which to load the course learner profile
-     * @return currently logged-in user with authorities and learner profile
-     */
-    @NonNull
-    default User getUserWithAuthoritiesAndLearnerProfile(long courseId) {
-        String currentUserLogin = getCurrentUserLogin();
-        return getValueElseThrow(findOneWithAuthoritiesAndLearnerProfileByLogin(currentUserLogin, courseId));
-    }
-
     default Optional<User> findUserWithAuthoritiesByRegistrationNumber(String registrationNumber) {
         if (!StringUtils.hasText(registrationNumber)) {
             return Optional.empty();
@@ -1347,13 +1317,13 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     }
 
     /**
-     * Get students by given course with their learner Profile
+     * Get students by given course
      *
      * @param course object
      * @return students for given course
      */
-    default Set<User> getStudentsWithLearnerProfile(Course course) {
-        return findAllWithAuthoritiesAndLearnerProfileByCourseIdAndRole(course.getId(), CourseRole.STUDENT);
+    default Set<User> getStudentsWithAuthorities(Course course) {
+        return findAllWithAuthoritiesByCourseIdAndRole(course.getId(), CourseRole.STUDENT);
     }
 
     /**

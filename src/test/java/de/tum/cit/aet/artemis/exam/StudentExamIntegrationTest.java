@@ -2822,7 +2822,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         return studentExam;
     }
 
-    private GradingScale createGradeScale(boolean isBonus) {
+    private GradingScale createGradeScale(boolean isBonus, Exam exam) {
         GradingScale gradingScale;
         if (isBonus) {
             gradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 60, 40, 50 }, Optional.of(new String[] { "0", "0.3", "0.6" }), true, 1);
@@ -2832,6 +2832,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             gradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 60, 25, 15, 50 }, Optional.of(new String[] { "5.0", "3.0", "1.0", "1.0" }),
                     true, 1);
         }
+        // A grading scale grades a course or an exam, and the row has to name one of the two before it is written.
+        gradingScale.setExam(exam);
         gradingScaleRepository.save(gradingScale);
         return gradingScale;
     }
@@ -2841,8 +2843,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     void testGradedStudentExamSummaryWithGradingScaleAsStudentAfterPublishResults() throws Exception {
         StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
 
-        GradingScale gradingScale = createGradeScale(false);
-        gradingScale.setExam(exam2);
+        GradingScale gradingScale = createGradeScale(false, exam2);
         gradingScaleRepository.save(gradingScale);
 
         // users tries to access exam summary after results are published
@@ -2937,8 +2938,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         exam2.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
         exam2 = examRepository.save(exam2);
 
-        GradingScale gradingScale = createGradeScale(false);
-        gradingScale.setExam(exam2);
+        GradingScale gradingScale = createGradeScale(false, exam2);
         gradingScaleRepository.save(gradingScale);
 
         // users tries to access exam summary after results are published
@@ -2953,8 +2953,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     void testGradedStudentExamSummaryWithGradingScaleAsStudentAfterPublishResultsWithOwnUserId() throws Exception {
         StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
 
-        GradingScale gradingScale = createGradeScale(false);
-        gradingScale.setExam(exam2);
+        GradingScale gradingScale = createGradeScale(false, exam2);
         gradingScaleRepository.save(gradingScale);
 
         // users tries to access exam summary after results are published
@@ -2980,8 +2979,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     void testGradedStudentExamSummaryWithGradingScaleAsStudentAfterPublishResultsWithOtherUserId() throws Exception {
         exam2 = createStudentExamWithResultsAndAssessments(true, 2).getExam();
 
-        GradingScale gradingScale = createGradeScale(false);
-        gradingScale.setExam(exam2);
+        GradingScale gradingScale = createGradeScale(false, exam2);
         gradingScaleRepository.save(gradingScale);
 
         // users try to access exam summary after results are published
@@ -2999,8 +2997,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
         exam2 = studentExam.getExam();
 
-        GradingScale gradingScale = createGradeScale(false);
-        gradingScale.setExam(exam2);
+        GradingScale gradingScale = createGradeScale(false, exam2);
         gradingScaleRepository.save(gradingScale);
 
         var studentExamGradeInfoFromServer = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId()
@@ -3021,8 +3018,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     void testGradedStudentExamSummaryWithGradingScaleWithCorrectlyRoundedPoints() throws Exception {
         StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
 
-        GradingScale gradingScale = createGradeScale(false);
-        gradingScale.setExam(exam2);
+        GradingScale gradingScale = createGradeScale(false, exam2);
         gradingScaleRepository.save(gradingScale);
         List<StudentParticipation> participations = studentParticipationRepository
                 .findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
@@ -3107,13 +3103,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var bonusExam = examRepository.findById(bonusStudentExam.getExam().getId()).orElseThrow();
         assertThat(finalExam.getId()).isNotEqualTo(bonusExam.getId());
 
-        GradingScale finalExamGradingScale = createGradeScale(false);
-        finalExamGradingScale.setExam(finalExam);
+        GradingScale finalExamGradingScale = createGradeScale(false, finalExam);
         finalExamGradingScale.setBonusStrategy(bonusStrategy);
         gradingScaleRepository.save(finalExamGradingScale);
 
-        GradingScale bonusGradingScale = createGradeScale(true);
-        bonusGradingScale.setExam(bonusExam);
+        GradingScale bonusGradingScale = createGradeScale(true, bonusExam);
         gradingScaleRepository.save(bonusGradingScale);
 
         double weight = bonusStrategy == BonusStrategy.POINTS ? 1.0 : -1.0;

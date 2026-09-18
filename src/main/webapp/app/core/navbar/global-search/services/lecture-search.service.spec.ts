@@ -53,6 +53,24 @@ describe('LectureSearchService', () => {
         req.flush([]);
     });
 
+    it('should include excludeCourseIds in the body when a non-empty array is passed', () => {
+        service.search('signals', 10, undefined, [5]).subscribe();
+
+        const req = httpTesting.expectOne('api/iris/lecture-search');
+        expect(req.request.body).toEqual({ query: 'signals', limit: 10, excludeCourseIds: [5] });
+
+        req.flush([]);
+    });
+
+    it('should omit excludeCourseIds from the body when an empty array is passed', () => {
+        service.search('signals', 10, undefined, []).subscribe();
+
+        const req = httpTesting.expectOne('api/iris/lecture-search');
+        expect(req.request.body).toEqual({ query: 'signals', limit: 10 });
+
+        req.flush([]);
+    });
+
     it('should omit courseIds from the body when an empty array is passed', () => {
         service.search('signals', 10, []).subscribe();
 

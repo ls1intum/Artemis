@@ -63,13 +63,13 @@ public class LearningPathRepositoryService {
         return learningPath.map(this::addTransientCompetencies);
     }
 
-    public Optional<LearningPath> findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(long learningPathId) {
-        final var learningPath = learningPathRepository.findWithEagerUserAndLearnerProfileById(learningPathId);
+    public Optional<LearningPath> findWithCompetenciesAndLectureUnitsAndExercisesById(long learningPathId) {
+        final var learningPath = learningPathRepository.findWithEagerUserAndCourseById(learningPathId);
         return learningPath.map(this::addTransientCompetenciesAndLectureUnitsAndExercises);
     }
 
-    public LearningPath findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(long learningPathId) {
-        return learningPathRepository.getValueElseThrow(findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(learningPathId), learningPathId);
+    public LearningPath findWithCompetenciesAndLectureUnitsAndExercisesByIdElseThrow(long learningPathId) {
+        return learningPathRepository.getValueElseThrow(findWithCompetenciesAndLectureUnitsAndExercisesById(learningPathId), learningPathId);
     }
 
     public LearningPath findWithEagerCompetenciesByCourseIdAndUserIdElseThrow(long courseId, long userId) {

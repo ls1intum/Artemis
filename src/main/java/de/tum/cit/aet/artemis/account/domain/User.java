@@ -22,7 +22,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Email;
@@ -44,10 +43,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
-import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
@@ -65,6 +64,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 @Entity
 @Table(name = "jhi_user")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@AggregateRoot("Account root.")
 public class User extends AbstractAuditingEntity implements Participant {
 
     /**
@@ -234,11 +234,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore
     private Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations = new HashSet<>();
-
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnoreProperties(value = "user", allowSetters = true)
-    @JoinColumn(name = "learner_profile_id")
-    private LearnerProfile learnerProfile;
 
     public User() {
     }
@@ -586,14 +581,6 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setPushNotificationDeviceConfigurations(Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations) {
         this.pushNotificationDeviceConfigurations = pushNotificationDeviceConfigurations;
-    }
-
-    public LearnerProfile getLearnerProfile() {
-        return learnerProfile;
-    }
-
-    public void setLearnerProfile(LearnerProfile learnerProfile) {
-        this.learnerProfile = learnerProfile;
     }
 
     /**

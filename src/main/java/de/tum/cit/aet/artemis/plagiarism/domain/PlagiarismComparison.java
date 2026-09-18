@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.plagiarism.domain;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -12,15 +13,18 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import org.jspecify.annotations.NonNull;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.jplag.JPlagComparison;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
@@ -35,31 +39,24 @@ public class PlagiarismComparison extends DomainObject implements Comparable<Pla
      * The result this comparison belongs to.
      */
     @ManyToOne(targetEntity = PlagiarismResult.class)
+    @JoinColumn(nullable = false)
+    @Parent
     private PlagiarismResult plagiarismResult;
 
     /**
-     * First submission compared. We maintain a bidirectional relationship manually with #PlagiarismSubmission.plagiarismComparison.
+     * The two submissions compared, each naming this comparison and the side it is on.
      * <p>
-     * Using `CascadeType.ALL` here is fine because we'll never delete a single comparison alone,
-     * which would leave empty references from other plagiarism comparisons. Comparisons are
-     * always deleted all at once, so we can also cascade deletion.
+     * The comparison used to name them instead, through {@code submission_a_id} and {@code submission_b_id}. That put
+     * the only pointer to a submission on the other row, so a submission whose comparison stopped naming it was
+     * reachable from nowhere, and it made the two tables reference each other, which every deletion had to unpick by
+     * clearing one side first.
+     * <p>
+     * {@code CascadeType.ALL} is fine because a single comparison is never deleted on its own: comparisons are always
+     * deleted all at once, so deletion can cascade.
      */
     @JsonIgnoreProperties(value = "plagiarismComparison", allowSetters = true)
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "submission_a_id")
-    private PlagiarismSubmission submissionA;
-
-    /**
-     * Second submission compared. We maintain a bidirectional relationship manually with #PlagiarismSubmission.plagiarismComparison.
-     * <p>
-     * Using `CascadeType.ALL` here is fine because we'll never delete a single comparison alone,
-     * which would leave empty references from other plagiarism comparisons. Comparisons are
-     * always deleted all at once, so we can also cascade deletion.
-     */
-    @JsonIgnoreProperties(value = "plagiarismComparison", allowSetters = true)
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "submission_b_id")
-    private PlagiarismSubmission submissionB;
+    @OneToMany(mappedBy = "plagiarismComparison", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<PlagiarismSubmission> submissions = new HashSet<>();
 
     /**
      * List of matches between both submissions involved in this comparison.
@@ -102,37 +99,48 @@ public class PlagiarismComparison extends DomainObject implements Comparable<Pla
     }
 
     /**
-     * Maintain the bidirectional relationship manually
+     * Puts a submission on the first side of this comparison, replacing whatever was there.
      *
-     * @param submissionA the new submission which will be attached to the comparison
+     * @param submissionA the submission to compare, or null to leave the side empty
      */
     public void setSubmissionA(PlagiarismSubmission submissionA) {
-        this.submissionA = submissionA;
-        if (this.submissionA != null) {
-            // Important: make sure to maintain the custom bidirectional association
-            this.submissionA.setPlagiarismComparison(this);
-        }
+        setSubmission(PlagiarismComparisonSide.FIRST, submissionA);
     }
 
     /**
-     * Maintain the bidirectional relationship manually
+     * Puts a submission on the second side of this comparison, replacing whatever was there.
      *
-     * @param submissionB the new submission which will be attached to the comparison
+     * @param submissionB the submission to compare, or null to leave the side empty
      */
     public void setSubmissionB(PlagiarismSubmission submissionB) {
-        this.submissionB = submissionB;
-        if (this.submissionB != null) {
-            // Important: make sure to maintain the custom bidirectional association
-            this.submissionB.setPlagiarismComparison(this);
+        setSubmission(PlagiarismComparisonSide.SECOND, submissionB);
+    }
+
+    @JsonIgnore
+    public PlagiarismSubmission getSubmissionA() {
+        return submissionOf(PlagiarismComparisonSide.FIRST);
+    }
+
+    @JsonIgnore
+    public PlagiarismSubmission getSubmissionB() {
+        return submissionOf(PlagiarismComparisonSide.SECOND);
+    }
+
+    public Set<PlagiarismSubmission> getSubmissions() {
+        return submissions;
+    }
+
+    private void setSubmission(PlagiarismComparisonSide side, PlagiarismSubmission submission) {
+        submissions.removeIf(existing -> existing.getSide() == side);
+        if (submission != null) {
+            submission.setSide(side);
+            submission.setPlagiarismComparison(this);
+            submissions.add(submission);
         }
     }
 
-    public PlagiarismSubmission getSubmissionA() {
-        return submissionA;
-    }
-
-    public PlagiarismSubmission getSubmissionB() {
-        return this.submissionB;
+    private PlagiarismSubmission submissionOf(PlagiarismComparisonSide side) {
+        return submissions.stream().filter(submission -> submission.getSide() == side).findFirst().orElse(null);
     }
 
     public PlagiarismResult getPlagiarismResult() {

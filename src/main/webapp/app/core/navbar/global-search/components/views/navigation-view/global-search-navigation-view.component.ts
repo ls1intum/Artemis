@@ -1,12 +1,10 @@
-import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, viewChildren } from '@angular/core';
 import { SkeletonModule } from 'primeng/skeleton';
 import {
     faBook,
     faCalendarCheck,
     faCheckDouble,
     faComment,
-    faComments,
-    faCube,
     faFileUpload,
     faFont,
     faGraduationCap,
@@ -19,10 +17,11 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { MIN_SEARCH_QUERY_LENGTH, SHORT_QUERY_MAX_LENGTH, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { LECTURE_CONTENT_TYPE } from 'app/core/navbar/global-search/models/lecture-content-result.util';
-import { IrisSearchAvailabilityService } from 'app/core/navbar/global-search/services/iris-search-availability.service';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
-import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { SearchResultItemComponent } from 'app/core/navbar/global-search/components/modal/search-result-item/search-result-item.component';
 import { Router } from '@angular/router';
@@ -34,13 +33,14 @@ import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/c
     selector: 'jhi-global-search-navigation-view',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [GlobalSearchIrisAnswerComponent, SearchableEntityItemComponent, SearchResultItemComponent, SkeletonModule, ArtemisTranslatePipe],
+    imports: [GlobalSearchIrisAnswerComponent, SearchResultItemComponent, SkeletonModule, ArtemisTranslatePipe],
     templateUrl: './global-search-navigation-view.component.html',
     styleUrls: ['./global-search-navigation-view.component.scss'],
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchNavigationViewComponent) }],
 })
 export class GlobalSearchNavigationViewComponent extends SearchResultView {
-    private readonly availability = inject(IrisSearchAvailabilityService);
+    private readonly profileService = inject(ProfileService);
+    private readonly accountService = inject(AccountService);
 
     readonly searchQuery = input.required<string>();
     readonly selectedIndex = input<number>(-1);
@@ -49,7 +49,8 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     readonly showResults = input<boolean>(false);
     readonly isLoading = input<boolean>(false);
     readonly searchError = input<string | undefined>(undefined);
-    readonly activeFilters = input<string[]>([]);
+    /** True while the slides and videos filter is the active one, which searches content instead of metadata. */
+    readonly contentSearchActive = input<boolean>(false);
 
     /**
      * True when the query is too short to send to the server (1-2 chars).
@@ -72,16 +73,22 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     // Skeleton placeholder array for loading animation
     protected readonly skeletonItems = Array(5);
 
-    readonly entityClick = output<SearchableEntity>();
-
     private readonly router = inject(Router);
     private readonly overlay = inject(SearchOverlayService);
 
     // Query all selectable items for auto-scroll functionality
     private readonly selectableItems = viewChildren<ElementRef<HTMLElement>>('selectableItem');
 
-    // True only when the Iris module is enabled AND the user has opted into AI usage (LOCAL_AI or CLOUD_AI).
-    protected readonly irisEnabled = this.availability.contentSearchAvailable;
+    // False when artemis.iris.enabled = false in the server config.
+    private readonly irisModuleEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
+    // True only when the module is enabled AND the user has opted into AI usage (LOCAL_AI or CLOUD_AI).
+    protected readonly irisEnabled = computed(() => {
+        if (!this.irisModuleEnabled) return false;
+        const usage = this.accountService.userIdentity()?.selectedLLMUsage;
+        return usage === LLMSelectionDecision.LOCAL_AI || usage === LLMSelectionDecision.CLOUD_AI;
+    });
+    /** True when the slides and videos filter is active without a search term, which content search cannot run without. */
+    protected readonly isContentSearchPrompt = computed(() => this.contentSearchActive() && this.searchQuery().trim().length === 0);
 
     constructor() {
         super();
@@ -110,108 +117,26 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     protected readonly faQuestion = faQuestion;
     protected readonly faCalendarCheck = faCalendarCheck;
 
-    // Every searchable entity the initial view can offer
-    private readonly allSearchableEntities: SearchableEntity[] = [
-        {
-            id: 'courses',
-            title: 'global.search.entities.coursesTitle',
-            description: 'global.search.entities.coursesDescription',
-            icon: faGraduationCap,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['course'],
-        },
-        {
-            id: 'exercises',
-            title: 'global.search.entities.exercisesTitle',
-            description: 'global.search.entities.exercisesDescription',
-            icon: faCube,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['exercise'],
-        },
-        {
-            id: 'lectures',
-            title: 'global.search.entities.lecturesTitle',
-            description: 'global.search.entities.lecturesDescription',
-            icon: faBook,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['lecture', 'lecture_unit'],
-        },
-        {
-            id: 'slides-and-videos',
-            title: 'global.search.entities.slidesAndVideosTitle',
-            description: 'global.search.entities.slidesAndVideosDescription',
-            icon: faPhotoFilm,
-            type: 'filter',
-            enabled: true,
-            filterTags: [LECTURE_CONTENT_TYPE],
-        },
-        {
-            id: 'communication',
-            title: 'global.search.entities.communicationTitle',
-            description: 'global.search.entities.communicationDescription',
-            icon: faComments,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['channel', 'post', 'answer_post'],
-        },
-        {
-            id: 'faqs',
-            title: 'global.search.entities.faqsTitle',
-            description: 'global.search.entities.faqsDescription',
-            icon: faQuestionCircle,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['faq'],
-        },
-        {
-            id: 'exams',
-            title: 'global.search.entities.examsTitle',
-            description: 'global.search.entities.examsDescription',
-            icon: faCalendarCheck,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['exam'],
-        },
-    ];
-
-    /**
-     * The searchable entities the initial view shows. The slides and videos filter only works through Iris content search,
-     * so it is offered only to users who can use that search.
-     */
-    protected readonly searchableEntities = computed(() =>
-        this.irisEnabled() ? this.allSearchableEntities : this.allSearchableEntities.filter((entity) => !entity.filterTags?.includes(LECTURE_CONTENT_TYPE)),
-    );
-
-    /** True when the slides and videos filter is active without a search term, which content search cannot run without. */
-    protected readonly isContentSearchPrompt = computed(() => this.activeFilters().includes(LECTURE_CONTENT_TYPE) && this.searchQuery().trim().length === 0);
-
     // Total selectable items reported to the modal to bound ArrowDown/ArrowUp.
-    readonly itemCount = computed(() => (this.showResults() ? this.results().length : this.searchableEntities().length));
+    readonly itemCount = computed(() => this.results().length);
 
     protected readonly faHashtag = faHashtag;
 
-    protected onEntityItemClick(entity: SearchableEntity) {
-        this.entityClick.emit(entity);
-    }
-
     protected getIconForType(type?: string, badge?: string): IconDefinition {
+        if (type === LECTURE_CONTENT_TYPE) {
+            return faPhotoFilm;
+        }
         if (type === 'exercise') {
             const normalizedBadge = badge?.toLowerCase();
             if (normalizedBadge === 'programming') return this.faKeyboard;
             if (normalizedBadge === 'modeling') return this.faProjectDiagram;
             if (normalizedBadge === 'text') return this.faFont;
-            if (normalizedBadge === 'file upload') return this.faFileUpload;
+            if (normalizedBadge === 'file-upload') return this.faFileUpload;
             if (normalizedBadge === 'quiz') return this.faCheckDouble;
             return this.faQuestion;
         }
         if (type === 'lecture' || type === 'lecture_unit') {
             return faBook;
-        }
-        if (type === LECTURE_CONTENT_TYPE) {
-            return faPhotoFilm;
         }
         if (type === 'channel') {
             return faHashtag;
@@ -232,6 +157,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     }
 
     protected navigateToResult(result: GlobalSearchResult) {
+        // A content hit points at a slide or a video timestamp, so it carries its own deep link instead of an entity id.
         if (result.type === LECTURE_CONTENT_TYPE) {
             const link = result.metadata?.['link'];
             const queryParams = result.metadata?.['queryParams'];
@@ -303,8 +229,16 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     }
 
     private navigateToExamExerciseDetailsPage(courseId: string, examId: string, exerciseGroupId: string, result: GlobalSearchResult) {
-        const typeSegment = (result.badge?.toLowerCase().replace(/ /g, '-') ?? 'text') + '-exercises';
-        void this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, typeSegment, result.id]);
+        // The badge key is the canonical exercise-type key (e.g. "programming", "file-upload"), which is exactly the
+        // exam exercise-group route segment prefix. A row without a recognisable type (the generic "exercise" fallback)
+        // carries no segment to build, and guessing one would open another type's detail page for this exercise id.
+        // The exam's exercise-group list is the closest page that is always right, and the exercise is one click away.
+        const validExerciseSegments = new Set(['programming', 'modeling', 'text', 'file-upload', 'quiz']);
+        if (!result.badgeKey || !validExerciseSegments.has(result.badgeKey)) {
+            void this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups']);
+            return;
+        }
+        void this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, result.badgeKey + '-exercises', result.id]);
     }
 
     private navigateToStudentExamView(courseId: string, examId: string) {
@@ -359,18 +293,10 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         const idx = this.selectedIndex();
         if (idx < 0) return;
 
-        if (this.showResults()) {
-            event.preventDefault();
-            const result = this.results()[idx];
-            if (result) {
-                this.navigateToResult(result);
-            }
-        } else {
-            event.preventDefault();
-            const entity = this.searchableEntities()[idx];
-            if (entity && entity.enabled) {
-                this.entityClick.emit(entity);
-            }
+        event.preventDefault();
+        const result = this.results()[idx];
+        if (result) {
+            this.navigateToResult(result);
         }
     }
 }
