@@ -30,6 +30,7 @@ public enum UserDeletionReferencePolicy {
     EXERCISE_VERSION_AUTHOR("exercise_version", "author_id", UserDeletionDataCategory.ASSESSMENT, UserDeletionAction.DELETE, true),
     GLOBAL_NOTIFICATION_SETTING("global_notification_setting", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
     IRIS_SESSION("iris_session", "user_id", UserDeletionDataCategory.COMMUNICATION, UserDeletionAction.DELETE, true),
+    IRIS_PROACTIVE_EPISODE("iris_proactive_episode", "user_id", UserDeletionDataCategory.COMMUNICATION, UserDeletionAction.DELETE, true),
     AUTHORITY("jhi_user_authority", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.REMOVE_MEMBERSHIP, false),
     LEARNER_PROFILE("learner_profile", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
     LEARNING_PATH("learning_path", "user_id", UserDeletionDataCategory.LEARNING_ANALYTICS, UserDeletionAction.DELETE, true),
