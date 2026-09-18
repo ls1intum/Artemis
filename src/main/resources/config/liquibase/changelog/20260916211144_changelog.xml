@@ -4,20 +4,21 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <!--
-    Drops ten secondary indexes that cannot serve a query, measured on a copy of the production
-    database (2026-08-03 snapshot). Together they occupy 1.78 GB. On result, participation and
-    build_job the secondary indexes currently outweigh the rows they point at - 2,324 MB against
-    1,177 MB on result, 791 MB against 345 MB on participation, 721 MB against 631 MB on build_job.
+    Drops ten secondary indexes that cannot serve a query. An analysis of the database structure
+    found that together they take about 1.8 GB on a large instance, and that on result, participation
+    and build_job the secondary indexes outweigh the rows they point at.
 
-    Sizes below are page counts from mysql.innodb_index_stats after ANALYZE, taken on a freshly
-    rebuilt schema so they are live pages rather than fragmentation.
+    Sizes below are page counts from mysql.innodb_index_stats after ANALYZE on a large instance, on a
+    freshly rebuilt schema so they are live pages rather than fragmentation. They say how much each
+    index costs; what makes it droppable is the structural argument beside it, which does not depend
+    on any one instance.
 
     Group 1 - a leftmost prefix of a composite index that already exists (717 MB)
 
       Each of these indexes a single column that is already the first column of a wider index.
-      Verified with EXPLAIN on the production copy: with the narrow index ignored, every lookup
-      falls through to the composite as the same "Covering index lookup", and the estimated cost
-      barely moves (0.53 -> 0.91 in the worst of the four).
+      Verified with EXPLAIN: with the narrow index ignored, every lookup falls through to the
+      composite as the same "Covering index lookup", and the estimated cost barely moves
+      (0.53 -> 0.91 in the worst of the four).
 
         submission.FKeap67y7pxd6ffvwbs6d6sfhmq (participation_id)            306 MB
           -> idx_submission_participation_submission_date (participation_id, submission_date DESC)
@@ -53,27 +54,26 @@
       that index is kept.
 
       Every query that filters on these columns also filters on a selective one - exercise_id,
-      participation_id or submission_id - and EXPLAIN on the production copy shows the optimizer
-      choosing that index and applying these columns as a post-filter.
+      participation_id or submission_id - and EXPLAIN shows the optimizer choosing that index and
+      applying these columns as a post-filter.
 
     Group 3 - selective in principle, unused in practice (340 MB)
 
         result.result_assessment_type (assessment_type)                      340 MB
 
       This one is listed separately because the usual cardinality argument does not settle it:
-      assessment_type has four values but MANUAL covers only 2.5% of rows (312,724 of 12.5M), which
-      is selective enough for the optimizer to pick the index - and it does, for a query that
-      filters on assessment_type alone and selects only indexed columns.
+      assessment_type has four values, but the manual ones are a small enough share of the table to
+      be selective, and the optimizer does pick the index for a query that filters on assessment_type
+      alone and selects only indexed columns.
 
       No such query exists in Artemis. Every JPQL query that mentions assessmentType pairs it with a
       selective driver (p.exercise.id, result.submission.id IN ...) or with a date range that has its
-      own index, and each of them projects columns the index does not carry. EXPLAIN on the
-      production copy confirms the optimizer chooses idx_result_exercise_id, fk_result_submission_id
-      or result_completion_date for those shapes and never result_assessment_type. If a reviewer
-      prefers to confirm this against production query plans first, this changeset can be removed
-      without touching the other ten.
+      own index, and each of them projects columns the index does not carry. EXPLAIN confirms the
+      optimizer chooses idx_result_exercise_id, fk_result_submission_id or result_completion_date for
+      those shapes and never result_assessment_type. If a reviewer prefers to confirm this against
+      real query plans first, this changeset can be removed without touching the other nine.
 
-    All eleven indexes are created by 00000000000000_initial_schema.xml, which cannot be edited
+    All ten indexes are created by 00000000000000_initial_schema.xml, which cannot be edited
     without invalidating recorded checksums, so - as with changelog 20260816213553 - fresh
     installations create them and drop them again here, which costs milliseconds on empty tables.
     Each changeset is a single DDL statement guarded by an indexExists precondition, so a schema that
