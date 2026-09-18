@@ -96,9 +96,10 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             // repository.
             //
             // It is moved aside rather than deleted where it lies, because the health check above and the repair are not
-            // one step: two requests can both find the same leftover broken. Only one of them can win the rename, so
-            // neither can delete what the other has since put there. The loser copies like any other request and settles
-            // it at publication time, which keeps whichever repository was published first.
+            // one step: two requests can both find the same leftover broken. Only one of them can win the rename, and the
+            // slower one gives back a finished repository it took by mistake, so neither can delete what the other has
+            // since put there. The loser copies like any other request and settles it at publication time, which keeps
+            // whichever repository was published first.
             log.warn("Target repository {} exists but is unborn or corrupt; moving it aside so the copy can recreate it", targetRepoUri);
             if (!quarantineBrokenRepository(targetRepoUri)) {
                 log.debug("Target repository {} was already repaired by a concurrent request", targetRepoUri);
@@ -133,11 +134,12 @@ public abstract class AbstractVersionControlService implements VersionControlSer
      * Moves a broken (unborn or corrupt) repository out of the way in one atomic step and discards it, so that a copy can recreate it at its path.
      * <p>
      * Claiming the repository and removing it are the same step on purpose. Two requests can both find the same leftover broken, and deleting it where it lies would let the
-     * slower one delete whatever the faster one has published at that path since. A rename has exactly one winner, and it takes the broken repository with it, so the loser
-     * finds the path free or taken by a finished repository and never removes either.
+     * slower one delete whatever the faster one has published at that path since. A rename has exactly one winner, but it takes whatever is at the path when it runs, which
+     * may already be the repository the faster request published. So what was moved aside is checked once more, and a healthy repository is moved back instead of deleted.
      *
      * @param repositoryUri the repository to move aside
-     * @return true if this call moved the broken repository aside, false if it was already gone, i.e. a concurrent request repaired the path first
+     * @return true if this call moved the broken repository aside and discarded it, false if it was already gone or had been replaced by a finished repository, i.e. a
+     *         concurrent request repaired the path first
      * @throws VersionControlException if the repository is there but could not be moved aside, since the copy could not have succeeded either way
      */
     protected abstract boolean quarantineBrokenRepository(LocalVCRepositoryUri repositoryUri);

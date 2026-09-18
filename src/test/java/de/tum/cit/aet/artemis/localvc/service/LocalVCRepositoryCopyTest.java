@@ -9,11 +9,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -150,6 +153,61 @@ class LocalVCRepositoryCopyTest {
         assertThat(readFileFromBranchHead("abc-student1")).as("the corrupt leftover is replaced by a working copy of the template").isEqualTo("template");
     }
 
+    @Test
+    void copyRepositoryWithoutHistory_slowerRepairOfTheSameBrokenRepository_keepsWhatTheFasterOnePublished() throws Exception {
+        // Both requests find the same unborn leftover broken. The faster one moves it aside, copies and publishes, and the student pushes to the published repository.
+        // Only then does the slower one move aside what is at the path, which is no longer the leftover. It has to give that repository back rather than delete it.
+        CyclicBarrier bothFoundItBroken = new CyclicBarrier(2);
+        CountDownLatch studentPushed = new CountDownLatch(1);
+        AtomicInteger healthChecks = new AtomicInteger();
+        GitService gitService = new GitService() {
+
+            // Holds the slower request between finding the leftover broken and moving it aside, which is the window the race needs.
+            @Override
+            public boolean isBareRepositoryHealthy(LocalVCRepositoryUri repositoryUri) {
+                boolean healthy = super.isBareRepositoryHealthy(repositoryUri);
+                try {
+                    bothFoundItBroken.await(10, TimeUnit.SECONDS);
+                    if (healthChecks.incrementAndGet() == 2 && !studentPushed.await(10, TimeUnit.SECONDS)) {
+                        throw new IllegalStateException("Timed out waiting for the student push");
+                    }
+                }
+                catch (Exception e) {
+                    throw new IllegalStateException(e);
+                }
+                return healthy;
+            }
+        };
+        ReflectionTestUtils.setField(gitService, "localVCBasePath", baseDir);
+        ReflectionTestUtils.setField(gitService, "defaultBranch", DEFAULT_BRANCH);
+        LocalVCService racingService = new LocalVCService(null, gitService, null, null, null, null);
+        ReflectionTestUtils.setField(racingService, "localVCBasePath", baseDir);
+        ReflectionTestUtils.setField(racingService, "localVCBaseUri", BASE_URI);
+        seedRepository("abc-exercise", "template");
+        Path unborn = pathFor("abc-student1");
+        Files.createDirectories(unborn);
+        Git.init().setDirectory(unborn.toFile()).setBare(true).setInitialBranch(DEFAULT_BRANCH).call().close();
+        Callable<LocalVCRepositoryUri> startExercise = () -> racingService.copyRepositoryWithoutHistory(PROJECT_KEY, "abc-exercise", DEFAULT_BRANCH, PROJECT_KEY, "student1", null);
+
+        ExecutorCompletionService<LocalVCRepositoryUri> requests = new ExecutorCompletionService<>(executor);
+        requests.submit(startExercise);
+        requests.submit(startExercise);
+        Future<LocalVCRepositoryUri> faster = requests.poll(20, TimeUnit.SECONDS);
+        assertThat(faster).as("the faster request finishes while the slower one waits").isNotNull();
+        faster.get();
+        pushToBranch("abc-student1", "work the student pushed");
+        studentPushed.countDown();
+        Future<LocalVCRepositoryUri> slower = requests.poll(20, TimeUnit.SECONDS);
+        assertThat(slower).as("the slower request finishes").isNotNull();
+
+        assertThat(slower.get().toString()).as("both requests are told about the same repository").isEqualTo(uriFor("abc-student1").toString());
+        assertThat(readFileFromBranchHead("abc-student1")).as("the push to the published repository survives the slower repair").isEqualTo("work the student pushed");
+        try (var entries = Files.list(baseDir.resolve(PROJECT_KEY))) {
+            assertThat(entries.map(entry -> entry.getFileName().toString())).as("nothing is left beside the repositories").containsExactlyInAnyOrder("abc-exercise.git",
+                    "abc-student1.git");
+        }
+    }
+
     private LocalVCRepositoryUri uriFor(String repositorySlug) {
         return new LocalVCRepositoryUri(BASE_URI, PROJECT_KEY, repositorySlug);
     }
@@ -175,6 +233,20 @@ class LocalVCRepositoryCopyTest {
             clone.push().setRefSpecs(new RefSpec("HEAD:" + Constants.R_HEADS + DEFAULT_BRANCH)).call();
         }
         FileUtils.deleteDirectory(seed.toFile());
+    }
+
+    /**
+     * Pushes a commit that replaces the README with the given content to {@value DEFAULT_BRANCH} of an existing bare repository, the way a student pushes.
+     */
+    private void pushToBranch(String repositorySlug, String content) throws Exception {
+        Path clone = baseDir.resolve("push-" + repositorySlug);
+        try (Git git = Git.cloneRepository().setURI(pathFor(repositorySlug).toUri().toString()).setDirectory(clone.toFile()).call()) {
+            FileUtils.write(clone.resolve("README.md").toFile(), content, StandardCharsets.UTF_8);
+            git.add().addFilepattern(".").call();
+            GitService.commit(git).setMessage("Student work").setAuthor("student1", "student1@example.com").setCommitter("student1", "student1@example.com").call();
+            git.push().setRefSpecs(new RefSpec("HEAD:" + Constants.R_HEADS + DEFAULT_BRANCH)).call();
+        }
+        FileUtils.deleteDirectory(clone.toFile());
     }
 
     private String readFileFromBranchHead(String repositorySlug) throws IOException {
