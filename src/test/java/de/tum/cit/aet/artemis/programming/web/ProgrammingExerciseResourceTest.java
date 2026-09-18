@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -817,7 +818,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         addedAuxiliaryRepository.setName("additional");
         addedAuxiliaryRepository.setDescription("Must not be created for a rejected update");
         addedAuxiliaryRepository.setCheckoutDirectory("additional");
-        programmingExercise.setAuxiliaryRepositories(new ArrayList<>(List.of(addedAuxiliaryRepository)));
+        programmingExercise.setAuxiliaryRepositories(new LinkedHashSet<>(List.of(addedAuxiliaryRepository)));
         var auxiliaryRepositoryUri = new LocalVCRepositoryUri(localVCBaseUri, programmingExercise.getProjectKey(), programmingExercise.generateRepositoryName("additional"));
         Path auxiliaryRepositoryPath = auxiliaryRepositoryUri.getLocalRepositoryPath(localVCBasePath);
         assertThat(auxiliaryRepositoryPath).doesNotExist();
@@ -1139,7 +1140,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
         programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         // re-attach the loaded auxiliary repositories the way the client re-sends the ones it received
-        programmingExercise.setAuxiliaryRepositories(new ArrayList<>(auxiliaryRepositoryRepository.findByExerciseId(programmingExercise.getId())));
+        programmingExercise.setAuxiliaryRepositories(new LinkedHashSet<>(auxiliaryRepositoryRepository.findByExerciseId(programmingExercise.getId())));
         var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise);
         assertThat(updateDTO.auxiliaryRepositories()).extracting(repository -> repository.id()).containsExactly(auxRepositoryId);
 

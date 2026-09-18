@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -25,7 +26,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
-import jakarta.persistence.OrderColumn;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.SecondaryTable;
 
 import org.hibernate.Hibernate;
@@ -78,10 +79,22 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "test_repository_url")
     private String testRepositoryUri;
 
+    /**
+     * The auxiliary repositories of this exercise, oldest first.
+     * <p>
+     * Ordered by id rather than by an index column: on an indexed collection Hibernate takes the row's foreign key for
+     * its own, so removing one repository first writes {@code exercise_id = NULL} and only then deletes the row -
+     * which a repository that must always name its exercise cannot allow. Nothing reorders auxiliary repositories,
+     * they are identified by name and checkout directory, so creation order is the order.
+     * <p>
+     * A Set rather than a List, for the reason {@code Lecture.lectureUnits} gives: a List without an index column is a
+     * Hibernate bag, {@link #tasks} is already one, and a single query cannot fetch two bags - which a query that
+     * loads the whole exercise has to.
+     */
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
-    @OrderColumn(name = "programming_exercise_auxiliary_repositories_order")
-    private List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>();
+    @OrderBy("id ASC")
+    private Set<AuxiliaryRepository> auxiliaryRepositories = new LinkedHashSet<>();
 
     @Column(name = "allow_online_editor", table = "programming_exercise_details")
     private Boolean allowOnlineEditor;
@@ -212,11 +225,12 @@ public class ProgrammingExercise extends Exercise {
     }
 
     @NonNull
-    public List<AuxiliaryRepository> getAuxiliaryRepositories() {
+    public Set<AuxiliaryRepository> getAuxiliaryRepositories() {
         return this.auxiliaryRepositories;
     }
 
-    public void setAuxiliaryRepositories(List<AuxiliaryRepository> auxiliaryRepositories) {
+    public void setAuxiliaryRepositories(Set<AuxiliaryRepository> auxiliaryRepositories) {
+        // Assigned rather than copied, so that a lazy collection stays the uninitialized one the caller passed in.
         this.auxiliaryRepositories = auxiliaryRepositories;
     }
 
