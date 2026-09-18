@@ -66,19 +66,19 @@ public class LectureContentProcessingScheduler {
      * and checkpoint callback resets the clock, so a healthy 2-hour transcription
      * is never considered stuck.
      */
-    private static final int NO_CALLBACK_TIMEOUT_MINUTES = 20;
+    private final int noCallbackTimeoutMinutes;
 
     /**
      * How long a worker lease may go unrenewed before the run counts as lost. The worker renews on a
      * fixed 5-second timer that is decoupled from pipeline progress, so unlike
-     * {@link #NO_CALLBACK_TIMEOUT_MINUTES} this threshold describes a sleep loop, never the
+     * {@link #noCallbackTimeoutMinutes} this threshold describes a sleep loop, never the
      * unpredictable duration of an AI stage: a lapse is a strong infrastructure signal (worker
      * process dead or partitioned). Recovery through this path therefore preserves the retry budget.
      * Sized like the Kubernetes node-lease grace: several missed intervals, so one dropped request
      * never reclaims a healthy run. Effective detection latency adds the scan interval of
      * {@link #processScheduledRetries}.
      */
-    private static final Duration LEASE_EXPIRY = Duration.ofSeconds(30);
+    private final Duration leaseExpiry;
 
     /**
      * Absolute upper bound in hours for a single ingestion run, regardless of heartbeats.
@@ -87,7 +87,7 @@ public class LectureContentProcessingScheduler {
      * any legitimate run (transcribing and ingesting the longest permitted videos), so hitting
      * it reliably indicates a wedged job.
      */
-    private static final int ABSOLUTE_TIMEOUT_HOURS = 12;
+    private final int absoluteTimeoutHours;
 
     /**
      * How long the stage progress counter may stand still, while heartbeats keep arriving, before
@@ -120,7 +120,9 @@ public class LectureContentProcessingScheduler {
     public LectureContentProcessingScheduler(LectureUnitProcessingStateRepository processingStateRepository, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
             LectureContentProcessingService processingService, ProcessingStateCallbackService callbackService, LectureIngestionReconcileService reconcileService,
             ProcessingStateRecoveryService recoveryService, FeatureToggleService featureToggleService, @Value("${artemis.iris.ingestion.stall-window:30m}") Duration stallWindow,
-            @Value("${artemis.iris.ingestion.slow-stage-warning-after:45m}") Duration slowStageWarningAfter) {
+            @Value("${artemis.iris.ingestion.slow-stage-warning-after:45m}") Duration slowStageWarningAfter,
+            @Value("${artemis.iris.ingestion.no-callback-timeout-minutes:20}") int noCallbackTimeoutMinutes,
+            @Value("${artemis.iris.ingestion.lease-expiry:30s}") Duration leaseExpiry, @Value("${artemis.iris.ingestion.absolute-timeout-hours:12}") int absoluteTimeoutHours) {
         this.processingStateRepository = processingStateRepository;
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.processingService = processingService;
@@ -130,6 +132,9 @@ public class LectureContentProcessingScheduler {
         this.featureToggleService = featureToggleService;
         this.stallWindow = stallWindow;
         this.slowStageWarningAfter = slowStageWarningAfter;
+        this.noCallbackTimeoutMinutes = noCallbackTimeoutMinutes;
+        this.leaseExpiry = leaseExpiry;
+        this.absoluteTimeoutHours = absoluteTimeoutHours;
     }
 
     /**
@@ -172,8 +177,8 @@ public class LectureContentProcessingScheduler {
         detectStalledAndSlowRuns();
 
         // Then, handle stuck states where no callback was received recently
-        recoverStuckPhase(ProcessingPhase.TRANSCRIBING, NO_CALLBACK_TIMEOUT_MINUTES);
-        recoverStuckPhase(ProcessingPhase.INGESTING, NO_CALLBACK_TIMEOUT_MINUTES);
+        recoverStuckPhase(ProcessingPhase.TRANSCRIBING, noCallbackTimeoutMinutes);
+        recoverStuckPhase(ProcessingPhase.INGESTING, noCallbackTimeoutMinutes);
 
         // Then release dispatch claims whose owner never finished dispatching them, e.g. a node killed by a rolling
         // deploy between taking the claim and writing the phase. Nothing else selects those rows, so without this the
@@ -196,11 +201,11 @@ public class LectureContentProcessingScheduler {
      */
     private void releaseAbandonedDispatchClaims() {
         ZonedDateTime now = ZonedDateTime.now();
-        ZonedDateTime cutoff = now.minusMinutes(NO_CALLBACK_TIMEOUT_MINUTES);
+        ZonedDateTime cutoff = now.minusMinutes(noCallbackTimeoutMinutes);
 
         int releasedClaims = processingStateRepository.releaseAbandonedIdleClaims(cutoff, now);
         if (releasedClaims > 0) {
-            log.info("Released {} abandoned dispatch claims older than {} minutes; the units are back in the queue", releasedClaims, NO_CALLBACK_TIMEOUT_MINUTES);
+            log.info("Released {} abandoned dispatch claims older than {} minutes; the units are back in the queue", releasedClaims, noCallbackTimeoutMinutes);
         }
     }
 
@@ -211,7 +216,7 @@ public class LectureContentProcessingScheduler {
      */
     private void reclaimLapsedLeases() {
         List<ProcessingPhase> inFlightPhases = List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING);
-        ZonedDateTime cutoff = ZonedDateTime.now().minus(LEASE_EXPIRY);
+        ZonedDateTime cutoff = ZonedDateTime.now().minus(leaseExpiry);
         List<LectureUnitProcessingState> lapsed = processingStateRepository.findRunsWithLapsedLease(inFlightPhases, cutoff);
         for (LectureUnitProcessingState candidate : lapsed) {
             // Atomic: a heartbeat renewing the lease, or a terminal callback finishing the run, in the window
@@ -255,8 +260,8 @@ public class LectureContentProcessingScheduler {
             // lastHeartbeatAt, so a run wedged mid-stage under a healthy worker keeps a fresh lease while
             // callbacks fall silent; without the lease arm such a run (having reported a stage) would still
             // escape this detector, findStuckStates and reclaimLapsedLeases alike.
-            boolean callbacksRecent = state.getLastUpdated() != null && state.getLastUpdated().isAfter(now.minusMinutes(NO_CALLBACK_TIMEOUT_MINUTES));
-            boolean leaseHeld = state.getLastHeartbeatAt() != null && state.getLastHeartbeatAt().isAfter(now.minus(LEASE_EXPIRY));
+            boolean callbacksRecent = state.getLastUpdated() != null && state.getLastUpdated().isAfter(now.minusMinutes(noCallbackTimeoutMinutes));
+            boolean leaseHeld = state.getLastHeartbeatAt() != null && state.getLastHeartbeatAt().isAfter(now.minus(leaseExpiry));
             boolean heartbeatsAlive = callbacksRecent || leaseHeld;
             // A stage that never reports a counter still sets lastProgressAt once, on entry (see
             // recordStageProgress), and then never again — so without this guard a healthy counterless
@@ -308,7 +313,7 @@ public class LectureContentProcessingScheduler {
     private void recoverStuckPhase(ProcessingPhase phase, int timeoutMinutes) {
         ZonedDateTime now = ZonedDateTime.now();
         ZonedDateTime cutoff = now.minusMinutes(timeoutMinutes);
-        ZonedDateTime absoluteCutoff = now.minusHours(ABSOLUTE_TIMEOUT_HOURS);
+        ZonedDateTime absoluteCutoff = now.minusHours(absoluteTimeoutHours);
 
         List<LectureUnitProcessingState> stuckStates = processingStateRepository.findStuckStates(List.of(phase), cutoff, absoluteCutoff);
 

@@ -78,10 +78,11 @@ public class ProcessingStateCallbackService {
     /**
      * How long a retry claim keeps a row out of the candidate list. It has to outlast the dispatch the claim belongs
      * to, and it doubles as the recovery window: a node killed mid-dispatch leaves the claim in place until it lapses,
-     * after which the row is eligible again. Matches the scheduler's no-callback timeout, which is the point at which
-     * a dispatch is no longer considered in flight.
+     * after which the row is eligible again. Intended to match the scheduler's no-callback timeout
+     * ({@code artemis.iris.ingestion.no-callback-timeout-minutes}), which is the point at which a dispatch is no
+     * longer considered in flight — keep the two in sync if either is overridden.
      */
-    private static final int RETRY_CLAIM_LEASE_MINUTES = 20;
+    private final int retryClaimLeaseMinutes;
 
     /**
      * Name of the cluster-wide lock that serializes push dispatch, so that count + claim + send is atomic across
@@ -116,10 +117,10 @@ public class ProcessingStateCallbackService {
      * worker support, or the worker gone for good), push dispatch resumes automatically. Sized as a
      * generous multiple of the worker's heartbeat interval so one lost heartbeat never flips modes.
      */
-    private static final Duration WORKER_MODE_GRACE = Duration.ofSeconds(90);
+    private final Duration workerModeGrace;
 
     /** Upper bound on jobs handed out per single worker claim call, purely as a sanity clamp. */
-    private static final int MAX_JOBS_PER_CLAIM = 8;
+    private final int maxJobsPerClaim;
 
     private static final String WORKER_MAP_NAME = "pyris-ingestion-worker";
 
@@ -131,7 +132,9 @@ public class ProcessingStateCallbackService {
     public ProcessingStateCallbackService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
             AttachmentRepository attachmentRepository, Optional<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService,
             LectureUnitContentFingerprintService contentFingerprintService, DistributedDataProvider distributedDataProvider, FeatureToggleService featureToggleService,
-            @Value("${artemis.iris.ingestion.max-concurrent-jobs:2}") int maxConcurrentJobs) {
+            @Value("${artemis.iris.ingestion.max-concurrent-jobs:2}") int maxConcurrentJobs,
+            @Value("${artemis.iris.ingestion.retry-claim-lease-minutes:20}") int retryClaimLeaseMinutes,
+            @Value("${artemis.iris.ingestion.worker-mode-grace:PT90S}") Duration workerModeGrace, @Value("${artemis.iris.ingestion.max-jobs-per-claim:8}") int maxJobsPerClaim) {
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
         this.attachmentRepository = attachmentRepository;
@@ -141,6 +144,9 @@ public class ProcessingStateCallbackService {
         this.distributedDataProvider = distributedDataProvider;
         this.featureToggleService = featureToggleService;
         this.maxConcurrentJobs = maxConcurrentJobs;
+        this.retryClaimLeaseMinutes = retryClaimLeaseMinutes;
+        this.workerModeGrace = workerModeGrace;
+        this.maxJobsPerClaim = maxJobsPerClaim;
     }
 
     private DistributedMap<String, String> getWorkerMap() {
@@ -220,7 +226,7 @@ public class ProcessingStateCallbackService {
                 if (availableSlots <= 0) {
                     break;
                 }
-                ZonedDateTime leaseExpiry = now.plusMinutes(RETRY_CLAIM_LEASE_MINUTES);
+                ZonedDateTime leaseExpiry = now.plusMinutes(retryClaimLeaseMinutes);
                 if (processingStateRepository.claimRetryEligible(state.getId(), now, leaseExpiry) == 0) {
                     log.debug("Another node claimed the retry of unit {}", state.getLectureUnit().getId());
                     continue;
@@ -406,7 +412,7 @@ public class ProcessingStateCallbackService {
             log.debug("LectureContentProcessing feature is disabled, handing out no jobs to worker {}", workerBootId);
             return List.of();
         }
-        int jobs = Math.clamp(maxJobs, 0, MAX_JOBS_PER_CLAIM);
+        int jobs = Math.clamp(maxJobs, 0, maxJobsPerClaim);
         if (jobs == 0) {
             return List.of();
         }
@@ -414,7 +420,7 @@ public class ProcessingStateCallbackService {
         List<LectureUnitProcessingState> claimed = new ArrayList<>();
 
         for (LectureUnitProcessingState state : processingStateRepository.findStatesReadyForRetry(ProcessingPhase.FAILED.name(), now, jobs)) {
-            ZonedDateTime leaseExpiry = now.plusMinutes(RETRY_CLAIM_LEASE_MINUTES);
+            ZonedDateTime leaseExpiry = now.plusMinutes(retryClaimLeaseMinutes);
             if (processingStateRepository.claimRetryEligible(state.getId(), now, leaseExpiry) == 0) {
                 continue;
             }
@@ -542,7 +548,7 @@ public class ProcessingStateCallbackService {
     }
 
     /**
-     * Whether a pulling Pyris worker has claimed or heartbeated within {@link #WORKER_MODE_GRACE}.
+     * Whether a pulling Pyris worker has claimed or heartbeated within {@link #workerModeGrace}.
      */
     boolean isWorkerModeActive() {
         String lastSeen = getWorkerMap().get(WORKER_LAST_SEEN_KEY);
@@ -550,7 +556,7 @@ public class ProcessingStateCallbackService {
             return false;
         }
         try {
-            return Instant.parse(lastSeen).isAfter(Instant.now().minus(WORKER_MODE_GRACE));
+            return Instant.parse(lastSeen).isAfter(Instant.now().minus(workerModeGrace));
         }
         catch (DateTimeParseException e) {
             return false;

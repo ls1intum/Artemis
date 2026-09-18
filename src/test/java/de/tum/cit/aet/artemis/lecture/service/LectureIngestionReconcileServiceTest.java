@@ -74,7 +74,7 @@ class LectureIngestionReconcileServiceTest {
         processingService = mock(LectureContentProcessingService.class);
 
         reconcileService = new LectureIngestionReconcileService(processingStateRepository, attachmentVideoUnitRepository, Optional.of(irisLectureApi), contentFingerprintService,
-                processingService, 5, 10, 0.8, Duration.ofHours(1));
+                processingService, 5, 10, 0.8, Duration.ofHours(1), 10);
 
         course = new Course();
         course.setId(COURSE_ID);
@@ -809,7 +809,7 @@ class LectureIngestionReconcileServiceTest {
     @Test
     void shouldSpendNothingWithoutIrisApi() {
         LectureIngestionReconcileService withoutIris = new LectureIngestionReconcileService(processingStateRepository, attachmentVideoUnitRepository, Optional.empty(),
-                contentFingerprintService, processingService, 5, 10, 0.8, Duration.ofHours(1));
+                contentFingerprintService, processingService, 5, 10, 0.8, Duration.ofHours(1), 10);
 
         assertThat(withoutIris.walkNextCourses()).isZero();
         assertThat(withoutIris.resolveStuckIngestionWithoutRetryPenalty(state)).isFalse();

@@ -75,7 +75,7 @@ class LectureContentProcessingSchedulerTest {
         when(callbackService.getMaxConcurrentJobs()).thenReturn(MAX_CONCURRENT_JOBS);
 
         scheduler = new LectureContentProcessingScheduler(processingStateRepository, attachmentVideoUnitRepository, processingService, callbackService, reconcileService,
-                recoveryService, featureToggleService, Duration.ofMinutes(30), Duration.ofMinutes(45));
+                recoveryService, featureToggleService, Duration.ofMinutes(30), Duration.ofMinutes(45), 20, Duration.ofSeconds(30), 12);
 
         Lecture testLecture = new Lecture();
         testLecture.setId(1L);

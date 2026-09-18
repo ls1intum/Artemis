@@ -114,7 +114,7 @@ public class LectureIngestionReconcileService {
      * with the ~hours-long cooldown this spans days of retrying, far longer than any transient outage, and the
      * count resets on a successful DONE, so it never shortens genuine transient recovery.
      */
-    private static final int MAX_REVIVALS = 10;
+    private final int maxRevivals;
 
     private final AtomicLong courseCursor = new AtomicLong(0);
 
@@ -123,7 +123,8 @@ public class LectureIngestionReconcileService {
             @Value("${artemis.iris.ingestion.reconcile.courses-per-run:5}") int coursesPerRun,
             @Value("${artemis.iris.ingestion.reconcile.requeue-limit-per-run:10}") int requeueLimitPerRun,
             @Value("${artemis.iris.ingestion.reconcile.quality-threshold:0.8}") double qualityThreshold,
-            @Value("${artemis.iris.ingestion.reconcile.failed-revival-cooldown:PT3H}") Duration failedRevivalCooldown) {
+            @Value("${artemis.iris.ingestion.reconcile.failed-revival-cooldown:PT3H}") Duration failedRevivalCooldown,
+            @Value("${artemis.iris.ingestion.reconcile.max-revivals:10}") int maxRevivals) {
         this.processingStateRepository = processingStateRepository;
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.irisLectureApi = irisLectureApi;
@@ -133,6 +134,7 @@ public class LectureIngestionReconcileService {
         this.requeueLimitPerRun = requeueLimitPerRun;
         this.qualityThreshold = qualityThreshold;
         this.failedRevivalCooldown = failedRevivalCooldown;
+        this.maxRevivals = maxRevivals;
     }
 
     /**
@@ -413,7 +415,7 @@ public class LectureIngestionReconcileService {
      * <li>the vector store answered this run's census, so a revival is not dispatched into a store that is
      * itself still down.</li>
      * </ul>
-     * Revivals are bounded, but generously: after {@link #MAX_REVIVALS} revivals without an intervening
+     * Revivals are bounded, but generously: after {@link #maxRevivals} revivals without an intervening
      * successful completion the unit is left FAILED for the manual retry button instead of being re-attempted
      * forever. This is the backstop for a genuinely-unprocessable unit that reports a generic (unclassified)
      * error and so is not in {@link #PERMANENT_ERROR_KEYS} — without it, such a unit would revive every
@@ -435,7 +437,7 @@ public class LectureIngestionReconcileService {
         if (state.getErrorKey() != null && PERMANENT_ERROR_KEYS.contains(state.getErrorKey())) {
             return 0;
         }
-        if (state.getRevivalCount() >= MAX_REVIVALS) {
+        if (state.getRevivalCount() >= maxRevivals) {
             // Exhausted its revival budget without ever succeeding: treat a generic error that keeps
             // recurring as effectively permanent and leave it FAILED for manual attention rather than
             // re-attempting it forever.

@@ -13,6 +13,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -84,7 +85,7 @@ class ProcessingStateWorkerDispatchTest {
         when(featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
 
         callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository, irisLectureApi, websocketMessagingService,
-                contentFingerprintService, distributedDataProvider, featureToggleService, 2);
+                contentFingerprintService, distributedDataProvider, featureToggleService, 2, 20, Duration.ofSeconds(90), 8);
 
         Lecture lecture = new Lecture();
         lecture.setId(1L);
