@@ -236,13 +236,7 @@ export class ExerciseDetailsStudentActionsComponent {
             .pipe(finalize(() => this._isLoading.set(false)))
             .subscribe({
                 next: (resumedParticipation: StudentParticipation) => {
-                    // Otherwise the client would think that all results are loaded, but there would not be any (=> no graded result).
-                    const currentParticipations = this._studentParticipations();
-                    const replacedIndex = currentParticipations.indexOf(participation!);
-                    const updatedParticipations = [...currentParticipations];
-                    updatedParticipations[replacedIndex] = resumedParticipation;
-                    this._studentParticipations.set(updatedParticipations);
-                    this.updateParticipations();
+                    this.receiveNewParticipation(resumedParticipation);
                     this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
                 },
                 error: (error) => {
