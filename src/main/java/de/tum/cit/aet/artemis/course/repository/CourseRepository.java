@@ -393,7 +393,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
      * <p>
      * Keyed on the participating student's id rather than their login: the consumer only needs a stable key to count
      * each student once per week, and the login would require joining {@code jhi_user} for every submission in the
-     * window (measured on a production dump: 400k submissions of one course, 0.24s with the join, 0.17s without).
+     * window, which measurably costs more than counting on the id alone.
      * That join was also what excluded team participations, which have no student, so they are excluded explicitly
      * now.
      *
