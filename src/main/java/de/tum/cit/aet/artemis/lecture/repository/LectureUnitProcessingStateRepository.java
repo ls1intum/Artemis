@@ -409,6 +409,30 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     int touchLastUpdated(@Param("id") long id, @Param("token") String token, @Param("now") ZonedDateTime now);
 
     /**
+     * Renew a run's worker lease atomically, for a heartbeat batch. Same token-and-phase guard as
+     * {@link #applyHeartbeat}: a terminal callback that finishes the run in the window between the
+     * heartbeat's read and this write clears the token first, so this predicate then matches no row and
+     * the stale lease-renewal is silently dropped instead of overwriting the DONE/FAILED state back to
+     * the in-flight phase and token it read.
+     *
+     * @param id           the processing state to update
+     * @param token        the job token the heartbeat carried
+     * @param now          recorded as the new {@code lastHeartbeatAt}
+     * @param workerBootId boot id of the worker renewing the lease
+     * @return 1 when applied, 0 when the run is no longer in flight under this token
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.lastHeartbeatAt = :now, ps.lockedBy = :workerBootId
+            WHERE ps.id = :id
+            AND ps.ingestionJobToken = :token
+            AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.TRANSCRIBING, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING)
+            """)
+    int renewLease(@Param("id") long id, @Param("token") String token, @Param("now") ZonedDateTime now, @Param("workerBootId") String workerBootId);
+
+    /**
      * Transition TRANSCRIBING to INGESTING for an enriched transcription checkpoint, atomically: same
      * token-and-phase guard as {@link #applyHeartbeat}, and the same field set {@link
      * de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState#transitionTo} applies, so a
@@ -464,6 +488,34 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             """)
     int reclaimLapsedLease(@Param("id") long id, @Param("token") String token, @Param("phases") List<ProcessingPhase> phases, @Param("cutoff") ZonedDateTime cutoff,
             @Param("now") ZonedDateTime now);
+
+    /**
+     * Requeue a stuck INGESTING run without charging its retry budget, atomically: only while it is still
+     * exactly the run whose census evidence justified skipping the failure penalty. The census lookup that
+     * precedes this call is a slow external round-trip; a terminal callback finishing (or otherwise
+     * changing) this run in that window clears its token first, so this predicate then matches no row and
+     * the stuck-recovery requeue is silently dropped instead of overwriting whatever the terminal callback
+     * wrote. Same field set as {@link #reclaimLapsedLease}, since both put the run back to a fresh IDLE
+     * state.
+     *
+     * @param id    the processing state to requeue
+     * @param token the job token observed when the census evidence was decided
+     * @param now   recorded as the new {@code lastUpdated}
+     * @return 1 when requeued, 0 when the run is no longer in flight under this token
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, ps.ingestionJobToken = NULL, ps.startedAt = NULL,
+                ps.retryEligibleAt = NULL, ps.errorKey = NULL, ps.lastUpdated = :now,
+                ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL,
+                ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL
+            WHERE ps.id = :id
+            AND ps.ingestionJobToken = :token
+            AND ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING
+            """)
+    int requeueStuckIngestionWithoutPenalty(@Param("id") long id, @Param("token") String token, @Param("now") ZonedDateTime now);
 
     /**
      * Activate a claim exactly once: turn a claimed row into an in-flight run, but only while it still holds the claim

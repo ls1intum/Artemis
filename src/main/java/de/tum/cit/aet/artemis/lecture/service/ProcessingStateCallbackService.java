@@ -507,6 +507,7 @@ public class ProcessingStateCallbackService {
     public List<String> renewWorkerLeases(String workerBootId, List<String> activeJobTokens) {
         markWorkerSeen(workerBootId);
         List<String> revoked = new ArrayList<>();
+        ZonedDateTime now = ZonedDateTime.now();
         for (String token : activeJobTokens) {
             Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByIngestionJobToken(token);
             if (stateOpt.isEmpty() || !stateOpt.get().isProcessing()) {
@@ -514,8 +515,17 @@ public class ProcessingStateCallbackService {
                 continue;
             }
             LectureUnitProcessingState state = stateOpt.get();
+            int updated = processingStateRepository.renewLease(state.getId(), token, now, workerBootId);
+            if (updated == 0) {
+                // The run finished or moved on between the read above and this write (a terminal
+                // callback cleared the token first); report the token revoked instead of notifying
+                // with a state that no longer reflects reality.
+                revoked.add(token);
+                continue;
+            }
+            // Reflect the just-persisted renewal in this in-memory copy for the notification payload
+            // only; this object is never saved, so it cannot race the atomic update above.
             state.renewLease(workerBootId);
-            processingStateRepository.save(state);
             TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(state.getLectureUnit().getId()).map(LectureTranscription::getTranscriptionStatus)
                     .orElse(null);
             notifyProcessingStateChange(state, txStatus);

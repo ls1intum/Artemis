@@ -190,13 +190,15 @@ class ProcessingStateWorkerDispatchTest {
         testState.setIngestionJobToken("token-known");
         when(processingStateRepository.findByIngestionJobToken("token-known")).thenReturn(Optional.of(testState));
         when(processingStateRepository.findByIngestionJobToken("token-unknown")).thenReturn(Optional.empty());
+        when(processingStateRepository.renewLease(eq(500L), eq("token-known"), any(), eq(WORKER_BOOT_ID))).thenReturn(1);
 
         List<String> revoked = callbackService.renewWorkerLeases(WORKER_BOOT_ID, List.of("token-known", "token-unknown"));
 
         assertThat(revoked).containsExactly("token-unknown");
         assertThat(testState.getLastHeartbeatAt()).isNotNull();
         assertThat(testState.getLockedBy()).isEqualTo(WORKER_BOOT_ID);
-        verify(processingStateRepository).save(testState);
+        verify(processingStateRepository).renewLease(eq(500L), eq("token-known"), any(), eq(WORKER_BOOT_ID));
+        verify(processingStateRepository, never()).save(testState);
     }
 
     @Test
@@ -209,6 +211,24 @@ class ProcessingStateWorkerDispatchTest {
 
         assertThat(revoked).containsExactly("token-done");
         assertThat(testState.getLastHeartbeatAt()).isNull();
+    }
+
+    @Test
+    void renewWorkerLeasesReportsTheTokenRevokedWhenATerminalCallbackWonTheRace() {
+        // The read here still sees the run as in-flight, but the atomic update reports 0 rows
+        // affected -- a terminal callback cleared the token in between. This is finding 5: without
+        // the atomic guard, a plain save() would have overwritten the just-written DONE/FAILED state
+        // back to INGESTING with the stale token and lease.
+        testState.setPhase(ProcessingPhase.INGESTING);
+        testState.setIngestionJobToken("token-racing");
+        when(processingStateRepository.findByIngestionJobToken("token-racing")).thenReturn(Optional.of(testState));
+        when(processingStateRepository.renewLease(eq(500L), eq("token-racing"), any(), eq(WORKER_BOOT_ID))).thenReturn(0);
+
+        List<String> revoked = callbackService.renewWorkerLeases(WORKER_BOOT_ID, List.of("token-racing"));
+
+        assertThat(revoked).containsExactly("token-racing");
+        assertThat(testState.getLastHeartbeatAt()).isNull();
+        verify(processingStateRepository, never()).save(testState);
     }
 
     @Test

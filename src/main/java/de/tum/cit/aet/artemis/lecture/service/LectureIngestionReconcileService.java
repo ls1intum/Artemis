@@ -283,17 +283,15 @@ public class LectureIngestionReconcileService {
         String observedFingerprint = state.getConfirmedFingerprint();
         if (observedFingerprint == null || !observedFingerprint.equals(currentFingerprint)) {
             // Legacy row that predates verification, or the content changed without the update path firing.
-            requeueForReconcile(state, observedFingerprint, "no confirmed fingerprint for the current content", fresh -> {
-            });
-            return 1;
+            return requeueForReconcile(state, observedFingerprint, "no confirmed fingerprint for the current content", fresh -> {
+            }) ? 1 : 0;
         }
         if (census != null) {
             if (censusEntry == null || censusEntry.unitRowCount() == 0 || !currentFingerprint.equals(censusEntry.contentFingerprint())) {
                 // The run was confirmed, but the index no longer holds a matching stamp: the data was lost
                 // or replaced after the fact (backup restore, collection recreate, raced delete). Force a
                 // full re-ingest so the run rewrites the unit instead of the skip-check treating it as done.
-                requeueForReconcile(state, observedFingerprint, "index stamp missing or different from the confirmed fingerprint", fresh -> forceRebuild(fresh));
-                return 1;
+                return requeueForReconcile(state, observedFingerprint, "index stamp missing or different from the confirmed fingerprint", fresh -> forceRebuild(fresh)) ? 1 : 0;
             }
             // Re-queue on any structural divergence between what the index holds and what a complete unit
             // must hold. Every signal below is healed by a forced full re-ingest and then reported clean, so
@@ -305,19 +303,17 @@ public class LectureIngestionReconcileService {
             boolean hasPdf = unit.getAttachment() != null && unit.getAttachment().getLink() != null && unit.getAttachment().getLink().endsWith(".pdf");
             String divergence = divergenceReason(censusEntry, hasPdf);
             if (divergence != null) {
-                requeueForReconcile(state, observedFingerprint, divergence, fresh -> forceRebuild(fresh));
-                return 1;
+                return requeueForReconcile(state, observedFingerprint, divergence, fresh -> forceRebuild(fresh)) ? 1 : 0;
             }
             if (isQualityRequeueDue(state, census, censusEntry)) {
                 // A newer pipeline version can improve this low-quality unit. The versioned edge
                 // (at most one quality requeue per pipeline version) is what makes this terminate;
                 // the forced re-run keeps the stored generation when it does not score better.
-                requeueForReconcile(state, observedFingerprint,
+                return requeueForReconcile(state, observedFingerprint,
                         "quality " + censusEntry.qualityScore() + " below threshold and pipeline version " + census.currentPipelineVersion() + " is available", fresh -> {
                             fresh.setLastQualityPipelineVersion(census.currentPipelineVersion());
                             fresh.setForceReingest(true);
-                        });
-                return 1;
+                        }) ? 1 : 0;
             }
         }
         return 0;
@@ -384,9 +380,8 @@ public class LectureIngestionReconcileService {
         if (!irisLectureApi.get().isLectureUnitProcessable(unit)) {
             return 0;
         }
-        requeueForReconcile(state, state.getConfirmedFingerprint(), "unit became processable after being skipped", fresh -> {
-        });
-        return 1;
+        return requeueForReconcile(state, state.getConfirmedFingerprint(), "unit became processable after being skipped", fresh -> {
+        }) ? 1 : 0;
     }
 
     /**
@@ -449,18 +444,22 @@ public class LectureIngestionReconcileService {
         if (state.getLastUpdated() == null || state.getLastUpdated().isAfter(ZonedDateTime.now().minus(failedRevivalCooldown))) {
             return 0;
         }
-        requeueForReconcile(state, state.getConfirmedFingerprint(), "transient failure cooled down, reviving for another attempt",
-                LectureUnitProcessingState::incrementRevivalCount);
-        return 1;
+        return requeueForReconcile(state, state.getConfirmedFingerprint(), "transient failure cooled down, reviving for another attempt",
+                LectureUnitProcessingState::incrementRevivalCount) ? 1 : 0;
     }
 
-    private void requeueForReconcile(LectureUnitProcessingState state, String observedFingerprint, String reason, Consumer<LectureUnitProcessingState> applyIntent) {
+    /**
+     * @return true if the row still matched the decision and was requeued; false if its state changed
+     *         since the batch read, in which case nothing was written and the caller's budget must not be
+     *         charged for this unit
+     */
+    private boolean requeueForReconcile(LectureUnitProcessingState state, String observedFingerprint, String reason, Consumer<LectureUnitProcessingState> applyIntent) {
         long unitId = state.getLectureUnit().getId();
         ProcessingPhase decidedPhase = state.getPhase();
         Optional<LectureUnitProcessingState> currentState = processingStateRepository.findById(state.getId());
         if (currentState.isEmpty() || currentState.get().getPhase() != decidedPhase || !Objects.equals(currentState.get().getConfirmedFingerprint(), observedFingerprint)) {
             log.debug("Reconcile: skipping requeue of unit {} — its state changed since the batch read", unitId);
-            return;
+            return false;
         }
         LectureUnitProcessingState fresh = currentState.get();
         log.info("Reconcile: requeueing unit {} ({})", unitId, reason);
@@ -469,6 +468,7 @@ public class LectureIngestionReconcileService {
         fresh.requeue();
         fresh.setDispatchPriority(RECONCILE_DISPATCH_PRIORITY);
         processingStateRepository.save(fresh);
+        return true;
     }
 
     /**
@@ -521,9 +521,19 @@ public class LectureIngestionReconcileService {
         if (entry == null || entry.unitRowCount() == 0 || !state.getContentFingerprint().equals(entry.contentFingerprint())) {
             return false;
         }
-        log.warn("Reconcile: unit {} looks fully ingested but its terminal callback never arrived; requeueing without retry penalty", unitId);
-        state.requeue();
-        processingStateRepository.save(state);
+        // The census lookup above is a slow external round-trip; a terminal callback can finish this run
+        // (or it can otherwise move on) while it is in flight. Requeue atomically, guarded on the same
+        // token this decision was made against: 0 rows affected means the run already moved on in that
+        // window, and in that case the caller must not fall back to the normal failure path with this
+        // now-stale snapshot either -- whatever actually happened to the run is already correctly
+        // reflected in the database, so either outcome here means "do not act on it again".
+        int updated = processingStateRepository.requeueStuckIngestionWithoutPenalty(state.getId(), state.getIngestionJobToken(), ZonedDateTime.now());
+        if (updated == 0) {
+            log.debug("Reconcile: unit {} moved on before the stuck-recovery requeue could apply; leaving it as-is", unitId);
+        }
+        else {
+            log.warn("Reconcile: unit {} looks fully ingested but its terminal callback never arrived; requeueing without retry penalty", unitId);
+        }
         return true;
     }
 }

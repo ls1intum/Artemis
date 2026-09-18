@@ -521,8 +521,11 @@ class LectureIngestionReconcileServiceTest {
             when(processingStateRepository.findById(state.getId())).thenReturn(Optional.of(liveState));
             givenCensus();
 
-            reconcileService.reconcileCourse(COURSE_ID, 10);
+            // Finding 3: a guard-rejected requeue must not count as spent, or it silently steals budget
+            // from other units this same course walk should have gotten to.
+            int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
 
+            assertThat(spent).isZero();
             verify(processingStateRepository, never()).save(any());
             assertThat(liveState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
         }
@@ -541,8 +544,9 @@ class LectureIngestionReconcileServiceTest {
             when(processingStateRepository.findById(state.getId())).thenReturn(Optional.of(reconfirmed));
             givenCensus();
 
-            reconcileService.reconcileCourse(COURSE_ID, 10);
+            int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
 
+            assertThat(spent).isZero();
             verify(processingStateRepository, never()).save(any());
             assertThat(reconfirmed.getPhase()).isEqualTo(ProcessingPhase.DONE);
             assertThat(reconfirmed.getConfirmedFingerprint()).isEqualTo(FINGERPRINT);
@@ -714,14 +718,30 @@ class LectureIngestionReconcileServiceTest {
         @Test
         void shouldRequeueWithoutRetryPenaltyWhenStampMatches() {
             givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
+            when(processingStateRepository.requeueStuckIngestionWithoutPenalty(eq(state.getId()), eq("token-123"), any())).thenReturn(1);
 
             boolean resolved = reconcileService.resolveStuckIngestionWithoutRetryPenalty(state);
 
             assertThat(resolved).isTrue();
-            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.IDLE);
-            assertThat(state.getRetryCount()).isEqualTo(2);
-            assertThat(state.getIngestionJobToken()).isNull();
-            verify(processingStateRepository).save(state);
+            verify(processingStateRepository).requeueStuckIngestionWithoutPenalty(eq(state.getId()), eq("token-123"), any());
+            verify(processingStateRepository, never()).save(state);
+        }
+
+        @Test
+        void shouldStillReportResolvedWhenATerminalCallbackWonTheRace() {
+            // The census lookup matched (evidence the run completed), but the atomic requeue affected 0
+            // rows -- a terminal callback finished (or otherwise changed) this run in the window opened by
+            // that lookup. This is finding 4: the caller must not fall back to the normal failure path with
+            // this now-stale snapshot either, since whatever happened to the run is already correctly
+            // reflected in the database.
+            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
+            when(processingStateRepository.requeueStuckIngestionWithoutPenalty(eq(state.getId()), eq("token-123"), any())).thenReturn(0);
+
+            boolean resolved = reconcileService.resolveStuckIngestionWithoutRetryPenalty(state);
+
+            assertThat(resolved).isTrue();
+            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+            verify(processingStateRepository, never()).save(state);
         }
 
         @Test
