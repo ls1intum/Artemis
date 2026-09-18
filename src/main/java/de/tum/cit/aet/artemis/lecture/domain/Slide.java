@@ -22,9 +22,19 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 public class Slide extends DomainObject {
 
     @ManyToOne
-    @JoinColumn(name = "attachment_unit_id")
+    @JoinColumn(name = "attachment_unit_id", nullable = false)
     @Parent
     private AttachmentVideoUnit attachmentVideoUnit;
+
+    /**
+     * Whether a newer version of the file has replaced this slide, or the instructor dropped it from the page order.
+     * <p>
+     * A superseded slide keeps its unit rather than being detached from it. Nothing references a slide row, so a
+     * detached one was reachable from nowhere and nothing ever removed it; keeping the unit leaves the history
+     * readable and the row inside the unit's lifetime. Every query that lists a unit's slides filters these out.
+     */
+    @Column(name = "superseded", nullable = false)
+    private boolean superseded = false;
 
     @Size(max = 150)
     @Column(name = "slide_image_path", length = 150)
@@ -40,6 +50,14 @@ public class Slide extends DomainObject {
     @ManyToOne
     @JoinColumn(name = "exercise_id")
     private Exercise exercise;
+
+    public boolean isSuperseded() {
+        return superseded;
+    }
+
+    public void setSuperseded(boolean superseded) {
+        this.superseded = superseded;
+    }
 
     public AttachmentVideoUnit getAttachmentVideoUnit() {
         return attachmentVideoUnit;

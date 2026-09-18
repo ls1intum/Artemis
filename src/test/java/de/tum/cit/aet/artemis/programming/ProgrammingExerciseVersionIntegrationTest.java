@@ -7,6 +7,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 
@@ -91,7 +93,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         AuxiliaryRepository auxiliaryRepository = new AuxiliaryRepository();
         auxiliaryRepository.setName("extra");
         auxiliaryRepository.setCheckoutDirectory("extra");
-        newExercise.setAuxiliaryRepositories(new ArrayList<>(List.of(auxiliaryRepository)));
+        newExercise.setAuxiliaryRepositories(new LinkedHashSet<>(List.of(auxiliaryRepository)));
         // Set valid build plan phases so that subsequent update requests pass the noBuildPhases validation
         var validPhases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
                 new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"))), "ubuntu:latest");
@@ -354,9 +356,9 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
                 ExerciseType.PROGRAMMING);
-        // set up test cases
+        // set up test cases; the helper saves them itself, and this exercise came back from the creation response, so
+        // saving it here would merge a graph whose auxiliary repositories no longer name the exercise they belong to
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
-        programmingExerciseRepository.save(programmingExercise);
         exerciseVersionService.createExerciseVersion(programmingExercise);
 
         final var endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases/reset";
@@ -375,9 +377,9 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
                 ExerciseType.PROGRAMMING);
-        // set up test cases
+        // set up test cases; the helper saves them itself, and this exercise came back from the creation response, so
+        // saving it here would merge a graph whose auxiliary repositories no longer name the exercise they belong to
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
-        programmingExerciseRepository.save(programmingExercise);
         exerciseVersionService.createExerciseVersion(programmingExercise);
 
         final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
@@ -446,9 +448,9 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
                 ExerciseType.PROGRAMMING);
 
-        List<AuxiliaryRepository> auxiliaryRepositories = programmingExercise.getAuxiliaryRepositories();
+        Collection<AuxiliaryRepository> auxiliaryRepositories = programmingExercise.getAuxiliaryRepositories();
         assertThat(auxiliaryRepositories).isNotEmpty();
-        Long auxiliaryRepositoryId = auxiliaryRepositories.getFirst().getId();
+        Long auxiliaryRepositoryId = auxiliaryRepositories.iterator().next().getId();
         assertThat(auxiliaryRepositoryId).isNotNull();
 
         request.postWithoutLocation("/api/programming/auxiliary-repositories/" + auxiliaryRepositoryId + "/file?file=Template.java", null, HttpStatus.OK, null);

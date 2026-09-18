@@ -277,7 +277,15 @@ Three things about it are worth knowing before changing it:
    dispatch inputs, so keep that trigger input-free.
 
 The job is `continue-on-error` and never appears in another job's `needs:`, so a Sonar outage, an
-expired `SONAR_TOKEN`, or a missing project cannot turn `develop` red.
+expired `SONAR_TOKEN`, or a missing project cannot fail the run.
+
+That covers the workflow, and only the workflow. SonarQube Cloud's GitHub App posts a second check
+of its own, `SonarCloud Code Analysis`, carrying the quality gate verdict. Nothing in this
+repository produces that check and `continue-on-error` cannot reach it, so a failed gate shows as a
+red X on the `develop` commit while the job beside it is green. It still gates nothing — branch
+protection requires only `All required CI Passed` — but it is the reason `develop` can look red with
+every workflow passing. Which conditions that verdict applies is the quality gate the project is
+assigned in SonarQube Cloud, configured there rather than here.
 
 ## Adding a new CI check
 

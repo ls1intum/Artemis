@@ -11,7 +11,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.Set;
 import java.util.zip.ZipFile;
 
 import org.apache.commons.io.FileUtils;
@@ -351,7 +351,7 @@ class GitRepositoryExportServiceExportTest {
         auxiliaryRepository.setName("helpers");
         auxiliaryRepository.setRepositoryUri("https://artemis.example.com/git/ABC/abc-helpers.git");
         auxiliaryRepository.setExercise(exercise);
-        exercise.setAuxiliaryRepositories(List.of(auxiliaryRepository));
+        exercise.setAuxiliaryRepositories(Set.of(auxiliaryRepository));
 
         var resource = exportService.exportInstructorAuxiliaryRepositoryForExerciseInMemory(exercise, auxiliaryRepository);
 

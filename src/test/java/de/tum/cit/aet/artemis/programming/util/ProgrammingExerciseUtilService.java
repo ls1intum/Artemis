@@ -853,10 +853,9 @@ public class ProgrammingExerciseUtilService {
         repository.setName("auxrepo");
         repository.setDescription("Description");
         repository.setCheckoutDirectory("assignment/src");
-        repository = auxiliaryRepositoryRepository.save(repository);
-        programmingExercise.setAuxiliaryRepositories(List.of(repository));
         repository.setExercise(programmingExercise);
-        programmingExerciseRepository.save(programmingExercise);
+        repository = auxiliaryRepositoryRepository.save(repository);
+        programmingExercise.setAuxiliaryRepositories(Set.of(repository));
         return repository;
     }
 

@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
@@ -66,7 +67,8 @@ public class AuxiliaryRepository extends DomainObject {
     @Column(name = "description")
     private String description;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "exercise_id", nullable = false)
     @JsonIgnore
     @Parent
     private ProgrammingExercise exercise;

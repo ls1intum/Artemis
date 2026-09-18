@@ -132,8 +132,8 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `CompetencyRelation` | Competency head and tail | Required (all) | No | Cascades on both. |
 | `CourseLearnerProfile` | Course `course_id` and LearnerProfile `learner_profile_id` | Required (all) | No |  |
 | `KnowledgeArea` | KnowledgeArea `parent_id` | Optional | **Yes** | Self-referencing tree; a null parent is a legitimate root. |
-| `LearnerProfile` | User `jhi_user.learner_profile_id` | Held by the parent | **Yes** | The user points at it; nothing points back. |
-| `LearningPath` | Course `course_id` and User `user_id` | No foreign key | **Yes** | Both columns exist but carry no foreign key at all. |
+| `LearnerProfile` | User `user_id` | Required | No | Unique per account, cascades on account deletion. |
+| `LearningPath` | Course `course_id` and User `user_id` | Required (all) | No | Cascades on both. |
 | `ScienceEvent` | — | Root | No | Analytics event; `resource_id` is an untyped pointer with no foreign key. |
 | `ScienceSetting` | — | Root | No | Keyed by user login rather than by foreign key. |
 | `Source` | — | Root | No | Reference data. |
@@ -232,7 +232,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `LectureUnit` and 4 subclasses | Lecture `lecture_id` | Required | No |  |
 | `LectureUnitCompletion` | LectureUnit `lecture_unit_id` and User `user_id` | Required (all) | No |  |
 | `LectureUnitProcessingState` | LectureUnit `lecture_unit_id` | Required | No | Cascades. |
-| `Slide` | AttachmentVideoUnit `attachment_unit_id` | Optional | **Yes** | Nullable, and ON DELETE SET NULL actively creates orphans. |
+| `Slide` | AttachmentVideoUnit `attachment_unit_id` | Required | No | Cascades. A slide the instructor replaced is marked `superseded` rather than detached. |
 
 ### Local CI
 
@@ -267,14 +267,14 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `PlagiarismComparison` | PlagiarismResult `plagiarism_result_id` | Required | No |  |
 | `PlagiarismDetectionConfig` | Exercise `exercise.plagiarism_detection_config_id` | Held by the parent | **Yes** | The exercise points at it; nothing points back. |
 | `PlagiarismResult` | Exercise `exercise_id` | Required | No |  |
-| `PlagiarismSubmission` | PlagiarismComparison `plagiarism_comparison_id` or PlagiarismCase `plagiarism_case_id` | Optional (alternatives) | **Yes** | Both nullable: the comparison cleanup detaches the submission rather than removing it. |
+| `PlagiarismSubmission` | PlagiarismComparison `plagiarism_comparison_id` | Required | No | Cascades. `comparison_side` says which half of the pair it is; the plagiarism case is a reference, not a parent. |
 | `PlagiarismSubmissionElement` | PlagiarismSubmission `plagiarism_submission_id` | Optional | **Yes** | Nullable, though it cascades when set. |
 
 ### Programming
 
 | Entity | Belongs to | Parent required | Orphan possible | Notes |
 | --- | --- | --- | --- | --- |
-| `AuxiliaryRepository` | ProgrammingExercise `exercise_id` | Optional | **Yes** | The exercise's collection owns the order column, so Hibernate dissociates a repository it removes instead of deleting it. |
+| `AuxiliaryRepository` | ProgrammingExercise `exercise_id` | Required | No | Ordered by id, so the exercise's collection no longer owns the row's foreign key. |
 | `BuildLogEntry` | ProgrammingSubmission `programming_submission_id` | Required | No |  |
 | `BuildPlan` | Exercise `exercise.build_plan_id` | Held by the parent | **Yes** | The exercise points at it; nothing points back. |
 | `Ide` | — | Root | No | Reference data. |
@@ -289,7 +289,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `UserIdeMapping` | Ide `ide_id` and User `user_id` | Required (all) | No |  |
 | `UserSshPublicKey` | User `user_id` | Required | No |  |
 | `UserVCSAccessToken` | User `user_id` | Required | No | Cascades on user deletion. |
-| `VcsAccessLog` | Participation `participation_id` | No foreign key | **Yes** | NOT NULL but carries no foreign key. |
+| `VcsAccessLog` | Participation `participation_id` | Required | No | Cascades. The account that acted is a reference and is cleared when it is deleted. |
 
 ### Quiz
 
@@ -321,10 +321,20 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 
 ## Finding orphans
 
-A migration that makes a parent required refuses to run while a row without one is still there, and
-names the columns it checked. This query answers the same question in advance, on any installation,
-and is read-only. A column with a count above zero is one that has to be dealt with before the
-migration will apply.
+A migration that makes a parent required does one of two things with the orphans it finds, and which
+one decides what you need to know before running it.
+
+Where an orphan carries no evidence of which parent it belonged to, the migration **halts** rather
+than guessing, because deleting it would lose work to save a migration. Where a row has been
+unreachable from the moment it lost its parent — nothing references it and nothing lists it — the
+migration **removes** it, and says so in the comment above the statement that does it.
+
+Both queries below are read-only and run on any installation.
+
+### Rows that would stop a migration
+
+A column with a count above zero has to be attached to its parent, or deliberately removed, before
+the migration will apply.
 
 ```sql
 SELECT 'attachment.attachment_unit_id'              AS column_checked, COUNT(*) AS orphans FROM attachment                     WHERE attachment_unit_id IS NULL
@@ -358,49 +368,68 @@ delete it only when it cannot: an orphan carries no evidence of which parent it 
 these tables own submissions, feedback, slides and messages, so a guess loses work rather than saving
 a migration.
 
+### Rows a migration removes
+
+These have no parent to be attached to, so the migration deletes them rather than halting. Counting
+them first is how you find out what an upgrade will take with it, and it is worth doing even when the
+counts are expected to be small: the files behind a deleted slide stay on disk, and a removed access
+log entry is not recoverable from anywhere else.
+
+```sql
+SELECT 'learner_profile with no account'                    AS what, COUNT(*) AS rows_affected
+  FROM learner_profile lp WHERE NOT EXISTS (SELECT 1 FROM jhi_user u WHERE u.learner_profile_id = lp.id)
+UNION ALL SELECT 'course_learner_profile of those profiles', COUNT(*)
+  FROM course_learner_profile clp WHERE clp.learner_profile_id IN
+       (SELECT lp.id FROM learner_profile lp WHERE NOT EXISTS (SELECT 1 FROM jhi_user u WHERE u.learner_profile_id = lp.id))
+UNION ALL SELECT 'vcs_access_log naming a missing participation', COUNT(*)
+  FROM vcs_access_log WHERE participation_id NOT IN (SELECT id FROM participation)
+UNION ALL SELECT 'vcs_access_log naming a missing account (cleared, not deleted)', COUNT(*)
+  FROM vcs_access_log WHERE user_id IS NOT NULL AND user_id NOT IN (SELECT id FROM jhi_user)
+UNION ALL SELECT 'slide with no unit', COUNT(*)
+  FROM slide WHERE attachment_unit_id IS NULL
+UNION ALL SELECT 'auxiliary repository with no exercise', COUNT(*)
+  FROM programming_exercise_auxiliary_repositories WHERE exercise_id IS NULL
+UNION ALL SELECT 'plagiarism_submission with no comparison', COUNT(*)
+  FROM plagiarism_submission WHERE plagiarism_comparison_id IS NULL
+UNION ALL SELECT 'plagiarism_submission_element of those submissions', COUNT(*)
+  FROM plagiarism_submission_element WHERE plagiarism_submission_id IN
+       (SELECT id FROM plagiarism_submission WHERE plagiarism_comparison_id IS NULL);
+```
+
+Only the account row is cleared rather than deleted: an access log entry that names an account that
+no longer exists still records what happened to the repository, so it keeps everything except the
+name.
+
 ## Where orphans are still possible
 
-Of the 147 tables behind the 186 entities, 79 have a required parent, 24 are roots by design, 18 are
+Of the 147 tables behind the 186 entities, 85 have a required parent, 24 are roots by design, 18 are
 join entities whose parents are all required and four carry a check constraint over alternative
-parents. That leaves **22 tables where the schema permits an orphan**, in four shapes.
+parents. That leaves **16 tables where the schema permits an orphan**, in three shapes.
 
 ### An owning foreign key that is nullable
 
-`Slide`, `Participation`, `Submission`, `Feedback`, `QuizQuestion`, `PlagiarismSubmissionElement`,
-`AuxiliaryRepository` and `KnowledgeArea`.
+`Participation`, `Submission`, `Feedback`, `QuizQuestion`, `PlagiarismSubmissionElement` and
+`KnowledgeArea`.
 
-Two of these are held open by the mapping rather than by old data. `KnowledgeArea` is a tree, so a
-null parent means a root node. `AuxiliaryRepository` sits in an ordered inverse collection: the
-exercise owns the `@OrderColumn`, so a repository cannot be written on its own without leaving its
-position null, and Hibernate dissociates one it removes from the list instead of deleting it.
-Requiring the column means giving the child an explicit position field the application maintains.
-The remaining six hold rows today that carry no evidence of which parent they belonged to, so a
-constraint needs a decision about those rows before a migration.
+`KnowledgeArea` is held open by the model rather than by old data: it is a tree, so a null parent
+means a root node. The other five hold rows today that carry no evidence of which parent they
+belonged to, so a constraint needs a decision about those rows before a migration.
 
 ### Alternative parents with nothing enforcing the choice
 
 `Post` may belong to a conversation or to a plagiarism case, and the database accepts a row naming
 neither. The rows that do this predate conversations entirely.
 
-`PlagiarismSubmission` names a comparison, a case, or both. Every stored row names a comparison, so
-the column looks required — but `PlagiarismResource#deletePlagiarismComparisons` detaches the
-submission when it cleans up comparisons rather than removing it, so requiring the column would turn
-a working cleanup into a failure. What that cleanup should do with the submissions comes first.
-
 ### One-to-one where the parent holds the pointer
 
-Ten tables have no foreign key of their own. Nothing in the schema connects them to anything, and
+Nine tables have no foreign key of their own. Nothing in the schema connects them to anything, and
 the only thing keeping them reachable is a nullable column on the parent: `CourseAthenaConfig`,
 `CourseConfiguration`, `OnlineCourseConfiguration`, `TutorialGroupsConfiguration`,
-`TeamAssignmentConfig`, `PlagiarismDetectionConfig`, `SubmissionPolicy`, `BuildPlan`,
-`ProgrammingExerciseBuildConfig` and `LearnerProfile`.
+`TeamAssignmentConfig`, `PlagiarismDetectionConfig`, `SubmissionPolicy`, `BuildPlan` and
+`ProgrammingExerciseBuildConfig`.
 
-### No foreign key at all
-
-`LearningPath` stores `course_id` and `user_id` as plain nullable columns, and `VcsAccessLog` stores
-a `NOT NULL participation_id` the same way. Nothing prevents them pointing at rows that no longer
-exist. `ScienceEvent.resourceId`, `ApollonDiagram.courseId` and `ProgrammingExerciseBuildStatistics`
-are untyped pointers of the same kind, which is why they are listed as roots above: there is no
+`ScienceEvent.resourceId`, `ApollonDiagram.courseId` and `ProgrammingExerciseBuildStatistics` hold
+untyped pointers with no foreign key, which is why they are listed as roots above: there is no
 relationship to enforce.
 
 ## When adding an entity
