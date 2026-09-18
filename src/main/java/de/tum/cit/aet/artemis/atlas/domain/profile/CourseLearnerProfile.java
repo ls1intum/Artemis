@@ -13,6 +13,7 @@ import jakarta.validation.constraints.Min;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.course.domain.Course;
 
 @Entity
@@ -33,11 +34,13 @@ public class CourseLearnerProfile extends DomainObject {
     public static final int MAX_PROFILE_VALUE = 5;
 
     @ManyToOne
-    @JoinColumn(name = "learner_profile_id")
+    @JoinColumn(name = "learner_profile_id", nullable = false)
+    @Parent
     private LearnerProfile learnerProfile;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id")
+    @JoinColumn(name = "course_id", nullable = false)
+    @Parent
     private Course course;
 
     @Column(name = "aim_for_grade_or_bonus")

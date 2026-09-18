@@ -11,6 +11,7 @@ import jakarta.persistence.Table;
 
 import org.hibernate.annotations.BatchSize;
 
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @Entity
 @Table(name = "feedback_message")
 @BatchSize(size = 50)
+@AggregateRoot("Reference data.")
 public class FeedbackMessage extends DomainObject {
 
     @Column(name = "hash", nullable = false)

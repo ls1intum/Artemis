@@ -15,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 
@@ -67,6 +68,7 @@ public class AuxiliaryRepository extends DomainObject {
 
     @ManyToOne
     @JsonIgnore
+    @Parent
     private ProgrammingExercise exercise;
 
     public String getRepositoryUri() {
