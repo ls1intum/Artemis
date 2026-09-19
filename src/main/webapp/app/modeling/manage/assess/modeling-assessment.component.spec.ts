@@ -456,6 +456,26 @@ describe('ModelingAssessmentComponent', () => {
             expect(adapted.detailText).toBe('Edited again');
         });
 
+        it('marks an accepted suggestion as adapted when only its score changes', () => {
+            const suggestion = Feedback.forModeling(1, 'Original detail', PACKAGE_ID, 'Package');
+            suggestion.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Missing abstraction';
+            comp.elementFeedback.set(PACKAGE_ID, suggestion);
+            comp['shownInApollon'].set(PACKAGE_ID, 'Original detail');
+
+            comp.generateFeedbackFromAssessment([assessmentFor({ score: 2, feedback: 'Original detail' })]);
+
+            expect(suggestion.text).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'Missing abstraction');
+        });
+
+        it('does not mark a non-suggestion feedback as adapted', () => {
+            const manual = Feedback.forModeling(1, 'Instructor comment', PACKAGE_ID, 'Package');
+            comp.elementFeedback.set(PACKAGE_ID, manual);
+
+            comp.generateFeedbackFromAssessment([assessmentFor({ score: 2, feedback: 'Edited instructor comment' })]);
+
+            expect(manual.text).toBe('Edited instructor comment');
+        });
+
         it('attaches the grading instruction the tutor dropped on an element, and detaches it once removed', () => {
             const instruction = { id: 7 } as any;
             comp.generateFeedbackFromAssessment([assessmentFor({ dropInfo: instruction })]);
