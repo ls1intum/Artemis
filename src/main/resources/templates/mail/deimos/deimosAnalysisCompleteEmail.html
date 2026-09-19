@@ -39,6 +39,16 @@
         </li>
     </ul>
 
+    <th:block th:if="${analysis.failureBreakdown != null and !analysis.failureBreakdown.isEmpty()}">
+        <p class="bold-text" th:text="#{email.deimos.analysisComplete.failureBreakdownHeading}">Failures by category</p>
+        <ul>
+            <li th:each="entry : ${analysis.failureBreakdown}">
+                <span th:text="#{${entry.translationKey}}">Category</span>: <span th:text="${entry.count}">0</span>
+            </li>
+        </ul>
+        <p th:text="#{email.deimos.analysisComplete.failureHint}">Categories other than "Nothing to analyze" mean these participations were not examined.</p>
+    </th:block>
+
     <th:block th:if="${analysis.failedAnalysisDetails != null and !analysis.failedAnalysisDetails.isEmpty()}">
         <p class="bold-text" th:text="#{email.deimos.analysisComplete.failedDetailsHeading}">Failure details</p>
         <ul>
