@@ -15,17 +15,17 @@ test.describe('Internal user creation', { tag: '@fast' }, () => {
             await login(admin, '/admin/user-management/new');
 
             try {
-                await page.getByLabel('Login', { exact: true }).fill(userLogin);
-                await page.getByLabel('First name', { exact: true }).fill('Random');
-                await page.getByLabel('Last name', { exact: true }).fill('Password');
-                await page.getByLabel('Email', { exact: true }).fill(`${userLogin}@example.com`);
+                await page.locator('#login').fill(userLogin);
+                await page.locator('#firstName').fill('Random');
+                await page.locator('#lastName').fill('Password');
+                await page.locator('#email').fill(`${userLogin}@example.com`);
                 await page.getByLabel('Internal', { exact: true }).check();
 
                 const randomPassword = page.getByLabel('Random password', { exact: true });
                 await expect(randomPassword).toBeChecked();
                 if (toggleBack) {
                     await randomPassword.uncheck();
-                    await page.getByLabel('Password', { exact: true }).fill('Typed-password-123');
+                    await page.locator('#password').fill('Typed-password-123');
                     await randomPassword.check();
                 }
 
