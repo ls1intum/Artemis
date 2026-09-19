@@ -394,8 +394,30 @@ UNION ALL SELECT 'plagiarism_submission with no comparison', COUNT(*)
   FROM plagiarism_submission WHERE plagiarism_comparison_id IS NULL
 UNION ALL SELECT 'plagiarism_submission_element of those submissions', COUNT(*)
   FROM plagiarism_submission_element WHERE plagiarism_submission_id IN
-       (SELECT id FROM plagiarism_submission WHERE plagiarism_comparison_id IS NULL);
+       (SELECT id FROM plagiarism_submission WHERE plagiarism_comparison_id IS NULL)
+UNION ALL SELECT 'post naming neither a conversation nor a plagiarism case', COUNT(*)
+  FROM post WHERE conversation_id IS NULL AND plagiarism_case_id IS NULL
+UNION ALL SELECT 'answer_post of those posts', COUNT(*)
+  FROM answer_post WHERE post_id IN (SELECT id FROM post WHERE conversation_id IS NULL AND plagiarism_case_id IS NULL)
+UNION ALL SELECT 'reaction on those posts and their answers', COUNT(*)
+  FROM reaction WHERE post_id IN (SELECT id FROM post WHERE conversation_id IS NULL AND plagiarism_case_id IS NULL)
+     OR answer_post_id IN (SELECT id FROM answer_post WHERE post_id IN
+       (SELECT id FROM post WHERE conversation_id IS NULL AND plagiarism_case_id IS NULL))
+UNION ALL SELECT 'feedback naming no result', COUNT(*)
+  FROM feedback WHERE result_id IS NULL
+UNION ALL SELECT 'long_feedback_text of that feedback (goes with it)', COUNT(*)
+  FROM long_feedback_text WHERE feedback_id IN (SELECT id FROM feedback WHERE result_id IS NULL)
+UNION ALL SELECT 'quiz_question naming no exercise', COUNT(*)
+  FROM quiz_question WHERE exercise_id IS NULL
+UNION ALL SELECT 'submitted_answer of those questions', COUNT(*)
+  FROM submitted_answer WHERE quiz_question_id IN (SELECT id FROM quiz_question WHERE exercise_id IS NULL);
 ```
+
+The text blocks of deleted feedback are **not** in that list, because they are not deleted. A text block
+belongs to its submission, which `text_block.submission_id` requires, so it keeps a parent and stays listed
+where it always was; the foreign key sets its `feedback_id` to null and the row is otherwise untouched. To
+see how many lose that reference, count
+`text_block WHERE feedback_id IN (SELECT id FROM feedback WHERE result_id IS NULL)`.
 
 Only the account row is cleared rather than deleted: an access log entry that names an account that
 no longer exists still records what happened to the repository, so it keeps everything except the
