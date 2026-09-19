@@ -119,6 +119,9 @@ peerDependencyRules:
 # because it never uses Vite. Without an override, @angular/build's own exact pin governs
 # and the mismatch cannot happen. `pnpm run check:vite-override` fails the build if it does.
 overrides:
+  # Rolldown 1.2.0 corrupts KaTeX surrogate escapes during chunk optimization (oxc-project/oxc#25084).
+  # Remove when @angular/build pins a fixed Rolldown version; keep chunk optimization enabled.
+  '@angular/build>rolldown': '1.2.9'
   'ng-mocks>@angular/common': '^22.0.0'
   'ng-mocks>@angular/core': '^22.0.0'
   'ng-mocks>@angular/forms': '^22.0.0'
