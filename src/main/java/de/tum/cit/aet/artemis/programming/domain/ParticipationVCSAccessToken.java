@@ -2,12 +2,14 @@ package de.tum.cit.aet.artemis.programming.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 
 /**
@@ -19,9 +21,13 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 public class ParticipationVCSAccessToken extends DomainObject {
 
     @ManyToOne
+    @JoinColumn(nullable = false)
+    @Parent
     private User user;
 
     @ManyToOne
+    @JoinColumn(nullable = false)
+    @Parent
     private Participation participation;
 
     @Column(name = "vcs_access_token", length = 50)

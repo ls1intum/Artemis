@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 
@@ -31,6 +32,8 @@ public class ExampleSubmission extends DomainObject {
     private Boolean usedForTutorial;
 
     @ManyToOne
+    @JoinColumn(nullable = false)
+    @Parent
     private Exercise exercise;
 
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true)

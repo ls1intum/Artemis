@@ -1572,7 +1572,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldGetListForAuxiliaryRepository() throws Exception {
-            var repositoryId = programmingExerciseWithAuxRepo.getAuxiliaryRepositories().getFirst().getId();
+            var repositoryId = programmingExerciseWithAuxRepo.getAuxiliaryRepositories().iterator().next().getId();
             var commits = request.getList(PATH_PREFIX + "AUXILIARY?repositoryId=" + repositoryId, HttpStatus.OK, CommitInfoDTO.class);
             assertThat(commits).isNotEmpty();
             assertThat(commits).anySatisfy(commit -> assertThat(commit.message()).isEqualTo(auxiliaryCommitMessage));
@@ -1586,7 +1586,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         }
 
         private AuxiliaryRepository ensureAuxiliaryRepositoryConfigured() throws Exception {
-            AuxiliaryRepository auxiliaryRepository = programmingExerciseWithAuxRepo.getAuxiliaryRepositories().getFirst();
+            AuxiliaryRepository auxiliaryRepository = programmingExerciseWithAuxRepo.getAuxiliaryRepositories().iterator().next();
             if (auxiliaryRepository.getRepositoryUri() == null) {
                 String projectKey = programmingExerciseWithAuxRepo.getProjectKey();
                 String repositorySlug = programmingExerciseWithAuxRepo.generateRepositoryName(auxiliaryRepository.getName());
@@ -1762,7 +1762,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void retrieveCommitHistoryGitExceptionEmptyList() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        doThrow(new NoHeadException("error")).when(gitServiceSpy).getCommitInfos(participation.getVcsRepositoryUri());
+        doThrow(new NoHeadException("error")).when(bareGitRepositoryServiceSpy).getCommitInfos(participation.getVcsRepositoryUri());
         assertThat(request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.OK, CommitInfoDTO.class))
                 .isEmpty();
     }

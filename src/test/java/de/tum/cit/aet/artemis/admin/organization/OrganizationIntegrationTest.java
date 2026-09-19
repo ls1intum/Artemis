@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseForEnrollmentDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
 class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
@@ -122,8 +123,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         course1 = courseRepository.save(course1);
         course2 = courseRepository.save(course2);
 
-        List<Course> coursesToEnroll = request.getList("/api/course/courses/for-enrollment", HttpStatus.OK, Course.class);
-        assertThat(coursesToEnroll).contains(course1).contains(course2);
+        List<CourseForEnrollmentDTO> coursesToEnroll = request.getList("/api/course/courses/for-enrollment", HttpStatus.OK, CourseForEnrollmentDTO.class);
+        assertThat(coursesToEnroll).extracting(CourseForEnrollmentDTO::id).contains(course1.getId(), course2.getId());
     }
 
     @Test

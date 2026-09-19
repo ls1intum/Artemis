@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 @Entity
 @Table(name = "tutorial_group_session")
@@ -91,8 +92,9 @@ public class TutorialGroupSession extends DomainObject {
      * The tutorial group that this session belongs to. Is always set for recurring and non-recurring sessions.
      */
     @ManyToOne
-    @JoinColumn(name = "tutorial_group_id")
+    @JoinColumn(name = "tutorial_group_id", nullable = false)
     @JsonIgnoreProperties(value = "tutorialGroupSessions", allowSetters = true)
+    @Parent
     private TutorialGroup tutorialGroup;
 
     public ZonedDateTime getStart() {

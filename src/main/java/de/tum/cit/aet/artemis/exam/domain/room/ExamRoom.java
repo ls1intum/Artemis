@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 @Entity
 @Table(name = "exam_room")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@AggregateRoot("Shared infrastructure, reused across exams.")
 public class ExamRoom extends AbstractAuditingEntity {
 
     /**

@@ -19,6 +19,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseManagementExerciseDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseWithExercisesDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -143,10 +145,10 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         // The course-with-exercises endpoint (used by the scores management view) must serialize each exercise's variant
         // group including its maxPoints, so the client can cap the combined points of a group's variants at that maxPoints.
         // With open-in-view disabled this only works because the fetch graph eagerly loads the association.
-        Course loaded = request.get("/api/course/courses/" + course.getId() + "/with-exercises", HttpStatus.OK, Course.class);
-        Exercise loadedExercise = loaded.getExercises().stream().filter(candidate -> candidate.getId().equals(exercise.getId())).findFirst().orElseThrow();
-        assertThat(loadedExercise.getExerciseVariantGroup()).isNotNull();
-        assertThat(loadedExercise.getExerciseVariantGroup().getMaxPoints()).isEqualTo(100.0);
+        CourseWithExercisesDTO loaded = request.get("/api/course/courses/" + course.getId() + "/with-exercises", HttpStatus.OK, CourseWithExercisesDTO.class);
+        CourseManagementExerciseDTO loadedExercise = loaded.exercises().stream().filter(candidate -> candidate.id().equals(exercise.getId())).findFirst().orElseThrow();
+        assertThat(loadedExercise.exerciseVariantGroup()).isNotNull();
+        assertThat(loadedExercise.exerciseVariantGroup().maxPoints()).isEqualTo(100.0);
     }
 
     @Test
@@ -661,8 +663,8 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     void testCourseWithExercisesSerializesVariantGroupForQuiz() throws Exception {
         QuizExercise quiz = quizInGroup();
 
-        Course loaded = request.get("/api/course/courses/" + course.getId() + "/with-exercises", HttpStatus.OK, Course.class);
-        Exercise loadedQuiz = loaded.getExercises().stream().filter(candidate -> candidate.getId().equals(quiz.getId())).findFirst().orElseThrow();
+        CourseWithExercisesDTO loaded = request.get("/api/course/courses/" + course.getId() + "/with-exercises", HttpStatus.OK, CourseWithExercisesDTO.class);
+        CourseManagementExerciseDTO loadedQuiz = loaded.exercises().stream().filter(candidate -> candidate.id().equals(quiz.getId())).findFirst().orElseThrow();
 
         assertVariantGroupPresent(loadedQuiz);
     }
@@ -679,6 +681,8 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         ExerciseVariantGroup group = new ExerciseVariantGroup();
         group.setTitle("Loop variants");
         group.setMaxPoints(100.0);
+        // A variant group belongs to a course, which the database now requires.
+        group.setCourse(course);
         quiz.setExerciseVariantGroup(exerciseVariantGroupRepository.save(group));
         return exerciseRepository.save(quiz);
     }
@@ -693,6 +697,12 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(loaded.getExerciseVariantGroup()).isNotNull();
         assertThat(loaded.getExerciseVariantGroup().getMaxPoints()).isEqualTo(100.0);
         assertThat(loaded.getExerciseVariantGroup().getTitle()).isEqualTo("Loop variants");
+    }
+
+    private static void assertVariantGroupPresent(CourseManagementExerciseDTO loaded) {
+        assertThat(loaded.exerciseVariantGroup()).isNotNull();
+        assertThat(loaded.exerciseVariantGroup().maxPoints()).isEqualTo(100.0);
+        assertThat(loaded.exerciseVariantGroup().title()).isEqualTo("Loop variants");
     }
 
     /** The text exercise edit page is a DTO, so unlike the entity-serializing pages it must map the group explicitly. */

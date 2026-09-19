@@ -35,6 +35,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
@@ -63,6 +64,9 @@ public class LocalVCRepositoryTestService {
 
     @Autowired
     private ObjectProvider<GitService> gitServiceProvider;
+
+    @Autowired
+    private ObjectProvider<BareGitRepositoryService> bareGitRepositoryServiceProvider;
 
     @Value("${artemis.version-control.url}")
     private URI localVCBaseUri;
@@ -254,11 +258,11 @@ public class LocalVCRepositoryTestService {
      * @return the paths of all files, relative to the repository root, or an empty list if nothing was ever pushed
      */
     public List<String> listFilePaths(LocalVCRepositoryUri repositoryUri) {
-        GitService gitService = gitServiceProvider.getIfAvailable();
-        if (gitService == null) {
-            throw new IllegalStateException("Cannot read " + repositoryUri.getURI() + ": the active test profile has no GitService");
+        BareGitRepositoryService bareGitRepositoryService = bareGitRepositoryServiceProvider.getIfAvailable();
+        if (bareGitRepositoryService == null) {
+            throw new IllegalStateException("Cannot read " + repositoryUri.getURI() + ": the active test profile has no BareGitRepositoryService");
         }
-        try (var bareRepository = gitService.getBareRepository(repositoryUri, false)) {
+        try (var bareRepository = bareGitRepositoryService.getBareRepository(repositoryUri, false)) {
             ObjectId head = bareRepository.resolve(Constants.HEAD);
             if (head == null) {
                 return List.of();
@@ -286,11 +290,11 @@ public class LocalVCRepositoryTestService {
      * @return the content of the file
      */
     public String readFile(LocalVCRepositoryUri repositoryUri, String filePath) {
-        GitService gitService = gitServiceProvider.getIfAvailable();
-        if (gitService == null) {
-            throw new IllegalStateException("Cannot read " + repositoryUri.getURI() + ": the active test profile has no GitService");
+        BareGitRepositoryService bareGitRepositoryService = bareGitRepositoryServiceProvider.getIfAvailable();
+        if (bareGitRepositoryService == null) {
+            throw new IllegalStateException("Cannot read " + repositoryUri.getURI() + ": the active test profile has no BareGitRepositoryService");
         }
-        try (var bareRepository = gitService.getBareRepository(repositoryUri, false)) {
+        try (var bareRepository = bareGitRepositoryService.getBareRepository(repositoryUri, false)) {
             ObjectId head = bareRepository.resolve(Constants.HEAD);
             if (head == null) {
                 throw new IllegalStateException("Cannot read " + filePath + " from " + repositoryUri.getURI() + ": nothing was ever pushed to it");
