@@ -6,7 +6,7 @@ import { PasswordStrengthBarComponent } from 'app/account/password/password-stre
 import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { PasswordResetFinishService } from './password-reset-finish.service';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'app/app.constants';
+import { PASSWORD_MAX_BYTES, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'app/app.constants';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TumUiButtonComponent, TumUiCheckboxComponent, TumUiFormFieldComponent, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
@@ -55,6 +55,8 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
     readonly PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
     /** Maximum allowed password length exposed for template validation messages */
     readonly PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
+    /** BCrypt limits passwords by their UTF-8 byte length, not their character count. */
+    readonly PASSWORD_MAX_BYTES = PASSWORD_MAX_BYTES;
 
     /** Indicates the component has finished extracting the reset key from URL */
     readonly initialized = signal(false);
@@ -83,7 +85,12 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
     readonly passwordForm = new FormGroup<PasswordResetForm>({
         newPassword: new FormControl('', {
             nonNullable: true,
-            validators: [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)],
+            validators: [
+                Validators.required,
+                Validators.minLength(PASSWORD_MIN_LENGTH),
+                Validators.maxLength(PASSWORD_MAX_LENGTH),
+                (control) => (new TextEncoder().encode(control.value).length > PASSWORD_MAX_BYTES ? { maxbytes: true } : null),
+            ],
         }),
         confirmPassword: new FormControl('', {
             nonNullable: true,
@@ -124,6 +131,11 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
 
         if (newPassword.value !== confirmPassword.value) {
             this.doNotMatch.set(true);
+            return;
+        }
+
+        if (this.passwordForm.invalid) {
+            this.passwordForm.markAllAsTouched();
             return;
         }
 
