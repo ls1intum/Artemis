@@ -503,6 +503,11 @@
             "title": "Exams",
             "createExam": "Create a new exam",
             "importExam": "Import an exam",
+            "empty": {
+                "title": "No exams yet",
+                "description": "Create an exam or import one from another course to get started.",
+                "documentation": "Learn about exams"
+            },
             "editExam": "Edit",
             "courseTitle": "Course Title",
             "examId": "Exam ID",

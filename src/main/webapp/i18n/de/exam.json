@@ -503,6 +503,11 @@
             "title": "Klausuren",
             "createExam": "Erstelle eine neue Klausur",
             "importExam": "Importiere eine Klausur",
+            "empty": {
+                "title": "Noch keine Klausuren",
+                "description": "Erstelle eine Klausur oder importiere eine aus einem anderen Kurs, um zu beginnen.",
+                "documentation": "Mehr über Klausuren erfahren"
+            },
             "editExam": "Bearbeiten",
             "courseTitle": "Kursname",
             "examId": "Klausur ID",
