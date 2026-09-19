@@ -18,8 +18,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.admin.config.DataCleanupProperties;
 import de.tum.cit.aet.artemis.admin.domain.CleanupJobExecution;
 import de.tum.cit.aet.artemis.admin.domain.CleanupJobType;
+import de.tum.cit.aet.artemis.admin.dto.CleanupConfigurationDTO;
 import de.tum.cit.aet.artemis.admin.dto.CleanupServiceExecutionRecordDTO;
 import de.tum.cit.aet.artemis.admin.dto.NonLatestNonRatedResultsCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.NonLatestRatedResultsCleanupCountDTO;
@@ -136,6 +138,9 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
 
     @Autowired
     private SubmissionVersionRepository submissionVersionRepository;
+
+    @Autowired
+    private DataCleanupProperties dataCleanupProperties;
 
     private Course oldCourse;
 
@@ -767,7 +772,51 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         request.delete("/api/admin/cleanup/plagiarism-cases", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
         request.get("/api/admin/cleanup/plagiarism-cases/count", HttpStatus.FORBIDDEN, PlagiarismCasesCleanupCountDTO.class);
 
+        request.get("/api/admin/cleanup/configuration", HttpStatus.FORBIDDEN, CleanupConfigurationDTO.class);
         request.get("/api/admin/cleanup/last-executions", HttpStatus.FORBIDDEN, List.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetCleanupConfiguration() throws Exception {
+        var before = ZonedDateTime.now();
+        var configuration = request.get("/api/admin/cleanup/configuration", HttpStatus.OK, CleanupConfigurationDTO.class);
+        var after = ZonedDateTime.now();
+
+        assertThat(configuration).isNotNull();
+        // The admin page states which data an age-based operation affects, so every configured period must be exposed.
+        assertThat(configuration.gradeRelevantRetentionYears()).isEqualTo(dataCleanupProperties.gradeRelevantRetentionYears());
+        assertThat(configuration.nonGradeRelevantRetentionYears()).isEqualTo(dataCleanupProperties.nonGradeRelevantRetentionYears());
+        assertThat(configuration.resetWarningGracePeriodDays()).isEqualTo(dataCleanupProperties.resetWarningGracePeriodDays());
+        assertThat(configuration.oldFeedbackCutoffWeeks()).isEqualTo(dataCleanupProperties.oldFeedbackCutoffWeeks());
+        assertThat(configuration.oldSubmissionVersionsCutoffWeeks()).isEqualTo(dataCleanupProperties.oldSubmissionVersionsCutoffWeeks());
+        assertThat(configuration.notEnrolledUsersInactivityMonths()).isEqualTo(dataCleanupProperties.notEnrolledUsersInactivityMonths());
+        assertThat(configuration.notEnrolledUsersWarningGracePeriodDays()).isEqualTo(dataCleanupProperties.notEnrolledUsersWarningGracePeriodDays());
+
+        // Each cutoff must be the configured period back from the moment the request was served, which is exactly what
+        // the corresponding cleanup job computes; a client-side re-derivation could drift from it.
+        assertCutoff(configuration.gradeRelevantCoursesEndedBefore(), before.minusYears(configuration.gradeRelevantRetentionYears()),
+                after.minusYears(configuration.gradeRelevantRetentionYears()));
+        assertCutoff(configuration.nonGradeRelevantCoursesEndedBefore(), before.minusYears(configuration.nonGradeRelevantRetentionYears()),
+                after.minusYears(configuration.nonGradeRelevantRetentionYears()));
+        assertCutoff(configuration.coursesWarnedBefore(), before.minusDays(configuration.resetWarningGracePeriodDays()),
+                after.minusDays(configuration.resetWarningGracePeriodDays()));
+        assertCutoff(configuration.oldFeedbackCoursesEndedBefore(), before.minusWeeks(configuration.oldFeedbackCutoffWeeks()),
+                after.minusWeeks(configuration.oldFeedbackCutoffWeeks()));
+        assertCutoff(configuration.oldSubmissionVersionsCoursesEndedBefore(), before.minusWeeks(configuration.oldSubmissionVersionsCutoffWeeks()),
+                after.minusWeeks(configuration.oldSubmissionVersionsCutoffWeeks()));
+        assertCutoff(configuration.usersInactiveBefore(), before.minusMonths(configuration.notEnrolledUsersInactivityMonths()),
+                after.minusMonths(configuration.notEnrolledUsersInactivityMonths()));
+        assertCutoff(configuration.usersWarnedBefore(), before.minusDays(configuration.notEnrolledUsersWarningGracePeriodDays()),
+                after.minusDays(configuration.notEnrolledUsersWarningGracePeriodDays()));
+    }
+
+    /**
+     * Asserts that a cutoff lies in the window the request was served in. Compared as instants, since PostgreSQL and
+     * the JSON round trip do not preserve the offset.
+     */
+    private void assertCutoff(ZonedDateTime actual, ZonedDateTime lowerBound, ZonedDateTime upperBound) {
+        assertThat(actual.toInstant()).isBetween(lowerBound.toInstant(), upperBound.toInstant());
     }
 
     @Test
