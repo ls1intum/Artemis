@@ -5,6 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { missingTranslationHandler } from 'app/core/config/translation.config';
 import { Alert, AlertCreationProperties, AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
+import englishUserManagement from 'src/main/webapp/i18n/en/user-management.json';
+import germanUserManagement from 'src/main/webapp/i18n/de/user-management.json';
+import englishErrors from 'src/main/webapp/i18n/en/error.json';
+import germanErrors from 'src/main/webapp/i18n/de/error.json';
 
 describe('Alert Service Test', () => {
     const alertSample = {
@@ -255,6 +259,28 @@ describe('Alert Service Test', () => {
         // THEN
         expect(service.get()).toHaveLength(1);
         expect(service.get()[0].message).toBe('Error on field &#34;artemisApp.foo.minField&#34;');
+    });
+
+    it.each([
+        { language: 'en', users: englishUserManagement, errors: englishErrors, fieldName: 'Password' },
+        { language: 'de', users: germanUserManagement, errors: germanErrors, fieldName: 'Passwort' },
+    ])('should translate a managed user password validation error in $language', ({ language, users, errors, fieldName }) => {
+        const translateService = TestBed.inject(TranslateService);
+        translateService.setTranslation(language, users);
+        translateService.setTranslation(language, errors, true);
+        translateService.use(language);
+
+        eventManager.broadcast({
+            name: 'artemisApp.httpError',
+            content: new HttpErrorResponse({
+                status: 400,
+                error: { fieldErrors: [{ objectName: 'managedUserVM', field: 'password', message: 'Size' }] },
+            }),
+        });
+
+        expect(service.get()).toHaveLength(1);
+        expect(service.get()[0].message).toContain(fieldName);
+        expect(service.get()[0].message).not.toContain('translation-not-found');
     });
 
     it('should display an alert on status 400 for error headers', () => {
