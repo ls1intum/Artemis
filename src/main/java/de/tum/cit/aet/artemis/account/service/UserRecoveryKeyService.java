@@ -80,10 +80,10 @@ public class UserRecoveryKeyService {
     /**
      * Stores a password-reset key and the moment it was issued, replacing any previous one.
      *
-     * @param userId     the account
-     * @param resetKeyId the id of the key to store
-     * @param resetKeyId the hash of the keys secret to store
-     * @param resetDate  when the key was issued, which is what bounds its validity
+     * @param userId       the account
+     * @param resetKeyId   the id of the key to store
+     * @param resetKeyHash the hash of the keys secret to store
+     * @param resetDate    when the key was issued, which is what bounds its validity
      */
     public void storeResetKey(long userId, String resetKeyId, String resetKeyHash, Instant resetDate) {
         saveHandlingConcurrentInsert(userId, row -> {

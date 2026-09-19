@@ -343,8 +343,9 @@ public class UserService {
                 .filter(userKey -> userKey.getResetDate() != null && userKey.getResetDate().isAfter(Instant.now().minus(MAX_RESET_KEY_LIFETIME))
                         && userKey.getResetKeyHash() != null && passwordService.checkPasswordMatch(keySecret, userKey.getResetKeyHash()))
                 .flatMap(userKey -> userRepository.findById(userKey.getUserId())).map(user -> {
-                    userRecoveryKeyService.clearResetKey(user.getId());
+                    // Hashing can reject the password; keep the reset link usable if it fails.
                     user.setPassword(passwordService.hashPassword(newPassword));
+                    userRecoveryKeyService.clearResetKey(user.getId());
                     saveUser(user);
                     // Stops sessions established before the reset from being extended any further.
                     userActivityService.recordCredentialsChanged(user.getId(), Instant.now());

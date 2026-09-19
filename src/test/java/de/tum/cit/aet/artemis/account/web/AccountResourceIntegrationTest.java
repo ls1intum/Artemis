@@ -653,6 +653,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @WithMockUser(AUTHENTICATEDUSER)
     void passwordResetFinishInvalidKeySecret() throws Throwable {
         User createdUser = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        String originalPassword = createdUser.getPassword();
 
         Optional<User> userBefore = userTestRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
         assertThat(userBefore).isPresent();
@@ -678,10 +679,21 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(recipientCaptor.getValue().resetKey()).isNotNull();
         final var badSecret = new StringBuilder(recipientCaptor.getValue().resetKey().secret());
         badSecret.setCharAt(0, badSecret.charAt(0) == 'a' ? 'b' : 'a');
-        KeyAndPasswordVM finishResetData = new KeyAndPasswordVM(recipientCaptor.getValue().email(), badSecret.toString(), newPassword, null);
+        String resetKeyId = recipientCaptor.getValue().resetKey().id();
+        KeyAndPasswordVM finishResetData = new KeyAndPasswordVM(resetKeyId, badSecret.toString(), newPassword, null);
 
         // finish password reset
         request.postWithoutLocation("/api/core/public/account/reset-password/finish", finishResetData, HttpStatus.FORBIDDEN, null);
+        assertThat(userTestRepository.findById(createdUser.getId()).orElseThrow().getPassword()).isEqualTo(originalPassword);
+        assertThat(userRecoveryKeyService.findResetKeyId(createdUser.getId())).isEqualTo(resetKeyId);
+        assertThat(userRecoveryKeyService.findResetKeyHash(createdUser.getId())).isEqualTo(resetKeyHash);
+
+        // A failed attempt must leave the issued credentials usable for their owner.
+        KeyAndPasswordVM validResetData = new KeyAndPasswordVM(resetKeyId, recipientCaptor.getValue().resetKey().secret(), newPassword, null);
+        request.postWithoutLocation("/api/core/public/account/reset-password/finish", validResetData, HttpStatus.OK, null);
+        assertThat(passwordService.checkPasswordMatch(newPassword, userTestRepository.findById(createdUser.getId()).orElseThrow().getPassword())).isTrue();
+        assertThat(userRecoveryKeyService.findResetKeyId(createdUser.getId())).isNull();
+        assertThat(userRecoveryKeyService.findResetKeyHash(createdUser.getId())).isNull();
     }
 
     @Test

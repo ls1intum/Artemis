@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.account.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -8,6 +9,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.context.annotation.Conditional;
@@ -443,6 +446,30 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         assertPasskeyKept();
         assertVcsAccessTokensKept();
         assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "a, 73", "ä, 37" })
+    void failedPasswordHashingKeepsTheResetLinkUsable(String character, int repetitions) {
+        prepareResetKey();
+        String originalPassword = user.getPassword();
+        String originalResetKeyHash = userRecoveryKeyService.findResetKeyHash(user.getId());
+        String unhashablePassword = character.repeat(repetitions);
+        // Both inputs fit the form's character limit but exceed BCrypt's 72-byte limit.
+        assertThat(unhashablePassword.length()).isLessThanOrEqualTo(Constants.PASSWORD_MAX_LENGTH);
+
+        assertThatThrownBy(() -> userService.completePasswordReset(unhashablePassword, getResetKeyId(), getResetKeySecret(), CredentialRevocationChoiceDTO.none()))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        assertThat(userRepository.findById(user.getId()).orElseThrow().getPassword()).isEqualTo(originalPassword);
+        assertThat(userRecoveryKeyService.findResetKeyId(user.getId())).isEqualTo(getResetKeyId());
+        assertThat(userRecoveryKeyService.findResetKeyHash(user.getId())).isEqualTo(originalResetKeyHash);
+
+        userService.completePasswordReset("new-Password-123", getResetKeyId(), getResetKeySecret(), CredentialRevocationChoiceDTO.none()).orElseThrow();
+
+        assertThat(passwordService.checkPasswordMatch("new-Password-123", userRepository.findById(user.getId()).orElseThrow().getPassword())).isTrue();
+        assertThat(userRecoveryKeyService.findResetKeyId(user.getId())).isNull();
+        assertThat(userRecoveryKeyService.findResetKeyHash(user.getId())).isNull();
     }
 
     private String getResetKeyId() {
