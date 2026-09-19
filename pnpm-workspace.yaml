@@ -13,15 +13,15 @@ catalog:
   '@angular-devkit/architect': 0.2201.8
   '@angular-devkit/core': 22.1.8
   '@angular/build': 22.1.8
-  '@angular/cdk': 22.1.6
+  '@angular/cdk': 22.1.7
   '@angular/cli': 22.1.8
-  '@angular/common': 22.1.6
-  '@angular/compiler': 22.1.6
-  '@angular/compiler-cli': 22.1.6
-  '@angular/core': 22.1.6
-  '@angular/forms': 22.1.6
-  '@angular/localize': 22.1.6
-  '@angular/platform-browser': 22.1.6
+  '@angular/common': 22.1.7
+  '@angular/compiler': 22.1.7
+  '@angular/compiler-cli': 22.1.7
+  '@angular/core': 22.1.7
+  '@angular/forms': 22.1.7
+  '@angular/localize': 22.1.7
+  '@angular/platform-browser': 22.1.7
   '@fortawesome/angular-fontawesome': 5.1.0
   '@fortawesome/fontawesome-svg-core': 7.3.1
   '@fortawesome/free-solid-svg-icons': 7.3.1
@@ -72,7 +72,7 @@ catalog:
 # go through pnpm.patchedDependencies (which works on the .pnpm symlink store
 # directly, without requiring transitive deps at top-level node_modules).
 
-# Auto-install peer dependencies (default in pnpm 10, opt-in in pnpm 11).
+# Auto-install peer dependencies (default in pnpm 10, opt-in since pnpm 11).
 # Without this, peer deps are not installed, and the Angular esbuild bundle
 # fails with "Could not resolve ..." errors.
 autoInstallPeers: true
@@ -103,7 +103,7 @@ peerDependencyRules:
     '@angular/platform-browser-dynamic': '22'
     '@angular/router': '22'
 
-# Dependency overrides. pnpm 11 reads overrides from this file in preference to
+# Dependency overrides. pnpm reads overrides from this file in preference to
 # the legacy `pnpm.overrides` block in package.json. We pin a handful of
 # transitive packages to CVE-patched versions and force the current Angular major
 # across the ng-mocks subtree (its peer range trails the Angular release train).
@@ -129,7 +129,7 @@ overrides:
   # @angular/localize is only pulled in transitively (e.g. via @ng-bootstrap/ng-bootstrap,
   # whose peer range requires the current Angular major). Without this pin it resolves to a
   # straggler from an older major that violates that peer range; keep it equal to @angular/core.
-  '@angular/localize': '22.1.6'
+  '@angular/localize': '22.1.7'
   'babel-plugin-istanbul>test-exclude': '8.0.0'
   '@babel/core': '7.29.7'
   '@babel/runtime': '7.29.7'
@@ -138,7 +138,7 @@ overrides:
   '@primeuix/utils': '0.7.2'
   '@sinonjs/fake-timers': '15.4.0'
   ajv: '8.20.0'
-  brace-expansion: '5.0.9'
+  brace-expansion: '5.0.12'
   braces: '3.0.3'
   cookie: '1.1.1'
   debug: '4.4.3'
@@ -153,9 +153,14 @@ overrides:
   globals: '17.12.0'
   http-proxy-middleware: '3.0.7'
   immutable: '5.1.9'
-  ip-address: '10.7.0'
+  ip-address: '10.7.2'
   # Kept on the 4.x line (consumers require ^4; 5.x is an API break).
   js-yaml: '4.3.2'
+  # Held at 30.0.1: in 30.1.0 a detached element's style object no longer passes jsdom's own
+  # brand check, so reading a property off it throws "called on an object that is not a valid
+  # instance of CSSStyleProperties". PrimeNG's MotionDirective does exactly that while tearing
+  # down, which failed 65 tests across two specs on teardown alone. Revisit once PrimeNG or
+  # jsdom fixes it; keep this equal to the catalog entry.
   jsdom: '30.0.1'
   katex: '0.18.7'
   # less dropped the optional `image-size` dependency in 4.9.0. Every image-size release published so
@@ -178,6 +183,11 @@ overrides:
   # it arrives as an auto-installed peer, and packages asking for `^19` will happily pull a newer react than the
   # catalog pins. Pinning both here makes the pairing enforced rather than a coincidence of resolution order.
   # Keep these two and the `react` catalog entry on the same version.
+  # Held at 19.2.8 for a second, independent reason: moving all three to 19.3.0 together keeps the
+  # pairing intact and passes the story tests, but still fails the forced-colors AutoDocs check -
+  # the selected and unselected select-buttons both come back ButtonFace, so the selected state is
+  # no longer distinguishable. Verified by bisect: 19.3.0 fails that test with everything else
+  # unchanged, and reverting only react and react-dom turns the suite green again.
   react: '19.2.8'
   react-dom: '19.2.8'
   # Reached through express / body-parser, which both already sit on their newest release and
@@ -209,7 +219,7 @@ patchedDependencies:
   y-monaco@0.1.6: patches/y-monaco@0.1.6.patch
 
 # Allowlist of dependencies permitted to run install-time build / lifecycle scripts.
-# pnpm 11 blocks build scripts by default; these are needed for native bindings
+# pnpm blocks build scripts by default; these are needed for native bindings
 # (@swc/core, esbuild, @parcel/watcher, lmdb, msgpackr-extract, unrs-resolver),
 # polyfill setup (core-js), or our own dev-time hooks (husky).
 allowBuilds:
