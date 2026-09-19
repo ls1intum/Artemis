@@ -144,6 +144,8 @@ artemis:
       model: gpt-5.6-luna
       temperature: 1.0
       reasoning-effort: xhigh
+      worker-model: gpt-5.6-luna
+      worker-reasoning-effort: high
       responses-api-enabled: true
       # Automatic competency orchestration (Feature.AtlasAgent). Disabled by default;
       # admins flip the toggle to opt the instance in. The scheduler ticks at scheduler-rate-ms and only

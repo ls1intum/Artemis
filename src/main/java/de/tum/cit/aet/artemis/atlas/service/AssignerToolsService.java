@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.cours
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.errorJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.exerciseBelongsToCourse;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.formatWeight;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.markWorkerToolActivity;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.matchAllowedBand;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.missingCourseContextError;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.toJson;
@@ -99,6 +100,7 @@ public class AssignerToolsService {
             @ToolParam(description = "evidence-strength weight: 1.0 (stand-alone evidence), 0.5 (partial), 0.3 (incidental). Must be > 0 and <= 1.0") Double weight,
             @ToolParam(description = "one-sentence outcome of the evidence test naming the chosen band (1.0 / 0.5 / 0.3) and why it is honest") String justification,
             ToolContext toolContext) {
+        markWorkerToolActivity(toolContext);
         Long courseId = courseIdFromContext(toolContext);
         if (courseId == null) {
             return missingCourseContextError(objectMapper);
@@ -182,6 +184,7 @@ public class AssignerToolsService {
     public String unassignExerciseFromCompetency(@ToolParam(description = "id of the competency") Long competencyId, @ToolParam(description = "id of the exercise") Long exerciseId,
             @ToolParam(description = "one-sentence reason stating (a) why the current link fails the evidence test and (b) which competency is the better home") String justification,
             ToolContext toolContext) {
+        markWorkerToolActivity(toolContext);
         Long courseId = courseIdFromContext(toolContext);
         if (courseId == null) {
             return missingCourseContextError(objectMapper);
