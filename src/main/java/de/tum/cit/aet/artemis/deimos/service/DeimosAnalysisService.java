@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.deimos.dto.DeimosLlmRequest;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosLlmResponse;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosTriggerType;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
@@ -45,20 +45,21 @@ public class DeimosAnalysisService {
 
     private final RepositoryService repositoryService;
 
-    private final GitService gitService;
+    private final BareGitRepositoryService bareGitRepositoryService;
 
     private static final String SYSTEM_PROMPT_PATH = "prompts/deimos/analyze_submission_system.st";
 
     private static final String USER_PROMPT_PATH = "prompts/deimos/analyze_submission_user.st";
 
     public DeimosAnalysisService(ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository,
-            DeimosLlmClient deimosLlmClient, DeimosPromptTemplateService deimosPromptTemplateService, RepositoryService repositoryService, GitService gitService) {
+            DeimosLlmClient deimosLlmClient, DeimosPromptTemplateService deimosPromptTemplateService, RepositoryService repositoryService,
+            BareGitRepositoryService bareGitRepositoryService) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.deimosLlmClient = deimosLlmClient;
         this.deimosPromptTemplateService = deimosPromptTemplateService;
         this.repositoryService = repositoryService;
-        this.gitService = gitService;
+        this.bareGitRepositoryService = bareGitRepositoryService;
     }
 
     /**
@@ -141,8 +142,8 @@ public class DeimosAnalysisService {
             return "";
         }
 
-        try (Repository repository = gitService.getBareRepository(participation.getVcsRepositoryUri(), false)) {
-            String setupCommitHash = gitService.getFirstCommitWithMessage(repository, SET_UP_TEMPLATE_FOR_EXERCISE);
+        try (Repository repository = bareGitRepositoryService.getBareRepository(participation.getVcsRepositoryUri(), false)) {
+            String setupCommitHash = bareGitRepositoryService.getFirstCommitWithMessage(repository, SET_UP_TEMPLATE_FOR_EXERCISE);
             if (setupCommitHash == null) {
                 log.warn("No setup commit found for participation {}, falling back to empty template", participationId);
             }

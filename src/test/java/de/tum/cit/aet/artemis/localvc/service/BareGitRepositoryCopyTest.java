@@ -26,7 +26,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 
 /**
- * Unit tests for the bare-repository copy in {@link GitService}.
+ * Unit tests for the bare-repository copy in {@link BareGitRepositoryService}.
  * <p>
  * A student repository is copied from the template the first time the student starts a programming exercise, and two
  * requests can ask for the same copy at the same time (a double click on "Start exercise"). The copy therefore has to
@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
  * leftover and delete; and a target that already exists is kept rather than created a second time, so that whichever
  * request finishes second still ends up with a usable repository.
  */
-class GitServiceRepositoryCopyTest {
+class BareGitRepositoryCopyTest {
 
     private static final URI BASE_URI = URI.create("https://artemis.example.com");
 
@@ -46,21 +46,21 @@ class GitServiceRepositoryCopyTest {
     @TempDir
     Path baseDir;
 
-    private GitService gitService;
+    private BareGitRepositoryService bareGitRepositoryService;
 
     @BeforeEach
     void setUp() {
-        gitService = new GitService();
-        ReflectionTestUtils.setField(gitService, "localVCBasePath", baseDir);
+        bareGitRepositoryService = new BareGitRepositoryService();
+        ReflectionTestUtils.setField(bareGitRepositoryService, "localVCBasePath", baseDir);
         // Spring injects this in production, and the copy writes the repository configuration and HEAD from it.
-        ReflectionTestUtils.setField(gitService, "defaultBranch", DEFAULT_BRANCH);
+        ReflectionTestUtils.setField(bareGitRepositoryService, "defaultBranch", DEFAULT_BRANCH);
     }
 
     @Test
     void copyBareRepositoryWithoutHistory_copiesTheStateOfTheSourceBranch() throws Exception {
         seedRepository("abc-exercise", "template");
 
-        try (Repository copy = gitService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH)) {
+        try (Repository copy = bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH)) {
             assertThat(copy.resolve(Constants.R_HEADS + DEFAULT_BRANCH)).as("the copy has the branch that was copied").isNotNull();
         }
 
@@ -73,7 +73,8 @@ class GitServiceRepositoryCopyTest {
     void copyBareRepositoryWithoutHistory_whenTheCopyFails_leavesNothingAtTheTargetPath() throws Exception {
         seedRepository("abc-exercise", "template");
 
-        assertThatExceptionOfType(IOException.class).isThrownBy(() -> gitService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), "no-such-branch"))
+        assertThatExceptionOfType(IOException.class)
+                .isThrownBy(() -> bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), "no-such-branch"))
                 .withMessageContaining("no-such-branch");
 
         // A failed copy that leaves an unborn repository behind is what a concurrent request would delete while the copy
@@ -87,7 +88,7 @@ class GitServiceRepositoryCopyTest {
         seedRepository("abc-student1", "already copied by the other request");
         ObjectId headBeforeTheCopy = branchHeadOf("abc-student1");
 
-        try (Repository copy = gitService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH)) {
+        try (Repository copy = bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH)) {
             assertThat(copy.resolve(Constants.R_HEADS + DEFAULT_BRANCH)).as("the repository that is already there is handed back").isEqualTo(headBeforeTheCopy);
         }
 
@@ -101,7 +102,7 @@ class GitServiceRepositoryCopyTest {
         seedRepository("abc-student1", "already copied by the other request");
         ObjectId headBeforeTheCopy = branchHeadOf("abc-student1");
 
-        try (Repository copy = gitService.copyBareRepositoryWithHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH)) {
+        try (Repository copy = bareGitRepositoryService.copyBareRepositoryWithHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH)) {
             assertThat(copy.resolve(Constants.R_HEADS + DEFAULT_BRANCH)).as("the repository that is already there is handed back").isEqualTo(headBeforeTheCopy);
         }
 
@@ -113,7 +114,7 @@ class GitServiceRepositoryCopyTest {
     void copyBareRepositoryWithoutHistory_leavesNothingBesidesTheRepositoriesInTheProject() throws Exception {
         seedRepository("abc-exercise", "template");
 
-        gitService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH).close();
+        bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH).close();
 
         try (var entries = Files.list(baseDir.resolve(PROJECT_KEY))) {
             assertThat(entries.map(entry -> entry.getFileName().toString())).as("a completed copy does not leave a working directory behind")
