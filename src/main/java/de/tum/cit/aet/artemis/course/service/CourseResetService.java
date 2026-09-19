@@ -254,8 +254,7 @@ public class CourseResetService {
 
             // Step 8: Delete Iris data
             double irisWeight = summary.numberOfIrisChatSessions() * CourseOperationWeights.getWeightPerIrisSession();
-            progressService.updateProgress(operationClaim, "Deleting Iris data", stepsCompleted, TOTAL_RESET_STEPS,
-                    calculateProgressPercent(completedWeight, totalWeight));
+            progressService.updateProgress(operationClaim, "Deleting Iris data", stepsCompleted, TOTAL_RESET_STEPS, calculateProgressPercent(completedWeight, totalWeight));
             deleteIrisData(courseId);
             completedWeight += irisWeight;
             stepsCompleted++;
