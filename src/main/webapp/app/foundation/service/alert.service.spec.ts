@@ -9,6 +9,8 @@ import englishUserManagement from 'src/main/webapp/i18n/en/user-management.json'
 import germanUserManagement from 'src/main/webapp/i18n/de/user-management.json';
 import englishErrors from 'src/main/webapp/i18n/en/error.json';
 import germanErrors from 'src/main/webapp/i18n/de/error.json';
+import enQuizSubmission from 'src/main/webapp/i18n/en/quizSubmission.json';
+import deQuizSubmission from 'src/main/webapp/i18n/de/quizSubmission.json';
 
 describe('Alert Service Test', () => {
     const alertSample = {
@@ -281,6 +283,29 @@ describe('Alert Service Test', () => {
         expect(service.get()).toHaveLength(1);
         expect(service.get()[0].message).toContain(fieldName);
         expect(service.get()[0].message).not.toContain('translation-not-found');
+    });
+
+    it.each([
+        { language: 'en', quizTranslations: enQuizSubmission, errors: englishErrors, expected: 'Field Short answer cannot be blank!' },
+        { language: 'de', quizTranslations: deQuizSubmission, errors: germanErrors, expected: 'Feld Kurzantwort darf nicht leer sein!' },
+    ])('should translate short-answer validation errors in $language', ({ language, quizTranslations, errors, expected }) => {
+        const translateService = TestBed.inject(TranslateService);
+        translateService.setTranslation(language, quizTranslations, true);
+        translateService.setTranslation(language, errors, true);
+        translateService.use(language);
+
+        eventManager.broadcast({
+            name: 'artemisApp.httpError',
+            content: new HttpErrorResponse({
+                status: 400,
+                error: {
+                    fieldErrors: [{ objectName: 'quizSubmissionFromStudent', field: 'submittedAnswers[0].submittedTexts[1].text', message: 'NotBlank' }],
+                },
+            }),
+        });
+
+        expect(service.get()).toHaveLength(1);
+        expect(service.get()[0].message).toBe(expected);
     });
 
     it('should display an alert on status 400 for error headers', () => {
