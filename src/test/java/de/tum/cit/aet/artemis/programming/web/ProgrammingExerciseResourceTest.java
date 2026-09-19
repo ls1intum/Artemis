@@ -58,12 +58,14 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTheiaConfigDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -107,6 +109,9 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
     private LocalVCRepositoryTestService localVCRepositoryTestService;
@@ -426,10 +431,12 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         var validPhases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
                 new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"))), "ubuntu:latest");
 
-        newExercise.getBuildConfig().setBuildPlanConfiguration(validPhases.toBuildPlanConfiguration());
+        var buildConfig = ProgrammingExerciseFactory.generateGradleBuildConfig();
+        buildConfig.setBuildPlanConfiguration(validPhases.toBuildPlanConfiguration());
         newExercise.setProblemStatement("a".repeat(100_001));
 
-        request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(newExercise, buildConfig), ProgrammingExercise.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -443,9 +450,11 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         newExercise.setAssessmentDueDate(dueDate.plusMinutes(10));
         newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
         var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));
-        newExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
+        var buildConfig = ProgrammingExerciseFactory.generateGradleBuildConfig();
+        buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
 
-        request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(newExercise, buildConfig), ProgrammingExercise.class,
+                HttpStatus.BAD_REQUEST);
 
         assertThat(programmingExerciseRepository.count()).isEqualTo(exerciseCountBeforeRequest);
     }
@@ -455,7 +464,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     void testUpdateProgrammingExercise_withTooLongProblemStatement_shouldReturnBadRequest() throws Exception {
         programmingExercise.setProblemStatement("a".repeat(100_001));
 
-        request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class,
+        request.putWithResponseBody("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), ProgrammingExercise.class,
                 HttpStatus.BAD_REQUEST);
     }
 
@@ -464,14 +474,15 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     void testUpdateProgrammingExercise_withTooLongBuildPlanConfiguration_shouldReturnBadRequest() throws Exception {
         addInstructorToCourse();
 
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         // A structurally valid phases configuration whose script pushes the serialized configuration past the maximum allowed length.
         // This ensures the request passes the build phase name parsing and is rejected specifically by the size validation.
         var oversizedPhase = new BuildPhaseDTO("Test", "a".repeat(MAX_BUILD_PLAN_CONFIGURATION_LENGTH + 1), BuildPhaseCondition.ALWAYS, false, List.of());
-        programmingExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(oversizedPhase), "ubuntu:latest").toBuildPlanConfiguration());
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(oversizedPhase), "ubuntu:latest").toBuildPlanConfiguration());
 
-        request.putAndExpectError("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.BAD_REQUEST,
+        request.putAndExpectError("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST,
                 "buildPlanConfigurationTooLong");
     }
 
@@ -480,14 +491,16 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     void testUpdateProgrammingExercise_withTooLongDockerFlags_shouldReturnBadRequest() throws Exception {
         addInstructorToCourse();
 
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         // Structurally valid docker flags (parse successfully, each env variable below the per-variable limit) whose raw JSON
         // exceeds the maximum allowed length, so the request is rejected specifically by the size validation.
-        programmingExercise.getBuildConfig().setBuildPlanConfiguration(validBuildPlanConfiguration());
-        programmingExercise.getBuildConfig().setDockerFlags(oversizedButValidDockerFlags());
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setBuildPlanConfiguration(validBuildPlanConfiguration());
+        buildConfig.setDockerFlags(oversizedButValidDockerFlags());
 
-        request.putAndExpectError("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.BAD_REQUEST, "dockerFlagsTooLong");
+        request.putAndExpectError("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST,
+                "dockerFlagsTooLong");
     }
 
     @Test
@@ -498,9 +511,11 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
 
         var oversizedPhase = new BuildPhaseDTO("Test", "a".repeat(MAX_BUILD_PLAN_CONFIGURATION_LENGTH + 1), BuildPhaseCondition.ALWAYS, false, List.of());
-        newExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(oversizedPhase), "ubuntu:latest").toBuildPlanConfiguration());
+        var buildConfig = ProgrammingExerciseFactory.generateGradleBuildConfig();
+        buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(oversizedPhase), "ubuntu:latest").toBuildPlanConfiguration());
 
-        request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(newExercise, buildConfig), ProgrammingExercise.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -513,7 +528,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(PAYLOAD_RELEASE_DATE, PAYLOAD_DUE_DATE, course);
         var validPhases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
                 new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"))), "ubuntu:latest");
-        newExercise.getBuildConfig().setBuildPlanConfiguration(validPhases.toBuildPlanConfiguration());
+        var buildConfig = ProgrammingExerciseFactory.generateGradleBuildConfig();
+        buildConfig.setBuildPlanConfiguration(validPhases.toBuildPlanConfiguration());
 
         var config = new PlagiarismDetectionConfig();
         config.setSimilarityThreshold(-1); // invalid: below 0
@@ -522,14 +538,15 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(7);
         newExercise.setPlagiarismDetectionConfig(config);
 
-        request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(newExercise, buildConfig), ProgrammingExercise.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_validPlagiarismDetectionConfig_updatesExistingConfigInPlace() throws Exception {
         addInstructorToCourse();
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         setValidBuildPlanConfiguration();
 
         PlagiarismDetectionConfig config = ensurePlagiarismDetectionConfig(programmingExercise);
@@ -543,10 +560,11 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
         programmingExercise.getPlagiarismDetectionConfig().setSimilarityThreshold(66);
         programmingExercise.getPlagiarismDetectionConfig().setMinimumScore(9);
-        var updated = request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise),
-                ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+        var updated = request.putWithResponseBody("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), ProgrammingExerciseResponseDTO.class,
+                HttpStatus.OK);
 
-        var fromDb = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(updated.id()).orElseThrow();
+        var fromDb = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(updated.id()).orElseThrow();
         // Same config row is mutated in place (no duplicate row), and the new values are persisted.
         assertThat(fromDb.getPlagiarismDetectionConfig().getId()).isEqualTo(configId);
         assertThat(fromDb.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(66);
@@ -559,7 +577,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
         addInstructorToCourse();
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         setValidBuildPlanConfiguration();
 
         PlagiarismDetectionConfig config = ensurePlagiarismDetectionConfig(programmingExercise);
@@ -575,11 +593,11 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         assertThat(configId).isNotNull();
 
         programmingExercise.getPlagiarismDetectionConfig().setSimilarityThreshold(101); // invalid: above 100
-        request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class,
+        request.putWithResponseBody("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), ProgrammingExercise.class,
                 HttpStatus.BAD_REQUEST);
 
-        ProgrammingExercise reloaded = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId())
-                .orElseThrow();
+        ProgrammingExercise reloaded = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         PlagiarismDetectionConfig reloadedConfig = reloaded.getPlagiarismDetectionConfig();
         assertThat(reloadedConfig).isNotNull();
         assertThat(reloadedConfig.getId()).isEqualTo(configId);
@@ -595,7 +613,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testReEvaluateAndUpdateProgrammingExercise_invalidPlagiarismDetectionConfig_badRequestAndPreservesExistingConfig() throws Exception {
         addInstructorToCourse();
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         setValidBuildPlanConfiguration();
 
         PlagiarismDetectionConfig config = ensurePlagiarismDetectionConfig(programmingExercise);
@@ -611,10 +629,10 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
         programmingExercise.getPlagiarismDetectionConfig().setSimilarityThreshold(101); // invalid: above 100
         request.putWithResponseBody("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate?deleteFeedback=false",
-                UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), ProgrammingExercise.class,
+                HttpStatus.BAD_REQUEST);
 
-        ProgrammingExercise reloaded = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId())
-                .orElseThrow();
+        ProgrammingExercise reloaded = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         PlagiarismDetectionConfig reloadedConfig = reloaded.getPlagiarismDetectionConfig();
         assertThat(reloadedConfig).isNotNull();
         assertThat(reloadedConfig.getId()).isEqualTo(configId);
@@ -630,7 +648,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_omittedPlagiarismDetectionConfig_preservesExisting() throws Exception {
         addInstructorToCourse();
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         setValidBuildPlanConfiguration();
 
         PlagiarismDetectionConfig config = ensurePlagiarismDetectionConfig(programmingExercise);
@@ -642,7 +660,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         Long configId = programmingExercise.getPlagiarismDetectionConfig().getId();
 
         // Simulate a caller that does not send the field: rebuild the same DTO but with a null plagiarism config.
-        UpdateProgrammingExerciseDTO base = UpdateProgrammingExerciseDTO.of(programmingExercise);
+        UpdateProgrammingExerciseDTO base = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
         UpdateProgrammingExerciseDTO withoutConfig = new UpdateProgrammingExerciseDTO(base.id(), base.title(), base.channelName(), base.shortName(), base.problemStatement(),
                 base.categories(), base.difficulty(), base.maxPoints(), base.bonusPoints(), base.includedInOverallScore(), base.allowComplaintsForAutomaticAssessments(),
                 base.presentationScoreEnabled(), base.secondCorrectionEnabled(), base.gradingInstructions(), base.releaseDate(), base.startDate(), base.dueDate(),
@@ -653,7 +671,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
                 base.releaseTestsWithExampleSolution(), base.assessmentType(), base.buildConfig(), null);
         var updated = request.putWithResponseBody("/api/programming/programming-exercises", withoutConfig, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
 
-        var fromDb = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(updated.id()).orElseThrow();
+        var fromDb = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(updated.id()).orElseThrow();
         // The existing config is preserved unchanged when the DTO omits it.
         assertThat(fromDb.getPlagiarismDetectionConfig()).isNotNull();
         assertThat(fromDb.getPlagiarismDetectionConfig().getId()).isEqualTo(configId);
@@ -674,8 +692,9 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         prepareExerciseWithoutPlagiarismDetectionConfig();
         programmingExercise.setPlagiarismDetectionConfig(submittedPlagiarismDetectionConfig());
 
-        var updated = request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise),
-                ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+        var updated = request.putWithResponseBody("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), ProgrammingExerciseResponseDTO.class,
+                HttpStatus.OK);
 
         assertCreatedPlagiarismDetectionConfig(updated.id());
     }
@@ -690,7 +709,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         programmingExercise.setPlagiarismDetectionConfig(submittedPlagiarismDetectionConfig());
 
         var updated = request.putWithResponseBody("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate?deleteFeedback=false",
-                UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), ProgrammingExerciseResponseDTO.class,
+                HttpStatus.OK);
 
         assertCreatedPlagiarismDetectionConfig(updated.id());
     }
@@ -701,12 +721,12 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
      */
     private void prepareExerciseWithoutPlagiarismDetectionConfig() throws Exception {
         addInstructorToCourse();
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         setValidBuildPlanConfiguration();
 
         programmingExercise.setPlagiarismDetectionConfig(null);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        assertThat(programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow()
+        assertThat(programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow()
                 .getPlagiarismDetectionConfig()).as("the exercise must start without a plagiarism detection config").isNull();
     }
 
@@ -724,7 +744,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     /** Asserts that the exercise now owns a persisted config carrying exactly the submitted values. */
     private void assertCreatedPlagiarismDetectionConfig(long exerciseId) {
-        var fromDb = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(exerciseId).orElseThrow();
+        var fromDb = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(exerciseId).orElseThrow();
         PlagiarismDetectionConfig createdConfig = fromDb.getPlagiarismDetectionConfig();
         assertThat(createdConfig).as("the resource must create the missing config").isNotNull();
         assertThat(createdConfig.getId()).as("the created config must be persisted").isNotNull();
@@ -754,19 +774,21 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
      */
     private void setValidBuildPlanConfiguration() throws Exception {
         var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));
-        programmingExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
+        programmingExerciseBuildConfigRepository.save(buildConfig);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_preservesBuildAndTestDateOffset() throws Exception {
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         // Setup exercise with an AFTER_DUE_DATE phase
         var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));
-        programmingExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
+        programmingExerciseBuildConfigRepository.save(buildConfig);
 
         ZonedDateTime originalDueDate = ZonedDateTime.now().plusDays(2);
         ZonedDateTime originalBuildAndTestDate = originalDueDate.plusHours(1);
@@ -783,8 +805,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         // Expected build and test date is shifted by +2 hours
         ZonedDateTime expectedBuildAndTestDate = originalBuildAndTestDate.plusHours(2);
 
-        var updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class,
-                HttpStatus.OK);
+        var updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise, buildConfig),
+                ProgrammingExercise.class, HttpStatus.OK);
 
         var exerciseFromDb = programmingExerciseRepository.findByIdElseThrow(updatedExercise.getId());
 
@@ -796,11 +818,12 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_rejectsInvalidAutomaticallyComputedBuildAndTestDateBeforeAuxiliaryRepositoryChanges() throws Exception {
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));
-        programmingExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
+        programmingExerciseBuildConfigRepository.save(buildConfig);
 
         programmingExercise.setDueDate(null);
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
@@ -823,7 +846,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         Path auxiliaryRepositoryPath = auxiliaryRepositoryUri.getLocalRepositoryPath(localVCBasePath);
         assertThat(auxiliaryRepositoryPath).doesNotExist();
 
-        request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class,
+        request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise, buildConfig), ProgrammingExercise.class,
                 HttpStatus.BAD_REQUEST);
 
         assertThat(auxiliaryRepositoryRepository.findByProgrammingExerciseId(programmingExercise.getId())).isEmpty();
@@ -835,11 +858,12 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     void testUpdateProgrammingExercise_preservesExamBuildAndTestDateOffset() throws Exception {
         programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
 
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));
-        programmingExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
+        programmingExerciseBuildConfigRepository.save(buildConfig);
 
         ZonedDateTime examEndDate = ZonedDateTime.now().plusDays(2);
         int gracePeriodInSeconds = 60;
@@ -859,8 +883,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
 
-        var updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class,
-                HttpStatus.OK);
+        var updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise, buildConfig),
+                ProgrammingExercise.class, HttpStatus.OK);
 
         var exerciseFromDb = programmingExerciseRepository.findByIdElseThrow(updatedExercise.getId());
 
@@ -875,11 +899,12 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     void testUpdateProgrammingExerciseTimeline_preservesExamBuildAndTestDateOffset() throws Exception {
         programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
 
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));
-        programmingExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
+        programmingExerciseBuildConfigRepository.save(buildConfig);
 
         ZonedDateTime examEndDate = ZonedDateTime.now().plusDays(2);
         int gracePeriodInSeconds = 60;
@@ -953,10 +978,12 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         newExercise.setChannelName("testchannel-competency");
         var validPhases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
                 new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"))), "ubuntu:latest");
-        newExercise.getBuildConfig().setBuildPlanConfiguration(validPhases.toBuildPlanConfiguration());
+        var buildConfig = ProgrammingExerciseFactory.generateGradleBuildConfig();
+        buildConfig.setBuildPlanConfiguration(validPhases.toBuildPlanConfiguration());
         newExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, newExercise, 1)));
 
-        var created = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExerciseResponseDTO.class, HttpStatus.CREATED);
+        var created = request.postWithResponseBody("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(newExercise, buildConfig),
+                ProgrammingExerciseResponseDTO.class, HttpStatus.CREATED);
 
         // read the rows back, not the in-memory graph: the links are persisted only after the exercise has an id
         List<CompetencyExerciseLink> storedLinks = competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(created.id());
@@ -973,10 +1000,11 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_responseCarriesClientReadContract_courseExercise() throws Exception {
         addInstructorToCourse();
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
-        var response = request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise),
-                ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+        var response = request.putWithResponseBody("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), ProgrammingExerciseResponseDTO.class,
+                HttpStatus.OK);
 
         assertThat(response.id()).isEqualTo(programmingExercise.getId());
         assertThat(response.type()).isEqualTo(ProgrammingExerciseResponseDTO.TYPE);
@@ -1007,11 +1035,12 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         course = programmingExercise.getExerciseGroup().getExam().getCourse();
         addInstructorToCourse();
         var exerciseGroup = programmingExercise.getExerciseGroup();
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         clearDatesOfExamExercise();
 
-        var response = request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise),
-                ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+        var response = request.putWithResponseBody("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), ProgrammingExerciseResponseDTO.class,
+                HttpStatus.OK);
 
         assertThat(response.course()).isNull();
         assertThat(response.exerciseGroup()).isNotNull();
@@ -1033,10 +1062,11 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_clientShapedBodyRebuiltFromResponse_courseExercise() throws Exception {
         addInstructorToCourse();
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
-        var firstResponse = request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise),
-                ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+        var firstResponse = request.putWithResponseBody("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), ProgrammingExerciseResponseDTO.class,
+                HttpStatus.OK);
 
         var clientBody = toClientUpdateDTO(firstResponse);
         var secondResponse = request.putWithResponseBody("/api/programming/programming-exercises", clientBody, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
@@ -1052,11 +1082,12 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
         course = programmingExercise.getExerciseGroup().getExam().getCourse();
         addInstructorToCourse();
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         clearDatesOfExamExercise();
 
-        var firstResponse = request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise),
-                ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+        var firstResponse = request.putWithResponseBody("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), ProgrammingExerciseResponseDTO.class,
+                HttpStatus.OK);
 
         var clientBody = toClientUpdateDTO(firstResponse);
         var secondResponse = request.putWithResponseBody("/api/programming/programming-exercises", clientBody, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
@@ -1076,13 +1107,13 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         exerciseUtilService.addGradingInstructionsToExercise(programmingExercise);
         programmingExerciseRepository.save(programmingExercise);
 
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         var criteriaBefore = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
         assertThat(criteriaBefore).hasSize(3);
         var criterionIdsBefore = criteriaBefore.stream().map(criterion -> criterion.getId()).collect(java.util.stream.Collectors.toSet());
 
         // first save the unchanged criteria: the ids must survive the round trip, otherwise the next save orphans them
-        var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise);
+        var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
         request.putWithResponseBody("/api/programming/programming-exercises", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
         assertThat(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId())).extracting(criterion -> criterion.getId())
                 .containsExactlyInAnyOrderElementsOf(criterionIdsBefore);
@@ -1107,11 +1138,11 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         programmingExerciseUtilService.addSubmissionPolicyToExercise(policy, programmingExercise);
         long policyId = policy.getId();
 
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         // the submission policy is a lazy relation of the loaded exercise; re-attach the loaded one the way the client
         // re-sends the policy object it received
         programmingExercise.setSubmissionPolicy(submissionPolicyRepository.findByIdElseThrow(policyId));
-        var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise);
+        var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
         assertThat(updateDTO.submissionPolicy()).isNotNull();
         assertThat(updateDTO.submissionPolicy().id()).isEqualTo(policyId);
         assertThat(updateDTO.submissionPolicy().type()).isEqualTo(SubmissionPolicyDTO.TYPE_LOCK_REPOSITORY);
@@ -1138,10 +1169,10 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         var auxRepository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(programmingExercise);
         long auxRepositoryId = auxRepository.getId();
 
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         // re-attach the loaded auxiliary repositories the way the client re-sends the ones it received
         programmingExercise.setAuxiliaryRepositories(new LinkedHashSet<>(auxiliaryRepositoryRepository.findByExerciseId(programmingExercise.getId())));
-        var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise);
+        var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
         assertThat(updateDTO.auxiliaryRepositories()).extracting(repository -> repository.id()).containsExactly(auxRepositoryId);
 
         request.putWithResponseBody("/api/programming/programming-exercises", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
@@ -1162,7 +1193,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         exerciseUtilService.addGradingInstructionsToExercise(programmingExercise);
         programmingExerciseRepository.save(programmingExercise);
 
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         var criterionIdsBefore = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId()).stream().map(criterion -> criterion.getId())
                 .collect(java.util.stream.Collectors.toSet());
         var instructionIdsBefore = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId()).stream()
@@ -1171,7 +1202,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         var params = new org.springframework.util.LinkedMultiValueMap<String, String>();
         params.add("deleteFeedback", "false");
         var response = request.putWithResponseBodyAndParams("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate",
-                UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExerciseResponseDTO.class, HttpStatus.OK, params);
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), ProgrammingExerciseResponseDTO.class,
+                HttpStatus.OK, params);
 
         assertThat(response.id()).isEqualTo(programmingExercise.getId());
         var criteriaAfter = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
@@ -1247,8 +1279,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_doesNotFanOutQueries() throws Exception {
         addInstructorToCourse();
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
-        var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
 
         assertThatDb(() -> request.putWithResponseBody("/api/programming/programming-exercises", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK))
                 .hasBeenCalledAtMostTimes(70);
@@ -1350,7 +1382,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         attachProgrammingExerciseToVariantGroup();
         requestTimelineShiftAlongsideUnownedChange();
 
-        request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), ProgrammingExercise.class, HttpStatus.OK);
 
         assertTimelinePinnedToGroup();
     }
@@ -1366,7 +1399,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         requestTimelineShiftAlongsideUnownedChange();
 
         request.putWithResponseBody("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate?deleteFeedback=false",
-                UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class, HttpStatus.OK);
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), ProgrammingExercise.class, HttpStatus.OK);
 
         assertTimelinePinnedToGroup();
     }
@@ -1384,12 +1417,13 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         group.setDueDate(GROUP_DUE_DATE);
         group.setAssessmentDueDate(GROUP_ASSESSMENT_DUE_DATE);
 
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         // Without an AFTER_DUE_DATE phase the automatic service clears the build-and-test date on every update, which
         // would hide whether the group guard leaves that exercise-owned date alone.
         var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));
-        programmingExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
+        programmingExerciseBuildConfigRepository.save(buildConfig);
 
         programmingExercise.setExerciseVariantGroup(exerciseVariantGroupRepository.save(group));
         programmingExercise.setReleaseDate(GROUP_RELEASE_DATE);
