@@ -130,6 +130,11 @@ overrides:
   # whose peer range requires the current Angular major). Without this pin it resolves to a
   # straggler from an older major that violates that peer range; keep it equal to @angular/core.
   '@angular/localize': '22.1.7'
+  # @angular/animations is never declared either: it arrives as an optional auto-installed peer of
+  # @angular/platform-browser. Both sides of that edge pin an exact patch - platform-browser asks for
+  # animations 22.1.7 and animations asks for core 22.1.7 - so without this pin an Angular patch bump
+  # leaves animations behind on the old patch against the new core. Keep it equal to @angular/core.
+  '@angular/animations': '22.1.7'
   'babel-plugin-istanbul>test-exclude': '8.0.0'
   '@babel/core': '7.29.7'
   '@babel/runtime': '7.29.7'
@@ -183,11 +188,11 @@ overrides:
   # it arrives as an auto-installed peer, and packages asking for `^19` will happily pull a newer react than the
   # catalog pins. Pinning both here makes the pairing enforced rather than a coincidence of resolution order.
   # Keep these two and the `react` catalog entry on the same version.
-  # Held at 19.2.8 for a second, independent reason: moving all three to 19.3.0 together keeps the
-  # pairing intact and passes the story tests, but still fails the forced-colors AutoDocs check -
-  # the selected and unselected select-buttons both come back ButtonFace, so the selected state is
-  # no longer distinguishable. Verified by bisect: 19.3.0 fails that test with everything else
-  # unchanged, and reverting only react and react-dom turns the suite green again.
+  # Left at 19.2.8 rather than moved to 19.3.0. Nothing here needs the newer react - it only exists
+  # to satisfy Storybook's peer requirement - and the gate that would qualify the bump cannot: the
+  # forced-colors check in .storybook/tests/accessibility-preferences.spec.ts is flaky, failing
+  # roughly a third of runs on 19.2.8 and on 19.3.0 alike (1 of 6 and 2 of 4 locally). Do not read
+  # a single red AutoDocs run as a verdict on a react bump; re-run it several times first.
   react: '19.2.8'
   react-dom: '19.2.8'
   # Reached through express / body-parser, which both already sit on their newest release and
