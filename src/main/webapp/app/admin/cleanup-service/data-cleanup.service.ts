@@ -20,9 +20,6 @@ export interface CleanupServiceExecutionRecordDTO {
 export type CleanupCount = Record<string, number>;
 
 export type OrphanCleanupCountDTO = {
-    orphanFeedback: number;
-    orphanLongFeedbackText: number;
-    orphanTextBlock: number;
     orphanStudentScore: number;
     orphanTeamScore: number;
     orphanFeedbackForOrphanResults: number;

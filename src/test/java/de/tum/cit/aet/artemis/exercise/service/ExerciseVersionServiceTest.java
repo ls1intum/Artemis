@@ -59,6 +59,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
@@ -74,6 +75,9 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     private static final String TEST_PREFIX = "exerciseversiontest";
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseVersionServiceTest.class);
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
     private ExerciseVersionTestRepository exerciseVersionRepository;
@@ -165,7 +169,9 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         assertThat(snapshot).isNotNull();
 
         Exercise fetchedExercise = fetchExerciseForComparison(exercise);
-        ExerciseSnapshotDTO expectedSnapshot = ExerciseSnapshotDTO.of(fetchedExercise, ExerciseVersionCommitHashResolver.resolveForExercise(fetchedExercise, gitService));
+        ExerciseSnapshotDTO expectedSnapshot = ExerciseSnapshotDTO.of(fetchedExercise,
+                programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(fetchedExercise.getId()).orElse(null),
+                ExerciseVersionCommitHashResolver.resolveForExercise(fetchedExercise, gitService));
         // Compare via JSON strings to avoid null vs empty list mismatches from @JsonInclude(NON_EMPTY) round-trip
         assertThat(objectMapper.writeValueAsString(snapshot)).isEqualTo(objectMapper.writeValueAsString(expectedSnapshot));
         assertThat(objectMapper.writeValueAsString(snapshot)).isNotEqualTo(objectMapper.writeValueAsString(previousVersion.getExerciseSnapshot()));
@@ -195,7 +201,9 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         assertThat(snapshot).isNotNull();
 
         Exercise fetchedExercise = fetchExerciseForComparison(exercise);
-        ExerciseSnapshotDTO expectedSnapshot = ExerciseSnapshotDTO.of(fetchedExercise, ExerciseVersionCommitHashResolver.resolveForExercise(fetchedExercise, gitService));
+        ExerciseSnapshotDTO expectedSnapshot = ExerciseSnapshotDTO.of(fetchedExercise,
+                programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(fetchedExercise.getId()).orElse(null),
+                ExerciseVersionCommitHashResolver.resolveForExercise(fetchedExercise, gitService));
         // Compare via JSON strings to avoid null vs empty list mismatches from @JsonInclude(NON_EMPTY) round-trip
         assertThat(objectMapper.writeValueAsString(snapshot)).isEqualTo(objectMapper.writeValueAsString(expectedSnapshot));
     }
@@ -261,7 +269,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         // The static code analysis categories created by the helper are loaded as well.
         assertThat(fetched.getStaticCodeAnalysisCategories()).isNotEmpty();
         // A to-one association from the base query is present, confirming the base query still loads its own attribute paths.
-        assertThat(fetched.getBuildConfig()).isNotNull();
+        assertThat(programmingExerciseUtilService.buildConfigOf(fetched)).isNotNull();
     }
 
     private Exercise createExerciseByType(ExerciseType exerciseType) {
@@ -645,14 +653,16 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         exercise.setProblemStatement("Original problem statement");
         programmingExerciseRepository.saveAndFlush(exercise);
         exercise = programmingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
-        ExerciseSnapshotDTO previousSnapshot = ExerciseSnapshotDTO.of(exercise, ExerciseVersionCommitHashResolver.resolveForExercise(exercise, gitService));
+        ExerciseSnapshotDTO previousSnapshot = ExerciseSnapshotDTO.of(exercise, programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(exercise.getId()).orElse(null),
+                ExerciseVersionCommitHashResolver.resolveForExercise(exercise, gitService));
 
         exercise.setProblemStatement("Rewritten problem statement covering new content");
         exercise.setTitle("Updated Title");
         exercise.setDueDate(ZonedDateTime.now().plusDays(3));
         programmingExerciseRepository.saveAndFlush(exercise);
         exercise = programmingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
-        ExerciseSnapshotDTO newSnapshot = ExerciseSnapshotDTO.of(exercise, ExerciseVersionCommitHashResolver.resolveForExercise(exercise, gitService));
+        ExerciseSnapshotDTO newSnapshot = ExerciseSnapshotDTO.of(exercise, programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(exercise.getId()).orElse(null),
+                ExerciseVersionCommitHashResolver.resolveForExercise(exercise, gitService));
 
         Set<String> changedFields = exerciseVersionService.collectChangedFieldsForEvent(newSnapshot, previousSnapshot);
 
@@ -675,20 +685,20 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCollectChangedFieldsForEventDoesNotTriggerOnUnextractedTypeSpecificFields() {
         ModelingExercise modelingExercise = createModelingExercise();
-        ExerciseSnapshotDTO previousModeling = ExerciseSnapshotDTO.of(fetchExerciseForComparison(modelingExercise), null);
+        ExerciseSnapshotDTO previousModeling = ExerciseSnapshotDTO.of(fetchExerciseForComparison(modelingExercise), null, null);
         modelingExercise.setExampleSolutionModel("{\"updated\": \"model\"}");
         modelingExerciseRepository.saveAndFlush(modelingExercise);
-        ExerciseSnapshotDTO newModeling = ExerciseSnapshotDTO.of(fetchExerciseForComparison(modelingExercise), null);
+        ExerciseSnapshotDTO newModeling = ExerciseSnapshotDTO.of(fetchExerciseForComparison(modelingExercise), null, null);
 
         assertThat(Collections.disjoint(exerciseVersionService.collectChangedFieldsForEvent(newModeling, previousModeling), ExerciseVersionService.COMPETENCY_RELEVANT_FIELDS))
                 .as("example-solution model is not extracted, so it must not arm orchestration").isTrue();
 
         QuizExercise quizExercise = createQuizExercise();
-        ExerciseSnapshotDTO previousQuiz = ExerciseSnapshotDTO.of(fetchExerciseForComparison(quizExercise), null);
+        ExerciseSnapshotDTO previousQuiz = ExerciseSnapshotDTO.of(fetchExerciseForComparison(quizExercise), null, null);
         quizExercise.setDuration(quizExercise.getDuration() == null ? 600 : quizExercise.getDuration() + 600);
         quizExercise.setRandomizeQuestionOrder(!Boolean.TRUE.equals(quizExercise.isRandomizeQuestionOrder()));
         quizExerciseRepository.saveAndFlush(quizExercise);
-        ExerciseSnapshotDTO newQuiz = ExerciseSnapshotDTO.of(fetchExerciseForComparison(quizExercise), null);
+        ExerciseSnapshotDTO newQuiz = ExerciseSnapshotDTO.of(fetchExerciseForComparison(quizExercise), null, null);
 
         assertThat(Collections.disjoint(exerciseVersionService.collectChangedFieldsForEvent(newQuiz, previousQuiz), ExerciseVersionService.COMPETENCY_RELEVANT_FIELDS))
                 .as("quiz delivery settings are not extracted, so they must not arm orchestration").isTrue();

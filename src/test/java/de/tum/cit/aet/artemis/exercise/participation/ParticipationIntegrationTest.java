@@ -241,8 +241,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exerciseRepository.save(modelingExercise);
 
         programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), course);
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExercise = exerciseRepository.save(programmingExercise);
+        // The configuration is a row of its own that names the exercise, so it is written once the exercise exists.
+        programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateGradleBuildConfig(), programmingExercise);
         course.addExercises(programmingExercise);
         course = courseRepository.save(course);
 
@@ -1415,7 +1416,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void resumeProgrammingExerciseParticipation_forbidden() throws Exception {
         var exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1), course);
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = exerciseRepository.save(exercise);
         var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, exercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
@@ -1898,8 +1898,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var now = ZonedDateTime.now();
         var exercise = ProgrammingExerciseFactory.generateProgrammingExercise(now.minusDays(2), now.plusDays(2), course);
         exercise.setMode(ExerciseMode.TEAM);
-        programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
-        return exerciseRepository.save(exercise);
+        var savedExercise = exerciseRepository.save(exercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateGradleBuildConfig(), savedExercise);
+        return savedExercise;
     }
 
     private ModelingExercise createModelingExerciseForTeam() {
@@ -1981,7 +1982,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         examRepository.save(examWithExerciseGroups);
         var exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().getFirst();
         programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         programmingExercise = exerciseRepository.save(programmingExercise);
         course.addExercises(programmingExercise);
@@ -2239,7 +2239,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exam = examRepository.save(exam);
         ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
         ProgrammingExercise examExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
-        examExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(examExercise.getBuildConfig()));
         examExercise = exerciseRepository.save(examExercise);
 
         MockHttpServletResponse response = request.postWithoutResponseBody("/api/exercise/exercises/" + examExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN, null);
