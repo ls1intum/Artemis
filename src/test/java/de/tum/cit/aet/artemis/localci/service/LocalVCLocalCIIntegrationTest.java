@@ -497,7 +497,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testDockerFlagsParsing() {
             String dockerFlags = "{\"network\": \"none\", \"env\": {\"key\": \"value\", \"key1\": \"value1\"}}";
-            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
             buildConfig.setDockerFlags(dockerFlags);
             programmingExerciseBuildConfigRepository.save(buildConfig);
 
@@ -519,7 +519,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         private ProgrammingExerciseBuildConfig createBuildConfig(String networkName) {
             // Create build config.
             String dockerFlags = "{\"network\": \"%s\", \"env\": {\"key\": \"value\", \"key1\": \"value1\"}}".formatted(networkName);
-            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
             buildConfig.setDockerFlags(dockerFlags);
             programmingExerciseBuildConfigRepository.save(buildConfig);
 
@@ -545,7 +545,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             localCITriggerService.triggerBuild(studentParticipation, false); // Does not throw.
 
             assertNetworkName(studentParticipation, null);
-            DockerRunConfig runConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
+            DockerRunConfig runConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig, programmingExercise);
             assertThat(runConfig).isNotNull();
             assertThat(runConfig.network()).isEqualTo(null);
         }
@@ -559,7 +559,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             // Does not throw.
 
             assertNetworkName(studentParticipation, "none");
-            DockerRunConfig runConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
+            DockerRunConfig runConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig, programmingExercise);
             assertThat(runConfig).isNotNull();
             assertThat(runConfig.network()).isEqualTo("none");
         }
@@ -577,7 +577,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testPhaseBuildPlanBeforeDueDate_excludesAfterDueDatePhases() throws Exception {
-            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
             BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
                     new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/test/*.xml"))), "");
             buildConfig.setBuildPlanConfiguration(phases.toBuildPlanConfiguration());
@@ -602,7 +602,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testPhaseBuildPlanAfterDueDate_includesAfterDueDatePhases() throws Exception {
-            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
             BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
                     new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/test/*.xml"))), "");
             buildConfig.setBuildPlanConfiguration(phases.toBuildPlanConfiguration());

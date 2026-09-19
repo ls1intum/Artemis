@@ -59,8 +59,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         SecurityUtils.setAuthorizationObject();
         programmingExercise = programmingExerciseRepository
-                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigCategories(programmingExercise.getId())
-                .orElseThrow();
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesTemplateAndSolutionParticipationsAndAuxReposAndCategories(programmingExercise.getId()).orElseThrow();
     }
 
     @Test

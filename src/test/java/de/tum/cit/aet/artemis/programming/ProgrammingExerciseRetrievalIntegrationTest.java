@@ -112,7 +112,7 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
         // gradingInstructionFeedbackUsed is a transient the grading-instruction editor branches on.
         assertThat(response.gradingInstructionFeedbackUsed()).isNotNull();
         assertThat(response.buildConfig()).isNotNull();
-        assertThat(response.buildConfig().id()).isEqualTo(exercise.getBuildConfig().getId());
+        assertThat(response.buildConfig().id()).isEqualTo(programmingExerciseUtilService.buildConfigOf(exercise).getId());
         assertThat(response.templateParticipation()).isNotNull();
         assertThat(response.templateParticipation().type()).isEqualTo("template");
         assertThat(response.solutionParticipation()).isNotNull();
@@ -180,7 +180,7 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
         assertThat(second.plagiarismDetectionConfig().id()).isNotNull().isEqualTo(third.plagiarismDetectionConfig().id());
 
         var reloaded = programmingExerciseRepository
-                .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigElseThrow(exercise.getId());
+                .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigElseThrow(exercise.getId());
         assertThat(reloaded.getPlagiarismDetectionConfig()).isNotNull();
         assertThat(reloaded.getPlagiarismDetectionConfig().getId()).isEqualTo(second.plagiarismDetectionConfig().id());
     }
