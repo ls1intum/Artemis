@@ -180,7 +180,8 @@ public class ProgrammingExerciseParticipationResource {
         List<ProgrammingSubmissionWithResultsDTO> submissionDTOs = submission == null ? List.of()
                 : List.of(ProgrammingSubmissionWithResultsDTO.of(submission, mapResults(results)));
         ProgrammingExerciseResponseDTO exerciseDTO = ProgrammingExerciseResponseDTO.of(participation.getProgrammingExercise());
-        return ResponseEntity.ok(ProgrammingExerciseStudentParticipationDTO.of(participation, exerciseDTO, submissionDTOs));
+        var response = ProgrammingExerciseStudentParticipationDTO.of(participation, exerciseDTO, submissionDTOs);
+        return ResponseEntity.ok(canSeeParticipantInformation(participation) ? response : response.withoutParticipantInformation());
     }
 
     private static List<ResultDTO> mapResults(Collection<Result> results) {
@@ -217,7 +218,8 @@ public class ProgrammingExerciseParticipationResource {
         List<ProgrammingSubmissionWithResultsDTO> submissionDTOs = submissions.stream()
                 .map(submission -> ProgrammingSubmissionWithResultsDTO.of(submission, hideResults ? List.of() : mapResults(submission.getResults()))).toList();
         ProgrammingExerciseResponseDTO exerciseDTO = ProgrammingExerciseResponseDTO.of(participation.getProgrammingExercise());
-        return ResponseEntity.ok(ProgrammingExerciseStudentParticipationDTO.of(participation, exerciseDTO, submissionDTOs));
+        var response = ProgrammingExerciseStudentParticipationDTO.of(participation, exerciseDTO, submissionDTOs);
+        return ResponseEntity.ok(canSeeParticipantInformation(participation) ? response : response.withoutParticipantInformation());
     }
 
     /**
@@ -255,6 +257,9 @@ public class ProgrammingExerciseParticipationResource {
         var participation = programmingExerciseStudentParticipationRepository.findByRepositoryUriElseThrow(repoUri);
 
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        if (!canSeeParticipantInformation(participation)) {
+            throw new AccessForbiddenException();
+        }
         // check if the exercise is released. This also checks if the user can see an exam exercise
         if (!participation.getProgrammingExercise().isReleased()) {
             throw new AccessForbiddenException("exercise", participation.getProgrammingExercise().getId());
@@ -645,6 +650,10 @@ public class ProgrammingExerciseParticipationResource {
         List<VcsAccessLog> vcsAccessLogs = vcsAccessLogRepository.get().findAllByParticipationId(participation.getId());
         var vcsAccessLogDTOs = vcsAccessLogs.stream().map(VcsAccessLogDTO::of).toList();
         return ResponseEntity.ok(vcsAccessLogDTOs);
+    }
+
+    private boolean canSeeParticipantInformation(ProgrammingExerciseStudentParticipation participation) {
+        return authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastInstructorForExercise(participation.getExercise());
     }
 
     /**

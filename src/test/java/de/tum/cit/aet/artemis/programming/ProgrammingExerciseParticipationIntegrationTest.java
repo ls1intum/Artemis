@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -29,6 +31,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -57,12 +60,15 @@ import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguratio
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
@@ -156,6 +162,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
+
+    @Autowired
+    private TeamRepository teamRepository;
 
     @BeforeEach
     void initTestCase() {
@@ -637,6 +646,98 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         if (withSubmission) {
             assertThat(submission).isEqualTo(resultResponse.getSubmission());
         }
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "student-participation-with-latest-result-and-feedbacks,false", "student-participation-with-all-results,false",
+            "student-participation-with-latest-result-and-feedbacks,true", "student-participation-with-all-results,true" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testParticipationPrivacyForTutor(String endpoint, boolean teamMode) throws Exception {
+        var result = createResultForParticipationPrivacyTest(teamMode);
+        var participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
+        assertThat(participation.getRepositoryUri()).isNotBlank();
+        assertThat(participation.getBuildPlanId()).isNotBlank();
+
+        JsonNode body = getJson(participationsBaseUrl + participation.getId() + "/" + endpoint);
+
+        assertThat(body.path("id").asLong()).isEqualTo(participation.getId());
+        for (String field : List.of("student", "team", "participantName", "participantIdentifier", "repositoryUri", "buildPlanId", "branch")) {
+            assertThat(body.has(field)).as("identity field %s", field).isFalse();
+        }
+        assertThat(body.toString()).doesNotContain(TEST_PREFIX + "student1", TEST_PREFIX + "team");
+        assertThat(body.path("submissions").get(0).path("id").asLong()).isEqualTo(result.getSubmission().getId());
+        assertThat(body.path("submissions").get(0).path("results").get(0).path("id").asLong()).isEqualTo(result.getId());
+        assertThat(body.path("exercise").path("id").asLong()).isEqualTo(programmingExercise.getId());
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "student-participation-with-latest-result-and-feedbacks,false", "student-participation-with-all-results,false",
+            "student-participation-with-latest-result-and-feedbacks,true", "student-participation-with-all-results,true" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testParticipationPrivacyPreservesInstructorIdentity(String endpoint, boolean teamMode) throws Exception {
+        var result = createResultForParticipationPrivacyTest(teamMode);
+        var participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
+
+        JsonNode body = getJson(participationsBaseUrl + participation.getId() + "/" + endpoint);
+
+        assertThat(body.path("repositoryUri").asString()).isEqualTo(participation.getRepositoryUri());
+        assertThat(body.path("participantIdentifier").asString()).isEqualTo(participation.getParticipantIdentifier());
+        assertThat(body.path(teamMode ? "team" : "student").path("id").asLong()).isEqualTo(participation.getParticipant().getId());
+        assertThat(body.path("submissions").get(0).path("results").get(0).path("id").asLong()).isEqualTo(result.getId());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "student-participation-with-latest-result-and-feedbacks", "student-participation-with-all-results" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testParticipationPrivacyPreservesTeamOwnerIdentity(String endpoint) throws Exception {
+        var result = createResultForParticipationPrivacyTest(true);
+        var participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
+
+        JsonNode body = getJson(participationsBaseUrl + participation.getId() + "/" + endpoint);
+
+        assertThat(body.path("repositoryUri").asString()).isEqualTo(participation.getRepositoryUri());
+        assertThat(body.path("team").path("students").get(0).path("login").asString()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(body.path("submissions").get(0).path("results").get(0).path("id").asLong()).isEqualTo(result.getId());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testParticipationPrivacyRejectsTutorRepoNameLookup(boolean teamMode) throws Exception {
+        var result = createResultForParticipationPrivacyTest(teamMode);
+        var participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
+        String response = request
+                .performMvcRequest(get("/api/programming/programming-exercise-participations").param("repoName", extractRepoName(participation.getRepositoryUri())))
+                .andExpect(status().isForbidden()).andReturn().getResponse().getContentAsString();
+        assertThat(objectMapper.readTree(response).path("detail").asString()).isEqualTo("You are not allowed to access this resource");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testParticipationPrivacyPreservesInstructorRepoNameLookup() throws Exception {
+        var result = createResultForParticipationPrivacyTest(false);
+        var participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
+        var dto = request.get("/api/programming/programming-exercise-participations?repoName=" + extractRepoName(participation.getRepositoryUri()), HttpStatus.OK,
+                RepoNameProgrammingStudentParticipationDTO.class);
+        assertThat(dto.id()).isEqualTo(participation.getId());
+    }
+
+    private Result createResultForParticipationPrivacyTest(boolean teamMode) {
+        startExercise();
+        if (!teamMode) {
+            return addStudentParticipationWithResult(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1));
+        }
+        programmingExercise.setMode(ExerciseMode.TEAM);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        var team = new Team();
+        team.setName("Student team");
+        team.setShortName(TEST_PREFIX + "team");
+        team.setExercise(programmingExercise);
+        team.addStudents(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        team = teamRepository.save(team);
+        var participation = participationUtilService.addTeamParticipationForProgrammingExercise(programmingExercise, team);
+        var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateProgrammingSubmission(true));
+        return participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1), submission);
     }
 
     // --- wire shape of the migrated participation and build-log responses ------------------------------------------
