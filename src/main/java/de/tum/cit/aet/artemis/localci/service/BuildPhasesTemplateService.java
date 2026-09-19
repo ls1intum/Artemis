@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 
 /**
  * Handles the request to {@link BuildPhasesTemplateResource} and Artemis internal
@@ -53,16 +52,13 @@ public class BuildPhasesTemplateService {
 
     private final BuildScriptProviderService buildScriptProviderService;
 
-    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
-
     private static final YAMLMapper yamlMapper = new YAMLMapper();
 
     public BuildPhasesTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService,
-            BuildScriptProviderService buildScriptProviderService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            BuildScriptProviderService buildScriptProviderService) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.resourceLoaderService = resourceLoaderService;
         this.buildScriptProviderService = buildScriptProviderService;
-        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     /**
@@ -178,13 +174,13 @@ public class BuildPhasesTemplateService {
     /**
      * Returns the file content of the template file for the given exercise
      *
-     * @param exercise the exercise for which the template file should be returned
+     * @param exercise    the exercise for which the template file should be returned
+     * @param buildConfig its build configuration, which is stored separately and passed in because a not yet created
+     *                        exercise has none stored
      * @return the requested template as a list of {@link BuildPhaseDTO} object
      */
-    public List<BuildPhaseDTO> getDefaultBuildPlanPhasesFor(ProgrammingExercise exercise) {
+    public List<BuildPhaseDTO> getDefaultBuildPlanPhasesFor(ProgrammingExercise exercise, ProgrammingExerciseBuildConfig buildConfig) {
         try {
-            // Read through the repository: the configuration holds the exercise key, so it is not loaded with the exercise.
-            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise);
             return getBuildPlanPhasesFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
                     buildConfig.hasSequentialTestRuns());
         }

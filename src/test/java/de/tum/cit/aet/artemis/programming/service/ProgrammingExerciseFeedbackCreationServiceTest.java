@@ -45,7 +45,6 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
     }
 
@@ -106,7 +105,6 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.KOTLIN);
         programmingExercise.setProjectType(null);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise);
         String actualFeedback = createFeedbackFromTestCase("test2", List.of(msgMatchMultiple), false);
         assertThat(actualFeedback).isEqualTo("""
                 expected:

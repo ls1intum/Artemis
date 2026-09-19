@@ -170,7 +170,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      */
     @Override
     public SharedBuildTriggerData prepareSharedTriggerData(ProgrammingExercise exercise) {
-        return SharedBuildTriggerData.of(getCommitHashOrNull(exercise.getVcsTestRepositoryUri(), "test repository"), loadBuildStatistics(exercise));
+        return SharedBuildTriggerData.of(getCommitHashOrNull(exercise.getVcsTestRepositoryUri(), "test repository"), loadBuildStatistics(exercise), loadBuildConfig(exercise));
     }
 
     /**
@@ -254,7 +254,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         String buildJobId = String.valueOf(participation.getId()) + submissionDate.toInstant().toEpochMilli();
 
-        var programmingExerciseBuildConfig = loadBuildConfig(programmingExercise);
+        var programmingExerciseBuildConfig = sharedData.resolved() ? sharedData.buildConfig() : loadBuildConfig(programmingExercise);
 
         var buildStatistics = sharedData.resolved() ? sharedData.buildStatistics() : loadBuildStatistics(programmingExercise);
 
@@ -379,9 +379,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         boolean staticCodeAnalysisEnabled = programmingExercise.isStaticCodeAnalysisEnabled();
         boolean sequentialTestRunsEnabled = buildConfig.hasSequentialTestRuns();
 
-        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
+        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig, programmingExercise);
 
-        programmingExercise.setBuildConfig(buildConfig);
         BuildPlanPhasesDTO buildPlanPhasesDTO;
         try {
             buildPlanPhasesDTO = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildConfig.getBuildPlanConfiguration());
@@ -390,7 +389,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             throw new LocalCIException("The build plan configuration is invalid for build config " + buildConfig.getId(), e);
         }
 
-        final List<BuildPhaseDTO> phases = buildPlanPhasesDTO.phases() == null ? buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise)
+        final List<BuildPhaseDTO> phases = buildPlanPhasesDTO.phases() == null ? buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise, buildConfig)
                 : buildPlanPhasesDTO.phases();
         final String dockerImage = buildPlanPhasesDTO.dockerImage() == null ? buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise)
                 : buildPlanPhasesDTO.dockerImage();
@@ -400,7 +399,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         final Set<String> resultPathsSet = BuildPhaseEvaluationService.gatherResultPaths(activePhases);
         final List<String> resultPaths = finalizeResultPaths(buildConfig, resultPathsSet.stream());
 
-        final String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(programmingExercise.getBuildConfig(), activePhases);
+        final String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(buildConfig, activePhases);
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
                 staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),
@@ -414,7 +413,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     }
 
     private ProgrammingExerciseBuildConfig loadBuildConfig(ProgrammingExercise programmingExercise) {
-        return programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise);
+        return programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
     }
 
     /**

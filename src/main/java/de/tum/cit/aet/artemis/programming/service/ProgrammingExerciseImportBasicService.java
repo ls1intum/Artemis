@@ -16,6 +16,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -139,36 +140,36 @@ public class ProgrammingExerciseImportBasicService {
      * in an order that respects the foreign keys the exercise owns (build config and submission policy first, then the
      * exercise, then its participations, test cases and tasks).
      *
-     * @param sourceExercise the source exercise providing the data to copy into the new exercise
-     * @param newExercise    the new exercise (potentially already carrying caller-provided overrides) to be persisted
+     * @param sourceExercise    the source exercise providing the data to copy into the new exercise
+     * @param sourceBuildConfig the stored build configuration of the source exercise
+     * @param newExercise       the new exercise (potentially already carrying caller-provided overrides) to be persisted
+     * @param newBuildConfig    the build configuration the caller supplied, or {@code null} to copy the source's
      * @return the newly created exercise, re-fetched with its import-relevant associations initialized
      */
-    public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise sourceExercise, ProgrammingExercise newExercise) {
+    public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise sourceExercise, final ProgrammingExerciseBuildConfig sourceBuildConfig,
+            ProgrammingExercise newExercise, @Nullable ProgrammingExerciseBuildConfig newBuildConfig) {
         // The channel name is a transient, client-supplied field, so it does not survive the re-fetch at the end of this
         // method. Capture it here to create the channel with the name the user chose during the import.
         final String channelName = newExercise.getChannelName();
 
-        prepareBasicExerciseInformation(sourceExercise, newExercise);
+        final ProgrammingExerciseBuildConfig buildConfig = prepareBasicExerciseInformation(sourceExercise, sourceBuildConfig, newExercise, newBuildConfig);
 
-        // The exercise owns the foreign keys to its build config and submission policy, so both must be persisted before
-        // the exercise is first saved (otherwise the flush references transient entities). Set the branch and reuse the
-        // source build plan configuration if the caller did not provide one, then persist the build config.
-        newExercise.getBuildConfig().setBranch(defaultBranch);
-        if (newExercise.getBuildConfig().getBuildPlanConfiguration() == null) {
-            newExercise.getBuildConfig().setBuildPlanConfiguration(sourceExercise.getBuildConfig().getBuildPlanConfiguration());
+        // Set the branch and reuse the source build plan configuration if the caller did not provide one.
+        buildConfig.setBranch(defaultBranch);
+        if (buildConfig.getBuildPlanConfiguration() == null) {
+            buildConfig.setBuildPlanConfiguration(sourceBuildConfig.getBuildPlanConfiguration());
         }
         // Validate the resolved build config, including values inherited from the source exercise, before it is persisted
-        programmingExerciseValidationService.validateBuildConfigSize(newExercise);
+        programmingExerciseValidationService.validateBuildConfigSize(buildConfig);
         if (automaticAfterDueDateService.isPresent() && newExercise.isCourseExercise()) {
             try {
-                newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(newExercise));
+                newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(newExercise, buildConfig));
             }
             catch (JacksonException e) {
                 throw new BadRequestAlertException("The build plan configuration is invalid", "programmingExercise", "invalidBuildPlanConfiguration");
             }
         }
         newExercise.validateDates();
-        newExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(newExercise.getBuildConfig()));
 
         // Persist the submission policy (as a fresh entity) up front for the same reason.
         importSubmissionPolicy(newExercise);
@@ -182,6 +183,8 @@ public class ProgrammingExerciseImportBasicService {
         // must point at the persisted exercise.
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
         newExercise = programmingExerciseRepository.save(newExercise);
+        // The configuration names the exercise, so it is written once that exercise exists.
+        programmingExerciseBuildConfigRepository.saveForExercise(buildConfig, newExercise);
         if (!competencyLinks.isEmpty()) {
             competencyExerciseLinkService.addCompetencyLinksForCreation(newExercise, competencyLinks);
             newExercise = programmingExerciseRepository.save(newExercise);
@@ -278,17 +281,22 @@ public class ProgrammingExerciseImportBasicService {
      * config identity, participations, etc.) so it can be persisted as a brand-new exercise, and copies the build plan
      * access secret setting from the source.
      *
-     * @param sourceExercise the exercise being imported from
-     * @param newExercise    the exercise being prepared for persistence
+     * @param sourceExercise    the exercise being imported from
+     * @param sourceBuildConfig the stored build configuration of that exercise
+     * @param newExercise       the exercise being prepared for persistence
+     * @param newBuildConfig    the build configuration the caller supplied, or {@code null} to copy the source's
+     * @return the build configuration the new exercise is written with
      */
-    private void prepareBasicExerciseInformation(final ProgrammingExercise sourceExercise, final ProgrammingExercise newExercise) {
+    private ProgrammingExerciseBuildConfig prepareBasicExerciseInformation(final ProgrammingExercise sourceExercise, final ProgrammingExerciseBuildConfig sourceBuildConfig,
+            final ProgrammingExercise newExercise, @Nullable final ProgrammingExerciseBuildConfig newBuildConfig) {
         // Set values we don't want to copy to null
         setupExerciseForImport(newExercise);
-        setupBuildConfig(sourceExercise, newExercise);
+        ProgrammingExerciseBuildConfig buildConfig = setupBuildConfig(sourceBuildConfig, newBuildConfig);
 
-        if (sourceExercise.getBuildConfig().hasBuildPlanAccessSecretSet()) {
-            newExercise.getBuildConfig().generateAndSetBuildPlanAccessSecret();
+        if (sourceBuildConfig.hasBuildPlanAccessSecretSet()) {
+            buildConfig.generateAndSetBuildPlanAccessSecret();
         }
+        return buildConfig;
     }
 
     /**
@@ -307,23 +315,16 @@ public class ProgrammingExerciseImportBasicService {
      * already supplied a build config (e.g. the user overrode it during import) its id and back-reference are cleared;
      * otherwise the config is copied from the source exercise, or a default config is created if the source has none.
      *
-     * @param sourceExercise the source exercise providing the fallback build config
-     * @param newExercise    the exercise being imported
+     * @param sourceBuildConfig the source exercise's build configuration, used when the caller supplied none
+     * @param newBuildConfig    the build configuration the caller supplied, or {@code null}
+     * @return the build configuration to persist for the new exercise
      */
-    private void setupBuildConfig(ProgrammingExercise sourceExercise, ProgrammingExercise newExercise) {
-        if (newExercise.getBuildConfig() != null) {
-            var buildConfig = newExercise.getBuildConfig();
-            buildConfig.setId(null);
-            buildConfig.setProgrammingExercise(null);
-            newExercise.setBuildConfig(buildConfig);
+    private ProgrammingExerciseBuildConfig setupBuildConfig(ProgrammingExerciseBuildConfig sourceBuildConfig, @Nullable ProgrammingExerciseBuildConfig newBuildConfig) {
+        if (newBuildConfig != null) {
+            newBuildConfig.setId(null);
+            return newBuildConfig;
         }
-        else if (sourceExercise.getBuildConfig() != null) {
-            var buildConfig = new ProgrammingExerciseBuildConfig(sourceExercise.getBuildConfig());
-            newExercise.setBuildConfig(buildConfig);
-        }
-        else {
-            newExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
-        }
+        return new ProgrammingExerciseBuildConfig(sourceBuildConfig);
     }
 
     /**

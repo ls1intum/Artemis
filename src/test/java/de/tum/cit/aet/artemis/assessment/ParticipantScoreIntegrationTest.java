@@ -169,7 +169,6 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), course);
         programmingExercise = exerciseRepository.save(programmingExercise);
-        programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise);
         course.addExercises(programmingExercise);
         courseRepository.save(course);
         participationUtilService.createParticipationSubmissionAndResult(getIdOfIndividualTextExerciseOfExam, student1, 10.0, 10.0, 50, true);

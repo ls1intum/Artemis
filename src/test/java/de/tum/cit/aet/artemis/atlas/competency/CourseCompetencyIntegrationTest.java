@@ -102,7 +102,6 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         programmingExercise.setMaxPoints(i * 10.0);
         programmingExercise.setDifficulty(i == 1 ? DifficultyLevel.EASY : i == 2 ? DifficultyLevel.MEDIUM : DifficultyLevel.HARD);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise);
 
         CompetencyExerciseLink link = new CompetencyExerciseLink(competency, programmingExercise, 1);
         programmingExercise = (ProgrammingExercise) competencyExerciseLinkRepository.save(link).getExercise();

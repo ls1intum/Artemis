@@ -28,7 +28,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.SecondaryTable;
-import jakarta.persistence.Transient;
 
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.TimeZoneStorage;
@@ -173,19 +172,6 @@ public class ProgrammingExercise extends Exercise {
 
     @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details", nullable = false)
     private boolean releaseTestsWithExampleSolution = false;
-
-    /**
-     * The build configuration of this exercise, which is not part of the exercise row.
-     * <p>
-     * The configuration holds the exercise key, and a {@code @OneToOne} is lazily proxyable only on the side that owns
-     * the key: mapping it here would make Hibernate issue a select on every exercise read, whether or not the caller
-     * wants the configuration. So it is read where it is needed, through
-     * {@link de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository}, which fills this
-     * field in. A caller that has not asked for it finds it null.
-     */
-    @Transient
-    @JsonIgnoreProperties("programmingExercise")
-    private ProgrammingExerciseBuildConfig buildConfig;
 
     /**
      * Convenience getter. The actual URI is stored in the {@link TemplateProgrammingExerciseParticipation}
@@ -460,23 +446,6 @@ public class ProgrammingExercise extends Exercise {
         this.submissionPolicy = submissionPolicy;
     }
 
-    public ProgrammingExerciseBuildConfig getBuildConfig() {
-        return buildConfig;
-    }
-
-    /**
-     * Attaches the build configuration and names this exercise on it.
-     *
-     * @param buildConfig the build configuration to attach
-     */
-    public void setBuildConfig(ProgrammingExerciseBuildConfig buildConfig) {
-        this.buildConfig = buildConfig;
-        // The configuration holds the key, so this is what stores the link once the configuration is written.
-        if (buildConfig != null) {
-            buildConfig.setProgrammingExercise(this);
-        }
-    }
-
     /**
      * Gets a URI of the templateRepositoryUri if there is one
      *
@@ -651,9 +620,6 @@ public class ProgrammingExercise extends Exercise {
         setTestRepositoryUri(null);
         setTemplateBuildPlanId(null);
         setSolutionBuildPlanId(null);
-        if (buildConfig != null && Hibernate.isInitialized(buildConfig)) {
-            buildConfig.filterSensitiveInformation();
-        }
         super.filterSensitiveInformation();
     }
 
@@ -727,8 +693,10 @@ public class ProgrammingExercise extends Exercise {
     /**
      * Validates general programming exercise settings
      * 1. Validates the programming language
+     *
+     * @param buildConfig the build configuration of this exercise, which is stored separately and read by the caller
      */
-    public void validateProgrammingSettings() {
+    public void validateProgrammingSettings(ProgrammingExerciseBuildConfig buildConfig) {
 
         // Check if a participation mode was selected
         if (!Boolean.TRUE.equals(isAllowOnlineEditor()) && !Boolean.TRUE.equals(isAllowOfflineIde()) && !isAllowOnlineIde()) {
@@ -761,15 +729,16 @@ public class ProgrammingExercise extends Exercise {
      * 5. Static code analysis max penalty must be positive
      *
      * @param programmingLanguageFeature describes the features available for the programming language of the programming exercise
+     * @param buildConfig                the build configuration of this exercise, which is stored separately and read by the caller
      */
-    public void validateStaticCodeAnalysisSettings(ProgrammingLanguageFeature programmingLanguageFeature) {
+    public void validateStaticCodeAnalysisSettings(ProgrammingLanguageFeature programmingLanguageFeature, ProgrammingExerciseBuildConfig buildConfig) {
         // Check if the static code analysis flag was set
         if (isStaticCodeAnalysisEnabled() == null) {
             throw new BadRequestAlertException("The static code analysis flag must be set to true or false", "Exercise", "staticCodeAnalysisFlagNotSet");
         }
 
         // Check that programming exercise doesn't have sequential test runs and static code analysis enabled
-        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && getBuildConfig().hasSequentialTestRuns()) {
+        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && buildConfig.hasSequentialTestRuns()) {
             throw new BadRequestAlertException("The static code analysis with sequential test runs is not supported at the moment", "Exercise", "staticCodeAnalysisAndSequential");
         }
 

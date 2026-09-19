@@ -748,7 +748,7 @@ public class ExamUtilService {
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(programmingGroup);
         Set<GradingCriterion> gradingCriteria = ProgrammingExerciseFactory.generateGradingCriteria(programmingExercise);
         exerciseRepository.save(programmingExercise);
-        programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise);
+        saveBuildConfig(programmingExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
 
         programmingGroup.addExercise(programmingExercise);
@@ -898,6 +898,16 @@ public class ExamUtilService {
      * @param withProgrammingExercise True, if a ProgrammingExercise should be added
      * @return The updated Exam
      */
+    /**
+     * Writes the build configuration of an exam programming exercise. The exercise does not carry it - the
+     * configuration is a row of its own that names the exercise - and starting a participation reads the branch off it.
+     *
+     * @param programmingExercise the stored exercise the configuration belongs to
+     */
+    private void saveBuildConfig(ProgrammingExercise programmingExercise) {
+        programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateGradleBuildConfig(), programmingExercise);
+    }
+
     public Exam addExerciseGroupsAndExercisesToExam(Exam exam, boolean withProgrammingExercise) {
         return addExerciseGroupsAndExercisesToExam(exam, withProgrammingExercise, false);
     }
@@ -978,7 +988,7 @@ public class ExamUtilService {
             // Programming exercises need a proper setup for 'prepare exam start' to work
             ProgrammingExercise programmingExercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup6, "Programming");
             exerciseRepository.save(programmingExercise1);
-            programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise1);
+            saveBuildConfig(programmingExercise1);
             programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise1);
             programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise1);
 
@@ -1026,7 +1036,7 @@ public class ExamUtilService {
             // Programming exercises need a proper setup for 'prepare exam start' to work
             ProgrammingExercise programmingExercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup2);
             exerciseRepository.save(programmingExercise1);
-            programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise1);
+            saveBuildConfig(programmingExercise1);
             programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise1);
             programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise1);
             exerciseGroup2.setExercises(Set.of(programmingExercise1));

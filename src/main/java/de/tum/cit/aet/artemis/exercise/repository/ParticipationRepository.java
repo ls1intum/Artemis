@@ -151,7 +151,7 @@ public interface ParticipationRepository extends ArtemisJpaRepository<Participat
                 LEFT JOIN FETCH p.exercise e
             WHERE p.id = :participationId
             """)
-    Optional<Participation> findWithProgrammingExerciseWithBuildConfigById(@Param("participationId") long participationId);
+    Optional<Participation> findWithProgrammingExerciseById(@Param("participationId") long participationId);
 
     /**
      * Removes all individual due dates of participations for which the individual due date is before the updated due date of the exercise.

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
@@ -21,26 +22,39 @@ public interface ProgrammingExerciseBuildConfigRepository extends ArtemisJpaRepo
 
     Optional<ProgrammingExerciseBuildConfig> findByProgrammingExerciseId(Long programmingExerciseId);
 
-    default ProgrammingExerciseBuildConfig getProgrammingExerciseBuildConfigElseThrow(ProgrammingExercise programmingExercise) {
-        if (programmingExercise.getBuildConfig() == null) {
-            return getValueElseThrow(findByProgrammingExerciseId(programmingExercise.getId()));
-        }
-        return programmingExercise.getBuildConfig();
+    /**
+     * Reads the build configurations of every exercise that belongs to a project.
+     *
+     * @param projectKey the project key shared by the exercises
+     * @return one build configuration per exercise in that project
+     */
+    @Query("""
+            SELECT buildConfig
+            FROM ProgrammingExerciseBuildConfig buildConfig
+            WHERE buildConfig.programmingExercise.projectKey = :projectKey
+            """)
+    List<ProgrammingExerciseBuildConfig> findAllByProjectKey(@Param("projectKey") String projectKey);
+
+    /**
+     * Reads the build configuration of an exercise.
+     *
+     * @param programmingExerciseId the id of the exercise whose configuration to read
+     * @return the build configuration
+     */
+    default ProgrammingExerciseBuildConfig getProgrammingExerciseBuildConfigElseThrow(long programmingExerciseId) {
+        return getValueElseThrow(findByProgrammingExerciseId(programmingExerciseId));
     }
 
     /**
-     * Writes the build configuration attached to an exercise, which has to exist first because the configuration names
-     * it, and attaches the stored instance back to the exercise.
+     * Writes a build configuration for an exercise that already exists, since the configuration carries the key.
      *
-     * @param programmingExercise the exercise whose attached build configuration should be written
+     * @param buildConfig         the configuration to write
+     * @param programmingExercise the exercise it belongs to
      * @return the stored build configuration
      */
-    default ProgrammingExerciseBuildConfig saveForExercise(ProgrammingExercise programmingExercise) {
-        ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+    default ProgrammingExerciseBuildConfig saveForExercise(ProgrammingExerciseBuildConfig buildConfig, ProgrammingExercise programmingExercise) {
         buildConfig.setProgrammingExercise(programmingExercise);
-        ProgrammingExerciseBuildConfig savedBuildConfig = save(buildConfig);
-        programmingExercise.setBuildConfig(savedBuildConfig);
-        return savedBuildConfig;
+        return save(buildConfig);
     }
 
     default void generateBuildPlanAccessSecretIfNotExists(ProgrammingExerciseBuildConfig buildConfig) {
@@ -48,10 +62,6 @@ public interface ProgrammingExerciseBuildConfigRepository extends ArtemisJpaRepo
             buildConfig.generateAndSetBuildPlanAccessSecret();
             save(buildConfig);
         }
-    }
-
-    default void loadAndSetBuildConfig(ProgrammingExercise programmingExercise) {
-        programmingExercise.setBuildConfig(getProgrammingExerciseBuildConfigElseThrow(programmingExercise));
     }
 
     /**

@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 
 /**
  * Covers what happens to a build phases template that cannot be deserialized.
@@ -56,14 +55,11 @@ class BuildPhasesTemplateServiceTest {
     @Mock
     private BuildScriptProviderService buildScriptProviderService;
 
-    @Mock
-    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
-
     private BuildPhasesTemplateService service;
 
     @BeforeEach
     void setUp() {
-        service = new BuildPhasesTemplateService(programmingLanguageConfiguration, resourceLoaderService, buildScriptProviderService, programmingExerciseBuildConfigRepository);
+        service = new BuildPhasesTemplateService(programmingLanguageConfiguration, resourceLoaderService, buildScriptProviderService);
     }
 
     private void givenTheTemplateOnDiskIsMalformed() {
@@ -86,11 +82,9 @@ class BuildPhasesTemplateServiceTest {
         var exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         exercise.setProjectType(ProjectType.PLAIN_MAVEN);
-        exercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
-        when(programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise)).thenReturn(exercise.getBuildConfig());
 
         // The exercise keeps its own configuration rather than the request failing.
-        assertThat(service.getDefaultBuildPlanPhasesFor(exercise)).isNull();
+        assertThat(service.getDefaultBuildPlanPhasesFor(exercise, new ProgrammingExerciseBuildConfig())).isNull();
     }
 
     @Test

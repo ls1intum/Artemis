@@ -136,7 +136,6 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         request.put("/api/exercise/participations/" + participation.getId() + "/cleanup-build-plan", null, HttpStatus.OK);
         request.postWithoutLocation("/api/programming/participations/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.OK, null);
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
-        programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise2);
         request.delete("/api/programming/programming-exercises/" + programmingExercise2.getId(), HttpStatus.OK, deleteProgrammingExerciseParamsFalse());
 
         var features = new HashMap<Feature, Boolean>();

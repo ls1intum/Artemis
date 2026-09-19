@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
@@ -88,19 +89,18 @@ public class ProgrammingExerciseBuildPlanService {
      * Adds the default build plan to a programming exercise.
      * This normalization is skipped for Jenkins, which uses its own Jenkinsfile-based approach.
      *
-     * @param programmingExercise the programming exercise whose build config should be normalized
+     * @param programmingExercise the programming exercise the configuration belongs to
+     * @param buildConfig         the build configuration that should be normalized
      */
-    public void addDefaultBuildPlanConfigForLocalCI(ProgrammingExercise programmingExercise) {
-        if (!profileService.isLocalCIActive() || programmingExercise.getBuildConfig().getBuildPlanConfiguration() != null) {
+    public void addDefaultBuildPlanConfigForLocalCI(ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig) {
+        if (!profileService.isLocalCIActive() || buildConfig.getBuildPlanConfiguration() != null) {
             return;
         }
-
-        var buildConfig = programmingExercise.getBuildConfig();
 
         // augment with default template or values
         if (buildPhasesTemplateService.isPresent()) {
             final BuildPhasesTemplateService templateService = buildPhasesTemplateService.orElseThrow();
-            List<BuildPhaseDTO> phases = templateService.getDefaultBuildPlanPhasesFor(programmingExercise);
+            List<BuildPhaseDTO> phases = templateService.getDefaultBuildPlanPhasesFor(programmingExercise, buildConfig);
             if (programmingExercise.isExamExercise()) {
                 phases = templateService.applyExamDefaults(phases);
             }
@@ -121,14 +121,16 @@ public class ProgrammingExerciseBuildPlanService {
      *
      * @param originalBuildPlanConfiguration the build plan configuration before the update
      * @param updatedProgrammingExercise     the changed programming exercise with its new values
+     * @param updatedBuildConfig             the build configuration the update carries
      */
-    public void updateBuildPlanForExercise(@Nullable String originalBuildPlanConfiguration, ProgrammingExercise updatedProgrammingExercise) {
-        if (continuousIntegrationService.isEmpty() || Objects.equals(originalBuildPlanConfiguration, updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration())) {
+    public void updateBuildPlanForExercise(@Nullable String originalBuildPlanConfiguration, ProgrammingExercise updatedProgrammingExercise,
+            ProgrammingExerciseBuildConfig updatedBuildConfig) {
+        if (continuousIntegrationService.isEmpty() || Objects.equals(originalBuildPlanConfiguration, updatedBuildConfig.getBuildPlanConfiguration())) {
             return;
         }
         // we only update the build plan configuration if it has changed and is not null, otherwise we
         // do not have a valid exercise anymore
-        if (updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() != null) {
+        if (updatedBuildConfig.getBuildPlanConfiguration() != null) {
             if (!profileService.isLocalCIActive()) {
                 continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
                 continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
@@ -138,7 +140,7 @@ public class ProgrammingExerciseBuildPlanService {
         }
         else {
             // if the user does not change the build plan configuration, we have to set the old one again
-            updatedProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalBuildPlanConfiguration);
+            updatedBuildConfig.setBuildPlanConfiguration(originalBuildPlanConfiguration);
         }
     }
 

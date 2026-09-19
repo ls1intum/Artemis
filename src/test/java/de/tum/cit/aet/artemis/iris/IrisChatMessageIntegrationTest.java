@@ -866,8 +866,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             exercise.setProjectType(ProjectType.PLAIN_GRADLE);
             exercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase(Locale.ROOT) + "-tests.git");
             programmingExerciseRepository.save(exercise);
-            programmingExerciseBuildConfigRepository.saveForExercise(exercise);
-            ProgrammingExercise reloaded = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exercise.getId()).orElseThrow();
+            ProgrammingExercise reloaded = programmingExerciseRepository.findWithAllParticipationsById(exercise.getId()).orElseThrow();
 
             String templateSlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
             TemplateProgrammingExerciseParticipation templateParticipation = reloaded.getTemplateParticipation();
@@ -902,8 +901,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             exercise.setProjectType(ProjectType.PLAIN_GRADLE);
             exercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase(Locale.ROOT) + "-tests.git");
             programmingExerciseRepository.save(exercise);
-            programmingExerciseBuildConfigRepository.saveForExercise(exercise);
-            ProgrammingExercise reloaded = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exercise.getId()).orElseThrow();
+            ProgrammingExercise reloaded = programmingExerciseRepository.findWithAllParticipationsById(exercise.getId()).orElseThrow();
 
             String templateSlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
             TemplateProgrammingExerciseParticipation templateParticipation = reloaded.getTemplateParticipation();

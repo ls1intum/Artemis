@@ -232,11 +232,6 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         this.allowBranching = allowBranching;
     }
 
-    public void filterSensitiveInformation() {
-        setBuildPlanConfiguration(null);
-        setBuildScript(null);
-    }
-
     public ProgrammingExercise getProgrammingExercise() {
         return programmingExercise;
     }

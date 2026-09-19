@@ -261,7 +261,6 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         ProgrammingExercise programming = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(programmingGroup, ProgrammingLanguage.JAVA);
         programmingGroup.addExercise(programming);
         exerciseRepository.save(programming);
-        programmingExerciseBuildConfigRepository.saveForExercise(programming);
 
         versionControlService.createProjectForExercise(programming);
         createdProjectKey = programming.getProjectKey();

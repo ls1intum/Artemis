@@ -231,8 +231,8 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         assertThat(buildJob.getCourseId()).isEqualTo(course.getId());
         assertThat(buildJob.getExerciseId()).isEqualTo(programmingExercise.getId());
         assertThat(buildJob.getParticipationId()).isEqualTo(studentParticipation.getId());
-        assertThat(buildJob.getDockerImage())
-                .isEqualTo(BuildPlanPhasesDTO.fromBuildPlanConfiguration(programmingExercise.getBuildConfig().getBuildPlanConfiguration()).dockerImage());
+        assertThat(buildJob.getDockerImage()).isEqualTo(
+                BuildPlanPhasesDTO.fromBuildPlanConfiguration(programmingExerciseUtilService.buildConfigOf(programmingExercise).getBuildPlanConfiguration()).dockerImage());
         assertThat(buildJob.getRepositoryName()).isEqualTo(assignmentRepositorySlug);
         assertThat(buildJob.getPriority()).isEqualTo(2);
         assertThat(buildJob.getRetryCount()).isEqualTo(0);
@@ -268,7 +268,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildJobTimeoutPersistence() throws JacksonException {
         try (ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1)) {
-            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
             int originalTimeout = buildConfig.getTimeoutSeconds();
             buildConfig.setTimeoutSeconds(1);
             programmingExerciseBuildConfigRepository.save(buildConfig);
@@ -303,8 +303,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
             assertThat(buildJob.getCourseId()).isEqualTo(course.getId());
             assertThat(buildJob.getExerciseId()).isEqualTo(programmingExercise.getId());
             assertThat(buildJob.getParticipationId()).isEqualTo(studentParticipation.getId());
-            assertThat(buildJob.getDockerImage())
-                    .isEqualTo(BuildPlanPhasesDTO.fromBuildPlanConfiguration(programmingExercise.getBuildConfig().getBuildPlanConfiguration()).dockerImage());
+            assertThat(buildJob.getDockerImage()).isEqualTo(BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildConfig.getBuildPlanConfiguration()).dockerImage());
             assertThat(buildJob.getRepositoryName()).isEqualTo(assignmentRepositorySlug);
             assertThat(buildJob.getPriority()).isEqualTo(2);
             assertThat(buildJob.getRetryCount()).isEqualTo(0);
@@ -571,7 +570,6 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         programmingExercise.setProjectType(null);
         programmingExerciseRepository.save(programmingExercise);
-        programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise);
 
         processNewPush(commitHash, studentAssignmentRepository.bareRepository().getRepository(), userTestRepository.getUserWithAuthorities());
         localVCLocalCITestService.testLatestSubmission(participation.getId(), commitHash, 1, false);
@@ -666,7 +664,6 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     void testStaticCodeAnalysis() throws IOException {
         programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExerciseRepository.save(programmingExercise);
-        programmingExerciseBuildConfigRepository.saveForExercise(programmingExercise);
 
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
@@ -778,10 +775,10 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCustomCheckoutPaths() {
-        var buildConfig = programmingExercise.getBuildConfig();
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
         buildConfig.setAssignmentCheckoutPath("customAssignmentPath");
         ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+        programmingExerciseBuildConfigRepository.save(buildConfig);
 
         processNewPush(commitHash, studentAssignmentRepository.bareRepository().getRepository(), userTestRepository.getUserWithAuthorities());
         localVCLocalCITestService.testLatestSubmission(participation.getId(), commitHash, 1, false);
@@ -793,10 +790,10 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDisableNetworkAccessAndEnvVars() {
-        var buildConfig = programmingExercise.getBuildConfig();
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
         buildConfig.setDockerFlags("{\"network\": \"none\", \"env\": {\"key\": \"value\"}}");
         ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+        programmingExerciseBuildConfigRepository.save(buildConfig);
 
         processNewPush(commitHash, studentAssignmentRepository.bareRepository().getRepository(), userTestRepository.getUserWithAuthorities());
         localVCLocalCITestService.testLatestSubmission(participation.getId(), commitHash, 1, false);
@@ -806,10 +803,10 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPerfDockerFlags() {
-        var buildConfig = programmingExercise.getBuildConfig();
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
         buildConfig.setDockerFlags("{\"cpuCount\": 4, \"memory\": 3072, \"memorySwap\": 2048}");
         ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+        programmingExerciseBuildConfigRepository.save(buildConfig);
 
         processNewPush(commitHash, studentAssignmentRepository.bareRepository().getRepository(), userTestRepository.getUserWithAuthorities());
         localVCLocalCITestService.testLatestSubmission(participation.getId(), commitHash, 1, false);

@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localci.service.LegacyBuildPlanConverterService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
@@ -84,7 +85,8 @@ class ProgrammingExerciseImportFromFileServiceTest {
         var importedExercise = importFixture("valid-import.zip");
 
         InOrder importOrder = inOrder(programmingExerciseImportRepositoryService, programmingExerciseCreationUpdateService);
-        importOrder.verify(programmingExerciseCreationUpdateService).createProgrammingExercise(any(ProgrammingExercise.class), eq(false), eq(true));
+        importOrder.verify(programmingExerciseCreationUpdateService).createProgrammingExercise(any(ProgrammingExercise.class), any(ProgrammingExerciseBuildConfig.class), eq(false),
+                eq(true));
         importOrder.verify(programmingExerciseImportRepositoryService).importRepositoriesFromFile(eq(importedExercise), any(Path.class), any(User.class));
         importOrder.verify(programmingExerciseCreationUpdateService).setupBuildPlansAndTriggerInitialBuilds(importedExercise);
     }
@@ -122,13 +124,14 @@ class ProgrammingExerciseImportFromFileServiceTest {
         importedExercise.setTemplateRepositoryUri("http://artemis.example/git/ABC/abc-exercise.git");
         importedExercise.setSolutionRepositoryUri("http://artemis.example/git/ABC/abc-solution.git");
         importedExercise.setTestRepositoryUri("http://artemis.example/git/ABC/abc-tests.git");
-        when(programmingExerciseCreationUpdateService.createProgrammingExercise(originalExercise, false, true)).thenReturn(importedExercise);
+        when(programmingExerciseCreationUpdateService.createProgrammingExercise(eq(originalExercise), any(ProgrammingExerciseBuildConfig.class), eq(false), eq(true)))
+                .thenReturn(importedExercise);
         when(programmingExerciseCreationUpdateService.setupBuildPlansAndTriggerInitialBuilds(importedExercise)).thenReturn(importedExercise);
 
         var importZip = new ClassPathResource("test-data/import-from-file/" + fixtureName);
         MockMultipartFile zipFile = new MockMultipartFile("file", fixtureName, "application/zip", importZip.getInputStream());
 
-        programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(originalExercise, zipFile, new Course(), new User());
+        programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(originalExercise, new ProgrammingExerciseBuildConfig(), zipFile, new Course(), new User());
         return importedExercise;
     }
 }
