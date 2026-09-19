@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -215,7 +216,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             // Used for a save typecast, this should always be true since this class only works with programming exercises.
             programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
-            programmingExercise.setAuxiliaryRepositories(auxiliaryRepositoryRepository.findByExerciseId(exercise.getId()));
+            programmingExercise.setAuxiliaryRepositories(new LinkedHashSet<>(auxiliaryRepositoryRepository.findByExerciseId(exercise.getId())));
         }
         super.exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir, pathsToBeZipped);
     }

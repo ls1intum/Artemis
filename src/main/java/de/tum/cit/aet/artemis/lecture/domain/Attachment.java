@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.ServedFileUrl;
 
@@ -54,7 +55,8 @@ public class Attachment extends DomainObject implements Serializable {
     private AttachmentType attachmentType;
 
     @OneToOne
-    @JoinColumn(name = "attachment_unit_id")
+    @JoinColumn(name = "attachment_unit_id", nullable = false)
+    @Parent
     private AttachmentVideoUnit attachmentVideoUnit;
 
     // Student Version holds the version of the file without the pages hidden by the Instructor

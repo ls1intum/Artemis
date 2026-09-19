@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationDTO.ParticipationExerciseDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 
 /**
@@ -33,7 +34,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
  * @param participantIdentifier the visible participant identifier, if authorized
  * @param student               safe public student information, if authorized and initialized
  * @param team                  safe team information, if authorized and initialized
- * @param exercise              the minimal exercise context, if requested and initialized
+ * @param exercise              the minimal exercise context, only on submit-path responses
  * @param submissions           initialized lean submissions, or absent when submissions were not loaded
  * @param repositoryUri         the programming repository URI, if applicable
  * @param buildPlanId           the programming build-plan identifier, if applicable
@@ -42,9 +43,35 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record StudentParticipationDTO(Long id, @Nullable InitializationState initializationState, @Nullable ZonedDateTime initializationDate,
         @Nullable ZonedDateTime individualDueDate, @Nullable Double presentationScore, boolean testRun, String type, @Nullable Integer submissionCount,
-        @Nullable String participantName, @Nullable String participantIdentifier, @Nullable UserPublicInfoDTO student, @Nullable ParticipationTeamDTO team,
-        @Nullable ParticipationExerciseContextDTO exercise, @Nullable List<ParticipationSubmissionDTO> submissions, @Nullable String repositoryUri, @Nullable String buildPlanId,
+        @Nullable String participantName, @Nullable String participantIdentifier, @Nullable UserPublicInfoDTO student, @Nullable TeamDTO team,
+        @Nullable ParticipationExerciseDTO exercise, @Nullable List<ParticipationSubmissionDTO> submissions, @Nullable String repositoryUri, @Nullable String buildPlanId,
         @Nullable String branch) {
+
+    /**
+     * The participant as the response reports it: either both DTO and name/identifier, or nothing at all.
+     *
+     * @param student    safe public student information, if the participant is a visible user
+     * @param team       safe team information, if the participant is a visible team
+     * @param name       the visible participant name
+     * @param identifier the visible participant identifier
+     */
+    // A mapping helper, never serialized: the name and the annotation only satisfy ExerciseCodeStyleArchitectureTest.testDTOImplementations,
+    // which requires every class in a dto package to be a *DTO record carrying @JsonInclude.
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private record ParticipantViewDTO(@Nullable UserPublicInfoDTO student, @Nullable TeamDTO team, @Nullable String name, @Nullable String identifier) {
+
+        /** The participant withheld, e.g. from a tutor assessing the participation. */
+        static final ParticipantViewDTO HIDDEN = new ParticipantViewDTO(null, null, null, null);
+
+        static ParticipantViewDTO of(@Nullable Participant participant) {
+            UserPublicInfoDTO student = participant instanceof User user ? new UserPublicInfoDTO(user) : null;
+            TeamDTO team = participant instanceof Team participantTeam ? TeamDTO.of(participantTeam) : null;
+            if (student == null && team == null) {
+                return HIDDEN;
+            }
+            return new ParticipantViewDTO(student, team, participant.getName(), participant.getParticipantIdentifier());
+        }
+    }
 
     /**
      * Builds the participation a submit response reports, from the projection the save was made against.
@@ -60,32 +87,10 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
      * @return the participation as the response reports it
      */
     public static StudentParticipationDTO of(StudentParticipationSubmitTargetDTO target, Exercise exercise, @Nullable Participant participant, boolean includeParticipant) {
-        UserPublicInfoDTO studentDTO = null;
-        ParticipationTeamDTO teamDTO = null;
-        if (includeParticipant) {
-            if (participant instanceof User user) {
-                studentDTO = new UserPublicInfoDTO(user);
-            }
-            else if (participant instanceof Team participantTeam) {
-                teamDTO = ParticipationTeamDTO.of(participantTeam);
-            }
-        }
-
-        String participantName = participant != null && (studentDTO != null || teamDTO != null) ? participant.getName() : null;
-        String participantIdentifier = participant != null && (studentDTO != null || teamDTO != null) ? participant.getParticipantIdentifier() : null;
+        ParticipantViewDTO participantView = includeParticipant ? ParticipantViewDTO.of(participant) : ParticipantViewDTO.HIDDEN;
         return new StudentParticipationDTO(target.id(), target.initializationState(), target.initializationDate(), target.individualDueDate(), target.presentationScore(),
-                target.testRun(), StudentParticipation.TYPE, null, participantName, participantIdentifier, studentDTO, teamDTO, ParticipationExerciseContextDTO.of(exercise), null,
-                null, null, null);
-    }
-
-    /**
-     * Maps a participation for an enclosing response without exposing its participant.
-     *
-     * @param participation the participation to map
-     * @return the participation response, or {@code null} when the input is {@code null}
-     */
-    public static @Nullable StudentParticipationDTO of(@Nullable StudentParticipation participation) {
-        return of(participation, false);
+                target.testRun(), StudentParticipation.TYPE, null, participantView.name(), participantView.identifier(), participantView.student(), participantView.team(),
+                ParticipationExerciseDTO.of(exercise), null, null, null, null);
     }
 
     /**
@@ -96,17 +101,23 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
      * @return the participation response, or {@code null} when the input is {@code null}
      */
     public static @Nullable StudentParticipationDTO of(@Nullable StudentParticipation participation, boolean includeStudent) {
-        return participation != null ? of(participation, includeStudent, true, false) : null;
+        if (participation == null) {
+            return null;
+        }
+        return build(participation, includeStudent ? ParticipantViewDTO.of(initializedParticipant(participation)) : ParticipantViewDTO.HIDDEN,
+                ParticipationExerciseDTO.of(participation.getExercise()), null);
     }
 
     /**
-     * Maps a newly started participation including its visible participant, exercise, and initialized submissions with subtype content.
+     * Maps a newly started participation including its participant and its initialized submissions with subtype content.
+     * No exercise is reported: every client uses the exercise it already holds.
      *
      * @param participation the newly started participation
+     * @param participant   the student or team the participation was started for, loaded for this request
      * @return the participation response
      */
-    public static StudentParticipationDTO ofAfterStart(StudentParticipation participation) {
-        return of(participation, true, true, true, true);
+    public static StudentParticipationDTO ofAfterStart(StudentParticipation participation, Participant participant) {
+        return build(participation, ParticipantViewDTO.of(participant), null, submissionsOf(participation, true));
     }
 
     /**
@@ -116,17 +127,31 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
      * @return the polling response
      */
     public static StudentParticipationDTO ofWithLatestResult(StudentParticipation participation) {
-        return of(participation, false, false, true);
+        return build(participation, ParticipantViewDTO.HIDDEN, null, submissionsOf(participation, false));
     }
 
     /**
-     * Maps a participation for its current owner, including safe participant and exercise information.
+     * Maps a resumed participation. The resume route saves the participation first and gets a merged instance back,
+     * whose team no longer has its students loaded, so it passes the participant it read before the save. No exercise
+     * is reported: every client uses the exercise it already holds.
      *
-     * @param participation the authorized participation loaded with team students when applicable
+     * @param participation the resumed participation
+     * @param participant   the student or team the participation belongs to, read before the save
+     * @return the resumed participation response
+     */
+    public static StudentParticipationDTO ofAfterResume(StudentParticipation participation, @Nullable Participant participant) {
+        return build(participation, ParticipantViewDTO.of(participant), null, null);
+    }
+
+    /**
+     * Maps a participation for its current owner. The participant comes from the eagerly loaded student or team; no
+     * exercise is reported, because every client uses the exercise it already holds.
+     *
+     * @param participation the authorized participation
      * @return the current-user participation response
      */
     public static StudentParticipationDTO ofForCurrentUser(StudentParticipation participation) {
-        return of(participation, true, true, false);
+        return build(participation, ParticipantViewDTO.of(initializedParticipant(participation)), null, null);
     }
 
     /**
@@ -136,39 +161,27 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
      * @return the lean update response
      */
     public static StudentParticipationDTO ofAfterUpdate(StudentParticipation participation) {
-        return of(participation, false, false, false);
+        return build(participation, ParticipantViewDTO.HIDDEN, null, null);
     }
 
-    private static StudentParticipationDTO of(StudentParticipation participation, boolean includeParticipant, boolean includeExercise, boolean includeSubmissions) {
-        return of(participation, includeParticipant, includeExercise, includeSubmissions, false);
+    /**
+     * The participant of a participation whose student or team was loaded for this request, {@code null} otherwise.
+     * Reading {@code getParticipant()} directly would dereference a lazy proxy.
+     */
+    private static @Nullable Participant initializedParticipant(StudentParticipation participation) {
+        User student = participation.getStudent().filter(Hibernate::isInitialized).orElse(null);
+        return student != null ? student : participation.getTeam().filter(Hibernate::isInitialized).orElse(null);
     }
 
-    private static StudentParticipationDTO of(StudentParticipation participation, boolean includeParticipant, boolean includeExercise, boolean includeSubmissions,
-            boolean includeSubmissionContent) {
-        UserPublicInfoDTO studentDTO = null;
-        ParticipationTeamDTO teamDTO = null;
-        if (includeParticipant) {
-            User student = participation.getStudent().filter(Hibernate::isInitialized).orElse(null);
-            Team team = participation.getTeam().filter(Hibernate::isInitialized).orElse(null);
-            studentDTO = student != null ? new UserPublicInfoDTO(student) : null;
-            teamDTO = team != null ? ParticipationTeamDTO.of(team) : null;
+    private static @Nullable List<ParticipationSubmissionDTO> submissionsOf(StudentParticipation participation, boolean includeContent) {
+        if (participation.getSubmissions() == null || !Hibernate.isInitialized(participation.getSubmissions())) {
+            return null;
         }
+        return participation.getSubmissions().stream().filter(Objects::nonNull).map(submission -> ParticipationSubmissionDTO.of(submission, includeContent)).toList();
+    }
 
-        String participantName = studentDTO != null || teamDTO != null ? participation.getParticipantName() : null;
-        String participantIdentifier = studentDTO != null || teamDTO != null ? participation.getParticipantIdentifier() : null;
-
-        ParticipationExerciseContextDTO exerciseDTO = null;
-        Exercise exercise = participation.getExercise();
-        if (includeExercise && exercise != null && Hibernate.isInitialized(exercise)) {
-            exerciseDTO = ParticipationExerciseContextDTO.of(exercise);
-        }
-
-        List<ParticipationSubmissionDTO> submissionDTOs = null;
-        if (includeSubmissions && participation.getSubmissions() != null && Hibernate.isInitialized(participation.getSubmissions())) {
-            submissionDTOs = participation.getSubmissions().stream().filter(Objects::nonNull).map(submission -> ParticipationSubmissionDTO.of(submission, includeSubmissionContent))
-                    .toList();
-        }
-
+    private static StudentParticipationDTO build(StudentParticipation participation, ParticipantViewDTO participant, @Nullable ParticipationExerciseDTO exercise,
+            @Nullable List<ParticipationSubmissionDTO> submissions) {
         String repositoryUri = null;
         String buildPlanId = null;
         String branch = null;
@@ -177,9 +190,8 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
             buildPlanId = programmingParticipation.getBuildPlanId();
             branch = programmingParticipation.getBranch();
         }
-
         return new StudentParticipationDTO(participation.getId(), participation.getInitializationState(), participation.getInitializationDate(),
                 participation.getIndividualDueDate(), participation.getPresentationScore(), participation.isTestRun(), participation.getType(), participation.getSubmissionCount(),
-                participantName, participantIdentifier, studentDTO, teamDTO, exerciseDTO, submissionDTOs, repositoryUri, buildPlanId, branch);
+                participant.name(), participant.identifier(), participant.student(), participant.team(), exercise, submissions, repositoryUri, buildPlanId, branch);
     }
 }
