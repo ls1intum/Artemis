@@ -10,7 +10,7 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { faArrowLeft, faCircleNotch, faKey } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormsModule, Validators } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -415,12 +415,13 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     }
 
     /**
-     * Validates if the currently entered username or email satisfies both
-     * the length constraints and the dynamic regular expression pattern.
+     * Validates email addresses independently of the configured username pattern.
+     * Both identifiers must satisfy the existing length constraints.
      */
     checkIdentifierValidity() {
         const meetsLength = this.username !== undefined && this.username.length >= this.USERNAME_MIN_LENGTH && this.username.length <= this.USERNAME_MAX_LENGTH;
 
-        this.isIdentifierValid.set(meetsLength && this.usernameRegexPattern().test(this.username));
+        const matchesPattern = this.username?.includes('@') ? Validators.email(new FormControl(this.username)) === null : this.usernameRegexPattern().test(this.username);
+        this.isIdentifierValid.set(meetsLength && matchesPattern);
     }
 }
