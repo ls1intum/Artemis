@@ -58,7 +58,7 @@ Enforcement lives in ArchUnit (`ArchitectureTest`, `DistributedDataProviderArchi
 ## Tech stack
 
 Spring Boot 4.1 on Java 25, MySQL and PostgreSQL, Hibernate, Hazelcast. Angular 22, TypeScript, SCSS, Tailwind v4.
-Build with Gradle (wrapper-pinned) and pnpm 11 / Node 24 — pnpm comes from `packageManager` in `package.json`, so run
+Build with Gradle (wrapper-pinned) and pnpm 12 / Node 24 — pnpm comes from `packageManager` in `package.json`, so run
 `corepack enable` once. Tests: JUnit 6, Vitest, Playwright.
 
 ## Commands
