@@ -347,8 +347,8 @@ export class CourseManagementExercisesComponent implements OnInit {
     private deleteObservableFor(exercise: Exercise, event: { [key: string]: boolean }): Observable<HttpResponse<void>> {
         switch (exercise.type) {
             case ExerciseType.PROGRAMMING:
-                // The cleanup checks are only offered on non-LocalCI setups, so the flags default to false.
-                return this.programmingExerciseService.delete(exercise.id!, event.deleteStudentReposBuildPlans ?? false, event.deleteBaseReposBuildPlans ?? false);
+                // Preserve omitted LocalCI cleanup flags so the server applies its repository deletion defaults.
+                return this.programmingExerciseService.delete(exercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans);
             case ExerciseType.QUIZ:
                 return this.quizExerciseService.delete(exercise.id!);
             case ExerciseType.TEXT:
