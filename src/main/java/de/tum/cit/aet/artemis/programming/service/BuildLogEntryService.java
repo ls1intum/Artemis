@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
@@ -24,6 +25,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
@@ -82,19 +84,22 @@ public class BuildLogEntryService {
     }
 
     /**
-     * Stores the build logs of a failed build, replacing whatever was stored for this submission before.
+     * Stores the build logs of a failed result. Other failed results of the same submission remain available.
      * <p>
      * The entries go to {@link FailedBuildLogService}, not to the database. A multi-line entry is written as several entries sharing its timestamp, which is why the returned
      * list can be longer than the one that was passed in.
      *
      * @param buildLogs             build logs to save
      * @param programmingSubmission submission of the build logs
+     * @param result                persisted result of the failed build
      * @return the entries as they were stored, which is what a subsequent read returns
      */
-    public List<BuildLogEntry> saveBuildLogs(List<BuildLogEntry> buildLogs, ProgrammingSubmission programmingSubmission) {
+    public List<BuildLogEntry> saveBuildLogs(List<BuildLogEntry> buildLogs, ProgrammingSubmission programmingSubmission, Result result) {
         List<BuildLogEntry> stored;
         try {
-            stored = failedBuildLogService.saveBuildLogs(programmingSubmission.getId(), buildLogs);
+            ZonedDateTime retentionTime = result.getCompletionDate() != null ? result.getCompletionDate()
+                    : Objects.requireNonNull(programmingSubmission.getSubmissionDate(), "A failed build result or its submission must have a timestamp");
+            stored = failedBuildLogService.saveBuildLogs(result.getExerciseId(), programmingSubmission.getId(), result.getId(), retentionTime, buildLogs);
         }
         catch (UncheckedIOException e) {
             // A build result must not fail because its logs could not be written, and the rows below are deliberately left alone: a submission that still has them keeps
@@ -103,7 +108,7 @@ public class BuildLogEntryService {
             return List.of();
         }
 
-        // Only now that the replacement exists. Rows of a build that predates the file store are removed rather than left behind, so that a submission is never represented in
+        // Only now that the result file exists. Rows of a build that predates the file store are removed rather than left behind, so that a submission is never represented in
         // both stores and the read below never has to decide which of the two is newer. Once the table has drained this is a delete that matches nothing.
         buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
         return stored;
@@ -118,7 +123,21 @@ public class BuildLogEntryService {
     public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
         // Builds that failed before this release still have their logs in build_log_entry and nothing moves them, so a submission without a file falls back to the table for
         // as long as its rows survive the retention period. Both branches are removed once the table has drained.
-        return failedBuildLogService.getBuildLogs(programmingSubmission.getId()).orElseGet(() -> programmingSubmissionRepository
+        long exerciseId = exerciseIdOf(programmingSubmission);
+        return failedBuildLogService.getLatestBuildLogs(exerciseId, programmingSubmission.getId()).orElseGet(() -> programmingSubmissionRepository
+                .findWithEagerBuildLogEntriesById(programmingSubmission.getId()).map(ProgrammingSubmission::getBuildLogEntries).map(List::copyOf).orElseGet(List::of));
+    }
+
+    /**
+     * Retrieves the failed build logs of one result.
+     *
+     * @param programmingSubmission submission the result belongs to
+     * @param resultId              result whose logs to retrieve
+     * @return the build log entries
+     */
+    public List<BuildLogEntry> getBuildLogs(ProgrammingSubmission programmingSubmission, long resultId) {
+        long exerciseId = exerciseIdOf(programmingSubmission);
+        return failedBuildLogService.getBuildLogs(exerciseId, programmingSubmission.getId(), resultId).orElseGet(() -> programmingSubmissionRepository
                 .findWithEagerBuildLogEntriesById(programmingSubmission.getId()).map(ProgrammingSubmission::getBuildLogEntries).map(List::copyOf).orElseGet(List::of));
     }
 
@@ -339,10 +358,24 @@ public class BuildLogEntryService {
      * @param programmingSubmission the programming submission for which the build logs should be deleted
      */
     public void deleteBuildLogEntriesForProgrammingSubmission(ProgrammingSubmission programmingSubmission) {
-        failedBuildLogService.deleteBuildLogs(programmingSubmission.getId());
+        long exerciseId = programmingSubmission.getParticipation().getExercise().getId();
+        failedBuildLogService.deleteBuildLogs(exerciseId, programmingSubmission.getId());
         programmingSubmission.setBuildLogEntries(Set.of());
         programmingSubmissionRepository.save(programmingSubmission);
         buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
+    }
+
+    private long exerciseIdOf(ProgrammingSubmission programmingSubmission) {
+        var persistedExerciseId = programmingSubmissionRepository.findExerciseIdBySubmissionId(programmingSubmission.getId());
+        if (persistedExerciseId.isPresent()) {
+            return persistedExerciseId.get();
+        }
+
+        Result latestResult = programmingSubmission.getLatestResult();
+        if (latestResult != null) {
+            return latestResult.getExerciseId();
+        }
+        throw new IllegalArgumentException("No programming submission found with id " + programmingSubmission.getId());
     }
 
     /**

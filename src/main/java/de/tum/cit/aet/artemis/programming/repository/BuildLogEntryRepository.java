@@ -30,7 +30,8 @@ public interface BuildLogEntryRepository extends ArtemisJpaRepository<BuildLogEn
     void deleteByProgrammingSubmissionId(long programmingSubmissionId);
 
     /**
-     * Finds the ids of build log entries older than the given cutoff, a page at a time.
+     * Finds the ids of build log entries older than the given cutoff, oldest first and a page at a time. The ordering matches the {@code (time, id)} retention index, so every
+     * batch can be selected without scanning and sorting the legacy table again.
      * <p>
      * Nothing writes to this table any more; the logs of a failed build are stored on disk. This is what drains what is left of it, so that the rows disappear on the same
      * retention period as the files rather than staying until someone drops the table.
@@ -59,6 +60,7 @@ public interface BuildLogEntryRepository extends ArtemisJpaRepository<BuildLogEn
             SELECT buildLogEntry.id
             FROM BuildLogEntry buildLogEntry
             WHERE buildLogEntry.time < :cutoff
+            ORDER BY buildLogEntry.time, buildLogEntry.id
             """)
     List<Long> findExpiredIds(@Param("cutoff") ZonedDateTime cutoff, Pageable pageable);
 

@@ -513,7 +513,21 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         var logs = List.of(new BuildLogEntry(java.time.ZonedDateTime.now(), "an older failure"));
         when(participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(PARTICIPATION_ID)).thenReturn(participation);
         when(programmingSubmissionRepository.findByResultIdElseThrow(80L)).thenReturn(earlier);
-        when(buildLogService.getLatestBuildLogs(earlier)).thenReturn(logs);
+        when(buildLogService.getBuildLogs(earlier, 80L)).thenReturn(logs);
+
+        assertThat(resource.getBuildLogs(PARTICIPATION_ID, Optional.of(80L)).getBody()).isEqualTo(logs.stream().map(BuildLogEntryDTO::of).toList());
+    }
+
+    @Test
+    void getBuildLogs_forAnEarlierResultOfTheLatestSubmission_returnsThatResultsLogs() {
+        var submission = submissionWithResult(50L, 90L, true);
+        var earlierResult = new Result();
+        earlierResult.setId(80L);
+        submission.setResults(Set.of(earlierResult, submission.getLatestResult()));
+        participation.setSubmissions(Set.of(submission));
+        var logs = List.of(new BuildLogEntry(java.time.ZonedDateTime.now(), "the earlier failure of the same submission"));
+        when(participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(PARTICIPATION_ID)).thenReturn(participation);
+        when(buildLogService.getBuildLogs(submission, 80L)).thenReturn(logs);
 
         assertThat(resource.getBuildLogs(PARTICIPATION_ID, Optional.of(80L)).getBody()).isEqualTo(logs.stream().map(BuildLogEntryDTO::of).toList());
     }

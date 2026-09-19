@@ -8,18 +8,17 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -32,17 +31,16 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 
 /**
- * Stores the build logs of failed builds on disk, one file per programming submission.
+ * Stores the build logs of failed builds on disk, one file per result.
  * <p>
  * This is deliberately not the store behind {@code artemis.build-logs-path}. That one keeps the complete log of every build job for a short period, is keyed by build job id,
- * and is only ever streamed to the browser as a download. This one keeps the logs of failed builds for a year, is keyed by submission id because that is all its readers have,
- * and is parsed back into entries to serve the build output panel, Iris and Hyperion. Sharing one store would force one retention period onto both.
+ * and is only ever streamed to the browser as a download. This one keeps the logs of failed builds for a year, is keyed by exercise, submission and result, and is parsed back
+ * into entries to serve the build output panel, Iris and Hyperion. Sharing one store would force one retention period onto both.
  * <p>
- * <b>Layout.</b> {@code <root>/<submissionId / 10000>/<submissionId>.log}. The bucket bounds the size of a directory while still finding a file from nothing but a submission
- * id, which is all the readers have.
+ * <b>Layout.</b> {@code <root>/<exerciseId>/<submissionId>/<resultId>.log}. Keeping every exercise in its own directory bounds the number of entries at each level, while the
+ * result id preserves the logs of multiple failed builds for one submission.
  * <p>
  * <b>Format.</b> One entry per line, {@code <ISO-8601 timestamp>\t<log>}, which is unambiguous only because {@link #splitIntoLines} guarantees no stored value contains a line
  * break: an entry whose log spans several lines is written as several entries sharing its timestamp. Nothing observes the difference, because the build output panel groups
@@ -56,25 +54,13 @@ public class FailedBuildLogService {
 
     private static final Logger log = LoggerFactory.getLogger(FailedBuildLogService.class);
 
-    /**
-     * How many submissions share a bucket directory. Purely a filesystem concern; changing it makes previously written files unreachable, so it is not configurable.
-     */
-    private static final long SUBMISSIONS_PER_BUCKET = 10_000;
-
     private static final char SEPARATOR = '\t';
 
     private static final String LOG_SUFFIX = ".log";
 
-    /**
-     * How many submission ids the cleanup asks about at once. A bucket holds up to {@link #SUBMISSIONS_PER_BUCKET} files and the query names every id it is given.
-     */
-    private static final int SUBMISSION_LOOKUP_BATCH_SIZE = 1_000;
-
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
     private final ProfileService profileService;
-
-    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     @Value("${artemis.failed-build-logs-path:./failed-build-logs}")
     private Path failedBuildLogsPath;
@@ -82,24 +68,26 @@ public class FailedBuildLogService {
     @Value("${artemis.continuous-integration.build-log.failed-build-retention-days:365}")
     private int retentionDays;
 
-    public FailedBuildLogService(ProfileService profileService, ProgrammingSubmissionRepository programmingSubmissionRepository) {
+    public FailedBuildLogService(ProfileService profileService) {
         this.profileService = profileService;
-        this.programmingSubmissionRepository = programmingSubmissionRepository;
     }
 
     /**
-     * Writes the build logs of a failed build, replacing whatever was stored for this submission before.
+     * Writes the build logs of a failed result. A different result of the same submission is stored in its own file.
      * <p>
      * Multi-line entries are split into one entry per line, all keeping the timestamp of the entry they came from, so that no stored value contains a line break.
      *
-     * @param submissionId the programming submission the logs belong to
-     * @param buildLogs    the entries to store
+     * @param exerciseId    the programming exercise the result belongs to
+     * @param submissionId  the programming submission the result belongs to
+     * @param resultId      the result the logs belong to
+     * @param retentionTime the result or submission timestamp used for retention
+     * @param buildLogs     the entries to store
      * @return the entries as they were stored, which is what a subsequent read returns
      * @throws UncheckedIOException if the logs could not be written. The caller has to know, because that is what decides whether the rows this file replaces may go.
      */
-    public List<BuildLogEntry> saveBuildLogs(long submissionId, List<BuildLogEntry> buildLogs) {
+    public List<BuildLogEntry> saveBuildLogs(long exerciseId, long submissionId, long resultId, ZonedDateTime retentionTime, List<BuildLogEntry> buildLogs) {
         List<BuildLogEntry> normalized = splitIntoLines(buildLogs);
-        Path logPath = pathFor(submissionId);
+        Path logPath = pathFor(exerciseId, submissionId, resultId);
 
         StringBuilder content = new StringBuilder();
         for (BuildLogEntry entry : normalized) {
@@ -114,6 +102,8 @@ public class FailedBuildLogService {
             // because two builds of one submission finishing together would otherwise share it and move each other's half of it into place.
             temporaryPath = Files.createTempFile(logPath.getParent(), submissionId + "-", ".tmp");
             Files.writeString(temporaryPath, content.toString(), StandardCharsets.UTF_8);
+            // File age is the retention contract. Set it on the temporary file so that the published file is never briefly stamped with the server's wall-clock time.
+            Files.setLastModifiedTime(temporaryPath, FileTime.from(retentionTime.toInstant()));
             try {
                 Files.move(temporaryPath, logPath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
             }
@@ -125,7 +115,7 @@ public class FailedBuildLogService {
             temporaryPath = null;
         }
         catch (IOException e) {
-            throw new UncheckedIOException("Could not write the failed build logs of submission " + submissionId + " to " + logPath, e);
+            throw new UncheckedIOException("Could not write the failed build logs of result " + resultId + " to " + logPath, e);
         }
         finally {
             deleteTemporaryFile(temporaryPath);
@@ -150,14 +140,50 @@ public class FailedBuildLogService {
     }
 
     /**
-     * Reads the stored build logs of a failed build.
+     * Reads the stored build logs of a failed result.
      *
-     * @param submissionId the programming submission to read the logs of
-     * @return the entries, or {@link Optional#empty()} if nothing is stored for this submission. Empty is not the same as an empty list: it is what tells the caller to look
+     * @param exerciseId   the programming exercise the result belongs to
+     * @param submissionId the programming submission the result belongs to
+     * @param resultId     the result to read the logs of
+     * @return the entries, or {@link Optional#empty()} if nothing is stored for this result. Empty is not the same as an empty list: it is what tells the caller to look
      *         for the logs of a build that predates this store.
      */
-    public Optional<List<BuildLogEntry>> getBuildLogs(long submissionId) {
-        Path logPath = pathFor(submissionId);
+    public Optional<List<BuildLogEntry>> getBuildLogs(long exerciseId, long submissionId, long resultId) {
+        return readBuildLogs(pathFor(exerciseId, submissionId, resultId), submissionId, resultId);
+    }
+
+    /**
+     * Reads the most recently stored failed-result logs of a submission.
+     *
+     * @param exerciseId   the programming exercise the submission belongs to
+     * @param submissionId the programming submission to read the latest logs of
+     * @return the latest result's entries, or {@link Optional#empty()} if none are stored
+     */
+    public Optional<List<BuildLogEntry>> getLatestBuildLogs(long exerciseId, long submissionId) {
+        Path submissionPath = submissionPathFor(exerciseId, submissionId);
+        long latestResultId = Long.MIN_VALUE;
+        Path latestLogPath = null;
+        try (DirectoryStream<Path> files = Files.newDirectoryStream(submissionPath, "*" + LOG_SUFFIX)) {
+            for (Path file : files) {
+                Optional<Long> resultId = resultIdOf(file);
+                if (resultId.isPresent() && resultId.get() > latestResultId) {
+                    latestResultId = resultId.get();
+                    latestLogPath = file;
+                }
+            }
+        }
+        catch (NoSuchFileException e) {
+            return Optional.empty();
+        }
+        catch (IOException e) {
+            log.error("Could not find the latest failed build logs of submission {} in {}", submissionId, submissionPath, e);
+            return Optional.empty();
+        }
+
+        return latestLogPath == null ? Optional.empty() : readBuildLogs(latestLogPath, submissionId, latestResultId);
+    }
+
+    private Optional<List<BuildLogEntry>> readBuildLogs(Path logPath, long submissionId, long resultId) {
         if (!Files.isRegularFile(logPath)) {
             return Optional.empty();
         }
@@ -166,11 +192,11 @@ public class FailedBuildLogService {
         try {
             List<String> lines = Files.readAllLines(logPath, StandardCharsets.UTF_8);
             for (String line : lines) {
-                parseLine(line, submissionId).ifPresent(entries::add);
+                parseLine(line, submissionId, resultId).ifPresent(entries::add);
             }
         }
         catch (IOException e) {
-            log.error("Could not read the failed build logs of submission {} from {}", submissionId, logPath, e);
+            log.error("Could not read the failed build logs of result {} of submission {} from {}", resultId, submissionId, logPath, e);
             return Optional.empty();
         }
 
@@ -183,20 +209,37 @@ public class FailedBuildLogService {
     }
 
     /**
-     * Removes the stored build logs of a submission, if there are any.
+     * Removes every stored failed-result log of a submission, if there are any.
      *
+     * @param exerciseId   the programming exercise the submission belongs to
      * @param submissionId the programming submission to delete the logs of
-     * @throws UncheckedIOException if the file is there and cannot be removed. Swallowing that would delete a submission while the build logs of its student stay on disk
+     * @throws UncheckedIOException if the directory is there and cannot be removed. Swallowing that would delete a submission while the build logs of its student stay on disk
      *                                  until the retention period expires, which is the one outcome a deletion path must not produce quietly.
      */
-    public void deleteBuildLogs(long submissionId) {
-        Path logPath = pathFor(submissionId);
+    public void deleteBuildLogs(long exerciseId, long submissionId) {
+        Path submissionPath = submissionPathFor(exerciseId, submissionId);
         try {
-            Files.deleteIfExists(logPath);
+            deleteRecursively(submissionPath);
         }
         catch (IOException e) {
-            throw new UncheckedIOException("Could not delete the failed build logs of submission " + submissionId + " at " + logPath, e);
+            throw new UncheckedIOException("Could not delete the failed build logs of submission " + submissionId + " at " + submissionPath, e);
         }
+    }
+
+    private static void deleteRecursively(Path path) throws IOException {
+        if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
+            return;
+        }
+        if (!Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
+            Files.delete(path);
+            return;
+        }
+        try (DirectoryStream<Path> children = Files.newDirectoryStream(path)) {
+            for (Path child : children) {
+                deleteRecursively(child);
+            }
+        }
+        Files.delete(path);
     }
 
     /**
@@ -224,10 +267,10 @@ public class FailedBuildLogService {
         return normalized;
     }
 
-    private Optional<BuildLogEntry> parseLine(String line, long submissionId) {
+    private Optional<BuildLogEntry> parseLine(String line, long submissionId, long resultId) {
         int separator = line.indexOf(SEPARATOR);
         if (separator < 0) {
-            log.warn("Skipping a malformed line in the failed build logs of submission {}", submissionId);
+            log.warn("Skipping a malformed line in the failed build logs of result {} of submission {}", resultId, submissionId);
             return Optional.empty();
         }
         String timestamp = line.substring(0, separator);
@@ -239,13 +282,17 @@ public class FailedBuildLogService {
             return Optional.of(new BuildLogEntry(ZonedDateTime.parse(timestamp, TIMESTAMP_FORMAT), message));
         }
         catch (DateTimeParseException e) {
-            log.warn("Skipping a line with an unparsable timestamp in the failed build logs of submission {}", submissionId);
+            log.warn("Skipping a line with an unparsable timestamp in the failed build logs of result {} of submission {}", resultId, submissionId);
             return Optional.empty();
         }
     }
 
-    private Path pathFor(long submissionId) {
-        return failedBuildLogsPath.resolve(String.valueOf(submissionId / SUBMISSIONS_PER_BUCKET)).resolve(submissionId + LOG_SUFFIX);
+    private Path pathFor(long exerciseId, long submissionId, long resultId) {
+        return submissionPathFor(exerciseId, submissionId).resolve(resultId + LOG_SUFFIX);
+    }
+
+    private Path submissionPathFor(long exerciseId, long submissionId) {
+        return failedBuildLogsPath.resolve(String.valueOf(exerciseId)).resolve(String.valueOf(submissionId));
     }
 
     /**
@@ -263,55 +310,38 @@ public class FailedBuildLogService {
         }
 
         ZonedDateTime cutoff = ZonedDateTime.now().minusDays(retentionDays);
-        int deleted = 0;
-        try (DirectoryStream<Path> buckets = Files.newDirectoryStream(failedBuildLogsPath)) {
-            for (Path bucket : buckets) {
-                deleted += deleteExpiredLogsInBucket(bucket, cutoff);
-            }
-        }
-        catch (IOException e) {
-            log.error("Error occurred while deleting old failed build logs in {}", failedBuildLogsPath, e);
-        }
+        int deleted = deleteExpiredLogs(failedBuildLogsPath, cutoff);
         log.info("Deleted {} expired failed build log files", deleted);
     }
 
-    private int deleteExpiredLogsInBucket(Path bucket, ZonedDateTime cutoff) {
-        if (!Files.isDirectory(bucket)) {
-            return 0;
+    private int deleteExpiredLogs(Path path, ZonedDateTime cutoff) {
+        if (!Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
+            return deleteIfExpired(path, cutoff) ? 1 : 0;
         }
 
         int deleted = 0;
-        Map<Long, Path> survivingFilesBySubmissionId = new HashMap<>();
-        try (DirectoryStream<Path> files = Files.newDirectoryStream(bucket)) {
-            for (Path file : files) {
-                if (deleteIfExpired(file, cutoff)) {
-                    deleted++;
-                    continue;
-                }
-                submissionIdOf(file).ifPresent(submissionId -> survivingFilesBySubmissionId.put(submissionId, file));
+        try (DirectoryStream<Path> children = Files.newDirectoryStream(path)) {
+            for (Path child : children) {
+                deleted += deleteExpiredLogs(child, cutoff);
             }
         }
         catch (IOException e) {
-            log.error("Error occurred while deleting old failed build logs in {}", bucket, e);
-            return deleted;
+            log.error("Error occurred while deleting old failed build logs in {}", path, e);
         }
-
-        deleted += deleteLogsOfDeletedSubmissions(survivingFilesBySubmissionId);
-        deleteBucketIfEmpty(bucket);
         return deleted;
     }
 
     /**
      * Deletes one file if it is a regular file whose build failed before the cutoff.
      * <p>
-     * A file that disappears while the bucket is walked is not an error: the submission it belongs to can be deleted at any time, and letting that abort the walk would leave
-     * the rest of a bucket, up to {@link #SUBMISSIONS_PER_BUCKET} files, unexamined until the next run.
+     * A file that disappears while the directory is walked is not an error: the submission it belongs to can be deleted at any time, and letting that abort the walk would leave
+     * the rest of the files unexamined until the next run.
      *
      * @return whether the file was deleted
      */
     private boolean deleteIfExpired(Path file, ZonedDateTime cutoff) {
         try {
-            if (!Files.isRegularFile(file)) {
+            if (!Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS)) {
                 return false;
             }
             ZonedDateTime lastModified = ZonedDateTime.ofInstant(Files.getLastModifiedTime(file).toInstant(), cutoff.getZone());
@@ -327,44 +357,9 @@ public class FailedBuildLogService {
     }
 
     /**
-     * Deletes the log files of submissions that no longer exist.
-     * <p>
-     * Nothing deletes such a file at the moment its submission goes: the store is keyed by submission id but has no foreign key, so a build result that is still being
-     * processed can write the file back after {@link #deleteBuildLogs} removed it. Without this sweep that file would hold the build output of a deleted submission for the
-     * rest of the retention period. It runs on the scheduling node only, once per bucket, against ids alone.
-     *
-     * @param logFilesBySubmissionId the unexpired files of this bucket, by the submission they belong to
-     * @return how many files were deleted
+     * The result a log file belongs to, or empty for anything this store did not publish, such as a temporary file left behind by an interrupted write.
      */
-    private int deleteLogsOfDeletedSubmissions(Map<Long, Path> logFilesBySubmissionId) {
-        int deleted = 0;
-        List<Long> submissionIds = List.copyOf(logFilesBySubmissionId.keySet());
-        for (int start = 0; start < submissionIds.size(); start += SUBMISSION_LOOKUP_BATCH_SIZE) {
-            Set<Long> batch = Set.copyOf(submissionIds.subList(start, Math.min(start + SUBMISSION_LOOKUP_BATCH_SIZE, submissionIds.size())));
-            Set<Long> existing = programmingSubmissionRepository.findExistingIds(batch);
-            for (Long submissionId : batch) {
-                if (existing.contains(submissionId)) {
-                    continue;
-                }
-                Path file = logFilesBySubmissionId.get(submissionId);
-                try {
-                    if (Files.deleteIfExists(file)) {
-                        log.debug("Deleted the failed build logs of submission {}, which no longer exists", submissionId);
-                        deleted++;
-                    }
-                }
-                catch (IOException e) {
-                    log.warn("Could not delete the failed build log file {} of the deleted submission {}", file, submissionId, e);
-                }
-            }
-        }
-        return deleted;
-    }
-
-    /**
-     * The submission a log file belongs to, or empty for anything this store did not write, such as a temporary file left behind by a write that was interrupted.
-     */
-    private static Optional<Long> submissionIdOf(Path file) {
+    private static Optional<Long> resultIdOf(Path file) {
         String name = file.getFileName().toString();
         if (!name.endsWith(LOG_SUFFIX)) {
             return Optional.empty();
@@ -377,14 +372,4 @@ public class FailedBuildLogService {
         }
     }
 
-    private static void deleteBucketIfEmpty(Path bucket) {
-        try (DirectoryStream<Path> remaining = Files.newDirectoryStream(bucket)) {
-            if (!remaining.iterator().hasNext()) {
-                Files.deleteIfExists(bucket);
-            }
-        }
-        catch (IOException e) {
-            log.error("Error occurred while removing the empty bucket directory {}", bucket, e);
-        }
-    }
 }

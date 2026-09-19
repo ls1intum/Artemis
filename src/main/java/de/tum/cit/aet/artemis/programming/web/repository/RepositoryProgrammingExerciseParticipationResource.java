@@ -464,8 +464,9 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             return ResponseEntity.ok(List.of());
         }
 
-        // Load the logs from the database
-        List<BuildLogEntry> buildLogs = buildLogService.getLatestBuildLogs(programmingSubmission);
+        ProgrammingSubmission selectedSubmission = programmingSubmission;
+        List<BuildLogEntry> buildLogs = resultId.map(id -> buildLogService.getBuildLogs(selectedSubmission, id))
+                .orElseGet(() -> buildLogService.getLatestBuildLogs(selectedSubmission));
         return ResponseEntity.ok(buildLogs.stream().map(BuildLogEntryDTO::of).toList());
     }
 }

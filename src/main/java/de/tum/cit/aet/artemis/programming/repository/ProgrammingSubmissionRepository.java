@@ -79,6 +79,9 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     @EntityGraph(type = LOAD, attributePaths = { "results" })
     Optional<ProgrammingSubmission> findProgrammingSubmissionWithResultsById(long programmingSubmissionId);
 
+    @Query("SELECT submission.participation.exercise.id FROM ProgrammingSubmission submission WHERE submission.id = :submissionId")
+    Optional<Long> findExerciseIdBySubmissionId(@Param("submissionId") long submissionId);
+
     /**
      * Returns what the grading code reads off the submission a build result belongs to, together with its newest result.
      * <p>
@@ -225,23 +228,6 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
                 AND s2.id IS NULL
             """)
     List<Long> findLatestSubmissionIdsByExerciseId(@Param("exerciseId") long exerciseId);
-
-    /**
-     * Of the given submission ids, the ones that still exist.
-     * <p>
-     * The failed build log cleanup uses this to recognise a log file whose submission is gone. The file store has no
-     * foreign key, so a submission deleted while its build result was still being processed can leave its log file
-     * behind, and nothing else would remove it before the retention period expires.
-     *
-     * @param submissionIds the ids to check
-     * @return the subset of {@code submissionIds} that still has a submission
-     */
-    @Query("""
-            SELECT s.id
-            FROM ProgrammingSubmission s
-            WHERE s.id IN :submissionIds
-            """)
-    Set<Long> findExistingIds(@Param("submissionIds") Set<Long> submissionIds);
 
     /**
      * Provide a list of graded submissions. To be graded a submission must:

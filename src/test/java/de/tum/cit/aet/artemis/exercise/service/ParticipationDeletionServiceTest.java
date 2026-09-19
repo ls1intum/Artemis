@@ -20,6 +20,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
@@ -83,15 +84,18 @@ class ParticipationDeletionServiceTest extends AbstractSpringIntegrationJenkinsL
         // Setup: create a participation and a submission with the build logs of a failed build for template, solution and student
         var templateParticipation = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise).getTemplateParticipation();
         var templateSubmission = programmingExerciseUtilService.createProgrammingSubmission(templateParticipation, true);
-        buildLogEntryService.saveBuildLogs(List.of(new BuildLogEntry(BUILD_LOG_TIME, "Some sample build log")), templateSubmission);
+        participationUtilService.addResultToSubmission(templateSubmission, AssessmentType.AUTOMATIC, programmingExercise.getId());
+        buildLogEntryService.saveBuildLogs(List.of(new BuildLogEntry(BUILD_LOG_TIME, "Some sample build log")), templateSubmission, templateSubmission.getLatestResult());
 
         var solutionParticipation = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise).getSolutionParticipation();
         var solutionSubmission = programmingExerciseUtilService.createProgrammingSubmission(solutionParticipation, true);
-        buildLogEntryService.saveBuildLogs(List.of(new BuildLogEntry(BUILD_LOG_TIME, "Some sample build log")), solutionSubmission);
+        participationUtilService.addResultToSubmission(solutionSubmission, AssessmentType.AUTOMATIC, programmingExercise.getId());
+        buildLogEntryService.saveBuildLogs(List.of(new BuildLogEntry(BUILD_LOG_TIME, "Some sample build log")), solutionSubmission, solutionSubmission.getLatestResult());
 
         var studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         var studentSubmission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, true);
-        buildLogEntryService.saveBuildLogs(List.of(new BuildLogEntry(BUILD_LOG_TIME, "Some sample build log")), studentSubmission);
+        participationUtilService.addResultToSubmission(studentSubmission, AssessmentType.AUTOMATIC, programmingExercise.getId());
+        buildLogEntryService.saveBuildLogs(List.of(new BuildLogEntry(BUILD_LOG_TIME, "Some sample build log")), studentSubmission, studentSubmission.getLatestResult());
 
         // Delete and assert removal. The logs live on disk now, so the service is what says whether they are still there.
         assertThat(buildLogEntryService.getLatestBuildLogs(templateSubmission)).isNotEmpty();

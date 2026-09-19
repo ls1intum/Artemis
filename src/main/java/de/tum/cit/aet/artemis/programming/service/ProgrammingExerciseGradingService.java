@@ -217,6 +217,7 @@ public class ProgrammingExerciseGradingService {
             }
 
             Result newResult = ciResultService.createResultFromBuildResult(buildResult, participation);
+            List<BuildLogEntry> failedBuildLogs = null;
 
             // Fetch submission or create a fallback
             var latestSubmission = getSubmissionForBuildResult(participation, buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
@@ -248,10 +249,10 @@ public class ProgrammingExerciseGradingService {
                     var buildLogMessages = buildLogs.stream().map(BuildLogEntry::getLog).toList();
                     mavenCentralRateLimitNotificationService.notifyInstructorsIfBuildWasRateLimited(exercise.getId(), programmingLanguage, buildLogMessages);
                     buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);
-                    // The logs are written to disk, keyed by submission, and replace whatever was stored for a previous build of it. The entries are deliberately not put
-                    // back onto the submission: they are no longer rows, so attaching them would ask the cascade on this association to persist entities that have no
-                    // submission of their own, and nothing reads the association on the way out of this method.
-                    buildLogService.saveBuildLogs(buildLogs, latestSubmission);
+                    // Keep the logs until the result has been persisted below. Its database id is part of the file name, so multiple failed results of this submission can
+                    // remain available independently. The entries are deliberately not put back onto the submission: they are no longer rows, so attaching them would ask
+                    // the cascade on this association to persist entities that have no submission of their own.
+                    failedBuildLogs = buildLogs;
                 }
             }
 
@@ -260,7 +261,11 @@ public class ProgrammingExerciseGradingService {
             newResult.setExerciseId(participation.getExercise().getId());
             newResult.setRatedIfNotAfterDueDate();
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
-            return processNewProgrammingExerciseResult(participation, newResult);
+            Result processedResult = processNewProgrammingExerciseResult(participation, newResult);
+            if (failedBuildLogs != null) {
+                buildLogService.saveBuildLogs(failedBuildLogs, latestSubmission, processedResult);
+            }
+            return processedResult;
         }
         catch (ContinuousIntegrationException ex) {
             log.error("Result for participation {} could not be created", participation.getId(), ex);
