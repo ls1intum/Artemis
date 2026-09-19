@@ -127,7 +127,7 @@
     },
     "engines": {
         "node": ">=24.20.0",
-        "pnpm": ">=11.25.0"
+        "pnpm": ">=12.5.1"
     },
     "scripts": {
         "build": "pnpm run webapp:prod --",
