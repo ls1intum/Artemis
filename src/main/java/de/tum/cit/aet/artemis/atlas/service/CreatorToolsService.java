@@ -99,7 +99,7 @@ public class CreatorToolsService {
      */
     @Tool(description = "Create a new competency in the current course. Returns the created competency id and title as JSON. "
             + "Taxonomy must be one of REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE. "
-            + "Call listCompetencyIndex again afterwards so subsequent actions can reference the new id.")
+            + "Use the returned competency id for subsequent references in this batch; the main orchestrator refreshes the competency index after the worker finishes.")
     public String createCompetency(@ToolParam(description = "concise competency title") String title,
             @ToolParam(description = "one-to-three sentence description of what a student who masters this competency can do") String description,
             @ToolParam(description = "Bloom taxonomy level: REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, or CREATE") String taxonomy,

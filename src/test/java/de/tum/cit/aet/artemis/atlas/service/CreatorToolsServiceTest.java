@@ -26,6 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.model.ToolContext;
+import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -105,6 +106,14 @@ class CreatorToolsServiceTest {
         });
         // The successful create must mirror the new competency to AtlasML (production sends UPDATE for creation).
         verify(atlasMLNotificationService).notifyAtlasML(List.of(persisted), OperationTypeDTO.UPDATE, "orchestrator competency creation");
+    }
+
+    @Test
+    void createCompetency_toolDescriptionMatchesCreatorToolSurface() {
+        var provider = MethodToolCallbackProvider.builder().toolObjects(service).build();
+
+        assertThat(provider.getToolCallbacks()).singleElement().satisfies(callback -> assertThat(callback.getToolDefinition().description()).doesNotContain("listCompetencyIndex")
+                .contains("returned competency id", "main orchestrator refreshes the competency index"));
     }
 
     @Test

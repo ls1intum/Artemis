@@ -16,6 +16,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -24,6 +25,9 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.config.AtlasResponsesApiConfiguration;
@@ -32,6 +36,7 @@ import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEditsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEditsDTO.EditDTO;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -88,6 +93,8 @@ public class ContentExtractionService {
 
     private static final String FLAVOR_STRIP_PROMPT_PATH = "/prompts/atlas/flavor_text_strip_prompt.st";
 
+    private static final String FLAVOR_STRIP_PIPELINE_ID = "ATLAS_FLAVOR_STRIP";
+
     private final ChatClient chatClient;
 
     private final AtlasPromptTemplateService templateService;
@@ -100,24 +107,47 @@ public class ContentExtractionService {
 
     private final double flavorStripTemperature;
 
+    @Nullable
+    private final LLMTokenUsageService llmTokenUsageService;
+
+    @Nullable
+    private final UserRepository userRepository;
+
     @Autowired
     public ContentExtractionService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, QuizExerciseRepository quizExerciseRepository,
             @Value("${artemis.atlas.flavor-strip-model:gpt-5.6-luna}") String flavorStripModel,
             @Value("${artemis.atlas.flavor-strip-reasoning-effort:high}") String flavorStripReasoningEffort,
             @Value("${artemis.atlas.flavor-strip-temperature:1.0}") double flavorStripTemperature, AtlasOrchestratorProperties orchestratorProperties,
+            @Qualifier(AtlasResponsesApiConfiguration.ATLAS_RESPONSES_CHAT_CLIENT) @Nullable AtlasResponsesChatClient responsesClient, LLMTokenUsageService llmTokenUsageService,
+            UserRepository userRepository) {
+        this(orchestratorProperties.responsesApiEnabled() ? (responsesClient == null ? null : responsesClient.chatClient()) : chatClient, templateService, quizExerciseRepository,
+                flavorStripModel, flavorStripReasoningEffort, flavorStripTemperature, llmTokenUsageService, userRepository);
+    }
+
+    public ContentExtractionService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, QuizExerciseRepository quizExerciseRepository,
+            String flavorStripModel, String flavorStripReasoningEffort, double flavorStripTemperature, AtlasOrchestratorProperties orchestratorProperties,
             @Qualifier(AtlasResponsesApiConfiguration.ATLAS_RESPONSES_CHAT_CLIENT) @Nullable AtlasResponsesChatClient responsesClient) {
         this(orchestratorProperties.responsesApiEnabled() ? (responsesClient == null ? null : responsesClient.chatClient()) : chatClient, templateService, quizExerciseRepository,
-                flavorStripModel, flavorStripReasoningEffort, flavorStripTemperature);
+                flavorStripModel, flavorStripReasoningEffort, flavorStripTemperature, (LLMTokenUsageService) null, (UserRepository) null);
     }
 
     public ContentExtractionService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, QuizExerciseRepository quizExerciseRepository,
             String flavorStripModel, String flavorStripReasoningEffort, double flavorStripTemperature) {
+        this(chatClient, templateService, quizExerciseRepository, flavorStripModel, flavorStripReasoningEffort, flavorStripTemperature, (LLMTokenUsageService) null,
+                (UserRepository) null);
+    }
+
+    public ContentExtractionService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, QuizExerciseRepository quizExerciseRepository,
+            String flavorStripModel, String flavorStripReasoningEffort, double flavorStripTemperature, @Nullable LLMTokenUsageService llmTokenUsageService,
+            @Nullable UserRepository userRepository) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.flavorStripModel = flavorStripModel;
         this.flavorStripReasoningEffort = flavorStripReasoningEffort;
         this.flavorStripTemperature = flavorStripTemperature;
+        this.llmTokenUsageService = llmTokenUsageService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -168,6 +198,10 @@ public class ContentExtractionService {
      * @return the cleaned text, or the original text if stripping is disabled or fails
      */
     public String stripFlavorText(String rawText) {
+        return stripFlavorText(rawText, null);
+    }
+
+    private String stripFlavorText(String rawText, @Nullable Exercise exercise) {
         if (rawText == null || rawText.isBlank()) {
             return "";
         }
@@ -179,7 +213,9 @@ public class ContentExtractionService {
             // the user message; no need to inject them via the prompt template.
             String systemPrompt = templateService.render(FLAVOR_STRIP_PROMPT_PATH, Map.of());
             OpenAiChatOptions.Builder options = buildChatOptions(flavorStripModel, flavorStripReasoningEffort, flavorStripTemperature);
-            FlavorStripEditsDTO parsedEdits = chatClient.prompt().system(systemPrompt).user(rawText).options(options).call().entity(FlavorStripEditsDTO.class);
+            var responseEntity = chatClient.prompt().system(systemPrompt).user(rawText).options(options).call().responseEntity(FlavorStripEditsDTO.class);
+            trackFlavorStripUsage(responseEntity.response(), exercise);
+            FlavorStripEditsDTO parsedEdits = responseEntity.entity();
             if (parsedEdits == null || parsedEdits.edits() == null || parsedEdits.edits().isEmpty()) {
                 return rawText;
             }
@@ -192,6 +228,17 @@ public class ContentExtractionService {
             log.warn("Flavor-text stripping failed; falling back to raw text", e);
             return rawText;
         }
+    }
+
+    private void trackFlavorStripUsage(@Nullable ChatResponse response, @Nullable Exercise exercise) {
+        if (llmTokenUsageService == null) {
+            return;
+        }
+        Long courseId = exercise != null && exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
+        Long exerciseId = exercise != null ? exercise.getId() : null;
+        Long userId = userRepository == null ? null : SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
+        llmTokenUsageService.trackChatResponseTokenUsage(response, LLMServiceType.ATLAS, FLAVOR_STRIP_PIPELINE_ID,
+                builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId));
     }
 
     /**
@@ -294,13 +341,13 @@ public class ContentExtractionService {
     private ExtractedContentDTO extractFromProgrammingExercise(ProgrammingExercise exercise, boolean applyFlavorStrip) {
         String title = Objects.requireNonNullElse(exercise.getTitle(), "");
         String raw = Objects.requireNonNullElse(exercise.getProblemStatement(), "");
-        String learningText = applyFlavorStrip ? stripFlavorText(raw) : raw;
+        String learningText = applyFlavorStrip ? stripFlavorText(raw, exercise) : raw;
         return new ExtractedContentDTO(title, learningText, baseMetadata(exercise));
     }
 
     private ExtractedContentDTO extractFromTextExercise(TextExercise exercise, boolean applyFlavorStrip) {
         String title = Objects.requireNonNullElse(exercise.getTitle(), "");
-        String learningText = statementWithSolution(exercise.getProblemStatement(), exercise.getExampleSolution(), applyFlavorStrip);
+        String learningText = statementWithSolution(exercise.getProblemStatement(), exercise.getExampleSolution(), applyFlavorStrip, exercise);
         return new ExtractedContentDTO(title, learningText, baseMetadata(exercise));
     }
 
@@ -308,7 +355,7 @@ public class ContentExtractionService {
         String title = Objects.requireNonNullElse(exercise.getTitle(), "");
         // The example-solution *explanation* is prose; the example-solution *model* is serialized Apollon
         // JSON and is deliberately excluded — it is noise for competency reasoning, not learning content.
-        String learningText = statementWithSolution(exercise.getProblemStatement(), exercise.getExampleSolutionExplanation(), applyFlavorStrip);
+        String learningText = statementWithSolution(exercise.getProblemStatement(), exercise.getExampleSolutionExplanation(), applyFlavorStrip, exercise);
         Map<String, String> metadata = baseMetadata(exercise);
         if (exercise.getDiagramType() != null) {
             metadata.put("diagramType", exercise.getDiagramType().name().toLowerCase(Locale.ROOT));
@@ -318,7 +365,7 @@ public class ContentExtractionService {
 
     private ExtractedContentDTO extractFromFileUploadExercise(FileUploadExercise exercise, boolean applyFlavorStrip) {
         String title = Objects.requireNonNullElse(exercise.getTitle(), "");
-        String learningText = statementWithSolution(exercise.getProblemStatement(), exercise.getExampleSolution(), applyFlavorStrip);
+        String learningText = statementWithSolution(exercise.getProblemStatement(), exercise.getExampleSolution(), applyFlavorStrip, exercise);
         Map<String, String> metadata = baseMetadata(exercise);
         if (exercise.getFilePattern() != null && !exercise.getFilePattern().isBlank()) {
             metadata.put("filePattern", exercise.getFilePattern().strip());
@@ -371,9 +418,9 @@ public class ContentExtractionService {
      * narrative scaffolding. Returns just the statement when no solution is present, and just the labeled
      * solution when the statement is blank.
      */
-    private String statementWithSolution(@Nullable String problemStatement, @Nullable String exampleSolution, boolean applyFlavorStrip) {
+    private String statementWithSolution(@Nullable String problemStatement, @Nullable String exampleSolution, boolean applyFlavorStrip, Exercise exercise) {
         String raw = Objects.requireNonNullElse(problemStatement, "");
-        String statement = applyFlavorStrip ? stripFlavorText(raw) : raw;
+        String statement = applyFlavorStrip ? stripFlavorText(raw, exercise) : raw;
         if (exampleSolution == null || exampleSolution.isBlank()) {
             return statement;
         }
