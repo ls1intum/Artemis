@@ -5,6 +5,8 @@ import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -31,6 +33,7 @@ import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.OneToOneChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.ResponsibleUserDTO;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -536,6 +539,58 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
         // cleanup
         conversationRepository.deleteById(channel.getId());
+    }
+
+    /**
+     * Course-wide channels resolve their members over user_course_role instead of the conversation participants, which
+     * used to run an id-only lookup that PostgreSQL rejected as soon as the client asked for a name sort
+     * ("for SELECT DISTINCT, ORDER BY expressions must appear in select list"). The client always sends
+     * {@code sort=firstName,asc&sort=lastName,asc}, so every member dialog of a course-wide channel answered 500.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void searchMembersOfCourseWideChannel_withNameSort_shouldPaginateInStableNameOrder() throws Exception {
+        var channel = createCourseWideChannel(TEST_PREFIX + "coursewide-members");
+        // A second course role for the same user makes the underlying join fan out, which is what the de-duplication in
+        // the member lookup has to absorb. Without it the pagination assertions below would pass even on a broken query.
+        userUtilService.enrollUserInCourse(userUtilService.getUserByLogin(testPrefix + "tutor1"), exampleCourse, CourseRole.EDITOR);
+
+        var allMembers = searchCourseWideChannelMembers(channel.getId(), 0, 20, null);
+        assertThat(allMembers).hasSizeGreaterThan(2);
+        assertThat(allMembers).extracting(ConversationUserDTO::getId).doesNotHaveDuplicates();
+        assertThat(allMembers).isSortedAccordingTo(
+                Comparator.comparing(ConversationUserDTO::getFirstName).thenComparing(ConversationUserDTO::getLastName).thenComparing(ConversationUserDTO::getId));
+
+        // Paging with a window smaller than the result set must partition that same list: no repeats, no gaps and no
+        // reshuffling between pages.
+        var pagedMembers = new ArrayList<ConversationUserDTO>();
+        for (int page = 0; page * 2 < allMembers.size(); page++) {
+            pagedMembers.addAll(searchCourseWideChannelMembers(channel.getId(), page, 2, null));
+        }
+        assertThat(pagedMembers).extracting(ConversationUserDTO::getId).containsExactlyElementsOf(allMembers.stream().map(ConversationUserDTO::getId).toList());
+
+        // The role-filtered variant runs a separate id-only query and regressed in exactly the same way.
+        var tutors = searchCourseWideChannelMembers(channel.getId(), 0, 20, "TUTOR");
+        assertThat(tutors).extracting(ConversationUserDTO::getId).doesNotHaveDuplicates();
+        assertThat(tutors).extracting(ConversationUserDTO::getLogin).contains(testPrefix + "tutor1");
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
+    }
+
+    private List<ConversationUserDTO> searchCourseWideChannelMembers(Long channelId, int page, int size, String filter) throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("loginOrName", "");
+        // The exact sort the client sends; it is the trigger for the regression this test guards.
+        params.add("sort", "firstName,asc");
+        params.add("sort", "lastName,asc");
+        params.add("page", String.valueOf(page));
+        params.add("size", String.valueOf(size));
+        if (filter != null) {
+            params.add("filter", filter);
+        }
+        return request.getList("/api/communication/courses/" + exampleCourseId + "/conversations/" + channelId + "/members/search", HttpStatus.OK, ConversationUserDTO.class,
+                params);
     }
 
     @Test
