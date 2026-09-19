@@ -25,6 +25,7 @@
     tum-ui-date-picker,
     tum-ui-dialog,
     tum-ui-doughnut-chart,
+    tum-ui-empty-state,
     tum-ui-form-field,
     tum-ui-icon-field,
     tum-ui-input-group,
@@ -173,4 +174,30 @@
 
 .tum-ui-icon-field[data-has-icon][data-position='right'] > .tum-ui-input {
     padding-inline-end: calc(var(--tumaet-ui-spacing) * 10);
+}
+
+/* Projected documentation links keep the component's link treatment across Angular view boundaries. */
+.tum-ui-empty-state-documentation a {
+    color: var(--tumaet-ui-accent-color);
+    text-decoration: underline;
+    transition: color 0.15s ease;
+}
+
+.tum-ui-empty-state-documentation a:focus-visible {
+    outline: 2px solid var(--tumaet-ui-focus-color);
+    outline-offset: 2px;
+}
+
+.tum-ui-empty-state-documentation a:hover {
+    color: var(--tumaet-ui-text-hover-color);
+}
+
+.tum-ui-empty-state-documentation a::after {
+    content: ' ↗';
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tum-ui-empty-state-documentation a {
+        transition: none;
+    }
 }
