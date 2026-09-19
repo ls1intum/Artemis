@@ -40,9 +40,6 @@ describe('CleanupOperationModalComponent', () => {
 
     const mockOrphanCounts: OrphanCleanupCountDTO = {
         totalCount: 100,
-        orphanFeedback: 10,
-        orphanLongFeedbackText: 5,
-        orphanTextBlock: 15,
         orphanStudentScore: 20,
         orphanTeamScore: 10,
         orphanFeedbackForOrphanResults: 5,
@@ -527,7 +524,7 @@ describe('CleanupOperationModalComponent', () => {
 
             const keys = component.cleanupKeys();
             expect(keys).toContain('totalCount');
-            expect(keys).toContain('orphanFeedback');
+            expect(keys).toContain('orphanStudentScore');
         });
 
         it('should return hasEntriesToDelete true when there are entries to delete', () => {
@@ -541,9 +538,6 @@ describe('CleanupOperationModalComponent', () => {
         it('should return hasEntriesToDelete false when all counts are zero', () => {
             const zeroCounts: OrphanCleanupCountDTO = {
                 totalCount: 0,
-                orphanFeedback: 0,
-                orphanLongFeedbackText: 0,
-                orphanTextBlock: 0,
                 orphanStudentScore: 0,
                 orphanTeamScore: 0,
                 orphanFeedbackForOrphanResults: 0,

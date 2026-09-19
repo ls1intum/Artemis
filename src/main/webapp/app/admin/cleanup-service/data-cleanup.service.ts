@@ -14,9 +14,6 @@ export interface CleanupCount {
 }
 
 export interface OrphanCleanupCountDTO extends CleanupCount {
-    orphanFeedback: number;
-    orphanLongFeedbackText: number;
-    orphanTextBlock: number;
     orphanStudentScore: number;
     orphanTeamScore: number;
     orphanFeedbackForOrphanResults: number;

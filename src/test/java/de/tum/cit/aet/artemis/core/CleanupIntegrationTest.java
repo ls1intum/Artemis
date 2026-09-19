@@ -235,9 +235,6 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         var counts = request.get("/api/admin/cleanup/orphans/count", HttpStatus.OK, OrphanCleanupCountDTO.class);
 
         assertThat(counts).isNotNull();
-        assertThat(counts.orphanFeedback()).isEqualTo(0);
-        assertThat(counts.orphanLongFeedbackText()).isEqualTo(0);
-        assertThat(counts.orphanTextBlock()).isEqualTo(0);
         assertThat(counts.orphanStudentScore()).isEqualTo(1);
         assertThat(counts.orphanTeamScore()).isEqualTo(1);
         assertThat(counts.orphanFeedbackForOrphanResults()).isEqualTo(1);
