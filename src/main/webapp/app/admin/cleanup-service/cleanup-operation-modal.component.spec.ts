@@ -632,7 +632,7 @@ describe('CleanupOperationModalComponent', () => {
         it('should label a warning operation "Warn" rather than "Delete"', () => {
             const operation = createAgeBasedOperation('warnOldCoursesReset', 'warn');
 
-            expect(cleanupActionLabelKey(operation.action)).toBe('cleanupService.button.warn');
+            expect(cleanupActionLabelKey(operation.action)).toBe('entity.action.warn');
             expect(cleanupActionSeverity(operation.action)).toBe('warn');
             expect(cleanupActionIcon(operation.action).iconName).toBe('triangle-exclamation');
         });

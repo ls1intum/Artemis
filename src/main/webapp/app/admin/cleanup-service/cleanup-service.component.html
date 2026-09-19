@@ -18,18 +18,23 @@
                         <span [jhiTranslate]="'cleanupService.operation.' + operation.name"></span>
                         <jhi-help-icon class="ps-1" text="{{ 'cleanupService.tooltip.' + operation.name }}" />
                     </div>
-                    @let description = descriptionOf(operation);
-                    <div
-                        class="text-muted-color text-sm"
-                        [attr.data-testid]="'cleanup-description-' + operation.name"
-                        [jhiTranslate]="'cleanupService.description.' + operation.name"
-                        [translateValues]="{
-                            cutoff: description.cutoff | artemisDate: 'long-date',
-                            period: description.periodKey | artemisTranslate: { count: description.periodCount },
-                            secondaryCutoff: description.secondaryCutoff | artemisDate: 'long-date',
-                            secondaryPeriod: description.secondaryPeriodKey | artemisTranslate: { count: description.secondaryPeriodCount },
-                        }"
-                    ></div>
+                    <!-- A line that quotes a cutoff would render as a sentence with a hole in it before the configuration
+                         arrives, so it waits for it, and says so instead of staying half-written if the request failed. -->
+                    @let description = descriptions()[operation.name];
+                    @if (description || !quotesCutoff(operation.name)) {
+                        <div
+                            class="text-muted-color text-sm"
+                            [attr.data-testid]="'cleanup-description-' + operation.name"
+                            [jhiTranslate]="'cleanupService.description.' + operation.name"
+                            [translateValues]="description"
+                        ></div>
+                    } @else if (configurationFailed()) {
+                        <div
+                            class="text-muted-color text-sm"
+                            [attr.data-testid]="'cleanup-description-' + operation.name"
+                            jhiTranslate="cleanupService.descriptionUnavailable"
+                        ></div>
+                    }
                 </td>
                 <td>
                     @if (!operation.ageBased) {
@@ -76,7 +81,6 @@
                 <td>
                     <button
                         tumUiButton
-                        id="execute-operation"
                         [severity]="cleanupActionSeverity(operation.action)"
                         size="small"
                         [disabled]="!operation.datesValid() || !operation.deleteFromValid() || !operation.deleteToValid()"

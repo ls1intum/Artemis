@@ -11,11 +11,12 @@ const ICON_BY_ACTION: Record<CleanupAction, IconDefinition> = {
 
 const LABEL_KEY_BY_ACTION: Record<CleanupAction, string> = {
     delete: 'entity.action.delete',
-    warn: 'cleanupService.button.warn',
+    warn: 'entity.action.warn',
     reset: 'entity.action.reset',
 };
 
-// Warning an instructor or a user is not destructive, so it must not carry the same red as an irreversible deletion.
+// A warning destroys nothing on its own — it archives, emails, and starts a grace period the recipient can still act
+// within — so it must not carry the red of an irreversible deletion. A reset does destroy student data, so it keeps it.
 const SEVERITY_BY_ACTION: Record<CleanupAction, TumUiButtonSeverity> = {
     delete: 'danger',
     warn: 'warn',

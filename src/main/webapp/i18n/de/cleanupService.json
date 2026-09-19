@@ -26,15 +26,16 @@
             "deletePlagiarismComparisons": "Nicht überprüfte Vergleiche von Kursen im ausgewählten Zeitraum.",
             "deleteNonRatedResults": "Feedback nicht-aktueller, nicht bewerteter Ergebnisse von Kursen im ausgewählten Zeitraum.",
             "deleteOldRatedResults": "Feedback nicht-aktueller, bewerteter Ergebnisse von Kursen im ausgewählten Zeitraum.",
-            "deleteOldSubmissionVersions": "Teilnahmeversionen von Kursen im ausgewählten Zeitraum.",
-            "deleteOldFeedback": "Kurse, die vor dem {{cutoff}} endeten ({{period}} nach Kursende).",
+            "deleteOldSubmissionVersions": "Teilnahmeversionen, die im ausgewählten Zeitraum erstellt wurden – kursübergreifend.",
+            "deleteOldFeedback": "Feedback nicht-aktueller Ergebnisse von Kursen, die vor dem {{cutoff}} endeten ({{period}} nach Kursende).",
             "warnOldCoursesReset": "Notenrelevante Kurse, die vor dem {{cutoff}} endeten ({{period}} Aufbewahrung), übrige Kurse vor dem {{secondaryCutoff}} ({{secondaryPeriod}} Aufbewahrung).",
             "resetOldCourses": "Kurse, deren Dozierende vor dem {{cutoff}} gewarnt wurden ({{period}} Übergangsfrist).",
             "deleteOldCourseSubmissionVersions": "Kurse, die vor dem {{cutoff}} endeten ({{period}} nach Kursende).",
             "warnNotEnrolledUsers": "Nutzer, die zuletzt vor dem {{cutoff}} aktiv waren ({{period}} Inaktivität).",
-            "deleteNotEnrolledUsers": "Nutzer, die vor dem {{cutoff}} gewarnt wurden ({{period}} Übergangsfrist) und weiterhin zuletzt vor dem {{secondaryCutoff}} aktiv waren.",
-            "deletePlagiarismCases": "Kurse, die vor dem {{cutoff}} endeten ({{period}} Aufbewahrung)."
+            "deleteNotEnrolledUsers": "Nutzer, die vor dem {{cutoff}} gewarnt wurden ({{period}} Übergangsfrist) und sich seit ihrer Warnung nicht angemeldet haben.",
+            "deletePlagiarismCases": "Plagiatsfälle von Kursen, die vor dem {{cutoff}} endeten ({{period}} Aufbewahrung)."
         },
+        "descriptionUnavailable": "Die betroffenen Daten können nicht angezeigt werden: Die Aufräum-Konfiguration konnte nicht geladen werden.",
         "duration": {
             "day": "1 Tag",
             "days": "{{count}} Tage",
@@ -63,7 +64,7 @@
             "question": "Bist du sicher, dass du die Operation <strong>{{ operationName }}</strong> für den Zeitraum von {{deleteFrom}} bis {{deleteTo}} ausführen möchtest? Diese Aktion kann NICHT rückgängig gemacht werden!",
             "questionWithoutDates": {
                 "delete": "Bist du sicher, dass du die Operation <strong>{{ operationName }}</strong> ausführen möchtest? Diese Aktion kann NICHT rückgängig gemacht werden!",
-                "warn": "Bist du sicher, dass du die Operation <strong>{{ operationName }}</strong> ausführen möchtest? Die betroffenen Nutzer werden per E-Mail benachrichtigt, was sich nicht zurücknehmen lässt.",
+                "warn": "Bist du sicher, dass du die Operation <strong>{{ operationName }}</strong> ausführen möchtest? Die E-Mails lassen sich nicht zurücknehmen, und mit der Warnung beginnt die Übergangsfrist, nach der die betroffenen Daten gelöscht werden.",
                 "reset": "Bist du sicher, dass du die Operation <strong>{{ operationName }}</strong> ausführen möchtest? Die Studierendendaten der betroffenen Kurse werden endgültig gelöscht, die Kursmaterialien bleiben erhalten."
             },
             "typeOperationNameToConfirm": "Bitte gib den Namen der Operation ein, um zu bestätigen."
@@ -106,7 +107,6 @@
             "blockedUsers": "Durch verbleibende Referenzen blockierte Nutzer"
         },
         "button": {
-            "warn": "Warnen",
             "close": "Schließen"
         }
     }

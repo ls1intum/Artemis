@@ -140,8 +140,8 @@ describe('CleanupServiceComponent date range integration', () => {
 
     it('names the row button after what the operation actually does', () => {
         // "Delete" is wrong for an operation that only emails a warning, or that resets a course while keeping it.
-        expect(rowText('warnOldCoursesReset', 'execute-operation')).toBe('cleanupService.button.warn');
-        expect(rowText('warnNotEnrolledUsers', 'execute-operation')).toBe('cleanupService.button.warn');
+        expect(rowText('warnOldCoursesReset', 'execute-operation')).toBe('entity.action.warn');
+        expect(rowText('warnNotEnrolledUsers', 'execute-operation')).toBe('entity.action.warn');
         expect(rowText('resetOldCourses', 'execute-operation')).toBe('entity.action.reset');
         expect(rowText('deleteOrphans', 'execute-operation')).toBe('entity.action.delete');
         expect(rowText('deletePlagiarismCases', 'execute-operation')).toBe('entity.action.delete');

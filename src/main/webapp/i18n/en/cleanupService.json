@@ -26,15 +26,16 @@
             "deletePlagiarismComparisons": "Undecided comparisons of courses that ran in the selected range.",
             "deleteNonRatedResults": "Feedback of non-latest non-rated results, for courses that ran in the selected range.",
             "deleteOldRatedResults": "Feedback of non-latest rated results, for courses that ran in the selected range.",
-            "deleteOldSubmissionVersions": "Submission versions of courses that ran in the selected range.",
-            "deleteOldFeedback": "Courses that ended before {{cutoff}} ({{period}} after the course end).",
+            "deleteOldSubmissionVersions": "Submission versions created in the selected range, across all courses.",
+            "deleteOldFeedback": "Feedback of non-latest results of courses that ended before {{cutoff}} ({{period}} after the course end).",
             "warnOldCoursesReset": "Grade-relevant courses that ended before {{cutoff}} ({{period}} retention), other courses before {{secondaryCutoff}} ({{secondaryPeriod}} retention).",
             "resetOldCourses": "Courses whose instructors were warned before {{cutoff}} ({{period}} grace period).",
             "deleteOldCourseSubmissionVersions": "Courses that ended before {{cutoff}} ({{period}} after the course end).",
             "warnNotEnrolledUsers": "Users last active before {{cutoff}} ({{period}} of inactivity).",
-            "deleteNotEnrolledUsers": "Users warned before {{cutoff}} ({{period}} grace period) and still last active before {{secondaryCutoff}}.",
-            "deletePlagiarismCases": "Courses that ended before {{cutoff}} ({{period}} retention)."
+            "deleteNotEnrolledUsers": "Users warned before {{cutoff}} ({{period}} grace period) who have not logged in since their warning.",
+            "deletePlagiarismCases": "Plagiarism cases of courses that ended before {{cutoff}} ({{period}} retention)."
         },
+        "descriptionUnavailable": "The affected data cannot be shown: the cleanup configuration could not be loaded.",
         "duration": {
             "day": "1 day",
             "days": "{{count}} days",
@@ -63,7 +64,7 @@
             "question": "Are you sure you want to execute the operation <strong>{{ operationName }}</strong> for the period from {{deleteFrom}} to {{deleteTo}}? This action cannot be undone!",
             "questionWithoutDates": {
                 "delete": "Are you sure you want to execute the operation <strong>{{ operationName }}</strong>? This action cannot be undone!",
-                "warn": "Are you sure you want to execute the operation <strong>{{ operationName }}</strong>? The affected users will be notified by email, which cannot be taken back.",
+                "warn": "Are you sure you want to execute the operation <strong>{{ operationName }}</strong>? The emails cannot be taken back, and the warning starts the grace period after which the affected data is deleted.",
                 "reset": "Are you sure you want to execute the operation <strong>{{ operationName }}</strong>? The student data of the affected courses is deleted permanently, the course material is kept."
             },
             "typeOperationNameToConfirm": "Please type in the name of the operation to confirm."
@@ -106,7 +107,6 @@
             "blockedUsers": "Users blocked by remaining references"
         },
         "button": {
-            "warn": "Warn",
             "close": "Close"
         }
     }

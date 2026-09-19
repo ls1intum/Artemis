@@ -272,55 +272,104 @@ describe('CleanupServiceComponent', () => {
         expect(comp.configuration()).toBeUndefined();
     });
 
+    it('should flag a failed configuration load so the affected rows can say their scope is unknown', () => {
+        const alertService = TestBed.inject(AlertService);
+        vi.spyOn(alertService, 'error');
+        vi.spyOn(cleanupService, 'getCleanupConfiguration').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+
+        comp.ngOnInit();
+
+        expect(comp.configurationFailed()).toBe(true);
+        expect(comp.descriptions()).toEqual({});
+    });
+
     it('should describe an age-based operation with the cutoff the server would apply', () => {
         comp.ngOnInit();
-        const operations = comp.cleanupOperations();
 
-        const plagiarismCases = comp.descriptionOf(operations.find((operation) => operation.name === 'deletePlagiarismCases')!);
-        expect(plagiarismCases.cutoff).toBe(CONFIGURATION.gradeRelevantCoursesEndedBefore);
-        expect(plagiarismCases.periodKey).toBe('cleanupService.duration.years');
-        expect(plagiarismCases.periodCount).toBe(5);
+        // MockTranslateService echoes the key, so the resolved period is the duration key the component picked.
+        expect(comp.descriptions().deletePlagiarismCases).toEqual({
+            cutoff: 'Mar 4, 2021',
+            period: 'cleanupService.duration.years',
+            secondaryCutoff: undefined,
+            secondaryPeriod: undefined,
+        });
 
         // The reset is measured from the warning, not from the course end, so it must quote the warning cutoff.
-        const reset = comp.descriptionOf(operations.find((operation) => operation.name === 'resetOldCourses')!);
-        expect(reset.cutoff).toBe(CONFIGURATION.coursesWarnedBefore);
-        expect(reset.periodKey).toBe('cleanupService.duration.days');
-        expect(reset.periodCount).toBe(30);
+        expect(comp.descriptions().resetOldCourses?.cutoff).toBe('Feb 2, 2026');
+        expect(comp.descriptions().resetOldCourses?.period).toBe('cleanupService.duration.days');
     });
 
     it('should describe both retention cutoffs of the old-course warning', () => {
         comp.ngOnInit();
 
-        const description = comp.descriptionOf(comp.cleanupOperations().find((operation) => operation.name === 'warnOldCoursesReset')!);
-
-        expect(description.cutoff).toBe(CONFIGURATION.gradeRelevantCoursesEndedBefore);
-        expect(description.periodKey).toBe('cleanupService.duration.years');
-        expect(description.secondaryCutoff).toBe(CONFIGURATION.nonGradeRelevantCoursesEndedBefore);
-        // A configured period of 1 must resolve to the singular key, otherwise the line reads "1 years".
-        expect(description.secondaryPeriodKey).toBe('cleanupService.duration.year');
-        expect(description.secondaryPeriodCount).toBe(1);
+        expect(comp.descriptions().warnOldCoursesReset).toEqual({
+            cutoff: 'Mar 4, 2021',
+            period: 'cleanupService.duration.years',
+            secondaryCutoff: 'Mar 4, 2025',
+            // A configured period of 1 must resolve to the singular key, otherwise the line reads "1 years".
+            secondaryPeriod: 'cleanupService.duration.year',
+        });
     });
 
     it('should pick the singular duration key for every period configured as one', () => {
         comp.ngOnInit();
-        const operations = comp.cleanupOperations();
 
-        expect(comp.descriptionOf(operations.find((operation) => operation.name === 'deleteOldCourseSubmissionVersions')!).periodKey).toBe('cleanupService.duration.week');
-        expect(comp.descriptionOf(operations.find((operation) => operation.name === 'deleteNotEnrolledUsers')!).periodKey).toBe('cleanupService.duration.day');
+        expect(comp.descriptions().deleteOldCourseSubmissionVersions?.period).toBe('cleanupService.duration.week');
+        expect(comp.descriptions().deleteNotEnrolledUsers?.period).toBe('cleanupService.duration.day');
+    });
+
+    it('should not quote a second cutoff for the not-enrolled user deletion', () => {
+        comp.ngOnInit();
+
+        // Phase 2 compares each user's last login against their own warning date, which no global cutoff can express.
+        expect(comp.descriptions().deleteNotEnrolledUsers?.secondaryCutoff).toBeUndefined();
+        expect(comp.descriptions().deleteNotEnrolledUsers?.secondaryPeriod).toBeUndefined();
     });
 
     it('should describe nothing until the configuration has loaded', () => {
         // Rendering a cutoff before the server answered would state a date the operation does not actually use.
-        const description = comp.descriptionOf(comp.cleanupOperations().find((operation) => operation.name === 'deletePlagiarismCases')!);
-
-        expect(description).toEqual({});
+        expect(comp.descriptions()).toEqual({});
+        expect(comp.configurationFailed()).toBe(false);
     });
 
-    it('should describe date-range operations without a cutoff', () => {
+    it('should mark only the cutoff-quoting operations as needing the configuration', () => {
         comp.ngOnInit();
+        const quoting = comp
+            .cleanupOperations()
+            .map((operation) => operation.name)
+            .filter((name) => comp.descriptions()[name] !== undefined);
 
-        // Their scope is already visible in the two date pickers, so there is no server-side cutoff to quote.
-        expect(comp.descriptionOf(comp.cleanupOperations().find((operation) => operation.name === 'deletePlagiarismComparisons')!)).toEqual({});
-        expect(comp.descriptionOf(comp.cleanupOperations().find((operation) => operation.name === 'deleteOrphans')!)).toEqual({});
+        // The four date-range operations state their scope through their pickers, and orphans have no time bound.
+        expect(quoting).toEqual([
+            'warnOldCoursesReset',
+            'resetOldCourses',
+            'deleteOldFeedback',
+            'deleteOldCourseSubmissionVersions',
+            'warnNotEnrolledUsers',
+            'deleteNotEnrolledUsers',
+            'deletePlagiarismCases',
+        ]);
+    });
+
+    it('should supply every placeholder its description string interpolates', async () => {
+        // The rendered line must never contain a hole. This pins the component and the translations together, so a
+        // string that starts quoting a cutoff, or an operation added without one, fails here instead of in the UI.
+        comp.ngOnInit();
+        const translations = (await import('../../../i18n/en/cleanupService.json')).default.cleanupService;
+
+        for (const operation of comp.cleanupOperations()) {
+            const template: string = translations.description[operation.name];
+            expect(template, `missing cleanupService.description.${operation.name}`).toBeDefined();
+
+            const placeholders = [...template.matchAll(/{{\s*(\w+)\s*}}/g)].map((match) => match[1]);
+            const description = comp.descriptions()[operation.name];
+            for (const placeholder of placeholders) {
+                expect(description?.[placeholder as keyof typeof description], `${operation.name} does not supply {{${placeholder}}}`).toBeTruthy();
+            }
+            // Conversely, an operation that supplies values must have a string that uses them.
+            if (description) {
+                expect(placeholders, `${operation.name} supplies values its description ignores`).not.toHaveLength(0);
+            }
+        }
     });
 });

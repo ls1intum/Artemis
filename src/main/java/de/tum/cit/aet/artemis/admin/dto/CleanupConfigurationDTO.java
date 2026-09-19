@@ -23,7 +23,8 @@ import de.tum.cit.aet.artemis.admin.config.DataCleanupProperties;
  * @param oldSubmissionVersionsCutoffWeeks        configured cutoff for submission versions, in weeks
  * @param oldSubmissionVersionsCoursesEndedBefore courses that ended before this have their submission versions purged
  * @param notEnrolledUsersInactivityMonths        configured inactivity period before a not-enrolled user is warned, in months
- * @param usersInactiveBefore                     not-enrolled users last active before this are warned and later deleted
+ * @param usersInactiveBefore                     not-enrolled users last active before this are warned; the later deletion
+ *                                                    instead compares each user's last login against their own warning date
  * @param notEnrolledUsersWarningGracePeriodDays  configured grace period between warning a user and deleting the account, in days
  * @param usersWarnedBefore                       warned users warned before this are due for deletion
  */

@@ -53,8 +53,8 @@ export class CleanupOperationModalComponent {
     protected readonly cleanupActionSeverity = cleanupActionSeverity;
     protected readonly faCheckCircle = faCheckCircle;
 
-    /** Keys from the CleanupCount object for iteration */
-    readonly cleanupKeys = computed(() => Object.keys(this.counts()) as (keyof CleanupCount)[]);
+    /** The entity types the server reported a count for, in the order it listed them. */
+    readonly cleanupKeys = computed(() => Object.keys(this.counts()));
 
     /** Whether the operation affects any entity at all; the confirmation button stays disabled while it does not. */
     readonly hasAffectedEntities = computed(() => Object.values(this.counts()).some((count) => count > 0));

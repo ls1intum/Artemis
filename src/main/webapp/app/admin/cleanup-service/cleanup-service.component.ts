@@ -1,4 +1,7 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslateService } from '@ngx-translate/core';
+import { EMPTY } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { CleanupOperation, OperationName } from 'app/admin/cleanup-service/cleanup-operation.model';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
@@ -23,18 +26,63 @@ import { cleanupActionIcon, cleanupActionLabelKey, cleanupActionSeverity } from 
 type DurationUnit = 'day' | 'week' | 'month' | 'year';
 
 /**
- * The interpolation values of an operation's description line. Cutoffs stay dayjs objects so the template can format
- * them with the locale-reactive `artemisDate` pipe; the period is a translation key plus its count, resolved by the
- * `artemisTranslate` pipe (ngx-translate has no ICU support here, so singular and plural are separate keys).
+ * The already-formatted interpolation values of an operation's description line. A type alias rather than an interface,
+ * so that it keeps the implicit index signature `translateValues` requires.
  */
-export interface OperationDescription {
-    cutoff?: dayjs.Dayjs;
-    periodKey?: string;
-    periodCount?: number;
-    secondaryCutoff?: dayjs.Dayjs;
-    secondaryPeriodKey?: string;
-    secondaryPeriodCount?: number;
+export type OperationDescription = {
+    cutoff: string;
+    period: string;
+    secondaryCutoff?: string;
+    secondaryPeriod?: string;
+};
+
+/** Which cutoff and period of the configuration an operation's description line quotes. */
+interface DescriptionSource {
+    cutoff: (configuration: CleanupConfiguration) => dayjs.Dayjs;
+    unit: DurationUnit;
+    count: (configuration: CleanupConfiguration) => number;
+    secondaryCutoff?: (configuration: CleanupConfiguration) => dayjs.Dayjs;
+    secondaryUnit?: DurationUnit;
+    secondaryCount?: (configuration: CleanupConfiguration) => number;
 }
+
+/**
+ * The cutoff each age-based operation's description line quotes, mirroring what the corresponding server job filters on.
+ * Operations missing here describe themselves without a date: the four date-range ones state their scope through their
+ * pickers, and `deleteOrphans` has no time bound at all.
+ */
+const DESCRIPTION_SOURCES: Partial<Record<OperationName, DescriptionSource>> = {
+    // Both retention periods are named, since which one applies depends on the course's grade relevance.
+    warnOldCoursesReset: {
+        cutoff: (configuration) => configuration.gradeRelevantCoursesEndedBefore,
+        unit: 'year',
+        count: (configuration) => configuration.gradeRelevantRetentionYears,
+        secondaryCutoff: (configuration) => configuration.nonGradeRelevantCoursesEndedBefore,
+        secondaryUnit: 'year',
+        secondaryCount: (configuration) => configuration.nonGradeRelevantRetentionYears,
+    },
+    // The grace period runs from the warning, not from the course end, so this quotes the warning cutoff.
+    resetOldCourses: { cutoff: (configuration) => configuration.coursesWarnedBefore, unit: 'day', count: (configuration) => configuration.resetWarningGracePeriodDays },
+    deleteOldFeedback: { cutoff: (configuration) => configuration.oldFeedbackCoursesEndedBefore, unit: 'week', count: (configuration) => configuration.oldFeedbackCutoffWeeks },
+    deleteOldCourseSubmissionVersions: {
+        cutoff: (configuration) => configuration.oldSubmissionVersionsCoursesEndedBefore,
+        unit: 'week',
+        count: (configuration) => configuration.oldSubmissionVersionsCutoffWeeks,
+    },
+    warnNotEnrolledUsers: { cutoff: (configuration) => configuration.usersInactiveBefore, unit: 'month', count: (configuration) => configuration.notEnrolledUsersInactivityMonths },
+    // Deliberately no second cutoff: phase 2 compares each user's last login against their own warning date, which no
+    // global cutoff can express. The description states that rule in words instead.
+    deleteNotEnrolledUsers: {
+        cutoff: (configuration) => configuration.usersWarnedBefore,
+        unit: 'day',
+        count: (configuration) => configuration.notEnrolledUsersWarningGracePeriodDays,
+    },
+    deletePlagiarismCases: {
+        cutoff: (configuration) => configuration.gradeRelevantCoursesEndedBefore,
+        unit: 'year',
+        count: (configuration) => configuration.gradeRelevantRetentionYears,
+    },
+};
 
 /**
  * Admin component for managing data cleanup operations.
@@ -61,6 +109,11 @@ export interface OperationDescription {
 export class CleanupServiceComponent implements OnInit {
     private readonly dataCleanupService = inject(DataCleanupService);
     private readonly alertService = inject(AlertService);
+    private readonly translateService = inject(TranslateService);
+    private readonly datePipe = inject(ArtemisDatePipe);
+
+    // Reading this in a computed re-resolves the description lines on a language change, the way the pipes would.
+    private readonly languageChange = toSignal(this.translateService.onLangChange ?? EMPTY);
 
     protected readonly cleanupActionIcon = cleanupActionIcon;
     protected readonly cleanupActionLabelKey = cleanupActionLabelKey;
@@ -92,10 +145,40 @@ export class CleanupServiceComponent implements OnInit {
     selectedOperation = signal<CleanupOperation | undefined>(undefined);
 
     /**
-     * The effective retention cutoffs of the age-based operations, once loaded. Until then the description lines of
-     * those operations render without a date rather than with a wrong one, see {@link descriptionOf}.
+     * The effective retention cutoffs of the age-based operations, once loaded. Until then (and if the request fails)
+     * those operations fall back to a description without a date rather than showing a wrong one, see {@link descriptions}.
      */
     readonly configuration = signal<CleanupConfiguration | undefined>(undefined);
+
+    /** Whether the configuration request failed, which turns "not loaded yet" from a transient state into a permanent one. */
+    readonly configurationFailed = signal(false);
+
+    /** Whether an operation's description line quotes a cutoff, and therefore cannot be rendered without the configuration. */
+    protected readonly quotesCutoff = (name: OperationName): boolean => name in DESCRIPTION_SOURCES;
+
+    /**
+     * The interpolation values of each age-based operation's description line, with the cutoff and the period already
+     * formatted. Resolved here rather than by pipes in the template so that the object handed to `translateValues` keeps
+     * its identity between change detections; reading {@link languageChange} keeps it locale-reactive all the same.
+     * An operation is absent while the configuration is unknown, which is what makes the template fall back.
+     */
+    readonly descriptions = computed<Partial<Record<OperationName, OperationDescription>>>(() => {
+        this.languageChange();
+        const configuration = this.configuration();
+        if (!configuration) {
+            return {};
+        }
+        const descriptions: Partial<Record<OperationName, OperationDescription>> = {};
+        for (const [name, source] of Object.entries(DESCRIPTION_SOURCES) as [OperationName, DescriptionSource][]) {
+            descriptions[name] = {
+                cutoff: this.datePipe.transform(source.cutoff(configuration), 'long-date'),
+                period: this.duration(source.unit, source.count(configuration)),
+                secondaryCutoff: source.secondaryCutoff ? this.datePipe.transform(source.secondaryCutoff(configuration), 'long-date') : undefined,
+                secondaryPeriod: source.secondaryUnit && source.secondaryCount ? this.duration(source.secondaryUnit, source.secondaryCount(configuration)) : undefined,
+            };
+        }
+        return descriptions;
+    });
 
     /** Cleanup operations data - uses signal for reactivity */
     readonly cleanupOperations = signal<CleanupOperation[]>([
@@ -259,54 +342,20 @@ export class CleanupServiceComponent implements OnInit {
     loadConfiguration(): void {
         this.dataCleanupService.getCleanupConfiguration().subscribe({
             next: (configuration) => this.configuration.set(configuration),
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            error: (error: HttpErrorResponse) => {
+                // The alert disappears, so the affected rows have to keep saying that their scope is unknown.
+                this.configurationFailed.set(true);
+                onError(this.alertService, error);
+            },
         });
     }
 
     /**
-     * The interpolation values for an operation's description line. Operations with an admin-picked date range describe
-     * themselves through their pickers and therefore need no values at all.
-     *
-     * @param operation the operation whose description line is rendered
-     * @return the cutoffs and periods referenced by `cleanupService.description.<operation name>`
+     * Resolves a configured period to a localized label, picking the singular or plural key so that a period of one
+     * does not read "1 years" (ngx-translate has no ICU support here).
      */
-    descriptionOf(operation: CleanupOperation): OperationDescription {
-        const configuration = this.configuration();
-        if (!configuration) {
-            return {};
-        }
-        switch (operation.name) {
-            case 'warnOldCoursesReset':
-                return describe({
-                    cutoff: configuration.gradeRelevantCoursesEndedBefore,
-                    unit: 'year',
-                    count: configuration.gradeRelevantRetentionYears,
-                    secondaryCutoff: configuration.nonGradeRelevantCoursesEndedBefore,
-                    secondaryUnit: 'year',
-                    secondaryCount: configuration.nonGradeRelevantRetentionYears,
-                });
-            case 'resetOldCourses':
-                return describe({ cutoff: configuration.coursesWarnedBefore, unit: 'day', count: configuration.resetWarningGracePeriodDays });
-            case 'deleteOldFeedback':
-                return describe({ cutoff: configuration.oldFeedbackCoursesEndedBefore, unit: 'week', count: configuration.oldFeedbackCutoffWeeks });
-            case 'deleteOldCourseSubmissionVersions':
-                return describe({ cutoff: configuration.oldSubmissionVersionsCoursesEndedBefore, unit: 'week', count: configuration.oldSubmissionVersionsCutoffWeeks });
-            case 'warnNotEnrolledUsers':
-                return describe({ cutoff: configuration.usersInactiveBefore, unit: 'month', count: configuration.notEnrolledUsersInactivityMonths });
-            case 'deleteNotEnrolledUsers':
-                return describe({
-                    cutoff: configuration.usersWarnedBefore,
-                    unit: 'day',
-                    count: configuration.notEnrolledUsersWarningGracePeriodDays,
-                    secondaryCutoff: configuration.usersInactiveBefore,
-                    secondaryUnit: 'month',
-                    secondaryCount: configuration.notEnrolledUsersInactivityMonths,
-                });
-            case 'deletePlagiarismCases':
-                return describe({ cutoff: configuration.gradeRelevantCoursesEndedBefore, unit: 'year', count: configuration.gradeRelevantRetentionYears });
-            default:
-                return {};
-        }
+    private duration(unit: DurationUnit, count: number): string {
+        return this.translateService.instant(`cleanupService.duration.${unit}${count === 1 ? '' : 's'}`, { count });
     }
 
     validateDates(operation: CleanupOperation): void {
@@ -331,29 +380,4 @@ export class CleanupServiceComponent implements OnInit {
         this.selectedOperation.set(operation);
         this.showCleanupModal.set(true);
     }
-}
-
-interface DescriptionInput {
-    cutoff: dayjs.Dayjs;
-    unit: DurationUnit;
-    count: number;
-    secondaryCutoff?: dayjs.Dayjs;
-    secondaryUnit?: DurationUnit;
-    secondaryCount?: number;
-}
-
-function describe(input: DescriptionInput): OperationDescription {
-    return {
-        cutoff: input.cutoff,
-        periodKey: durationKey(input.unit, input.count),
-        periodCount: input.count,
-        secondaryCutoff: input.secondaryCutoff,
-        secondaryPeriodKey: input.secondaryUnit && input.secondaryCount !== undefined ? durationKey(input.secondaryUnit, input.secondaryCount) : undefined,
-        secondaryPeriodCount: input.secondaryCount,
-    };
-}
-
-/** Picks the singular or plural duration key for `count`, so "1 year" does not render as "1 years". */
-function durationKey(unit: DurationUnit, count: number): string {
-    return `cleanupService.duration.${unit}${count === 1 ? '' : 's'}`;
 }

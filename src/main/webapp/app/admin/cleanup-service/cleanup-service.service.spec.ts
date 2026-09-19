@@ -358,4 +358,28 @@ describe('DataCleanupService', () => {
         expect(dayjs.isDayjs(configuration!.usersWarnedBefore)).toBe(true);
         expect(configuration!.usersWarnedBefore.toISOString()).toBe(dayjs('2026-02-02T00:00:00Z').toISOString());
     });
+
+    it('should reject a cleanup configuration with a missing cutoff instead of defaulting it to now', () => {
+        // dayjs(undefined) is today, which on this page would read as a plausible but entirely wrong cutoff.
+        let error: Error | undefined;
+        service.getCleanupConfiguration().subscribe({ error: (thrown: Error) => (error = thrown) });
+
+        httpMock.expectOne({ method: 'GET', url: 'api/admin/cleanup/configuration' }).flush({
+            gradeRelevantRetentionYears: 5,
+            nonGradeRelevantRetentionYears: 1,
+            nonGradeRelevantCoursesEndedBefore: '2025-03-04T00:00:00Z',
+            resetWarningGracePeriodDays: 30,
+            coursesWarnedBefore: '2026-02-02T00:00:00Z',
+            oldFeedbackCutoffWeeks: 8,
+            oldFeedbackCoursesEndedBefore: '2026-01-07T00:00:00Z',
+            oldSubmissionVersionsCutoffWeeks: 8,
+            oldSubmissionVersionsCoursesEndedBefore: '2026-01-07T00:00:00Z',
+            notEnrolledUsersInactivityMonths: 6,
+            usersInactiveBefore: '2025-09-04T00:00:00Z',
+            notEnrolledUsersWarningGracePeriodDays: 30,
+            usersWarnedBefore: '2026-02-02T00:00:00Z',
+        });
+
+        expect(error?.message).toBe('The cleanup configuration is missing a cutoff: received undefined');
+    });
 });
