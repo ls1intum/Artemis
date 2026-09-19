@@ -296,7 +296,11 @@ public class ProgrammingExerciseParticipationResource {
         // the automatic test-case and SCA feedback lives in the compact typed tables and has to be attached as legacy views before filtering
         result.ifPresent(value -> resultService.attachAutomaticFeedbackAndFilterSensitiveInformation(participation, List.of(value)));
 
-        return result.map(value -> ResponseEntity.ok(ProgrammingParticipationLatestResultDTO.of(value))).orElseGet(() -> ResponseEntity.ok(null));
+        boolean hideParticipant = participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && !canSeeParticipantInformation(studentParticipation);
+        return result.map(value -> {
+            var response = ProgrammingParticipationLatestResultDTO.of(value);
+            return ResponseEntity.ok(hideParticipant ? response.withoutParticipantInformation() : response);
+        }).orElseGet(() -> ResponseEntity.ok(null));
     }
 
     /**

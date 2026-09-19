@@ -168,7 +168,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
+        userUtilService.addUsers(TEST_PREFIX, 4, 2, 1, 2);
         var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
@@ -720,6 +720,102 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var dto = request.get("/api/programming/programming-exercise-participations?repoName=" + extractRepoName(participation.getRepositoryUri()), HttpStatus.OK,
                 RepoNameProgrammingStudentParticipationDTO.class);
         assertThat(dto.id()).isEqualTo(participation.getId());
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "false, false", "false, true", "true, false", "true, true" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testNestedParticipationPrivacyForTutor(boolean teamMode, boolean submissionsList) throws Exception {
+        assertNestedParticipationPrivacy(teamMode, false, submissionsList);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "false, false", "false, true", "true, false", "true, true" })
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testNestedParticipationPrivacyForEditor(boolean teamMode, boolean submissionsList) throws Exception {
+        assertNestedParticipationPrivacy(teamMode, false, submissionsList);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "false, false", "false, true", "true, false", "true, true" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testNestedParticipationPrivacyPreservesInstructorIdentity(boolean teamMode, boolean submissionsList) throws Exception {
+        assertNestedParticipationPrivacy(teamMode, true, submissionsList);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testNestedParticipationPrivacyPreservesOwnerIdentity(boolean teamMode) throws Exception {
+        assertNestedParticipationPrivacy(teamMode, true, false);
+    }
+
+    private void assertNestedParticipationPrivacy(boolean teamMode, boolean seesIdentity, boolean submissionsList) throws Exception {
+        var result = createResultForParticipationPrivacyTest(teamMode);
+        var submission = result.getSubmission();
+        var participation = (ProgrammingExerciseStudentParticipation) submission.getParticipation();
+        assertThat(participation.getRepositoryUri()).isNotBlank();
+        assertThat(participation.getBuildPlanId()).isNotBlank();
+        if (!submissionsList) {
+            for (boolean withSubmission : List.of(false, true)) {
+                JsonNode response = getJson(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks?withSubmission=" + withSubmission);
+                assertThat(response.path("id").asLong()).isEqualTo(result.getId());
+                assertThat(response.path("submission").path("id").asLong()).isEqualTo(submission.getId());
+                assertThat(response.path("submission").path("participation").path("exercise").path("id").asLong()).isEqualTo(programmingExercise.getId());
+                assertNestedParticipantIdentity(response.path("submission").path("participation"), participation, teamMode, seesIdentity);
+                if (!seesIdentity) {
+                    assertThat(response.toString()).doesNotContain(TEST_PREFIX + "student1", TEST_PREFIX + "team");
+                }
+            }
+        }
+        else {
+            JsonNode response = getJson("/api/programming/exercises/" + programmingExercise.getId() + "/programming-submissions");
+            assertThat(response).hasSize(1);
+            JsonNode listedSubmission = response.get(0);
+            assertThat(listedSubmission.path("id").asLong()).isEqualTo(submission.getId());
+            assertThat(listedSubmission.path("results").get(0).path("id").asLong()).isEqualTo(result.getId());
+            assertNestedParticipantIdentity(listedSubmission.path("participation"), participation, teamMode, seesIdentity);
+            assertThat(listedSubmission.path("participation").path("submissionCount").asInt()).isEqualTo(1);
+            if (!seesIdentity) {
+                assertThat(response.toString()).doesNotContain(TEST_PREFIX + "student1", TEST_PREFIX + "team");
+            }
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "lock", "without-assessment", "without-assessment?lock=true" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testNestedParticipationPrivacyForAssessmentResponses(String endpoint) throws Exception {
+        var result = createResultForParticipationPrivacyTest(false);
+        var submission = result.getSubmission();
+        var participation = (ProgrammingExerciseStudentParticipation) submission.getParticipation();
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+        String url = endpoint.equals("lock") ? "/api/programming/programming-submissions/" + submission.getId() + "/lock"
+                : "/api/programming/exercises/" + programmingExercise.getId() + "/programming-submission-" + endpoint;
+
+        JsonNode response = getJson(url);
+
+        assertThat(response.path("id").asLong()).isPositive();
+        assertNestedParticipantIdentity(response.path("participation"), participation, false, false);
+        assertThat(response.path("participation").path("exercise").path("id").asLong()).isEqualTo(programmingExercise.getId());
+        assertThat(response.toString()).doesNotContain(TEST_PREFIX + "student1");
+    }
+
+    private void assertNestedParticipantIdentity(JsonNode response, ProgrammingExerciseStudentParticipation participation, boolean teamMode, boolean seesIdentity) {
+        assertThat(response.path("id").asLong()).isEqualTo(participation.getId());
+        if (seesIdentity) {
+            assertThat(response.path("repositoryUri").asString()).isEqualTo(participation.getRepositoryUri());
+            assertThat(response.path("participantIdentifier").asString()).isEqualTo(participation.getParticipantIdentifier());
+            assertThat(response.path(teamMode ? "team" : "student").path("id").asLong()).isEqualTo(participation.getParticipant().getId());
+        }
+        else {
+            for (String field : List.of("student", "team", "participantName", "participantIdentifier", "repositoryUri", "userIndependentRepositoryUri", "buildPlanId", "branch")) {
+                assertThat(response.has(field)).as("anonymous participation omits %s", field).isFalse();
+            }
+        }
     }
 
     private Result createResultForParticipationPrivacyTest(boolean teamMode) {
