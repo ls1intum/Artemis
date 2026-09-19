@@ -99,7 +99,7 @@ class IrisLegacyTriggerFlagTest extends AbstractIrisIntegrationTest {
         exercise.setProjectType(ProjectType.PLAIN_GRADLE);
         exercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase(Locale.ROOT) + "-tests.git");
         programmingExerciseRepository.save(exercise);
-        exercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exercise.getId()).orElseThrow();
+        exercise = programmingExerciseRepository.findWithAllParticipationsById(exercise.getId()).orElseThrow();
 
         // Set the correct repository URIs for the template and the solution participation.
         String templateRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";

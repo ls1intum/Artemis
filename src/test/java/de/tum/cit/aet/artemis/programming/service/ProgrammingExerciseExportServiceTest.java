@@ -51,7 +51,6 @@ import de.tum.cit.aet.artemis.localvc.service.GitRepositoryExportService.Reposit
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
@@ -630,8 +629,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         programmingExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         // the export endpoint hands the service an exercise loaded with its configurations, so the test does the same
-        var exerciseToExport = programmingExerciseRepository
-                .findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+        var exerciseToExport = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
 
         Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(exerciseToExport, new ArrayList<>());
 
@@ -651,7 +649,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         assertThat(importRequest.packageName()).isEqualTo(programmingExercise.getPackageName());
         assertThat(importRequest.allowOfflineIde()).isEqualTo(programmingExercise.isAllowOfflineIde());
         assertThat(importRequest.buildConfig()).as("the build configuration is part of the create form").isNotNull();
-        assertThat(importRequest.buildConfig().buildScript()).isEqualTo(exerciseToExport.getBuildConfig().getBuildScript());
+        assertThat(importRequest.buildConfig().buildScript()).isEqualTo(programmingExerciseUtilService.buildConfigOf(exerciseToExport).getBuildScript());
 
         // The import creates a new exercise, so it must build fresh configurations instead of adopting the ids of the
         // exported exercise's configuration rows.
@@ -673,8 +671,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         programmingExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
         programmingExercise.setTeamAssignmentConfig(teamAssignmentConfig());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        var exerciseToExport = programmingExerciseRepository
-                .findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+        var exerciseToExport = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
         assertThat(exerciseToExport.getPlagiarismDetectionConfig().getId()).isNotNull();
         assertThat(exerciseToExport.getTeamAssignmentConfig().getId()).isNotNull();
 
@@ -701,8 +698,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         programmingExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
         programmingExercise.setTeamAssignmentConfig(teamAssignmentConfig());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        var exerciseToExport = programmingExerciseRepository
-                .findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+        var exerciseToExport = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
         Long sourceConfigId = exerciseToExport.getPlagiarismDetectionConfig().getId();
 
         Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(exerciseToExport, new ArrayList<>());
@@ -722,11 +718,10 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         imported.setShortName(programmingExercise.getShortName() + "imp");
         imported.setTitle(programmingExercise.getTitle() + " imported");
         imported.setCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
-        imported.setBuildConfig(programmingExerciseBuildConfigRepository.save(new ProgrammingExerciseBuildConfig()));
         var saved = programmingExerciseRepository.save(imported);
 
         assertThat(saved.getPlagiarismDetectionConfig().getId()).as("the import created its own configuration row").isNotNull().isNotEqualTo(sourceConfigId);
-        var source = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+        var source = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
         assertThat(source.getPlagiarismDetectionConfig().getId()).as("the exported exercise keeps its own configuration row").isEqualTo(sourceConfigId);
     }
 
@@ -742,8 +737,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         createAndSeedBaseRepositories();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         seedAuxiliaryRepository("solutionhints", Map.of("hints/Hint.java", "public class Hint {}"));
-        var exerciseToExport = programmingExerciseRepository
-                .findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+        var exerciseToExport = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
 
         Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(exerciseToExport, new ArrayList<>());
 
@@ -780,8 +774,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         programmingExercise.setTeamAssignmentConfig(teamAssignmentConfig());
         programmingExercise.setGradingCriteria(new HashSet<>(Set.of(criterionWithInstruction())));
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        var exerciseToExport = programmingExerciseRepository
-                .findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+        var exerciseToExport = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
         // No export query loads participations today. They are put on the exercise here so that the file is what the
         // projection decides rather than what a query happened to fetch: a wider graph must not leak student work.
         var studentParticipations = seedStudentParticipations(TEST_PREFIX + "student1");
@@ -861,8 +854,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         criteria.add(criterionWithInstruction());
         programmingExercise.setGradingCriteria(criteria);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        var exerciseToExport = programmingExerciseRepository
-                .findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+        var exerciseToExport = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
         assertThat(exerciseToExport.getGradingCriteria()).hasSize(2);
 
         Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(exerciseToExport, new ArrayList<>());

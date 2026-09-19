@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.lti.service.Lti13Service;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
@@ -96,6 +97,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @Autowired
     protected GitService gitService;
+
+    @Autowired
+    protected BareGitRepositoryService bareGitRepositoryService;
 
     @MockitoSpyBean
     protected FileService fileService;

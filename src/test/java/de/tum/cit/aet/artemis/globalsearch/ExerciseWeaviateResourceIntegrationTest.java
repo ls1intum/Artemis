@@ -181,15 +181,12 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         endedExamAutoAssessmentProgrammingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(autoAssessmentExerciseGroup);
         endedExamAutoAssessmentProgrammingExercise.setTitle(SEARCH_PREFIX + " AutoAssess ExamProg");
         endedExamAutoAssessmentProgrammingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
-        endedExamAutoAssessmentProgrammingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(endedExamAutoAssessmentProgrammingExercise.getBuildConfig()));
         endedExamAutoAssessmentProgrammingExercise = exerciseRepository.save(endedExamAutoAssessmentProgrammingExercise);
 
         // Create an exam programming exercise with SEMI_AUTOMATIC assessment in the ended exam
         endedExamSemiAutoAssessmentProgrammingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(semiAutoAssessmentExerciseGroup);
         endedExamSemiAutoAssessmentProgrammingExercise.setTitle(SEARCH_PREFIX + " SemiAutoAssess ExamProg");
         endedExamSemiAutoAssessmentProgrammingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-        endedExamSemiAutoAssessmentProgrammingExercise
-                .setBuildConfig(programmingExerciseBuildConfigRepository.save(endedExamSemiAutoAssessmentProgrammingExercise.getBuildConfig()));
         endedExamSemiAutoAssessmentProgrammingExercise = exerciseRepository.save(endedExamSemiAutoAssessmentProgrammingExercise);
 
         // Create a lecture in the same course

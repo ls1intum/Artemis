@@ -208,7 +208,7 @@ class ProgrammingExerciseDtoMappingTest {
         exercise.setCategories(Set.of("[\"easy\"]"));
         exercise.setCourse(course);
 
-        ProgrammingExerciseResponseDTO dto = ProgrammingExerciseResponseDTO.of(exercise, true);
+        ProgrammingExerciseResponseDTO dto = ProgrammingExerciseResponseDTO.of(exercise, null, true);
 
         assertThat(dto.exerciseGroup()).isNull();
         assertThat(dto.course()).isNotNull();
@@ -438,9 +438,12 @@ class ProgrammingExerciseDtoMappingTest {
     @Test
     void exportProjectionStripsEveryNestedId() {
         ProgrammingExercise exercise = exerciseWithEveryNestedId();
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setId(4L);
+        buildConfig.setBuildScript("build.sh");
 
-        ProgrammingExerciseResponseDTO response = ProgrammingExerciseResponseDTO.of(exercise);
-        ProgrammingExerciseResponseDTO exported = ProgrammingExerciseResponseDTO.forExport(exercise);
+        ProgrammingExerciseResponseDTO response = ProgrammingExerciseResponseDTO.of(exercise, buildConfig);
+        ProgrammingExerciseResponseDTO exported = ProgrammingExerciseResponseDTO.forExport(exercise, buildConfig);
 
         // the response keeps the ids: the client edits a stored exercise through them
         assertThat(response.teamAssignmentConfig().id()).isEqualTo(1L);
@@ -513,11 +516,6 @@ class ProgrammingExerciseDtoMappingTest {
         submissionPolicy.setActive(true);
         exercise.setSubmissionPolicy(submissionPolicy);
 
-        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
-        buildConfig.setId(4L);
-        buildConfig.setBuildScript("build.sh");
-        exercise.setBuildConfig(buildConfig);
-
         GradingCriterion criterion = new GradingCriterion();
         criterion.setId(5L);
         criterion.setTitle("criterion");
@@ -573,7 +571,6 @@ class ProgrammingExerciseDtoMappingTest {
         assertThat(exercise.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(2);
         assertThat(exercise.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(4);
         assertThat(exercise.getCategories()).containsExactly("[\"cat\"]");
-        assertThat(exercise.getBuildConfig()).isNull();
         assertThat(exercise.getSubmissionPolicy()).isNull();
     }
 

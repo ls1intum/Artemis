@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.connector.JenkinsRequestMockProvider;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.jenkins.service.JenkinsService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCService;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
@@ -64,6 +65,10 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTestBase extends Ab
     @MockitoSpyBean
     protected GitService gitServiceSpy;
 
+    // Spy is only used for simulating non-feasible failure scenarios. Please use the real bean otherwise.
+    @MockitoSpyBean
+    protected BareGitRepositoryService bareGitRepositoryServiceSpy;
+
     @Autowired
     protected LocalVCService versionControlService;
 
@@ -100,8 +105,8 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTestBase extends Ab
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(continuousIntegrationService, gitServiceSpy, programmingMessagingService, resultWebsocketService, examLiveEventsService, groupNotificationScheduleService,
-                continuousIntegrationTriggerService);
+        Mockito.reset(continuousIntegrationService, gitServiceSpy, bareGitRepositoryServiceSpy, programmingMessagingService, resultWebsocketService, examLiveEventsService,
+                groupNotificationScheduleService, continuousIntegrationTriggerService);
         super.resetSpyBeans();
     }
 

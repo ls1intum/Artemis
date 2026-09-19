@@ -304,9 +304,9 @@ describe('TutorialGroupsManagementComponent', () => {
         expect(renderedRows().map((row) => row[0])).toEqual(['Group']);
     });
 
-    it('should label the tutor column with "you" for the groups the current user tutors', async () => {
-        await setUp([generateExampleTutorialGroup({ id: 3, title: 'Own', isUserTutor: true })]);
-        expect(renderedRows()[0][1]).toBe('global.generic.you');
+    it('should display the full tutor name for the groups the current user tutors', async () => {
+        await setUp([generateExampleTutorialGroup({ id: 3, title: 'Own', isUserTutor: true, teachingAssistantName: 'Ada Lovelace' })]);
+        expect(renderedRows()[0][1]).toBe('Ada Lovelace');
     });
 
     it('should filter the rows by the search term', () => {

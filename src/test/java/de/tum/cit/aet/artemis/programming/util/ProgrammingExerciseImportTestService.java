@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 
 /**
@@ -91,10 +92,9 @@ public class ProgrammingExerciseImportTestService {
         assertThat(detailsJsonString).isNotNull();
 
         ProgrammingExercise parsedExercise = objectMapper.readValue(detailsJsonString, ProgrammingExercise.class);
-
-        if (parsedExercise.getBuildConfig() == null) {
-            parsedExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
-        }
+        // The build configuration is a row of its own, so the exercise does not carry it: it is read off the archive separately.
+        var parsedBuildConfigDTO = objectMapper.readValue(detailsJsonString, ImportProgrammingExerciseRequestDTO.class).buildConfig();
+        var parsedBuildConfig = parsedBuildConfigDTO == null ? new ProgrammingExerciseBuildConfig() : parsedBuildConfigDTO.toEntity();
 
         Object additionalData = modifier.modify(parsedExercise);
 
@@ -106,7 +106,7 @@ public class ProgrammingExerciseImportTestService {
         MockMultipartFile file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
 
         ProgrammingExerciseResponseDTO importedExercise = request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file",
-                parsedExercise, "programmingExercise", file, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+                ImportProgrammingExerciseRequestDTO.of(parsedExercise, parsedBuildConfig), "programmingExercise", file, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
 
         return new ImportFileResult(resource, parsedExercise, importedExercise, additionalData);
     }

@@ -9,7 +9,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Observable, of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router, RouterState } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Title } from '@angular/platform-browser';
@@ -374,7 +374,7 @@ describe('UserManagementUpdateComponent', () => {
 
             expect(updateSpy).toHaveBeenCalledOnce();
             const submitted = updateSpy.mock.calls[0][0];
-            expect(submitted.password).toBeFalsy();
+            expect(submitted.password).toBeUndefined();
             expect(submitted.revokeCredentials).toBe(false);
             expect(component.editForm.get('password')?.value).toBe('');
         });
@@ -449,6 +449,33 @@ describe('UserManagementUpdateComponent', () => {
             expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 123, login: 'test_user', password: undefined, revokeCredentials: false }));
             expect(component.user().revokeCredentials).toBe(false);
             expect(component.isSaving()).toBe(false);
+        });
+
+        it.each([false, true])('should omit the password when creating an internal user with a random password (toggle back: %s)', async (toggleBack) => {
+            component.user.set(new User());
+            component['initializeForm']();
+            component.editForm.patchValue({
+                login: 'random-password-user',
+                firstName: 'Random',
+                lastName: 'Password',
+                email: 'random-password@example.org',
+                internal: true,
+            });
+            if (toggleBack) {
+                component.shouldRandomizePassword(false);
+                component.editForm.patchValue({ password: 'typed-Password-123' });
+                component.shouldRandomizePassword(true);
+            }
+            expect(component.editForm.valid).toBe(true);
+
+            await component.save();
+
+            const httpMock = TestBed.inject(HttpTestingController);
+            const request = httpMock.expectOne({ method: 'POST', url: 'api/account/admin/users' });
+            expect(request.request.serializeBody()).not.toContain('"password"');
+            request.flush({ id: 123, login: 'random-password-user', internal: true }, { status: 201, statusText: 'Created' });
+            expect(component.isSaving()).toBe(false);
+            httpMock.verify();
         });
 
         it('should call create service when saving new user', async () => {
