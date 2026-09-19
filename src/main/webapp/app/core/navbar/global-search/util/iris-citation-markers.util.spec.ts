@@ -4,7 +4,7 @@ import { parseCitationNumbers, renderCitationMarkers } from './iris-citation-mar
 describe('renderCitationMarkers', () => {
     it('converts a single marker into a citation chip element', () => {
         const result = renderCitationMarkers('The quiz is worth 4 points.[2]', 3);
-        expect(result.html).toBe('The quiz is worth 4 points.<sup class="iris-cite" data-n="2">2</sup>');
+        expect(result.html).toBe('The quiz is worth 4 points.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
         expect([...result.citedNumbers]).toEqual([2]);
     });
 
@@ -12,7 +12,9 @@ describe('renderCitationMarkers', () => {
         // One hover target and one link per source: a combined chip could neither say what source 3
         // alone supports nor open anything but the first of them.
         const result = renderCitationMarkers('Composition beats inheritance.[1][3]', 3);
-        expect(result.html).toBe('Composition beats inheritance.<sup class="iris-cite" data-n="1">1</sup><sup class="iris-cite" data-n="3">3</sup>');
+        expect(result.html).toBe(
+            'Composition beats inheritance.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup><sup class="iris-cite" data-n="3" role="link" tabindex="0">3</sup>',
+        );
         expect([...result.citedNumbers]).toEqual([1, 3]);
     });
 
@@ -24,18 +26,18 @@ describe('renderCitationMarkers', () => {
 
     it('deduplicates repeated numbers inside a run', () => {
         const result = renderCitationMarkers('Claim.[1][1]', 3);
-        expect(result.html).toBe('Claim.<sup class="iris-cite" data-n="1">1</sup>');
+        expect(result.html).toBe('Claim.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
     });
 
     it('drops out-of-range markers and removes a run left empty', () => {
         const result = renderCitationMarkers('Wrong.[9] Right.[2]', 3);
-        expect(result.html).toBe('Wrong. Right.<sup class="iris-cite" data-n="2">2</sup>');
+        expect(result.html).toBe('Wrong. Right.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
         expect([...result.citedNumbers]).toEqual([2]);
     });
 
     it('keeps separate runs as separate chips', () => {
         const result = renderCitationMarkers('A.[1] B.[1]', 3);
-        expect(result.html).toBe('A.<sup class="iris-cite" data-n="1">1</sup> B.<sup class="iris-cite" data-n="1">1</sup>');
+        expect(result.html).toBe('A.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup> B.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
     });
 
     it('passes a markerless answer through untouched', () => {
@@ -58,7 +60,7 @@ describe('renderCitationMarkers', () => {
 
     it('leaves a bracketed index inside an inline code span untouched', () => {
         const result = renderCitationMarkers('Access the first element with `list[0]`.[2]', 2);
-        expect(result.html).toBe('Access the first element with `list[0]`.<sup class="iris-cite" data-n="2">2</sup>');
+        expect(result.html).toBe('Access the first element with `list[0]`.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
         expect([...result.citedNumbers]).toEqual([2]);
     });
 
@@ -66,8 +68,8 @@ describe('renderCitationMarkers', () => {
         const answer = ['See the loop below.[1]', '```python', 'for i in range(3):', '    print(items[i])', '```', 'Iteration order matches the list.[2]'].join('\n');
         const result = renderCitationMarkers(answer, 2);
         expect(result.html).toContain('```python\nfor i in range(3):\n    print(items[i])\n```');
-        expect(result.html).toContain('See the loop below.<sup class="iris-cite" data-n="1">1</sup>');
-        expect(result.html).toContain('Iteration order matches the list.<sup class="iris-cite" data-n="2">2</sup>');
+        expect(result.html).toContain('See the loop below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect(result.html).toContain('Iteration order matches the list.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
         expect([...result.citedNumbers]).toEqual([1, 2]);
     });
 });

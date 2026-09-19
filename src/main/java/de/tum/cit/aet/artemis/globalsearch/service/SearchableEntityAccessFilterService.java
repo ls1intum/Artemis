@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -91,27 +92,30 @@ public class SearchableEntityAccessFilterService {
      * </ul>
      *
      * @param user           the requesting user (with course roles loaded)
-     * @param courseId       optional course id to scope the search to a single course
+     * @param courseIds      optional course ids to scope the search to (empty/null for unscoped)
      * @param requestedTypes the entity types to include
      * @return the compound filter plus the per-request access context (accessible courses, staff and editor course ids)
      */
-    public FilterBuildResult buildSearchableItemFilter(User user, Long courseId, Set<String> requestedTypes) {
+    public FilterBuildResult buildSearchableItemFilter(User user, @Nullable List<Long> courseIds, Set<String> requestedTypes) {
         // Decide if the filters should be applied
         boolean isAdmin = authCheckService.isCurrentUserAdminAccessEnabled();
+        boolean hasCourseScope = courseIds != null && !courseIds.isEmpty();
         boolean needsCommFiltering = requestedTypes.contains(SearchableEntitySchema.TypeValues.CHANNEL) || requestedTypes.contains(SearchableEntitySchema.TypeValues.POST)
                 || requestedTypes.contains(SearchableEntitySchema.TypeValues.ANSWER_POST);
 
-        if (isAdmin && courseId == null && !needsCommFiltering) {
+        if (isAdmin && !hasCourseScope && !needsCommFiltering) {
             return new FilterBuildResult(buildTypeDiscriminatorFilter(requestedTypes), true, null, null, null);
         }
         List<Course> accessibleCourses;
-        if (isAdmin && courseId == null) {
+        if (isAdmin && !hasCourseScope) {
             accessibleCourses = courseRepository.findAll();
         }
-        else if (courseId != null) {
-            Course course = courseRepository.findByIdElseThrow(courseId);
-            authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-            accessibleCourses = List.of(course);
+        else if (hasCourseScope) {
+            accessibleCourses = courseIds.stream().map(id -> {
+                Course course = courseRepository.findByIdElseThrow(id);
+                authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+                return course;
+            }).toList();
         }
         else {
             accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getId(), false);
@@ -135,7 +139,7 @@ public class SearchableEntityAccessFilterService {
 
         List<Filter> disjuncts = new ArrayList<>();
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE)) {
-            if (isAdmin && courseId == null) {
+            if (isAdmin && !hasCourseScope) {
                 disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.EXERCISE));
             }
             else {
@@ -147,7 +151,7 @@ public class SearchableEntityAccessFilterService {
 
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.LECTURE)) {
-            if (isAdmin && courseId == null) {
+            if (isAdmin && !hasCourseScope) {
                 disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.LECTURE));
             }
             else {
@@ -158,7 +162,7 @@ public class SearchableEntityAccessFilterService {
             }
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.LECTURE_UNIT)) {
-            if (isAdmin && courseId == null) {
+            if (isAdmin && !hasCourseScope) {
                 disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.LECTURE_UNIT));
             }
             else {
@@ -169,7 +173,7 @@ public class SearchableEntityAccessFilterService {
             }
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.EXAM)) {
-            if (isAdmin && courseId == null) {
+            if (isAdmin && !hasCourseScope) {
                 disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.EXAM));
             }
             else {
@@ -189,7 +193,7 @@ public class SearchableEntityAccessFilterService {
             }
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.FAQ)) {
-            if (isAdmin && courseId == null) {
+            if (isAdmin && !hasCourseScope) {
                 disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.FAQ));
             }
             else {
@@ -207,7 +211,7 @@ public class SearchableEntityAccessFilterService {
             }
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.COURSE)) {
-            if (isAdmin && courseId == null) {
+            if (isAdmin && !hasCourseScope) {
                 disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.COURSE));
             }
             else {

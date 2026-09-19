@@ -54,14 +54,14 @@ public class SearchableEntityPrefetchService {
     /**
      * Runs the access-filtered entity search for the given user and maps the rows to candidates.
      *
-     * @param user     the requesting user (with course roles loaded)
-     * @param query    the search query
-     * @param limit    the maximum number of candidates
-     * @param courseId optional course id to scope the candidates to a single course
+     * @param user      the requesting user (with course roles loaded)
+     * @param query     the search query
+     * @param limit     the maximum number of candidates
+     * @param courseIds optional course ids to scope the candidates to (empty/null for unscoped)
      * @return the candidates, empty when the user has no accessible courses
      */
-    public List<SearchableEntityCandidateDTO> prefetchCandidates(User user, String query, int limit, @Nullable Long courseId) {
-        var filterResult = accessFilterService.buildSearchableItemFilter(user, courseId, PREFETCH_TYPES);
+    public List<SearchableEntityCandidateDTO> prefetchCandidates(User user, String query, int limit, @Nullable List<Long> courseIds) {
+        var filterResult = accessFilterService.buildSearchableItemFilter(user, courseIds, PREFETCH_TYPES);
         if (!filterResult.hasAccess()) {
             return List.of();
         }
@@ -100,9 +100,10 @@ public class SearchableEntityPrefetchService {
         Long lectureId = asLong(properties.get(SearchableEntitySchema.Properties.LECTURE_ID));
         Long examId = asLong(properties.get(SearchableEntitySchema.Properties.EXAM_ID));
         Long channelId = asLong(properties.get(SearchableEntitySchema.Properties.CHANNEL_ID));
+        Long postId = asLong(properties.get(SearchableEntitySchema.Properties.POST_ID));
         return new SearchableEntityCandidateDTO(entityType, entityId, courseId, courseId != null ? courseNameById.get(courseId) : null,
                 asString(properties.get(SearchableEntitySchema.Properties.TITLE)), asString(properties.get(SearchableEntitySchema.Properties.DESCRIPTION)),
-                asString(properties.get(SearchableEntitySchema.Properties.SHORT_NAME)), buildLink(entityType, entityId, courseId, lectureId, examId, channelId),
+                asString(properties.get(SearchableEntitySchema.Properties.SHORT_NAME)), buildLink(entityType, entityId, courseId, lectureId, examId, channelId, postId),
                 asIsoDate(properties.get(SearchableEntitySchema.Properties.RELEASE_DATE)), asIsoDate(properties.get(SearchableEntitySchema.Properties.START_DATE)),
                 asIsoDate(properties.get(SearchableEntitySchema.Properties.DUE_DATE)), asIsoDate(properties.get(SearchableEntitySchema.Properties.END_DATE)),
                 asIsoDate(properties.get(SearchableEntitySchema.Properties.EXAM_VISIBLE_DATE)), asIsoDate(properties.get(SearchableEntitySchema.Properties.EXAM_START_DATE)),
@@ -118,7 +119,7 @@ public class SearchableEntityPrefetchService {
      */
     @Nullable
     private static String buildLink(@Nullable String entityType, @Nullable Long entityId, @Nullable Long courseId, @Nullable Long lectureId, @Nullable Long examId,
-            @Nullable Long channelId) {
+            @Nullable Long channelId, @Nullable Long postId) {
         if (entityType == null) {
             return null;
         }
@@ -131,8 +132,15 @@ public class SearchableEntityPrefetchService {
                 courseId != null && (examId != null || entityId != null) ? "/courses/" + courseId + "/exams/" + (examId != null ? examId : entityId) : null;
             case SearchableEntitySchema.TypeValues.FAQ -> courseId != null ? "/courses/" + courseId + "/faq" : null;
             case SearchableEntitySchema.TypeValues.CHANNEL -> courseId != null && entityId != null ? "/courses/" + courseId + "/communication?conversationId=" + entityId : null;
-            case SearchableEntitySchema.TypeValues.POST, SearchableEntitySchema.TypeValues.ANSWER_POST ->
-                courseId != null && channelId != null ? "/courses/" + courseId + "/communication?conversationId=" + channelId : null;
+            // Mirrors the palette's own click handler (GlobalSearchNavigationViewComponent): a post is
+            // focused by its own id, a reply additionally names its parent post so the client can open
+            // the right thread. Without these, the citation opens the channel but not the cited message.
+            case SearchableEntitySchema.TypeValues.POST ->
+                courseId != null && channelId != null && entityId != null ? "/courses/" + courseId + "/communication?conversationId=" + channelId + "&focusPostId=" + entityId
+                        : null;
+            case SearchableEntitySchema.TypeValues.ANSWER_POST -> courseId != null && channelId != null && postId != null && entityId != null
+                    ? "/courses/" + courseId + "/communication?conversationId=" + channelId + "&messageId=" + postId + "&focusReplyId=" + entityId
+                    : null;
             default -> null;
         };
     }

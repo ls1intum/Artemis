@@ -318,22 +318,22 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
             fixture.detectChanges();
 
-            expect(mockAsk).toHaveBeenCalledWith('angular signals', 5, undefined);
+            expect(mockAsk).toHaveBeenCalledWith('angular signals', 5, [], []);
         });
 
         it('passes the active course filter to ask() and re-asks when it changes', () => {
             fixture.componentRef.setInput('searchQuery', 'angular signals');
-            fixture.componentRef.setInput('courseId', 14);
+            fixture.componentRef.setInput('courseIds', [14]);
             fixture.detectChanges();
             vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
             fixture.detectChanges();
-            expect(mockAsk).toHaveBeenCalledWith('angular signals', 5, 14);
+            expect(mockAsk).toHaveBeenCalledWith('angular signals', 5, [14], []);
 
-            fixture.componentRef.setInput('courseId', 16);
+            fixture.componentRef.setInput('courseIds', [16]);
             fixture.detectChanges();
             vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
             fixture.detectChanges();
-            expect(mockAsk).toHaveBeenCalledWith('angular signals', 5, 16);
+            expect(mockAsk).toHaveBeenCalledWith('angular signals', 5, [16], []);
         });
 
         it('should NOT call irisSearchAnswerService.ask() for an empty query', () => {
@@ -368,7 +368,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             fixture.detectChanges();
             vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
             fixture.detectChanges();
-            expect(mockAsk).toHaveBeenCalledWith('abcdef', 5, undefined);
+            expect(mockAsk).toHaveBeenCalledWith('abcdef', 5, [], []);
         });
 
         it('should NOT call ask() before the debounce period has elapsed', () => {
@@ -545,7 +545,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             startQuery();
             askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'A claim.[2]', partialSeq: 1 });
             revealEverything();
-            expect(component['citationView']().html).toContain('<sup class="iris-cite" data-n="2">2</sup>');
+            expect(component['citationView']().html).toContain('<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
         });
 
         it('replaces the draft with the terminal answer and resets the partial state', () => {
@@ -572,9 +572,9 @@ describe('GlobalSearchIrisAnswerComponent', () => {
         it('converts each marker into its own citation chip', () => {
             // @ts-expect-error — protected computed
             const view = component.citationView();
-            expect(view.html).toContain('<sup class="iris-cite" data-n="1">1</sup>');
-            expect(view.html).toContain('<sup class="iris-cite" data-n="2">2</sup>');
-            expect(view.html).toContain('<sup class="iris-cite" data-n="3">3</sup>');
+            expect(view.html).toContain('<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+            expect(view.html).toContain('<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+            expect(view.html).toContain('<sup class="iris-cite" data-n="3" role="link" tabindex="0">3</sup>');
             expect([...view.citedNumbers].sort()).toEqual([1, 2, 3]);
         });
 
@@ -705,7 +705,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             // marker [4] indexes the entity source (3 lecture sources + 1 entity)
             // @ts-expect-error — protected computed
             const view = component.citationView();
-            expect(view.html).toContain('<sup class="iris-cite" data-n="4">4</sup>');
+            expect(view.html).toContain('<sup class="iris-cite" data-n="4" role="link" tabindex="0">4</sup>');
         });
 
         it('opens the entity link when its chip is clicked', () => {

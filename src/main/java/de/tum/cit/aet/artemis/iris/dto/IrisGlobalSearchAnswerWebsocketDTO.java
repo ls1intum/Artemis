@@ -22,7 +22,10 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRe
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisGlobalSearchAnswerWebsocketDTO(String runId, boolean isThinking, @Nullable String answer, @Nullable List<PyrisLectureSearchResultDTO> sources,
-        @Nullable String partialResult, @Nullable Integer partialSeq, @Nullable List<PyrisEntitySourceDTO> entitySources) {
+        // NON_NULL, not the record-level NON_EMPTY: an empty string is the provider's retry-clear signal for a stale
+        // streamed draft (see PartialResultSender on the Pyris side) and must reach the client distinguishable from
+        // "no partial result in this message", which NON_EMPTY would otherwise collapse it into.
+        @JsonInclude(JsonInclude.Include.NON_NULL) @Nullable String partialResult, @Nullable Integer partialSeq, @Nullable List<PyrisEntitySourceDTO> entitySources) {
 
     public IrisGlobalSearchAnswerWebsocketDTO(String runId, boolean isThinking, @Nullable String answer, @Nullable List<PyrisLectureSearchResultDTO> sources) {
         this(runId, isThinking, answer, sources, null, null, null);

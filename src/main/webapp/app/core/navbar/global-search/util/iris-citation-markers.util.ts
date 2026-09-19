@@ -5,9 +5,12 @@
  * (already sanitized and renumbered server-side to index the returned sources
  * list). This util converts EACH marker into its own small `<sup>` chip element
  * before markdown rendering; the markdown pipeline keeps inline HTML
- * (`html: true`) and DOMPurify keeps `sup`, `class` and `data-*` attributes, so
- * the chip survives sanitization. An answer without markers passes through
- * unchanged, which keeps old-server responses rendering exactly as before.
+ * (`html: true`) and DOMPurify keeps `sup`, `class`, `data-*`, `role` and
+ * `tabindex` attributes, so the chip survives sanitization. `role="link"` and
+ * `tabindex="0"` make each chip keyboard-focusable with Tab and activatable
+ * with Enter/Space (see onAnswerClick/onAnswerKeydown), matching what a mouse
+ * click already does. An answer without markers passes through unchanged,
+ * which keeps old-server responses rendering exactly as before.
  *
  * A run of consecutive markers stays one chip per source rather than a single
  * combined chip: a combined chip is one hover target and one link for several
@@ -66,7 +69,7 @@ export function renderCitationMarkers(answer: string | undefined, sourceCount: n
                 return '';
             }
             numbers.forEach((n) => cited.add(n));
-            return numbers.map((n) => `<sup class="iris-cite" data-n="${n}">${n}</sup>`).join('');
+            return numbers.map((n) => `<sup class="iris-cite" data-n="${n}" role="link" tabindex="0">${n}</sup>`).join('');
         });
 
     // Walk the code segments in order, replacing markers only in the prose between them; code

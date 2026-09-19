@@ -185,6 +185,16 @@ public class IrisGlobalSearchResource {
         userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
         var selectedLlmUsage = userAiPreferenceService.findDecision(user.getId());
         var accessContext = irisAccessContextService.resolveAccessContext(user);
+        // Resolved BEFORE the job token is registered: an all-courses-Iris-disabled request is a
+        // genuine rejection (AccessForbiddenAlertException from lectureSearchScope), not a transient
+        // failure, and must never leave an orphaned job token behind for that case.
+        var excludedCourseIds = requestDTO.excludeCourseIds() == null ? List.<Long>of() : requestDTO.excludeCourseIds();
+        var scope = lectureSearchScope(requestDTO.courseIds(), excludedCourseIds, accessContext);
+        // searchesNothing (every requested course excluded) still answers rather than short-circuiting
+        // like /lecture-search does: an explicit EMPTY list (not null/unscoped) tells both the entity
+        // filter and Pyris there is no lecture content to search, while pre-authorized entity candidates
+        // (public FAQs, catalog entries) are independent of this scope and can still ground an answer.
+        List<Long> resolvedCourseIds = scope.searchesNothing() ? List.of() : scope.courseIds();
         pyrisJobService.addGlobalSearchAnswerJob(principal.getName(), requestDTO.runId().toString());
         // Note: do NOT remove the job on exception here. Transport-level failures are ambiguous —
         // Pyris may have received the request and already started the pipeline. Removing the token
@@ -196,19 +206,19 @@ public class IrisGlobalSearchResource {
         // A Weaviate hiccup here must not fail the whole answer: the job token above is already
         // registered, so surfacing a 500 would strand it until the Hazelcast TTL clears it and give
         // the student nothing, when the lecture-content-only answer could still have succeeded.
-        List<PyrisEntityCandidateDTO> entityCandidates = fetchEntityCandidates(user, requestDTO);
+        List<PyrisEntityCandidateDTO> entityCandidates = fetchEntityCandidates(user, requestDTO, resolvedCourseIds);
         pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), selectedLlmUsage, accessContext,
-                entityCandidates, requestDTO.courseId());
+                entityCandidates, resolvedCourseIds);
         return ResponseEntity.accepted().build();
     }
 
-    private List<PyrisEntityCandidateDTO> fetchEntityCandidates(User user, GlobalSearchAskRequestDTO requestDTO) {
+    private List<PyrisEntityCandidateDTO> fetchEntityCandidates(User user, GlobalSearchAskRequestDTO requestDTO, @Nullable List<Long> courseIds) {
         if (searchableEntityPrefetchApi.isEmpty()) {
             return List.of();
         }
         try {
-            return searchableEntityPrefetchApi.get().prefetchCandidates(user, requestDTO.query(), ENTITY_CANDIDATE_LIMIT, requestDTO.courseId()).stream()
-                    .map(PyrisEntityCandidateDTO::of).toList();
+            return searchableEntityPrefetchApi.get().prefetchCandidates(user, requestDTO.query(), ENTITY_CANDIDATE_LIMIT, courseIds).stream().map(PyrisEntityCandidateDTO::of)
+                    .toList();
         }
         catch (WeaviateException e) {
             log.warn("Entity candidate prefetch failed for global search run {}; answering from lecture content only: {}", requestDTO.runId(), e.getMessage());

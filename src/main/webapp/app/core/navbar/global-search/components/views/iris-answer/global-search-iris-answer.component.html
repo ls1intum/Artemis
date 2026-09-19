@@ -59,8 +59,12 @@
                             (mouseout)="onAnswerOut($event)"
                             (focus)="onAnswerOver($event)"
                             (blur)="onAnswerOut($event)"
+                            (focusin)="onAnswerOver($event)"
+                            (focusout)="onAnswerOut($event)"
                             (click)="onAnswerClick($event)"
                             (keydown.escape)="clearCitationHighlight()"
+                            (keydown.enter)="onAnswerKeydownActivate($event)"
+                            (keydown.space)="onAnswerKeydownActivate($event)"
                         >
                             <!-- While writing, the card holds a fixed height and the text rises inside it, so the
                                  results underneath stay where they are until the answer settles exactly once. -->

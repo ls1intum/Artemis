@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisAccessContextService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchAskRequestDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisAccessContextDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisEntityCandidateDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
@@ -79,25 +81,28 @@ class IrisGlobalSearchResourceTest {
         testUser.setLogin("student1");
         when(userRepository.getUserWithCourseRolesAndAuthorities()).thenReturn(testUser);
         when(userAiPreferenceService.findDecision(1L)).thenReturn(AiSelectionDecision.CLOUD_AI);
+        // Unrestricted, matching an unscoped request's "no ceiling to narrow" path through
+        // lectureSearchScope — resolveAccessContext never legitimately returns null in production.
+        when(irisAccessContextService.resolveAccessContext(testUser)).thenReturn(new PyrisAccessContextDTO(null, null, null, null, null, null, true));
     }
 
     @Test
     void ask_whenEntityPrefetchSucceeds_forwardsTheCandidates() {
         var candidate = new SearchableEntityCandidateDTO("exercise", 8L, 11L, "Test course", "RNN and LSTM Fundamentals", "A quiz", null, "/courses/11/exercises/8", null, null,
                 null, null, null, null, null, 10.0, null, null, "quiz", null, null, null);
-        when(searchableEntityPrefetchApi.prefetchCandidates(eq(testUser), anyString(), anyInt(), eq((Long) null))).thenReturn(List.of(candidate));
+        when(searchableEntityPrefetchApi.prefetchCandidates(eq(testUser), anyString(), anyInt(), eq((List<Long>) null))).thenReturn(List.of(candidate));
 
         var requestDTO = new GlobalSearchAskRequestDTO("is there an rnn quiz", 5, UUID.randomUUID());
         ResponseEntity<Void> response = resource.ask(requestDTO, principal);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
         verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(eq(requestDTO.query()), eq(requestDTO.limit()), eq(requestDTO.runId().toString()),
-                eq(AiSelectionDecision.CLOUD_AI), eq(null), eq(List.of(PyrisEntityCandidateDTO.of(candidate))), eq(requestDTO.courseId()));
+                eq(AiSelectionDecision.CLOUD_AI), any(), eq(List.of(PyrisEntityCandidateDTO.of(candidate))), eq((List<Long>) null));
     }
 
     @Test
     void ask_whenEntityPrefetchFailsWithWeaviateException_answersFromLectureContentOnlyInsteadOfFailing() {
-        when(searchableEntityPrefetchApi.prefetchCandidates(eq(testUser), anyString(), anyInt(), eq((Long) null)))
+        when(searchableEntityPrefetchApi.prefetchCandidates(eq(testUser), anyString(), anyInt(), eq((List<Long>) null)))
                 .thenThrow(new WeaviateException("Weaviate is down", new RuntimeException("connection refused")));
 
         var requestDTO = new GlobalSearchAskRequestDTO("what is backpropagation", 5, UUID.randomUUID());
@@ -107,7 +112,7 @@ class IrisGlobalSearchResourceTest {
         // instead of surfacing a 500 for a job token that pyrisJobService already registered.
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
         verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(eq(requestDTO.query()), eq(requestDTO.limit()), eq(requestDTO.runId().toString()),
-                eq(AiSelectionDecision.CLOUD_AI), eq(null), eq(List.of()), eq(requestDTO.courseId()));
+                eq(AiSelectionDecision.CLOUD_AI), any(), eq(List.of()), eq((List<Long>) null));
         verify(pyrisJobService).addGlobalSearchAnswerJob(anyString(), anyString());
     }
 
@@ -121,6 +126,6 @@ class IrisGlobalSearchResourceTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
         verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(eq(requestDTO.query()), eq(requestDTO.limit()), eq(requestDTO.runId().toString()),
-                eq(AiSelectionDecision.CLOUD_AI), eq(null), eq(List.of()), eq(requestDTO.courseId()));
+                eq(AiSelectionDecision.CLOUD_AI), any(), eq(List.of()), eq((List<Long>) null));
     }
 }

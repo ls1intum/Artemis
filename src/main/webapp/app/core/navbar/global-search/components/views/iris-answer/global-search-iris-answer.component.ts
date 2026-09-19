@@ -84,8 +84,10 @@ export class GlobalSearchIrisAnswerComponent {
     private readonly destroyRef = inject(DestroyRef);
 
     readonly searchQuery = input.required<string>();
-    /** Active course filter from the search modal; scopes the answer's retrieval to that course. */
-    readonly courseId = input<number | undefined>(undefined);
+    /** Active course include/exclude filters from the search modal; scope the answer's retrieval the
+     * same way they already scope the visible results. */
+    readonly courseIds = input<number[]>([]);
+    readonly excludeCourseIds = input<number[]>([]);
 
     private readonly answerBody = viewChild<ElementRef<HTMLElement>>('answerBody');
 
@@ -253,9 +255,9 @@ export class GlobalSearchIrisAnswerComponent {
         // so the UI clears on every keystroke even if the request has not fired yet.
         // A retry re-emits the same query, which is why the source carries the attempt; the course scope
         // rides along so a scoped palette re-asks when the user switches course.
-        toObservable(computed(() => ({ query: this.searchQuery(), courseId: this.courseId(), attempt: this.retryAttempt() })))
+        toObservable(computed(() => ({ query: this.searchQuery(), courseIds: this.courseIds(), excludeCourseIds: this.excludeCourseIds(), attempt: this.retryAttempt() })))
             .pipe(
-                switchMap(({ query, courseId }) => {
+                switchMap(({ query, courseIds, excludeCourseIds }) => {
                     this.resetRun();
                     if (query.trim().length < IRIS_ANSWER_MIN_QUERY_LENGTH) {
                         return of(undefined);
@@ -266,7 +268,7 @@ export class GlobalSearchIrisAnswerComponent {
                     // which would bypass the debounce window entirely.
                     return timer(IRIS_ANSWER_DEBOUNCE_MS).pipe(
                         switchMap(() =>
-                            this.irisSearchAnswerService.ask(query, 5, courseId).pipe(
+                            this.irisSearchAnswerService.ask(query, 5, courseIds, excludeCourseIds).pipe(
                                 catchError(() => {
                                     // A failure is worth saying out loud: it is the one ending the reader can act on.
                                     // A reveal timer scheduled by an earlier partial on this same run must not keep
@@ -496,6 +498,19 @@ export class GlobalSearchIrisAnswerComponent {
             this.openEntitySource(entitySource);
         }
         // Streamed draft: sources arrive with the terminal update, clicks are ignored until then.
+    }
+
+    /**
+     * Enter/Space on a focused inline citation activates it exactly like a click. Only
+     * preventDefault when the target actually IS a citation chip, so Space still scrolls
+     * normally everywhere else in the answer region.
+     */
+    protected onAnswerKeydownActivate(event: KeyboardEvent): void {
+        if (!(event.target as HTMLElement).closest('.iris-cite')) {
+            return;
+        }
+        event.preventDefault();
+        this.onAnswerClick(event);
     }
 
     protected clearCitationHighlight(): void {
