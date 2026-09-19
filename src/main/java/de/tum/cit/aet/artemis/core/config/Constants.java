@@ -551,6 +551,12 @@ public final class Constants {
     public static final String MODULE_FEATURE_SAML2 = "saml2";
 
     /**
+     * The name of the module feature used for the global search (Weaviate) integration. It is published to the client
+     * when {@link #WEAVIATE_ENABLED_PROPERTY_NAME} is enabled, so the client can gate global-search admin surfaces.
+     */
+    public static final String MODULE_FEATURE_GLOBAL_SEARCH = "globalsearch";
+
+    /**
      * The YAML property prefix consumed by {@code SAML2Properties} when SAML2 is enabled.
      */
     public static final String SAML2_PROPERTIES_PREFIX = "saml2";
@@ -619,6 +625,14 @@ public final class Constants {
      * The name of the property used to require passkey authentication for access to administrator features.
      */
     public static final String PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME = "artemis.user-management.passkey.require-for-administrator-features";
+
+    /**
+     * TEMPORARY (revert before merge): when true, an account holding the instructor authority receives the full
+     * administrator surface. It exists so the global search ingestion work can be exercised on a test server from an
+     * account that cannot be made an administrator there. Defaults to true on this branch and is switched off for the
+     * test configuration, so the shipped authorization tests keep asserting the real rules.
+     */
+    public static final String TEMPORARY_INSTRUCTOR_ADMIN_ACCESS_PROPERTY_NAME = "artemis.temporary-instructor-admin-access";
 
     /**
      * The name of the property used to enable or disable the sharing functionality.

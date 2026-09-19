@@ -8,9 +8,11 @@ import java.util.Set;
 import org.hibernate.NonUniqueResultException;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
@@ -46,6 +48,27 @@ public class LectureUnitRepositoryApi extends AbstractLectureApi {
         return lectureUnitRepository.findByNameAndLectureTitleAndCourseIdWithCompetencies(name, lectureTitle, courseId);
     }
 
+    /**
+     * Checks which of the given ids is currently indexable, for the pass that removes index rows with no backing entity.
+     *
+     * @param entityIds the ids to check
+     * @return the subset that is currently indexable
+     */
+    public Set<Long> findIndexableUnitIds(Collection<Long> entityIds) {
+        return lectureUnitRepository.findIndexableUnitIds(entityIds);
+    }
+
+    /**
+     * Walks the ids expected to be indexed, one page at a time, for the reconcile passes.
+     *
+     * @param afterId the id the previous page stopped at
+     * @param limit   the page size
+     * @return the next indexable lecture unit ids in ascending order
+     */
+    public List<Long> findIndexableUnitIdsAfter(long afterId, int limit) {
+        return lectureUnitRepository.findIndexableUnitIdsAfter(afterId, PageRequest.ofSize(limit));
+    }
+
     public LectureUnit findByIdElseThrow(long lectureUnitId) {
         return lectureUnitRepository.findByIdElseThrow(lectureUnitId);
     }
@@ -56,5 +79,17 @@ public class LectureUnitRepositoryApi extends AbstractLectureApi {
 
     public LectureUnit save(LectureUnit lectureUnit) {
         return lectureUnitRepository.save(lectureUnit);
+    }
+
+    public List<CourseEntityIdDTO> findIndexableUnitIdCourseIdPairsForCourses(Collection<Long> courseIds) {
+        return lectureUnitRepository.findIndexableUnitIdCourseIdPairsForCourses(courseIds);
+    }
+
+    public List<CourseEntityIdDTO> findUnitIdCourseIdPairsWithPdfAttachmentForCourses(Collection<Long> courseIds) {
+        return lectureUnitRepository.findUnitIdCourseIdPairsWithPdfAttachmentForCourses(courseIds);
+    }
+
+    public List<CourseEntityIdDTO> findUnitIdCourseIdPairsWithVideoForCourses(Collection<Long> courseIds) {
+        return lectureUnitRepository.findUnitIdCourseIdPairsWithVideoForCourses(courseIds);
     }
 }

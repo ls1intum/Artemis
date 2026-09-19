@@ -86,10 +86,18 @@
                         </a>
                     </li>
                     @if (!isExamActive() && !isExamStarted()) {
-                        <li *jhiHasAnyAuthority="IS_AT_LEAST_ADMIN">
+                        <!-- TEMPORARY (revert before merge): instructors see the admin entry on this branch. -->
+                        <li *jhiHasAnyAuthority="IS_AT_LEAST_INSTRUCTOR">
                             <a class="dropdown-item" routerLink="/admin" routerLinkActive="active" (click)="collapseNavbar()" id="admin-menu">
                                 <fa-icon [icon]="faUserShield" [fixedWidth]="true" />
                                 <span jhiTranslate="global.menu.admin.main"></span>
+                            </a>
+                        </li>
+                        <!-- TEMPORARY (revert before merge): instructor-visible shortcut to the ingestion dashboard for test-server verification. -->
+                        <li *jhiHasAnyAuthority="IS_AT_LEAST_INSTRUCTOR">
+                            <a class="dropdown-item" routerLink="/ingestion-dashboard" routerLinkActive="active" (click)="collapseNavbar()" id="ingestion-dashboard-menu">
+                                <fa-icon [icon]="faMagnifyingGlassChart" [fixedWidth]="true" />
+                                <span jhiTranslate="global.menu.admin.sidebar.courseIngestionDashboard"></span>
                             </a>
                         </li>
                     }

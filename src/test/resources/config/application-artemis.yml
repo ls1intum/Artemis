@@ -3,6 +3,10 @@
 # ===================================================================
 
 artemis:
+    # TEMPORARY (revert before merge): the instructor administrator override defaults to true on this branch so a
+    # test server works without extra configuration. It is off here so the shipped authorization tests keep
+    # asserting the real admin-only rules.
+    temporary-instructor-admin-access: false
     course-archives-path: ./local/server-integration-test/exports/courses
     legal-path: ./local/server-integration-test/legal
     repo-clone-path: ./local/server-integration-test/repos

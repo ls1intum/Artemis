@@ -2,6 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN } from 'app/app.constants';
+// TEMPORARY (revert before merge): supports the instructor administrator override.
+import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_INSTRUCTOR } from 'app/foundation/constants/authority.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 @Injectable({
@@ -44,6 +46,14 @@ export class PasskeyAuthenticationGuard implements CanActivate {
      */
     async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean> {
         if (!this.shouldEnforcePasskeyForAdminFeatures()) {
+            return true;
+        }
+
+        // TEMPORARY (revert before merge): an instructor reaching the admin area through the server-side override has no
+        // approved passkey and never could have one, so the passkey gate would block the very access the override grants.
+        // A real administrator is deliberately excluded: they keep the normal passkey flow.
+        const isAdministrator = this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN);
+        if (!isAdministrator && this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_INSTRUCTOR)) {
             return true;
         }
 
