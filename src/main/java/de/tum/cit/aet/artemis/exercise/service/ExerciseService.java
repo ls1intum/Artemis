@@ -304,7 +304,7 @@ public class ExerciseService {
         final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByExerciseId(exerciseId);
         stats.setTotalNumberOfAssessmentLocks(totalNumberOfAssessmentLocks);
 
-        stats.setFeedbackRequestEnabled(course.getComplaintsEnabled());
+        stats.setComplaintsEnabled(course.getComplaintsEnabled());
         stats.setFeedbackRequestEnabled(course.getRequestMoreFeedbackEnabled());
 
         return stats;

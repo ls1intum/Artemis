@@ -52,7 +52,7 @@ public class Post extends Posting {
     private Set<AnswerPost> answers = new HashSet<>();
 
     @ManyToOne
-    @Parent
+    @Parent(enforcedBy = "CK_POST_HAS_A_PARENT")
     private Conversation conversation;
 
     // TODO: convert to real database enum

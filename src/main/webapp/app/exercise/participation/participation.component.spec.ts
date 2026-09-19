@@ -23,6 +23,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
+import { By } from '@angular/platform-browser';
+import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
 
 describe('ParticipationComponent', () => {
@@ -197,6 +199,78 @@ describe('ParticipationComponent', () => {
 
             component.gradeStepsDTO.set({ presentationsNumber: 0, gradeSteps: [], gradeType: undefined as any, title: '', plagiarismGrade: '', noParticipationGrade: '' });
             expect(component.gradedPresentationEnabled()).toBe(false);
+        });
+    });
+
+    describe('Individual due date input validation', () => {
+        let picker: FormDateTimePickerComponent;
+        let saveButton: HTMLButtonElement;
+        let dto: ParticipationManagementDTO;
+        const dueDate = dayjs('2030-06-01T12:00:00');
+        const individualDueDate = dayjs('2030-06-03T12:00:00');
+
+        beforeEach(async () => {
+            dto = { ...sampleDto, individualDueDate };
+            const exerciseWithDueDate = { ...exercise, course: undefined, dueDate };
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseWithDueDate })));
+            vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [dto], totalElements: 1 }));
+            component.startEditDueDate(dto);
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+            componentFixture.detectChanges();
+            picker = componentFixture.debugElement.query(By.directive(FormDateTimePickerComponent)).componentInstance;
+            saveButton = componentFixture.nativeElement.querySelector('button[title="Save"]');
+        });
+
+        it.each(['invalid date', new Date('2020-01-01T12:00:00')])('should prevent saving invalid input %s', async (invalidInput) => {
+            const updateSpy = vi.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(of(new HttpResponse({ body: [] })));
+            const successSpy = vi.spyOn(alertService, 'success');
+
+            picker.updateField(invalidInput);
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+
+            expect(saveButton.disabled).toBe(true);
+            saveButton.click();
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(successSpy).not.toHaveBeenCalled();
+            expect(dto.individualDueDate).toEqual(individualDueDate);
+        });
+
+        it('should save when invalid input is corrected', async () => {
+            const updateSpy = vi.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(of(new HttpResponse({ body: [] })));
+            const successSpy = vi.spyOn(alertService, 'success');
+            picker.updateField('invalid date');
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+            expect(saveButton.disabled).toBe(true);
+
+            picker.updateField(individualDueDate.toDate());
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+
+            expect(saveButton.disabled).toBe(false);
+            expect(component.getPendingDueDate(dto.participationId)).toEqual(individualDueDate);
+            saveButton.click();
+            expect(updateSpy).toHaveBeenCalledExactlyOnceWith(component.exercise(), [expect.objectContaining({ id: dto.participationId, individualDueDate })]);
+            expect(successSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should allow clearing an existing individual due date after invalid input', async () => {
+            const updateSpy = vi.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(of(new HttpResponse({ body: [{ id: dto.participationId }] })));
+            picker.updateField('invalid date');
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+            expect(saveButton.disabled).toBe(true);
+
+            picker.updateField(null);
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+
+            expect(saveButton.disabled).toBe(false);
+            saveButton.click();
+            expect(updateSpy).toHaveBeenCalledExactlyOnceWith(component.exercise(), [expect.objectContaining({ id: dto.participationId, individualDueDate: undefined })]);
+            expect(dto.individualDueDate).toBeUndefined();
         });
     });
 

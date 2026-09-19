@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Lazy;
 
 import de.tum.cit.aet.artemis.atlas.service.AssignerToolsService;
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentToolsService;
+import de.tum.cit.aet.artemis.atlas.service.AtlasOrchestratorTerminalToolService;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyMappingToolsService;
 import de.tum.cit.aet.artemis.atlas.service.CreatorToolsService;
@@ -168,4 +169,18 @@ public class AtlasAgentToolConfig {
     public AtlasToolSurface assignerToolCallbackProvider(AssignerToolsService service) {
         return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(service).build());
     }
+
+    /**
+     * Main orchestrator completion, isolated from interactive chat and worker tool surfaces.
+     *
+     * @param service terminal tool service
+     * @return the main orchestrator completion surface
+     */
+    @Bean
+    @Lazy
+    @Qualifier("orchestratorTerminalToolCallbackProvider")
+    public AtlasToolSurface orchestratorTerminalToolCallbackProvider(AtlasOrchestratorTerminalToolService service) {
+        return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(service).build());
+    }
+
 }

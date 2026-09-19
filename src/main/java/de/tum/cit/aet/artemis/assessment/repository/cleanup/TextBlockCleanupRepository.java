@@ -71,39 +71,6 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
     int countTextBlockForOrphanResults();
 
     /**
-     * Deletes {@link TextBlock} entries linked to {@link Feedback} with a {@code null} result.
-     *
-     * @return the number of deleted entities
-     */
-    @Modifying
-    @Transactional // ok because of delete
-    @Query("""
-            DELETE FROM TextBlock tb
-            WHERE tb.feedback IN (
-                SELECT f
-                FROM Feedback f
-                WHERE f.result IS NULL
-            )
-            """)
-    int deleteTextBlockForEmptyFeedback();
-
-    /**
-     * Counts {@link TextBlock} entries linked to {@link Feedback} with a {@code null} result.
-     *
-     * @return the number of entities that would be deleted
-     */
-    @Query("""
-            SELECT COUNT(tb)
-            FROM TextBlock tb
-            WHERE tb.feedback IN (
-                SELECT f
-                FROM Feedback f
-                WHERE f.result IS NULL
-            )
-            """)
-    int countTextBlockForEmptyFeedback();
-
-    /**
      * Deletes {@link TextBlock} entries associated with rated {@link Result} that are not the latest rated result
      * for a {@link Participation}, within courses conducted between the specified date range.
      * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation -> exercise.
