@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -817,7 +818,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         addedAuxiliaryRepository.setName("additional");
         addedAuxiliaryRepository.setDescription("Must not be created for a rejected update");
         addedAuxiliaryRepository.setCheckoutDirectory("additional");
-        programmingExercise.setAuxiliaryRepositories(new ArrayList<>(List.of(addedAuxiliaryRepository)));
+        programmingExercise.setAuxiliaryRepositories(new LinkedHashSet<>(List.of(addedAuxiliaryRepository)));
         var auxiliaryRepositoryUri = new LocalVCRepositoryUri(localVCBaseUri, programmingExercise.getProjectKey(), programmingExercise.generateRepositoryName("additional"));
         Path auxiliaryRepositoryPath = auxiliaryRepositoryUri.getLocalRepositoryPath(localVCBasePath);
         assertThat(auxiliaryRepositoryPath).doesNotExist();
@@ -1139,7 +1140,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
         programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         // re-attach the loaded auxiliary repositories the way the client re-sends the ones it received
-        programmingExercise.setAuxiliaryRepositories(new ArrayList<>(auxiliaryRepositoryRepository.findByExerciseId(programmingExercise.getId())));
+        programmingExercise.setAuxiliaryRepositories(new LinkedHashSet<>(auxiliaryRepositoryRepository.findByExerciseId(programmingExercise.getId())));
         var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise);
         assertThat(updateDTO.auxiliaryRepositories()).extracting(repository -> repository.id()).containsExactly(auxRepositoryId);
 
@@ -1260,11 +1261,12 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     private static UpdateProgrammingExerciseDTO toClientUpdateDTO(ProgrammingExerciseResponseDTO response) {
         Long exerciseGroupId = response.exerciseGroup() != null ? response.exerciseGroup().id() : null;
         Long courseId = exerciseGroupId != null ? null : (response.course() != null ? response.course().id() : null);
+        Set<GradingCriterionDTO> gradingCriteria = response.gradingCriteria() == null ? null : new HashSet<>(response.gradingCriteria());
         return new UpdateProgrammingExerciseDTO(response.id(), response.title(), response.channelName(), response.shortName(), response.problemStatement(), response.categories(),
                 response.difficulty(), response.maxPoints(), response.bonusPoints(), response.includedInOverallScore(), response.allowComplaintsForAutomaticAssessments(),
                 response.presentationScoreEnabled(), response.secondCorrectionEnabled(), response.gradingInstructions(), response.releaseDate(), response.startDate(),
-                response.dueDate(), response.assessmentDueDate(), response.exampleSolutionPublicationDate(), courseId, exerciseGroupId, response.gradingCriteria(),
-                response.competencyLinks(), response.testRepositoryUri(), null, response.auxiliaryRepositories(), response.allowOnlineEditor(), response.allowOfflineIde(),
+                response.dueDate(), response.assessmentDueDate(), response.exampleSolutionPublicationDate(), courseId, exerciseGroupId, gradingCriteria, response.competencyLinks(),
+                response.testRepositoryUri(), null, response.auxiliaryRepositories(), response.allowOnlineEditor(), response.allowOfflineIde(),
                 Boolean.TRUE.equals(response.allowOnlineIde()), response.staticCodeAnalysisEnabled(), response.maxStaticCodeAnalysisPenalty(), response.programmingLanguage(),
                 response.packageName(), Boolean.TRUE.equals(response.showTestNamesToStudents()), response.buildAndTestStudentSubmissionsAfterDueDate(), response.testCasesChanged(),
                 response.projectKey(), response.submissionPolicy(), response.projectType(), Boolean.TRUE.equals(response.releaseTestsWithExampleSolution()),
@@ -1376,6 +1378,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         ExerciseVariantGroup group = new ExerciseVariantGroup();
         group.setTitle("Loop variants");
         group.setReleaseDate(GROUP_RELEASE_DATE);
+        // A variant group belongs to a course, which the database now requires.
+        group.setCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         group.setStartDate(GROUP_START_DATE);
         group.setDueDate(GROUP_DUE_DATE);
         group.setAssessmentDueDate(GROUP_ASSESSMENT_DUE_DATE);

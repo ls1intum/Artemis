@@ -77,6 +77,11 @@ artemis:
         enabled: true
         url: http://iris.fake
         secret-token: secret-token
+        proactive:
+            # The admission cooldown spaces out real triggers; integration tests fire several for the same student
+            # and exercise back to back and would otherwise reject each other. Its behaviour is covered directly in
+            # PyrisJobServiceStruggleTest and IrisStruggleInterventionServiceTriggerTest.
+            trigger-cooldown: 1ms
     atlas:
         enabled: true
         atlasml:

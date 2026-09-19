@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTA
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -318,7 +319,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
 
-        List<AuxiliaryRepository> auxiliaryRepositories;
+        Collection<AuxiliaryRepository> auxiliaryRepositories;
 
         // If the auxiliary repositories are not initialized, we need to fetch them from the database.
         if (Hibernate.isInitialized(participation.getProgrammingExercise().getAuxiliaryRepositories())) {

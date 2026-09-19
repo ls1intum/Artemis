@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -282,7 +283,7 @@ public class ProgrammingExerciseUpdateResource {
         programmingExerciseCreationUpdateService.prepareAndValidateTimelineForUpdate(updatedProgrammingExercise, originalBuildAndTestOffset);
 
         if (updatedProgrammingExercise.getAuxiliaryRepositories() == null) {
-            updatedProgrammingExercise.setAuxiliaryRepositories(new ArrayList<>());
+            updatedProgrammingExercise.setAuxiliaryRepositories(new LinkedHashSet<>());
         }
 
         // Create a proxy with the original aux repos for comparison (L1 cache means
@@ -290,7 +291,7 @@ public class ProgrammingExerciseUpdateResource {
         ProgrammingExercise exerciseWithOriginalAuxRepos = new ProgrammingExercise();
         exerciseWithOriginalAuxRepos.setId(updatedProgrammingExercise.getId());
         exerciseWithOriginalAuxRepos.setProgrammingLanguage(updatedProgrammingExercise.getProgrammingLanguage());
-        exerciseWithOriginalAuxRepos.setAuxiliaryRepositories(originalAuxRepos);
+        exerciseWithOriginalAuxRepos.setAuxiliaryRepositories(new LinkedHashSet<>(originalAuxRepos));
 
         // Update the auxiliary repositories in the DB and ProgrammingExercise instance
         auxiliaryRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(exerciseWithOriginalAuxRepos, updatedProgrammingExercise);
@@ -397,10 +398,13 @@ public class ProgrammingExerciseUpdateResource {
         exercise.setProjectType(dto.projectType());
         exercise.setReleaseTestsWithExampleSolution(dto.releaseTestsWithExampleSolution());
 
-        // Update auxiliary repositories
+        // Update auxiliary repositories. Attached one by one rather than assigned as a collection: a repository
+        // carries the key to its exercise, and one deserialized from the request body names none until it is attached,
+        // so a flush between here and the auxiliary repository handling below would write that null over the exercise.
         if (dto.auxiliaryRepositories() != null) {
             List<AuxiliaryRepository> auxRepos = dto.auxiliaryRepositories().stream().map(AuxiliaryRepositoryDTO::toEntity).toList();
-            exercise.setAuxiliaryRepositories(new ArrayList<>(auxRepos));
+            exercise.setAuxiliaryRepositories(new LinkedHashSet<>());
+            auxRepos.forEach(exercise::addAuxiliaryRepository);
         }
 
         // Update build config

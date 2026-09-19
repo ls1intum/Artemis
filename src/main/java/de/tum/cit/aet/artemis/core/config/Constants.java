@@ -66,8 +66,6 @@ public final class Constants {
      */
     public static final int PROGRAMMING_GRACE_PERIOD_SECONDS = 1;
 
-    public static final String FILEPATH_ID_PLACEHOLDER = "PLACEHOLDER_FOR_ID";
-
     public static final String EXERCISE_TOPIC_ROOT = "/topic/exercise/";
 
     public static final String NEW_RESULT_TOPIC = "/topic/newResults";

@@ -21,6 +21,16 @@ public record GradingInstructionDTO(Long id, double credits, String gradingScale
     }
 
     /**
+     * Returns the same instruction without the row id, for payloads that are written to a file and read back by
+     * another instance, whose import copies the id onto the instruction it creates.
+     *
+     * @return a copy of this DTO with a {@code null} id
+     */
+    public GradingInstructionDTO withoutId() {
+        return new GradingInstructionDTO(null, credits, gradingScale, instructionDescription, feedback, usageCount);
+    }
+
+    /**
      * Creates a detached {@link GradingInstruction} from this DTO.
      * Intended for creation or non-managed use. For updating an existing
      * managed entity, prefer {@link #applyTo(GradingInstruction)}.

@@ -31,6 +31,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { faCheckCircle } from '@fortawesome/free-regular-svg-icons';
 
 const mockExercise: Exercise = {
     id: 1,
@@ -191,6 +192,41 @@ describe('ResultComponent', () => {
             expect(comp.textColorClass()).toBe('text-state-danger');
             expect(comp.canShowDetails()).toBe(true);
             expect(fixture.debugElement.nativeElement.querySelector(RESULT_SCORE_SELECTOR).classList).toContain('clickable-result');
+        });
+
+        it('renders a zero-test programming test run as compilation-only, from the payload the list endpoint sends', () => {
+            // verbatim shape of GET exercises/{exerciseId}/test-run-submissions: the participation carries no exercise,
+            // so the only source of the exercise type is the exercise the assessment dashboard binds next to it
+            const testRunSubmission = {
+                id: 77,
+                submitted: true,
+                submissionExerciseType: SubmissionExerciseType.PROGRAMMING,
+                participation: { id: 12, type: ParticipationType.PROGRAMMING, testRun: true } as Participation,
+                results: [
+                    {
+                        id: 13,
+                        completionDate: dayjs().subtract(1, 'minute'),
+                        successful: true,
+                        score: 0,
+                        rated: true,
+                        assessmentType: AssessmentType.SEMI_AUTOMATIC,
+                        testCaseCount: 0,
+                        passedTestCaseCount: 0,
+                    } as Result,
+                ],
+            };
+            const examProgrammingExercise = { ...mockExercise, id: 4, assessmentType: AssessmentType.SEMI_AUTOMATIC } as Exercise;
+            expect(testRunSubmission.participation.exercise).toBeUndefined();
+
+            fixture.componentRef.setInput('exercise', examProgrammingExercise);
+            fixture.componentRef.setInput('participation', testRunSubmission.participation);
+            fixture.componentRef.setInput('result', testRunSubmission.results[0]);
+            fixture.detectChanges();
+
+            expect(comp.templateStatus()).toEqual(ResultTemplateStatus.HAS_RESULT);
+            // 0 of 0 passed tests is a pass, not a failure: the badge stays green
+            expect(comp.textColorClass()).toBe('text-state-success');
+            expect(comp.resultIconClass()).toBe(faCheckCircle);
         });
 
         describe('results that belong to no participation', () => {

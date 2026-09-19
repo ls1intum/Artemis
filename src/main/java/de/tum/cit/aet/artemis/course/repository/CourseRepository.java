@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -107,8 +108,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             SELECT DISTINCT c
             FROM Course c
                 LEFT JOIN FETCH c.athenaConfig
-            WHERE (c.startDate <= :now OR c.startDate IS NULL)
-                AND (c.endDate >= :now OR c.endDate IS NULL)
+            WHERE c.startDate <= :now
+                AND c.endDate >= :now
             """)
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
 
@@ -159,8 +160,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             SELECT DISTINCT c
             FROM Course c
                 JOIN UserCourseRole ucr ON ucr.course = c AND ucr.user.id = :userId
-            WHERE (c.startDate <= :now OR c.startDate IS NULL)
-                AND (c.endDate >= :now OR c.endDate IS NULL)
+            WHERE c.startDate <= :now
+                AND c.endDate >= :now
             """)
     List<Course> findAllActiveWhereUserHasAnyRole(@Param("userId") long userId, @Param("now") ZonedDateTime now);
 
@@ -176,10 +177,9 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             SELECT DISTINCT c
             FROM Course c
                 JOIN UserCourseRole ucr ON ucr.course = c AND ucr.user.id = :userId
-            WHERE (c.endDate >= :now OR c.endDate IS NULL)
+            WHERE c.endDate >= :now
                 AND (
                     c.startDate <= :now
-                    OR c.startDate IS NULL
                     OR ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT,
                                     de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
                                     de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
@@ -200,8 +200,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             SELECT DISTINCT c
             FROM Course c
                 JOIN UserCourseRole ucr ON ucr.course = c AND ucr.user.id = :userId
-            WHERE (c.startDate <= :now OR c.startDate IS NULL)
-                AND (c.endDate >= :now OR c.endDate IS NULL)
+            WHERE c.startDate <= :now
+                AND c.endDate >= :now
                 AND c.learningPathsEnabled = TRUE
             """)
     List<Course> findAllActiveWhereUserHasAnyRoleAndLearningPathsEnabled(@Param("userId") long userId, @Param("now") ZonedDateTime now);
@@ -209,8 +209,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @Query("""
             SELECT DISTINCT c
             FROM Course c
-            WHERE (c.startDate <= :now OR c.startDate IS NULL)
-                AND (c.endDate >= :now OR c.endDate IS NULL)
+            WHERE c.startDate <= :now
+                AND c.endDate >= :now
                 AND c.learningPathsEnabled=true
             """)
     List<Course> findAllActiveForUserAndLearningPathsEnabled(@Param("now") ZonedDateTime now);
@@ -226,8 +226,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             FROM Course c
                 LEFT JOIN c.courseRoles ucr ON ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT
                     AND ucr.user.deleted = FALSE
-            WHERE (c.startDate <= :now OR c.startDate IS NULL)
-                AND (c.endDate >= :now OR c.endDate IS NULL)
+            WHERE c.startDate <= :now
+                AND c.endDate >= :now
                 AND c.testCourse = FALSE
             GROUP BY c.id, c.title, c.shortName, c.semester
             """)
@@ -394,7 +394,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
      * <p>
      * Keyed on the participating student's id rather than their login: the consumer only needs a stable key to count
      * each student once per week, and the login would require joining {@code jhi_user} for every submission in the
-     * window (measured on a production dump: 400k submissions of one course, 0.24s with the join, 0.17s without).
+     * window, which measurably costs more than counting on the id alone.
      * That join was also what excluded team participations, which have no student, so they are excluded explicitly
      * now.
      *
@@ -419,7 +419,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     List<StatisticsEntry> getActiveStudents(@Param("exerciseIds") Set<Long> exerciseIds, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     /**
-     * Get all courses that are not ended yet or have no end date
+     * Get all courses that are not ended yet.
      *
      * @param now the current time
      * @return a list of courses that are not ended yet
@@ -427,8 +427,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @Query("""
             SELECT c
             FROM Course c
-            WHERE c.endDate IS NULL
-                OR c.endDate >= :now
+            WHERE c.endDate >= :now
             """)
     List<Course> findAllNotEnded(@Param("now") ZonedDateTime now);
 
@@ -461,7 +460,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @Query("""
             SELECT c
             FROM Course c
-            WHERE (c.endDate IS NULL OR c.endDate >= :now)
+            WHERE c.endDate >= :now
             AND EXISTS (
                 SELECT ucr FROM UserCourseRole ucr
                 WHERE ucr.course.id = c.id AND ucr.user.id = :userId
@@ -733,6 +732,29 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
                )
             """)
     List<Course> findAllAccessibleCoursesForUser(@Param("userId") Long userId, @Param("isAdmin") boolean isAdmin);
+
+    /**
+     * Finds the courses among the requested ids where the user has any role (student, TA, editor, or instructor).
+     * <p>
+     * Same access rule as {@link #findAllAccessibleCoursesForUser}, narrowed in the query so a scoped request does not
+     * load every accessible course only to drop most of them. Ids the user cannot access are simply not returned.
+     *
+     * @param userId    the id of the user
+     * @param isAdmin   whether the user is an admin
+     * @param courseIds the course ids the caller asked for
+     * @return the requested courses the user can access
+     */
+    @Query("""
+            SELECT c
+            FROM Course c
+            WHERE c.id IN :courseIds
+               AND (:isAdmin = TRUE
+                   OR EXISTS (
+                       SELECT ucr FROM UserCourseRole ucr
+                       WHERE ucr.course.id = c.id AND ucr.user.id = :userId
+                   ))
+            """)
+    List<Course> findAllAccessibleCoursesForUserAndIdIn(@Param("userId") Long userId, @Param("isAdmin") boolean isAdmin, @Param("courseIds") Collection<Long> courseIds);
 
     @Query("""
                 SELECT course.timeZone

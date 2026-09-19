@@ -627,6 +627,29 @@ jobs:
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
+  # No `if:` either, for a reason specific to this check: the pull request that creates dead code is
+  # usually one that only *deletes* something, and removing the last caller of a class can orphan it
+  # from any area of the repository. Two checkouts, a source scan and a knip run; no Gradle build.
+  dead-code:
+    name: Dead Code
+    uses: ./.github/workflows/ci-dead-code.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
+  # No `if:` either. The baseline under config/liquibase/baseline is generated, so nothing about the
+  # file itself says it matches the changelogs it folded — these checks are what says so, and they are
+  # also what catches a new changelog filed in the wrong directory. Docker containers and a driver
+  # resolution; no Gradle build and no server boot.
+  liquibase:
+    name: Liquibase Schema
+    uses: ./.github/workflows/ci-liquibase.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
   # Required for internal PRs — part of the `all-required-ci-passed` gate (a test that fails all
   # its retries blocks the merge; flaky-recovered runs stay green). Depends on `build` for the
   # Docker image, not on `test`, so a flaky unit-test run never blocks it; runs only when `build`
@@ -712,6 +735,8 @@ jobs:
       - bean-instantiations
       - skills
       - terminology
+      - dead-code
+      - liquibase
       - e2e
     runs-on: ubuntu-latest
     permissions: {}  # reads only the `needs` context; no checkout, no token scope
@@ -780,6 +805,8 @@ jobs:
       - bean-instantiations
       - skills
       - terminology
+      - dead-code
+      - liquibase
       - e2e
       - codeql
       - coverage-report

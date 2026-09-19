@@ -222,10 +222,6 @@ public class DataCleanupService {
         int deletedPlagiarismElements = plagiarismComparisonCleanupRepository.deletePlagiarismSubmissionElementsByComparisonIdsIn(pcIds);
         log.info("Deleted {} plagiarism elements that are part of the plagiarism submissions", deletedPlagiarismElements);
 
-        // NOTE: we need to set submissionA and submissionB to null first to avoid foreign key constraints
-        int updatedPlagiarismComparisons = plagiarismComparisonCleanupRepository.setPlagiarismSubmissionsToNullInComparisonsWithIds(pcIds);
-        log.info("Updated {} plagiarism comparisons to set plagiarism submissions to null", updatedPlagiarismComparisons);
-
         // Delete all plagiarism submissions that reference plagiarism comparisons
         int deletedPlagiarismSubmissions = plagiarismComparisonCleanupRepository.deletePlagiarismSubmissionsByComparisonIdsIn(pcIds);
         log.info("Deleted {} plagiarism submissions that reference plagiarism comparisons", deletedPlagiarismSubmissions);
