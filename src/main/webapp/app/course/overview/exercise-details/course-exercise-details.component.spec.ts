@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
 import { ActivatedRoute, Navigation, ParamMap, Router, UrlTree, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
@@ -457,6 +459,63 @@ describe('CourseExerciseDetailsComponent', () => {
         participationWebsocketBehaviorSubject.next({ ...newParticipation, exercise: programmingExercise });
     });
 
+    it('should keep earlier practice submissions when a new practice attempt is emitted', () => {
+        const practiceParticipation = { id: 7, testRun: true, submissions: [{ id: 1 }, { id: 2 }] } as StudentParticipation;
+        comp.studentParticipations = [practiceParticipation];
+
+        // A freshly submitted practice attempt is emitted carrying only the latest submission.
+        comp.onNewParticipation({ id: 7, testRun: true, submissions: [{ id: 3 }] } as StudentParticipation);
+
+        expect(comp.studentParticipations[0].submissions?.map((submission) => submission.id)).toEqual([1, 2, 3]);
+        expect(comp.participationMode()).toBe('practice');
+    });
+
+    describe('quizSubmitDisabledForMode', () => {
+        const quizComponentMode = signal<string | undefined>(undefined);
+        const quizSubmitDisabled = signal(true);
+
+        beforeEach(() => {
+            quizComponentMode.set(undefined);
+            quizSubmitDisabled.set(true);
+            // The split panel is the routed child; stand in for the two signals the header binding reads.
+            vi.spyOn(comp as unknown as { splitPanel: () => unknown }, 'splitPanel').mockReturnValue({ quizComponentMode, quizSubmitDisabled });
+        });
+
+        it('should pass the quiz submit-disabled state through in graded mode', () => {
+            quizComponentMode.set('live');
+
+            expect(comp.quizSubmitDisabledForMode()).toBe(true);
+        });
+
+        it.each([undefined, 'live'])('should ignore the stale submit-disabled state in practice mode while the quiz component mode is %s', (mode) => {
+            comp.participationMode.set('practice');
+            quizComponentMode.set(mode);
+
+            expect(comp.quizSubmitDisabledForMode()).toBe(false);
+        });
+
+        it('should use the quiz submit-disabled state once the quiz component has switched to practice', () => {
+            comp.participationMode.set('practice');
+            quizComponentMode.set('practice');
+
+            expect(comp.quizSubmitDisabledForMode()).toBe(true);
+
+            quizSubmitDisabled.set(false);
+            expect(comp.quizSubmitDisabledForMode()).toBe(false);
+        });
+    });
+
+    it('should replace, not duplicate, a re-emitted submission of an existing participation', () => {
+        const participation = { id: 8, testRun: false, submissions: [{ id: 1 }, { id: 2 }] } as StudentParticipation;
+        comp.studentParticipations = [participation];
+
+        comp.onNewParticipation({ id: 8, testRun: false, submissions: [{ id: 2, submitted: true } as Submission] } as StudentParticipation);
+
+        const submissions = comp.studentParticipations[0].submissions!;
+        expect(submissions.map((submission) => submission.id)).toEqual([1, 2]);
+        expect(submissions[1].submitted).toBe(true);
+    });
+
     it.each<[string[]]>([[[]], [[MODULE_FEATURE_IRIS]]])('should load iris settings only if module feature iris is active', async (activeModuleFeatures: string[]) => {
         vi.useFakeTimers();
         // Setup
@@ -571,6 +630,12 @@ describe('CourseExerciseDetailsComponent', () => {
 
     it('should show discussion section when communication is enabled', async () => {
         vi.useFakeTimers();
+        fixture.detectChanges();
+        // The right-hand group renders only its active tab, and Exercise Details is now the first of them, so the
+        // communication tab has to be selected before its content exists.
+        const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent));
+        const labels = panels.componentInstance.rightPanels().map((panel: PanelDirective) => panel.label());
+        panels.componentInstance.setActiveRight(labels.indexOf('artemisApp.metis.communication.label'));
         fixture.detectChanges();
         await vi.advanceTimersByTimeAsync(500);
 
@@ -787,6 +852,39 @@ describe('CourseExerciseDetailsComponent', () => {
 
         expect(comp.participationMode()).toBe('practice');
         expect(navigateSpy).toHaveBeenCalledWith(['programming-exercises', exercise.id, 'code-editor', 680], expect.objectContaining({ replaceUrl: true }));
+    });
+
+    describe('continue to latest', () => {
+        // Both the flag and the action are owned here rather than delegated to the details panel: that panel is
+        // unmounted whenever another tab is shown, which used to leave the header offering an action that did nothing.
+        it('should navigate to the latest submission without needing the details panel', () => {
+            comp.courseId = 1;
+            comp.exercise = { ...exercise, type: ExerciseType.TEXT, course: { id: 1 } } as unknown as Exercise;
+            const participation = { id: 42, testRun: false } as StudentParticipation;
+            comp.studentParticipations = [participation];
+            vi.spyOn(participationService, 'getSpecificStudentParticipation').mockReturnValue(participation);
+            const router = TestBed.inject(Router) as unknown as MockRouter;
+            const navigateSpy = vi.spyOn(router, 'navigate');
+
+            comp.continueToLatest();
+
+            expect(navigateSpy).toHaveBeenCalledWith(['/courses', 1, 'exercises', 'text-exercises', exercise.id, 'participate', 42]);
+        });
+
+        it.each([
+            ['/courses/1/exercises/2/participate/3', false],
+            ['/courses/1/exercises/2/submission/7', true],
+            ['/courses/1/exercises/2/result/9', true],
+        ])('should take the viewing-submission state from the route %s', (url, expected) => {
+            comp.exercise = { ...exercise, type: ExerciseType.TEXT, course: { id: 1 } } as unknown as Exercise;
+            // detectChanges so ngOnInit runs and subscribes; the route sync is wired there.
+            fixture.detectChanges();
+            const router = TestBed.inject(Router) as unknown as MockRouter;
+
+            router.setUrl(url);
+
+            expect(comp.isViewingSubmission()).toBe(expected);
+        });
     });
 
     it('does not add a history entry when correcting the URL to the practice participation', () => {

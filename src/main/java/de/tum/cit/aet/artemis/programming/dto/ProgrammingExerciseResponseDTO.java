@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.course.dto.CourseManagementExerciseDTO;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
@@ -107,14 +108,14 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
         IncludedInOverallScore includedInOverallScore, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
         ZonedDateTime exampleSolutionPublicationDate, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, AssessmentType assessmentType,
         Boolean allowComplaintsForAutomaticAssessments, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String gradingInstructions,
-        Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, PlagiarismDetectionConfigDTO plagiarismDetectionConfig,
+        List<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, PlagiarismDetectionConfigDTO plagiarismDetectionConfig,
         ProgrammingLanguage programmingLanguage, String packageName, ProjectType projectType, String projectKey, String testRepositoryUri, Boolean staticCodeAnalysisEnabled,
         Integer maxStaticCodeAnalysisPenalty, Boolean showTestNamesToStudents, Boolean releaseTestsWithExampleSolution, Boolean testCasesChanged, Boolean allowOnlineEditor,
         Boolean allowOfflineIde, Boolean allowOnlineIde, Boolean gradingInstructionFeedbackUsed, UpdateProgrammingExerciseBuildConfigDTO buildConfig,
         SubmissionPolicyDTO submissionPolicy, ProgrammingExerciseCourseDTO course, ProgrammingExerciseExamGroupDTO exerciseGroup,
         TemplateSolutionParticipationDTO templateParticipation, TemplateSolutionParticipationDTO solutionParticipation, ExerciseVariantGroupReferenceDTO exerciseVariantGroup,
         List<ProgrammingExerciseStudentParticipationDTO> studentParticipations, List<AuxiliaryRepositoryDTO> auxiliaryRepositories, ExerciseType exerciseType,
-        boolean visibleToStudents, boolean studentAssignedTeamIdComputed, Visibility defaultTestCaseVisibility) implements Serializable {
+        boolean visibleToStudents, boolean studentAssignedTeamIdComputed, Visibility defaultTestCaseVisibility) implements Serializable, CourseManagementExerciseDTO {
 
     /**
      * The constant Jackson subtype id of {@link ProgrammingExercise}.
@@ -134,6 +135,30 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
     }
 
     /**
+     * Creates the record written into the exercise details file of an export or an archive. It is the response record
+     * without the ids of everything nested in it: the plagiarism detection configuration, the team assignment
+     * configuration, the submission policy, the build configuration, the grading criteria with their instructions, the
+     * auxiliary repositories and the template and solution participations. The file is read back by another instance,
+     * which creates a new exercise from it, and every one of those records is bound by a {@code toEntity()} that
+     * copies the id through. An importer of any version would otherwise reach persistence with the identity of the
+     * exported exercise's rows - and the creation rejects an auxiliary repository that already has an id outright.
+     * <p>
+     * The exercise's own id stays: the import drops it, and the archive names the exercise it came from. The course
+     * and exercise group references keep their ids as well, because they point at rows the importing instance
+     * replaces with its own target anyway.
+     * <p>
+     * The student participations are left out and the template and solution participations lose their submissions:
+     * the file is handed to another instance, the import reads none of it, and student work has no business in an
+     * exercise export.
+     *
+     * @param exercise the exercise to export (may be {@code null})
+     * @return the corresponding DTO, or {@code null} if the input was {@code null}
+     */
+    public static ProgrammingExerciseResponseDTO forExport(ProgrammingExercise exercise) {
+        return of(exercise, exercise == null ? null : exercise.isGradingInstructionFeedbackUsed(), true);
+    }
+
+    /**
      * Creates a {@link ProgrammingExerciseResponseDTO} from the given exercise, carrying the transient
      * {@code gradingInstructionFeedbackUsed} flag. That flag is computed by the retrieval resource before
      * serialization and the grading-instruction editor branches on it, so it is passed in explicitly rather than read
@@ -145,6 +170,10 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
      * @return the corresponding DTO, or {@code null} if the input was {@code null}
      */
     public static ProgrammingExerciseResponseDTO of(ProgrammingExercise exercise, Boolean gradingInstructionFeedbackUsed) {
+        return of(exercise, gradingInstructionFeedbackUsed, false);
+    }
+
+    private static ProgrammingExerciseResponseDTO of(ProgrammingExercise exercise, Boolean gradingInstructionFeedbackUsed, boolean forExport) {
         if (exercise == null) {
             return null;
         }
@@ -153,10 +182,13 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
         ProgrammingExerciseExamGroupDTO exerciseGroup = ProgrammingExerciseExamGroupDTO.ofExamExercise(exercise);
         Set<String> categories = copyCategories(exercise);
 
-        Set<GradingCriterionDTO> gradingCriteria = null;
+        // A list, not a set: the export projection nulls the criterion and instruction ids, and GradingCriterionDTO is
+        // a record with value equality, so a set would merge two stored criteria that only differ by id and silently
+        // drop a rubric row.
+        List<GradingCriterionDTO> gradingCriteria = null;
         Set<GradingCriterion> criteria = exercise.getGradingCriteria();
         if (criteria != null && Hibernate.isInitialized(criteria)) {
-            gradingCriteria = criteria.isEmpty() ? Set.of() : criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+            gradingCriteria = criteria.stream().map(GradingCriterionDTO::of).toList();
         }
 
         Set<CompetencyLinkDTO> competencyLinks = null;
@@ -189,6 +221,25 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
         var submissionPolicyEntity = exercise.getSubmissionPolicy();
         SubmissionPolicyDTO submissionPolicy = submissionPolicyEntity != null && Hibernate.isInitialized(submissionPolicyEntity) ? SubmissionPolicyDTO.of(submissionPolicyEntity)
                 : null;
+        UpdateProgrammingExerciseBuildConfigDTO buildConfig = UpdateProgrammingExerciseBuildConfigDTO.of(exercise.getBuildConfig());
+        TemplateSolutionParticipationDTO templateParticipation = TemplateSolutionParticipationDTO.ofTemplate(exercise.getTemplateParticipation());
+        TemplateSolutionParticipationDTO solutionParticipation = TemplateSolutionParticipationDTO.ofSolution(exercise.getSolutionParticipation());
+
+        if (forExport) {
+            // Every id below is the identity of a row of this instance. The importer reading the file creates a new
+            // exercise, and each of these records is mapped by a toEntity() that copies the id onto what it creates.
+            teamAssignmentConfig = teamAssignmentConfig == null ? null : teamAssignmentConfig.withoutId();
+            plagiarismDetectionConfig = plagiarismDetectionConfig == null ? null : plagiarismDetectionConfig.withoutId();
+            submissionPolicy = submissionPolicy == null ? null : submissionPolicy.withoutId();
+            buildConfig = buildConfig == null ? null : buildConfig.withoutId();
+            gradingCriteria = gradingCriteria == null ? null : gradingCriteria.stream().map(GradingCriterionDTO::withoutIds).toList();
+            auxiliaryRepositories = auxiliaryRepositories == null ? null : auxiliaryRepositories.stream().map(AuxiliaryRepositoryDTO::withoutId).toList();
+            templateParticipation = templateParticipation == null ? null : templateParticipation.forExport();
+            solutionParticipation = solutionParticipation == null ? null : solutionParticipation.forExport();
+            // No export query loads them today, so this only keeps a later caller with a wider graph from writing
+            // student logins, submissions and results into a file that is handed to another instance.
+            studentParticipations = null;
+        }
 
         return new ProgrammingExerciseResponseDTO(exercise.getId(), TYPE, exercise.getTitle(), exercise.getShortName(), exercise.getChannelName(), exercise.getProblemStatement(),
                 categories, exercise.getDifficulty(), exercise.getMode(), exercise.isTeamMode(), teamAssignmentConfig, exercise.getMaxPoints(), exercise.getBonusPoints(),
@@ -198,11 +249,10 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
                 exercise.getGradingInstructions(), gradingCriteria, competencyLinks, plagiarismDetectionConfig, exercise.getProgrammingLanguage(), exercise.getPackageName(),
                 exercise.getProjectType(), exercise.getProjectKey(), exercise.getTestRepositoryUri(), exercise.isStaticCodeAnalysisEnabled(),
                 exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getShowTestNamesToStudents(), exercise.isReleaseTestsWithExampleSolution(), exercise.getTestCasesChanged(),
-                exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(), exercise.isAllowOnlineIde(), gradingInstructionFeedbackUsed,
-                UpdateProgrammingExerciseBuildConfigDTO.of(exercise.getBuildConfig()), submissionPolicy, course, exerciseGroup,
-                TemplateSolutionParticipationDTO.ofTemplate(exercise.getTemplateParticipation()), TemplateSolutionParticipationDTO.ofSolution(exercise.getSolutionParticipation()),
-                ExerciseVariantGroupReferenceDTO.ofNullable(exercise.getExerciseVariantGroup()), studentParticipations, auxiliaryRepositories, exercise.getExerciseType(),
-                exercise.isVisibleToStudents(), exercise.isStudentAssignedTeamIdComputed(), exercise.getDefaultTestCaseVisibility());
+                exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(), exercise.isAllowOnlineIde(), gradingInstructionFeedbackUsed, buildConfig, submissionPolicy, course,
+                exerciseGroup, templateParticipation, solutionParticipation, ExerciseVariantGroupReferenceDTO.ofNullable(exercise.getExerciseVariantGroup()), studentParticipations,
+                auxiliaryRepositories, exercise.getExerciseType(), exercise.isVisibleToStudents(), exercise.isStudentAssignedTeamIdComputed(),
+                exercise.getDefaultTestCaseVisibility());
     }
 
     /**

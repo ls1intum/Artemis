@@ -4,9 +4,12 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 
+import jakarta.persistence.LockModeType;
+
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.dao.IrisSessionContextDAO;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 
 /**
@@ -24,7 +29,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 @Lazy
 @Repository
 @Conditional(IrisEnabled.class)
-public interface IrisSessionRepository extends ArtemisJpaRepository<IrisSession, Long> {
+public interface IrisSessionRepository extends ArtemisJpaRepository<IrisSession, Long>, IrisSessionWriteRepository {
 
     @Query("""
             SELECT s
@@ -47,6 +52,111 @@ public interface IrisSessionRepository extends ArtemisJpaRepository<IrisSession,
     default IrisSession findByIdWithMessagesElseThrow(long sessionId) throws EntityNotFoundException {
         return getValueElseThrow(findByIdWithMessages(sessionId), sessionId);
     }
+
+    /**
+     * Take a write lock on the session row so that appending a message can serialize against a concurrent append to
+     * the same session. Callers lock first and then load the messages, inside one transaction. The messages are
+     * deliberately not fetch-joined, because PostgreSQL rejects {@code FOR UPDATE} on the nullable side of the outer
+     * join {@code LEFT JOIN FETCH s.messages} produces.
+     *
+     * <p>
+     * A cooperative mutex on the parent row, so it only serializes writers that take it. Writers that change a scalar
+     * field do not need it and must not merge the aggregate instead; they go through {@link #updateTitle} and
+     * {@link #updateLatestSuggestions}, which never mention the collection. The direct message-row writes
+     * ({@code deleteSupersededProactiveMessage}, the outcome update) stay outside it: they target one row rather than
+     * replacing the list, so they cannot orphan-remove a concurrent append, but they can interleave with one.
+     *
+     * @param sessionId the session to lock
+     * @return the locked session, if it exists
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT s
+            FROM IrisSession s
+            WHERE s.id = :sessionId
+            """)
+    Optional<IrisSession> findByIdWithWriteLock(@Param("sessionId") long sessionId);
+
+    /**
+     * {@link #findByIdWithWriteLock} or throw if the session does not exist.
+     *
+     * @param sessionId the session to lock
+     * @return the locked session
+     * @throws EntityNotFoundException if no session with that id exists
+     */
+    @NonNull
+    default IrisSession findByIdWithWriteLockElseThrow(long sessionId) throws EntityNotFoundException {
+        return getValueElseThrow(findByIdWithWriteLock(sessionId), sessionId);
+    }
+
+    /**
+     * Write the session title without touching the rest of the aggregate. Deliberately a scalar update rather than
+     * {@code save(session)}: the callers hold a session whose messages were loaded earlier, and once that collection
+     * is replaced by a plain list it loses its Hibernate snapshot, after which {@code orphanRemoval} can delete a row
+     * the caller never knew about. Writing one column cannot reach the collection, so it needs no session lock.
+     *
+     * @param sessionId the session to rename
+     * @param title     the new title
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE IrisSession s
+            SET s.title = :title
+            WHERE s.id = :sessionId
+            """)
+    void updateTitle(@Param("sessionId") long sessionId, @Param("title") String title);
+
+    /**
+     * Write the serialized latest suggestions without touching the rest of the aggregate, for the same reason as
+     * {@link #updateTitle}.
+     *
+     * @param sessionId         the session to update
+     * @param latestSuggestions the serialized suggestions
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE IrisSession s
+            SET s.latestSuggestions = :latestSuggestions
+            WHERE s.id = :sessionId
+            """)
+    void updateLatestSuggestions(@Param("sessionId") long sessionId, @Param("latestSuggestions") String latestSuggestions);
+
+    /**
+     * The chat session's current context, read right after {@link #findByIdWithWriteLock} by the writers that decide
+     * on it. A projection rather than the locked instance, because the lock does not refresh one the persistence
+     * context already manages; locking, because a plain read is answered from the transaction's snapshot on MySQL.
+     *
+     * @param sessionId the session to read
+     * @return the context, or empty when the session does not exist or is not a chat session
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.iris.dao.IrisSessionContextDAO(s.chatMode, s.entityId, s.courseId)
+            FROM IrisChatSession s
+            WHERE s.id = :sessionId
+            """)
+    Optional<IrisSessionContextDAO> findContextById(@Param("sessionId") long sessionId);
+
+    /**
+     * Move a chat session to a new context without touching the rest of the aggregate, for the same reason as
+     * {@link #updateTitle}.
+     *
+     * @param sessionId   the session to move
+     * @param chatMode    the mode to move to
+     * @param newEntityId the entity the new mode points at
+     * @return the number of rows updated, which the caller checks is exactly one
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE IrisChatSession s
+            SET s.chatMode = :chatMode,
+                s.entityId = :newEntityId
+            WHERE s.id = :sessionId
+            """)
+    int updateContext(@Param("sessionId") long sessionId, @Param("chatMode") IrisChatMode chatMode, @Param("newEntityId") long newEntityId);
 
     /**
      * Counts all Iris sessions for a given user, regardless of concrete session type.

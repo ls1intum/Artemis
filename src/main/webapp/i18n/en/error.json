@@ -70,11 +70,14 @@
         "internalServerError": "Internal server error",
         "server.not.reachable": "Server not reachable",
         "url.not.found": "Not found",
+        "NotBlank": "Field {{ fieldName }} cannot be blank!",
         "NotNull": "Field {{ fieldName }} cannot be empty!",
+        "Size": "Field {{ fieldName }} does not meet min/max size requirements!",
         "size": "Field {{ fieldName }} does not meet min/max size requirements!",
         "userExists": "Login name already in use!",
         "emailExists": "Email is already in use!",
         "idExists": "A new {{ entityName }} cannot already have an ID",
+        "invalidOrganizationReference": "One or more selected organizations are invalid or no longer exist.",
         "ambiguousContext": "A new {{entityName}} must have an unambiguous context",
         "invalid": {
             "template": {
@@ -195,6 +198,7 @@
         "reactionNotFound": "The reaction could not be found.",
         "missingAssociation": "The reaction must be associated with a post or an answer post.",
         "emojiIdMissing": "emojiId must be set.",
+        "ambiguousPostingId": "The selected id belongs to both a post and an answer post in this course, so the type of posting has to be specified.",
         "exampleSubmission": {
             "isNull": "No example submission was provided.",
             "submissionIsNull": "This example submission has no solution attached.",
@@ -204,6 +208,7 @@
         "participationExerciseMismatch": "The feedback request could not be processed because the participation does not match the exercise.",
         "submissionExerciseMismatch": "The submission does not belong to the specified exercise.",
         "maxAthenaResultsReached": "Maximum number of AI feedback requests reached.",
+        "otherTestRunNotSubmitted": "Submit your other test runs of this exam before requesting AI feedback.",
         "submissionAlreadyHasAthenaResult": "Submission already has an Athena result.",
         "examExerciseNoAccessToAthena": "Exam exercises do not have access to Athena.",
         "noAccessToAthenaModule": "The exercise has no access to the selected Athena module.",
@@ -315,6 +320,11 @@
         },
         "fileReadError": "An error occurred while reading the files of the referenced commit. Please try again.",
         "buildConfigMissing": "The programming exercise build configuration is missing.",
+        "blankDockerImage": "The Docker image must not be blank.",
+        "noBuildPhases": "The build plan must contain at least one build phase.",
+        "invalidBuildPhaseName": "A build phase name is invalid or uses a reserved name. Please choose a different name.",
+        "duplicateBuildPhaseNames": "Build phase names must be unique.",
+        "buildPlanConfigurationTooLarge": "The build plan configuration is too large to be processed. Please reduce the size of your build phases.",
         "sharingInfoMissing": "The sharing platform information is missing.",
         "problemStatementTooLong": "The problem statement must not exceed 100,000 characters."
     }

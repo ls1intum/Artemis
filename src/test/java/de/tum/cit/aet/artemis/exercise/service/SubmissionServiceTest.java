@@ -19,11 +19,11 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.ComplaintDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionResponseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithComplaintDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -601,19 +602,19 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
 
         List<SubmissionWithComplaintDTO> dtoList = submissionService.getSubmissionsWithComplaintsForExercise(examTextExercise.getId(), true);
 
-        List<Submission> submissionsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::submission).filter(Objects::nonNull).toList();
-        List<Complaint> complaintsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::complaint).filter(Objects::nonNull).toList();
+        List<Long> submissionIdsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::submission).filter(Objects::nonNull).map(SubmissionResponseDTO::id).toList();
+        List<ComplaintDTO> complaintsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::complaint).filter(Objects::nonNull).toList();
 
         assertThat(dtoList).hasSize(2);
         assertThat(complaintsFromDTO).hasSize(2);
-        assertThat(submissionsFromDTO).isEqualTo(List.of(submissionWithComplaintSameTutor, submissionWithComplaintOtherTutor));
+        assertThat(submissionIdsFromDTO).isEqualTo(List.of(submissionWithComplaintSameTutor.getId(), submissionWithComplaintOtherTutor.getId()));
 
         dtoList.forEach(dto -> {
-            if (dto.submission().equals(submissionWithComplaintSameTutor)) {
-                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().getId()).orElseThrow().getStudent().getLogin()).isEqualTo(TEST_PREFIX + "student2");
+            if (Objects.equals(dto.submission().id(), submissionWithComplaintSameTutor.getId())) {
+                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().id()).orElseThrow().getStudent().getLogin()).isEqualTo(TEST_PREFIX + "student2");
             }
-            else if (dto.submission().equals(submissionWithComplaintOtherTutor)) {
-                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().getId()).orElseThrow().getStudent().getLogin()).isEqualTo(TEST_PREFIX + "student3");
+            else if (Objects.equals(dto.submission().id(), submissionWithComplaintOtherTutor.getId())) {
+                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().id()).orElseThrow().getStudent().getLogin()).isEqualTo(TEST_PREFIX + "student3");
             }
             else {
                 fail("Unreachable statement");
@@ -636,15 +637,15 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
 
         List<SubmissionWithComplaintDTO> dtoList = submissionService.getSubmissionsWithComplaintsForExercise(examTextExercise.getId(), false);
 
-        List<Submission> submissionsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::submission).filter(Objects::nonNull).toList();
-        List<Complaint> complaintsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::complaint).filter(Objects::nonNull).toList();
+        List<Long> submissionIdsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::submission).filter(Objects::nonNull).map(SubmissionResponseDTO::id).toList();
+        List<ComplaintDTO> complaintsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::complaint).filter(Objects::nonNull).toList();
 
         assertThat(dtoList).hasSize(1);
         assertThat(complaintsFromDTO).hasSize(1);
-        assertThat(submissionsFromDTO).isEqualTo(List.of(submissionWithComplaintOtherTutor));
+        assertThat(submissionIdsFromDTO).isEqualTo(List.of(submissionWithComplaintOtherTutor.getId()));
         dtoList.forEach(dto -> {
-            if (dto.submission().equals(submissionWithComplaintOtherTutor)) {
-                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().getId()).orElseThrow().getStudent().getLogin()).isEqualTo(TEST_PREFIX + "student3");
+            if (Objects.equals(dto.submission().id(), submissionWithComplaintOtherTutor.getId())) {
+                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().id()).orElseThrow().getStudent().getLogin()).isEqualTo(TEST_PREFIX + "student3");
             }
             else {
                 fail("Unreachable statement");
@@ -667,15 +668,15 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
 
         List<SubmissionWithComplaintDTO> dtoList = submissionService.getSubmissionsWithMoreFeedbackRequestsForExercise(examTextExercise.getId());
 
-        List<Submission> submissionsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::submission).filter(Objects::nonNull).toList();
-        List<Complaint> requestsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::complaint).filter(Objects::nonNull).toList();
+        List<Long> submissionIdsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::submission).filter(Objects::nonNull).map(SubmissionResponseDTO::id).toList();
+        List<ComplaintDTO> requestsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::complaint).filter(Objects::nonNull).toList();
 
         assertThat(dtoList).hasSize(1);
         assertThat(requestsFromDTO).hasSize(1);
-        assertThat(submissionsFromDTO).isEqualTo(List.of(submissionWithRequestSameTutor));
+        assertThat(submissionIdsFromDTO).isEqualTo(List.of(submissionWithRequestSameTutor.getId()));
         dtoList.forEach(dto -> {
-            if (dto.submission().equals(submissionWithRequestSameTutor)) {
-                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().getId()).orElseThrow().getStudent().getLogin()).isEqualTo(TEST_PREFIX + "student2");
+            if (Objects.equals(dto.submission().id(), submissionWithRequestSameTutor.getId())) {
+                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().id()).orElseThrow().getStudent().getLogin()).isEqualTo(TEST_PREFIX + "student2");
             }
             else {
                 fail("Unreachable statement");

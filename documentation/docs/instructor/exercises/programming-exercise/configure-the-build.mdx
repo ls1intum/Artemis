@@ -20,8 +20,8 @@ Each section below says whether it needs [Integrated Code Lifecycle](/instructor
 **Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
 
 Instructors can configure the build phases.
-To do this, check the **Customize Build Configuration** option in the exercise creation, edit, or import screen. All changes apply to all builds (template, solution, and student submissions).
-You can view the configured build plan on the exercise's detail or edit page.
+A new exercise starts with a default build plan for its programming language. To adapt it, open the exercise's detail page and click **Edit build plan**. All changes apply to all builds (template, solution, and student submissions).
+The build plan editor shows the template and solution build status next to the configuration, so you can immediately see whether your changes still build. You can also view the configured build plan on the exercise's detail page.
 
 <Image src={buildPlanPhases} alt="Build phases with their scripts and result paths" size={ImageSize.large} caption="The build phases" />
 
@@ -47,10 +47,10 @@ Before a build runs, any phases where the inclusion condition is not met are dro
 
 Controlling when tests *run* (via build-phase inclusion conditions) is separate from controlling when results are *visible* to students (via test-case visibility in the grading page). To achieve the desired outcome, both must be configured accordingly:
 
-1. **Immediate Full Feedback:** Set all build phases to `Always` and configure the corresponding test cases to always be visible. Tests execute on every commit, and all results are shown immediately after submission.
+1. **Immediate Full Feedback:** Set all build phases to **Always** and configure the corresponding test cases to always be visible. Tests execute on every commit, and all results are shown immediately after submission.
 2. **Build Status Only:** Remove all phases that expect tests. Students only see if their code compiled successfully based on the build's exit status. Test-case visibility is irrelevant since no tests are executed.
-3. **Tests After Due Date:** Keep the compilation phase as `Always` and set any phases expecting tests to `After due date`. Since the tests do not execute before the deadline, test-case visibility technically does not matter, but can be set to `After Due Date` for consistency. The tests will only execute after the deadline passes, and their output will become available at that point.
-4. **Partial Immediate Feedback:** Set specific test phases (e.g., static code analysis) to `Always`, and other test phases to `After due date`. For tests running immediately, set their visibility to `Always`. For tests running after the due date, visibility technically does not matter, but can be set to `After Due Date` for consistency. Students receive immediate feedback on some aspects and delayed feedback on others.
+3. **Tests After Due Date:** Keep the compilation phase as **Always** and set any phases expecting tests to **After due date**. Since the tests do not execute before the deadline, test-case visibility technically does not matter, but can be set to **After Due Date** for consistency. The tests will only execute after the deadline passes, and their output will become available at that point.
+4. **Partial Immediate Feedback:** Set specific test phases (e.g., static code analysis) to **Always**, and other test phases to **After due date**. For tests running immediately, set their visibility to **Always**. For tests running after the due date, visibility technically does not matter, but can be set to **After Due Date** for consistency. Students receive immediate feedback on some aspects and delayed feedback on others.
 
 **Default behavior:**
 - **Creating a course programming exercise**: Phases are set to always run. Test results are set to always be visible.
@@ -97,6 +97,8 @@ Update the build plan accordingly (see the [Adapt Build Phases](#adapt-build-pha
 
 **Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
 
+You edit this on the dedicated build plan editor page, which you open with the **Edit build plan** button on the exercise detail page (see [Adapt Build Phases](#adapt-build-phases-optional)).
+
 The default maximum build duration (120 seconds) usually doesn't need changes.
 
 Use the slider to adjust the time limit for build plan execution:
@@ -106,6 +108,8 @@ Use the slider to adjust the time limit for build plan execution:
 ## Edit Container Configuration (Optional)
 
 **Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
+
+You edit this on the dedicated build plan editor page, which you open with the **Edit build plan** button on the exercise detail page (see [Adapt Build Phases](#adapt-build-phases-optional)).
 
 In most cases, the default container configuration does not need to be changed.
 

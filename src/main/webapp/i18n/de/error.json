@@ -70,11 +70,14 @@
         "internalServerError": "Interner Serverfehler",
         "server.not.reachable": "Server ist nicht erreichbar",
         "url.not.found": "Nicht gefunden",
+        "NotBlank": "Feld {{fieldName}} darf nicht leer sein!",
         "NotNull": "Feld {{fieldName}} darf nicht leer sein!",
+        "Size": "Feld {{fieldName}} erfüllt nicht die minimalen/maximalen Längenanforderungen!",
         "size": "Feld {{fieldName}} erfüllt nicht die minimalen/maximalen Längenanforderungen!",
         "userExists": "Login bereits vergeben!",
         "emailExists": "E-Mail wird bereits verwendet!",
         "idExists": "Ein neuer {{entityName}} kann noch keine ID haben",
+        "invalidOrganizationReference": "Eine oder mehrere ausgewählte Organisationen sind ungültig oder nicht mehr vorhanden.",
         "ambiguousContext": "Ein neuer {{entityName}} muss einen eindeutigen Kontext haben",
         "invalid": {
             "template": {
@@ -195,6 +198,7 @@
         "reactionNotFound": "Die Reaktion konnte nicht gefunden werden.",
         "missingAssociation": "Die Reaktion muss einem Beitrag oder einer Antwort zugeordnet sein.",
         "emojiIdMissing": "emojiId muss gesetzt sein.",
+        "ambiguousPostingId": "Die gewählte ID gehört in diesem Kurs sowohl zu einem Beitrag als auch zu einer Antwort, daher muss die Art des Beitrags angegeben werden.",
         "exampleSubmission": {
             "isNull": "Es wurde keine Beispielabgabe übermittelt.",
             "submissionIsNull": "Diese Beispielabgabe enthält keine Lösung.",
@@ -204,6 +208,7 @@
         "participationExerciseMismatch": "Die Feedback-Anfrage konnte nicht verarbeitet werden, da die Teilnahme nicht zur Aufgabe passt.",
         "submissionExerciseMismatch": "Die Abgabe gehört nicht zur angegebenen Aufgabe.",
         "maxAthenaResultsReached": "Maximale Anzahl an KI-Feedback-Anfragen erreicht.",
+        "otherTestRunNotSubmitted": "Reiche deine anderen Testläufe dieser Klausur ab, bevor du KI-Feedback anfragst.",
         "submissionAlreadyHasAthenaResult": "Die Abgabe hat bereits ein Athena-Ergebnis.",
         "examExerciseNoAccessToAthena": "Klausuraufgaben haben keinen Zugriff auf Athena.",
         "noAccessToAthenaModule": "Die Aufgabe hat keinen Zugriff auf das ausgewählte Athena-Modul.",
@@ -317,6 +322,11 @@
         },
         "fileReadError": "Beim Lesen der Dateien des betreffenden Commits ist ein Fehler aufgetreten. Bitte versuche es erneut.",
         "buildConfigMissing": "Die Build-Konfiguration der Programmieraufgabe fehlt.",
+        "blankDockerImage": "Das Docker-Image darf nicht leer sein.",
+        "noBuildPhases": "Der Build-Plan muss mindestens eine Build-Phase enthalten.",
+        "invalidBuildPhaseName": "Ein Build-Phasenname ist ungültig oder verwendet einen reservierten Namen. Bitte wähle einen anderen Namen.",
+        "duplicateBuildPhaseNames": "Build-Phasennamen müssen eindeutig sein.",
+        "buildPlanConfigurationTooLarge": "Die Build-Plan-Konfiguration ist zu groß, um verarbeitet zu werden. Bitte reduziere die Größe deiner Build-Phasen.",
         "sharingInfoMissing": "Die Informationen der Sharing-Plattform fehlen.",
         "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten."
     }

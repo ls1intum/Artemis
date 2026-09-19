@@ -8,16 +8,24 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Check;
 import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
+/**
+ * A message forwarded to exactly one destination: a post or an answer post, never both and never neither.
+ * <p>
+ * That invariant is enforced in two places, neither of which is this class's mapping. The constructor rejects a pair
+ * that breaks it, and the database holds {@code CHECK_DESTINATION_POST_OR_ANSWER}, created by
+ * {@code 20260910212533_changelog.xml}. The entity used to declare the same rule with Hibernate's {@code @Check}, which
+ * never reached any database: {@code ddl-auto} is {@code none} in every profile, so Hibernate emits no schema at all.
+ * The annotation is gone rather than replaced, because the JPA spelling of it would be inert for the same reason.
+ */
 @Entity
 @Table(name = "forwarded_message")
-@Check(constraints = "((destination_post_id IS NOT NULL AND destination_answer_id IS NULL) OR (destination_post_id IS NULL AND destination_answer_id IS NOT NULL))")
 public class ForwardedMessage extends DomainObject {
 
     @Column(name = "source_id", nullable = false)
@@ -31,11 +39,13 @@ public class ForwardedMessage extends DomainObject {
     @ManyToOne
     @JoinColumn(name = "destination_post_id")
     @JsonIncludeProperties({ "id" })
+    @Parent(enforcedBy = "CHECK_DESTINATION_POST_OR_ANSWER")
     private Post destinationPost;
 
     @ManyToOne
     @JoinColumn(name = "destination_answer_id")
     @JsonIncludeProperties({ "id" })
+    @Parent(enforcedBy = "CHECK_DESTINATION_POST_OR_ANSWER")
     private AnswerPost destinationAnswerPost;
 
     public ForwardedMessage() {

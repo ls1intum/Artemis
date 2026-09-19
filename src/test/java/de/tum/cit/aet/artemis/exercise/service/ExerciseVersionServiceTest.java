@@ -10,10 +10,10 @@ import static org.mockito.Mockito.verify;
 
 import java.lang.reflect.RecordComponent;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -297,7 +297,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         try {
             newProgrammingExercise = programmingExerciseRepository.findForVersioningById(newProgrammingExercise.getId()).orElseThrow();
 
-            newProgrammingExercise.setAuxiliaryRepositories(new ArrayList<>());
+            newProgrammingExercise.setAuxiliaryRepositories(new LinkedHashSet<>());
 
             RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, newProgrammingExercise);
             templateProgrammingExerciseParticipationRepository.save(newProgrammingExercise.getTemplateParticipation());
@@ -374,7 +374,12 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
                 ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(newProgrammingExercise, exercise.getShortName(), "Updated Title", true, ProgrammingLanguage.SWIFT);
                 yield newProgrammingExercise;
             case QuizExercise quizExercise:
+                // emptyOutQuizExercise prepares a quiz for an import request and clears its course on the way. This
+                // test saves the entity instead of posting it, so the course is put back: an exercise row belongs to a
+                // course or to an exercise group, never to neither.
+                Course quizCourse = quizExercise.getCourseViaExerciseGroupOrCourseMember();
                 quizExerciseUtilService.emptyOutQuizExercise(quizExercise);
+                quizExercise.setCourse(quizCourse);
                 yield quizExercise;
             case ModelingExercise modelingExercise:
                 modelingExercise.setExampleSolutionModel("Updated example solution");

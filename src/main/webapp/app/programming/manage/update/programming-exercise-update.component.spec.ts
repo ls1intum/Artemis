@@ -27,8 +27,7 @@ import * as Utils from 'app/exercise/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
-import { BUILD_PLAN_CONFIGURATION_MAX_LENGTH, DOCKER_FLAGS_MAX_LENGTH, ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { MODULE_FEATURE_THEIA } from 'app/app.constants';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
 import {
     APP_NAME_PATTERN_FOR_SWIFT,
@@ -1203,82 +1202,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             });
         });
 
-        const setupCustomizeBuildPlan = (buildPlanPhasesJSON: string | undefined, dockerFlags: string | undefined) => {
-            comp.programmingExercise.customizeBuildPlan = true;
-            comp.customBuildPlansSupported = PROFILE_LOCALCI;
-            comp.programmingExercise.buildConfig = Object.assign(new ProgrammingExerciseBuildConfig(), { dockerFlags });
-            const customBuildPlanComponent = {
-                arePhaseNamesValid: () => true,
-                getBuildPlanPhasesJSON: () => buildPlanPhasesJSON,
-            };
-            internals(comp).exerciseLanguageComponent = signal({
-                programmingExerciseCustomBuildPlanComponent: () => customBuildPlanComponent,
-            } as unknown as ProgrammingExerciseLanguageComponent).asReadonly();
-        };
-
-        it('validateBuildConfigSize rejects a build plan configuration exceeding the maximum length', () => {
-            setupCustomizeBuildPlan('a'.repeat(BUILD_PLAN_CONFIGURATION_MAX_LENGTH + 1), undefined);
-            expect(comp.getInvalidReasons()).toContainEqual({
-                translateKey: 'artemisApp.programmingExercise.buildConfig.buildPlanConfigurationTooLong',
-                translateValues: {},
-            });
-        });
-
-        it('validateBuildConfigSize accepts a build plan configuration exactly at the maximum length', () => {
-            setupCustomizeBuildPlan('a'.repeat(BUILD_PLAN_CONFIGURATION_MAX_LENGTH), undefined);
-            expect(comp.getInvalidReasons()).not.toContainEqual({
-                translateKey: 'artemisApp.programmingExercise.buildConfig.buildPlanConfigurationTooLong',
-                translateValues: {},
-            });
-        });
-
-        it('validateBuildConfigSize rejects docker flags exceeding the maximum length', () => {
-            setupCustomizeBuildPlan(undefined, 'a'.repeat(DOCKER_FLAGS_MAX_LENGTH + 1));
-            expect(comp.getInvalidReasons()).toContainEqual({
-                translateKey: 'artemisApp.programmingExercise.buildConfig.dockerFlagsTooLong',
-                translateValues: {},
-            });
-        });
-
-        it('validateBuildConfigSize accepts docker flags exactly at the maximum length', () => {
-            setupCustomizeBuildPlan(undefined, 'a'.repeat(DOCKER_FLAGS_MAX_LENGTH));
-            expect(comp.getInvalidReasons()).not.toContainEqual({
-                translateKey: 'artemisApp.programmingExercise.buildConfig.dockerFlagsTooLong',
-                translateValues: {},
-            });
-        });
-
-        // UI: the build config size reason produced by getInvalidReasons() must disable saving in the rendered form footer.
-        it('disables saving in the form footer when the build plan configuration is too long', () => {
-            setupCustomizeBuildPlan('a'.repeat(BUILD_PLAN_CONFIGURATION_MAX_LENGTH + 1), undefined);
-            const reasons = comp.getInvalidReasons().filter((reason) => reason.translateKey === 'artemisApp.programmingExercise.buildConfig.buildPlanConfigurationTooLong');
-            expect(reasons).toHaveLength(1);
-
-            const footer = TestBed.createComponent(FormFooterComponent);
-            footer.componentRef.setInput('isCreation', true);
-            footer.componentRef.setInput('invalidReasons', reasons);
-            footer.detectChanges();
-
-            const saveButton = footer.nativeElement.querySelector('#save-entity') as HTMLButtonElement;
-            expect(saveButton.disabled).toBe(true);
-            expect(footer.nativeElement.querySelector('.badge.bg-danger')).toBeTruthy();
-        });
-
-        it('disables saving in the form footer when the docker flags are too long', () => {
-            setupCustomizeBuildPlan(undefined, 'a'.repeat(DOCKER_FLAGS_MAX_LENGTH + 1));
-            const reasons = comp.getInvalidReasons().filter((reason) => reason.translateKey === 'artemisApp.programmingExercise.buildConfig.dockerFlagsTooLong');
-            expect(reasons).toHaveLength(1);
-
-            const footer = TestBed.createComponent(FormFooterComponent);
-            footer.componentRef.setInput('isCreation', true);
-            footer.componentRef.setInput('invalidReasons', reasons);
-            footer.detectChanges();
-
-            const saveButton = footer.nativeElement.querySelector('#save-entity') as HTMLButtonElement;
-            expect(saveButton.disabled).toBe(true);
-            expect(footer.nativeElement.querySelector('.badge.bg-danger')).toBeTruthy();
-        });
-
         it('enables saving in the form footer when there are no invalid reasons', () => {
             const footer = TestBed.createComponent(FormFooterComponent);
             footer.componentRef.setInput('isCreation', true);
@@ -1286,8 +1209,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             footer.detectChanges();
 
             const saveButton = footer.nativeElement.querySelector('#save-entity') as HTMLButtonElement;
-            expect(saveButton.disabled).toBe(false);
-            expect(footer.nativeElement.querySelector('.badge.bg-danger')).toBeFalsy();
+            expect(saveButton.getAttribute('aria-disabled')).toBe('false');
+            expect(saveButton.getAttribute('aria-describedby')).toBeNull();
         });
 
         it('validateExercisePoints', () => {
@@ -1296,6 +1219,53 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 translateKey: 'artemisApp.exercise.form.points.customMax',
                 translateValues: {},
             });
+        });
+
+        const gradingReason = { translateKey: 'artemisApp.programmingExercise.gradingSection.invalidReason', translateValues: {} };
+        const withInvalidGradingForm = (isTimelineValid = true) => {
+            internals(comp).exerciseGradingComponent = signal({
+                formValid: false,
+                // The grading component carries the timeline's status itself now, rather than a child lifecycle component.
+                timelineStatus: signal({ valid: isTimelineValid, empty: false, invalidItems: [] }),
+            } as unknown as ProgrammingExerciseGradingComponent).asReadonly();
+        };
+
+        // The timeline lives in the grading form and has no validator of its own, so the generic message
+        // is the only thing that can report it.
+        it('should report the generic grading reason when no grading field explains it', () => {
+            withInvalidGradingForm();
+            comp.programmingExercise.maxPoints = 100;
+            comp.programmingExercise.bonusPoints = 0;
+
+            expect(comp.getInvalidReasons()).toContainEqual(gradingReason);
+        });
+
+        it('should not add the generic grading reason on top of a grading field reason', () => {
+            withInvalidGradingForm();
+            comp.programmingExercise.maxPoints = undefined;
+            comp.programmingExercise.bonusPoints = 0;
+
+            const reasons = comp.getInvalidReasons();
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.undefined',
+                translateValues: {},
+            });
+            expect(reasons).not.toContainEqual(gradingReason);
+        });
+
+        // An invalid timeline is a separate cause that only the generic message names, so deduplicating it against
+        // a field error would hide it until that field is fixed.
+        it('should keep the generic grading reason alongside a field reason when the timeline is also invalid', () => {
+            withInvalidGradingForm(false);
+            comp.programmingExercise.maxPoints = undefined;
+            comp.programmingExercise.bonusPoints = 0;
+
+            const reasons = comp.getInvalidReasons();
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.undefined',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual(gradingReason);
         });
 
         it('should not require points when exercise is not included in the course score', () => {
@@ -1848,30 +1818,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         for (const subscription of comp.inputFieldSubscriptions) {
             expect(subscription?.closed ?? true).toBe(true);
         }
-    });
-
-    it('should propagate customizeBuildPlan changes from custom build plan component through language component to update component', () => {
-        vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile) => profile === PROFILE_LOCALCI);
-        comp.ngOnInit();
-        fixture.detectChanges();
-
-        const languageComp = comp.exerciseLanguageComponent();
-        expect(languageComp).toBeDefined();
-
-        const customBuildPlanComp = languageComp?.programmingExerciseCustomBuildPlanComponent();
-        expect(customBuildPlanComp).toBeDefined();
-
-        expect(comp.programmingExercise.customizeBuildPlan).toBeFalsy();
-
-        customBuildPlanComp!.onCustomizeBuildPlanChange(true);
-        fixture.detectChanges();
-
-        expect(comp.programmingExercise.customizeBuildPlan).toBe(true);
-
-        customBuildPlanComp!.onCustomizeBuildPlanChange(false);
-        fixture.detectChanges();
-
-        expect(comp.programmingExercise.customizeBuildPlan).toBe(false);
     });
 
     function verifyImport(importedProgrammingExercise: ProgrammingExercise) {

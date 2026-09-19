@@ -11,6 +11,8 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import de.tum.cit.aet.artemis.core.domain.Parent;
+
 /**
  * The key an account currently has outstanding to activate itself or to complete a password reset.
  * <p>
@@ -24,6 +26,7 @@ public class UserRecoveryKey {
 
     @Id
     @Column(name = "user_id")
+    @Parent
     private long userId;
 
     /**

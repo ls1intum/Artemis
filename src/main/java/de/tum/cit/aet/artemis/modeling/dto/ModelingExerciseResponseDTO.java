@@ -13,6 +13,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseForQuizExerciseDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseManagementExerciseDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -40,7 +41,7 @@ public record ModelingExerciseResponseDTO(Long id, String title, String shortNam
         CourseForQuizExerciseDTO course, Long exerciseGroupId, Long examId, ZonedDateTime examPublishResultsDate, TeamAssignmentConfigDTO teamAssignmentConfig,
         List<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, PlagiarismDetectionConfigDTO plagiarismDetectionConfig,
         boolean gradingInstructionFeedbackUsed, Set<ModelingExampleSubmissionDTO> exampleSubmissions, Boolean teamMode, ModelingExerciseExamGroupDTO exerciseGroup,
-        ExerciseVariantGroupReferenceDTO exerciseVariantGroup) implements Serializable {
+        ExerciseVariantGroupReferenceDTO exerciseVariantGroup) implements Serializable, CourseManagementExerciseDTO {
 
     /**
      * Creates a {@link ModelingExerciseResponseDTO} from the given {@link ModelingExercise}.
@@ -49,6 +50,22 @@ public record ModelingExerciseResponseDTO(Long id, String title, String shortNam
      * @return the corresponding DTO, or {@code null} if the input was {@code null}
      */
     public static ModelingExerciseResponseDTO of(ModelingExercise exercise) {
+        return of(exercise, false);
+    }
+
+    /**
+     * Creates the record written into the exercise details file of an archive. It is the response record without the
+     * ids of the plagiarism detection and the team assignment configuration: those are rows of this instance, and a
+     * file read back elsewhere must not carry them.
+     *
+     * @param exercise the modeling exercise to export (may be {@code null})
+     * @return the corresponding DTO, or {@code null} if the input was {@code null}
+     */
+    public static ModelingExerciseResponseDTO forExport(ModelingExercise exercise) {
+        return of(exercise, true);
+    }
+
+    private static ModelingExerciseResponseDTO of(ModelingExercise exercise, boolean forExport) {
         if (exercise == null) {
             return null;
         }
@@ -96,6 +113,11 @@ public record ModelingExerciseResponseDTO(Long id, String title, String shortNam
         PlagiarismDetectionConfigDTO plagiarismDetectionConfigDTO = Hibernate.isInitialized(exercise.getPlagiarismDetectionConfig())
                 ? PlagiarismDetectionConfigDTO.of(exercise.getPlagiarismDetectionConfig())
                 : null;
+
+        if (forExport) {
+            teamAssignmentConfigDTO = teamAssignmentConfigDTO == null ? null : teamAssignmentConfigDTO.withoutId();
+            plagiarismDetectionConfigDTO = plagiarismDetectionConfigDTO == null ? null : plagiarismDetectionConfigDTO.withoutId();
+        }
 
         // Only populated on the single-exercise detail endpoint, which explicitly loads example submissions; null/omitted elsewhere.
         Set<ModelingExampleSubmissionDTO> exampleSubmissionDTOs = ModelingDtoCollections.setFromInitializedSet(exercise.getExampleSubmissions(), ModelingExampleSubmissionDTO::of);

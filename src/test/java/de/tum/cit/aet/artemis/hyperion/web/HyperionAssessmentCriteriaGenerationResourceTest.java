@@ -22,6 +22,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
@@ -47,7 +48,7 @@ class HyperionAssessmentCriteriaGenerationResourceTest extends AbstractSpringInt
     @BeforeEach
     void setupTestData() {
         userUtilService.addUsers(TEST_PREFIX, 0, 1, 1, 0);
-        Course course = new Course();
+        Course course = CourseFactory.generateMinimalCourse();
         course.setTitle("Assessment Criteria Test Course");
         course = courseRepository.save(course);
         courseId = course.getId();

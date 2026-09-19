@@ -14,7 +14,6 @@ import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 import static org.apache.commons.lang3.StringUtils.lowerCase;
 
-import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -54,7 +53,6 @@ import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
@@ -71,7 +69,7 @@ import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingService;
@@ -574,7 +572,6 @@ public class UserService {
             globalNotificationSettingService.deleteAllByUserId(user.getId());
             userCourseRoleRepository.deleteByUser_Id(user.getId());
             user.setDeleted(true);
-            user.setLearnerProfile(null);
             anonymizeUser(user);
             log.warn("Soft Deleted User: {}", user);
         });
@@ -616,7 +613,7 @@ public class UserService {
         scienceEventApi.ifPresent(api -> api.renameIdentity(originalLogin, anonymizedLogin));
 
         if (userImageString != null) {
-            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(userImageString), FilePathType.PROFILE_PICTURE), 0);
+            fileService.schedulePathForDeletion(new FileSystemLocation.ProfilePicture(userImageString).path(), 0);
         }
     }
 

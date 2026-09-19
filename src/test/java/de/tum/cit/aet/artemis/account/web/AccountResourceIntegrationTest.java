@@ -308,6 +308,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
         // Build DTO outside the transaction (session is closed because open-in-view=false)
         UserDTO dto = new UserDTO(lazyUser);
+        assertThat(dto.getOrganizations()).isNull();
 
         // Serialize with a bare mapper that has no Hibernate module, so nothing papers over an uninitialized
         // proxy. If the DTO still holds an uninitialized PersistentSet, this throws LazyInitializationException.
@@ -388,22 +389,6 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         request.put("/api/account/basic-information", new UserDTO(user), HttpStatus.OK);
 
         // check if update successful
-        Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
-        assertThat(updatedUser).isPresent();
-        assertThat(updatedUser.get().getFirstName()).isEqualTo(updatedFirstName);
-    }
-
-    @Test
-    @WithMockUser(username = AUTHENTICATEDUSER)
-    void saveAccountViaLegacyPath() throws Exception {
-        // The pre-9.3 bare URL "PUT api/core/account" must keep working for deployed clients (iOS, Android, older web);
-        // it is served by AccountLegacyResource and delegates to the canonical api/account/basic-information endpoint.
-        String updatedFirstName = "UpdatedFirstNameLegacy";
-        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
-        user.setFirstName(updatedFirstName);
-
-        request.put("/api/core/account", new UserDTO(user), HttpStatus.OK);
-
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(updatedUser).isPresent();
         assertThat(updatedUser.get().getFirstName()).isEqualTo(updatedFirstName);

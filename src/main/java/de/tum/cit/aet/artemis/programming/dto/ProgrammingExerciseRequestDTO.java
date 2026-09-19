@@ -9,7 +9,6 @@ import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentConfigDTO;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -165,7 +164,9 @@ public interface ProgrammingExerciseRequestDTO {
             exercise.setBuildConfig(request.buildConfig().toEntity());
         }
         exercise.setSubmissionPolicy(request.submissionPolicy() == null ? null : request.submissionPolicy().toEntity());
-        exercise.setPlagiarismDetectionConfig(toPlagiarismDetectionConfigEntity(request.plagiarismDetectionConfig()));
+        // Both callers build a brand new exercise, so the config must never adopt the id the request carries: an
+        // exported archive carries the source exercise's config id, and persisting it would write onto that row.
+        exercise.setPlagiarismDetectionConfig(request.plagiarismDetectionConfig() == null ? null : request.plagiarismDetectionConfig().toEntity());
         if (request.course() != null) {
             Course courseEntity = new Course();
             courseEntity.setId(request.course().id());
@@ -174,29 +175,5 @@ public interface ProgrammingExerciseRequestDTO {
         if (request.exerciseGroup() != null) {
             exercise.setExerciseGroup(request.exerciseGroup().toEntity());
         }
-    }
-
-    /**
-     * Builds a transient plagiarism detection configuration, preserving the id from the request.
-     *
-     * This mapper is intentionally separate from {@link PlagiarismDetectionConfigDTO#toEntity()},
-     * which omits the id for paths that must not adopt a client-supplied entity id.
-     *
-     * @param dto the parsed configuration (may be {@code null})
-     * @return the transient configuration, or {@code null} if the input was {@code null}
-     */
-    static PlagiarismDetectionConfig toPlagiarismDetectionConfigEntity(PlagiarismDetectionConfigDTO dto) {
-        if (dto == null) {
-            return null;
-        }
-        PlagiarismDetectionConfig config = new PlagiarismDetectionConfig();
-        config.setId(dto.id());
-        config.setContinuousPlagiarismControlEnabled(dto.continuousPlagiarismControlEnabled());
-        config.setContinuousPlagiarismControlPostDueDateChecksEnabled(dto.continuousPlagiarismControlPostDueDateChecksEnabled());
-        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(dto.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod());
-        config.setSimilarityThreshold(dto.similarityThreshold());
-        config.setMinimumScore(dto.minimumScore());
-        config.setMinimumSize(dto.minimumSize());
-        return config;
     }
 }

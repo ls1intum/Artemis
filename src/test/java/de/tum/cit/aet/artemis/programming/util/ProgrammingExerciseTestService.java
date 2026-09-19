@@ -73,9 +73,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.admin.service.export.CourseExamExportService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -139,6 +137,7 @@ import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
@@ -209,9 +208,6 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
-
-    @Autowired
-    private PasswordService passwordService;
 
     @Autowired
     private ZipFileTestUtilService zipFileTestUtilService;
@@ -1346,7 +1342,7 @@ public class ProgrammingExerciseTestService {
     // TEST
     public void resumeProgrammingExercise_doesNotExist(ExerciseMode exerciseMode) throws Exception {
         setupCourseWithProgrammingExercise(exerciseMode);
-        request.putWithResponseBody("/api/programming/exercises/" + exercise.getId() + "/resume-programming-participation/" + -1, null,
+        request.putWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/-1/resume-programming-participation", null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.NOT_FOUND);
     }
 
@@ -1362,7 +1358,8 @@ public class ProgrammingExerciseTestService {
         var participant = participation.getParticipant();
         mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
 
-        participation = request.putWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
+        participation = request.putWithResponseBody(
+                "/api/exercise/exercises/" + exercise.getId() + "/participations/" + participation.getId() + "/resume-programming-participation", null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
 
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
@@ -1440,12 +1437,13 @@ public class ProgrammingExerciseTestService {
 
         if (!buildPlanExists) {
             mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
-            participation = request.putWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
+            participation = request.putWithResponseBody(
+                    "/api/exercise/exercises/" + exercise.getId() + "/participations/" + participation.getId() + "/resume-programming-participation", null,
                     ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
         }
 
         // Construct trigger-build url and execute request
-        String url = "/api/programming/programming-submissions/" + participation.getId() + "/trigger-failed-build";
+        String url = "/api/programming/participations/" + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
 
         // Fetch updated participation and assert
@@ -1692,11 +1690,12 @@ public class ProgrammingExerciseTestService {
             var json = files.filter(Files::isRegularFile).filter(file -> file.getFileName().toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json")).findFirst();
             assertThat(json).isPresent();
 
-            var exportedExercise = objectMapper.readValue(json.get().toFile(), ProgrammingExercise.class);
-            assertThat(exportedExercise.getTeamAssignmentConfig()).isNotNull();
-            assertThat(exportedExercise.getTeamAssignmentConfig().getId()).isNull();
-            assertThat(exportedExercise.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(1);
-            assertThat(exportedExercise.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(10);
+            // read the file the way the import from file and the sharing import read it
+            var exportedExercise = objectMapper.readValue(json.get().toFile(), ImportProgrammingExerciseRequestDTO.class);
+            assertThat(exportedExercise.teamAssignmentConfig()).isNotNull();
+            assertThat(exportedExercise.teamAssignmentConfig().id()).isNull();
+            assertThat(exportedExercise.teamAssignmentConfig().minTeamSize()).isEqualTo(1);
+            assertThat(exportedExercise.teamAssignmentConfig().maxTeamSize()).isEqualTo(10);
         }
 
         RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDir);
@@ -1745,14 +1744,14 @@ public class ProgrammingExerciseTestService {
         await().until(zipFile::exists);
         Path extractedZipDir = zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
 
-        ProgrammingExercise exportedExercise;
+        ImportProgrammingExerciseRequestDTO exportedExercise;
         try (var files = Files.walk(extractedZipDir)) {
             var exerciseDetailsFile = files.filter(Files::isRegularFile).filter(file -> file.getFileName().toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*\\.json"))
                     .findFirst().orElseThrow();
-            exportedExercise = objectMapper.readValue(exerciseDetailsFile.toFile(), ProgrammingExercise.class);
+            exportedExercise = objectMapper.readValue(exerciseDetailsFile.toFile(), ImportProgrammingExerciseRequestDTO.class);
         }
 
-        assertThat(exportedExercise.getProblemStatement()).isEqualTo("[task][name](%s)".formatted(test.getTestName()));
+        assertThat(exportedExercise.problemStatement()).isEqualTo("[task][name](%s)".formatted(test.getTestName()));
 
         RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDir);
         FileUtils.delete(zipFile);
@@ -2323,42 +2322,25 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void configureRepository_throwExceptionWhenLtiUserIsNotExistent() throws Exception {
-        setupTeamExercise();
-
-        // create a team for the user (necessary condition before starting an exercise)
-        // final String edxUsername = userPrefixEdx.get() + "student"; // TODO: Fix this (userPrefixEdx is missing)
-        final String edxUsername = userPrefix + "ltinotpres" + "student";
-
-        User edxStudent = UserFactory.generateActivatedUsers(edxUsername, Set.of(new Authority(Role.STUDENT.getAuthority())), 1).getFirst();
-        edxStudent.setInternal(true);
-        edxStudent.setPassword(passwordService.hashPassword(edxStudent.getPassword()));
-        edxStudent = userRepo.save(edxStudent);
-        Team team = setupTeam(edxStudent);
-
-        // Set up mock requests for start participation and that a lti user is not existent
-        final boolean ltiUserExists = false;
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), ltiUserExists);
-
-        // Start participation with original team
-        assertThatExceptionOfType(Exception.class).isThrownBy(() -> participationService.startExercise(exercise, team, false));
-    }
-
-    // TEST
     public void copyRepository_testNotCreatedError() throws Exception {
         Team team = setupTeamForBadRequestForStartExercise();
-        RepositoryExportTestUtil.deleteStudentBareRepo(exercise, team.getShortName(), localVCBasePath);
-
-        // The shared setup pre-creates the team's repository on disk (setupParticipantRepository). This test
-        // models a NEW participation whose repository is created for the first time and whose creation (copy) fails,
-        // so the target repository must not exist beforehand. Otherwise copyRepository treats it as a re-copy into an
-        // existing repository, which (since #12777) is intentionally preserved on failure instead of cleaned up.
-        String teamRepoSlug = exercise.getProjectKey().toLowerCase(Locale.ROOT) + "-" + (userPrefix + TEAM_SHORT_NAME).toLowerCase(Locale.ROOT);
-        versionControlService.deleteRepository(versionControlService.getCloneRepositoryUri(exercise.getProjectKey(), teamRepoSlug));
+        deleteTeamRepository(team);
 
         // Start participation
         assertThatExceptionOfType(VersionControlException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false))
                 .matches(exception -> !exception.getMessage().isEmpty());
+    }
+
+    /**
+     * Removes the team's repository, which the shared setup pre-creates on disk (setupParticipantRepository).
+     * <p>
+     * Tests that make the repository copy fail have to model a NEW participation whose repository is created for the first time, so the target repository must not exist
+     * beforehand. Otherwise starting the exercise hands back the repository that is already there and never reaches the copy at all.
+     */
+    private void deleteTeamRepository(Team team) throws Exception {
+        RepositoryExportTestUtil.deleteStudentBareRepo(exercise, team.getShortName(), localVCBasePath);
+        String teamRepoSlug = exercise.getProjectKey().toLowerCase(Locale.ROOT) + "-" + (userPrefix + TEAM_SHORT_NAME).toLowerCase(Locale.ROOT);
+        versionControlService.deleteRepository(versionControlService.getCloneRepositoryUri(exercise.getProjectKey(), teamRepoSlug));
     }
 
     // TEST
@@ -2393,20 +2375,24 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void copyRepository_keepsHealthyPreexistingTargetOnFailedCopy() throws Exception {
+    public void copyRepository_withAHealthyExistingTarget_reusesIt() throws Exception {
         Team team = setupTeamForBadRequestForStartExercise();
 
-        // The shared setup pre-creates a healthy team repository (with an initial commit); a failed copy must not delete it (see #12777)
+        // The shared setup pre-creates a healthy team repository (with an initial commit). Starting the exercise when the repository is already there has to hand that
+        // repository back rather than copy over it: that is both the recovery path of a start that failed after the copy, and what the request that loses a race on the
+        // "Start exercise" button runs into (issue #13870).
         String teamRepoSlug = exercise.getProjectKey().toLowerCase(Locale.ROOT) + "-" + (userPrefix + TEAM_SHORT_NAME).toLowerCase(Locale.ROOT);
         LocalVCRepositoryUri targetRepoUri = versionControlService.getCloneRepositoryUri(exercise.getProjectKey(), teamRepoSlug);
         Path targetPath = targetRepoUri.getLocalRepositoryPath(localVCBasePath);
         assertThat(targetPath).as("precondition: the target repository exists before the copy").exists();
 
-        assertThatExceptionOfType(VersionControlException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false));
+        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true);
 
+        var participation = participationService.startExercise(exercise, team, false);
+
+        assertThat(participation.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
         try (Repository targetRepository = new FileRepositoryBuilder().setBare().setGitDir(targetPath.toFile()).setMustExist(true).build()) {
-            assertThat(targetRepository.getRefDatabase().getRefsByPrefix(Constants.R_HEADS)).as("the healthy pre-existing repository must be preserved on a failed copy")
-                    .isNotEmpty();
+            assertThat(targetRepository.getRefDatabase().getRefsByPrefix(Constants.R_HEADS)).as("the repository that was already there is kept as it is").isNotEmpty();
         }
     }
 
@@ -2435,6 +2421,7 @@ public class ProgrammingExerciseTestService {
     // TEST
     public void configureRepository_testBadRequestError() throws Exception {
         Team team = setupTeamForBadRequestForStartExercise();
+        deleteTeamRepository(team);
 
         // Start participation
         assertThatExceptionOfType(VersionControlException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false))
