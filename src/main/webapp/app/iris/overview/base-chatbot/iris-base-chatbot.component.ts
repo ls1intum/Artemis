@@ -362,6 +362,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly isChatGptWrapper = input<boolean>(false);
     readonly layout = input<'client' | 'widget' | 'embedded'>('client');
     readonly aboutIrisDialogTransport = input<'automatic' | 'material' | 'dynamic'>('automatic');
+    /**
+     * Whether the user may change the chat topic from the input row. When false, the context selector
+     * (the "+" dropdown and the chip showing the active context) is not rendered, so the session keeps
+     * whatever context its host pinned. The CTXSWAP dividers in the message list stay visible either
+     * way, so the student still sees which topic the chat is on.
+     */
+    readonly isContextSelectionAvailable = input<boolean>(true);
     /** Optional function provider that returns a list of context objects for the current message */
     readonly contextProvider = input<(() => IrisMessageContextDTO[]) | undefined>(undefined);
     readonly fullSizeToggle = output<void>();
