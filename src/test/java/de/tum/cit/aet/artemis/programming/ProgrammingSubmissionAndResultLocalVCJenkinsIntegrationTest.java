@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -34,11 +35,15 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "progsubreslocalvcjen";
+
+    @Autowired
+    private BuildLogEntryService buildLogEntryService;
 
     private ProgrammingExercise exercise;
 
@@ -82,16 +87,11 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of(), logs, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
-        var submissionWithLogsOptional = submissionRepository.findWithEagerBuildLogEntriesById(submission.getId());
-        assertThat(submissionWithLogsOptional).isPresent();
-
-        // Assert that the submission contains build log entries
-        ProgrammingSubmission submissionWithLogs = submissionWithLogsOptional.get();
-        java.util.Set<BuildLogEntry> buildLogEntries = submissionWithLogs.getBuildLogEntries();
+        // The build logs of a failed build are stored on disk, keyed by submission, so the service is what reads them back
+        List<BuildLogEntry> buildLogEntries = buildLogEntryService.getLatestBuildLogs(submission);
         assertThat(buildLogEntries).hasSize(2);
-        var orderedBuildLogEntries = List.copyOf(buildLogEntries);
-        assertThat(orderedBuildLogEntries.getFirst().getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,9] not a statement");
-        assertThat(orderedBuildLogEntries.get(1).getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,10] ';' expected");
+        assertThat(buildLogEntries.getFirst().getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,9] not a statement");
+        assertThat(buildLogEntries.get(1).getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,10] ';' expected");
     }
 
     private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationArguments() {
@@ -195,12 +195,10 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
         assertThat(submission).isNotNull();
         assertThat(submission.isBuildFailed()).isTrue();
 
-        var submissionWithLogsOptional = submissionRepository.findWithEagerBuildLogEntriesById(submission.getId());
-        assertThat(submissionWithLogsOptional).isPresent();
-        assertThat(submissionWithLogsOptional.get().getBuildLogEntries()).hasSize(3);
+        assertThat(buildLogEntryService.getLatestBuildLogs(submission)).hasSize(3);
 
         userUtilService.changeUser(userLogin);
-        // Assert that the build logs can be retrieved from the REST API from the database
+        // Assert that the build logs can be retrieved from the REST API
         var receivedLogs = request.get("/api/programming/participations/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
         assertThat(receivedLogs).isNotNull().isNotEmpty();
 

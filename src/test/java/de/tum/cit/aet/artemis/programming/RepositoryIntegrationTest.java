@@ -1044,24 +1044,22 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogsWithManualResult() throws Exception {
         var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, true);
-        var buildLogEntries = buildLogEntryService.saveBuildLogs(logs, submission);
-        submission.setBuildLogEntries(new java.util.LinkedHashSet<>(buildLogEntries));
+        var storedLogs = buildLogEntryService.saveBuildLogs(logs, submission);
         participationUtilService.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC);
         var receivedLogs = request.getList(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(2);
-        assertLogsContent(receivedLogs);
+        assertLogsContent(receivedLogs, storedLogs);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogs() throws Exception {
         var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, true);
-        var buildLogEntries = buildLogEntryService.saveBuildLogs(logs, submission);
-        submission.setBuildLogEntries(new java.util.LinkedHashSet<>(buildLogEntries));
+        var storedLogs = buildLogEntryService.saveBuildLogs(logs, submission);
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
         var receivedLogs = request.getList(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(2);
-        assertLogsContent(receivedLogs);
+        assertLogsContent(receivedLogs, storedLogs);
     }
 
     /**
@@ -1073,7 +1071,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogs_keepsTheScorpioKeySet() throws Exception {
         var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, true);
-        submission.setBuildLogEntries(new java.util.LinkedHashSet<>(buildLogEntryService.saveBuildLogs(logs, submission)));
+        buildLogEntryService.saveBuildLogs(logs, submission);
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
 
         String response = request.get(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, String.class);
@@ -1091,12 +1089,16 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         request.getList(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.FORBIDDEN, BuildLogEntry.class);
     }
 
-    private void assertLogsContent(List<BuildLogEntry> receivedLogs) {
+    /**
+     * Asserts against what the store actually wrote rather than against the fixtures: a stored entry is truncated, and a multi-line one is written as several entries, so the
+     * fixtures are no longer what a read returns.
+     */
+    private void assertLogsContent(List<BuildLogEntry> receivedLogs, List<BuildLogEntry> expectedLogs) {
         for (int i = 0; i < receivedLogs.size(); i++) {
-            assertThat(receivedLogs.get(i).getLog()).isEqualTo(logs.get(i).getLog());
+            assertThat(receivedLogs.get(i).getLog()).isEqualTo(expectedLogs.get(i).getLog());
             // When serializing and deserializing the logs, the time of each BuildLogEntry is converted to UTC.
             // Convert the time in the logs set up above to UTC and round it to milliseconds for comparison.
-            ZonedDateTime expectedTime = ZonedDateTime.ofInstant(logs.get(i).getTime().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC"));
+            ZonedDateTime expectedTime = ZonedDateTime.ofInstant(expectedLogs.get(i).getTime().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC"));
             ZonedDateTime actualTime = receivedLogs.get(i).getTime().truncatedTo(ChronoUnit.MILLIS);
             assertThat(actualTime).isCloseTo(expectedTime, within(1, ChronoUnit.MILLIS));
         }
