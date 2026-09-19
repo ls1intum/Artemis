@@ -8,6 +8,7 @@ import { provideHttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 
 import {
+    CleanupConfiguration,
     CleanupServiceExecutionRecordDTO,
     DataCleanupService,
     NonLatestNonRatedResultsCleanupCountDTO,
@@ -24,7 +25,6 @@ describe('DataCleanupService', () => {
     const mockDate = dayjs();
     const mockExecutionRecord: CleanupServiceExecutionRecordDTO = { executionDate: mockDate, jobType: 'deleteOrphans' };
     const mockOrphanCount: OrphanCleanupCountDTO = {
-        totalCount: 10,
         orphanFeedback: 2,
         orphanLongFeedbackText: 3,
         orphanTextBlock: 1,
@@ -39,7 +39,6 @@ describe('DataCleanupService', () => {
     };
 
     const mockPlagiarismCount: PlagiarismComparisonCleanupCountDTO = {
-        totalCount: 5,
         plagiarismComparison: 3,
         plagiarismElements: 1,
         plagiarismSubmissions: 1,
@@ -47,21 +46,18 @@ describe('DataCleanupService', () => {
     };
 
     const mockNonRatedResultsCount: NonLatestNonRatedResultsCleanupCountDTO = {
-        totalCount: 4,
         longFeedbackText: 1,
         textBlock: 2,
         feedback: 1,
     };
 
     const mockRatedResultsCount: NonLatestRatedResultsCleanupCountDTO = {
-        totalCount: 7,
         longFeedbackText: 2,
         textBlock: 3,
         feedback: 2,
     };
 
     const mockSubmissionVersionsCount: SubmissionVersionsCleanupCountDTO = {
-        totalCount: 8,
         submissionVersions: 8,
     };
 
@@ -332,5 +328,34 @@ describe('DataCleanupService', () => {
 
         service.countPlagiarismCases().subscribe((res) => expect(res.body).toEqual({ plagiarismCases: 3 }));
         httpMock.expectOne({ method: 'GET', url: 'api/admin/cleanup/plagiarism-cases/count' }).flush({ plagiarismCases: 3 });
+    });
+
+    it('should send GET request for the cleanup configuration and parse the cutoffs as dates', () => {
+        let configuration: CleanupConfiguration | undefined;
+        service.getCleanupConfiguration().subscribe((response) => (configuration = response));
+
+        httpMock.expectOne({ method: 'GET', url: 'api/admin/cleanup/configuration' }).flush({
+            gradeRelevantRetentionYears: 5,
+            gradeRelevantCoursesEndedBefore: '2021-03-04T00:00:00Z',
+            nonGradeRelevantRetentionYears: 1,
+            nonGradeRelevantCoursesEndedBefore: '2025-03-04T00:00:00Z',
+            resetWarningGracePeriodDays: 30,
+            coursesWarnedBefore: '2026-02-02T00:00:00Z',
+            oldFeedbackCutoffWeeks: 8,
+            oldFeedbackCoursesEndedBefore: '2026-01-07T00:00:00Z',
+            oldSubmissionVersionsCutoffWeeks: 8,
+            oldSubmissionVersionsCoursesEndedBefore: '2026-01-07T00:00:00Z',
+            notEnrolledUsersInactivityMonths: 6,
+            usersInactiveBefore: '2025-09-04T00:00:00Z',
+            notEnrolledUsersWarningGracePeriodDays: 30,
+            usersWarnedBefore: '2026-02-02T00:00:00Z',
+        });
+
+        expect(configuration!.gradeRelevantRetentionYears).toBe(5);
+        // The cutoffs arrive as ISO strings and must reach the component as dayjs objects, ready to format.
+        expect(dayjs.isDayjs(configuration!.gradeRelevantCoursesEndedBefore)).toBe(true);
+        expect(configuration!.gradeRelevantCoursesEndedBefore.toISOString()).toBe(dayjs('2021-03-04T00:00:00Z').toISOString());
+        expect(dayjs.isDayjs(configuration!.usersWarnedBefore)).toBe(true);
+        expect(configuration!.usersWarnedBefore.toISOString()).toBe(dayjs('2026-02-02T00:00:00Z').toISOString());
     });
 });

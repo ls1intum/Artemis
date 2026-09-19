@@ -11,9 +11,26 @@ import dayjs from 'dayjs/esm';
 
 import { CleanupServiceComponent } from 'app/admin/cleanup-service/cleanup-service.component';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
-import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
+import { CleanupConfiguration, CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+
+const CONFIGURATION: CleanupConfiguration = {
+    gradeRelevantRetentionYears: 5,
+    gradeRelevantCoursesEndedBefore: dayjs('2021-03-04T00:00:00Z'),
+    nonGradeRelevantRetentionYears: 1,
+    nonGradeRelevantCoursesEndedBefore: dayjs('2025-03-04T00:00:00Z'),
+    resetWarningGracePeriodDays: 30,
+    coursesWarnedBefore: dayjs('2026-02-02T00:00:00Z'),
+    oldFeedbackCutoffWeeks: 8,
+    oldFeedbackCoursesEndedBefore: dayjs('2026-01-07T00:00:00Z'),
+    oldSubmissionVersionsCutoffWeeks: 1,
+    oldSubmissionVersionsCoursesEndedBefore: dayjs('2026-02-25T00:00:00Z'),
+    notEnrolledUsersInactivityMonths: 6,
+    usersInactiveBefore: dayjs('2025-09-04T00:00:00Z'),
+    notEnrolledUsersWarningGracePeriodDays: 1,
+    usersWarnedBefore: dayjs('2026-03-03T00:00:00Z'),
+};
 
 describe('CleanupServiceComponent', () => {
     let comp: CleanupServiceComponent;
@@ -22,7 +39,8 @@ describe('CleanupServiceComponent', () => {
 
     beforeEach(async () => {
         const mockCleanupService = {
-            getLastExecutions: vi.fn(),
+            getLastExecutions: vi.fn().mockReturnValue(of(new HttpResponse<CleanupServiceExecutionRecordDTO[]>({ body: [] }))),
+            getCleanupConfiguration: vi.fn().mockReturnValue(of(CONFIGURATION)),
         };
 
         await TestBed.configureTestingModule({
@@ -90,6 +108,7 @@ describe('CleanupServiceComponent', () => {
     it('should validate date ranges correctly', () => {
         const validOperation: CleanupOperation = {
             name: 'deleteOrphans',
+            action: 'delete',
             deleteFrom: dayjs().subtract(6, 'months'),
             deleteTo: dayjs(),
             lastExecuted: undefined,
@@ -100,6 +119,7 @@ describe('CleanupServiceComponent', () => {
 
         const invalidOperation: CleanupOperation = {
             name: 'deleteOrphans',
+            action: 'delete',
             deleteFrom: dayjs(),
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
@@ -118,6 +138,7 @@ describe('CleanupServiceComponent', () => {
     it('should clear the model and invalidate the row when a date is cleared', () => {
         const operation: CleanupOperation = {
             name: 'deletePlagiarismComparisons',
+            action: 'delete',
             deleteFrom: dayjs().subtract(6, 'months'),
             deleteTo: dayjs(),
             lastExecuted: undefined,
@@ -136,6 +157,7 @@ describe('CleanupServiceComponent', () => {
     it('should set a new from-date and revalidate the row', () => {
         const operation: CleanupOperation = {
             name: 'deletePlagiarismComparisons',
+            action: 'delete',
             deleteFrom: undefined,
             deleteTo: dayjs(),
             lastExecuted: undefined,
@@ -154,6 +176,7 @@ describe('CleanupServiceComponent', () => {
     it('should clear the model and invalidate the row when the to-date is cleared', () => {
         const operation: CleanupOperation = {
             name: 'deletePlagiarismComparisons',
+            action: 'delete',
             deleteFrom: dayjs().subtract(6, 'months'),
             deleteTo: dayjs(),
             lastExecuted: undefined,
@@ -171,6 +194,7 @@ describe('CleanupServiceComponent', () => {
     it('should set a new to-date and revalidate the row', () => {
         const operation: CleanupOperation = {
             name: 'deletePlagiarismComparisons',
+            action: 'delete',
             deleteFrom: dayjs().subtract(6, 'months'),
             deleteTo: undefined,
             lastExecuted: undefined,
@@ -216,5 +240,87 @@ describe('CleanupServiceComponent', () => {
             expect(operation!.deleteTo).toBeUndefined();
             expect(operation!.datesValid()).toBe(true);
         }
+    });
+
+    it('should label every operation with the action it actually performs', () => {
+        const actionByName = new Map(comp.cleanupOperations().map((operation) => [operation.name, operation.action]));
+
+        // "Delete" is wrong for an operation that only emails a warning, or that resets a course while keeping it.
+        expect(actionByName.get('warnOldCoursesReset')).toBe('warn');
+        expect(actionByName.get('warnNotEnrolledUsers')).toBe('warn');
+        expect(actionByName.get('resetOldCourses')).toBe('reset');
+        for (const name of ['deleteOrphans', 'deleteOldFeedback', 'deleteNotEnrolledUsers', 'deletePlagiarismCases'] as const) {
+            expect(actionByName.get(name)).toBe('delete');
+        }
+    });
+
+    it('should load the effective cleanup configuration on init', () => {
+        comp.ngOnInit();
+
+        expect(cleanupService.getCleanupConfiguration).toHaveBeenCalledOnce();
+        expect(comp.configuration()).toEqual(CONFIGURATION);
+    });
+
+    it('should alert on a failed configuration load', () => {
+        const alertService = TestBed.inject(AlertService);
+        const errorSpy = vi.spyOn(alertService, 'error');
+        vi.spyOn(cleanupService, 'getCleanupConfiguration').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+
+        comp.ngOnInit();
+
+        expect(errorSpy).toHaveBeenCalledOnce();
+        expect(comp.configuration()).toBeUndefined();
+    });
+
+    it('should describe an age-based operation with the cutoff the server would apply', () => {
+        comp.ngOnInit();
+        const operations = comp.cleanupOperations();
+
+        const plagiarismCases = comp.descriptionOf(operations.find((operation) => operation.name === 'deletePlagiarismCases')!);
+        expect(plagiarismCases.cutoff).toBe(CONFIGURATION.gradeRelevantCoursesEndedBefore);
+        expect(plagiarismCases.periodKey).toBe('cleanupService.duration.years');
+        expect(plagiarismCases.periodCount).toBe(5);
+
+        // The reset is measured from the warning, not from the course end, so it must quote the warning cutoff.
+        const reset = comp.descriptionOf(operations.find((operation) => operation.name === 'resetOldCourses')!);
+        expect(reset.cutoff).toBe(CONFIGURATION.coursesWarnedBefore);
+        expect(reset.periodKey).toBe('cleanupService.duration.days');
+        expect(reset.periodCount).toBe(30);
+    });
+
+    it('should describe both retention cutoffs of the old-course warning', () => {
+        comp.ngOnInit();
+
+        const description = comp.descriptionOf(comp.cleanupOperations().find((operation) => operation.name === 'warnOldCoursesReset')!);
+
+        expect(description.cutoff).toBe(CONFIGURATION.gradeRelevantCoursesEndedBefore);
+        expect(description.periodKey).toBe('cleanupService.duration.years');
+        expect(description.secondaryCutoff).toBe(CONFIGURATION.nonGradeRelevantCoursesEndedBefore);
+        // A configured period of 1 must resolve to the singular key, otherwise the line reads "1 years".
+        expect(description.secondaryPeriodKey).toBe('cleanupService.duration.year');
+        expect(description.secondaryPeriodCount).toBe(1);
+    });
+
+    it('should pick the singular duration key for every period configured as one', () => {
+        comp.ngOnInit();
+        const operations = comp.cleanupOperations();
+
+        expect(comp.descriptionOf(operations.find((operation) => operation.name === 'deleteOldCourseSubmissionVersions')!).periodKey).toBe('cleanupService.duration.week');
+        expect(comp.descriptionOf(operations.find((operation) => operation.name === 'deleteNotEnrolledUsers')!).periodKey).toBe('cleanupService.duration.day');
+    });
+
+    it('should describe nothing until the configuration has loaded', () => {
+        // Rendering a cutoff before the server answered would state a date the operation does not actually use.
+        const description = comp.descriptionOf(comp.cleanupOperations().find((operation) => operation.name === 'deletePlagiarismCases')!);
+
+        expect(description).toEqual({});
+    });
+
+    it('should describe date-range operations without a cutoff', () => {
+        comp.ngOnInit();
+
+        // Their scope is already visible in the two date pickers, so there is no server-side cutoff to quote.
+        expect(comp.descriptionOf(comp.cleanupOperations().find((operation) => operation.name === 'deletePlagiarismComparisons')!)).toEqual({});
+        expect(comp.descriptionOf(comp.cleanupOperations().find((operation) => operation.name === 'deleteOrphans')!)).toEqual({});
     });
 });

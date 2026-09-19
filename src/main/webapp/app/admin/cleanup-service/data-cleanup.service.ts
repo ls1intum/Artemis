@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { convertDateFromClient } from 'app/foundation/util/date.utils';
 
@@ -9,8 +9,15 @@ export interface CleanupServiceExecutionRecordDTO {
     jobType: string;
 }
 
+/**
+ * A count response: one number per affected entity type. The concrete DTOs below name their entities, but the modal
+ * reads the keys dynamically so it can list whatever the server reports.
+ *
+ * There is deliberately no `totalCount`: no server count DTO has such a field, and declaring one made the dialog list a
+ * phantom, untranslated `totalCount` row while the real counts were still loading.
+ */
 export interface CleanupCount {
-    totalCount: number;
+    [entity: string]: number;
 }
 
 export interface OrphanCleanupCountDTO extends CleanupCount {
@@ -67,6 +74,28 @@ export interface NotEnrolledUsersCleanupCountDTO extends CleanupCount {
 
 export interface PlagiarismCasesCleanupCountDTO extends CleanupCount {
     plagiarismCases: number;
+}
+
+/**
+ * The effective retention cutoffs of the age-based cleanup operations. Every cutoff comes as the configured period plus
+ * the concrete point in time the operation would apply if it ran now, so the admin page can name the affected data
+ * instead of vaguely referring to the configuration in the YAML.
+ */
+export interface CleanupConfiguration {
+    gradeRelevantRetentionYears: number;
+    gradeRelevantCoursesEndedBefore: dayjs.Dayjs;
+    nonGradeRelevantRetentionYears: number;
+    nonGradeRelevantCoursesEndedBefore: dayjs.Dayjs;
+    resetWarningGracePeriodDays: number;
+    coursesWarnedBefore: dayjs.Dayjs;
+    oldFeedbackCutoffWeeks: number;
+    oldFeedbackCoursesEndedBefore: dayjs.Dayjs;
+    oldSubmissionVersionsCutoffWeeks: number;
+    oldSubmissionVersionsCoursesEndedBefore: dayjs.Dayjs;
+    notEnrolledUsersInactivityMonths: number;
+    usersInactiveBefore: dayjs.Dayjs;
+    notEnrolledUsersWarningGracePeriodDays: number;
+    usersWarnedBefore: dayjs.Dayjs;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -187,6 +216,31 @@ export class DataCleanupService {
      */
     deletePlagiarismCases(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
         return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/plagiarism-cases`, { observe: 'response' });
+    }
+
+    /**
+     * Send GET request to get the effective retention cutoffs of the age-based operations.
+     * The cutoffs arrive as ISO strings and are converted to dayjs here, so callers can format them directly.
+     */
+    getCleanupConfiguration(): Observable<CleanupConfiguration> {
+        return this.http.get<CleanupConfiguration>(`${this.adminResourceUrl}/configuration`).pipe(
+            map((configuration) => ({
+                gradeRelevantRetentionYears: configuration.gradeRelevantRetentionYears,
+                gradeRelevantCoursesEndedBefore: dayjs(configuration.gradeRelevantCoursesEndedBefore),
+                nonGradeRelevantRetentionYears: configuration.nonGradeRelevantRetentionYears,
+                nonGradeRelevantCoursesEndedBefore: dayjs(configuration.nonGradeRelevantCoursesEndedBefore),
+                resetWarningGracePeriodDays: configuration.resetWarningGracePeriodDays,
+                coursesWarnedBefore: dayjs(configuration.coursesWarnedBefore),
+                oldFeedbackCutoffWeeks: configuration.oldFeedbackCutoffWeeks,
+                oldFeedbackCoursesEndedBefore: dayjs(configuration.oldFeedbackCoursesEndedBefore),
+                oldSubmissionVersionsCutoffWeeks: configuration.oldSubmissionVersionsCutoffWeeks,
+                oldSubmissionVersionsCoursesEndedBefore: dayjs(configuration.oldSubmissionVersionsCoursesEndedBefore),
+                notEnrolledUsersInactivityMonths: configuration.notEnrolledUsersInactivityMonths,
+                usersInactiveBefore: dayjs(configuration.usersInactiveBefore),
+                notEnrolledUsersWarningGracePeriodDays: configuration.notEnrolledUsersWarningGracePeriodDays,
+                usersWarnedBefore: dayjs(configuration.usersWarnedBefore),
+            })),
+        );
     }
 
     /**

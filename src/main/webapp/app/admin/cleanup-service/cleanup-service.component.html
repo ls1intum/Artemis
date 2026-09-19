@@ -14,8 +14,22 @@
         @for (operation of cleanupOperations(); track operation.name) {
             <tr [attr.data-testid]="'cleanup-row-' + operation.name">
                 <td>
-                    <span [jhiTranslate]="'cleanupService.operation.' + operation.name"></span>
-                    <jhi-help-icon class="ps-1" text="{{ 'cleanupService.tooltip.' + operation.name }}" />
+                    <div>
+                        <span [jhiTranslate]="'cleanupService.operation.' + operation.name"></span>
+                        <jhi-help-icon class="ps-1" text="{{ 'cleanupService.tooltip.' + operation.name }}" />
+                    </div>
+                    @let description = descriptionOf(operation);
+                    <div
+                        class="text-muted-color text-sm"
+                        [attr.data-testid]="'cleanup-description-' + operation.name"
+                        [jhiTranslate]="'cleanupService.description.' + operation.name"
+                        [translateValues]="{
+                            cutoff: description.cutoff | artemisDate: 'long-date',
+                            period: description.periodKey | artemisTranslate: { count: description.periodCount },
+                            secondaryCutoff: description.secondaryCutoff | artemisDate: 'long-date',
+                            secondaryPeriod: description.secondaryPeriodKey | artemisTranslate: { count: description.secondaryPeriodCount },
+                        }"
+                    ></div>
                 </td>
                 <td>
                     @if (!operation.ageBased) {
@@ -63,14 +77,14 @@
                     <button
                         tumUiButton
                         id="execute-operation"
-                        severity="danger"
+                        [severity]="cleanupActionSeverity(operation.action)"
                         size="small"
                         [disabled]="!operation.datesValid() || !operation.deleteFromValid() || !operation.deleteToValid()"
                         (click)="openCleanupOperationModal(operation)"
                         data-testid="execute-operation"
                     >
-                        <fa-icon [icon]="faTrash" />
-                        <span jhiTranslate="entity.action.delete"></span>
+                        <fa-icon [icon]="cleanupActionIcon(operation.action)" />
+                        <span [jhiTranslate]="cleanupActionLabelKey(operation.action)"></span>
                     </button>
                 </td>
             </tr>
