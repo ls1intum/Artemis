@@ -7,11 +7,14 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -20,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import tools.jackson.core.JacksonException;
 
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -29,6 +33,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.AutomaticAfterDueDatePreviewRequestDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseBuildPlanConfigurationDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
@@ -132,7 +137,7 @@ public class AutomaticAfterDueDateService {
      * @return the computed date or null if the value would not be set
      */
     public ZonedDateTime computeBuildAndTestDate(ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig) {
-        return computeBuildAndTestDate(programmingExercise, buildConfig, null, null, false);
+        return computeBuildAndTestDate(programmingExercise, buildConfig.getBuildPlanConfiguration(), null, null, false);
     }
 
     /**
@@ -145,7 +150,7 @@ public class AutomaticAfterDueDateService {
      */
     public ZonedDateTime computeBuildAndTestDate(final ProgrammingExercise programmingExercise, final ProgrammingExerciseBuildConfig buildConfig,
             final Duration buildAndTestOffset) {
-        return computeBuildAndTestDate(programmingExercise, buildConfig, buildAndTestOffset, null, false);
+        return computeBuildAndTestDate(programmingExercise, buildConfig.getBuildPlanConfiguration(), buildAndTestOffset, null, false);
     }
 
     /**
@@ -172,23 +177,34 @@ public class AutomaticAfterDueDateService {
     public Set<Long> updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam(final Exam examWithExercises, final ZonedDateTime originalLatestEndDate) {
         final List<ProgrammingExercise> programmingExercises = examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
                 .filter(ProgrammingExercise.class::isInstance).map(e -> (ProgrammingExercise) e).toList();
+        if (programmingExercises.isEmpty()) {
+            return Set.of();
+        }
         final ZonedDateTime newLatestEndDate = getLatestExamEndDateWithGrace(examWithExercises);
+
+        // The configuration is a row of its own, so it is read here rather than through the exercise - once for the
+        // whole exam, and projected down to the build plan, which is all the computation below reads.
+        final Map<Long, ProgrammingExerciseBuildPlanConfigurationDTO> buildPlansByExerciseId = programmingExerciseBuildConfigRepository
+                .findBuildPlanConfigurationsByProgrammingExerciseIds(programmingExercises.stream().map(ProgrammingExercise::getId).toList()).stream()
+                .collect(Collectors.toMap(ProgrammingExerciseBuildPlanConfigurationDTO::exerciseId, Function.identity()));
 
         final List<ProgrammingExercise> updatedExercises = new ArrayList<>();
         for (ProgrammingExercise programmingExercise : programmingExercises) {
             final Duration offset = originalLatestEndDate == null || programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null ? null
                     : Duration.between(originalLatestEndDate, programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
 
-            // The configuration is a row of its own, so it is read here rather than through the exercise.
-            final ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
+            final ProgrammingExerciseBuildPlanConfigurationDTO buildPlan = buildPlansByExerciseId.get(programmingExercise.getId());
+            if (buildPlan == null) {
+                throw new EntityNotFoundException("ProgrammingExerciseBuildConfig", programmingExercise.getId());
+            }
 
             final ZonedDateTime computedBuildAndTestDate;
             try {
-                computedBuildAndTestDate = computeBuildAndTestDate(programmingExercise, buildConfig, offset, newLatestEndDate, true);
+                computedBuildAndTestDate = computeBuildAndTestDate(programmingExercise, buildPlan.buildPlanConfiguration(), offset, newLatestEndDate, true);
             }
             catch (JacksonException e) {
                 log.error("Skipping automatic build-and-test date recomputation for programming exercise {} due to invalid build plan configuration in build config {}.",
-                        programmingExercise.getId(), buildConfig.getId(), e);
+                        programmingExercise.getId(), buildPlan.buildConfigId(), e);
                 continue;
             }
             if (!Objects.equals(programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate)) {
@@ -227,13 +243,13 @@ public class AutomaticAfterDueDateService {
         return examApi.flatMap(api -> api.findByExerciseId(programmingExercise.getId()).map(this::getLatestExamEndDateWithGrace)).orElse(null);
     }
 
-    private ZonedDateTime computeBuildAndTestDate(final ProgrammingExercise exercise, final ProgrammingExerciseBuildConfig buildConfig, final Duration offset,
+    private ZonedDateTime computeBuildAndTestDate(final ProgrammingExercise exercise, @Nullable final String buildPlanConfiguration, final Duration offset,
             final ZonedDateTime newLatestWithGraceExamEndDate, final boolean forceCompute) {
         final ZonedDateTime dueDate = exercise.isExamExercise() ? newLatestWithGraceExamEndDate == null && examApi.isPresent()
                 ? getLatestExamEndDateWithGrace(examApi.orElseThrow().findByExerciseId(exercise.getId()).orElseThrow())
                 : newLatestWithGraceExamEndDate : exercise.getDueDate();
 
-        final boolean hasAfterDueDatePhase = hasAfterDueDatePhase(BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildConfig.getBuildPlanConfiguration()).phases());
+        final boolean hasAfterDueDatePhase = hasAfterDueDatePhase(BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildPlanConfiguration).phases());
 
         if (!hasAfterDueDatePhase || dueDate == null) {
             return null;

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseBuildPlanConfigurationDTO;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -34,6 +36,25 @@ public interface ProgrammingExerciseBuildConfigRepository extends ArtemisJpaRepo
             WHERE buildConfig.programmingExercise.projectKey = :projectKey
             """)
     List<ProgrammingExerciseBuildConfig> findAllByProjectKey(@Param("projectKey") String projectKey);
+
+    /**
+     * Reads the build plan configuration of several exercises at once.
+     * <p>
+     * For callers that need the build plan of every programming exercise in an exam: one query for all of them,
+     * projecting only the two values they read rather than the whole configuration row.
+     *
+     * @param exerciseIds the exercises whose build plan configuration to read
+     * @return one entry per exercise that has a configuration, in no particular order
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseBuildPlanConfigurationDTO(
+                buildConfig.id,
+                buildConfig.programmingExercise.id,
+                buildConfig.buildPlanConfiguration)
+            FROM ProgrammingExerciseBuildConfig buildConfig
+            WHERE buildConfig.programmingExercise.id IN :exerciseIds
+            """)
+    List<ProgrammingExerciseBuildPlanConfigurationDTO> findBuildPlanConfigurationsByProgrammingExerciseIds(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
      * Reads the build configuration of an exercise.
