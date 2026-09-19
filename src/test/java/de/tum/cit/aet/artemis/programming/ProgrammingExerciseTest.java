@@ -237,4 +237,22 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
         Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
         assertThat(exerciseChannelAfterDelete).isEmpty();
     }
+
+    /**
+     * The build configuration holds the exercise key, with ON DELETE CASCADE, and the exercise carries no field for it,
+     * so nothing in the application deletes the configuration: the database does. That makes this the test that the
+     * constraint is really there. Without it, a migration that recreated the foreign key without the delete rule would
+     * leave a configuration row naming an exercise that no longer exists, which is the orphan the key exists to prevent.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteProgrammingExerciseDeletesItsBuildConfig() throws Exception {
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        Exercise programmingExercise = course.getExercises().stream().findFirst().orElseThrow();
+        assertThat(programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId())).isPresent();
+
+        request.delete("/api/programming/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK, deleteProgrammingExerciseParamsFalse());
+
+        assertThat(programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId())).isEmpty();
+    }
 }
