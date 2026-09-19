@@ -13,7 +13,6 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * One proactive struggle episode, registered when Artemis accepts a trigger for it and holding that episode's
@@ -43,11 +42,9 @@ import de.tum.cit.aet.artemis.core.domain.Parent;
 public class IrisProactiveEpisode extends DomainObject {
 
     @Column(name = "user_id", nullable = false)
-    @Parent
     private long userId;
 
     @Column(name = "exercise_id", nullable = false)
-    @Parent
     private long exerciseId;
 
     /**
