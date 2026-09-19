@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -12,8 +13,10 @@ import java.time.Duration;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
@@ -69,5 +72,13 @@ class PyrisJobServiceTest {
 
         verify(jobMap).remove(job.jobId());
         verify(clientIdMap).remove(job.jobId());
+    }
+
+    @Test
+    void getAndAuthenticateJobWithoutAuthorizationHeaderThrowsAccessForbidden() {
+        var request = new MockHttpServletRequest();
+
+        assertThatThrownBy(() -> service.getAndAuthenticateJobFromHeaderElseThrow(request, ChatJob.class)).isInstanceOf(AccessForbiddenException.class)
+                .hasMessage("No valid token provided");
     }
 }
