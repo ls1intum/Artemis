@@ -2,7 +2,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, model, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
-import { cleanupActionIcon, cleanupActionLabelKey, cleanupActionSeverity } from 'app/admin/cleanup-service/cleanup-action.util';
+import { CLEANUP_ACTION_PRESENTATION } from 'app/admin/cleanup-service/cleanup-action.util';
 import { CleanupCount, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
@@ -48,9 +48,7 @@ export class CleanupOperationModalComponent {
     private readonly destroyRef = inject(DestroyRef);
 
     protected readonly faTimes = faTimes;
-    protected readonly cleanupActionIcon = cleanupActionIcon;
-    protected readonly cleanupActionLabelKey = cleanupActionLabelKey;
-    protected readonly cleanupActionSeverity = cleanupActionSeverity;
+    protected readonly actionPresentation = CLEANUP_ACTION_PRESENTATION;
     protected readonly faCheckCircle = faCheckCircle;
 
     /** The entity types the server reported a count for, in the order it listed them. */

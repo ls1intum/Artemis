@@ -57,14 +57,14 @@
             <button
                 tumUiButton
                 type="button"
-                [severity]="cleanupActionSeverity(operation().action)"
+                [severity]="actionPresentation[operation().action].severity"
                 size="small"
                 [disabled]="operationExecuting() || !hasAffectedEntities()"
                 (click)="executeCleanupOperation()"
                 data-testid="execute-button"
             >
-                <fa-icon [icon]="cleanupActionIcon(operation().action)" />
-                <span [jhiTranslate]="cleanupActionLabelKey(operation().action)"></span>
+                <fa-icon [icon]="actionPresentation[operation().action].icon" />
+                <span [jhiTranslate]="actionPresentation[operation().action].labelKey"></span>
             </button>
         </div>
     </ng-template>

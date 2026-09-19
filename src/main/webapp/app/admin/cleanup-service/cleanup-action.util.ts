@@ -3,53 +3,24 @@ import { faRotateLeft, faTrash, faTriangleExclamation } from '@fortawesome/free-
 import { TumUiButtonSeverity } from '@tumaet/ui-angular';
 import { CleanupAction } from 'app/admin/cleanup-service/cleanup-operation.model';
 
-const ICON_BY_ACTION: Record<CleanupAction, IconDefinition> = {
-    delete: faTrash,
-    warn: faTriangleExclamation,
-    reset: faRotateLeft,
-};
-
-const LABEL_KEY_BY_ACTION: Record<CleanupAction, string> = {
-    delete: 'entity.action.delete',
-    warn: 'entity.action.warn',
-    reset: 'entity.action.reset',
-};
-
-// A warning destroys nothing on its own — it archives, emails, and starts a grace period the recipient can still act
-// within — so it must not carry the red of an irreversible deletion. A reset does destroy student data, so it keeps it.
-const SEVERITY_BY_ACTION: Record<CleanupAction, TumUiButtonSeverity> = {
-    delete: 'danger',
-    warn: 'warn',
-    reset: 'danger',
-};
-
-/**
- * The icon of the confirmation button for a cleanup action. A trash can is wrong for an operation that only sends a
- * warning email, or that resets a course's student data while keeping the course itself.
- *
- * @param action what the operation does to the affected entities
- * @return the icon to render on the button
- */
-export function cleanupActionIcon(action: CleanupAction): IconDefinition {
-    return ICON_BY_ACTION[action];
+/** How the confirmation button of a cleanup action presents itself. */
+export interface CleanupActionPresentation {
+    icon: IconDefinition;
+    labelKey: string;
+    severity: TumUiButtonSeverity;
 }
 
 /**
- * The translation key of the confirmation button label for a cleanup action ("Delete", "Warn" or "Reset").
+ * The confirmation button per cleanup action, for the row and for the dialog. A trash can labelled "Delete" is wrong for
+ * an operation that only sends a warning email, or that resets a course's student data while keeping the course itself.
  *
- * @param action what the operation does to the affected entities
- * @return the translation key of the button label
- */
-export function cleanupActionLabelKey(action: CleanupAction): string {
-    return LABEL_KEY_BY_ACTION[action];
-}
-
-/**
- * The button severity for a cleanup action.
+ * A warning destroys nothing on its own — it archives, emails, and starts a grace period the recipient can still act
+ * within — so it must not carry the red of an irreversible deletion. A reset does destroy student data, so it keeps it.
  *
- * @param action what the operation does to the affected entities
- * @return the TUM UI button severity
+ * Exported as a record rather than as lookup functions because templates must not call methods (`methods_in_html`).
  */
-export function cleanupActionSeverity(action: CleanupAction): TumUiButtonSeverity {
-    return SEVERITY_BY_ACTION[action];
-}
+export const CLEANUP_ACTION_PRESENTATION: Record<CleanupAction, CleanupActionPresentation> = {
+    delete: { icon: faTrash, labelKey: 'entity.action.delete', severity: 'danger' },
+    warn: { icon: faTriangleExclamation, labelKey: 'entity.action.warn', severity: 'warn' },
+    reset: { icon: faRotateLeft, labelKey: 'entity.action.reset', severity: 'danger' },
+};

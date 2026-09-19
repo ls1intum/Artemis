@@ -11,7 +11,7 @@ import dayjs from 'dayjs/esm';
 
 import { CleanupOperationModalComponent } from 'app/admin/cleanup-service/cleanup-operation-modal.component';
 import { CleanupAction, CleanupOperation, OperationName } from 'app/admin/cleanup-service/cleanup-operation.model';
-import { cleanupActionIcon, cleanupActionLabelKey, cleanupActionSeverity } from 'app/admin/cleanup-service/cleanup-action.util';
+import { CLEANUP_ACTION_PRESENTATION } from 'app/admin/cleanup-service/cleanup-action.util';
 import {
     CleanupCount,
     CleanupServiceExecutionRecordDTO,
@@ -630,26 +630,29 @@ describe('CleanupOperationModalComponent', () => {
 
     describe('action wording', () => {
         it('should label a warning operation "Warn" rather than "Delete"', () => {
-            const operation = createAgeBasedOperation('warnOldCoursesReset', 'warn');
+            const { action } = createAgeBasedOperation('warnOldCoursesReset', 'warn');
 
-            expect(cleanupActionLabelKey(operation.action)).toBe('entity.action.warn');
-            expect(cleanupActionSeverity(operation.action)).toBe('warn');
-            expect(cleanupActionIcon(operation.action).iconName).toBe('triangle-exclamation');
+            expect(CLEANUP_ACTION_PRESENTATION[action].labelKey).toBe('entity.action.warn');
+            // A warning destroys nothing on its own, so it must not carry the red of an irreversible deletion.
+            expect(CLEANUP_ACTION_PRESENTATION[action].severity).toBe('warn');
+            expect(CLEANUP_ACTION_PRESENTATION[action].icon.iconName).toBe('triangle-exclamation');
         });
 
         it('should label a reset operation "Reset" rather than "Delete"', () => {
-            const operation = createAgeBasedOperation('resetOldCourses', 'reset');
+            const { action } = createAgeBasedOperation('resetOldCourses', 'reset');
 
-            expect(cleanupActionLabelKey(operation.action)).toBe('entity.action.reset');
+            expect(CLEANUP_ACTION_PRESENTATION[action].labelKey).toBe('entity.action.reset');
             // A reset is irreversible, so it keeps the destructive styling even though it is not a deletion.
-            expect(cleanupActionSeverity(operation.action)).toBe('danger');
-            expect(cleanupActionIcon(operation.action).iconName).toBe('rotate-left');
+            expect(CLEANUP_ACTION_PRESENTATION[action].severity).toBe('danger');
+            expect(CLEANUP_ACTION_PRESENTATION[action].icon.iconName).toBe('rotate-left');
         });
 
         it('should keep "Delete" for the deleting operations', () => {
-            expect(cleanupActionLabelKey(deleteOrphansOperation.action)).toBe('entity.action.delete');
-            expect(cleanupActionSeverity(deleteOrphansOperation.action)).toBe('danger');
-            expect(cleanupActionIcon(deleteOrphansOperation.action).iconName).toBe('trash');
+            const { action } = deleteOrphansOperation;
+
+            expect(CLEANUP_ACTION_PRESENTATION[action].labelKey).toBe('entity.action.delete');
+            expect(CLEANUP_ACTION_PRESENTATION[action].severity).toBe('danger');
+            expect(CLEANUP_ACTION_PRESENTATION[action].icon.iconName).toBe('trash');
         });
     });
 });

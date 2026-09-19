@@ -20,7 +20,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { TumUiButtonDirective, TumUiDatePickerComponent, TumUiTableDirective } from '@tumaet/ui-angular';
-import { cleanupActionIcon, cleanupActionLabelKey, cleanupActionSeverity } from 'app/admin/cleanup-service/cleanup-action.util';
+import { CLEANUP_ACTION_PRESENTATION } from 'app/admin/cleanup-service/cleanup-action.util';
 
 /** The unit a configured retention period is expressed in, used to pick the matching singular/plural label key. */
 type DurationUnit = 'day' | 'week' | 'month' | 'year';
@@ -115,9 +115,7 @@ export class CleanupServiceComponent implements OnInit {
     // Reading this in a computed re-resolves the description lines on a language change, the way the pipes would.
     private readonly languageChange = toSignal(this.translateService.onLangChange ?? EMPTY);
 
-    protected readonly cleanupActionIcon = cleanupActionIcon;
-    protected readonly cleanupActionLabelKey = cleanupActionLabelKey;
-    protected readonly cleanupActionSeverity = cleanupActionSeverity;
+    protected readonly actionPresentation = CLEANUP_ACTION_PRESENTATION;
 
     // Maps each client operation to the server CleanupJobType.label() it corresponds to. The names differ for
     // several jobs (e.g. 'deleteOldRatedResults' -> server 'deleteRatedResults'), so the execution records must
@@ -153,8 +151,8 @@ export class CleanupServiceComponent implements OnInit {
     /** Whether the configuration request failed, which turns "not loaded yet" from a transient state into a permanent one. */
     readonly configurationFailed = signal(false);
 
-    /** Whether an operation's description line quotes a cutoff, and therefore cannot be rendered without the configuration. */
-    protected readonly quotesCutoff = (name: OperationName): boolean => name in DESCRIPTION_SOURCES;
+    /** The operations whose description line quotes a cutoff, and therefore cannot be rendered without the configuration. */
+    protected readonly quotesCutoff: Partial<Record<OperationName, boolean>> = Object.fromEntries(Object.keys(DESCRIPTION_SOURCES).map((name) => [name, true]));
 
     /**
      * The interpolation values of each age-based operation's description line, with the cutoff and the period already
