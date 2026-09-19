@@ -7,7 +7,10 @@ import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getAuthoritySp
 import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getInternalOrExternalSpecification;
 import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getSearchTermSpecification;
 import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getWithOrWithoutRegistrationNumberSpecification;
+import static de.tum.cit.aet.artemis.account.repository.UserSpecs.inCourseWithRole;
 import static de.tum.cit.aet.artemis.account.repository.UserSpecs.notSoftDeleted;
+import static de.tum.cit.aet.artemis.account.repository.UserSpecs.orderByColumn;
+import static de.tum.cit.aet.artemis.account.repository.UserSpecs.searchByLoginNameEmailOrRegistrationNumber;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
@@ -45,6 +48,7 @@ import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecip
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.CourseRoleCountDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseRoleMembersSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserRoleDTO;
@@ -1726,4 +1730,20 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             GROUP BY ucr.course.id, ucr.role
             """)
     List<CourseRoleCountDTO> countStudentsByCourseIdsAndUserIds(@Param("courseIds") Set<Long> courseIds, @Param("userIds") Set<Long> userIds);
+
+    /**
+     * Returns a page of users in the given course that have the given role, matching the search term and sort from {@code search}.
+     *
+     * @param search   pagination, search term, and sort info
+     * @param courseId the ID of the course
+     * @param role     the {@link CourseRole} to filter by
+     * @return page of matching {@link User} entities
+     */
+    default Page<User> searchUsersInCourseRole(CourseRoleMembersSearchDTO search, long courseId, CourseRole role) {
+        // orderByColumn() applies the sort as a query.orderBy() side effect, so the Pageable itself stays unsorted.
+        Pageable pageable = PageRequest.of(search.page(), search.pageSize());
+        Specification<User> spec = notSoftDeleted().and(inCourseWithRole(courseId, role)).and(searchByLoginNameEmailOrRegistrationNumber(search.searchTerm()))
+                .and(orderByColumn(search.sortedColumn(), search.sortingOrder()));
+        return findAll(spec, pageable);
+    }
 }

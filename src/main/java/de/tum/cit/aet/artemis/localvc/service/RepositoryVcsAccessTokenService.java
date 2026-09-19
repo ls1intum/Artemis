@@ -178,8 +178,8 @@ public class RepositoryVcsAccessTokenService {
     /**
      * Eagerly creates the missing repository tokens for a single staff user across all (non-exam) programming exercises of the given course.
      * <p>
-     * Exam programming exercises and staff added through paths other than the course-management add endpoint (e.g. admin user management, CSV import) are intentionally not covered
-     * here; the lazy clone-dialog fallback creates their tokens on first use.
+     * Exam programming exercises and staff added through paths other than {@code CourseAccessService} (e.g. admin user management) are intentionally not covered here; the lazy
+     * clone-dialog fallback creates their tokens on first use.
      *
      * @param user   the staff user that just joined the course
      * @param course the course the user joined

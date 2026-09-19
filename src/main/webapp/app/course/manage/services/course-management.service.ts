@@ -4,9 +4,11 @@ import { CoursesForDashboardDTO, CoursesForDashboardResponseDTO, coursesForDashb
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
+import { PageableResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { User, UserNameAndLoginDTO, UserPublicInfoDTO } from 'app/account/user/user.model';
+import { CourseRoleMember } from 'app/course/shared/course-group/course-role-member.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { createRequestOption } from 'app/foundation/util/request.util';
@@ -30,6 +32,7 @@ import { CourseNotificationService } from 'app/notification/course-notification/
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
+import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import {
     CourseForEnrollmentDTO,
@@ -544,6 +547,43 @@ export class CourseManagementService implements OnDestroy {
     }
 
     /**
+     * Returns a page of course members for the given role, filtered and sorted by the search parameters.
+     * @param courseId       the id of the course
+     * @param courseRoleSlug the role path segment ('students', 'tutors', 'editors', 'instructors')
+     * @param search         pagination, search term, and sort info
+     */
+    getPagedUsersInCourseRole(courseId: number, courseRoleSlug: CourseRoleSlug, search: SearchTermPageableSearch): Observable<PageableResult<CourseRoleMember>> {
+        const params: Record<string, string | number> = {
+            page: search.page,
+            pageSize: search.pageSize,
+            sortingOrder: search.sortingOrder,
+            sortedColumn: search.sortedColumn,
+            searchTerm: search.searchTerm,
+        };
+        return this.http
+            .get<CourseRoleMember[]>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}/paged`, { params, observe: 'response' })
+            .pipe(map((res) => ({ content: res.body ?? [], totalElements: Number(res.headers.get('X-Total-Count') ?? 0) })));
+    }
+
+    /**
+     * Searches Artemis users by login, full name, email, or registration number for registration in the given course role.
+     * Users already in the role are marked with {@code isRegistered = true}.
+     * @param courseId       the id of the course
+     * @param courseRoleSlug the role path segment ('students', 'tutors', 'editors', 'instructors')
+     * @param searchTerm     the text entered by the instructor
+     * @param page           zero-based page index
+     * @param size           number of results per page
+     */
+    searchUsersForCourseRole(courseId: number, courseRoleSlug: CourseRoleSlug, searchTerm: string, page: number, size: number): Observable<UserSearchResult> {
+        return this.http
+            .get<UserForRegistration[]>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}/users/search`, {
+                params: { searchTerm, page, size },
+                observe: 'response',
+            })
+            .pipe(map((res) => ({ content: res.body ?? [], totalElements: Number(res.headers.get('X-Total-Count') ?? 0) })));
+    }
+
+    /**
      * finds users of the course corresponding to the name
      * @param courseId  the id of the course
      * @param name      the term to search users
@@ -612,16 +652,6 @@ export class CourseManagementService implements OnDestroy {
             map((res): HttpResponse<Submission[]> => res.clone({ body: res.body?.map(lockedCourseSubmissionFromDTO) ?? null })),
             filter((res) => !!res.body),
         );
-    }
-
-    /**
-     * Adds a single user to the course with the given role.
-     * @param courseId - the id of the course
-     * @param courseRoleSlug - the role path segment ('students', 'tutors', 'editors', 'instructors')
-     * @param login - login of the user to be added
-     */
-    addUserToCourseRole(courseId: number, courseRoleSlug: CourseRoleSlug, login: string): Observable<HttpResponse<void>> {
-        return this.http.post<void>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}/${login}`, {}, { observe: 'response' });
     }
 
     /**
