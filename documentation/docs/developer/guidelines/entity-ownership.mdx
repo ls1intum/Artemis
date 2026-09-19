@@ -356,12 +356,24 @@ UNION ALL SELECT 'text_block.submission_id',                   COUNT(*) FROM tex
 UNION ALL SELECT 'tutor_participation.assessed_exercise_id',   COUNT(*) FROM tutor_participation            WHERE assessed_exercise_id IS NULL
 UNION ALL SELECT 'tutorial_group.course_id',                   COUNT(*) FROM tutorial_group                 WHERE course_id IS NULL
 UNION ALL SELECT 'grading_scale (exactly one parent)',         COUNT(*) FROM grading_scale                  WHERE (course_id IS NULL) = (exam_id IS NULL)
-UNION ALL SELECT 'reaction (exactly one parent)',              COUNT(*) FROM reaction                       WHERE (post_id IS NULL) = (answer_post_id IS NULL);
+UNION ALL SELECT 'reaction (exactly one parent)',              COUNT(*) FROM reaction                       WHERE (post_id IS NULL) = (answer_post_id IS NULL)
+UNION ALL SELECT 'quiz_question.exercise_id (still answered)',  COUNT(*)
+  FROM submitted_answer sa
+    JOIN submission s ON s.id = sa.submission_id
+    JOIN participation p ON p.id = s.participation_id
+    JOIN quiz_question q ON q.id = sa.quiz_question_id
+  WHERE q.exercise_id IS NULL AND p.exercise_id IS NOT NULL;
 ```
 
-The last two rows are the alternative-parent shape: the check constraint requires exactly one of the
-two columns to be set, so both set and neither set are equally wrong, which is what comparing the two
-`IS NULL` tests finds.
+The `grading_scale` and `reaction` rows are the alternative-parent shape: the check constraint requires
+exactly one of the two columns to be set, so both set and neither set are equally wrong, which is what
+comparing the two `IS NULL` tests finds.
+
+The last row is the shape a count cannot summarise on its own. A quiz question without an exercise is
+removed by the migration, on the grounds that nothing lists it — but an answer to it whose submission
+still reaches a participation is listed by that participant, and the participation names the exercise
+the question belonged to. That is a recoverable parent rather than an orphan, so the changeset halts on
+it rather than deleting the answer. Reattach the question to the exercise its answers point at.
 
 To list the rows themselves rather than count them, replace `COUNT(*)` with the columns you need and
 drop the other branches. Attach each row to its parent where the parent can be established, and

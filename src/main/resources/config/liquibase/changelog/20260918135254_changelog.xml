@@ -78,11 +78,20 @@
     </changeSet>
 
     <changeSet id="20260918135254-05-quiz-questions-name-their-exercise" author="krusche">
+        <preConditions onFail="HALT" onFailMessage="A quiz question without an exercise is still answered in a submission whose participation names an exercise. That answer is listed by its participant and the participation says which exercise the question belonged to, so reattach those questions before upgrading. The query in documentation/docs/developer/guidelines/entity-ownership.mdx, under 'Rows that would stop a migration', lists them.">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM submitted_answer sa JOIN submission s ON s.id = sa.submission_id JOIN participation p ON p.id = s.participation_id JOIN quiz_question q ON q.id = sa.quiz_question_id WHERE q.exercise_id IS NULL AND p.exercise_id IS NOT NULL</sqlCheck>
+        </preConditions>
         <comment>A quiz question belongs to one quiz exercise, and a deleted exercise now takes its questions with it.</comment>
         <!--
         A question naming no exercise is reachable from nowhere. No exercise lists it, and the only rows that still
         point at it are submitted answers whose submissions have themselves lost their participation, so no participant
         lists those either. Both sides go together; a question that is still part of an exercise keeps its answers.
+
+        That last sentence is a statement about the rows, not something the old schema enforced, so it is checked
+        rather than assumed. An answer whose submission still reaches a participation naming an exercise is listed by
+        that participant, and the participation is evidence of the parent its question lost - which makes it a row to
+        reattach, not one to delete. Finding one halts the upgrade instead of guessing, as every recoverable orphan in
+        entity-ownership.mdx does.
         -->
         <sql>DELETE FROM submitted_answer WHERE quiz_question_id IN (SELECT id FROM quiz_question WHERE exercise_id IS NULL);</sql>
         <sql>DELETE FROM quiz_question WHERE exercise_id IS NULL;</sql>
