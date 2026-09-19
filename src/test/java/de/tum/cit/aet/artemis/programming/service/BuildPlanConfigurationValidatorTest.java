@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -68,6 +69,34 @@ class BuildPlanConfigurationValidatorTest {
         var plan = planOf(new BuildContainerDTO("tests", DOCKER_IMAGE, List.of(phase("compile"))), new BuildContainerDTO("Tests", DOCKER_IMAGE, List.of(phase("compile"))));
 
         assertThat(errorKeyOf(plan)).isEqualTo("duplicateBuildContainerName");
+    }
+
+    @Test
+    void testRejectsNullContainer() {
+        // a build plan inside the build config of an exercise update is not bean validated, so a null element reaches the validator
+        var plan = new BuildPlanPhasesDTO(null, null, Collections.singletonList(null));
+
+        assertThat(errorKeyOf(plan)).isEqualTo("invalidBuildContainerName");
+    }
+
+    @Test
+    void testRejectsBlankContainerImage() {
+        assertThat(errorKeyOf(planOf(new BuildContainerDTO("tests", "  ", List.of(phase("compile")))))).isEqualTo("blankDockerImage");
+        assertThat(errorKeyOf(new BuildPlanPhasesDTO(List.of(phase("compile")), " "))).isEqualTo("blankDockerImage");
+    }
+
+    @Test
+    void testAcceptsContainerWithoutImage() {
+        // null selects the default image of the exercise
+        assertThatCode(() -> BuildPlanConfigurationValidator.validate(planOf(new BuildContainerDTO("tests", null, List.of(phase("compile")))))).doesNotThrowAnyException();
+    }
+
+    @Test
+    void testRejectsEmptyRepositorySelection() {
+        // an empty selection would be dropped on write and come back as "all repositories of the exercise"
+        var container = new BuildContainerDTO("student_tests", DOCKER_IMAGE, List.of(), List.of(phase("test")));
+
+        assertThat(errorKeyOf(planOf(container))).isEqualTo("emptyBuildContainerRepositories");
     }
 
     @Test

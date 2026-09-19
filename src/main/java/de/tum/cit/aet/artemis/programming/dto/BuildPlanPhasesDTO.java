@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.core.config.ArtemisJacksonDefaults;
  * @param containers  the containers of the build plan, or null if this is a legacy single-container configuration
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record BuildPlanPhasesDTO(List<@Valid @NotNull BuildPhaseDTO> phases, String dockerImage, List<@Valid BuildContainerDTO> containers) {
+public record BuildPlanPhasesDTO(List<@Valid @NotNull BuildPhaseDTO> phases, String dockerImage, List<@Valid @NotNull BuildContainerDTO> containers) {
 
     /**
      * Parsing bounds for the user-provided build plan configuration JSON. A build plan configuration is a small list of
