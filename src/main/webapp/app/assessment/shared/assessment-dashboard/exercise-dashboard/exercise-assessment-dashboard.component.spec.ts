@@ -71,6 +71,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import dayjs from 'dayjs/esm';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
     let comp: ExerciseAssessmentDashboardComponent;
@@ -737,6 +738,49 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.togglingSecondCorrectionButton()).toBe(false);
         expect(comp.secondCorrectionEnabled()).toBe(secondCorrectionEnabled);
         expect(comp.numberOfCorrectionRoundsEnabled()).toBe(2);
+    });
+
+    it('should place the second correction toggle in the second correction round', () => {
+        const instructorExercise = deepClone(modelingExercise);
+        instructorExercise.isAtLeastInstructor = true;
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: instructorExercise, headers: new HttpHeaders() })));
+
+        fixture.detectChanges();
+        comp.numberOfAssessmentsOfCorrectionRounds.update((correctionRounds) => correctionRounds.slice(0, 1));
+        fixture.detectChanges();
+
+        const firstCorrectionRound = fixture.nativeElement.querySelector('[data-testid="correction-round-0"]');
+        const secondCorrectionRound = fixture.nativeElement.querySelector('[data-testid="correction-round-1"]');
+        const secondCorrectionToggles = fixture.nativeElement.querySelectorAll('[data-testid="toggle-second-correction"]');
+
+        expect(firstCorrectionRound.querySelector('[data-testid="toggle-second-correction"]')).toBeNull();
+        expect(secondCorrectionToggles).toHaveLength(1);
+        expect(secondCorrectionRound.querySelector('[data-testid="toggle-second-correction"]')).toBe(secondCorrectionToggles[0]);
+        expect(secondCorrectionRound.querySelector('[data-testid="correction-round-header"].mb-3.flex.w-full.items-center.justify-between')).not.toBeNull();
+    });
+
+    it('should show the second correction toggle before the instructor participates', () => {
+        const instructorExercise = deepClone(modelingExercise);
+        instructorExercise.isAtLeastInstructor = true;
+        instructorExercise.tutorParticipations = [{ status: TutorParticipationStatus.NOT_PARTICIPATED }];
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: instructorExercise, headers: new HttpHeaders() })));
+
+        fixture.detectChanges();
+
+        const secondCorrectionRound = fixture.nativeElement.querySelector('[data-testid="correction-round-1"]');
+
+        expect(secondCorrectionRound.querySelector('[data-testid="toggle-second-correction"]')).not.toBeNull();
+    });
+
+    it('should not add configured correction rounds to test runs', () => {
+        comp.exam.set(exam);
+        comp.numberOfAssessmentsOfCorrectionRounds.update((correctionRounds) => correctionRounds.slice(0, 1));
+
+        expect(comp.correctionRoundIndices()).toEqual([0, 1]);
+
+        comp.isTestRun.set(true);
+
+        expect(comp.correctionRoundIndices()).toEqual([0]);
     });
 
     it('should check if complaint locked', () => {
