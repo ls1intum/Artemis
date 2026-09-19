@@ -25,9 +25,6 @@ describe('DataCleanupService', () => {
     const mockDate = dayjs();
     const mockExecutionRecord: CleanupServiceExecutionRecordDTO = { executionDate: mockDate, jobType: 'deleteOrphans' };
     const mockOrphanCount: OrphanCleanupCountDTO = {
-        orphanFeedback: 2,
-        orphanLongFeedbackText: 3,
-        orphanTextBlock: 1,
         orphanStudentScore: 1,
         orphanTeamScore: 1,
         orphanFeedbackForOrphanResults: 0,
