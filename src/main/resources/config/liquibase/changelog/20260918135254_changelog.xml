@@ -43,6 +43,13 @@
         Feedback that names no result is reachable from nowhere: it is only ever listed through the result that owns
         it, and the row carries no evidence of which result it was written for. The cleanup that used to remove these
         rows goes with this changeset, because the schema no longer lets them appear.
+
+        What hangs off such a row goes with it or keeps its own parent, and the two foreign keys already say which.
+        long_feedback_text cascades, because feedback is all it belongs to. text_block sets its feedback_id to null,
+        because a text block belongs to its submission - submission_id is NOT NULL - and the feedback is a reference
+        to whatever assessed that segment. So the block survives the delete still listed by its submission, having
+        lost only a pointer to a row nothing could reach. Deleting it instead would take a live submission's
+        segmentation with it.
         -->
         <sql>DELETE FROM feedback WHERE result_id IS NULL;</sql>
         <!--
