@@ -4,96 +4,167 @@ title: Useful Database Commands
 sidebar_label: Database Tips
 ---
 
-import Callout from "../../src/components/Callout/Callout";
-import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Callout from '../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../src/components/Callout/Callout.types';
 
 ## Changing the Version Control System URL
 
 This might be useful when the version control system changed its base-url but all repositories are still present there.
+
 ```sql
 update participation
 set repository_url = replace(repository_url, 'some.old.domain.com', 'your.new.vcs.domain')
 where repository_url is not null;
 ```
 
----
-
 ## Migrating MySQL Data to PostgreSQL
 
 <Callout variant={CalloutVariant.warning}>
 
-  Do *not* use <a href="https://pgloader.io/">pgloader</a> to convert the database from MySQL to PostgreSQL. This results in a database schema that is not compatible with future migrations. PgLoader converts constraint names into all-lowercase. The Liquibase migrations assume that they have got their original name which contains the case-sensitive prefix `FK`.
+Do _not_ point Artemis at the database <a href="https://pgloader.io/">pgloader</a> writes. Its schema is not compatible with future migrations: pgloader converts constraint names into all-lowercase, while the Liquibase changelogs expect the original names, which contain the case-sensitive prefix `FK`. It also converts MySQL `enum` columns into PostgreSQL enum types, where Artemis declares plain `varchar` columns, and it truncates index names that exceed PostgreSQL's 63 character limit.
+
+The merge in step 7 is what resolves all of this. It keeps the data pgloader transferred and discards the schema pgloader generated, taking the schema from Artemis instead. Follow the steps through to the end rather than stopping after step 4.
 
 </Callout>
 
+### Planning the maintenance window
+
+The whole procedure is dominated by step 1, the Liquibase migration, and within it by the changesets that rewrite the largest tables. Everything after it is comparatively quick: transferring the data and importing the merged dump scale with the size of the database, but do not depend on how much history it holds.
+
+Two figures are worth measuring on a copy of the database before the window, because they set the length of the longest step:
+
+```sql
+SELECT COUNT(*) FROM feedback WHERE test_case_id IS NOT NULL;
+SELECT COUNT(*) FROM result WHERE submission_id IS NULL;
+```
+
+The first drives a single unbatched `DELETE` that cannot be resumed part way. On a developer machine it clears roughly 20,000 rows per second, so a database with tens of millions of matching rows should be expected to spend a good part of an hour in that one statement. It runs as one transaction, so an interruption rolls all of it back and the rollback takes time of its own.
+
+### Steps
+
 1. Start Artemis at least once in version `V` ≧ 6.0.0 or greater to make sure the current database schema is PostgreSQL-compatible.
+
+<Callout variant={CalloutVariant.warning}>
+
+Artemis still points at MySQL for this step, so the configuration has to say so:
+
+```yaml
+spring:
+    jpa:
+        database: MYSQL
+```
+
+`application-prod.yml` sets `spring.jpa.database` to `POSTGRESQL` and switches off JDBC metadata access, so the dialect is not detected from the connection. Without this override Hibernate generates PostgreSQL SQL against MySQL, and every paginated or cast query fails. Remove the override again in step 5, once the datasource points at PostgreSQL.
+
+</Callout>
 
 2. Stop Artemis.
 
-3. Create a database backup using `mysqldump --all-databases Artemis > Artemis.sql`.
-This dump is called `Artemis.sql` in the following steps.
+3. Create a database backup using `mysqldump --databases Artemis > Artemis.sql`.
+   This dump is called `Artemis.sql` in the following steps.
+
+<Callout variant={CalloutVariant.info}>
+
+Use `--databases Artemis` rather than `--all-databases`, so the dump holds the Artemis schema alone. `--all-databases` also carries MySQL's own `mysql` and `sys` databases, including the accounts and privileges in `mysql.user`, which must not be restored onto another server.
+
+</Callout>
 
 4. Copy the `docker-compose.yml` file into the same directory as the `Artemis.sql` database dump
-and run the following commands to convert the `Artemis.sql` dump into `Artemis.pg.sql` that is usable by PostgreSQL.
+   and run the following commands to convert the `Artemis.sql` dump into `Artemis.pg.sql` that is usable by PostgreSQL.
 
 **docker-compose.yml with helper containers for MySQL and PostgreSQL:**
 
 <Callout variant={CalloutVariant.warning}>
 
-  The temporary MySQL helper below is deliberately pinned to **8.0** and is *not* kept in sync with the
-  MySQL version Artemis itself runs on. `pgloader` only implements the `mysql_native_password`
-  authentication plugin, which MySQL **disabled by default in 8.4** and **removed in 9.0**. So the
-  `pgloader` step below fails with `Condition QMYND:MYSQL-UNSUPPORTED-AUTHENTICATION was signalled`
-  against a default MySQL 8.4 (where the plugin can still be switched back on with
-  `--mysql-native-password=ON`) and against any MySQL 9.x (where it is gone for good), and neither
-  `caching_sha2_password` (the default) nor `sha256_password` is a usable alternative.
-  This container is a throwaway format converter that only ever talks to `pgloader` on a local Docker
-  network, so running an older MySQL here is safe — but do not copy this snippet as a template for a
-  real Artemis deployment.
+The temporary MySQL helper below is deliberately pinned to **8.0** and is _not_ kept in sync with the
+MySQL version Artemis itself runs on. `pgloader` only implements the `mysql_native_password`
+authentication plugin, which MySQL **disabled by default in 8.4** and **removed in 9.0**. So the
+`pgloader` step below fails with `Condition QMYND:MYSQL-UNSUPPORTED-AUTHENTICATION was signalled`
+against a default MySQL 8.4 (where the plugin can still be switched back on with
+`--mysql-native-password=ON`) and against any MySQL 9.x (where it is gone for good), and neither
+`caching_sha2_password` (the default) nor `sha256_password` is a usable alternative.
+This container is a throwaway format converter that only ever talks to `pgloader` on a local Docker
+network, so running an older MySQL here is safe, but do not copy this snippet as a template for a
+real Artemis deployment.
 
 </Callout>
 
 ```yaml
-   services:
-       mysql:
-           image: docker.io/library/mysql:8.0.46
-           environment:
-               - MYSQL_DATABASE=Artemis
-               - MYSQL_ALLOW_EMPTY_PASSWORD=yes
-           # Bind to localhost only: this helper runs with an empty root password and TLS disabled,
-           # so it must never be reachable from outside the host.
-           ports:
-               - 127.0.0.1:3306:3306
-           command: >
-               mysqld
-                   --lower_case_table_names=1 --skip-ssl
-                   --character_set_server=utf8mb4
-                   --collation-server=utf8mb4_unicode_ci
-                   --explicit_defaults_for_timestamp
-                   --default-authentication-plugin=mysql_native_password
-           networks:
-               - db-migration
+services:
+    mysql:
+        image: docker.io/library/mysql:8.0.46
+        environment:
+            - MYSQL_DATABASE=Artemis
+            - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+        # Bind to localhost only: this helper runs with an empty root password and TLS disabled,
+        # so it must never be reachable from outside the host.
+        ports:
+            - 127.0.0.1:3306:3306
+        command: >
+            mysqld
+                --lower_case_table_names=1 --skip-ssl
+                --character_set_server=utf8mb4
+                --collation-server=utf8mb4_unicode_ci
+                --explicit_defaults_for_timestamp
+                --default-authentication-plugin=mysql_native_password
+                --skip-log-bin
+                --innodb_buffer_pool_size=8G
+                --innodb_redo_log_capacity=4G
+                --innodb_flush_log_at_trx_commit=2
+                --max_allowed_packet=1G
+        volumes:
+            - migration-mysql-data:/var/lib/mysql
+        networks:
+            - db-migration
 
-       postgres:
-           image: docker.io/library/postgres:18.6-alpine
-           environment:
-               - POSTGRES_USER=root
-               - POSTGRES_DB=Artemis
-               - POSTGRES_HOST_AUTH_METHOD=trust
-           # Bind to localhost only: POSTGRES_HOST_AUTH_METHOD=trust accepts any connection without
-           # a password, so this must never be reachable from outside the host.
-           ports:
-               - 127.0.0.1:5432:5432
-           networks:
-               - db-migration
+    postgres:
+        image: docker.io/library/postgres:18.6-alpine
+        environment:
+            - POSTGRES_USER=root
+            - POSTGRES_DB=Artemis
+            - POSTGRES_HOST_AUTH_METHOD=trust
+            - TZ=UTC
+            - PGTZ=UTC
+        # Bind to localhost only: POSTGRES_HOST_AUTH_METHOD=trust accepts any connection without
+        # a password, so this must never be reachable from outside the host.
+        ports:
+            - 127.0.0.1:5432:5432
+        command: >
+            postgres
+                -c shared_buffers=4GB
+                -c maintenance_work_mem=2GB
+                -c max_wal_size=8GB
+                -c synchronous_commit=off
+        volumes:
+            - migration-postgres-data:/var/lib/postgresql
+        networks:
+            - db-migration
 
-   networks:
-       db-migration:
-           driver: "bridge"
-           name: artemis-db-migration
+volumes:
+    migration-mysql-data:
+    migration-postgres-data:
+
+networks:
+    db-migration:
+        driver: 'bridge'
+        name: artemis-db-migration
 ```
 
+<Callout variant={CalloutVariant.info}>
+
+Four details in that file are easy to get wrong and expensive to discover late:
+
+- **`--skip-log-bin`.** MySQL 8.0 enables the binary log by default and synchronises it on every commit. This helper has no replica and no point-in-time recovery, so every byte of it is waste: it roughly doubles the space the import needs and slows it down noticeably.
+- **The InnoDB settings.** Stock MySQL uses a 128 MB buffer pool, which turns a multi-gigabyte restore into an overnight job. These are import-time settings for a throwaway container and are not advice for a real deployment.
+- **`/var/lib/postgresql`, not `/var/lib/postgresql/data`.** PostgreSQL 18 keeps its cluster in a major-version subdirectory. Mounting the old path makes the image refuse to start, reporting `there appears to be PostgreSQL data in /var/lib/postgresql/data (unused mount/volume)`.
+- **`TZ=UTC` and `PGTZ=UTC`.** MySQL `DATETIME` has no timezone, and pgloader writes the converted values with the session's offset. Artemis declares those columns as `timestamp without time zone`, so the offset is dropped on import. As long as it is `+00` the value is preserved; under any other session timezone every timestamp in the database shifts, silently and without an error.
+
+The named volumes are not in the original snippet either. Without them a container restart discards an import that can take a long time to repeat.
+
+</Callout>
+
 **Commands to transform the MySQL dump into a PostgreSQL one:**
+
 ```bash
    #! /usr/bin/env bash
 
@@ -104,7 +175,9 @@ and run the following commands to convert the `Artemis.sql` dump into `Artemis.p
    docker compose exec -T mysql mysql < Artemis.sql
 
    # use pgloader to transfer data from MySQL to Postgres
-   docker run --rm --network=artemis-db-migration docker.io/dimitri/pgloader pgloader mysql://root@mysql/Artemis postgresql://root@postgres/Artemis
+   docker run --rm --platform linux/amd64 --network=artemis-db-migration \
+       -v "$PWD/pgloader.load:/tmp/pgloader.load:ro" \
+       docker.io/dimitri/pgloader pgloader /tmp/pgloader.load
 
    # dump the Postgres data in a format that can be imported in the actual database
    docker compose exec -T postgres pg_dump -Ox Artemis > Artemis.pg.sql
@@ -113,22 +186,72 @@ and run the following commands to convert the `Artemis.sql` dump into `Artemis.p
    docker compose down
 ```
 
-<Callout variant={CalloutVariant.info}>
+**pgloader.load, in the same directory:**
 
-  Alternatively, you could use some temporary database on your PostgreSQL instance that can be deleted afterwards to migrate the data directly from your production MySQL into there. Use this temporary PostgreSQL database to create the `Artemis.pg.sql` dump that can be imported into the production database after merging with the proper schema. In that case the `pgloader` command in the steps above should work similarly without the `--network` flag and adapted database connection URLs. For `pg_dump`, add the necessary flags to connect to your database *in addition to* `-Ox`.
+```
+   LOAD DATABASE
+        FROM     mysql://root@mysql/Artemis
+        INTO postgresql://root@postgres/Artemis
 
-</Callout>
+    WITH include drop, create tables, create indexes, reset sequences, foreign keys,
+         workers = 2, concurrency = 1,
+         prefetch rows = 500, batch rows = 500, batch size = 8MB
 
-5. Update the Artemis config to connect to an *empty* new PostgreSQL database (see [Connecting Artemis to PostgreSQL](#connecting-artemis-to-postgresql)).
-Start Artemis, wait until it has finished starting up and created the schema, and stop it again.
+    SET maintenance_work_mem to '512MB', work_mem to '48MB';
+```
 
 <Callout variant={CalloutVariant.warning}>
 
-  Use the same version `V` that was connected to MySQL before.
+The command file is not optional for a database of any size. Given source and target on the command line instead, pgloader reads 100,000 rows into memory at a time, and the `dimitri/pgloader` image is built with a 1 GB SBCL heap that cannot be raised from the command line. Artemis stores plenty of wide rows, so one batch is enough to exhaust it. pgloader then crashes into the SBCL low-level debugger:
+
+```
+Heap exhausted during garbage collection: 13152 bytes available, 14880 requested.
+           Dynamic-space-size bytes =    1073741824
+fatal error encountered in SBCL pid 1 tid 12:
+Heap exhausted, game over.
+```
+
+This happens _after_ the schema and the first few gigabytes have been written, so the target looks plausibly populated and is in fact truncated. Smaller batches keep it inside the heap. `include drop` makes the command safe to re-run: it clears a partially loaded target first.
+
+`--platform linux/amd64` is needed because the image is published for `amd64` only. On an `arm64` machine it then runs under emulation.
+
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+
+Both of those are properties of the image rather than of pgloader, so installing pgloader on the host avoids them: your build runs natively, and its heap is whatever your distribution compiled it with rather than the image's fixed 1 GB. Install it with your package manager (`brew install pgloader` on macOS) and run `pgloader pgloader.load` in place of the `docker run` line.
+
+The host is not on the `artemis-db-migration` network, so it reaches the two containers through their published ports instead of by container name. Change the two URLs in `pgloader.load` accordingly, and leave the rest of the file as it is:
+
+```
+   LOAD DATABASE
+        FROM     mysql://root@localhost/Artemis
+        INTO postgresql://root@localhost/Artemis
+```
+
+Keep the `WITH` settings even here. A larger heap raises the ceiling rather than removing it, and the batch sizes are what keep a run inside whatever that ceiling turns out to be.
+
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+
+Alternatively, you could use some temporary database on your PostgreSQL instance that can be deleted afterwards to migrate the data directly from your production MySQL into there. Use this temporary PostgreSQL database to create the `Artemis.pg.sql` dump that can be imported into the production database after merging with the proper schema. In that case the `pgloader` command in the steps above should work similarly without the `--network` flag and adapted database connection URLs. For `pg_dump`, add the necessary flags to connect to your database _in addition to_ `-Ox`.
+
+Note that pgloader names the target schema after the source database. The helper above passes `--lower_case_table_names=1`, so that schema is called `artemis`; a MySQL server started without it reports the database as `Artemis` and the schema is named accordingly. `merge.py` below detects the name rather than assuming it, so either works.
+
+</Callout>
+
+5. Update the Artemis config to connect to an _empty_ new PostgreSQL database (see [Connecting Artemis to PostgreSQL](#connecting-artemis-to-postgresql)).
+   Start Artemis, wait until it has finished starting up and created the schema, and stop it again.
+
+<Callout variant={CalloutVariant.warning}>
+
+Use the same version `V` that was connected to MySQL before.
 
 </Callout>
 
 6. Dump the schema Artemis has created on the PostgreSQL server in the previous step using
+
 ```bash
    pg_dump -Ox Artemis > empty.pg.sql
 ```
@@ -138,6 +261,7 @@ Start Artemis, wait until it has finished starting up and created the schema, an
 Use the following script like `python3 ./merge.py > merged.pg.sql` to create the merged database dump.
 
 **merge.py database dump merge script:**
+
 ```python
    #! /usr/bin/env python3
 
@@ -151,9 +275,17 @@ Use the following script like `python3 ./merge.py > merged.pg.sql` to create the
    MySQL to PostgreSQL using pgloader.
 
    It is merged so that the schema definitions are taken from `empty.pg.sql` and
-   the actual data comes from `Artemis.pg.sql`. The script assumes the order of
-   operations in the dumps: first the schema is created, then data is inserted,
-   and finally foreign key constraints and indices are added.
+   the actual data comes from `Artemis.pg.sql`. That is what undoes pgloader's
+   lowercasing of constraint names and its conversion of MySQL enum columns into
+   PostgreSQL enum types.
+
+   Two tables are taken from the schema side as well: databasechangelog and
+   databasechangeloglock. Their contents describe the schema rather than the
+   application's data, and both the list of applied changesets and the checksum
+   recorded for each of them differ between MySQL and PostgreSQL. A changeset
+   written for one database only is absent from the other's list, and a changeset
+   whose content varies by database, either through a dbms attribute or through a
+   property that resolves to a different value, hashes differently.
 
    Both the empty database dump and the original MySQL data must come from an
    _identical_ version of Artemis. Otherwise, the data to be inserted might not
@@ -161,35 +293,95 @@ Use the following script like `python3 ./merge.py > merged.pg.sql` to create the
 
    """
 
+   import re
    from pathlib import Path
-   from typing import Iterator
+   from typing import Iterator, Optional
 
+   # Tables whose contents describe the schema, not the application's data.
+   SCHEMA_OWNED_TABLES = ("databasechangelog", "databasechangeloglock")
 
-   def _fix_schema(line: str) -> str:
-       if line.startswith("COPY artemis."):
-           return line.replace("COPY artemis.", "COPY public.", 1)
+   # Matches: COPY artemis.feedback (id, ...) FROM stdin;
+   _COPY = re.compile(r'^COPY\s+(?:"?(?P<schema>[^".\s]+)"?\.)?"?(?P<table>[^".\s]+)"?\s*\(')
 
-       if line.startswith("SELECT"):
-           old = "SELECT pg_catalog.setval('artemis."
-           new = "SELECT pg_catalog.setval('public."
-           return line.replace(old, new, 1)
+   def _copied_table(line: str) -> Optional[str]:
+       match = _COPY.match(line)
+       return match.group("table").lower() if match else None
 
-       return line
-
-
-   def _extract_data(data_file_path: Path) -> None:
+   def _detect_schema(data_file_path: Path) -> str:
+       """pgloader names the schema after the MySQL database it read from."""
        with open(data_file_path, encoding="utf-8") as data_file:
-           copy_found = False
            for line in data_file:
-               if not copy_found and line.startswith("COPY "):
-                   copy_found = True
-               if copy_found and line.startswith("ALTER TABLE "):
-                   break
-               if copy_found:
-                   print(_fix_schema(line), end="")
+               match = _COPY.match(line)
+               if match and match.group("schema"):
+                   return match.group("schema")
+       raise SystemExit(f"{data_file_path} contains no COPY statement")
 
+   def _to_public(line: str, schema_prefix: "re.Pattern[str]") -> str:
+       return schema_prefix.sub(r"\1public.", line, count=1)
+
+   def _schema_prefix(schema: str) -> "re.Pattern[str]":
+       """Matches the schema qualifier pgloader wrote, quoted or not.
+
+       pg_dump quotes an identifier that would not survive being folded to lower
+       case, so a database left under the default lower_case_table_names=0 gives
+       COPY "Artemis".feedback while the helper's setting gives COPY artemis.feedback.
+       """
+       return re.compile(r"(COPY |setval\(')\"?" + re.escape(schema) + r"\"?\.")
+
+   def _extract_data(data_file_path: Path, schema_prefix: "re.Pattern[str]") -> None:
+       """Print the table data and the sequence positions from the pgloader dump.
+
+       COPY blocks are tracked explicitly, because in PostgreSQL's text format
+       every data row is a line of its own: a row whose first column happens to
+       begin with "ALTER TABLE " would otherwise be mistaken for the end of the
+       data section and silently truncate everything after it.
+       """
+       with open(data_file_path, encoding="utf-8") as data_file:
+           data_started = False
+           inside_block = False
+           skipping = False
+           for line in data_file:
+               if inside_block:
+                   block_ended = line.rstrip("\n") == "\\."
+                   if not skipping:
+                       print(line, end="")
+                   if block_ended:
+                       inside_block = False
+                       skipping = False
+                   continue
+
+               table = _copied_table(line)
+               if table is not None:
+                   data_started = True
+                   inside_block = True
+                   skipping = table in SCHEMA_OWNED_TABLES
+                   if not skipping:
+                       print(_to_public(line, schema_prefix), end="")
+                   continue
+
+               if not data_started:
+                   continue
+               if line.startswith("ALTER TABLE "):
+                   break
+               print(_to_public(line, schema_prefix), end="")
+
+   def _extract_schema_owned_data(schema_file_path: Path) -> None:
+       """Print databasechangelog and databasechangeloglock from the schema dump."""
+       with open(schema_file_path, encoding="utf-8") as schema_file:
+           inside_block = False
+           for line in schema_file:
+               if inside_block:
+                   print(line, end="")
+                   if line.rstrip("\n") == "\\.":
+                       inside_block = False
+                   continue
+               if _copied_table(line) in SCHEMA_OWNED_TABLES:
+                   inside_block = True
+                   print(line, end="")
 
    def _merge_files(*, schema_file_path: Path, data_file_path: Path) -> None:
+       schema_prefix = _schema_prefix(_detect_schema(data_file_path))
+
        with open(schema_file_path, encoding="utf-8") as schema_file:
            schema_file_iter: Iterator[str] = iter(schema_file)
            for line in schema_file_iter:
@@ -197,7 +389,8 @@ Use the following script like `python3 ./merge.py > merged.pg.sql` to create the
                    break
                print(line, end="")
 
-           _extract_data(data_file_path)
+           _extract_data(data_file_path, schema_prefix)
+           _extract_schema_owned_data(schema_file_path)
 
            alter_table_found = False
            for line in schema_file_iter:
@@ -205,7 +398,6 @@ Use the following script like `python3 ./merge.py > merged.pg.sql` to create the
                    alter_table_found = True
                if alter_table_found:
                    print(line, end="")
-
 
    def main() -> None:
        print("-- ensure fresh schema")
@@ -217,7 +409,6 @@ Use the following script like `python3 ./merge.py > merged.pg.sql` to create the
            schema_file_path=Path("empty.pg.sql"), data_file_path=Path("Artemis.pg.sql")
        )
 
-
    if __name__ == "__main__":
        main()
 ```
@@ -226,19 +417,64 @@ Use the following script like `python3 ./merge.py > merged.pg.sql` to create the
 
 <Callout variant={CalloutVariant.warning}>
 
-  The schema `public` of the target database will be deleted and completely overwritten when importing.
+The schema `public` of the target database will be deleted and completely overwritten when importing.
 
 </Callout>
 
----
+9. Start Artemis against the new PostgreSQL database and confirm that it reports readiness. Liquibase should apply no changesets at all: the schema came from step 5, and `merge.py` carried over the record of how it was built.
+
+<Callout variant={CalloutVariant.info}>
+
+Two checks are worth running once before the instance is handed back to users, because both failure modes are quiet.
+
+**Every table's row count**, to compare against the same figures taken from MySQL before the migration. These have to be exact counts. `pg_stat_user_tables.n_live_tup` and MySQL's `information_schema.TABLES.TABLE_ROWS` are both estimates that a freshly restored database has not updated yet, so neither of them detects a transfer that lost rows.
+
+```sql
+-- PostgreSQL, after the migration
+SELECT relname AS table_name,
+       (xpath('/row/cnt/text()',
+              query_to_xml(format('SELECT COUNT(*) AS cnt FROM public.%I', relname),
+                           false, true, '')))[1]::text::bigint AS row_count
+FROM pg_stat_user_tables
+WHERE schemaname = 'public'
+ORDER BY relname;
+```
+
+`pg_stat_user_tables` lists every non-system schema, so the filter matters here: if the pgloader staging schema is still present in the same database, its tables would otherwise be counted as though they were in `public`, which either fails or counts the same table twice.
+
+```bash
+# MySQL, before the migration, for the same comparison
+mysql -N -B -D Artemis -e "SHOW TABLES" | while read -r table; do
+    printf '%s\t%s\n' "$table" \
+        "$(mysql -N -B -D Artemis -e "SELECT COUNT(*) FROM \`$table\`")"
+done | sort
+```
+
+Every table has to match, with one expected exception: `databasechangelog` and `databasechangeloglock` differ on purpose, because `merge.py` takes them from the PostgreSQL side. If Artemis has already started and created its internal admin account, the tables holding that account and its audit trail differ by those few rows as well.
+
+**Every identity sequence**, which has to sit above the largest id already in its table:
+
+```sql
+SELECT c.relname AS table_name, a.attname AS column_name
+FROM pg_class c
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+  JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum > 0 AND NOT a.attisdropped
+WHERE n.nspname = 'public' AND c.relkind = 'r'
+  AND pg_get_serial_sequence(c.oid::regclass::text, a.attname) IS NOT NULL;
+```
+
+For each sequence this returns, `nextval` has to be greater than the largest id in the table. pgloader repositions the sequences and `merge.py` carries the new positions over, so this should hold everywhere; if it does not, the first write to that table after go-live fails with a duplicate key error.
+
+</Callout>
 
 ## Connecting Artemis to PostgreSQL
 
 In your Artemis config the following values might need to be added/updated to connect to PostgreSQL instead of MySQL:
+
 ```yaml
 spring:
     datasource:
-        url: "jdbc:postgresql://<IP/HOSTNAME of PostgreSQL database host>/Artemis?ssl=false"
+        url: 'jdbc:postgresql://<IP/HOSTNAME of PostgreSQL database host>/Artemis?ssl=false'
         username: <YOUR_DB_USER>
         password: <YOUR_DB_PASSWORD>
     jpa:

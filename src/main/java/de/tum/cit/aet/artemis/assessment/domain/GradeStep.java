@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 
 /**
@@ -33,6 +34,7 @@ public class GradeStep extends DomainObject {
     @ManyToOne
     @JsonIgnoreProperties(value = "gradeSteps", allowSetters = true)
     @JoinColumn(nullable = false)
+    @Parent
     private GradingScale gradingScale;
 
     @Column(name = "lower_bound_percentage")

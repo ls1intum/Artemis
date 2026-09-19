@@ -90,6 +90,12 @@ export class ExerciseSplitPanelComponent {
     readonly liveQuizStatusChange = output<LiveQuizParticipationStatus | undefined>();
 
     readonly quizSubmitDisabled = computed(() => this._quizComponent()?.isSubmitDisabled() ?? false);
+    // Exposes the active quiz component's mode as a reactive signal so parent templates
+    // can guard against stale submit-disabled state during the live→practice transition.
+    readonly quizComponentMode = computed(() => this._quizComponent()?.mode());
+    // The attempt state is cached per UI tick, so pair it with the mode the component reports right now.
+    readonly quizPracticeAttemptFinished = computed(() => this.quizComponentMode() === 'practice' && (this._quizComponent()?.practiceAttemptFinished() ?? false));
+    readonly quizPracticeInProgress = computed(() => this.exercise().type === ExerciseType.QUIZ && this.participationMode() === 'practice' && !this.quizPracticeAttemptFinished());
     readonly quizSubmitTitle = computed(() => this._quizComponent()?.submitTitleKey() ?? 'entity.action.submit');
     readonly quizLiveHeaderInfo = computed(() => this._quizComponent()?.liveHeaderInfo());
 
@@ -253,10 +259,23 @@ export class ExerciseSplitPanelComponent {
 
                 const type = exercise.type;
                 if (type === ExerciseType.QUIZ) {
-                    const targetSegment = mode === 'practice' ? 'practice' : 'live';
                     const currentSegment = this.route.firstChild?.snapshot.url[0]?.path;
-                    if (currentSegment !== targetSegment) {
-                        void this.router.navigate(['quiz-exercises', exercise.id, targetSegment], { relativeTo: this.route.parent });
+                    if (mode === 'practice') {
+                        // Already on a practice route — either viewing a result or a fresh attempt is in progress.
+                        // Do not re-navigate, so an in-progress attempt is never disrupted.
+                        if (currentSegment === 'practice') {
+                            return;
+                        }
+                        // Entering practice from another mode: show the latest practice result if a practice attempt exists,
+                        // otherwise start the first attempt. Gate on testRun so we never navigate with a graded participation id.
+                        const practiceParticipationId = participation?.testRun ? participation.id : undefined;
+                        if (practiceParticipationId) {
+                            void this.router.navigate(['quiz-exercises', exercise.id, 'practice', practiceParticipationId], { relativeTo: this.route.parent });
+                        } else {
+                            void this.router.navigate(['quiz-exercises', exercise.id, 'practice'], { relativeTo: this.route.parent });
+                        }
+                    } else if (currentSegment !== 'live') {
+                        void this.router.navigate(['quiz-exercises', exercise.id, 'live'], { relativeTo: this.route.parent });
                     }
                     return;
                 }
@@ -319,11 +338,18 @@ export class ExerciseSplitPanelComponent {
 
     restartPractice(): boolean {
         const quizComponent = this._quizComponent();
-        if (quizComponent && quizComponent.mode() === 'practice') {
-            quizComponent.restartPractice();
+        if (!quizComponent || quizComponent.mode() !== 'practice') {
+            return false;
+        }
+        const params = this.route.firstChild?.snapshot.paramMap;
+        if (params?.get('participationId') || params?.get('submissionId')) {
+            // The URL still names the attempt that was opened, so restart on the bare route, which re-creates the
+            // quiz component — it starts the fresh attempt itself, free of the previous result.
+            void this.router.navigate(['quiz-exercises', this.exercise().id, 'practice'], { relativeTo: this.route.parent });
             return true;
         }
-        return false;
+        quizComponent.restartPractice();
+        return true;
     }
 
     onOutletActivate(component: unknown): void {

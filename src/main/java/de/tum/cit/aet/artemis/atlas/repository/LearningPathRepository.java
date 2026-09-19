@@ -77,17 +77,6 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
     long countLearningPathsOfEnrolledStudentsInCourse(@Param("courseId") long courseId);
 
     @Query("""
-            SELECT l
-            FROM LearningPath l
-            LEFT JOIN FETCH l.user u
-            LEFT JOIN FETCH u.learnerProfile lp
-            LEFT JOIN FETCH lp.courseLearnerProfiles clp
-            WHERE l.id = :learningPathId
-                AND clp.course.id = l.course.id
-            """)
-    Optional<LearningPath> findWithEagerUserAndLearnerProfileById(@Param("learningPathId") long learningPathId);
-
-    @Query("""
             SELECT lp
             FROM LearningPath lp
             WHERE lp.course.id = :courseId

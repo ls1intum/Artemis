@@ -105,11 +105,12 @@ describe('TumUiPopoverComponent', () => {
 
         it('starts from the side it was asked for', () => {
             fixture.componentRef.setInput('placement', 'top');
-            component.open(origin);
-            fixture.detectChanges();
 
-            // The animation grows the panel from the edge nearest its origin, which this attribute selects.
-            expect(panel()?.getAttribute('data-placement')).toBe('top');
+            component.open(origin);
+
+            // The signal rather than the rendered attribute: jsdom lays nothing out, so the overlay measures zero and
+            // CDK re-reports a fallback side the moment it positions the panel. The attribute is covered below.
+            expect(component['appliedPlacement']()).toBe('top');
         });
 
         it('follows the panel when there is no room and it is flipped', () => {
@@ -125,6 +126,7 @@ describe('TumUiPopoverComponent', () => {
             strategy.positionChanges.next({ connectionPair: { originX: 'center', originY: 'top', overlayX: 'center', overlayY: 'bottom' } });
             fixture.detectChanges();
 
+            // The animation grows the panel from the edge nearest its origin, which this attribute selects.
             expect(panel()?.getAttribute('data-placement')).toBe('top');
         });
     });

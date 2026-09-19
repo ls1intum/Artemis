@@ -71,6 +71,12 @@ public class JacksonDeserializerInitializationConfig {
 
     private void prime() {
         TypeFactory typeFactory = jsonMapper.getTypeFactory();
+        // The chains go first, from their outermost type. Resolving an entity on its own reads "{}", which never
+        // reaches a property, so a type the entity pulls in on the way can end up cached before it is resolved and
+        // the next reader gets a FailingDeserializer for one of its properties. Reading the chain first makes the
+        // outermost type the frame that resolves everything below it. They are read again after the entity types, so
+        // that an entity priming that reopens the cycle still fails here rather than in a test.
+        exerciseFailureChains(typeFactory);
         log.info("Priming Jackson deserializers for {} entity types", ENTITY_TYPES.size());
         for (Class<?> entityType : ENTITY_TYPES) {
             String name = entityType.getSimpleName();

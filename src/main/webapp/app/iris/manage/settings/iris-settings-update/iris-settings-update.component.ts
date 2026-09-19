@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -8,6 +8,7 @@ import { faClock, faUser } from '@fortawesome/free-regular-svg-icons';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { isEqual } from 'lodash-es';
 import { AccountService } from 'app/core/auth/account.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -81,6 +82,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     private irisSettingsService = inject(IrisSettingsService);
     private alertService = inject(AlertService);
     private accountService = inject(AccountService);
+    private featureToggleService = inject(FeatureToggleService);
     private translateService = inject(TranslateService);
 
     public courseId?: number;
@@ -302,6 +304,9 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         }
         return cloneWith(settings, {
             customInstructions: this.normalizeEmpty(settings.customInstructions),
+            // A never-opted-in course loads the flag as `false` (or absent, on a row predating the field). Coerce to
+            // a boolean so an unchanged off-course is not falsely flagged dirty against an explicit `false`.
+            proactiveStruggleEnabled: !!settings.proactiveStruggleEnabled,
         });
     }
 
@@ -366,11 +371,8 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
 
         const originalSettingsValue = this.originalSettings();
         if (!this.isAdmin()) {
-            // Non-admins can only change enabled, supportLevel and customInstructions.
-            // Restore original variant and rate limits to prevent unauthorized changes.
             if (originalSettingsValue) {
-                settingsToSave.variant = originalSettingsValue.variant;
-                settingsToSave.rateLimit = originalSettingsValue.rateLimit;
+                this.restoreAdminOnlyFields(settingsToSave, originalSettingsValue);
             }
         } else {
             // Admin: reconstruct rateLimit from form fields unless a caller only saves
@@ -451,9 +453,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         });
 
         if (!this.isAdmin()) {
-            // Non-admins cannot change variant or rate limits — restore the originals.
-            settingsToSave.variant = originalSettingsValue.variant;
-            settingsToSave.rateLimit = originalSettingsValue.rateLimit;
+            this.restoreAdminOnlyFields(settingsToSave, originalSettingsValue);
         } else if (this.isFormValid()) {
             // Admin with a valid rate-limit form: reconstruct rateLimit from the current form fields.
             settingsToSave.rateLimit = this.buildRateLimitForSave();
@@ -507,9 +507,9 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
      *
      * Stages the defaults into the `settings` signal, then calls `saveSettings()` so
      * the change is written to the server right away (no separate "Save Changes" step).
-     * Only the General-tab editable fields are reset: `supportLevel` and
-     * `customInstructions`. The `enabled` toggle (auto-saved separately) and the
-     * admin-only `variant` / `rateLimit` fields are left as they are.
+     * Only `supportLevel` and `customInstructions` are reset. The `enabled` toggle
+     * (auto-saved separately), the two proactive toggles and the admin-only
+     * `variant` / `rateLimit` fields are left as they are.
      *
      * No-ops if the General-tab fields already hold their default values, so an
      * idempotent click does not trigger an unnecessary network request.
@@ -570,6 +570,54 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
             this.settings.set(cloneWith(currentSettings, { variant: value }));
         }
     }
+
+    /**
+     * Put the admin-only fields back to what the server holds, for a save made by someone who may not change them.
+     * Both save paths go through here: keeping two lists in step failed once already, when an auto-save on the
+     * enabled toggle wrote back whatever the signal happened to hold for a flag this list had forgotten.
+     */
+    private restoreAdminOnlyFields(target: IrisCourseSettingsDTO, original: IrisCourseSettingsDTO): void {
+        target.variant = original.variant;
+        target.rateLimit = original.rateLimit;
+    }
+
+    /**
+     * Update the proactive-struggle flag in the settings signal (saved via the Save button).
+     */
+    updateProactiveStruggleEnabled(value: boolean): void {
+        const currentSettings = this.settings();
+        if (currentSettings) {
+            this.settings.set(cloneWith(currentSettings, { proactiveStruggleEnabled: value }));
+        }
+    }
+
+    /**
+     * Writes an EXPLICIT boolean, which is the point: the field's third state ("nobody ever decided") exists so a
+     * save from a client that does not know the field leaves the stored value alone, and touching the toggle is
+     * exactly the moment that stops being true.
+     */
+    updateLegacyBuildTriggersEnabled(value: boolean): void {
+        const currentSettings = this.settings();
+        if (currentSettings) {
+            this.settings.set(cloneWith(currentSettings, { legacyBuildTriggersEnabled: value }));
+        }
+    }
+
+    /**
+     * Whether this installation serves struggle detection, from the runtime toggle an admin can flip without a
+     * restart. A signal, not a one-time read, so the switch greys out the moment that happens.
+     */
+    readonly struggleAvailable = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.IrisProactiveStruggle), { initialValue: true });
+
+    /**
+     * Both proactive mechanisms armed: Artemis' own build/progress events and this course's struggle detection fire
+     * on the same build, from different pipelines, neither aware of the other. Not blocked, because the combination
+     * has to stay observable, but the instructor should not discover it by reading a chat transcript.
+     */
+    readonly bothProactiveMechanismsActive = computed(() => {
+        const currentSettings = this.settings();
+        return this.struggleAvailable() && !!currentSettings?.proactiveStruggleEnabled && (currentSettings?.legacyBuildTriggersEnabled ?? true);
+    });
 
     /**
      * Builds the rateLimit object for saving, preserving null semantics:

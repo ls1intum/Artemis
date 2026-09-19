@@ -271,13 +271,11 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
 
     private processFeedbackRequest(participation = this.participation) {
         this.courseExerciseService.requestFeedback(this.exercise().id!, participation!.id!).subscribe({
-            next: (updatedParticipation: StudentParticipation) => {
-                if (updatedParticipation) {
-                    if (this.participationId() === undefined || this.participationId() === participation?.id) {
-                        this.isFeedbackRequestPending.set(true);
-                    }
-                    this.alertService.success('artemisApp.exercise.feedbackRequestSent');
+            next: () => {
+                if (this.participationId() === undefined || this.participationId() === participation?.id) {
+                    this.isFeedbackRequestPending.set(true);
                 }
+                this.alertService.success('artemisApp.exercise.feedbackRequestSent');
             },
             error: (error: HttpErrorResponse) => {
                 this.alertService.error(`artemisApp.exercise.${error.error.errorKey}`);

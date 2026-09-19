@@ -4,6 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ALLOWED_CHECKOUT_DIRE
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -42,14 +44,14 @@ public class AuxiliaryRepositoryService {
      * @param programmingExercise      The programming exercise where the auxiliary repositories are added
      * @param newAuxiliaryRepositories The newly added auxiliary repositories
      */
-    public void validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(ProgrammingExercise programmingExercise, List<AuxiliaryRepository> newAuxiliaryRepositories) {
+    public void validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(ProgrammingExercise programmingExercise, Collection<AuxiliaryRepository> newAuxiliaryRepositories) {
         List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>(Objects
                 .requireNonNullElse(programmingExercise.getAuxiliaryRepositories(), new ArrayList<AuxiliaryRepository>()).stream().filter(repo -> repo.getId() != null).toList());
         for (AuxiliaryRepository repo : newAuxiliaryRepositories) {
             validateAuxiliaryRepository(programmingExercise.getProgrammingLanguage(), repo, auxiliaryRepositories, true);
             auxiliaryRepositories.add(repo);
         }
-        programmingExercise.setAuxiliaryRepositories(new ArrayList<>());
+        programmingExercise.setAuxiliaryRepositories(new LinkedHashSet<>());
         auxiliaryRepositories.forEach(programmingExercise::addAuxiliaryRepository);
     }
 
@@ -91,7 +93,7 @@ public class AuxiliaryRepositoryService {
                     programmingExercise.getAuxiliaryRepositories().stream().noneMatch(existingRepo -> existingRepo.getId().equals(repo.getId())));
             auxiliaryRepositories.add(repo);
         }
-        updatedExercise.setAuxiliaryRepositories(new ArrayList<>());
+        updatedExercise.setAuxiliaryRepositories(new LinkedHashSet<>());
         auxiliaryRepositories.forEach(updatedExercise::addAuxiliaryRepository);
     }
 
@@ -222,7 +224,18 @@ public class AuxiliaryRepositoryService {
      * @return true if the repository is an auxiliary repository of the exercise, false otherwise.
      */
     public boolean isAuxiliaryRepositoryOfExercise(String repositoryName, ProgrammingExercise exercise) {
-        return findAuxiliaryRepositoryIdOfExercise(repositoryName, exercise).isPresent();
+        return isAuxiliaryRepositoryOfExercise(repositoryName, exercise.getId());
+    }
+
+    /**
+     * Whether the exercise has an auxiliary repository by that name, for a caller that holds only the exercise's id.
+     *
+     * @param repositoryName the name of the auxiliary repository, as it appears in its repository uri
+     * @param exerciseId     the exercise the repository would belong to
+     * @return true if the exercise has such an auxiliary repository
+     */
+    public boolean isAuxiliaryRepositoryOfExercise(String repositoryName, long exerciseId) {
+        return findAuxiliaryRepositoryIdOfExercise(repositoryName, exerciseId).isPresent();
     }
 
     /**
@@ -233,7 +246,19 @@ public class AuxiliaryRepositoryService {
      * @return the id of that auxiliary repository, or empty if the exercise has none by that name
      */
     public Optional<Long> findAuxiliaryRepositoryIdOfExercise(String repositoryName, ProgrammingExercise exercise) {
-        List<AuxiliaryRepository> auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(exercise.getId());
+        return findAuxiliaryRepositoryIdOfExercise(repositoryName, exercise.getId());
+    }
+
+    /**
+     * Finds the id of the auxiliary repository of the given exercise that carries the given name, for a caller that
+     * holds only the exercise's id.
+     *
+     * @param repositoryName the name of the auxiliary repository, as it appears in its repository uri
+     * @param exerciseId     the exercise the repository belongs to
+     * @return the id of that auxiliary repository, or empty if the exercise has none by that name
+     */
+    public Optional<Long> findAuxiliaryRepositoryIdOfExercise(String repositoryName, long exerciseId) {
+        List<AuxiliaryRepository> auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(exerciseId);
         for (AuxiliaryRepository repo : auxiliaryRepositories) {
             if (repo.getName().equals(repositoryName)) {
                 return Optional.ofNullable(repo.getId());

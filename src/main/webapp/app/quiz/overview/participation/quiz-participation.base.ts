@@ -18,6 +18,8 @@ export abstract class QuizParticipationBase {
     abstract readonly submitTitleKey: Signal<string>;
     abstract readonly liveHeaderInfo: Signal<QuizLiveHeaderInfo | undefined>;
     abstract readonly mode: Signal<string>;
+    /** Whether the practice attempt is over: submitted, showing a result, or expired with nothing in flight. */
+    abstract readonly practiceAttemptFinished: Signal<boolean>;
     abstract restartPractice(): void;
     abstract readonly quizStartedEvent: OutputRef<void>;
     abstract readonly quizSubmittedEvent: OutputRef<QuizSubmission>;
