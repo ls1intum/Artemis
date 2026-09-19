@@ -99,7 +99,9 @@ describe('CleanupOperationModalComponent', () => {
                         countOldCoursesReset: vi.fn().mockReturnValue(of(new HttpResponse({ body: { courses: 2 } }))),
                         countOldFeedback: vi.fn().mockReturnValue(of(new HttpResponse({ body: { longFeedbackText: 1, textBlock: 2, feedback: 3 } }))),
                         countOldCourseSubmissionVersions: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockSubmissionVersionCounts }))),
+                        countNotEnrolledUsersWarning: vi.fn().mockReturnValue(of(new HttpResponse({ body: { users: 9, blockedUsers: 0 } }))),
                         countNotEnrolledUsers: vi.fn().mockReturnValue(of(new HttpResponse({ body: { users: 4 } }))),
+                        warnNotEnrolledUsers: vi.fn().mockReturnValue(of(new HttpResponse({}))),
                         countPlagiarismCases: vi.fn().mockReturnValue(of(new HttpResponse({ body: { plagiarismCases: 3 } }))),
                         deleteOrphans: vi.fn().mockReturnValue(of(new HttpResponse({}))),
                         deletePlagiarismComparisons: vi.fn().mockReturnValue(of(new HttpResponse({}))),
@@ -407,6 +409,46 @@ describe('CleanupOperationModalComponent', () => {
 
             expect(dataCleanupService.deletePlagiarismCases).toHaveBeenCalled();
             expect(component.operationExecuted()).toBe(true);
+        });
+
+        // Every age-based operation dispatches to its own pair of service calls; a wrong branch would silently run a
+        // different cleanup than the dialog announced.
+        const ageBasedDispatch = [
+            { name: 'warnOldCoursesReset', action: 'warn', count: 'countOldCoursesResetWarning', execute: 'warnOldCoursesReset' },
+            { name: 'resetOldCourses', action: 'reset', count: 'countOldCoursesReset', execute: 'resetOldCourses' },
+            { name: 'deleteOldFeedback', action: 'delete', count: 'countOldFeedback', execute: 'deleteOldFeedback' },
+            { name: 'deleteOldCourseSubmissionVersions', action: 'delete', count: 'countOldCourseSubmissionVersions', execute: 'deleteOldCourseSubmissionVersions' },
+            { name: 'warnNotEnrolledUsers', action: 'warn', count: 'countNotEnrolledUsersWarning', execute: 'warnNotEnrolledUsers' },
+            { name: 'deleteNotEnrolledUsers', action: 'delete', count: 'countNotEnrolledUsers', execute: 'deleteNotEnrolledUsers' },
+            { name: 'deletePlagiarismCases', action: 'delete', count: 'countPlagiarismCases', execute: 'deletePlagiarismCases' },
+        ] as const;
+
+        it.each(ageBasedDispatch)('should count and execute $name via its own endpoints', ({ name, action, count, execute }) => {
+            componentRef.setInput('operation', createAgeBasedOperation(name, action));
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            expect(dataCleanupService[count]).toHaveBeenCalledOnce();
+
+            component.executeCleanupOperation();
+
+            expect(dataCleanupService[execute]).toHaveBeenCalledOnce();
+            expect(component.operationExecuted()).toBe(true);
+        });
+
+        it('should refuse to execute or count an unknown operation instead of silently doing nothing', () => {
+            const unknown = createAgeBasedOperation('notAnOperation' as OperationName);
+            componentRef.setInput('operation', unknown);
+
+            // updateCounts() runs inside the open effect, so opening is what surfaces the unsupported operation.
+            expect(() => {
+                component.visible.set(true);
+                fixture.detectChanges();
+            }).toThrow('Unsupported operation: notAnOperation');
+
+            expect(() => component.executeCleanupOperation()).toThrow('Unsupported operation: notAnOperation');
+            // The in-flight guard must be released, otherwise the dialog stays permanently disabled.
+            expect(component.operationExecuting()).toBe(false);
         });
 
         it('should execute deleteNonRatedResults operation', () => {
