@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.programming.exception.GitException;
 /**
  * Unit tests for the repository state inspection in {@link GitService}.
  * <p>
- * {@link GitService#isBareRepositoryHealthy} decides whether a repository on disk can be served or has to be repaired, so it has to tell three states apart: a usable
+ * {@link BareGitRepositoryService#isBareRepositoryHealthy} decides whether a repository on disk can be served or has to be repaired, so it has to tell three states apart: a usable
  * repository, an "unborn" one that was created but never received a branch, and a directory that is not a git repository at all. {@link GitService#setRemoteUrl} rewrites the
  * remote of a checked out repository, which has to happen only when the remote actually changed.
  */
@@ -44,10 +44,14 @@ class GitServiceRepositoryStateTest {
 
     private GitService gitService;
 
+    private BareGitRepositoryService bareGitRepositoryService;
+
     @BeforeEach
     void setUp() {
         gitService = new GitService();
         ReflectionTestUtils.setField(gitService, "localVCBasePath", baseDir);
+        bareGitRepositoryService = new BareGitRepositoryService();
+        ReflectionTestUtils.setField(bareGitRepositoryService, "localVCBasePath", baseDir);
     }
 
     private LocalVCRepositoryUri uriFor(String repositorySlug) {
@@ -63,7 +67,7 @@ class GitServiceRepositoryStateTest {
         // A bare repository only gets a branch once something is pushed to it.
         checkoutOf("abc-exercise").close();
 
-        assertThat(gitService.isBareRepositoryHealthy(uriFor("abc-exercise"))).as("a repository with a branch is healthy").isTrue();
+        assertThat(bareGitRepositoryService.isBareRepositoryHealthy(uriFor("abc-exercise"))).as("a repository with a branch is healthy").isTrue();
     }
 
     @Test
@@ -73,7 +77,7 @@ class GitServiceRepositoryStateTest {
         Files.createDirectories(repositoryPath);
         Git.init().setDirectory(repositoryPath.toFile()).setBare(true).setInitialBranch("main").call().close();
 
-        assertThat(gitService.isBareRepositoryHealthy(uriFor("abc-unborn"))).as("a repository without any branch is not healthy").isFalse();
+        assertThat(bareGitRepositoryService.isBareRepositoryHealthy(uriFor("abc-unborn"))).as("a repository without any branch is not healthy").isFalse();
     }
 
     @Test
@@ -83,12 +87,12 @@ class GitServiceRepositoryStateTest {
         Files.createDirectories(repositoryPath.resolve("refs").resolve("heads"));
         Files.createDirectories(repositoryPath.resolve("objects"));
 
-        assertThat(gitService.isBareRepositoryHealthy(uriFor("abc-corrupt"))).as("a directory that is not a git repository is not healthy").isFalse();
+        assertThat(bareGitRepositoryService.isBareRepositoryHealthy(uriFor("abc-corrupt"))).as("a directory that is not a git repository is not healthy").isFalse();
     }
 
     @Test
     void isBareRepositoryHealthy_withAMissingDirectory_isNotHealthy() {
-        assertThat(gitService.isBareRepositoryHealthy(uriFor("abc-missing"))).as("a repository that does not exist is not healthy").isFalse();
+        assertThat(bareGitRepositoryService.isBareRepositoryHealthy(uriFor("abc-missing"))).as("a repository that does not exist is not healthy").isFalse();
     }
 
     @Test
@@ -98,7 +102,7 @@ class GitServiceRepositoryStateTest {
         FileUtils.write(repositoryPath.toFile(), "not a directory", StandardCharsets.UTF_8);
 
         // A plain file cannot be opened as a repository, which JGit reports as "not found" rather than as an I/O error, so the health check reports it as unhealthy.
-        assertThat(gitService.isBareRepositoryHealthy(uriFor("abc-file"))).as("a file where the repository should be is not healthy").isFalse();
+        assertThat(bareGitRepositoryService.isBareRepositoryHealthy(uriFor("abc-file"))).as("a file where the repository should be is not healthy").isFalse();
     }
 
     @Test
