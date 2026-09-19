@@ -49,6 +49,8 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     readonly showResults = input<boolean>(false);
     readonly isLoading = input<boolean>(false);
     readonly searchError = input<string | undefined>(undefined);
+    /** Active course filter id, forwarded to the Iris answer so it scopes its retrieval. */
+    readonly activeCourseId = input<number | undefined>(undefined);
     /** True while the slides and videos filter is the active one, which searches content instead of metadata. */
     readonly contentSearchActive = input<boolean>(false);
 

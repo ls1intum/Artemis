@@ -4,12 +4,97 @@
     border-radius: 0.75rem;
     border: 1px solid color-mix(in srgb, var(--bs-primary) 18%, transparent);
     background: color-mix(in srgb, var(--bs-primary) 4.5%, transparent);
+    transition:
+        border-color 0.3s ease,
+        background 0.3s ease,
+        opacity 0.3s ease;
+
+    /* An ending that has had its say recedes and then takes its space back, rather than sitting on
+       top of the results for the rest of the search. */
+    &.is-quiet {
+        border-color: color-mix(in srgb, var(--bs-primary) 10%, transparent);
+        background: color-mix(in srgb, var(--bs-primary) 2.5%, transparent);
+    }
+
+    &.is-dismissed {
+        margin: 0 !important;
+        border-width: 0;
+        opacity: 0;
+        pointer-events: none;
+    }
 }
 
 .iris-card-header {
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid color-mix(in srgb, var(--bs-primary) 12%, transparent);
+    /* Transparent while the card is a strip: a divider under a collapsed body is a line to nowhere. */
+    border-bottom: 1px solid transparent;
     border-radius: 0.75rem 0.75rem 0 0;
+    transition: border-color 0.32s ease;
+
+    .is-open > & {
+        border-bottom-color: color-mix(in srgb, var(--bs-primary) 12%, transparent);
+    }
+}
+
+/* Status of the running pipeline, set in the answer's own type so the waiting card and the finished
+   card read as the same object. */
+.iris-strip-status {
+    min-width: 0;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    color: color-mix(in srgb, var(--bs-body-color) 45%, transparent);
+}
+
+/* The body opens from nothing without measuring anything in TypeScript: a grid row animates from
+   0fr to 1fr, and the row's own overflow keeps the content clipped on the way. */
+.iris-card-body-wrapper {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.34s cubic-bezier(0.4, 0, 0.2, 1);
+
+    .is-open > & {
+        grid-template-rows: 1fr;
+    }
+
+    .is-dismissed > & {
+        grid-template-rows: 0fr;
+    }
+}
+
+.iris-card-body {
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* ── Endings ────────────────────────────────────────────────────────────────── */
+
+.iris-quiet-note {
+    padding: 0.5rem 0.75rem 0.625rem;
+    font-size: 0.78125rem;
+    line-height: 1.5;
+    color: var(--bs-secondary-color);
+}
+
+.iris-quiet-icon {
+    margin-top: 0.15rem;
+    font-size: 0.8125rem;
+    color: color-mix(in srgb, var(--bs-primary) 55%, transparent);
+}
+
+.iris-quiet-sub {
+    font-size: 0.71875rem;
+    color: color-mix(in srgb, var(--bs-secondary-color) 70%, transparent);
+}
+
+.iris-retry-btn {
+    margin-top: 0.15rem;
+    font-size: 0.71875rem;
+    color: var(--bs-primary);
+    cursor: pointer;
+
+    &:hover {
+        text-decoration: underline;
+    }
 }
 
 .iris-card-label {
@@ -40,16 +125,43 @@
     animation: iris-logo-pulse 1.4s ease-in-out infinite;
 }
 
-/* Thinking bubble wrapper — provides padding; .thinking-bubble overrides live in global.scss */
-.iris-thinking-wrapper {
-    display: block;
-    padding: 0.5rem 0.75rem 0.625rem;
-}
-
 /* ── Answer collapse ────────────────────────────────────────────────────────── */
 
 .iris-answer-region {
     padding: 0.625rem 0.75rem 0;
+}
+
+/**
+ * While the answer is being written the card holds a fixed height and the text rises inside it, so
+ * the search results underneath stay put until it settles exactly once at the end. `column-reverse`
+ * pins the content to the bottom of the window, which is what keeps the newest line in view without
+ * measuring or scrolling anything.
+ */
+.iris-answer-window.is-streaming {
+    /* 6 lines × line-height 1.6 × font-size 0.8125rem */
+    max-height: calc(6 * 1.6 * 0.8125rem);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column-reverse;
+    -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 1.125rem), color-mix(in srgb, black 25%, transparent) 100%);
+    mask-image: linear-gradient(to bottom, black calc(100% - 1.125rem), color-mix(in srgb, black 25%, transparent) 100%);
+}
+
+/* The words that arrived last, fading in where they land. No cursor: the text itself is the signal. */
+:host ::ng-deep .iris-answer-tail {
+    animation: iris-answer-tail-in 0.3s ease both;
+}
+
+@keyframes iris-answer-tail-in {
+    from {
+        opacity: 0;
+        filter: blur(3px);
+    }
+
+    to {
+        opacity: 1;
+        filter: blur(0);
+    }
 }
 
 .iris-answer-text {
@@ -177,4 +289,100 @@
 
 .iris-chip-name {
     max-width: 9rem;
+}
+
+/* Course suffix on entity chips can be a long course title; cap it like the name. */
+.iris-chip-meta {
+    max-width: 8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Inline citation chips (rendered inside the markdown innerHTML) ────────── */
+
+.iris-answer-region {
+    position: relative;
+}
+
+:host ::ng-deep .iris-cite {
+    display: inline-block;
+    padding: 0 0.3rem;
+    margin-left: 0.15rem;
+    border-radius: 0.3rem;
+    font-size: 0.66rem;
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--bs-primary);
+    background: color-mix(in srgb, var(--bs-primary) 10%, transparent);
+    cursor: pointer;
+    user-select: none;
+    transition: background 120ms ease;
+}
+
+/* Markers of one run sit tighter than markers of separate runs, so `[1][2]` still reads as one
+   cluster even though each source is its own chip, hover target and link. */
+:host ::ng-deep .iris-cite + .iris-cite {
+    margin-left: 0.09rem;
+}
+
+:host ::ng-deep .iris-cite.iris-cite-lit {
+    background: color-mix(in srgb, var(--bs-primary) 24%, transparent);
+}
+
+:host ::ng-deep .iris-attr-lit {
+    background: color-mix(in srgb, var(--bs-primary) 8%, transparent);
+    border-radius: 0.3rem;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--bs-primary) 8%, transparent);
+}
+
+.iris-cite-popover {
+    position: absolute;
+    transform: translate(-50%, calc(-100% - 0.4rem));
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    max-width: 18rem;
+    padding: 0.3rem 0.6rem;
+    border: 1px solid color-mix(in srgb, var(--bs-primary) 18%, transparent);
+    border-radius: 0.5rem;
+    background: var(--bs-body-bg);
+    box-shadow: 0 4px 14px rgb(0 0 0 / 0.12);
+    font-size: 0.75rem;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.iris-chip-n {
+    font-size: 0.65rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--bs-secondary-color);
+}
+
+.iris-chip.iris-chip-lit {
+    border-color: var(--bs-primary);
+    background: color-mix(in srgb, var(--bs-primary) 10%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :host ::ng-deep .iris-cite {
+        transition: none;
+    }
+
+    /* The text still arrives progressively, it just stops moving while it does. */
+    :host ::ng-deep .iris-answer-tail {
+        animation: none;
+    }
+
+    .iris-inline-answer,
+    .iris-card-header,
+    .iris-card-body-wrapper,
+    .iris-answer-text {
+        transition: none;
+    }
+
+    .iris-logo-pulse {
+        animation: none;
+    }
 }
