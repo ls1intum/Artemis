@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
@@ -67,6 +68,8 @@ public class ProgrammingExerciseParticipationService {
 
     private final GitService gitService;
 
+    private final BareGitRepositoryService bareGitRepositoryService;
+
     private final ResultRepository resultRepository;
 
     private final SubmissionRepository submissionRepository;
@@ -75,14 +78,15 @@ public class ProgrammingExerciseParticipationService {
 
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
-            ParticipationRepository participationRepository, GitService gitService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
-            SubmissionRepository submissionRepository, UserRepository userRepository) {
+            ParticipationRepository participationRepository, GitService gitService, BareGitRepositoryService bareGitRepositoryService,
+            Optional<VersionControlService> versionControlService, ResultRepository resultRepository, SubmissionRepository submissionRepository, UserRepository userRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
         this.participationRepository = participationRepository;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
+        this.bareGitRepositoryService = bareGitRepositoryService;
         this.resultRepository = resultRepository;
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
@@ -318,7 +322,7 @@ public class ProgrammingExerciseParticipationService {
     // TODO: use some kind of paging mechanism
     public List<CommitInfoDTO> getCommitInfos(LocalVCRepositoryUri localVCRepositoryUri) {
         try {
-            return gitService.getCommitInfos(localVCRepositoryUri);
+            return bareGitRepositoryService.getCommitInfos(localVCRepositoryUri);
         }
         catch (GitAPIException e) {
             log.error("Could not get commit infos for repository with uri {}", localVCRepositoryUri);
