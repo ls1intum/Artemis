@@ -380,6 +380,61 @@ describe('DataCleanupService', () => {
             usersWarnedBefore: '2026-02-02T00:00:00Z',
         });
 
-        expect(error?.message).toBe('The cleanup configuration is missing a cutoff: received undefined');
+        expect(error?.message).toBe('The cleanup configuration has no usable cutoff: received undefined');
+    });
+
+    it.each([
+        // dayjs normalizes an out-of-range day to the next month with isValid() still true, which would read as a
+        // plausible but wrong cutoff on the one page whose purpose is stating exact dates.
+        ['2024-02-30T00:00:00Z', 'an out-of-range day'],
+        ['2024-13-01T00:00:00Z', 'an out-of-range month'],
+        ['2026-02-02', 'a date without a time'],
+        ['not a date', 'unparseable text'],
+    ])('should reject %s in the cleanup configuration (%s)', (cutoff) => {
+        let error: Error | undefined;
+        service.getCleanupConfiguration().subscribe({ error: (thrown: Error) => (error = thrown) });
+
+        httpMock.expectOne({ method: 'GET', url: 'api/admin/cleanup/configuration' }).flush({
+            gradeRelevantRetentionYears: 5,
+            gradeRelevantCoursesEndedBefore: cutoff,
+            nonGradeRelevantRetentionYears: 1,
+            nonGradeRelevantCoursesEndedBefore: '2025-03-04T00:00:00Z',
+            resetWarningGracePeriodDays: 30,
+            coursesWarnedBefore: '2026-02-02T00:00:00Z',
+            oldFeedbackCutoffWeeks: 8,
+            oldFeedbackCoursesEndedBefore: '2026-01-07T00:00:00Z',
+            oldSubmissionVersionsCutoffWeeks: 8,
+            oldSubmissionVersionsCoursesEndedBefore: '2026-01-07T00:00:00Z',
+            notEnrolledUsersInactivityMonths: 6,
+            usersInactiveBefore: '2025-09-04T00:00:00Z',
+            notEnrolledUsersWarningGracePeriodDays: 30,
+            usersWarnedBefore: '2026-02-02T00:00:00Z',
+        });
+
+        expect(error?.message).toBe(`The cleanup configuration has no usable cutoff: received ${cutoff}`);
+    });
+
+    it('should accept an offset cutoff, which is how the server serializes a ZonedDateTime', () => {
+        let configuration: CleanupConfiguration | undefined;
+        service.getCleanupConfiguration().subscribe((response) => (configuration = response));
+
+        httpMock.expectOne({ method: 'GET', url: 'api/admin/cleanup/configuration' }).flush({
+            gradeRelevantRetentionYears: 5,
+            gradeRelevantCoursesEndedBefore: '2021-03-04T12:30:45.123+02:00',
+            nonGradeRelevantRetentionYears: 1,
+            nonGradeRelevantCoursesEndedBefore: '2025-03-04T00:00:00Z',
+            resetWarningGracePeriodDays: 30,
+            coursesWarnedBefore: '2026-02-02T00:00:00Z',
+            oldFeedbackCutoffWeeks: 8,
+            oldFeedbackCoursesEndedBefore: '2026-01-07T00:00:00Z',
+            oldSubmissionVersionsCutoffWeeks: 8,
+            oldSubmissionVersionsCoursesEndedBefore: '2026-01-07T00:00:00Z',
+            notEnrolledUsersInactivityMonths: 6,
+            usersInactiveBefore: '2025-09-04T00:00:00Z',
+            notEnrolledUsersWarningGracePeriodDays: 30,
+            usersWarnedBefore: '2026-02-02T00:00:00Z',
+        });
+
+        expect(configuration!.gradeRelevantCoursesEndedBefore.toISOString()).toBe(dayjs('2021-03-04T12:30:45.123+02:00').toISOString());
     });
 });

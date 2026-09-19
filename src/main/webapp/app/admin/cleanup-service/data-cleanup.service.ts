@@ -392,14 +392,28 @@ export class DataCleanupService {
     }
 }
 
+/** An ISO-8601 instant as the server serializes a `ZonedDateTime`, captured down to its calendar date. */
+const ISO_INSTANT = /^(\d{4})-(\d{2})-(\d{2})T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
+
 /**
- * Parses a cutoff sent by the server. A bare `dayjs(undefined)` would silently yield *now* — a plausible-looking wrong
- * cutoff on the one page whose purpose is stating exact ones — so a missing value has to fail loudly instead.
+ * Parses a cutoff sent by the server, rejecting anything that is not exactly one calendar instant.
+ *
+ * Both lenient outcomes of a bare `dayjs()` are wrong here, on the one page whose purpose is stating exact dates:
+ * `dayjs(undefined)` yields *now*, and `dayjs('2024-02-30T00:00:00Z')` yields 1 March with `isValid()` true, because
+ * dayjs normalizes an out-of-range day instead of refusing it. Both would read as a plausible but wrong cutoff, so the
+ * shape and the calendar date are checked before the value is accepted.
  */
 function cutoff(value: string): dayjs.Dayjs {
-    const parsed = convertDateStringFromServer(value);
-    if (!parsed?.isValid()) {
-        throw new Error(`The cleanup configuration is missing a cutoff: received ${String(value)}`);
+    const match = ISO_INSTANT.exec(value ?? '');
+    const parsed = match && convertDateStringFromServer(value);
+    if (!parsed?.isValid() || !isRealCalendarDate(match![1], match![2], match![3])) {
+        throw new Error(`The cleanup configuration has no usable cutoff: received ${String(value)}`);
     }
     return parsed;
+}
+
+/** Whether the year/month/day triple survives a UTC round trip, i.e. is a date that exists. */
+function isRealCalendarDate(year: string, month: string, day: string): boolean {
+    const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+    return date.getUTCFullYear() === Number(year) && date.getUTCMonth() === Number(month) - 1 && date.getUTCDate() === Number(day);
 }

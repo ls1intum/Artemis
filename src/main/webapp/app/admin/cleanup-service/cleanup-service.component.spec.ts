@@ -366,9 +366,13 @@ describe('CleanupServiceComponent', () => {
             for (const placeholder of placeholders) {
                 expect(description?.[placeholder as keyof typeof description], `${operation.name} does not supply {{${placeholder}}}`).toBeTruthy();
             }
-            // Conversely, an operation that supplies values must have a string that uses them.
+            // Conversely, every value supplied must be one the string actually interpolates, so that dropping a
+            // {{period}} from a translation is caught too, not just dropping the value behind it.
             if (description) {
-                expect(placeholders, `${operation.name} supplies values its description ignores`).not.toHaveLength(0);
+                const supplied = Object.entries(description)
+                    .filter(([, value]) => value !== undefined)
+                    .map(([key]) => key);
+                expect(new Set(placeholders), `${operation.name} supplies values that do not match its placeholders`).toEqual(new Set(supplied));
             }
         }
     });
