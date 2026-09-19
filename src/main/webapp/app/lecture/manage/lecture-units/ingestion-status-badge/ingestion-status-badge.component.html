@@ -1,0 +1,37 @@
+@if (state(); as badgeState) {
+    <tum-ui-tag
+        rounded
+        size="sm"
+        class="ingestion-status-badge"
+        [severity]="severity()"
+        data-testid="ingestion-status-badge"
+        [attr.data-state]="badgeState"
+        [ngbTooltip]="tooltipKey() ? (tooltipKey()! | artemisTranslate) : undefined"
+    >
+        @if (icon(); as runningIcon) {
+            <fa-icon [icon]="runningIcon" animation="spin" />
+        }
+        <!-- role="status" only on the phase label: it announces phase transitions (Queued -> Reading slides ->
+             Indexing -> Verifying -> Indexed) without re-reading the fast-ticking counter or clock on every tick. -->
+        <span role="status" [jhiTranslate]="labelKey()"></span>
+        @if (progressText(); as progress) {
+            <span class="stage-counter" data-testid="ingestion-stage-counter" aria-hidden="true">{{ progress }}</span>
+        }
+        @if (elapsed(); as time) {
+            <span class="stage-elapsed" data-testid="ingestion-elapsed" aria-hidden="true">{{ time }}</span>
+        }
+        @if (lastSeenAgo(); as seen) {
+            <span class="stage-elapsed" data-testid="ingestion-last-seen">{{ 'artemisApp.attachmentVideoUnit.processing.lastSeen' | artemisTranslate: { time: seen } }}</span>
+        }
+        @if (showRetry()) {
+            <span
+                class="stage-retry"
+                data-testid="ingestion-retry"
+                [ngbTooltip]="'artemisApp.attachmentVideoUnit.processing.retriedTooltip' | artemisTranslate: { count: retryCount() }"
+            >
+                {{ retryCount() }}
+                <span [jhiTranslate]="retryLabelKey()"></span>
+            </span>
+        }
+    </tum-ui-tag>
+}

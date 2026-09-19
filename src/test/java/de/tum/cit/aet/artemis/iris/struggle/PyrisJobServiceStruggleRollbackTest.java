@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -101,7 +102,7 @@ class PyrisJobServiceStruggleRollbackTest {
         when(distributedDataProvider.<String, PyrisJob>getExpiringMap(eq("pyris-job-map"), any())).thenReturn(jobs);
         when(distributedDataProvider.<String, String>getExpiringMap(eq("struggle-inflight-map"), any())).thenReturn(failingInFlight);
 
-        var service = new PyrisJobService(distributedDataProvider, new IrisProactiveProperties());
+        var service = new PyrisJobService(distributedDataProvider, Optional.empty(), new IrisProactiveProperties());
         ReflectionTestUtils.setField(service, "jobTimeout", 300);
         ReflectionTestUtils.setField(service, "serverUrl", "http://localhost:8080");
         ReflectionTestUtils.setField(service, "instanceId", "test-node");

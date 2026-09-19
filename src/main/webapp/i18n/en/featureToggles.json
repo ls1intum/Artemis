@@ -174,9 +174,9 @@
                     "disableWarning": "Iris will not retain conversation history between sessions, resulting in less personalized AI assistance."
                 },
                 "LectureContentProcessing": {
-                    "name": "Lecture Video Processing",
-                    "description": "Enables automated lecture content processing: transcription, slide extraction, and Pyris ingestion.",
-                    "disableWarning": "Disabling lecture content processing stops all ongoing transcription and ingestion jobs for new lectures."
+                    "name": "Lecture Unit Indexing",
+                    "description": "Indexes lecture units for Iris: transcribes videos, extracts slide content from PDFs, and ingests both into the vector store so Iris can answer questions about them.",
+                    "disableWarning": "Disabling lecture unit indexing stops new lecture units from being indexed, including retries, backfill, and reconciliation. Running jobs finish, and nothing already indexed is removed."
                 },
                 "RateLimit": {
                     "name": "API Rate Limiting",

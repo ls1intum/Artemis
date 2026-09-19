@@ -62,7 +62,7 @@ export { TumUiTabPanelsComponent } from './lib/tabs/tum-ui-tab-panels.component'
 export { TumUiTabComponent } from './lib/tabs/tum-ui-tab.component';
 export { TumUiTabsComponent } from './lib/tabs/tum-ui-tabs.component';
 export type { TumUiTabValue } from './lib/tabs/tum-ui-tabs.service';
-export { TumUiTagComponent, type TumUiTagSeverity } from './lib/tag/tum-ui-tag.component';
+export { TumUiTagComponent, type TumUiTagSeverity, type TumUiTagSize } from './lib/tag/tum-ui-tag.component';
 export { TumUiToggleSwitchComponent } from './lib/toggle-switch/tum-ui-toggle-switch.component';
 export { TumUiTooltipDirective } from './lib/tooltip/tum-ui-tooltip.directive';
 export type { TumUiOverlayPlacement } from './lib/overlay/tum-ui-overlay.service';
