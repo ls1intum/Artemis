@@ -254,7 +254,7 @@ public class ProgrammingSubmissionResource {
         }
         // Loaded with the associations the trigger reads off the exercise, so no participation has to load either of
         // them for itself. The template and solution participations this used to fetch are not read here.
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithBuildConfigAndAuxiliaryRepositoriesById(exerciseId)
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", exerciseId));
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
             throw new AccessForbiddenException();

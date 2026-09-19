@@ -416,9 +416,10 @@ public class ProgrammingExerciseResultTestService {
 
     // Test
     public void shouldCreateResultOnCustomDefaultBranch(String defaultBranch, BuildResultNotification resultNotification) {
-        programmingExercise.getBuildConfig().setBranch(defaultBranch);
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        var buildConfig = programmingExerciseUtilService.saveBuildConfigIfMissing(programmingExercise);
+        buildConfig.setBranch(defaultBranch);
+        programmingExerciseBuildConfigRepository.save(buildConfig);
         solutionParticipation.setProgrammingExercise(programmingExercise);
         programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
         participationUtilService.addSubmission(solutionParticipation,
