@@ -21,6 +21,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -92,6 +93,28 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
         assertThat(buildLogEntries).hasSize(2);
         assertThat(buildLogEntries.getFirst().getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,9] not a statement");
         assertThat(buildLogEntries.get(1).getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,10] ';' expected");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldStoreBuildLogsWhenAnExistingSemiAutomaticResultIsUpdated() throws Exception {
+        String userLogin = TEST_PREFIX + "student1";
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA, TEST_PREFIX);
+        var exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
+
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, false);
+        participationUtilService.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, exercise.getId());
+        long existingResultId = submission.getLatestResult().getId();
+
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of(), logs, new ArrayList<>());
+        postResult(notification, HttpStatus.OK);
+
+        var results = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participation.getId());
+        assertThat(results).singleElement().extracting(Result::getId).isEqualTo(existingResultId);
+        assertThat(buildLogEntryService.getBuildLogs(submission, existingResultId)).extracting(BuildLogEntry::getLog).containsExactly("[ERROR] Log1", "[ERROR] Log2",
+                "[ERROR] Log3");
     }
 
     private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationArguments() {

@@ -99,7 +99,7 @@ public class BuildLogEntryService {
         try {
             ZonedDateTime retentionTime = result.getCompletionDate() != null ? result.getCompletionDate()
                     : Objects.requireNonNull(programmingSubmission.getSubmissionDate(), "A failed build result or its submission must have a timestamp");
-            stored = failedBuildLogService.saveBuildLogs(result.getExerciseId(), programmingSubmission.getId(), result.getId(), retentionTime, buildLogs);
+            stored = failedBuildLogService.saveBuildLogs(exerciseIdOf(programmingSubmission), programmingSubmission.getId(), result.getId(), retentionTime, buildLogs);
         }
         catch (UncheckedIOException e) {
             // A build result must not fail because its logs could not be written, and the rows below are deliberately left alone: a submission that still has them keeps
