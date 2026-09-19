@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
@@ -97,8 +96,7 @@ public class BuildLogEntryService {
     public List<BuildLogEntry> saveBuildLogs(List<BuildLogEntry> buildLogs, ProgrammingSubmission programmingSubmission, Result result) {
         List<BuildLogEntry> stored;
         try {
-            ZonedDateTime retentionTime = result.getCompletionDate() != null ? result.getCompletionDate()
-                    : Objects.requireNonNull(programmingSubmission.getSubmissionDate(), "A failed build result or its submission must have a timestamp");
+            ZonedDateTime retentionTime = result.getCompletionDate() != null ? result.getCompletionDate() : programmingSubmission.getSubmissionDate();
             stored = failedBuildLogService.saveBuildLogs(exerciseIdOf(programmingSubmission), programmingSubmission.getId(), result.getId(), retentionTime, buildLogs);
         }
         catch (UncheckedIOException e) {

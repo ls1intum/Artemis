@@ -459,8 +459,9 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             return ResponseEntity.ok(List.of());
         }
 
-        // Empty build logs are returned if the submission is not build failed
-        if (!programmingSubmission.isBuildFailed()) {
+        // Without a specific result, the submission's current build state decides whether latest failed-build logs are relevant. A result-specific request must not use that
+        // flag: a later successful rebuild sets it to false while the deliberately retained logs of an earlier failed result remain available.
+        if (resultId.isEmpty() && !programmingSubmission.isBuildFailed()) {
             return ResponseEntity.ok(List.of());
         }
 

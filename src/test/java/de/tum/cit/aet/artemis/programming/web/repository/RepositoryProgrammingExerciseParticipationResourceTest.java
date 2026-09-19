@@ -519,6 +519,20 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     }
 
     @Test
+    void getBuildLogs_forAFailedResultAfterASuccessfulRebuild_returnsTheFailedResultLogs() {
+        // A successful rebuild changes the submission's current flag, but an explicit result request still addresses the retained failed-result log.
+        participation.setSubmissions(Set.of(submissionWithResult(50L, 90L, false)));
+        var submissionWithFailedResult = submissionWithResult(50L, 80L, false);
+        submissionWithFailedResult.setParticipation(participation);
+        var logs = List.of(new BuildLogEntry(java.time.ZonedDateTime.parse("2026-09-19T10:15:30+02:00"), "the earlier build failed"));
+        when(participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(PARTICIPATION_ID)).thenReturn(participation);
+        when(programmingSubmissionRepository.findByResultIdElseThrow(80L)).thenReturn(submissionWithFailedResult);
+        when(buildLogService.getBuildLogs(submissionWithFailedResult, 80L)).thenReturn(logs);
+
+        assertThat(resource.getBuildLogs(PARTICIPATION_ID, Optional.of(80L)).getBody()).isEqualTo(logs.stream().map(BuildLogEntryDTO::of).toList());
+    }
+
+    @Test
     void getBuildLogs_forAnEarlierResultOfTheLatestSubmission_returnsThatResultsLogs() {
         var submission = submissionWithResult(50L, 90L, true);
         var earlierResult = new Result();

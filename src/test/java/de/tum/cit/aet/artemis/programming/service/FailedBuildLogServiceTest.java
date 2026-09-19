@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -11,6 +13,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +25,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 
 /**
  * Unit tests for the build logs of failed builds, which are kept on disk under {@code <failedBuildLogsPath>/<exerciseId>/<submissionId>/<resultId>.log} rather than in the
@@ -47,6 +51,9 @@ class FailedBuildLogServiceTest {
     @Mock
     private ProfileService profileService;
 
+    @Mock
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
+
     @TempDir
     Path failedBuildLogsPath;
 
@@ -54,9 +61,10 @@ class FailedBuildLogServiceTest {
 
     @BeforeEach
     void setUp() {
-        failedBuildLogService = new FailedBuildLogService(profileService);
+        failedBuildLogService = new FailedBuildLogService(profileService, programmingSubmissionRepository);
         ReflectionTestUtils.setField(failedBuildLogService, "failedBuildLogsPath", failedBuildLogsPath);
         ReflectionTestUtils.setField(failedBuildLogService, "retentionDays", RETENTION_DAYS);
+        lenient().when(programmingSubmissionRepository.findExistingIds(anySet())).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     private List<BuildLogEntry> save(long resultId, ZonedDateTime retentionTime, BuildLogEntry... entries) {
@@ -197,6 +205,23 @@ class FailedBuildLogServiceTest {
 
         assertThat(get(RESULT_ID)).isEmpty();
         assertThat(get(RESULT_ID + 1)).isPresent();
+    }
+
+    /**
+     * A result can finish while its submission is being deleted and recreate the directory after the deletion path removed it. The scheduled sweep prevents those orphaned
+     * logs from remaining until their normal retention date.
+     */
+    @Test
+    void shouldDeleteLogsOfSubmissionsThatNoLongerExist() {
+        save(RESULT_ID, new BuildLogEntry(TIME, "belongs to a deleted submission"));
+        failedBuildLogService.saveBuildLogs(EXERCISE_ID, SUBMISSION_ID + 1, RESULT_ID + 1, TIME, List.of(new BuildLogEntry(TIME, "belongs to a live submission")));
+        when(profileService.isSchedulingActive()).thenReturn(true);
+        when(programmingSubmissionRepository.findExistingIds(anySet())).thenReturn(Set.of(SUBMISSION_ID + 1));
+
+        failedBuildLogService.deleteOldFailedBuildLogs();
+
+        assertThat(submissionPath()).doesNotExist();
+        assertThat(failedBuildLogService.getBuildLogs(EXERCISE_ID, SUBMISSION_ID + 1, RESULT_ID + 1)).isPresent();
     }
 
     /**

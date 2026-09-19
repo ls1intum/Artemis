@@ -17,8 +17,11 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -31,6 +34,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 
 /**
  * Stores the build logs of failed builds on disk, one file per result.
@@ -58,9 +62,13 @@ public class FailedBuildLogService {
 
     private static final String LOG_SUFFIX = ".log";
 
+    private static final int SUBMISSION_LOOKUP_BATCH_SIZE = 1_000;
+
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
     private final ProfileService profileService;
+
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     @Value("${artemis.failed-build-logs-path:./failed-build-logs}")
     private Path failedBuildLogsPath;
@@ -68,8 +76,9 @@ public class FailedBuildLogService {
     @Value("${artemis.continuous-integration.build-log.failed-build-retention-days:365}")
     private int retentionDays;
 
-    public FailedBuildLogService(ProfileService profileService) {
+    public FailedBuildLogService(ProfileService profileService, ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.profileService = profileService;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
     }
 
     /**
@@ -310,8 +319,9 @@ public class FailedBuildLogService {
         }
 
         ZonedDateTime cutoff = ZonedDateTime.now().minusDays(retentionDays);
-        int deleted = deleteExpiredLogs(failedBuildLogsPath, cutoff);
-        log.info("Deleted {} expired failed build log files", deleted);
+        int deletedExpiredLogs = deleteExpiredLogs(failedBuildLogsPath, cutoff);
+        int deletedOrphanedSubmissions = deleteLogsOfDeletedSubmissions();
+        log.info("Deleted {} expired failed build log files and the log directories of {} deleted submissions", deletedExpiredLogs, deletedOrphanedSubmissions);
     }
 
     private int deleteExpiredLogs(Path path, ZonedDateTime cutoff) {
@@ -327,6 +337,79 @@ public class FailedBuildLogService {
         }
         catch (IOException e) {
             log.error("Error occurred while deleting old failed build logs in {}", path, e);
+        }
+        return deleted;
+    }
+
+    /**
+     * Deletes log directories whose submissions no longer exist.
+     * <p>
+     * Normal retention remains based only on the result timestamp stored as the file's last-modified time. This separate sweep handles a deletion race: a result that finishes
+     * while its submission is being deleted can publish its log after the deletion path removed the submission directory. Without the sweep, that orphan would remain until
+     * its regular retention period expires.
+     *
+     * @return how many orphaned submission directories were deleted
+     */
+    private int deleteLogsOfDeletedSubmissions() {
+        Map<Long, Path> submissionDirectories = new HashMap<>(SUBMISSION_LOOKUP_BATCH_SIZE);
+        int deleted = 0;
+        try (DirectoryStream<Path> exerciseDirectories = Files.newDirectoryStream(failedBuildLogsPath)) {
+            for (Path exerciseDirectory : exerciseDirectories) {
+                if (!Files.isDirectory(exerciseDirectory, LinkOption.NOFOLLOW_LINKS)) {
+                    continue;
+                }
+                deleted += collectAndDeleteOrphanedSubmissionDirectories(exerciseDirectory, submissionDirectories);
+            }
+        }
+        catch (IOException e) {
+            log.error("Error occurred while finding orphaned failed build logs in {}", failedBuildLogsPath, e);
+        }
+        return deleted + deleteOrphanedSubmissionDirectories(submissionDirectories);
+    }
+
+    private int collectAndDeleteOrphanedSubmissionDirectories(Path exerciseDirectory, Map<Long, Path> submissionDirectories) {
+        int deleted = 0;
+        try (DirectoryStream<Path> children = Files.newDirectoryStream(exerciseDirectory)) {
+            for (Path submissionDirectory : children) {
+                if (!Files.isDirectory(submissionDirectory, LinkOption.NOFOLLOW_LINKS)) {
+                    continue;
+                }
+                Optional<Long> submissionId = directoryIdOf(submissionDirectory);
+                if (submissionId.isEmpty()) {
+                    continue;
+                }
+                submissionDirectories.put(submissionId.get(), submissionDirectory);
+                if (submissionDirectories.size() == SUBMISSION_LOOKUP_BATCH_SIZE) {
+                    deleted += deleteOrphanedSubmissionDirectories(submissionDirectories);
+                    submissionDirectories.clear();
+                }
+            }
+        }
+        catch (IOException e) {
+            log.error("Error occurred while finding orphaned failed build logs in {}", exerciseDirectory, e);
+        }
+        return deleted;
+    }
+
+    private int deleteOrphanedSubmissionDirectories(Map<Long, Path> submissionDirectories) {
+        if (submissionDirectories.isEmpty()) {
+            return 0;
+        }
+
+        Set<Long> existingSubmissionIds = programmingSubmissionRepository.findExistingIds(Set.copyOf(submissionDirectories.keySet()));
+        int deleted = 0;
+        for (Map.Entry<Long, Path> submissionDirectory : submissionDirectories.entrySet()) {
+            if (existingSubmissionIds.contains(submissionDirectory.getKey())) {
+                continue;
+            }
+            try {
+                deleteRecursively(submissionDirectory.getValue());
+                deleted++;
+                log.debug("Deleted the failed build logs of submission {}, which no longer exists", submissionDirectory.getKey());
+            }
+            catch (IOException e) {
+                log.warn("Could not delete the failed build log directory {} of deleted submission {}", submissionDirectory.getValue(), submissionDirectory.getKey(), e);
+            }
         }
         return deleted;
     }
@@ -366,6 +449,15 @@ public class FailedBuildLogService {
         }
         try {
             return Optional.of(Long.parseLong(name.substring(0, name.length() - LOG_SUFFIX.length())));
+        }
+        catch (NumberFormatException e) {
+            return Optional.empty();
+        }
+    }
+
+    private static Optional<Long> directoryIdOf(Path directory) {
+        try {
+            return Optional.of(Long.parseLong(directory.getFileName().toString()));
         }
         catch (NumberFormatException e) {
             return Optional.empty();

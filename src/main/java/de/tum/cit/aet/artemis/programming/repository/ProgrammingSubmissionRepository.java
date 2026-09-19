@@ -82,6 +82,9 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     @Query("SELECT submission.participation.exercise.id FROM ProgrammingSubmission submission WHERE submission.id = :submissionId")
     Optional<Long> findExerciseIdBySubmissionId(@Param("submissionId") long submissionId);
 
+    @Query("SELECT submission.id FROM ProgrammingSubmission submission WHERE submission.id IN :submissionIds")
+    Set<Long> findExistingIds(@Param("submissionIds") Set<Long> submissionIds);
+
     /**
      * Returns what the grading code reads off the submission a build result belongs to, together with its newest result.
      * <p>
