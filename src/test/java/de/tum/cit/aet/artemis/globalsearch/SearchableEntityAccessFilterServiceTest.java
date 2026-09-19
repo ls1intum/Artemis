@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.globalsearch;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -69,8 +70,8 @@ class SearchableEntityAccessFilterServiceTest {
         org.mockito.Mockito.doThrow(new de.tum.cit.aet.artemis.core.exception.AccessForbiddenException("no access")).when(authCheckService)
                 .checkHasAtLeastRoleInCourseElseThrow(eq(Role.STUDENT), eq(courseB), eq(user));
 
-        org.junit.jupiter.api.Assertions.assertThrows(de.tum.cit.aet.artemis.core.exception.AccessForbiddenException.class,
-                () -> filterService.buildSearchableItemFilter(user, List.of(9L, 11L), Set.of(SearchableEntitySchema.TypeValues.EXERCISE)));
+        assertThatThrownBy(() -> filterService.buildSearchableItemFilter(user, List.of(9L, 11L), Set.of(SearchableEntitySchema.TypeValues.EXERCISE)))
+                .isInstanceOf(de.tum.cit.aet.artemis.core.exception.AccessForbiddenException.class);
     }
 
     @Test

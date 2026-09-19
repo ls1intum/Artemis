@@ -22,17 +22,19 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRe
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisGlobalSearchAnswerWebsocketDTO(String runId, boolean isThinking, @Nullable String answer, @Nullable List<PyrisLectureSearchResultDTO> sources,
-        // NON_NULL, not the record-level NON_EMPTY: an empty string is the provider's retry-clear signal for a stale
-        // streamed draft (see PartialResultSender on the Pyris side) and must reach the client distinguishable from
-        // "no partial result in this message", which NON_EMPTY would otherwise collapse it into.
-        @JsonInclude(JsonInclude.Include.NON_NULL) @Nullable String partialResult, @Nullable Integer partialSeq, @Nullable List<PyrisEntitySourceDTO> entitySources) {
+        @Nullable String partialResult, @Nullable Integer partialSeq, @Nullable List<PyrisEntitySourceDTO> entitySources,
+        // Distinguishes the provider's retry-clear signal for a stale streamed draft (see PartialResultSender on the
+        // Pyris side) from "no partial result in this message". An empty partialResult cannot carry that meaning
+        // itself: the record-level NON_EMPTY policy drops null and an empty string identically, so the client could
+        // not otherwise tell "clear the draft" from "nothing new this frame".
+        boolean clearDraft) {
 
     public IrisGlobalSearchAnswerWebsocketDTO(String runId, boolean isThinking, @Nullable String answer, @Nullable List<PyrisLectureSearchResultDTO> sources) {
-        this(runId, isThinking, answer, sources, null, null, null);
+        this(runId, isThinking, answer, sources, null, null, null, false);
     }
 
     public IrisGlobalSearchAnswerWebsocketDTO(String runId, boolean isThinking, @Nullable String answer, @Nullable List<PyrisLectureSearchResultDTO> sources,
-            @Nullable String partialResult, @Nullable Integer partialSeq) {
-        this(runId, isThinking, answer, sources, partialResult, partialSeq, null);
+            @Nullable String partialResult, @Nullable Integer partialSeq, boolean clearDraft) {
+        this(runId, isThinking, answer, sources, partialResult, partialSeq, null, clearDraft);
     }
 }

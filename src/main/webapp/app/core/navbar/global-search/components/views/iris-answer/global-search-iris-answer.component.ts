@@ -328,17 +328,20 @@ export class GlobalSearchIrisAnswerComponent {
             return;
         }
         this.currentRunId.set(update.runId);
-        if (update.partialResult === undefined) {
+        if (update.partialResult === undefined && !update.clearDraft) {
             if (this.phase() === 'idle') {
                 this.phase.set('thinking');
             }
             return;
         }
-        if (!this.isNewerPartial(update)) {
+        // clearDraft is the provider's retry-clear signal for a stale draft; it carries no text of
+        // its own (see IrisGlobalSearchAnswerWebsocketDTO on the server), so an empty string stands in.
+        const partialResult = update.clearDraft ? '' : update.partialResult!;
+        if (!this.isNewerPartial(update, partialResult)) {
             return;
         }
         const previousLength = this.irisResult()?.answer?.length ?? 0;
-        if (update.partialResult.length < previousLength) {
+        if (partialResult.length < previousLength) {
             // A provider retry legitimately restarts shorter (even empty) than what was already shown,
             // to wipe the stale draft; the old reveal progress no longer describes this text.
             this.revealedLength.set(0);
@@ -346,7 +349,7 @@ export class GlobalSearchIrisAnswerComponent {
         }
         this.phase.set('answering');
         this.progressiveReveal.set(true);
-        this.irisResult.set({ answer: update.partialResult, sources: [] });
+        this.irisResult.set({ answer: partialResult, sources: [] });
         this.scheduleReveal();
     }
 
@@ -356,9 +359,9 @@ export class GlobalSearchIrisAnswerComponent {
      * HIGHER seq to clear a stale one, which a plain length comparison would wrongly reject as
      * stale. An older Iris that omits `partialSeq` falls back to length, the previous behavior.
      */
-    private isNewerPartial(update: IrisSearchStatusUpdate): boolean {
+    private isNewerPartial(update: IrisSearchStatusUpdate, partialResult: string): boolean {
         if (update.partialSeq === undefined) {
-            return update.partialResult!.length > (this.irisResult()?.answer?.length ?? 0);
+            return partialResult.length > (this.irisResult()?.answer?.length ?? 0);
         }
         if (this.lastPartialSeq !== undefined && update.partialSeq <= this.lastPartialSeq) {
             return false;

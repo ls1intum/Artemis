@@ -219,8 +219,12 @@ public class PyrisStatusUpdateService {
         if (isThinking) {
             if (statusUpdate.partialResult() != null) {
                 // Streamed draft of the answer while the LLM generates; the terminal update carries the authoritative answer.
-                irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC,
-                        new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), true, null, null, statusUpdate.partialResult(), statusUpdate.partialSeq()));
+                // An empty partialResult is the provider's retry-clear signal for a stale draft (see PartialResultSender on
+                // the Pyris side); it is forwarded as clearDraft=true with partialResult omitted, since an empty string
+                // would not survive this DTO's NON_EMPTY serialization and reach the client indistinguishable from absent.
+                boolean clearDraft = statusUpdate.partialResult().isEmpty();
+                irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC, new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), true, null, null,
+                        clearDraft ? null : statusUpdate.partialResult(), statusUpdate.partialSeq(), clearDraft));
             }
             else {
                 irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC, new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), true, null, null));
@@ -229,7 +233,7 @@ public class PyrisStatusUpdateService {
         }
         else if (isTerminal) {
             irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC,
-                    new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), false, statusUpdate.answer(), statusUpdate.sources(), null, null, statusUpdate.entitySources()));
+                    new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), false, statusUpdate.answer(), statusUpdate.sources(), null, null, statusUpdate.entitySources(), false));
             pyrisJobService.removeJob(job);
         }
         else {

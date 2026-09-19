@@ -150,7 +150,7 @@ class PyrisStatusUpdateServiceTest {
         service.handleStatusUpdate(job, terminalUpdate);
 
         verify(irisWebsocketService).send("student1", "global-search-answer",
-                new IrisGlobalSearchAnswerWebsocketDTO("global-run", false, "answer.[1]", null, null, null, List.of(entitySource)));
+                new IrisGlobalSearchAnswerWebsocketDTO("global-run", false, "answer.[1]", null, null, null, List.of(entitySource), false));
         verify(pyrisJobService).removeJob(job);
     }
 
@@ -162,7 +162,22 @@ class PyrisStatusUpdateServiceTest {
         service.handleStatusUpdate(job, partialUpdate);
 
         verify(irisWebsocketService).send("student1", "global-search-answer",
-                new IrisGlobalSearchAnswerWebsocketDTO("global-run", true, null, null, "Signals are reactive.[1]", 3));
+                new IrisGlobalSearchAnswerWebsocketDTO("global-run", true, null, null, "Signals are reactive.[1]", 3, false));
+        verify(pyrisJobService).updateJob(job);
+    }
+
+    @Test
+    void globalSearchEmptyPartialResultIsForwardedAsClearDraftInsteadOfEmptyText() {
+        // The provider's retry-clear signal (see PartialResultSender on the Pyris side) is an empty
+        // partialResult; it must be translated to clearDraft=true with partialResult omitted, since an
+        // empty string would not survive IrisGlobalSearchAnswerWebsocketDTO's NON_EMPTY serialization
+        // and would reach the client indistinguishable from "no partial result in this message".
+        var job = new GlobalSearchAnswerJob("global-run", "student1");
+        var clearUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.RUNNING, null, null, null, "", 4);
+
+        service.handleStatusUpdate(job, clearUpdate);
+
+        verify(irisWebsocketService).send("student1", "global-search-answer", new IrisGlobalSearchAnswerWebsocketDTO("global-run", true, null, null, null, 4, true));
         verify(pyrisJobService).updateJob(job);
     }
 

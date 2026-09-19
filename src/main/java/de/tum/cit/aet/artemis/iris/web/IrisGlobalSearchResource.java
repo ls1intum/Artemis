@@ -208,7 +208,7 @@ public class IrisGlobalSearchResource {
         // the student nothing, when the lecture-content-only answer could still have succeeded.
         List<PyrisEntityCandidateDTO> entityCandidates = fetchEntityCandidates(user, requestDTO, resolvedCourseIds);
         pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), selectedLlmUsage, accessContext,
-                entityCandidates, resolvedCourseIds);
+                entityCandidates, scope.courseIds(), scope.searchesNothing());
         return ResponseEntity.accepted().build();
     }
 

@@ -500,16 +500,17 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             expect(component['irisResult']()?.answer).toBe('Longer draft text.');
         });
 
-        it('accepts a shorter draft when its partialSeq is newer, ordering by sequence rather than length', () => {
+        it('accepts a clearDraft signal when its partialSeq is newer, ordering by sequence rather than length', () => {
             // A provider retry mid-stream restarts the draft from empty with a HIGHER partialSeq
-            // (Iris's PartialResultSender sends an empty partial specifically to clear a stale one);
-            // a length comparison would wrongly reject this as stale.
+            // (Iris's PartialResultSender sends an empty partial specifically to clear a stale one,
+            // forwarded by the server as clearDraft=true since an empty partialResult does not survive
+            // its NON_EMPTY serialization); a length comparison would wrongly reject this as stale.
             startQuery();
             askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'A fairly long draft before the retry.', partialSeq: 3 });
             fixture.detectChanges();
             expect(component['irisResult']()?.answer).toBe('A fairly long draft before the retry.');
 
-            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: '', partialSeq: 4 });
+            askSubject.next({ runId: 'run-1', isThinking: true, clearDraft: true, partialSeq: 4 });
             fixture.detectChanges();
             expect(component['irisResult']()?.answer).toBe('');
 

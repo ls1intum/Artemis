@@ -97,7 +97,7 @@ class IrisGlobalSearchResourceTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
         verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(eq(requestDTO.query()), eq(requestDTO.limit()), eq(requestDTO.runId().toString()),
-                eq(AiSelectionDecision.CLOUD_AI), any(), eq(List.of(PyrisEntityCandidateDTO.of(candidate))), eq((List<Long>) null));
+                eq(AiSelectionDecision.CLOUD_AI), any(), eq(List.of(PyrisEntityCandidateDTO.of(candidate))), eq((List<Long>) null), eq(false));
     }
 
     @Test
@@ -112,7 +112,7 @@ class IrisGlobalSearchResourceTest {
         // instead of surfacing a 500 for a job token that pyrisJobService already registered.
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
         verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(eq(requestDTO.query()), eq(requestDTO.limit()), eq(requestDTO.runId().toString()),
-                eq(AiSelectionDecision.CLOUD_AI), any(), eq(List.of()), eq((List<Long>) null));
+                eq(AiSelectionDecision.CLOUD_AI), any(), eq(List.of()), eq((List<Long>) null), eq(false));
         verify(pyrisJobService).addGlobalSearchAnswerJob(anyString(), anyString());
     }
 
@@ -126,6 +126,6 @@ class IrisGlobalSearchResourceTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
         verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(eq(requestDTO.query()), eq(requestDTO.limit()), eq(requestDTO.runId().toString()),
-                eq(AiSelectionDecision.CLOUD_AI), any(), eq(List.of()), eq((List<Long>) null));
+                eq(AiSelectionDecision.CLOUD_AI), any(), eq(List.of()), eq((List<Long>) null), eq(false));
     }
 }

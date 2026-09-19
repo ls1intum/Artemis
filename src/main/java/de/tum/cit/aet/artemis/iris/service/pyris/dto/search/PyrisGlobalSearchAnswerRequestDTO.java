@@ -20,9 +20,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSetti
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisGlobalSearchAnswerRequestDTO(@NotBlank String query, @Min(1) @Max(5) int limit, PyrisPipelineExecutionSettingsDTO settings,
-        @Nullable PyrisAccessContextDTO accessContext, @Nullable List<PyrisEntityCandidateDTO> entityCandidates,
-        // NON_NULL, not the record-level NON_EMPTY: an EMPTY list here means the caller already resolved the course
-        // scope to nothing (e.g. every requested course was excluded) and must reach Pyris as an empty list, not
-        // collapse into "absent" (which Pyris reads as unscoped — the opposite of what an all-excluded scope means).
-        @JsonInclude(JsonInclude.Include.NON_NULL) @Nullable List<Long> courseIds) {
+        @Nullable PyrisAccessContextDTO accessContext, @Nullable List<PyrisEntityCandidateDTO> entityCandidates, @Nullable List<Long> courseIds,
+        // Disambiguates an all-excluded course scope from "unscoped" without relying on an empty courseIds list
+        // surviving the wire: the class-level NON_EMPTY policy drops both null and an empty list identically, so
+        // Pyris could not otherwise tell "no scope requested" from "every requested course was excluded".
+        boolean searchesNothing) {
 }

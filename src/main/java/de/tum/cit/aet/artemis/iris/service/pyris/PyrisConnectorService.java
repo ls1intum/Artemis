@@ -262,19 +262,20 @@ public class PyrisConnectorService {
      * @param aiSelection      the user's LLM selection (LOCAL_AI or CLOUD_AI)
      * @param accessContext    the requesting user's role-grouped course access, applied by Pyris as an opaque filter (may be null)
      * @param entityCandidates pre-fetched, access-filtered entity candidates for the answer pipeline (may be null or empty)
-     * @param courseIds        optional course scope from the search UI's active course filter: {@code null} is unscoped
-     *                             (search everything the access context permits), an EMPTY list means the caller already
-     *                             resolved the scope to nothing (e.g. every requested course was excluded) and must reach
-     *                             Pyris as such, not collapse back to unscoped
+     * @param courseIds        optional course scope from the search UI's active course filter, {@code null} for unscoped
+     *                             (search everything the access context permits)
+     * @param searchesNothing  whether the caller already resolved the scope to nothing (e.g. every requested course
+     *                             was excluded); distinct from an unscoped {@code courseIds}, and passed as its own
+     *                             field since an empty {@code courseIds} list does not survive the wire
      */
     public void executeGlobalSearchIrisAnswer(String query, int limit, String jobToken, AiSelectionDecision aiSelection, @Nullable PyrisAccessContextDTO accessContext,
-            @Nullable List<PyrisEntityCandidateDTO> entityCandidates, @Nullable List<Long> courseIds) {
+            @Nullable List<PyrisEntityCandidateDTO> entityCandidates, @Nullable List<Long> courseIds, boolean searchesNothing) {
         var endpoint = "/api/v1/pipelines/global-search/run";
         try {
             // streamResponse: Pyris posts throttled partial-answer snapshots while the LLM generates,
             // which this service forwards to the client as partial WebSocket updates.
             var settings = new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, null, IrisSupportLevel.MODERATE.jsonValue(), Boolean.TRUE);
-            var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, accessContext, entityCandidates, courseIds);
+            var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, accessContext, entityCandidates, courseIds, searchesNothing);
             var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, Void.class);
             if (response.getStatusCode().value() != HttpStatus.ACCEPTED.value()) {
                 log.warn("Unexpected status {} from Pyris search/ask async", response.getStatusCode().value());

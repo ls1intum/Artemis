@@ -19,4 +19,6 @@ export interface IrisSearchStatusUpdate {
     partialResult?: string;
     /** Monotonic sequence number of the streamed draft; lower numbers are stale. */
     partialSeq?: number;
+    /** The provider is retrying and the streamed draft so far is stale; discard it and wait for the next one. */
+    clearDraft?: boolean;
 }
