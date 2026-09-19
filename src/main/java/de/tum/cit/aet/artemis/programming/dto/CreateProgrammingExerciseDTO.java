@@ -137,8 +137,7 @@ public record CreateProgrammingExerciseDTO(@Nullable Long id, String title, Stri
                 exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(), exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(),
                 exercise.isAllowOnlineIde(), exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getShowTestNamesToStudents(),
                 exercise.isReleaseTestsWithExampleSolution(), exercise.getProgrammingLanguage(), exercise.getProjectType(), UpdateProgrammingExerciseBuildConfigDTO.of(buildConfig),
-                gradingCriteria, competencyLinks, auxiliaryRepositories, SubmissionPolicyDTO.of(exercise.getSubmissionPolicy()),
-                PlagiarismDetectionConfigDTO.of(exercise.getPlagiarismDetectionConfig()),
+                gradingCriteria, competencyLinks, auxiliaryRepositories, submissionPolicy, plagiarismDetectionConfig,
                 exercise.isCourseExercise() && course != null ? new CourseRefDTO(course.getId(), null, null, null) : null,
                 exercise.getExerciseGroup() == null ? null : new ExerciseGroupIdDTO(exercise.getExerciseGroup().getId()));
     }
