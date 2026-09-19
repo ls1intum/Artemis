@@ -156,20 +156,12 @@ public class DataCleanupService {
 
     /**
      * Deletes orphaned entities that are no longer associated with valid results or participations.
-     * This includes feedback, text blocks, and scores that reference null results, participations, or submissions.
+     * This is everything hanging off a result that has lost its submission or participation, plus scores naming
+     * neither a student nor a team, ratings whose result went the same way, and unreferenced feedback messages.
      *
      * @return a {@link CleanupServiceExecutionRecordDTO} representing the execution record of the cleanup job
      */
     public CleanupServiceExecutionRecordDTO deleteOrphans() {
-        int deletedLongFeedbackTexts = longFeedbackTextCleanupRepository.deleteLongFeedbackTextForOrphanedFeedback();
-        log.info("Deleted {} orphaned long feedback texts", deletedLongFeedbackTexts);
-
-        int deletedTextBlocks = textBlockCleanupRepository.deleteTextBlockForEmptyFeedback();
-        log.info("Deleted {} text blocks for empty feedback", deletedTextBlocks);
-
-        int deletedOrphanFeedback = feedbackCleanupRepository.deleteOrphanFeedback();
-        log.info("Deleted {} orphaned feedback entries", deletedOrphanFeedback);
-
         int deletedOrphanStudentScores = studentScoreCleanupRepository.deleteOrphanStudentScore();
         log.info("Deleted {} orphaned student scores", deletedOrphanStudentScores);
 
@@ -300,14 +292,12 @@ public class DataCleanupService {
 
     /**
      * Counts orphaned entities that are no longer associated with valid results or participations.
-     * This includes feedback, text blocks, and scores that reference null results, participations, or submissions.
+     * This is everything hanging off a result that has lost its submission or participation, plus scores naming
+     * neither a student nor a team, ratings whose result went the same way, and unreferenced feedback messages.
      *
      * @return an {@link OrphanCleanupCountDTO} representing the counts of orphaned entities that would be deleted
      */
     public OrphanCleanupCountDTO countOrphans() {
-        int orphanFeedbackCount = feedbackCleanupRepository.countOrphanFeedback();
-        int orphanLongFeedbackTextCount = longFeedbackTextCleanupRepository.countLongFeedbackTextForOrphanedFeedback();
-        int orphanTextBlockCount = textBlockCleanupRepository.countTextBlockForEmptyFeedback();
         int orphanStudentScoreCount = studentScoreCleanupRepository.countOrphanStudentScore();
         int orphanTeamScoreCount = teamScoreCleanupRepository.countOrphanTeamScore();
         int orphanLongFeedbackTextForOrphanResultsCount = longFeedbackTextCleanupRepository.countLongFeedbackTextForOrphanResult();
@@ -318,9 +308,8 @@ public class DataCleanupService {
         int orphanResultsWithoutParticipationCount = resultCleanupRepository.countResultWithoutParticipationAndSubmission();
         int orphanFeedbackMessageCount = feedbackMessageCleanupRepository.countUnreferencedFeedbackMessages(ZonedDateTime.now().minusDays(FEEDBACK_MESSAGE_GRACE_PERIOD_DAYS));
 
-        return new OrphanCleanupCountDTO(orphanFeedbackCount, orphanLongFeedbackTextCount, orphanTextBlockCount, orphanStudentScoreCount, orphanTeamScoreCount,
-                orphanFeedbackForOrphanResultsCount, orphanLongFeedbackTextForOrphanResultsCount, orphanTextBlockForOrphanResultsCount, orphanRatingCount,
-                orphanResultsWithoutParticipationCount, orphanFeedbackMessageCount);
+        return new OrphanCleanupCountDTO(orphanStudentScoreCount, orphanTeamScoreCount, orphanFeedbackForOrphanResultsCount, orphanLongFeedbackTextForOrphanResultsCount,
+                orphanTextBlockForOrphanResultsCount, orphanRatingCount, orphanResultsWithoutParticipationCount, orphanFeedbackMessageCount);
     }
 
     /**

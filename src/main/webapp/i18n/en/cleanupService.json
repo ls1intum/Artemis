@@ -82,9 +82,6 @@
             "datesInvalid": "'Delete to' must be after 'Delete from'"
         },
         "entities": {
-            "orphanFeedback": "Orphan feedback",
-            "orphanLongFeedbackText": "Orphan long feedback text",
-            "orphanTextBlock": "Orphan text block",
             "orphanStudentScore": "Orphan student score",
             "orphanTeamScore": "Orphan team score",
             "orphanFeedbackForOrphanResults": "Orphan feedback for orphan results",

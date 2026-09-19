@@ -345,8 +345,9 @@ public class ProgrammingExerciseResultTestService {
                 userPrefix + "tutor1", AssessmentType.SEMI_AUTOMATIC, true);
 
         List<Feedback> feedback = ParticipationFactory.generateManualFeedback();
-        feedback = feedbackRepository.saveAll(feedback);
+        // Attached before it is written: result_id is not nullable, so a detached insert fails outright.
         programmingSubmission.getFirstResult().addFeedbacks(feedback);
+        feedbackRepository.saveAll(feedback);
         resultRepository.save(programmingSubmission.getFirstResult());
 
         final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
