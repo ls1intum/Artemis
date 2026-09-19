@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    An analysis of the database structure found that a post is the one entity with two possible parents and nothing
+    requiring either. It is written in a conversation or it belongs to a plagiarism case, and the schema accepted a row
+    naming neither.
+    -->
+
+    <changeSet id="20260918135254-01-a-post-belongs-to-a-conversation-or-a-plagiarism-case" author="krusche">
+        <comment>Remove the posts that belong to neither, so that the rule below can be stated.</comment>
+        <!--
+        A post that names neither predates conversations entirely. Nothing lists it: the conversation view reads posts
+        through the conversation and the plagiarism view through the case, so such a post has been invisible since the
+        column that used to place it was removed. Its answers and reactions go with it, for the same reason.
+        -->
+        <sql>DELETE FROM reaction WHERE answer_post_id IN
+            (SELECT id FROM answer_post WHERE post_id IN (SELECT id FROM post WHERE conversation_id IS NULL AND plagiarism_case_id IS NULL));</sql>
+        <sql>DELETE FROM reaction WHERE post_id IN (SELECT id FROM post WHERE conversation_id IS NULL AND plagiarism_case_id IS NULL);</sql>
+        <sql>DELETE FROM answer_post WHERE post_id IN (SELECT id FROM post WHERE conversation_id IS NULL AND plagiarism_case_id IS NULL);</sql>
+        <sql>DELETE FROM post WHERE conversation_id IS NULL AND plagiarism_case_id IS NULL;</sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20260918135254-02-post-parent-check" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM post WHERE conversation_id IS NULL AND plagiarism_case_id IS NULL</sqlCheck>
+        </preConditions>
+        <!-- Two alternative parents cannot be expressed as a NOT NULL, so the rule is a check constraint instead. -->
+        <sql>ALTER TABLE post ADD CONSTRAINT CK_POST_HAS_A_PARENT CHECK (conversation_id IS NOT NULL OR plagiarism_case_id IS NOT NULL);</sql>
+        <rollback>
+            <sql dbms="mysql">ALTER TABLE post DROP CHECK CK_POST_HAS_A_PARENT;</sql>
+            <sql dbms="postgresql">ALTER TABLE post DROP CONSTRAINT CK_POST_HAS_A_PARENT;</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260918135254-03-feedback-names-its-result" author="krusche">
+        <comment>A piece of feedback belongs to one result, and a deleted result now takes its feedback with it.</comment>
+        <!--
+        Feedback that names no result is reachable from nowhere: it is only ever listed through the result that owns
+        it, and the row carries no evidence of which result it was written for. The cleanup that used to remove these
+        rows goes with this changeset, because the schema no longer lets them appear.
+
+        What hangs off such a row goes with it or keeps its own parent, and the two foreign keys already say which.
+        long_feedback_text cascades, because feedback is all it belongs to. text_block sets its feedback_id to null,
+        because a text block belongs to its submission - submission_id is NOT NULL - and the feedback is a reference
+        to whatever assessed that segment. So the block survives the delete still listed by its submission, having
+        lost only a pointer to a row nothing could reach. Deleting it instead would take a live submission's
+        segmentation with it.
+        -->
+        <sql>DELETE FROM feedback WHERE result_id IS NULL;</sql>
+        <!--
+        The delete rule goes first, and the column is required in the next changeset: RESTRICT made deleting a result
+        depend on the application clearing its feedback beforehand, and a key that can refuse the delete is not what a
+        required parent means.
+        -->
+        <dropForeignKeyConstraint baseTableName="feedback" constraintName="feedback_ibfk_1"/>
+        <addForeignKeyConstraint baseTableName="feedback" baseColumnNames="result_id" constraintName="feedback_ibfk_1"
+                                 referencedTableName="result" referencedColumnNames="id" onDelete="CASCADE"/>
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="feedback" constraintName="feedback_ibfk_1"/>
+            <addForeignKeyConstraint baseTableName="feedback" baseColumnNames="result_id" constraintName="feedback_ibfk_1"
+                                     referencedTableName="result" referencedColumnNames="id" onDelete="RESTRICT"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260918135254-04-feedback-result-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM feedback WHERE result_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="feedback" columnName="result_id" columnDataType="BIGINT"/>
+        <rollback>
+            <dropNotNullConstraint tableName="feedback" columnName="result_id" columnDataType="BIGINT"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260918135254-05-quiz-questions-name-their-exercise" author="krusche">
+        <preConditions onFail="HALT" onFailMessage="A quiz question without an exercise is still answered in a submission whose participation names an exercise. That answer is listed by its participant and the participation says which exercise the question belonged to, so reattach those questions before upgrading. The query in documentation/docs/developer/guidelines/entity-ownership.mdx, under 'Rows that would stop a migration', lists them.">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM submitted_answer sa JOIN submission s ON s.id = sa.submission_id JOIN participation p ON p.id = s.participation_id JOIN quiz_question q ON q.id = sa.quiz_question_id WHERE q.exercise_id IS NULL AND p.exercise_id IS NOT NULL</sqlCheck>
+        </preConditions>
+        <comment>A quiz question belongs to one quiz exercise, and a deleted exercise now takes its questions with it.</comment>
+        <!--
+        A question naming no exercise is reachable from nowhere. No exercise lists it, and the only rows that still
+        point at it are submitted answers whose submissions have themselves lost their participation, so no participant
+        lists those either. Both sides go together; a question that is still part of an exercise keeps its answers.
+
+        That last sentence is a statement about the rows, not something the old schema enforced, so it is checked
+        rather than assumed. An answer whose submission still reaches a participation naming an exercise is listed by
+        that participant, and the participation is evidence of the parent its question lost - which makes it a row to
+        reattach, not one to delete. Finding one halts the upgrade instead of guessing, as every recoverable orphan in
+        entity-ownership.mdx does.
+        -->
+        <sql>DELETE FROM submitted_answer WHERE quiz_question_id IN (SELECT id FROM quiz_question WHERE exercise_id IS NULL);</sql>
+        <sql>DELETE FROM quiz_question WHERE exercise_id IS NULL;</sql>
+        <!-- RESTRICT made deleting a quiz exercise depend on the application clearing its questions beforehand. -->
+        <dropForeignKeyConstraint baseTableName="quiz_question" constraintName="FKcw89k10abejup8p3hif0kjpw"/>
+        <addForeignKeyConstraint baseTableName="quiz_question" baseColumnNames="exercise_id" constraintName="FKcw89k10abejup8p3hif0kjpw"
+                                 referencedTableName="exercise" referencedColumnNames="id" onDelete="CASCADE"/>
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="quiz_question" constraintName="FKcw89k10abejup8p3hif0kjpw"/>
+            <addForeignKeyConstraint baseTableName="quiz_question" baseColumnNames="exercise_id" constraintName="FKcw89k10abejup8p3hif0kjpw"
+                                     referencedTableName="exercise" referencedColumnNames="id" onDelete="RESTRICT"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260918135254-06-quiz-question-exercise-not-null" author="krusche">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM quiz_question WHERE exercise_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="quiz_question" columnName="exercise_id" columnDataType="BIGINT"/>
+        <rollback>
+            <dropNotNullConstraint tableName="quiz_question" columnName="exercise_id" columnDataType="BIGINT"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

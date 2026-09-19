@@ -82,9 +82,6 @@
             "datesInvalid": "'Löschen bis' muss nach 'Löschen von' liegen"
         },
         "entities": {
-            "orphanFeedback": "Verwaistes Feedback",
-            "orphanLongFeedbackText": "Verwaister langer Feedback-Text",
-            "orphanTextBlock": "Verwaister Textblock",
             "orphanStudentScore": "Verwaiste Studentenbewertung",
             "orphanTeamScore": "Verwaiste Teambewertung",
             "orphanFeedbackForOrphanResults": "Verwaistes Feedback für verwaiste Ergebnisse",
