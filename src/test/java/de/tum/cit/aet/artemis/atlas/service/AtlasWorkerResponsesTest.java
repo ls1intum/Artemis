@@ -54,7 +54,7 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 
 /** Exercises real nested delegation and the native tool advisor against a scripted Responses provider. */
-class AtlasWorkerResponsesIntegrationTest {
+class AtlasWorkerResponsesTest {
 
     @ParameterizedTest
     @CsvSource({ "Creator,createCompetency,true", "Assigner,assignExerciseToCompetency,false", "Editor,editCompetency,true" })
