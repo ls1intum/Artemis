@@ -11,9 +11,26 @@ import dayjs from 'dayjs/esm';
 
 import { CleanupServiceComponent } from 'app/admin/cleanup-service/cleanup-service.component';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
-import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
+import { CleanupConfiguration, CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+
+const CONFIGURATION: CleanupConfiguration = {
+    gradeRelevantRetentionYears: 5,
+    gradeRelevantCoursesEndedBefore: dayjs('2021-03-04T00:00:00Z'),
+    nonGradeRelevantRetentionYears: 1,
+    nonGradeRelevantCoursesEndedBefore: dayjs('2025-03-04T00:00:00Z'),
+    resetWarningGracePeriodDays: 30,
+    coursesWarnedBefore: dayjs('2026-02-02T00:00:00Z'),
+    oldFeedbackCutoffWeeks: 8,
+    oldFeedbackCoursesEndedBefore: dayjs('2026-01-07T00:00:00Z'),
+    oldSubmissionVersionsCutoffWeeks: 1,
+    oldSubmissionVersionsCoursesEndedBefore: dayjs('2026-02-25T00:00:00Z'),
+    notEnrolledUsersInactivityMonths: 6,
+    usersInactiveBefore: dayjs('2025-09-04T00:00:00Z'),
+    notEnrolledUsersWarningGracePeriodDays: 1,
+    usersWarnedBefore: dayjs('2026-03-03T00:00:00Z'),
+};
 
 describe('CleanupServiceComponent', () => {
     let comp: CleanupServiceComponent;
@@ -22,7 +39,8 @@ describe('CleanupServiceComponent', () => {
 
     beforeEach(async () => {
         const mockCleanupService = {
-            getLastExecutions: vi.fn(),
+            getLastExecutions: vi.fn().mockReturnValue(of(new HttpResponse<CleanupServiceExecutionRecordDTO[]>({ body: [] }))),
+            getCleanupConfiguration: vi.fn().mockReturnValue(of(CONFIGURATION)),
         };
 
         await TestBed.configureTestingModule({
@@ -90,6 +108,7 @@ describe('CleanupServiceComponent', () => {
     it('should validate date ranges correctly', () => {
         const validOperation: CleanupOperation = {
             name: 'deleteOrphans',
+            action: 'delete',
             deleteFrom: dayjs().subtract(6, 'months'),
             deleteTo: dayjs(),
             lastExecuted: undefined,
@@ -100,6 +119,7 @@ describe('CleanupServiceComponent', () => {
 
         const invalidOperation: CleanupOperation = {
             name: 'deleteOrphans',
+            action: 'delete',
             deleteFrom: dayjs(),
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
@@ -118,6 +138,7 @@ describe('CleanupServiceComponent', () => {
     it('should clear the model and invalidate the row when a date is cleared', () => {
         const operation: CleanupOperation = {
             name: 'deletePlagiarismComparisons',
+            action: 'delete',
             deleteFrom: dayjs().subtract(6, 'months'),
             deleteTo: dayjs(),
             lastExecuted: undefined,
@@ -136,6 +157,7 @@ describe('CleanupServiceComponent', () => {
     it('should set a new from-date and revalidate the row', () => {
         const operation: CleanupOperation = {
             name: 'deletePlagiarismComparisons',
+            action: 'delete',
             deleteFrom: undefined,
             deleteTo: dayjs(),
             lastExecuted: undefined,
@@ -154,6 +176,7 @@ describe('CleanupServiceComponent', () => {
     it('should clear the model and invalidate the row when the to-date is cleared', () => {
         const operation: CleanupOperation = {
             name: 'deletePlagiarismComparisons',
+            action: 'delete',
             deleteFrom: dayjs().subtract(6, 'months'),
             deleteTo: dayjs(),
             lastExecuted: undefined,
@@ -171,6 +194,7 @@ describe('CleanupServiceComponent', () => {
     it('should set a new to-date and revalidate the row', () => {
         const operation: CleanupOperation = {
             name: 'deletePlagiarismComparisons',
+            action: 'delete',
             deleteFrom: dayjs().subtract(6, 'months'),
             deleteTo: undefined,
             lastExecuted: undefined,
@@ -215,6 +239,141 @@ describe('CleanupServiceComponent', () => {
             expect(operation!.deleteFrom).toBeUndefined();
             expect(operation!.deleteTo).toBeUndefined();
             expect(operation!.datesValid()).toBe(true);
+        }
+    });
+
+    it('should label every operation with the action it actually performs', () => {
+        const actionByName = new Map(comp.cleanupOperations().map((operation) => [operation.name, operation.action]));
+
+        // "Delete" is wrong for an operation that only emails a warning, or that resets a course while keeping it.
+        expect(actionByName.get('warnOldCoursesReset')).toBe('warn');
+        expect(actionByName.get('warnNotEnrolledUsers')).toBe('warn');
+        expect(actionByName.get('resetOldCourses')).toBe('reset');
+        for (const name of ['deleteOrphans', 'deleteOldFeedback', 'deleteNotEnrolledUsers', 'deletePlagiarismCases'] as const) {
+            expect(actionByName.get(name)).toBe('delete');
+        }
+    });
+
+    it('should load the effective cleanup configuration on init', () => {
+        comp.ngOnInit();
+
+        expect(cleanupService.getCleanupConfiguration).toHaveBeenCalledOnce();
+        expect(comp.configuration()).toEqual(CONFIGURATION);
+    });
+
+    it('should alert on a failed configuration load', () => {
+        const alertService = TestBed.inject(AlertService);
+        const errorSpy = vi.spyOn(alertService, 'error');
+        vi.spyOn(cleanupService, 'getCleanupConfiguration').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+
+        comp.ngOnInit();
+
+        expect(errorSpy).toHaveBeenCalledOnce();
+        expect(comp.configuration()).toBeUndefined();
+    });
+
+    it('should flag a failed configuration load so the affected rows can say their scope is unknown', () => {
+        const alertService = TestBed.inject(AlertService);
+        vi.spyOn(alertService, 'error');
+        vi.spyOn(cleanupService, 'getCleanupConfiguration').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+
+        comp.ngOnInit();
+
+        expect(comp.configurationFailed()).toBe(true);
+        expect(comp.descriptions()).toEqual({});
+    });
+
+    it('should describe an age-based operation with the cutoff the server would apply', () => {
+        comp.ngOnInit();
+
+        // MockTranslateService echoes the key, so the resolved period is the duration key the component picked.
+        expect(comp.descriptions().deletePlagiarismCases).toEqual({
+            cutoff: 'Mar 4, 2021',
+            period: 'cleanupService.duration.years',
+            secondaryCutoff: undefined,
+            secondaryPeriod: undefined,
+        });
+
+        // The reset is measured from the warning, not from the course end, so it must quote the warning cutoff.
+        expect(comp.descriptions().resetOldCourses?.cutoff).toBe('Feb 2, 2026');
+        expect(comp.descriptions().resetOldCourses?.period).toBe('cleanupService.duration.days');
+    });
+
+    it('should describe both retention cutoffs of the old-course warning', () => {
+        comp.ngOnInit();
+
+        expect(comp.descriptions().warnOldCoursesReset).toEqual({
+            cutoff: 'Mar 4, 2021',
+            period: 'cleanupService.duration.years',
+            secondaryCutoff: 'Mar 4, 2025',
+            // A configured period of 1 must resolve to the singular key, otherwise the line reads "1 years".
+            secondaryPeriod: 'cleanupService.duration.year',
+        });
+    });
+
+    it('should pick the singular duration key for every period configured as one', () => {
+        comp.ngOnInit();
+
+        expect(comp.descriptions().deleteOldCourseSubmissionVersions?.period).toBe('cleanupService.duration.week');
+        expect(comp.descriptions().deleteNotEnrolledUsers?.period).toBe('cleanupService.duration.day');
+    });
+
+    it('should not quote a second cutoff for the not-enrolled user deletion', () => {
+        comp.ngOnInit();
+
+        // Phase 2 compares each user's last login against their own warning date, which no global cutoff can express.
+        expect(comp.descriptions().deleteNotEnrolledUsers?.secondaryCutoff).toBeUndefined();
+        expect(comp.descriptions().deleteNotEnrolledUsers?.secondaryPeriod).toBeUndefined();
+    });
+
+    it('should describe nothing until the configuration has loaded', () => {
+        // Rendering a cutoff before the server answered would state a date the operation does not actually use.
+        expect(comp.descriptions()).toEqual({});
+        expect(comp.configurationFailed()).toBe(false);
+    });
+
+    it('should mark only the cutoff-quoting operations as needing the configuration', () => {
+        comp.ngOnInit();
+        const quoting = comp
+            .cleanupOperations()
+            .map((operation) => operation.name)
+            .filter((name) => comp.descriptions()[name] !== undefined);
+
+        // The four date-range operations state their scope through their pickers, and orphans have no time bound.
+        expect(quoting).toEqual([
+            'warnOldCoursesReset',
+            'resetOldCourses',
+            'deleteOldFeedback',
+            'deleteOldCourseSubmissionVersions',
+            'warnNotEnrolledUsers',
+            'deleteNotEnrolledUsers',
+            'deletePlagiarismCases',
+        ]);
+    });
+
+    it('should supply every placeholder its description string interpolates', async () => {
+        // The rendered line must never contain a hole. This pins the component and the translations together, so a
+        // string that starts quoting a cutoff, or an operation added without one, fails here instead of in the UI.
+        comp.ngOnInit();
+        const translations = (await import('../../../i18n/en/cleanupService.json')).default.cleanupService;
+
+        for (const operation of comp.cleanupOperations()) {
+            const template: string = translations.description[operation.name];
+            expect(template, `missing cleanupService.description.${operation.name}`).toBeDefined();
+
+            const placeholders = [...template.matchAll(/{{\s*(\w+)\s*}}/g)].map((match) => match[1]);
+            const description = comp.descriptions()[operation.name];
+            for (const placeholder of placeholders) {
+                expect(description?.[placeholder as keyof typeof description], `${operation.name} does not supply {{${placeholder}}}`).toBeTruthy();
+            }
+            // Conversely, every value supplied must be one the string actually interpolates, so that dropping a
+            // {{period}} from a translation is caught too, not just dropping the value behind it.
+            if (description) {
+                const supplied = Object.entries(description)
+                    .filter(([, value]) => value !== undefined)
+                    .map(([key]) => key);
+                expect(new Set(placeholders), `${operation.name} supplies values that do not match its placeholders`).toEqual(new Set(supplied));
+            }
         }
     });
 });

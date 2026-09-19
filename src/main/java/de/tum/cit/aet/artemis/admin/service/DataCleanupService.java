@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.account.service.user.deletion.UserDeletionPlanServ
 import de.tum.cit.aet.artemis.admin.config.DataCleanupProperties;
 import de.tum.cit.aet.artemis.admin.domain.CleanupJobExecution;
 import de.tum.cit.aet.artemis.admin.domain.CleanupJobType;
+import de.tum.cit.aet.artemis.admin.dto.CleanupConfigurationDTO;
 import de.tum.cit.aet.artemis.admin.dto.CleanupServiceExecutionRecordDTO;
 import de.tum.cit.aet.artemis.admin.dto.NonLatestNonRatedResultsCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.NonLatestRatedResultsCleanupCountDTO;
@@ -664,6 +665,16 @@ public class DataCleanupService {
 
     private OldCoursesCleanupCountDTO toOldCoursesCleanupCountDTO(List<Course> courses) {
         return new OldCoursesCleanupCountDTO(courses.size());
+    }
+
+    /**
+     * Returns the configured retention periods together with the cutoffs the age-based operations would apply right now,
+     * so the admin UI can name the affected data instead of only referring to "the configured cutoff".
+     *
+     * @return the effective cleanup configuration
+     */
+    public CleanupConfigurationDTO getCleanupConfiguration() {
+        return CleanupConfigurationDTO.of(dataCleanupProperties, ZonedDateTime.now());
     }
 
     /**
