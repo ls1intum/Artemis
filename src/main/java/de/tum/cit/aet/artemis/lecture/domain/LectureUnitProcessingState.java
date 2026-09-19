@@ -85,7 +85,7 @@ public class LectureUnitProcessingState extends DomainObject {
      * Fingerprint of the stored transcription's segments, used to decide whether {@link #transcriptionVersion} has to be incremented.
      * Without it, the repeated checkpoint writes during a transcription run would inflate the version on every checkpoint.
      */
-    @Column(name = "transcription_content_hash")
+    @Column(name = "transcription_content_hash", length = 64)
     private String transcriptionContentHash;
 
     /**
