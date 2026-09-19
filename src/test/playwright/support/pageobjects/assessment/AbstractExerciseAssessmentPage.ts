@@ -17,12 +17,12 @@ export abstract class AbstractExerciseAssessmentPage {
     }
 
     async fillFeedback(points: number, feedback?: string) {
-        const unreferencedFeedback = this.page.locator('.unreferenced-feedback-detail');
-        await unreferencedFeedback.locator('#feedback-points').clear();
-        await unreferencedFeedback.locator('#feedback-points').fill(points.toString());
+        const unreferencedFeedback = this.page.locator('.unreferenced-feedback-detail').last();
+        await unreferencedFeedback.locator('.feedback-card__points-input').clear();
+        await unreferencedFeedback.locator('.feedback-card__points-input').fill(points.toString());
         if (feedback) {
-            await unreferencedFeedback.locator('#feedback-textarea').clear();
-            await unreferencedFeedback.locator('#feedback-textarea').fill(feedback);
+            await unreferencedFeedback.locator('.feedback-card__textarea').clear();
+            await unreferencedFeedback.locator('.feedback-card__textarea').fill(feedback);
         }
     }
 

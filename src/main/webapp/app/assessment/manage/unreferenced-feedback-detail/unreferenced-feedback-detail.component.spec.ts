@@ -5,6 +5,7 @@ import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { FeedbackService } from 'app/exercise/feedback/services/feedback.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -83,6 +84,44 @@ describe('Unreferenced Feedback Detail Component', () => {
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
+    it('should apply an armed instruction via the dedicated button without a drop event', () => {
+        const instruction: GradingInstruction = {
+            id: 1,
+            credits: 2,
+            feedback: 'test',
+            gradingScale: 'good',
+            instructionDescription: 'description of instruction',
+            usageCount: 0,
+        };
+        const feedback = {
+            id: 1,
+            detailText: 'feedback1',
+            credits: 1.5,
+        } as Feedback;
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.componentRef.setInput('resultId', 1);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.componentRef.setInput('useDefaultFeedbackSuggestionBadgeText', false);
+
+        TestBed.inject(GradingInstructionSelectionService).armInstruction(instruction);
+
+        const applySpy = vi.spyOn(sgiService, 'applyArmedInstructionToFeedback').mockImplementation((currentFeedback) => {
+            currentFeedback.gradingInstruction = instruction;
+            currentFeedback.credits = instruction.credits;
+            return true;
+        });
+        const dropSpy = vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent');
+        const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
+
+        comp.applyArmedInstruction();
+
+        expect(applySpy).toHaveBeenCalledWith(feedback);
+        expect(dropSpy).not.toHaveBeenCalled();
+        expect(feedback.gradingInstruction).toEqual(instruction);
+        expect(feedback.credits).toBe(2);
+        expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
     it('should emit the assessment change after deletion', () => {
         fixture.componentRef.setInput('feedback', {
             id: 1,
@@ -112,5 +151,98 @@ describe('Unreferenced Feedback Detail Component', () => {
             detailText: 'feedback1',
             credits: 1.5,
         } as Feedback);
+    });
+
+    it('should preserve suggestion prefix when updating AI title', () => {
+        fixture.componentRef.setInput('feedback', {
+            id: 1,
+            type: FeedbackType.AUTOMATIC,
+            text: 'FeedbackSuggestion:Model quality',
+            detailText: 'Improve the diagram',
+            credits: 1,
+        } as Feedback);
+        const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
+        comp.updateHeaderTitle('Updated title');
+        expect(emitSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                text: 'FeedbackSuggestion:Updated title',
+                detailText: 'Improve the diagram',
+            }),
+        );
+    });
+
+    it('should store manual header in feedback text', () => {
+        fixture.componentRef.setInput('feedback', {
+            id: 1,
+            detailText: 'Body',
+            credits: 1,
+        } as Feedback);
+        const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
+        comp.updateHeaderTitle('Player');
+        expect(emitSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                text: 'Player',
+                detailText: 'Body',
+            }),
+        );
+    });
+
+    it('should update tone when credits change via the stepper', () => {
+        const originalFeedback = {
+            id: 1,
+            detailText: 'feedback',
+            credits: 0.5,
+        } as Feedback;
+        fixture.componentRef.setInput('feedback', originalFeedback);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.componentRef.setInput('resultId', 1);
+        fixture.componentRef.setInput('useDefaultFeedbackSuggestionBadgeText', false);
+        const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
+        fixture.detectChanges();
+
+        const card = () => fixture.nativeElement.querySelector('tum-ui-card') as HTMLElement;
+        expect(card().getAttribute('data-tone')).toBe('positive');
+
+        comp.stepCredits(-comp.CREDITS_STEP);
+        fixture.detectChanges();
+        expect(comp.feedback()).toBe(originalFeedback);
+        expect(comp.feedback().credits).toBe(0);
+        expect(card().getAttribute('data-tone')).toBe('neutral');
+        expect(emitSpy).toHaveBeenCalledWith(originalFeedback);
+
+        comp.stepCredits(-comp.CREDITS_STEP);
+        fixture.detectChanges();
+        expect(comp.feedback().credits).toBe(-0.5);
+        expect(card().getAttribute('data-tone')).toBe('negative');
+    });
+
+    it('should normalize typed credits before emitting feedback', () => {
+        const originalFeedback = { credits: 0 } as Feedback;
+        fixture.componentRef.setInput('feedback', originalFeedback);
+        const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
+
+        comp.updateCredits(0.3);
+
+        expect(comp.feedback()).toBe(originalFeedback);
+        expect(comp.feedback().credits).toBe(0.5);
+        expect(emitSpy).toHaveBeenCalledWith(originalFeedback);
+    });
+
+    it('should give each card unique control ids linked to Title and Feedback labels', () => {
+        fixture.componentRef.setInput('feedback', { detailText: 'note', credits: 1 } as Feedback);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.componentRef.setInput('resultId', 1);
+        fixture.componentRef.setInput('useDefaultFeedbackSuggestionBadgeText', false);
+        fixture.detectChanges();
+
+        const header = fixture.nativeElement.querySelector('.feedback-card__header-input') as HTMLInputElement;
+        const textarea = fixture.nativeElement.querySelector('.feedback-card__textarea') as HTMLTextAreaElement;
+        const points = fixture.nativeElement.querySelector('.feedback-card__points-input') as HTMLInputElement;
+        expect(header?.id).toBeTruthy();
+        expect(textarea?.id).toBeTruthy();
+        expect(points?.id).toBeTruthy();
+        expect(fixture.nativeElement.querySelector(`label[for="${header.id}"]`)).not.toBeNull();
+        expect(fixture.nativeElement.querySelector(`label[for="${textarea.id}"]`)).not.toBeNull();
+        expect(new Set([header.id, textarea.id, points.id]).size).toBe(3);
     });
 });

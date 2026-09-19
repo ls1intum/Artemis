@@ -1,9 +1,10 @@
 @if (headerKey() !== null) {
     <div class="expandable-header-row">
         @if (isSubHeader()) {
-            <h6 class="expandable-header" (click)="toggleCollapsed()">
-                {{ hasTranslation() ? (headerKey() | artemisTranslate) : headerKey() }}
+            <!-- Sub-header (used only by the structured criteria panel): chevron leads the title, per the design. -->
+            <h6 class="expandable-header expandable-header--sub" (click)="toggleCollapsed()">
                 <fa-icon [icon]="isCollapsed() ? faAngleRight : faAngleDown" />
+                {{ hasTranslation() ? (headerKey() | artemisTranslate) : headerKey() }}
             </h6>
         } @else {
             <h5 class="expandable-header" (click)="toggleCollapsed()">

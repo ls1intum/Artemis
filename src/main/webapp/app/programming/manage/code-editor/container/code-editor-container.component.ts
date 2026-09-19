@@ -24,6 +24,7 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { CodeEditorInstructionsComponent } from 'app/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Course } from 'app/course/shared/entities/course.model';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { KeysPipe } from 'app/foundation/pipes/keys.pipe';
@@ -97,6 +98,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     isProblemStatementVisible = input<boolean>(true);
     showNavbar = input<boolean>(true);
     course = input<Course | undefined>();
+    gradingCriteria = input<GradingCriterion[]>([]);
     selectedRepository = input<RepositoryType>();
     fileSyncService = input<CodeEditorFileSyncService | undefined>();
     enableExerciseReviewComments = input<boolean>(false);
@@ -105,6 +107,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     onCommitStateChange = output<CommitState>();
     onFileChanged = output<void>();
     onUpdateFeedback = output<Feedback[]>();
+    onPendingFeedbackChange = output<Feedback[]>();
     onFileLoad = output<string>();
     onAcceptSuggestion = output<Feedback>();
     onDiscardSuggestion = output<Feedback>();
