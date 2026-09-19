@@ -58,7 +58,7 @@ public class ProgrammingExerciseImportFromFileService {
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
-    private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
+    private final ProgrammingExerciseProjectNameService programmingExerciseProjectNameService;
 
     private final ProgrammingExerciseImportRepositoryService programmingExerciseImportRepositoryService;
 
@@ -74,14 +74,14 @@ public class ProgrammingExerciseImportFromFileService {
 
     public ProgrammingExerciseImportFromFileService(ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, ZipFileService zipFileService, StaticCodeAnalysisService staticCodeAnalysisService,
-            ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, ProgrammingExerciseImportRepositoryService programmingExerciseImportRepositoryService,
+            ProgrammingExerciseProjectNameService programmingExerciseProjectNameService, ProgrammingExerciseImportRepositoryService programmingExerciseImportRepositoryService,
             FileService fileService, ProfileService profileService, BuildPlanRepository buildPlanRepository, TempFileUtilService tempFileUtilService,
             Optional<LegacyBuildPlanConverterService> legacyBuildPlanConverterService) {
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.zipFileService = zipFileService;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
-        this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
+        this.programmingExerciseProjectNameService = programmingExerciseProjectNameService;
         this.programmingExerciseImportRepositoryService = programmingExerciseImportRepositoryService;
         this.fileService = fileService;
         this.profileService = profileService;
@@ -151,7 +151,7 @@ public class ProgrammingExerciseImportFromFileService {
             }
 
             try {
-                programmingExerciseRepositoryService.adjustProjectNames(getExerciseDetailsFromFile(importExerciseDir).title(), newProgrammingExercise);
+                programmingExerciseProjectNameService.adjustProjectNames(getExerciseDetailsFromFile(importExerciseDir).title(), newProgrammingExercise);
             }
             catch (GitAPIException | IOException e) {
                 log.error("Error during adjustment of placeholders of ProgrammingExercise {}", newProgrammingExercise.getTitle(), e);

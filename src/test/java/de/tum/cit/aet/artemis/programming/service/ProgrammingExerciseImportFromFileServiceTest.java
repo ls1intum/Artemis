@@ -48,7 +48,7 @@ class ProgrammingExerciseImportFromFileServiceTest {
     private StaticCodeAnalysisService staticCodeAnalysisService;
 
     @Mock
-    private ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
+    private ProgrammingExerciseProjectNameService programmingExerciseProjectNameService;
 
     @Mock
     private ProgrammingExerciseImportRepositoryService programmingExerciseImportRepositoryService;
@@ -76,7 +76,7 @@ class ProgrammingExerciseImportFromFileServiceTest {
     @BeforeEach
     void setUp() {
         programmingExerciseImportFromFileService = new ProgrammingExerciseImportFromFileService(programmingExerciseCreationUpdateService, programmingExerciseValidationService,
-                new ZipFileService(fileService), staticCodeAnalysisService, programmingExerciseRepositoryService, programmingExerciseImportRepositoryService, fileService,
+                new ZipFileService(fileService), staticCodeAnalysisService, programmingExerciseProjectNameService, programmingExerciseImportRepositoryService, fileService,
                 profileService, buildPlanRepository, tempFileUtilService, Optional.of(legacyBuildPlanConverterService));
     }
 
@@ -100,7 +100,7 @@ class ProgrammingExerciseImportFromFileServiceTest {
     void importProgrammingExerciseFromFile_readsTheTitleFromEntityShapedAndFromRecordShapedDetails(String fixtureName, String expectedTitle) throws Exception {
         var importedExercise = importFixture(fixtureName);
 
-        verify(programmingExerciseRepositoryService).adjustProjectNames(expectedTitle, importedExercise);
+        verify(programmingExerciseProjectNameService).adjustProjectNames(expectedTitle, importedExercise);
     }
 
     /**
