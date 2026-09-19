@@ -2,11 +2,12 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, model, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
+import { CLEANUP_ACTION_PRESENTATION } from 'app/admin/cleanup-service/cleanup-action.util';
 import { CleanupCount, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 import { Observable, Subscription, finalize } from 'rxjs';
-import { faCheckCircle, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -28,8 +29,8 @@ export class CleanupOperationModalComponent {
     /** The cleanup operation to execute */
     readonly operation = input.required<CleanupOperation>();
 
-    /** Counts of entities to be cleaned up */
-    readonly counts = signal<CleanupCount>({ totalCount: 0 });
+    /** Counts of entities affected by this operation, empty until the server has answered. */
+    readonly counts = signal<CleanupCount>({});
 
     /** Whether the operation has been executed */
     readonly operationExecuted = signal(false);
@@ -47,14 +48,14 @@ export class CleanupOperationModalComponent {
     private readonly destroyRef = inject(DestroyRef);
 
     protected readonly faTimes = faTimes;
-    protected readonly faTrash = faTrash;
+    protected readonly actionPresentation = CLEANUP_ACTION_PRESENTATION;
     protected readonly faCheckCircle = faCheckCircle;
 
-    /** Keys from the CleanupCount object for iteration */
-    readonly cleanupKeys = computed(() => Object.keys(this.counts()) as (keyof CleanupCount)[]);
+    /** The entity types the server reported a count for, in the order it listed them. */
+    readonly cleanupKeys = computed(() => Object.keys(this.counts()));
 
-    /** Computed property to check if there are any entries to delete */
-    readonly hasEntriesToDelete = computed(() => Object.values(this.counts()).some((count) => count > 0));
+    /** Whether the operation affects any entity at all; the confirmation button stays disabled while it does not. */
+    readonly hasAffectedEntities = computed(() => Object.values(this.counts()).some((count) => count > 0));
 
     constructor() {
         effect(() => {
@@ -65,7 +66,7 @@ export class CleanupOperationModalComponent {
                     // refresh asynchronously): start clean, then fetch this operation's counts.
                     this.operationExecuted.set(false);
                     this.dialogError.set(undefined);
-                    this.counts.set({ totalCount: 0 });
+                    this.counts.set({});
                     this.updateCounts();
                 });
             } else {
