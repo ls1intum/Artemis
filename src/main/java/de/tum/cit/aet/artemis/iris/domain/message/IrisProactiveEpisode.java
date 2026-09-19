@@ -13,6 +13,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * One proactive struggle episode, registered when Artemis accepts a trigger for it and holding that episode's
@@ -41,10 +42,19 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class IrisProactiveEpisode extends DomainObject {
 
+    /**
+     * The student the episode is about. A parent rather than a reference: an episode is a fact about one student's
+     * work on one exercise, so it has no meaning once either is gone, and the schema agrees -- both foreign keys
+     * cascade on delete, and {@code UserDeletionReferencePolicy.IRIS_PROACTIVE_EPISODE} deletes these rows with
+     * their account.
+     */
     @Column(name = "user_id", nullable = false)
+    @Parent
     private long userId;
 
+    /** The exercise the episode is about. A parent for the same reason as {@link #userId}. */
     @Column(name = "exercise_id", nullable = false)
+    @Parent
     private long exerciseId;
 
     /**
