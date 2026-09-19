@@ -96,12 +96,11 @@ public class JenkinsBuildPlanService {
      */
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri, boolean forceCreateStoredBuildPlan) {
         final JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs internalRepositoryUris = getInternalRepositoryUris(exercise, repositoryUri);
-        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(exercise);
 
         final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
         final String buildPlanUrl = jenkinsPipelineScriptCreator.generateBuildPlanURL(exercise);
-        final boolean checkoutSolution = exercise.getBuildConfig().getCheckoutSolutionRepository();
+        final boolean checkoutSolution = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).getCheckoutSolutionRepository();
         final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, internalRepositoryUris, checkoutSolution, buildPlanUrl);
 
         final String jobFolder = exercise.getProjectKey();
@@ -206,9 +205,10 @@ public class JenkinsBuildPlanService {
      */
     private void updateBuildPlanURLs(ProgrammingExercise templateExercise, ProgrammingExercise newExercise, Document jobConfig) {
         final Long previousExerciseId = templateExercise.getId();
-        final String previousBuildPlanAccessSecret = templateExercise.getBuildConfig().getBuildPlanAccessSecret();
+        final String previousBuildPlanAccessSecret = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(previousExerciseId)
+                .getBuildPlanAccessSecret();
         final Long newExerciseId = newExercise.getId();
-        final String newBuildPlanAccessSecret = newExercise.getBuildConfig().getBuildPlanAccessSecret();
+        final String newBuildPlanAccessSecret = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(newExerciseId).getBuildPlanAccessSecret();
 
         String toBeReplaced = "/%d/build-plan?secret=%s".formatted(previousExerciseId, previousBuildPlanAccessSecret);
         String replacement = "/%d/build-plan?secret=%s".formatted(newExerciseId, newBuildPlanAccessSecret);

@@ -60,6 +60,7 @@ import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCIL
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 /**
@@ -177,7 +178,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         newExercise.setAllowOfflineIde(true);
         newExercise.setChannelName(channelName);
 
-        return request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        return request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
     }
 
     /**
@@ -199,7 +201,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         auxRepo.setDescription("Auxiliary repository for testing");
         newExercise.setAuxiliaryRepositories(Set.of(auxRepo));
 
-        return request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        return request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
     }
 
     /**
@@ -686,7 +689,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             newExercise.setAllowOfflineIde(true);
             newExercise.setChannelName("test-team-exercise");
             newExercise.setMode(ExerciseMode.TEAM);
-            ProgrammingExercise exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+            ProgrammingExercise exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                    CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
 
             String projectKey = exercise.getProjectKey();
 
@@ -742,7 +746,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             newExercise.setAllowOfflineIde(true);
             newExercise.setChannelName("test-team-before-start");
             newExercise.setMode(ExerciseMode.TEAM);
-            ProgrammingExercise exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+            ProgrammingExercise exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                    CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
 
             String projectKey = exercise.getProjectKey();
 
@@ -789,7 +794,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             newExercise.setAllowOfflineIde(true);
             newExercise.setChannelName("test-team-after-due");
             newExercise.setMode(ExerciseMode.TEAM);
-            ProgrammingExercise exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+            ProgrammingExercise exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                    CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
 
             String projectKey = exercise.getProjectKey();
 
@@ -1068,7 +1074,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
             newExercise.setAllowOfflineIde(true);
 
-            return request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+            return request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                    CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
         }
 
         @BeforeEach
@@ -1446,7 +1453,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             newExercise.setAllowOfflineIde(true);
             newExercise.setChannelName("test-team-token");
             newExercise.setMode(ExerciseMode.TEAM);
-            ProgrammingExercise exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+            ProgrammingExercise exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                    CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
 
             String projectKey = exercise.getProjectKey();
 
