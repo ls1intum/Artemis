@@ -28,7 +28,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
@@ -70,7 +69,7 @@ import de.tum.cit.aet.artemis.lti.api.LtiApi;
 @FeatureUsage("users/user-directory")
 @RestController
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/account/", AccountLegacyRestPaths.CORE_PREFIX })
+@RequestMapping("api/account/")
 public class UserResource {
 
     private static final Logger log = LoggerFactory.getLogger(UserResource.class);

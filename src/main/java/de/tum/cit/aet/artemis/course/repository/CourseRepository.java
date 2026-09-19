@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -393,7 +394,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
      * <p>
      * Keyed on the participating student's id rather than their login: the consumer only needs a stable key to count
      * each student once per week, and the login would require joining {@code jhi_user} for every submission in the
-     * window (measured on a production dump: 400k submissions of one course, 0.24s with the join, 0.17s without).
+     * window, which measurably costs more than counting on the id alone.
      * That join was also what excluded team participations, which have no student, so they are excluded explicitly
      * now.
      *
@@ -731,6 +732,29 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
                )
             """)
     List<Course> findAllAccessibleCoursesForUser(@Param("userId") Long userId, @Param("isAdmin") boolean isAdmin);
+
+    /**
+     * Finds the courses among the requested ids where the user has any role (student, TA, editor, or instructor).
+     * <p>
+     * Same access rule as {@link #findAllAccessibleCoursesForUser}, narrowed in the query so a scoped request does not
+     * load every accessible course only to drop most of them. Ids the user cannot access are simply not returned.
+     *
+     * @param userId    the id of the user
+     * @param isAdmin   whether the user is an admin
+     * @param courseIds the course ids the caller asked for
+     * @return the requested courses the user can access
+     */
+    @Query("""
+            SELECT c
+            FROM Course c
+            WHERE c.id IN :courseIds
+               AND (:isAdmin = TRUE
+                   OR EXISTS (
+                       SELECT ucr FROM UserCourseRole ucr
+                       WHERE ucr.course.id = c.id AND ucr.user.id = :userId
+                   ))
+            """)
+    List<Course> findAllAccessibleCoursesForUserAndIdIn(@Param("userId") Long userId, @Param("isAdmin") boolean isAdmin, @Param("courseIds") Collection<Long> courseIds);
 
     @Query("""
                 SELECT course.timeZone

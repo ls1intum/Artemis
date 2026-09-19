@@ -8,8 +8,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
@@ -106,9 +108,9 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         newAuxiliaryRepo.setRepositoryUri(auxRepoUri.toString());
         newAuxiliaryRepo.setCheckoutDirectory("assignment/src");
         newAuxiliaryRepo.setExercise(programmingExercise);
-        programmingExercise.setAuxiliaryRepositories(List.of(newAuxiliaryRepo));
+        programmingExercise.setAuxiliaryRepositories(Set.of(newAuxiliaryRepo));
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        auxiliaryRepository = programmingExercise.getAuxiliaryRepositories().getFirst();
+        auxiliaryRepository = programmingExercise.getAuxiliaryRepositories().iterator().next();
 
         // No GitService stubs for happy path; LocalVC will checkout the repository for auxRepoUri
     }
@@ -581,11 +583,11 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         updatedExercise.setId(programmingExercise.getId());
         updatedExercise.setProgrammingLanguage(programmingExercise.getProgrammingLanguage());
         ReflectionTestUtils.setField(updatedExercise, "projectKey", programmingExercise.getProjectKey());
-        updatedExercise.setAuxiliaryRepositories(new ArrayList<>(List.of(added)));
+        updatedExercise.setAuxiliaryRepositories(new LinkedHashSet<>(List.of(added)));
 
         var exerciseBeforeUpdate = new ProgrammingExercise();
         exerciseBeforeUpdate.setId(programmingExercise.getId());
-        exerciseBeforeUpdate.setAuxiliaryRepositories(new ArrayList<>());
+        exerciseBeforeUpdate.setAuxiliaryRepositories(new LinkedHashSet<>());
 
         programmingExerciseRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(exerciseBeforeUpdate, updatedExercise);
 
@@ -593,7 +595,8 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         Path createdRepository = new LocalVCRepositoryUri(added.getRepositoryUri()).getLocalRepositoryPath(localVCBasePath);
         assertThat(createdRepository).as("the repository is created in the LocalVC folder structure").isDirectory();
         assertThat(createdRepository.resolve("HEAD")).as("it is a bare repository").isRegularFile();
-        assertThat(gitService.isBareRepositoryHealthy(new LocalVCRepositoryUri(added.getRepositoryUri()))).as("it received an initial commit, so it has a branch").isTrue();
+        assertThat(bareGitRepositoryService.isBareRepositoryHealthy(new LocalVCRepositoryUri(added.getRepositoryUri()))).as("it received an initial commit, so it has a branch")
+                .isTrue();
     }
 
     @Test
@@ -605,10 +608,10 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         // The updated exercise no longer lists the auxiliary repository, so its repository has to be removed from version control.
         var exerciseBeforeUpdate = new ProgrammingExercise();
         exerciseBeforeUpdate.setId(programmingExercise.getId());
-        exerciseBeforeUpdate.setAuxiliaryRepositories(new ArrayList<>(List.of(auxiliaryRepository)));
+        exerciseBeforeUpdate.setAuxiliaryRepositories(new LinkedHashSet<>(List.of(auxiliaryRepository)));
         var updatedExercise = new ProgrammingExercise();
         updatedExercise.setId(programmingExercise.getId());
-        updatedExercise.setAuxiliaryRepositories(new ArrayList<>());
+        updatedExercise.setAuxiliaryRepositories(new LinkedHashSet<>());
 
         programmingExerciseRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(exerciseBeforeUpdate, updatedExercise);
 
@@ -623,10 +626,10 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         // The same auxiliary repository is present before and after, so nothing is created and nothing is deleted.
         var exerciseBeforeUpdate = new ProgrammingExercise();
         exerciseBeforeUpdate.setId(programmingExercise.getId());
-        exerciseBeforeUpdate.setAuxiliaryRepositories(new ArrayList<>(List.of(auxiliaryRepository)));
+        exerciseBeforeUpdate.setAuxiliaryRepositories(new LinkedHashSet<>(List.of(auxiliaryRepository)));
         var updatedExercise = new ProgrammingExercise();
         updatedExercise.setId(programmingExercise.getId());
-        updatedExercise.setAuxiliaryRepositories(new ArrayList<>(List.of(auxiliaryRepository)));
+        updatedExercise.setAuxiliaryRepositories(new LinkedHashSet<>(List.of(auxiliaryRepository)));
 
         programmingExerciseRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(exerciseBeforeUpdate, updatedExercise);
 

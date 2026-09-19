@@ -6,11 +6,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -218,8 +220,9 @@ public class ProgrammingExerciseImportBasicService {
         // Copy the auxiliary repositories.
         for (AuxiliaryRepository auxiliaryRepository : sourceExercise.getAuxiliaryRepositories()) {
             AuxiliaryRepository newAuxiliaryRepository = auxiliaryRepository.cloneObjectForNewExercise();
-            newAuxiliaryRepository = auxiliaryRepositoryRepository.save(newAuxiliaryRepository);
+            // Attach it first: a repository names the exercise it belongs to, and cannot be written without one.
             newExercise.addAuxiliaryRepository(newAuxiliaryRepository);
+            auxiliaryRepositoryRepository.save(newAuxiliaryRepository);
         }
 
         // Final save persisting the participation references, the remapped problem statement, the test repository uri
@@ -479,7 +482,7 @@ public class ProgrammingExerciseImportBasicService {
             newExercise.setTeamAssignmentConfig(newExercise.getTeamAssignmentConfig().copyTeamAssignmentConfig());
         }
         // We have to rebuild the auxiliary repositories
-        newExercise.setAuxiliaryRepositories(new ArrayList<>());
+        newExercise.setAuxiliaryRepositories(new LinkedHashSet<>());
 
         if (newExercise.isTeamMode()) {
             newExercise.getTeamAssignmentConfig().setId(null);
@@ -526,12 +529,14 @@ public class ProgrammingExerciseImportBasicService {
         versionControl.copyRepositoryWithHistory(sourceProjectKey, solutionRepoName, sourceBranch, targetProjectKey, RepositoryType.SOLUTION.getName(), null);
         versionControl.copyRepositoryWithHistory(sourceProjectKey, testRepoName, sourceBranch, targetProjectKey, RepositoryType.TESTS.getName(), null);
 
-        List<AuxiliaryRepository> auxRepos = sourceExercise.getAuxiliaryRepositories();
-        for (int i = 0; i < auxRepos.size(); i++) {
-            AuxiliaryRepository auxRepo = auxRepos.get(i);
+        // Paired by name, which is what identifies an auxiliary repository within its exercise and is what the copy
+        // carries over from the source.
+        Map<String, AuxiliaryRepository> newAuxiliaryRepositoriesByName = newExercise.getAuxiliaryRepositories().stream()
+                .collect(Collectors.toMap(AuxiliaryRepository::getName, Function.identity()));
+        for (AuxiliaryRepository auxRepo : sourceExercise.getAuxiliaryRepositories()) {
             var repoUri = versionControl.copyRepositoryWithHistory(sourceProjectKey, auxRepo.getRepositoryName(), sourceBranch, targetProjectKey, auxRepo.getName(), null)
                     .toString();
-            AuxiliaryRepository newAuxRepo = newExercise.getAuxiliaryRepositories().get(i);
+            AuxiliaryRepository newAuxRepo = newAuxiliaryRepositoriesByName.get(auxRepo.getName());
             newAuxRepo.setRepositoryUri(repoUri);
             auxiliaryRepositoryRepository.save(newAuxRepo);
         }

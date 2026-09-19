@@ -201,6 +201,10 @@ jobs:
           # points, which put both over the ten-dependency line. Pushing them back under it means extracting
           # ExerciseService.reEvaluateExercise and the grading service's score calculation into services of their own,
           # which is a refactoring of its own rather than part of the table split.
+          # NOTE on max_large_classes: LearningPathRecommendationService still crosses a thousand lines since #13864.
+          # Getting it back under the line means extracting the recommendation state it threads through most of its
+          # methods, which is a refactoring of its own. The count is back at seventeen because GitService dropped off
+          # the list when the bare-repository handling moved into BareGitRepositoryService.
           max_large_classes=17
           max_complex_beans=20
 
