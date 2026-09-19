@@ -117,7 +117,7 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     @Email
     @Size(max = 100)
-    @Column(length = 100) // TODO why not unique (there is no unique constraint at db level)
+    @Column(length = 100)
     private String email;
 
     /**
