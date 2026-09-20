@@ -16,6 +16,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 describe('ExamBarComponent', () => {
     let fixture: ComponentFixture<ExamBarComponent>;
@@ -87,7 +88,7 @@ describe('ExamBarComponent', () => {
         it('should derive exam properties from inputs', () => {
             const exam = new Exam();
             exam.title = 'Test Exam Title';
-            exam.testExam = true;
+            exam.examMode = ExamMode.TEST;
             const studentExam = new StudentExam();
             studentExam.testRun = true;
             studentExam.exercises = [{ id: 1 } as Exercise];

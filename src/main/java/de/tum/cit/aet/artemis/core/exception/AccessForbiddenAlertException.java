@@ -42,4 +42,8 @@ public class AccessForbiddenAlertException extends HttpStatusException {
         parameters.put("params", translationParameters);
         return parameters;
     }
+
+    public AccessForbiddenAlertException(String defaultMessage, String entityName, String errorKey, boolean skipAlert) {
+        this(ErrorConstants.DEFAULT_TYPE, defaultMessage, entityName, errorKey, skipAlert);
+    }
 }

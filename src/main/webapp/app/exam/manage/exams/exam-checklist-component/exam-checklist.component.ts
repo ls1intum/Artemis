@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, effect, inject, input, signal } from '@angular/core';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isActingAsTestExam, isRealExam } from 'app/exam/overview/exam.utils';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
@@ -69,7 +70,9 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
     readonly totalPoints = signal(false);
     readonly hasOptionalExercises = signal(false);
     readonly countMandatoryExercises = signal(0);
-    readonly isTestExam = signal<boolean>(undefined!);
+    // when it is a test exam or a simulation and test exam and the simulation phase is over
+    readonly isActingAsTestExam = signal<boolean>(undefined!);
+    readonly isRealExam = signal<boolean>(undefined!);
     readonly isEvaluatingQuizExercises = signal(false);
     readonly isAssessingUnsubmittedExams = signal(false);
     readonly existsUnfinishedAssessments = signal(false);
@@ -118,7 +121,8 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
     }
 
     private updateChecklistState() {
-        this.isTestExam.set(this.exam().testExam!);
+        this.isActingAsTestExam.set(isActingAsTestExam(this.exam()));
+        this.isRealExam.set(isRealExam(this.exam()));
         this.pointsExercisesEqual.set(this.examChecklistService.checkPointsExercisesEqual(this.exam()));
         this.totalPoints.set(this.examChecklistService.checkTotalPointsMandatory(this.pointsExercisesEqual(), this.exam()));
         this.allGroupsContainExercise.set(this.examChecklistService.checkEachGroupContainsExercise(this.exam()));

@@ -1,3 +1,4 @@
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -197,7 +198,7 @@ describe('ExamParticipationService', () => {
             endDate,
             workingTime: 7200,
             examMaxPoints: 100,
-            testExam: false,
+            examMode: ExamMode.REAL,
         };
         let received: ExamForOverview[] | undefined;
 
@@ -207,7 +208,7 @@ describe('ExamParticipationService', () => {
         request.flush([serverExam]);
 
         expect(received).toHaveLength(1);
-        expect(received?.[0]).toMatchObject({ id: 17, title: 'Overview exam', moduleNumber: 'M1', workingTime: 7200, examMaxPoints: 100, testExam: false });
+        expect(received?.[0]).toMatchObject({ id: 17, title: 'Overview exam', moduleNumber: 'M1', workingTime: 7200, examMaxPoints: 100, examMode: ExamMode.REAL });
         expect(dayjs.isDayjs(received?.[0].visibleDate)).toBe(true);
         expect(dayjs.isDayjs(received?.[0].startDate)).toBe(true);
         expect(dayjs.isDayjs(received?.[0].endDate)).toBe(true);
@@ -319,7 +320,9 @@ describe('ExamParticipationService', () => {
         service
             .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
+            .subscribe(() => {
+                expect(service.testStudentExams()).toEqual(returnedFromService);
+            });
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
     });
@@ -339,11 +342,12 @@ describe('ExamParticipationService', () => {
         req.flush(null);
         expect(received).toBeNull();
     });
-    it('should fetch sidebar data successfully', async () => {
-        const returnedFromService = [studentExam];
-        service.getRealExamSidebarData(1).subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
+    it('should fetch real exam sidebar data successfully', async () => {
+        const returnedFromService = [{ id: 1, title: 'Exam 1' } as Exam];
+        service.getRealExamSidebarData(1).subscribe((resp: Exam[]) => expect(resp).toMatchObject(returnedFromService));
 
         const req = httpMock.expectOne({ method: 'GET' });
+        expect(req.request.url).toBe('api/exam/courses/1/real-exams-sidebar-data');
         req.flush(returnedFromService);
     });
 

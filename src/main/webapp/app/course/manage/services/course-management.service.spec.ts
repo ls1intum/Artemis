@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import dayjs from 'dayjs/esm';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
@@ -12,7 +13,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
@@ -937,16 +938,25 @@ describe('Course DTO adapter boundary', () => {
                     title: 'Exam with points',
                     startDate: '2026-01-01T00:00:00Z',
                     endDate: '2026-01-01T02:00:00Z',
-                    testExam: false,
+                    examMode: ExamMode.REAL,
                     examMaxPoints: 20,
                     course: { id: 5, title: 'Course' },
                 },
-                { id: 2, title: 'Exam without points', startDate: '2026-01-01T00:00:00Z', endDate: '2026-01-01T02:00:00Z', testExam: false, course: { id: 5, title: 'Course' } },
+                {
+                    id: 2,
+                    title: 'Exam without points',
+                    startDate: '2026-01-01T00:00:00Z',
+                    endDate: '2026-01-01T02:00:00Z',
+                    examMode: ExamMode.TEST_WITH_SIMULATION,
+                    course: { id: 5, title: 'Course' },
+                },
             ],
         };
 
         const result = coursesForDashboardFromDTO(dto);
 
+        expect(result.activeExams?.[0].examMode).toBe(ExamMode.REAL);
+        expect(result.activeExams?.[1].examMode).toBe(ExamMode.TEST_WITH_SIMULATION);
         expect(result.activeExams?.[0].examMaxPoints).toBe(20);
         expect(result.activeExams?.[1].examMaxPoints).toBeUndefined();
     });

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 import java.time.ZonedDateTime;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
@@ -42,6 +44,19 @@ class GitRepositoryAccessCourseResolutionIntegrationTest extends AbstractProgram
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
         examCourse = examExercise.getExerciseGroup().getExam().getCourse();
+    }
+
+    @Test
+    void accessProjectionPreservesSimulationExamMode() {
+        Exam exam = examExercise.getExerciseGroup().getExam();
+        exam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        examRepository.save(exam);
+
+        GitRepositoryAccessDTO projection = programmingExerciseRepository.findAccessProjectionByProjectKey(examExercise.getProjectKey()).getFirst();
+
+        assertThat(projection.examMode()).isEqualTo(ExamMode.TEST_WITH_SIMULATION);
+        assertThat(projection.examMode()).isEqualTo(GitRepositoryAccessDTO.of(examExercise).examMode());
+        assertThat(projection.isTestExamExercise()).isTrue();
     }
 
     /**

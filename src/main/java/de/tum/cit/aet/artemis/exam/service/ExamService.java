@@ -520,7 +520,7 @@ public class ExamService {
 
         Map<Long, List<StudentParticipation>> participationsByStudentId = new HashMap<>();
 
-        List<StudentExam> regularStudentExams = studentExams.stream().filter(se -> !se.isTestRun() && !se.isTestExam()).toList();
+        List<StudentExam> regularStudentExams = studentExams.stream().filter(se -> !se.isTestRun() && se.getExamMode().isReal()).toList();
 
         if (!regularStudentExams.isEmpty()) {
             var regularStudentIds = regularStudentExams.stream().map(se -> se.getUser().getId()).toList();
@@ -539,7 +539,7 @@ public class ExamService {
         Map<Long, List<StudentParticipation>> participationsByStudentExamId = new LinkedHashMap<>();
         for (StudentExam studentExam : studentExams) {
             List<StudentParticipation> participations;
-            if (studentExam.isTestRun() || studentExam.isTestExam()) {
+            if (studentExam.isTestRun() || !studentExam.getExamMode().isReal()) {
                 participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
             }
             else {

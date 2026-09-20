@@ -12,7 +12,7 @@
                 }
             </div>
             <div class="status-step-content">
-                <h6 class="text-center" jhiTranslate="artemisApp.examStatus.preparation.{{ isTestExam() ? 'testExam.' : '' }}examPreparation"></h6>
+                <h6 class="text-center" jhiTranslate="artemisApp.examStatus.preparation.{{ !isRealExam() ? 'testExam.' : '' }}examPreparation"></h6>
                 <ol>
                     <li class="d-flex align-items-center">
                         <span jhiTranslate="artemisApp.examStatus.preparation.configureExercises" [translateValues]="{ amount: exam().exerciseGroups?.length ?? 0 }"></span>
@@ -23,7 +23,7 @@
                             <fa-icon [icon]="faTimes" class="cross" />
                         }
                     </li>
-                    @if (isTestExam()) {
+                    @if (!isRealExam()) {
                         <li class="d-flex align-items-center">
                             @if (maxPointExercises() === exam().examMaxPoints) {
                                 <span>{{ 'artemisApp.examStatus.preparation.testExam.maxPointsCorrect' | artemisTranslate }}{{ exam().examMaxPoints }}</span>
@@ -35,7 +35,7 @@
                             }
                         </li>
                     }
-                    @if (!isTestExam()) {
+                    @if (!isActingAsTestExam()) {
                         <li class="d-flex align-items-center">
                             <span jhiTranslate="artemisApp.examStatus.preparation.registerStudents" [translateValues]="{ registered: exam().numberOfExamUsers }"></span>
                             @if (registeredStudents()) {
@@ -45,8 +45,6 @@
                                 <fa-icon [icon]="faTimes" class="cross" />
                             }
                         </li>
-                    }
-                    @if (!isTestExam()) {
                         <li class="d-flex align-items-center">
                             <span jhiTranslate="artemisApp.examStatus.preparation.generateStudentExams"></span>
                             <!-- If no students are registered yet, we do not want to display "0 of 0" -->
@@ -69,8 +67,6 @@
                                 <fa-icon [icon]="faTimes" class="cross" />
                             }
                         </li>
-                    }
-                    @if (!isTestExam()) {
                         <li class="d-flex align-items-center">
                             <span jhiTranslate="artemisApp.examStatus.preparation.prepareExerciseStart"></span>
                             @if (preparedExerciseStart()) {
@@ -110,13 +106,13 @@
         </div>
         <div class="status-step-content">
             <div class="text-center mb-1">
-                <h6 jhiTranslate="artemisApp.examStatus.conduction.{{ isTestExam() ? 'testExam.' : '' }}examConduction"></h6>
+                <h6 jhiTranslate="artemisApp.examStatus.conduction.{{ !isRealExam() ? 'testExam.' : '' }}examConduction"></h6>
                 <b>{{ exam().startDate | artemisDate }} - {{ exam().endDate | artemisDate }}</b>
             </div>
             <!-- In case the exercise configuration is wrong, but the test eam already started, students are not able to start a test eam -->
             @if (examConductionState() === examConductionStateEnum.ERROR) {
                 <div class="text-center mb-1">
-                    <h6 jhiTranslate="artemisApp.examStatus.conduction.{{ isTestExam() ? 'testExam.' : '' }}conductionSuspended"></h6>
+                    <h6 jhiTranslate="artemisApp.examStatus.conduction.{{ !isRealExam() ? 'testExam.' : '' }}conductionSuspended"></h6>
                 </div>
             }
             @if (course()?.isAtLeastInstructor && examChecklist() && examConductionState() !== examConductionStateEnum.ERROR) {
@@ -124,14 +120,14 @@
                     <li>
                         <span> {{ 'artemisApp.examStatus.conduction.workingTime' | artemisTranslate }}: {{ exam().workingTime! | artemisDurationFromSeconds: true }} </span>
                     </li>
-                    @if (isTestExam()) {
+                    @if (!isRealExam()) {
                         <li>
                             <span> {{ 'artemisApp.examStatus.conduction.testExam.numberOfStudents' | artemisTranslate }}: {{ exam().numberOfExamUsers }} </span>
                         </li>
                     }
                     <li>
                         <span>
-                            {{ 'artemisApp.examStatus.conduction.' + (isTestExam() ? 'testExam.' : '') + 'startedExams' | artemisTranslate }}
+                            {{ 'artemisApp.examStatus.conduction.' + (!isRealExam() ? 'testExam.' : '') + 'startedExams' | artemisTranslate }}
                             :
                             {{ numberOfStarted() }}
                             ({{ numberOfGeneratedStudentExams() > 0 ? round((numberOfStarted() * 100) / examChecklist().numberOfGeneratedStudentExams!, 1) : 0 }}
@@ -140,7 +136,7 @@
                     </li>
                     <li>
                         <span>
-                            {{ 'artemisApp.examStatus.conduction.' + (isTestExam() ? 'testExam.' : '') + 'submittedExams' | artemisTranslate }}
+                            {{ 'artemisApp.examStatus.conduction.' + (!isRealExam() ? 'testExam.' : '') + 'submittedExams' | artemisTranslate }}
                             :
                             {{ numberOfSubmitted() }}
                             ({{ numberOfGeneratedStudentExams() > 0 ? round((numberOfSubmitted() * 100) / numberOfGeneratedStudentExams()!, 1) : 0 }}
@@ -151,11 +147,9 @@
             }
         </div>
     </div>
-    @if (!isTestExam()) {
+    @if (isRealExam()) {
         <div class="connector" [ngClass]="examConductionState() === examConductionStateEnum.FINISHED ? 'check' : ''"></div>
-    }
-    <!-- 3. Exam correction -->
-    @if (!isTestExam()) {
+        <!-- 3. Exam correction -->
         <div class="status-step">
             <!-- If exam review phase is running or there are still open complaints, show a yellow dot,
     If exam review phase is finished and all complaints are resolved, show a green check

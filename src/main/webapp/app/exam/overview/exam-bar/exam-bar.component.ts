@@ -6,6 +6,7 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { faDoorClosed } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isRealExam } from 'app/exam/overview/exam.utils';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamTimerComponent } from 'app/exam/overview/timer/exam-timer.component';
 import { ExamLiveEventsButtonComponent } from 'app/exam/overview/events/button/exam-live-events-button.component';
@@ -38,7 +39,7 @@ export class ExamBarComponent implements AfterViewInit, OnDestroy {
 
     criticalTime = dayjs.duration(5, 'minutes');
     criticalTimeEndView = dayjs.duration(30, 'seconds');
-    readonly testExam = computed(() => this.exam()?.testExam ?? false);
+    readonly testExam = computed(() => !isRealExam(this.exam()));
     readonly isTestRun = computed(() => this.studentExam()?.testRun ?? false);
     readonly examTitle = computed(() => this.exam()?.title ?? '');
     readonly exercises = computed<Exercise[]>(() => this.studentExam()?.exercises ?? []);

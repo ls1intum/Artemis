@@ -1,3 +1,4 @@
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
@@ -17,8 +18,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { ExamImportProgressDialogComponent } from 'app/exam/manage/exams/exam-import/exam-import-progress-dialog.component';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export interface ExamImportDialogData {
     subsequentExerciseGroupSelection?: boolean;
@@ -44,6 +45,8 @@ export interface ExamImportDialogData {
     ],
 })
 export class ExamImportComponent extends ImportComponent<Exam> implements OnInit {
+    protected readonly ExamMode = ExamMode;
+
     private examManagementService = inject(ExamManagementService);
     private alertService = inject(AlertService);
 

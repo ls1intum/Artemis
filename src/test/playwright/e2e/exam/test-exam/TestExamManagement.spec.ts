@@ -1,4 +1,5 @@
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamMode } from '../../../support/constants';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 
 import { admin, instructor } from '../../../support/users';
@@ -18,7 +19,7 @@ test.describe('Test Exam management', { tag: '@fast' }, () => {
 
     test.beforeEach('Create exam', async ({ login, examAPIRequests }) => {
         await login(admin);
-        exam = await examAPIRequests.createExam({ course, title: examTitle, testExam: true });
+        exam = await examAPIRequests.createExam({ course, title: examTitle, examMode: ExamMode.TEST });
     });
 
     test.describe('Manage Group', () => {

@@ -482,7 +482,7 @@ public class ResultService {
         if (exam.resultsPublished()) {
             return true;
         }
-        if (exam.isTestExam() && participation instanceof StudentParticipation) {
+        if (!exam.getExamMode().isReal() && participation instanceof StudentParticipation) {
             return api.findByExamIdAndParticipationId(exam.getId(), participation.getId()).map(StudentExam::areResultsPublishedYet).orElse(false);
         }
         return false;

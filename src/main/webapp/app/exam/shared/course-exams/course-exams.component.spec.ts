@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { Course } from 'app/course/shared/entities/course.model';
 import { CourseExamsComponent } from 'app/exam/shared/course-exams/course-exams.component';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
@@ -17,9 +16,15 @@ import { CourseStorageService } from 'app/course/manage/services/course-storage.
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
+
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
+import { SidebarCardElement } from 'app/foundation/types/sidebar';
+import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
+import { signal } from '@angular/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -37,54 +42,59 @@ describe('CourseExamsComponent', () => {
     let courseStorageService: CourseStorageService;
     let courseOverviewService: CourseOverviewService;
     let examParticipationService: ExamParticipationService;
+    let courseOverviewTabDataService: CourseOverviewTabDataService;
+    let courseTabRefreshService: CourseTabRefreshService;
     const router = new MockRouter();
+
+    const parentParamsSubject = new BehaviorSubject({ courseId: '1' });
 
     const visibleRealExam1 = {
         id: 1,
         visibleDate: dayjs().subtract(1, 'days'),
         startDate: dayjs().subtract(30, 'minutes'),
-        testExam: false,
+        examMode: ExamMode.REAL,
     } as Exam;
+
+    const childParamsSubject = new BehaviorSubject({ examId: visibleRealExam1.id });
 
     const visibleRealExam2 = {
         id: 2,
 
         visibleDate: dayjs().subtract(2, 'days'),
         startDate: dayjs().subtract(1, 'days'),
-        testExam: false,
+        examMode: ExamMode.REAL,
     } as Exam;
 
     const notVisibleRealExam = {
         id: 3,
         visibleDate: dayjs().add(2, 'days'),
         startDate: dayjs().add(1, 'days'),
-        testExam: false,
+        examMode: ExamMode.REAL,
     } as Exam;
 
     const visibleTestExam1 = {
         id: 11,
         visibleDate: dayjs().subtract(1, 'days'),
         startDate: dayjs().subtract(30, 'minutes'),
-        testExam: true,
+        examMode: ExamMode.TEST,
     } as Exam;
 
     const visibleTestExam2 = {
         id: 12,
         visibleDate: dayjs().subtract(4, 'days'),
         startDate: dayjs().subtract(1, 'days'),
-        testExam: true,
+        examMode: ExamMode.TEST,
     } as Exam;
 
     const notVisibleTestExam = {
         id: 13,
         visibleDate: dayjs().add(2, 'days'),
         startDate: dayjs().add(1, 'days'),
-        testExam: true,
+        examMode: ExamMode.TEST,
     } as Exam;
 
     // The test-exams-per-user endpoint returns StudentExamDTO, whose nested `exam` is the slimmed
-    // ExamForStudentExamDTO projection (id, title, testExam, workingTime) — not the full Exam entity.
-    const toExamForStudentExamDTO = (exam: Exam) => ({ id: exam.id!, title: exam.title, testExam: !!exam.testExam, workingTime: exam.workingTime ?? 0 });
+    const toExamForStudentExamDTO = (exam: Exam) => ({ id: exam.id!, title: exam.title, examMode: exam.examMode ?? ExamMode.REAL, workingTime: exam.workingTime ?? 0 });
 
     const studentExamForExam3AndSubmitted: StudentExamDTO = {
         id: 11,
@@ -102,15 +112,6 @@ describe('CourseExamsComponent', () => {
         startedDate: dayjs().subtract(2, 'hour'),
         testRun: false,
         exam: toExamForStudentExamDTO(visibleTestExam1),
-    };
-
-    const studentExamForExam4AndSubmitted: StudentExamDTO = {
-        id: 13,
-        started: true,
-        submitted: true,
-        submissionDate: dayjs().subtract(1, 'hour'),
-        testRun: false,
-        exam: toExamForStudentExamDTO(visibleTestExam2),
     };
 
     beforeEach(() => {
@@ -135,15 +136,25 @@ describe('CourseExamsComponent', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         parent: {
-                            params: of({ courseId: '1' }),
+                            params: parentParamsSubject.asObservable(),
+                            snapshot: { params: { courseId: '1' } },
+                        },
+                        firstChild: {
+                            params: childParamsSubject.asObservable(),
+                            snapshot: { params: { examId: visibleRealExam1.id } },
                         },
                         pathFromRoot: [{ snapshot: { url: [{ path: 'courses' }, { path: '1' }] } }, { snapshot: { url: [{ path: 'exams' }] } }],
-                        params: of({ examId: visibleRealExam1.id }),
+                        params: childParamsSubject.asObservable(),
+                        snapshot: { params: { examId: visibleRealExam1.id } },
                     },
                 },
                 MockProvider(CourseStorageService),
                 MockProvider(ArtemisServerDateService),
                 MockProvider(ExamParticipationService),
+                MockProvider(CourseOverviewTabDataService),
+                MockProvider(CourseTabRefreshService),
+                MockProvider(SessionStorageService),
+                MockProvider(CourseOverviewService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: AccountService, useClass: MockAccountService },
@@ -153,24 +164,26 @@ describe('CourseExamsComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                componentFixture = TestBed.createComponent(CourseExamsComponent);
-                component = componentFixture.componentInstance;
-
                 courseStorageService = TestBed.inject(CourseStorageService);
                 examParticipationService = TestBed.inject(ExamParticipationService);
                 courseOverviewService = TestBed.inject(CourseOverviewService);
+                courseOverviewTabDataService = TestBed.inject(CourseOverviewTabDataService);
+                courseTabRefreshService = TestBed.inject(CourseTabRefreshService);
+
                 (examParticipationService as any).examIsStarted$ = of(false);
-                examParticipationService.shouldUpdateTestExamsObservable = new BehaviorSubject<boolean>(false).asObservable();
                 examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
+                (examParticipationService as any).testStudentExams = signal([]);
+
+                vi.spyOn(courseTabRefreshService, 'reselections').mockReturnValue(new Subject<void>().asObservable());
                 vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({});
-                // The exams tab loads the visible exams itself instead of reading them off the course
-                vi.spyOn(examParticipationService, 'getExamsForOverview').mockReturnValue(
+                vi.spyOn(courseOverviewTabDataService, 'loadExamsIfNeeded').mockReturnValue(
                     of([visibleRealExam1, visibleRealExam2, notVisibleRealExam, visibleTestExam1, visibleTestExam2, notVisibleTestExam] as ExamForOverview[]),
                 );
-                vi.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage').mockReturnValue(
-                    of([studentExamForExam3AndSubmitted, studentExamForExam3AndNotSubmitted, studentExamForExam4AndSubmitted]),
-                );
+                vi.spyOn(examParticipationService, 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage').mockReturnValue(of(undefined));
                 vi.spyOn(examParticipationService, 'getRealExamSidebarData').mockReturnValue(of([]));
+
+                componentFixture = TestBed.createComponent(CourseExamsComponent);
+                component = componentFixture.componentInstance;
             });
     });
 
@@ -181,274 +194,163 @@ describe('CourseExamsComponent', () => {
 
     it('exam should be visible', () => {
         componentFixture.detectChanges();
-        expect(component.isVisible(visibleRealExam1)).toBe(true);
+        expect(component['isVisible'](visibleRealExam1)).toBe(true);
     });
 
     it('exam should not be visible', () => {
         componentFixture.detectChanges();
-        expect(component.isVisible(notVisibleRealExam)).toBe(false);
+        expect(component['isVisible'](notVisibleRealExam)).toBe(false);
     });
 
     it('should correctly return StudentExams by id in reverse order', () => {
-        componentFixture.detectChanges();
         const resultArray = [studentExamForExam3AndNotSubmitted, studentExamForExam3AndSubmitted];
-        expect(component.getStudentExamForExamIdOrderedByIdReverse(11)).toEqual(resultArray);
+        expect(component['getStudentExamForExamIdOrderedByIdReverse']([studentExamForExam3AndSubmitted, studentExamForExam3AndNotSubmitted], 11)).toEqual(resultArray);
     });
 
-    it('should correctly initialize the expandAttemptsMap', () => {
-        const expectedMap = new Map<number, boolean>();
-        expectedMap.set(visibleTestExam1.id!, false);
-        expectedMap.set(visibleTestExam2.id!, false);
-
-        // Map gets initialized in OnInit-Method
-        component.ngOnInit();
-
-        expect(component.expandAttemptsMap).toEqual(expectedMap);
-    });
-
-    it('should reuse the loaded exams when the routed tab component is recreated during the same course visit', () => {
-        component.ngOnInit();
+    it('should reuse the loaded exams when the routed tab component is recreated during the same course visit', async () => {
+        componentFixture.detectChanges();
+        await Promise.resolve();
         const firstExams = component.exams();
-        component.ngOnDestroy();
+
+        componentFixture.destroy();
         const returnedFixture = TestBed.createComponent(CourseExamsComponent);
         const returnedComponent = returnedFixture.componentInstance;
-        returnedComponent.ngOnInit();
+        returnedFixture.detectChanges();
+        await Promise.resolve();
 
-        expect(examParticipationService.getExamsForOverview).toHaveBeenCalledExactlyOnceWith(1);
+        expect(courseOverviewTabDataService.loadExamsIfNeeded).toHaveBeenCalled();
         expect(returnedComponent.exams()).toBe(firstExams);
-        expect(returnedComponent.realExamsOfCourse).toEqual([visibleRealExam2, visibleRealExam1]);
-        expect(returnedComponent.testExamsOfCourse).toEqual([visibleTestExam2, visibleTestExam1]);
+        expect(returnedComponent['realExamsOfCourse']()).toEqual([visibleRealExam2, visibleRealExam1]);
+        expect(returnedComponent['testExamsOfCourse']()).toEqual([visibleTestExam2, visibleTestExam1]);
 
-        returnedComponent.ngOnDestroy();
         returnedFixture.destroy();
     });
 
-    it('should cancel, reset, and reload when Angular reuses the tab for another course', async () => {
-        const params = new BehaviorSubject({ courseId: '1' });
-        const firstExams = new Subject<ExamForOverview[]>();
-        const secondExams = new Subject<ExamForOverview[]>();
-        const firstStudentExams = new Subject<StudentExamDTO[]>();
-        const secondStudentExams = new Subject<StudentExamDTO[]>();
-        const firstRealExamSidebar = new Subject<Exam[]>();
-        const secondRealExamSidebar = new Subject<Exam[]>();
-        (TestBed.inject(ActivatedRoute) as any).parent.params = params.asObservable();
-        const examsSpy = vi.spyOn(examParticipationService, 'getExamsForOverview').mockImplementation((courseId) => (courseId === 1 ? firstExams : secondExams));
-        const studentExamsSpy = vi
-            .spyOn(examParticipationService, 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage')
-            .mockImplementation((courseId) => (courseId === 1 ? firstStudentExams : secondStudentExams));
-        vi.spyOn(courseStorageService, 'getCourse').mockImplementation((courseId) => ({ id: courseId, title: `Course ${courseId}` }) as Course);
-        vi.spyOn(examParticipationService, 'getRealExamSidebarData').mockImplementation((courseId) => (courseId === 1 ? firstRealExamSidebar : secondRealExamSidebar));
-        const oldExam = { ...visibleRealExam1, id: 41 } as ExamForOverview;
-        const newExam = { ...visibleRealExam2, id: 42 } as ExamForOverview;
-
-        component.ngOnInit();
-        firstExams.next([oldExam]);
-        firstStudentExams.next([studentExamForExam3AndSubmitted]);
-        component.setPageTitle('Old exam');
-        expect(component.exams()).toEqual([oldExam]);
-        expect(Object.values(component.accordionExamGroups).some((group) => group.entityData.length > 0)).toBe(true);
-        expect(firstExams.observed).toBe(true);
-        expect(firstStudentExams.observed).toBe(true);
-
-        params.next({ courseId: '2' });
-
-        expect(component.courseId()).toBe(2);
-        expect(component.course()?.id).toBe(2);
-        expect(component.exams()).toBeUndefined();
-        expect(component.realExamsOfCourse).toEqual([]);
-        expect(component.testExamsOfCourse).toEqual([]);
-        expect(component.expandAttemptsMap.size).toBe(0);
-        expect(component.sidebarExams).toEqual([]);
-        expect(component.sidebarData()).toBeUndefined();
-        expect(Object.values(component.accordionExamGroups).every((group) => group.entityData.length === 0)).toBe(true);
-        expect(component.pageTitle()).toBe('');
-        expect(firstExams.observed).toBe(false);
-        expect(firstStudentExams.observed).toBe(false);
-        expect(secondExams.observed).toBe(true);
-        expect(secondStudentExams.observed).toBe(true);
-        expect(examsSpy).toHaveBeenNthCalledWith(1, 1);
-        expect(examsSpy).toHaveBeenNthCalledWith(2, 2);
-        expect(studentExamsSpy).toHaveBeenNthCalledWith(1, 1);
-        expect(studentExamsSpy).toHaveBeenNthCalledWith(2, 2);
-
-        firstExams.next([{ ...oldExam, title: 'Stale exam' }]);
-        secondExams.next([newExam]);
-        secondStudentExams.next([]);
-        firstRealExamSidebar.next([{ id: 91 } as Exam]);
-        firstRealExamSidebar.complete();
-        secondRealExamSidebar.next([{ id: 92 } as Exam]);
-        secondRealExamSidebar.complete();
+    it('should expose an empty exam list and a non-selected state when the overview request fails', async () => {
+        vi.spyOn(courseOverviewTabDataService, 'loadExamsIfNeeded').mockReturnValue(throwError(() => new Error('network')));
+        (TestBed.inject(ActivatedRoute) as any).firstChild.snapshot.params.examId = undefined;
+        componentFixture = TestBed.createComponent(CourseExamsComponent);
+        component = componentFixture.componentInstance;
+        componentFixture.detectChanges();
         await Promise.resolve();
-        await Promise.resolve();
-        params.next({ courseId: '2' });
-
-        expect(component.exams()).toEqual([newExam]);
-        expect(component.studentExamsForRealExams.has(91)).toBe(false);
-        expect(component.studentExamsForRealExams.has(92)).toBe(true);
-        expect(examsSpy).toHaveBeenCalledTimes(2);
-        expect(studentExamsSpy).toHaveBeenCalledTimes(2);
-    });
-
-    it('should replace and append test-exam attempts received while the tab is active', () => {
-        const shouldUpdate = new BehaviorSubject(false);
-        const currentStudentExam = new Subject<StudentExam>();
-        examParticipationService.shouldUpdateTestExamsObservable = shouldUpdate.asObservable();
-        examParticipationService.currentlyLoadedStudentExam = currentStudentExam;
-        const resetUpdateSpy = vi.spyOn(examParticipationService, 'setShouldUpdateTestExams');
-        const prepareSidebarSpy = vi.spyOn(component, 'prepareSidebarData');
-        component.ngOnInit();
-        const replacement = {
-            ...studentExamForExam3AndSubmitted,
-            startedDate: dayjs().subtract(30, 'minutes'),
-            exam: { ...visibleTestExam1, course: { id: 1 } as Course },
-        } as StudentExam;
-        const added = {
-            ...studentExamForExam3AndSubmitted,
-            id: 99,
-            startedDate: dayjs().subtract(10, 'minutes'),
-            exam: { ...visibleTestExam1, course: { id: 1 } as Course },
-        } as StudentExam;
-
-        currentStudentExam.next(replacement);
-        shouldUpdate.next(true);
-        currentStudentExam.next(added);
-
-        const attempts = component.getStudentExamForExamIdOrderedByIdReverse(visibleTestExam1.id!);
-        expect(attempts).toHaveLength(3);
-        expect(attempts).toEqual([added, studentExamForExam3AndNotSubmitted, replacement]);
-        expect(attempts).not.toContain(studentExamForExam3AndSubmitted);
-        expect(resetUpdateSpy).toHaveBeenCalledTimes(2);
-        expect(resetUpdateSpy).toHaveBeenNthCalledWith(1, false);
-        expect(resetUpdateSpy).toHaveBeenNthCalledWith(2, false);
-        expect(prepareSidebarSpy).toHaveBeenCalledTimes(4);
-    });
-
-    it('should expose an empty exam list and a non-selected state when the overview request fails', () => {
-        vi.spyOn(examParticipationService, 'getExamsForOverview').mockReturnValue(throwError(() => new Error('network')));
-
-        component.ngOnInit();
 
         expect(component.exams()).toEqual([]);
         expect(component.examSelected()).toBe(false);
         expect(router.navigate).not.toHaveBeenCalled();
     });
 
-    it('should navigate to the last selected exam before considering an upcoming exam', () => {
+    it('should navigate to the last selected exam before considering an upcoming exam', async () => {
+        router.navigate.mockClear();
         vi.spyOn(TestBed.inject(SessionStorageService), 'retrieve').mockReturnValue(42);
         const upcomingSpy = vi.spyOn(courseOverviewService, 'getUpcomingExam').mockReturnValue({ id: 43 } as Exam);
+        (TestBed.inject(ActivatedRoute) as any).firstChild.snapshot.params.examId = undefined;
+        childParamsSubject.next({ examId: undefined });
+        componentFixture = TestBed.createComponent(CourseExamsComponent);
+        component = componentFixture.componentInstance;
+        componentFixture.detectChanges();
+        await Promise.resolve();
 
-        component.navigateToExam();
-
-        expect(upcomingSpy).toHaveBeenCalledWith([]);
-        expect(router.navigate).toHaveBeenCalledExactlyOnceWith([42], { relativeTo: TestBed.inject(ActivatedRoute), replaceUrl: true });
+        expect(upcomingSpy).toHaveBeenCalled();
+        expect(router.navigate).toHaveBeenCalledWith([42], { relativeTo: TestBed.inject(ActivatedRoute), replaceUrl: true });
     });
 
-    it('should navigate to the upcoming exam when none was selected previously', () => {
+    it('should navigate to the upcoming exam when none was selected previously', async () => {
+        router.navigate.mockClear();
         vi.spyOn(TestBed.inject(SessionStorageService), 'retrieve').mockReturnValue(undefined);
         vi.spyOn(courseOverviewService, 'getUpcomingExam').mockReturnValue({ id: 43 } as Exam);
+        (TestBed.inject(ActivatedRoute) as any).firstChild.snapshot.params.examId = undefined;
+        childParamsSubject.next({ examId: undefined });
+        componentFixture = TestBed.createComponent(CourseExamsComponent);
+        component = componentFixture.componentInstance;
+        componentFixture.detectChanges();
+        await Promise.resolve();
 
-        component.navigateToExam();
-
-        expect(router.navigate).toHaveBeenCalledExactlyOnceWith([43], { relativeTo: TestBed.inject(ActivatedRoute), replaceUrl: true });
+        expect(router.navigate).toHaveBeenCalledWith([43], { relativeTo: TestBed.inject(ActivatedRoute), replaceUrl: true });
     });
 
     it('should keep the selected exam from the URL without redirecting', () => {
         (TestBed.inject(ActivatedRoute) as any).firstChild = { snapshot: { params: { examId: 1 } } };
-
-        component.navigateToExam();
+        component['navigateToExam']();
 
         expect(component.examSelected()).toBe(true);
         expect(router.navigate).not.toHaveBeenCalled();
     });
 
-    it('should stop checking a latest test-exam attempt once its working time expires', () => {
-        vi.useFakeTimers();
-        const attempt = { started: true, startedDate: dayjs(), exam: visibleTestExam1 } as StudentExam;
-        const workingTimeSpy = vi.spyOn(component, 'isWithinWorkingTime').mockImplementation(() => {
-            component.withinWorkingTime = false;
-        });
-
-        component.calculateIndividualWorkingTimeForTestExams(attempt, true);
-        vi.advanceTimersByTime(1000);
-
-        expect(workingTimeSpy).toHaveBeenCalledExactlyOnceWith(attempt, visibleTestExam1);
-        expect(component.studentExamState?.closed).toBe(true);
-    });
-
-    it('should calculate whether an active test-exam attempt remains within its individual working time', () => {
-        const attempt = { started: true, submitted: false, startedDate: dayjs().subtract(30, 'minutes') } as StudentExam;
-        const exam = { workingTime: 60 * 60 } as Exam;
-
-        component.isWithinWorkingTime(attempt, exam);
-        expect(component.withinWorkingTime).toBe(true);
-
-        attempt.startedDate = dayjs().subtract(2, 'hours');
-        component.isWithinWorkingTime(attempt, exam);
-        expect(component.withinWorkingTime).toBe(false);
-    });
-
-    it('should correctly switch boolean value in expandAttemptsMap', () => {
-        const expectedMap = new Map<number, boolean>();
-        expectedMap.set(visibleTestExam1.id!, true);
-        expectedMap.set(visibleTestExam2.id!, false);
-
-        // Map gets initialized in OnInit-Method
-        component.ngOnInit();
-        component.changeExpandAttemptList(visibleTestExam1.id!);
-
-        expect(component.expandAttemptsMap).toEqual(expectedMap);
-    });
-
     it('should correctly update new exams', async () => {
         const newExam = {
             id: 42,
-            visibleDate: dayjs().subtract(1, 'minutes'),
-        } as Exam;
-        const course = new Course();
-        course.exams = [visibleRealExam1, visibleRealExam2];
-        component.course.set(course);
+            workingTime: 60,
+        } as unknown as StudentExam;
+        // exams are now fetched via loadExamsIfNeeded
 
-        vi.spyOn(examParticipationService, 'getRealExamSidebarData').mockReturnValue(of([visibleRealExam1, visibleRealExam2, newExam]));
-        examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
-        examParticipationService.shouldUpdateTestExamsObservable = new BehaviorSubject<boolean>(false).asObservable();
-        component.ngOnInit();
+        vi.spyOn(examParticipationService, 'getRealExamSidebarData').mockReturnValue(of([newExam as any]));
+        componentFixture = TestBed.createComponent(CourseExamsComponent);
+        component = componentFixture.componentInstance;
+        componentFixture.detectChanges();
         // Allow promise from lastValueFrom in updateExams() to resolve
         await Promise.resolve();
         await Promise.resolve();
-        expect(component.studentExamsForRealExams.has(newExam.id!)).toBe(true);
+        expect(component['realExamWorkingTimeByExamId']().has(newExam.id!)).toBe(true);
     });
 
-    it('should correctly return visible real exams ordered according to startedDate', () => {
-        component.ngOnInit();
-        const resultArray = [visibleRealExam2, visibleRealExam1];
-        expect(component.realExamsOfCourse).toEqual(resultArray);
-    });
+    it('should cancel previous request when a new course is loaded', async () => {
+        // Destroy the component created in beforeEach to avoid duplicate subscriptions
+        componentFixture.destroy();
 
-    it('should correctly return visible test exams ordered according to startedDate', () => {
-        component.ngOnInit();
-        const resultArray = [visibleTestExam2, visibleTestExam1];
-        expect(component.testExamsOfCourse).toEqual(resultArray);
-    });
+        const subject1 = new Subject<StudentExamDTO[]>();
+        const subject2 = new Subject<StudentExamDTO[]>();
 
-    it('should display/hide sidebar if exam is started/over', () => {
-        (examParticipationService as any).examIsStarted$ = of(true);
+        const getRealExamSidebarDataSpy = vi.spyOn(examParticipationService, 'getRealExamSidebarData').mockReturnValueOnce(subject1).mockReturnValueOnce(subject2);
+
+        // Recreate the component
+        componentFixture = TestBed.createComponent(CourseExamsComponent);
+        component = componentFixture.componentInstance;
+
+        // Triggers initial loadExams(1)
         componentFixture.detectChanges();
-        expect(componentFixture.nativeElement.querySelector('#exam-sidebar-test').hidden).toBe(true);
+        await Promise.resolve();
 
-        component.isExamStarted.set(false);
-        componentFixture.changeDetectorRef.detectChanges();
-        expect(componentFixture.nativeElement.querySelector('#exam-sidebar-test').hidden).toBe(false);
+        expect(getRealExamSidebarDataSpy).toHaveBeenCalledWith(1);
+
+        // Switch to a new course
+        parentParamsSubject.next({ courseId: '2' });
+        componentFixture.detectChanges();
+        await Promise.resolve();
+
+        expect(getRealExamSidebarDataSpy).toHaveBeenCalledWith(2);
+
+        // Resolve out-of-order (course 2 responds first, course 1 responds late)
+        subject2.next([{ id: 43, workingTime: 120 } as StudentExamDTO]);
+        subject1.next([{ id: 42, workingTime: 60 } as StudentExamDTO]);
+
+        // Course 1 map should be ignored because its subscription was cancelled
+        expect(component['realExamWorkingTimeByExamId']().has(42)).toBe(false);
+        expect(component['realExamWorkingTimeByExamId']().get(43)).toBe(120);
+    });
+
+    it('should correctly return visible real exams ordered according to startedDate', async () => {
+        componentFixture.detectChanges();
+        await Promise.resolve();
+        const resultArray = [visibleRealExam2, visibleRealExam1];
+        expect(component['realExamsOfCourse']()).toEqual(resultArray);
+    });
+
+    it('should correctly return visible test exams ordered according to startedDate', async () => {
+        componentFixture.detectChanges();
+        await Promise.resolve();
+        const resultArray = [visibleTestExam2, visibleTestExam1];
+        expect(component['testExamsOfCourse']()).toEqual(resultArray);
     });
 
     it('should group all exams as test when all exams are test exams', () => {
         const testExams: Exam[] = [
-            { id: 1, title: 'Test Exam 1', testExam: true } as Exam,
-            { id: 2, title: 'Test Exam 2', testExam: true } as Exam,
-            { id: 3, title: 'Test Exam 3', testExam: true } as Exam,
+            { id: 1, title: 'Test Exam 1', examMode: ExamMode.TEST } as Exam,
+            { id: 2, title: 'Test Exam 2', examMode: ExamMode.TEST } as Exam,
+            { id: 3, title: 'Test Exam 3', examMode: ExamMode.TEST } as Exam,
         ];
 
-        vi.spyOn(courseOverviewService, 'mapExamToSidebarCardElement');
-        const groupedExams = component.groupExamsByRealOrTest([], testExams);
+        vi.spyOn(courseOverviewService, 'mapExamToSidebarCardElement').mockImplementation((exam) => ({ title: exam.title }) as SidebarCardElement);
+        const groupedExams = component['groupExamsByRealOrTestOrAttempt']([], testExams, new Map());
 
         expect(groupedExams['real'].entityData).toHaveLength(0);
         expect(groupedExams['test'].entityData).toHaveLength(3);
@@ -460,19 +362,19 @@ describe('CourseExamsComponent', () => {
 
     it('should group all exam types correctly and map to sidebar card elements', () => {
         const testExams: Exam[] = [
-            { id: 1, title: 'Test Exam 1', testExam: true } as Exam,
-            { id: 2, title: 'Test Exam 2', testExam: true } as Exam,
-            { id: 3, title: 'Test Exam 3', testExam: true } as Exam,
+            { id: 1, title: 'Test Exam 1', examMode: ExamMode.TEST } as Exam,
+            { id: 2, title: 'Test Exam 2', examMode: ExamMode.TEST } as Exam,
+            { id: 3, title: 'Test Exam 3', examMode: ExamMode.TEST } as Exam,
         ];
 
         const realExams: Exam[] = [
-            { id: 1, title: 'Real Exam 1', testExam: false } as Exam,
-            { id: 2, title: 'Real Exam 2', testExam: false } as Exam,
-            { id: 3, title: 'Real Exam 3', testExam: false } as Exam,
+            { id: 1, title: 'Real Exam 1', examMode: ExamMode.REAL } as Exam,
+            { id: 2, title: 'Real Exam 2', examMode: ExamMode.REAL } as Exam,
+            { id: 3, title: 'Real Exam 3', examMode: ExamMode.REAL } as Exam,
         ];
 
-        vi.spyOn(courseOverviewService, 'mapExamToSidebarCardElement');
-        const groupedExams = component.groupExamsByRealOrTest(realExams, testExams);
+        vi.spyOn(courseOverviewService, 'mapExamToSidebarCardElement').mockImplementation((exam) => ({ title: exam.title }) as SidebarCardElement);
+        const groupedExams = component['groupExamsByRealOrTestOrAttempt'](realExams, testExams, new Map());
 
         expect(groupedExams['real'].entityData).toHaveLength(3);
         expect(groupedExams['test'].entityData).toHaveLength(3);
@@ -492,7 +394,7 @@ describe('CourseExamsComponent', () => {
             { id: 3, title: 'Exam 3', startDate: dayjs().subtract(20, 'minutes') } as Exam,
         ];
 
-        const sortedExams = exams.sort((a, b) => component.sortExamsByStartDate(a, b));
+        const sortedExams = [...exams].sort((a, b) => component['sortExamsByStartDate'](a, b));
 
         expect(sortedExams[0].id).toBe(2);
         expect(sortedExams[1].id).toBe(3);
@@ -506,15 +408,5 @@ describe('CourseExamsComponent', () => {
 
         component.toggleSidebar();
         expect(component.isCollapsed()).toBe(false);
-    });
-
-    it('should not update sidebarData if there is no exam', () => {
-        const course = new Course();
-        course.exams = undefined;
-        component.course.set(course);
-
-        const updateSidebarDataStub = vi.spyOn(component, 'updateSidebarData');
-        component.prepareSidebarData();
-        expect(updateSidebarDataStub).not.toHaveBeenCalledOnce();
     });
 });

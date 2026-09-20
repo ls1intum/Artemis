@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -31,12 +32,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * @param dueDate         when submissions close, for a course exercise
  * @param examId          the exam, or {@code null} for a course exercise
  * @param examStartDate   when the exam starts, or {@code null} for a course exercise
- * @param testExam        whether the exam may be taken repeatedly, {@code null} for a course exercise, since the
- *                            exam side of the join is then absent
+ * @param examMode        the mode of the exam, {@code null} for a course exercise
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GitRepositoryAccessDTO(long exerciseId, long courseId, ExerciseMode mode, @Nullable Boolean allowOfflineIde, @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime dueDate, @Nullable Long examId, @Nullable ZonedDateTime examStartDate, @Nullable Boolean testExam) {
+        @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime dueDate, @Nullable Long examId, @Nullable ZonedDateTime examStartDate, @Nullable ExamMode examMode) {
 
     /**
      * Builds the projection from an exercise that is already loaded.
@@ -56,7 +56,7 @@ public record GitRepositoryAccessDTO(long exerciseId, long courseId, ExerciseMod
             throw new IllegalStateException("Cannot build the repository access projection for exercise " + exercise.getId() + ": no course is reachable from it.");
         }
         return new GitRepositoryAccessDTO(exercise.getId(), course.getId(), exercise.getMode(), exercise.isAllowOfflineIde(), exercise.getStartDate(), exercise.getReleaseDate(),
-                exercise.getDueDate(), exam == null ? null : exam.getId(), exam == null ? null : exam.getStartDate(), exam == null ? null : exam.isTestExam());
+                exercise.getDueDate(), exam == null ? null : exam.getId(), exam == null ? null : exam.getStartDate(), exam == null ? null : exam.getExamMode());
     }
 
     /**
@@ -65,7 +65,7 @@ public record GitRepositoryAccessDTO(long exerciseId, long courseId, ExerciseMod
      * @return whether the exercise belongs to a test exam
      */
     public boolean isTestExamExercise() {
-        return Boolean.TRUE.equals(testExam);
+        return examMode != null && !examMode.isReal();
     }
 
     /**
