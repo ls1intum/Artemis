@@ -25,6 +25,8 @@ export { TumUiConfirmDialogComponent } from './lib/confirm-dialog/tum-ui-confirm
 export { TumUiConfirmationService, type TumUiConfirmationRequest } from './lib/confirm-dialog/tum-ui-confirmation.service';
 export { TumUiDatePickerComponent } from './lib/date-picker/tum-ui-date-picker.component';
 export { TumUiDialogComponent, type TumUiDialogSize } from './lib/dialog/tum-ui-dialog.component';
+export { TumUiEmptyStateComponent } from './lib/empty-state/tum-ui-empty-state.component';
+export type { TumUiEmptyStateVariant } from './lib/empty-state/tum-ui-empty-state.variants';
 export { TumUiFormFieldComponent } from './lib/form-field/tum-ui-form-field.component';
 export { TUM_UI_FORM_FIELD, type TumUiFormFieldContext } from './lib/form-field/tum-ui-form-field.token';
 export { TUM_UI_TRANSLATOR, provideTumUiTranslator, type TumUiTranslationKey, type TumUiTranslationParams, type TumUiTranslator } from './lib/i18n/tum-ui-translations';

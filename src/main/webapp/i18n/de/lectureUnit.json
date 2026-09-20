@@ -108,7 +108,8 @@
             "processingSkipped": "Nicht indiziert",
             "processingSkippedTooltip": "Iris ist für diese Einheit nicht verfügbar, daher wurde ihr Inhalt nicht indiziert. Sie wird automatisch verarbeitet, sobald Iris für den Kurs aktiviert ist.",
             "videoSlideSync": {
-                "toggle": "Folien und Video synchronisieren"
+                "toggle": "Folien und Video synchronisieren",
+                "disabledByPointOut": "Synchronisation deaktiviert: Iris verweist auf Seite {{page}} und Zeitpunkt {{time}}."
             },
             "processing": {
                 "lostContactTooltip": "Iris meldet für diesen Lauf keine Aktivität mehr. Er wird automatisch zurückgeholt und erneut gestartet, ohne das Wiederholungsbudget zu verbrauchen.",

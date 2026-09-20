@@ -23,6 +23,10 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
+import { By } from '@angular/platform-browser';
+import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
 
 describe('ParticipationComponent', () => {
@@ -66,6 +70,7 @@ describe('ParticipationComponent', () => {
                 MockProvider(ParticipationService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(EventManager),
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -93,6 +98,76 @@ describe('ParticipationComponent', () => {
 
             expect(exerciseFindStub).toHaveBeenCalledExactlyOnceWith(1);
             expect(component.exercise()).toEqual(exercise);
+        });
+    });
+
+    describe('Anonymous participation list', () => {
+        it.each([false, true])('should show participation IDs without identity search or team links for tutors (team mode: %s)', async (teamMode) => {
+            const tutorExercise = { ...exercise, course: undefined, type: ExerciseType.PROGRAMMING, isAtLeastTutor: true, isAtLeastInstructor: false, teamMode };
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: tutorExercise })));
+            vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [sampleDto], totalElements: 1 }));
+
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+            componentFixture.detectChanges();
+
+            expect(component.columns()[0]).toMatchObject({ headerKey: 'artemisApp.participation.participationId', field: 'participationId', sort: true });
+            expect(
+                component.columns().some((column) => column.headerKey === 'artemisApp.participation.students' || column.headerKey === 'artemisApp.participation.repository'),
+            ).toBe(false);
+            const table: HTMLElement = componentFixture.nativeElement.querySelector('jhi-table-view');
+            expect(table.querySelector('tbody td')?.textContent?.trim()).toBe(String(sampleDto.participationId));
+            expect(table.textContent).not.toContain(sampleDto.participantName);
+            expect(table.querySelector('a[href*="/teams/"]')).toBeNull();
+            expect(table.querySelector('jhi-search-filter')).toBeNull();
+        });
+
+        it.each([false, true])('should retain identity columns and search for instructors (team mode: %s)', (teamMode) => {
+            component.exercise.set({ ...exercise, teamMode, isAtLeastInstructor: true });
+
+            expect(component.tableOptions().showSearch).not.toBe(false);
+            expect(component.columns()[0]).toMatchObject({
+                headerKey: teamMode ? 'artemisApp.participation.team' : 'artemisApp.participation.student',
+                field: 'participantName',
+                sort: true,
+            });
+            expect(component.columns().some((column) => column.headerKey === 'artemisApp.participation.students')).toBe(teamMode);
+        });
+
+        it.each(['participantName', 'participantIdentifier', 'buildPlanId'])(
+            'should discard stale identity search and sorting for tutors while retaining filters and paging (%s)',
+            (sortField) => {
+                component.exercise.set({ ...exercise, isAtLeastInstructor: false });
+                component.activeFilter.set(FilterProp.NO_SUBMISSIONS);
+                const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+
+                component.onLazyLoad({ first: 50, rows: 25, globalFilter: 'alice', sortField });
+
+                expect(searchSpy).toHaveBeenCalledWith(
+                    exercise.id,
+                    expect.objectContaining({ page: 2, pageSize: 25, searchTerm: '', sortedColumn: 'id', filterProp: FilterProp.NO_SUBMISSIONS }),
+                );
+            },
+        );
+
+        it('should retain instructor identity search and sorting', () => {
+            component.exercise.set({ ...exercise, isAtLeastInstructor: true });
+            const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+
+            component.onLazyLoad({ globalFilter: 'alice', sortField: 'participantName' });
+
+            expect(searchSpy).toHaveBeenCalledWith(exercise.id, expect.objectContaining({ searchTerm: 'alice', sortedColumn: 'participantName' }));
+        });
+
+        it('should identify an anonymous participation in the due-date success message', () => {
+            const dto: ParticipationManagementDTO = { participationId: 42, submissionCount: 1, testRun: false };
+            vi.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(of(new HttpResponse({ body: [] })));
+            const successSpy = vi.spyOn(alertService, 'success');
+            component.startEditDueDate(dto);
+
+            component.saveIndividualDueDate(dto);
+
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.participation.updateDueDates.success', { name: '42' });
         });
     });
 
@@ -197,6 +272,78 @@ describe('ParticipationComponent', () => {
 
             component.gradeStepsDTO.set({ presentationsNumber: 0, gradeSteps: [], gradeType: undefined as any, title: '', plagiarismGrade: '', noParticipationGrade: '' });
             expect(component.gradedPresentationEnabled()).toBe(false);
+        });
+    });
+
+    describe('Individual due date input validation', () => {
+        let picker: FormDateTimePickerComponent;
+        let saveButton: HTMLButtonElement;
+        let dto: ParticipationManagementDTO;
+        const dueDate = dayjs('2030-06-01T12:00:00');
+        const individualDueDate = dayjs('2030-06-03T12:00:00');
+
+        beforeEach(async () => {
+            dto = { ...sampleDto, individualDueDate };
+            const exerciseWithDueDate = { ...exercise, course: undefined, dueDate };
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseWithDueDate })));
+            vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [dto], totalElements: 1 }));
+            component.startEditDueDate(dto);
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+            componentFixture.detectChanges();
+            picker = componentFixture.debugElement.query(By.directive(FormDateTimePickerComponent)).componentInstance;
+            saveButton = componentFixture.nativeElement.querySelector('button[title="Save"]');
+        });
+
+        it.each(['invalid date', new Date('2020-01-01T12:00:00')])('should prevent saving invalid input %s', async (invalidInput) => {
+            const updateSpy = vi.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(of(new HttpResponse({ body: [] })));
+            const successSpy = vi.spyOn(alertService, 'success');
+
+            picker.updateField(invalidInput);
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+
+            expect(saveButton.disabled).toBe(true);
+            saveButton.click();
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(successSpy).not.toHaveBeenCalled();
+            expect(dto.individualDueDate).toEqual(individualDueDate);
+        });
+
+        it('should save when invalid input is corrected', async () => {
+            const updateSpy = vi.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(of(new HttpResponse({ body: [] })));
+            const successSpy = vi.spyOn(alertService, 'success');
+            picker.updateField('invalid date');
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+            expect(saveButton.disabled).toBe(true);
+
+            picker.updateField(individualDueDate.toDate());
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+
+            expect(saveButton.disabled).toBe(false);
+            expect(component.getPendingDueDate(dto.participationId)).toEqual(individualDueDate);
+            saveButton.click();
+            expect(updateSpy).toHaveBeenCalledExactlyOnceWith(component.exercise(), [expect.objectContaining({ id: dto.participationId, individualDueDate })]);
+            expect(successSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should allow clearing an existing individual due date after invalid input', async () => {
+            const updateSpy = vi.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(of(new HttpResponse({ body: [{ id: dto.participationId }] })));
+            picker.updateField('invalid date');
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+            expect(saveButton.disabled).toBe(true);
+
+            picker.updateField(null);
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+
+            expect(saveButton.disabled).toBe(false);
+            saveButton.click();
+            expect(updateSpy).toHaveBeenCalledExactlyOnceWith(component.exercise(), [expect.objectContaining({ id: dto.participationId, individualDueDate: undefined })]);
+            expect(dto.individualDueDate).toBeUndefined();
         });
     });
 

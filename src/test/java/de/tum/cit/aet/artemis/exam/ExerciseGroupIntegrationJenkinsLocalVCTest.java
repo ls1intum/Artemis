@@ -535,7 +535,6 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         exam = examRepository.save(exam);
         ProgrammingExercise programming = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(programmingGroup, ProgrammingLanguage.JAVA);
         programmingGroup.addExercise(programming);
-        programming.setBuildConfig(programmingExerciseBuildConfigRepository.save(programming.getBuildConfig()));
         exerciseRepository.save(programming);
 
         versionControlService.createProjectForExercise(programming);

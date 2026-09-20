@@ -355,7 +355,7 @@ class ProgrammingTriggerServiceTest {
     @Test
     void triggerInstructorBuildForExercise_bracketsTheRunWithTheMessagesTheInstructorWaitsOn() {
         // The instructor's page shows a running build run until the completion message arrives, so both have to be sent.
-        when(programmingExerciseRepository.findWithBuildConfigAndAuxiliaryRepositoriesById(EXERCISE_ID)).thenReturn(Optional.of(exercise));
+        when(programmingExerciseRepository.findWithAuxiliaryRepositoriesById(EXERCISE_ID)).thenReturn(Optional.of(exercise));
         when(programmingExerciseStudentParticipationRepository.findBuildTriggerDataByExerciseId(EXERCISE_ID)).thenReturn(List.of());
 
         programmingTriggerService.triggerInstructorBuildForExercise(EXERCISE_ID);
@@ -370,7 +370,7 @@ class ProgrammingTriggerServiceTest {
 
     @Test
     void triggerInstructorBuildForExercise_forAnExerciseThatDoesNotExist_isReported() {
-        when(programmingExerciseRepository.findWithBuildConfigAndAuxiliaryRepositoriesById(EXERCISE_ID)).thenReturn(Optional.empty());
+        when(programmingExerciseRepository.findWithAuxiliaryRepositoriesById(EXERCISE_ID)).thenReturn(Optional.empty());
 
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> programmingTriggerService.triggerInstructorBuildForExercise(EXERCISE_ID));
 

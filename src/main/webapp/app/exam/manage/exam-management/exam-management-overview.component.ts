@@ -3,7 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { SortService } from 'app/foundation/service/sort.service';
-import { faFileImport, faPlus, faSort } from '@fortawesome/free-solid-svg-icons';
+import { faFileAlt, faFileImport, faPlus, faSort } from '@fortawesome/free-solid-svg-icons';
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { ExamImportComponent, ExamImportDialogData } from 'app/exam/manage/exams/exam-import/exam-import.component';
@@ -12,7 +12,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { ExamStatusComponent } from '../exam-status/exam-status.component';
-import { TumUiButtonComponent, TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumUiButtonComponent, TumUiButtonDirective, TumUiEmptyStateComponent } from '@tumaet/ui-angular';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
@@ -33,6 +33,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         ExamStatusComponent,
         TumUiButtonDirective,
         TumUiButtonComponent,
+        TumUiEmptyStateComponent,
         CourseTitleBarActionsDirective,
         CourseTitleBarTitleDirective,
         ExamModeBadgeComponent,
@@ -57,6 +58,7 @@ export class ExamManagementOverviewComponent implements OnDestroy {
     faSort = faSort;
     faPlus = faPlus;
     faFileImport = faFileImport;
+    faFileAlt = faFileAlt;
 
     constructor() {
         this.predicate = 'id';

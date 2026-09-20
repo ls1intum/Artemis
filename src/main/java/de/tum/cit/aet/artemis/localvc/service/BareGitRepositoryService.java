@@ -178,7 +178,7 @@ public class BareGitRepositoryService extends AbstractGitService {
 
     /**
      * Creates a new bare Git repository at the specified target location,
-     * containing a single commit that includes all files from the source repository.
+     * containing a single commit on the configured default branch that includes all files from the source repository.
      * <p>
      * The history of the source repository is not preserved; instead, a new commit is created
      * with a fresh tree built from the source repository's latest state. The commit's author and
@@ -240,11 +240,11 @@ public class BareGitRepositoryService extends AbstractGitService {
                         ObjectId newCommitId = inserter.insert(commitBuilder);
                         inserter.flush();
 
-                        // Update refs/heads/main in new bare repo
-                        RefUpdate refUpdate = targetRepo.updateRef("refs/heads/" + sourceBranch);
+                        // Publish on the default branch, matching the copied participation and the configured HEAD.
+                        RefUpdate refUpdate = targetRepo.updateRef("refs/heads/" + defaultBranch);
                         refUpdate.setNewObjectId(newCommitId);
                         refUpdate.setForceUpdate(true);
-                        verifyRefUpdateResult(refUpdate.update(), "refs/heads/" + sourceBranch, targetRepoUri);
+                        verifyRefUpdateResult(refUpdate.update(), "refs/heads/" + defaultBranch, targetRepoUri);
                     }
                 }
             });
@@ -253,7 +253,7 @@ public class BareGitRepositoryService extends AbstractGitService {
 
     /**
      * Creates a new bare Git repository at the specified target location, copying all commits
-     * and history from the source repository.
+     * and history from the source branch onto the configured default branch.
      * <p>
      * This method efficiently duplicates the entire commit history from the source to the target
      * repository by directly transferring Git objects (commits, trees, and blobs) without checking
@@ -325,11 +325,11 @@ public class BareGitRepositoryService extends AbstractGitService {
 
                         inserter.flush();
 
-                        // Update target HEAD ref
-                        RefUpdate refUpdate = targetRepo.updateRef("refs/heads/" + sourceBranch);
+                        // Imported exercises use the default branch, which is also the target of the configured HEAD.
+                        RefUpdate refUpdate = targetRepo.updateRef("refs/heads/" + defaultBranch);
                         refUpdate.setNewObjectId(headCommitId);
                         refUpdate.setForceUpdate(true);
-                        verifyRefUpdateResult(refUpdate.update(), "refs/heads/" + sourceBranch, targetRepoUri);
+                        verifyRefUpdateResult(refUpdate.update(), "refs/heads/" + defaultBranch, targetRepoUri);
                     }
                 }
             });

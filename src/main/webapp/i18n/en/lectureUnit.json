@@ -108,7 +108,8 @@
             "processingSkipped": "Not indexed",
             "processingSkippedTooltip": "Iris is not available for this unit, so its content was not indexed. It is picked up automatically once Iris is enabled for the course.",
             "videoSlideSync": {
-                "toggle": "Synchronize slides and video"
+                "toggle": "Synchronize slides and video",
+                "disabledByPointOut": "Synchronization disabled: Iris points to page {{page}} and timestamp {{time}}."
             },
             "processing": {
                 "lostContactTooltip": "Iris has stopped reporting liveness for this run. It will be reclaimed and retried automatically without spending the retry budget.",

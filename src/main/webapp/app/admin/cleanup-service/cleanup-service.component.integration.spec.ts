@@ -8,7 +8,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CleanupServiceComponent } from 'app/admin/cleanup-service/cleanup-service.component';
 import { DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
 import { TumUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import dayjs from 'dayjs/esm';
 
 describe('CleanupServiceComponent date range integration', () => {
     let fixture: ComponentFixture<CleanupServiceComponent>;
@@ -22,6 +24,24 @@ describe('CleanupServiceComponent date range integration', () => {
                     provide: DataCleanupService,
                     useValue: {
                         getLastExecutions: vi.fn().mockReturnValue(of(new HttpResponse({ body: [] }))),
+                        getCleanupConfiguration: vi.fn().mockReturnValue(
+                            of({
+                                gradeRelevantRetentionYears: 5,
+                                gradeRelevantCoursesEndedBefore: dayjs('2021-03-04T00:00:00Z'),
+                                nonGradeRelevantRetentionYears: 1,
+                                nonGradeRelevantCoursesEndedBefore: dayjs('2025-03-04T00:00:00Z'),
+                                resetWarningGracePeriodDays: 30,
+                                coursesWarnedBefore: dayjs('2026-02-02T00:00:00Z'),
+                                oldFeedbackCutoffWeeks: 8,
+                                oldFeedbackCoursesEndedBefore: dayjs('2026-01-07T00:00:00Z'),
+                                oldSubmissionVersionsCutoffWeeks: 8,
+                                oldSubmissionVersionsCoursesEndedBefore: dayjs('2026-01-07T00:00:00Z'),
+                                notEnrolledUsersInactivityMonths: 6,
+                                usersInactiveBefore: dayjs('2025-09-04T00:00:00Z'),
+                                notEnrolledUsersWarningGracePeriodDays: 30,
+                                usersWarnedBefore: dayjs('2026-02-02T00:00:00Z'),
+                            }),
+                        ),
                     },
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -93,5 +113,37 @@ describe('CleanupServiceComponent date range integration', () => {
         expect(operation.datesValid()).toBe(true);
         expect(operation.deleteFromValid()).toBe(false);
         expect(executeButton().disabled).toBe(true);
+    });
+
+    function rowText(operationName: string, testId: string): string {
+        const row = fixture.debugElement.query(By.css(`[data-testid="cleanup-row-${operationName}"]`));
+        return (row.query(By.css(`[data-testid="${testId}"]`)).nativeElement as HTMLElement).textContent!.trim();
+    }
+
+    it('renders a description under every operation name', () => {
+        for (const operation of component.cleanupOperations()) {
+            expect(rowText(operation.name, `cleanup-description-${operation.name}`)).toBe(`cleanupService.description.${operation.name}`);
+        }
+    });
+
+    it('passes the effective cutoff and the matching duration key into the description', () => {
+        const row = fixture.debugElement.query(By.css('[data-testid="cleanup-row-warnOldCoursesReset"]'));
+        const description = row.query(By.css('[data-testid="cleanup-description-warnOldCoursesReset"]'));
+        const values = description.injector.get(TranslateDirective).translateValues()!;
+
+        expect(values['cutoff']).toBe(dayjs('2021-03-04T00:00:00Z').format('MMM D, YYYY'));
+        expect(values['period']).toBe('cleanupService.duration.years');
+        expect(values['secondaryCutoff']).toBe(dayjs('2025-03-04T00:00:00Z').format('MMM D, YYYY'));
+        // A configured retention of one year must use the singular key, so the line does not read "1 years".
+        expect(values['secondaryPeriod']).toBe('cleanupService.duration.year');
+    });
+
+    it('names the row button after what the operation actually does', () => {
+        // "Delete" is wrong for an operation that only emails a warning, or that resets a course while keeping it.
+        expect(rowText('warnOldCoursesReset', 'execute-operation')).toBe('entity.action.warn');
+        expect(rowText('warnNotEnrolledUsers', 'execute-operation')).toBe('entity.action.warn');
+        expect(rowText('resetOldCourses', 'execute-operation')).toBe('entity.action.reset');
+        expect(rowText('deleteOrphans', 'execute-operation')).toBe('entity.action.delete');
+        expect(rowText('deletePlagiarismCases', 'execute-operation')).toBe('entity.action.delete');
     });
 });

@@ -49,6 +49,10 @@ public class PyrisJobService {
 
     private static final Logger log = LoggerFactory.getLogger(PyrisJobService.class);
 
+    private static final String PYRIS_JOB_MAP_NAME = "pyris-job-map";
+
+    private static final String CHAT_JOB_CLIENT_ID_MAP_NAME = "pyris-chat-job-client-id-map";
+
     /**
      * Shared deliberately: {@link SecureRandom} is thread-safe, and constructing one re-seeds from the system
      * entropy source on every call.
@@ -61,6 +65,9 @@ public class PyrisJobService {
 
     @Nullable
     private DistributedMap<String, PyrisJob> jobMap;
+
+    @Nullable
+    private DistributedMap<String, String> chatJobClientIdMap;
 
     @Nullable
     private DistributedMap<String, String> struggleInFlightMap;
@@ -100,7 +107,7 @@ public class PyrisJobService {
      */
     private DistributedMap<String, PyrisJob> getPyrisJobMap() {
         if (this.jobMap == null) {
-            this.jobMap = this.distributedDataProvider.getExpiringMap("pyris-job-map", Duration.ofSeconds(jobTimeout));
+            this.jobMap = this.distributedDataProvider.getExpiringMap(PYRIS_JOB_MAP_NAME, Duration.ofSeconds(jobTimeout));
         }
         return this.jobMap;
     }
@@ -175,6 +182,17 @@ public class PyrisJobService {
     }
 
     /**
+     * Keeps the browser tab associated with a chat job outside {@link ChatJob}. The job record is part of the persisted distributed-data wire format and changing its components
+     * would make jobs written before an upgrade unreadable. This separate string map can be introduced without changing any existing stored representation.
+     */
+    private DistributedMap<String, String> getChatJobClientIdMap() {
+        if (this.chatJobClientIdMap == null) {
+            this.chatJobClientIdMap = this.distributedDataProvider.getExpiringMap(CHAT_JOB_CLIENT_ID_MAP_NAME, Duration.ofSeconds(jobTimeout));
+        }
+        return this.chatJobClientIdMap;
+    }
+
+    /**
      * Creates a token for an arbitrary job, runs the provided function with the token as an argument,
      * and stores the job in the job map.
      *
@@ -188,11 +206,33 @@ public class PyrisJobService {
         return token;
     }
 
-    public String addChatJob(long courseId, long sessionId, Long entityId, Long userMessageId) {
+    /**
+     * Adds a chat job and separately associates it with the originating browser tab.
+     *
+     * @param courseId      the course id
+     * @param sessionId     the chat session id
+     * @param entityId      the optional entity id
+     * @param userMessageId the optional user message id
+     * @param clientId      the optional id of the originating browser tab
+     * @return the token of the job
+     */
+    public String addChatJob(long courseId, long sessionId, Long entityId, Long userMessageId, String clientId) {
         var token = generateJobIdToken();
         var job = new ChatJob(token, courseId, sessionId, entityId, null, userMessageId, null);
         getPyrisJobMap().put(token, job);
+        if (clientId != null) {
+            getChatJobClientIdMap().put(token, clientId);
+        }
         return token;
+    }
+
+    /**
+     * @param jobId the chat job whose originating browser tab should be addressed
+     * @return the client id, or {@code null} for jobs created without one or before this association existed
+     */
+    @Nullable
+    public String getChatJobClientId(String jobId) {
+        return getChatJobClientIdMap().get(jobId);
     }
 
     /**
@@ -432,6 +472,9 @@ public class PyrisJobService {
      */
     public void removeJob(PyrisJob job) {
         getPyrisJobMap().remove(job.jobId());
+        if (job instanceof ChatJob) {
+            getChatJobClientIdMap().remove(job.jobId());
+        }
     }
 
     /**
@@ -454,6 +497,12 @@ public class PyrisJobService {
     public void updateJob(PyrisJob job) {
         int ttl = (job instanceof LectureIngestionWebhookJob || job instanceof FaqIngestionWebhookJob) ? ingestionJobTimeout : jobTimeout;
         getPyrisJobMap().put(job.jobId(), job, Duration.ofSeconds(ttl));
+        if (job instanceof ChatJob) {
+            var clientId = getChatJobClientIdMap().get(job.jobId());
+            if (clientId != null) {
+                getChatJobClientIdMap().put(job.jobId(), clientId, Duration.ofSeconds(ttl));
+            }
+        }
     }
 
     /**
@@ -501,7 +550,7 @@ public class PyrisJobService {
      */
     public <Job extends PyrisJob> Job getAndAuthenticateJobFromHeaderElseThrow(HttpServletRequest request, Class<Job> jobClass) {
         var authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (!authHeader.startsWith(Constants.BEARER_PREFIX)) {
+        if (authHeader == null || !authHeader.startsWith(Constants.BEARER_PREFIX)) {
             throw new AccessForbiddenException("No valid token provided");
         }
         var token = authHeader.substring(7);

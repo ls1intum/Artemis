@@ -19,7 +19,7 @@ on:
         required: true
         type: string
 
-permissions: {}  # default-deny; each job grants only what it needs
+permissions: {} # default-deny; each job grants only what it needs
 
 env:
   CI: true
@@ -82,3 +82,5 @@ jobs:
         run: ./gradlew exportLiquibaseDrivers -q
       - name: Schema checks
         run: python3 supporting_scripts/liquibase/verify_schema.py --database ${{ matrix.database }}
+      - name: Reset-key migration with existing data
+        run: python3 supporting_scripts/liquibase/test_reset_key_migration.py --database ${{ matrix.database }}
