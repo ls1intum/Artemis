@@ -181,20 +181,22 @@ public class CourseDeletionService {
         int stepsCompleted = 0;
         int failed = 0;
 
-        // Calculate weighted progress based on course content
-        CourseSummaryDTO summary = courseAdminService.getCourseSummary(courseId);
-
-        // Calculate actual exam weight based on real exam data (student exams, programming exercises)
-        List<ExamDeletionInfoDTO> examInfoList = examRepositoryApi.map(api -> api.findDeletionInfoByCourseId(courseId)).orElse(List.of());
-        double actualExamWeight = examInfoList.stream().mapToDouble(info -> CourseOperationWeights.calculateExamWeight(info.studentExamCount(), info.programmingExerciseCount()))
-                .sum();
-
-        double totalWeight = CourseOperationWeights.calculateDeletionTotalWeight(summary, actualExamWeight);
+        double totalWeight = 0;
         double completedWeight = 0;
 
         CourseOperationClaim operationClaim = progressService.startOperation(courseId, CourseOperationType.DELETE, "Deleting exercises", TOTAL_DELETE_STEPS, startedAt);
 
         try {
+            // Calculate weighted progress based on course content
+            CourseSummaryDTO summary = courseAdminService.getCourseSummary(courseId);
+
+            // Calculate actual exam weight based on real exam data (student exams, programming exercises)
+            List<ExamDeletionInfoDTO> examInfoList = examRepositoryApi.map(api -> api.findDeletionInfoByCourseId(courseId)).orElse(List.of());
+            double actualExamWeight = examInfoList.stream()
+                    .mapToDouble(info -> CourseOperationWeights.calculateExamWeight(info.studentExamCount(), info.programmingExerciseCount())).sum();
+
+            totalWeight = CourseOperationWeights.calculateDeletionTotalWeight(summary, actualExamWeight);
+
             // Step 1: Delete exercises (with per-exercise progress updates)
             completedWeight = deleteExercisesWithWeightedProgress(courseId, stepsCompleted, operationClaim, completedWeight, totalWeight);
             stepsCompleted++;

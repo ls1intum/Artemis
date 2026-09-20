@@ -131,7 +131,12 @@ public class CourseExamExportService {
         CourseOperationClaim operationClaim = progressService.startOperation(course.getId(), CourseOperationType.ARCHIVE, "Creating directories", TOTAL_ARCHIVE_STEPS, startedAt);
         try {
             Optional<Path> archivedCourse = exportCourseForArchive(course, outputDir, exportErrors, examScoresData, operationClaim);
-            progressService.completeOperation(operationClaim, TOTAL_ARCHIVE_STEPS, exportErrors.size());
+            if (archivedCourse.isPresent()) {
+                progressService.completeOperation(operationClaim, TOTAL_ARCHIVE_STEPS, exportErrors.size());
+            }
+            else {
+                progressService.failOperation(operationClaim, "Archive failed", 0, TOTAL_ARCHIVE_STEPS, exportErrors.size(), "No course archive was created", 0);
+            }
             return archivedCourse;
         }
         catch (RuntimeException e) {
@@ -227,7 +232,7 @@ public class CourseExamExportService {
             Optional<Path> exportedCourse = zipExportedExercises(outputDir, exportErrors, notificationTopic, tmpCourseDir);
             stepsCompleted++;
 
-            log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCourse.orElse(null));
+            exportedCourse.ifPresent(path -> log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), path));
             return exportedCourse;
         }
         catch (Exception e) {
@@ -258,8 +263,11 @@ public class CourseExamExportService {
         // Delete temporary directory used for zipping
         fileService.scheduleDirectoryPathForRecursiveDeletion(tmpDir, 1);
 
-        var exportState = exportErrors.isEmpty() ? CourseExamExportState.COMPLETED : CourseExamExportState.COMPLETED_WITH_WARNINGS;
-        notifyUserAboutExerciseExportState(notificationTopic, exportState, exportErrors, null);
+        var exportState = CourseExamExportState.COMPLETED_WITH_ERRORS;
+        if (exportedCourse.isPresent()) {
+            exportState = exportErrors.isEmpty() ? CourseExamExportState.COMPLETED : CourseExamExportState.COMPLETED_WITH_WARNINGS;
+        }
+        notifyUserAboutExerciseExportState(notificationTopic, exportState, exportErrors, exportedCourse.isEmpty() ? CourseExamExportErrorCause.ZIP_NOT_CREATED.toString() : null);
         return exportedCourse;
     }
 

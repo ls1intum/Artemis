@@ -162,8 +162,11 @@ public class CourseArchiveService {
                 progressService.verifyOperationClaim(operationClaim);
                 course.setCourseArchivePath(archivedCoursePath.get().getFileName().toString());
                 courseRepository.saveAndFlush(course);
+                progressService.completeOperation(operationClaim, TOTAL_ARCHIVE_STEPS, exportErrors.size());
             }
-            progressService.completeOperation(operationClaim, TOTAL_ARCHIVE_STEPS, exportErrors.size());
+            else {
+                progressService.failOperation(operationClaim, "Archive failed", 0, TOTAL_ARCHIVE_STEPS, exportErrors.size(), "No course archive was created", 0);
+            }
             log.info("archive course took {}", TimeLogUtil.formatDurationFrom(start));
             return archivedCoursePath.isPresent();
         }

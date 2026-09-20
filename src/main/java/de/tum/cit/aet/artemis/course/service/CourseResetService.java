@@ -190,16 +190,7 @@ public class CourseResetService {
         ZonedDateTime startedAt = ZonedDateTime.now();
         int stepsCompleted = 0;
 
-        // Calculate weighted progress based on course content
-        CourseSummaryDTO summary = courseAdminService.getCourseSummary(courseId);
-
-        // Calculate actual exam weight based on real exam data (student exams, programming exercises)
-        // Apply 0.5 factor for reset (structure preserved, only student data deleted)
-        List<ExamDeletionInfoDTO> examInfoList = examRepositoryApi.map(api -> api.findDeletionInfoByCourseId(courseId)).orElse(List.of());
-        double actualExamWeight = examInfoList.stream()
-                .mapToDouble(info -> CourseOperationWeights.calculateExamWeight(info.studentExamCount(), info.programmingExerciseCount()) * 0.5).sum();
-
-        double totalWeight = CourseOperationWeights.calculateResetTotalWeight(summary, actualExamWeight);
+        double totalWeight = 0;
         double completedWeight = 0;
 
         // Per-exercise/exam failures are collected rather than aborting the whole batch at the first bad item; if any
@@ -209,6 +200,17 @@ public class CourseResetService {
         CourseOperationClaim operationClaim = progressService.startOperation(courseId, CourseOperationType.RESET, "Resetting exercises", TOTAL_RESET_STEPS, startedAt);
 
         try {
+            // Calculate weighted progress based on course content
+            CourseSummaryDTO summary = courseAdminService.getCourseSummary(courseId);
+
+            // Calculate actual exam weight based on real exam data (student exams, programming exercises)
+            // Apply 0.5 factor for reset (structure preserved, only student data deleted)
+            List<ExamDeletionInfoDTO> examInfoList = examRepositoryApi.map(api -> api.findDeletionInfoByCourseId(courseId)).orElse(List.of());
+            double actualExamWeight = examInfoList.stream()
+                    .mapToDouble(info -> CourseOperationWeights.calculateExamWeight(info.studentExamCount(), info.programmingExerciseCount()) * 0.5).sum();
+
+            totalWeight = CourseOperationWeights.calculateResetTotalWeight(summary, actualExamWeight);
+
             // Step 1: Reset exercises (with per-exercise progress updates)
             completedWeight = resetExercisesWithWeightedProgress(courseId, stepsCompleted, operationClaim, completedWeight, totalWeight, failedItems);
             stepsCompleted++;
