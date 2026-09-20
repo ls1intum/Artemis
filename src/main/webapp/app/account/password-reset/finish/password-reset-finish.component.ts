@@ -1,3 +1,4 @@
+import { passwordMaxBytesValidator } from 'app/account/shared/password-max-bytes.validator';
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -85,12 +86,7 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
     readonly passwordForm = new FormGroup<PasswordResetForm>({
         newPassword: new FormControl('', {
             nonNullable: true,
-            validators: [
-                Validators.required,
-                Validators.minLength(PASSWORD_MIN_LENGTH),
-                Validators.maxLength(PASSWORD_MAX_LENGTH),
-                (control) => (new TextEncoder().encode(control.value).length > PASSWORD_MAX_BYTES ? { maxbytes: true } : null),
-            ],
+            validators: [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH), passwordMaxBytesValidator],
         }),
         confirmPassword: new FormControl('', {
             nonNullable: true,

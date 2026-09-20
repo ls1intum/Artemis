@@ -123,6 +123,21 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.CREATED, null);
     }
 
+    @ParameterizedTest
+    @CsvSource({ "a,73,72", "ä,37,36", "€,25,24", "😀,19,18" })
+    void registrationRejectsOversizedPasswordAndAcceptsByteLimit(String character, int invalidLength, int validLength) throws Exception {
+        ManagedUserVM userVM = new ManagedUserVM(UserFactory.generateActivatedUser("byteboundary" + invalidLength));
+        userVM.setPassword(character.repeat(invalidLength));
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.BAD_REQUEST, null);
+        assertThat(userTestRepository.findOneByLogin(userVM.getLogin())).isEmpty();
+
+        String password = character.repeat(validLength);
+        userVM.setPassword(password);
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.CREATED, null);
+        User registered = userTestRepository.findOneByLogin(userVM.getLogin()).orElseThrow();
+        assertThat(passwordService.checkPasswordMatch(password, registered.getPassword())).isTrue();
+    }
+
     @Test
     void registerAccountTooLongPassword() throws Exception {
         // setup user
@@ -485,6 +500,22 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(updatedUser).isPresent();
         assertThat(passwordService.checkPasswordMatch(updatedPassword, updatedUser.get().getPassword())).isTrue();
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "a,73,72", "ä,37,36", "€,25,24", "😀,19,18" })
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void passwordChangeRejectsOversizedPasswordAndAcceptsByteLimit(String character, int invalidLength, int validLength) throws Exception {
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER, passwordService.hashPassword(UserFactory.USER_PASSWORD));
+        String originalHash = user.getPassword();
+        var invalidRequest = new PasswordChangeDTO(UserFactory.USER_PASSWORD, character.repeat(invalidLength), null);
+        request.postWithoutLocation("/api/account/change-password", invalidRequest, HttpStatus.BAD_REQUEST, null);
+        assertThat(userTestRepository.findById(user.getId()).orElseThrow().getPassword()).isEqualTo(originalHash);
+
+        String password = character.repeat(validLength);
+        var validRequest = new PasswordChangeDTO(UserFactory.USER_PASSWORD, password, null);
+        request.postWithoutLocation("/api/account/change-password", validRequest, HttpStatus.OK, null);
+        assertThat(passwordService.checkPasswordMatch(password, userTestRepository.findById(user.getId()).orElseThrow().getPassword())).isTrue();
     }
 
     @Test

@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.security.jwt.JWTFilter.extractValidJwt
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -366,8 +365,7 @@ public class PublicAccountResource {
     @EnforceNothing
     @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
     public ResponseEntity<Void> finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
-        if (accountService.isPasswordLengthInvalid(keyAndPassword.newPassword())
-                || keyAndPassword.newPassword().getBytes(StandardCharsets.UTF_8).length > Constants.PASSWORD_MAX_BYTES) {
+        if (accountService.isPasswordLengthInvalid(keyAndPassword.newPassword())) {
             throw new PasswordViolatesRequirementsException();
         }
         if (StringUtils.isEmpty(keyAndPassword.keyId()) || StringUtils.isEmpty(keyAndPassword.keySecret()) || keyAndPassword.keyId().length() < 10
