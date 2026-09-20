@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 /**
@@ -40,11 +39,8 @@ public class SlideUnhideExecutionService {
      */
     public void unhideSlide(Long slideId) {
         slideRepository.findById(slideId).ifPresent(slide -> {
-            AttachmentVideoUnit attachmentVideoUnit = slide.getAttachmentVideoUnit();
-            Attachment attachment = null;
-            if (attachmentVideoUnit != null) {
-                attachment = attachmentVideoUnit.getAttachment();
-            }
+            // A slide always belongs to a unit; the attachment behind that unit is what may be missing.
+            Attachment attachment = slide.getAttachmentVideoUnit().getAttachment();
 
             // Use repository method to handle transaction
             slideRepository.unhideSlide(slideId);

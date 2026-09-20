@@ -17,6 +17,7 @@ import jakarta.persistence.Table;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * A scheduled and graded occurrence of a presentation assessment.
@@ -28,6 +29,7 @@ public class PresentationAssessmentInstance extends DomainObject {
     public static final String ENTITY_NAME = "presentationAssessmentInstance";
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @Parent
     private PresentationAssessment presentationAssessment;
 
     @Column(name = "presentation_date", nullable = false)

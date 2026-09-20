@@ -25,7 +25,6 @@ import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.codegeneration.HyperionCodeGenerationExecutionService;
 import de.tum.cit.aet.artemis.hyperion.service.codegeneration.HyperionCodeGenerationJobService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -61,7 +60,6 @@ class HyperionCodeGenerationResourceTest {
         testExercise = new ProgrammingExercise();
         testExercise.setId(1L);
         testExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
-        testExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
     }
 
     @Test
@@ -205,14 +203,6 @@ class HyperionCodeGenerationResourceTest {
 
         // Should not throw any exception
         ReflectionTestUtils.invokeMethod(resource, "validateExerciseForGeneration", testExercise);
-    }
-
-    @Test
-    void validateExerciseForGeneration_withNullBuildConfig_throwsException() {
-        testExercise.setBuildConfig(null);
-
-        assertThatThrownBy(() -> ReflectionTestUtils.invokeMethod(resource, "validateExerciseForGeneration", testExercise)).isInstanceOf(BadRequestAlertException.class)
-                .hasMessageContaining("Exercise must have build configuration for code generation");
     }
 
     @Test

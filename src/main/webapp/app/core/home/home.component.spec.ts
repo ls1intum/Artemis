@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NgModel } from '@angular/forms';
+import { By } from '@angular/platform-browser';
 import { HomeComponent } from './home.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
@@ -108,6 +110,84 @@ describe('HomeComponent', () => {
         expect(component.isIdentifierValid()).toBe(true);
 
         component.username = 'abc';
+        component.checkIdentifierValidity();
+        expect(component.isIdentifierValid()).toBe(false);
+    });
+
+    it.each(['pwreset+6139@mailpit.local', 'student+tag@example.org'])('should accept an email independently of the configured username pattern: %s', (email) => {
+        component.usernameRegexPattern.set(/^[a-z]{7}$/);
+        component.username = email;
+        component.checkIdentifierValidity();
+
+        expect(component.isIdentifierValid()).toBe(true);
+        component.onContinue();
+        const req = httpMock.expectOne((request) => request.url === 'api/core/public/login-options');
+        expect(req.request.params.get('usernameOrEmail')).toBe(email);
+        expect(req.request.urlWithParams).toContain('%2B');
+        req.flush({ loginMethod: 'PASSWORD' });
+        expect(component.currentStage()).toBe(2);
+    });
+
+    it.each(['user+tag', 'abc', 'user+tag@', 'user+tag@@example.org', 'user name@example.org', "o'brien+tag@example.org"])(
+        'should reject invalid identifiers without looking up login options: %s',
+        (identifier) => {
+            component.username = identifier;
+            component.checkIdentifierValidity();
+            expect(component.isIdentifierValid()).toBe(false);
+            component.onContinue();
+            httpMock.expectNone((request) => request.url === 'api/core/public/login-options');
+            expect(component.currentStage()).toBe(1);
+        },
+    );
+
+    it('should accept a plus-address in the rendered identifier form', async () => {
+        component.usernameRegexPattern.set(/^[a-z]{7}$/);
+        const input = fixture.debugElement.query(By.css('#username'));
+        input.nativeElement.value = 'pwreset+6139@mailpit.local';
+        input.nativeElement.dispatchEvent(new Event('input'));
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(component.isIdentifierValid()).toBe(true);
+        expect(input.injector.get(NgModel).valid).toBe(true);
+        expect(fixture.debugElement.query(By.directive(TumUiButtonComponent)).componentInstance.disabled()).toBe(false);
+    });
+
+    it.each(['user@dept_name', 'user@@department'])('should retain configured username support for @ identifiers: %s', async (identifier) => {
+        const input = fixture.debugElement.query(By.css('#username'));
+        input.nativeElement.value = identifier;
+        input.nativeElement.dispatchEvent(new Event('input'));
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(component.isIdentifierValid()).toBe(true);
+        expect(input.injector.get(NgModel).valid).toBe(true);
+        expect(fixture.debugElement.query(By.directive(TumUiButtonComponent)).componentInstance.disabled()).toBe(false);
+        component.onContinue();
+        const req = httpMock.expectOne((request) => request.url === 'api/core/public/login-options');
+        expect(req.request.params.get('usernameOrEmail')).toBe(identifier);
+        req.flush({ loginMethod: 'PASSWORD' });
+        expect(component.currentStage()).toBe(2);
+    });
+
+    it('should apply the server email grammar to the rendered form', async () => {
+        const input = fixture.debugElement.query(By.css('#username'));
+        input.nativeElement.value = "o'brien+tag@example.org";
+        input.nativeElement.dispatchEvent(new Event('input'));
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(component.isIdentifierValid()).toBe(false);
+        expect(input.injector.get(NgModel).valid).toBe(false);
+        expect(fixture.debugElement.query(By.directive(TumUiButtonComponent)).componentInstance.disabled()).toBe(true);
+    });
+
+    it('should keep the configured pattern for usernames', () => {
+        component.usernameRegexPattern.set(/^[a-z]{7}$/);
+        component.username = 'validid';
+        component.checkIdentifierValidity();
+        expect(component.isIdentifierValid()).toBe(true);
+        component.username = 'validUser';
         component.checkIdentifierValidity();
         expect(component.isIdentifierValid()).toBe(false);
     });

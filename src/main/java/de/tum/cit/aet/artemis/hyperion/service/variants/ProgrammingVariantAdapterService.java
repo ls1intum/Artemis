@@ -173,7 +173,7 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
         // Same eager graph as the import REST endpoint — the import service copies test cases, tasks, hints,
         // static code analysis categories and grading criteria from this instance.
         ProgrammingExercise original = programmingExerciseRepository
-                .findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigAndGradingCriteria(source.getId())
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndGradingCriteria(source.getId())
                 .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", source.getId()));
         // Fetching the tasks separately, as putting them in the query above leads to Hibernate duplicating the tasks.
         var templateTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(original.getId());

@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * A SubmittedAnswer.
@@ -59,6 +60,7 @@ public abstract class SubmittedAnswer extends DomainObject {
     @ManyToOne
     @JsonIgnore
     @JoinColumn(nullable = false)
+    @Parent
     private QuizSubmission submission;
 
     // The student's submitted selection, stored as JSON instead of separate relational child tables/join tables (see SubmittedAnswerSelection). All three submitted-answer types

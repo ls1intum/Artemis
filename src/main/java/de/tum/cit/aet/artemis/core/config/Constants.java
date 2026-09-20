@@ -16,6 +16,9 @@ public final class Constants {
 
     public static final int PASSWORD_MAX_LENGTH = 100;
 
+    /** Maximum UTF-8 byte length supported by BCrypt. */
+    public static final int PASSWORD_MAX_BYTES = 72;
+
     public static final String SET_UP_TEMPLATE_FOR_EXERCISE = "Set up template for exercise";
 
     public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 24 * 60; // 24h; Same as in artemisApp.locks.acquired

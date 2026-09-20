@@ -983,7 +983,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     private void executeResultCompletionDateBackfill() throws Exception {
-        String changeLogPath = "config/liquibase/changelog/20260827174007_changelog.xml";
+        String changeLogPath = "config/liquibase/history/v10/20260827174007_changelog.xml";
         try (Connection connection = dataSource.getConnection(); ClassLoaderResourceAccessor resourceAccessor = new ClassLoaderResourceAccessor()) {
             var database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(connection));
             var changeLog = ChangeLogParserFactory.getInstance().getParser(changeLogPath, resourceAccessor).parse(changeLogPath, new ChangeLogParameters(database),

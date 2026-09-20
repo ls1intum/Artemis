@@ -26,6 +26,7 @@ export enum FeatureToggle {
     AutonomousTutor = 'AutonomousTutor',
     GlobalSearch = 'GlobalSearch',
     Deimos = 'Deimos',
+    IrisProactiveStruggle = 'IrisProactiveStruggle',
     PresentationAssessments = 'PresentationAssessments',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
