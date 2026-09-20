@@ -73,6 +73,28 @@ describe('renderCitationMarkers', () => {
         expect([...result.citedNumbers]).toEqual([2]);
     });
 
+    it('leaves a bracketed index inside a code span that wraps onto the next line untouched', () => {
+        // CommonMark folds a line break inside a code span to a space at render time, so a span can
+        // legitimately cross one newline within the same paragraph; excluding newlines entirely would
+        // stop at the break and leak the rest, including the bracketed index, as citable prose.
+        const answer = 'Access it with `list[0]\ncontains the first item`.[2]';
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toBe('Access it with `list[0]\ncontains the first item`.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([2]);
+    });
+
+    it('does not let an unclosed backtick swallow a later paragraph as code', () => {
+        // A code span's content may cross one line break but must not cross a blank line: CommonMark
+        // inline parsing never spans a paragraph boundary either way, and without this bound one stray
+        // unclosed backtick could silently eat every following paragraph's citations as "code".
+        const answer = 'A stray backtick ` appears here.[1]\n\nA new paragraph follows.[2]';
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toBe(
+            'A stray backtick ` appears here.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>\n\nA new paragraph follows.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>',
+        );
+        expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
+
     it('leaves a tilde-fenced code block untouched', () => {
         const answer = ['See the loop below.[1]', '~~~python', 'for i in range(3):', '    print(items[i])', '~~~', 'Iteration order matches the list.[2]'].join('\n');
         const result = renderCitationMarkers(answer, 2);

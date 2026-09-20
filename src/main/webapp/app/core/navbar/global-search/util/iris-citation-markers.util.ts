@@ -29,18 +29,29 @@ const SINGLE_MARKER_REGEX = /\[(\d+)\]/g;
  * Every CommonMark code node this answer's markdown could realistically contain, tried longest-and-most-
  * specific first: a backtick fence of 3+ backticks (incl. language tag, possibly spanning lines, closed
  * by a same-length run so a fence can itself contain a shorter backtick run), a tilde fence, or an inline
- * code span delimited by a run of one or more backticks closed by a same-length run (no line breaks;
- * CommonMark allows a longer run specifically so the span can contain a literal backtick, e.g. ``a ` b``
- * uses two backticks as delimiters — matching only a single backtick would stop at the interior one and
- * leak the rest as prose). Content matched here is left untouched: a bracketed expression like an array
- * index (`list[0]`) is common in course content and must render as code, not as a citation chip.
+ * code span delimited by a run of one or more backticks closed by a same-length run. CommonMark allows a
+ * longer run specifically so the span can contain a literal backtick, e.g. ``a ` b`` uses two backticks
+ * as delimiters, and a span can itself contain a single line break (CommonMark folds it to a space at
+ * render time) — matching only a single, same-line backtick would stop at the interior backtick or
+ * newline and leak the rest as prose. The span's content may cross a line break but not a full blank
+ * line: CommonMark inline parsing never crosses a paragraph boundary either, and bounding it here keeps
+ * one stray unclosed backtick from silently swallowing every following paragraph as "code" while still
+ * catching the real, useful case (a code term wrapped mid-sentence). Content matched here is left
+ * untouched: a bracketed expression like an array index (`list[0]`) is common in course content and must
+ * render as code, not as a citation chip.
  *
  * Indented code blocks (4+ leading spaces, no delimiter) are deliberately NOT covered: unlike a fence or
- * span, they have no closing delimiter to key off, and a naive line-based match would just as often catch
- * a nested list item's continuation line, suppressing a real citation in ordinary prose. No answer this
- * util has seen uses one; every model defaults to fenced blocks for code.
+ * span they have no closing delimiter to key off, and CommonMark only treats one as a code block when it
+ * is NOT a continuation line of a list item — telling the two apart needs the same list-nesting state a
+ * full block parser tracks, which this synchronous, per-animation-tick scan (see `citationView` in the
+ * answer component) cannot afford to become. The markdown-it pipeline this answer already renders
+ * through (`app/foundation/util/markdown-render.util`) gets this right natively via its own token walk;
+ * moving citation-chip insertion into a markdown-it plugin there would close this gap for real, but it
+ * needs the reveal-animation pipeline to move off a synchronous computed signal first — worth a
+ * dedicated follow-up rather than folding into this fix. No answer this util has seen has used one;
+ * every model defaults to fenced blocks for code.
  */
-const CODE_SEGMENT_REGEX = /(`{3,})[\s\S]*?\1|~~~+[\s\S]*?~~~+|(`+)[^\n]*?\2(?!`)/g;
+const CODE_SEGMENT_REGEX = /(`{3,})[\s\S]*?\1|~~~+[\s\S]*?~~~+|(`+)(?:(?!\n[ \t]*\n)[\s\S])*?\2(?!`)/g;
 
 export interface CitationRenderResult {
     /** The answer markdown with marker runs replaced by `<sup>` chip elements. */
