@@ -27,14 +27,11 @@ public record ParticipationDTO(Long id, boolean testRun, String type, Initializa
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ParticipationExerciseDTO(Long id, ExerciseType exerciseType, String type, AssessmentType assessmentType, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
-            Double maxPoints, CourseDTO course) implements Serializable {
+            Double maxPoints, @Nullable CourseDTO course) implements Serializable {
 
         /**
-         * Maps an {@link Exercise} to a {@link ParticipationExerciseDTO}.
-         * <p>
-         * Student-facing endpoints mask exam exercises by stripping {@code exerciseGroup.exam} before mapping (the
-         * masked-exam state). In that state {@link Exercise#getCourseViaExerciseGroupOrCourseMember()} would dereference the
-         * now-missing exam and throw, so the course is resolved to {@code null} instead.
+         * Maps an {@link Exercise} to a {@link ParticipationExerciseDTO}. An exam exercise whose exam was masked out for
+         * a student-facing payload resolves to a {@code null} course.
          *
          * @param exercise the exercise to convert (may be {@code null})
          * @return the corresponding DTO, or {@code null} if the input was {@code null}
@@ -42,7 +39,7 @@ public record ParticipationDTO(Long id, boolean testRun, String type, Initializa
         @Nullable
         public static ParticipationExerciseDTO of(Exercise exercise) {
             return Optional.ofNullable(exercise).map(e -> {
-                Course course = e.isExamExercise() && (e.getExerciseGroup() == null || e.getExerciseGroup().getExam() == null) ? null : e.getCourseViaExerciseGroupOrCourseMember();
+                Course course = e.getCourseViaExerciseGroupOrCourseMember();
                 return new ParticipationExerciseDTO(e.getId(), e.getExerciseType(), e.getType(), e.getAssessmentType(), e.getDueDate(), e.getAssessmentDueDate(), e.getMaxPoints(),
                         CourseDTO.of(course));
             }).orElse(null);

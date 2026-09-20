@@ -173,7 +173,6 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
     private ProgrammingExercise createProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate) {
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(releaseDate, dueDate, course, ProgrammingLanguage.JAVA);
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExercise = exerciseRepository.save(programmingExercise);
 
         CompetencyExerciseLink link = new CompetencyExerciseLink(courseCompetency, programmingExercise, 1);

@@ -591,8 +591,10 @@ public class SubmissionService {
                 feedback.setDetailText(feedbackText);
                 feedback.setPositive(false);
                 feedback.setType(FeedbackType.AUTOMATIC);
-                feedback = feedbackRepository.save(feedback);
+                // The feedback names its result before it is written: result_id is not nullable, so saving it detached and
+                // attaching it afterwards fails the insert instead of updating the row.
                 feedback.setResult(result);
+                feedback = feedbackRepository.save(feedback);
                 result.setFeedbacks(List.of(feedback));
                 resultRepository.save(result);
             }

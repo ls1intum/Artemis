@@ -85,6 +85,8 @@ artemis:
             trigger-cooldown: 1ms
     atlas:
         enabled: true
+        orchestrator:
+            responses-api-enabled: false # General integration tests mock the shared ChatClient; adapter tests enable Responses explicitly.
         atlasml:
             enabled: true
             base-url: https://fake.fake

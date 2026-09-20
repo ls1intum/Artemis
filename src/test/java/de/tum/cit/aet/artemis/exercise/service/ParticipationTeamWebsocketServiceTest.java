@@ -25,6 +25,7 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -39,13 +40,14 @@ import de.tum.cit.aet.artemis.exercise.dto.TeamTextSubmissionUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
-import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.web.ParticipationTeamWebsocketService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
@@ -68,7 +70,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     private ParticipationUtilService participationUtilService;
 
     @Autowired
-    private SubmissionTestRepository submissionTestRepository;
+    private TextSubmissionTestRepository textSubmissionRepository;
 
     @Autowired
     private TeamUtilService teamUtilService;
@@ -203,7 +205,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateTextSubmission() {
-        TeamTextSubmissionUpdateDTO submission = new TeamTextSubmissionUpdateDTO(null, null, null, null, null);
+        TeamTextSubmissionUpdateDTO submission = new TeamTextSubmissionUpdateDTO(null, null, null, null);
 
         // when we submit a new text submission ...
         participationTeamWebsocketService.updateTextSubmission(teamTextParticipation.getId(), submission, getPrincipalMock("student1"));
@@ -216,7 +218,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateTextSubmissionBroadcastsWhatTheReceivingEditorSavesBack() {
-        TeamTextSubmissionUpdateDTO update = new TeamTextSubmissionUpdateDTO(null, "Hello team", Language.ENGLISH, true, null);
+        TeamTextSubmissionUpdateDTO update = new TeamTextSubmissionUpdateDTO(null, "Hello team", Language.ENGLISH, true);
 
         participationTeamWebsocketService.updateTextSubmission(teamTextParticipation.getId(), update, getPrincipalMock("student1"));
 
@@ -237,8 +239,8 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUpdateTextSubmissionWithResultsStartsANewSubmission() {
-        participationTeamWebsocketService.updateTextSubmission(teamTextParticipation.getId(), new TeamTextSubmissionUpdateDTO(null, "First", Language.ENGLISH, true, null),
+    void testUpdateAssessedTextSubmissionWithoutResultsInPayloadStartsANewSubmission() {
+        participationTeamWebsocketService.updateTextSubmission(teamTextParticipation.getId(), new TeamTextSubmissionUpdateDTO(null, "First", Language.ENGLISH, true),
                 getPrincipalMock("student1"));
 
         ArgumentCaptor<Object> payloadCaptor = ArgumentCaptor.forClass(Object.class);
@@ -246,16 +248,22 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         Long assessedSubmissionId = ((SubmissionSyncPayloadDTO) payloadCaptor.getValue()).submission().id();
         assertThat(assessedSubmissionId).isNotNull();
 
-        // The editor holds a result for that submission, so the next update must not overwrite the assessed one.
-        TeamTextSubmissionUpdateDTO update = new TeamTextSubmissionUpdateDTO(assessedSubmissionId, "Second", Language.ENGLISH, true,
-                List.of(new TeamTextSubmissionUpdateDTO.ResultIdDTO(1L)));
+        TextSubmission assessedSubmission = textSubmissionRepository.findByIdWithParticipationExerciseResultAssessorElseThrow(assessedSubmissionId);
+        assessedSubmission = (TextSubmission) participationUtilService.addResultToSubmission(assessedSubmission, AssessmentType.MANUAL);
+        Long resultId = assessedSubmission.getLatestResult().getId();
+
+        // The editor does not receive unreleased results, so the server must use the persisted result to protect the assessed submission.
+        TeamTextSubmissionUpdateDTO update = new TeamTextSubmissionUpdateDTO(assessedSubmissionId, "Second", Language.ENGLISH, true);
         participationTeamWebsocketService.updateTextSubmission(teamTextParticipation.getId(), update, getPrincipalMock("student1"));
 
         verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(eq(websocketTopic(teamTextParticipation) + "/text-submissions"), payloadCaptor.capture());
         SubmissionSyncPayloadDTO payload = (SubmissionSyncPayloadDTO) payloadCaptor.getAllValues().getLast();
-        assertThat(payload.submission().id()).as("A submission the client holds a result for is not overwritten").isNotEqualTo(assessedSubmissionId);
+        assertThat(payload.submission().id()).as("A result-bearing submission is not overwritten").isNotEqualTo(assessedSubmissionId);
         assertThat(payload.submission().text()).isEqualTo("Second");
-        assertThat(submissionTestRepository.findById(assessedSubmissionId)).as("The assessed submission is kept").isPresent();
+
+        TextSubmission preservedSubmission = textSubmissionRepository.findByIdWithParticipationExerciseResultAssessorElseThrow(assessedSubmissionId);
+        assertThat(preservedSubmission.getText()).as("The assessed text is unchanged").isEqualTo("First");
+        assertThat(preservedSubmission.getResults()).as("The assessment is unchanged").singleElement().extracting(result -> result.getId()).isEqualTo(resultId);
     }
 
     @Test

@@ -110,8 +110,15 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         User user = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         userId = user.getId();
 
+        // The question goes in through the exercise: its position in that list is the order column, which a direct
+        // save would leave empty and every later read of the list would then reject.
+        QuizExercise quizExercise = new QuizExercise();
+        quizExercise.setCourse(course);
         quizQuestion = new MultipleChoiceQuestion();
-        quizQuestion = quizQuestionRepository.save(quizQuestion);
+        quizQuestion.setExercise(quizExercise);
+        quizExercise.setQuizQuestions(new ArrayList<>(List.of(quizQuestion)));
+        quizExercise = quizExerciseTestRepository.save(quizExercise);
+        quizQuestion = quizExercise.getQuizQuestions().getFirst();
         quizQuestionId = quizQuestion.getId();
 
         quizQuestionProgress = new QuizQuestionProgress();
@@ -159,8 +166,18 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         List<QuizQuestion> questions = new ArrayList<>();
 
         for (int i = 0; i < 12; i++) {
-            QuizQuestion question = quizQuestionRepository.save(new MultipleChoiceQuestion());
+            QuizQuestion question = new MultipleChoiceQuestion();
+            question.setExercise(quizExercise);
             questions.add(question);
+        }
+        // Saved through the exercise: the position in its list is the order column, and a question stored on its own
+        // would leave that empty, which every later read of the list rejects.
+        quizExercise.setQuizQuestions(questions);
+        quizExercise = quizExerciseTestRepository.save(quizExercise);
+        questions = quizExercise.getQuizQuestions();
+
+        for (int i = 0; i < questions.size(); i++) {
+            QuizQuestion question = questions.get(i);
 
             QuizQuestionProgress progress = new QuizQuestionProgress();
             progress.setUserId(userId);
@@ -172,9 +189,6 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
             progress.setLastAnsweredAt(ZonedDateTime.now());
             quizQuestionProgressRepository.save(progress);
         }
-
-        quizExercise.setQuizQuestions(questions);
-        quizExerciseTestRepository.save(quizExercise);
 
         Pageable pageable = Pageable.ofSize(10);
 
@@ -200,8 +214,18 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         List<QuizQuestion> questions = new ArrayList<>();
 
         for (int i = 0; i < 12; i++) {
-            QuizQuestion question = quizQuestionRepository.save(new MultipleChoiceQuestion());
+            QuizQuestion question = new MultipleChoiceQuestion();
+            question.setExercise(quizExercise);
             questions.add(question);
+        }
+        // Saved through the exercise: the position in its list is the order column, and a question stored on its own
+        // would leave that empty, which every later read of the list rejects.
+        quizExercise.setQuizQuestions(questions);
+        quizExercise = quizExerciseTestRepository.save(quizExercise);
+        questions = quizExercise.getQuizQuestions();
+
+        for (int i = 0; i < questions.size(); i++) {
+            QuizQuestion question = questions.get(i);
 
             QuizQuestionProgress progress = new QuizQuestionProgress();
             progress.setUserId(userId);
@@ -213,9 +237,6 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
             progress.setLastAnsweredAt(ZonedDateTime.now());
             quizQuestionProgressRepository.save(progress);
         }
-
-        quizExercise.setQuizQuestions(questions);
-        quizExerciseTestRepository.save(quizExercise);
 
         Pageable pageable = Pageable.ofSize(10);
 

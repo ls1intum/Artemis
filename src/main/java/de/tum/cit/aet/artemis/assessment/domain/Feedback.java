@@ -15,6 +15,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -105,7 +106,8 @@ public class Feedback extends DomainObject {
     @Column(name = "visibility")
     private Visibility visibility;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "result_id", nullable = false)
     @JsonIgnoreProperties("feedbacks")
     @Parent
     private Result result;
