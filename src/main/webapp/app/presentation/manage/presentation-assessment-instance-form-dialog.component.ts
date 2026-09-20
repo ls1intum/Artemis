@@ -72,6 +72,7 @@ export class PresentationAssessmentInstanceFormDialogComponent {
     protected readonly DateTimePickerType = DateTimePickerType;
     protected readonly hiddenStudentColumnFields = ['id', 'visibleRegistrationNumber', 'email'];
     protected readonly resultPointsUpperBound = RESULT_POINTS_UPPER_BOUND;
+    protected readonly acceptedPointsDecimalSeparators = ['.', ','];
     protected readonly minPresentationDate = MIN_PRESENTATION_DATE;
     readonly languageOptions = computed(() => {
         this.translationChanges();

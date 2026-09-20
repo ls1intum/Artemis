@@ -39,6 +39,9 @@
                 [max]="resultPointsUpperBound"
                 [step]="0.001"
                 [maxFractionDigits]="3"
+                [useGrouping]="false"
+                locale="en-US"
+                [acceptedDecimalSeparators]="acceptedPointsDecimalSeparators"
                 [placeholder]="'artemisApp.presentationAssessment.placeholder.resultPoints' | artemisTranslate"
                 formControlName="resultPoints"
             />

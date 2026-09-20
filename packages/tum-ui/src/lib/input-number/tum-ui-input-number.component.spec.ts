@@ -69,7 +69,7 @@ class HostComponent {
     readonly prefix = signal<string | undefined>(undefined);
     readonly suffix = signal<string | undefined>(undefined);
     readonly grouping = signal(true);
-    readonly locale = signal<string | undefined>(undefined);
+    readonly locale = signal<string | undefined>('en');
 }
 
 describe('TumUiInputNumberComponent (ngModel + formatting)', () => {
@@ -250,7 +250,7 @@ describe('TumUiInputNumberComponent (ngModel + formatting)', () => {
 });
 
 @Component({
-    template: `<tum-ui-input-number [formControl]="control" [min]="1" [max]="5000" [showButtons]="true" />`,
+    template: `<tum-ui-input-number [formControl]="control" [min]="1" [max]="5000" [showButtons]="true" locale="en" />`,
     imports: [TumUiInputNumberComponent, ReactiveFormsModule, FontAwesomeTestingModule],
 })
 class ReactiveHostComponent {
@@ -323,6 +323,7 @@ describe('TumUiInputNumberComponent (external CVA writes)', () => {
         [step]="step()"
         [maxFractionDigits]="maxFractionDigits()"
         [locale]="locale()"
+        [acceptedDecimalSeparators]="acceptedDecimalSeparators()"
         [showButtons]="true"
     />`,
     imports: [TumUiInputNumberComponent, FormsModule, FontAwesomeTestingModule],
@@ -332,6 +333,7 @@ class DecimalHostComponent {
     readonly step = signal(1);
     readonly maxFractionDigits = signal(1);
     readonly locale = signal<string | undefined>('en');
+    readonly acceptedDecimalSeparators = signal<readonly string[]>([]);
 }
 
 describe('TumUiInputNumberComponent (maxFractionDigits)', () => {
@@ -406,6 +408,19 @@ describe('TumUiInputNumberComponent (maxFractionDigits)', () => {
         expect(host.value).toBe(1234.5);
         blur();
         expect(input().value).toBe('1.234,5');
+    });
+
+    it('accepts configured alternative decimal separators and formats with the configured locale', () => {
+        host.acceptedDecimalSeparators.set(['.', ',']);
+        fixture.detectChanges();
+
+        type('1,5');
+        expect(host.value).toBe(1.5);
+        blur();
+        expect(input().value).toBe('1.5');
+
+        type('2.75');
+        expect(host.value).toBe(2.7);
     });
 
     it('steps by a fractional step without accumulating float error', () => {

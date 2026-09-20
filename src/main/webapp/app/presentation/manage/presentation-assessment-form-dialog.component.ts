@@ -67,6 +67,7 @@ export class PresentationAssessmentFormDialogComponent {
     protected readonly faTrash = faTrash;
     protected readonly maxPointsUpperBound = MAX_POINTS_UPPER_BOUND;
     protected readonly minPoints = MIN_POINTS;
+    protected readonly acceptedPointsDecimalSeparators = ['.', ','];
     readonly filteredExercises = signal<Exercise[]>([]);
 
     editForm = this.formBuilder.group({
