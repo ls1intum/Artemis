@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 
@@ -38,7 +39,7 @@ import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @ConcreteProxy
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
 // @formatter:off
 @JsonSubTypes({
     @JsonSubTypes.Type(value = Competency.class, name = "competency"),
@@ -77,8 +78,9 @@ public abstract class CourseCompetency extends BaseCompetency {
     private Set<CompetencyProgress> userProgress = new HashSet<>();
 
     @ManyToOne
-    @JoinColumn(name = "course_id")
+    @JoinColumn(name = "course_id", nullable = false)
     @JsonIgnoreProperties({ "competencies", "prerequisites" })
+    @Parent
     private Course course;
 
     @ManyToOne
@@ -122,7 +124,6 @@ public abstract class CourseCompetency extends BaseCompetency {
         this.optional = optional;
     }
 
-    @ManyToOne
     public Course getCourse() {
         return course;
     }

@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.core.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.EnumSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -9,10 +11,12 @@ import java.util.function.Consumer;
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.CheckReturnValue;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -20,9 +24,13 @@ import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.security.jwt.ElevationClaims;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -43,11 +51,147 @@ public class AuthorizationCheckService {
 
     private final UserRepository userRepository;
 
+    private final UserCourseRoleRepository userCourseRoleRepository;
+
     private final TeamRepository teamRepository;
 
-    public AuthorizationCheckService(UserRepository userRepository, TeamRepository teamRepository) {
+    private final boolean isPasskeyRequiredForAdministratorFeatures;
+
+    public AuthorizationCheckService(UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, TeamRepository teamRepository,
+            @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures) {
         this.userRepository = userRepository;
+        this.userCourseRoleRepository = userCourseRoleRepository;
         this.teamRepository = teamRepository;
+        this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
+    }
+
+    // Adaptive: if the caller pre-loaded course roles (e.g. dashboard endpoints that call
+    // getUserWithCourseRolesAndAuthorities()), we use the O(1) in-memory index built by
+    // getCourseRolesByCourseId(). Otherwise we fall back to a single indexed EXISTS query
+    // so that endpoints that only load authorities do not pay the cost of fetching all
+    // course memberships (which would be a heavy JOIN for users in many courses).
+    private boolean hasCourseRole(User user, Course course, CourseRole role) {
+        return hasCourseRole(user, course.getId(), role);
+    }
+
+    /**
+     * The exact-role counterpart of {@link #hasCourseRoleAtLeast(User, long, CourseRole)}, likewise needing nothing
+     * from the course but its id. It must keep the fallback: a user whose course roles were not loaded has to be
+     * answered from the database, not treated as holding no role.
+     *
+     * @param user     the user whose role is being checked
+     * @param courseId the course to check the role in
+     * @param role     the exact role to look for
+     * @return true if the user holds that role in the course
+     */
+    private boolean hasCourseRole(User user, long courseId, CourseRole role) {
+        if (user.isCourseRolesLoaded()) {
+            EnumSet<CourseRole> roles = user.getCourseRolesByCourseId().get(courseId);
+            return roles != null && roles.contains(role);
+        }
+        return userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), courseId, role);
+    }
+
+    private boolean hasCourseRoleAtLeast(User user, Course course, CourseRole minimum) {
+        return hasCourseRoleAtLeast(user, course.getId(), minimum);
+    }
+
+    /**
+     * Whether the user is at least an editor in the course, identified by id.
+     * <p>
+     * The {@code Course} overloads read nothing but the id from the entity, so a caller holding a projection can use
+     * these and leave the course unloaded. See {@link #hasCourseRoleAtLeast(User, long, CourseRole)}.
+     *
+     * @param courseId the course to check in
+     * @param user     the user to check
+     * @return true if the user is at least an editor in the course
+     */
+    @CheckReturnValue
+    public boolean isAtLeastEditorInCourse(long courseId, @Nullable User user) {
+        user = loadUserIfNeeded(user);
+        return hasCourseRoleAtLeast(user, courseId, CourseRole.EDITOR) || hasAdminAccess(user);
+    }
+
+    /**
+     * Whether the user is at least a teaching assistant in the course, identified by id.
+     *
+     * @param courseId the course to check in
+     * @param user     the user to check
+     * @return true if the user is at least a teaching assistant in the course
+     */
+    @CheckReturnValue
+    public boolean isAtLeastTeachingAssistantInCourse(long courseId, @Nullable User user) {
+        user = loadUserIfNeeded(user);
+        return hasCourseRoleAtLeast(user, courseId, CourseRole.TEACHING_ASSISTANT) || hasAdminAccess(user);
+    }
+
+    /**
+     * Whether the user is at least a student in the course, identified by id.
+     *
+     * @param courseId the course to check in
+     * @param user     the user to check
+     * @return true if the user is at least a student in the course
+     */
+    @CheckReturnValue
+    public boolean isAtLeastStudentInCourse(long courseId, @Nullable User user) {
+        user = loadUserIfNeeded(user);
+        return hasCourseRoleAtLeast(user, courseId, CourseRole.STUDENT) || hasAdminAccess(user);
+    }
+
+    /**
+     * Whether the user holds exactly the teaching assistant role in the course, identified by id.
+     * <p>
+     * Unlike the {@code isAtLeast} checks this one is exact, because the caller uses it to distinguish a tutor from an
+     * editor rather than to grant access.
+     *
+     * @param courseId the course to check in
+     * @param user     the user to check
+     * @return true if the user is a teaching assistant in the course
+     */
+    @CheckReturnValue
+    public boolean isTeachingAssistantInCourse(long courseId, @Nullable User user) {
+        user = loadUserIfNeeded(user);
+        return hasCourseRole(user, courseId, CourseRole.TEACHING_ASSISTANT);
+    }
+
+    /**
+     * Whether the user is a student in the course and nothing more, identified by id.
+     *
+     * @param courseId the course to check in
+     * @param user     the user to check
+     * @return true if the user is only a student in the course
+     */
+    @CheckReturnValue
+    public boolean isOnlyStudentInCourse(long courseId, @Nullable User user) {
+        user = loadUserIfNeeded(user);
+        return hasCourseRole(user, courseId, CourseRole.STUDENT) && !isAtLeastTeachingAssistantInCourse(courseId, user);
+    }
+
+    /**
+     * The course role check needs nothing from the course but its id: it answers from the user's course roles, and
+     * falls back to a membership query keyed by the same id. Callers that already know the id can therefore skip
+     * loading the course entity, which is what the git request path does - it used to fetch all of it, twice for an
+     * exam exercise, to supply this one value.
+     *
+     * @param user     the user whose role is being checked
+     * @param courseId the course to check the role in
+     * @param minimum  the lowest role that satisfies the check
+     * @return true if the user holds at least that role in the course
+     */
+    private boolean hasCourseRoleAtLeast(User user, long courseId, CourseRole minimum) {
+        if (user.isCourseRolesLoaded()) {
+            EnumSet<CourseRole> roles = user.getCourseRolesByCourseId().get(courseId);
+            if (roles == null) {
+                return false;
+            }
+            for (CourseRole role : roles) {
+                if (role.isAtLeast(minimum)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRoleIn(user.getId(), courseId, CourseRole.valuesAtLeast(minimum));
     }
 
     /**
@@ -98,7 +242,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastEditorInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user);
+        return hasCourseRoleAtLeast(user, course, CourseRole.EDITOR) || hasAdminAccess(user);
     }
 
     /**
@@ -110,7 +254,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastEditorInCourse(String login, long courseId) {
-        return userRepository.isAtLeastEditorInCourse(login, courseId);
+        return userRepository.isAtLeastEditorInCourse(login, courseId) || hasCurrentUserAdminAccess(login);
     }
 
     /**
@@ -122,7 +266,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastEditorInCourse(long courseId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastEditorInCourse(login, courseId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastEditorInCourse(login, courseId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -213,7 +357,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return isTeachingAssistantInCourse(course, user) || isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user);
+        return hasCourseRoleAtLeast(user, course, CourseRole.TEACHING_ASSISTANT) || hasAdminAccess(user);
     }
 
     /**
@@ -225,7 +369,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantInCourse(String login, long courseId) {
-        return userRepository.isAtLeastTeachingAssistantInCourse(login, courseId);
+        return userRepository.isAtLeastTeachingAssistantInCourse(login, courseId) || hasCurrentUserAdminAccess(login);
     }
 
     /**
@@ -237,7 +381,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantInCourse(long courseId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastTeachingAssistantInCourse(login, courseId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastTeachingAssistantInCourse(login, courseId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -263,8 +407,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastStudentInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return isStudentInCourse(course, user) || isTeachingAssistantInCourse(course, user) || isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user)
-                || isSuperAdmin(user);
+        return hasCourseRoleAtLeast(user, course, CourseRole.STUDENT) || hasAdminAccess(user);
     }
 
     /**
@@ -276,7 +419,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastStudentInCourse(long courseId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastStudentInCourse(login, courseId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastStudentInCourse(login, courseId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -338,8 +481,16 @@ public class AuthorizationCheckService {
     public void checkHasAtLeastRoleInCourseElseThrow(@NonNull Role role, @NonNull Course course, @Nullable User user) {
         // Note: the consumer is necessary to get an exhaustive check for the switch expression here, also see https://stackoverflow.com/questions/66204407
         Consumer<User> consumer = switch (role) {
-            case SUPER_ADMIN -> this::checkIsSuperAdminElseThrow;
-            case ADMIN -> this::checkIsAdminElseThrow;
+            case SUPER_ADMIN -> userOrNull -> {
+                if (!isSuperAdmin(userOrNull) || !hasAdminAccess(userOrNull)) {
+                    throw new AccessForbiddenException();
+                }
+            };
+            case ADMIN -> userOrNull -> {
+                if (!hasAdminAccess(userOrNull)) {
+                    throw new AccessForbiddenException();
+                }
+            };
             case INSTRUCTOR -> userOrNull -> checkIsAtLeastInstructorInCourseElseThrow(course, userOrNull);
             case EDITOR -> userOrNull -> checkIsAtLeastEditorInCourseElseThrow(course, userOrNull);
             case TEACHING_ASSISTANT -> userOrNull -> checkIsAtLeastTeachingAssistantInCourseElseThrow(course, userOrNull);
@@ -373,7 +524,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastInstructorInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return user.getGroups().contains(course.getInstructorGroupName()) || isAdmin(user);
+        return hasCourseRoleAtLeast(user, course, CourseRole.INSTRUCTOR) || hasAdminAccess(user);
     }
 
     /**
@@ -385,7 +536,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastInstructorInCourse(String login, long courseId) {
-        return userRepository.isAtLeastInstructorInCourse(login, courseId);
+        return userRepository.isAtLeastInstructorInCourse(login, courseId) || hasCurrentUserAdminAccess(login);
     }
 
     /**
@@ -397,7 +548,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastInstructorInCourse(long courseId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastInstructorInCourse(login, courseId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastInstructorInCourse(login, courseId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -410,7 +561,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isInstructorInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return user.getGroups().contains(course.getInstructorGroupName());
+        return hasCourseRole(user, course, CourseRole.INSTRUCTOR);
     }
 
     /**
@@ -423,7 +574,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isEditorInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return user.getGroups().contains(course.getEditorGroupName());
+        return hasCourseRole(user, course, CourseRole.EDITOR);
     }
 
     /**
@@ -436,7 +587,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isTeachingAssistantInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return user.getGroups().contains(course.getTeachingAssistantGroupName());
+        return hasCourseRole(user, course, CourseRole.TEACHING_ASSISTANT);
     }
 
     /**
@@ -449,7 +600,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isOnlyStudentInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return user.getGroups().contains(course.getStudentGroupName()) && !isAtLeastTeachingAssistantInCourse(course, user);
+        return hasCourseRole(user, course, CourseRole.STUDENT) && !isAtLeastTeachingAssistantInCourse(course, user);
     }
 
     /**
@@ -462,7 +613,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isStudentInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return user.getGroups().contains(course.getStudentGroupName());
+        return hasCourseRole(user, course, CourseRole.STUDENT);
     }
 
     /**
@@ -553,7 +704,7 @@ public class AuthorizationCheckService {
             throw new AccessForbiddenException();
         }
         user = loadUserIfNeeded(user);
-        if (isAdmin(user)) {
+        if (hasAdminAccess(user)) {
             return true;
         }
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
@@ -570,7 +721,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAllowedToSeeLectureUnit(@NonNull LectureUnit lectureUnit, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        if (isAdmin(user)) {
+        if (hasAdminAccess(user)) {
             return true;
         }
         Course course = lectureUnit.getLecture().getCourse();
@@ -644,12 +795,65 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Checks whether the current request may exercise the global administrator override. Use this method for data selection and current-caller authorization. Use
+     * {@link #isAdmin(User)} only to classify an arbitrary account independently of the current request.
+     *
+     * @return true if administrator elevation is active for the current request
+     */
+    @CheckReturnValue
+    public boolean isCurrentUserAdminAccessEnabled() {
+        // The same decision as ElevatedAccessService.isAdminElevationActive, expressed through the same predicate so the
+        // two cannot drift. Reading the session first preserves the zero-query fast path for ordinary users; the
+        // repository predicate then rejects a token that outlived the administrator role it was issued for.
+        if (!ElevationClaims.isRequestElevated(SecurityContextHolder.getContext().getAuthentication(), isPasskeyRequiredForAdministratorFeatures)) {
+            return false;
+        }
+        return SecurityUtils.getCurrentUserLogin().filter(userRepository::isAdmin).isPresent();
+    }
+
+    private boolean hasCurrentUserAdminAccess(String login) {
+        return SecurityUtils.getCurrentUserLogin().filter(login::equals).isPresent() && isCurrentUserAdminAccessEnabled();
+    }
+
+    /**
+     * Preserves account classification for genuinely arbitrary users and internal processing, while requiring request elevation when the supplied user is the current caller.
+     * <p>
+     * The account half is read from the account the caller already loaded rather than asked for again. The per-course
+     * overloads run once per course in a list - {@code CourseService#fetchParticipationsWithSubmissionsAndResultsForCourses}
+     * loops over the dashboard's courses - so a query here would cost one round trip per course for an administrator.
+     */
+    private boolean hasAdminAccess(@Nullable User user) {
+        if (user == null) {
+            return isCurrentUserAdminAccessEnabled();
+        }
+        boolean isCurrentUser = SecurityUtils.getCurrentUserLogin().filter(login -> Objects.equals(login, user.getLogin())).isPresent();
+        if (!isCurrentUser) {
+            return isAdmin(user);
+        }
+        return ElevationClaims.isRequestElevated(SecurityContextHolder.getContext().getAuthentication(), isPasskeyRequiredForAdministratorFeatures) && isActiveAdministrator(user);
+    }
+
+    /**
+     * The account half of administrator elevation, answered from an account the caller already loaded. This is what
+     * {@link de.tum.cit.aet.artemis.account.repository.UserRepository#isAdmin(String)} asks the database, including its
+     * requirement that the account is activated and not deleted, so a token that outlived the role it was issued for is
+     * rejected here as well.
+     *
+     * @param user the loaded account
+     * @return whether it is an active administrator
+     */
+    private static boolean isActiveAdministrator(User user) {
+        return user.getActivated() && !user.isDeleted() && isAdmin(user.getAuthorities());
+    }
+
+    /**
      * Checks if the passed user is an admin user. Throws an AccessForbiddenException in case the user is not an admin
      *
-     * @param user the user with authorities. If the user is null, the currently logged-in user will be used.
+     * @param user the user with authorities. If the user is null, the current caller is checked, which then has to
+     *                 hold administrator elevation rather than only the administrator role.
      **/
     public void checkIsAdminElseThrow(@Nullable User user) {
-        if (!isAdmin(user)) {
+        if (!hasAdminAccess(user)) {
             throw new AccessForbiddenException();
         }
     }
@@ -664,7 +868,10 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isSuperAdmin() {
-        return SecurityUtils.isCurrentUserInRole(Role.SUPER_ADMIN.getAuthority());
+        if (!SecurityUtils.isCurrentUserInRole(Role.SUPER_ADMIN.getAuthority())) {
+            return false;
+        }
+        return SecurityUtils.getCurrentUserLogin().filter(userRepository::isSuperAdmin).isPresent();
     }
 
     /**
@@ -695,10 +902,11 @@ public class AuthorizationCheckService {
     /**
      * Checks if the passed user is a super admin user. Throws an AccessForbiddenException in case the user is not a super admin
      *
-     * @param user the user with authorities. If the user is null, the currently logged-in user will be used.
+     * @param user the user with authorities. If the user is null, the current caller is checked, which then has to
+     *                 hold administrator elevation rather than only the super-administrator role.
      **/
     public void checkIsSuperAdminElseThrow(@Nullable User user) {
-        if (!isSuperAdmin(user)) {
+        if (!isSuperAdmin(user) || !hasAdminAccess(user)) {
             throw new AccessForbiddenException();
         }
     }
@@ -747,14 +955,19 @@ public class AuthorizationCheckService {
         }
     }
 
+    // Only guarantees that authorities are initialized — course roles are intentionally NOT
+    // loaded here. hasCourseRole / hasCourseRoleAtLeast decide adaptively whether to use
+    // the pre-loaded in-memory index (when the caller fetched course roles up front, e.g.
+    // for the dashboard) or a targeted indexed EXISTS query (for single-course endpoints
+    // that only need to verify one membership). Loading course roles unconditionally here
+    // would be an unnecessary heavy JOIN for every auth check on single-course endpoints.
     private User loadUserIfNeeded(@Nullable User user) {
         if (user == null) {
-            user = userRepository.getUserWithGroupsAndAuthorities();
+            user = userRepository.getUserWithAuthorities();
         }
-        else if (user.getGroups() == null || !Hibernate.isInitialized(user.getGroups())) {
-            user = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
+        else if (user.getAuthorities() == null || !Hibernate.isInitialized(user.getAuthorities())) {
+            user = userRepository.getUserWithAuthorities(user.getLogin());
         }
-
         return user;
     }
 
@@ -768,8 +981,8 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastRoleInCourse(Role role, long courseId) {
         return switch (role) {
-            case SUPER_ADMIN -> isSuperAdmin();
-            case ADMIN -> isAdmin();
+            case SUPER_ADMIN -> isSuperAdmin() && isCurrentUserAdminAccessEnabled();
+            case ADMIN -> isCurrentUserAdminAccessEnabled();
             case INSTRUCTOR -> isAtLeastInstructorInCourse(courseId);
             case EDITOR -> isAtLeastEditorInCourse(courseId);
             case TEACHING_ASSISTANT -> isAtLeastTeachingAssistantInCourse(courseId);
@@ -793,7 +1006,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastStudentInExercise(long exerciseId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastStudentInExercise(login, exerciseId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastStudentInExercise(login, exerciseId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -805,7 +1018,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantInExercise(long exerciseId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastTeachingAssistantInExercise(login, exerciseId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastTeachingAssistantInExercise(login, exerciseId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -817,7 +1030,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantInExercise(String login, long exerciseId) {
-        return userRepository.isAtLeastTeachingAssistantInExercise(login, exerciseId);
+        return userRepository.isAtLeastTeachingAssistantInExercise(login, exerciseId) || hasCurrentUserAdminAccess(login);
     }
 
     /**
@@ -829,7 +1042,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastEditorInExercise(String login, long exerciseId) {
-        return userRepository.isAtLeastEditorInExercise(login, exerciseId);
+        return userRepository.isAtLeastEditorInExercise(login, exerciseId) || hasCurrentUserAdminAccess(login);
     }
 
     /**
@@ -841,7 +1054,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastEditorInExercise(long exerciseId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastEditorInExercise(login, exerciseId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastEditorInExercise(login, exerciseId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -853,7 +1066,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastInstructorInExercise(long exerciseId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastInstructorInExercise(login, exerciseId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastInstructorInExercise(login, exerciseId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -865,7 +1078,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastInstructorInExercise(String login, long exerciseId) {
-        return userRepository.isAtLeastInstructorInExercise(login, exerciseId);
+        return userRepository.isAtLeastInstructorInExercise(login, exerciseId) || hasCurrentUserAdminAccess(login);
     }
 
     /**
@@ -878,8 +1091,8 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastRoleInExercise(Role role, long exerciseId) {
         return switch (role) {
-            case SUPER_ADMIN -> isSuperAdmin();
-            case ADMIN -> isAdmin();
+            case SUPER_ADMIN -> isSuperAdmin() && isCurrentUserAdminAccessEnabled();
+            case ADMIN -> isCurrentUserAdminAccessEnabled();
             case INSTRUCTOR -> isAtLeastInstructorInExercise(exerciseId);
             case EDITOR -> isAtLeastEditorInExercise(exerciseId);
             case TEACHING_ASSISTANT -> isAtLeastTeachingAssistantInExercise(exerciseId);
@@ -903,7 +1116,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastStudentInLectureUnit(long lectureUnitId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastStudentInLectureUnit(login, lectureUnitId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastStudentInLectureUnit(login, lectureUnitId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -915,7 +1128,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantInLectureUnit(long lectureUnitId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastTeachingAssistantInLectureUnit(login, lectureUnitId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastTeachingAssistantInLectureUnit(login, lectureUnitId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -927,7 +1140,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastEditorInLectureUnit(long lectureUnitId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastEditorInLectureUnit(login, lectureUnitId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastEditorInLectureUnit(login, lectureUnitId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -939,7 +1152,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastInstructorInLectureUnit(long lectureUnitId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastInstructorInLectureUnit(login, lectureUnitId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastInstructorInLectureUnit(login, lectureUnitId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -951,7 +1164,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastStudentInLecture(long lectureId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastStudentInLecture(login, lectureId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastStudentInLecture(login, lectureId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -963,7 +1176,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantInLecture(long lectureId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastTeachingAssistantInLecture(login, lectureId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastTeachingAssistantInLecture(login, lectureId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -975,7 +1188,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastEditorInLecture(long lectureId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastEditorInLecture(login, lectureId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastEditorInLecture(login, lectureId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -987,7 +1200,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastInstructorInLecture(long lectureId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastInstructorInLecture(login, lectureId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastInstructorInLecture(login, lectureId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -1000,8 +1213,8 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastRoleInLectureUnit(Role role, long lectureUnitId) {
         return switch (role) {
-            case SUPER_ADMIN -> isSuperAdmin();
-            case ADMIN -> isAdmin();
+            case SUPER_ADMIN -> isSuperAdmin() && isCurrentUserAdminAccessEnabled();
+            case ADMIN -> isCurrentUserAdminAccessEnabled();
             case INSTRUCTOR -> isAtLeastInstructorInLectureUnit(lectureUnitId);
             case EDITOR -> isAtLeastEditorInLectureUnit(lectureUnitId);
             case TEACHING_ASSISTANT -> isAtLeastTeachingAssistantInLectureUnit(lectureUnitId);
@@ -1026,8 +1239,8 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastRoleInLecture(Role role, long lectureId) {
         return switch (role) {
-            case SUPER_ADMIN -> isSuperAdmin();
-            case ADMIN -> isAdmin();
+            case SUPER_ADMIN -> isSuperAdmin() && isCurrentUserAdminAccessEnabled();
+            case ADMIN -> isCurrentUserAdminAccessEnabled();
             case INSTRUCTOR -> isAtLeastInstructorInLecture(lectureId);
             case EDITOR -> isAtLeastEditorInLecture(lectureId);
             case TEACHING_ASSISTANT -> isAtLeastTeachingAssistantInLecture(lectureId);

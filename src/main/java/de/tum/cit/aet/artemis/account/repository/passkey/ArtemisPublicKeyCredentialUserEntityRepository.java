@@ -49,7 +49,7 @@ public class ArtemisPublicKeyCredentialUserEntityRepository implements PublicKey
 
     public Optional<User> findArtemisUserById(Bytes id) {
         Long userId = BytesConverter.bytesToLong(id);
-        return userRepository.findOneWithGroupsAndAuthoritiesById(userId);
+        return userRepository.findOneWithAuthoritiesById(userId);
     }
 
     @Override

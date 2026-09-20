@@ -24,8 +24,9 @@ import org.springframework.messaging.tcp.TcpOperations;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
+import de.tum.cit.aet.artemis.core.service.distributed.NodeRegistryService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 
 /**
  * Manages the lifecycle of the STOMP broker relay connection and coordinates reconnect attempts.
@@ -51,9 +52,11 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
 
     private final Optional<StompBrokerRelayMessageHandler> stompBrokerRelayMessageHandler;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
-    private IMap<String, Boolean> brokerStatusMap;
+    private final NodeRegistryService nodeRegistryService;
+
+    private DistributedMap<String, Boolean> brokerStatusMap;
 
     private String lastPublishedMemberId;
 
@@ -76,17 +79,18 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
 
     public WebsocketBrokerReconnectionService(@Qualifier("messageBrokerTaskScheduler") TaskScheduler messageBrokerTaskScheduler,
             Optional<StompBrokerRelayMessageHandler> stompBrokerRelayMessageHandler,
-            @Qualifier("websocketBrokerTcpClientSupplier") Supplier<TcpOperations<byte[]>> stompTcpClientSupplier,
-            @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+            @Qualifier("websocketBrokerTcpClientSupplier") Supplier<TcpOperations<byte[]>> stompTcpClientSupplier, DistributedDataProvider distributedDataProvider,
+            NodeRegistryService nodeRegistryService) {
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.stompBrokerRelayMessageHandler = stompBrokerRelayMessageHandler;
         this.stompTcpClientSupplier = stompTcpClientSupplier;
-        this.hazelcastInstance = hazelcastInstance;
+        this.distributedDataProvider = distributedDataProvider;
+        this.nodeRegistryService = nodeRegistryService;
     }
 
     @PostConstruct
     void initBrokerStatusPublisher() {
-        this.brokerStatusMap = hazelcastInstance.getMap(WEBSOCKET_BROKER_STATUS_MAP);
+        this.brokerStatusMap = distributedDataProvider.getMap(WEBSOCKET_BROKER_STATUS_MAP);
         updateBrokerStatus(false);
         scheduleStatusPublisher();
     }
@@ -275,7 +279,7 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
     }
 
     private String currentMemberId() {
-        return hazelcastInstance.getCluster().getLocalMember().getUuid().toString();
+        return nodeRegistryService.getLocalNodeId();
     }
 
     public enum ControlAction {

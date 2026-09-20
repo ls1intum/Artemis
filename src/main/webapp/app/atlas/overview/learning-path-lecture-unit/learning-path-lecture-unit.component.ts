@@ -13,6 +13,7 @@ import { isCommunicationEnabled } from 'app/course/shared/entities/course.model'
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-learning-path-lecture-unit',
@@ -58,7 +59,7 @@ export class LearningPathLectureUnitComponent {
     setLearningObjectCompletion(completionEvent: LectureUnitCompletionEvent): void {
         this.lectureUnitService.completeLectureUnit(this.lectureUnit()!.lecture!, completionEvent, () => {
             // Publish a new reference so the unit card reacts (zoneless change detection), then propagate to the navigation.
-            this.lectureUnit.update((unit) => (unit ? Object.assign({}, unit, { completed: completionEvent.completed }) : unit));
+            this.lectureUnit.update((unit) => (unit ? cloneWith(unit, { completed: completionEvent.completed }) : unit));
             this.learningPathNavigationService.setCurrentLearningObjectCompletion(completionEvent.completed);
         });
     }

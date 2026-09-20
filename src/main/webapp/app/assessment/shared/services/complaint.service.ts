@@ -15,6 +15,7 @@ import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { User } from 'app/account/user/user.model';
 import { Feedback, convertFeedbacksFromServer } from 'app/assessment/shared/entities/feedback.model';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<ComplaintDTO>;
 export type EntityResponseTypeArray = HttpResponse<ComplaintDTO[]>;
@@ -31,6 +32,8 @@ export interface IComplaintService {
     findAllByCourseId: (courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
     findAllByCourseIdAndExamId: (courseId: number, examId: number) => Observable<EntityResponseTypeArray>;
     findAllByExerciseId: (exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
+    findAllWithoutStudentInformationForCourseId: (courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
+    findAllWithoutStudentInformationForExerciseId: (exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -122,6 +125,17 @@ export class ComplaintService implements IComplaintService {
      */
     findAllWithoutStudentInformationForCourseId(courseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
         const url = `${this.resourceUrl}?courseId=${courseId}&complaintType=${complaintType}&allComplaintsForTutor=true`;
+        return this.requestComplaintsFromUrl(url);
+    }
+
+    /**
+     * Find all complaints of a single exercise and complaintType without student's information.
+     * Used by the tutor "All" scope on exercise-scoped pages, so it cannot leak complaints of other exercises.
+     * @param exerciseId - the exercise id for which the complaints should be retrieved
+     * @param complaintType - the type of complaint
+     */
+    findAllWithoutStudentInformationForExerciseId(exerciseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
+        const url = `${this.resourceUrl}?exerciseId=${exerciseId}&complaintType=${complaintType}&allComplaintsForTutor=true`;
         return this.requestComplaintsFromUrl(url);
     }
 
@@ -274,6 +288,8 @@ export class ComplaintService implements IComplaintService {
         complaint.complaintType = dto.complaintType;
         complaint.accepted = dto.complaintIsAccepted;
         complaint.submittedTime = dto.submittedTime ? dayjs(dto.submittedTime) : undefined;
+        complaint.assessorKey = dto.assessorKey;
+        complaint.assessorLabel = dto.assessorLabel;
 
         if (dto.complaintResponse) {
             complaint.complaintResponse = this.complaintResponseService.convertComplaintResponseFromServer(dto.complaintResponse);
@@ -287,13 +303,13 @@ export class ComplaintService implements IComplaintService {
      */
     private assignParticipant(complaint: Complaint, participant?: ParticipantDTO): void {
         if (participant?.isStudent === true) {
-            complaint.student = Object.assign(new User(), {
+            complaint.student = hydrate(new User(), {
                 id: participant.id,
                 name: participant.name,
                 login: participant.login,
             });
         } else if (participant?.isStudent === false) {
-            complaint.team = Object.assign(new Team(), {
+            complaint.team = hydrate(new Team(), {
                 id: participant.id,
                 name: participant.name,
                 shortName: participant.login,
@@ -310,10 +326,11 @@ export class ComplaintService implements IComplaintService {
         result.completionDate = resultDto.completionDate ? dayjs(resultDto.completionDate) : undefined;
         result.score = resultDto.score;
         result.rated = resultDto.rated;
+        result.successful = resultDto.successful;
         result.assessmentType = resultDto.assessmentType;
 
         if (resultDto.assessor) {
-            result.assessor = Object.assign(new User(), {
+            result.assessor = hydrate(new User(), {
                 id: resultDto.assessor.id,
                 login: resultDto.assessor.login,
                 name: resultDto.assessor.name,
@@ -329,7 +346,7 @@ export class ComplaintService implements IComplaintService {
             const submission: Submission = { id: resultDto.submission.id };
 
             if (resultDto.submission.participation) {
-                const participation = Object.assign(new StudentParticipation(), {
+                const participation = hydrate(new StudentParticipation(), {
                     id: resultDto.submission.participation.id,
                 });
 
@@ -353,17 +370,17 @@ export class ComplaintService implements IComplaintService {
      * Returns feedbacks without circular references.
      */
     public getFeedbacksForUpdateAfterComplaint(assessments: Feedback[]): Feedback[] {
-        return assessments.map((feedback) => Object.assign(new Feedback(), feedback, { result: undefined }));
+        return assessments.map((feedback) => hydrate(new Feedback(), feedback, { result: undefined }));
     }
 
     /**
      * Returns a complaint response payload without circular references.
      */
     public getComplaintResponseForUpdateAfterComplaint(complaintResponse: ComplaintResponse): ComplaintResponse {
-        const sanitizedComplaintResponse = Object.assign(new ComplaintResponse(), complaintResponse);
+        const sanitizedComplaintResponse = hydrate(new ComplaintResponse(), complaintResponse);
 
         if (complaintResponse.complaint) {
-            sanitizedComplaintResponse.complaint = Object.assign(new Complaint(), {
+            sanitizedComplaintResponse.complaint = hydrate(new Complaint(), {
                 id: complaintResponse.complaint.id,
                 accepted: complaintResponse.complaint.accepted,
                 complaintType: complaintResponse.complaint.complaintType,

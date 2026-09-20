@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.assessment.repository.cleanup;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -56,5 +57,49 @@ public interface SubmissionVersionCleanupRepository extends ArtemisJpaRepository
                 AND sv.createdDate < :deleteTo
             """)
     int countSubmissionVersionsByCreatedDateRange(@Param("deleteFrom") Instant deleteFrom, @Param("deleteTo") Instant deleteTo);
+
+    /**
+     * Deletes {@link SubmissionVersion} entities of submissions belonging to a course that ended before
+     * {@code courseEndDateBefore}. Used by the age-based cleanup that removes editor keystroke history once a course is
+     * over. Exam exercises have no direct course and are therefore not affected (consistent with the feedback cleanup).
+     *
+     * @param courseEndDateBefore submission versions of courses that ended before this date are deleted
+     * @return the number of deleted entities
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("""
+            DELETE FROM SubmissionVersion sv
+            WHERE sv.submission IN (
+                SELECT s
+                FROM Submission s
+                    JOIN s.participation p
+                    JOIN p.exercise e
+                    JOIN e.course c
+                WHERE c.endDate < :courseEndDateBefore
+            )
+            """)
+    int deleteSubmissionVersionsWhereCourseEndDateBefore(@Param("courseEndDateBefore") ZonedDateTime courseEndDateBefore);
+
+    /**
+     * Counts {@link SubmissionVersion} entities of submissions belonging to a course that ended before
+     * {@code courseEndDateBefore}.
+     *
+     * @param courseEndDateBefore submission versions of courses that ended before this date are counted
+     * @return the number of entities that would be deleted
+     */
+    @Query("""
+            SELECT COUNT(sv)
+            FROM SubmissionVersion sv
+            WHERE sv.submission IN (
+                SELECT s
+                FROM Submission s
+                    JOIN s.participation p
+                    JOIN p.exercise e
+                    JOIN e.course c
+                WHERE c.endDate < :courseEndDateBefore
+            )
+            """)
+    int countSubmissionVersionsWhereCourseEndDateBefore(@Param("courseEndDateBefore") ZonedDateTime courseEndDateBefore);
 
 }

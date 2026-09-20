@@ -25,32 +25,46 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
  * A dedicated projection (rather than enriching {@link ExamForStudentExamDTO}) keeps the management/test-run endpoints that
  * nest the slim exam from newly serializing the exam cover texts — those consumers read only {@code exam.course}, so folding
  * the conduction fields into the shared slim projection would leak the markdown cover content onto the student-exams list.
+ * <p>
+ * {@code examSummaryPublicationDate} and {@code publishResultsDate} are required by the client-side summary gate
+ * ({@code isExamSummaryPublished} in {@code exam.utils.ts}), which the exam-participation component evaluates against the exam
+ * it takes from this projection after a hand-in. Omitting them breaks the gate in opposite directions, so neither may be
+ * dropped:
+ * <ul>
+ * <li>Without {@code examSummaryPublicationDate} the gate reads the absent value as "published" and opens the submission
+ * overview immediately, defeating a configured delay.</li>
+ * <li>Without {@code publishResultsDate} the results-published fallback can never fire, so a configured future publication
+ * date keeps the overview withheld even after the grades are out.</li>
+ * </ul>
  *
- * @param id                      the id of the exam
- * @param title                   the title shown on the exam cover
- * @param testExam                whether this is a test exam (drives the test-exam conduction branch)
- * @param examWithAttendanceCheck whether an attendance check is enabled (the cover renders the attendance confirmation)
- * @param visibleDate             the date the exam becomes visible
- * @param startDate               the exam start date (individual end date + waiting-for-start are computed from it)
- * @param endDate                 the exam end date
- * @param gracePeriod             the grace period in seconds
- * @param workingTime             the regular working time in seconds
- * @param startText               the markdown start text
- * @param endText                 the markdown end text
- * @param confirmationStartText   the markdown confirmation start text (start consent)
- * @param confirmationEndText     the markdown confirmation end text (end consent)
- * @param examMaxPoints           the maximum achievable points (exam-start information box)
- * @param numberOfExercisesInExam the number of exercises drawn per student exam (exam-start information box)
- * @param examiner                the examiner (exam-start information box)
- * @param moduleNumber            the module number (exam-start information box)
- * @param courseName              the course name shown on the exam cover (exam-start information box)
- * @param course                  the slim student-facing course projection (only {@code id} is read)
+ * @param id                         the id of the exam
+ * @param title                      the title shown on the exam cover
+ * @param testExam                   whether this is a test exam (drives the test-exam conduction branch)
+ * @param examWithAttendanceCheck    whether an attendance check is enabled (the cover renders the attendance confirmation)
+ * @param visibleDate                the date the exam becomes visible
+ * @param startDate                  the exam start date (individual end date + waiting-for-start are computed from it)
+ * @param endDate                    the exam end date
+ * @param gracePeriod                the grace period in seconds
+ * @param workingTime                the regular working time in seconds
+ * @param startText                  the markdown start text
+ * @param endText                    the markdown end text
+ * @param confirmationStartText      the markdown confirmation start text (start consent)
+ * @param confirmationEndText        the markdown confirmation end text (end consent)
+ * @param examMaxPoints              the maximum achievable points (exam-start information box)
+ * @param numberOfExercisesInExam    the number of exercises drawn per student exam (exam-start information box)
+ * @param examiner                   the examiner (exam-start information box)
+ * @param moduleNumber               the module number (exam-start information box)
+ * @param courseName                 the course name shown on the exam cover (exam-start information box)
+ * @param examSummaryPublicationDate the date the submission overview becomes visible, or {@code null} when it is not delayed
+ * @param publishResultsDate         the date the results are published (the summary gate also opens once results are out)
+ * @param course                     the slim student-facing course projection (only {@code id} is read)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamForConductionDTO(long id, @Nullable String title, boolean testExam, boolean examWithAttendanceCheck, @Nullable ZonedDateTime visibleDate,
         @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable Integer gracePeriod, int workingTime, @Nullable String startText, @Nullable String endText,
         @Nullable String confirmationStartText, @Nullable String confirmationEndText, int examMaxPoints, @Nullable Integer numberOfExercisesInExam, @Nullable String examiner,
-        @Nullable String moduleNumber, @Nullable String courseName, @Nullable CourseForStudentExamDTO course) {
+        @Nullable String moduleNumber, @Nullable String courseName, @Nullable ZonedDateTime examSummaryPublicationDate, @Nullable ZonedDateTime publishResultsDate,
+        @Nullable CourseForStudentExamDTO course) {
 
     /**
      * Converts an Exam into an ExamForConductionDTO.
@@ -70,6 +84,6 @@ public record ExamForConductionDTO(long id, @Nullable String title, boolean test
         return new ExamForConductionDTO(exam.getId(), exam.getTitle(), exam.isTestExam(), exam.isExamWithAttendanceCheck(), exam.getVisibleDate(), exam.getStartDate(),
                 exam.getEndDate(), exam.getGracePeriod(), exam.getWorkingTime(), exam.getStartText(), exam.getEndText(), exam.getConfirmationStartText(),
                 exam.getConfirmationEndText(), exam.getExamMaxPoints(), exam.getNumberOfExercisesInExam(), exam.getExaminer(), exam.getModuleNumber(), exam.getCourseName(),
-                courseDTO);
+                exam.getExamSummaryPublicationDate(), exam.getPublishResultsDate(), courseDTO);
     }
 }

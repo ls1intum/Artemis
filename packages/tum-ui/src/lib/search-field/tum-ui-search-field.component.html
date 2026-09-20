@@ -1,0 +1,25 @@
+<fa-icon [icon]="faMagnifyingGlass" class="tum-ui-search-field-icon tum:text-muted" aria-hidden="true" />
+
+<input
+    #searchInput
+    tumUiInput
+    type="search"
+    [tumUiInputSize]="size()"
+    [value]="value()"
+    [disabled]="disabled()"
+    [placeholder]="placeholder() | tumUiTranslate"
+    [attr.aria-label]="accessibleNameKey() | tumUiTranslate"
+    (input)="onInput(searchInput.value)"
+/>
+
+@if (value()) {
+    <button
+        type="button"
+        class="tum-ui-search-field-clear tum:cursor-pointer tum:appearance-none tum:border-0 tum:bg-transparent tum:p-0 tum:text-muted tum:hover:text-text"
+        [disabled]="disabled()"
+        [attr.aria-label]="'tumUi.searchField.clear' | tumUiTranslate"
+        (click)="clear()"
+    >
+        <fa-icon [icon]="faXmark" />
+    </button>
+}

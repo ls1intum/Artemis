@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.exam.service.StudentExamService;
+import de.tum.cit.aet.artemis.exam.service.ExamSubmissionService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
@@ -33,13 +33,13 @@ class TextComparisonTest {
         var submission4 = TextExerciseFactory.generateTextExerciseSubmission(textExercise, null);
         var submission5 = TextExerciseFactory.generateTextExerciseSubmission(textExercise, null);
 
-        assertThat(StudentExamService.isContentEqualTo(submission1, submission2)).isTrue();  // submission with same text
-        assertThat(StudentExamService.isContentEqualTo(submission1, submission3)).isFalse(); // submission with different text
-        assertThat(StudentExamService.isContentEqualTo(submission3, submission4)).isFalse();
-        assertThat(StudentExamService.isContentEqualTo(submission4, submission5)).isTrue();  // both submission with null text
+        assertThat(ExamSubmissionService.isContentEqualTo(submission1, submission2)).isTrue();  // submission with same text
+        assertThat(ExamSubmissionService.isContentEqualTo(submission1, submission3)).isFalse(); // submission with different text
+        assertThat(ExamSubmissionService.isContentEqualTo(submission3, submission4)).isFalse();
+        assertThat(ExamSubmissionService.isContentEqualTo(submission4, submission5)).isTrue();  // both submission with null text
 
-        assertThat(StudentExamService.isContentEqualTo(submission2, null)).isFalse(); // one submission null
-        assertThat(StudentExamService.isContentEqualTo(null, submission4)).isFalse();  // one submission null, other null text
-        assertThat(StudentExamService.isContentEqualTo((TextSubmission) null, null)).isTrue(); // both submissions null
+        assertThat(ExamSubmissionService.isContentEqualTo(submission2, null)).isFalse(); // one submission null
+        assertThat(ExamSubmissionService.isContentEqualTo(null, submission4)).isFalse();  // one submission null, other null text
+        assertThat(ExamSubmissionService.isContentEqualTo((TextSubmission) null, null)).isTrue(); // both submissions null
     }
 }

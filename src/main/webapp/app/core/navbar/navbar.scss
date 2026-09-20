@@ -1,11 +1,26 @@
 @import 'src/main/webapp/content/scss/artemis-variables';
 
+/*
+ * The host needs a box of its own: `ResizeObserver` reports nothing for a non-replaced inline element, and
+ * `observeShellMetrics()` watches this element to keep `--navbar-height` in step with the rendered navbar. Left
+ * inline, the height the shells size themselves from goes stale whenever the navbar grows without a navigation —
+ * a system notification appearing, or breadcrumbs wrapping. `jhi-footer` declares the same for the same reason.
+ */
+:host {
+    display: block;
+}
+
 /* ==========================================================================
 Navbar
 ========================================================================== */
 
-/* Don't underline the menu items on hover */
-a:not(.btn):hover {
+/*
+ * Don't underline the menu items on hover, overriding the rule that does so for every anchor in `global.scss` — see
+ * the comment there for why the exclusions belong in one `:not()` argument list rather than a chain of clauses. On
+ * the account menu the stray underline is especially visible: the avatar covers the stretch behind it, so all that
+ * surfaces is a short blue dash next to the image.
+ */
+a:not(.btn, .tum-ui-btn, .tab-link):hover {
     text-decoration: none !important;
 }
 
@@ -70,8 +85,7 @@ a:not(.btn):hover {
     padding: 0.2em 1rem;
 }
 
-.jh-navbar,
-.server-administration {
+.jh-navbar {
     background-color: var(--artemis-dark);
     white-space: nowrap;
     color: var(--navbar-dark-color);
@@ -90,30 +104,6 @@ a:not(.btn):hover {
 
     .dropdown-toggle::after {
         margin-left: 0.15em;
-    }
-
-    ul.navbar-nav {
-        flex-direction: row;
-        padding-right: 10px;
-
-        .nav-item {
-            margin-left: 1.5rem;
-        }
-
-        &.vertical {
-            flex-direction: column;
-        }
-    }
-
-    @media screen and (min-width: 480px) {
-        ul.navbar-nav:not(.vertical) {
-            justify-content: flex-end;
-            flex-grow: 4;
-
-            .nav-item:first-child {
-                margin-left: 0;
-            }
-        }
     }
 
     .nav-link {
@@ -237,21 +227,8 @@ a:not(.btn):hover {
     flex-wrap: nowrap;
     justify-content: flex-start;
 
-    .navbar-nav {
-        flex-direction: row;
-
-        .nav-link {
-            padding-right: 0.5rem;
-            padding-left: 0.5rem;
-        }
-    }
-
     .navbar-collapse {
         display: flex !important;
-    }
-
-    .jh-logo-container .toggler-wrapper {
-        display: none;
     }
 }
 

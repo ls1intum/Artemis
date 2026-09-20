@@ -14,8 +14,10 @@ import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -79,6 +81,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
@@ -97,7 +100,9 @@ import de.tum.cit.aet.artemis.exam.dto.ExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForAssessmentDashboardDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForImportListDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForQuestionPoolDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamIdAndTitleDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
@@ -109,6 +114,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
+import de.tum.cit.aet.artemis.exam.dto.LockedExamSubmissionDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamForConductionDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
@@ -130,6 +136,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseForPlagiarismCasesOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
@@ -144,6 +151,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
  */
 @Conditional(ExamEnabled.class)
 @Lazy
+@FeatureUsage("authoring/exam-management")
 @RestController
 @RequestMapping("api/exam/")
 public class ExamResource {
@@ -161,6 +169,8 @@ public class ExamResource {
     private String examArchivesDirPath;
 
     private final UserRepository userRepository;
+
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final CourseRepository courseRepository;
 
@@ -212,7 +222,8 @@ public class ExamResource {
             AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, ExamImportService examImportService,
             CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository, ExerciseRepository exerciseRepository,
             ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService,
-            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional,
+            StudentParticipationRepository studentParticipationRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -237,6 +248,7 @@ public class ExamResource {
         this.examUserService = examUserService;
         this.automaticAfterDueDateService = automaticAfterDueDateService;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -254,6 +266,7 @@ public class ExamResource {
         if (examDTO.id() != null) {
             throw new BadRequestAlertException("A new exam cannot already have an ID", ENTITY_NAME, "idExists");
         }
+        checkExamTitleIsPresentElseThrow(examDTO.title());
 
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
 
@@ -287,6 +300,7 @@ public class ExamResource {
         if (examUpdateDTO.id() == null) {
             throw new BadRequestAlertException("An exam update must have an ID", ENTITY_NAME, "idMissing");
         }
+        checkExamTitleIsPresentElseThrow(examUpdateDTO.title());
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examUpdateDTO.id());
 
@@ -309,6 +323,9 @@ public class ExamResource {
 
         // Validate the updated exam
         checkForExamConflictsElseThrow(courseId, originalExam);
+        // Separate from the generic conflict checks because it needs the pre-update duration: a duration change rescales
+        // the individual working time extensions further down, so the invariant has to hold for the PROJECTED state.
+        checkExamSummaryPublicationDateAfterIndividualEndDatesElseThrow(originalExam, originalExamDuration);
 
         Channel updatedChannel = channelService.updateExamChannel(originalExam);
 
@@ -405,7 +422,7 @@ public class ExamResource {
         // Validate the resulting working time for real exams
         if (!exam.isTestExam()) {
             if (exam.getWorkingTime() <= 0) {
-                throw new BadRequestAlertException("The working time of a real exam must be positive.", ENTITY_NAME, "examWorkingTimeInvalid");
+                throw new BadRequestAlertException("The working time of a real exam must be positive.", ENTITY_NAME, "examTimes");
             }
             final int maxWorkingTimeSeconds = 2_592_000;
             if (exam.getWorkingTime() > maxWorkingTimeSeconds) {
@@ -416,6 +433,11 @@ public class ExamResource {
             }
         }
 
+        // The submission overview must never become visible while a student is still writing, so validate against the
+        // PROJECTED latest individual end date: step 2 rescales the existing individual extensions by the same duration
+        // change, so checking only the new nominal end date would miss an extended student crossing the publication
+        // date. Safe to validate after mutating: the exam is detached here, and throwing skips the save below.
+        checkExamSummaryPublicationDateAfterIndividualEndDatesElseThrow(exam, originalExamDuration);
         examRepository.save(exam);
 
         // 2. Re-calculate the working times of all student exams
@@ -472,6 +494,7 @@ public class ExamResource {
     public ResponseEntity<ExamImportResultDTO> importExamWithExercises(@PathVariable Long courseId, @RequestBody ExamImportDTO examImportDTO,
             @RequestParam(required = false) String importId) throws URISyntaxException, IOException {
         log.debug("REST request to import an exam : {}", examImportDTO);
+        checkExamTitleIsPresentElseThrow(examImportDTO.title());
 
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
 
@@ -485,14 +508,14 @@ public class ExamResource {
         // Import Exam with Exercises and create a channel for the exam. When the client supplies an importId, live progress
         // is reported to the importing user over a websocket so the UI can show a progress dialog while this request runs.
         ExamImportResultDTO importResult = examImportService.importExamWithExercises(examToBeImported, courseId, importId, userRepository.getCurrentUserLogin());
-        Exam examCopied = importResult.exam();
+        ExamIdAndTitleDTO examCopied = importResult.exam();
 
         // The exam is always created. Any exercises that could not be imported are reported in the response body, split
         // into "skipped" (cleanly not imported) and "incomplete" (failed partway, may need review), so the client can
         // give precise feedback instead of the whole import failing.
-        HttpHeaders headers = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, examCopied.getTitle());
+        HttpHeaders headers = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, examCopied.title());
 
-        return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + examCopied.getId())).headers(headers).body(importResult);
+        return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + examCopied.id())).headers(headers).body(importResult);
     }
 
     /**
@@ -556,6 +579,18 @@ public class ExamResource {
     }
 
     /**
+     * Checks that the exam title is present, so an exam is never created or updated with a missing or blank title. The client marks this too, but crafted requests and import
+     * payloads bypass the UI. This validates the raw request title before it is mapped to an entity, because {@link Exam#setTitle} would throw on a null title during mapping.
+     *
+     * @param title the exam title from the request
+     */
+    private void checkExamTitleIsPresentElseThrow(String title) {
+        if (title == null || title.isBlank()) {
+            throw new BadRequestAlertException("The exam title must not be empty.", ENTITY_NAME, "examTitleEmpty");
+        }
+    }
+
+    /**
      * Validates numeric field limits for exam configuration.
      * Maximum values:
      * - Working time: 2592000 seconds (30 days)
@@ -578,9 +613,10 @@ public class ExamResource {
             throw new BadRequestAlertException("The grace period is too long. Maximum allowed is 3600 seconds.", ENTITY_NAME, "examGracePeriodTooHigh");
         }
 
-        // Max points: max 9999
-        if (exam.getExamMaxPoints() > 9999) {
-            throw new BadRequestAlertException("The maximum points value is too high. Maximum allowed is 9999.", ENTITY_NAME, "examMaxPointsTooHigh");
+        // Max points: max MAX_GRADING_POINTS
+        if (exam.getExamMaxPoints() > Constants.MAX_GRADING_POINTS) {
+            throw new BadRequestAlertException("The maximum points value is too high. Maximum allowed is " + Constants.MAX_GRADING_POINTS + ".", ENTITY_NAME,
+                    "examMaxPointsTooHigh");
         }
 
         // Number of exercises: max 100
@@ -591,8 +627,7 @@ public class ExamResource {
 
     /**
      * Checks that the visible/start/end-dates are present and in the correct order.
-     * For real exams: visibleDate < startDate < endDate
-     * For test exams: visibleDate <= startDate < endDate
+     * visibleDate < startDate < endDate
      *
      * @param exam the exam to be checked
      */
@@ -601,19 +636,44 @@ public class ExamResource {
             throw new BadRequestAlertException("An exam has to have times when it becomes visible, starts, and ends as well as a working time.", ENTITY_NAME, "examTimes");
         }
 
-        if (exam.isTestExam()) {
-            if (!(exam.getVisibleDate().isBefore(exam.getStartDate()) || exam.getVisibleDate().isEqual(exam.getStartDate())) || !exam.getStartDate().isBefore(exam.getEndDate())) {
-                throw new BadRequestAlertException("For test exams, the visible date has to be before or equal to the start date and the start date has to be before the end date",
-                        ENTITY_NAME, "examTimes");
-            }
-        }
-        else if (!exam.getVisibleDate().isBefore(exam.getStartDate()) || !exam.getStartDate().isBefore(exam.getEndDate())) {
-            throw new BadRequestAlertException("For real exams, the visible date has to be before the start date and the start date has to be before the end date", ENTITY_NAME,
-                    "examTimes");
+        if (!exam.getVisibleDate().isBefore(exam.getStartDate()) || !exam.getStartDate().isBefore(exam.getEndDate())) {
+            throw new BadRequestAlertException("The visible date has to be before the start date and the start date has to be before the end date", ENTITY_NAME, "examTimes");
         }
 
         if (exam.getExampleSolutionPublicationDate() != null && exam.getExampleSolutionPublicationDate().isBefore(exam.getEndDate())) {
             throw new BadRequestAlertException("Example solutions cannot be published before the end date of an exam.", ENTITY_NAME, "examTimes");
+        }
+
+        if (exam.getExamSummaryPublicationDate() != null) {
+            if (!exam.getExamSummaryPublicationDate().isAfter(exam.getEndDate())) {
+                throw new BadRequestAlertException("The exam summary must be published after the end date of an exam.", ENTITY_NAME, "examTimes");
+            }
+            // the overview must never lag behind the grades: if a publish results date is set, the summary has to be visible no later than the results
+            if (exam.getPublishResultsDate() != null && exam.getExamSummaryPublicationDate().isAfter(exam.getPublishResultsDate())) {
+                throw new BadRequestAlertException("The exam summary cannot be published after the results are published.", ENTITY_NAME, "examTimes");
+            }
+        }
+    }
+
+    /**
+     * Checks that the submission overview would not become visible while a student with an individual working time extension is still writing.
+     * <p>
+     * {@link #checkExamForDatesConflictsElseThrow} only compares against the nominal end date, but individual extensions can push a student exam past it. When the update also
+     * changes the exam duration, {@link ExamService#updateStudentExamsAndRescheduleExercises} rescales those extensions proportionally AFTER this validation runs, so the check
+     * has to look at the PROJECTED working times: an extension that is still below the publication date today can cross it once recalculated. Skipped for exams that do not
+     * exist yet (creation, so no student exams) and for exams without a configured publication date.
+     *
+     * @param exam                 the exam to be checked, already carrying the new dates
+     * @param originalExamDuration the exam duration in seconds before this update
+     */
+    private void checkExamSummaryPublicationDateAfterIndividualEndDatesElseThrow(Exam exam, int originalExamDuration) {
+        if (exam.getId() == null || exam.getExamSummaryPublicationDate() == null || exam.isTestExam()) {
+            return;
+        }
+        ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDateAfterDurationChange(exam, originalExamDuration);
+        if (!exam.getExamSummaryPublicationDate().isAfter(latestIndividualExamEndDate)) {
+            throw new BadRequestAlertException("The exam summary must be published after the individual end date of every student, including working time extensions.", ENTITY_NAME,
+                    "examSummaryPublicationDateBeforeIndividualEnd");
         }
     }
 
@@ -697,7 +757,7 @@ public class ExamResource {
     @GetMapping("exams/active")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ActiveExamDTO>> getAllActiveExams(Pageable pageable) {
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         Page<ActiveExamDTO> page = examService.getAllActiveExams(pageable, user);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
@@ -720,7 +780,7 @@ public class ExamResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<SearchResultPageDTO<ExamForImportListDTO>> getAllExamsOnPage(@RequestParam(defaultValue = "false") boolean withExercises,
             SearchTermPageableSearchDTO<String> search) {
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         SearchResultPageDTO<Exam> page = examService.getAllOnPageWithSize(search, user, withExercises);
         List<ExamForImportListDTO> rows = page.getResultsOnPage().stream().map(ExamForImportListDTO::of).toList();
         return ResponseEntity.ok(new SearchResultPageDTO<>(rows, page.getNumberOfPages()));
@@ -844,7 +904,7 @@ public class ExamResource {
         Course course = exam.getCourse();
         checkExamCourseIdElseThrow(courseId, exam);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
 
         if (ZonedDateTime.now().isBefore(exam.getEndDate()) && authCheckService.isTeachingAssistantInCourse(course, user)) {
@@ -936,16 +996,15 @@ public class ExamResource {
     @GetMapping("courses/{courseId}/exams-for-user")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<ExamForQuestionPoolDTO>> getExamsWithQuizExercisesForUser(@PathVariable Long courseId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         final List<Exam> exams;
-        if (authCheckService.isAdmin(user)) {
+        if (authCheckService.isCurrentUserAdminAccessEnabled()) {
             exams = examRepository.findAllWithQuizExercisesWithEagerExerciseGroupsAndExercises();
         }
         else {
             Course course = courseRepository.findByIdElseThrow(courseId);
             authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
-            var userGroups = new ArrayList<>(user.getGroups());
-            exams = examRepository.getExamsWithQuizExercisesForWhichUserHasInstructorAccess(userGroups);
+            exams = examRepository.getExamsWithQuizExercisesForWhichUserHasInstructorAccess(user.getId());
         }
         return ResponseEntity.ok(exams.stream().map(ExamForQuestionPoolDTO::of).toList());
     }
@@ -1045,7 +1104,10 @@ public class ExamResource {
 
     @NonNull
     private Exam checkAccessForStudentExamGenerationAndLogAuditEvent(Long courseId, Long examId, String auditEventAction) {
-        final Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
+        // Without the exam users: validateForStudentExamGeneration below reads only the exercise groups, and the
+        // generation itself reads the registered students as ids. Fetching them here pulled an ExamUser per student
+        // and, through its eager user association, a select per student on top.
+        final Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
 
         if (exam.isTestExam()) {
             throw new BadRequestAlertException("Generate student exams is only allowed for real exams", ENTITY_NAME, "generateStudentExamsOnlyForRealExams");
@@ -1178,7 +1240,7 @@ public class ExamResource {
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        Optional<User> optionalStudent = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
+        Optional<User> optionalStudent = userRepository.findOneWithAuthoritiesByLogin(studentLogin);
         if (optionalStudent.isEmpty()) {
             throw new EntityNotFoundException("User with login " + studentLogin + " does not exist");
         }
@@ -1241,6 +1303,23 @@ public class ExamResource {
     }
 
     /**
+     * GET /courses/{courseId}/exams-for-overview : Get the exams of a course that are visible to the requesting user.
+     * <p>
+     * Projected to what the sidebar renders. The visibility rules are unchanged: an exam is returned once its visible
+     * date has passed and the user is registered for it, is at least a tutor in the course, or it is a test exam.
+     *
+     * @param courseId the id of the course
+     * @return the ResponseEntity with status 200 (OK) and the exams visible to the user as body
+     */
+    @GetMapping("courses/{courseId}/exams-for-overview")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Set<ExamForOverviewDTO>> getExamsForCourseOverview(@PathVariable long courseId) {
+        log.debug("REST request to get the exams of course {} for the course overview", courseId);
+        User user = userRepository.getUser();
+        return ResponseEntity.ok(examRepository.findAllForOverviewByCourseIdForUser(courseId, user.getId(), ZonedDateTime.now()));
+    }
+
+    /**
      * GET /courses/{courseId}/real-exams-sidebar-data : Get sidebar data for real exams in a course.
      * For the content see {@link ExamSidebarDataDTO}
      *
@@ -1257,18 +1336,21 @@ public class ExamResource {
     }
 
     /**
-     * PUT /courses/:courseId/exams/:examId/exercise-groups-order : Update the order of exercise groups. If the received
-     * exercise groups do not belong to the exam the operation is aborted.
+     * PUT /courses/:courseId/exams/:examId/exercise-groups-order : Update the order of exercise groups. If a received
+     * exercise group id does not belong to the exam the operation is aborted.
+     * <p>
+     * The body is the ids of the exam's exercise groups in the desired order (mirroring
+     * {@code LectureUnitResource.updateLectureUnitsOrder}). The response carries no body: the caller already holds the
+     * fully-detailed groups in exactly this order, so there is nothing to echo.
      *
-     * @param courseId              the id of the course
-     * @param examId                the id of the exam
-     * @param orderedExerciseGroups the exercise groups of the exam in the desired order.
-     * @return the list of exercise groups
+     * @param courseId                the id of the course
+     * @param examId                  the id of the exam
+     * @param orderedExerciseGroupIds the ids of the exam's exercise groups in the desired order
+     * @return 200 (OK) with an empty body once the order is persisted
      */
     @PutMapping("courses/{courseId}/exams/{examId}/exercise-groups-order")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<ExerciseGroup>> updateOrderOfExerciseGroups(@PathVariable Long courseId, @PathVariable Long examId,
-            @RequestBody List<ExerciseGroup> orderedExerciseGroups) {
+    public ResponseEntity<Void> updateOrderOfExerciseGroups(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<Long> orderedExerciseGroupIds) {
         log.debug("REST request to update the order of exercise groups of exam : {}", examId);
 
         examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
@@ -1276,22 +1358,25 @@ public class ExamResource {
         Exam exam = examRepository.findByIdWithExerciseGroupsElseThrow(examId);
 
         // Ensure that exactly as many exercise groups have been received as are currently related to the exam
-        if (orderedExerciseGroups.size() != exam.getExerciseGroups().size()) {
+        if (orderedExerciseGroupIds.size() != exam.getExerciseGroups().size()) {
             throw new BadRequestAlertException("The number of exercise groups changed", ENTITY_NAME, "numberExerciseGroupsChanged");
         }
 
         // Build a map from ID to managed exercise group for reordering
-        var managedGroupsById = new java.util.HashMap<Long, ExerciseGroup>();
+        var managedGroupsById = new HashMap<Long, ExerciseGroup>();
         for (ExerciseGroup managedGroup : exam.getExerciseGroups()) {
             managedGroupsById.put(managedGroup.getId(), managedGroup);
         }
 
-        // Ensure all received exercise groups exist in the exam and build the reordered list using managed entities
-        var reorderedManagedGroups = new java.util.ArrayList<ExerciseGroup>();
-        for (ExerciseGroup exerciseGroup : orderedExerciseGroups) {
-            ExerciseGroup managedGroup = managedGroupsById.get(exerciseGroup.getId());
+        // Ensure the received ids are exactly a permutation of the exam's group ids and build the reordered list using
+        // managed entities. remove() (not get()) also rejects duplicate ids: together with the size check above, a
+        // duplicate would mean another group is omitted from the rebuilt list — and with orphanRemoval on
+        // Exam.exerciseGroups, saving such a list would delete the omitted group and its exercises.
+        var reorderedManagedGroups = new ArrayList<ExerciseGroup>();
+        for (Long exerciseGroupId : orderedExerciseGroupIds) {
+            ExerciseGroup managedGroup = managedGroupsById.remove(exerciseGroupId);
             if (managedGroup == null) {
-                throw new BadRequestAlertException("The exercise group is not related to the exam", ENTITY_NAME, "exerciseGroupNotRelatedToExam");
+                throw new BadRequestAlertException("The exercise group is not related to the exam or appears more than once", ENTITY_NAME, "exerciseGroupNotRelatedToExam");
             }
             reorderedManagedGroups.add(managedGroup);
         }
@@ -1302,8 +1387,7 @@ public class ExamResource {
         exam.getExerciseGroups().addAll(reorderedManagedGroups);
         examRepository.save(exam);
 
-        // Return the original request body as it might contain exercise details (e.g. quiz questions), which would be lost otherwise
-        return ResponseEntity.ok(orderedExerciseGroups);
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -1334,18 +1418,23 @@ public class ExamResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/locked-submissions")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<Submission>> getLockedSubmissionsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<List<LockedExamSubmissionDTO>> getLockedSubmissionsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all locked submissions for course : {}", courseId);
         long start = System.currentTimeMillis();
-        Course course = courseRepository.findWithEagerExercisesById(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+        // The locked submissions are loaded by exam id alone, so authorizing the course on its own would let an
+        // instructor pair a course they manage with another course's exam and read that exam's submissions.
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        User user = userRepository.getUserWithAuthorities();
 
-        List<Submission> submissions = submissionService.getLockedSubmissions(examId, user);
+        List<Submission> submissions = submissionService.getLockedSubmissions(examRepository.findExerciseIdsByExamId(examId), user);
+        // one batched query for the submission counts the assessment-locks table renders; never one query per row
+        List<Long> participationIds = submissions.stream().map(submission -> submission.getParticipation().getId()).distinct().toList();
+        Map<Long, Integer> submissionCounts = studentParticipationRepository.countSubmissionsPerParticipationByIdsAsMap(participationIds);
+        List<LockedExamSubmissionDTO> lockedSubmissions = submissions.stream().map(submission -> LockedExamSubmissionDTO.of(submission, submissionCounts)).toList();
 
         long end = System.currentTimeMillis();
         log.debug("Finished /courses/{}/submissions call in {}ms", courseId, end - start);
-        return ResponseEntity.ok(submissions);
+        return ResponseEntity.ok(lockedSubmissions);
     }
 
     /**

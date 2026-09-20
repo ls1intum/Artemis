@@ -1,4 +1,4 @@
-import { Component, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SidebarEventService } from '../service/sidebar-event.service';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
@@ -25,6 +25,23 @@ export class SidebarCardMediumComponent {
     readonly pageChange = output<string | number>();
     /** Key used for grouping or categorizing sidebar items */
     readonly groupKey = input<string>();
+    /** Id of the entity the detail route currently shows, set by {@link SidebarCardDirective}. */
+    readonly activeItemId = input<number>();
+
+    /**
+     * True when this card stands for a variant group rather than a single exercise. A group has no difficulty of its
+     * own, so the left stripe that would carry the difficulty colour marks it as a group instead.
+     */
+    protected readonly isVariantGroup = computed<boolean>(() => !!this.sidebarItem().groupedItems?.length);
+
+    /**
+     * True when the open detail page belongs to one of this card's grouped members. A variant group is a single card
+     * whose members have no card of their own, so `routerLinkActive` cannot highlight it while a variant is open.
+     */
+    protected readonly containsActiveVariant = computed<boolean>(() => {
+        const activeItemId = this.activeItemId();
+        return activeItemId !== undefined && !!this.sidebarItem().groupedItems?.some((member) => member.id === activeItemId);
+    });
 
     onNonExamCardClicked() {
         this.storeTargetComponentSubRoute();

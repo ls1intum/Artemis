@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.Conversation
 import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -59,13 +60,6 @@ public class ConversationService {
     private static final Logger log = LoggerFactory.getLogger(ConversationService.class);
 
     private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/communication/";
-
-    // Legacy STOMP destination kept in parallel during the migration to /topic/communication/...
-    // Deployed mobile and external clients may still be subscribed here.
-    // TODO: Remove once external clients have migrated. Target sunset: 2026-09-30 — keep in sync with
-    // LegacyApiPathDeprecationInterceptor.SUNSET_DATE.
-    @Deprecated(forRemoval = true, since = "9.3")
-    private static final String LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
 
     private final ConversationDTOService conversationDTOService;
 
@@ -191,10 +185,10 @@ public class ConversationService {
         var conversationsOfUser = new ArrayList<Conversation>();
         List<Channel> channelsOfUser;
         if (course.getCourseInformationSharingConfiguration().isMessagingEnabled()) {
-            var oneToOneChatsOfUser = oneToOneChatRepository.findAllWithParticipantsAndUserGroupsByCourseIdAndUserId(course.getId(), requestingUser.getId());
+            var oneToOneChatsOfUser = oneToOneChatRepository.findAllWithParticipantsAndUserCourseRolesByCourseIdAndUserId(course.getId(), requestingUser.getId());
             conversationsOfUser.addAll(oneToOneChatsOfUser);
 
-            var groupChatsOfUser = groupChatRepository.findGroupChatsOfUserWithParticipantsAndUserGroups(course.getId(), requestingUser.getId());
+            var groupChatsOfUser = groupChatRepository.findGroupChatsOfUserWithParticipantsAndUserCourseRoles(course.getId(), requestingUser.getId());
             conversationsOfUser.addAll(groupChatsOfUser);
         }
 
@@ -224,7 +218,9 @@ public class ConversationService {
         Stream<ConversationSummary> conversationSummaries = conversationsOfUser.stream()
                 .map(conversation -> new ConversationSummary(conversation, userConversationInfos.get(conversation.getId()), generalConversationInfos.get(conversation.getId())));
 
-        return conversationSummaries.map(summary -> conversationDTOService.convertToDTO(summary, requestingUser)).toList();
+        List<ConversationDTO> conversationDTOs = conversationSummaries.map(summary -> conversationDTOService.convertToDTO(summary, requestingUser)).toList();
+        conversationDTOService.fillSubTypeReferenceDates(conversationDTOs);
+        return conversationDTOs;
     }
 
     /**
@@ -358,12 +354,9 @@ public class ConversationService {
      * @param recipients      the users to be messaged
      */
     // TODO: this should be Async
-    @SuppressWarnings("deprecation")
     public void broadcastOnConversationMembershipChannel(Course course, MetisCrudAction metisCrudAction, Conversation conversation, Set<User> recipients) {
         String conversationParticipantTopicName = getConversationParticipantTopicName(course.getId());
-        String legacyConversationParticipantTopicName = getLegacyConversationParticipantTopicName(course.getId());
-        recipients.forEach(
-                user -> sendToConversationMembershipChannel(metisCrudAction, conversation, user, conversationParticipantTopicName, legacyConversationParticipantTopicName));
+        recipients.forEach(user -> sendToConversationMembershipChannel(metisCrudAction, conversation, user, conversationParticipantTopicName));
     }
 
     @NonNull
@@ -371,20 +364,7 @@ public class ConversationService {
         return METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId + "/conversations/user/";
     }
 
-    /**
-     * Legacy variant of {@link #getConversationParticipantTopicName(Long)} kept for the deprecation window.
-     *
-     * @param courseId the id of the course
-     * @return the legacy STOMP destination prefix that the server still mirrors notifications onto
-     */
-    @Deprecated(forRemoval = true, since = "9.3")
-    @NonNull
-    public static String getLegacyConversationParticipantTopicName(Long courseId) {
-        return LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId + "/conversations/user/";
-    }
-
-    private void sendToConversationMembershipChannel(MetisCrudAction metisCrudAction, Conversation conversation, User user, String conversationParticipantTopicName,
-            String legacyConversationParticipantTopicName) {
+    private void sendToConversationMembershipChannel(MetisCrudAction metisCrudAction, Conversation conversation, User user, String conversationParticipantTopicName) {
         ConversationDTO dto;
         if (metisCrudAction.equals(MetisCrudAction.NEW_MESSAGE)) {
             // we do not want to recalculate the whole dto for a new message, just the information needed for updating the unread messages
@@ -392,12 +372,12 @@ public class ConversationService {
         }
         else {
             dto = conversationDTOService.convertToDTO(conversation, user);
+            // Without these the updated channel would replace the sidebar's copy and silently lose its current marker
+            conversationDTOService.fillSubTypeReferenceDates(List.of(dto));
         }
 
         var websocketDTO = new ConversationWebsocketDTO(dto, metisCrudAction);
         websocketMessagingService.sendMessageToUser(user.getLogin(), conversationParticipantTopicName + user.getId(), websocketDTO);
-        // Mirror to the legacy destination so older subscribers still receive updates during the migration window.
-        websocketMessagingService.sendMessageToUser(user.getLogin(), legacyConversationParticipantTopicName + user.getId(), websocketDTO);
     }
 
     /**
@@ -414,34 +394,34 @@ public class ConversationService {
             Optional<ConversationMemberSearchFilters> filter) {
         if (filter.isEmpty()) {
             if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-                return userRepository.searchAllWithGroupsByLoginOrNameInCourseAndReturnPage(pageable, searchTerm, course.getId());
+                return userRepository.searchAllWithCourseRolesByLoginOrNameInCourseAndReturnPage(pageable, searchTerm, course.getId());
             }
-            return userRepository.searchAllWithGroupsByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
+            return userRepository.searchAllWithCourseRolesByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
         }
         else {
-            var groups = new HashSet<String>();
+            var roles = new HashSet<CourseRole>();
             switch (filter.get()) {
-                case INSTRUCTOR -> groups.add(course.getInstructorGroupName());
+                case INSTRUCTOR -> roles.add(CourseRole.INSTRUCTOR);
                 case TUTOR -> {
-                    groups.add(course.getTeachingAssistantGroupName());
+                    roles.add(CourseRole.TEACHING_ASSISTANT);
                     // searching for tutors also searches for editors
-                    groups.add(course.getEditorGroupName());
+                    roles.add(CourseRole.EDITOR);
                 }
-                case STUDENT -> groups.add(course.getStudentGroupName());
+                case STUDENT -> roles.add(CourseRole.STUDENT);
                 case CHANNEL_MODERATOR -> {
                     if (!(conversation instanceof Channel)) {
                         throw new IllegalArgumentException("The filter CHANNEL_MODERATOR is only allowed for channels!");
                     }
-                    return userRepository.searchChannelModeratorsWithGroupsByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
+                    return userRepository.searchChannelModeratorsWithCourseRolesByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
                 }
                 default -> throw new IllegalArgumentException("The filter is not supported.");
             }
 
             if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-                return userRepository.searchAllWithGroupsByLoginOrNameInGroups(pageable, searchTerm, groups);
+                return userRepository.searchAllWithCourseRolesByLoginOrNameInCourseNotUserId(pageable, searchTerm, course.getId(), roles, -1L);
             }
 
-            return userRepository.searchAllWithCourseGroupsByLoginOrNameInConversation(pageable, searchTerm, conversation.getId(), groups);
+            return userRepository.searchAllWithCourseRolesByLoginOrNameInConversation(pageable, searchTerm, conversation.getId(), course.getId(), roles);
         }
 
     }
@@ -497,7 +477,9 @@ public class ConversationService {
         ZonedDateTime now = ZonedDateTime.now();
         var userId = requestingUser.getId();
         List<Long> conversationIds = conversationParticipantRepository.findConversationIdsByUserIdAndCourseId(userId, courseId);
-        conversationParticipantRepository.updateMultipleLastReadAsync(userId, conversationIds, now);
+        if (!conversationIds.isEmpty()) {
+            conversationParticipantRepository.updateMultipleLastReadAsync(userId, conversationIds, now);
+        }
 
         log.debug("Marking all conversations with existing participants as read took {} ms", TimeLogUtil.formatDurationFrom(start));
         start = System.nanoTime();
@@ -535,18 +517,21 @@ public class ConversationService {
      * @return the set of users found in the database
      */
     public Set<User> findUsersInDatabase(Course course, boolean findAllStudents, boolean findAllTutors, boolean findAllInstructors) {
-        Set<User> users = new HashSet<>();
+        Set<CourseRole> roles = new HashSet<>();
         if (findAllStudents) {
-            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getStudentGroupName()));
+            roles.add(CourseRole.STUDENT);
         }
         if (findAllTutors) {
-            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()));
-            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getEditorGroupName()));
+            roles.add(CourseRole.TEACHING_ASSISTANT);
+            roles.add(CourseRole.EDITOR);
         }
         if (findAllInstructors) {
-            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()));
+            roles.add(CourseRole.INSTRUCTOR);
         }
-        return users;
+        if (roles.isEmpty()) {
+            return new HashSet<>();
+        }
+        return userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), roles);
     }
 
     /**
@@ -561,7 +546,7 @@ public class ConversationService {
             if (userLogin == null || userLogin.isEmpty()) {
                 continue;
             }
-            var userToRegister = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userLogin);
+            var userToRegister = userRepository.findOneWithAuthoritiesByLogin(userLogin);
             userToRegister.ifPresent(users::add);
         }
         return users;

@@ -16,7 +16,7 @@
             [ngModel]="cell.data.isSuperAdminApproved"
             [inputId]="'approval-' + cell.data.credentialId"
             (changed)="onApprovalToggle(cell.data)"
-            [attr.aria-label]="'artemisApp.adminPasskeyManagement.toggleApproval' | artemisTranslate"
+            [ariaLabel]="'artemisApp.adminPasskeyManagement.toggleApproval' | artemisTranslate"
             data-testid="passkey-approval-toggle"
         />
         @if (cell.data.isSuperAdminApproved) {

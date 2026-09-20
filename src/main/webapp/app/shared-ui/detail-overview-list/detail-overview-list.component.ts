@@ -15,11 +15,12 @@ import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/asse
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/programming/shared/build-details/programming-exercise-repository-and-build-plan-details/programming-exercise-repository-and-build-plan-details.component';
-import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor.component';
+import { BuildPhasesEditorComponent } from 'app/programming/manage/build-plan-editor/build-phases-editor/build-phases-editor.component';
 import { ExerciseDetailDirective } from './exercise-detail.directive';
 import { NoDataComponent } from '../components/no-data/no-data-component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ProgrammingExerciseTimelineComponent } from '../../programming/shared/programming-exercise-timeline/programming-exercise-timeline.component';
+import { ProgrammingExerciseReadonlyTimelineComponent } from '../../programming/shared/programming-exercise-timeline/programming-exercise-readonly-timeline.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export interface DetailOverviewSection {
     headline: string;
@@ -66,7 +67,7 @@ export enum DetailType {
         ExerciseDetailDirective,
         NoDataComponent,
         ArtemisTranslatePipe,
-        ProgrammingExerciseTimelineComponent,
+        ProgrammingExerciseReadonlyTimelineComponent,
     ],
 })
 export class DetailOverviewListComponent {
@@ -92,7 +93,7 @@ export class DetailOverviewListComponent {
     // headline record to avoid function call in html
     readonly headlinesRecord = computed<Record<string, string>>(() =>
         this.headlines().reduce((previousValue, currentValue) => {
-            return { ...previousValue, [currentValue.translationKey]: currentValue.id };
+            return cloneWith(previousValue, { [currentValue.translationKey]: currentValue.id });
         }, {}),
     );
 

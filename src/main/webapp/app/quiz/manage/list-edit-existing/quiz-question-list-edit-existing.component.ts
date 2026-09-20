@@ -340,12 +340,12 @@ export class QuizQuestionListEditExistingComponent {
         const newQuizQuestions = new Array<QuizQuestion>();
         const files: Map<string, { path: string; file: File }> = new Map<string, { path: string; file: File }>();
         // To make sure all questions are duplicated (new resources are created), we need to remove some fields from the input questions,
-        // This contains removing all ids, duplicating images in case of dnd questions, the question statistic and the exercise
+        // This removes all ids, duplicates images for drag-and-drop questions, and clears the exercise reference.
         let questionIndex = 0;
         for (const question of existingQuizQuestions) {
+            const sourceQuestionId = question.id;
             // do not set question.exercise = this.quizExercise, because it will cause a cycle when converting to json
             question.exercise = undefined;
-            question.quizQuestionStatistic = undefined;
             question.invalid = false;
             question.id = undefined;
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
@@ -384,7 +384,12 @@ export class QuizQuestionListEditExistingComponent {
                             files.set(exportedDragItemFile.name, { path: dragItem.pictureFilePath, file: exportedDragItemFile });
                             dragItem.pictureFilePath = exportedDragItemFile.name;
                         } else {
-                            const dragItemFile = await this.fileService.getFile(dragItem.pictureFilePath, this.filePool());
+                            const storedPicturePath = dragItem.pictureFilePath;
+                            const downloadPath =
+                                sourceQuestionId !== undefined && dragItem.id !== undefined
+                                    ? `drag-and-drop/questions/${sourceQuestionId}/drag-items/${dragItem.id}/${storedPicturePath.substring(storedPicturePath.lastIndexOf('/') + 1)}`
+                                    : storedPicturePath;
+                            const dragItemFile = await this.fileService.getFile(downloadPath, this.filePool());
                             files.set(dragItemFile.name, { path: dragItem.pictureFilePath, file: dragItemFile });
                             dragItem.pictureFilePath = dragItemFile.name;
                         }

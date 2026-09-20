@@ -1,0 +1,61 @@
+:host {
+    position: relative;
+    margin: 0 auto;
+    width: 100px;
+    height: 100px;
+    display: inline-block;
+}
+
+:host::before {
+    content: '';
+    display: block;
+    padding-top: 100%;
+}
+
+.tum-ui-progress-spinner-spin {
+    height: 100%;
+    width: 100%;
+    transform-origin: center center;
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    animation: tum-ui-progress-spinner-rotate 2s linear infinite;
+}
+
+.tum-ui-progress-spinner-circle {
+    stroke-dasharray: 89, 200;
+    stroke-dashoffset: 0;
+    stroke: var(--tumaet-ui-primary-color);
+    stroke-linecap: round;
+    animation: tum-ui-progress-spinner-dash 1.5s ease-in-out infinite;
+}
+
+@keyframes tum-ui-progress-spinner-rotate {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes tum-ui-progress-spinner-dash {
+    0% {
+        stroke-dasharray: 1, 200;
+        stroke-dashoffset: 0;
+    }
+
+    50% {
+        stroke-dasharray: 89, 200;
+        stroke-dashoffset: -35px;
+    }
+
+    100% {
+        stroke-dasharray: 89, 200;
+        stroke-dashoffset: -124px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tum-ui-progress-spinner-spin,
+    .tum-ui-progress-spinner-circle {
+        animation: none;
+    }
+}

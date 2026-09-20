@@ -1,0 +1,103 @@
+import type { Meta, StoryObj } from '@storybook/angular-vite';
+import { expect } from 'storybook/test';
+
+import { formStoryDecorator } from '../../../.storybook/story-decorators';
+import { TumUiInputDirective } from './tum-ui-input.directive';
+import { TumUiInputSize } from './tum-ui-input.variants';
+
+interface InputStoryArgs {
+    label: string;
+    placeholder: string;
+    tumUiInputSize: TumUiInputSize | undefined;
+    tumUiInputInvalid: boolean;
+    disabled: boolean;
+}
+
+const meta = {
+    title: 'Forms/Input',
+    component: TumUiInputDirective,
+    args: {
+        label: 'Course title',
+        placeholder: 'Introduction to Computer Science',
+        tumUiInputSize: undefined,
+        tumUiInputInvalid: false,
+        disabled: false,
+    },
+    argTypes: {
+        tumUiInputSize: {
+            control: 'inline-radio',
+            options: [undefined, 'small', 'large'],
+        },
+    },
+    decorators: [formStoryDecorator],
+    render: (args) => ({
+        props: args,
+        template: `
+            <label for="course-title">{{ label }}</label>
+            <input
+                id="course-title"
+                tumUiInput
+                [placeholder]="placeholder"
+                [tumUiInputSize]="tumUiInputSize"
+                [tumUiInputInvalid]="tumUiInputInvalid"
+                [disabled]="disabled"
+                [attr.aria-invalid]="tumUiInputInvalid || null"
+                [attr.aria-describedby]="tumUiInputInvalid ? 'course-title-error' : null"
+            />
+            @if (tumUiInputInvalid) {
+                <div id="course-title-error" class="tum-ui-story-error" role="alert">Enter a course title.</div>
+            }
+        `,
+    }),
+} satisfies Meta<InputStoryArgs>;
+
+export default meta;
+
+type Story = StoryObj<InputStoryArgs>;
+
+export const Default: Story = {};
+
+export const Invalid: Story = {
+    args: {
+        tumUiInputInvalid: true,
+    },
+    play: async ({ canvas, userEvent }) => {
+        await userEvent.tab();
+        const input = canvas.getByRole('textbox', { name: 'Course title' });
+        await expect(input).toHaveFocus();
+        await expect(getComputedStyle(input).outlineWidth).toBe('2px');
+    },
+};
+
+export const Disabled: Story = {
+    args: {
+        disabled: true,
+    },
+};
+
+export const Multiline: Story = {
+    args: {
+        label: 'Course description',
+        placeholder: 'Describe the course',
+    },
+    render: (args) => ({
+        props: args,
+        template: `
+            <label for="course-description">{{ label }}</label>
+            <textarea
+                id="course-description"
+                tumUiTextarea
+                rows="4"
+                [placeholder]="placeholder"
+                [tumUiInputSize]="tumUiInputSize"
+                [tumUiInputInvalid]="tumUiInputInvalid"
+                [disabled]="disabled"
+                [attr.aria-invalid]="tumUiInputInvalid || null"
+                [attr.aria-describedby]="tumUiInputInvalid ? 'course-description-error' : null"
+            ></textarea>
+            @if (tumUiInputInvalid) {
+                <div id="course-description-error" class="tum-ui-story-error" role="alert">Enter a course description.</div>
+            }
+        `,
+    }),
+};

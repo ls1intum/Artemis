@@ -10,7 +10,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -29,10 +28,10 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.PublicFileUrl;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -65,6 +64,9 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
 
     private FileUploadSubmission lateFileUploadSubmission;
 
+    // Measured baseline for the file upload submit endpoint; upper bound, so a new query fails the build.
+    private static final int FILE_UPLOAD_SUBMIT_QUERY_COUNT = 9;
+
     private final MockMultipartFile validFile = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
 
     private StudentParticipation participation;
@@ -72,7 +74,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
-        Course course = fileUploadExerciseUtilService.addCourseWithFourFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFourFileUploadExercise(TEST_PREFIX);
         releasedFileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         finishedFileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "finished");
         assessedFileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "assessed");
@@ -132,9 +134,18 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     @Test
     @WithMockUser(TEST_PREFIX + "student3")
     void submitFileSpecialExtensions() throws Exception {
-        releasedFileUploadExercise.setFilePattern("ipynb");
-        exerciseRepository.save(releasedFileUploadExercise);
+        fileUploadExerciseUtilService.updateFilePattern(releasedFileUploadExercise.getId(), "ipynb");
         submitFile("test.ipynb", false, MediaType.APPLICATION_OCTET_STREAM);
+    }
+
+    @Test
+    @WithMockUser(TEST_PREFIX + "student3")
+    void submitFileWithAFilePatternThatRepeatsAnEnding() throws Exception {
+        // The exercise validation accepts a pattern that names the same ending twice, so the check on submission has
+        // to tolerate the duplicate rather than reject an upload that the pattern allows.
+        fileUploadExerciseUtilService.updateFilePattern(releasedFileUploadExercise.getId(), "png,png");
+
+        submitFile("file.png", false);
     }
 
     private void submitFile(String filename, boolean differentFilePath) throws Exception {
@@ -166,15 +177,16 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
             }
         }
 
-        URI publicFilePath = FilePathConverter.externalUriForFileSystemPath(actualFilePath, FilePathType.FILE_UPLOAD_SUBMISSION, returnedSubmission.id());
+        String publicFilePath = new PublicFileUrl.FileUploadSubmission(releasedFileUploadExercise.getId(), returnedSubmission.id(), actualFilePath.getFileName().toString())
+                .clientPath();
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
-        assertThat(returnedSubmission.filePath()).isEqualTo(publicFilePath.toString());
+        assertThat(returnedSubmission.filePath()).isEqualTo(publicFilePath);
         assertThat(returnedSubmission.participation().isOwner()).isTrue();
         assertThat(returnedSubmission.results()).isNullOrEmpty();
         var fileBytes = Files.readAllBytes(actualFilePath);
         assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
 
-        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, returnedSubmission.filePath());
+        String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, returnedSubmission.filePath());
         MvcResult file = request.performMvcRequest(get(requestUrl)).andExpect(status().isOk()).andExpect(content().contentType(expectedMediaType)).andReturn();
         assertThat(file.getResponse().getContentAsByteArray()).isEqualTo(validFile.getBytes());
     }
@@ -201,7 +213,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExamExerciseSubmission_withoutParticipation() throws Exception {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var course = courseUtilService.createCourse();
+        var course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(course, user);
 
         var exam = examRepository.findByCourseId(course.getId()).getFirst();
@@ -245,7 +257,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
 
         List<FileUploadSubmissionDTO> submissions = assertThatDb(
                 () -> request.getList("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", HttpStatus.OK, FileUploadSubmissionDTO.class))
-                .hasBeenCalledAtMostTimes(10);
+                .hasBeenCalledAtMostTimes(9);
 
         assertThat(submissions).extracting(FileUploadSubmissionDTO::id).containsExactlyInAnyOrder(submission1.getId(), submission2.getId());
     }
@@ -309,7 +321,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         FileUploadSubmissionDTO storedSubmission = assertThatDb(
                 () -> request.get("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.OK,
                         FileUploadSubmissionDTO.class))
-                .hasBeenCalledAtMostTimes(10);
+                .hasBeenCalledAtMostTimes(7);
 
         assertThat(storedSubmission).as("no submission eligible for new assessment").isNull();
     }
@@ -413,7 +425,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getFileUploadSubmissionWithoutAssessment_wrongExerciseType() throws Exception {
-        Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        Course course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         ModelingExercise modelingExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         request.get("/api/fileupload/exercises/" + modelingExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.BAD_REQUEST, FileUploadSubmissionDTO.class);
     }
@@ -486,7 +498,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void getDataForFileUpload_wrongExerciseType() throws Exception {
-        Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        Course course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         ModelingExercise modelingExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         Participation modelingExerciseParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
         FileUploadSubmissionDTO submission = request.get("/api/fileupload/participations/" + modelingExerciseParticipation.getId() + "/file-upload-editor", HttpStatus.BAD_REQUEST,
@@ -525,9 +537,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
 
         var course = submission.participation().exercise().course();
         var expectedCourse = assessedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember();
-        assertThat(course.teachingAssistantGroupName()).isEqualTo(expectedCourse.getTeachingAssistantGroupName());
-        assertThat(course.editorGroupName()).isEqualTo(expectedCourse.getEditorGroupName());
-        assertThat(course.instructorGroupName()).isEqualTo(expectedCourse.getInstructorGroupName());
+        assertThat(course.id()).isEqualTo(expectedCourse.getId());
         assertThat(course.maxComplaints()).isEqualTo(expectedCourse.getMaxComplaints());
         assertThat(course.maxTeamComplaints()).isEqualTo(expectedCourse.getMaxTeamComplaints());
         assertThat(course.maxComplaintTimeDays()).isEqualTo(expectedCourse.getMaxComplaintTimeDays());
@@ -589,6 +599,18 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
                 FileUploadSubmissionDTO.class, HttpStatus.FORBIDDEN);
     }
 
+    /**
+     * Guards the file upload submit endpoint, which the exam simulation drives once per student per file upload
+     * exercise. Measured baseline as an upper bound, so a new query fails the build.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
+    void testSubmitFileUploadQueryCount() throws Exception {
+        assertThatDb(() -> request.postWithMultipartFile("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions",
+                submissionInput(notSubmittedFileUploadSubmission, releasedFileUploadExercise.getId()), "submission", validFile, FileUploadSubmissionDTO.class, HttpStatus.OK))
+                .hasBeenCalledAtMostTimes(FILE_UPLOAD_SUBMIT_QUERY_COUNT);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
     void submitExercise_beforeDueDate_allowed() throws Exception {
@@ -613,7 +635,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         final MockMultipartFile tooLargeFile = new MockMultipartFile("file", "file.png", "application/json", new String(charsTooLarge).getBytes());
         request.postWithMultipartFile("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions",
                 submissionInput(submittedFileUploadSubmission, releasedFileUploadExercise.getId()), "submission", tooLargeFile, FileUploadSubmissionDTO.class,
-                HttpStatus.PAYLOAD_TOO_LARGE);
+                HttpStatus.CONTENT_TOO_LARGE);
     }
 
     @Test

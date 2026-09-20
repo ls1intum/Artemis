@@ -18,9 +18,6 @@ export interface FileUploadCourseContextDTO {
     id?: number;
     title?: string;
     shortName?: string;
-    teachingAssistantGroupName?: string;
-    editorGroupName?: string;
-    instructorGroupName?: string;
     accuracyOfScores?: number;
     maxComplaints?: number;
     maxTeamComplaints?: number;

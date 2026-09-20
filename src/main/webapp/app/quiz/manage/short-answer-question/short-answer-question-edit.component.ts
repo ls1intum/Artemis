@@ -22,7 +22,6 @@ import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mappin
 import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.interface';
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
-import { cloneDeep } from 'lodash-es';
 import { QuizQuestion, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { markdownForHtml } from 'app/foundation/util/markdown.conversion.util';
 import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/foundation/util/markdown.util';
@@ -54,6 +53,7 @@ import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-short-answer-question-edit',
@@ -161,7 +161,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
             }
             this.shortAnswerQuestion = this.question() as ShortAnswerQuestion;
 
-            this.backupQuestion = cloneDeep(this.shortAnswerQuestion);
+            this.backupQuestion = deepClone(this.shortAnswerQuestion);
             this.textParts.set(this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text!));
 
             if (!this.firstChange) {
@@ -512,6 +512,9 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
         this.shortAnswerQuestion.solutions = this.shortAnswerQuestion.solutions?.filter((solution) => solution !== solutionToDelete);
         this.deleteMappingsForSolution(solutionToDelete);
         this.questionEditorText.set(this.generateMarkdown());
+        // The parent caches the reasons a blocked save explains itself with, but reads the validity itself live.
+        // Changing one without telling it leaves Save refusing to submit under an empty tooltip.
+        this.questionUpdated.emit();
     }
 
     /**
@@ -543,7 +546,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
                     this.shortAnswerQuestionUtil.isSameSpot(existingMapping.spot, spot) && this.shortAnswerQuestionUtil.isSameSolution(existingMapping.solution, dragItem),
             )
         ) {
-            this.deleteMapping(this.getMappingsForSolution(dragItem).filter((mapping) => mapping.spot === undefined)[0]);
+            this.removeMapping(this.getMappingsForSolution(dragItem).filter((mapping) => mapping.spot === undefined)[0]);
             // Mapping doesn't exit yet => add this mapping
             const saMapping = new ShortAnswerMapping(spot, dragItem);
             this.shortAnswerQuestion.correctMappings.push(saMapping);
@@ -619,6 +622,19 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
      * @param mappingToDelete {object} the mapping to delete
      */
     deleteMapping(mappingToDelete: ShortAnswerMapping): void {
+        this.removeMapping(mappingToDelete);
+        // The parent caches the reasons a blocked save explains itself with, but reads the validity itself live.
+        // Changing one without telling it leaves Save refusing to submit under an empty tooltip.
+        this.questionUpdated.emit();
+    }
+
+    /**
+     * Removes the mapping without announcing it, for callers that go on to change more before they do.
+     *
+     * A drop deletes the old mapping and adds the new one; announcing between the two would have the parent judge a
+     * question that is briefly missing both.
+     */
+    private removeMapping(mappingToDelete: ShortAnswerMapping): void {
         if (!this.shortAnswerQuestion.correctMappings) {
             this.shortAnswerQuestion.correctMappings = [];
         }
@@ -679,6 +695,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
      */
     resetQuestionTitle() {
         this.shortAnswerQuestion.title = this.backupQuestion.title;
+        this.questionUpdated.emit();
     }
 
     /**
@@ -686,8 +703,14 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
      * @desc Resets the question text by using the text of the backupQuestion (which has the original text of the question)
      */
     resetQuestionText() {
+        this.restoreQuestionText();
+        this.questionUpdated.emit();
+    }
+
+    /** Restores the text without notifying, so a full reset emits once when everything is back. */
+    private restoreQuestionText() {
         this.shortAnswerQuestion.text = this.backupQuestion.text;
-        this.shortAnswerQuestion.spots = cloneDeep(this.backupQuestion.spots);
+        this.shortAnswerQuestion.spots = deepClone(this.backupQuestion.spots);
         this.shortAnswerQuestion.explanation = this.backupQuestion.explanation;
         this.shortAnswerQuestion.hint = this.backupQuestion.hint;
 
@@ -699,14 +722,15 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
      * @desc Resets the whole question by using the backupQuestion (which is the original question)
      */
     resetQuestion() {
-        this.resetQuestionTitle();
+        this.shortAnswerQuestion.title = this.backupQuestion.title;
         this.shortAnswerQuestion.invalid = this.backupQuestion.invalid;
         this.shortAnswerQuestion.randomizeOrder = this.backupQuestion.randomizeOrder;
         this.shortAnswerQuestion.scoringType = this.backupQuestion.scoringType;
-        this.shortAnswerQuestion.solutions = cloneDeep(this.backupQuestion.solutions);
-        this.shortAnswerQuestion.correctMappings = cloneDeep(this.backupQuestion.correctMappings);
-        this.shortAnswerQuestion.spots = cloneDeep(this.backupQuestion.spots);
-        this.resetQuestionText();
+        this.shortAnswerQuestion.solutions = deepClone(this.backupQuestion.solutions);
+        this.shortAnswerQuestion.correctMappings = deepClone(this.backupQuestion.correctMappings);
+        this.shortAnswerQuestion.spots = deepClone(this.backupQuestion.spots);
+        this.restoreQuestionText();
+        this.questionUpdated.emit();
     }
 
     /**
@@ -740,6 +764,9 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
         this.shortAnswerQuestion.text = this.textParts()
             .map((textPart) => textPart.join(' '))
             .join('\n');
+        // The parent caches the reasons a blocked save explains itself with, but reads the validity itself live.
+        // Changing one without telling it leaves Save refusing to submit under an empty tooltip.
+        this.questionUpdated.emit();
     }
 
     /**
@@ -767,6 +794,9 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
             .join('\n');
 
         this.refillTextParts(this.shortAnswerQuestion.text);
+        // The parent caches the reasons a blocked save explains itself with, but reads the validity itself live.
+        // Changing one without telling it leaves Save refusing to submit under an empty tooltip.
+        this.questionUpdated.emit();
     }
 
     /**

@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +14,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.dto.TutorEffortDTO;
 import de.tum.cit.aet.artemis.assessment.repository.TextAssessmentEventRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -41,6 +41,9 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentBat
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
+    @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
+
     private Course course;
 
     private Exercise exercise;
@@ -54,13 +57,11 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentBat
      */
     @BeforeEach
     void initTestCase() {
-        course = courseUtilService.createCourseWithTextExerciseAndTutor(TEST_PREFIX + "tutor1");
+        userUtilService.addUsers(TEST_PREFIX, 0, 1, 0, 1);
+        course = courseUtilService.createEnrolledCourseWithTextExercise(TEST_PREFIX);
         exercise = course.getExercises().iterator().next();
         studentParticipation = studentParticipationRepository.findByExerciseId(exercise.getId()).stream().iterator().next();
         textSubmission = textSubmissionTestRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId()).iterator().next();
-        var instructor = userUtilService.createAndSaveUser(TEST_PREFIX + "instructor");
-        instructor.setGroups(Set.of(course.getInstructorGroupName()));
-        userTestRepository.save(instructor);
     }
 
     /**
@@ -68,7 +69,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentBat
      * timestamps of 1 minute but
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCalculateTutorEfforts0MinutesOneTimestamp() throws Exception {
         List<TextAssessmentEvent> events = createTextAssessmentEventsInIntervals(1, 1);
 
@@ -88,7 +89,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentBat
      * between timestamps of 5 minutes.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCalculateTutorEffortsDistance5Minutes() throws Exception {
         List<TextAssessmentEvent> events = createTextAssessmentEventsInIntervals(6, 5);
 
@@ -109,7 +110,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentBat
      * as it is referred as a period of inactivity
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCalculateTutorEffortsDistance10Minutes() throws Exception {
         List<TextAssessmentEvent> events = createTextAssessmentEventsInIntervals(11, 10);
         textAssessmentEventRepository.saveAll(events);

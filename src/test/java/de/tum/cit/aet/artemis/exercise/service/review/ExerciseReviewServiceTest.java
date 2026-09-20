@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -99,7 +100,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     @BeforeEach
     void initTest() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
         programmingExercise.setProblemStatement("Line 1\nLine 2\nLine 3");
@@ -312,6 +313,29 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
             assertThat(thread.getInitialCommitSha()).isEqualTo(expectedCommitSha);
             assertThat(thread.getComments()).singleElement().extracting(Comment::getType).isEqualTo(CommentType.CONSISTENCY_CHECK);
         });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldBuildInlineFixForTextFileWithBinaryListedExtension() throws Exception {
+        LocalRepoWithGit templateRepo = createLocalRepositoryWithGit("template-shell-inline-fix");
+        pushFileToRepository(templateRepo, "check.sh", "#!/bin/sh\necho old\n");
+
+        var templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(templateRepo.uri().toString());
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
+
+        ConsistencyIssueDTO issue = new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, "Update shell check", "Use the new output",
+                List.of(new ArtifactLocationDTO(ArtifactType.TEMPLATE_REPOSITORY, "check.sh", 2, 2, "echo new")));
+
+        exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue));
+
+        CommentThread thread = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId()).iterator().next();
+        ConsistencyIssueCommentContentDTO content = (ConsistencyIssueCommentContentDTO) thread.getComments().iterator().next().getContent();
+        assertThat(content.suggestedFix()).isNotNull();
+        assertThat(content.suggestedFix().expectedCode()).isEqualTo("echo old");
+        assertThat(content.suggestedFix().replacementCode()).isEqualTo("echo new");
     }
 
     @Test
@@ -856,7 +880,8 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         auxiliaryRepository.setExercise(programmingExercise);
         programmingExercise.getAuxiliaryRepositories().add(auxiliaryRepository);
         programmingExerciseRepository.save(programmingExercise);
-        auxiliaryRepository = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow().getAuxiliaryRepositories().getFirst();
+        auxiliaryRepository = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow().getAuxiliaryRepositories().iterator()
+                .next();
 
         String commitSha = exerciseReviewService.resolveLatestCommitSha(CommentThreadLocationType.AUXILIARY_REPO, auxiliaryRepository.getId(), programmingExercise.getId());
 
@@ -1306,8 +1331,8 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     private ExerciseSnapshotDTO buildExerciseSnapshot(long exerciseId, String problemStatement, ProgrammingExerciseSnapshotDTO programmingData) {
-        return new ExerciseSnapshotDTO(exerciseId, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, problemStatement, null,
-                null, null, null, null, null, null, null, programmingData, null, null, null, null);
+        return new ExerciseSnapshotDTO(exerciseId, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, problemStatement, null, null,
+                null, null, null, null, null, programmingData, null, null, null, null);
     }
 
     private ProgrammingExerciseSnapshotDTO buildProgrammingSnapshot(String testRepositoryUri, String testsCommitId,
@@ -1367,7 +1392,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     private LocalRepoWithGit createLocalRepositoryWithGit(String suffix) throws Exception {
-        String repositorySlug = programmingExercise.getProjectKey().toLowerCase() + "-" + suffix;
+        String repositorySlug = programmingExercise.getProjectKey().toLowerCase(Locale.ROOT) + "-" + suffix;
         localVCService.createProjectForExercise(programmingExercise);
         localVCService.createRepository(programmingExercise.getProjectKey(), repositorySlug);
         LocalVCRepositoryUri repositoryUri = new LocalVCRepositoryUri(localVCBaseUri, programmingExercise.getProjectKey(), repositorySlug);

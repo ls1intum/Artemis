@@ -7,10 +7,13 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.ConcreteProxy;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -19,11 +22,11 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * A SubmittedAnswer.
  */
-// No @Cache here on purpose: parent of MC/DnD/SA submitted answers, inserted on every live save/submit. See #12574 / #12584.
 @Entity
 @Table(name = "submitted_answer")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
@@ -33,7 +36,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 // add JsonTypeInfo and JsonSubTypes annotation to help Jackson decide which class the JSON should be deserialized to
 // depending on the value of the "type" property.
-// Note: The "type" property has to be added on the front-end when making a request that includes a SubmittedAnswer Object
+// Note: The "type" property has to be added by the client when making a request that includes a SubmittedAnswer Object
 // However, the "type" property will be automatically added by Jackson when an object is serialized
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // @formatter:off
@@ -51,11 +54,23 @@ public abstract class SubmittedAnswer extends DomainObject {
 
     @ManyToOne
     @JsonIgnoreProperties({ "questionStatistic", "exercise" })
+    @JoinColumn(nullable = false)
     private QuizQuestion quizQuestion;
 
     @ManyToOne
     @JsonIgnore
+    @JoinColumn(nullable = false)
+    @Parent
     private QuizSubmission submission;
+
+    // The student's submitted selection, stored as JSON instead of separate relational child tables/join tables (see SubmittedAnswerSelection). All three submitted-answer types
+    // (drag-and-drop, multiple-choice, short-answer) use it.
+    // @JsonIgnore because this is an internal storage representation: subclasses expose the selection through their existing getters (e.g. getMappings()),
+    // preserving the REST/websocket wire format.
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "selection")
+    @JsonIgnore
+    private SubmittedAnswerSelection selection;
 
     public Double getScoreInPoints() {
         return scoreInPoints;
@@ -79,6 +94,14 @@ public abstract class SubmittedAnswer extends DomainObject {
 
     public void setSubmission(QuizSubmission quizSubmission) {
         this.submission = quizSubmission;
+    }
+
+    protected SubmittedAnswerSelection getSelection() {
+        return selection;
+    }
+
+    protected void setSelection(SubmittedAnswerSelection selection) {
+        this.selection = selection;
     }
 
     /**

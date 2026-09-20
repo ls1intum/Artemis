@@ -20,6 +20,8 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
 import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';
 import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
+import { IrisCommand } from 'app/iris/shared/entities/iris-command.model';
+import { IrisPointOut, parsePointOut } from 'app/iris/shared/entities/iris-point-out.model';
 import { randomInt } from 'app/foundation/util/utils';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { ChatServiceMode, SessionContext, sameSessionContext } from 'app/iris/shared/entities/iris-session-context.model';
@@ -27,6 +29,7 @@ import { IrisChatContextService } from 'app/iris/overview/services/iris-chat-con
 import { parseJson } from 'app/foundation/util/json.util';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IrisActivityItem, IrisRunState, IrisStatusError } from 'app/iris/shared/entities/iris-activity.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export { ChatServiceMode } from 'app/iris/shared/entities/iris-session-context.model';
 export type { SessionContext } from 'app/iris/shared/entities/iris-session-context.model';
@@ -104,6 +107,7 @@ export class IrisChatService implements OnDestroy {
     private chatSessionByIdSubscription?: Subscription;
     private sessionLoadingSubscription?: Subscription;
     private websocketSessionSubscription?: Subscription;
+    private websocketCommandSubscription?: Subscription;
     private authenticationStateSubscription: Subscription;
 
     /**
@@ -137,10 +141,23 @@ export class IrisChatService implements OnDestroy {
     private shouldReopenChatSubject = new BehaviorSubject<boolean>(false);
     public shouldReopenChat$ = this.shouldReopenChatSubject.asObservable();
 
+    // Emits when Iris points the student to a position in the combined view, either pushed by the server
+    // mid-pipeline (then it carries a correlationId to acknowledge) or raised by a marker click in the chat
+    // history. The lecture combined view subscribes and navigates.
+    private pointOutSubject = new Subject<IrisPointOut>();
+    public pointOut$ = this.pointOutSubject.asObservable();
+
     private llmOptedOutSubject = new Subject<void>();
     public llmOptedOut$ = this.llmOptedOutSubject.asObservable();
 
     hasJustAcceptedLLMUsage = false;
+
+    /**
+     * The AI-experience decision as last confirmed by the server, captured before an optimistic update so a failed
+     * update can be rolled back. Set while a consent request is in flight and cleared once it settles, so a rapid
+     * second choice does not overwrite it with the first choice's unpersisted value.
+     */
+    private lastConfirmedDecision?: { decision?: LLMSelectionDecision; timestamp?: dayjs.Dayjs };
 
     /**
      * This property should only be used internally in {@link getCourseId()} and {@link setCourseId()}.
@@ -191,6 +208,8 @@ export class IrisChatService implements OnDestroy {
         }
         this.websocketSessionSubscription?.unsubscribe();
         this.websocketSessionSubscription = undefined;
+        this.websocketCommandSubscription?.unsubscribe();
+        this.websocketCommandSubscription = undefined;
         this.chatSessionSubscription?.unsubscribe();
         this.chatSessionSubscription = undefined;
         this.chatSessionByIdSubscription?.unsubscribe();
@@ -215,6 +234,9 @@ export class IrisChatService implements OnDestroy {
         // Plain fields.
         this.latestStartedSession = undefined;
         this.hasJustAcceptedLLMUsage = false;
+        // The snapshot belongs to the user whose consent request was just cancelled above. Keeping it would
+        // make the next user's rollback restore the previous user's decision into their identity cache.
+        this.lastConfirmedDecision = undefined;
         this.rateLimitInfo = undefined;
     }
 
@@ -268,6 +290,7 @@ export class IrisChatService implements OnDestroy {
         this.chatSessionByIdSubscription?.unsubscribe();
         this.sessionLoadingSubscription?.unsubscribe();
         this.websocketSessionSubscription?.unsubscribe();
+        this.websocketCommandSubscription?.unsubscribe();
         this.authenticationStateSubscription.unsubscribe();
     }
 
@@ -281,10 +304,7 @@ export class IrisChatService implements OnDestroy {
             this.hasJustAcceptedLLMUsage
         ) {
             this.sessionLoadingSubscription?.unsubscribe();
-            this.sessionLoadingSubscription = this.getCurrentSessionOrCreate().subscribe({
-                ...this.handleNewSession(),
-                complete: () => this.loadChatSessions(),
-            });
+            this.sessionLoadingSubscription = this.getCurrentSessionOrCreate().subscribe(cloneWith(this.handleNewSession(), { complete: () => this.loadChatSessions() }));
         }
     }
 
@@ -301,6 +321,9 @@ export class IrisChatService implements OnDestroy {
      */
     public sendMessage(message: string, uncommittedFiles: { [path: string]: string } = {}, context?: IrisMessageContextDTO[]): Observable<undefined> {
         if (!this.sessionId) {
+            // Surface this instead of failing silently: onSend() clears the textarea regardless of the
+            // outcome, so a swallowed error drops the user's message without telling them anything.
+            this.error.next(IrisErrorMessageKey.SEND_MESSAGE_FAILED);
             return throwError(() => new Error('Not initialized'));
         }
 
@@ -310,7 +333,16 @@ export class IrisChatService implements OnDestroy {
         const pendingContext = this.contextService.pending();
         const pendingContextDTO = pendingContext ? { mode: pendingContext.mode, entityId: pendingContext.entityId } : undefined;
         const requestSessionId = this.sessionId;
-        const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text(message)], randomInt(), uncommittedFiles, pendingContextDTO, context);
+        const requestDTO: IrisMessageRequestDTO = {
+            content: [IrisMessageContentDTO.text(message)],
+            messageDifferentiator: randomInt(),
+            uncommittedFiles,
+            pendingContext: pendingContextDTO,
+            context,
+            // Travels with the message so a command Iris issues while answering comes back addressed to this tab
+            // rather than to every tab the user has the session open in.
+            clientId: this.irisWebsocketService.clientId,
+        };
 
         const generation = this.stateGeneration;
         this.openPendingRunGeneration();
@@ -325,7 +357,7 @@ export class IrisChatService implements OnDestroy {
                         .getValue()
                         .map((session) =>
                             session.id === requestSessionId
-                                ? { ...session, mode: pendingContext.mode, entityId: pendingContext.entityId, entityName: pendingContext.entityName ?? session.entityName }
+                                ? cloneWith(session, { mode: pendingContext.mode, entityId: pendingContext.entityId, entityName: pendingContext.entityName ?? session.entityName })
                                 : session,
                         );
                     this.chatSessions.next(updatedSessions);
@@ -393,7 +425,7 @@ export class IrisChatService implements OnDestroy {
 
         const generation = this.stateGeneration;
         this.openPendingRunGeneration();
-        return this.irisChatHttpService.resendMessage(this.sessionId, message).pipe(
+        return this.irisChatHttpService.resendMessage(this.sessionId, message, this.irisWebsocketService.clientId).pipe(
             map((r: HttpResponse<IrisMessageResponseDTO>) => this.mapMessageDTO(r.body!)),
             tap((m) => {
                 if (this.stateGeneration !== generation) return;
@@ -448,16 +480,34 @@ export class IrisChatService implements OnDestroy {
     }
 
     public updateLLMUsageConsent(accepted: LLMSelectionDecision): void {
+        // Publish the decision to the cached user identity right away, before the request resolves: the chatbot
+        // gates the "Choose Your AI Experience" modal on `userIdentity().selectedLLMUsage`, so a chat that is
+        // (re-)opened while the request is still in flight would otherwise read the stale value and ask the user
+        // to choose again. Reverted in the error handlers below if persisting the decision fails.
+        //
+        // The snapshot is only taken when nothing is in flight. A second choice made while the first request is
+        // still running would otherwise capture that first, unpersisted decision as its "previous" value and
+        // roll back to something the server may never have stored.
+        const identity = this.accountService.userIdentity();
+        this.lastConfirmedDecision ??= { decision: identity?.selectedLLMUsage, timestamp: identity?.selectedLLMUsageTimestamp };
+        const snapshot = this.lastConfirmedDecision;
+        const revertDecision = () => {
+            this.lastConfirmedDecision = undefined;
+            this.accountService.restoreUserLLMSelectionDecision(snapshot.decision, snapshot.timestamp);
+        };
+        this.accountService.setUserLLMSelectionDecision(accepted);
+
         if (accepted === LLMSelectionDecision.NO_AI) {
             this.hasJustAcceptedLLMUsage = false;
             this.acceptSubscription?.unsubscribe();
             this.acceptSubscription = this.userService.updateLLMSelectionDecision(accepted).subscribe({
                 next: () => {
-                    this.accountService.setUserLLMSelectionDecision(accepted);
+                    this.lastConfirmedDecision = undefined;
                     this.llmOptedOutSubject.next();
                     this.close();
                 },
                 error: () => {
+                    revertDecision();
                     this.error.next(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE);
                     this.close();
                 },
@@ -467,11 +517,18 @@ export class IrisChatService implements OnDestroy {
         this.acceptSubscription?.unsubscribe();
         this.acceptSubscription = this.userService.updateLLMSelectionDecision(accepted).subscribe({
             next: () => {
+                this.lastConfirmedDecision = undefined;
                 this.hasJustAcceptedLLMUsage = true;
-                this.accountService.setUserLLMSelectionDecision(accepted);
-                this.closeAndStart();
+                // Only start the session that could not be created before the user opted in (the server rejects
+                // session creation without consent). If one is already established — the chat was reopened right
+                // after the choice and start() succeeded on its own — leave it alone: closing it here would drop
+                // the websocket subscription and discard the response to a message the user already sent.
+                if (!this.sessionId) {
+                    this.closeAndStart();
+                }
             },
             error: () => {
+                revertDecision();
                 this.error.next(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE);
             },
         });
@@ -565,6 +622,8 @@ export class IrisChatService implements OnDestroy {
                 this.initialLoadCompleteSubject.next(true);
                 this.websocketSessionSubscription?.unsubscribe();
                 this.websocketSessionSubscription = this.irisWebsocketService.subscribeToSession(this.sessionId).subscribe((message) => this.handleWebsocketMessage(message));
+                this.websocketCommandSubscription?.unsubscribe();
+                this.websocketCommandSubscription = this.irisWebsocketService.subscribeToSessionCommands(this.sessionId).subscribe((command) => this.handleCommand(command));
             },
             error: (error: IrisErrorMessageKey) => {
                 this.error.next(error);
@@ -600,11 +659,11 @@ export class IrisChatService implements OnDestroy {
         }
         if (payload.sessionTitle && this.sessionId) {
             if (this.latestStartedSession?.id === this.sessionId) {
-                this.latestStartedSession = { ...this.latestStartedSession, title: payload.sessionTitle };
+                this.latestStartedSession = cloneWith(this.latestStartedSession, { title: payload.sessionTitle });
             }
 
             // Update the observable list immutably so OnPush change detection picks up the new title immediately.
-            const updatedSessions = this.chatSessions.getValue().map((session) => (session.id === this.sessionId ? { ...session, title: payload.sessionTitle } : session));
+            const updatedSessions = this.chatSessions.getValue().map((session) => (session.id === this.sessionId ? cloneWith(session, { title: payload.sessionTitle }) : session));
             this.chatSessions.next(updatedSessions);
         }
         if (payload.citationInfo?.length) {
@@ -681,7 +740,7 @@ export class IrisChatService implements OnDestroy {
             this.finalizedRunIds.add(payload.runId);
             this.lastSeenPartialSeqByRunId.delete(payload.runId);
         }
-        // The backend can resend an already-persisted assistant message (same id) to
+        // The server can resend an already-persisted assistant message (same id) to
         // attach createdMemories; only fire the unread-badge side effects for a new id.
         const isNewMessage = payload.message?.id === undefined || !this.messages.getValue().some((existing) => existing.id === payload.message!.id);
         if (payload.message?.sender === IrisSender.LLM) {
@@ -772,7 +831,7 @@ export class IrisChatService implements OnDestroy {
     }
 
     private mapMessageDTO(dto: IrisMessageResponseDTO): IrisMessage {
-        return Object.assign({}, dto, {
+        return cloneWith(dto, {
             sentAt: dto.sentAt ? dayjs(dto.sentAt) : undefined,
         }) as IrisMessage;
     }
@@ -786,6 +845,8 @@ export class IrisChatService implements OnDestroy {
             this.irisWebsocketService.unsubscribeFromSession(this.sessionId);
             this.websocketSessionSubscription?.unsubscribe();
             this.websocketSessionSubscription = undefined;
+            this.websocketCommandSubscription?.unsubscribe();
+            this.websocketCommandSubscription = undefined;
             this.sessionId = undefined;
             this.messages.next([]);
             this.resetRunTracking();
@@ -913,10 +974,7 @@ export class IrisChatService implements OnDestroy {
         if (!isFreshCourseSession && courseId) {
             this.close();
             this.sessionLoadingSubscription?.unsubscribe();
-            this.sessionLoadingSubscription = this.createCourseSession().subscribe({
-                ...this.handleNewSession(),
-                complete: () => this.loadChatSessions(),
-            });
+            this.sessionLoadingSubscription = this.createCourseSession().subscribe(cloneWith(this.handleNewSession(), { complete: () => this.loadChatSessions() }));
         }
     }
 
@@ -1066,5 +1124,91 @@ export class IrisChatService implements OnDestroy {
      */
     public setShouldReopenChat(value: boolean): void {
         this.shouldReopenChatSubject.next(value);
+    }
+
+    /**
+     * Triggers navigation to a point-out marker's position, (re)opening the combined view if needed.
+     * Used when the student clicks a COMMAND marker in the chat history.
+     *
+     * The lecture unit that carries out a point-out only listens while it is on screen. Chat history, however, opens a
+     * lecture session from anywhere — the course Iris page above all — and there the marker would emit into the void
+     * and the click would do nothing at all. So when the marker's lecture is not the one the route is showing, the
+     * target is handed to that lecture's deep link instead, which reaches the same position through the route and
+     * applies it as the page builds. Only a marker whose lecture is already open is delivered in place, where the
+     * combined view can move without a reload.
+     *
+     * The lecture comes off the marker rather than out of the session's context: a conversation can be switched to
+     * another lecture after a point-out was made, and an older marker still points where it pointed then.
+     * @param pointOut the navigation target (the caller should set forceOpen to reopen a closed view)
+     */
+    public navigateToPointOut(pointOut: IrisPointOut): void {
+        const courseId = this.getCourseId();
+        const pageContext = this.contextService.page();
+        const showsMarkersLecture = pageContext?.mode === ChatServiceMode.LECTURE && pageContext.entityId === pointOut.lectureId;
+        if (pointOut.lectureId != undefined && courseId && !showsMarkersLecture) {
+            // Same deep link the lecture citations use, so both ways of pointing at a position arrive the same way.
+            // Unlike a citation it also asks for the combined view, which is where Iris did the pointing and where
+            // the toggle and its explanation live — otherwise the same click would land in a different place
+            // depending on which page the student happened to start from.
+            const queryParams: Record<string, number | boolean> = { unit: pointOut.lectureUnitId, combined: true };
+            if (pointOut.page != undefined) {
+                queryParams.page = pointOut.page;
+            }
+            // displayPage labels the marker but is not a navigation coordinate. A routed combined view starts with
+            // synchronization disabled, so it also cannot need the in-place mismatch notice that uses this label.
+            if (pointOut.timestamp != undefined) {
+                queryParams.timestamp = pointOut.timestamp;
+            }
+            void this.router.navigate(['/courses', courseId, 'lectures', pointOut.lectureId], { queryParams });
+            return;
+        }
+        this.pointOutSubject.next(pointOut);
+    }
+
+    /**
+     * Carries out a command pushed by the server, dispatching on its type. Supporting a further type means adding a
+     * case here. Anything else — including a command whose parameters do not hold up — is acknowledged as not applied
+     * right away, so the waiting pipeline learns the outcome instead of running into its ack timeout.
+     *
+     * Commands addressed to another tab are ignored completely. The WebSocket destination is user-wide, while the
+     * client id selects the one tab that should act.
+     *
+     * @param command the command pushed by the server
+     */
+    private handleCommand(command: IrisCommand): void {
+        if (command.targetClientId && command.targetClientId !== this.irisWebsocketService.clientId) {
+            return;
+        }
+
+        // Untargeted commands are tried by every subscribed tab; the server accepts the first successful acknowledgement.
+        // Unlike a marker click this never routes a tab elsewhere, even where the lecture unit is not on screen to
+        // receive it: a click is the student asking to be taken somewhere, while this arrives on its own and would
+        // pull them out of whatever they were doing. Such a tab therefore does nothing and the pipeline is released
+        // by the server-side ack timeout.
+        switch (command.type) {
+            case 'pointOut': {
+                const pointOut = parsePointOut(command.parameters);
+                if (pointOut && typeof command.expiresAt === 'number' && Number.isFinite(command.expiresAt) && command.expiresAt > Date.now()) {
+                    // The pipeline is waiting on this one; the combined view acknowledges once it has actually moved.
+                    pointOut.correlationId = command.correlationId;
+                    pointOut.expiresAt = command.expiresAt;
+                    this.pointOutSubject.next(pointOut);
+                    return;
+                }
+                break;
+            }
+        }
+        if (typeof command.correlationId === 'string') {
+            this.sendCommandAck(command.correlationId, false);
+        }
+    }
+
+    /**
+     * Acknowledges a server command request, unblocking the Iris pipeline that is waiting on it.
+     * @param correlationId the correlation id of the request being answered
+     * @param applied       whether the command was carried out on the client
+     */
+    public sendCommandAck(correlationId: string, applied: boolean): void {
+        this.irisWebsocketService.sendCommandAck({ correlationId, applied });
     }
 }

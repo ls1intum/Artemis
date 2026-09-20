@@ -25,9 +25,28 @@ import de.tum.cit.aet.artemis.lecture.dto.SlideUnhideDTO;
 @Repository
 public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
 
-    Slide findSlideByAttachmentVideoUnitIdAndSlideNumber(long attachmentVideoUnitId, int slideNumber);
+    Slide findSlideByAttachmentVideoUnitIdAndSlideNumberAndSupersededIsFalse(long attachmentVideoUnitId, int slideNumber);
 
-    List<Slide> findAllByAttachmentVideoUnitId(Long attachmentUnitId);
+    /**
+     * The slides of an attachment video unit, in slide order.
+     * <p>
+     * Ordered explicitly. As a derived query this returned rows in whatever order the database produced them, while
+     * callers do treat the result as ordered: the splitter iterates it to renumber and re-hide slides, and
+     * SlideSplitterServiceTest asserts the slide number by list position. That assumption held until it did not - the
+     * test failed in CI with "expected: 1 but was: 3" on the first element, which is an unordered read rather than a
+     * wrong split. Ordering here fixes every caller at once and cannot break one that never cared.
+     *
+     * @param attachmentUnitId the attachment video unit whose slides are returned
+     * @return the slides, ascending by slide number
+     */
+    @Query("""
+            SELECT slide
+            FROM Slide slide
+            WHERE slide.attachmentVideoUnit.id = :attachmentUnitId
+                AND slide.superseded = FALSE
+            ORDER BY slide.slideNumber ASC
+            """)
+    List<Slide> findAllByAttachmentVideoUnitId(@Param("attachmentUnitId") Long attachmentUnitId);
 
     /**
      * Find all slides with non-null hidden field but only returns the id and hidden fields
@@ -38,6 +57,7 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
             SELECT new de.tum.cit.aet.artemis.lecture.dto.SlideUnhideDTO(s.id, s.hidden)
             FROM Slide s
             WHERE s.hidden IS NOT NULL
+                AND s.superseded = FALSE
             """)
     List<SlideUnhideDTO> findHiddenSlidesProjection();
 
@@ -48,7 +68,7 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
      * @param attachmentUnitId The ID of the attachment video unit
      * @return List of hidden slides for the attachment video unit
      */
-    List<Slide> findByAttachmentVideoUnitIdAndHiddenNotNull(Long attachmentUnitId);
+    List<Slide> findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(Long attachmentUnitId);
 
     /**
      * Find all slides associated with a specific exercise
@@ -81,6 +101,7 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
             SELECT new de.tum.cit.aet.artemis.lecture.dto.SlideDTO(s.id, s.slideNumber, s.hidden, s.attachmentVideoUnit.id)
             FROM Slide s
             WHERE s.attachmentVideoUnit.id IN :attachmentVideoUnitIds
+                AND s.superseded = FALSE
                 AND (s.hidden IS NULL OR s.hidden < CURRENT_TIMESTAMP())
             """)
     Set<SlideDTO> findVisibleSlidesByAttachmentVideoUnits(@Param("attachmentVideoUnitIds") Set<Long> attachmentVideoUnitIds);

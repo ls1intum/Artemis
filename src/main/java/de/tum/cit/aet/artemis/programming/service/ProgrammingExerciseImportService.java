@@ -7,15 +7,17 @@ import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
@@ -23,8 +25,10 @@ import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 
@@ -32,6 +36,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCase
 @Lazy
 @Service
 public class ProgrammingExerciseImportService {
+
+    /** Everything that is not alphanumeric, which a short name may not contain. */
+    private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^a-zA-Z0-9]");
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
@@ -45,29 +52,29 @@ public class ProgrammingExerciseImportService {
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
-    private final TemplateUpgradePolicyService templateUpgradePolicyService;
-
     private final ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
 
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
 
     public ProgrammingExerciseImportService(Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService, ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService,
-            ProgrammingExerciseTaskService programmingExerciseTaskService, TemplateUpgradePolicyService templateUpgradePolicyService,
-            ProgrammingExerciseImportBasicService programmingExerciseImportBasicService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
+            ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseImportBasicService programmingExerciseImportBasicService,
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.continuousIntegrationService = continuousIntegrationService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseBuildPlanService = programmingExerciseBuildPlanService;
         this.programmingExerciseCreationScheduleService = programmingExerciseCreationScheduleService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
-        this.templateUpgradePolicyService = templateUpgradePolicyService;
         this.programmingExerciseImportBasicService = programmingExerciseImportBasicService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -78,20 +85,20 @@ public class ProgrammingExerciseImportService {
      * Imports all base build plans for an exercise. These include the template and the solution build plan, <b>not</b>
      * any participation plans!
      *
-     * @param templateExercise The template exercise which plans should get copied
-     * @param newExercise      The new exercise to which all plans should get copied
+     * @param sourceExercise The source exercise which plans should get copied
+     * @param newExercise    The new exercise to which all plans should get copied
      */
-    public void importBuildPlans(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
+    public void importBuildPlans(final ProgrammingExercise sourceExercise, final ProgrammingExercise newExercise) {
         final var templateParticipation = newExercise.getTemplateParticipation();
         final var solutionParticipation = newExercise.getSolutionParticipation();
         final var targetExerciseProjectKey = newExercise.getProjectKey();
 
         // Clone all build plans, enable them and set up the initial participations, i.e. setting the correct repo URIs and
         // running the plan for the first time
-        cloneAndEnableAllBuildPlans(templateExercise, newExercise);
+        cloneAndEnableAllBuildPlans(sourceExercise, newExercise);
 
-        updatePlanRepositoriesInBuildPlans(newExercise, targetExerciseProjectKey, templateExercise.getTemplateRepositoryUri(), templateExercise.getSolutionRepositoryUri(),
-                templateExercise.getTestRepositoryUri(), templateExercise.getAuxiliaryRepositoriesForBuildPlan());
+        updatePlanRepositoriesInBuildPlans(newExercise, targetExerciseProjectKey, sourceExercise.getTemplateRepositoryUri(), sourceExercise.getSolutionRepositoryUri(),
+                sourceExercise.getTestRepositoryUri(), sourceExercise.getAuxiliaryRepositoriesForBuildPlan());
 
         ContinuousIntegrationTriggerService triggerService = continuousIntegrationTriggerService.orElseThrow();
         triggerService.triggerBuild(templateParticipation);
@@ -135,95 +142,93 @@ public class ProgrammingExerciseImportService {
         }
     }
 
-    private void cloneAndEnableAllBuildPlans(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) {
+    private void cloneAndEnableAllBuildPlans(ProgrammingExercise sourceExercise, ProgrammingExercise newExercise) {
         final var templateParticipation = newExercise.getTemplateParticipation();
         final var solutionParticipation = newExercise.getSolutionParticipation();
         final var targetExerciseProjectKey = newExercise.getProjectKey();
         final var templatePlanName = BuildPlanType.TEMPLATE.getName();
         final var solutionPlanName = BuildPlanType.SOLUTION.getName();
-        final var targetName = newExercise.getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase() + " " + newExercise.getTitle();
+        final var targetName = newExercise.getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase(Locale.ROOT) + " " + newExercise.getTitle();
         ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
         continuousIntegration.createProjectForExercise(newExercise);
-        continuousIntegration.copyBuildPlan(templateExercise, templatePlanName, newExercise, targetName, templatePlanName, false);
-        continuousIntegration.copyBuildPlan(templateExercise, solutionPlanName, newExercise, targetName, solutionPlanName, true);
+        continuousIntegration.copyBuildPlan(sourceExercise, templatePlanName, newExercise, targetName, templatePlanName, false);
+        continuousIntegration.copyBuildPlan(sourceExercise, solutionPlanName, newExercise, targetName, solutionPlanName, true);
         continuousIntegration.enablePlan(targetExerciseProjectKey, templateParticipation.getBuildPlanId());
         continuousIntegration.enablePlan(targetExerciseProjectKey, solutionParticipation.getBuildPlanId());
+    }
+
+    /**
+     * Imports a programming exercise that is copied from one this instance already stores, so both the source
+     * configuration and the new one come from that stored row.
+     *
+     * @param sourceExercise                      the exercise to copy
+     * @param newExercise                         the exercise the copy is written into
+     * @param recreateBuildPlans                  if the build plans should be recreated
+     * @param setTestCaseVisibilityToAfterDueDate if the test case visibility should be set to {@link Visibility#AFTER_DUE_DATE}
+     * @return the imported programming exercise
+     */
+    public ProgrammingExercise importProgrammingExercise(ProgrammingExercise sourceExercise, @NonNull ProgrammingExercise newExercise, boolean recreateBuildPlans,
+            boolean setTestCaseVisibilityToAfterDueDate) {
+        var sourceBuildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(sourceExercise.getId());
+        return importProgrammingExercise(sourceExercise, sourceBuildConfig, newExercise, null, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate);
     }
 
     /**
      * Method to import a programming exercise, including all base build plans (template, solution) and repositories (template, solution, test).
      * Referenced entities, s.a. the test cases or the hints will get cloned and assigned a new id.
      *
-     * @param originalProgrammingExercise         the Programming Exercise which should be used as a blueprint
-     * @param newProgrammingExercise              The new exercise already containing values which should not get copied, i.e. overwritten
-     * @param updateTemplate                      if the template files should be updated
+     * @param sourceExercise                      the Programming Exercise which should be used as a blueprint
+     * @param newExercise                         The new exercise already containing values which should not get copied, i.e. overwritten
+     * @param sourceBuildConfig                   the stored build configuration of the source exercise
+     * @param newBuildConfig                      the build configuration the request carries, or {@code null} to copy the source's
      * @param recreateBuildPlans                  if the build plans should be recreated
      * @param setTestCaseVisibilityToAfterDueDate if the test case visibility should be set to {@link Visibility#AFTER_DUE_DATE}
      * @return the imported programming exercise
      */
-    public ProgrammingExercise importProgrammingExercise(ProgrammingExercise originalProgrammingExercise, ProgrammingExercise newProgrammingExercise, boolean updateTemplate,
-            boolean recreateBuildPlans, boolean setTestCaseVisibilityToAfterDueDate) throws JsonProcessingException {
+    public ProgrammingExercise importProgrammingExercise(ProgrammingExercise sourceExercise, ProgrammingExerciseBuildConfig sourceBuildConfig,
+            @NonNull ProgrammingExercise newExercise, @Nullable ProgrammingExerciseBuildConfig newBuildConfig, boolean recreateBuildPlans,
+            boolean setTestCaseVisibilityToAfterDueDate) {
         // remove all non-alphanumeric characters from the short name. This gets already done in the client, but we do it again here to be sure
-        newProgrammingExercise.setShortName(newProgrammingExercise.getShortName().replaceAll("[^a-zA-Z0-9]", ""));
-        newProgrammingExercise.generateAndSetProjectKey();
-        programmingExerciseValidationService.checkIfProjectExists(newProgrammingExercise);
+        newExercise.setShortName(NON_ALPHANUMERIC.matcher(newExercise.getShortName()).replaceAll(""));
+        newExercise.generateAndSetProjectKey();
+        programmingExerciseValidationService.checkIfProjectExists(newExercise);
 
-        if (newProgrammingExercise.isExamExercise()) {
-            // Disable feedback suggestions on exam exercises (currently not supported)
-            newProgrammingExercise.setFeedbackSuggestionModule(null);
-        }
-
-        newProgrammingExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(originalProgrammingExercise, newProgrammingExercise);
+        newExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(sourceExercise, sourceBuildConfig, newExercise, newBuildConfig);
         if (automaticAfterDueDateService.isPresent()) {
-            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(newProgrammingExercise);
-            final boolean buildAndTestDateChanged = !Objects.equals(newProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate);
-            final boolean feedbackRequestsChanged = setBuildAndTestDateAndEnforceFeedbackRequestInvariant(newProgrammingExercise, computedBuildAndTestDate);
-            if (buildAndTestDateChanged || feedbackRequestsChanged) {
-                programmingExerciseRepository.save(newProgrammingExercise);
+            var storedBuildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(newExercise.getId());
+            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(newExercise, storedBuildConfig);
+            final boolean buildAndTestDateChanged = !Objects.equals(newExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate);
+            newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
+            if (buildAndTestDateChanged) {
+                programmingExerciseRepository.save(newExercise);
             }
         }
-        programmingExerciseImportBasicService.importRepositories(originalProgrammingExercise, newProgrammingExercise);
+        programmingExerciseImportBasicService.importRepositories(sourceExercise, newExercise);
 
         if (setTestCaseVisibilityToAfterDueDate) {
-            Set<ProgrammingExerciseTestCase> testCases = this.programmingExerciseTestCaseRepository.findByExerciseId(newProgrammingExercise.getId());
+            Set<ProgrammingExerciseTestCase> testCases = this.programmingExerciseTestCaseRepository.findByExerciseId(newExercise.getId());
             for (ProgrammingExerciseTestCase testCase : testCases) {
                 testCase.setVisibility(Visibility.AFTER_DUE_DATE);
             }
             List<ProgrammingExerciseTestCase> updatedTestCases = programmingExerciseTestCaseRepository.saveAll(testCases);
-            newProgrammingExercise.setTestCases(new HashSet<>(updatedTestCases));
-        }
-
-        // Update the template files
-        if (updateTemplate) {
-            TemplateUpgradeService upgradeService = templateUpgradePolicyService.getUpgradeService(newProgrammingExercise.getProgrammingLanguage());
-            upgradeService.upgradeTemplate(newProgrammingExercise);
+            newExercise.setTestCases(new HashSet<>(updatedTestCases));
         }
 
         if (recreateBuildPlans) {
             // Create completely new build plans for the exercise
-            programmingExerciseBuildPlanService.setupBuildPlansForNewExercise(newProgrammingExercise);
+            programmingExerciseBuildPlanService.setupBuildPlansForNewExercise(newExercise);
         }
         else {
             // We have removed the automatic build trigger from test to base for new programming exercises.
             // We also remove this build trigger in the case of an import as the source exercise might still have this trigger.
             // The importBuildPlans method includes this process
-            importBuildPlans(originalProgrammingExercise, newProgrammingExercise);
+            importBuildPlans(sourceExercise, newExercise);
         }
 
-        programmingExerciseCreationScheduleService.scheduleOperations(newProgrammingExercise.getId());
+        programmingExerciseCreationScheduleService.scheduleOperations(newExercise.getId());
 
-        programmingExerciseTaskService.replaceTestIdsWithNames(newProgrammingExercise);
-        return newProgrammingExercise;
-    }
-
-    private boolean setBuildAndTestDateAndEnforceFeedbackRequestInvariant(ProgrammingExercise programmingExercise, ZonedDateTime computedBuildAndTestDate) {
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
-        if (computedBuildAndTestDate == null || !programmingExercise.getAllowFeedbackRequests()) {
-            return false;
-        }
-
-        programmingExercise.setAllowFeedbackRequests(false);
-        return true;
+        programmingExerciseTaskService.replaceTestIdsWithNames(newExercise);
+        return newExercise;
     }
 
 }

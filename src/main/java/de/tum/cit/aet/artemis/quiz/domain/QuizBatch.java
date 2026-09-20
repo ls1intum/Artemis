@@ -16,11 +16,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * A QuizBatch.
  */
-// No @Cache here on purpose: written every time a student joins a BATCHED quiz. See #12574 / #12584.
 @Entity
 @Table(name = "quiz_batch")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -39,8 +39,9 @@ public class QuizBatch extends DomainObject {
     private Long creator;
 
     @ManyToOne
-    @JoinColumn(name = "quiz_id")
+    @JoinColumn(name = "quiz_id", nullable = false)
     @JsonIgnore
+    @Parent
     private QuizExercise quizExercise;
 
     @Nullable

@@ -1,0 +1,13 @@
+:host {
+    display: inline-flex;
+    max-width: 100%;
+}
+
+.tum-ui-chip-remove {
+    border-radius: 50%;
+
+    &:focus-visible {
+        outline: 2px solid var(--tumaet-ui-focus-color);
+        outline-offset: 1px;
+    }
+}

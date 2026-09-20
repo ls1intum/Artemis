@@ -27,11 +27,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
 import de.tum.cit.aet.artemis.exercise.domain.review.ReviewThreadSyncAction;
@@ -41,7 +43,6 @@ import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncTar
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseReviewThreadUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -50,13 +51,10 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     private CourseTestRepository courseRepository;
 
     @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
     private CommentThreadRepository commentThreadRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     private static final String TEST_PREFIX = "hyperionproblemstatementresource";
 
@@ -73,27 +71,19 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     void setupTestData() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
-        Course course = new Course();
+        Course course = CourseFactory.generateMinimalCourse();
         course.setTitle("Hyperion Test Course");
-        course.setStudentGroupName(TEST_PREFIX + "student");
-        course.setTeachingAssistantGroupName(TEST_PREFIX + "tutor");
-        course.setEditorGroupName(TEST_PREFIX + "editor");
-        course.setInstructorGroupName(TEST_PREFIX + "instructor");
         course = courseRepository.save(course);
         persistedCourseId = course.getId();
 
         var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student.getGroups().add(course.getStudentGroupName());
-        userTestRepository.save(student);
+        userUtilService.enrollUserInCourse(student, course, CourseRole.STUDENT);
         var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        tutor.getGroups().add(course.getTeachingAssistantGroupName());
-        userTestRepository.save(tutor);
+        userUtilService.enrollUserInCourse(tutor, course, CourseRole.TEACHING_ASSISTANT);
         var editor = userUtilService.getUserByLogin(TEST_PREFIX + "editor1");
-        editor.getGroups().add(course.getEditorGroupName());
-        userTestRepository.save(editor);
+        userUtilService.enrollUserInCourse(editor, course, CourseRole.EDITOR);
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        instructor.getGroups().add(course.getInstructorGroupName());
-        userTestRepository.save(instructor);
+        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
 
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setTitle("Hyperion Test Exercise");
@@ -514,7 +504,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     // Targeted refinement endpoint tests
 
     private String buildTargetedRefinementBody(String problemStatement, int startLine, int endLine, Integer startColumn, Integer endColumn, String instruction)
-            throws JsonProcessingException {
+            throws JacksonException {
         ObjectNode node = objectMapper.createObjectNode();
         node.put("problemStatementText", problemStatement);
         node.put("startLine", startLine);
@@ -618,9 +608,8 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldReturnBadRequestForChecklistAnalysisCourseMismatch() throws Exception {
         // Create a second course with its own exercise
-        Course otherCourse = new Course();
+        Course otherCourse = CourseFactory.generateMinimalCourse();
         otherCourse.setTitle("Other Course");
-        otherCourse.setInstructorGroupName(TEST_PREFIX + "instructor-other");
         otherCourse = courseRepository.save(otherCourse);
 
         ProgrammingExercise otherExercise = new ProgrammingExercise();
@@ -719,9 +708,8 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldReturnBadRequestForChecklistSectionAnalysisCourseMismatch() throws Exception {
-        Course otherCourse = new Course();
+        Course otherCourse = CourseFactory.generateMinimalCourse();
         otherCourse.setTitle("Other Course Section");
-        otherCourse.setInstructorGroupName(TEST_PREFIX + "instructor-other-section");
         otherCourse = courseRepository.save(otherCourse);
 
         ProgrammingExercise otherExercise = new ProgrammingExercise();

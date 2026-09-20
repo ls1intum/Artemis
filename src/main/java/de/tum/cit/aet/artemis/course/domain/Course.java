@@ -1,15 +1,8 @@
 package de.tum.cit.aet.artemis.course.domain;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
-import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_RESPONSE_TEXT_LIMIT;
-import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_TEXT_LIMIT;
-import static de.tum.cit.aet.artemis.core.config.Constants.COURSE_SHORT_NAME_MAX_LENGTH;
-import static de.tum.cit.aet.artemis.core.config.Constants.SHORT_NAME_PATTERN;
-
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.regex.Matcher;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -31,16 +24,21 @@ import org.hibernate.Hibernate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
+import de.tum.cit.aet.artemis.core.util.ServedFileUrl;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -53,11 +51,14 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 @Entity
 @Table(name = "course")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@AggregateRoot("The main aggregate root.")
 public class Course extends DomainObject {
 
     public static final String ENTITY_NAME = "course";
 
     private static final int DEFAULT_COMPLAINT_TEXT_LIMIT = 2000;
+
+    public static final int SEMESTER_MAX_LENGTH = 25;
 
     @Column(name = "title")
     private String title;
@@ -68,22 +69,10 @@ public class Course extends DomainObject {
     @Column(name = "short_name", unique = true)
     private String shortName;
 
-    @Column(name = "student_group_name")
-    private String studentGroupName;
-
-    @Column(name = "teaching_assistant_group_name")
-    private String teachingAssistantGroupName;
-
-    @Column(name = "editor_group_name")
-    private String editorGroupName;
-
-    @Column(name = "instructor_group_name")
-    private String instructorGroupName;
-
-    @Column(name = "start_date")
+    @Column(name = "start_date", nullable = false)
     private ZonedDateTime startDate;
 
-    @Column(name = "end_date")
+    @Column(name = "end_date", nullable = false)
     private ZonedDateTime endDate;
 
     @Column(name = "enrollment_start_date")
@@ -95,7 +84,7 @@ public class Course extends DomainObject {
     @Column(name = "unenrollment_end_date")
     private ZonedDateTime unenrollmentEndDate;
 
-    @Column(name = "semester")
+    @Column(name = "semester", nullable = false)
     private String semester;
 
     @Column(name = "test_course", nullable = false)
@@ -115,6 +104,16 @@ public class Course extends DomainObject {
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "online_course_configuration_id")
     private OnlineCourseConfiguration onlineCourseConfiguration;
+
+    // Lazy on purpose: the course table is already wide and these values are only needed in specific flows. Note that
+    // getCourseConfiguration() returns null while the association is uninitialized, so every flow that needs it must
+    // fetch it deliberately. The ones that do: the instructor course-settings read path
+    // (findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById), the course update path (which attaches
+    // it via CourseConfigurationRepository.findByCourseId so applyTo updates it in place) and the data-retention cleanup
+    // queries. Do NOT add it to any other course query or entity graph.
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_configuration_id")
+    private CourseConfiguration courseConfiguration;
 
     @Enumerated(EnumType.ORDINAL)
     @Column(name = "info_sharing_config", nullable = false)
@@ -172,8 +171,14 @@ public class Course extends DomainObject {
     @Column(name = "accuracy_of_scores", nullable = false)
     private Integer accuracyOfScores = 1; // default value
 
-    @Column(name = "restricted_athena_modules_access", nullable = false)
-    private boolean restrictedAthenaModulesAccess = false; // default is false
+    /**
+     * Lazy, like every other configuration on a course. Read it through {@code CourseAthenaConfigRepository} where it
+     * is needed rather than dragging it along with the course.
+     */
+    @JsonIgnore
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JoinColumn(name = "athena_config_id")
+    private CourseAthenaConfig athenaConfig;
 
     /**
      * Note: Currently just used in the scope of the tutorial groups feature
@@ -181,11 +186,15 @@ public class Course extends DomainObject {
     @Column(name = "time_zone")
     private String timeZone;
 
-    // No @Cache: instructors create / archive / edit exercises while every student's course-overview read hits this; NONSTRICT caused the dashboard to "forget"
-    // exercises on other nodes for a short window, same class of bug as #12574.
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("course")
     private Set<Exercise> exercises = new HashSet<>();
+
+    // The group holds the key, so it can never exist without a course. Empty groups are still fine: a group is created
+    // in exercise management before any exercise is added to it.
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties(value = "course", allowSetters = true)
+    private Set<ExerciseVariantGroup> exerciseVariantGroups = new HashSet<>();
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "course", allowSetters = true)
@@ -208,7 +217,6 @@ public class Course extends DomainObject {
     @OrderBy("title")
     private Set<TutorialGroup> tutorialGroups = new HashSet<>();
 
-    // No @Cache: exams are created / edited / archived by instructors while students see the course overview, same class of bug as #12574.
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("course")
     private Set<Exam> exams = new HashSet<>();
@@ -218,6 +226,10 @@ public class Course extends DomainObject {
             @JoinColumn(name = "organization_id", referencedColumnName = "id") })
     @JsonIgnoreProperties("course")
     private Set<Organization> organizations = new HashSet<>();
+
+    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<UserCourseRole> courseRoles = new HashSet<>();
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("course")
@@ -321,58 +333,6 @@ public class Course extends DomainObject {
         this.shortName = shortName;
     }
 
-    public String getStudentGroupName() {
-        return studentGroupName;
-    }
-
-    public void setStudentGroupName(String studentGroupName) {
-        this.studentGroupName = studentGroupName;
-    }
-
-    public String getTeachingAssistantGroupName() {
-        return teachingAssistantGroupName;
-    }
-
-    public void setTeachingAssistantGroupName(String teachingAssistantGroupName) {
-        this.teachingAssistantGroupName = teachingAssistantGroupName;
-    }
-
-    public String getEditorGroupName() {
-        return editorGroupName;
-    }
-
-    public void setEditorGroupName(String editorGroupName) {
-        this.editorGroupName = editorGroupName;
-    }
-
-    public String getInstructorGroupName() {
-        return instructorGroupName;
-    }
-
-    public void setInstructorGroupName(String instructorGroupName) {
-        this.instructorGroupName = instructorGroupName;
-    }
-
-    @JsonIgnore
-    public String getDefaultStudentGroupName() {
-        return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-students";
-    }
-
-    @JsonIgnore
-    public String getDefaultTeachingAssistantGroupName() {
-        return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-tutors";
-    }
-
-    @JsonIgnore
-    public String getDefaultEditorGroupName() {
-        return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-editors";
-    }
-
-    @JsonIgnore
-    public String getDefaultInstructorGroupName() {
-        return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-instructors";
-    }
-
     public ZonedDateTime getStartDate() {
         return startDate;
     }
@@ -436,8 +396,7 @@ public class Course extends DomainObject {
     public boolean unenrollmentIsActive() {
         ZonedDateTime now = ZonedDateTime.now();
         final boolean startCondition = getEnrollmentStartDate() == null || getEnrollmentStartDate().isBefore(now);
-        final boolean endCondition = (getUnenrollmentEndDate() == null && getEndDate() == null) || (getUnenrollmentEndDate() == null && getEndDate().isAfter(now))
-                || (getUnenrollmentEndDate() != null && getUnenrollmentEndDate().isAfter(now));
+        final boolean endCondition = (getUnenrollmentEndDate() == null && getEndDate().isAfter(now)) || (getUnenrollmentEndDate() != null && getUnenrollmentEndDate().isAfter(now));
         return startCondition && endCondition;
     }
 
@@ -487,6 +446,41 @@ public class Course extends DomainObject {
 
     public void setOnlineCourseConfiguration(OnlineCourseConfiguration onlineCourseConfiguration) {
         this.onlineCourseConfiguration = onlineCourseConfiguration;
+    }
+
+    public CourseConfiguration getCourseConfiguration() {
+        return Hibernate.isInitialized(courseConfiguration) ? courseConfiguration : null;
+    }
+
+    public void setCourseConfiguration(CourseConfiguration courseConfiguration) {
+        this.courseConfiguration = courseConfiguration;
+    }
+
+    /**
+     * Whether the course is grade-relevant, driving how long its student data is retained before the GDPR cleanup resets
+     * it. A course without an explicit {@link CourseConfiguration} (i.e. one that was never edited) is treated as
+     * grade-relevant, matching the safe default. This is null-safe with respect to the lazy association: it only reflects
+     * the flag when the configuration has been initialized.
+     *
+     * @return {@code true} if the course is grade-relevant or has no explicit configuration, {@code false} if an
+     *         instructor opted out
+     */
+    public boolean isGradeRelevant() {
+        CourseConfiguration configuration = getCourseConfiguration();
+        return configuration == null || configuration.isGradeRelevant();
+    }
+
+    /**
+     * Whether the course is under a data-retention hold, which suspends the GDPR cleanup of its student data for as long
+     * as it lasts (e.g. a pending objection or legal proceeding). A course without an explicit
+     * {@link CourseConfiguration} is not held. This is null-safe with respect to the lazy association: it only reflects
+     * the flag when the configuration has been initialized.
+     *
+     * @return {@code true} if an administrator or instructor placed the course under a retention hold
+     */
+    public boolean isDataRetentionHold() {
+        CourseConfiguration configuration = getCourseConfiguration();
+        return configuration != null && configuration.isDataRetentionHold();
     }
 
     public Integer getMaxComplaints() {
@@ -572,12 +566,22 @@ public class Course extends DomainObject {
         this.color = color;
     }
 
+    /**
+     * The path the course icon is served under, relative to {@code api/core/files/}. The column stores only the filename.
+     *
+     * @return the served path of the icon, or its filename while the course has no id yet
+     */
     public String getCourseIcon() {
-        return courseIcon;
+        return ServedFileUrl.courseIcon(getId(), courseIcon);
     }
 
+    /**
+     * Stores the filename of the given value. See {@link FileSystemLocation#storedFilename} for why a served URL sent back by a client cannot end up in the column.
+     *
+     * @param courseIcon the filename of the icon, or the URL it is served under
+     */
     public void setCourseIcon(String courseIcon) {
-        this.courseIcon = courseIcon;
+        this.courseIcon = FileSystemLocation.storedFilename(courseIcon);
     }
 
     public Boolean isEnrollmentEnabled() {
@@ -634,6 +638,14 @@ public class Course extends DomainObject {
         this.exercises = exercises;
     }
 
+    public Set<ExerciseVariantGroup> getExerciseVariantGroups() {
+        return exerciseVariantGroups;
+    }
+
+    public void addExerciseVariantGroup(ExerciseVariantGroup exerciseVariantGroup) {
+        this.exerciseVariantGroups.add(exerciseVariantGroup);
+    }
+
     public Set<Lecture> getLectures() {
         return lectures;
     }
@@ -670,6 +682,14 @@ public class Course extends DomainObject {
         this.organizations = organizations;
     }
 
+    public Set<UserCourseRole> getCourseRoles() {
+        return courseRoles;
+    }
+
+    public void setCourseRoles(Set<UserCourseRole> courseRoles) {
+        this.courseRoles = courseRoles;
+    }
+
     public Set<Prerequisite> getPrerequisites() {
         return prerequisites;
     }
@@ -680,13 +700,11 @@ public class Course extends DomainObject {
 
     @Override
     public String toString() {
-        return "Course{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", shortName='" + getShortName() + "'"
-                + ", studentGroupName='" + getStudentGroupName() + "'" + ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" + ", editorGroupName='"
-                + getEditorGroupName() + "'" + ", instructorGroupName='" + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate()
-                + "'" + ", enrollmentStartDate='" + getEnrollmentStartDate() + "'" + ", enrollmentEndDate='" + getEnrollmentEndDate() + "'" + ", unenrollmentEndDate='"
-                + getUnenrollmentEndDate() + "'" + ", semester='" + getSemester() + "'" + "'" + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'"
-                + ", courseIcon='" + getCourseIcon() + "'" + ", enrollmentEnabled='" + isEnrollmentEnabled() + "'" + ", unenrollmentEnabled='" + isUnenrollmentEnabled() + "'"
-                + ", presentationScore='" + getPresentationScore() + "'" + "}";
+        return "Course{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", shortName='" + getShortName() + "'" + ", startDate='"
+                + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + ", enrollmentStartDate='" + getEnrollmentStartDate() + "'" + ", enrollmentEndDate='"
+                + getEnrollmentEndDate() + "'" + ", unenrollmentEndDate='" + getUnenrollmentEndDate() + "'" + ", semester='" + getSemester() + "'" + "'" + ", onlineCourse='"
+                + isOnlineCourse() + "'" + ", color='" + getColor() + "'" + ", courseIcon='" + getCourseIcon() + "'" + ", enrollmentEnabled='" + isEnrollmentEnabled() + "'"
+                + ", unenrollmentEnabled='" + isUnenrollmentEnabled() + "'" + ", presentationScore='" + getPresentationScore() + "'" + "}";
     }
 
     public void setNumberOfInstructors(Long numberOfInstructors) {
@@ -737,6 +755,38 @@ public class Course extends DomainObject {
         this.learningPathsEnabled = learningPathsEnabled;
     }
 
+    /**
+     * Flat accessor for the auto-orchestration kill switch stored on the {@link CourseConfiguration}, mirroring
+     * {@link #isGradeRelevant()}. Used by the course update flow to detect admin-only changes. This is null-safe with
+     * respect to the lazy association: it only reflects the flag when the configuration has been initialized.
+     *
+     * @return whether auto-orchestration is enabled for this course, {@code false} when the configuration is absent or not loaded
+     */
+    public boolean getAutoOrchestratorEnabled() {
+        CourseConfiguration configuration = getCourseConfiguration();
+        return configuration != null && configuration.isAutoOrchestratorEnabled();
+    }
+
+    /**
+     * Flat accessor for the per-course debounce-window override stored on the {@link CourseConfiguration}.
+     *
+     * @return the override in seconds, or {@code null} when unset / not loaded (global default applies)
+     */
+    public Integer getDebounceWindowSecondsOverride() {
+        CourseConfiguration configuration = getCourseConfiguration();
+        return configuration == null ? null : configuration.getDebounceWindowSecondsOverride();
+    }
+
+    /**
+     * Flat accessor for the per-course daily-cap override stored on the {@link CourseConfiguration}.
+     *
+     * @return the override, or {@code null} when unset / not loaded (global default applies)
+     */
+    public Integer getMaxDailyOrchestrationOverride() {
+        CourseConfiguration configuration = getCourseConfiguration();
+        return configuration == null ? null : configuration.getMaxDailyOrchestrationOverride();
+    }
+
     public Set<LearningPath> getLearningPaths() {
         return learningPaths;
     }
@@ -773,12 +823,22 @@ public class Course extends DomainObject {
         this.accuracyOfScores = accuracyOfScores;
     }
 
-    public boolean getRestrictedAthenaModulesAccess() {
-        return restrictedAthenaModulesAccess;
+    public CourseAthenaConfig getAthenaConfig() {
+        return athenaConfig;
     }
 
-    public void setRestrictedAthenaModulesAccess(boolean restrictedAthenaModulesAccess) {
-        this.restrictedAthenaModulesAccess = restrictedAthenaModulesAccess;
+    public void setAthenaConfig(CourseAthenaConfig athenaConfig) {
+        this.athenaConfig = athenaConfig;
+    }
+
+    @JsonProperty("athenaGradingFeedbackEnabled")
+    public boolean isAthenaGradingFeedbackEnabled() {
+        return athenaConfig != null && Hibernate.isInitialized(athenaConfig) && athenaConfig.isGradingFeedbackEnabled();
+    }
+
+    @JsonProperty("athenaFormativeFeedbackEnabled")
+    public boolean isAthenaFormativeFeedbackEnabled() {
+        return athenaConfig != null && Hibernate.isInitialized(athenaConfig) && athenaConfig.isFormativeFeedbackEnabled();
     }
 
     public Set<TutorialGroup> getTutorialGroups() {
@@ -795,192 +855,6 @@ public class Course extends DomainObject {
 
     public void setTimeZone(String timeZone) {
         this.timeZone = timeZone;
-    }
-
-    /**
-     * Validates that only one of onlineCourse and enrollmentEnabled is selected
-     */
-    public void validateOnlineCourseAndEnrollmentEnabled() {
-        if (isOnlineCourse() && isEnrollmentEnabled()) {
-            throw new BadRequestAlertException("Online course and enrollment enabled cannot be active at the same time", ENTITY_NAME, "onlineCourseEnrollmentEnabledInvalid", true);
-        }
-    }
-
-    /**
-     * Validates that the accuracy of the scores is between 0 and 5
-     */
-    public void validateAccuracyOfScores() {
-        if (getAccuracyOfScores() == null) {
-            throw new BadRequestAlertException("The course needs to specify the accuracy of scores", ENTITY_NAME, "accuracyOfScoresNotSet", true);
-        }
-        if (getAccuracyOfScores() < 0 || getAccuracyOfScores() > 5) {
-            throw new BadRequestAlertException("The accuracy of scores defined for the course is either negative or uses too many decimal places (more than five)", ENTITY_NAME,
-                    "accuracyOfScoresInvalid", true);
-        }
-    }
-
-    /**
-     * Validates that the short name of the course follows SHORT_NAME_PATTERN and (for new courses) does not exceed
-     * {@link de.tum.cit.aet.artemis.core.config.Constants#COURSE_SHORT_NAME_MAX_LENGTH}.
-     * Course short names are immutable after creation, but the update path re-runs this validator with the persisted
-     * value — so the max-length check is gated on a missing id to avoid breaking edits of legacy courses whose
-     * shortName predates the limit.
-     */
-    public void validateShortName() {
-        // Check if the course shortname matches regex
-        Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(getShortName());
-        if (!shortNameMatcher.matches()) {
-            throw new BadRequestAlertException("The shortname is invalid", ENTITY_NAME, "shortnameInvalid", true);
-        }
-        if (getId() == null && getShortName().length() > COURSE_SHORT_NAME_MAX_LENGTH) {
-            throw new BadRequestAlertException("The shortname must not exceed " + COURSE_SHORT_NAME_MAX_LENGTH + " characters", ENTITY_NAME, "shortnameTooLong", true);
-        }
-    }
-
-    /**
-     * validates that the configuration for complaints and more feedback requests is correct
-     */
-    public void validateComplaintsAndRequestMoreFeedbackConfig() {
-        if (getMaxComplaints() == null) {
-            // set the default value to prevent null pointer exceptions
-            setMaxComplaints(3);
-        }
-        if (getMaxTeamComplaints() == null) {
-            // set the default value to prevent null pointer exceptions
-            setMaxTeamComplaints(3);
-        }
-        if (getMaxComplaints() < 0) {
-            throw new BadRequestAlertException("Max Complaints cannot be negative", ENTITY_NAME, "maxComplaintsInvalid", true);
-        }
-        if (getMaxTeamComplaints() < 0) {
-            throw new BadRequestAlertException("Max Team Complaints cannot be negative", ENTITY_NAME, "maxTeamComplaintsInvalid", true);
-        }
-        if (getMaxComplaintTimeDays() < 0) {
-            throw new BadRequestAlertException("Max Complaint Days cannot be negative", ENTITY_NAME, "maxComplaintDaysInvalid", true);
-        }
-        if (getMaxComplaintTextLimit() < 0) {
-            throw new BadRequestAlertException("Max Complaint text limit cannot be negative", ENTITY_NAME, "maxComplaintTextLimitInvalid", true);
-        }
-        if (getMaxComplaintTextLimit() > COMPLAINT_TEXT_LIMIT) {
-            throw new BadRequestAlertException("Max Complaint response text limit cannot be above " + COMPLAINT_TEXT_LIMIT + " characters.", ENTITY_NAME,
-                    "maxComplaintTextLimitInvalid", true);
-        }
-        if (getMaxComplaintResponseTextLimit() < 0) {
-            throw new BadRequestAlertException("Max Complaint response text limit cannot be negative", ENTITY_NAME, "maxComplaintResponseTextLimitInvalid", true);
-        }
-        if (getMaxComplaintResponseTextLimit() > COMPLAINT_RESPONSE_TEXT_LIMIT) {
-            throw new BadRequestAlertException("Max Complaint response text limit cannot be above " + COMPLAINT_RESPONSE_TEXT_LIMIT + " characters.", ENTITY_NAME,
-                    "maxComplaintResponseTextLimitInvalid", true);
-        }
-        if (getMaxRequestMoreFeedbackTimeDays() < 0) {
-            throw new BadRequestAlertException("Max Request More Feedback Days cannot be negative", ENTITY_NAME, "maxRequestMoreFeedbackDaysInvalid", true);
-        }
-        if (getMaxComplaintTimeDays() == 0 && (getMaxComplaints() != 0 || getMaxTeamComplaints() != 0)) {
-            throw new BadRequestAlertException("If complaints or more feedback requests are allowed, the complaint time in days must be positive.", ENTITY_NAME,
-                    "complaintsConfigInvalid", true);
-        }
-        if (getMaxComplaintTimeDays() != 0 && getMaxComplaints() == 0 && getMaxTeamComplaints() == 0) {
-            throw new BadRequestAlertException("If no complaints or more feedback requests are allowed, the complaint time in days should be set to zero.", ENTITY_NAME,
-                    "complaintsConfigInvalid", true);
-        }
-    }
-
-    public void validateEnrollmentConfirmationMessage() {
-        if (getEnrollmentConfirmationMessage() != null && getEnrollmentConfirmationMessage().length() > 2000) {
-            throw new BadRequestAlertException("Confirmation enrollment message must be shorter than 2000 characters", ENTITY_NAME, "confirmationEnrollmentMessageInvalid", true);
-        }
-    }
-
-    /**
-     * Validates if the start and end dates of the course fulfill all requirements.
-     */
-    public void validateStartAndEndDate() {
-        if (getStartDate() != null && getEndDate() != null && !getStartDate().isBefore(getEndDate())) {
-            throw new BadRequestAlertException("For Courses, the start date has to be before the end date", ENTITY_NAME, "invalidCourseStartDate", true);
-        }
-    }
-
-    /**
-     * Validates if the start and end date to enroll in the course fulfill all requirements.
-     * <p>
-     * The enrollment period is considered valid if
-     * <ul>
-     * <li>start and end date of the course are set and valid ({@link #validateStartAndEndDate()})</li>
-     * <li>start and end date of the enrollment period are in the correct order,</li>
-     * <li>and the start and end date of the enrollment is before the end date of the course.</li>
-     * </ul>
-     *
-     * @throws BadRequestAlertException if the enrollment period is invalid
-     */
-    public void validateEnrollmentStartAndEndDate() {
-        if (getEnrollmentStartDate() == null || getEnrollmentEndDate() == null) {
-            return;
-        }
-        final String errorKey = "enrollmentPeriodInvalid";
-        if (!getEnrollmentStartDate().isBefore(getEnrollmentEndDate())) {
-            throw new BadRequestAlertException("Enrollment start date must be before the end date.", ENTITY_NAME, errorKey, true);
-        }
-
-        if (getStartDate() == null || getEndDate() == null) {
-            throw new BadRequestAlertException("Enrollment can not be set if the course has no assigned start and end date.", ENTITY_NAME, errorKey, true);
-        }
-
-        validateStartAndEndDate();
-
-        if (getEnrollmentEndDate().isAfter(getEndDate())) {
-            throw new BadRequestAlertException("Enrollment end can not be after the end date of the course.", ENTITY_NAME, errorKey, true);
-        }
-    }
-
-    /**
-     * Validates if the end date to unenroll from the course fulfills all requirements.
-     * <p>
-     * The unenrollment end date is considered valid if
-     * <ul>
-     * <li>start and end date of the enrollment period are set and valid ({@link #validateEnrollmentStartAndEndDate()})</li>
-     * <li>the enrollment period ends before the unenrollment end date,</li>
-     * <li>and the end date for unenrollment is not after the end date of the course.</li>
-     * </ul>
-     *
-     * @throws BadRequestAlertException if the unenrollment end date is invalid
-     */
-    public void validateUnenrollmentEndDate() {
-        if (getUnenrollmentEndDate() == null) {
-            return;
-        }
-
-        validateEnrollmentStartAndEndDate();
-
-        final String errorKey = "unenrollmentEndDateInvalid";
-
-        if (getEnrollmentStartDate() == null || getEnrollmentEndDate() == null) {
-            throw new BadRequestAlertException("Unenrollment end date requires a configured enrollment period.", ENTITY_NAME, errorKey, true);
-        }
-
-        if (!getEnrollmentEndDate().isBefore(getUnenrollmentEndDate())) {
-            throw new BadRequestAlertException("End date for enrollment must be before the end date to unenroll.", ENTITY_NAME, errorKey, true);
-        }
-
-        if (getUnenrollmentEndDate().isAfter(getEndDate())) {
-            throw new BadRequestAlertException("End date for enrollment can not be after the end date of the course.", ENTITY_NAME, errorKey, true);
-        }
-    }
-
-    /**
-     * We want to add users to a group, however different courses might have different courseGroupNames, therefore we
-     * use this method to return the customized courseGroup name
-     *
-     * @param courseGroup the courseGroup we want to add the user to
-     * @return the customized userGroupName
-     */
-    public String defineCourseGroupName(String courseGroup) {
-        return switch (courseGroup) {
-            case "students" -> getStudentGroupName();
-            case "tutors" -> getTeachingAssistantGroupName();
-            case "instructors" -> getInstructorGroupName();
-            case "editors" -> getEditorGroupName();
-            default -> throw new IllegalArgumentException("The course group does not exist");
-        };
     }
 
     public TutorialGroupsConfiguration getTutorialGroupsConfiguration() {

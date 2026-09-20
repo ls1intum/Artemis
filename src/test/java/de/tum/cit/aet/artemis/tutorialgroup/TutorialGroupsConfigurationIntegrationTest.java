@@ -17,8 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.core.domain.Language;
@@ -33,6 +32,8 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
     private static final String TEST_PREFIX = "tutorialgroupconfiguration";
 
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
     Long exampleTutorialGroupId;
 
     private Long courseId;
@@ -42,8 +43,8 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     void setupTestScenario() {
         super.setupTestScenario();
         userUtilService.addUsers(this.testPrefix, 1, 2, 1, 1);
-        if (userRepository.findOneByLogin(testPrefix + "instructor42").isEmpty()) {
-            userRepository.save(UserFactory.generateActivatedUser(testPrefix + "instructor42"));
+        if (userRepository.findOneByLogin(OTHER_PREFIX + "instructor42").isEmpty()) {
+            userRepository.save(UserFactory.generateActivatedUser(OTHER_PREFIX + "instructor42"));
         }
         this.exampleTutorialGroupId = tutorialGroupUtilService
                 .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(),
@@ -57,7 +58,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void request_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
         this.testJustForInstructorEndpoints();
     }
@@ -82,7 +83,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
     @BeforeEach
     void deleteExistingConfiguration() {
-        var course = courseUtilService.createCourse();
+        var course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         course.setTimeZone(exampleTimeZone);
         courseRepository.save(course);
         courseId = course.getId();
@@ -411,7 +412,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
             @Test
             void shouldSerializeAndDeserializeCorrectly() throws Exception {
-                ObjectMapper mapper = JsonMapper.builder().findAndAddModules().build();
+                JsonMapper mapper = JsonMapper.builder().findAndAddModules().build();
 
                 var dto = new TutorialGroupConfigurationDTO(1L, "2024-01-01", "2024-02-01", true, false, Set.of());
 

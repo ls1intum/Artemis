@@ -1,0 +1,8 @@
+<ng-content />
+<span
+    class="tum-ui-tab-indicator"
+    [class.tum-ui-tab-indicator-animated]="indicatorPosition().animate"
+    aria-hidden="true"
+    [style.width.px]="indicatorPosition().width"
+    [style.transform]="indicatorTransform()"
+></span>

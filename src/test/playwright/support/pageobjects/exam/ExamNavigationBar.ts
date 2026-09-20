@@ -61,10 +61,6 @@ export class ExamNavigationBar {
      * Presses the hand in early button in the navigation bar.
      */
     async handInEarly() {
-        await this.page.locator('#hand-in-early').click({ timeout: 30000 });
-    }
-
-    async clickSave() {
-        await this.page.locator('#save').click();
+        await this.page.locator('[data-testid="hand-in-early"]').click({ timeout: 30000 });
     }
 }

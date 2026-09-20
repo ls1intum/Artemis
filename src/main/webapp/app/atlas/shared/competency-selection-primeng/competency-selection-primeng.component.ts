@@ -25,6 +25,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-competency-selection-primeng',
@@ -69,7 +70,6 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
     // all course competencies (rebuilt as a fresh array on every write so the template re-renders under zoneless)
     readonly competencyLinks = signal<CompetencyLearningObjectLink[] | undefined>(undefined);
 
-    readonly isLoading = signal(false);
     readonly isSuggesting = signal(false);
     // rebuilt as a fresh object on every write so the template re-renders under zoneless
     readonly checkboxStates = signal<Record<number, boolean>>(undefined!);
@@ -113,29 +113,21 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
             if (course?.competencies?.length || course?.prerequisites?.length) {
                 this.setCompetencyLinks([...(course.competencies ?? []), ...(course.prerequisites ?? [])]);
             } else {
-                this.isLoading.set(true);
-                this.courseCompetencyService
-                    .getAllForCourse(courseId)
-                    .pipe(
-                        finalize(() => {
-                            this.isLoading.set(false);
-                        }),
-                    )
-                    .subscribe({
-                        next: (response) => {
-                            this.setCompetencyLinks(response.body!);
-                            // Apply any links that arrived via refreshWithLinks() while still loading
-                            if (this.pendingRefreshLinks) {
-                                this.refreshWithLinks(this.pendingRefreshLinks);
-                                this.pendingRefreshLinks = undefined;
-                            } else {
-                                this.writeValue(this.selectedCompetencyLinks);
-                            }
-                        },
-                        error: () => {
-                            this.disabled.set(true);
-                        },
-                    });
+                this.courseCompetencyService.getAllForCourse(courseId).subscribe({
+                    next: (response) => {
+                        this.setCompetencyLinks(response.body!);
+                        // Apply any links that arrived via refreshWithLinks() while still loading
+                        if (this.pendingRefreshLinks) {
+                            this.refreshWithLinks(this.pendingRefreshLinks);
+                            this.pendingRefreshLinks = undefined;
+                        } else {
+                            this.writeValue(this.selectedCompetencyLinks);
+                        }
+                    },
+                    error: () => {
+                        this.disabled.set(true);
+                    },
+                });
             }
         }
     }
@@ -173,7 +165,7 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
 
             const competencyId = newValue.competency.id;
             // Rebuild a fresh object so the dependent template bindings re-render under zoneless.
-            this.checkboxStates.update((states) => ({ ...states, [competencyId]: !states[competencyId] }));
+            this.checkboxStates.update((states) => cloneWith(states, { [competencyId]: !states[competencyId] }));
 
             // make sure to do not send an empty list to server
             if (!this.selectedCompetencyLinks?.length) {

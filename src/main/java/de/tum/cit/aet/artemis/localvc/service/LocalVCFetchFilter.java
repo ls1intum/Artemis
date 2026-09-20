@@ -27,8 +27,11 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
 
     private final LocalVCServletService localVCServletService;
 
-    public LocalVCFetchFilter(LocalVCServletService localVCServletService) {
+    private final LocalVCUsageTrackingService usageTrackingService;
+
+    public LocalVCFetchFilter(LocalVCServletService localVCServletService, LocalVCUsageTrackingService usageTrackingService) {
         this.localVCServletService = localVCServletService;
+        this.usageTrackingService = usageTrackingService;
     }
 
     @Override
@@ -43,10 +46,11 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
         }
         catch (LocalVCAuthException | LocalVCForbiddenException | LocalVCInternalException e) {
             int status = localVCServletService.getHttpStatusForException(e, servletRequest.getRequestURI());
-            // The first request of every git operation has no Authorization header by design (the client waits
-            // for the 401 challenge), so do not log that expected handshake. Log every other rejection with its
-            // concrete reason — otherwise a 401/403 is returned silently and is impossible to diagnose.
-            if (!"No authorization header provided".equals(e.getMessage())) {
+            // Parts of the git authentication handshake are expected and happen on every clone, so they must not be
+            // logged as warnings. The exception itself says whether it is such a case; matching on the message text
+            // silently missed the second one (an empty password) and made every clone look like a failure. Log every
+            // other rejection with its concrete reason, otherwise a 401/403 is returned silently and cannot be diagnosed.
+            if (!(e instanceof LocalVCAuthException authException && authException.isExpectedDuringHandshake())) {
                 log.warn("LocalVC fetch rejected for {} -> HTTP {} ({}: {})", servletRequest.getRequestURI(), status, e.getClass().getSimpleName(), e.getMessage());
             }
             servletResponse.setStatus(status);
@@ -59,6 +63,15 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
             throw e;
         }
 
-        filterChain.doFilter(servletRequest, servletResponse);
+        long startNanos = System.nanoTime();
+        // stays true if doFilter throws, so a fetch that blew up is not counted as a success
+        boolean failed = true;
+        try {
+            filterChain.doFilter(servletRequest, servletResponse);
+            failed = servletResponse.getStatus() >= HttpServletResponse.SC_BAD_REQUEST;
+        }
+        finally {
+            usageTrackingService.recordFetch(servletRequest, (System.nanoTime() - startNanos) / 1_000_000, failed);
+        }
     }
 }

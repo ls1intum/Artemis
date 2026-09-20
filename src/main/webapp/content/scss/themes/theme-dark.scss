@@ -1,5 +1,6 @@
 /* stylelint-disable */
 @use 'sass:meta';
+@use 'apollon';
 @use 'generate-css-vars';
 
 @import 'dark-variables';
@@ -36,6 +37,11 @@ html {
             background-color: $neutral-dark-l-10;
         }
     }
+}
+
+.artemis-apollon-theme {
+    @include generate-css-vars.generate-prefixed('dark-variables', 'apollon-');
+    @include apollon.component-overrides;
 }
 
 @import '../global';
@@ -198,4 +204,5 @@ input:-webkit-autofill:active {
     --overview-card-bg: #16191d;
     --overview-card-nested-bg: #343a42;
     --overview-card-hover-bg: #434c56;
+    --overview-card-hover-color: #{$body-color};
 }

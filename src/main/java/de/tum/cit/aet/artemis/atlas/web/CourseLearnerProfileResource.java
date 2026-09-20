@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile.M
 import static de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile.MIN_PROFILE_VALUE;
 
 import java.time.ZonedDateTime;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -29,11 +30,14 @@ import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.service.profile.CourseLearnerProfileService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseAtlasService;
 
 @Conditional(AtlasEnabled.class)
 @Lazy
+@FeatureUsage("learner-profile/learner-profile")
 @RestController
 @RequestMapping("api/atlas/")
 public class CourseLearnerProfileResource {
@@ -48,12 +52,15 @@ public class CourseLearnerProfileResource {
 
     private final CourseLearnerProfileService courseLearnerProfileService;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
     public CourseLearnerProfileResource(UserRepository userRepository, CourseLearnerProfileRepository courseLearnerProfileRepository, CourseAtlasService courseAtlasService,
-            CourseLearnerProfileService courseLearnerProfileService) {
+            CourseLearnerProfileService courseLearnerProfileService, AuthorizationCheckService authorizationCheckService) {
         this.userRepository = userRepository;
         this.courseLearnerProfileRepository = courseLearnerProfileRepository;
         this.courseAtlasService = courseAtlasService;
         this.courseLearnerProfileService = courseLearnerProfileService;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -65,10 +72,10 @@ public class CourseLearnerProfileResource {
     @GetMapping("course-learner-profiles")
     @EnforceAtLeastStudent
     public ResponseEntity<Set<CourseLearnerProfileDTO>> getCourseLearnerProfiles() {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         log.debug("REST request to get all CourseLearnerProfiles of user {}", user.getLogin());
         Set<CourseLearnerProfile> courseLearnerProfiles = courseLearnerProfileRepository.findAllByLoginAndCourseActive(user.getLogin(), ZonedDateTime.now()).stream()
-                .filter(profile -> user.getGroups().contains(profile.getCourse().getStudentGroupName())).collect(Collectors.toSet());
+                .filter(profile -> authorizationCheckService.isStudentInCourse(profile.getCourse(), user)).collect(Collectors.toSet());
 
         Set<Course> coursesWithLearningPaths = courseAtlasService.findAllActiveForUserAndLearningPathsEnabled(user);
 
@@ -93,7 +100,7 @@ public class CourseLearnerProfileResource {
     private void validateProfileField(int value, String fieldName) {
         if (value < MIN_PROFILE_VALUE || value > MAX_PROFILE_VALUE) {
             String message = "%s (%d) is outside valid bounds [%d, %d]".formatted(fieldName, value, MIN_PROFILE_VALUE, MAX_PROFILE_VALUE);
-            throw new BadRequestAlertException(message, CourseLearnerProfile.ENTITY_NAME, fieldName.toLowerCase() + "OutOfBounds", true);
+            throw new BadRequestAlertException(message, CourseLearnerProfile.ENTITY_NAME, fieldName.toLowerCase(Locale.ROOT) + "OutOfBounds", true);
         }
     }
 

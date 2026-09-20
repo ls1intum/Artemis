@@ -82,7 +82,7 @@
         </div>
         <div class="flex flex-col gap-2">
             <label for="knowledge-area-select" jhiTranslate="artemisApp.standardizedCompetency.model.knowledgeArea"></label>
-            <tum-ui-select inputId="knowledge-area-select" [options]="knowledgeAreas()" optionLabel="title" optionValue="id" formControlName="knowledgeAreaId" appendTo="body" />
+            <tum-ui-select inputId="knowledge-area-select" [options]="knowledgeAreas()" optionLabel="title" optionValue="id" formControlName="knowledgeAreaId" />
             @if (form.controls.knowledgeAreaId.invalid && (form.controls.knowledgeAreaId.dirty || form.controls.knowledgeAreaId.touched)) {
                 <tum-ui-message severity="error" data-testid="knowledge-area-error">
                     <span jhiTranslate="artemisApp.standardizedCompetency.details.error.knowledgeAreaRequired"></span>
@@ -91,7 +91,7 @@
         </div>
         <div class="flex flex-col gap-2">
             <label for="source-select" jhiTranslate="artemisApp.standardizedCompetency.model.source"></label>
-            <tum-ui-select inputId="source-select" [options]="sourceOptions()" optionLabel="label" optionValue="id" formControlName="sourceId" [showClear]="true" appendTo="body" />
+            <tum-ui-select inputId="source-select" [options]="sourceOptions()" optionLabel="label" optionValue="id" formControlName="sourceId" [showClear]="true" />
         </div>
     </div>
     @if (isEditing()) {

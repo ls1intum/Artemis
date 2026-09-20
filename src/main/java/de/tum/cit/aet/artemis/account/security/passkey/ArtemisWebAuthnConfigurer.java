@@ -44,8 +44,8 @@ import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingServ
  * <li>
  * Using custom repositories for register & authenticate option requests, as the default implementation in
  * memory storage would not work on multinode systems (instead we are using hazelcast
- * {@link de.tum.cit.aet.artemis.account.repository.passkey.HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository}
- * {@link de.tum.cit.aet.artemis.account.repository.passkey.HazelcastPublicKeyCredentialRequestOptionsRepository})
+ * {@link de.tum.cit.aet.artemis.account.repository.passkey.DistributedHttpSessionPublicKeyCredentialCreationOptionsRepository}
+ * {@link de.tum.cit.aet.artemis.account.repository.passkey.DistributedPublicKeyCredentialRequestOptionsRepository})
  * </li>
  * </ul>
  *

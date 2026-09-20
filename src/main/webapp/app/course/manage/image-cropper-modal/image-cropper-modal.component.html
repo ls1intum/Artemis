@@ -1,26 +1,19 @@
-<div class="modal-header justify-between">
-    <h4 class="modal-title">
-        <span jhiTranslate="artemisApp.course.imageCropper.title"></span>
-    </h4>
-</div>
-<div class="modal-body">
-    <div class="row">
-        <image-cropper
-            [imageFile]="uploadFile()"
-            [maintainAspectRatio]="true"
-            [format]="fileFormat()"
-            [aspectRatio]="1"
-            [resizeToWidth]="200"
-            [cropperMinWidth]="100"
-            [onlyScaleDown]="true"
-            [roundCropper]="roundCropper()"
-            (imageCropped)="imageCropped($event)"
-        />
-    </div>
-</div>
-<div class="modal-footer">
-    <button id="cancel-cropping-button" type="button" class="btn btn-outline-secondary" (click)="onCancel()"><span jhiTranslate="entity.action.cancel"></span></button>
-    <button id="save-cropping-button" type="button" class="btn btn-primary" (click)="onSave()">
+<image-cropper
+    [imageFile]="uploadFile()"
+    [maintainAspectRatio]="true"
+    [format]="fileFormat()"
+    [aspectRatio]="1"
+    [resizeToWidth]="200"
+    [cropperMinWidth]="100"
+    [onlyScaleDown]="true"
+    [roundCropper]="roundCropper()"
+    (imageCropped)="imageCropped($event)"
+/>
+<div class="mt-4 flex justify-end gap-2">
+    <button type="button" tumUiButton severity="secondary" variant="outlined" data-testid="cancel-cropping-button" (click)="onCancel()">
+        <span jhiTranslate="entity.action.cancel"></span>
+    </button>
+    <button type="button" tumUiButton severity="primary" data-testid="save-cropping-button" (click)="onSave()">
         <span jhiTranslate="entity.action.save"></span>
     </button>
 </div>

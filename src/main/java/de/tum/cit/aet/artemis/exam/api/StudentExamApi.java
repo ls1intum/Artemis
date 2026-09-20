@@ -14,6 +14,7 @@ import org.springframework.stereotype.Controller;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingTimeDTO;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -69,8 +70,16 @@ public class StudentExamApi extends AbstractExamApi {
         return studentExamRepository.findAllWithExercisesByUserId(userId).stream().collect(Collectors.groupingBy(studentExam -> studentExam.getExam().getCourse()));
     }
 
-    public Optional<StudentExam> findByExamIdAndUserId(Long examId, Long userId) {
-        return studentExamRepository.findByExamIdAndUserId(examId, userId);
+    /**
+     * Reads only the working time and started date of a student exam, for callers that need nothing but the individual
+     * end date.
+     *
+     * @param examId the id of the exam
+     * @param userId the id of the student
+     * @return the working time projection, if a student exam exists
+     */
+    public Optional<StudentExamWorkingTimeDTO> findWorkingTimeByExamIdAndUserId(Long examId, Long userId) {
+        return studentExamRepository.findWorkingTimeByExamIdAndUserId(examId, userId);
     }
 
     public Set<Long> findRegisteredNonTestExamIdsByUserIdAndCourseIds(long userId, Collection<Long> courseIds) {

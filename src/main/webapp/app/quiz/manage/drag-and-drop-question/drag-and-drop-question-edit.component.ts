@@ -2,21 +2,22 @@ import {
     AfterViewInit,
     Component,
     ElementRef,
-    OnChanges,
     OnDestroy,
     OnInit,
     OutputRefSubscription,
-    SimpleChanges,
     ViewEncapsulation,
     computed,
+    effect,
     inject,
     input,
     output,
     signal,
+    untracked,
     viewChild,
 } from '@angular/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
+import { dragItemPicturePath } from 'app/quiz/shared/util/drag-and-drop-file-url.util';
 import { DragAndDropMouseEvent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
 import { DragState } from 'app/quiz/shared/entities/drag-state.enum';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -26,7 +27,6 @@ import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.interface';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
-import { cloneDeep } from 'lodash-es';
 import { round } from 'app/foundation/util/utils';
 import { MAX_SIZE_UNIT } from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import { ImageComponent, ImageLoadingStatus } from 'app/shared-ui/image/image.component';
@@ -69,6 +69,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FileService } from 'app/foundation/service/file.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
@@ -101,7 +102,7 @@ import { FileService } from 'app/foundation/service/file.service';
         InputNumberModule,
     ],
 })
-export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit, OnDestroy {
+export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, QuizQuestionEdit, OnDestroy {
     protected readonly faBan = faBan;
     protected readonly faPlus = faPlus;
     protected readonly faTrash = faTrash;
@@ -188,13 +189,55 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
 
     dragAndDropDomainActions = [this.explanationAction, this.hintAction];
 
+    /** Previous value of the question input, used to suppress the questionUpdated emit on the first run (replaces SimpleChanges.previousValue). */
+    private previousQuestion?: DragAndDropQuestion;
+
+    constructor() {
+        // Replaces the ngOnChanges 'question' branch: notify the parent when the bound question changes (but not on
+        // the initial binding — the former hook guarded on `changes.question.previousValue`) and refresh the backup
+        // copy. previousQuestion shadows the missing SimpleChanges.previousValue; the emit/clone run untracked.
+        effect(() => {
+            const question = this.question();
+            untracked(() => {
+                const hadPreviousQuestion = this.previousQuestion !== undefined;
+                this.previousQuestion = question;
+                if (hadPreviousQuestion) {
+                    this.questionUpdated.emit();
+                }
+                if (question) {
+                    this.backupQuestion = deepClone(question);
+                }
+            });
+        });
+
+        // Replaces the ngOnChanges filePool handling: register preview paths for any newly provided files. The former
+        // hook ran this on *every* ngOnChanges (it was outside the `changes.filePool` guard), which is how it picked up
+        // in-place `fileMap` mutations that co-occur with a question change (e.g. an Apollon import populates the shared
+        // Map without changing its reference). We therefore also track question() so the (idempotent) sync re-runs on
+        // those updates; reacting to filePool() alone would miss same-reference Map mutations.
+        effect(() => {
+            const filePool = this.filePool();
+            this.question();
+            untracked(() => {
+                if (!filePool || filePool.size === 0) {
+                    return;
+                }
+                filePool.forEach((value, fileName) => {
+                    if (value.path && !this.filePreviewPaths().has(fileName)) {
+                        this.filePreviewPaths.update((map) => new Map(map).set(fileName, value.path!));
+                    }
+                });
+            });
+        });
+    }
+
     /**
      * Actions when initializing component.
      */
     ngOnInit(): void {
         const question = this.question();
         // create deep copy as backup
-        this.backupQuestion = cloneDeep(question);
+        this.backupQuestion = deepClone(question);
 
         /** Initialize DropLocation and MouseEvent objects **/
         this.currentDropLocation = new DropLocation();
@@ -216,31 +259,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         this.adjustClickLayerWidthSubscription?.unsubscribe();
     }
 
-    /**
-     * Watch for any changes to the question model and notify listener
-     * @param changes {SimpleChanges}
-     */
-    ngOnChanges(changes: SimpleChanges): void {
-        /** Check if previousValue wasn't null to avoid firing at component initialization **/
-        if (changes.question && changes.question.previousValue) {
-            this.questionUpdated.emit();
-        }
-        /** Update backupQuestion if the question changed **/
-        if (changes.question && changes.question.currentValue) {
-            this.backupQuestion = cloneDeep(this.question());
-        }
-
-        if (!this.filePool() || this.filePool().size == 0) {
-            return;
-        }
-
-        this.filePool().forEach((value, fileName) => {
-            if (value.path && !this.filePreviewPaths().has(fileName)) {
-                this.filePreviewPaths.update((map) => new Map(map).set(fileName, value.path!));
-            }
-        });
-    }
-
     ngAfterViewInit(): void {
         const question = this.question();
         if (question.backgroundFilePath && !this.filePreviewPaths().has(question.backgroundFilePath)) {
@@ -249,9 +267,13 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
 
         if (question.dragItems) {
             for (const dragItem in question.dragItems) {
-                const path = question.dragItems[dragItem].pictureFilePath;
+                const item = question.dragItems[dragItem];
+                const path = item.pictureFilePath;
                 if (path && !this.filePreviewPaths().has(path)) {
-                    this.filePreviewPaths.update((map) => new Map(map).set(path, path));
+                    // Map the stored filename to the question-scoped path that serves it. A drag item id is only unique within its question, so the picture cannot be
+                    // addressed without the question id.
+                    const previewPath = question.id !== undefined && item.id !== undefined ? dragItemPicturePath(question.id, item.id, path) : path;
+                    this.filePreviewPaths.update((map) => new Map(map).set(path, previewPath));
                 }
             }
         }
@@ -829,12 +851,19 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     resetQuestionTitle(): void {
         const question = this.question();
         question.title = this.backupQuestion.title;
+        this.questionUpdated.emit();
     }
 
     /**
      * Resets the question text
      */
     resetQuestionText(): void {
+        this.restoreQuestionText();
+        this.questionUpdated.emit();
+    }
+
+    /** Restores the text without notifying, so a full reset emits once when everything is back. */
+    private restoreQuestionText(): void {
         const question = this.question();
         question.text = this.backupQuestion.text;
         question.explanation = this.backupQuestion.explanation;
@@ -852,11 +881,12 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         question.randomizeOrder = this.backupQuestion.randomizeOrder;
         question.scoringType = this.backupQuestion.scoringType;
         this.resetBackground();
-        question.dropLocations = cloneDeep(this.backupQuestion.dropLocations);
-        question.dragItems = cloneDeep(this.backupQuestion.dragItems);
-        question.correctMappings = cloneDeep(this.backupQuestion.correctMappings);
+        question.dropLocations = deepClone(this.backupQuestion.dropLocations);
+        question.dragItems = deepClone(this.backupQuestion.dragItems);
+        question.correctMappings = deepClone(this.backupQuestion.correctMappings);
         question.isHighlighted = this.backupQuestion.isHighlighted;
-        this.resetQuestionText();
+        this.restoreQuestionText();
+        this.questionUpdated.emit();
     }
 
     /**

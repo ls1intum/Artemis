@@ -2,9 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { DebugElement } from '@angular/core';
+import { Location } from '@angular/common';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { BehaviorSubject, Subject, asapScheduler, firstValueFrom, of, scheduled, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, asapScheduler, firstValueFrom, of, scheduled, throwError } from 'rxjs';
 import { outputToObservable } from '@angular/core/rxjs-interop';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -32,7 +33,7 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
-import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, UrlTree, convertToParamMap, provideRouter } from '@angular/router';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
@@ -42,6 +43,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockAthenaService } from 'test/helpers/mocks/service/mock-athena.service';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
@@ -113,7 +115,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     let lockAndGetProgrammingSubmissionParticipationStub: ReturnType<typeof vi.spyOn>;
     let findWithParticipationsStub: ReturnType<typeof vi.spyOn>;
 
-    const user = <User>{ id: 99, groups: ['instructorGroup'] };
+    const user = <User>{ id: 99 };
     const result: Result = {
         feedbacks: [new Feedback()],
         score: 80,
@@ -136,7 +138,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         },
         maxPoints: 100,
         gradingInstructions: 'Grading Instructions',
-        course: <Course>{ instructorGroupName: 'instructorGroup' },
+        course: <Course>{},
     } as unknown as ProgrammingExercise;
 
     const participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
@@ -176,6 +178,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         ({
             params: of({ submissionId: 123 }),
             queryParamMap: of(convertToParamMap({ testRun: false })),
+            snapshot: { queryParams: { 'correction-round': '0', testRun: 'false' } },
         }) as any as ActivatedRoute;
     const fileContent = 'This is the content of a file';
     const templateFileSessionReturn: { [fileName: string]: string } = { 'folder/file1': fileContent };
@@ -312,8 +315,28 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id, false, true);
     });
 
+    it('should load an anonymous submission for tutor assessment', async () => {
+        const anonymousSubmission = structuredClone(submission);
+        const anonymousParticipation = anonymousSubmission.participation as ProgrammingExerciseStudentParticipation;
+        delete anonymousParticipation.student;
+        delete anonymousParticipation.repositoryUri;
+        lockAndGetProgrammingSubmissionParticipationStub.mockReturnValue(scheduled([anonymousSubmission], asapScheduler));
+
+        comp.ngOnInit();
+        await flushMicrotasks();
+
+        expect(comp.loadingInitialSubmission()).toBe(false);
+        expect(comp.participationCouldNotBeFetched()).toBe(false);
+        expect(comp.participation()?.id).toBe(participation.id);
+        expect(comp.participation()?.student).toBeUndefined();
+        expect(comp.participation()?.repositoryUri).toBeUndefined();
+        expect(comp.exercise()?.id).toBe(exercise.id);
+        expect(comp.manualResult()?.id).toBe(result.id);
+        expect(comp.isAssessor()).toBe(true);
+    });
+
     it('should update assessor correctly if the manual assessment is overridden', async () => {
-        const user2 = <User>{ id: 100, groups: ['instructorGroup'] };
+        const user2 = <User>{ id: 100 };
         const discardPendingSubmissionsWithConfirmationStub = vi.spyOn(comp, 'discardPendingSubmissionsWithConfirmation').mockReturnValue(Promise.resolve(true));
         const updateAfterNewAssessment = vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(of(overrideEntityResponse));
         result.assessor = user2;
@@ -415,6 +438,44 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         comp.ngOnInit();
         expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalledOnce();
+    });
+
+    it.each([
+        { param: '1', expectedRound: 1, description: 'a usable round' },
+        { param: undefined, expectedRound: 0, description: 'an absent round' },
+        { param: '   ', expectedRound: 0, description: 'a whitespace only round' },
+        { param: 'abc', expectedRound: 0, description: 'a round that is not a number' },
+        { param: '1.5', expectedRound: 0, description: 'a fractional round' },
+        { param: '-1', expectedRound: 0, description: 'a negative round' },
+        { param: '1e3', expectedRound: 0, description: 'an exponential round' },
+    ])('should lock the submission for $description', ({ param, expectedRound }) => {
+        // The round is sent along when the submission is locked, so an unusable value must not travel on as NaN: the
+        // request went out as correction-round=NaN and left the tutor on an empty editor (#13396).
+        // queryParamMap is declared readonly on ActivatedRoute, so the mock is reached through a writable view.
+        const activatedRoute = TestBed.inject(ActivatedRoute) as unknown as { queryParamMap: Observable<ParamMap> };
+        activatedRoute.queryParamMap = of(convertToParamMap(param === undefined ? { testRun: 'false' } : { testRun: 'false', 'correction-round': param }));
+
+        comp.ngOnInit();
+
+        expect(comp.correctionRound()).toBe(expectedRound);
+        expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledExactlyOnceWith(123, expectedRound);
+    });
+
+    it('should keep the round it locked with when only the correction round in the url changes', () => {
+        // This component has no resolver, so a `correction-round` that changes on its own — reachable only by
+        // hand-editing the address bar — starts no new load. The round it shows must then stay the round the submission
+        // was locked with, because the same value indexes the results of that submission.
+        const queryParamMap$ = new BehaviorSubject(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+        const activatedRoute = TestBed.inject(ActivatedRoute) as unknown as { queryParamMap: Observable<ParamMap> };
+        activatedRoute.queryParamMap = queryParamMap$.asObservable();
+
+        comp.ngOnInit();
+        expect(comp.correctionRound()).toBe(1);
+
+        queryParamMap$.next(convertToParamMap({ testRun: 'false', 'correction-round': '0' }));
+
+        expect(comp.correctionRound()).toBe(1);
+        expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledExactlyOnceWith(123, 1);
     });
 
     it('should not show complaint when participation contains no complaint', async () => {
@@ -596,7 +657,8 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             unassessedSubmission.id!.toString(),
             'assessment',
         ];
-        const queryParams = { queryParams: { 'correction-round': 0 } };
+        // Merge rather than replace, so that the navigation keeps testRun and every other parameter (#13421).
+        const queryParams = { queryParams: { 'correction-round': 0 }, queryParamsHandling: 'merge' };
         expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalledOnce();
         expect(routerStub).toHaveBeenCalledWith(url, queryParams);
     });
@@ -699,6 +761,23 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         await internals(comp).onSubmissionReceived('123', submission);
         expect(comp.assessmentsAreValid()).toBe(true);
+    });
+
+    it('should keep the exam route and query parameters when replacing new with the loaded submission id', async () => {
+        comp.courseId = 2;
+        comp.examId = 3;
+        comp.exerciseGroupId = 4;
+        comp.exerciseId = 14;
+        const createUrlTreeSpy = vi.spyOn(router, 'createUrlTree').mockReturnValue({ toString: () => '/rewritten' } as unknown as UrlTree);
+        const goSpy = vi.spyOn(TestBed.inject(Location), 'go').mockImplementation(() => {});
+
+        await internals(comp).onSubmissionReceived('new', submission);
+
+        expect(createUrlTreeSpy).toHaveBeenCalledExactlyOnceWith(
+            ['/course-management', '2', 'exams', '3', 'exercise-groups', '4', 'programming-exercises', '14', 'submissions', '1234', 'assessment'],
+            { queryParams: { 'correction-round': '0', testRun: 'false' } },
+        );
+        expect(goSpy).toHaveBeenCalledExactlyOnceWith('/rewritten');
     });
 
     it('should not invalidate assessment after saving', async () => {
@@ -898,13 +977,13 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.hasAutomaticFeedback()).toBe(false);
     });
 
-    it('should return true for isFeedbackSuggestionsEnabled when feedbackSuggestionModule is set', () => {
-        comp.exercise.set(Object.assign({}, exercise, { feedbackSuggestionModule: 'module_text_programming' }) as unknown as ProgrammingExercise);
+    it('should return true for isFeedbackSuggestionsEnabled when athenaGradingFeedbackEnabled is set on course', () => {
+        comp.exercise.set(Object.assign({}, exercise, { course: { athenaGradingFeedbackEnabled: true } }) as unknown as ProgrammingExercise);
         expect(comp.isFeedbackSuggestionsEnabled()).toBe(true);
     });
 
-    it('should return false for isFeedbackSuggestionsEnabled when feedbackSuggestionModule is absent', () => {
-        comp.exercise.set(Object.assign({}, exercise, { feedbackSuggestionModule: undefined }) as unknown as ProgrammingExercise);
+    it('should return false for isFeedbackSuggestionsEnabled when athenaGradingFeedbackEnabled is absent', () => {
+        comp.exercise.set(Object.assign({}, exercise, { course: { athenaGradingFeedbackEnabled: false } }) as unknown as ProgrammingExercise);
         expect(comp.isFeedbackSuggestionsEnabled()).toBe(false);
     });
 
@@ -933,5 +1012,53 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         const banner = fixture.debugElement.query(By.directive(FeedbackSuggestionsBannerComponent));
         expect(banner).not.toBeNull();
+    });
+
+    describe('when assessment is not possible yet', () => {
+        // The server rejects opening an assessment while the exam is still running and says when the tutor can come
+        // back. The editor is unusable until then, so the container explains that instead of the code editor.
+        const notPossibleYetResponse = () =>
+            new HttpErrorResponse({
+                status: 403,
+                error: { errorKey: ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, params: { date: '2026-08-01T10:00:00Z' } },
+            });
+
+        it('should explain when assessment is possible instead of claiming the participation is missing', () => {
+            const alertService = TestBed.inject(AlertService);
+            const closeAllSpy = vi.spyOn(alertService, 'closeAll');
+            const errorSpy = vi.spyOn(alertService, 'error');
+            lockAndGetProgrammingSubmissionParticipationStub.mockReturnValue(throwError(() => notPossibleYetResponse()));
+
+            // detectChanges rather than a manual ngOnInit, so that the component initializes exactly once and renders
+            fixture.detectChanges();
+
+            expect(comp.assessmentNotPossibleYet()).toEqual({ translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, date: '2026-08-01T10:00:00Z' });
+            expect(comp.participationCouldNotBeFetched()).toBe(false);
+            expect(debugElement.query(By.css('#assessment-not-possible-yet'))).not.toBeNull();
+            // the submission does exist, so the "no unassessed submissions" fallback must not contradict the explanation
+            expect(debugElement.query(By.css('[jhiTranslate="artemisApp.programmingAssessment.notFound"]'))).toBeNull();
+            expect(debugElement.query(By.css('[jhiTranslate="artemisApp.editor.errors.participationNotFound"]'))).toBeNull();
+            // the panel explains this permanently, so the interceptor's toast is closed and no second one is added
+            expect(closeAllSpy).toHaveBeenCalledOnce();
+            expect(errorSpy).not.toHaveBeenCalled();
+        });
+
+        it('should clear the reason when a submission is loaded into the reused component', async () => {
+            const params = new BehaviorSubject<{ submissionId: number }>({ submissionId: 123 });
+            TestBed.inject(ActivatedRoute).params = params;
+            lockAndGetProgrammingSubmissionParticipationStub.mockReturnValue(throwError(() => notPossibleYetResponse()));
+
+            comp.ngOnInit();
+            expect(comp.assessmentNotPossibleYet()).toBeDefined();
+
+            // The exam ends and the tutor opens the next submission: Angular reuses this component instance and only
+            // re-emits the route params, so the previous reason has to be cleared or it would hide the loaded editor.
+            lockAndGetProgrammingSubmissionParticipationStub.mockReturnValue(scheduled([submission], asapScheduler));
+            params.next({ submissionId: 456 });
+            await flushMicrotasks();
+
+            expect(comp.assessmentNotPossibleYet()).toBeUndefined();
+            expect(comp.submission()).toEqual(submission);
+        });
     });
 });

@@ -14,6 +14,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * An abstract component intended for cases where a resource needs to be imported from one course into another.
@@ -115,10 +116,7 @@ export class ImportTableComponent<T extends BaseEntity> {
     private readonly debouncedDataLoad = BaseApiHttpService.debounce(this.loadData.bind(this), 300);
 
     private filterSearchResult(searchResults: SearchResult<T>): SearchResult<T> {
-        return {
-            ...searchResults,
-            resultsOnPage: searchResults.resultsOnPage?.filter((entity) => !this.disabledIds().includes(entity.id!)),
-        };
+        return cloneWith(searchResults, { resultsOnPage: searchResults.resultsOnPage?.filter((entity) => !this.disabledIds().includes(entity.id!)) });
     }
 
     protected async setSortedColumn(sortedColumn: string): Promise<void> {

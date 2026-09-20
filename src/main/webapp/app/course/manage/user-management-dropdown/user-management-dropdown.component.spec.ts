@@ -42,29 +42,43 @@ describe('UserManagementDropdownComponent', () => {
         expect(component.userAddActions()).toEqual([
             {
                 icon: faSchool,
-                routerLink: ['/course-management/123/groups/students'],
+                routerLink: ['/course-management/123/members/students'],
                 label: 'entity.action.addStudent',
                 id: 'add-student',
             },
             {
                 icon: faPersonChalkboard,
-                routerLink: ['/course-management/123/groups/tutors'],
+                routerLink: ['/course-management/123/members/tutors'],
                 label: 'entity.action.addTutor',
                 id: 'add-tutor',
             },
             {
                 icon: faListAlt,
-                routerLink: ['/course-management/123/groups/editors'],
+                routerLink: ['/course-management/123/members/editors'],
                 label: 'entity.action.addEditor',
                 id: 'add-editor',
             },
             {
                 icon: faGraduationCap,
-                routerLink: ['/course-management/123/groups/instructors'],
+                routerLink: ['/course-management/123/members/instructors'],
                 label: 'entity.action.addInstructor',
                 id: 'add-instructor',
             },
         ]);
+    });
+
+    it('should show the add actions as links once the menu is opened', () => {
+        fixture.componentRef.setInput('courseId', 123);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(document.querySelector('[role="menu"]')).toBeNull();
+
+        (fixture.nativeElement.querySelector('#user-management-dropdown') as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        const items = Array.from(document.querySelectorAll('[role="menuitem"]')) as HTMLElement[];
+        expect(items.map((item) => item.id)).toEqual(['add-student', 'add-tutor', 'add-editor', 'add-instructor']);
+        expect(items.every((item) => item.tagName === 'A')).toBe(true);
     });
 
     it('should not initialize userAddActions when courseId is undefined', () => {

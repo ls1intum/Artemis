@@ -83,6 +83,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
  * @param moduleNumber                   the module number
  * @param courseName                     the course name shown on the exam cover
  * @param exampleSolutionPublicationDate the date example solutions are published
+ * @param examSummaryPublicationDate     the date the submission overview becomes visible to students
  * @param course                         the slim course projection (id, title, testCourse, group names)
  * @param examArchivePath                the archive path; the exam-detail archive button reads it to enable download / cleanup
  * @param started                        whether the exam has started (computed server-side; {@code false} when no start date is set; the test-run screen reads it)
@@ -95,8 +96,9 @@ public record ExamWithExerciseGroupsDTO(long id, @Nullable String title, boolean
         @Nullable ZonedDateTime examStudentReviewEnd, @Nullable Integer gracePeriod, int workingTime, @Nullable String startText, @Nullable String endText,
         @Nullable String confirmationStartText, @Nullable String confirmationEndText, int examMaxPoints, @Nullable Boolean randomizeExerciseOrder,
         @Nullable Integer numberOfExercisesInExam, @Nullable Integer numberOfCorrectionRoundsInExam, @Nullable String examiner, @Nullable String moduleNumber,
-        @Nullable String courseName, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable CourseForExamDTO course, @Nullable String examArchivePath, boolean started,
-        @Nullable Long numberOfExamUsers, @Nullable List<ExerciseGroupWithExercisesDTO> exerciseGroups) implements ExamResponseDTO {
+        @Nullable String courseName, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable ZonedDateTime examSummaryPublicationDate, @Nullable CourseForExamDTO course,
+        @Nullable String examArchivePath, boolean started, @Nullable Long numberOfExamUsers, @Nullable List<ExerciseGroupWithExercisesDTO> exerciseGroups)
+        implements ExamResponseDTO {
 
     /**
      * Builds the response for the detailed {@code GET} ({@code withExerciseGroups=true}): the exercise-group management
@@ -181,8 +183,8 @@ public record ExamWithExerciseGroupsDTO(long id, @Nullable String title, boolean
         return new ExamWithExerciseGroupsDTO(core.id(), core.title(), core.testExam(), core.examWithAttendanceCheck(), core.visibleDate(), core.startDate(), core.endDate(),
                 core.publishResultsDate(), core.examStudentReviewStart(), core.examStudentReviewEnd(), core.gracePeriod(), core.workingTime(), core.startText(), core.endText(),
                 core.confirmationStartText(), core.confirmationEndText(), core.examMaxPoints(), core.randomizeExerciseOrder(), core.numberOfExercisesInExam(),
-                core.numberOfCorrectionRoundsInExam(), core.examiner(), core.moduleNumber(), core.courseName(), core.exampleSolutionPublicationDate(), core.course(),
-                core.examArchivePath(), started, exam.getNumberOfExamUsers(), groups);
+                core.numberOfCorrectionRoundsInExam(), core.examiner(), core.moduleNumber(), core.courseName(), core.exampleSolutionPublicationDate(),
+                core.examSummaryPublicationDate(), core.course(), core.examArchivePath(), started, exam.getNumberOfExamUsers(), groups);
     }
 
     /**

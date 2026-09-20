@@ -1,41 +1,39 @@
 <div
-    #resizeContainer
-    class="modeling-assessment"
-    [class.resizable]="resizeOptions()"
-    jhiResizable
-    [resizableEdges]="resizableEdges()"
-    [resizableConstraints]="{
-        minWidth: MODELING_EDITOR_MIN_WIDTH,
-        maxWidth: MODELING_EDITOR_MAX_WIDTH,
-        minHeight: MODELING_EDITOR_MIN_HEIGHT,
-        maxHeight: MODELING_EDITOR_MAX_HEIGHT,
-    }"
+    #assessmentFrame
+    class="modeling-assessment artemis-apollon-theme"
+    [class.modeling-assessment--fullscreen]="fullscreenActive()"
+    [class.apollon-fullscreen-frame]="fullscreenActive()"
 >
-    @if (title() || displayPoints()) {
-        <div class="card-header bg-primary text-white">
-            @if (title()) {
-                <span>{{ title() }}</span>
-            }
-            <span class="flex-fill"></span>
-            @if (displayPoints()) {
-                <jhi-score-display [score]="totalScore()" [maxPoints]="maxScore()" [maxBonusPoints]="maxBonusPoints()" [course]="course()" />
-            }
-        </div>
-    }
-    <div class="apollon-row" id="apollon-assessment-row">
-        <div #editorContainer class="apollon-container"></div>
-        @if (resizeOptions()?.horizontalResize) {
-            <div class="draggable-right">
-                <fa-icon [icon]="faGripLinesVertical" />
-            </div>
+    <div #topLeftRegion class="modeling-assessment__region modeling-assessment__region--top-left nopan nodrag nowheel">
+        <ng-content select="[modelingAssessmentTopLeft]" />
+    </div>
+    <div #topRightRegion class="modeling-assessment__region modeling-assessment__region--top-right nopan nodrag nowheel">
+        <ng-content select="[modelingAssessmentTopRight]" />
+    </div>
+    <div
+        #bottomCenterRegion
+        class="modeling-assessment__region modeling-assessment__region--bottom-center nopan nodrag nowheel"
+        [class.modeling-assessment__region--bottom-center-elevated]="bottomCenterElevated()"
+    >
+        @if (explanation()) {
+            <jhi-modeling-explanation-editor [explanation]="explanation()" [readOnly]="true" [autosizeMaxRows]="6" [autosizeMinRows]="4" />
         }
     </div>
-    @if (resizeOptions()?.verticalResize) {
-        <div class="draggable-bottom">
-            <fa-icon [icon]="faGripLines" />
-        </div>
-    }
-    @if (explanation()) {
-        <jhi-modeling-explanation-editor [explanation]="explanation()" [readOnly]="true" />
-    }
+
+    <jhi-apollon-rail-disclosure
+        #panelRegion
+        [label]="panelLabel()"
+        [icon]="faPanel"
+        testId="modeling-assessment-panel"
+        [(visible)]="panelVisible"
+        [maxHeight]="panelMaxHeight()"
+        [hidden]="!hasPanel()"
+        (resized)="scheduleChromePlacement()"
+    >
+        <ng-content select="[modelingAssessmentPanel]" />
+    </jhi-apollon-rail-disclosure>
+
+    <div class="modeling-assessment__canvas-shell">
+        <div #editorContainer class="apollon-container artemis-apollon-theme"></div>
+    </div>
 </div>

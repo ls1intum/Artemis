@@ -15,10 +15,14 @@ import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
-import { of } from 'rxjs';
+import { firstValueFrom, of, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 import { ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { NewStudentParticipationResolver, StudentParticipationResolver } from 'app/text/manage/assess/service/text-submission-assessment-resolve.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 /**
  * Test suite for TextAssessment Service.
@@ -71,7 +75,12 @@ describe('TextAssessment Service', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         });
         service = TestBed.inject(TextAssessmentService);
         httpMock = TestBed.inject(HttpTestingController);
@@ -277,13 +286,16 @@ describe('TextAssessment Service', () => {
 
         const snapshot = {
             paramMap: convertToParamMap({ exerciseId: 1 }),
-            queryParamMap: convertToParamMap({ correctionRound: 0 }),
+            // A round the fallback would not produce, so that the assertion below really pins the parameter being read.
+            // The key has to be the one the url uses, and the value a string: `correctionRound: 0` reads the same but is
+            // neither, so it silently exercised the absent-parameter path instead.
+            queryParamMap: convertToParamMap({ 'correction-round': '1' }),
         } as unknown as ActivatedRouteSnapshot;
 
         resolver.resolve(snapshot);
 
         expect(newStudentParticipationStub).toHaveBeenCalledOnce();
-        expect(newStudentParticipationStub).toHaveBeenCalledWith(1, 'lock', 0);
+        expect(newStudentParticipationStub).toHaveBeenCalledWith(1, 'lock', 1);
     });
 
     it('should resolve the needed StudentParticipations for TextSubmissionAssessmentComponent', () => {
@@ -292,13 +304,53 @@ describe('TextAssessment Service', () => {
 
         const snapshot = {
             paramMap: convertToParamMap({ participationId: 1, submissionId: 2, resultId: 1 }),
-            queryParamMap: convertToParamMap({ correctionRound: 0 }),
+            queryParamMap: convertToParamMap({ 'correction-round': '1' }),
         } as unknown as ActivatedRouteSnapshot;
 
         resolver.resolve(snapshot);
 
         expect(studentParticipationSpy).toHaveBeenCalledOnce();
+        // A named result identifies its own round, so this branch deliberately passes no round even though the url has one.
         expect(studentParticipationSpy).toHaveBeenCalledWith(2, undefined, 1);
+    });
+
+    it.each([
+        [
+            'NewStudentParticipationResolver',
+            () => TestBed.inject(NewStudentParticipationResolver),
+            () => vi.spyOn(TestBed.inject(TextSubmissionService), 'getSubmissionWithoutAssessment'),
+        ],
+        ['StudentParticipationResolver', () => TestBed.inject(StudentParticipationResolver), () => vi.spyOn(service, 'getFeedbackDataForExerciseSubmission')],
+    ])('should hand the "assessment is not possible yet" reason to the assessment page instead of swallowing it (%s)', async (_name, injectResolver, spyOnLoad) => {
+        // Without the reason the page cannot tell an empty exercise apart from a still-running exam and would claim
+        // that the submission was not found, contradicting the explanation the server sent.
+        const error = new HttpErrorResponse({
+            status: 403,
+            error: { errorKey: ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, params: { date: '2026-08-01T10:00:00Z' } },
+        });
+        spyOnLoad().mockReturnValue(throwError(() => error));
+        const snapshot = {
+            paramMap: convertToParamMap({ exerciseId: 1, submissionId: 2 }),
+            queryParamMap: convertToParamMap({ 'correction-round': '0' }),
+        } as unknown as ActivatedRouteSnapshot;
+
+        const routeData = await firstValueFrom(injectResolver().resolve(snapshot));
+
+        expect(routeData.participation).toBeUndefined();
+        expect(routeData.assessmentNotPossibleYet).toEqual({ translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, date: '2026-08-01T10:00:00Z' });
+    });
+
+    it('should not report any reason for an ordinary load failure', async () => {
+        vi.spyOn(service, 'getFeedbackDataForExerciseSubmission').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+        const snapshot = {
+            paramMap: convertToParamMap({ submissionId: 2 }),
+            queryParamMap: convertToParamMap({ 'correction-round': '0' }),
+        } as unknown as ActivatedRouteSnapshot;
+
+        const routeData = await firstValueFrom(TestBed.inject(StudentParticipationResolver).resolve(snapshot));
+
+        // The round is reported even for a failed load, so the page can say which round it could not open.
+        expect(routeData).toEqual({ assessmentNotPossibleYet: undefined, correctionRound: 0 });
     });
 
     afterEach(() => {

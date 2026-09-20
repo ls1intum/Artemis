@@ -1,14 +1,19 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
+import static de.tum.cit.aet.artemis.core.util.DateUtil.validateStrictDateSequence;
 import static de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import jakarta.persistence.CascadeType;
@@ -21,10 +26,13 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
-import jakarta.persistence.OrderColumn;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.SecondaryTable;
 
 import org.hibernate.Hibernate;
+import org.hibernate.annotations.TimeZoneStorage;
+import org.hibernate.annotations.TimeZoneStorageType;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,8 +65,6 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExercise extends Exercise {
 
-    // TODO: delete publish_build_plan_url from exercise using liquibase
-
     // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
     @Override
     public String getType() {
@@ -67,13 +73,28 @@ public class ProgrammingExercise extends Exercise {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
 
+    /** A run of whitespace, which a project key may not contain. */
+    private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
+
     @Column(name = "test_repository_url")
     private String testRepositoryUri;
 
+    /**
+     * The auxiliary repositories of this exercise, oldest first.
+     * <p>
+     * Ordered by id rather than by an index column: on an indexed collection Hibernate takes the row's foreign key for
+     * its own, so removing one repository first writes {@code exercise_id = NULL} and only then deletes the row -
+     * which a repository that must always name its exercise cannot allow. Nothing reorders auxiliary repositories,
+     * they are identified by name and checkout directory, so creation order is the order.
+     * <p>
+     * A Set rather than a List, for the reason {@code Lecture.lectureUnits} gives: a List without an index column is a
+     * Hibernate bag, {@link #tasks} is already one, and a single query cannot fetch two bags - which a query that
+     * loads the whole exercise has to.
+     */
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
-    @OrderColumn(name = "programming_exercise_auxiliary_repositories_order")
-    private List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>();
+    @OrderBy("id ASC")
+    private Set<AuxiliaryRepository> auxiliaryRepositories = new LinkedHashSet<>();
 
     @Column(name = "allow_online_editor", table = "programming_exercise_details")
     private Boolean allowOnlineEditor;
@@ -101,6 +122,12 @@ public class ProgrammingExercise extends Exercise {
     private boolean showTestNamesToStudents;
 
     @Nullable
+    // Normalized on purpose. This is the only temporal column on the secondary table, and Hibernate writes a secondary
+    // table with a MERGE whose source casts every parameter, here to "timestamp with time zone". The column itself is
+    // "timestamp without time zone", so the database converted the value using the session time zone and the date moved
+    // by the server's UTC offset on every save. NORMALIZE makes Hibernate bind a plain timestamp in the JDBC time zone
+    // (UTC, see hibernate.jdbc.time_zone), which is what the columns of the main exercise table already receive.
+    @TimeZoneStorage(TimeZoneStorageType.NORMALIZE)
     @Column(name = "build_and_test_student_submissions_after_due_date", table = "programming_exercise_details")
     private ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate;
 
@@ -145,11 +172,6 @@ public class ProgrammingExercise extends Exercise {
 
     @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details", nullable = false)
     private boolean releaseTestsWithExampleSolution = false;
-
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(unique = true, name = "programming_exercise_build_config_id", table = "programming_exercise_details")
-    @JsonIgnoreProperties("programmingExercise")
-    private ProgrammingExerciseBuildConfig buildConfig;
 
     /**
      * Convenience getter. The actual URI is stored in the {@link TemplateProgrammingExerciseParticipation}
@@ -197,11 +219,13 @@ public class ProgrammingExercise extends Exercise {
         return testRepositoryUri;
     }
 
-    public List<AuxiliaryRepository> getAuxiliaryRepositories() {
+    @NonNull
+    public Set<AuxiliaryRepository> getAuxiliaryRepositories() {
         return this.auxiliaryRepositories;
     }
 
-    public void setAuxiliaryRepositories(List<AuxiliaryRepository> auxiliaryRepositories) {
+    public void setAuxiliaryRepositories(Set<AuxiliaryRepository> auxiliaryRepositories) {
+        // Assigned rather than copied, so that a lazy collection stays the uninitialized one the caller passed in.
         this.auxiliaryRepositories = auxiliaryRepositories;
     }
 
@@ -316,7 +340,7 @@ public class ProgrammingExercise extends Exercise {
      */
     public String generateRepositoryName(String repositoryName) {
         generateAndSetProjectKey();
-        return this.projectKey.toLowerCase() + "-" + repositoryName;
+        return this.projectKey.toLowerCase(Locale.ROOT) + "-" + repositoryName;
     }
 
     /**
@@ -348,9 +372,22 @@ public class ProgrammingExercise extends Exercise {
         forceNewProjectKey();
     }
 
+    /**
+     * Generates a project key from the course and exercise short names and sets it, replacing any key already there.
+     * <p>
+     * {@link #generateAndSetProjectKey()} is the entry point that keeps an existing key; this one is for the callers that deliberately want a new one.
+     *
+     * @throws IllegalStateException if no course is reachable from this exercise, which leaves no short name to build a key from
+     */
     public void forceNewProjectKey() {
         Course course = getCourseViaExerciseGroupOrCourseMember();
-        this.projectKey = (course.getShortName() + this.getShortName()).toUpperCase().replaceAll("\\s+", "");
+        if (course == null) {
+            // Reachable only on a masked exam graph: student-facing exam payloads clear exerciseGroup.exam before serialization, which leaves no course to take a short
+            // name from. There is nothing to fall back on, so name the exercise that cannot be keyed instead of dereferencing null for a NullPointerException that says
+            // nothing about which one it was.
+            throw new IllegalStateException("Cannot generate a project key for exercise " + getId() + ": no course is reachable from it.");
+        }
+        this.projectKey = WHITESPACE_RUN.matcher((course.getShortName() + this.getShortName()).toUpperCase(Locale.ROOT)).replaceAll("");
     }
 
     @Override
@@ -407,14 +444,6 @@ public class ProgrammingExercise extends Exercise {
 
     public void setSubmissionPolicy(SubmissionPolicy submissionPolicy) {
         this.submissionPolicy = submissionPolicy;
-    }
-
-    public ProgrammingExerciseBuildConfig getBuildConfig() {
-        return buildConfig;
-    }
-
-    public void setBuildConfig(ProgrammingExerciseBuildConfig buildConfig) {
-        this.buildConfig = buildConfig;
     }
 
     /**
@@ -591,9 +620,6 @@ public class ProgrammingExercise extends Exercise {
         setTestRepositoryUri(null);
         setTemplateBuildPlanId(null);
         setSolutionBuildPlanId(null);
-        if (buildConfig != null && Hibernate.isInitialized(buildConfig)) {
-            buildConfig.filterSensitiveInformation();
-        }
         super.filterSensitiveInformation();
     }
 
@@ -609,7 +635,7 @@ public class ProgrammingExercise extends Exercise {
     @Override
     public void filterResultsForStudents(Participation participation) {
         participation.getSubmissions().forEach(submission -> {
-            List<Result> results = submission.getResults();
+            Set<Result> results = submission.getResults();
             if (results != null && !results.isEmpty()) {
                 results.removeIf(result -> !(result.isAssessmentComplete() && (result.isAutomatic() || ExerciseDateService.isAfterAssessmentDueDate(this))));
             }
@@ -617,24 +643,43 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * Check if manual results are allowed for the exercise
+     * Check if the exercise is configured for manual assessment at all, independently of any date.
+     *
+     * @return true if tutors are meant to assess this exercise manually, false if it is assessed purely automatically
+     */
+    @JsonIgnore
+    public boolean isManualAssessmentConfigured() {
+        return getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || getAllowComplaintsForAutomaticAssessments();
+    }
+
+    /**
+     * Check if manual results are allowed for the exercise.
+     * <p>
+     * For exam exercises only the configuration is checked here. The point in time from which on assessment is possible
+     * depends on the individual student exams and is enforced by
+     * {@code SubmissionService#checkThatAssessmentIsPossibleElseThrow}, which additionally tells the tutor when they can
+     * start. Evaluating the build-and-test date here as well would also block instructor test runs, which happen before
+     * the exam starts and must stay assessable.
+     * <p>
+     * One caller is deliberately not behind that gate: {@code StudentExamService#prepareProgrammingSubmission}, used by
+     * "assess unsubmitted / empty student exams". It now also creates the empty submission in the window between the end
+     * of the exam and the build-and-test date, where it previously skipped programming participations. That endpoint
+     * already requires the exam and its grace period to be over, and creating the submission is what lets the
+     * participation be graded with 0 points at all, so this is intended.
      *
      * @return true if manual results are allowed, false otherwise
      */
     public boolean areManualResultsAllowed() {
         // Only allow manual results for programming exercises if option was enabled and due dates have passed;
-        if (getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || getAllowComplaintsForAutomaticAssessments()) {
-            // The relevantDueDate check below keeps us from assessing feedback requests,
-            // as their relevantDueDate is before the due date
-            if (getAllowFeedbackRequests()) {
-                return true;
-            }
-
-            final var relevantDueDate = getBuildAndTestStudentSubmissionsAfterDueDate() != null ? getBuildAndTestStudentSubmissionsAfterDueDate() : getDueDate();
-            return (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
+        if (!isManualAssessmentConfigured()) {
+            return false;
+        }
+        if (isExamExercise()) {
+            return true;
         }
 
-        return false;
+        final var relevantDueDate = getBuildAndTestStudentSubmissionsAfterDueDate() != null ? getBuildAndTestStudentSubmissionsAfterDueDate() : getDueDate();
+        return (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
     }
 
     @Override
@@ -648,8 +693,10 @@ public class ProgrammingExercise extends Exercise {
     /**
      * Validates general programming exercise settings
      * 1. Validates the programming language
+     *
+     * @param buildConfig the build configuration of this exercise, which is stored separately and read by the caller
      */
-    public void validateProgrammingSettings() {
+    public void validateProgrammingSettings(ProgrammingExerciseBuildConfig buildConfig) {
 
         // Check if a participation mode was selected
         if (!Boolean.TRUE.equals(isAllowOnlineEditor()) && !Boolean.TRUE.equals(isAllowOfflineIde()) && !isAllowOnlineIde()) {
@@ -682,15 +729,16 @@ public class ProgrammingExercise extends Exercise {
      * 5. Static code analysis max penalty must be positive
      *
      * @param programmingLanguageFeature describes the features available for the programming language of the programming exercise
+     * @param buildConfig                the build configuration of this exercise, which is stored separately and read by the caller
      */
-    public void validateStaticCodeAnalysisSettings(ProgrammingLanguageFeature programmingLanguageFeature) {
+    public void validateStaticCodeAnalysisSettings(ProgrammingLanguageFeature programmingLanguageFeature, ProgrammingExerciseBuildConfig buildConfig) {
         // Check if the static code analysis flag was set
         if (isStaticCodeAnalysisEnabled() == null) {
             throw new BadRequestAlertException("The static code analysis flag must be set to true or false", "Exercise", "staticCodeAnalysisFlagNotSet");
         }
 
         // Check that programming exercise doesn't have sequential test runs and static code analysis enabled
-        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && getBuildConfig().hasSequentialTestRuns()) {
+        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && buildConfig.hasSequentialTestRuns()) {
             throw new BadRequestAlertException("The static code analysis with sequential test runs is not supported at the moment", "Exercise", "staticCodeAnalysisAndSequential");
         }
 
@@ -716,25 +764,22 @@ public class ProgrammingExercise extends Exercise {
         }
     }
 
-    /**
-     * Validates settings for exercises, where allowFeedbackRequests is set
-     */
-    public void validateSettingsForFeedbackRequest() {
-        if (!this.getAllowFeedbackRequests()) {
-            return;
-        }
+    @Override
+    public void validateDates() {
+        super.validateDates();
 
-        if (this.getAssessmentType() == AssessmentType.AUTOMATIC) {
-            throw new BadRequestAlertException("Assessment type is not manual", "Exercise", "invalidManualFeedbackSettings");
+        if (!validateBuildAndTestStudentSubmissionsAfterDueDate()) {
+            throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
         }
+    }
 
-        if (this.getDueDate() == null) {
-            throw new BadRequestAlertException("Exercise due date is not set", "Exercise", "invalidManualFeedbackSettings");
+    private boolean validateBuildAndTestStudentSubmissionsAfterDueDate() {
+        ZonedDateTime buildAndTestDate = getBuildAndTestStudentSubmissionsAfterDueDate();
+        if (buildAndTestDate == null || isExamExercise()) {
+            return true;
         }
-
-        if (this.buildAndTestStudentSubmissionsAfterDueDate != null) {
-            throw new BadRequestAlertException("Cannot run tests after due date", "Exercise", "invalidManualFeedbackSettings");
-        }
+        return getDueDate() != null && validateStrictDateSequence(Arrays.asList(getReleaseDate(), getStartDate(), getDueDate()), buildAndTestDate,
+                Arrays.asList(getAssessmentDueDate(), getExampleSolutionPublicationDate()));
     }
 
     /**

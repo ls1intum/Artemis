@@ -11,6 +11,7 @@ import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model'
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
 import { randomInt } from 'app/foundation/util/utils';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export type Response<T> = Observable<HttpResponse<T>>;
 
@@ -37,7 +38,7 @@ export class IrisChatHttpService {
                 if (!dtos) return response.clone<IrisMessage[]>({});
 
                 const messages: IrisMessage[] = dtos.map((dto) => {
-                    return Object.assign({}, dto, {
+                    return cloneWith(dto, {
                         sentAt: dto.sentAt ? dayjs(dto.sentAt) : undefined,
                     }) as IrisMessage;
                 });
@@ -69,7 +70,7 @@ export class IrisChatHttpService {
      * @param sessionId of the session
      */
     createTutorSuggestion(sessionId: number): Response<void> {
-        return this.httpClient.post<void>(`${this.apiPrefix}/sessions/${sessionId}/tutor-suggestion`, Object.assign({}), { observe: 'response' });
+        return this.httpClient.post<void>(`${this.apiPrefix}/sessions/${sessionId}/tutor-suggestion`, {}, { observe: 'response' });
     }
 
     /**
@@ -78,15 +79,20 @@ export class IrisChatHttpService {
      * @param {IrisUserMessage} message
      * @return {Response<IrisMessage>}
      */
-    resendMessage(sessionId: number, message: IrisUserMessage): Response<IrisMessageResponseDTO> {
+    resendMessage(sessionId: number, message: IrisUserMessage, clientId: string): Response<IrisMessageResponseDTO> {
         message.messageDifferentiator = message.messageDifferentiator ?? randomInt();
-        return this.httpClient.post<IrisMessageResponseDTO>(`${this.apiPrefix}/sessions/${sessionId}/messages/${message.id}/resend`, null, { observe: 'response' }).pipe(
-            tap((response) => {
-                if (response.body && response.body.id) {
-                    message.id = response.body.id;
-                }
-            }),
-        );
+        return this.httpClient
+            .post<IrisMessageResponseDTO>(`${this.apiPrefix}/sessions/${sessionId}/messages/${message.id}/resend`, null, {
+                observe: 'response',
+                params: { clientId },
+            })
+            .pipe(
+                tap((response) => {
+                    if (response.body && response.body.id) {
+                        message.id = response.body.id;
+                    }
+                }),
+            );
     }
 
     /**

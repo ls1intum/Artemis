@@ -24,6 +24,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 
 describe('StudentExamDetailComponent', () => {
     let studentExamDetailComponentFixture: ComponentFixture<StudentExamDetailComponent>;
@@ -117,13 +118,23 @@ describe('StudentExamDetailComponent', () => {
             },
         } as StudentExamWithGradeDTO;
 
+        // The real server responses are slimmed DTOs, not the full StudentExam entity fixtures above — model that
+        // here so the mocked service methods match the actual `StudentExamService` return types.
+        const updateWorkingTimeResponseBody: StudentExamDTO = { id: studentExam.id!, workingTime: studentExam.workingTime, testRun: !!studentExam.testRun };
+        const toggleSubmittedStateResponseBody: StudentExamDTO = {
+            id: studentExam2.id!,
+            submitted: studentExam2.submitted,
+            submissionDate: studentExam2.submissionDate,
+            testRun: !!studentExam2.testRun,
+        };
+
         await TestBed.configureTestingModule({
             providers: [
                 MockProvider(StudentExamService, {
                     updateWorkingTime: () => {
                         return of(
                             new HttpResponse({
-                                body: studentExam,
+                                body: updateWorkingTimeResponseBody,
                                 status: 200,
                             }),
                         );
@@ -131,7 +142,7 @@ describe('StudentExamDetailComponent', () => {
                     toggleSubmittedState: () => {
                         return of(
                             new HttpResponse({
-                                body: studentExam2,
+                                body: toggleSubmittedStateResponseBody,
                                 status: 200,
                             }),
                         );
@@ -176,6 +187,40 @@ describe('StudentExamDetailComponent', () => {
         expect(course.id).toBe(1);
         expect(studentExamDetailComponent.achievedTotalPoints()).toBe(40);
         expect(studentExamDetailComponent.maxTotalPoints()).toBe(100);
+    });
+
+    it('should merge the working-time response into the loaded student exam without wiping other fields', () => {
+        // The server response for the working-time PATCH is a slimmed DTO: no `user`/`exercises`, and its nested
+        // `exam` lacks `startDate`/`gracePeriod`. Ensure saveWorkingTime() merges instead of replacing wholesale.
+        exam.gracePeriod = 300;
+        const slimmedResponseBody: StudentExamDTO = {
+            id: studentExam.id!,
+            workingTime: 4200,
+            submissionDate: undefined,
+            testRun: false,
+            exam: { id: exam.id!, title: exam.title, testExam: false, workingTime: 4200 },
+        };
+        const studentExamSpy = vi.spyOn(studentExamService, 'updateWorkingTime').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: slimmedResponseBody,
+                    status: 200,
+                }),
+            ),
+        );
+        studentExamDetailComponentFixture.detectChanges();
+
+        studentExamDetailComponent.saveWorkingTime();
+
+        expect(studentExamSpy).toHaveBeenCalledOnce();
+        // the working time is taken from the response...
+        expect(studentExamDetailComponent.studentExam()!.workingTime).toBe(4200);
+        expect(studentExamDetailComponent.workingTimeSeconds()).toBe(4200);
+        // ...but fields the response omits stay intact from the previously-loaded full student exam
+        expect(studentExamDetailComponent.studentExam()!.user).toEqual(student);
+        expect(studentExamDetailComponent.studentExam()!.exercises).toEqual([exercise]);
+        expect(studentExamDetailComponent.studentExam()!.exam!.startDate).toEqual(exam.startDate);
+        expect(studentExamDetailComponent.studentExam()!.exam!.gracePeriod).toEqual(exam.gracePeriod);
     });
 
     it('should not increase points when save working time is called more than once', () => {

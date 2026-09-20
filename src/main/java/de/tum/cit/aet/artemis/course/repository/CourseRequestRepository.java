@@ -27,9 +27,6 @@ import de.tum.cit.aet.artemis.course.domain.CourseRequestStatus;
 public interface CourseRequestRepository extends ArtemisJpaRepository<CourseRequest, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "requester" })
-    List<CourseRequest> findAllByOrderByCreatedDateDesc();
-
-    @EntityGraph(type = LOAD, attributePaths = { "requester" })
     Optional<CourseRequest> findOneWithEagerRelationshipsById(long id);
 
     Optional<CourseRequest> findOneByShortNameIgnoreCase(String shortName);
@@ -45,7 +42,7 @@ public interface CourseRequestRepository extends ArtemisJpaRepository<CourseRequ
      * @param status the status to filter by
      * @return list of course requests with the given status
      */
-    @EntityGraph(type = LOAD, attributePaths = { "requester", "requester.groups" })
+    @EntityGraph(type = LOAD, attributePaths = { "requester" })
     List<CourseRequest> findAllByStatusOrderByCreatedDateDesc(CourseRequestStatus status);
 
     /**

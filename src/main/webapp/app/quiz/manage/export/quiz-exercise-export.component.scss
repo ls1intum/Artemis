@@ -1,14 +1,13 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
 .edit-quiz-footer {
-    height: 80px;
-    position: sticky;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 10;
+    flex: 0 0 auto;
+    padding: 0.75rem 0;
     border-top: 1px solid var(--border-color);
     background: var(--edit-quiz-footer-background);
-
-    .container {
-        height: 100%;
-    }
 }

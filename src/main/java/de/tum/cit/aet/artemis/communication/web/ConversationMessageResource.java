@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -55,6 +56,7 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("posts/messages")
 @RestController
 @RequestMapping("api/communication/")
 public class ConversationMessageResource {
@@ -123,7 +125,7 @@ public class ConversationMessageResource {
         long timeNanoStart = System.nanoTime();
         Page<Post> posts;
 
-        final var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        final var requestingUser = userRepository.getUserWithAuthorities();
         final var course = courseRepository.findByIdElseThrow(postContextFilter.courseId());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
 

@@ -65,7 +65,7 @@ public class PlagiarismPostService extends PostingService {
      */
     public PlagiarismPostCreationResponseDTO createPost(Long courseId, PlagiarismPostCreationDTO postDto) {
         Post post = postDto.toEntity();
-        final User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        final User user = this.userRepository.getUserWithAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
         if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {
             throw new BadRequestAlertException("Posting is disabled for this course.", PlagiarismPostCreationDTO.PLAGIARISM_POST_ENTITY_NAME, "courseInformationSharingDisabled");
@@ -109,7 +109,7 @@ public class PlagiarismPostService extends PostingService {
      * @return updated post that was persisted
      */
     public Post updatePost(Long courseId, Long postId, PlagiarismPostUpdateRequestDTO request) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
         Post existingPost = postRepository.findPostByIdElseThrow(postId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
@@ -148,7 +148,7 @@ public class PlagiarismPostService extends PostingService {
      * @return page of posts that belong to the plagiarism case
      */
     public List<Post> getAllPlagiarismCasePosts(PostContextFilterDTO postContextFilter) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
         final Course course = courseRepository.findByIdElseThrow(postContextFilter.courseId());
         // the user has to be at least a student in the course
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
@@ -178,7 +178,7 @@ public class PlagiarismPostService extends PostingService {
      * @param postId   id of the post to delete
      */
     public void deletePostById(Long courseId, Long postId) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
 
         Post post = postRepository.findPostByIdElseThrow(postId);

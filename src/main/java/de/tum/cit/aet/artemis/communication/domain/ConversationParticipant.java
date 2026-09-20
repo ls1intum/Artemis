@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -16,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 @Entity
 @Table(name = "conversation_participant")
@@ -24,11 +26,15 @@ public class ConversationParticipant extends DomainObject {
 
     @ManyToOne
     @JsonIgnore
+    @JoinColumn(nullable = false)
+    @Parent
     private Conversation conversation;
 
     @ManyToOne
     @JsonIncludeProperties({ "id", "firstName", "lastName" })
+    @JoinColumn(nullable = false)
     @NonNull
+    @Parent
     private User user;
 
     /**

@@ -73,7 +73,7 @@ describe('VcsAccessTokenOverviewComponent', () => {
 
     it('loads the tokens and exposes them for the current page', () => {
         comp.ngOnInit();
-        comp.onDataRequest({ page: 0, pageSize: 20 });
+        comp.onDataRequest({ pageIndex: 0, pageSize: 20 });
 
         expect(serviceMock.getTokens).toHaveBeenCalledOnce();
         expect(comp['totalCount']()).toBe(3);
@@ -83,32 +83,32 @@ describe('VcsAccessTokenOverviewComponent', () => {
     it('filters by the search term (course, exercise, student login, repository type and URI) client-side', () => {
         comp.ngOnInit();
 
-        comp.onDataRequest({ page: 0, pageSize: 20, searchTerm: 'student1' });
+        comp.onDataRequest({ pageIndex: 0, pageSize: 20, searchTerm: 'student1' });
         expect(comp['rows']().map((token) => token.id)).toEqual([2]);
 
-        comp.onDataRequest({ page: 0, pageSize: 20, searchTerm: 'exercise c' });
+        comp.onDataRequest({ pageIndex: 0, pageSize: 20, searchTerm: 'exercise c' });
         expect(comp['rows']().map((token) => token.id)).toEqual([3]);
 
-        comp.onDataRequest({ page: 0, pageSize: 20, searchTerm: 'course two' });
+        comp.onDataRequest({ pageIndex: 0, pageSize: 20, searchTerm: 'course two' });
         expect(comp['rows']().map((token) => token.id)).toEqual([2]);
 
         // Repository type label (only the template token maps to the "template" label / URI).
-        comp.onDataRequest({ page: 0, pageSize: 20, searchTerm: 'template' });
+        comp.onDataRequest({ pageIndex: 0, pageSize: 20, searchTerm: 'template' });
         expect(comp['rows']().map((token) => token.id)).toEqual([1]);
 
         // Repository URI fragment.
-        comp.onDataRequest({ page: 0, pageSize: 20, searchTerm: 'exercise-b-student1' });
+        comp.onDataRequest({ pageIndex: 0, pageSize: 20, searchTerm: 'exercise-b-student1' });
         expect(comp['rows']().map((token) => token.id)).toEqual([2]);
     });
 
     it('paginates the tokens client-side', () => {
         comp.ngOnInit();
 
-        comp.onDataRequest({ page: 0, pageSize: 2 });
+        comp.onDataRequest({ pageIndex: 0, pageSize: 2 });
         expect(comp['rows']()).toHaveLength(2);
         expect(comp['totalCount']()).toBe(3);
 
-        comp.onDataRequest({ page: 1, pageSize: 2 });
+        comp.onDataRequest({ pageIndex: 1, pageSize: 2 });
         expect(comp['rows']().map((token) => token.id)).toEqual([3]);
     });
 
@@ -156,7 +156,7 @@ describe('VcsAccessTokenOverviewComponent', () => {
 
     it('revokes a token, removes it from the list and reports success', () => {
         comp.ngOnInit();
-        comp.onDataRequest({ page: 0, pageSize: 20 });
+        comp.onDataRequest({ pageIndex: 0, pageSize: 20 });
 
         comp.revokeToken(tokens[1]);
 
@@ -168,7 +168,7 @@ describe('VcsAccessTokenOverviewComponent', () => {
 
     it('revokes a token through the confirmation dialog', () => {
         comp.ngOnInit();
-        comp.onDataRequest({ page: 0, pageSize: 20 });
+        comp.onDataRequest({ pageIndex: 0, pageSize: 20 });
 
         // The mock delete dialog immediately triggers the confirm callback, so this drives the full revoke flow.
         comp['openRevokeDialog'](tokens[0]);
@@ -181,7 +181,7 @@ describe('VcsAccessTokenOverviewComponent', () => {
         serviceMock.getTokens.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 404 })));
 
         comp.ngOnInit();
-        comp.onDataRequest({ page: 0, pageSize: 20 });
+        comp.onDataRequest({ pageIndex: 0, pageSize: 20 });
 
         expect(comp['rows']()).toHaveLength(0);
         expect(alertServiceMock.error).toHaveBeenCalledWith('error.http.404');

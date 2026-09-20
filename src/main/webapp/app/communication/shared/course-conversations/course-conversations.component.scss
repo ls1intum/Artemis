@@ -15,6 +15,16 @@
     border-color: var(--bs-border-color);
 }
 
+/*
+ * The page fills the shell's content region, so these rows pass that height down instead of collapsing to their
+ * content. Without it the cards stop a couple of pixels short and the grey divider above the footer reads as 8px
+ * rather than the 6px used everywhere else.
+ */
+.communication-layout-row {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
 // Content column beside the sidebar; holds the search above the message/thread row.
 .communication-content-main {
     --header-height: 16px;
@@ -23,10 +33,27 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
+
+    > .communication-message-row {
+        flex: 1 1 auto;
+        min-height: 0;
+    }
 }
 
 .communication-message-wrap {
     min-width: 30%;
+}
+
+/*
+ * Take the height from the filled row rather than from `dynamic-content-height`'s viewport arithmetic, whose hardcoded
+ * navbar+footer estimate does not match what the shell computes. The row has a definite height, so each pane still
+ * contains its own scrolling — it does not grow with the message list.
+ *
+ * Scoped to the row rather than to the message pane: the row's other child is the open answer thread, and a pane left
+ * on the viewport-derived height overflows the row it now sits in instead of ending at the divider above the footer.
+ */
+.communication-message-row > .scrollable-communication-content {
+    height: auto;
 }
 
 .highlight-post {
@@ -54,6 +81,12 @@
         width: 100%;
         z-index: 2;
         pointer-events: none;
+
+        /*
+         * The drawer is anchored where the sidebar would sit in flow, which is the top of the search bar beside it, so
+         * it covered that bar. Offset it by the bar and its divider to open level with the message list instead.
+         */
+        margin-top: calc(var(--title-bar-height) + var(--spacing-divider));
 
         & .sidebar-wrap,
         .communication-content-sidebar .sidebar-width {

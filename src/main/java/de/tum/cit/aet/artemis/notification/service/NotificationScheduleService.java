@@ -195,8 +195,6 @@ public class NotificationScheduleService {
      * Checks the SecurityUtils for authentication, if not yet authenticated do so.
      */
     private void checkSecurityUtils() {
-        if (!SecurityUtils.isAuthenticated()) {
-            SecurityUtils.setAuthorizationObject();
-        }
+        SecurityUtils.setAuthorizationObject();
     }
 }

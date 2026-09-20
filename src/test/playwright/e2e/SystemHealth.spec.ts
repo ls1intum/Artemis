@@ -3,10 +3,17 @@ import { admin } from '../support/users';
 import { Page, expect } from '@playwright/test';
 import { Commands } from '../support/commands';
 
+// Exactly one of the two distributed data providers contributes a health indicator, decided by
+// artemis.distributed-data.provider. Asserting on the one that is not configured would fail on a perfectly healthy
+// server, so the runner tells us which one to expect.
+const distributedDataProvider = (process.env.DISTRIBUTED_DATA_PROVIDER ?? 'hazelcast').toLowerCase();
+const distributedDataHealthCheck =
+    distributedDataProvider === 'redis' ? { selector: '#redis', name: 'redis', expectedStatus: 'UP' } : { selector: '#hazelcast', name: 'hazelcast', expectedStatus: 'UP' };
+
 const healthChecks = [
     { selector: '#continuousIntegrationServer', name: 'continuous integration server', expectedStatus: 'UP' },
     { selector: '#db', name: 'db', expectedStatus: 'UP' },
-    { selector: '#hazelcast', name: 'hazelcast', expectedStatus: 'UP' },
+    distributedDataHealthCheck,
     { selector: '#ping', name: 'ping', expectedStatus: 'UP' },
     { selector: '#readinessState', name: 'readiness state', expectedStatus: 'UP' },
     { selector: '#websocketBroker', name: 'websocket broker', expectedStatus: 'UP' },
@@ -24,7 +31,7 @@ test.describe('Check artemis system health', { tag: '@fast' }, () => {
 
     for (const healthCheck of healthChecks) {
         test(`Checks ${healthCheck.name} health`, async () => {
-            const statusLocator = page.locator(`#healthCheck ${healthCheck.selector} [data-testid="status-cell"]`);
+            const statusLocator = page.locator(`[data-testid="healthCheck"] ${healthCheck.selector} [data-testid="status-cell"]`);
             await expect(statusLocator).toHaveText(healthCheck.expectedStatus, { timeout: 5000 });
         });
     }
@@ -32,7 +39,7 @@ test.describe('Check artemis system health', { tag: '@fast' }, () => {
     // WebSocket connection test handled separately with reload mechanism since
     // the client-side WebSocket connection may take longer to establish on CI
     test('Checks websocket connection health', async () => {
-        const statusLocator = page.locator('#healthCheck #websocketConnection [data-testid="status-cell"]');
+        const statusLocator = page.locator('[data-testid="healthCheck"] [data-testid="websocketConnection"] [data-testid="status-cell"]');
         const timeout = 60000;
         const reloadInterval = 5000;
         const startTime = Date.now();

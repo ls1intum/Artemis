@@ -98,13 +98,13 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     @BeforeEach
     void reset() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         this.programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         // This is done to avoid proxy issues in the processNewResult method of the ResultService.
         this.programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(this.programmingExercise, TEST_PREFIX + "student1");
         participationUtilService.addSubmission(this.programmingExerciseStudentParticipation, new ProgrammingSubmission());
 
-        ProgrammingExercise examProgrammingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        ProgrammingExercise examProgrammingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
         this.examStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(examProgrammingExercise, TEST_PREFIX + "student1");
         participationUtilService.addSubmission(examStudentParticipation, new ProgrammingSubmission());
     }
@@ -325,6 +325,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
         Feedback feedback = new Feedback();
         feedback.setDetailText("short text");
         feedback.setHasLongFeedbackText(true);
+        result.addFeedback(feedback);
         feedback = feedbackRepository.save(feedback);
 
         LongFeedbackText longFeedbackText = new LongFeedbackText();
@@ -430,7 +431,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
         assertThat(resultRepository.findById(result1Id)).isEmpty();
         assertThat(resultRepository.findById(result2Id)).isPresent();
         // Use a query that eagerly fetches feedbacks to avoid LazyInitializationException
-        Result survivingResult = resultRepository.findResultWithFeedbacksAndTestCasesById(result2Id).orElseThrow();
+        Result survivingResult = resultRepository.findResultWithFeedbacksById(result2Id).orElseThrow();
         assertThat(survivingResult.getFeedbacks()).isNotEmpty();
     }
 
@@ -469,6 +470,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
         Feedback feedback = new Feedback();
         feedback.setDetailText("short text");
         feedback.setHasLongFeedbackText(true);
+        result.addFeedback(feedback);
         feedback = feedbackRepository.save(feedback);
 
         LongFeedbackText longFeedbackText = new LongFeedbackText();

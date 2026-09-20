@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.participation;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -11,21 +12,30 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import tools.jackson.databind.JsonNode;
+
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
+import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionResponseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionVersionDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -48,6 +58,9 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     private PageableSearchUtilService pageableSearchUtilService;
 
     @Autowired
+    private ModelingExerciseUtilService modelingExerciseUtilService;
+
+    @Autowired
     private SubmissionVersionRepository submissionVersionRepository;
 
     private TextExercise textExercise;
@@ -55,7 +68,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        Course course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
     }
 
@@ -67,12 +80,12 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         submission = submissionRepository.save(submission);
 
         Result result1 = new Result().assessmentType(assessmentType).score(100D).rated(true).exerciseId(textExercise.getId());
-        result1 = resultRepository.save(result1);
         result1.setSubmission(submission);
+        result1 = resultRepository.save(result1);
 
         Result result2 = new Result().assessmentType(assessmentType).score(200D).rated(true).exerciseId(textExercise.getId());
-        result2 = resultRepository.save(result2);
         result2.setSubmission(submission);
+        result2 = resultRepository.save(result2);
 
         submission.addResult(result1);
         submission.addResult(result2);
@@ -95,15 +108,15 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         submission = submissionRepository.save(submission);
 
         Result result1 = new Result().assessmentType(assessmentType).score(100D).rated(true).exerciseId(textExercise.getId());
-        result1 = resultRepository.save(result1);
         result1.setSubmission(submission);
+        result1 = resultRepository.save(result1);
 
         submission.addResult(result1);
         submission = submissionRepository.save(submission);
 
         Result result2 = new Result().assessmentType(assessmentType).score(200D).rated(true).exerciseId(textExercise.getId());
-        result2 = resultRepository.save(result2);
         result2.setSubmission(submission);
+        result2 = resultRepository.save(result2);
 
         submission.addResult(result2);
         submission = submissionRepository.save(submission);
@@ -125,15 +138,15 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         submission = submissionRepository.save(submission);
 
         Result result1 = new Result().assessmentType(assessmentType).score(100D).rated(true).exerciseId(textExercise.getId());
-        result1 = resultRepository.save(result1);
         result1.setSubmission(submission);
+        result1 = resultRepository.save(result1);
 
         submission.addResult(result1);
         submission = submissionRepository.save(submission);
 
         Result result2 = new Result().assessmentType(assessmentType).score(200D).rated(true).exerciseId(textExercise.getId());
-        result2 = resultRepository.save(result2);
         result2.setSubmission(submission);
+        result2 = resultRepository.save(result2);
 
         submission.addResult(result2);
         submission = submissionRepository.save(submission);
@@ -153,10 +166,20 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatc
 
     }
 
+    /**
+     * An exam without exercises resolves to an empty id set, so the locked submissions of an exam are looked up with an
+     * empty collection. The query has to return nothing instead of failing on the empty IN list.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLockedSubmissionsAndResultsWithoutExercises() {
+        assertThat(submissionRepository.getLockedSubmissionsAndResultsByExerciseIds(Set.of())).isEmpty();
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetSubmissionsOnPageWithSize() throws Exception {
-        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+        Course course = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
         TextExercise textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         assertThat(textExercise).isNotNull();
         TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
@@ -164,9 +187,98 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         participationUtilService.addResultToSubmission(submission, AssessmentType.MANUAL, userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
         SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
 
-        var resultPage = request.getSearchResult("/api/exercise/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, Submission.class,
+        var resultPage = request.getSearchResult("/api/exercise/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, SubmissionResponseDTO.class,
                 pageableSearchUtilService.searchMapping(search));
         assertThat(resultPage.getResultsOnPage()).hasSize(1);
+
+        // the example-submission import table reads all of these: the participant column, the submission size (from the
+        // text), the result column (resolved over the participation's submissions) and the polymorphic discriminator
+        var listed = resultPage.getResultsOnPage().getFirst();
+        assertThat(listed.submissionExerciseType()).isEqualTo("text");
+        assertThat(listed.text()).isEqualTo("submissionText");
+        assertThat(listed.participation().participantName()).isNotBlank();
+        assertThat(listed.participation().submissions()).isNotEmpty();
+        assertThat(listed.participation().submissions().getFirst().results()).isNotEmpty();
+        // the client decides over the sibling date whether the participation was in due time, without it every listed result is late
+        assertThat(listed.participation().submissions().getFirst().submissionDate()).isNotNull();
+        assertThat(listed.participation().submissions().getFirst().submissionExerciseType()).isEqualTo("text");
+
+        var wirePage = request.getSearchResult("/api/exercise/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, JsonNode.class,
+                pageableSearchUtilService.searchMapping(search));
+        // getLatestResultOfStudentParticipation keeps only rated sibling results, and the badge prints their score
+        assertThat(wirePage.getResultsOnPage().getFirst().path("participation").path("submissions")).isNotEmpty()
+                .allSatisfy(sibling -> assertThat(sibling.path("results")).isNotEmpty().allSatisfy(result -> {
+                    assertThat(result.path("rated").isBoolean()).isTrue();
+                    assertThat(result.path("rated").asBoolean()).isTrue();
+                    assertThat(result.path("score").isNumber()).isTrue();
+                    assertThat(result.path("score").asDouble()).isEqualTo(100D);
+                }));
+
+        // the import table sizes a modeling submission by its model
+        ModelingExercise modelingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
+        String model = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        var modelingSubmission = modelingExerciseUtilService.addModelingSubmission(modelingExercise, ParticipationFactory.generateModelingSubmission(model, true),
+                TEST_PREFIX + "student1");
+        // the import list only offers assessed submissions
+        participationUtilService.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
+        var modelingPage = request.getSearchResult("/api/exercise/exercises/" + modelingExercise.getId() + "/submissions-for-import", HttpStatus.OK, JsonNode.class,
+                pageableSearchUtilService.searchMapping(search));
+        assertThat(modelingPage.getResultsOnPage()).hasSize(1);
+        assertThat(modelingPage.getResultsOnPage().getFirst().path("submissionExerciseType").asString()).isEqualTo("modeling");
+        assertThat(modelingPage.getResultsOnPage().getFirst().path("model").asString()).isEqualTo(model);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetSubmissionsOnPageWithSizeSortedByStudentName() throws Exception {
+        User firstStudent = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        firstStudent.setFirstName("Zelda");
+        firstStudent.setLastName("Student");
+        userTestRepository.save(firstStudent);
+
+        User secondStudent = userUtilService.addStudentToCourse(TEST_PREFIX + "student2", textExercise.getCourseViaExerciseGroupOrCourseMember());
+        secondStudent.setFirstName("Ada");
+        secondStudent.setLastName("Student");
+        userTestRepository.save(secondStudent);
+
+        User assessor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        TextSubmission firstSubmission = ParticipationFactory.generateTextSubmission("first", Language.ENGLISH, true);
+        firstSubmission = textExerciseUtilService.saveTextSubmission(textExercise, firstSubmission, firstStudent.getLogin());
+        participationUtilService.addResultToSubmission(firstSubmission, AssessmentType.MANUAL, assessor);
+
+        TextSubmission laterSubmission = ParticipationFactory.generateTextSubmission("later", Language.ENGLISH, true);
+        laterSubmission = (TextSubmission) participationUtilService.addSubmission((StudentParticipation) firstSubmission.getParticipation(), laterSubmission);
+        participationUtilService.addResultToSubmission(laterSubmission, AssessmentType.MANUAL, assessor);
+
+        TextSubmission secondStudentSubmission = ParticipationFactory.generateTextSubmission("second", Language.ENGLISH, true);
+        secondStudentSubmission = textExerciseUtilService.saveTextSubmission(textExercise, secondStudentSubmission, secondStudent.getLogin());
+        participationUtilService.addResultToSubmission(secondStudentSubmission, AssessmentType.MANUAL, assessor);
+
+        SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
+        search.setPageSize(1);
+        search.setSortedColumn("STUDENT_NAME");
+        search.setSortingOrder(SortingOrder.ASCENDING);
+        var firstNamePage = request.getSearchResult("/api/exercise/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, SubmissionResponseDTO.class,
+                pageableSearchUtilService.searchMapping(search));
+        assertThat(firstNamePage.getNumberOfPages()).isEqualTo(2);
+        assertThat(firstNamePage.getResultsOnPage()).extracting(submission -> submission.participation().participantName()).containsExactly("Ada Student");
+
+        search.setPageSize(10);
+        search.setSortingOrder(SortingOrder.DESCENDING);
+        var descendingNamePage = request.getSearchResult("/api/exercise/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, SubmissionResponseDTO.class,
+                pageableSearchUtilService.searchMapping(search));
+        assertThat(descendingNamePage.getResultsOnPage()).extracting(submission -> submission.participation().participantName()).containsExactly("Zelda Student", "Ada Student");
+
+        search.setSortedColumn("ID");
+        search.setSortingOrder(SortingOrder.ASCENDING);
+        var ascendingIdPage = request.getSearchResult("/api/exercise/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, SubmissionResponseDTO.class,
+                pageableSearchUtilService.searchMapping(search));
+        assertThat(ascendingIdPage.getResultsOnPage()).extracting(submission -> submission.participation().participantName()).containsExactly("Zelda Student", "Ada Student");
+
+        search.setSortingOrder(SortingOrder.DESCENDING);
+        var descendingIdPage = request.getSearchResult("/api/exercise/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, SubmissionResponseDTO.class,
+                pageableSearchUtilService.searchMapping(search));
+        assertThat(descendingIdPage.getResultsOnPage()).extracting(submission -> submission.participation().participantName()).containsExactly("Ada Student", "Zelda Student");
     }
 
     @Test
@@ -174,40 +286,40 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     void testGetSubmissionsOnPageWithSize_exerciseNotFound() throws Exception {
         long randomExerciseId = UUID.nameUUIDFromBytes("test".getBytes()).getMostSignificantBits();
         SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
-        request.getSearchResult("/api/exercise/exercises/" + randomExerciseId + "/submissions-for-import", HttpStatus.NOT_FOUND, Submission.class,
+        request.getSearchResult("/api/exercise/exercises/" + randomExerciseId + "/submissions-for-import", HttpStatus.NOT_FOUND, SubmissionResponseDTO.class,
                 pageableSearchUtilService.searchMapping(search));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetSubmissionsOnPageWithSize_isNotAtLeastInstructorInExercise_forbidden() throws Exception {
-        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+    void testGetSubmissionsOnPageWithSize_notInstructorInCourse_forbidden() throws Exception {
+        Course course = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
         TextExercise textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         assertThat(textExercise).isNotNull();
-        course.setInstructorGroupName("test");
-        courseRepository.save(course);
         SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
-        request.getSearchResult("/api/exercise/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.FORBIDDEN, Submission.class,
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        userUtilService.unenrollUserFromCourseByRole(instructor, course, CourseRole.INSTRUCTOR);
+        request.getSearchResult("/api/exercise/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.FORBIDDEN, SubmissionResponseDTO.class,
                 pageableSearchUtilService.searchMapping(search));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetSubmissionVersionsBySubmissionId_isNotInstructorInCourse_forbidden() throws Exception {
-        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+    void testGetSubmissionVersionsBySubmissionId_notInstructorInCourse_forbidden() throws Exception {
+        Course course = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
         TextExercise textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
         submission = submissionRepository.save(submission);
         participationUtilService.addSubmission(textExercise, submission, TEST_PREFIX + "student1");
-        course.setInstructorGroupName("test");
-        courseRepository.save(course);
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        userUtilService.unenrollUserFromCourseByRole(instructor, course, CourseRole.INSTRUCTOR);
         request.getList("/api/exercise/submissions/" + submission.getId() + "/versions", HttpStatus.FORBIDDEN, Submission.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetSubmissionVersionsBySubmissionIdForTextExercise_returnsCorrectContent() throws Exception {
-        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+        Course course = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         TextExercise textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);

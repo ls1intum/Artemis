@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.fileupload.dto;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -14,7 +15,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
  * @param course the course context of the exam
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadExamContextDTO(Long id, FileUploadCourseContextDTO course) {
+public record FileUploadExamContextDTO(Long id, @Nullable FileUploadCourseContextDTO course) {
 
     /**
      * Factory method to create a {@link FileUploadExamContextDTO} from an {@link Exam} entity.
@@ -22,7 +23,7 @@ public record FileUploadExamContextDTO(Long id, FileUploadCourseContextDTO cours
      * @param exam the exam entity to map, can be null
      * @return the mapped DTO, or null if the input was null
      */
-    public static FileUploadExamContextDTO of(Exam exam) {
+    public static @Nullable FileUploadExamContextDTO of(@Nullable Exam exam) {
         if (exam == null) {
             return null;
         }

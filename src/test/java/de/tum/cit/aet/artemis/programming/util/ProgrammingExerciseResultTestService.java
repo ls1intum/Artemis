@@ -2,9 +2,6 @@ package de.tum.cit.aet.artemis.programming.util;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.NEW_RESULT_TOPIC;
-import static java.util.Comparator.comparing;
-import static java.util.Comparator.naturalOrder;
-import static java.util.Comparator.nullsFirst;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -32,7 +29,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -40,6 +37,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
@@ -87,6 +86,12 @@ public class ProgrammingExerciseResultTestService {
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
+
+    @Autowired
+    private TestCaseFeedbackRepository testCaseFeedbackRepository;
+
+    @Autowired
+    private ScaFeedbackRepository scaFeedbackRepository;
 
     @Autowired
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
@@ -155,7 +160,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     public void setupForProgrammingLanguage(ProgrammingLanguage programmingLanguage) throws GitAPIException, IOException {
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, programmingLanguage);
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(false, programmingLanguage, userPrefix);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
         ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true, programmingLanguage);
@@ -172,8 +177,8 @@ public class ProgrammingExerciseResultTestService {
         // We are either in the middle of the 2h exam or at the end of the exam
         var startDate = now.minusHours(isExamOver ? 2 : 1);
         var endDate = now.plusHours(isExamOver ? 0 : 1);
-        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(10), startDate, endDate,
-                now.plusHours(10), userPrefix + "student1", 120 * 60);
+        programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(10), startDate, endDate,
+                now.plusHours(10), userPrefix + "student1", 120 * 60, userPrefix);
         course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
         programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
@@ -229,10 +234,10 @@ public class ProgrammingExerciseResultTestService {
         var semiAutoResultId = semiAutoResult.getId();
         semiAutoResult = updatedResults.stream().filter(result -> result.getId().equals(semiAutoResultId)).findFirst().orElseThrow();
         assertThat(semiAutoResult.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-        // Assert that the SEMI_AUTOMATIC result has two feedbacks: one MANUAL and one AUTOMATIC
-        assertThat(semiAutoResult.getFeedbacks()).hasSize(2);
+        // Assert that the SEMI_AUTOMATIC result has two feedbacks: one MANUAL and one AUTOMATIC (typed test-case row)
+        assertThat(semiAutoResult.getFeedbacks()).hasSize(1);
         assertThat(semiAutoResult.getFeedbacks().stream().filter(f -> f.getType() == FeedbackType.MANUAL).findFirst()).isPresent();
-        assertThat(semiAutoResult.getFeedbacks().stream().filter(f -> f.getType() == FeedbackType.AUTOMATIC).findFirst()).isPresent();
+        assertThat(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(semiAutoResult.getId()))).hasSize(1);
     }
 
     private void postResult(BuildResultNotification requestBodyMap) throws Exception {
@@ -244,7 +249,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     public static Object convertBuildResultToJsonObject(BuildResultNotification requestBodyMap) {
-        ObjectMapper mapper = JsonObjectMapper.get();
+        JsonMapper mapper = JsonObjectMapper.get();
         return mapper.convertValue(requestBodyMap, Object.class);
     }
 
@@ -321,13 +326,10 @@ public class ProgrammingExerciseResultTestService {
         var submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
         assertThat(submissions).hasSize(1);
 
-        // Create comparator to explicitly compare feedback attributes (equals only compares id)
-        var scaFeedbackComparator = comparing(Feedback::getDetailText, nullsFirst(naturalOrder())).thenComparing(Feedback::getText, nullsFirst(naturalOrder()))
-                .thenComparing(Feedback::getReference, nullsFirst(naturalOrder()));
-
-        assertThat(result.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(savedResult.getFeedbacks());
-        assertThat(result.getFeedbacks().stream().filter(Feedback::isStaticCodeAnalysisFeedback).count())
-                .isEqualTo(StaticCodeAnalysisTool.getToolsForProgrammingLanguage(programmingLanguage).size());
+        assertThat(result.getFeedbacks()).containsAll(savedResult.getFeedbacks());
+        // SCA feedback is stored as structured typed rows, one per issue and tool
+        assertThat(result.getScaFeedbacks()).hasSize(StaticCodeAnalysisTool.getToolsForProgrammingLanguage(programmingLanguage).size());
+        assertThat(scaFeedbackRepository.findByResultIds(List.of(result.getId()))).hasSameSizeAs(result.getScaFeedbacks());
 
         // Call again and shouldn't re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultRequestBody);
@@ -343,8 +345,9 @@ public class ProgrammingExerciseResultTestService {
                 userPrefix + "tutor1", AssessmentType.SEMI_AUTOMATIC, true);
 
         List<Feedback> feedback = ParticipationFactory.generateManualFeedback();
-        feedback = feedbackRepository.saveAll(feedback);
+        // Attached before it is written: result_id is not nullable, so a detached insert fails outright.
         programmingSubmission.getFirstResult().addFeedbacks(feedback);
+        feedbackRepository.saveAll(feedback);
         resultRepository.save(programmingSubmission.getFirstResult());
 
         final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
@@ -353,8 +356,9 @@ public class ProgrammingExerciseResultTestService {
         assertThat(result).isNotNull();
 
         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-        assertThat(result.getFeedbacks()).hasSize(6);
-        assertThat(result.getFeedbacks().stream().filter((fb) -> fb.getType() == FeedbackType.AUTOMATIC).count()).isEqualTo(3);
+        assertThat(result.getFeedbacks()).hasSize(3);
+        assertThat(result.getFeedbacks()).allMatch(fb -> fb.getType() != FeedbackType.AUTOMATIC);
+        assertThat(result.getTestCaseFeedbacks()).hasSize(3);
         assertThat(result.getTestCaseCount()).isEqualTo(3);
         assertThat(result.getPassedTestCaseCount()).isEqualTo(3);
 
@@ -412,9 +416,10 @@ public class ProgrammingExerciseResultTestService {
 
     // Test
     public void shouldCreateResultOnCustomDefaultBranch(String defaultBranch, BuildResultNotification resultNotification) {
-        programmingExercise.getBuildConfig().setBranch(defaultBranch);
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        var buildConfig = programmingExerciseUtilService.saveBuildConfigIfMissing(programmingExercise);
+        buildConfig.setBranch(defaultBranch);
+        programmingExerciseBuildConfigRepository.save(buildConfig);
         solutionParticipation.setProgrammingExercise(programmingExercise);
         programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
         participationUtilService.addSubmission(solutionParticipation,

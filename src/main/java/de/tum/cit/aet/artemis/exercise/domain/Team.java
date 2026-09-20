@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 
 /**
@@ -43,12 +44,10 @@ public class Team extends AbstractAuditingEntity implements Participant {
 
     @ManyToOne
     @JsonIgnore
+    @JoinColumn(nullable = false)
+    @Parent
     private Exercise exercise;
 
-    /**
-     * The cache concurrency strategy needs to be READ_WRITE (and not NONSTRICT_READ_WRITE) since the non-strict mode will cause an SQLIntegrityConstraintViolationException to
-     * occur when trying to persist the entity for the first time after changes have been made to the related entities of the ManyToMany relationship (users in this case).
-     */
     @ManyToMany(fetch = FetchType.LAZY)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JoinTable(name = "team_student", joinColumns = @JoinColumn(name = "team_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id"))

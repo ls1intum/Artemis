@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.atlas.service.profile.CourseLearnerProfileService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -122,7 +123,7 @@ public class LearningPathService {
      */
     public void enableLearningPathsForCourse(@NonNull Course course) {
         course.setLearningPathsEnabled(true);
-        Set<User> students = userRepository.getStudentsWithLearnerProfile(course);
+        Set<User> students = userRepository.getStudentsWithAuthorities(course);
         courseLearnerProfileService.createCourseLearnerProfiles(course, students);
         generateLearningPaths(course, students);
         courseRepository.save(course);
@@ -135,7 +136,7 @@ public class LearningPathService {
      * @param course course the learning paths are created for
      */
     public void generateLearningPaths(@NonNull Course course) {
-        Set<User> students = userRepository.getStudentsWithLearnerProfile(course);
+        Set<User> students = userRepository.getStudentsWithAuthorities(course);
         courseLearnerProfileService.createCourseLearnerProfiles(course, students);
         generateLearningPaths(course, students);
     }
@@ -306,7 +307,7 @@ public class LearningPathService {
     }
 
     private Long checkMissingLearningPaths(@NonNull Course course, @NonNull Set<LearningPathHealthDTO.HealthStatus> status) {
-        long numberOfStudents = userRepository.countUserInGroup(course.getStudentGroupName());
+        long numberOfStudents = userRepository.countByCourseIdAndRole(course.getId(), CourseRole.STUDENT);
         long numberOfLearningPaths = learningPathRepository.countLearningPathsOfEnrolledStudentsInCourse(course.getId());
         Long numberOfMissingLearningPaths = numberOfStudents - numberOfLearningPaths;
 
@@ -382,7 +383,7 @@ public class LearningPathService {
      * @return the navigation overview
      */
     public LearningPathNavigationOverviewDTO getLearningPathNavigationOverview(long learningPathId) {
-        var learningPath = findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersAndLearnerProfileById(learningPathId);
+        var learningPath = findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersById(learningPathId);
         if (!userRepository.getUser().equals(learningPath.getUser())) {
             throw new AccessForbiddenException("You are not allowed to access this learning path");
         }
@@ -398,16 +399,12 @@ public class LearningPathService {
      * @param learningPathId the id of the learning path to fetch
      * @return the learning path with fetched data
      */
-    public LearningPath findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersAndLearnerProfileById(long learningPathId) {
-        Optional<LearningPath> optionalLearningPath = learningPathRepositoryService.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(learningPathId);
-        LearningPath learningPath;
-        if (optionalLearningPath.isEmpty()) {
-            LearningPath learningPathWithCourse = learningPathRepository.findWithEagerUserAndCourseByIdElseThrow(learningPathId);
-            courseLearnerProfileService.createCourseLearnerProfile(learningPathWithCourse.getCourse(), learningPathWithCourse.getUser());
-            learningPath = learningPathRepositoryService.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(learningPathId);
-        }
-        else {
-            learningPath = optionalLearningPath.get();
+    public LearningPath findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersById(long learningPathId) {
+        LearningPath learningPath = learningPathRepositoryService.findWithCompetenciesAndLectureUnitsAndExercisesByIdElseThrow(learningPathId);
+        if (learningPath.getUser() != null) {
+            // The navigation reads the per-course profile, and a path can be older than the profile, so make sure one
+            // exists. Creating it is idempotent: an existing profile is returned rather than replaced.
+            courseLearnerProfileService.createCourseLearnerProfile(learningPath.getCourse(), learningPath.getUser());
         }
 
         // Remove exercises that are not visible to students

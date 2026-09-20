@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.fileupload.dto;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -15,7 +17,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
  * @param imageUrl  the URL to the user's profile image
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadUserDTO(Long id, String login, String name, String firstName, String lastName, String imageUrl) {
+public record FileUploadUserDTO(Long id, String login, @Nullable String name, @Nullable String firstName, @Nullable String lastName, @Nullable String imageUrl) {
 
     /**
      * Factory method to create a {@link FileUploadUserDTO} from a {@link User} entity.
@@ -23,7 +25,7 @@ public record FileUploadUserDTO(Long id, String login, String name, String first
      * @param user the user entity to map, can be null
      * @return the mapped DTO, or null if the input was null
      */
-    public static FileUploadUserDTO of(User user) {
+    public static @Nullable FileUploadUserDTO of(@Nullable User user) {
         if (user == null) {
             return null;
         }

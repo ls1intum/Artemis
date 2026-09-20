@@ -1,0 +1,24 @@
+:host {
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    flex-shrink: 0;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+    padding: calc(var(--tumaet-ui-spacing) * 4) calc(var(--tumaet-ui-spacing) * 4.5);
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    background: transparent;
+    outline-color: transparent;
+    transition:
+        color 0.2s,
+        background 0.2s,
+        outline-color 0.2s;
+}
+
+:host.tum-ui-tab-disabled {
+    opacity: 0.6;
+    cursor: default;
+    pointer-events: none;
+}

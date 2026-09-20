@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.fileupload.dto;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -15,7 +16,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentNote;
  * @param creator the user who created the assessment note
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadAssessmentNoteDTO(Long id, String note, FileUploadUserDTO creator) {
+public record FileUploadAssessmentNoteDTO(Long id, @Nullable String note, @Nullable FileUploadUserDTO creator) {
 
     /**
      * Factory method to create a {@link FileUploadAssessmentNoteDTO} from an {@link AssessmentNote} entity.
@@ -23,7 +24,7 @@ public record FileUploadAssessmentNoteDTO(Long id, String note, FileUploadUserDT
      * @param assessmentNote the assessment note entity to map, can be null
      * @return the mapped DTO, or null if the input was null
      */
-    public static FileUploadAssessmentNoteDTO of(AssessmentNote assessmentNote) {
+    public static @Nullable FileUploadAssessmentNoteDTO of(@Nullable AssessmentNote assessmentNote) {
         if (assessmentNote == null) {
             return null;
         }

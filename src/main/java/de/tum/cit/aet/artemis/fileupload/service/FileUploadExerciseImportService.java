@@ -49,51 +49,60 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
     }
 
     /**
-     * Imports a file upload exercise creating a new entity, copying all basic values and saving it in the database.
-     * All basic include everything except Student-, Tutor participations, and student questions. <br>
-     * This method calls {@link #copyFileUploadExerciseBasis(FileUploadExercise)} to set up the basis of the exercise
+     * Imports a file upload exercise: builds a new entity from {@code newExercise} (the destination and any caller
+     * overrides), backfills its basis from {@code sourceExercise} (the original), and saves it. Student-/tutor
+     * participations are not copied.
+     * This method calls {@link #copyFileUploadExerciseBasis(FileUploadExercise, FileUploadExercise)} to set up the basis
+     * of the exercise.
      *
-     * @param templateExercise The template exercise which should get imported
-     * @param importedExercise The new exercise already containing values which should not get copied, i.e. overwritten
+     * @param newExercise    the exercise to build; already carries the destination (course / exercise group) and any overrides
+     * @param sourceExercise the source exercise whose content is copied
      * @return The newly created exercise
      */
     @NonNull
-    public FileUploadExercise importFileUploadExercise(final FileUploadExercise templateExercise, FileUploadExercise importedExercise) {
-        log.debug("Creating a new Exercise based on exercise {}", templateExercise);
-        FileUploadExercise newExercise = copyFileUploadExerciseBasis(importedExercise, templateExercise);
+    public FileUploadExercise importFileUploadExercise(final FileUploadExercise newExercise, final FileUploadExercise sourceExercise) {
+        log.debug("Creating a new file upload exercise based on exercise {}", sourceExercise);
+        copyFileUploadExerciseBasis(newExercise, sourceExercise);
 
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
+        // Only the first save is identity-preserving (the id was cleared, so Spring Data persists newExercise itself). The
+        // second save operates on a detached entity and therefore merges into a new instance, so its result must be used:
+        // otherwise the freshly added competency links keep their unset embedded id on the returned graph.
         FileUploadExercise savedExercise = fileUploadExerciseRepository.save(newExercise);
         if (!competencyLinks.isEmpty()) {
             competencyExerciseLinkService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
             savedExercise = fileUploadExerciseRepository.save(savedExercise);
         }
-        final FileUploadExercise newFileUploadExercise = savedExercise;
+        final FileUploadExercise persistedExercise = savedExercise;
+        // The channel name is transient, so a merged copy does not carry it. Restore it so the serialized import response
+        // reports the channel the caller asked for.
+        persistedExercise.setChannelName(newExercise.getChannelName());
 
-        channelService.createExerciseChannel(newFileUploadExercise, Optional.ofNullable(importedExercise.getChannelName()));
+        channelService.createExerciseChannel(persistedExercise, Optional.ofNullable(persistedExercise.getChannelName()));
 
-        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(newFileUploadExercise));
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedExercise));
 
-        return newFileUploadExercise;
+        return persistedExercise;
     }
 
     /**
-     * This helper method copies all attributes of the {@code importedExercise} into the new exercise.
-     * Here we ignore all external entities as well as the start-, end-, and assessment due date.
+     * Backfills the file upload exercise basis onto {@code newExercise} from {@code sourceExercise}: the generic basis
+     * follows the "keep the caller's value, else take the source's" rule (see
+     * {@link ExerciseImportService#copyExerciseBasis}), and the file-upload-specific fields likewise prefer the caller's
+     * edited value. The assessment type is always set to {@code MANUAL} (file upload exercises are manually assessed).
+     * All external entities and the start-, end-, and assessment due dates are intentionally not copied here.
      *
-     * @param importedExercise The exercise from which to copy the basis
-     * @return the cloned TextExercise basis
+     * @param newExercise    the exercise being built; mutated in place
+     * @param sourceExercise the source exercise providing the content to backfill
      */
-    @NonNull
-    private FileUploadExercise copyFileUploadExerciseBasis(FileUploadExercise importedExercise, FileUploadExercise templateExercise) {
-        log.debug("Copying the exercise basis from {}", importedExercise);
-        FileUploadExercise newExercise = new FileUploadExercise();
-        super.copyExerciseBasis(newExercise, importedExercise, templateExercise, new HashMap<>());
+    private void copyFileUploadExerciseBasis(FileUploadExercise newExercise, FileUploadExercise sourceExercise) {
+        log.debug("Copying the file upload exercise basis from {}", sourceExercise);
+        prepareNewExerciseForImport(newExercise);
+        super.copyExerciseBasis(newExercise, sourceExercise, new HashMap<>());
         newExercise.setAssessmentType(AssessmentType.MANUAL);
-        // Prefer the intended exercise (honours edits from the standalone import form), fall back to the source content.
-        newExercise.setFilePattern(firstNonNull(importedExercise.getFilePattern(), templateExercise.getFilePattern()));
-        newExercise.setExampleSolution(firstNonNull(importedExercise.getExampleSolution(), templateExercise.getExampleSolution()));
-        return newExercise;
+        // Prefer the caller's edited value (standalone import form), fall back to the source content.
+        newExercise.setFilePattern(firstNonNull(newExercise.getFilePattern(), sourceExercise.getFilePattern()));
+        newExercise.setExampleSolution(firstNonNull(newExercise.getExampleSolution(), sourceExercise.getExampleSolution()));
     }
 
 }

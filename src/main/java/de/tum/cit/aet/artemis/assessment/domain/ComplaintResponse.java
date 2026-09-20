@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * A ComplaintResponse.
@@ -43,8 +44,9 @@ public class ComplaintResponse extends AbstractAuditingEntity {
     private ZonedDateTime submittedTime;
 
     @OneToOne
-    @JoinColumn(unique = true)
+    @JoinColumn(unique = true, nullable = false)
     @JsonIgnoreProperties(value = "complaintResponse", allowSetters = true)
+    @Parent
     private Complaint complaint;
 
     @ManyToOne

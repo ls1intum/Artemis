@@ -10,13 +10,10 @@
         />
 
         @if (!isFirstVisit() && isDataLoaded()) {
-            <div class="header-section d-flex">
-                <div class="ms-auto d-flex align-items-center">
-                    <jhi-button (onClick)="navigateToTraining()" class="button-class" [title]="'artemisApp.exercise.startTraining'" />
-                </div>
+            <!-- Projected into the shell title bar so this page reads like the rest of the overview. -->
+            <div *titleBarActions class="d-flex align-items-center">
+                <jhi-button (onClick)="navigateToTraining()" [title]="'artemisApp.exercise.startTraining'" />
             </div>
-
-            <hr class="mt-2 mb-4" />
 
             <div class="main-body-section">
                 <div class="legend-section p-3">

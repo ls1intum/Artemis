@@ -9,6 +9,7 @@ import { captureException } from '@sentry/angular';
 import { IconDefinition, faCheckCircle, faExclamationCircle, faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /** PrimeNG `p-button` severities used by alert action buttons. */
 export type AlertButtonSeverity = 'success' | 'danger' | 'warn' | 'info';
@@ -105,7 +106,7 @@ export class AlertService {
                     });
                     if (errorHeader && !this.translateService.instant(errorHeader).startsWith(translationNotFoundMessage)) {
                         const entityName = this.translateService.instant('global.menu.entities.' + entityKey);
-                        this.addErrorAlert(errorHeader, errorHeader, { entityName, ...httpErrorResponse.error?.params });
+                        this.addErrorAlert(errorHeader, errorHeader, cloneWith({ entityName }, httpErrorResponse.error?.params ?? {}));
                     } else if (httpErrorResponse.error && httpErrorResponse.error.fieldErrors) {
                         const fieldErrors = httpErrorResponse.error.fieldErrors;
                         for (const fieldError of fieldErrors) {

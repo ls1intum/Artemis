@@ -17,6 +17,7 @@ import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } 
 import { filter, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { ExampleSubmissionAssessCommand, FeedbackMarker } from 'app/exercise/example-submission/example-submission-assess-command';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { Observable, of } from 'rxjs';
@@ -32,6 +33,7 @@ import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessm
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 type ExampleSubmissionResponseType = EntityResponseType;
 
@@ -110,6 +112,13 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     private get assessments(): Feedback[] {
         return [...this.referencedFeedback, ...this.unreferencedFeedback()];
     }
+
+    /** Full assessment feedback for the unreferenced-feedback score summary. */
+    allAssessmentFeedbacks(): Feedback[] {
+        return this.assessments;
+    }
+
+    readonly getTotalMaxPoints = getTotalMaxPoints;
 
     /**
      * Reads route params and loads the example submission on initialWithContext.
@@ -385,11 +394,14 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     }
 
     private exampleSubmissionForNetwork() {
-        const exampleSubmission = Object.assign({}, this.exampleSubmission);
-        exampleSubmission.submission = Object.assign({}, this.submission);
+        const exampleSubmission = deepClone(this.exampleSubmission);
+        // `?? new TextSubmission()` keeps the previous behaviour: `Object.assign({}, undefined)` produced an empty
+        // object rather than undefined, which the branches below then mutate.
+        exampleSubmission.submission = deepClone(this.submission) ?? new TextSubmission();
 
         if (this.result()) {
-            const result = Object.assign({}, this.result());
+            // Non-null assertion is safe inside this branch; the signal read above established the result exists.
+            const result = deepClone(this.result()!);
             setLatestSubmissionResult(exampleSubmission.submission, result);
             result.feedbacks = this.assessments;
             delete result?.submission;

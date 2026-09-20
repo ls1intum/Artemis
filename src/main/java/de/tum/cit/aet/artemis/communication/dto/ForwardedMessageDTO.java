@@ -8,6 +8,7 @@ import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ForwardedMessage;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 /**
  * Data Transfer Object for ForwardedMessage.
@@ -31,6 +32,15 @@ public record ForwardedMessageDTO(Long id, Long sourceId, PostingType sourceType
      * @return the ForwardedMessage entity
      */
     public ForwardedMessage toEntity() {
+        // A forwarded message points at exactly one destination, which is stated twice below this layer: the setters of
+        // ForwardedMessage reject a second destination with an IllegalStateException, and the database holds
+        // CHECK_DESTINATION_POST_OR_ANSWER. So two ids set trips the setter and neither id set trips the constraint,
+        // and both answer 500 for what is the client naming the wrong number of destinations. Both are rejected here
+        // instead.
+        if ((this.destinationPostId == null) == (this.destinationAnswerPostId == null)) {
+            throw new BadRequestAlertException("A forwarded message must have exactly one destination, either a destination post or a destination answer post", "forwardedMessage",
+                    "forwardedMessageNeedsExactlyOneDestination");
+        }
         ForwardedMessage message = new ForwardedMessage();
         message.setId(this.id);
         message.setSourceId(this.sourceId);

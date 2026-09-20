@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTA
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -16,7 +17,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.localci.service.ci.SharedBuildTriggerData;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
@@ -104,10 +106,17 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final BuildPhaseEvaluationService buildPhaseEvaluationService;
 
+    private final BuildJobCloneTokenService buildJobCloneTokenService;
+
     private static final int DEFAULT_BUILD_DURATION = 17;
 
     // Arbitrary value to ensure that the build duration is always a bit higher than the actual build duration
     private static final double BUILD_DURATION_SAFETY_FACTOR = 1.1;
+
+    /**
+     * Only report the stage breakdown of a build trigger when it took at least this long, so a healthy system stays quiet.
+     */
+    private static final long SLOW_TRIGGER_LOG_THRESHOLD_MILLIS = 200;
 
     public LocalCITriggerService(DistributedDataAccessService distributedDataAccessService, BuildPhasesTemplateService buildPhasesTemplateService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, GitService gitService,
@@ -116,7 +125,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, BuildScriptProviderService buildScriptProviderService,
             ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService, BuildJobRepository buildJobRepository,
-            BuildPhaseEvaluationService buildPhaseEvaluationService) {
+            BuildPhaseEvaluationService buildPhaseEvaluationService, BuildJobCloneTokenService buildJobCloneTokenService) {
+        this.buildJobCloneTokenService = buildJobCloneTokenService;
         this.distributedDataAccessService = distributedDataAccessService;
         this.buildPhasesTemplateService = buildPhasesTemplateService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
@@ -143,7 +153,24 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation, boolean triggerAll) throws LocalCIException {
-        triggerBuild(participation, null, null, triggerAll, 0);
+        triggerBuild(participation, null, null, triggerAll, 0, SharedBuildTriggerData.NONE);
+    }
+
+    @Override
+    public void triggerBuild(ProgrammingExerciseParticipation participation, boolean triggerAll, SharedBuildTriggerData sharedData) throws LocalCIException {
+        triggerBuild(participation, null, null, triggerAll, 0, sharedData);
+    }
+
+    /**
+     * Resolves the head commit of the exercise's test repository and the exercise's build statistics, which every
+     * participation of this exercise would otherwise resolve for itself.
+     *
+     * @param exercise the exercise whose participations are about to be triggered
+     * @return the inputs shared by every participation of that exercise
+     */
+    @Override
+    public SharedBuildTriggerData prepareSharedTriggerData(ProgrammingExercise exercise) {
+        return SharedBuildTriggerData.of(getCommitHashOrNull(exercise.getVcsTestRepositoryUri(), "test repository"), loadBuildStatistics(exercise), loadBuildConfig(exercise));
     }
 
     /**
@@ -156,7 +183,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo) throws LocalCIException {
-        triggerBuild(participation, commitHashToBuild, triggeredByPushTo, false, 0);
+        triggerBuild(participation, commitHashToBuild, triggeredByPushTo, false, 0, SharedBuildTriggerData.NONE);
     }
 
     public void retryBuildJob(BuildJob buildJob, ProgrammingExerciseParticipation participation) throws LocalCIException {
@@ -174,13 +201,15 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * @throws LocalCIException if the build job could not be added to the queue.
      */
     public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo, int retryCount) throws LocalCIException {
-        triggerBuild(participation, commitHashToBuild, triggeredByPushTo, false, retryCount);
+        triggerBuild(participation, commitHashToBuild, triggeredByPushTo, false, retryCount, SharedBuildTriggerData.NONE);
     }
 
-    private void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo, boolean triggerAll, int retryCount)
-            throws LocalCIException {
+    private void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo, boolean triggerAll, int retryCount,
+            SharedBuildTriggerData sharedData) throws LocalCIException {
 
         log.info("Triggering build for participation {} and commit hash {}", participation.getId(), commitHashToBuild);
+
+        long stageStart = System.nanoTime();
 
         // Commit hash related to the repository that will be tested
         String assignmentCommitHash;
@@ -190,18 +219,18 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         if (triggeredByPushTo == null || triggeredByPushTo.equals(RepositoryType.AUXILIARY)) {
             assignmentCommitHash = getCommitHashOrNull(participation.getVcsRepositoryUri(), "assignment repository");
-            testCommitHash = getCommitHashOrNull(participation.getProgrammingExercise().getVcsTestRepositoryUri(), "test repository");
+            testCommitHash = testCommitHashFrom(sharedData, participation);
         }
         else if (triggeredByPushTo.equals(RepositoryType.TESTS)) {
             assignmentCommitHash = getCommitHashOrNull(participation.getVcsRepositoryUri(), "assignment repository");
             if (commitHashToBuild == null) {
-                commitHashToBuild = getCommitHashOrNull(participation.getProgrammingExercise().getVcsTestRepositoryUri(), "test repository");
+                commitHashToBuild = testCommitHashFrom(sharedData, participation);
             }
             testCommitHash = commitHashToBuild;
         }
         else {
             assignmentCommitHash = commitHashToBuild;
-            testCommitHash = getCommitHashOrNull(participation.getProgrammingExercise().getVcsTestRepositoryUri(), "test repository");
+            testCommitHash = testCommitHashFrom(sharedData, participation);
         }
 
         // If we couldn't retrieve commit hashes, skip the build - there's nothing to build yet
@@ -209,6 +238,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             log.info("Skipping build for participation {} - commit hashes not available yet", participation.getId());
             return;
         }
+
+        long commitHashNanos = System.nanoTime() - stageStart;
+        stageStart = System.nanoTime();
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
 
@@ -222,9 +254,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         String buildJobId = String.valueOf(participation.getId()) + submissionDate.toInstant().toEpochMilli();
 
-        var programmingExerciseBuildConfig = loadBuildConfig(programmingExercise);
+        var programmingExerciseBuildConfig = sharedData.resolved() ? sharedData.buildConfig() : loadBuildConfig(programmingExercise);
 
-        var buildStatistics = loadBuildStatistics(programmingExercise);
+        var buildStatistics = sharedData.resolved() ? sharedData.buildStatistics() : loadBuildStatistics(programmingExercise);
 
         long estimatedDuration = (buildStatistics != null && buildStatistics.getBuildDurationSeconds() > 0) ? buildStatistics.getBuildDurationSeconds() : DEFAULT_BUILD_DURATION;
         estimatedDuration = Math.round(estimatedDuration * BUILD_DURATION_SAFETY_FACTOR);
@@ -237,14 +269,36 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         BuildAgentDTO buildAgent = new BuildAgentDTO(null, null, null);
 
+        // The credential the agent that claims this job will clone with. Scoped to this job's repositories and valid
+        // only while the job is in the processing list, so it replaces the installation-wide build agent password
+        // rather than adding to it.
+        String cloneToken = buildJobCloneTokenService.generateCloneToken();
+
         BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem(buildJobId, participation.getBuildPlanId(), buildAgent, participation.getId(), courseId,
-                programmingExercise.getId(), retryCount, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
+                programmingExercise.getId(), retryCount, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null, cloneToken);
+
+        long buildJobDataNanos = System.nanoTime() - stageStart;
+        stageStart = System.nanoTime();
 
         // Save the build job before adding it to the queue to ensure it exists in the database.
         // This prevents potential race conditions where a build agent pulls the job from the queue very quickly before it is persisted,
         // leading to a failed update operation due to a missing record.
         buildJobRepository.save(new BuildJob(buildJobQueueItem, BuildStatus.QUEUED, null));
+
+        long persistNanos = System.nanoTime() - stageStart;
+        stageStart = System.nanoTime();
+
         distributedDataAccessService.getDistributedBuildJobQueue().add(buildJobQueueItem);
+
+        long enqueueNanos = System.nanoTime() - stageStart;
+        // Queueing a build was measured as effectively the whole latency of a git push under exam load, while each
+        // individual step is a few milliseconds when uncontended. Report the breakdown when a call is slow, so a
+        // regression can be attributed to a step rather than guessed at.
+        long totalMillis = (commitHashNanos + buildJobDataNanos + persistNanos + enqueueNanos) / 1_000_000;
+        if (totalMillis >= SLOW_TRIGGER_LOG_THRESHOLD_MILLIS) {
+            log.info("Slow build trigger for participation {}: {} ms total (commit hashes {} ms, build job data {} ms, persist {} ms, enqueue {} ms)", participation.getId(),
+                    totalMillis, commitHashNanos / 1_000_000, buildJobDataNanos / 1_000_000, persistNanos / 1_000_000, enqueueNanos / 1_000_000);
+        }
         log.info("Added build job {} for exercise {} and participation {} with priority {} to the queue", buildJobId, programmingExercise.getShortName(), participation.getId(),
                 priority);
 
@@ -264,7 +318,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
 
-        List<AuxiliaryRepository> auxiliaryRepositories;
+        Collection<AuxiliaryRepository> auxiliaryRepositories;
 
         // If the auxiliary repositories are not initialized, we need to fetch them from the database.
         if (Hibernate.isInitialized(participation.getProgrammingExercise().getAuxiliaryRepositories())) {
@@ -325,18 +379,17 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         boolean staticCodeAnalysisEnabled = programmingExercise.isStaticCodeAnalysisEnabled();
         boolean sequentialTestRunsEnabled = buildConfig.hasSequentialTestRuns();
 
-        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
+        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig, programmingExercise);
 
-        programmingExercise.setBuildConfig(buildConfig);
         BuildPlanPhasesDTO buildPlanPhasesDTO;
         try {
             buildPlanPhasesDTO = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildConfig.getBuildPlanConfiguration());
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new LocalCIException("The build plan configuration is invalid for build config " + buildConfig.getId(), e);
         }
 
-        final List<BuildPhaseDTO> phases = buildPlanPhasesDTO.phases() == null ? buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise)
+        final List<BuildPhaseDTO> phases = buildPlanPhasesDTO.phases() == null ? buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise, buildConfig)
                 : buildPlanPhasesDTO.phases();
         final String dockerImage = buildPlanPhasesDTO.dockerImage() == null ? buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise)
                 : buildPlanPhasesDTO.dockerImage();
@@ -346,7 +399,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         final Set<String> resultPathsSet = BuildPhaseEvaluationService.gatherResultPaths(activePhases);
         final List<String> resultPaths = finalizeResultPaths(buildConfig, resultPathsSet.stream());
 
-        final String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(programmingExercise.getBuildConfig(), activePhases);
+        final String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(buildConfig, activePhases);
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
                 staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),
@@ -360,7 +413,20 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     }
 
     private ProgrammingExerciseBuildConfig loadBuildConfig(ProgrammingExercise programmingExercise) {
-        return programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise);
+        return programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
+    }
+
+    /**
+     * @param sharedData    the inputs the caller resolved for the whole exercise
+     * @param participation the participation being triggered
+     * @return the head commit of the exercise's test repository, taken from the caller when it resolved it and read
+     *         from the repository otherwise
+     */
+    private String testCommitHashFrom(SharedBuildTriggerData sharedData, ProgrammingExerciseParticipation participation) {
+        if (sharedData.resolved()) {
+            return sharedData.testCommitHash();
+        }
+        return getCommitHashOrNull(participation.getProgrammingExercise().getVcsTestRepositoryUri(), "test repository");
     }
 
     private ProgrammingExerciseBuildStatistics loadBuildStatistics(ProgrammingExercise programmingExercise) {

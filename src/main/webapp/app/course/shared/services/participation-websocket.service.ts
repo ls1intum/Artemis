@@ -8,12 +8,12 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import dayjs from 'dayjs/esm';
-import { cloneDeep } from 'lodash-es';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { SubmissionUpdateResult } from 'app/exercise/shared/entities/submission/submission-updated-with-result.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 /**
  * Websocket destination for user-specific participation results.
@@ -266,7 +266,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      */
     public addParticipation = (newParticipation: StudentParticipation, exercise?: Exercise) => {
         // The participation needs to be cloned so that the original object is not modified
-        const participation = cloneDeep(newParticipation);
+        const participation = deepClone(newParticipation);
         if (!participation.exercise && !exercise) {
             throw new Error('a link from the participation to the exercise is required. Please attach it manually or add exercise as function input');
         }
@@ -399,8 +399,8 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             return;
         }
 
-        // load submissions of given participation
-        const submissions = cachedParticipation.submissions ?? [];
+        // load submissions of given participation and remove stale websocket-only Athena status entries
+        const submissions = this.removeStaleAthenaPlaceholders(cachedParticipation.submissions ?? [], result);
 
         // if submission with latest result exists, append result to submission
         const { updatedSubmissions, hasMatchingSubmission } = this.updateExistingSubmissionResult(submissions, result);
@@ -408,6 +408,9 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
         const appendedOrUpdatedSubmission = hasMatchingSubmission ? updatedSubmissions : this.appendNewSubmission(updatedSubmissions, cachedParticipation, result);
 
         const updatedParticipation = deepClone(cachedParticipation);
+        if (result.submission?.participation?.initializationState !== undefined) {
+            updatedParticipation.initializationState = result.submission.participation.initializationState;
+        }
         updatedParticipation.submissions = appendedOrUpdatedSubmission;
         this.cachedParticipations.set(participationId, updatedParticipation);
     };
@@ -435,7 +438,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
 
             matchedExistingSubmission = true;
 
-            const existingResults = (submission.results ?? []).filter((existingResult) => existingResult.id !== result.id);
+            const existingResults = (submission.results ?? []).filter((existingResult) => !this.shouldReplaceExistingResult(existingResult, result));
             // we do not mutate the mergedResults, hence concat is fine
             const mergedResults = existingResults.concat(result);
 
@@ -446,6 +449,40 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
         });
 
         return { updatedSubmissions: submissionsAfterUpdate, hasMatchingSubmission: matchedExistingSubmission };
+    }
+
+    private shouldReplaceExistingResult(existingResult: Result, incomingResult: Result): boolean {
+        if (existingResult.id === incomingResult.id) {
+            return true;
+        }
+
+        return this.isUnfinishedAthenaPlaceholder(existingResult) && this.isPersistedAthenaResult(incomingResult);
+    }
+
+    private removeStaleAthenaPlaceholders(submissions: Submission[], incomingResult: Result): Submission[] {
+        if (!this.isPersistedAthenaResult(incomingResult)) {
+            return submissions;
+        }
+
+        return submissions.map((submission) => {
+            const results = submission.results ?? [];
+            const persistentOrFinishedResults = results.filter((result) => !this.isUnfinishedAthenaPlaceholder(result));
+            if (persistentOrFinishedResults.length === results.length) {
+                return submission;
+            }
+
+            const updatedSubmission = deepClone(submission);
+            updatedSubmission.results = persistentOrFinishedResults;
+            return updatedSubmission;
+        });
+    }
+
+    private isUnfinishedAthenaPlaceholder(result: Result): boolean {
+        return result.id === undefined && result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful !== true;
+    }
+
+    private isPersistedAthenaResult(result: Result): boolean {
+        return result.id !== undefined && result.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
     }
 
     /**

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.assessment.dto.GradedPresentationConfigDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -45,6 +46,36 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
             WHERE gradingScale.course.id = :courseId
             """)
     Optional<GradingScale> findByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Projects only the graded-presentation settings needed by the course score calculator.
+     *
+     * @param courseId the course whose grading scale is queried
+     * @return the presentation configuration, or empty if the course has no grading scale
+     */
+    @Query("""
+            SELECT NEW de.tum.cit.aet.artemis.assessment.dto.GradedPresentationConfigDTO(
+                COALESCE(gradingScale.presentationsNumber, 0),
+                COALESCE(gradingScale.presentationsWeight, 0.0))
+            FROM GradingScale gradingScale
+            WHERE gradingScale.course.id = :courseId
+            ORDER BY gradingScale.id ASC
+            """)
+    List<GradedPresentationConfigDTO> findPresentationConfigsByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * The graded-presentation settings of the course's grading scale.
+     * <p>
+     * A course is meant to have at most one grading scale, but a concurrent creation can briefly leave two behind — see
+     * {@link #findByCourseIdOrElseThrow}, which repairs that. A read on the course overview must not fail on it and must
+     * not repair data either, so it takes the oldest scale, which is the one that repair keeps.
+     *
+     * @param courseId the course whose grading scale is queried
+     * @return the presentation configuration, or empty if the course has no grading scale
+     */
+    default Optional<GradedPresentationConfigDTO> findPresentationConfigByCourseId(long courseId) {
+        return findPresentationConfigsByCourseId(courseId).stream().findFirst();
+    }
 
     /**
      * Find a grading scale for exam by id
@@ -131,7 +162,7 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
      * Query which fetches all the grading scales with BONUS grade type for which the user is instructor in the course and matching the search criteria.
      *
      * @param partialTitle course or exam title search term
-     * @param groups       user groups
+     * @param userId       id of the user
      * @param pageable     Pageable
      * @return Page with search results
      */
@@ -143,13 +174,17 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
                 LEFT JOIN gs.exam.course
             WHERE gs.gradeType = de.tum.cit.aet.artemis.assessment.domain.GradeType.BONUS
                 AND (
-                    (gs.course.instructorGroupName IN :groups AND gs.course.title LIKE %:partialTitle%)
-                    OR (gs.exam.course.instructorGroupName IN :groups AND gs.exam.title LIKE %:partialTitle%)
+                    (gs.course IS NOT NULL
+                        AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = gs.course.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
+                        AND gs.course.title LIKE %:partialTitle%)
+                    OR (gs.exam IS NOT NULL
+                        AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = gs.exam.course.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
+                        AND gs.exam.title LIKE %:partialTitle%)
                 )
             """)
     // Note: Removing "LEFT JOIN gs.exam.course" part from the query above would cause the query to exclude GradingScales for Courses and just return the
     // GradingScales for Exams. (It will do so by generating a CROSS JOIN and a WHERE clause which checks for exam.course_id = course.id)
-    Page<GradingScale> findWithBonusGradeTypeByTitleInCourseOrExamAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("groups") Set<String> groups,
+    Page<GradingScale> findWithBonusGradeTypeByTitleInCourseOrExamAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("userId") long userId,
             Pageable pageable);
 
     /**

@@ -16,6 +16,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 @Entity
 @Table(name = "lecture_transcription")
@@ -34,7 +35,8 @@ public class LectureTranscription extends DomainObject {
     private List<LectureTranscriptionSegment> segments;
 
     @OneToOne
-    @JoinColumn(name = "lecture_unit_id", unique = true)
+    @JoinColumn(name = "lecture_unit_id", unique = true, nullable = false)
+    @Parent
     private LectureUnit lectureUnit;
 
     /**

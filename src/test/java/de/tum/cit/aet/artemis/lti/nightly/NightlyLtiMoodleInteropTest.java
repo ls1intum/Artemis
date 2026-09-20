@@ -51,6 +51,8 @@ import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lti.AbstractLtiIntegrationTest;
 import de.tum.cit.aet.artemis.lti.config.DistributedStateAuthorizationRequestRepository;
@@ -64,16 +66,16 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
  * Boots Moodle 5.0.2 (bitnamilegacy image) + Postgres on a shared docker network. Moodle's one-time install runs at
  * container start. The suite exercises every step of the LTI 1.3 OIDC launch against this real Moodle:
  * <ul>
- * <li><b>Step 1 (initiate-login):</b> {@link #initiateLoginRedirectsToMoodleAuthEndpoint()} — Artemis must build the
+ * <li><b>Step 1 (initiate-login):</b> {@link #initiateLoginRedirectsToMoodleAuthEndpoint()} - Artemis must build the
  * authorization-request URL Moodle expects, with state cached for the round trip.</li>
- * <li><b>Step 3a (redirect proxy):</b> {@link #authCallbackProxyAcceptsMoodleSignedJwt()} — Artemis's
+ * <li><b>Step 3a (redirect proxy):</b> {@link #authCallbackProxyAcceptsMoodleSignedJwt()} - Artemis's
  * {@code /auth-callback} must accept a real Moodle-signed launch JWT and redirect to {@code /lti/launch}.</li>
- * <li><b>Step 3b (Moodle-signed):</b> {@link #moodleSignedJwtPassesArtemisValidation()} — Moodle calls its own
+ * <li><b>Step 3b (Moodle-signed):</b> {@link #moodleSignedJwtPassesArtemisValidation()} - Moodle calls its own
  * {@code lti_sign_jwt()} via {@code docker exec}, producing a JWT with Moodle's actual claim mapping. Artemis
  * must fetch Moodle's JWKS over real HTTP, verify the signature, and survive claim validation.</li>
- * <li><b>Step 3b (synthetic):</b> {@link #syntheticJwtSignedWithMoodleKeyValidates()} — sanity check that signs with
+ * <li><b>Step 3b (synthetic):</b> {@link #syntheticJwtSignedWithMoodleKeyValidates()} - sanity check that signs with
  * Moodle's extracted private key and a minimal claim set. Isolates the signature/JWKS mechanics from claim shape.</li>
- * <li><b>Full success:</b> {@link #fullLaunchSucceedsWithCourseAndExerciseFixture()} — Moodle signs an id_token whose
+ * <li><b>Full success:</b> {@link #fullLaunchSucceedsWithCourseAndExerciseFixture()} - Moodle signs an id_token whose
  * target_link_uri matches a Course + TextExercise in the test DB; performLaunch auto-creates the user, joins them to
  * the course's student group, and returns 200 with the success JSON. The deepest end-to-end coverage achievable in
  * a MockMvc test JVM.</li>
@@ -143,6 +145,9 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
+    @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
+
     private String registrationId;
 
     private RSAPrivateKey moodlePrivateKey;
@@ -185,7 +190,7 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
     void cleanup() {
         // Each teardown step is independently try-wrapped so a failure in one does not leak the others. Without this,
         // a Docker daemon hiccup during moodle.stop() would orphan the Postgres container until Ryuk cleans up at JVM
-        // exit — which can wedge a CI runner if Ryuk also fails.
+        // exit - which can wedge a CI runner if Ryuk also fails.
         if (createdUserLogin != null) {
             try {
                 userTestRepository.findOneByLogin(createdUserLogin).ifPresent(userTestRepository::delete);
@@ -236,7 +241,7 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
     void initiateLoginRedirectsToMoodleAuthEndpoint() throws Exception {
         // Step 1: a real Moodle would send the browser here. Artemis must respond with a 302 to Moodle's auth.php
         // carrying state/nonce/client_id/redirect_uri/scope/response_type/response_mode. This is the exact code path
-        // that broke after the Spring Boot 4 upgrade (#12739) — UriComponentsBuilder.fromHttpUrl no longer exists.
+        // that broke after the Spring Boot 4 upgrade (#12739) - UriComponentsBuilder.fromHttpUrl no longer exists.
         MvcResult result = request
                 .performMvcRequest(get("/api/lti/public/lti13/initiate-login/{registrationId}", registrationId).param("iss", MOODLE_ISSUER).param("login_hint", "moodle-user-42")
                         .param("target_link_uri", "http://localhost/courses/1").param("client_id", CLIENT_ID))
@@ -276,7 +281,7 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
         // using its own claim mapping (roles normalized to IMS URIs, nested context/resource_link objects, etc).
         // Artemis must fetch Moodle's JWKS, verify the signature, and survive Spring/upstream claim validation.
         // performLaunch then reaches `getCourseFromTargetLink` and rejects with 400 (BadRequestAlertException
-        // → "Course not found") since the target_link_uri does not match any course in the test DB. The 400
+        // â†’ "Course not found") since the target_link_uri does not match any course in the test DB. The 400
         // proves that every layer above performLaunch handled real Moodle output correctly.
         String state = UUID.randomUUID().toString();
         String nonce = UUID.randomUUID().toString();
@@ -291,7 +296,7 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
     @WithAnonymousUser
     void syntheticJwtSignedWithMoodleKeyValidates() throws Exception {
         // Step 3b with a synthetic-claim JWT signed using the private key extracted from Moodle's DB. Isolates the
-        // signature/JWKS mechanics from claim shape — if this passes but the Moodle-signed test fails, the regression
+        // signature/JWKS mechanics from claim shape - if this passes but the Moodle-signed test fails, the regression
         // is in claim handling, not in JWKS plumbing.
         String state = UUID.randomUUID().toString();
         String nonce = UUID.randomUUID().toString();
@@ -320,11 +325,11 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
         // Moodle signs an id_token whose target_link_uri matches /courses/{courseId}/exercises/{exerciseId}, so
         // lti13Service.performLaunch finds the course, finds the exercise, auto-creates a user from the launch claims
         // (requireExistingUser=false), establishes a security context, and writes the success JSON response. This is
-        // the deepest end-to-end coverage achievable in a test JVM — the only thing missing is a browser session
+        // the deepest end-to-end coverage achievable in a test JVM - the only thing missing is a browser session
         // round-trip, and that requires a real HTTP listener instead of MockMvc.
         String userPrefix = "moodletest" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         String email = userPrefix + "@example.com";
-        Course initialCourse = courseUtilService.createCourseWithUserPrefix(userPrefix);
+        Course initialCourse = courseUtilService.createEnrolledCourse(userPrefix);
         initialCourse.setOnlineCourse(true);
         OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setUserPrefix(userPrefix);
@@ -354,8 +359,7 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
         var newUser = userTestRepository.findOneByEmailIgnoreCase(email).orElseThrow();
         assertThat(newUser.getLogin()).startsWith(userPrefix + "_");
         createdUserLogin = newUser.getLogin();
-        var newUserWithGroups = userTestRepository.findUserWithGroupsAndAuthoritiesByLogin(newUser.getLogin()).orElseThrow();
-        assertThat(newUserWithGroups.getGroups()).contains(course.getStudentGroupName());
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(newUser.getId(), course.getId(), CourseRole.STUDENT)).isTrue();
     }
 
     private void seedCachedAuthorizationRequest(String state, String nonce) {

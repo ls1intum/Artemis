@@ -1,0 +1,24 @@
+/**
+ * Artemis Application Server API
+ * NOTE: This file is auto-generated. Do not edit manually.
+ */
+
+import { HttpClient } from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { AssessmentCriteriaGenerationRequest } from '../model/assessment-criteria-generation-request';
+import { AssessmentCriteriaGenerationResponse } from '../model/assessment-criteria-generation-response';
+
+@Injectable({ providedIn: 'root' })
+export class HyperionAssessmentCriteriaGenerationApi {
+    private readonly http = inject(HttpClient);
+    private readonly basePath = '';
+
+    generateAssessmentCriteria(
+        courseId: number,
+        assessmentCriteriaGenerationRequest: AssessmentCriteriaGenerationRequest,
+    ): Observable<AssessmentCriteriaGenerationResponse> {
+        const url = `${this.basePath}/api/hyperion/courses/${courseId}/assessment-criteria/generate`;
+        return this.http.post<AssessmentCriteriaGenerationResponse>(url, assessmentCriteriaGenerationRequest);
+    }
+}

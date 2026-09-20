@@ -1,7 +1,8 @@
 import { Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, signal, viewChildren } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { debounceTime, map } from 'rxjs/operators';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subscription } from 'rxjs';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 
@@ -13,6 +14,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
 import { onError } from 'app/foundation/util/global.utils';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -25,7 +27,16 @@ import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-cate
     templateUrl: './course-faq.component.html',
     styleUrls: ['../../course/overview/course-overview/course-overview.scss', 'course-faq.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent, SearchFilterComponent, NgbDropdownModule, TranslateDirective, FontAwesomeModule, CommonModule],
+    imports: [
+        CourseTitleBarActionsDirective,
+        CourseFaqAccordionComponent,
+        CustomExerciseCategoryBadgeComponent,
+        SearchFilterComponent,
+        NgbDropdownModule,
+        TranslateDirective,
+        FontAwesomeModule,
+        CommonModule,
+    ],
 })
 export class CourseFaqComponent implements OnInit, OnDestroy {
     faqElements = viewChildren<ElementRef>('faqElement');
@@ -48,6 +59,8 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     readonly faFilter = faFilter;
 
     private route = inject(ActivatedRoute);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
+    private tabReselectionSubscription?: Subscription;
     private faqService = inject(FaqService);
     private alertService = inject(AlertService);
     private renderer = inject(Renderer2);
@@ -69,6 +82,12 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
 
         this.searchInput.pipe(debounceTime(300)).subscribe((searchTerm: string) => {
             this.refreshFaqList(searchTerm);
+        });
+
+        // Selecting this tab while already on it acts as a refresh
+        this.tabReselectionSubscription = this.courseTabRefreshService.reselections(this.route).subscribe(() => {
+            this.loadFaqs();
+            this.loadCourseExerciseCategories(this.courseId);
         });
     }
 
@@ -93,6 +112,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        this.tabReselectionSubscription?.unsubscribe();
         this.searchInput.complete();
     }
 

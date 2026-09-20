@@ -19,10 +19,15 @@ const sidebars: SidebarsConfig = {
             label: 'Exercises',
             link: { type: 'doc', id: 'exercises/intro' },
             items: [
+                'exercises/programming-exercise',
                 'exercises/quiz-exercise',
                 'exercises/modeling-exercise',
-                'exercises/programming-exercise',
+                'exercises/text-exercise',
+                'exercises/file-upload-exercise',
+                'exercises/exercise-variants',
+                'exercises/practice-mode',
                 'exercises/quiz-training',
+                'exercises/ai-feedback',
             ],
         },
         {
@@ -34,7 +39,12 @@ const sidebars: SidebarsConfig = {
                 'learning-content/iris',
             ],
         },
-        'exams',
+        {
+            type: 'category',
+            label: 'Exams',
+            link: { type: 'doc', id: 'exams' },
+            items: ['exams/take-an-exam', 'exams/exercises-in-an-exam', 'exams/after-the-exam'],
+        },
         {
             type: 'category',
             label: 'Assessment & Grades',
@@ -43,6 +53,7 @@ const sidebars: SidebarsConfig = {
                 'assessment-grades/assessment',
                 'assessment-grades/grading',
                 'assessment-grades/plagiarism-check',
+                'assessment-grades/deimos',
             ],
         },
         {

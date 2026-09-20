@@ -30,7 +30,12 @@ import { SafeHtmlPipe } from 'app/foundation/pipes/safe-html.pipe';
 import { GradeStepBoundsPipe } from 'app/foundation/pipes/grade-step-bounds.pipe';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { GradingScaleDTO, toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
-
+import { MAX_GRADING_POINTS, MAX_PRESENTATION_COUNT, MAX_PRESENTATION_SCORE } from 'app/foundation/constants/input.constants';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { faDownload, faFileImport, faMagic, faTrash } from '@fortawesome/free-solid-svg-icons';
 const csvColumnsGrade = Object.freeze({
     gradeName: 'gradeName',
     lowerBoundPercentage: 'lowerBoundPercentage',
@@ -95,6 +100,9 @@ type GradingScaleMeta = Pick<GradingScale, 'id' | 'bonusStrategy' | 'GradeStep' 
         SafeHtmlPipe,
         GradeStepBoundsPipe,
         DeleteButtonDirective,
+        CourseTitleBarActionsDirective,
+        CourseTitleBarTitleDirective,
+        TumUiButtonDirective,
     ],
 })
 export class GradingComponent implements OnInit {
@@ -111,6 +119,7 @@ export class GradingComponent implements OnInit {
     readonly ButtonSize = ButtonSize;
     readonly GradingScale = GradingScale;
     readonly documentationType: DocumentationType = 'Grading';
+    readonly MAX_GRADING_POINTS = MAX_GRADING_POINTS;
 
     // State
     /**
@@ -156,17 +165,47 @@ export class GradingComponent implements OnInit {
     maxPoints = signal<number | undefined>(undefined);
 
     /**
+     * Error message shown when the configured max points are not a whole number, are below 1, or exceed {@link MAX_GRADING_POINTS}.
+     * Also used to block saving, both by disabling the save buttons and by guarding the {@link save} handler.
+     */
+    readonly maxPointsErrorMessage = computed<string | undefined>(() => {
+        const maxPoints = this.maxPoints();
+        if (maxPoints != undefined && !Number.isInteger(maxPoints)) {
+            return this.translateService.instant('artemisApp.gradingSystem.error.maxPointsWholeNumber');
+        }
+        if (maxPoints != undefined && maxPoints < 1) {
+            return this.translateService.instant('artemisApp.gradingSystem.error.maxPointsTooLow', { min: 1 });
+        }
+        if (maxPoints != undefined && maxPoints > MAX_GRADING_POINTS) {
+            return this.translateService.instant('artemisApp.gradingSystem.error.maxPointsTooHigh', { max: MAX_GRADING_POINTS });
+        }
+        return undefined;
+    });
+
+    /**
      * Recombines the editable {@link gradeStepsModel} with {@link gradingScaleMeta} into a full {@link GradingScale}.
      * Reading this in a reactive context (template, computed, validator) tracks {@link gradeStepsModel}.
      */
     get gradingScale(): GradingScale {
         const model = this.gradeStepsModel();
-        return Object.assign(new GradingScale(), this.gradingScaleMeta, {
-            gradeType: model.gradeType,
-            plagiarismGrade: model.plagiarismGrade || undefined,
-            noParticipationGrade: model.noParticipationGrade || undefined,
-            gradeSteps: model.gradeSteps,
-        });
+        // The fields are assigned individually rather than copied: this getter runs on every template read, and
+        // handing out detached copies of `course` / `exam` / `gradeSteps` would give every read fresh object
+        // identities. Under zoneless change detection that re-notifies child inputs and re-creates the
+        // `track`-by-identity grade-step rows on every pass, which ends in NG0103.
+        const gradingScale = new GradingScale();
+        gradingScale.id = this.gradingScaleMeta.id;
+        gradingScale.bonusStrategy = this.gradingScaleMeta.bonusStrategy;
+        gradingScale.GradeStep = this.gradingScaleMeta.GradeStep;
+        gradingScale.course = this.gradingScaleMeta.course;
+        gradingScale.exam = this.gradingScaleMeta.exam;
+        gradingScale.presentationsNumber = this.gradingScaleMeta.presentationsNumber;
+        gradingScale.presentationsWeight = this.gradingScaleMeta.presentationsWeight;
+        gradingScale.bonusFrom = this.gradingScaleMeta.bonusFrom;
+        gradingScale.gradeType = model.gradeType;
+        gradingScale.plagiarismGrade = model.plagiarismGrade || undefined;
+        gradingScale.noParticipationGrade = model.noParticipationGrade || undefined;
+        gradingScale.gradeSteps = model.gradeSteps;
+        return gradingScale;
     }
 
     set gradingScale(value: GradingScale) {
@@ -194,9 +233,9 @@ export class GradingComponent implements OnInit {
      */
     private updateGradeSteps(mutate: (gradeSteps: GradeStep[]) => void): void {
         this.gradeStepsModel.update((model) => {
-            const gradeSteps = model.gradeSteps.map((gradeStep) => ({ ...gradeStep }));
+            const gradeSteps = model.gradeSteps.map((gradeStep) => deepClone(gradeStep));
             mutate(gradeSteps);
-            return { ...model, gradeSteps };
+            return cloneWith(model, { gradeSteps });
         });
     }
 
@@ -239,6 +278,10 @@ export class GradingComponent implements OnInit {
     readonly faTimes = faTimes;
     readonly faExclamationTriangle = faExclamationTriangle;
     readonly faInfo = faInfo;
+    readonly faDownload = faDownload;
+    readonly faFileImport = faFileImport;
+    readonly faMagic = faMagic;
+    readonly faTrash = faTrash;
 
     // =========================================================================
     // Lifecycle
@@ -337,6 +380,9 @@ export class GradingComponent implements OnInit {
      * and passing grade properties, and saves the grading scale via the service
      */
     save(): void {
+        if (this.maxPointsErrorMessage() !== undefined) {
+            return;
+        }
         this.isLoading.set(true);
         // Capture the recombined scale once (the getter rebuilds it from the signal model on each access) and
         // operate on this local copy before sending it to the server.
@@ -487,7 +533,7 @@ export class GradingComponent implements OnInit {
             }
         }
         // copy the grade steps in a separate array, so they don't get dynamically updated when sorting
-        const sortedGradeSteps = this.gradingService.sortGradeSteps(gradeSteps.map((gradeStep) => Object.assign({}, gradeStep)));
+        const sortedGradeSteps = this.gradingService.sortGradeSteps(gradeSteps.map((gradeStep) => deepClone(gradeStep)));
         if (gradeType === GradeType.BONUS) {
             // check if when the grade type is BONUS, the bonus points are at least 0
             for (const gradeStep of sortedGradeSteps) {
@@ -524,8 +570,18 @@ export class GradingComponent implements OnInit {
      */
     presentationsConfigErrorMessage(): string | undefined {
         const presentationsConfig = this.presentationsConfig();
-        if (presentationsConfig.presentationType === PresentationType.BASIC && (this.course()?.presentationScore ?? 0) <= 0) {
-            return this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsNumber');
+        const coursePresentationScore = this.course()?.presentationScore;
+        if (coursePresentationScore != undefined && coursePresentationScore > MAX_PRESENTATION_SCORE) {
+            return this.translateService.instant('artemisApp.gradingSystem.error.valueTooHigh', { max: MAX_PRESENTATION_SCORE });
+        }
+        if (presentationsConfig.presentationsNumber != undefined && presentationsConfig.presentationsNumber > MAX_PRESENTATION_COUNT) {
+            return this.translateService.instant('artemisApp.gradingSystem.error.valueTooHigh', { max: MAX_PRESENTATION_COUNT });
+        }
+        if (presentationsConfig.presentationType === PresentationType.BASIC) {
+            const basicPresentationScore = this.course()?.presentationScore;
+            if (basicPresentationScore === undefined || !Number.isInteger(basicPresentationScore) || basicPresentationScore <= 0) {
+                return this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsNumber');
+            }
         }
         if (presentationsConfig.presentationType === PresentationType.GRADED) {
             const presentationsNumber = presentationsConfig.presentationsNumber;
@@ -548,6 +604,13 @@ export class GradingComponent implements OnInit {
      */
     validPresentationsConfig(): boolean {
         const presentationsConfig = this.presentationsConfig();
+        const coursePresentationScore = this.course()?.presentationScore;
+        if (coursePresentationScore != undefined && coursePresentationScore > MAX_PRESENTATION_SCORE) {
+            return false;
+        }
+        if (presentationsConfig.presentationsNumber != undefined && presentationsConfig.presentationsNumber > MAX_PRESENTATION_COUNT) {
+            return false;
+        }
         if (presentationsConfig.presentationType === PresentationType.NONE) {
             if (presentationsConfig.presentationsNumber !== undefined || presentationsConfig.presentationsWeight !== undefined) {
                 return false;
@@ -560,7 +623,8 @@ export class GradingComponent implements OnInit {
             if (presentationsConfig.presentationsNumber !== undefined || presentationsConfig.presentationsWeight !== undefined) {
                 return false;
             }
-            if ((this.course()?.presentationScore ?? 0) <= 0) {
+            const basicPresentationScore = this.course()?.presentationScore;
+            if (basicPresentationScore === undefined || !Number.isInteger(basicPresentationScore) || basicPresentationScore <= 0) {
                 return false;
             }
         }
@@ -849,13 +913,16 @@ export class GradingComponent implements OnInit {
             let currentInterval: number;
 
             if (previousGradeStep) {
-                currentInterval = this.getPercentageInterval(currentGradeStep);
+                currentInterval = this.calculatePercentageInterval(currentGradeStep);
                 currentGradeStep.lowerBoundPercentage = previousGradeStep.upperBoundPercentage;
             } else {
-                currentInterval = newPercentageInterval ?? this.getPercentageInterval(currentGradeStep);
+                currentInterval = newPercentageInterval ?? this.calculatePercentageInterval(currentGradeStep);
             }
 
-            currentGradeStep.upperBoundPercentage = currentGradeStep.lowerBoundPercentage + currentInterval;
+            const shiftedUpperBound = currentGradeStep.lowerBoundPercentage + currentInterval;
+            // The final grade step is sticky: preserve its interval when the scale grows, but expand it when needed so
+            // reducing an earlier interval cannot leave an otherwise valid grading scale ending below 100 percent.
+            currentGradeStep.upperBoundPercentage = i === gradeSteps.length - 1 ? Math.max(shiftedUpperBound, 100) : shiftedUpperBound;
 
             this.setPoints(currentGradeStep, true);
             this.setPoints(currentGradeStep, false);
@@ -877,6 +944,10 @@ export class GradingComponent implements OnInit {
     }
 
     getPercentageInterval(gradeStep: GradeStep): number {
+        return parseFloat(this.calculatePercentageInterval(gradeStep).toFixed(1));
+    }
+
+    private calculatePercentageInterval(gradeStep: GradeStep): number {
         return gradeStep.upperBoundPercentage - gradeStep.lowerBoundPercentage;
     }
 
@@ -1056,12 +1127,12 @@ export class GradingComponent implements OnInit {
         }
 
         if (csvGradeSteps.length === 0 || csvGradeSteps.length > 100) {
-            this.gradeStepsModel.update((model) => ({ ...model, gradeSteps: [] }));
+            this.gradeStepsModel.update((model) => cloneWith(model, { gradeSteps: [] }));
             return;
         }
 
         const gradeType = csvGradeSteps[0]['bonusPoints' as keyof CsvGradeStep] === undefined ? GradeType.GRADE : GradeType.BONUS;
-        this.gradeStepsModel.update((model) => ({ ...model, gradeType, gradeSteps: this.mapCsvGradeStepsToGradeSteps(csvGradeSteps, gradeType) }));
+        this.gradeStepsModel.update((model) => cloneWith(model, { gradeType, gradeSteps: this.mapCsvGradeStepsToGradeSteps(csvGradeSteps, gradeType) }));
         return undefined;
     }
 
@@ -1090,7 +1161,9 @@ export class GradingComponent implements OnInit {
                 upperBoundPercentage: csvGradeStep[csvColumnsGrade.upperBoundPercentage as keyof CsvGradeStep]
                     ? Number(csvGradeStep[csvColumnsGrade.upperBoundPercentage as keyof CsvGradeStep])
                     : undefined,
-                ...(gradeType === GradeType.GRADE && { isPassingGrade: csvGradeStep[csvColumnsGrade.isPassingGrade as keyof CsvGradeStep] === 'TRUE' }),
+                // Explicitly undefined rather than absent: the object is serialised to JSON, which drops undefined
+                // members, so the request payload is unchanged.
+                isPassingGrade: gradeType === GradeType.GRADE ? csvGradeStep[csvColumnsGrade.isPassingGrade as keyof CsvGradeStep] === 'TRUE' : undefined,
             };
             return gradeStep as GradeStep;
         });
@@ -1103,12 +1176,15 @@ export class GradingComponent implements OnInit {
     }
 
     convertToCsvRow(gradeStep: GradeStep): CsvRow {
+        // Undefined cells are equivalent to absent ones here: downloadCsv only reads the keys listed in
+        // columnHeaders, and those differ per grade type.
+        const gradeType = this.gradingScale.gradeType;
         return {
-            ...(this.gradingScale.gradeType === GradeType.GRADE && { gradeName: gradeStep.gradeName ?? '' }),
-            ...(this.gradingScale.gradeType === GradeType.BONUS && { bonusPoints: gradeStep.gradeName ?? '' }),
+            gradeName: gradeType === GradeType.GRADE ? (gradeStep.gradeName ?? '') : undefined,
+            bonusPoints: gradeType === GradeType.BONUS ? (gradeStep.gradeName ?? '') : undefined,
             lowerBoundPercentage: gradeStep.lowerBoundPercentage ?? '',
             upperBoundPercentage: gradeStep.upperBoundPercentage ?? '',
-            ...(this.gradingScale.gradeType === GradeType.GRADE && { isPassingGrade: gradeStep.isPassingGrade }),
+            isPassingGrade: gradeType === GradeType.GRADE ? gradeStep.isPassingGrade : undefined,
         };
     }
 

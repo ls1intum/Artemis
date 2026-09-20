@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -54,6 +55,7 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
  */
 @Conditional(AtlasEnabled.class)
 @Lazy
+@FeatureUsage("competencies/prerequisites")
 @RestController
 @RequestMapping("api/atlas/")
 public class PrerequisiteResource {
@@ -101,7 +103,7 @@ public class PrerequisiteResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<CourseCompetencyResponseDTO>> getPrerequisitesWithProgress(@PathVariable long courseId) {
         log.debug("REST request to get prerequisites for course with id: {}", courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         final var prerequisites = prerequisiteService.findPrerequisitesWithProgressForUserByCourseId(courseId, user.getId());
         return ResponseEntity.ok(prerequisites.stream().map(CourseCompetencyResponseDTO::of).toList());
     }
@@ -118,7 +120,7 @@ public class PrerequisiteResource {
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<CourseCompetencyResponseDTO> getPrerequisite(@PathVariable long prerequisiteId, @PathVariable long courseId) {
         log.info("REST request to get Prerequisite : {}", prerequisiteId);
-        var currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        var currentUser = userRepository.getUserWithAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
         var prerequisite = prerequisiteService.findPrerequisiteWithExercisesAndLectureUnitsAndProgressForUser(prerequisiteId, currentUser.getId());
         checkCourseForPrerequisite(course, prerequisite);
@@ -233,7 +235,9 @@ public class PrerequisiteResource {
 
         Set<CourseCompetency> prerequisitesToImport = courseCompetencyRepository.findAllByIdWithExercisesAndLectureUnitsAndLecturesAndAttachments(importOptions.competencyIds());
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        // Pre-load the current user's course roles so the per-item checkHasAtLeastRoleInCourseElseThrow check below
+        // resolves in memory instead of one EXISTS query per imported prerequisite's source course.
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         prerequisitesToImport.forEach(prerequisiteToImport -> {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, prerequisiteToImport.getCourse(), user);
             if (prerequisiteToImport.getCourse().getId().equals(courseId)) {

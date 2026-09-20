@@ -9,7 +9,13 @@ import fs from 'fs';
 import path from 'path';
 import { hashElement } from 'folder-hash';
 import { fileURLToPath } from 'url';
+import { spawn } from 'node:child_process';
 import * as esbuild from 'esbuild';
+import { runViteOverrideCheck } from './supporting_scripts/check-vite-override.mjs';
+
+// Runs on every `ng serve` and every client build: a vite version that does not match what
+// @angular/build expects breaks the dev server silently (blank page), so fail here instead.
+runViteOverrideCheck();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -142,6 +148,24 @@ await esbuild.build({
     format: 'esm',
     outbase: 'node_modules/monaco-editor/esm',
     outdir: 'node_modules/monaco-editor/bundles',
+});
+
+await new Promise((resolve, reject) => {
+    const buildScript = `tum-ui:build${developFlag ? ':dev' : ''}`;
+    const command = process.platform === 'win32' ? 'cmd.exe' : 'pnpm';
+    const commandArguments = process.platform === 'win32' ? ['/d', '/s', '/c', `pnpm run ${buildScript}`] : ['run', buildScript];
+    const child = spawn(command, commandArguments, {
+        cwd: __dirname,
+        stdio: 'inherit',
+    });
+    child.once('error', reject);
+    child.once('exit', (code, signal) => {
+        if (code === 0) {
+            resolve();
+            return;
+        }
+        reject(new Error(`TUM UI package build failed${signal ? ` with signal ${signal}` : ` with exit code ${code}`}.`));
+    });
 });
 
 console.log('Pre-Build complete!');

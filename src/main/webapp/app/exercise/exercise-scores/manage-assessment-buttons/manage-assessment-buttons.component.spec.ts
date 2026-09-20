@@ -54,9 +54,10 @@ describe('ManageAssessmentButtonsComponent', () => {
 
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('course', course);
+        // Distinct ids on purpose: with everything set to 1 an assertion cannot tell which id a service received.
         fixture.componentRef.setInput('participation', {
-            id: 1,
-            submissions: [{ id: 1, results: [{ id: 1 } as Result] } as Submission],
+            id: 10,
+            submissions: [{ id: 20, results: [{ id: 30, correctionRound: 0 } as Result] } as Submission],
         } as Participation);
     });
 
@@ -96,7 +97,6 @@ describe('ManageAssessmentButtonsComponent', () => {
             fixture.componentRef.setInput('exercise', {
                 ...exercise,
                 assessmentType: 'SEMI_AUTOMATIC',
-                allowManualFeedbackRequests: true,
             } as any);
 
             comp.ngOnInit();
@@ -127,7 +127,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT } as Exercise);
             fixture.componentRef.setInput('participation', {
                 id: 1,
-                submissions: [{ id: 1, results: [{ id: 1 }] } as Submission],
+                submissions: [{ id: 1, results: [{ id: 1, correctionRound: 0 }] } as Submission],
             } as Participation);
 
             const result = comp.getAssessmentLink();
@@ -151,7 +151,7 @@ describe('ManageAssessmentButtonsComponent', () => {
                 submissions: [
                     {
                         id: 1,
-                        results: [{ id: 1, hasComplaint: true } as Result, { id: 2 } as Result],
+                        results: [{ id: 1, correctionRound: 0, hasComplaint: true } as Result, { id: 2, correctionRound: 1 } as Result],
                     } as Submission,
                 ],
             } as Participation);
@@ -164,7 +164,7 @@ describe('ManageAssessmentButtonsComponent', () => {
         it('should return same correction round when no complaint', () => {
             fixture.componentRef.setInput('participation', {
                 id: 1,
-                submissions: [{ id: 1, results: [{ id: 1, hasComplaint: false } as Result] } as Submission],
+                submissions: [{ id: 1, results: [{ id: 1, correctionRound: 0, hasComplaint: false } as Result] } as Submission],
             } as Participation);
 
             const result = comp.getCorrectionRoundForAssessmentLink(0);
@@ -186,11 +186,11 @@ describe('ManageAssessmentButtonsComponent', () => {
             const cancelSpy = vi.spyOn(programmingAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
             const refreshSpy = vi.spyOn(comp.refresh, 'emit');
             fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.PROGRAMMING } as Exercise);
-            const result = { id: 1, submission: { id: 1 } } as Result;
+            const result = { id: 30, submission: { id: 20 } } as Result;
 
             comp.cancelAssessment(result, comp.participation());
 
-            expect(cancelSpy).toHaveBeenCalledWith(1);
+            expect(cancelSpy).toHaveBeenCalledWith(20, 30);
             expect(refreshSpy).toHaveBeenCalled();
         });
 
@@ -198,11 +198,11 @@ describe('ManageAssessmentButtonsComponent', () => {
             const cancelSpy = vi.spyOn(modelingAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
             const refreshSpy = vi.spyOn(comp.refresh, 'emit');
             fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.MODELING } as Exercise);
-            const result = { id: 1, submission: { id: 1 } } as Result;
+            const result = { id: 30, submission: { id: 20 } } as Result;
 
             comp.cancelAssessment(result, comp.participation());
 
-            expect(cancelSpy).toHaveBeenCalledWith(1);
+            expect(cancelSpy).toHaveBeenCalledWith(20, 30);
             expect(refreshSpy).toHaveBeenCalled();
         });
 
@@ -210,11 +210,11 @@ describe('ManageAssessmentButtonsComponent', () => {
             const cancelSpy = vi.spyOn(textAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
             const refreshSpy = vi.spyOn(comp.refresh, 'emit');
             fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.TEXT } as Exercise);
-            const result = { id: 1, submission: { id: 1 } } as Result;
+            const result = { id: 30, submission: { id: 20 } } as Result;
 
             comp.cancelAssessment(result, comp.participation());
 
-            expect(cancelSpy).toHaveBeenCalledWith(1, 1);
+            expect(cancelSpy).toHaveBeenCalledWith(10, 20, 30);
             expect(refreshSpy).toHaveBeenCalled();
         });
 
@@ -222,27 +222,46 @@ describe('ManageAssessmentButtonsComponent', () => {
             const cancelSpy = vi.spyOn(fileUploadAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
             const refreshSpy = vi.spyOn(comp.refresh, 'emit');
             fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.FILE_UPLOAD } as Exercise);
-            const result = { id: 1, submission: { id: 1 } } as Result;
+            const result = { id: 30, submission: { id: 20 } } as Result;
 
             comp.cancelAssessment(result, comp.participation());
 
-            expect(cancelSpy).toHaveBeenCalledWith(1);
+            expect(cancelSpy).toHaveBeenCalledWith(20, 30);
             expect(refreshSpy).toHaveBeenCalled();
+        });
+
+        /**
+         * The scores overview builds its rows from ParticipationScoreDTO, and those results have no submission back
+         * reference. Guarding on result.submission?.id therefore swallowed every click and no request was sent (#13396).
+         */
+        it('should cancel even when the result has no submission back reference', () => {
+            const cancelSpy = vi.spyOn(textAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
+            vi.spyOn(window, 'confirm').mockReturnValue(true);
+            fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.TEXT } as Exercise);
+            // Exactly the shape ExerciseScoresComponent#toParticipation produces: no `submission` on the result.
+            const dtoShapedResult = { id: 30 } as Result;
+
+            comp.cancelAssessment(dtoShapedResult, comp.participation());
+
+            expect(cancelSpy).toHaveBeenCalledWith(10, 20, 30);
         });
 
         it('should not cancel when user declines confirmation', () => {
             vi.spyOn(window, 'confirm').mockReturnValue(false);
             const cancelSpy = vi.spyOn(programmingAssessmentService, 'cancelAssessment');
-            const result = { id: 1, submission: { id: 1 } } as Result;
+            const result = { id: 30, submission: { id: 20 } } as Result;
 
             comp.cancelAssessment(result, comp.participation());
 
             expect(cancelSpy).not.toHaveBeenCalled();
         });
 
-        it('should not cancel when submission id is missing', () => {
+        it('should not cancel when the participation has no submission', () => {
+            // The submission id comes from the participation now, so that is the precondition that has to be missing.
             const cancelSpy = vi.spyOn(programmingAssessmentService, 'cancelAssessment');
-            const result = { id: 1, submission: undefined } as Result;
+            vi.spyOn(window, 'confirm').mockReturnValue(true);
+            fixture.componentRef.setInput('participation', { id: 10, submissions: [] } as Participation);
+            const result = { id: 30 } as Result;
 
             comp.cancelAssessment(result, comp.participation());
 

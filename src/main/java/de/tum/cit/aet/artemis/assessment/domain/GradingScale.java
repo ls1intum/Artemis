@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 
@@ -62,10 +63,12 @@ public class GradingScale extends DomainObject {
 
     @OneToOne
     @JoinColumn(name = "course_id")
+    @Parent(enforcedBy = "CHECK_GRADING_SCALE_COURSE_OR_EXAM")
     private Course course;
 
     @OneToOne
     @JoinColumn(name = "exam_id")
+    @Parent(enforcedBy = "CHECK_GRADING_SCALE_COURSE_OR_EXAM")
     private Exam exam;
 
     @Nullable
@@ -80,7 +83,6 @@ public class GradingScale extends DomainObject {
      * Current implementation works with one Bonus instance as GradingScale.bonusFrom per Bonus.bonusTo instance (OneToOne) but
      * the relation is defined as OneToMany in order to allow applying multiple bonuses.
      */
-    // No @Cache on the two child collections below: mutated during grading-scale edits, same bug class as #12574 / #12584.
     @OneToMany(mappedBy = "gradingScale", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonIgnoreProperties(value = "gradingScale", allowSetters = true)
     private Set<GradeStep> gradeSteps = new HashSet<>();

@@ -70,7 +70,7 @@ public class ComplaintResponseService {
         }
         ComplaintResponse complaintResponseRepresentingLock = getComplaintResponseRepresentingALock(complaint);
 
-        User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        User user = this.userRepository.getUserWithAuthorities();
         if (!isUserAuthorizedToRespondToComplaint(complaint, user)) {
             throw new AccessForbiddenException("Insufficient permission for removing the lock on the complaint");
         }
@@ -78,8 +78,7 @@ public class ComplaintResponseService {
         if (blockedByLock(complaintResponseRepresentingLock, user)) {
             throw new ComplaintResponseLockedException(complaintResponseRepresentingLock);
         }
-        complaintResponseRepresentingLock = disassociateComplaintAndComplaintResponse(complaint, complaintResponseRepresentingLock);
-        complaintResponseRepository.deleteById(complaintResponseRepresentingLock.getId());
+        deleteComplaintResponseRepresentingLock(complaint, complaintResponseRepresentingLock);
         log.debug("Removed empty complaint and thus lock for complaint with id : {}", complaint.getId());
     }
 
@@ -117,7 +116,7 @@ public class ComplaintResponseService {
         }
         ComplaintResponse complaintResponseRepresentingLock = getComplaintResponseRepresentingALock(complaint);
 
-        User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        User user = this.userRepository.getUserWithAuthorities();
         if (!isUserAuthorizedToRespondToComplaint(complaint, user)) {
             throw new AccessForbiddenException("Insufficient permission for refreshing the lock on the complaint");
         }
@@ -126,8 +125,7 @@ public class ComplaintResponseService {
             throw new ComplaintResponseLockedException(complaintResponseRepresentingLock);
         }
 
-        complaintResponseRepresentingLock = disassociateComplaintAndComplaintResponse(complaint, complaintResponseRepresentingLock);
-        complaintResponseRepository.deleteById(complaintResponseRepresentingLock.getId());
+        deleteComplaintResponseRepresentingLock(complaint, complaintResponseRepresentingLock);
 
         ComplaintResponse refreshedEmptyComplaintResponse = new ComplaintResponse();
         refreshedEmptyComplaintResponse.setReviewer(user); // owner of the lock
@@ -137,14 +135,21 @@ public class ComplaintResponseService {
         return persistedComplaintResponse;
     }
 
-    private ComplaintResponse disassociateComplaintAndComplaintResponse(Complaint complaint, ComplaintResponse complaintResponseRepresentingLock) {
-        // we need to remove the relationship between the complaint and the complaint response as we otherwise cannot delete the ComplaintResponse
-        // we need the save method calls to make the PersistenceContext aware of the changes
+    /**
+     * Deletes the empty complaint response that represents the lock on the given complaint.
+     * <p>
+     * The complaint is the inverse side of this one-to-one and holds no column of its own, so nothing in the database
+     * points at the response and the row can go away in a single statement. This used to save the response with its
+     * complaint set to null first, which left a row without a parent behind for the length of one statement and stood
+     * in the way of requiring the column to be set. Clearing the back reference afterwards keeps the complaint that the
+     * caller holds consistent with the database.
+     *
+     * @param complaint                         the complaint the lock belongs to
+     * @param complaintResponseRepresentingLock the empty complaint response to delete
+     */
+    private void deleteComplaintResponseRepresentingLock(Complaint complaint, ComplaintResponse complaintResponseRepresentingLock) {
+        complaintResponseRepository.deleteResponseById(complaintResponseRepresentingLock.getId());
         complaint.setComplaintResponse(null);
-        complaintRepository.save(complaint);
-        complaintResponseRepresentingLock.setComplaint(null);
-        complaintResponseRepresentingLock = complaintResponseRepository.save(complaintResponseRepresentingLock);
-        return complaintResponseRepresentingLock;
     }
 
     /**
@@ -166,7 +171,7 @@ public class ComplaintResponseService {
         if (complaint.getComplaintResponse() != null) {
             throw new IllegalArgumentException("Complaint response already exists for given complaint");
         }
-        User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        User user = this.userRepository.getUserWithAuthorities();
         if (!isUserAuthorizedToRespondToComplaint(complaint, user)) {
             throw new AccessForbiddenException("Insufficient permission for creating the empty complaint response");
         }
@@ -219,7 +224,7 @@ public class ComplaintResponseService {
         ComplaintResponse complaintResponseFromDatabase = complaintResponseRepository.findByIdElseThrow(complaintResponseId);
         // TODO: make this retrieval redundant by proper fetching
         Complaint originalComplaint = complaintRepository.findWithEagerAssessorByIdElseThrow(complaintResponseFromDatabase.getComplaint().getId());
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         validateUserPermissionAndLockStatus(originalComplaint, complaintResponseFromDatabase, user);
         validateComplaintResponseEmpty(complaintResponseFromDatabase);
         validateOriginalComplaintNotAnswered(originalComplaint);

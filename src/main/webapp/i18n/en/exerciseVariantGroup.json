@@ -1,0 +1,27 @@
+{
+    "artemisApp": {
+        "exerciseVariantGroup": {
+            "detail": {
+                "variants": "Variants",
+                "pointsTooltip": "The variants in this group total {{ total }} pts, but only {{ cap }} pts count toward your course score.",
+                "callout": {
+                    "heading": "Choose a variant to work on",
+                    "body": "This group has {{ count }} variants. You can work on any or all of them.",
+                    "cappedScore": " Your combined score for this group is capped at {{ maxPoints }} points."
+                }
+            },
+            "edit": "Edit group",
+            "editGroupDates": "edit the group dates",
+            "delete": "Delete group",
+            "timelineLocked": {
+                "tooltip": "These dates are managed by the exercise group. Click to edit the group's timeline.",
+                "message": "Because this exercise is part of an exercise group, some of its dates cannot be changed individually. Instead, you can"
+            },
+            "deleted": "Deleted group with identifier {{ param }}",
+            "deleteDialog": {
+                "question": "Are you sure you want to delete the group <strong>{{ title }}</strong>? The exercises in this group will <strong>not</strong> be deleted, only ungrouped.",
+                "typeNameToConfirm": "Please type in the name of the group to confirm."
+            }
+        }
+    }
+}

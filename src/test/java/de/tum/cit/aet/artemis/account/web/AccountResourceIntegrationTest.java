@@ -2,15 +2,24 @@ package de.tum.cit.aet.artemis.account.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithAnonymousUser;
@@ -18,9 +27,19 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.LinkedMultiValueMap;
 
+import tools.jackson.databind.json.JsonMapper;
+
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO;
+import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO.LoginMethod;
 import de.tum.cit.aet.artemis.account.service.AccountService;
+import de.tum.cit.aet.artemis.account.service.LoginOptionsService;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
+import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.util.PasskeyCredentialUtilService;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
@@ -34,6 +53,7 @@ import de.tum.cit.aet.artemis.core.dto.vm.KeyAndPasswordVM;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.util.ConfigUtil;
 import de.tum.cit.aet.artemis.core.web.open.PublicAccountResource;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
@@ -44,8 +64,21 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     public static final String AUTHENTICATEDUSER = "authenticateduser";
 
+    private static final String TEST_PREFIX = "loginoptions";
+
+    private static final String EXTERNAL_IDP_NAME = "Test University Login";
+
     @Autowired
     private PublicAccountResource publicAccountResource;
+
+    @Autowired
+    private UserRecoveryKeyService userRecoveryKeyService;
+
+    @Autowired
+    private UserAiPreferenceService userAiPreferenceService;
+
+    @Autowired
+    private LoginOptionsService loginOptionsService;
 
     @Autowired
     private AccountService accountService;
@@ -93,6 +126,21 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
         // make request
         request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.CREATED, null);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "a,73,72", "ä,37,36", "€,25,24", "😀,19,18" })
+    void registrationRejectsOversizedPasswordAndAcceptsByteLimit(String character, int invalidLength, int validLength) throws Exception {
+        ManagedUserVM userVM = new ManagedUserVM(UserFactory.generateActivatedUser("byteboundary" + invalidLength));
+        userVM.setPassword(character.repeat(invalidLength));
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.BAD_REQUEST, null);
+        assertThat(userTestRepository.findOneByLogin(userVM.getLogin())).isEmpty();
+
+        String password = character.repeat(validLength);
+        userVM.setPassword(password);
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.CREATED, null);
+        User registered = userTestRepository.findOneByLogin(userVM.getLogin()).orElseThrow();
+        assertThat(passwordService.checkPasswordMatch(password, registered.getPassword())).isTrue();
     }
 
     @Test
@@ -195,7 +243,8 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         String testActivationKey = "testActivationKey";
         User user = UserFactory.generateActivatedUser("ab123cdm");
         user.setActivated(false);
-        user.setActivationKey(testActivationKey);
+        userTestRepository.save(user);
+        userRecoveryKeyService.storeActivationKey(user.getId(), testActivationKey);
         user = userTestRepository.save(user);
 
         // make request
@@ -208,7 +257,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(updatedUser).isPresent();
         assertThat(updatedUser.get()).isNotNull();
         assertThat(updatedUser.get().getActivated()).isTrue();
-        assertThat(updatedUser.get().getActivationKey()).isNull();
+        assertThat(userRecoveryKeyService.findActivationKey(updatedUser.get().getId())).isNull();
     }
 
     @Test
@@ -271,22 +320,21 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
      */
     @Test
     @WithMockUser(AUTHENTICATEDUSER)
-    void getAccountWithOrganizationDoesNotTriggerLazyLoading() throws Exception {
+    void getAccountWithOrganizationDoesNotTriggerLazyLoading() {
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         Organization organization = organizationUtilService.createOrganization();
         userTestRepository.addOrganizationToUser(user.getId(), organization);
 
         // Load user exactly as the account endpoint does — organizations are NOT in the entity graph
-        User lazyUser = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(AUTHENTICATEDUSER).orElseThrow();
+        User lazyUser = userTestRepository.findOneWithAuthoritiesByLogin(AUTHENTICATEDUSER).orElseThrow();
 
         // Build DTO outside the transaction (session is closed because open-in-view=false)
         UserDTO dto = new UserDTO(lazyUser);
+        assertThat(dto.getOrganizations()).isNull();
 
-        // Serialize with a plain ObjectMapper (no Hibernate module) to simulate Jackson 3,
-        // which does not have the Hibernate7Module registered. If the DTO still holds an
-        // uninitialized PersistentSet, this will throw LazyInitializationException.
-        var plainMapper = new com.fasterxml.jackson.databind.ObjectMapper();
-        plainMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+        // Serialize with a bare mapper that has no Hibernate module, so nothing papers over an uninitialized
+        // proxy. If the DTO still holds an uninitialized PersistentSet, this throws LazyInitializationException.
+        var plainMapper = new JsonMapper();
         assertThatCode(() -> plainMapper.writeValueAsString(dto)).doesNotThrowAnyException();
     }
 
@@ -370,22 +418,6 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
-    void saveAccountViaLegacyPath() throws Exception {
-        // The pre-9.3 bare URL "PUT api/core/account" must keep working for deployed clients (iOS, Android, older web);
-        // it is served by AccountLegacyResource and delegates to the canonical api/account/basic-information endpoint.
-        String updatedFirstName = "UpdatedFirstNameLegacy";
-        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
-        user.setFirstName(updatedFirstName);
-
-        request.put("/api/core/account", new UserDTO(user), HttpStatus.OK);
-
-        Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
-        assertThat(updatedUser).isPresent();
-        assertThat(updatedUser.get().getFirstName()).isEqualTo(updatedFirstName);
-    }
-
-    @Test
-    @WithMockUser(username = AUTHENTICATEDUSER)
     void saveAccountRegistrationDisabledExternalUser() throws Throwable {
         testWithRegistrationDisabled(() -> {
             // Create an external user (non-internal users should be forbidden)
@@ -429,17 +461,66 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
+    void saveAccountAllowsAnUnchangedLegacyDuplicateEmail() throws Exception {
+        String sharedEmail = "legacy-duplicate@test.de";
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        user.setEmail(sharedEmail);
+        userTestRepository.save(user);
+        User duplicate = userUtilService.createAndSaveUser("legacyduplicate");
+        duplicate.setEmail(sharedEmail);
+        userTestRepository.save(duplicate);
+
+        UserDTO update = new UserDTO(user);
+        update.setEmail(sharedEmail.toUpperCase(Locale.ROOT));
+        update.setFirstName("Updated");
+        request.put("/api/account/basic-information", update, HttpStatus.OK);
+
+        User updated = userTestRepository.findOneByLogin(AUTHENTICATEDUSER).orElseThrow();
+        assertThat(updated.getFirstName()).isEqualTo("Updated");
+        assertThat(updated.getEmail()).isEqualTo(sharedEmail);
+    }
+
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void saveAccountAllowsRemovingAnEmail() throws Exception {
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        UserDTO update = new UserDTO(user);
+        update.setEmail(null);
+
+        request.put("/api/account/basic-information", update, HttpStatus.OK);
+
+        assertThat(userTestRepository.findOneByLogin(AUTHENTICATEDUSER).orElseThrow().getEmail()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
     void changePassword() throws Exception {
         String updatedPassword = "12345678";
         userUtilService.createAndSaveUser(AUTHENTICATEDUSER, passwordService.hashPassword(UserFactory.USER_PASSWORD));
 
-        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword, null);
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.OK, null);
 
         // check if update successful
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(updatedUser).isPresent();
         assertThat(passwordService.checkPasswordMatch(updatedPassword, updatedUser.get().getPassword())).isTrue();
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "a,73,72", "ä,37,36", "€,25,24", "😀,19,18" })
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void passwordChangeRejectsOversizedPasswordAndAcceptsByteLimit(String character, int invalidLength, int validLength) throws Exception {
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER, passwordService.hashPassword(UserFactory.USER_PASSWORD));
+        String originalHash = user.getPassword();
+        var invalidRequest = new PasswordChangeDTO(UserFactory.USER_PASSWORD, character.repeat(invalidLength), null);
+        request.postWithoutLocation("/api/account/change-password", invalidRequest, HttpStatus.BAD_REQUEST, null);
+        assertThat(userTestRepository.findById(user.getId()).orElseThrow().getPassword()).isEqualTo(originalHash);
+
+        String password = character.repeat(validLength);
+        var validRequest = new PasswordChangeDTO(UserFactory.USER_PASSWORD, password, null);
+        request.postWithoutLocation("/api/account/change-password", validRequest, HttpStatus.OK, null);
+        assertThat(passwordService.checkPasswordMatch(password, userTestRepository.findById(user.getId()).orElseThrow().getPassword())).isTrue();
     }
 
     @Test
@@ -450,7 +531,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         userTestRepository.save(user);
 
         String updatedPassword = "12345678";
-        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword, null);
 
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
     }
@@ -460,7 +541,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     void changePasswordInvalidPassword() throws Exception {
         userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         String updatedPassword = "";
-        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword, null);
 
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
     }
@@ -469,7 +550,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @WithMockUser(username = AUTHENTICATEDUSER)
     void changePasswordSamePassword() throws Exception {
         userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
-        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, UserFactory.USER_PASSWORD);
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, UserFactory.USER_PASSWORD, null);
 
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
     }
@@ -507,11 +588,12 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
         Optional<User> userBefore = userTestRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
         assertThat(userBefore).isPresent();
-        String resetKeyBefore = userBefore.get().getResetKey();
+        String resetKeyIdBefore = userRecoveryKeyService.findResetKeyId(userBefore.get().getId());
+        String resetKeyHashBefore = userRecoveryKeyService.findResetKeyHash(userBefore.get().getId());
 
+        doNothing().when(mailService).sendPasswordResetMail(any());
         request.postStringWithoutLocation("/api/core/public/account/reset-password/init", createdUser.getEmail(), HttpStatus.OK, null);
-
-        verifyPasswordReset(createdUser, resetKeyBefore);
+        verifyPasswordReset(createdUser, resetKeyIdBefore, resetKeyHashBefore);
     }
 
     @Test
@@ -520,26 +602,31 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
         Optional<User> userBefore = userTestRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
         assertThat(userBefore).isPresent();
-        String resetKeyBefore = userBefore.get().getResetKey();
+        String resetKeyIdBefore = userRecoveryKeyService.findResetKeyId(userBefore.get().getId());
+        String resetKeyHashBefore = userRecoveryKeyService.findResetKeyHash(userBefore.get().getId());
 
+        doNothing().when(mailService).sendPasswordResetMail(any());
         request.postStringWithoutLocation("/api/core/public/account/reset-password/init", createdUser.getLogin(), HttpStatus.OK, null);
-        verifyPasswordReset(createdUser, resetKeyBefore);
+        verifyPasswordReset(createdUser, resetKeyIdBefore, resetKeyHashBefore);
     }
 
-    private void verifyPasswordReset(User createdUser, String resetKeyBefore) throws Exception {
+    private void verifyPasswordReset(User createdUser, String resetKeyIdBefore, String resetKeyHashBefore) throws Exception {
         // check user data
         Optional<User> userPasswordResetInit = userTestRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
         assertThat(userPasswordResetInit).isPresent();
-        String resetKey = userPasswordResetInit.get().getResetKey();
+        String resetKeyId = userRecoveryKeyService.findResetKeyId(userPasswordResetInit.get().getId());
+        String resetKeyHash = userRecoveryKeyService.findResetKeyHash(userPasswordResetInit.get().getId());
 
         // verify key has been changed by the request
-        assertThat(resetKey).isNotEqualTo(resetKeyBefore);
+        assertThat(resetKeyId).isNotEqualTo(resetKeyIdBefore);
+        assertThat(resetKeyHash).isNotEqualTo(resetKeyHashBefore);
 
         // finish password reset
+        ArgumentCaptor<MailRecipientDTO> recipientCaptor = ArgumentCaptor.forClass(MailRecipientDTO.class);
+        verify(mailService).sendPasswordResetMail(recipientCaptor.capture());
         String newPassword = getValidPassword();
-        KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
-        finishResetData.setKey(resetKey);
-        finishResetData.setNewPassword(newPassword);
+        assertThat(recipientCaptor.getValue().resetKey()).isNotNull();
+        KeyAndPasswordVM finishResetData = new KeyAndPasswordVM(recipientCaptor.getValue().resetKey().id(), recipientCaptor.getValue().resetKey().secret(), newPassword, null);
 
         // finish password reset
         request.postWithoutLocation("/api/core/public/account/reset-password/finish", finishResetData, HttpStatus.OK, null);
@@ -556,7 +643,8 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
         Optional<User> userBefore = userTestRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
         assertThat(userBefore).isPresent();
-        String resetKeyBefore = userBefore.get().getResetKey();
+        String emailBefore = userBefore.get().getEmail();
+        String resetKeyHashBefore = userRecoveryKeyService.findResetKeyHash(userBefore.get().getId());
 
         // init password reset
         request.postStringWithoutLocation("/api/core/public/account/reset-password/init", "invalidemail", HttpStatus.OK, null);
@@ -564,10 +652,31 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         // check user data
         Optional<User> userPasswordResetInit = userTestRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
         assertThat(userPasswordResetInit).isPresent();
-        String resetKey = userPasswordResetInit.get().getResetKey();
+        String email = userPasswordResetInit.get().getEmail();
+        String resetKeyHash = userRecoveryKeyService.findResetKeyHash(userPasswordResetInit.get().getId());
 
         // verify key has not been changed by the invalid request
-        assertThat(resetKey).isEqualTo(resetKeyBefore);
+        assertThat(email).isEqualTo(emailBefore);
+        assertThat(resetKeyHash).isEqualTo(resetKeyHashBefore);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "missing@example.org\r\nFORGED_RESET_EVENT", "unknown-user\nFORGED_RESET_EVENT", "unknown-user\rFORGED_RESET_EVENT" })
+    @WithAnonymousUser
+    void passwordResetDoesNotLogUntrustedIdentifier(String identifier) throws Exception {
+        Logger logger = (Logger) LoggerFactory.getLogger(PublicAccountResource.class);
+        var appender = new ListAppender<ILoggingEvent>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            request.postStringWithoutLocation("/api/core/public/account/reset-password/init", identifier, HttpStatus.OK, null);
+
+            assertThat(appender.list).isNotEmpty().allSatisfy(event -> assertThat(event.getFormattedMessage()).doesNotContain(identifier, "FORGED_RESET_EVENT", "\r", "\n"));
+        }
+        finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
     }
 
     @Test
@@ -586,47 +695,116 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @Test
     @WithMockUser(AUTHENTICATEDUSER)
     void passwordResetFinishInvalidPassword() throws Throwable {
-        KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
-        finishResetData.setNewPassword("");
+        KeyAndPasswordVM finishResetData = new KeyAndPasswordVM("0123456789", "0123456789", "", null);
         request.postWithoutLocation("/api/core/public/account/reset-password/finish", finishResetData, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "a,73,72", "ä,37,36", "€,25,24", "😀,19,18" })
+    void passwordResetRejectsOversizedPasswordAndAllowsRetry(String character, int invalidLength, int validLength) throws Exception {
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        String originalPassword = user.getPassword();
+        doNothing().when(mailService).sendPasswordResetMail(any());
+        request.postStringWithoutLocation("/api/core/public/account/reset-password/init", user.getLogin(), HttpStatus.OK, null);
+        ArgumentCaptor<MailRecipientDTO> recipientCaptor = ArgumentCaptor.forClass(MailRecipientDTO.class);
+        verify(mailService).sendPasswordResetMail(recipientCaptor.capture());
+        var resetKey = recipientCaptor.getValue().resetKey();
+        assertThat(resetKey).isNotNull();
+        String resetKeyHash = userRecoveryKeyService.findResetKeyHash(user.getId());
+
+        var invalidRequest = new KeyAndPasswordVM(resetKey.id(), resetKey.secret(), character.repeat(invalidLength), null);
+        request.postWithoutLocation("/api/core/public/account/reset-password/finish", invalidRequest, HttpStatus.BAD_REQUEST, null);
+        assertThat(userTestRepository.findById(user.getId()).orElseThrow().getPassword()).isEqualTo(originalPassword);
+        assertThat(userRecoveryKeyService.findResetKeyId(user.getId())).isEqualTo(resetKey.id());
+        assertThat(userRecoveryKeyService.findResetKeyHash(user.getId())).isEqualTo(resetKeyHash);
+
+        String validPassword = character.repeat(validLength);
+        var validRequest = new KeyAndPasswordVM(resetKey.id(), resetKey.secret(), validPassword, null);
+        request.postWithoutLocation("/api/core/public/account/reset-password/finish", validRequest, HttpStatus.OK, null);
+        assertThat(passwordService.checkPasswordMatch(validPassword, userTestRepository.findById(user.getId()).orElseThrow().getPassword())).isTrue();
+        assertThat(userRecoveryKeyService.findResetKeyId(user.getId())).isNull();
     }
 
     @Test
     @WithMockUser(AUTHENTICATEDUSER)
-    void passwordResetFinishInvalidKey() throws Throwable {
-        KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
-        finishResetData.setNewPassword(getValidPassword());
+    void passwordResetFinishUnknownKey() throws Throwable {
+        KeyAndPasswordVM finishResetData = new KeyAndPasswordVM("0123456789", "0123456789", getValidPassword(), null);
         request.postWithoutLocation("/api/core/public/account/reset-password/finish", finishResetData, HttpStatus.FORBIDDEN, null);
+    }
+
+    @Test
+    @WithMockUser(AUTHENTICATEDUSER)
+    void passwordResetFinishInvalidKeySecret() throws Throwable {
+        User createdUser = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        String originalPassword = createdUser.getPassword();
+
+        Optional<User> userBefore = userTestRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
+        assertThat(userBefore).isPresent();
+        String emailBefore = userBefore.get().getEmail();
+        String resetKeyHashBefore = userRecoveryKeyService.findResetKeyHash(userBefore.get().getId());
+
+        doNothing().when(mailService).sendPasswordResetMail(any());
+        request.postStringWithoutLocation("/api/core/public/account/reset-password/init", createdUser.getLogin(), HttpStatus.OK, null);
+        // check user data
+        Optional<User> userPasswordResetInit = userTestRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
+        assertThat(userPasswordResetInit).isPresent();
+        String email = userPasswordResetInit.get().getEmail();
+        String resetKeyHash = userRecoveryKeyService.findResetKeyHash(userPasswordResetInit.get().getId());
+
+        // verify key has been changed by the request
+        assertThat(email).isEqualTo(emailBefore);
+        assertThat(resetKeyHash).isNotEqualTo(resetKeyHashBefore);
+
+        // try finishing password reset with wrong secret
+        ArgumentCaptor<MailRecipientDTO> recipientCaptor = ArgumentCaptor.forClass(MailRecipientDTO.class);
+        verify(mailService).sendPasswordResetMail(recipientCaptor.capture());
+        String newPassword = getValidPassword();
+        assertThat(recipientCaptor.getValue().resetKey()).isNotNull();
+        final var badSecret = new StringBuilder(recipientCaptor.getValue().resetKey().secret());
+        badSecret.setCharAt(0, badSecret.charAt(0) == 'a' ? 'b' : 'a');
+        String resetKeyId = recipientCaptor.getValue().resetKey().id();
+        KeyAndPasswordVM finishResetData = new KeyAndPasswordVM(resetKeyId, badSecret.toString(), newPassword, null);
+
+        // finish password reset
+        request.postWithoutLocation("/api/core/public/account/reset-password/finish", finishResetData, HttpStatus.FORBIDDEN, null);
+        assertThat(userTestRepository.findById(createdUser.getId()).orElseThrow().getPassword()).isEqualTo(originalPassword);
+        assertThat(userRecoveryKeyService.findResetKeyId(createdUser.getId())).isEqualTo(resetKeyId);
+        assertThat(userRecoveryKeyService.findResetKeyHash(createdUser.getId())).isEqualTo(resetKeyHash);
+
+        // A failed attempt must leave the issued credentials usable for their owner.
+        KeyAndPasswordVM validResetData = new KeyAndPasswordVM(resetKeyId, recipientCaptor.getValue().resetKey().secret(), newPassword, null);
+        request.postWithoutLocation("/api/core/public/account/reset-password/finish", validResetData, HttpStatus.OK, null);
+        assertThat(passwordService.checkPasswordMatch(newPassword, userTestRepository.findById(createdUser.getId()).orElseThrow().getPassword())).isTrue();
+        assertThat(userRecoveryKeyService.findResetKeyId(createdUser.getId())).isNull();
+        assertThat(userRecoveryKeyService.findResetKeyHash(createdUser.getId())).isNull();
     }
 
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
     void acceptExternalLLMUsageSuccessful() throws Exception {
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
-        user.setSelectedLLMUsageTimestamp(null);
-        userTestRepository.save(user);
+        userUtilService.clearAiSelectionDecision(user);
 
         SelectedLLMUsageDTO selectedLLMUsageDTO = new SelectedLLMUsageDTO(AiSelectionDecision.CLOUD_AI);
         request.put("/api/account/users/select-llm-usage", selectedLLMUsageDTO, HttpStatus.OK);
 
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(updatedUser).isPresent();
-        assertThat(updatedUser.get().getSelectedLLMUsageTimestamp()).isNotNull();
+        assertThat(userAiPreferenceService.findDecisionDate(updatedUser.get().getId())).isNotNull();
     }
 
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
     void selectNoAIUsageSuccessful() throws Exception {
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
-        user.setSelectedLLMUsageTimestamp(null);
-        userTestRepository.save(user);
+        userUtilService.clearAiSelectionDecision(user);
 
         SelectedLLMUsageDTO selectedLLMUsageDTO = new SelectedLLMUsageDTO(AiSelectionDecision.NO_AI);
         request.put("/api/account/users/select-llm-usage", selectedLLMUsageDTO, HttpStatus.OK);
 
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(updatedUser).isPresent();
-        assertThat(updatedUser.get().getSelectedLLMUsageTimestamp()).isNotNull();
+        assertThat(userAiPreferenceService.findDecisionDate(updatedUser.get().getId())).isNotNull();
     }
 
     @Test
@@ -635,7 +813,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         // Create user in repo with existing timestamp
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         ZonedDateTime originalTimestamp = ZonedDateTime.now().truncatedTo(ChronoUnit.MILLIS);
-        user.setSelectedLLMUsageTimestamp(originalTimestamp);
+        userUtilService.setAiSelectionDecisionDate(user, originalTimestamp);
         userTestRepository.save(user);
 
         request.put("/api/account/users/select-llm-usage", null, HttpStatus.BAD_REQUEST);
@@ -644,7 +822,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         Optional<User> unchangedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(unchangedUser).isPresent();
 
-        ZonedDateTime actualTimestamp = unchangedUser.get().getSelectedLLMUsageTimestamp();
+        ZonedDateTime actualTimestamp = userAiPreferenceService.findDecisionDate(unchangedUser.get().getId());
         assertThat(actualTimestamp).isNotNull();
         assertThat(actualTimestamp.truncatedTo(ChronoUnit.MILLIS)).isEqualTo(originalTimestamp);
     }
@@ -687,5 +865,147 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
             // The endpoint must still return 200 so the language preference can be saved
             request.put("/api/account/basic-information", new UserDTO(user), HttpStatus.OK);
         });
+    }
+
+    /**
+     * Requests the login options for the given identifier. The endpoint is public, so no authentication is set up.
+     *
+     * @param usernameOrEmail the login or email address to ask for
+     * @return the login options returned by the server
+     */
+    private LoginOptionsDTO getLoginOptions(String usernameOrEmail) throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("usernameOrEmail", usernameOrEmail);
+        return request.get("/api/core/public/login-options", HttpStatus.OK, LoginOptionsDTO.class, params);
+    }
+
+    /**
+     * Runs the given test with an external identity provider enabled and a known display name, restoring both afterwards.
+     *
+     * @param enabledFlagName the name of the provider flag on the service, either oidcEnabled or samlEnabled
+     * @param displayNameName the name of the display name attribute belonging to that provider
+     * @param test            the test to execute
+     */
+    private void testWithExternalIdpEnabled(String enabledFlagName, String displayNameName, Executable test) throws Throwable {
+        ConfigUtil.testWithChangedConfig(loginOptionsService, enabledFlagName, true,
+                () -> ConfigUtil.testWithChangedConfig(loginOptionsService, displayNameName, EXTERNAL_IDP_NAME, test));
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getLoginOptionsForInternalUserByLoginReturnsPassword() throws Exception {
+        User internalUser = userUtilService.createAndSaveUser(TEST_PREFIX + "internal");
+
+        LoginOptionsDTO loginOptions = getLoginOptions(internalUser.getLogin());
+
+        assertThat(loginOptions.loginMethod()).isEqualTo(LoginMethod.PASSWORD);
+        assertThat(loginOptions.idpName()).isNull();
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getLoginOptionsForInternalUserByEmailReturnsPassword() throws Exception {
+        User internalUser = userUtilService.createAndSaveUser(TEST_PREFIX + "internalbymail");
+
+        // the client sends whatever the user typed, so the upper case variant has to resolve to the same account
+        LoginOptionsDTO loginOptions = getLoginOptions(internalUser.getEmail().toUpperCase(Locale.ROOT));
+
+        assertThat(loginOptions.loginMethod()).isEqualTo(LoginMethod.PASSWORD);
+        assertThat(loginOptions.idpName()).isNull();
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getLoginOptionsForExternalUserWithOidcEnabledReturnsOidc() throws Throwable {
+        User externalUser = UserFactory.generateActivatedUser(TEST_PREFIX + "externaloidc");
+        externalUser.setInternal(false);
+        userTestRepository.save(externalUser);
+
+        testWithExternalIdpEnabled("oidcEnabled", "oidcDisplayName", () -> {
+            LoginOptionsDTO loginOptions = getLoginOptions(externalUser.getLogin());
+
+            assertThat(loginOptions.loginMethod()).isEqualTo(LoginMethod.OIDC);
+            assertThat(loginOptions.idpName()).isEqualTo(EXTERNAL_IDP_NAME);
+        });
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getLoginOptionsForExternalUserWithSaml2EnabledReturnsSaml2() throws Throwable {
+        User externalUser = UserFactory.generateActivatedUser(TEST_PREFIX + "externalsaml");
+        externalUser.setInternal(false);
+        userTestRepository.save(externalUser);
+
+        testWithExternalIdpEnabled("samlEnabled", "samlDisplayName", () -> {
+            LoginOptionsDTO loginOptions = getLoginOptions(externalUser.getEmail());
+
+            assertThat(loginOptions.loginMethod()).isEqualTo(LoginMethod.SAML2);
+            assertThat(loginOptions.idpName()).isEqualTo(EXTERNAL_IDP_NAME);
+        });
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getLoginOptionsForExternalUserWithoutExternalIdpReturnsPassword() throws Exception {
+        User externalUser = UserFactory.generateActivatedUser(TEST_PREFIX + "externalnoidp");
+        externalUser.setInternal(false);
+        userTestRepository.save(externalUser);
+
+        LoginOptionsDTO loginOptions = getLoginOptions(externalUser.getLogin());
+
+        assertThat(loginOptions.loginMethod()).isEqualTo(LoginMethod.PASSWORD);
+        assertThat(loginOptions.idpName()).isNull();
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getLoginOptionsForUnknownUserReturnsOidcForJustInTimeProvisioning() throws Throwable {
+        testWithExternalIdpEnabled("oidcEnabled", "oidcDisplayName", () -> {
+            LoginOptionsDTO loginOptions = getLoginOptions(TEST_PREFIX + "doesnotexist");
+
+            assertThat(loginOptions.loginMethod()).isEqualTo(LoginMethod.OIDC);
+            assertThat(loginOptions.idpName()).isEqualTo(EXTERNAL_IDP_NAME);
+        });
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getLoginOptionsForSoftDeletedUserTreatsThemAsUnknown() throws Throwable {
+        User deletedUser = UserFactory.generateActivatedUser(TEST_PREFIX + "softdeleted");
+        deletedUser.setDeleted(true);
+        userTestRepository.save(deletedUser);
+
+        // with an external provider enabled, a known internal account would answer PASSWORD, so OIDC proves the account was not found
+        testWithExternalIdpEnabled("oidcEnabled", "oidcDisplayName", () -> {
+            assertThat(getLoginOptions(deletedUser.getLogin()).loginMethod()).isEqualTo(LoginMethod.OIDC);
+            assertThat(getLoginOptions(deletedUser.getEmail()).loginMethod()).isEqualTo(LoginMethod.OIDC);
+        });
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getLoginOptionsForBlankIdentifierReturnsPassword() throws Exception {
+        LoginOptionsDTO loginOptions = getLoginOptions("   ");
+
+        assertThat(loginOptions.loginMethod()).isEqualTo(LoginMethod.PASSWORD);
+        assertThat(loginOptions.idpName()).isNull();
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getLoginOptionsForOverlyLongIdentifierReturnsBadRequest() throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("usernameOrEmail", "a".repeat(256));
+
+        request.get("/api/core/public/login-options", HttpStatus.BAD_REQUEST, LoginOptionsDTO.class, params);
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getLoginOptionsForIdentifierAtTheLengthLimitIsAccepted() throws Exception {
+        // the limit itself has to stay valid, so only what exceeds it is rejected
+        LoginOptionsDTO loginOptions = getLoginOptions("a".repeat(255));
+
+        assertThat(loginOptions.loginMethod()).isEqualTo(LoginMethod.PASSWORD);
     }
 }

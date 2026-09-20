@@ -1,0 +1,76 @@
+:host {
+    display: inline-block;
+    position: relative;
+    box-sizing: border-box;
+    width: calc(var(--tumaet-ui-spacing) * 10);
+    height: calc(var(--tumaet-ui-spacing) * 6);
+    flex-shrink: 0;
+    border: 1px solid transparent;
+    border-radius: 30px;
+    cursor: pointer;
+    vertical-align: middle;
+    outline-color: transparent;
+    transition:
+        background-color 0.2s,
+        border-color 0.2s,
+        box-shadow 0.2s,
+        outline-color 0.2s;
+}
+
+:host([data-disabled='true']) {
+    cursor: default;
+}
+
+:host(:has(.tum-ui-toggle-switch-input:focus-visible)) {
+    outline: 2px solid var(--tumaet-ui-focus-color);
+    outline-offset: 2px;
+}
+
+.tum-ui-toggle-switch-input {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.tum-ui-toggle-switch-input:disabled {
+    cursor: default;
+}
+
+.tum-ui-toggle-switch-handle {
+    position: absolute;
+    top: 50%;
+    width: calc(var(--tumaet-ui-spacing) * 4);
+    height: calc(var(--tumaet-ui-spacing) * 4);
+    margin-block-start: calc(var(--tumaet-ui-spacing) * -2);
+    inset-inline-start: var(--tumaet-ui-spacing);
+    border-radius: 50%;
+    transition:
+        background-color 0.2s,
+        inset-inline-start 0.2s;
+}
+
+:host([data-checked='true']) .tum-ui-toggle-switch-handle {
+    inset-inline-start: calc(var(--tumaet-ui-spacing) * 5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tum-ui-toggle-switch-handle {
+        transition-property: background-color;
+    }
+}
+
+@media (forced-colors: active) {
+    .tum-ui-toggle-switch-input {
+        appearance: auto;
+        opacity: 1;
+    }
+
+    .tum-ui-toggle-switch-handle {
+        display: none;
+    }
+}

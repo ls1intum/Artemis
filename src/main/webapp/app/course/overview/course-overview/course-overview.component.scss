@@ -1,1 +1,7 @@
 @import '../../shared/course-base-container/course-base-container.component';
+
+.layout-container:not(.exam-wrapper) {
+    --shell-top-spacing: var(--spacing-divider);
+
+    padding-top: var(--spacing-divider);
+}

@@ -77,6 +77,33 @@ describe('read-users-from-csv', () => {
                 ],
             });
         });
+
+        it('should parse the optional isTestUser column when present (empty cell counts as false)', async () => {
+            const csv = ['login,istestuser', 'ada,true', 'bob,false', 'cleo,'].join('\n');
+            const result = await readStudentDTOsFromCSVFile(createCsvFile(csv));
+            expect(result.ok).toBe(true);
+            if (result.ok) {
+                expect(result.students.map((student) => student.isTestUser)).toEqual([true, false, false]);
+            }
+        });
+
+        it('should recognize alternative truthy values and header aliases for isTestUser', async () => {
+            const csv = ['login,testuser', 'a,1', 'b,YES', 'c,x', 'd,no'].join('\n');
+            const result = await readStudentDTOsFromCSVFile(createCsvFile(csv));
+            expect(result.ok).toBe(true);
+            if (result.ok) {
+                expect(result.students.map((student) => student.isTestUser)).toEqual([true, true, true, false]);
+            }
+        });
+
+        it('should leave isTestUser undefined when the column is absent', async () => {
+            const csv = ['login', 'ada'].join('\n');
+            const result = await readStudentDTOsFromCSVFile(createCsvFile(csv));
+            expect(result.ok).toBe(true);
+            if (result.ok) {
+                expect(result.students[0].isTestUser).toBeUndefined();
+            }
+        });
     });
 
     describe('readExamUserDTOsFromCSVFile', () => {

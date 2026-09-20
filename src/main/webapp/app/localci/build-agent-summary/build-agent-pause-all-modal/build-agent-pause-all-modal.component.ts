@@ -3,9 +3,7 @@ import { faPause, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-
+import { TumUiButtonComponent, TumUiDialogComponent } from '@tumaet/ui-angular';
 /**
  * Modal component for confirming the action to pause all build agents.
  * Provides a simple confirmation dialog with cancel and confirm buttons.

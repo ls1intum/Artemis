@@ -1,12 +1,15 @@
 package de.tum.cit.aet.artemis.globalsearch.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 import org.testcontainers.DockerClientFactory;
@@ -74,6 +77,26 @@ public final class WeaviateTestUtil {
             return null;
         }
         return response.objects().getFirst().properties();
+    }
+
+    /**
+     * Waits until the exercise is present in Weaviate, without asserting on any of its properties.
+     * <p>
+     * Indexing runs asynchronously, so a test that indexes an exercise and then deletes its course needs this barrier:
+     * without it the upsert can land after the deletion has already swept the collection, leaving behind a row that
+     * the deletion can no longer remove and that the test then reports as a cleanup failure.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param exerciseId      the ID of the exercise that should be indexed
+     */
+    public static void awaitExerciseInWeaviate(WeaviateService weaviateService, long exerciseId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryExerciseProperties(weaviateService, exerciseId);
+            assertThat(properties).as("Exercise %d should be indexed in Weaviate before its course is deleted", exerciseId).isNotNull();
+        });
     }
 
     /**
@@ -221,34 +244,25 @@ public final class WeaviateTestUtil {
 
     /**
      * Asserts that a Weaviate date property matches the expected ZonedDateTime value.
-     * Compares by converting both dates to UTC before comparison.
+     * Both values are reduced to an instant, so the stored offset does not matter.
      */
     private static void assertDateProperty(Map<String, Object> properties, String propertyName, ZonedDateTime expected) {
         if (expected == null) {
             return;
         }
-        // Convert expected to UTC for comparison
-        String expectedUTC = expected.withZoneSameInstant(java.time.ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-
-        // Handle both OffsetDateTime (newer Weaviate client) and String (older versions)
+        // Weaviate may return DATE properties as OffsetDateTime, ZonedDateTime, or String depending on the client version.
         Object actualValue = properties.get(propertyName);
-        String actualUTC;
+        Instant actual = switch (actualValue) {
+            case OffsetDateTime offsetDateTime -> offsetDateTime.toInstant();
+            case ZonedDateTime zonedDateTime -> zonedDateTime.toInstant();
+            case String actualString -> OffsetDateTime.parse(actualString, DateTimeFormatter.ISO_OFFSET_DATE_TIME).toInstant();
+            case null -> throw new AssertionError("Property " + propertyName + " is missing");
+            default -> throw new AssertionError("Property " + propertyName + " has unexpected type: " + actualValue.getClass());
+        };
 
-        if (actualValue instanceof OffsetDateTime offsetDateTime) {
-            // Convert OffsetDateTime to UTC
-            actualUTC = offsetDateTime.atZoneSameInstant(java.time.ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-        }
-        else if (actualValue instanceof String actualStr) {
-            // Parse string date and convert to UTC
-            ZonedDateTime actualDateTime = ZonedDateTime.parse(actualStr, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-            actualUTC = actualDateTime.withZoneSameInstant(java.time.ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-        }
-        else {
-            throw new AssertionError("Property " + propertyName + " has unexpected type: " + (actualValue != null ? actualValue.getClass() : "null"));
-        }
-
-        // Compare first 19 chars (YYYY-MM-DDTHH:MM:SS) to avoid millisecond precision differences
-        assertThat(actualUTC).as("Property %s should match expected date", propertyName).startsWith(expectedUTC.substring(0, 19));
+        // The value read back from Weaviate can differ from the in-memory value by sub-second rounding, e.g. 12:00:09.992 comes back as 12:00:10.
+        // Allow one second of tolerance. Comparing second-truncated string prefixes instead would fail whenever the rounding crosses a second boundary.
+        assertThat(actual).as("Property %s should match expected date", propertyName).isCloseTo(expected.toInstant(), within(1, ChronoUnit.SECONDS));
     }
 
     // -- Lecture utilities --
@@ -268,6 +282,7 @@ public final class WeaviateTestUtil {
         var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
         var response = collection.query
                 .fetchObjects(query -> query.filters(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.LECTURE),
+                        Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.LECTURE_UNIT).not(),
                         Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(lectureId))).limit(1));
         if (response.objects().isEmpty()) {
             return null;
@@ -641,8 +656,12 @@ public final class WeaviateTestUtil {
             return null;
         }
         var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+        // `type` uses Weaviate's default WORD tokenization, so "answer_post" carries the token "post" and a bare
+        // type == "post" filter also matches answer posts. Without the NotEqual guard this helper reports an unrelated
+        // answer post that happens to share the numeric id, which is a false failure that depends on id allocation.
         var response = collection.query
                 .fetchObjects(query -> query.filters(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.POST),
+                        Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST).not(),
                         Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(postId))).limit(1));
         if (response.objects().isEmpty()) {
             return null;

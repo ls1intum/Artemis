@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "artemis.configName" . }}
+  labels:
+    {{- include "artemis.labels" . | nindent 4 }}
+data:
+  # ---- Public URLs (must resolve for browsers and build-agent pods) ----
+  SERVER_URL: {{ include "artemis.serverUrl" . | quote }}
+  ARTEMIS_VERSIONCONTROL_URL: {{ include "artemis.serverUrl" . | quote }}
+  ARTEMIS_VERSIONCONTROL_SSHTEMPLATECLONEURL: "ssh://git@{{ .Values.gateway.hostname | default (include "artemis.httpName" .) }}:{{ .Values.gateway.ssh.port }}/"
+  ARTEMIS_VERSIONCONTROL_SSHHOSTKEYPATH: "/opt/artemis/config/ssh-hostkey"
+
+  INFO_OPERATORNAME: {{ .Values.artemis.config.operator.name | quote }}
+  INFO_OPERATORADMINNAME: {{ .Values.artemis.config.operator.adminName | quote }}
+
+  # ---- Datasource (PostgreSQL) ----
+  SPRING_DATASOURCE_URL: {{ include "artemis.jdbcUrl" . | quote }}
+  SPRING_DATASOURCE_USERNAME: {{ .Values.postgresql.auth.username | quote }}
+
+  # ---- Storage. Build logs must be shared because any core can serve them. ----
+  ARTEMIS_COURSEARCHIVESPATH: "/opt/artemis/data/course-archives"
+  ARTEMIS_REPOCLONEPATH: "/opt/artemis/data/repos"
+  ARTEMIS_REPODOWNLOADCLONEPATH: "/opt/artemis/local/repos-download"
+  ARTEMIS_FILEUPLOADPATH: "/opt/artemis/data/uploads"
+  ARTEMIS_SUBMISSIONEXPORTPATH: "/opt/artemis/data/exports"
+  ARTEMIS_LEGALPATH: "/opt/artemis/data/legal"
+  ARTEMIS_VERSIONCONTROL_LOCALVCSREPOPATH: "/opt/artemis/data/local-vcs-repos"
+  ARTEMIS_TEMPPATH: "/opt/artemis/local/tmp"
+  ARTEMIS_BUILDLOGSPATH: "/opt/artemis/data/build-logs"
+
+  # ---- Service discovery (Eureka) + Hazelcast ----
+  # EUREKA_CLIENT_SERVICEURL_DEFAULTZONE lives in the Secret because the URL embeds the registry password.
+  EUREKA_CLIENT_ENABLED: "true"
+  EUREKA_INSTANCE_PREFERIPADDRESS: "true"
+  EUREKA_INSTANCE_APPNAME: "Artemis"
+  # Evict dead pod IPs quickly so Hazelcast stops dialing gone pods on churn.
+  EUREKA_INSTANCE_LEASERENEWALINTERVALINSECONDS: "5"
+  EUREKA_INSTANCE_LEASEEXPIRATIONDURATIONINSECONDS: "10"
+
+  # ---- WebSocket STOMP relay (ActiveMQ) ----
+  SPRING_WEBSOCKET_BROKER_ADDRESSES: {{ include "artemis.brokerAddresses" . | quote }}
+
+  # ---- LocalCI distributed queue and result processing ----
+  ARTEMIS_CONTINUOUSINTEGRATION_DATASTORE: {{ .Values.artemis.config.localci.dataStore | quote }}
+  ARTEMIS_CONTINUOUSINTEGRATION_CONCURRENTRESULTPROCESSINGSIZE: {{ .Values.artemis.config.localci.concurrentResultProcessingSize | quote }}
+
+  # ---- User management ----
+  ARTEMIS_USERMANAGEMENT_USEEXTERNAL: "false"
+  JHIPSTER_SECURITY_AUTHENTICATION_JWT_COOKIESECURE: {{ .Values.artemis.config.secureCookies | quote }}

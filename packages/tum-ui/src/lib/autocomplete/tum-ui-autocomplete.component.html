@@ -1,0 +1,64 @@
+<div #container [class]="containerClasses()" (click)="focusInput()">
+    @if (multiple()) {
+        @for (value of selectedValues(); track $index; let i = $index) {
+            <tum-ui-chip
+                size="small"
+                [label]="valueLabel(value)"
+                [removable]="!isDisabled()"
+                [removeAriaLabel]="removeAriaLabel() ?? ('tumUi.autocomplete.remove' | tumUiTranslate)"
+                (removed)="removeAt(i, $event)"
+            />
+        }
+    }
+    <input
+        #textInput
+        type="text"
+        role="combobox"
+        [id]="inputId()"
+        [attr.name]="name()"
+        class="tum-ui-autocomplete-input tum:min-w-16 tum:flex-1 tum:border-0 tum:bg-transparent tum:p-0 tum:text-base tum:text-inherit tum:outline-none tum:placeholder:text-muted"
+        [value]="inputText()"
+        [attr.placeholder]="inputPlaceholder()"
+        [disabled]="isDisabled()"
+        autocomplete="off"
+        aria-autocomplete="list"
+        [attr.aria-expanded]="panelVisible() ? 'true' : 'false'"
+        [attr.aria-controls]="panelVisible() ? listboxId : null"
+        [attr.aria-activedescendant]="activeOptionId()"
+        [attr.aria-label]="ariaLabel()"
+        (input)="onInput($event)"
+        (focus)="onFocus($event)"
+        (blur)="onBlur()"
+        (keydown)="onInputKeydown($event)"
+    />
+</div>
+
+<ng-template #panel>
+    <div class="tum-ui-autocomplete-panel tum:box-border tum:w-full tum:rounded-md tum:border tum:border-border tum:bg-overlay-background tum:text-text tum:shadow-md">
+        <ul
+            [id]="listboxId"
+            role="listbox"
+            [attr.aria-label]="ariaLabel()"
+            [attr.aria-multiselectable]="multiple() ? 'true' : null"
+            class="tum:m-0 tum:flex tum:max-h-60 tum:list-none tum:flex-col tum:gap-0.5 tum:overflow-y-auto tum:p-1"
+        >
+            @for (option of suggestions(); track $index; let i = $index) {
+                <li
+                    [id]="optionId(i)"
+                    role="option"
+                    [attr.aria-selected]="isAlreadySelected(option) ? 'true' : 'false'"
+                    [class]="optionClasses(option, i)"
+                    (mousedown)="$event.preventDefault()"
+                    (click)="selectOption(option, $event)"
+                    (mouseenter)="setActive(i)"
+                >
+                    <span class="tum:flex-1 tum:truncate">{{ valueLabel(option) }}</span>
+                </li>
+            } @empty {
+                <li role="option" aria-selected="false" aria-disabled="true" class="tum:px-3 tum:py-2 tum:text-muted">
+                    {{ emptyMessage() ?? ('tumUi.autocomplete.empty' | tumUiTranslate) }}
+                </li>
+            }
+        </ul>
+    </div>
+</ng-template>

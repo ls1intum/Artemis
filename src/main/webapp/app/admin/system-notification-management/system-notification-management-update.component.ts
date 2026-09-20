@@ -10,12 +10,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
-import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
-import { TumUiSelectComponent } from 'app/shared-ui/tum-ui/select/tum-ui-select.component';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
-import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
-
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { TumUiButtonDirective, TumUiCheckboxComponent, TumUiInputDirective, TumUiMessageComponent, TumUiSelectComponent } from '@tumaet/ui-angular';
 /**
  * Form structure for system notification editing.
  * Note: FormControl values can be null when initialized with undefined.
@@ -136,7 +132,7 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
             // Valid: clear the custom error from both controls
             [notificationDateControl, expireDateControl].forEach((control) => {
                 if (control?.errors?.['expireMustBeAfterNotification']) {
-                    const errors = { ...control.errors };
+                    const errors = deepClone(control.errors);
                     delete errors['expireMustBeAfterNotification'];
                     const isEmpty = Object.keys(errors).length === 0;
                     control.setErrors(isEmpty ? null : errors);
@@ -145,7 +141,7 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
         } else {
             // Invalid: set custom error on both controls
             [notificationDateControl, expireDateControl].forEach((control) => {
-                const errors = { ...(control?.errors ?? {}), expireMustBeAfterNotification: true };
+                const errors = cloneWith(control?.errors ?? {}, { expireMustBeAfterNotification: true });
                 control?.setErrors(errors);
             });
         }
@@ -173,15 +169,14 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
     save(): void {
         this.isSaving.set(true);
         const formValues = this.form.getRawValue();
-        const toSave: SystemNotification = {
-            ...this.notification,
+        const toSave: SystemNotification = cloneWith(this.notification, {
             id: formValues.id ?? undefined,
             title: formValues.title ?? undefined,
             text: formValues.text ?? undefined,
             type: formValues.type ?? undefined,
             notificationDate: formValues.notificationDate ?? undefined,
             expireDate: formValues.expireDate ?? undefined,
-        };
+        });
 
         const saveOperation = this.notification.id ? this.systemNotificationService.update(toSave) : this.systemNotificationService.create(toSave, this.sendMaintenanceEmail());
 

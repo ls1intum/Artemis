@@ -2,24 +2,17 @@ package de.tum.cit.aet.artemis.shared.base;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
 import jakarta.mail.internet.MimeMessage;
 
-import org.eclipse.jgit.storage.file.FileBasedConfig;
-import org.eclipse.jgit.util.FS;
-import org.eclipse.jgit.util.SystemReader;
-import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
@@ -58,6 +51,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.lti.service.Lti13Service;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
@@ -67,7 +61,6 @@ import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 import de.tum.cit.aet.artemis.notification.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.notification.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.cit.aet.artemis.notification.service.notifications.push_notifications.FirebasePushNotificationService;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
@@ -104,6 +97,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @Autowired
     protected GitService gitService;
+
+    @Autowired
+    protected BareGitRepositoryService bareGitRepositoryService;
 
     @MockitoSpyBean
     protected FileService fileService;
@@ -209,14 +205,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     private static volatile boolean fileUploadPathInitialized = false;
 
-    @BeforeAll
-    static void setup() {
-        // Configure JGit to skip reading system-level git config files.
-        // This prevents "File is too large" errors when system gitconfig files (e.g., /opt/homebrew/etc/gitconfig)
-        // exceed JGit's default 5MB file size limit.
-        configureJGitSystemReader();
-    }
-
     @BeforeEach
     void initFileUploadPath() {
         // Set the file upload path from configuration (only once across all tests)
@@ -224,95 +212,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
             FilePathConverter.setFileUploadPath(fileUploadPath);
             fileUploadPathInitialized = true;
         }
-    }
-
-    /**
-     * Configures JGit to use a custom SystemReader that skips system-level git config files.
-     * This is necessary because system gitconfig files can exceed JGit's default file size limit,
-     * causing test failures on some machines.
-     */
-    private static void configureJGitSystemReader() {
-        final var defaultReader = getSystemReader();
-
-        SystemReader.setInstance(new SystemReader() {
-
-            @Override
-            public String getHostname() {
-                return defaultReader.getHostname();
-            }
-
-            @Override
-            public String getenv(String variable) {
-                return defaultReader.getenv(variable);
-            }
-
-            @Override
-            public String getProperty(String key) {
-                return defaultReader.getProperty(key);
-            }
-
-            @Override
-            public FileBasedConfig openUserConfig(org.eclipse.jgit.lib.Config parent, FS fs) {
-                return defaultReader.openUserConfig(parent, fs);
-            }
-
-            @Override
-            public FileBasedConfig openSystemConfig(org.eclipse.jgit.lib.Config parent, FS fs) {
-                // Return an empty config instead of reading the potentially large system gitconfig
-                return new FileBasedConfig(parent, null, fs) {
-
-                    @Override
-                    public void load() {
-                        // Don't load anything - skip system config
-                    }
-
-                    @Override
-                    public boolean isOutdated() {
-                        return false;
-                    }
-                };
-            }
-
-            @Override
-            public FileBasedConfig openJGitConfig(org.eclipse.jgit.lib.Config parent, FS fs) {
-                return defaultReader.openJGitConfig(parent, fs);
-            }
-
-            @Override
-            public Instant now() {
-                return defaultReader.now();
-            }
-
-            @Override
-            public ZoneOffset getTimeZoneAt(Instant when) {
-                return defaultReader.getTimeZoneAt(when);
-            }
-
-            @SuppressWarnings("deprecation")
-            @Override
-            public long getCurrentTime() {
-                return defaultReader.getCurrentTime();
-            }
-
-            @SuppressWarnings("deprecation")
-            @Override
-            public int getTimezone(long when) {
-                return defaultReader.getTimezone(when);
-            }
-        });
-    }
-
-    private static @NonNull SystemReader getSystemReader() {
-        SystemReader defaultReader = SystemReader.getInstance();
-
-        // Force initialization of static platform detection fields before calling setInstance().
-        // This prevents a race condition where setInstance() -> init() -> setPlatformChecker()
-        // accesses static fields (isMacOS, isWindows) that haven't been initialized yet
-        // during parallel test execution, causing NullPointerException.
-        defaultReader.isMacOS();
-        defaultReader.isWindows();
-        defaultReader.isLinux();
-        return defaultReader;
     }
 
     @BeforeEach
@@ -343,29 +242,8 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected void resetSpyBeans() {
         Mockito.reset(groupNotificationService, singleUserNotificationService, websocketMessagingService, examAccessService, mailService, instanceMessageSendService,
                 programmingExerciseScheduleService, programmingExerciseParticipationService, uriService, scheduleService, participantScoreScheduleService, javaMailSender,
-                programmingTriggerService, zipFileService);
-    }
-
-    @Override
-    public void mockGetRepositorySlugFromRepositoryUri(String repositorySlug, VcsRepositoryUri repositoryUri) {
-        // mock both versions to be independent
-        doReturn(repositorySlug).when(uriService).getRepositorySlugFromRepositoryUri(repositoryUri);
-        doReturn(repositorySlug).when(uriService).getRepositorySlugFromRepositoryUriString(repositoryUri.toString());
-    }
-
-    @Override
-    public void mockGetProjectKeyFromRepositoryUri(String projectKey, VcsRepositoryUri repositoryUri) {
-        doReturn(projectKey).when(uriService).getProjectKeyFromRepositoryUri(repositoryUri);
-    }
-
-    @Override
-    public void mockGetRepositoryPathFromRepositoryUri(String projectPath, VcsRepositoryUri repositoryUri) {
-        doReturn(projectPath).when(uriService).getRepositoryPathFromRepositoryUri(repositoryUri);
-    }
-
-    @Override
-    public void mockGetProjectKeyFromAnyUrl(String projectKey) {
-        doReturn(projectKey).when(uriService).getProjectKeyFromRepositoryUri(any());
+                programmingTriggerService, zipFileService, lti13Service, fileService, mailSendingService, firebasePushNotificationService, applePushNotificationService,
+                modelingSubmissionService, textSubmissionService, programmingExerciseGradingService, exerciseDateService, textBlockService);
     }
 
     /**

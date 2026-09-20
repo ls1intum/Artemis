@@ -26,8 +26,10 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizAction;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
@@ -50,6 +52,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("authoring/exercise-management")
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizExerciseResource {
@@ -81,9 +84,12 @@ public class QuizExerciseResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
+    private final ExerciseVariantGroupService exerciseVariantGroupService;
+
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
             UserRepository userRepository, InstanceMessageSendService instanceMessageSendService, AuthorizationCheckService authCheckService, QuizBatchService quizBatchService,
-            QuizBatchRepository quizBatchRepository, QuizSubmissionService quizSubmissionService, ExerciseVersionService exerciseVersionService) {
+            QuizBatchRepository quizBatchRepository, QuizSubmissionService quizSubmissionService, ExerciseVersionService exerciseVersionService,
+            ExerciseVariantGroupService exerciseVariantGroupService) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -94,6 +100,7 @@ public class QuizExerciseResource {
         this.quizBatchRepository = quizBatchRepository;
         this.quizSubmissionService = quizSubmissionService;
         this.exerciseVersionService = exerciseVersionService;
+        this.exerciseVariantGroupService = exerciseVariantGroupService;
     }
 
     /**
@@ -129,11 +136,18 @@ public class QuizExerciseResource {
     @EnforceAtLeastEditorInExercise(resourceIdFieldName = "quizExerciseId")
     public ResponseEntity<QuizExerciseDatesDTO> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable QuizAction action) {
         log.debug("REST request to perform action {} on quiz exercise {}", action, quizExerciseId);
-        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExerciseId);
+        var user = userRepository.getUserWithAuthorities();
 
         if (quizExercise.isExamExercise()) {
             throw new BadRequestAlertException("These actions are not allowed for exam exercises", ENTITY_NAME, "notAllowedInExam");
+        }
+
+        // These actions only move the quiz's dates, which a variant group owns. SET_VISIBLE/END_NOW would desync a member
+        // from its group; START_NOW/START_BATCH are already rejected below, so guarding all of them just gives a clearer message.
+        if (exerciseVariantGroupService.findOwningGroup(quizExerciseId).isPresent()) {
+            throw new BadRequestAlertException("The timeline of an exercise in a variant group is managed by its group and must be changed there", ENTITY_NAME,
+                    "timelineManagedByVariantGroup");
         }
 
         // Each case persists its state change via targeted @Modifying UPDATEs on the scalar columns it actually changes.
@@ -227,7 +241,7 @@ public class QuizExerciseResource {
         // Reload to refresh proxy state before building the response DTO and broadcasting. Cheap (one SELECT with
         // the existing entity graph) and — critically — no write path was invoked above that could cascade into the
         // question graph, so child primary keys are guaranteed stable at this point.
-        quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+        quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExercise.getId());
 
         if (action == QuizAction.START_NOW) {
             // notify the instance message send service to send the quiz exercise start schedule (if necessary

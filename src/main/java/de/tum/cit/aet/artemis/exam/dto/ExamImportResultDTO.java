@@ -4,8 +4,6 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.exam.domain.Exam;
-
 /**
  * Result of importing an exam together with its exercises.
  * <p>
@@ -19,10 +17,10 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
  * should be reviewed and removed by the instructor.</li>
  * </ul>
  *
- * @param exam                the imported exam, containing the exercise groups and exercises that were imported successfully
+ * @param exam                the imported exam as a slim id/title reference; the client only navigates to it by id
  * @param skippedExercises    titles of exercises that were cleanly skipped (nothing persisted)
  * @param incompleteExercises titles of exercises that failed partway and may be incomplete (need review)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExamImportResultDTO(Exam exam, List<String> skippedExercises, List<String> incompleteExercises) {
+public record ExamImportResultDTO(ExamIdAndTitleDTO exam, List<String> skippedExercises, List<String> incompleteExercises) {
 }

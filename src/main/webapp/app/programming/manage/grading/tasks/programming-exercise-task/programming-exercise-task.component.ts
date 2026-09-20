@@ -8,12 +8,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { TestCasePassedBuildsChartComponent } from 'app/programming/manage/grading/charts/test-case-passed-builds-chart.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { Tooltip } from 'primeng/tooltip';
 
 @Component({
     selector: 'jhi-programming-exercise-task',
     templateUrl: './programming-exercise-task.component.html',
     styleUrls: ['../programming-exercise-grading-tasks-table/programming-exercise-grading-tasks-table.scss'],
-    imports: [FaIconComponent, FormsModule, TestCasePassedBuildsChartComponent, ArtemisTranslatePipe],
+    imports: [FaIconComponent, FormsModule, TestCasePassedBuildsChartComponent, ArtemisTranslatePipe, Tooltip],
 })
 export class ProgrammingExerciseTaskComponent implements OnInit {
     private programmingExerciseTaskService = inject(ProgrammingExerciseTaskService);

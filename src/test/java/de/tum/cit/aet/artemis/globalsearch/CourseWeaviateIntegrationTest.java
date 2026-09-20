@@ -54,7 +54,7 @@ class CourseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalC
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         // Pyris is not running in integration tests — stub the FAQ deletion to prevent PyrisConnectorException
         doNothing().when(pyrisFaqApi).deleteFaq(any());
     }

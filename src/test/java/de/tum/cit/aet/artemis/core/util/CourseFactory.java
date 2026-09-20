@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.util;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -17,62 +18,73 @@ import de.tum.cit.aet.artemis.programming.util.ShortNameGenerator;
 public class CourseFactory {
 
     /**
-     * Generates a course with the passed values.
-     *
-     * @param id                         The id of the course.
-     * @param startDate                  The start date of the course.
-     * @param endDate                    The end date of the course.
-     * @param exercises                  The course exercises.
-     * @param studentGroupName           The student group name of the course.
-     * @param teachingAssistantGroupName The teaching assistant group name of the course.
-     * @param editorGroupName            The editor group name of the course.
-     * @param instructorGroupName        The instructor group name of the course.
-     * @return The generated course.
+     * Semester used by every generated course. The three fields are mandatory, so the factory always sets them,
+     * which keeps the many call sites that pass null dates working.
      */
-    public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
-            String teachingAssistantGroupName, String editorGroupName, String instructorGroupName) {
-        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, editorGroupName, instructorGroupName, 3, 3, 7, 2000, 2000, true,
-                false, 7);
+    public static final String DEFAULT_SEMESTER = "SS24";
+
+    /**
+     * Generates a course that carries nothing but the three values the database insists on. Use it where a test needs
+     * a persisted course it does not otherwise care about; {@link #generateCourse} is the richer alternative that also
+     * fills a title, a short name and the complaint settings.
+     *
+     * @return A course with a start date, an end date and a semester, and no other value set.
+     */
+    public static Course generateMinimalCourse() {
+        Course course = new Course();
+        // TimeUtil.now() rather than ZonedDateTime.now(): a test that fixed the clock would otherwise get course
+        // dates from the wall clock, which no longer agree with its own notion of now. Both bounds come from the
+        // same reading so they cannot drift apart.
+        ZonedDateTime now = TimeUtil.now();
+        course.setStartDate(now.minusMonths(3));
+        course.setEndDate(now.plusMonths(3));
+        course.setSemester(DEFAULT_SEMESTER);
+        return course;
     }
 
     /**
-     * Generates a course with the passed values.
+     * Generates a course with the passed id, start and end date, and exercises.
+     * Group name columns are populated with course-derived defaults (columns remain for
+     * legacy compatibility; will be dropped in a later migration phase).
+     * Messaging is disabled; communication-only mode is active.
      *
-     * @param id                         The id of the course.
-     * @param startDate                  The start date of the course.
-     * @param endDate                    The end date of the course.
-     * @param exercises                  The course exercises.
-     * @param studentGroupName           The student group name of the course.
-     * @param teachingAssistantGroupName The teaching assistant group name of the course.
-     * @param editorGroupName            The editor group name of the course.
-     * @param instructorGroupName        The instructor group name of the course.
-     * @param messagingEnabled           Whether messaging in the course should be enabled (true) or not (false).
+     * @param id        The id of the course.
+     * @param startDate The start date of the course.
+     * @param endDate   The end date of the course.
+     * @param exercises The course exercises.
      * @return The generated course.
      */
-    public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
-            String teachingAssistantGroupName, String editorGroupName, String instructorGroupName, boolean messagingEnabled) {
-        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, editorGroupName, instructorGroupName, 3, 3, 7, 2000, 2000, true,
-                messagingEnabled, 7);
+    public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
+        return generateCourse(id, "short", startDate, endDate, exercises, 3, 3, 7, 2000, 2000, true, false, 7);
     }
 
     /**
-     * Generates a course with the passed values.
+     * Generates a course with the passed values, controlling whether messaging is enabled.
      *
-     * @param id                         The id of the course.
-     * @param shortName                  The short name of the course.
-     * @param startDate                  The start date of the course.
-     * @param endDate                    The end date of the course.
-     * @param exercises                  The course exercises.
-     * @param studentGroupName           The student group name of the course.
-     * @param teachingAssistantGroupName The teaching assistant group name of the course.
-     * @param editorGroupName            The editor group name of the course.
-     * @param instructorGroupName        The instructor group name of the course.
+     * @param id               The id of the course.
+     * @param startDate        The start date of the course.
+     * @param endDate          The end date of the course.
+     * @param exercises        The course exercises.
+     * @param messagingEnabled Whether messaging in the course should be enabled.
      * @return The generated course.
      */
-    public static Course generateCourse(Long id, String shortName, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
-            String teachingAssistantGroupName, String editorGroupName, String instructorGroupName) {
-        return generateCourse(id, shortName, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, editorGroupName, instructorGroupName, 3, 3, 7, 2000, 2000,
-                true, true, 7);
+    public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, boolean messagingEnabled) {
+        return generateCourse(id, "short", startDate, endDate, exercises, 3, 3, 7, 2000, 2000, true, messagingEnabled, 7);
+    }
+
+    /**
+     * Generates a course with a custom short name.
+     * Communication and messaging are both enabled by default.
+     *
+     * @param id        The id of the course.
+     * @param shortName The short name prefix for the course.
+     * @param startDate The start date of the course.
+     * @param endDate   The end date of the course.
+     * @param exercises The course exercises.
+     * @return The generated course.
+     */
+    public static Course generateCourse(Long id, String shortName, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
+        return generateCourse(id, shortName, startDate, endDate, exercises, 3, 3, 7, 2000, 2000, true, true, 7);
     }
 
     /**
@@ -82,10 +94,6 @@ public class CourseFactory {
      * @param startDate                     The start date of the course.
      * @param endDate                       The end date of the course.
      * @param exercises                     The course exercises.
-     * @param studentGroupName              The student group name of the course.
-     * @param teachingAssistantGroupName    The teaching assistant group name of the course.
-     * @param editorGroupName               The editor group name of the course.
-     * @param instructorGroupName           The instructor group name of the course.
      * @param maxComplaints                 The max number of allowed complaints.
      * @param maxTeamComplaints             The max number of allowed team complaints.
      * @param maxComplaintTimeDays          The max complaint time in days.
@@ -96,12 +104,11 @@ public class CourseFactory {
      * @param requestMoreFeedbackTimeDays   The time to request more feedback in days.
      * @return The generated course.
      */
-    public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
-            String teachingAssistantGroupName, String editorGroupName, String instructorGroupName, Integer maxComplaints, Integer maxTeamComplaints, Integer maxComplaintTimeDays,
-            int maxComplaintTextLimit, int maxComplaintResponseTextLimit, boolean communicationEnabled, boolean messagingEnabled, int requestMoreFeedbackTimeDays) {
-        return generateCourse(id, "short", startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, editorGroupName, instructorGroupName, maxComplaints,
-                maxTeamComplaints, maxComplaintTimeDays, maxComplaintTextLimit, maxComplaintResponseTextLimit, communicationEnabled, messagingEnabled, requestMoreFeedbackTimeDays);
-
+    public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, Integer maxComplaints, Integer maxTeamComplaints,
+            Integer maxComplaintTimeDays, int maxComplaintTextLimit, int maxComplaintResponseTextLimit, boolean communicationEnabled, boolean messagingEnabled,
+            int requestMoreFeedbackTimeDays) {
+        return generateCourse(id, "short", startDate, endDate, exercises, maxComplaints, maxTeamComplaints, maxComplaintTimeDays, maxComplaintTextLimit,
+                maxComplaintResponseTextLimit, communicationEnabled, messagingEnabled, requestMoreFeedbackTimeDays);
     }
 
     /**
@@ -112,10 +119,6 @@ public class CourseFactory {
      * @param startDate                     The start date of the course.
      * @param endDate                       The end date of the course.
      * @param exercises                     The course exercises.
-     * @param studentGroupName              The student group name of the course.
-     * @param teachingAssistantGroupName    The teaching assistant group name of the course.
-     * @param editorGroupName               The editor group name of the course.
-     * @param instructorGroupName           The instructor group name of the course.
      * @param maxComplaints                 The max number of allowed complaints.
      * @param maxTeamComplaints             The max number of allowed team complaints.
      * @param maxComplaintTimeDays          The max complaint time in days.
@@ -126,9 +129,9 @@ public class CourseFactory {
      * @param requestMoreFeedbackTimeDays   The time to request more feedback in days.
      * @return The generated course.
      */
-    public static Course generateCourse(Long id, String shortName, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
-            String teachingAssistantGroupName, String editorGroupName, String instructorGroupName, Integer maxComplaints, Integer maxTeamComplaints, Integer maxComplaintTimeDays,
-            int maxComplaintTextLimit, int maxComplaintResponseTextLimit, boolean communicationEnabled, boolean messagingEnabled, int requestMoreFeedbackTimeDays) {
+    public static Course generateCourse(Long id, String shortName, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, Integer maxComplaints,
+            Integer maxTeamComplaints, Integer maxComplaintTimeDays, int maxComplaintTextLimit, int maxComplaintResponseTextLimit, boolean communicationEnabled,
+            boolean messagingEnabled, int requestMoreFeedbackTimeDays) {
         Course course = new Course();
         course.setId(id);
 
@@ -153,31 +156,20 @@ public class CourseFactory {
             course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
         }
         course.setMaxRequestMoreFeedbackTimeDays(requestMoreFeedbackTimeDays);
-        course.setStudentGroupName(studentGroupName);
-        course.setTeachingAssistantGroupName(teachingAssistantGroupName);
-        course.setEditorGroupName(editorGroupName);
-        course.setInstructorGroupName(instructorGroupName);
-        course.setStartDate(startDate);
-        course.setEndDate(endDate);
+        // Derive a missing bound from the one that was supplied, so a caller that passes only a start or only an end
+        // never ends up with the two in the wrong order. CourseValidator.validateStartAndEndDate rejects that, and the
+        // columns are NOT NULL, so an inverted default would surface as a confusing failure far from its cause.
+        // TimeUtil.now() rather than ZonedDateTime.now(), so a test that fixed the clock gets dates that agree with it.
+        ZonedDateTime now = TimeUtil.now();
+        course.setStartDate(startDate != null ? startDate : Objects.requireNonNullElse(endDate, now).minusMonths(3));
+        course.setEndDate(endDate != null ? endDate : Objects.requireNonNullElse(startDate, now).plusMonths(3));
+        course.setSemester(DEFAULT_SEMESTER);
         course.setExercises(exercises);
         course.setOnlineCourse(false);
         course.setEnrollmentEnabled(false);
         course.setPresentationScore(2);
         course.setAccuracyOfScores(1);
         return course;
-    }
-
-    /**
-     * Generates a course with the passed id, start and end date as well as exercises.
-     *
-     * @param id        The id of the course.
-     * @param startDate The start date of the course.
-     * @param endDate   The end date of the course.
-     * @param exercises The course exercises.
-     * @return The generated course.
-     */
-    public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
-        return generateCourse(id, startDate, endDate, exercises, null, null, null, null);
     }
 
     /**

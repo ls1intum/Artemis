@@ -18,6 +18,9 @@
             <div class="col">
                 <div class="form-group">
                     <label class="label-narrow" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
+                    @if (programmingExercise().includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED) {
+                        <span class="text-state-danger" aria-hidden="true">*</span>
+                    }
                     <input
                         [required]="programmingExercise().includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED"
                         type="number"
@@ -39,6 +42,9 @@
             <div class="col">
                 <div class="form-group" [hidden]="programmingExercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
                     <label class="label-narrow" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label>
+                    @if (programmingExercise().includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                        <span class="text-state-danger" aria-hidden="true">*</span>
+                    }
                     <input
                         type="number"
                         [required]="programmingExercise().includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
@@ -117,14 +123,16 @@
             @let programmingExerciseValue = programmingExercise();
             @let exampleSolutionPublicationDateSet =
                 !!programmingExerciseValue.exampleSolutionPublicationDate || !!programmingExerciseValue.exerciseGroup?.exam?.exampleSolutionPublicationDate;
-            <jhi-programming-exercise-update-timeline
+            <jhi-programming-exercise-timeline
                 id="timeline"
                 [isExamMode]="programmingExerciseCreationConfig().isExamMode"
                 [complaintsInCourseEnabled]="programmingExerciseValue.course?.complaintsEnabled ?? false"
                 [exampleSolutionPublicationDateSet]="exampleSolutionPublicationDateSet"
                 [isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord]="isEditFieldDisplayedRecord()"
-                [customizeBuildPlan]="programmingExerciseValue.customizeBuildPlan"
                 [exercise]="programmingExerciseValue"
+                [exercisePartOfExerciseGroup]="exercisePartOfExerciseGroup()"
+                (editGroupDates)="editGroupDates.emit()"
+                (timelineStatus)="onTimelineStatusChange($event)"
                 [(releaseDate)]="programmingExerciseValue.releaseDate"
                 [(startDate)]="programmingExerciseValue.startDate"
                 [(dueDate)]="programmingExerciseValue.dueDate"
@@ -132,11 +140,9 @@
                 [(assessmentDueDate)]="programmingExerciseValue.assessmentDueDate"
                 [(exampleSolutionPublicationDate)]="programmingExerciseValue.exampleSolutionPublicationDate"
                 [(assessmentType)]="programmingExerciseValue.assessmentType"
-                [(allowFeedbackRequests)]="programmingExerciseValue.allowFeedbackRequests"
                 [(setTestCaseVisibilityToAfterDueDate)]="importOptions().setTestCaseVisibilityToAfterDueDate"
                 [(allowComplaintsForAutomaticAssessments)]="programmingExerciseValue.allowComplaintsForAutomaticAssessments"
                 [(releaseTestsWithExampleSolution)]="programmingExerciseValue.releaseTestsWithExampleSolution"
-                [(feedbackSuggestionModule)]="programmingExerciseValue.feedbackSuggestionModule"
                 [(showTestNamesToStudents)]="programmingExerciseValue.showTestNamesToStudents"
             />
         </div>
@@ -144,7 +150,7 @@
     @if (isEditFieldDisplayedRecord().assessmentInstructions && programmingExercise().assessmentType === AssessmentType.SEMI_AUTOMATIC) {
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions"></label>
-            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="programmingExercise()" />
+            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="programmingExercise()" [editable]="editable()" (criteriaGenerated)="criteriaGenerated.emit()" />
         </div>
     }
     @if (isEditFieldDisplayedRecord().presentationScore) {

@@ -15,11 +15,13 @@ import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseForQuizExerciseDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseManagementExerciseDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupReferenceDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentConfigDTO;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
@@ -35,10 +37,11 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
         Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate,
         ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, AssessmentType assessmentType, boolean secondCorrectionEnabled,
         Boolean presentationScoreEnabled, String problemStatement, String exampleSolution, String gradingInstructions, Set<String> categories, String channelName,
-        String feedbackSuggestionModule, boolean allowComplaintsForAutomaticAssessments, boolean allowFeedbackRequests, Long courseId, Double courseAccuracyOfScores,
-        CourseForQuizExerciseDTO course, Long exerciseGroupId, Long examId, ZonedDateTime examPublishResultsDate, TeamAssignmentConfigDTO teamAssignmentConfig,
-        Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, PlagiarismDetectionConfigDTO plagiarismDetectionConfig,
-        boolean gradingInstructionFeedbackUsed, Set<ExampleSubmissionDTO> exampleSubmissions, Boolean teamMode, TextExerciseExamGroupDTO exerciseGroup) implements Serializable {
+        boolean allowComplaintsForAutomaticAssessments, boolean allowFeedbackRequests, Long courseId, Double courseAccuracyOfScores, CourseForQuizExerciseDTO course,
+        Long exerciseGroupId, Long examId, ZonedDateTime examPublishResultsDate, TeamAssignmentConfigDTO teamAssignmentConfig, Set<GradingCriterionDTO> gradingCriteria,
+        Set<CompetencyLinkDTO> competencyLinks, PlagiarismDetectionConfigDTO plagiarismDetectionConfig, boolean gradingInstructionFeedbackUsed,
+        Set<ExampleSubmissionDTO> exampleSubmissions, Boolean teamMode, TextExerciseExamGroupDTO exerciseGroup, ExerciseVariantGroupReferenceDTO exerciseVariantGroup)
+        implements Serializable, CourseManagementExerciseDTO {
 
     /**
      * Creates a {@link TextExerciseResponseDTO} from the given {@link TextExercise}.
@@ -47,6 +50,22 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
      * @return the corresponding DTO, or {@code null} if the input was {@code null}
      */
     public static TextExerciseResponseDTO of(TextExercise exercise) {
+        return of(exercise, false);
+    }
+
+    /**
+     * Creates the record written into the exercise details file of an archive. It is the response record without the
+     * ids of the plagiarism detection and the team assignment configuration: those are rows of this instance, and a
+     * file read back elsewhere must not carry them.
+     *
+     * @param exercise the text exercise to export (may be {@code null})
+     * @return the corresponding DTO, or {@code null} if the input was {@code null}
+     */
+    public static TextExerciseResponseDTO forExport(TextExercise exercise) {
+        return of(exercise, true);
+    }
+
+    private static TextExerciseResponseDTO of(TextExercise exercise, boolean forExport) {
         if (exercise == null) {
             return null;
         }
@@ -109,10 +128,19 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
                 ? PlagiarismDetectionConfigDTO.of(exercise.getPlagiarismDetectionConfig())
                 : null;
 
+        if (forExport) {
+            teamAssignmentConfigDTO = teamAssignmentConfigDTO == null ? null : teamAssignmentConfigDTO.withoutId();
+            plagiarismDetectionConfigDTO = plagiarismDetectionConfigDTO == null ? null : plagiarismDetectionConfigDTO.withoutId();
+        }
+
         // Only populated on the single-exercise detail endpoint, which explicitly loads example submissions; null/omitted elsewhere.
         Set<ExampleSubmissionDTO> exampleSubmissionDTOs = Hibernate.isInitialized(exercise.getExampleSubmissions())
                 ? exercise.getExampleSubmissions().stream().map(ExampleSubmissionDTO::of).collect(Collectors.toSet())
                 : null;
+
+        // The exercise edit form renders its timeline as read-only "locked to group" pickers when the exercise belongs to a
+        // variant group, so the group reference has to travel with the exercise.
+        ExerciseVariantGroupReferenceDTO exerciseVariantGroupDTO = ExerciseVariantGroupReferenceDTO.ofNullable(exercise.getExerciseVariantGroup());
 
         // categories is a LAZY @ElementCollection: never store the live Hibernate collection in the record. The
         // dev-profile LoggingAspect calls toString() on the DTO after the loading session closed, which throws
@@ -123,9 +151,9 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
                 exercise.getMode(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(), exercise.getReleaseDate(), exercise.getStartDate(),
                 exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getAssessmentType(),
                 exercise.getSecondCorrectionEnabled(), exercise.getPresentationScoreEnabled(), exercise.getProblemStatement(), exercise.getExampleSolution(),
-                exercise.getGradingInstructions(), categories, exercise.getChannelName(), exercise.getFeedbackSuggestionModule(),
-                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), courseId, courseAccuracyOfScores, course, exerciseGroupId, examId,
-                examPublishResultsDate, teamAssignmentConfigDTO, gradingCriterionDTOs, competencyLinkDTOs, plagiarismDetectionConfigDTO,
-                exercise.isGradingInstructionFeedbackUsed(), exampleSubmissionDTOs, exercise.getMode() == ExerciseMode.TEAM, exerciseGroup);
+                exercise.getGradingInstructions(), categories, exercise.getChannelName(), exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(),
+                courseId, courseAccuracyOfScores, course, exerciseGroupId, examId, examPublishResultsDate, teamAssignmentConfigDTO, gradingCriterionDTOs, competencyLinkDTOs,
+                plagiarismDetectionConfigDTO, exercise.isGradingInstructionFeedbackUsed(), exampleSubmissionDTOs, exercise.getMode() == ExerciseMode.TEAM, exerciseGroup,
+                exerciseVariantGroupDTO);
     }
 }

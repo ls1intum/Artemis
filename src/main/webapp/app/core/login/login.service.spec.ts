@@ -92,7 +92,8 @@ describe('LoginService', () => {
             await expect(loginService.login(credentials)).rejects.toThrow('Invalid credentials');
 
             // Verify logout was called (forceful = false)
-            expect(authenticateStub).toHaveBeenCalledWith(undefined);
+            expect(loginService.lastLogoutWasForceful()).toBe(false);
+            expect(authServerProviderClearStub).toHaveBeenCalled();
         });
     });
 
@@ -137,23 +138,20 @@ describe('LoginService', () => {
         });
         it('should login via OIDC successfully and resolve identity profile', async () => {
             const loginSpy = vi.spyOn(authServerProvider, 'loginOIDC').mockReturnValue(of({}));
-            const identitySpy = vi.spyOn(accountService, 'identity').mockResolvedValue({ id: 1 } as any);
 
             await loginService.loginOIDC(true);
             // Verify that loginService firtly calls AuthServerProvider
             expect(loginSpy).toHaveBeenCalledWith(true);
-            // And than by success it pulls userIdentity
-            expect(identitySpy).toHaveBeenCalledWith(true);
         });
 
-        it('should reject, trigger forceful logout, and clean context on OIDC login error', async () => {
+        it('should reject and reset forceful flag on OIDC login error', async () => {
             const loginError = new Error('OIDC handshake protocol failed');
-            vi.spyOn(authServerProvider, 'loginOIDC').mockReturnValue(throwError(() => loginError));
-            navigateByUrlStub.mockReturnValue(Promise.resolve(true));
-            // Verify that loginService throws an Error
-            await expect(loginService.loginOIDC(true)).rejects.toThrow('OIDC handshake protocol failed');
+            vi.spyOn(authServerProvider, 'loginOIDC').mockImplementation(() => {
+                throw loginError;
+            });
 
-            expect(authenticateStub).toHaveBeenCalledWith(undefined);
+            await expect(loginService.loginOIDC(true)).rejects.toThrow('OIDC handshake protocol failed');
+            expect(loginService.lastLogoutWasForceful()).toBe(false);
         });
     });
 

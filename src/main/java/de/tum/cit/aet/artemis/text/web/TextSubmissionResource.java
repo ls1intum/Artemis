@@ -31,12 +31,15 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -61,6 +64,7 @@ import de.tum.cit.aet.artemis.text.service.TextSubmissionService;
  */
 @Conditional(TextEnabled.class)
 @Lazy
+@FeatureUsage("participation/submissions")
 @RestController
 @RequestMapping("api/text/")
 public class TextSubmissionResource extends AbstractSubmissionResource {
@@ -68,6 +72,11 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
     private static final String ENTITY_NAME = "textSubmission";
 
     private static final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
+
+    /**
+     * Only report the stage breakdown of a submission when it took at least this long, so a healthy system stays quiet.
+     */
+    private static final long SLOW_SUBMISSION_LOG_THRESHOLD_MILLIS = 200;
 
     private final TextSubmissionRepository textSubmissionRepository;
 
@@ -91,10 +100,13 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private final ExerciseDateService exerciseDateService;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     public TextSubmissionResource(SubmissionRepository submissionRepository, TextSubmissionRepository textSubmissionRepository, ExerciseRepository exerciseRepository,
             TextExerciseRepository textExerciseRepository, AuthorizationCheckService authCheckService, TextSubmissionService textSubmissionService, UserRepository userRepository,
             StudentParticipationRepository studentParticipationRepository, GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService,
-            Optional<ExamSubmissionApi> examSubmissionApi, Optional<PlagiarismAccessApi> plagiarismAccessApi, ExerciseDateService exerciseDateService) {
+            Optional<ExamSubmissionApi> examSubmissionApi, Optional<PlagiarismAccessApi> plagiarismAccessApi, ExerciseDateService exerciseDateService,
+            CourseAthenaConfigRepository courseAthenaConfigRepository) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, textSubmissionService, studentParticipationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
@@ -107,6 +119,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         this.examSubmissionApi = examSubmissionApi;
         this.plagiarismAccessApi = plagiarismAccessApi;
         this.exerciseDateService = exerciseDateService;
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
     }
 
     /**
@@ -145,12 +158,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
             return createTextSubmission(exerciseId, textSubmissionDTO);
         }
         final TextSubmission textSubmission = toTextSubmission(textSubmissionDTO);
-        // The request DTO no longer carries results, so reconstruct the Athena-result fork signal from the persisted
-        // submission: if the existing submission already has a result (e.g. Athena auto-feedback), autosave must create a
-        // fresh submission instead of overwriting the result-bearing one.
-        boolean existingSubmissionHasResults = textSubmissionRepository.findWithEagerResultsAssessorById(textSubmissionDTO.id()).map(existing -> !existing.getResults().isEmpty())
-                .orElse(false);
-        return handleTextSubmission(exerciseId, textSubmission, existingSubmissionHasResults);
+        return handleTextSubmission(exerciseId, textSubmission);
     }
 
     /**
@@ -171,38 +179,52 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     @NonNull
     private ResponseEntity<TextSubmissionResponseDTO> handleTextSubmission(long exerciseId, TextSubmission textSubmission) {
-        return handleTextSubmission(exerciseId, textSubmission, false);
-    }
-
-    @NonNull
-    private ResponseEntity<TextSubmissionResponseDTO> handleTextSubmission(long exerciseId, TextSubmission textSubmission, boolean forceNewSubmission) {
         long start = System.currentTimeMillis();
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
-        final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
+        // Course roles are loaded with the user so the course-membership checks on this path (the submission
+        // allowance check and the detail filtering) resolve in memory instead of each issuing its own query. This
+        // is the autosave path, so it runs repeatedly per student per exercise.
+        long stageStart = System.nanoTime();
+        final var user = userRepository.getUserWithCourseRolesAndAuthorities();
+        long userNanos = System.nanoTime() - stageStart;
 
+        stageStart = System.nanoTime();
+        final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
+        long exerciseNanos = System.nanoTime() - stageStart;
+
+        stageStart = System.nanoTime();
+        StudentParticipationSubmitTargetDTO participationFromExamGate = null;
         if (exercise.isExamExercise()) {
             ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
 
             // Apply further checks if it is an exam submission
             api.checkSubmissionAllowanceElseThrow(exercise, user);
 
-            // Prevent multiple submissions (currently only for exam submissions)
-            textSubmission = (TextSubmission) api.preventMultipleSubmissions(exercise, textSubmission, user);
+            // Prevent multiple submissions (currently only for exam submissions). The gate modifies the submission in
+            // place and returns the participation it resolved, so the save below does not have to read it again.
+            participationFromExamGate = api.preventMultipleSubmissions(exercise, textSubmission, user);
         }
+        long examChecksNanos = System.nanoTime() - stageStart;
 
+        stageStart = System.nanoTime();
         // Check if the user is allowed to submit
         textSubmissionService.checkSubmissionAllowanceElseThrow(exercise, textSubmission, user);
+        long allowanceNanos = System.nanoTime() - stageStart;
 
-        if (forceNewSubmission) {
-            textSubmission.setId(null);
-        }
-        textSubmission = textSubmissionService.handleTextSubmission(textSubmission, exercise, user);
-        textSubmissionService.hideDetails(textSubmission, user);
+        stageStart = System.nanoTime();
+        var saved = textSubmissionService.handleTextSubmission(textSubmission, exercise, user, participationFromExamGate);
+        textSubmission = saved.submission();
+        long saveNanos = System.nanoTime() - stageStart;
         long end = System.currentTimeMillis();
+        // A slow autosave is worth attributing to a stage rather than guessing at, so the breakdown names which of them
+        // took the time.
+        if (end - start >= SLOW_SUBMISSION_LOG_THRESHOLD_MILLIS) {
+            log.info("Slow text submission for exercise {}: {} ms total (user {} ms, exercise {} ms, exam checks {} ms, allowance {} ms, save {} ms)", exerciseId, end - start,
+                    userNanos / 1_000_000, exerciseNanos / 1_000_000, examChecksNanos / 1_000_000, allowanceNanos / 1_000_000, saveNanos / 1_000_000);
+        }
         log.info("handleTextSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         // Include the student: this is the student's own submission and the client checks participation ownership
         // (isOwnerOfParticipation) on the returned participation. hideDetails keeps the participant for the owner.
-        return ResponseEntity.ok(TextSubmissionResponseDTO.of(textSubmission, true));
+        return ResponseEntity.ok(TextSubmissionResponseDTO.of(textSubmission, saved.participation()));
     }
 
     /**
@@ -252,7 +274,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
             return ResponseEntity.status(response.getStatusCode()).headers(response.getHeaders()).build();
         }
         // Tutors must not see the student behind a submission; instructors may.
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         List<TextSubmissionResponseDTO> submissionDTOs = submissions.stream().map(submission -> TextSubmissionResponseDTO.of((TextSubmission) submission, includeStudent)).toList();
@@ -283,10 +305,14 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
         // Check if tutors can start assessing the students submission
         textSubmissionService.checkIfExerciseDueDateIsReached(exercise);
+        textSubmissionService.checkCorrectionRoundIsValidElseThrow(exercise, correctionRound);
 
         // Check if the limit of simultaneously locked submissions has been reached
         textSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
+        // Before the selection: it asks Athena which submission to hand out next, and again for the response, where the
+        // assessment editor gates the feedback suggestions on the same setting.
+        courseAthenaConfigRepository.attachToCourseOf(exercise);
         Optional<TextSubmission> optionalTextSubmission = textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise,
                 skipAssessmentOrderOptimization, exercise.isExamExercise(), correctionRound);
 
@@ -310,8 +336,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         studentParticipation.setExercise(exercise);
         textSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
         // Remove sensitive information of submission depending on user
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        textSubmissionService.hideDetails(textSubmission, user);
+        User user = userRepository.getUserWithAuthorities();
 
         // The client resolves the participation via submission.participation; it carries the exercise and the locked
         // submission with its results. Tutors must not see the student (double-blind); instructors may, matching the

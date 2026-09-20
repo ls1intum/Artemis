@@ -1,11 +1,11 @@
-import { Component, Injector, OnChanges, OnInit, SimpleChanges, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, Injector, OnInit, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
-import { of, throwError } from 'rxjs';
+import { catchError, map, switchMap, take, tap } from 'rxjs/operators';
+import { EMPTY, of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/localci/shared/entities/build-log.model';
 import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { Badge, ResultService } from 'app/exercise/result/result.service';
@@ -27,14 +27,10 @@ import { ProgrammingFeedbackItemService } from 'app/exercise/feedback/item/progr
 import { FeedbackService } from 'app/exercise/feedback/services/feedback.service';
 import { evaluateTemplateStatus, isOnlyCompilationTested, isStudentParticipation, resultIsPreliminary } from '../result/result.utils';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
-import { ChartModule } from 'primeng/chart';
 import { FeedbackChartData } from 'app/exercise/feedback/chart/feedback-chart-data';
-import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
-import { multiSeriesToStackedBarData } from 'app/shared-ui/chart/chart-adapters';
-import { barChartOptions } from 'app/shared-ui/chart/chart-options';
+import { stackedBarChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
 import { FeedbackChartService } from 'app/exercise/feedback/chart/feedback-chart.service';
 import { isFeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
-import { cloneDeep } from 'lodash-es';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgTemplateOutlet, UpperCasePipe } from '@angular/common';
@@ -43,6 +39,12 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { Participation, getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
+import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
+import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
+import { TumUiBarChartComponent, TumUiBarChartConfig } from '@tumaet/ui-angular';
+
+const CODE_REFERENCE_CONTEXT_LINES = 2;
+const MAX_DISPLAYED_CODE_REFERENCE_LINES = 50;
 
 // Modal -> Result details view
 @Component({
@@ -51,7 +53,7 @@ import { Participation, getLatestSubmission } from 'app/exercise/shared/entities
     imports: [
         TranslateDirective,
         FaIconComponent,
-        ChartModule,
+        TumUiBarChartComponent,
         TagModule,
         ButtonModule,
         TooltipModule,
@@ -63,11 +65,12 @@ import { Participation, getLatestSubmission } from 'app/exercise/shared/entities
         ArtemisTimeAgoPipe,
     ],
 })
-export class FeedbackComponent implements OnInit, OnChanges {
+export class FeedbackComponent implements OnInit {
     private resultService = inject(ResultService);
     private buildLogService = inject(BuildLogService);
     private feedbackService = inject(FeedbackService);
     private feedbackChartService = inject(FeedbackChartService);
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private injector = inject(Injector);
     readonly dialogRef = inject(DynamicDialogRef, { optional: true });
 
@@ -138,29 +141,22 @@ export class FeedbackComponent implements OnInit, OnChanges {
         colors: [GraphColors.GREEN, GraphColors.RED],
         results: [],
     });
-    private readonly chartColors = inject(ChartColorService).resolvedColors(() => this.chartData().colors);
-    readonly scoreChartData = computed(() => multiSeriesToStackedBarData(this.chartData().results, this.chartColors()));
-    readonly scoreChartOptions = computed(() =>
-        barChartOptions({
-            horizontal: true,
-            stacked: true,
-            maxBarThickness: 25,
-            xAxis: { max: this.chartData().xScaleMax, tickFormatter: (value) => this.xAxisFormatting(String(value)) },
-            yAxis: { display: false },
-            legend: { position: 'bottom' },
-            tooltip: false,
-        }),
-    );
+    private readonly chartColors = computed(() => this.chartData().colors);
+    readonly scoreChartData = computed(() => stackedBarChart(this.chartData().results, this.chartColors()));
+    readonly scoreChartConfig = computed<TumUiBarChartConfig>(() => ({
+        horizontal: true,
+        stacked: true,
+        maxBarThickness: 25,
+        xAxis: { max: this.chartData().xScaleMax, tickFormatter: (value) => this.xAxisFormatting(String(value)) },
+        yAxis: { display: false },
+        legend: { position: 'bottom' },
+        tooltip: false,
+    }));
 
     readonly badge = signal<Badge | undefined>(undefined);
 
     feedbackItemService!: FeedbackItemService; // set in ngOnInit() (selected based on exercise type)
     readonly feedbackItemNodes = signal<FeedbackNode[] | undefined>(undefined);
-    /**
-     * Used to reset the feedbackItemNodes to the state before printing if {@link isPrinting} changes
-     * from true to false
-     */
-    private feedbackItemNodesBeforePrinting?: FeedbackNode[];
 
     /**
      * Load the result feedbacks if necessary and assign them to the component.
@@ -184,23 +180,9 @@ export class FeedbackComponent implements OnInit, OnChanges {
                 this.result(),
                 this.participation(),
                 evaluateTemplateStatus(this.resolvedExercise(), this.result().submission?.participation, this.result(), false),
+                this.resolvedExercise(),
             ),
         );
-    }
-
-    /**
-     * Expand the feedback items groups while the exam summary is printed and
-     * collapse them again (if collapsed before) when the printing is done
-     */
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes.isPrinting) {
-            if (changes.isPrinting.currentValue) {
-                this.feedbackItemNodesBeforePrinting = cloneDeep(this.feedbackItemNodes());
-                this.expandFeedbackItemGroups();
-            } else {
-                this.feedbackItemNodes.set(this.feedbackItemNodesBeforePrinting);
-            }
-        }
     }
 
     /**
@@ -246,6 +228,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
                         const exercise = this.resolvedExercise();
                         if (exercise) {
                             this.feedbackItemNodes.set(this.feedbackItemService.group(feedbackItems, exercise));
+                            this.enrichFeedbackItemsWithCodeReferences(feedbackItems);
                         }
                         if (this.isExamReviewPage()) {
                             this.expandFeedbackItemGroups();
@@ -285,6 +268,47 @@ export class FeedbackComponent implements OnInit, OnChanges {
             .subscribe(() => {
                 this.isLoading.set(false);
             });
+    }
+
+    private enrichFeedbackItemsWithCodeReferences(feedbackItems: FeedbackItem[]): void {
+        const participation = this.participation();
+        const exerciseId = this.resolvedExercise()?.id;
+        const participationId = participation.id;
+        const commitHash = (this.result().submission as ProgrammingSubmission)?.commitHash;
+        const referencedFilePaths = [...new Set(feedbackItems.flatMap((item) => (item.codeReference ? [item.codeReference.filePath] : [])))];
+        if (this.exerciseType() !== ExerciseType.PROGRAMMING || exerciseId === undefined || participationId === undefined || !commitHash || referencedFilePaths.length === 0) {
+            return;
+        }
+
+        this.programmingExerciseParticipationService
+            .getSelectedParticipationRepositoryFilesAtCommit(exerciseId, participationId, commitHash, referencedFilePaths)
+            .pipe(
+                take(1),
+                catchError(() => EMPTY),
+            )
+            .subscribe((fileContentByPath) => {
+                if (!fileContentByPath) {
+                    return;
+                }
+                feedbackItems.forEach((item) => {
+                    const reference = item.codeReference;
+                    const fileContent = reference && fileContentByPath.get(reference.filePath);
+                    if (reference && fileContent) {
+                        reference.lines = this.getReferencedLines(fileContent, reference.line, reference.lineEnd ?? reference.line);
+                    }
+                });
+                this.feedbackItemNodes.update((nodes) => (nodes ? [...nodes] : nodes));
+            });
+    }
+
+    private getReferencedLines(fileContent: string, lineStart: number, lineEnd: number): { line: number; code: string; referenced: boolean }[] {
+        const lines = fileContent.split(/\r?\n/);
+        const firstLine = Math.max(1, lineStart - CODE_REFERENCE_CONTEXT_LINES);
+        const lastLine = Math.min(lines.length, lineEnd + CODE_REFERENCE_CONTEXT_LINES, firstLine + MAX_DISPLAYED_CODE_REFERENCE_LINES - 1);
+        return lines.slice(firstLine - 1, lastLine).map((code, index) => {
+            const line = firstLine + index;
+            return { line, code, referenced: line >= lineStart && line <= lineEnd };
+        });
     }
 
     /**

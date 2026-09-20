@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.localvc.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
+import static de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService.ONLY_THE_CREDENTIALS_IN_THE_URI;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
@@ -16,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -48,15 +50,17 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.CreateTestRunDTO;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 /**
@@ -112,8 +116,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         instructor1 = users.stream().filter(u -> u.getLogin().equals(TEST_PREFIX + "instructor1")).findFirst().orElseThrow();
 
         // Setup course without programming exercise (we'll create exercises via REST API)
-        // Use default groups ("tumuser", "tutor", "editor", "instructor") which match the groups created by addUsers
-        course = courseUtilService.addEmptyCourse();
+        course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         // Mock LDAP authentication
         mockLdapUserAuthentication();
@@ -175,7 +178,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         newExercise.setAllowOfflineIde(true);
         newExercise.setChannelName(channelName);
 
-        return request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        return request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
     }
 
     /**
@@ -195,9 +199,10 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         auxRepo.setName("testaux");
         auxRepo.setCheckoutDirectory("aux");
         auxRepo.setDescription("Auxiliary repository for testing");
-        newExercise.setAuxiliaryRepositories(List.of(auxRepo));
+        newExercise.setAuxiliaryRepositories(Set.of(auxRepo));
 
-        return request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        return request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
     }
 
     /**
@@ -209,7 +214,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-test-clone-");
         clonedRepoPaths.add(clonePath);
 
-        return Git.cloneRepository().setURI(repoUri).setDirectory(clonePath.toFile()).call();
+        return Git.cloneRepository().setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI).setURI(repoUri).setDirectory(clonePath.toFile()).call();
     }
 
     /**
@@ -217,8 +222,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
      */
     private String buildRepositoryUri(String username, String projectKey, String repositorySlug) {
         String userInfo = username + ":" + UserFactory.USER_PASSWORD;
-        return UriComponentsBuilder.fromUri(localVCBaseUri).port(port).userInfo(userInfo).pathSegment("git", projectKey.toUpperCase(), repositorySlug + ".git").build().toUri()
-                .toString();
+        return UriComponentsBuilder.fromUri(localVCBaseUri).port(port).userInfo(userInfo).pathSegment("git", projectKey.toUpperCase(Locale.ROOT), repositorySlug + ".git").build()
+                .toUri().toString();
     }
 
     /**
@@ -226,8 +231,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
      */
     private String buildRepositoryUriWithToken(String username, String token, String projectKey, String repositorySlug) {
         String userInfo = username + ":" + token;
-        return UriComponentsBuilder.fromUri(localVCBaseUri).port(port).userInfo(userInfo).pathSegment("git", projectKey.toUpperCase(), repositorySlug + ".git").build().toUri()
-                .toString();
+        return UriComponentsBuilder.fromUri(localVCBaseUri).port(port).userInfo(userInfo).pathSegment("git", projectKey.toUpperCase(Locale.ROOT), repositorySlug + ".git").build()
+                .toUri().toString();
     }
 
     /**
@@ -343,7 +348,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // Create exercise via REST API - this creates template, solution, and tests repos
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-template-repo");
             String projectKey = exercise.getProjectKey();
-            String templateRepoSlug = projectKey.toLowerCase() + "-exercise";
+            String templateRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
 
             // Students should NOT be able to fetch or push
             try (Git studentGit = cloneRepository(instructor1.getLogin(), projectKey, templateRepoSlug)) {
@@ -378,7 +383,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // Create exercise via REST API
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-solution-repo");
             String projectKey = exercise.getProjectKey();
-            String solutionRepoSlug = projectKey.toLowerCase() + "-solution";
+            String solutionRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-solution";
 
             // Students should NOT be able to fetch or push
             try (Git git = cloneRepository(instructor1.getLogin(), projectKey, solutionRepoSlug)) {
@@ -413,7 +418,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // Create exercise via REST API
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-tests-repo");
             String projectKey = exercise.getProjectKey();
-            String testsRepoSlug = projectKey.toLowerCase() + "-tests";
+            String testsRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-tests";
 
             // Students should NOT be able to fetch or push
             try (Git git = cloneRepository(instructor1.getLogin(), projectKey, testsRepoSlug)) {
@@ -451,8 +456,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
 
             // Get the auxiliary repository slug from the created exercise
             assertThat(exercise.getAuxiliaryRepositories()).hasSize(1);
-            AuxiliaryRepository auxRepo = exercise.getAuxiliaryRepositories().getFirst();
-            String auxRepoSlug = projectKey.toLowerCase() + "-" + auxRepo.getName().toLowerCase();
+            AuxiliaryRepository auxRepo = exercise.getAuxiliaryRepositories().iterator().next();
+            String auxRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + auxRepo.getName().toLowerCase(Locale.ROOT);
 
             // First, push an initial commit as instructor to populate the aux repo (empty repos cause DetachedHeadException on push)
             try (Git git = cloneRepository(instructor1.getLogin(), projectKey, auxRepoSlug)) {
@@ -499,13 +504,13 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             userUtilService.changeUser(TEST_PREFIX + "student1");
             mockDockerClientForStudentBuild();
 
-            StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class,
-                    HttpStatus.CREATED);
+            StudentParticipationDTO participation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null,
+                    StudentParticipationDTO.class, HttpStatus.CREATED);
 
             assertThat(participation).isNotNull();
-            assertThat(participation.getStudent()).contains(student1);
+            assertThat(participation.student().getId()).isEqualTo(student1.getId());
 
-            String student1RepoSlug = projectKey.toLowerCase() + "-" + student1.getLogin();
+            String student1RepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + student1.getLogin();
 
             // Student1 should be able to fetch and push to their own repository
             try (Git git = cloneRepository(student1.getLogin(), projectKey, student1RepoSlug)) {
@@ -551,7 +556,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // Student1 starts the exercise via REST API (this creates the repository)
             userUtilService.changeUser(TEST_PREFIX + "student1");
             mockDockerClientForStudentBuild();
-            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.CREATED);
+            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipationDTO.class, HttpStatus.CREATED);
 
             // Now set due date to the past (re-fetch exercise to avoid Hibernate orphan removal of the new participation)
             userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -559,7 +564,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             exercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
             programmingExerciseRepository.save(exercise);
 
-            String student1RepoSlug = projectKey.toLowerCase() + "-" + student1.getLogin();
+            String student1RepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + student1.getLogin();
 
             // Student1 should be able to fetch but NOT push after due date
             try (Git git = cloneRepository(student1.getLogin(), projectKey, student1RepoSlug)) {
@@ -591,23 +596,23 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // Student1 starts the exercise via REST API
             userUtilService.changeUser(TEST_PREFIX + "student1");
             mockDockerClientForStudentBuild();
-            StudentParticipation participation1 = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class,
-                    HttpStatus.CREATED);
+            StudentParticipationDTO participation1 = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null,
+                    StudentParticipationDTO.class, HttpStatus.CREATED);
 
             assertThat(participation1).isNotNull();
-            assertThat(participation1.getStudent()).contains(student1);
+            assertThat(participation1.student().getId()).isEqualTo(student1.getId());
 
             // Student2 starts the exercise via REST API
             userUtilService.changeUser(TEST_PREFIX + "student2");
             mockDockerClientForStudentBuild();
-            StudentParticipation participation2 = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class,
-                    HttpStatus.CREATED);
+            StudentParticipationDTO participation2 = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null,
+                    StudentParticipationDTO.class, HttpStatus.CREATED);
 
             assertThat(participation2).isNotNull();
-            assertThat(participation2.getStudent()).contains(student2);
+            assertThat(participation2.student().getId()).isEqualTo(student2.getId());
 
-            String student1RepoSlug = projectKey.toLowerCase() + "-" + student1.getLogin();
-            String student2RepoSlug = projectKey.toLowerCase() + "-" + student2.getLogin();
+            String student1RepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + student1.getLogin();
+            String student2RepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + student2.getLogin();
 
             // Student1 can access their own repo
             try (Git git = cloneRepository(student1.getLogin(), projectKey, student1RepoSlug)) {
@@ -648,7 +653,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
 
             // Create participation for student1 via utility (not REST API since start date is in future)
             participationUtilService.addStudentParticipationForProgrammingExercise(exercise, student1.getLogin());
-            String student1RepoSlug = projectKey.toLowerCase() + "-" + student1.getLogin();
+            String student1RepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + student1.getLogin();
 
             // Student1 should NOT be able to fetch or push before start date
             try (Git git = cloneRepository(instructor1.getLogin(), projectKey, student1RepoSlug)) {
@@ -684,7 +689,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             newExercise.setAllowOfflineIde(true);
             newExercise.setChannelName("test-team-exercise");
             newExercise.setMode(ExerciseMode.TEAM);
-            ProgrammingExercise exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+            ProgrammingExercise exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                    CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
 
             String projectKey = exercise.getProjectKey();
 
@@ -696,12 +702,12 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             team.setStudents(Set.of(student1));
             teamRepository.save(team);
 
-            String teamRepoSlug = projectKey.toLowerCase() + "-team1";
+            String teamRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-team1";
 
             // Team member (student1) starts the exercise via REST API (creates repo)
             userUtilService.changeUser(TEST_PREFIX + "student1");
             mockDockerClientForStudentBuild();
-            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.CREATED);
+            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipationDTO.class, HttpStatus.CREATED);
 
             // Team member (student1) should be able to fetch and push
             try (Git git = cloneRepository(student1.getLogin(), projectKey, teamRepoSlug)) {
@@ -740,7 +746,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             newExercise.setAllowOfflineIde(true);
             newExercise.setChannelName("test-team-before-start");
             newExercise.setMode(ExerciseMode.TEAM);
-            ProgrammingExercise exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+            ProgrammingExercise exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                    CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
 
             String projectKey = exercise.getProjectKey();
 
@@ -755,7 +762,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // Add team participation
             participationUtilService.addTeamParticipationForProgrammingExercise(exercise, team);
 
-            String teamRepoSlug = projectKey.toLowerCase() + "-team2";
+            String teamRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-team2";
 
             // Team member should NOT be able to access before start date
             try (Git git = cloneRepository(instructor1.getLogin(), projectKey, teamRepoSlug)) {
@@ -787,7 +794,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             newExercise.setAllowOfflineIde(true);
             newExercise.setChannelName("test-team-after-due");
             newExercise.setMode(ExerciseMode.TEAM);
-            ProgrammingExercise exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+            ProgrammingExercise exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                    CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
 
             String projectKey = exercise.getProjectKey();
 
@@ -799,12 +807,12 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             team.setStudents(Set.of(student1));
             teamRepository.save(team);
 
-            String teamRepoSlug = projectKey.toLowerCase() + "-team3";
+            String teamRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-team3";
 
             // Team member (student1) starts the exercise via REST API (creates repo)
             userUtilService.changeUser(TEST_PREFIX + "student1");
             mockDockerClientForStudentBuild();
-            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.CREATED);
+            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipationDTO.class, HttpStatus.CREATED);
 
             // Now set due date to the past (re-fetch exercise to avoid Hibernate orphan removal of the new participation)
             userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -846,9 +854,9 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // TA starts the exercise via REST API (creates repo)
             userUtilService.changeUser(TEST_PREFIX + "tutor1");
             mockDockerClientForStudentBuild();
-            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.CREATED);
+            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipationDTO.class, HttpStatus.CREATED);
 
-            String taRepoSlug = projectKey.toLowerCase() + "-" + tutor1.getLogin();
+            String taRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + tutor1.getLogin();
 
             // Students should NOT be able to access TA's assignment repository
             try (Git git = cloneRepository(tutor1.getLogin(), projectKey, taRepoSlug)) {
@@ -880,9 +888,9 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
 
             // Instructor starts the exercise via REST API (creates repo)
             mockDockerClientForStudentBuild();
-            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.CREATED);
+            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipationDTO.class, HttpStatus.CREATED);
 
-            String instructorRepoSlug = projectKey.toLowerCase() + "-" + instructor1.getLogin();
+            String instructorRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + instructor1.getLogin();
 
             // Students should NOT be able to access instructor's assignment repository
             try (Git git = cloneRepository(instructor1.getLogin(), projectKey, instructorRepoSlug)) {
@@ -921,11 +929,11 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // Create practice participation for student1 via REST API
             userUtilService.changeUser(TEST_PREFIX + "student1");
             mockDockerClientForStudentBuild();
-            StudentParticipation practiceParticipation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/practice", null,
-                    StudentParticipation.class, HttpStatus.CREATED);
-            assertThat(practiceParticipation.isPracticeMode()).isTrue();
+            StudentParticipationDTO practiceParticipation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/practice", null,
+                    StudentParticipationDTO.class, HttpStatus.CREATED);
+            assertThat(practiceParticipation.testRun()).isTrue();
 
-            String practiceRepoSlug = projectKey.toLowerCase() + "-practice-" + student1.getLogin();
+            String practiceRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-practice-" + student1.getLogin();
 
             // Mock Docker for additional builds
             mockDockerClientForStudentBuild();
@@ -970,11 +978,11 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // Create practice participation for tutor1 via REST API
             userUtilService.changeUser(TEST_PREFIX + "tutor1");
             mockDockerClientForStudentBuild();
-            StudentParticipation practiceParticipation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/practice", null,
-                    StudentParticipation.class, HttpStatus.CREATED);
-            assertThat(practiceParticipation.isPracticeMode()).isTrue();
+            StudentParticipationDTO practiceParticipation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/practice", null,
+                    StudentParticipationDTO.class, HttpStatus.CREATED);
+            assertThat(practiceParticipation.testRun()).isTrue();
 
-            String practiceRepoSlug = projectKey.toLowerCase() + "-practice-" + tutor1.getLogin();
+            String practiceRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-practice-" + tutor1.getLogin();
 
             // Mock Docker for additional builds
             mockDockerClientForStudentBuild();
@@ -1013,11 +1021,11 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // Create practice participation for instructor1 via REST API
             // Note: instructor1 is already the current user from @WithMockUser
             mockDockerClientForStudentBuild();
-            StudentParticipation practiceParticipation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/practice", null,
-                    StudentParticipation.class, HttpStatus.CREATED);
-            assertThat(practiceParticipation.isPracticeMode()).isTrue();
+            StudentParticipationDTO practiceParticipation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/practice", null,
+                    StudentParticipationDTO.class, HttpStatus.CREATED);
+            assertThat(practiceParticipation.testRun()).isTrue();
 
-            String practiceRepoSlug = projectKey.toLowerCase() + "-practice-" + instructor1.getLogin();
+            String practiceRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-practice-" + instructor1.getLogin();
 
             // Mock Docker for additional builds
             mockDockerClientForStudentBuild();
@@ -1066,19 +1074,15 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
             newExercise.setAllowOfflineIde(true);
 
-            return request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+            return request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                    CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
         }
 
         @BeforeEach
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void setupExam() throws Exception {
-            // Update course groups to match the user groups created by addUsers(TEST_PREFIX, ...)
-            // This is required for exam tests where students must be in the course's student group
-            course.setStudentGroupName(TEST_PREFIX + "tumuser");
-            course.setTeachingAssistantGroupName(TEST_PREFIX + "tutor");
-            course.setEditorGroupName(TEST_PREFIX + "editor");
-            course.setInstructorGroupName(TEST_PREFIX + "instructor");
-            courseRepository.save(course);
+            // Enroll TEST_PREFIX users into the course via UCR (addEmptyCourse enrolls "" prefix users only)
+            userUtilService.enrollPrefixedUsersInCourse(course, TEST_PREFIX);
 
             // Create exam with exercise group
             exam = examUtilService.addExamWithExerciseGroup(course, true);
@@ -1104,9 +1108,10 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // Generate student exams using the service directly (avoids REST API validation issues)
             List<StudentExam> generatedExams = studentExamService.generateStudentExams(exam);
 
-            // Find student exams for student1 and student2
-            studentExam1 = generatedExams.stream().filter(se -> se.getUser().getLogin().equals(student1.getLogin())).findFirst().orElseThrow();
-            StudentExam studentExam2 = generatedExams.stream().filter(se -> se.getUser().getLogin().equals(student2.getLogin())).findFirst().orElseThrow();
+            // Find student exams for student1 and student2. Matched on the user id: a generated student exam carries an
+            // id-only user, so its login is not populated.
+            studentExam1 = generatedExams.stream().filter(se -> se.getUser().getId().equals(student1.getId())).findFirst().orElseThrow();
+            StudentExam studentExam2 = generatedExams.stream().filter(se -> se.getUser().getId().equals(student2.getId())).findFirst().orElseThrow();
 
             // Set started date for the student exams (simulating that students have started the exam)
             studentExam1.setStartedAndStartDate(now.minusMinutes(30));
@@ -1121,7 +1126,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testFetchPush_examTemplateRepository() throws Exception {
-            String templateRepoSlug = examProjectKey.toLowerCase() + "-exercise";
+            String templateRepoSlug = examProjectKey.toLowerCase(Locale.ROOT) + "-exercise";
 
             // Students should NOT be able to fetch or push
             try (Git git = cloneRepository(instructor1.getLogin(), examProjectKey, templateRepoSlug)) {
@@ -1154,7 +1159,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testFetchPush_examStudentRepository_duringWorkingTime() throws Exception {
             // Participation was created in setup by start-exercises
-            String student1RepoSlug = examProjectKey.toLowerCase() + "-" + student1.getLogin();
+            String student1RepoSlug = examProjectKey.toLowerCase(Locale.ROOT) + "-" + student1.getLogin();
 
             // Mock Docker for CI execution
             mockDockerClientForStudentBuild();
@@ -1190,8 +1195,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testFetchPush_examStudentRepository_twoStudents() throws Exception {
             // Participations were created in setup by start-exercises
-            String student1RepoSlug = examProjectKey.toLowerCase() + "-" + student1.getLogin();
-            String student2RepoSlug = examProjectKey.toLowerCase() + "-" + student2.getLogin();
+            String student1RepoSlug = examProjectKey.toLowerCase(Locale.ROOT) + "-" + student1.getLogin();
+            String student2RepoSlug = examProjectKey.toLowerCase(Locale.ROOT) + "-" + student2.getLogin();
 
             // Mock Docker for CI execution
             mockDockerClientForStudentBuild();
@@ -1236,7 +1241,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             studentExamRepository.save(studentExam1);
 
             // Participation was created in setup by start-exercises
-            String student1RepoSlug = examProjectKey.toLowerCase() + "-" + student1.getLogin();
+            String student1RepoSlug = examProjectKey.toLowerCase(Locale.ROOT) + "-" + student1.getLogin();
 
             // Student1 should be able to fetch but NOT push after exam end
             try (Git git = cloneRepository(student1.getLogin(), examProjectKey, student1RepoSlug)) {
@@ -1272,7 +1277,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             studentExamRepository.save(studentExam1);
 
             // Participation was created in setup by start-exercises
-            String student1RepoSlug = examProjectKey.toLowerCase() + "-" + student1.getLogin();
+            String student1RepoSlug = examProjectKey.toLowerCase(Locale.ROOT) + "-" + student1.getLogin();
 
             // Student1 should NOT be able to fetch or push before exam starts
             try (Git git = cloneRepository(instructor1.getLogin(), examProjectKey, student1RepoSlug)) {
@@ -1321,7 +1326,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             studentExamRepository.save(studentExam1);
 
             // Participation was created in setup by start-exercises
-            String student1RepoSlug = examProjectKey.toLowerCase() + "-" + student1.getLogin();
+            String student1RepoSlug = examProjectKey.toLowerCase(Locale.ROOT) + "-" + student1.getLogin();
 
             // Mock Docker for CI execution
             mockDockerClientForStudentBuild();
@@ -1363,7 +1368,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             studentExamRepository.save(studentExam1);
 
             // Participation was created in setup by start-exercises
-            String student1RepoSlug = examProjectKey.toLowerCase() + "-" + student1.getLogin();
+            String student1RepoSlug = examProjectKey.toLowerCase(Locale.ROOT) + "-" + student1.getLogin();
 
             // Student1 should be able to fetch but NOT push after grace period ends
             try (Git git = cloneRepository(student1.getLogin(), examProjectKey, student1RepoSlug)) {
@@ -1396,10 +1401,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             examRepository.save(exam);
 
             // Create an instructor exam test run, including its participation and repository.
-            StudentExam testRunConfiguration = new StudentExam();
-            testRunConfiguration.setExam(exam);
-            testRunConfiguration.setExercises(List.of(examProgrammingExercise));
-            testRunConfiguration.setWorkingTime(3600);
+            CreateTestRunDTO testRunConfiguration = new CreateTestRunDTO(exam.getId(), List.of(examProgrammingExercise.getId()), 3600);
             StudentExam instructorTestRunExam = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/test-runs", testRunConfiguration,
                     StudentExam.class, HttpStatus.OK);
 
@@ -1412,7 +1414,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             await().until(
                     () -> programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(examProgrammingExercise.getId(), instructor1.getLogin()).isPresent());
 
-            String instructorRepoSlug = examProjectKey.toLowerCase() + "-" + instructor1.getLogin();
+            String instructorRepoSlug = examProjectKey.toLowerCase(Locale.ROOT) + "-" + instructor1.getLogin();
 
             // Mock Docker for build execution
             mockDockerClientForStudentBuild();
@@ -1451,7 +1453,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             newExercise.setAllowOfflineIde(true);
             newExercise.setChannelName("test-team-token");
             newExercise.setMode(ExerciseMode.TEAM);
-            ProgrammingExercise exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+            ProgrammingExercise exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                    CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
 
             String projectKey = exercise.getProjectKey();
 
@@ -1463,17 +1466,17 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             team.setStudents(Set.of(student1));
             teamRepository.save(team);
 
-            String teamRepoSlug = projectKey.toLowerCase() + "-tokenteam";
+            String teamRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-tokenteam";
 
             // Team member (student1) starts the exercise via REST API
             userUtilService.changeUser(TEST_PREFIX + "student1");
             mockDockerClientForStudentBuild();
-            var participation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class,
+            var participation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipationDTO.class,
                     HttpStatus.CREATED);
 
             // Create a participation VCS access token for student1
-            localVCLocalCITestService.createParticipationVcsAccessToken(student1, participation.getId());
-            var participationToken = localVCLocalCITestService.getParticipationVcsAccessToken(student1, participation.getId());
+            localVCLocalCITestService.createParticipationVcsAccessToken(student1, participation.id());
+            var participationToken = localVCLocalCITestService.getParticipationVcsAccessToken(student1, participation.id());
             String token = participationToken.getVcsAccessToken();
 
             // Disable LDAP fallback so success can only come from participation token auth
@@ -1483,7 +1486,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String tokenRepoUri = buildRepositoryUriWithToken(student1.getLogin(), token, projectKey, teamRepoSlug);
             Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-team-token-clone-");
             clonedRepoPaths.add(clonePath);
-            try (Git git = Git.cloneRepository().setURI(tokenRepoUri).setDirectory(clonePath.toFile()).call()) {
+            try (Git git = Git.cloneRepository().setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI).setURI(tokenRepoUri).setDirectory(clonePath.toFile()).call()) {
                 assertThat(git).isNotNull();
 
                 // Verify fetch with the same token also works
@@ -1505,16 +1508,16 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-individual-token");
 
             String projectKey = exercise.getProjectKey();
-            String studentRepoSlug = projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1";
+            String studentRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + TEST_PREFIX + "student1";
 
             // Student1 starts participation
             userUtilService.changeUser(TEST_PREFIX + "student1");
             mockDockerClientForStudentBuild();
-            var participation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class,
+            var participation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipationDTO.class,
                     HttpStatus.CREATED);
 
             // Get the auto-created participation VCS access token for student1
-            var participationToken = localVCLocalCITestService.getParticipationVcsAccessToken(student1, participation.getId());
+            var participationToken = localVCLocalCITestService.getParticipationVcsAccessToken(student1, participation.id());
             String token = participationToken.getVcsAccessToken();
 
             // Disable LDAP fallback so success can only come from participation token auth
@@ -1524,7 +1527,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String tokenRepoUri = buildRepositoryUriWithToken(student1.getLogin(), token, projectKey, studentRepoSlug);
             Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-individual-token-clone-");
             clonedRepoPaths.add(clonePath);
-            try (Git git = Git.cloneRepository().setURI(tokenRepoUri).setDirectory(clonePath.toFile()).call()) {
+            try (Git git = Git.cloneRepository().setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI).setURI(tokenRepoUri).setDirectory(clonePath.toFile()).call()) {
                 assertThat(git).isNotNull();
                 assertThat(git.getRepository().getBranch()).isNotNull();
 
@@ -1549,8 +1552,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         void testCloneFetchPush_templateRepository_withRepositoryVcsAccessToken() throws Exception {
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-template-repo-token");
             String projectKey = exercise.getProjectKey();
-            String templateRepoSlug = projectKey.toLowerCase() + "-exercise";
-            String solutionRepoSlug = projectKey.toLowerCase() + "-solution";
+            String templateRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
+            String solutionRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-solution";
 
             // The instructor obtains a repository-scoped token for the template repository via the REST endpoint (the clone-dialog flow).
             String tokenUrl = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=TEMPLATE";
@@ -1566,7 +1569,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String templateTokenUri = buildRepositoryUriWithToken(instructor1.getLogin(), token, projectKey, templateRepoSlug);
             Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-template-token-clone-");
             clonedRepoPaths.add(clonePath);
-            try (Git git = Git.cloneRepository().setURI(templateTokenUri).setDirectory(clonePath.toFile()).call()) {
+            try (Git git = Git.cloneRepository().setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI).setURI(templateTokenUri).setDirectory(clonePath.toFile()).call()) {
                 assertThat(git).isNotNull();
                 assertThat(git.getRepository().getBranch()).isNotNull();
 
@@ -1582,8 +1585,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String solutionWithTemplateTokenUri = buildRepositoryUriWithToken(instructor1.getLogin(), token, projectKey, solutionRepoSlug);
             Path solutionClonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-solution-wrong-token-clone-");
             clonedRepoPaths.add(solutionClonePath);
-            assertThatThrownBy(() -> Git.cloneRepository().setURI(solutionWithTemplateTokenUri).setDirectory(solutionClonePath.toFile()).call())
-                    .isInstanceOf(TransportException.class).hasMessageContaining(NOT_AUTHORIZED);
+            assertThatThrownBy(() -> Git.cloneRepository().setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI).setURI(solutionWithTemplateTokenUri)
+                    .setDirectory(solutionClonePath.toFile()).call()).isInstanceOf(TransportException.class).hasMessageContaining(NOT_AUTHORIZED);
         }
 
         @Test
@@ -1591,7 +1594,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         void testRepositoryVcsAccessToken_authenticatesButStillEnforcesAuthorization() throws Exception {
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-tests-repo-token");
             String projectKey = exercise.getProjectKey();
-            String testsRepoSlug = projectKey.toLowerCase() + "-tests";
+            String testsRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-tests";
 
             // A tutor obtains a repository-scoped token for the tests repository via the REST endpoint (allowed for at least a tutor).
             userUtilService.changeUser(TEST_PREFIX + "tutor1");
@@ -1605,7 +1608,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String tutorTokenUri = buildRepositoryUriWithToken(tutor1.getLogin(), tutorToken, projectKey, testsRepoSlug);
             Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-tests-tutor-token-clone-");
             clonedRepoPaths.add(clonePath);
-            try (Git git = Git.cloneRepository().setURI(tutorTokenUri).setDirectory(clonePath.toFile()).call()) {
+            try (Git git = Git.cloneRepository().setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI).setURI(tutorTokenUri).setDirectory(clonePath.toFile()).call()) {
                 // The token authenticates the tutor, and a tutor is allowed to READ the tests repository.
                 assertThat(git).isNotNull();
                 git.fetch().setRemote(tutorTokenUri).setRefSpecs(new RefSpec("+refs/heads/*:refs/remotes/origin/*")).call();
@@ -1623,7 +1626,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         void testRepositoryVcsAccessToken_forgedTokenIsRejected() throws Exception {
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-forged-token");
             String projectKey = exercise.getProjectKey();
-            String templateRepoSlug = projectKey.toLowerCase() + "-exercise";
+            String templateRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
 
             // A syntactically valid but never-issued token (correct prefix and length) must not authenticate anyone.
             String forgedToken = "vcpat-" + "x".repeat(44);
@@ -1634,8 +1637,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String forgedTokenUri = buildRepositoryUriWithToken(instructor1.getLogin(), forgedToken, projectKey, templateRepoSlug);
             Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-forged-token-clone-");
             clonedRepoPaths.add(clonePath);
-            assertThatThrownBy(() -> Git.cloneRepository().setURI(forgedTokenUri).setDirectory(clonePath.toFile()).call()).isInstanceOf(TransportException.class)
-                    .hasMessageContaining(NOT_AUTHORIZED);
+            assertThatThrownBy(() -> Git.cloneRepository().setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI).setURI(forgedTokenUri).setDirectory(clonePath.toFile()).call())
+                    .isInstanceOf(TransportException.class).hasMessageContaining(NOT_AUTHORIZED);
         }
 
         @Test
@@ -1643,7 +1646,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         void testRepositoryVcsAccessToken_isBoundToOwningUser() throws Exception {
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-token-owner-binding");
             String projectKey = exercise.getProjectKey();
-            String templateRepoSlug = projectKey.toLowerCase() + "-exercise";
+            String templateRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
 
             // The instructor obtains their own repository-scoped token for the template repository.
             String tokenUrl = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=TEMPLATE";
@@ -1658,8 +1661,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String stolenTokenUri = buildRepositoryUriWithToken(editor1.getLogin(), instructorToken, projectKey, templateRepoSlug);
             Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-stolen-token-clone-");
             clonedRepoPaths.add(clonePath);
-            assertThatThrownBy(() -> Git.cloneRepository().setURI(stolenTokenUri).setDirectory(clonePath.toFile()).call()).isInstanceOf(TransportException.class)
-                    .hasMessageContaining(NOT_AUTHORIZED);
+            assertThatThrownBy(() -> Git.cloneRepository().setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI).setURI(stolenTokenUri).setDirectory(clonePath.toFile()).call())
+                    .isInstanceOf(TransportException.class).hasMessageContaining(NOT_AUTHORIZED);
         }
     }
 }

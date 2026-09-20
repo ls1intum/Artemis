@@ -5,12 +5,18 @@ import java.time.ZonedDateTime;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import tools.jackson.databind.annotation.JsonDeserialize;
+
+import de.tum.cit.aet.artemis.core.config.StrictIntegerDeserializer;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
+import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
@@ -34,13 +40,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseCreateDTO(
         // Basic info
-        @NotBlank @Size(max = 255) String title, @NotBlank @Size(max = 255) String shortName, @Size(max = 2000) String description, String semester,
-
-        // Group names (optional - will use defaults if not set)
-        String studentGroupName, String teachingAssistantGroupName, String editorGroupName, String instructorGroupName,
+        @NotBlank @Size(max = 255) String title, @NotBlank @Size(max = 255) String shortName, @Size(max = 2000) String description, @NotBlank @Size(max = 25) String semester,
 
         // Dates
-        ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime enrollmentStartDate, ZonedDateTime enrollmentEndDate, ZonedDateTime unenrollmentEndDate,
+        @NotNull ZonedDateTime startDate, @NotNull ZonedDateTime endDate, ZonedDateTime enrollmentStartDate, ZonedDateTime enrollmentEndDate, ZonedDateTime unenrollmentEndDate,
 
         // Configuration flags
         boolean testCourse, Boolean onlineCourse, Language language, ProgrammingLanguage defaultProgrammingLanguage,
@@ -53,8 +56,21 @@ public record CourseCreateDTO(
         String color, Boolean enrollmentEnabled, @Size(max = 2000) String enrollmentConfirmationMessage, boolean unenrollmentEnabled,
 
         // Course features
-        boolean learningPathsEnabled, Integer presentationScore, Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores, boolean restrictedAthenaModulesAccess,
-        String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration) {
+        boolean learningPathsEnabled, @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
+        @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores, String timeZone,
+        CourseInformationSharingConfiguration courseInformationSharingConfiguration,
+
+        // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained).
+        // Boxed so an omitted value fails safe to grade-relevant (the longer retention), not to earlier deletion.
+        Boolean gradeRelevant,
+
+        // Atlas auto-orchestration configuration (per-course): kill switch plus nullable overrides. Creating a course is
+        // admin-only, so the same admin-gated settings the update form exposes are accepted here; without them, enabling
+        // the pipeline on the create form would be silently dropped and only take effect after a second (edit) save.
+        // The strict deserializer matches CourseUpdateDTO: @Min(1) alone would not reject a fractional value, because the
+        // default Integer deserializer truncates it (10.5 -> 10) before bean validation runs.
+        boolean autoOrchestratorEnabled, @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer debounceWindowSecondsOverride,
+        @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride) {
 
     /**
      * Creates a new Course entity from this DTO.
@@ -76,12 +92,6 @@ public record CourseCreateDTO(
         course.setShortName(shortName);
         course.setDescription(description);
         course.setSemester(semester);
-
-        // Group names
-        course.setStudentGroupName(studentGroupName);
-        course.setTeachingAssistantGroupName(teachingAssistantGroupName);
-        course.setEditorGroupName(editorGroupName);
-        course.setInstructorGroupName(instructorGroupName);
 
         // Dates
         course.setStartDate(startDate);
@@ -115,9 +125,22 @@ public record CourseCreateDTO(
         course.setPresentationScore(presentationScore);
         course.setMaxPoints(maxPoints);
         course.setAccuracyOfScores(accuracyOfScores);
-        course.setRestrictedAthenaModulesAccess(restrictedAthenaModulesAccess);
+        // Start every course with a disabled Athena configuration; instructors turn the features on from the course
+        // overview or the onboarding wizard via CourseAthenaConfigResource, which is the only writer of these flags.
+        course.setAthenaConfig(new CourseAthenaConfig());
         course.setTimeZone(timeZone);
         course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+
+        // Attach the course configuration holding the grade-relevance flag (drives the student-data retention period)
+        // and the Atlas auto-orchestration settings.
+        // Fail safe to grade-relevant (longer retention) when the client omits the flag.
+        CourseConfiguration configuration = new CourseConfiguration();
+        configuration.setGradeRelevant(gradeRelevant == null || gradeRelevant);
+        configuration.setAutoOrchestratorEnabled(autoOrchestratorEnabled);
+        configuration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
+        configuration.setMaxDailyOrchestrationOverride(maxDailyOrchestrationOverride);
+        configuration.setCourse(course);
+        course.setCourseConfiguration(configuration);
 
         return course;
     }

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -70,7 +71,7 @@ public class BinaryFileExtensionConfiguration {
      * @return true if the file is considered a binary file based on the above extensions, false otherwise
      */
     public static boolean isBinaryFile(String filePath) {
-        String lowerCasePath = filePath.toLowerCase();
+        String lowerCasePath = filePath.toLowerCase(Locale.ROOT);
         return binaryFileExtensions.stream().anyMatch(lowerCasePath::endsWith);
     }
 }

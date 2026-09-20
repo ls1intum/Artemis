@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
@@ -46,6 +47,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 @Validated
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("feedback/student-ratings")
 @RestController
 @RequestMapping("api/assessment/")
 public class RatingResource {
@@ -78,7 +80,7 @@ public class RatingResource {
     @GetMapping("results/{resultId}/rating")
     @EnforceAtLeastStudent
     public ResponseEntity<Optional<Integer>> getRatingForResult(@PathVariable Long resultId) {
-        if (!authCheckService.isAdmin()) {
+        if (!authCheckService.isCurrentUserAdminAccessEnabled()) {
             checkIfUserIsOwnerOfSubmissionElseThrow(resultId);
         }
         Optional<Rating> rating = ratingService.findRatingByResultId(resultId);
@@ -125,13 +127,13 @@ public class RatingResource {
     }
 
     /**
-     * GET /course/:courseId/rating : Get paginated ratings for the "courseId" Course
+     * GET /courses/:courseId/rating : Get paginated ratings for the "courseId" Course
      *
      * @param courseId - Id of the course that the ratings are fetched for
      * @param pageable - Pagination information (page, size, sort)
      * @return List of RatingListItemDTO with pagination info in headers
      */
-    @GetMapping({ "courses/{courseId}/rating", "course/{courseId}/rating" })
+    @GetMapping("courses/{courseId}/rating")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<RatingListItemDTO>> getRatingForInstructorDashboard(@PathVariable Long courseId, Pageable pageable) {
         Page<RatingListItemDTO> ratings = ratingService.getAllRatingsForDashboard(courseId, pageable);

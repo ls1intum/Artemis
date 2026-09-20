@@ -23,6 +23,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.GraphType;
 import de.tum.cit.aet.artemis.admin.domain.StatisticsView;
+import de.tum.cit.aet.artemis.admin.dto.ActiveUserLastSubmissionDTO;
 import de.tum.cit.aet.artemis.admin.dto.ActiveUserWindowCountsDTO;
 import de.tum.cit.aet.artemis.admin.dto.CourseStatisticsAverageScore;
 import de.tum.cit.aet.artemis.admin.dto.StatisticsEntry;
@@ -94,7 +95,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
                 LEFT JOIN p.submissions submission
             WHERE submission.submissionDate >= :startDate
                 AND submission.submissionDate <= :endDate
-                AND p.student.login NOT LIKE '%test%'
+                AND p.student.isTestUser = FALSE
                 AND (submission.participation.exercise.exerciseGroup IS NOT NULL
                     OR EXISTS (SELECT c FROM Course c WHERE submission.participation.exercise.course.testCourse = FALSE)
                 )
@@ -103,30 +104,32 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
     List<StatisticsEntry> getActiveUsers(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     /**
-     * Return active user counts for multiple rolling windows in a single pass.
+     * Return the most recent submission date of every student who submitted inside the given window.
+     * <p>
+     * The rolling 1/7/14/30 day active user windows are derived from this result in
+     * {@link ActiveUserWindowCountsDTO#of}. Counting the windows in SQL instead required four
+     * {@code COUNT(DISTINCT CASE WHEN …)} expressions and a join to {@code jhi_user} to evaluate the test user flag,
+     * which made the MySQL optimizer stop driving from the selective {@code submission_date} range and examine every
+     * user's whole submission history. Neither the aggregation nor the {@code jhi_user} join may be reintroduced here:
+     * test users are filtered out in Java via {@code UserRepository#findAllTestUserIds()}.
      *
      * @param now            upper bound for submissions considered active
-     * @param nowMinus1Day   lower bound for 1-day window
-     * @param nowMinus7Days  lower bound for 7-day window
-     * @param nowMinus14Days lower bound for 14-day window
-     * @param nowMinus30Days lower bound for 30-day window
-     * @return aggregated active user counts for multiple windows
+     * @param nowMinus30Days lower bound for submissions considered active, i.e. the widest window
+     * @return the latest submission date per active student
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.admin.dto.ActiveUserWindowCountsDTO(
-                COUNT(DISTINCT CASE WHEN s.submissionDate >= :nowMinus1Day THEN student.id END),
-                COUNT(DISTINCT CASE WHEN s.submissionDate >= :nowMinus7Days THEN student.id END),
-                COUNT(DISTINCT CASE WHEN s.submissionDate >= :nowMinus14Days THEN student.id END),
-                COUNT(DISTINCT CASE WHEN s.submissionDate >= :nowMinus30Days THEN student.id END)
+            SELECT new de.tum.cit.aet.artemis.admin.dto.ActiveUserLastSubmissionDTO(
+                p.student.id,
+                MAX(s.submissionDate)
             )
             FROM Submission s
                 JOIN StudentParticipation p ON p.id = s.participation.id
-                JOIN p.student student
-            WHERE s.submissionDate BETWEEN :nowMinus30Days AND :now
-                AND LOWER(student.login) NOT LIKE '%test%'
+            WHERE s.submissionDate >= :nowMinus30Days
+                AND s.submissionDate <= :now
+                AND p.student.id IS NOT NULL
+            GROUP BY p.student.id
             """)
-    ActiveUserWindowCountsDTO countActiveUsersByWindows(@Param("now") ZonedDateTime now, @Param("nowMinus1Day") ZonedDateTime nowMinus1Day,
-            @Param("nowMinus7Days") ZonedDateTime nowMinus7Days, @Param("nowMinus14Days") ZonedDateTime nowMinus14Days, @Param("nowMinus30Days") ZonedDateTime nowMinus30Days);
+    List<ActiveUserLastSubmissionDTO> findLastSubmissionPerActiveUser(@Param("now") ZonedDateTime now, @Param("nowMinus30Days") ZonedDateTime nowMinus30Days);
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.admin.dto.StatisticsEntry(
@@ -137,7 +140,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
                 LEFT JOIN p.submissions submission
             WHERE submission.submissionDate >= :startDate
                 AND submission.submissionDate <= :endDate
-                AND p.student.login NOT LIKE '%test%'
+                AND p.student.isTestUser = FALSE
                 AND p.exercise.id IN :exerciseIds
             ORDER BY submission.submissionDate ASC
             """)
@@ -153,7 +156,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
                 LEFT JOIN p.submissions submission
             WHERE submission.submissionDate >= :startDate
                 AND submission.submissionDate <= :endDate
-                AND p.student.login NOT LIKE '%test%'
+                AND p.student.isTestUser = FALSE
             AND p.exercise.id = :exerciseId
             ORDER BY submission.submissionDate ASC
             """)
@@ -220,7 +223,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             FROM User u
                 LEFT JOIN PersistentAuditEvent p ON u.login = p.principal
             WHERE p.auditEventType = 'AUTHENTICATION_SUCCESS'
-                AND u.login NOT LIKE '%test%'
+                AND u.isTestUser = FALSE
                 AND p.auditEventDate >= :startDate AND p.auditEventDate <= :endDate
             ORDER BY p.auditEventDate ASC
             """)
@@ -319,7 +322,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
                 AND (
                     r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL
                     OR r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
-                ) AND r.assessor.login NOT LIKE '%test%'
+                ) AND r.assessor.isTestUser = FALSE
                 AND (
                     r.submission.participation.exercise.exerciseGroup IS NOT NULL
                     OR EXISTS (SELECT c FROM Course c WHERE r.submission.participation.exercise.course.testCourse = FALSE)
@@ -338,8 +341,9 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
                 AND (
                     r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL
                     OR r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
-                ) AND r.assessor.login NOT LIKE '%test%'
-                AND r.submission.participation.exercise.id IN :exerciseIds
+                ) AND r.assessor.isTestUser = FALSE
+                AND r.exerciseId IN :exerciseIds
+                AND (r.exampleResult IS NULL OR r.exampleResult = FALSE)
             """)
     List<StatisticsEntry> getActiveTutorsForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
             @Param("exerciseIds") List<Long> exerciseIds);
@@ -355,8 +359,9 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
                 AND (
                     r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL
                     OR r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
-                ) AND r.assessor.login NOT LIKE '%test%'
-                AND r.submission.participation.exercise.id = :exerciseId
+                ) AND r.assessor.isTestUser = FALSE
+                AND r.exerciseId = :exerciseId
+                AND (r.exampleResult IS NULL OR r.exampleResult = FALSE)
             """)
     List<StatisticsEntry> getActiveTutorsForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") long exerciseId);
 
@@ -383,7 +388,8 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             FROM Result r
             WHERE r.completionDate >= :startDate
                 AND r.completionDate <= :endDate
-                AND r.submission.participation.exercise.id IN :exerciseIds
+                AND r.exerciseId IN :exerciseIds
+                AND (r.exampleResult IS NULL OR r.exampleResult = FALSE)
             GROUP BY r.completionDate
             ORDER BY r.completionDate
             """)
@@ -397,7 +403,8 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             FROM Result r
             WHERE r.completionDate >= :startDate
                 AND r.completionDate <= :endDate
-                AND r.submission.participation.exercise.id = :exerciseId
+                AND r.exerciseId = :exerciseId
+                AND (r.exampleResult IS NULL OR r.exampleResult = FALSE)
             GROUP BY r.completionDate
             ORDER BY r.completionDate
             """)
@@ -405,7 +412,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.admin.dto.StatisticsEntry(
-                r.completionDate, SUM(SIZE(r.feedbacks))
+                r.completionDate, SUM(SIZE(r.feedbacks) + SIZE(r.testCaseFeedbacks) + SIZE(r.scaFeedbacks))
             )
             FROM Result r
             WHERE r.completionDate >= :startDate
@@ -420,12 +427,13 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.admin.dto.StatisticsEntry(
-                r.completionDate, SUM(SIZE(r.feedbacks))
+                r.completionDate, SUM(SIZE(r.feedbacks) + SIZE(r.testCaseFeedbacks) + SIZE(r.scaFeedbacks))
             )
             FROM Result r
             WHERE r.completionDate >= :startDate
                 AND r.completionDate <= :endDate
-                AND r.submission.participation.exercise.id IN :exerciseIds
+                AND r.exerciseId IN :exerciseIds
+                AND (r.exampleResult IS NULL OR r.exampleResult = FALSE)
             GROUP BY r.completionDate
             ORDER BY r.completionDate
             """)
@@ -434,12 +442,13 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.admin.dto.StatisticsEntry(
-                r.completionDate, SUM(SIZE(r.feedbacks))
+                r.completionDate, SUM(SIZE(r.feedbacks) + SIZE(r.testCaseFeedbacks) + SIZE(r.scaFeedbacks))
             )
             FROM Result r
             WHERE r.completionDate >= :startDate
                 AND r.completionDate <= :endDate
-                AND r.submission.participation.exercise.id = :exerciseId
+                AND r.exerciseId = :exerciseId
+                AND (r.exampleResult IS NULL OR r.exampleResult = FALSE)
             GROUP BY r.completionDate
             ORDER BY r.completionDate
             """)

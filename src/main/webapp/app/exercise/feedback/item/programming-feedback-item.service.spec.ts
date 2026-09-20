@@ -3,7 +3,14 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { ProgrammingFeedbackItemService } from 'app/exercise/feedback/item/programming-feedback-item.service';
-import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
+import {
+    FEEDBACK_SUGGESTION_IDENTIFIER,
+    Feedback,
+    FeedbackType,
+    NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
+    STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
+    SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
+} from 'app/assessment/shared/entities/feedback.model';
 import { TranslateService } from '@ngx-translate/core';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
@@ -181,6 +188,42 @@ describe('ProgrammingFeedbackItemService', () => {
         };
 
         expect(service.create([feedback], true)).toEqual([expected]);
+    });
+
+    it('should recover ranged code references from legacy non-graded feedback', () => {
+        const feedback = {
+            id: 1,
+            type: FeedbackType.AUTOMATIC,
+            text: `${NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER}File src/main/java/Example.java at lines 11-13`,
+            detailText: 'The loop condition is incorrect.',
+            reference: 'file:src/main/java/Example.java_line:11',
+        } as Feedback;
+
+        const item = service.create([feedback], false)[0];
+
+        expect(item.title).toBe('File src/main/java/Example.java at lines 11-13');
+        expect(item.codeReference).toEqual({
+            filePath: 'src/main/java/Example.java',
+            line: 11,
+            lineEnd: 13,
+        });
+    });
+
+    it('should not recover ranged code references from regular feedback suggestion titles', () => {
+        const feedback = {
+            id: 1,
+            type: FeedbackType.MANUAL,
+            text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Review the loop at lines 11-13`,
+            detailText: 'The loop condition is incorrect.',
+            reference: 'file:src/main/java/Example.java_line:11',
+        } as Feedback;
+
+        const item = service.create([feedback], false)[0];
+
+        expect(item.codeReference).toEqual({
+            filePath: 'src/main/java/Example.java',
+            line: 11,
+        });
     });
 
     it('should handle not executed tests', () => {

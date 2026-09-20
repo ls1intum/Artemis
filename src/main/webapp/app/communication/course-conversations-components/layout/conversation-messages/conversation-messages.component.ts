@@ -49,6 +49,18 @@ interface PostGroup {
     posts: Post[];
 }
 
+/**
+ * Returns a new {@link Post} reference differing only in `isConsecutive`, so grouping can flag a post without touching
+ * the cached one. Built with {@link Post.withSameValues} rather than a copy: this runs for every post in the channel on
+ * every regroup (new message, reaction, edit, load-more), and the author, reactions and answers must keep their identity
+ * so the rendered children are not re-created.
+ */
+function withConsecutiveFlag(post: Post, isConsecutive: boolean): Post {
+    const flagged = Post.withSameValues(post);
+    flagged.isConsecutive = isConsecutive;
+    return flagged;
+}
+
 @Component({
     selector: 'jhi-conversation-messages',
     templateUrl: './conversation-messages.component.html',
@@ -87,7 +99,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     readonly openThread = output<Post>();
 
     readonly messages = viewChildren<PostingThreadComponent>('postingThread');
-    readonly content = viewChild.required<ElementRef>('container');
+    // Intentionally NOT `viewChild.required`: `#container` lives inside the template's `@if (course())`,
+    // and the effects created in the constructor run before view queries resolve (see the note above them).
+    // A required query throws NG0951 in both cases, so this must stay optional and every read guarded.
+    readonly content = viewChild<ElementRef>('container');
 
     readonly course = input<Course>();
     showOnlyPinned = input<boolean>(false);
@@ -138,6 +153,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     accountService = inject(AccountService);
 
     constructor() {
+        // Reviewed for the effect()-debt cleanup (P2.2) and intentionally kept as effect()s: the first three react to
+        // rendered view children / focus inputs to perform DOM side effects (scroll, highlight, requestAnimationFrame)
+        // — exactly what effect() is for. The last one re-runs the imperative setPosts() (which filters, reverses,
+        // re-groups, and may fetch forwarded messages over HTTP, and is also driven from the metis subscription), so it
+        // cannot be expressed as a computed().
         effect(() => {
             const focusPostIdValue = this.focusPostId();
             const openThreadOnFocusValue = this.openThreadOnFocus();
@@ -256,9 +276,13 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private mutationObserver: MutationObserver | undefined;
 
     ngAfterViewInit() {
-        this.content().nativeElement.addEventListener('scroll', this.scrollListener);
+        const el = this.content()?.nativeElement;
+        if (!el) {
+            // No course set, so `@if (course())` kept the container out of the DOM; nothing to observe.
+            return;
+        }
+        el.addEventListener('scroll', this.scrollListener);
 
-        const el = this.content().nativeElement;
         this.mutationObserver = new MutationObserver(() => {
             this.findElementsAtScrollPosition();
         });
@@ -361,7 +385,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         sortedPosts.forEach((post) => {
             if (!currentGroup) {
                 // Start new group if none exists.
-                currentGroup = { author: post.author, posts: [{ ...post, isConsecutive: false }] };
+                currentGroup = { author: post.author, posts: [withConsecutiveFlag(post, false)] };
                 return;
             }
 
@@ -375,10 +399,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             }
 
             if (this.isAuthorEqual(currentGroup, { author: post.author, posts: [] }) && timeDiff < 5 && timeDiff >= 0) {
-                currentGroup.posts.push({ ...post, isConsecutive: true });
+                currentGroup.posts.push(withConsecutiveFlag(post, true));
             } else {
                 computedGroups.push(currentGroup);
-                currentGroup = { author: post.author, posts: [{ ...post, isConsecutive: false }] };
+                currentGroup = { author: post.author, posts: [withConsecutiveFlag(post, false)] };
             }
         });
         if (currentGroup) {
@@ -592,7 +616,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         } else if (!this.canStartSaving) {
             this.canStartSaving = true;
         }
-        this.content().nativeElement.scrollTop = this.content().nativeElement.scrollTop + addBuffer;
+        const el = this.content()?.nativeElement;
+        if (el) {
+            el.scrollTop = el.scrollTop + addBuffer;
+        }
     }
 
     public commandMetisToFetchPosts(forceUpdate = false) {
@@ -643,7 +670,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     handleScrollOnNewMessage = () => {
-        if ((this.posts().length > 0 && this.content().nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
+        const el = this.content()?.nativeElement;
+        if (!el) {
+            return;
+        }
+        if ((this.posts().length > 0 && el.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
             this.scrollToBottomOfMessages();
         }
     };
@@ -651,7 +682,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     scrollToBottomOfMessages() {
         // Use setTimeout to ensure the scroll happens after the new message is rendered
         requestAnimationFrame(() => {
-            this.content().nativeElement.scrollTop = this.content().nativeElement.scrollHeight;
+            const el = this.content()?.nativeElement;
+            if (el) {
+                el.scrollTop = el.scrollHeight;
+            }
         });
     }
 
@@ -687,7 +721,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.fetchNextPage();
         } else {
             // We scroll to the element with a slight buffer to ensure its fully visible (-10)
-            this.content().nativeElement.scrollTop = Math.max(0, element.elementRef.nativeElement.offsetTop - 10);
+            const containerEl = this.content()?.nativeElement;
+            if (containerEl) {
+                containerEl.scrollTop = Math.max(0, element.elementRef.nativeElement.offsetTop - 10);
+            }
             this.canStartSaving = true;
             if (isOpenThread) {
                 this.openThread.emit(element.post());
@@ -706,7 +743,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     findElementsAtScrollPosition() {
         const messageArray = this.messages();
-        const containerRect = this.content().nativeElement.getBoundingClientRect();
+        const containerEl = this.content()?.nativeElement;
+        if (!containerEl) {
+            return;
+        }
+        const containerRect = containerEl.getBoundingClientRect();
         const visibleMessages = [];
         for (const message of messageArray) {
             if (!message.elementRef?.nativeElement || !message.post()?.id) continue;
@@ -766,7 +807,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return;
         }
 
-        const containerElement = this.content().nativeElement;
+        const containerElement = this.content()?.nativeElement;
+        if (!containerElement) {
+            return;
+        }
         const { postRect, containerRect } = rects;
 
         const isVisible = postRect.top >= containerRect.top && postRect.bottom <= containerRect.bottom;

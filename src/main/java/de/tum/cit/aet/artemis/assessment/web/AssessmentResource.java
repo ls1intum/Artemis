@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.assessment.web;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -102,7 +103,7 @@ public abstract class AssessmentResource {
      * @return result after saving/submitting modeling assessment
      */
     public ResponseEntity<Result> saveAssessment(Submission submission, boolean submit, List<Feedback> feedbackList, Long resultId, String assessmentNote) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -130,7 +131,7 @@ public abstract class AssessmentResource {
      * @return result after saving example assessment
      */
     protected Result saveExampleAssessment(long exampleSubmissionId, List<Feedback> feedbacks) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         final var exampleSubmission = exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmissionId);
         Submission submission = exampleSubmission.getSubmission();
         Exercise exercise = exampleSubmission.getExercise();
@@ -157,7 +158,7 @@ public abstract class AssessmentResource {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         final var exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
 
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         var isAtLeastEditor = authCheckService.isAtLeastEditorForExercise(exercise, user);
         var isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
         // It is allowed to get the example assessment, if the user is at least an editor or
@@ -202,24 +203,61 @@ public abstract class AssessmentResource {
         }
     }
 
-    protected ResponseEntity<Void> cancelAssessment(long submissionId) { // TODO: Add correction round !
-        log.debug("REST request to cancel assessment of submission: {}", submissionId);
+    protected ResponseEntity<Void> cancelAssessment(long submissionId, @Nullable Long resultId) {
+        log.debug("REST request to cancel assessment of submission {} and result {}", submissionId, resultId);
         Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
-        if (submission.getLatestResult() == null) {
+        // Release the result the caller named. A submission can hold one result per correction round, and the caller is
+        // the only one that knows which round its button belongs to: resolving it here always released the newest round,
+        // so "cancel assessment of correction round 1" released round 2 instead and round 1 stayed locked (#13396).
+        Result resultToCancel;
+        if (resultId != null) {
+            resultToCancel = submission.getManualResultsById(resultId);
+            if (resultToCancel == null) {
+                throw new BadRequestAlertException("The result does not belong to this submission or is not a manual assessment", "result", "resultNotFound");
+            }
+            // Cancelling releases a draft assessment, so a finished correction round is not a valid target here.
+            //
+            // The check is deliberately scoped to this branch. Its job is to make sure the new parameter cannot reach a
+            // result that was unreachable before: without a result id only the newest manual result is ever released,
+            // so naming an id is the only way to reach an older, already submitted correction round. Releasing the
+            // newest manual result even when it carries a completion date is long-standing behaviour that
+            // cancelOwnAssessmentAsTutor and cancelAssessmentOfOtherTutorAsInstructor both assert, and changing it is a
+            // product decision that does not belong in a hotfix.
+            if (resultToCancel.getCompletionDate() != null) {
+                throw new BadRequestAlertException("The assessment of this correction round is already submitted and cannot be cancelled", "result", "resultAlreadySubmitted");
+            }
+        }
+        else {
+            // Without a result id the newest correction round is released, which is what every caller got before the
+            // parameter existed.
+            //
+            // Deliberately the newest *manual* result rather than the highest id. In a normal lifecycle those are the
+            // same, because an Athena result is only created by a student's preliminary feedback request and never by
+            // the tutor-facing feedback suggestions, so it cannot follow a manual assessment. It can differ in an
+            // exercise that allows preliminary feedback requests with no due date, where a student may request AI
+            // feedback after a tutor has already assessed. Resolving by highest id would then pick a result with no
+            // assessor and the authorization check below would dereference null.
+            resultToCancel = submission.getLatestManualResult();
+        }
+        // The permission decision falls back to the latest result: a submission whose only result is automatic has nothing
+        // to cancel, but another tutor still has to be rejected rather than silently told everything is fine.
+        Result resultForAuthorization = resultToCancel != null ? resultToCancel : submission.getLatestResult();
+        if (resultForAuthorization == null) {
             // if there is no result everything is fine
             return ResponseEntity.ok().build();
         }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(exercise, user);
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        if (!(isAtLeastInstructor || userRepository.getUser().getId().equals(submission.getLatestResult().getAssessor().getId()))) {
+        boolean isAssessorOfResult = resultForAuthorization.getAssessor() != null && user.getId().equals(resultForAuthorization.getAssessor().getId());
+        if (!(isAtLeastInstructor || isAssessorOfResult)) {
             // tutors cannot cancel the assessment of other tutors (only instructors can)
             throw new AccessForbiddenException();
         }
-        assessmentService.cancelAssessmentOfSubmission(submission);
+        assessmentService.cancelAssessmentOfSubmission(submission, resultToCancel);
         return ResponseEntity.ok().build();
     }
 

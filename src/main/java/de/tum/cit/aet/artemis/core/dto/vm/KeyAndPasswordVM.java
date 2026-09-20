@@ -1,30 +1,24 @@
 package de.tum.cit.aet.artemis.core.dto.vm;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
+
 /**
- * View Model object for storing the user's key and password.
+ * View Model object for storing the user's key id, key secret and password.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class KeyAndPasswordVM {
+public record KeyAndPasswordVM(String keyId, String keySecret, String newPassword, @Nullable CredentialRevocationChoiceDTO revokeCredentials) {
 
-    private String key;
-
-    private String newPassword;
-
-    public String getKey() {
-        return key;
+    public CredentialRevocationChoiceDTO revokeCredentialsOrAll() {
+        return revokeCredentials != null ? revokeCredentials : new CredentialRevocationChoiceDTO(true, true, true);
     }
 
-    public void setKey(String key) {
-        this.key = key;
-    }
-
-    public String getNewPassword() {
-        return newPassword;
-    }
-
-    public void setNewPassword(String newPassword) {
-        this.newPassword = newPassword;
+    @Override
+    public @NonNull String toString() {
+        return "KeyAndPasswordVM[" + "keyId='" + keyId + '\'' + ", keySecret=***" + ", newPassword=***" + ", revokeCredentials=" + revokeCredentials + ']';
     }
 }

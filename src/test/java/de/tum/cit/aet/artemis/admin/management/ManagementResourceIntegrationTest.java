@@ -21,8 +21,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.admin.domain.ApplicationAuditEvent;
 import de.tum.cit.aet.artemis.admin.domain.PersistentAuditEvent;
+import de.tum.cit.aet.artemis.admin.domain.SecurityAuditEvent;
+import de.tum.cit.aet.artemis.admin.repository.ApplicationAuditEventRepository;
 import de.tum.cit.aet.artemis.admin.repository.PersistenceAuditEventRepository;
+import de.tum.cit.aet.artemis.admin.repository.SecurityAuditEventRepository;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -43,6 +49,12 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
     private PersistenceAuditEventRepository persistenceAuditEventRepository;
 
     @Autowired
+    private SecurityAuditEventRepository securityAuditEventRepository;
+
+    @Autowired
+    private ApplicationAuditEventRepository applicationAuditEventRepository;
+
+    @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Autowired
@@ -55,6 +67,10 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
     private ParticipationUtilService participationUtilService;
 
     private PersistentAuditEvent persAuditEvent;
+
+    private SecurityAuditEvent securityAuditEvent;
+
+    private ApplicationAuditEvent applicationAuditEvent;
 
     @BeforeEach
     void initTestCase() {
@@ -75,6 +91,22 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         persAuditEvent2.setAuditEventType("tt");
         persAuditEvent2.setData(data);
         persistenceAuditEventRepository.save(persAuditEvent2);
+
+        securityAuditEventRepository.deleteAll();
+        securityAuditEvent = new SecurityAuditEvent();
+        securityAuditEvent.setPrincipal(TEST_PREFIX + "securityprincipal");
+        securityAuditEvent.setAuditEventDate(Instant.now());
+        securityAuditEvent.setAuditEventType(AuditEventConstants.PASSWORD_RESET_COMPLETED);
+        securityAuditEvent.setData(data);
+        securityAuditEvent = securityAuditEventRepository.save(securityAuditEvent);
+
+        applicationAuditEventRepository.deleteAll();
+        applicationAuditEvent = new ApplicationAuditEvent();
+        applicationAuditEvent.setPrincipal(TEST_PREFIX + "applicationprincipal");
+        applicationAuditEvent.setAuditEventDate(Instant.now());
+        applicationAuditEvent.setAuditEventType(Constants.DELETE_EXERCISE);
+        applicationAuditEvent.setData(data);
+        applicationAuditEvent = applicationAuditEventRepository.save(applicationAuditEvent);
     }
 
     @AfterEach
@@ -86,7 +118,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
     @WithMockUser(username = "admin", roles = "ADMIN")
     void toggleFeatures() throws Exception {
         // This setup only needed in this test case
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         var programmingExercise1 = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         var programmingExercise2 = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusHours(2), course);
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise1, "admin");
@@ -103,13 +135,12 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
                 HttpStatus.OK);
         request.put("/api/exercise/participations/" + participation.getId() + "/cleanup-build-plan", null, HttpStatus.OK);
         request.postWithoutLocation("/api/programming/participations/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.OK, null);
-        programmingExercise2.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise2.getBuildConfig()));
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
         request.delete("/api/programming/programming-exercises/" + programmingExercise2.getId(), HttpStatus.OK, deleteProgrammingExerciseParamsFalse());
 
         var features = new HashMap<Feature, Boolean>();
         features.put(Feature.ProgrammingExercises, false);
-        request.put("/api/core/admin/feature-toggle", features, HttpStatus.OK);
+        request.put("/api/admin/feature-toggle", features, HttpStatus.OK);
         verify(this.websocketMessagingService).sendMessage("/topic/management/feature-toggles", featureToggleService.enabledFeatures());
         assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).as("Feature was disabled").isFalse();
 
@@ -127,7 +158,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void getAllAuditEvents() throws Exception {
-        var auditEvents = request.getList("/api/core/admin/audits", HttpStatus.OK, PersistentAuditEvent.class);
+        var auditEvents = request.getList("/api/admin/audits", HttpStatus.OK, PersistentAuditEvent.class);
         assertThat(auditEvents).hasSize(2);
     }
 
@@ -136,7 +167,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
     void getAllAuditEventsByDate() throws Exception {
         String pastDate = LocalDate.now().minusDays(1).toString();
         String currentDate = LocalDate.now().toString();
-        var auditEvents = request.getList("/api/core/admin/audits?fromDate=" + pastDate + "&toDate=" + currentDate, HttpStatus.OK, PersistentAuditEvent.class);
+        var auditEvents = request.getList("/api/admin/audits?fromDate=" + pastDate + "&toDate=" + currentDate, HttpStatus.OK, PersistentAuditEvent.class);
         assertThat(auditEvents).hasSize(1);
         var auditEvent = auditEvents.getFirst();
         var auditEventsInDb = persistenceAuditEventRepository.findAllWithDataByAuditEventDateBetween(Instant.now().minus(2, ChronoUnit.DAYS), Instant.now(), Pageable.unpaged());
@@ -146,8 +177,56 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void getAllAuditEventsScopedToEachLogType() throws Exception {
+        // each tab in the admin UI queries one log; a query must never return another log's rows
+        var generalEvents = request.getList("/api/admin/audits?logType=GENERAL", HttpStatus.OK, PersistentAuditEvent.class);
+        assertThat(generalEvents).extracting(PersistentAuditEvent::getPrincipal).containsExactlyInAnyOrder(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+
+        var securityEvents = request.getList("/api/admin/audits?logType=SECURITY", HttpStatus.OK, PersistentAuditEvent.class);
+        assertThat(securityEvents).extracting(PersistentAuditEvent::getPrincipal).containsExactly(TEST_PREFIX + "securityprincipal");
+
+        var applicationEvents = request.getList("/api/admin/audits?logType=APPLICATION", HttpStatus.OK, PersistentAuditEvent.class);
+        assertThat(applicationEvents).extracting(PersistentAuditEvent::getPrincipal).containsExactly(TEST_PREFIX + "applicationprincipal");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void getAuditEventByIdIsScopedToTheRequestedLogType() throws Exception {
+        var securityEvent = request.get("/api/admin/audits/" + securityAuditEvent.getId() + "?logType=SECURITY", HttpStatus.OK, PersistentAuditEvent.class);
+        assertThat(securityEvent.getPrincipal()).isEqualTo(TEST_PREFIX + "securityprincipal");
+
+        var applicationEvent = request.get("/api/admin/audits/" + applicationAuditEvent.getId() + "?logType=APPLICATION", HttpStatus.OK, PersistentAuditEvent.class);
+        assertThat(applicationEvent.getPrincipal()).isEqualTo(TEST_PREFIX + "applicationprincipal");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void getAuditEventByIdDoesNotFallBackToAnotherLog() throws Exception {
+        // Each log has its own id sequence, so the same id can exist in more than one of them. Asking for a security
+        // event's id under the application log must therefore never answer with the security event: either that id does
+        // not exist in the application log (404), or it identifies a different, unrelated application event (200).
+        Long securityEventId = securityAuditEvent.getId();
+        boolean idAlsoExistsInApplicationLog = applicationAuditEventRepository.findById(securityEventId).isPresent();
+
+        if (idAlsoExistsInApplicationLog) {
+            var event = request.get("/api/admin/audits/" + securityEventId + "?logType=APPLICATION", HttpStatus.OK, PersistentAuditEvent.class);
+            assertThat(event.getPrincipal()).isNotEqualTo(TEST_PREFIX + "securityprincipal");
+        }
+        else {
+            request.get("/api/admin/audits/" + securityEventId + "?logType=APPLICATION", HttpStatus.NOT_FOUND, PersistentAuditEvent.class);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void getAllAuditEventsWithUnknownLogTypeIsRejected() throws Exception {
+        request.getList("/api/admin/audits?logType=DOES_NOT_EXIST", HttpStatus.BAD_REQUEST, PersistentAuditEvent.class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void getAuditEvent() throws Exception {
-        var auditEvent = request.get("/api/core/admin/audits/" + persAuditEvent.getId(), HttpStatus.OK, PersistentAuditEvent.class);
+        var auditEvent = request.get("/api/admin/audits/" + persAuditEvent.getId(), HttpStatus.OK, PersistentAuditEvent.class);
         assertThat(auditEvent).isNotNull();
         var auditEventInDb = persistenceAuditEventRepository.findById(persAuditEvent.getId()).orElseThrow();
         assertThat(auditEventInDb.getPrincipal()).isEqualTo(auditEvent.getPrincipal());

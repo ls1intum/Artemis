@@ -4,10 +4,11 @@
  */
 
 /**
- * DTO for competency reference (just the ID).
+ * DTO for a competency reference. Response DTOs can additionally provide the title.
  */
 export interface CompetencyDTO {
     id: number;
+    title?: string;
 }
 
 /**

@@ -20,22 +20,6 @@ export class AthenaService {
     public resourceUrl = 'api/athena';
 
     /**
-     * Fetches all available modules for a course and exercise.
-     *
-     * @param courseId The id of the course for which the feedback suggestion modules should be fetched
-     * @param exercise The exercise for which the feedback suggestion modules should be fetched
-     */
-    public getAvailableModules(courseId: number, exercise: Exercise): Observable<string[]> {
-        if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA)) {
-            return of([] as string[]);
-        }
-
-        return this.http
-            .get<string[]>(`${this.resourceUrl}/courses/${courseId}/${exercise.type}-exercises/available-modules`, { observe: 'response' })
-            .pipe(switchMap((res: HttpResponse<string[]>) => of(res.body!)));
-    }
-
-    /**
      * Get feedback suggestions for the given submission from Athena
      *
      * @param exercise
@@ -43,9 +27,6 @@ export class AthenaService {
      * @return observable that emits the feedback suggestions
      */
     private getFeedbackSuggestions<T>(exercise: Exercise, submissionId: number): Observable<T[]> {
-        if (!exercise.feedbackSuggestionModule) {
-            return of([]);
-        }
         if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA)) {
             return of([] as T[]);
         }
@@ -125,10 +106,11 @@ export class AthenaService {
                     feedback.credits = suggestion.credits;
                     feedback.text = FEEDBACK_SUGGESTION_IDENTIFIER + suggestion.title;
                     feedback.detailText = suggestion.description;
-                    if (suggestion.filePath != undefined && (suggestion.lineEnd ?? suggestion.lineStart) != undefined) {
+                    if (suggestion.filePath && Number.isInteger(suggestion.lineStart) && suggestion.lineStart! > 0) {
                         // Referenced feedback
                         feedback.type = FeedbackType.MANUAL;
-                        feedback.reference = `file:${suggestion.filePath}_line:${suggestion.lineEnd ?? suggestion.lineStart}`; // Only use a single line for now because Artemis does not support line ranges
+                        const lineEnd = Number.isInteger(suggestion.lineEnd) && suggestion.lineEnd! > suggestion.lineStart! ? suggestion.lineEnd : suggestion.lineStart;
+                        feedback.reference = `file:${suggestion.filePath}_line:${suggestion.lineStart}${lineEnd !== suggestion.lineStart ? `-${lineEnd}` : ''}`;
                     } else {
                         // Unreferenced feedback
                         feedback.type = FeedbackType.MANUAL_UNREFERENCED;

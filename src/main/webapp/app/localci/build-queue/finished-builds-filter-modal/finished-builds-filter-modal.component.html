@@ -1,12 +1,9 @@
 <tum-ui-dialog
     [(visible)]="visible"
-    [modal]="true"
     [closable]="true"
     [closeOnEscape]="true"
     [dismissableMask]="true"
-    [draggable]="false"
-    [appendTo]="'body'"
-    [style]="{ width: '60rem' }"
+    size="large"
     [header]="'artemisApp.buildQueue.filter.title' | artemisTranslate"
 >
     <div>
@@ -25,7 +22,7 @@
                                 name="buildStatusFilter"
                                 [value]="status"
                                 [ngModel]="this.finishedBuildJobFilter.status"
-                                (onClick)="this.toggleBuildStatusFilter(status)"
+                                (selected)="this.toggleBuildStatusFilter(status)"
                             />
                             <label for="buildStatusFilter-{{ status }}">
                                 <span jhiTranslate="artemisApp.buildQueue.filter.buildStatus.{{ status }}"></span>
@@ -38,7 +35,7 @@
                             name="buildStatusFilter"
                             [value]="undefined"
                             [ngModel]="this.finishedBuildJobFilter.status"
-                            (onClick)="this.toggleBuildStatusFilter()"
+                            (selected)="this.toggleBuildStatusFilter()"
                         />
                         <label for="buildStatusFilter-none">
                             <span jhiTranslate="artemisApp.buildQueue.filter.none"></span>
@@ -55,13 +52,14 @@
                 </div>
                 <div class="finished-build-jobs-filter-background-accent px-3 my-0 py-2">
                     <tum-ui-autocomplete
-                        styleClass="w-full"
+                        [ariaLabel]="'artemisApp.buildQueue.filter.buildAgentAddress' | artemisTranslate"
+                        class="w-full"
                         [placeholder]="'artemisApp.buildQueue.filter.buildAgentAddress' | artemisTranslate"
                         [(ngModel)]="finishedBuildJobFilter.buildAgentAddress"
                         [suggestions]="buildAgentAddressSuggestions()"
                         [completeOnFocus]="true"
-                        (completeMethod)="searchBuildAgentAddresses($event)"
-                        (onSelect)="filterBuildAgentAddressChanged()"
+                        (searchRequested)="searchBuildAgentAddresses($event)"
+                        (optionSelected)="filterBuildAgentAddressChanged()"
                         (focusout)="filterBuildAgentAddressChanged()"
                     />
                 </div>

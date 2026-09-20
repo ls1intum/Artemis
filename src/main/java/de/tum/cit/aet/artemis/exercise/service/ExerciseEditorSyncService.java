@@ -77,9 +77,13 @@ public class ExerciseEditorSyncService {
      *                                  repository, tests repository)
      * @param auxiliaryRepositoryId (optional) the id of the auxiliary repository
      *                                  associated with this commit
+     * @param clientSessionId       (optional) the session of the client whose commit this is, so that client can filter the
+     *                                  alert out again. Passed in rather than read here, because the caller runs
+     *                                  asynchronously and {@link #getClientSessionId()} only works on a request thread.
      */
-    public void broadcastNewCommitAlert(@NonNull Long exerciseId, @NonNull ExerciseEditorSyncTarget target, @Nullable Long auxiliaryRepositoryId) {
-        ExerciseNewCommitAlertDTO payload = new ExerciseNewCommitAlertDTO(ExerciseEditorSyncEventType.NEW_COMMIT_ALERT, target, auxiliaryRepositoryId, getClientSessionId(),
+    public void broadcastNewCommitAlert(@NonNull Long exerciseId, @NonNull ExerciseEditorSyncTarget target, @Nullable Long auxiliaryRepositoryId,
+            @Nullable String clientSessionId) {
+        ExerciseNewCommitAlertDTO payload = new ExerciseNewCommitAlertDTO(ExerciseEditorSyncEventType.NEW_COMMIT_ALERT, target, auxiliaryRepositoryId, clientSessionId,
                 Instant.now().toEpochMilli());
         websocketMessagingService.sendMessage(getSynchronizationTopic(exerciseId), payload).exceptionally(exception -> {
             log.warn("Cannot send new commit alert for exercise {}", exerciseId, exception);

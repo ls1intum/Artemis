@@ -32,7 +32,6 @@ import { CourseSidebarService } from 'app/course/overview/services/course-sideba
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { CurrentCourseContextService } from 'app/course/shared/services/current-course-context.service';
 
 /**
  * Type guard that checks whether a route-activated component provides a bar control configuration
@@ -60,7 +59,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected ltiService = inject(LtiService);
     protected courseSidebarService = inject(CourseSidebarService);
     protected localStorageService = inject(LocalStorageService);
-    protected currentCourseContextService = inject(CurrentCourseContextService);
 
     ngUnsubscribe = new Subject<void>();
     protected closeSidebarEventSubscription?: Subscription;
@@ -71,7 +69,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
 
     courseId = signal<number>(0);
     course = signal<Course | undefined>(undefined);
-    refreshingCourse = signal<boolean>(false);
     hasUnreadMessages = signal<boolean>(false);
     communicationRouteLoaded = signal<boolean>(false);
 
@@ -131,7 +128,10 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         });
 
         effect(() => {
-            this.currentCourseContextService.setCourse(this.course());
+            const courseId = this.course()?.id;
+            if (courseId) {
+                this.courseStorageService.setCurrentCourse(courseId);
+            }
         });
     }
 
@@ -186,7 +186,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
 
     abstract handleToggleSidebar(): void;
 
-    abstract loadCourse(refresh?: boolean): Observable<void>;
+    abstract loadCourse(): Observable<void>;
 
     ngAfterViewInit() {
         if (this.controlsViewContainer()) {
@@ -204,7 +204,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.openSidebarEventSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();
         this.loadCourseSubscription?.unsubscribe();
-        this.currentCourseContextService.clearCourse();
+        this.courseStorageService.clearCurrentCourse();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }
@@ -279,6 +279,10 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
                         this.conversationServiceInstantiated.set(true);
                         // service is fully set up, now we can subscribe to the respective observables
                         this.subscribeToHasUnreadMessages();
+                    },
+                    error: () => {
+                        // Leave the service marked as not instantiated so that a later attempt sets it up again. The error
+                        // itself has already been shown to the user by the service.
                     },
                 });
         } else if (!this.checkedForUnreadMessages() && isMessagingEnabled(currentCourse)) {

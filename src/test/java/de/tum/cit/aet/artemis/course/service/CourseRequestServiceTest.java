@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,6 +27,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -86,6 +86,7 @@ class CourseRequestServiceTest {
         pendingRequest.setId(1L);
         pendingRequest.setTitle("New Course");
         pendingRequest.setShortName("NEW123");
+        pendingRequest.setSemester("WS25");
         pendingRequest.setStartDate(ZonedDateTime.now().minusDays(1));
         pendingRequest.setEndDate(ZonedDateTime.now().plusDays(10));
         User requester = new User();
@@ -97,28 +98,19 @@ class CourseRequestServiceTest {
         when(courseRequestRepository.findOneWithEagerRelationshipsById(1L)).thenReturn(Optional.of(pendingRequest));
         when(courseRepository.existsByShortNameIgnoreCase("NEW123")).thenReturn(false);
         when(courseRequestRepository.findOneByShortNameIgnoreCase("NEW123")).thenReturn(Optional.empty());
-        doAnswer(invocation -> {
-            Course course = invocation.getArgument(0);
-            course.setStudentGroupName(course.getDefaultStudentGroupName());
-            course.setTeachingAssistantGroupName(course.getDefaultTeachingAssistantGroupName());
-            course.setEditorGroupName(course.getDefaultEditorGroupName());
-            course.setInstructorGroupName(course.getDefaultInstructorGroupName());
-            return null;
-        }).when(courseAccessService).setDefaultGroupsIfNotSet(any(Course.class));
         when(courseRepository.save(any(Course.class))).thenAnswer(invocation -> {
             Course course = invocation.getArgument(0);
             course.setId(22L);
             return course;
         });
-        when(userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(7L)).thenReturn(requester);
+        when(userRepository.findByIdWithAuthoritiesElseThrow(7L)).thenReturn(requester);
         when(courseRequestRepository.save(any(CourseRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(resourceLoaderService.getResource(any())).thenReturn(new ByteArrayResource("code of conduct".getBytes(StandardCharsets.UTF_8)));
 
         CourseRequestDTO result = courseRequestService.acceptRequest(1L);
 
-        verify(courseAccessService).setDefaultGroupsIfNotSet(courseCaptor.capture());
-        verify(channelService).createDefaultChannels(courseCaptor.getValue());
-        verify(courseAccessService).addUserToGroup(eq(requester), eq(courseCaptor.getValue().getInstructorGroupName()), eq(courseCaptor.getValue()));
+        verify(channelService).createDefaultChannels(courseCaptor.capture());
+        verify(courseAccessService).addUserToCourse(eq(requester), eq(courseCaptor.getValue()), eq(CourseRole.INSTRUCTOR));
         verify(mailSendingService).buildAndSendAsync(eq(MailRecipientDTO.from(requester)), anyString(), eq("mail/courseRequestAcceptedEmail"), anyMap());
         verify(courseRequestRepository).save(courseRequestCaptor.capture());
 
@@ -141,20 +133,12 @@ class CourseRequestServiceTest {
         when(courseRequestRepository.findOneWithEagerRelationshipsById(1L)).thenReturn(Optional.of(pendingRequest));
         when(courseRepository.existsByShortNameIgnoreCase("NEW123")).thenReturn(false);
         when(courseRequestRepository.findOneByShortNameIgnoreCase("NEW123")).thenReturn(Optional.empty());
-        doAnswer(invocation -> {
-            Course course = invocation.getArgument(0);
-            course.setStudentGroupName(course.getDefaultStudentGroupName());
-            course.setTeachingAssistantGroupName(course.getDefaultTeachingAssistantGroupName());
-            course.setEditorGroupName(course.getDefaultEditorGroupName());
-            course.setInstructorGroupName(course.getDefaultInstructorGroupName());
-            return null;
-        }).when(courseAccessService).setDefaultGroupsIfNotSet(any(Course.class));
         when(courseRepository.save(any(Course.class))).thenAnswer(invocation -> {
             Course course = invocation.getArgument(0);
             course.setId(22L);
             return course;
         });
-        when(userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(7L)).thenReturn(requester);
+        when(userRepository.findByIdWithAuthoritiesElseThrow(7L)).thenReturn(requester);
         when(resourceLoaderService.getResource(any())).thenReturn(new ByteArrayResource("code of conduct".getBytes(StandardCharsets.UTF_8)));
 
         // Simulate merge() behavior: return a new entity where the requester association is null
@@ -217,7 +201,7 @@ class CourseRequestServiceTest {
     @Test
     void createCourseRequestShouldSendReceivedEmailWithCorrectRequester() {
         User requester = createRequester();
-        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(requester);
+        when(userRepository.getUserWithAuthorities()).thenReturn(requester);
         when(courseRepository.existsByShortNameIgnoreCase("NEW123")).thenReturn(false);
         when(courseRequestRepository.findOneByShortNameIgnoreCase("NEW123")).thenReturn(Optional.empty());
 
@@ -273,6 +257,7 @@ class CourseRequestServiceTest {
         request.setId(1L);
         request.setTitle("New Course");
         request.setShortName("NEW123");
+        request.setSemester("WS25");
         request.setStartDate(ZonedDateTime.now().minusDays(1));
         request.setEndDate(ZonedDateTime.now().plusDays(10));
         request.setStatus(CourseRequestStatus.PENDING);

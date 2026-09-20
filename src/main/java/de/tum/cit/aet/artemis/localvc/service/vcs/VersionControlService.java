@@ -66,6 +66,15 @@ public interface VersionControlService {
     boolean checkIfProjectExists(String projectKey, String projectName);
 
     /**
+     * Checks if a valid git repository exists for the given URI on the VCS server. This goes beyond a simple existence check of the directory:
+     * it also verifies that the directory actually contains a git repository (object database, refs and a valid HEAD).
+     *
+     * @param repositoryUri the repository URI to check
+     * @return true if a valid git repository exists, false if it is missing or corrupt
+     */
+    boolean isValidGitRepository(LocalVCRepositoryUri repositoryUri);
+
+    /**
      * Copies a repository from one project to another one. The project can be the same. The commit history is not preserved
      *
      * @param sourceProjectKey     The key of the template project (normally based on the course and exercise short name)

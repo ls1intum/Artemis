@@ -12,6 +12,23 @@
                     </span>
                 }
             </div>
+            @if (feedbackItem()!.codeReference) {
+                <div class="feedback-item__code-reference">
+                    <div class="feedback-item__code-reference-path">{{ feedbackItem()!.codeReference!.filePath }}</div>
+                    @for (line of feedbackItem()!.codeReference!.lines; track line.line) {
+                        <div class="feedback-item__code-reference-line" [class.feedback-item__code-reference-line--referenced]="line.referenced">
+                            <span class="feedback-item__code-reference-line-number">{{ line.line }}</span>
+                            <code class="hljs" [innerHTML]="highlightCode(line.code, feedbackItem()!.codeReference!.filePath)"></code>
+                        </div>
+                    } @empty {
+                        <div class="feedback-item__code-reference-line feedback-item__code-reference-line--referenced">
+                            <span class="feedback-item__code-reference-line-number">
+                                {{ feedbackItem()!.codeReference!.line }}{{ feedbackItem()!.codeReference!.lineEnd ? '-' + feedbackItem()!.codeReference!.lineEnd : '' }}
+                            </span>
+                        </div>
+                    }
+                </div>
+            }
             @if (feedbackItem()!.text) {
                 <jhi-feedback-collapse class="mt-3 block" [feedback]="feedbackItem()!" />
             } @else {
@@ -27,7 +44,7 @@
             (click)="toggleFeedbackItemGroupOpen()"
         >
             <div class="flex items-center">
-                <fa-icon class="me-2" [icon]="feedbackItemGroup()!.open ? faAngleUp : faAngleDown" />
+                <fa-icon class="me-2" [icon]="isGroupExpanded() ? faAngleUp : faAngleDown" />
                 <h4 class="feedback-item__category mb-0 text-base font-bold">
                     {{ 'artemisApp.feedback.group.' + feedbackItemGroup()!.name | artemisTranslate }} ({{ feedbackItemGroup()!.members.length }})
                 </h4>
@@ -36,10 +53,10 @@
                 <span class="font-bold">{{ roundValueSpecifiedByCourseSettings(feedbackItemGroup()!.credits, course()) }}P </span>
             }
         </div>
-        @if (feedbackItemGroup()!.open) {
+        @if (isGroupExpanded()) {
             <div class="mx-3">
                 @for (feedbackItem of feedbackItemGroup()!.members; track feedbackItem) {
-                    <jhi-feedback-node [feedbackItemNode]="feedbackItem" [course]="course()" />
+                    <jhi-feedback-node [feedbackItemNode]="feedbackItem" [course]="course()" [isPrinting]="isPrinting()" />
                 }
             </div>
         }

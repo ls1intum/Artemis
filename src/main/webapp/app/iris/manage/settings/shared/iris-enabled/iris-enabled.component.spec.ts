@@ -214,13 +214,13 @@ describe('IrisEnabledComponent', () => {
         });
     });
 
-    describe('getSettingsRoute', () => {
+    describe('settingsRoute', () => {
         it('should return correct route for course settings', () => {
             vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockResponse));
             componentRef.setInput('course', course);
             fixture.detectChanges();
 
-            const route = comp.getSettingsRoute();
+            const route = comp.settingsRoute();
 
             expect(route).toEqual(['/course-management', '5', 'iris-settings']);
         });
@@ -230,7 +230,7 @@ describe('IrisEnabledComponent', () => {
             componentRef.setInput('course', courseWithoutId);
             // No fixture.detectChanges() call needed since course has no id, ngOnInit won't call service
 
-            const route = comp.getSettingsRoute();
+            const route = comp.settingsRoute();
 
             expect(route).toEqual(['/course-management', 'undefined', 'iris-settings']);
         });

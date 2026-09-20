@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -38,6 +39,7 @@ import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
  */
 @Conditional(TextEnabled.class)
 @Lazy
+@FeatureUsage("assessment/assessment-analytics")
 @RestController
 @RequestMapping("api/text/")
 public class TextAssessmentEventResource {
@@ -92,7 +94,7 @@ public class TextAssessmentEventResource {
         // Save the event if it is valid. All other requests are considered bad requests.
         if (isTextAssessmentAnalyticsEnabled() && validateEvent(event)) {
             textAssessmentEventRepository.save(event);
-            return ResponseEntity.created(new URI("/api/text/admin/event-insights/text-assessment/events/" + event.getCourseId())).build();
+            return ResponseEntity.created(new URI("/api/text/admin/event-insights/text-assessment/events?courseId=" + event.getCourseId())).build();
         }
         // TODO: this is not really nice, because the reason for the bad request is not given
         return ResponseEntity.badRequest().build();
@@ -108,7 +110,7 @@ public class TextAssessmentEventResource {
     @GetMapping("event-insights/text-assessment/courses/{courseId}/text-exercises/{exerciseId}/tutors-involved")
     @EnforceAtLeastInstructor
     public ResponseEntity<Integer> getNumberOfTutorsInvolved(@PathVariable Long courseId, @PathVariable Long exerciseId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
         Integer numberOfTutors = textAssessmentEventRepository.getNumberOfTutorsInvolvedInAssessingByExerciseAndCourseId(courseId, exerciseId);
@@ -128,7 +130,7 @@ public class TextAssessmentEventResource {
      */
     private boolean validateEvent(TextAssessmentEvent event) {
         // avoid access from tutor if they are not part of the course
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
 
         // The ID check is defense-in-depth: the DTO doesn't have an ID field, so client-specified IDs
         // are silently ignored during JSON deserialization. This check guards against future changes.

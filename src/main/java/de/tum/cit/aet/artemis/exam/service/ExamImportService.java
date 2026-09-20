@@ -22,7 +22,10 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExamIdAndTitleDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamImportErrorExerciseGroupDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.exception.ExamConfigurationException;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
@@ -30,6 +33,7 @@ import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exercise.domain.BaseExercise;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadImportApi;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
@@ -63,6 +67,8 @@ public class ExamImportService {
 
     private final ExerciseGroupRepository exerciseGroupRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
     private final QuizExerciseRepository quizExerciseRepository;
 
     private final QuizExerciseImportService quizExerciseImportService;
@@ -93,7 +99,7 @@ public class ExamImportService {
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseImportService programmingExerciseImportService,
             Optional<FileUploadImportApi> fileUploadImportApi, GradingCriterionRepository gradingCriterionRepository,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ChannelService channelService,
-            Optional<SearchableEntityWeaviateService> searchableItemWeaviateService, WebsocketMessagingService websocketMessagingService) {
+            Optional<SearchableEntityWeaviateService> searchableItemWeaviateService, WebsocketMessagingService websocketMessagingService, ExerciseRepository exerciseRepository) {
         this.textExerciseImportApi = textExerciseImportApi;
         this.modelingExerciseImportApi = modelingExerciseImportApi;
         this.examRepository = examRepository;
@@ -110,6 +116,7 @@ public class ExamImportService {
         this.channelService = channelService;
         this.searchableItemWeaviateService = searchableItemWeaviateService;
         this.websocketMessagingService = websocketMessagingService;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -185,7 +192,7 @@ public class ExamImportService {
                     .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, examWithExercises)).toList(), examWithExercises.getId());
         });
 
-        return new ExamImportResultDTO(examWithExercises, skippedExerciseTitles, incompleteExerciseTitles);
+        return new ExamImportResultDTO(ExamIdAndTitleDTO.of(examWithExercises), skippedExerciseTitles, incompleteExerciseTitles);
     }
 
     /**
@@ -246,7 +253,8 @@ public class ExamImportService {
                     .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, examWithExercises)).toList(), examWithExercises.getId());
         });
 
-        return new ExerciseGroupImportResultDTO(examWithExercises.getExerciseGroups(), skippedExerciseTitles, incompleteExerciseTitles);
+        List<ExerciseGroupDTO> exerciseGroupDTOs = examWithExercises.getExerciseGroups().stream().map(ExerciseGroupDTO::ofWithExercises).toList();
+        return new ExerciseGroupImportResultDTO(exerciseGroupDTOs, skippedExerciseTitles, incompleteExerciseTitles);
     }
 
     /**
@@ -323,17 +331,17 @@ public class ExamImportService {
         // check for duplicated titles
         boolean duplicatedTitles = checkForAndRemoveDuplicatedTitlesAndShortNames(programmingExercises, true);
         if (duplicatedTitles) {
-            throw new ExamConfigurationException(exerciseGroups, 0, "duplicatedProgrammingExerciseTitle");
+            throw new ExamConfigurationException(ExamImportErrorExerciseGroupDTO.ofAll(exerciseGroups), 0, "duplicatedProgrammingExerciseTitle");
         }
         // check for duplicated short names
         boolean duplicatedShortNames = checkForAndRemoveDuplicatedTitlesAndShortNames(programmingExercises, false);
         if (duplicatedShortNames) {
-            throw new ExamConfigurationException(exerciseGroups, 0, "duplicatedProgrammingExerciseShortName");
+            throw new ExamConfigurationException(ExamImportErrorExerciseGroupDTO.ofAll(exerciseGroups), 0, "duplicatedProgrammingExerciseShortName");
         }
         // check for existing project on VCS / CI
         int numberOfInvalidProgrammingExercises = checkForExistingProjectAndRemoveTitleShortName(programmingExercises, courseShortName);
         if (numberOfInvalidProgrammingExercises > 0) {
-            throw new ExamConfigurationException(exerciseGroups, numberOfInvalidProgrammingExercises, "invalidKey");
+            throw new ExamConfigurationException(ExamImportErrorExerciseGroupDTO.ofAll(exerciseGroups), numberOfInvalidProgrammingExercises, "invalidKey");
         }
     }
 
@@ -408,7 +416,17 @@ public class ExamImportService {
                 // Hibernate conflicts with managed entities that have the same ID in the persistence context
                 Long sourceExerciseId = exerciseToCopy.getId();
                 exerciseToCopy.setId(null);
-                Optional<? extends Exercise> exerciseCopied = switch (exerciseToCopy.getExerciseType()) {
+                // PROGRAMMING and QUIZ load the source themselves below (with their eager association queries) and copy the
+                // settings off that fetch; a lookup here would only be a second SELECT for the same row.
+                ExerciseType exerciseType = exerciseToCopy.getExerciseType();
+                if (exerciseType != ExerciseType.PROGRAMMING && exerciseType != ExerciseType.QUIZ) {
+                    exerciseRepository.findById(sourceExerciseId).ifPresent(sourceExercise -> copyCallerOwnedSettingsFromSource(sourceExercise, exerciseToCopy));
+                }
+                // The exercise is not editable on this path, so the skeleton carries no grading criteria of its own; null
+                // asks the import service to deep-copy the source's (an initialized empty collection would count as "the
+                // caller wants none", see ExerciseImportService#copyExerciseBasis).
+                exerciseToCopy.setGradingCriteria(null);
+                Optional<? extends Exercise> exerciseCopied = switch (exerciseType) {
                     case MODELING -> {
                         if (modelingExerciseImportApi.isEmpty()) {
                             yield Optional.empty();
@@ -425,7 +443,7 @@ public class ExamImportService {
 
                     case PROGRAMMING -> {
                         final Optional<ProgrammingExercise> optionalOriginalProgrammingExercise = programmingExerciseRepository
-                                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigCategories(sourceExerciseId);
+                                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesTemplateAndSolutionParticipationsAndAuxReposAndCategories(sourceExerciseId);
                         if (optionalOriginalProgrammingExercise.isEmpty()) {
                             yield Optional.empty();
                         }
@@ -440,7 +458,7 @@ public class ExamImportService {
                         copyProgrammingExerciseInformationForExamImport(originalProgrammingExercise, newProgrammingExercise);
                         prepareProgrammingExerciseForExamImport(newProgrammingExercise);
 
-                        yield Optional.of(programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newProgrammingExercise, false, false, false));
+                        yield Optional.of(programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newProgrammingExercise, false, false));
                     }
 
                     case FILE_UPLOAD -> {
@@ -453,24 +471,20 @@ public class ExamImportService {
                     case QUIZ -> {
                         // Use a query that eagerly loads quiz questions, grading criteria, and other needed associations
                         final Optional<QuizExercise> optionalOriginalQuizExercise = quizExerciseRepository
-                                .findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(sourceExerciseId);
+                                .findWithEagerQuestionsAndCompetenciesAndBatchesAndGradingCriteriaById(sourceExerciseId);
                         if (optionalOriginalQuizExercise.isEmpty()) {
                             yield Optional.empty();
                         }
                         var originalQuizExercise = optionalOriginalQuizExercise.get();
-                        // The import service mutates the second parameter (importedExercise) in-place
-                        // (e.g., nulling question IDs and clearing statistics). We must NOT pass the
-                        // same managed entity for both parameters, as that would corrupt the original
-                        // quiz in the L1 cache. The exerciseToCopy skeleton already has the correct
-                        // exercise group, title, shortName, etc. from the DTO conversion.
-                        // However, the skeleton does not contain quiz questions or batches (these are
-                        // not part of ExerciseImportDTO), so we must copy them from the original.
+                        // The quizSkeleton is the destination-bearing newExercise (correct exercise group, title,
+                        // shortName from the DTO conversion). The import service backfills questions and settings from
+                        // originalQuizExercise (the source), so we must NOT pass the same managed entity for both
+                        // parameters, which would corrupt the original quiz in the L1 cache. Batches are not copied for
+                        // exam exercises (exam timing controls scheduling); the import service skips them anyway.
                         QuizExercise quizSkeleton = (QuizExercise) exerciseToCopy;
-                        quizSkeleton.setQuizQuestions(originalQuizExercise.getQuizQuestions());
-                        // Don't copy batches — exam timing controls quiz scheduling, and the import service
-                        // skips batch copying for exam exercises anyway.
+                        copyCallerOwnedSettingsFromSource(originalQuizExercise, quizSkeleton);
                         // We don't allow a modification of the exercise at this point, so we can just pass an empty list of files.
-                        yield Optional.of(quizExerciseImportService.importQuizExercise(originalQuizExercise, quizSkeleton, null));
+                        yield Optional.of(quizExerciseImportService.importQuizExercise(quizSkeleton, originalQuizExercise, null));
                     }
                 };
                 // Attach the newly created Exercise to the new Exercise Group only if the importing was successful.
@@ -499,6 +513,23 @@ public class ExamImportService {
             }
         }
         exerciseGroupRepository.save(exerciseGroupCopied);
+    }
+
+    /**
+     * Copies the settings that {@link de.tum.cit.aet.artemis.exercise.service.ExerciseImportService#copyExerciseBasis} leaves exactly as the caller set them
+     * (they have non-null defaults, so a skeleton's default is indistinguishable from an intentional value) from the source exercise onto the skeleton.
+     * The exam import skeleton is built from {@link de.tum.cit.aet.artemis.exam.dto.ExerciseImportDTO}, which carries none of them, so without this
+     * copy every imported exercise would silently fall back to the defaults (fully included, no presentation score, no second correction, no complaints
+     * for automatic assessments).
+     *
+     * @param sourceExercise the exercise the import copies
+     * @param skeleton       the skeleton built from the import DTO
+     */
+    private static void copyCallerOwnedSettingsFromSource(Exercise sourceExercise, Exercise skeleton) {
+        skeleton.setIncludedInOverallScore(sourceExercise.getIncludedInOverallScore());
+        skeleton.setPresentationScoreEnabled(sourceExercise.getPresentationScoreEnabled());
+        skeleton.setSecondCorrectionEnabled(sourceExercise.getSecondCorrectionEnabled());
+        skeleton.setAllowComplaintsForAutomaticAssessments(sourceExercise.getAllowComplaintsForAutomaticAssessments());
     }
 
     /**
@@ -534,7 +565,7 @@ public class ExamImportService {
     }
 
     /**
-     * Copies programming-specific fields that are not part of {@link de.tum.cit.aet.artemis.exam.dto.ExerciseImportDTO}.
+     * Copies the programming-specific fields and the caller-owned settings that are not part of {@link de.tum.cit.aet.artemis.exam.dto.ExerciseImportDTO}.
      * The DTO intentionally only carries generic exercise fields and possible overrides such as title, short name, and points.
      *
      * @param originalExercise the source programming exercise with complete programming settings
@@ -554,9 +585,8 @@ public class ExamImportService {
         newExercise.setAssessmentType(originalExercise.getAssessmentType());
         newExercise.setDifficulty(originalExercise.getDifficulty());
         newExercise.setMode(originalExercise.getMode());
-        newExercise.setIncludedInOverallScore(originalExercise.getIncludedInOverallScore());
-        newExercise.setAllowComplaintsForAutomaticAssessments(originalExercise.getAllowComplaintsForAutomaticAssessments());
-        newExercise.setAllowFeedbackRequests(originalExercise.getAllowFeedbackRequests());
+        // covers includedInOverallScore and allowComplaintsForAutomaticAssessments as well
+        copyCallerOwnedSettingsFromSource(originalExercise, newExercise);
         newExercise.setProblemStatement(originalExercise.getProblemStatement());
         newExercise.setGradingInstructions(originalExercise.getGradingInstructions());
         newExercise.setCategories(new HashSet<>(originalExercise.getCategories()));

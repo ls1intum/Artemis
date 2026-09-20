@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -22,8 +23,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -36,8 +37,10 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localci.service.LegacyBuildPlanConverterService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.programming.dto.ExportedExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 
 @Profile(PROFILE_CORE)
@@ -55,7 +58,7 @@ public class ProgrammingExerciseImportFromFileService {
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
-    private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
+    private final ProgrammingExerciseProjectNameService programmingExerciseProjectNameService;
 
     private final ProgrammingExerciseImportRepositoryService programmingExerciseImportRepositoryService;
 
@@ -71,14 +74,14 @@ public class ProgrammingExerciseImportFromFileService {
 
     public ProgrammingExerciseImportFromFileService(ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, ZipFileService zipFileService, StaticCodeAnalysisService staticCodeAnalysisService,
-            ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, ProgrammingExerciseImportRepositoryService programmingExerciseImportRepositoryService,
+            ProgrammingExerciseProjectNameService programmingExerciseProjectNameService, ProgrammingExerciseImportRepositoryService programmingExerciseImportRepositoryService,
             FileService fileService, ProfileService profileService, BuildPlanRepository buildPlanRepository, TempFileUtilService tempFileUtilService,
             Optional<LegacyBuildPlanConverterService> legacyBuildPlanConverterService) {
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.zipFileService = zipFileService;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
-        this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
+        this.programmingExerciseProjectNameService = programmingExerciseProjectNameService;
         this.programmingExerciseImportRepositoryService = programmingExerciseImportRepositoryService;
         this.fileService = fileService;
         this.profileService = profileService;
@@ -96,11 +99,12 @@ public class ProgrammingExerciseImportFromFileService {
      * @param zipFile                     the zip file that contains the exercise
      * @param course                      the course to which the exercise should be added
      * @param user                        the user initiating the import
+     * @param buildConfig                 the build configuration read out of the archive, which is stored as a row of its own
      * @param isImportFromSharing         flag whether file import (false) of sharing import
      * @return the imported programming exercise
      **/
-    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise originalProgrammingExercise, MultipartFile zipFile, Course course, User user,
-            boolean isImportFromSharing) throws IOException, GitAPIException {
+    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise originalProgrammingExercise, ProgrammingExerciseBuildConfig buildConfig, MultipartFile zipFile,
+            Course course, User user, boolean isImportFromSharing) throws IOException, GitAPIException {
         if (!"zip".equals(FilenameUtils.getExtension(zipFile.getOriginalFilename()))) {
             throw new BadRequestAlertException("The file is not a zip file", "programmingExercise", "fileNotZip");
         }
@@ -126,13 +130,13 @@ public class ProgrammingExerciseImportFromFileService {
             checkDetailsJsonExists(importExerciseDir);
             checkRepositoriesExist(importExerciseDir);
 
-            handleLegacyLocalCIProgrammingExercise(originalProgrammingExercise);
+            handleLegacyLocalCIProgrammingExercise(buildConfig);
 
             originalProgrammingExercise.setCourse(course);
             originalProgrammingExercise.setTestCasesChanged(false);
 
-            programmingExerciseValidationService.validateNewProgrammingExerciseSettings(originalProgrammingExercise, course);
-            newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(originalProgrammingExercise, false, true);
+            programmingExerciseValidationService.validateNewProgrammingExerciseSettings(originalProgrammingExercise, buildConfig, course);
+            newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(originalProgrammingExercise, buildConfig, false, true);
 
             if (Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled())) {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
@@ -147,7 +151,7 @@ public class ProgrammingExerciseImportFromFileService {
             }
 
             try {
-                programmingExerciseRepositoryService.adjustProjectNames(getProgrammingExerciseFromDetailsFile(importExerciseDir).getTitle(), newProgrammingExercise);
+                programmingExerciseProjectNameService.adjustProjectNames(getExerciseDetailsFromFile(importExerciseDir).title(), newProgrammingExercise);
             }
             catch (GitAPIException | IOException e) {
                 log.error("Error during adjustment of placeholders of ProgrammingExercise {}", newProgrammingExercise.getTitle(), e);
@@ -184,15 +188,16 @@ public class ProgrammingExerciseImportFromFileService {
      * Overloaded method setting the isImportFromSharing flag to false as default
      *
      * @param programmingExerciseForImport the programming exercise that should be imported
+     * @param buildConfig                  the build configuration read out of the archive
      * @param zipFile                      the zip file that contains the exercise
      * @param course                       the course to which the exercise should be added
      * @param user                         the user initiating the import
      * @return the imported programming exercise
      * @throws IOException if there is an error reading the file
      */
-    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise programmingExerciseForImport, MultipartFile zipFile, Course course, User user)
-            throws IOException, GitAPIException, URISyntaxException {
-        return this.importProgrammingExerciseFromFile(programmingExerciseForImport, zipFile, course, user, false);
+    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise programmingExerciseForImport, ProgrammingExerciseBuildConfig buildConfig,
+            MultipartFile zipFile, Course course, User user) throws IOException, GitAPIException, URISyntaxException {
+        return this.importProgrammingExerciseFromFile(programmingExerciseForImport, buildConfig, zipFile, course, user, false);
     }
 
     /**
@@ -217,20 +222,20 @@ public class ProgrammingExerciseImportFromFileService {
     }
 
     /**
-     * Reads the programming exercise details from the JSON file in the extracted zip path.
+     * Reads the exported exercise details from the JSON file in the extracted zip path.
      *
      * @param extractedZipPath the path to the extracted zip file containing the exercise details
-     * @return the programming exercise object deserialized from the JSON file
+     * @return the exercise details deserialized from the JSON file
      * @throws IOException if there is an error reading the file
      */
-    private ProgrammingExercise getProgrammingExerciseFromDetailsFile(Path extractedZipPath) throws IOException {
+    private ExportedExerciseDetailsDTO getExerciseDetailsFromFile(Path extractedZipPath) throws IOException {
         var exerciseJsonPath = retrieveExerciseJsonPath(extractedZipPath);
-        ObjectMapper objectMapper = JsonObjectMapper.get();
+        JsonMapper objectMapper = JsonObjectMapper.get();
 
         try {
-            return objectMapper.readValue(exerciseJsonPath.toFile(), ProgrammingExercise.class);
+            return objectMapper.readValue(exerciseJsonPath.toFile(), ExportedExerciseDetailsDTO.class);
         }
-        catch (IOException e) {
+        catch (JacksonException e) {
             throw new BadRequestAlertException("The JSON file for the programming exercise is not valid or was not found.", "programmingExercise", "exerciseJsonNotValidOrFound");
         }
     }
@@ -299,29 +304,28 @@ public class ProgrammingExerciseImportFromFileService {
     /**
      * This handles the build config where the buildPlanConfiguration is still in the old format.
      *
-     * @param programmingExercise the exercise to handle
-     * @throws JsonProcessingException when serialization failed
+     * @param buildConfig the build configuration to handle
      */
-    private void handleLegacyLocalCIProgrammingExercise(ProgrammingExercise programmingExercise) throws JsonProcessingException {
-        if (!profileService.isLocalCIActive() || programmingExercise.getBuildConfig() == null) {
+    private void handleLegacyLocalCIProgrammingExercise(@Nullable ProgrammingExerciseBuildConfig buildConfig) {
+        if (!profileService.isLocalCIActive() || buildConfig == null) {
             return;
         }
 
-        final Optional<BuildPlanPhasesDTO> buildPlanPhasesDTO = legacyBuildPlanConverterService.orElseThrow().convertLegacyBuildPlanConfiguration(programmingExercise);
-        programmingExercise.getBuildConfig().setBuildScript(null);
+        final Optional<BuildPlanPhasesDTO> buildPlanPhasesDTO = legacyBuildPlanConverterService.orElseThrow().convertLegacyBuildPlanConfiguration(buildConfig);
+        buildConfig.setBuildScript(null);
 
         if (buildPlanPhasesDTO.isEmpty()) {
             try {
                 // check that it is in the valid format
-                BuildPlanPhasesDTO.fromBuildPlanConfiguration(programmingExercise.getBuildConfig().getBuildPlanConfiguration());
+                BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildConfig.getBuildPlanConfiguration());
             }
-            catch (JsonProcessingException e) {
+            catch (JacksonException e) {
                 // if not reset it
-                programmingExercise.getBuildConfig().setBuildPlanConfiguration(null);
+                buildConfig.setBuildPlanConfiguration(null);
             }
             return;
         }
 
-        programmingExercise.getBuildConfig().setBuildPlanConfiguration(buildPlanPhasesDTO.orElseThrow().toBuildPlanConfiguration());
+        buildConfig.setBuildPlanConfiguration(buildPlanPhasesDTO.orElseThrow().toBuildPlanConfiguration());
     }
 }

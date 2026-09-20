@@ -32,6 +32,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -84,6 +85,7 @@ public abstract class Participation extends DomainObject implements Participatio
     // and the gain from fetching lazy here is minimal
     @ManyToOne
     @JsonIgnoreProperties("studentParticipations")
+    @Parent
     protected Exercise exercise;
 
     /**
@@ -94,7 +96,6 @@ public abstract class Participation extends DomainObject implements Participatio
      * have to use the save function and not the saveAndFlush function because otherwise an exception is thrown. We can think about adding orphanRemoval=true here, after adding the
      * participationId to all submissions.
      */
-    // No @Cache: grows on every submit; NONSTRICT produced stale submission lists for concurrent readers, same class of bug as #12574.
     @OneToMany(mappedBy = "participation", fetch = FetchType.LAZY)
     @JsonIgnoreProperties({ "participation" })
     private Set<Submission> submissions = new HashSet<>();

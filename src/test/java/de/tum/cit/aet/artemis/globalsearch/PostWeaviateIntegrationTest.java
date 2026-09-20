@@ -89,7 +89,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         doNothing().when(pyrisFaqApi).deleteFaq(any());
     }
@@ -262,7 +262,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
             assertPostExistsInWeaviate(weaviateService, post.getId());
 
             long postId = post.getId();
-            request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
+            request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
             assertPostNotInWeaviate(weaviateService, postId);
         }

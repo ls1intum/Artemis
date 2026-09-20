@@ -15,7 +15,9 @@ const config: Config = {
 
     customFields: {
         pageTitle: PAGE_TITLE,
+        tumUiStorybookIncluded: process.env.ARTEMIS_DOCS_TUM_UI === 'true',
     },
+    staticDirectories: ['static', ...(process.env.ARTEMIS_DOCS_TUM_UI === 'true' ? ['../build/documentation-static'] : [])],
 
     // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
     future: {
@@ -72,7 +74,7 @@ const config: Config = {
                 language: ['en'],
                 indexDocs: true,
                 indexBlog: false,
-                docsRouteBasePath: ['student', 'instructor', 'developer', 'admin'],
+                docsRouteBasePath: ['student', 'instructor', 'developer', 'admin', 'about'],
                 searchContextByPaths: [
                     {
                         label: 'Student Guide',
@@ -90,6 +92,10 @@ const config: Config = {
                         label: 'Admin Guide',
                         path: 'admin',
                     },
+                    {
+                        label: 'About Artemis',
+                        path: 'about',
+                    },
                 ],
                 useAllContextsWithNoSearchContext: true,
             },
@@ -97,6 +103,21 @@ const config: Config = {
     ],
 
     plugins: [
+        [
+            // The site is served from GitHub Pages, which cannot redirect, so a page
+            // that moves needs a generated stub at its old path. Add an entry here
+            // whenever a URL that has been public changes, and never remove one.
+            '@docusaurus/plugin-client-redirects',
+            {
+                redirects: [
+                    {
+                        // The single exam guide became a category of focused pages.
+                        from: '/instructor/exams/exam-timeline',
+                        to: '/instructor/exams/intro',
+                    },
+                ],
+            },
+        ],
         [
             '@docusaurus/plugin-content-docs',
             {
@@ -144,6 +165,18 @@ const config: Config = {
                 beforeDefaultRemarkPlugins: [warnSphinxRefs],
             },
         ],
+        [
+            '@docusaurus/plugin-content-docs',
+            {
+                id: 'about',
+                path: 'docs/about',
+                routeBasePath: 'about',
+                sidebarPath: './sidebar-about.ts',
+                editUrl: EDIT_URL,
+                exclude: ['**/README.md'],
+                beforeDefaultRemarkPlugins: [warnSphinxRefs],
+            },
+        ],
     ],
 
     themeConfig: {
@@ -160,6 +193,11 @@ const config: Config = {
                 srcDark: 'img/tum-logo-blue.svg',
             },
             items: [
+                {
+                    to: '/about',
+                    label: 'About',
+                    position: 'left',
+                },
                 {
                     to: '/compare',
                     label: 'Compare',
@@ -206,15 +244,32 @@ const config: Config = {
                     ],
                 },
                 {
+                    title: 'Project',
+                    items: [
+                        {
+                            label: 'About Artemis',
+                            to: '/about',
+                        },
+                        {
+                            label: 'Trust & Transparency',
+                            to: '/about/trust',
+                        },
+                        {
+                            label: 'Project Governance',
+                            to: '/about/governance',
+                        },
+                        {
+                            label: 'Research & Publications',
+                            to: '/publications',
+                        },
+                    ],
+                },
+                {
                     title: 'Legal',
                     items: [
                         {
                             label: 'Imprint',
                             to: '/imprint',
-                        },
-                        {
-                            label: 'About Us',
-                            to: '/about',
                         },
                     ],
                 },

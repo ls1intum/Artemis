@@ -48,18 +48,25 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.event.ExamLiveEvent;
 import de.tum.cit.aet.artemis.exam.dto.AthenaFeedbackUsageDTO;
+import de.tum.cit.aet.artemis.exam.dto.CreateTestRunDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
+import de.tum.cit.aet.artemis.exam.dto.conduction.StudentExamForConductionDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamAttendanceCheckEventDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamLiveEventBaseDTO;
+import de.tum.cit.aet.artemis.exam.dto.submit.SubmitStudentExamDTO;
+import de.tum.cit.aet.artemis.exam.dto.summary.StudentExamForSummaryDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamLiveEventRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
@@ -69,6 +76,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamDeletionService;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exam.service.ExamSessionService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamAccessService;
+import de.tum.cit.aet.artemis.exam.service.StudentExamAthenaFeedbackService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamLiveEventService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -79,6 +87,7 @@ import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
  */
 @Conditional(ExamEnabled.class)
 @Lazy
+@FeatureUsage("conduction/student-exam")
 @RestController
 @RequestMapping("api/exam/")
 public class StudentExamResource {
@@ -90,6 +99,8 @@ public class StudentExamResource {
     private final ExamDeletionService examDeletionService;
 
     private final StudentExamService studentExamService;
+
+    private final StudentExamAthenaFeedbackService studentExamAthenaFeedbackService;
 
     private final StudentExamAccessService studentExamAccessService;
 
@@ -125,14 +136,19 @@ public class StudentExamResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     public StudentExamResource(ExamAccessService examAccessService, ExamDeletionService examDeletionService, StudentExamService studentExamService,
-            StudentExamAccessService studentExamAccessService, UserRepository userRepository, AuditEventRepository auditEventRepository,
-            StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService, ExamRepository examRepository,
-            AuthorizationCheckService authorizationCheckService, ExamService examService, WebsocketMessagingService websocketMessagingService,
-            SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventRepository examLiveEventRepository, StudentExamLiveEventService studentExamLiveEventService) {
+            StudentExamAthenaFeedbackService studentExamAthenaFeedbackService, StudentExamAccessService studentExamAccessService, UserRepository userRepository,
+            AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService,
+            ExamRepository examRepository, AuthorizationCheckService authorizationCheckService, ExamService examService, WebsocketMessagingService websocketMessagingService,
+            SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventRepository examLiveEventRepository, StudentExamLiveEventService studentExamLiveEventService,
+            CourseAthenaConfigRepository courseAthenaConfigRepository) {
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
+        this.studentExamAthenaFeedbackService = studentExamAthenaFeedbackService;
         this.studentExamAccessService = studentExamAccessService;
         this.userRepository = userRepository;
         this.auditEventRepository = auditEventRepository;
@@ -172,18 +188,18 @@ public class StudentExamResource {
      *
      * @param courseId the course to which the student exams belong to
      * @param examId   the exam to which the student exams belong to
-     * @return the ResponseEntity with status 200 (OK) and a set of student exams. The set can be empty
+     * @return the ResponseEntity with status 200 (OK) and a list of student exams (without the nested exam). The list can be empty
      */
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Set<StudentExam>> getStudentExamsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<List<StudentExamDTO>> getStudentExamsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all student exams for exam : {}", examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         var studentExams = studentExamRepository.findByExamIdWithSessions(examId);
-        // reduce payload
-        studentExams.forEach(studentExam -> studentExam.setExam(null));
-        return ResponseEntity.ok(studentExams);
+        // reduce payload: the nested exam is intentionally omitted (see StudentExamDTO#of)
+        List<StudentExamDTO> studentExamDTOs = studentExams.stream().map(StudentExamDTO::of).toList();
+        return ResponseEntity.ok(studentExamDTOs);
     }
 
     /**
@@ -193,17 +209,18 @@ public class StudentExamResource {
      * @param examId        the exam to which the student exams belong to
      * @param studentExamId the id of the student exam to find
      * @param workingTime   the new working time in seconds
-     * @return the ResponseEntity with status 200 (OK) and with the updated student exam as body
+     * @return the ResponseEntity with status 200 (OK) and with the updated student exam (including its nested exam and course) as body
      */
     @PatchMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/working-time")
     @EnforceAtLeastInstructor
-    public ResponseEntity<StudentExam> updateWorkingTime(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
+    public ResponseEntity<StudentExamDTO> updateWorkingTime(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
             @RequestBody Integer workingTime) {
         log.debug("REST request to update the working time of student exam : {}", studentExamId);
 
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
-        return ResponseEntity.ok(studentExamLiveEventService.updateWorkingTime(examId, studentExamId, workingTime));
+        StudentExam studentExam = studentExamLiveEventService.updateWorkingTime(examId, studentExamId, workingTime);
+        return ResponseEntity.ok(StudentExamDTO.withExam(studentExam));
     }
 
     /**
@@ -228,35 +245,45 @@ public class StudentExamResource {
 
     /**
      * POST /courses/{courseId}/exams/{examId}/student-exams/submit : Submits the student exam
-     * Updates all submissions and marks student exam as submitted according to given student exam
-     * NOTE: the studentExam has to be sent with all exercises, participations and submissions
+     * Updates all submissions and marks student exam as submitted. Only the student exam id and the last-second
+     * submission changes are read from the body; ownership, exam/course validation and the test-run/test-exam gating
+     * are derived from the authoritative student exam loaded from the database.
      *
      * @param courseId              the course to which the student exams belong to
      * @param examId                the exam to which the student exams belong to
-     * @param studentExamFromClient the student exam with exercises, participations and submissions
+     * @param studentExamFromClient the student exam id with the exercises, participations and submissions carrying the last-second changes
      * @return empty response with status code:
      *         200 if successful
      *         400 if student exam was in an illegal state
      */
     @PostMapping("courses/{courseId}/exams/{examId}/student-exams/submit")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExamFromClient) {
+    // NOTE: the body is intentionally NOT @Valid — the legacy full-entity endpoint activated no Bean Validation, and the
+    // DTO migration must not add validation the legacy endpoint lacked (a rejected body would break the hand-in instead
+    // of degrading gracefully). Malformed/ambiguous parts are tolerated and dropped during reconstruction.
+    public ResponseEntity<Void> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody SubmitStudentExamDTO studentExamFromClient) {
         long start = System.nanoTime();
-        log.debug("REST request to mark the studentExam as submitted : {}", studentExamFromClient.getId());
+        log.debug("REST request to mark the studentExam as submitted : {}", studentExamFromClient.id());
 
-        // 1. DB Call: read
-        User currentUser = userRepository.getUser();
-        // prevent manipulation of the user object that is attached to the student exam in the request body (which is saved later on into the database as part of this request)
-        if (!Objects.equals(studentExamFromClient.getUser().getId(), currentUser.getId())) {
+        // The authenticated login comes from the security context and costs no query.
+        String currentUserLogin = userRepository.getCurrentUserLogin();
+
+        // 1. DB Call: read the authoritative student exam; all downstream truth (ownership, exam/course, submitted
+        // flag, test-run/test-exam gating) comes from this DB entity, not from the client body.
+        StudentExam existingStudentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamFromClient.id());
+        // Ownership is checked against the persisted owner instead of a client-supplied user field. This is the
+        // behavior-equivalent replacement for the previous anti-manipulation gate and closes the latent hole where the
+        // client-claimed user was the only ownership check.
+        // StudentExam#user is a @ManyToOne and therefore already loaded here, so once this comparison holds it IS the
+        // current user: loading the same row a second time through the user repository would add nothing.
+        User currentUser = existingStudentExam.getUser();
+        if (!Objects.equals(currentUser.getLogin(), currentUserLogin)) {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
+        validateExamRequestParametersElseThrow(existingStudentExam, examId, courseId);
 
-        // 2. DB Call: read
-        StudentExam existingStudentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamFromClient.getId());
-        validateExamRequestParametersElseThrow(studentExamFromClient, examId, courseId);
-
-        if (Boolean.TRUE.equals(studentExamFromClient.isSubmitted()) || Boolean.TRUE.equals(existingStudentExam.isSubmitted())) {
-            log.error("Student exam with id {} for user {} is already submitted.", studentExamFromClient.getId(), currentUser.getLogin());
+        if (Boolean.TRUE.equals(existingStudentExam.isSubmitted())) {
+            log.error("Student exam with id {} for user {} is already submitted.", studentExamFromClient.id(), currentUser.getLogin());
             // NOTE: we should not send an error message to the user here, due to overload it could happen that the call is sent multiple times
             return ResponseEntity.ok().build();
         }
@@ -269,7 +296,8 @@ public class StudentExamResource {
 
         log.debug("Completed input validation for submitStudentExam in {}", formatDurationFrom(start));
 
-        studentExamService.submitStudentExam(studentExamFromClient, currentUser);
+        // The service reconstructs the transient graph from the slim DTO and then runs the (unchanged) submit machinery.
+        studentExamService.submitStudentExam(existingStudentExam, studentExamFromClient, currentUser);
 
         websocketMessagingService.sendMessage("/topic/exam/" + examId + "/submitted", "");
 
@@ -280,7 +308,7 @@ public class StudentExamResource {
 
     /**
      * POST /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/request-feedback : Request Athena AI
-     * feedback for all text and modeling exercises in the given submitted test exam.
+     * feedback for all text and modeling exercises in the given submitted test exam or instructor test run.
      *
      * @param courseId      the course to which the exam belongs
      * @param examId        the exam to which the student exam belongs
@@ -289,7 +317,7 @@ public class StudentExamResource {
      */
     @PostMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/request-feedback")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> requestAthenaFeedbackForTestExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+    public ResponseEntity<Void> requestAthenaFeedback(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         log.debug("REST request to trigger Athena feedback for student exam {}", studentExamId);
         User currentUser = userRepository.getUser();
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
@@ -297,13 +325,15 @@ public class StudentExamResource {
         if (!Objects.equals(currentUser.getId(), studentExam.getUser().getId())) {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
-        studentExamService.requestAthenaFeedbackForTestExam(studentExam, currentUser);
+        checkCourseAccessForTestRunElseThrow(studentExam, examId, courseId, currentUser);
+        studentExamAthenaFeedbackService.requestAthenaFeedback(studentExam, currentUser);
         return ResponseEntity.ok().build();
     }
 
     /**
      * GET /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/athena-feedback-usage : Return how many
-     * Athena AI feedback requests the current user has already used for this test exam and the configured cap.
+     * Athena AI feedback requests the current user has already used for this test exam (or test run) and the
+     * configured cap.
      *
      * @param courseId      the course to which the exam belongs
      * @param examId        the exam to which the student exam belongs
@@ -313,13 +343,31 @@ public class StudentExamResource {
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/athena-feedback-usage")
     @EnforceAtLeastStudent
     public ResponseEntity<AthenaFeedbackUsageDTO> getAthenaFeedbackUsage(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+        // The user is needed for the test-run course access check below, which resolves the course roles of this very user.
         User currentUser = userRepository.getUser();
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
         validateExamRequestParametersElseThrow(studentExam, examId, courseId);
         if (!Objects.equals(currentUser.getId(), studentExam.getUser().getId())) {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
-        return ResponseEntity.ok(studentExamService.getAthenaFeedbackUsage(currentUser.getId(), examId));
+        checkCourseAccessForTestRunElseThrow(studentExam, examId, courseId, currentUser);
+        return ResponseEntity.ok(studentExamAthenaFeedbackService.getAthenaFeedbackUsage(currentUser.getId(), examId, studentExam.isTestRun()));
+    }
+
+    /**
+     * Ensures that the owner of a test run still has instructor access to the course. Test run ownership survives a
+     * role revocation, so ownership alone must not keep an endpoint open for a former instructor. Non test run student
+     * exams are unaffected: their parameters were already validated by the caller and the check is an extra query.
+     *
+     * @param studentExam the student exam the request targets
+     * @param examId      the exam id from the path
+     * @param courseId    the course id from the path
+     * @param currentUser the current user
+     */
+    private void checkCourseAccessForTestRunElseThrow(StudentExam studentExam, Long examId, Long courseId, User currentUser) {
+        if (studentExam.isTestRun()) {
+            studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, true, false);
+        }
     }
 
     /**
@@ -336,10 +384,12 @@ public class StudentExamResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/conduction")
     @EnforceAtLeastStudent
-    public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
+    public ResponseEntity<StudentExamForConductionDTO> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
             HttpServletRequest request) {
         long start = System.currentTimeMillis();
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        // Course roles are loaded with the user so the instructor checks below (and the one in
+        // ExamService#fetchParticipationsSubmissionsAndResultsForExam) resolve in memory instead of each issuing its own query.
+        User currentUser = userRepository.getUserWithCourseRolesAndAuthorities();
         log.debug("REST request to get the student exam of user {} for exam {} for conduction", currentUser.getLogin(), examId);
 
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
@@ -362,6 +412,19 @@ public class StudentExamResource {
             throw new AccessForbiddenException("Students cannot download the student exams until " + EXAM_START_WAIT_TIME_MINUTES + " minutes before the exam start");
         }
 
+        // If the instructor delayed the submission overview (examSummaryPublicationDate), a student who already submitted must not be able to re-fetch the exam content via
+        // the conduction endpoint either, otherwise the summary gate could be bypassed to leak the exam content (relevant for staggered/multi-shift exams). Instructors and
+        // test runs always have access. Students who have not submitted yet are unaffected, so an ongoing conduction (incl. reload) keeps working.
+        // The instructor check is evaluated last and only when the gate could actually close: currentUser is loaded without its
+        // course roles, so isAtLeastInstructorInCourse costs an extra query, which the common conduction path must not pay.
+        if (Boolean.TRUE.equals(studentExam.isSubmitted()) && !studentExam.getExam().isExamSummaryPublished()) {
+            boolean conductionAccessAlwaysAllowed = studentExam.isTestRun()
+                    || authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
+            if (!conductionAccessAlwaysAllowed) {
+                throw new AccessForbiddenException("The exam content is not available after submission until the summary is published");
+            }
+        }
+
         if (!Boolean.TRUE.equals(studentExam.isStarted())) {
             websocketMessagingService.sendMessage("/topic/exam/" + examId + "/started", "");
         }
@@ -370,7 +433,7 @@ public class StudentExamResource {
 
         log.info("getStudentExamForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(),
                 currentUser.getLogin());
-        return ResponseEntity.ok(studentExam);
+        return ResponseEntity.ok(StudentExamForConductionDTO.of(studentExam));
     }
 
     private void validateExamRequestParametersElseThrow(StudentExam studentExam, Long examId, Long courseId) {
@@ -385,7 +448,7 @@ public class StudentExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/test-run/{testRunId}/conduction : Find a specific test run for conduction.
+     * GET /courses/{courseId}/exams/{examId}/test-runs/{testRunId}/conduction : Find a specific test run for conduction.
      * This will be used for the actual conduction of the test run. The test run will be returned with the exercises
      * and with the student participation and with the submissions.
      * NOTE: when this is called it will also mark the test run as started
@@ -397,16 +460,20 @@ public class StudentExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found test run as body
      */
     // TODO: use the same REST call as for real exams and test exams
-    @GetMapping({ "courses/{courseId}/exams/{examId}/test-runs/{testRunId}/conduction", "courses/{courseId}/exams/{examId}/test-run/{testRunId}/conduction" })
+    @GetMapping("courses/{courseId}/exams/{examId}/test-runs/{testRunId}/conduction")
     @EnforceAtLeastInstructor
-    public ResponseEntity<StudentExam> getTestRunForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId, HttpServletRequest request) {
+    public ResponseEntity<StudentExamForConductionDTO> getTestRunForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId,
+            HttpServletRequest request) {
         // NOTE: it is important that this method has the same logic (except really small differences) as getStudentExamForConduction
         long start = System.currentTimeMillis();
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithAuthorities();
         log.debug("REST request to get the test run for exam {} with id {}", examId, testRunId);
 
         // 1st: load the testRun with all associated exercises
         StudentExam testRun = studentExamRepository.findWithExercisesById(testRunId).orElseThrow(() -> new EntityNotFoundException("StudentExam", testRunId));
+        // the conduction response reports whether the student may request AI feedback, and the query above no longer
+        // drags the configuration along with every course it touches
+        courseAthenaConfigRepository.attachTo(testRun.getExam().getCourse());
 
         if (!currentUser.equals(testRun.getUser())) {
             throw new ConflictException("Current user is not the user of the test run", "StudentExam", "userMismatch");
@@ -416,7 +483,7 @@ public class StudentExamResource {
         prepareStudentExamForConduction(request, currentUser, testRun);
 
         log.info("getTestRunForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, testRun.getExercises().size(), currentUser.getLogin());
-        return ResponseEntity.ok(testRun);
+        return ResponseEntity.ok(StudentExamForConductionDTO.of(testRun));
     }
 
     @NonNull
@@ -431,17 +498,18 @@ public class StudentExamResource {
      * Retrieves all StudentExams for test exams of one Course for the current user
      *
      * @param courseId the course to which the student exam belongs to
-     * @return all StudentExams for test exam for the specified course and user
+     * @return all StudentExams (each including its nested exam and course) for test exam for the specified course and user
      */
     @GetMapping("courses/{courseId}/test-exams-per-user")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<StudentExam>> getStudentExamsForCoursePerUser(@PathVariable Long courseId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+    public ResponseEntity<List<StudentExamDTO>> getStudentExamsForCoursePerUser(@PathVariable Long courseId) {
+        User user = userRepository.getUserWithAuthorities();
         studentExamAccessService.checkCourseAccessForStudentElseThrow(courseId, user);
 
         List<StudentExam> studentExamList = studentExamRepository.findStudentExamsForTestExamsByUserIdAndCourseId(user.getId(), courseId);
+        List<StudentExamDTO> studentExamDTOs = studentExamList.stream().map(StudentExamDTO::withExam).toList();
 
-        return ResponseEntity.ok(studentExamList);
+        return ResponseEntity.ok(studentExamDTOs);
     }
 
     /**
@@ -456,9 +524,11 @@ public class StudentExamResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/summary")
     @EnforceAtLeastStudent
-    public ResponseEntity<StudentExam> getStudentExamForSummary(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+    public ResponseEntity<StudentExamForSummaryDTO> getStudentExamForSummary(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         long start = System.currentTimeMillis();
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        // Course roles are loaded with the user: this request runs three course-role checks on the same user and course
+        // (the access service, the summary publication gate, and the participation filter), which would otherwise be three queries.
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
 
         log.debug("REST request to get the student exam of user {} for exam {}", user.getLogin(), examId);
 
@@ -476,6 +546,13 @@ public class StudentExamResource {
             throw new AccessForbiddenException("You are not allowed to access the summary of a student exam which was NOT submitted!");
         }
 
+        // 3.5th: if the instructor configured a summary publication date, students may only access the summary (incl. exam questions and the PDF export)
+        // from that date onwards. This protects staggered/multi-shift exams from early submitters leaking the exam content. Instructors and test runs always have access.
+        boolean summaryAccessAlwaysAllowed = studentExam.isTestRun() || authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), user);
+        if (!summaryAccessAlwaysAllowed && !studentExam.getExam().isExamSummaryPublished()) {
+            throw new AccessForbiddenException("The summary of this student exam is not available yet");
+        }
+
         // 4th: Reload the Quiz-Exercises
         examService.loadQuizExercisesForStudentExam(studentExam);
 
@@ -483,7 +560,13 @@ public class StudentExamResource {
         examService.fetchParticipationsSubmissionsAndResultsForExam(studentExam, user);
 
         log.info("getStudentExamForSummary done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
-        return ResponseEntity.ok(studentExam);
+        // Only a test exam or test run summary offers the AI feedback request - the client hides the button for anything else and
+        // StudentExamAthenaFeedbackService rejects it - so a real exam attempt does not read the (lazy) Athena configuration.
+        // A test run is an attempt on a real exam, so it has to be named here separately rather than covered by isTestExam().
+        if (studentExam.getExam().isTestExam() || studentExam.isTestRun()) {
+            courseAthenaConfigRepository.attachTo(studentExam.getExam().getCourse());
+        }
+        return ResponseEntity.ok(StudentExamForSummaryDTO.of(studentExam));
     }
 
     /**
@@ -506,9 +589,9 @@ public class StudentExamResource {
     public ResponseEntity<StudentExamWithGradeDTO> getStudentExamGradesForSummary(@PathVariable long courseId, @PathVariable long examId, @PathVariable long studentExamId,
             @RequestParam(required = false) Long userId) {
         long start = System.currentTimeMillis();
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithAuthorities();
         log.debug("REST request to get the student exam grades of user with id {} for exam {} by user {}", userId, examId, currentUser.getLogin());
-        User targetUser = userId == null ? currentUser : userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
+        User targetUser = userId == null ? currentUser : userRepository.findByIdWithAuthoritiesElseThrow(userId);
         StudentExam studentExam = findStudentExamWithExercisesElseThrow(targetUser, examId, courseId, studentExamId);
 
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
@@ -535,7 +618,7 @@ public class StudentExamResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<ExamLiveEventBaseDTO>> getExamLiveEvents(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.currentTimeMillis();
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithAuthorities();
         log.debug("REST request to get the exam live events for exam {} by user {}", examId, currentUser.getLogin());
 
         StudentExam studentExam = studentExamRepository.findOneByExamIdAndUserIdElseThrow(examId, currentUser.getId());
@@ -558,17 +641,18 @@ public class StudentExamResource {
      *
      * @param courseId the id of the course
      * @param examId   the id of the exam
-     * @return the list of test runs
+     * @return the list of test runs (each including its nested user)
      */
     @GetMapping("courses/{courseId}/exams/{examId}/test-runs")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<StudentExam>> findAllTestRunsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<List<StudentExamDTO>> findAllTestRunsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to find all test runs for exam {}", examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         List<StudentExam> testRuns = studentExamRepository.findAllTestRunsByExamId(examId);
-        return ResponseEntity.ok(testRuns);
+        List<StudentExamDTO> testRunDTOs = testRuns.stream().map(StudentExamDTO::withUser).toList();
+        return ResponseEntity.ok(testRunDTOs);
     }
 
     /**
@@ -576,20 +660,22 @@ public class StudentExamResource {
      *
      * @param courseId             the id of the course
      * @param examId               the id of the exam
-     * @param testRunConfiguration the desired student exam configuration for the test run
-     * @return the created test run student exam
+     * @param testRunConfiguration the desired exam id, exercise ids (in persistence order) and working time for the test run
+     * @return the created test run student exam (including its nested user), consistent with {@link #findAllTestRunsForExam}
      */
     @PostMapping({ "courses/{courseId}/exams/{examId}/test-runs", "courses/{courseId}/exams/{examId}/test-run" })
     @EnforceAtLeastInstructor
-    public ResponseEntity<StudentExam> createTestRun(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam testRunConfiguration) {
+    public ResponseEntity<StudentExamDTO> createTestRun(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody CreateTestRunDTO testRunConfiguration) {
         log.info("REST request to create a test run of exam {}", examId);
-        if (testRunConfiguration.getExam() == null || !testRunConfiguration.getExam().getId().equals(examId)) {
+        if (testRunConfiguration.examId() != examId) {
             throw new BadRequestException();
         }
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        StudentExam testRun = studentExamService.createTestRun(testRunConfiguration);
-        return ResponseEntity.ok(testRun);
+        Exam exam = examRepository.findByIdElseThrow(examId);
+        List<Long> exerciseIds = testRunConfiguration.exerciseIds() != null ? testRunConfiguration.exerciseIds() : List.of();
+        StudentExam testRun = studentExamService.createTestRun(exam, exerciseIds, testRunConfiguration.workingTime());
+        return ResponseEntity.ok(StudentExamDTO.withUser(testRun));
     }
 
     /**
@@ -633,14 +719,14 @@ public class StudentExamResource {
     }
 
     /**
-     * DELETE /courses/{courseId}/exams/{examId}/test-run/{testRunId} : Delete a test run
+     * DELETE /courses/{courseId}/exams/{examId}/test-runs/{testRunId} : Delete a test run
      *
      * @param courseId  the id of the course
      * @param examId    the id of the exam
      * @param testRunId the id of the student exam of the test run
      * @return the deleted test run student exam
      */
-    @DeleteMapping({ "courses/{courseId}/exams/{examId}/test-runs/{testRunId}", "courses/{courseId}/exams/{examId}/test-run/{testRunId}" })
+    @DeleteMapping("courses/{courseId}/exams/{examId}/test-runs/{testRunId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteTestRun(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId) {
         log.info("REST request to delete the test run with id {}", testRunId);
@@ -670,9 +756,11 @@ public class StudentExamResource {
             throw new BadRequestAlertException("Start exercises is only allowed for real exams", "StudentExam", "startExerciseOnlyForRealExams");
         }
 
-        User instructor = userRepository.getUser();
+        // Only the login is used, for the audit event and the log line, and the login is already in the security
+        // context. Loading the user read a row of roughly sixty columns to obtain a value we were holding already.
+        String instructorLogin = userRepository.getCurrentUserLogin();
         log.info("REST request to start exercises for student exams of exam {}", examId);
-        AuditEvent auditEvent = new AuditEvent(instructor.getLogin(), Constants.PREPARE_EXERCISE_START, "examId=" + examId, "user=" + instructor.getLogin());
+        AuditEvent auditEvent = new AuditEvent(instructorLogin, Constants.PREPARE_EXERCISE_START, "examId=" + examId, "user=" + instructorLogin);
         auditEventRepository.add(auditEvent);
 
         studentExamService.startExercises(examId).thenAccept(numberOfGeneratedParticipations -> log.info("Generated {} participations in {} for student exams of exam {}",
@@ -751,12 +839,6 @@ public class StudentExamResource {
 
         // Fetch participations, submissions and results and connect them to the studentExam
         examService.fetchParticipationsSubmissionsAndResultsForExam(studentExam, currentUser);
-        for (var exercise : studentExam.getExercises()) {
-            for (var participation : exercise.getStudentParticipations()) {
-                // remove inner exercise from participation
-                participation.setExercise(null);
-            }
-        }
 
         // Create new exam session
         createNewExamSession(request, studentExam);
@@ -791,8 +873,10 @@ public class StudentExamResource {
      */
     @PutMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggle-to-submitted")
     @EnforceAtLeastInstructor
-    public ResponseEntity<StudentExam> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
-        User instructor = userRepository.getUser();
+    public ResponseEntity<StudentExamDTO> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+        // Only the login is used, for the audit event and the log line, and the login is already in the security
+        // context. Loading the user read a row of roughly sixty columns to obtain a value we were holding already.
+        String instructorLogin = userRepository.getCurrentUserLogin();
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
         StudentExam studentExam = studentExamRepository.findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("studentExam", studentExamId));
@@ -808,12 +892,12 @@ public class StudentExamResource {
         studentExam.setSubmissionDate(submissionTime);
         studentExam.setSubmitted(true);
 
-        log.info("REST request by user: {} for exam with id {} to set student-exam {} to SUBMITTED", instructor.getLogin(), examId, studentExamId);
-        AuditEvent auditEvent = new AuditEvent(instructor.getLogin(), Constants.TOGGLE_STUDENT_EXAM_SUBMITTED, "examId=" + examId, "user=" + instructor.getLogin(),
+        log.info("REST request by user: {} for exam with id {} to set student-exam {} to SUBMITTED", instructorLogin, examId, studentExamId);
+        AuditEvent auditEvent = new AuditEvent(instructorLogin, Constants.TOGGLE_STUDENT_EXAM_SUBMITTED, "examId=" + examId, "user=" + instructorLogin,
                 "studentExamId=" + studentExamId);
         auditEventRepository.add(auditEvent);
 
-        return ResponseEntity.ok(studentExamRepository.save(studentExam));
+        return ResponseEntity.ok(StudentExamDTO.of(studentExamRepository.save(studentExam)));
     }
 
     /**
@@ -828,8 +912,10 @@ public class StudentExamResource {
      */
     @PutMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggle-to-unsubmitted")
     @EnforceAtLeastInstructor
-    public ResponseEntity<StudentExam> unsubmitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
-        User instructor = userRepository.getUser();
+    public ResponseEntity<StudentExamDTO> unsubmitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+        // Only the login is used, for the audit event and the log line, and the login is already in the security
+        // context. Loading the user read a row of roughly sixty columns to obtain a value we were holding already.
+        String instructorLogin = userRepository.getCurrentUserLogin();
 
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
@@ -845,12 +931,12 @@ public class StudentExamResource {
         studentExam.setSubmissionDate(null);
         studentExam.setSubmitted(false);
 
-        log.info("REST request by user: {} for exam with id {} to set student-exam {} to UNSUBMITTED", instructor.getLogin(), examId, studentExamId);
-        AuditEvent auditEvent = new AuditEvent(instructor.getLogin(), Constants.TOGGLE_STUDENT_EXAM_UNSUBMITTED, "examId=" + examId, "user=" + instructor.getLogin(),
+        log.info("REST request by user: {} for exam with id {} to set student-exam {} to UNSUBMITTED", instructorLogin, examId, studentExamId);
+        AuditEvent auditEvent = new AuditEvent(instructorLogin, Constants.TOGGLE_STUDENT_EXAM_UNSUBMITTED, "examId=" + examId, "user=" + instructorLogin,
                 "studentExamId=" + studentExamId);
         auditEventRepository.add(auditEvent);
 
-        return ResponseEntity.ok(studentExamRepository.save(studentExam));
+        return ResponseEntity.ok(StudentExamDTO.of(studentExamRepository.save(studentExam)));
     }
 
     /**

@@ -10,6 +10,7 @@
         "rootDir": ".",
         "paths": {
             "@angular/*": ["./node_modules/@angular/*"],
+            "@tumaet/ui-angular": ["./packages/tum-ui/dist"],
             "app/*": ["./src/main/webapp/app/*"],
             "test/*": ["./src/test/javascript/spec/*"],
             "src/*": ["./src/*"]
@@ -18,6 +19,6 @@
         "isolatedModules": true
     },
     "files": ["src/test/javascript/spec/vitest-test-setup.ts"],
-    "include": ["src/test/javascript", "src/main/webapp/app/**/*.spec.ts"],
+    "include": ["src/test/javascript", "src/main/webapp/app/**/*.spec.ts", "packages/tum-ui/src/**/*.spec.ts"],
     "exclude": ["node_modules"]
 }

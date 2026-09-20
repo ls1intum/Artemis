@@ -15,4 +15,5 @@ export interface Student {
     lastName?: string;
     registrationNumber?: string;
     email?: string;
+    isTestUser?: boolean;
 }

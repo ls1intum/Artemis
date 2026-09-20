@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -35,16 +36,19 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
-import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.dto.AuxiliaryRepositoryDTO;
 import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseListItemDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseStateDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTheiaConfigDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
@@ -61,6 +65,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryParticipationService
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("authoring/exercise-management")
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExerciseRetrievalResource {
@@ -130,27 +135,30 @@ public class ProgrammingExerciseRetrievalResource {
      */
     @GetMapping("courses/{courseId}/programming-exercises")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<ProgrammingExercise>> getProgrammingExercisesForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<ProgrammingExerciseListItemDTO>> getProgrammingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         List<ProgrammingExercise> exercises = programmingExerciseService.findByCourseIdWithCategoriesLatestSubmissionResultForTemplateAndSolutionParticipation(courseId);
+        List<ProgrammingExerciseListItemDTO> exerciseDTOs = new ArrayList<>(exercises.size());
         for (ProgrammingExercise exercise : exercises) {
-            // not required in the returned json body
-            exercise.setStudentParticipations(null);
+            // The course is deliberately left out of the payload to save bandwidth: the client already has it and
+            // re-attaches it (CourseExerciseService#findAllProgrammingExercisesForCourse). Detaching the course member
+            // before mapping keeps the slot empty, exactly as before this endpoint returned DTOs.
             exercise.setCourse(null);
+            exerciseDTOs.add(ProgrammingExerciseListItemDTO.of(exercise));
         }
-        return ResponseEntity.ok().body(exercises);
+        return ResponseEntity.ok().body(exerciseDTOs);
     }
 
     private ProgrammingExercise findProgrammingExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
         if (includePlagiarismDetectionConfig) {
             var programmingExercise = programmingExerciseRepository
-                    .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigElseThrow(exerciseId);
+                    .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigElseThrow(exerciseId);
             PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(programmingExercise, programmingExerciseRepository);
             return programmingExercise;
         }
-        return programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigElseThrow(exerciseId);
+        return programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndVariantGroupElseThrow(exerciseId);
     }
 
     /**
@@ -162,7 +170,8 @@ public class ProgrammingExerciseRetrievalResource {
      */
     @GetMapping("programming-exercises/{exerciseId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
+    public ResponseEntity<ProgrammingExerciseResponseDTO> getProgrammingExercise(@PathVariable long exerciseId,
+            @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
         var programmingExercise = findProgrammingExercise(exerciseId, withPlagiarismDetectionConfig);
         // Fetch grading criterion into exercise of participation
@@ -186,7 +195,10 @@ public class ProgrammingExerciseRetrievalResource {
 
         programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
 
-        return ResponseEntity.ok().body(programmingExercise);
+        // gradingInstructionFeedbackUsed is a transient flag computed above; the grading-instruction editor branches on
+        // it, so it is passed into the mapper explicitly.
+        var buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId);
+        return ResponseEntity.ok().body(ProgrammingExerciseResponseDTO.of(programmingExercise, buildConfig, programmingExercise.isGradingInstructionFeedbackUsed()));
     }
 
     /**
@@ -212,9 +224,9 @@ public class ProgrammingExerciseRetrievalResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/with-participations")
     @EnforceAtLeastEditor
-    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithSetupParticipations(@PathVariable long exerciseId) {
+    public ResponseEntity<ProgrammingExerciseResponseDTO> getProgrammingExerciseWithSetupParticipations(@PathVariable long exerciseId) {
         log.debug("REST request to get ProgrammingExercise with setup participations : {}", exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         var programmingExercise = programmingExerciseService.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
         var assignmentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithLatestResult(programmingExercise.getId(), user.getId(), false);
@@ -223,7 +235,8 @@ public class ProgrammingExerciseRetrievalResource {
         programmingExercise.setStudentParticipations(participations);
 
         programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
-        return ResponseEntity.ok(programmingExercise);
+        return ResponseEntity
+                .ok(ProgrammingExerciseResponseDTO.of(programmingExercise, programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId)));
     }
 
     /**
@@ -236,11 +249,12 @@ public class ProgrammingExerciseRetrievalResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/with-template-and-solution-participation")
     @EnforceAtLeastTutorInExercise
-    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithTemplateAndSolutionParticipation(@PathVariable long exerciseId,
+    public ResponseEntity<ProgrammingExerciseResponseDTO> getProgrammingExerciseWithTemplateAndSolutionParticipation(@PathVariable long exerciseId,
             @RequestParam(defaultValue = "false") boolean withSubmissionResults, @RequestParam(defaultValue = "false") boolean withGradingCriteria) {
         log.debug("REST request to get programming exercise with template and solution participation : {}", exerciseId);
         final var programmingExercise = programmingExerciseService.loadProgrammingExercise(exerciseId, withSubmissionResults, withGradingCriteria);
-        return ResponseEntity.ok(programmingExercise);
+        return ResponseEntity
+                .ok(ProgrammingExerciseResponseDTO.of(programmingExercise, programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId)));
     }
 
     /**
@@ -251,11 +265,12 @@ public class ProgrammingExerciseRetrievalResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/with-auxiliary-repository")
     @EnforceAtLeastTutorInExercise
-    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithAuxiliaryRepository(@PathVariable long exerciseId) {
+    public ResponseEntity<ProgrammingExerciseResponseDTO> getProgrammingExerciseWithAuxiliaryRepository(@PathVariable long exerciseId) {
 
         log.debug("REST request to get programming exercise with auxiliary repositories: {}", exerciseId);
         final var programmingExercise = programmingExerciseService.loadProgrammingExerciseWithAuxiliaryRepositories(exerciseId);
-        return ResponseEntity.ok(programmingExercise);
+        return ResponseEntity
+                .ok(ProgrammingExerciseResponseDTO.of(programmingExercise, programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId)));
     }
 
     /**
@@ -286,10 +301,10 @@ public class ProgrammingExerciseRetrievalResource {
      */
     @GetMapping("programming-exercises")
     @EnforceAtLeastEditor
-    public ResponseEntity<SearchResultPageDTO<ProgrammingExercise>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
+    public ResponseEntity<SearchResultPageDTO<ProgrammingExerciseListItemDTO>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
-        return ResponseEntity.ok(programmingExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
+        final var user = userRepository.getUserWithAuthorities();
+        return ResponseEntity.ok(toListItemPage(programmingExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user)));
     }
 
     /**
@@ -304,11 +319,19 @@ public class ProgrammingExerciseRetrievalResource {
      */
     @GetMapping("programming-exercises/with-sca")
     @EnforceAtLeastEditor
-    public ResponseEntity<SearchResultPageDTO<ProgrammingExercise>> getAllExercisesWithSCAOnPage(SearchTermPageableSearchDTO<String> search,
+    public ResponseEntity<SearchResultPageDTO<ProgrammingExerciseListItemDTO>> getAllExercisesWithSCAOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter,
             @RequestParam ProgrammingLanguage programmingLanguage) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        return ResponseEntity.ok(programmingExerciseService.getAllWithSCAOnPageWithSize(search, isCourseFilter, isExamFilter, programmingLanguage, user));
+        User user = userRepository.getUserWithAuthorities();
+        return ResponseEntity.ok(toListItemPage(programmingExerciseService.getAllWithSCAOnPageWithSize(search, isCourseFilter, isExamFilter, programmingLanguage, user)));
+    }
+
+    /**
+     * Maps a page of programming exercises onto the slim list-item DTO the import table renders, keeping the page
+     * metadata untouched.
+     */
+    private static SearchResultPageDTO<ProgrammingExerciseListItemDTO> toListItemPage(SearchResultPageDTO<ProgrammingExercise> page) {
+        return new SearchResultPageDTO<>(page.getResultsOnPage().stream().map(ProgrammingExerciseListItemDTO::of).toList(), page.getNumberOfPages());
     }
 
     /**
@@ -320,10 +343,10 @@ public class ProgrammingExerciseRetrievalResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/auxiliary-repository")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<AuxiliaryRepository>> getAuxiliaryRepositories(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<AuxiliaryRepositoryDTO>> getAuxiliaryRepositories(@PathVariable Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-        return ResponseEntity.ok(exercise.getAuxiliaryRepositories());
+        return ResponseEntity.ok(exercise.getAuxiliaryRepositories().stream().map(AuxiliaryRepositoryDTO::of).toList());
     }
 
     /**
@@ -332,21 +355,22 @@ public class ProgrammingExerciseRetrievalResource {
      * id (which the client may not know) and returns the same payload as
      * {@code participations/{participationId}/repository/files-content}.
      *
-     * @param exerciseId   the exercise for which the solution repository files should be retrieved
-     * @param omitBinaries do not send binaries to reduce payload size
+     * The files are read from the latest commit of the bare repository, so uncommitted changes made through the online
+     * editor are not included. Binary files are never included, because the content is returned as a string.
+     *
+     * @param exerciseId the exercise for which the solution repository files should be retrieved
      * @return the ResponseEntity with status 200 (OK) and a map of file path to file content
      */
     @GetMapping("programming-exercises/{exerciseId}/solution-files-content")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Map<String, String>> getSolutionRepositoryFilesWithContent(@PathVariable Long exerciseId,
-            @RequestParam(value = "omitBinaries", required = false, defaultValue = "false") boolean omitBinaries) {
+    public ResponseEntity<Map<String, String>> getSolutionRepositoryFilesWithContent(@PathVariable Long exerciseId) {
         log.debug("REST request to get latest Solution Repository Files for ProgrammingExercise with id : {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
-        return ResponseEntity.ok(repositoryParticipationService.getFilesContentFromWorkingCopy(participation, exercise, omitBinaries));
+        return ResponseEntity.ok(repositoryParticipationService.getFilesContentFromLastCommit(participation));
     }
 
     /**
@@ -355,21 +379,22 @@ public class ProgrammingExerciseRetrievalResource {
      * id (which the client may not know) and returns the same payload as
      * {@code participations/{participationId}/repository/files-content}.
      *
-     * @param exerciseId   the exercise for which the template repository files should be retrieved
-     * @param omitBinaries do not send binaries to reduce payload size
+     * The files are read from the latest commit of the bare repository, so uncommitted changes made through the online
+     * editor are not included. Binary files are never included, because the content is returned as a string.
+     *
+     * @param exerciseId the exercise for which the template repository files should be retrieved
      * @return the ResponseEntity with status 200 (OK) and a map of file path to file content
      */
     @GetMapping("programming-exercises/{exerciseId}/template-files-content")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Map<String, String>> getTemplateRepositoryFilesWithContent(@PathVariable Long exerciseId,
-            @RequestParam(value = "omitBinaries", required = false, defaultValue = "false") boolean omitBinaries) {
+    public ResponseEntity<Map<String, String>> getTemplateRepositoryFilesWithContent(@PathVariable Long exerciseId) {
         log.debug("REST request to get latest Template Repository Files for ProgrammingExercise with id : {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         var participation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
-        return ResponseEntity.ok(repositoryParticipationService.getFilesContentFromWorkingCopy(participation, exercise, omitBinaries));
+        return ResponseEntity.ok(repositoryParticipationService.getFilesContentFromLastCommit(participation));
     }
 
     /**

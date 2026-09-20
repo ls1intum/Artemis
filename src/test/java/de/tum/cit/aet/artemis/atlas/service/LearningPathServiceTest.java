@@ -68,10 +68,9 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentBatchT
 
             learnerProfileUtilService.createLearnerProfilesForUsers(TEST_PREFIX);
 
-            course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(8), new HashSet<>(), TEST_PREFIX + "tumuser",
-                    TEST_PREFIX + "tutor", TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
+            course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(8), new HashSet<>());
             course = courseRepository.save(course);
-
+            userUtilService.enrollPrefixedUsersInCourse(course, TEST_PREFIX);
         }
 
         @Test
@@ -80,7 +79,8 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentBatchT
             final var competency2 = competencyUtilService.createCompetency(course);
             competencyUtilService.addRelation(competency1, RelationType.MATCHES, competency2);
             course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-            userUtilService.addStudent(TEST_PREFIX + "tumuser", TEST_PREFIX + "student1337");
+            // Enroll a brand-new student AFTER path generation so the health check detects them as missing
+            userUtilService.addStudentToCourse(TEST_PREFIX + "student1337", course);
             var healthStatus = learningPathService.getHealthStatusForCourse(course);
             assertThat(healthStatus.status()).containsExactly(LearningPathHealthDTO.HealthStatus.MISSING);
             assertThat(healthStatus.missingLearningPaths()).isEqualTo(1);
@@ -111,8 +111,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentBatchT
         @BeforeEach
         void setup() {
             userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-            course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(8), new HashSet<>(), TEST_PREFIX + "tumuser",
-                    TEST_PREFIX + "tutor", TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
+            course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(8), new HashSet<>());
             course = courseRepository.save(course);
         }
 

@@ -29,6 +29,7 @@ export class LoginService {
                 },
                 error: (err) => {
                     this.logout(false);
+                    this.logoutWasForceful = false;
                     reject(err);
                 },
             });
@@ -49,6 +50,7 @@ export class LoginService {
                 },
                 error: (err) => {
                     this.logout(false);
+                    this.logoutWasForceful = false;
                     reject(err);
                 },
             });
@@ -59,19 +61,15 @@ export class LoginService {
      * Login the user with OIDC.
      * @param rememberMe whether or not to remember the user
      */
-    loginOIDC(rememberMe: boolean) {
+    loginOIDC(rememberMe: boolean): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.authServerProvider.loginOIDC(rememberMe).subscribe({
-                next: () => {
-                    void this.accountService.identity(true).then(() => {
-                        resolve();
-                    });
-                },
-                error: (err) => {
-                    this.logout(false);
-                    reject(err);
-                },
-            });
+            try {
+                this.authServerProvider.loginOIDC(rememberMe);
+                resolve();
+            } catch (err) {
+                this.logoutWasForceful = false;
+                reject(err);
+            }
         });
     }
 

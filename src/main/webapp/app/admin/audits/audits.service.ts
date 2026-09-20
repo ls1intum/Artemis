@@ -3,6 +3,7 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { Audit } from 'app/admin/audits/audit.model';
+import { AuditLogType } from 'app/admin/audits/audit-log-type.model';
 
 /**
  * Query parameters for retrieving audit entries.
@@ -13,6 +14,8 @@ export interface AuditsQuery {
     sort?: string[];
     fromDate?: string;
     toDate?: string;
+    /** Which of the three audit logs to read. Defaults to the general log on the server if omitted. */
+    logType?: AuditLogType;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -1,4 +1,4 @@
-import { Page } from 'playwright';
+import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 import { BASE_API } from '../../constants';
 import { fillDateTimePicker, setMonacoEditorContentByLocator } from '../../utils';
@@ -54,7 +54,7 @@ export class LectureCreationPage {
      * @param date - The start date for the lecture.
      */
     async setStartDate(date: dayjs.Dayjs) {
-        await fillDateTimePicker(this.page.locator('#start-date #date-input-field'), date);
+        await fillDateTimePicker(this.page.getByLabel('Start Date', { exact: true }), date);
     }
 
     /**
@@ -62,6 +62,6 @@ export class LectureCreationPage {
      * @param date - The end date for the lecture.
      */
     async setEndDate(date: dayjs.Dayjs) {
-        await fillDateTimePicker(this.page.locator('#end-date #date-input-field'), date);
+        await fillDateTimePicker(this.page.getByLabel('End Date', { exact: true }), date);
     }
 }

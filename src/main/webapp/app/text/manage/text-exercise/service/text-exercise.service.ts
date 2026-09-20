@@ -10,6 +10,7 @@ import { toImportTextExerciseDTO, toUpdateTextExerciseDTO } from 'app/text/manag
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
 import { PlagiarismResultDTO } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<TextExercise>;
 export type EntityArrayResponseType = HttpResponse<TextExercise[]>;
@@ -99,9 +100,7 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
         return this.http
             .get<PlagiarismResultDTO>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
                 observe: 'response',
-                params: {
-                    ...options?.toParams(),
-                },
+                params: deepClone(options?.toParams()),
             })
             .pipe(map((response: HttpResponse<PlagiarismResultDTO>) => response.body!));
     }

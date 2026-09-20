@@ -37,6 +37,11 @@ describe('CourseOnboardingComponent', () => {
         course.id = 1;
         course.title = 'Test Course';
         course.shortName = 'TC';
+        // Mirrors a course arriving from the validated create endpoint: startDate, endDate and semester are
+        // already set. Individual tests below clear one of these to exercise the wizard's own required checks.
+        course.startDate = dayjs().subtract(1, 'month');
+        course.endDate = dayjs().add(1, 'month');
+        course.semester = 'SS24';
 
         const route = {
             data: of({ course }),
@@ -162,6 +167,9 @@ describe('CourseOnboardingComponent', () => {
 
             const courseWithoutId = new Course();
             courseWithoutId.title = 'No ID';
+            courseWithoutId.startDate = dayjs().subtract(1, 'month');
+            courseWithoutId.endDate = dayjs().add(1, 'month');
+            courseWithoutId.semester = 'SS24';
             comp.course.set(courseWithoutId);
 
             const updateSpy = vi.spyOn(courseManagementService, 'update');
@@ -169,6 +177,27 @@ describe('CourseOnboardingComponent', () => {
 
             expect(updateSpy).not.toHaveBeenCalled();
             expect(comp.activeStep()).toBe(1);
+        });
+    });
+
+    describe('assessment step max points validation', () => {
+        it('should reject max points above the limit and not save', () => {
+            comp.ngOnInit();
+            comp.course.set({ ...course, maxPoints: 10000 } as Course);
+            comp.activeStep.set(3);
+            const updateSpy = vi.spyOn(courseManagementService, 'update');
+
+            expect(comp.validateCurrentStep()).toBe(false);
+            comp.nextStep();
+            expect(updateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should accept max points at the limit', () => {
+            comp.ngOnInit();
+            comp.course.set({ ...course, maxPoints: 9999 } as Course);
+            comp.activeStep.set(3);
+
+            expect(comp.validateCurrentStep()).toBe(true);
         });
     });
 
@@ -315,6 +344,9 @@ describe('CourseOnboardingComponent', () => {
 
             const courseWithoutId = new Course();
             courseWithoutId.title = 'No ID';
+            courseWithoutId.startDate = dayjs().subtract(1, 'month');
+            courseWithoutId.endDate = dayjs().add(1, 'month');
+            courseWithoutId.semester = 'SS24';
             comp.course.set(courseWithoutId);
 
             const updateSpy = vi.spyOn(courseManagementService, 'update');
@@ -368,6 +400,46 @@ describe('CourseOnboardingComponent', () => {
             expect(comp.validateCurrentStep()).toBe(true);
         });
 
+        it('should reject a missing startDate on step 0', () => {
+            const errorSpy = vi.spyOn(alertService, 'error');
+            const c = comp.course();
+            c.startDate = undefined;
+            comp.course.set(c);
+
+            expect(comp.validateCurrentStep()).toBe(false);
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.course.onboarding.validation.startDateRequired');
+        });
+
+        it('should reject a missing endDate on step 0', () => {
+            const errorSpy = vi.spyOn(alertService, 'error');
+            const c = comp.course();
+            c.endDate = undefined;
+            comp.course.set(c);
+
+            expect(comp.validateCurrentStep()).toBe(false);
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.course.onboarding.validation.endDateRequired');
+        });
+
+        it('should reject a missing semester on step 0', () => {
+            const errorSpy = vi.spyOn(alertService, 'error');
+            const c = comp.course();
+            c.semester = undefined;
+            comp.course.set(c);
+
+            expect(comp.validateCurrentStep()).toBe(false);
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.course.onboarding.validation.semesterRequired');
+        });
+
+        it('should reject a blank semester on step 0', () => {
+            const errorSpy = vi.spyOn(alertService, 'error');
+            const c = comp.course();
+            c.semester = '   ';
+            comp.course.set(c);
+
+            expect(comp.validateCurrentStep()).toBe(false);
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.course.onboarding.validation.semesterRequired');
+        });
+
         it('should reject enrollment startDate after endDate on step 1', () => {
             const errorSpy = vi.spyOn(alertService, 'error');
             advanceToStep(1);
@@ -404,6 +476,18 @@ describe('CourseOnboardingComponent', () => {
 
             expect(comp.validateCurrentStep()).toBe(false);
             expect(errorSpy).toHaveBeenCalledWith('artemisApp.course.onboarding.validation.maxPointsPositive');
+        });
+
+        it('should reject a non-integer maxPoints on step 3', () => {
+            const errorSpy = vi.spyOn(alertService, 'error');
+            advanceToStep(3);
+
+            const c = comp.course();
+            c.maxPoints = 10.5;
+            comp.course.set(c);
+
+            expect(comp.validateCurrentStep()).toBe(false);
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.course.onboarding.validation.maxPointsWholeNumber');
         });
 
         it('should not advance on nextStep if validation fails', () => {

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, inject, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, inject, input, output, signal, viewChild } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
@@ -12,7 +12,7 @@ import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-gra
 import { Subject, Subscription } from 'rxjs';
 import { FormsModule, NgModel } from '@angular/forms';
 import { SubmissionPolicyUpdateComponent } from 'app/exercise/submission-policy/submission-policy-update.component';
-import { ProgrammingExerciseUpdateTimelineComponent } from '../../../../shared/programming-exercise-update-timeline/programming-exercise-update-timeline.component';
+import { ProgrammingExerciseTimelineComponent } from '../../../../shared/programming-exercise-update-timeline/programming-exercise-timeline.component';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -21,6 +21,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Message } from 'primeng/message';
+import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',
@@ -33,7 +34,7 @@ import { Message } from 'primeng/message';
         FaIconComponent,
         NgbTooltip,
         SubmissionPolicyUpdateComponent,
-        ProgrammingExerciseUpdateTimelineComponent,
+        ProgrammingExerciseTimelineComponent,
         GradingInstructionsDetailsComponent,
         PresentationScoreComponent,
         KeyValuePipe,
@@ -54,14 +55,18 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
     programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
     importOptions = input.required<ImportOptions>();
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
+    exercisePartOfExerciseGroup = input<boolean>(false);
+    editGroupDates = output<void>();
+    editable = input(true);
+    criteriaGenerated = output<void>();
 
     submissionPolicyUpdateComponent = viewChild(SubmissionPolicyUpdateComponent);
-    lifecycleComponent = viewChild(ProgrammingExerciseUpdateTimelineComponent);
     maxScoreField = viewChild<NgModel>('maxScore');
     bonusPointsField = viewChild<NgModel>('bonusPoints');
     maxPenaltyField = viewChild<NgModel>('maxPenalty');
 
     formValidSignal = signal<boolean>(false);
+    timelineStatus = signal<TimelineStatus>({ valid: true, empty: false, invalidItems: [] });
 
     formValid!: boolean; // assigned in calculateFormStatus(); left unset so parent's `?? false` / `=== false` reads can distinguish "not yet computed"
     formEmpty!: boolean; // assigned in calculateFormStatus() (see formValid)
@@ -76,7 +81,6 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
         this.inputFieldSubscriptions.push(this.bonusPointsField()?.valueChanges?.subscribe(() => this.calculateFormStatus()));
         this.inputFieldSubscriptions.push(this.maxPenaltyField()?.valueChanges?.subscribe(() => this.calculateFormStatus()));
         this.inputFieldSubscriptions.push(this.submissionPolicyUpdateComponent()?.form?.valueChanges?.subscribe(() => this.calculateFormStatus()));
-        this.inputFieldSubscriptions.push(this.lifecycleComponent()?.formValidChanges?.subscribe(() => this.calculateFormStatus()));
         this.setEditPolicyPageLink();
     }
 
@@ -97,13 +101,19 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
         const bonusPointsValidOrHidden = this.bonusPointsField()?.valid || programmingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY;
         const maxPenaltyValidOrDisabled = this.maxPenaltyField()?.valid || !programmingExercise.staticCodeAnalysisEnabled;
         const scoreFieldsValid = maxScoreValidOrOptional && bonusPointsValidOrHidden && maxPenaltyValidOrDisabled;
-        const dependentComponentsValid = !this.submissionPolicyUpdateComponent()?.invalid && this.lifecycleComponent()?.formValid;
+        const timelineStatus = this.timelineStatus();
+        const dependentComponentsValid = !this.submissionPolicyUpdateComponent()?.invalid && timelineStatus.valid;
         const newFormValidValue = Boolean(scoreFieldsValid && dependentComponentsValid);
 
         this.formValidSignal.set(newFormValidValue);
         this.formValid = newFormValidValue;
-        this.formEmpty = this.lifecycleComponent()?.formEmpty ?? false;
+        this.formEmpty = timelineStatus.empty;
         this.formValidChanges.next(this.formValid);
+    }
+
+    onTimelineStatusChange(timelineStatus: TimelineStatus): void {
+        this.timelineStatus.set(timelineStatus);
+        this.calculateFormStatus();
     }
 
     onIncludedInOverallScoreChange(includedInOverallScore: IncludedInOverallScore): void {

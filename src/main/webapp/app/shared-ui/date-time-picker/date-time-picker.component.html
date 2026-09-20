@@ -14,13 +14,36 @@
         <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-muted-color" />
     </fa-stack>
 }
-<div class="flex relative" data-testid="date-picker-wrapper" [class.invalid-date-input]="showErrorBorder()" (keydown)="onPickerKeydown($event)" (paste)="onPickerPaste($event)">
+<div
+    class="flex relative"
+    data-testid="date-picker-wrapper"
+    [attr.data-invalid]="showErrorBorder()"
+    [class.invalid-date-input]="showErrorBorder()"
+    (keydown)="onPickerKeydown($event)"
+    (paste)="onPickerPaste($event)"
+>
+    @if (lockedToGroup()) {
+        <div
+            class="date-lock-overlay"
+            role="button"
+            tabindex="0"
+            (click)="lockedClick.emit()"
+            (keydown.enter)="lockedClick.emit()"
+            (keydown.space)="lockedClick.emit()"
+            [tumUiTooltip]="'artemisApp.exerciseVariantGroup.timelineLocked.tooltip' | artemisTranslate"
+            [attr.aria-label]="'artemisApp.exerciseVariantGroup.timelineLocked.tooltip' | artemisTranslate"
+        >
+            <fa-icon [icon]="faLock" class="date-lock-icon text-muted-color" />
+        </div>
+    }
     <p-datepicker
         #datePicker
-        [inputId]="inputId()"
         styleClass="w-full"
-        [inputStyleClass]="warning() ? 'date-time-picker-warning-border' : ''"
         panelStyleClass="jhi-date-time-picker-panel"
+        [pt]="passThrough"
+        [inputId]="inputId()"
+        [fluid]="fluid()"
+        [inputStyleClass]="warning() ? 'date-time-picker-warning-border' : ''"
         [ngModel]="value() ?? null"
         [ngModelOptions]="{ standalone: true }"
         (ngModelChange)="updateField($event)"
@@ -43,7 +66,7 @@
         [minDate]="minDate()"
         [maxDate]="maxDate()"
         [defaultDate]="startDate()"
-        [disabled]="disabled()"
+        [disabled]="effectiveDisabled()"
         [showButtonBar]="showTime() || timeOnly()"
         [invalid]="showErrorBorder()"
     >

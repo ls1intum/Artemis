@@ -33,6 +33,7 @@ import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
 import { Message } from 'primeng/message';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
 
@@ -83,7 +84,6 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     shortNameField = viewChild<NgModel>('shortName');
     checkoutSolutionRepositoryField = viewChild<NgModel>('checkoutSolutionRepository');
     recreateBuildPlansField = viewChild<NgModel>('recreateBuildPlans');
-    updateTemplateFilesField = viewChild<NgModel>('updateTemplateFiles');
     programmingExerciseEditCheckoutDirectories = viewChild(ProgrammingExerciseEditCheckoutDirectoriesComponent);
 
     readonly auxRepoNameTemplate = viewChild<CellTemplateRef<AuxiliaryRepository>>('auxRepoNameTemplate');
@@ -190,7 +190,6 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         this.inputFieldSubscriptions.push(this.shortNameField()?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.checkoutSolutionRepositoryField()?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.recreateBuildPlansField()?.valueChanges?.subscribe(() => this.calculateFormValid()));
-        this.inputFieldSubscriptions.push(this.updateTemplateFilesField()?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.programmingExerciseEditCheckoutDirectories()?.formValidChanges.subscribe(() => this.calculateFormValid()));
         // viewChildren() is a signal of the current list; subscribe directly. Re-registration when the
         // list changes is driven by the registerInputFieldsWhenChildComponentsAreReady effect, which reads
@@ -255,7 +254,6 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
 
     isUpdateTemplateFilesValid(): boolean {
         return (
-            this.updateTemplateFilesField()?.valid ||
             !this.programmingExerciseCreationConfig().isImportFromExistingExercise ||
             this.programmingExercise().projectType === ProjectType.PLAIN_GRADLE ||
             this.programmingExercise().projectType === ProjectType.GRADLE_GRADLE
@@ -296,19 +294,19 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     onAssigmentRepositoryCheckoutPathChange(event: string) {
         this.programmingExercise().buildConfig!.assignmentCheckoutPath = event;
         // We need to create a new object to trigger the change detection
-        this.programmingExercise().buildConfig = { ...this.programmingExercise().buildConfig! };
+        this.programmingExercise().buildConfig = deepClone(this.programmingExercise().buildConfig!);
     }
 
     onTestRepositoryCheckoutPathChange(event: string) {
         this.programmingExercise().buildConfig!.testCheckoutPath = event;
         // We need to create a new object to trigger the change detection
-        this.programmingExercise().buildConfig = { ...this.programmingExercise().buildConfig! };
+        this.programmingExercise().buildConfig = deepClone(this.programmingExercise().buildConfig!);
     }
 
     onSolutionRepositoryCheckoutPathChange(event: string) {
         this.programmingExercise().buildConfig!.solutionCheckoutPath = event;
         // We need to create a new object to trigger the change detection
-        this.programmingExercise().buildConfig = { ...this.programmingExercise().buildConfig! };
+        this.programmingExercise().buildConfig = deepClone(this.programmingExercise().buildConfig!);
     }
 
     private registerInputFieldsWhenChildComponentsAreReady() {

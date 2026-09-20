@@ -219,11 +219,24 @@ public class TextExerciseUtilService {
     /**
      * Creates and saves a Course with one TextExercise.
      *
+     * @param title      The title of the created TextExercise
+     * @param userPrefix The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @return The newly created Course
+     */
+    public Course addEnrolledCourseWithOneReleasedTextExercise(String title, String userPrefix) {
+        Course course = addCourseWithOneReleasedTextExercise(title);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
+    }
+
+    /**
+     * Creates and saves a Course with one TextExercise.
+     *
      * @param title The title of the created TextExercise
      * @return The newly created Course
      */
     public Course addCourseWithOneReleasedTextExercise(String title) {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>());
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         textExercise.setTitle(title);
         course.addExercises(textExercise);
@@ -409,11 +422,9 @@ public class TextExerciseUtilService {
         for (Feedback feedback : feedbacks) {
             // Important note to prevent 'JpaSystemException: null index column for collection':
             // 1) save the child entity (without connection to the parent entity) and make sure to re-assign the return value
-            feedback = feedbackRepo.save(feedback);
-            // this also invokes feedback.setResult(result)
-            // Important note to prevent 'JpaSystemException: null index column for collection':
-            // 2) connect child and parent entity
+            // The feedback names its result, so it is connected to the parent before it is written.
             result.addFeedback(feedback);
+            feedback = feedbackRepo.save(feedback);
         }
         // this automatically saves the feedback because of the CascadeType.All annotation
         // Important note to prevent 'JpaSystemException: null index column for collection':
@@ -500,12 +511,24 @@ public class TextExerciseUtilService {
     }
 
     /**
+     * Creates and saves a Course with one finished TextExercise and enrolls the users identified by the given prefix.
+     *
+     * @param userPrefix The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @return The created Course with prefix users enrolled
+     */
+    public Course addEnrolledCourseWithOneFinishedTextExercise(String userPrefix) {
+        Course course = addCourseWithOneFinishedTextExercise();
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
+    }
+
+    /**
      * Creates and saves a Course with one finished TextExercise (release, due, and assessment due date in the past).
      *
      * @return The created Course
      */
     public Course addCourseWithOneFinishedTextExercise() {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>());
         TextExercise finishedTextExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, pastTimestamp.plusHours(12), pastTimestamp.plusHours(24), course);
         finishedTextExercise.setTitle("Finished");
         course.addExercises(finishedTextExercise);

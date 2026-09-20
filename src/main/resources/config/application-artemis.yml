@@ -13,6 +13,17 @@ artemis:
   # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
   user-management:
     use-external: true # enables ldap authentication
+    # A "remember me" session is silently extended while it stays in use, so an active user is not signed out every time
+    # the token expires. This is the one bound on how long that can go on: the session may never live longer than this
+    # after the original login, whatever the request pattern. An inactive session still ends when its current token
+    # expires, after token-validity-in-seconds-for-remember-me.
+    #
+    # Measured from the login rather than counted per extension on purpose. A rotation fires on the first request after
+    # less than half the validity remains, so counting extensions would make the maximum depend on when requests arrive,
+    # and would give the most active sessions the shortest lives.
+    #
+    # A passkey session has its own, longer bound: artemis.user-management.passkey.token-validity-in-seconds-for-passkey.
+    max-session-lifetime-in-seconds: 2592000 # 30 days, the lifetime a single non-rotating remember-me token used to have
     password-reset:
       links: # The password reset links for different languages
         en: '<link>'
@@ -41,6 +52,13 @@ artemis:
       allowed-username-pattern: '^([a-z]{2}\d{2}[a-z]{3})$'    # example for a TUM identifier, e.g. ab12cde
     login:
       account-name: TUM                   # optional: customization for the welcome page "please sign in with your <account-name> account"
+  programming:
+    # Optional Maven Central mirror for the test repositories of Java and Kotlin exercises. Maven Central rate-limits
+    # requests (HTTP 429), which makes exercise builds fail. When this is set, Artemis declares the mirror as the first
+    # repository (dependencies and plugins) in every newly created Java/Kotlin test repository, so builds resolve through
+    # the mirror instead of Maven Central. Leave it unset to keep resolving from Maven Central directly.
+    # TUM-operated instances can use the mirror the Artemis team provides:
+    # maven-central-mirror-url: https://reposilite.aet.cit.tum.de/releases
   version-control:
     url: https://artemis.tum.de
     user: <username>                # e.g. ga12abc
@@ -50,6 +68,13 @@ artemis:
     ssh-port: 7921
     #        ssh-private-key-folder-path: <ssh-private-key-folder-path>       # the path to the folder in which the private ssh key file (e.g. id_rsa) is stored that can be used to clone git repos on the version control server
     #        ssh-private-key-password: <ssh-private-key-password>        # the password for the private ssh key
+    # Build agent authentication, in the order you should prefer it. Neither of the first two needs a secret from you:
+    #   1. ssh keys (recommended): set build-agent-use-ssh: true on the build agents AND on every core node, plus the two ssh properties above on the agents.
+    #      Each agent generates its own key pair at startup and publishes only the public key - nothing to distribute or rotate.
+    #   2. build job clone tokens: the automatic fallback over https when build-agent-use-ssh is false, and it needs no configuration at all.
+    #   3. build-agent-git-username / build-agent-git-password: Jenkins with LocalVC only. A node running local CI refuses to start with either set.
+    # See documentation/docs/admin/production-setup/security.mdx#build-agent-authentication.
+    # build-agent-use-ssh: true
     default-branch: main            # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
     repository-authentication-mechanisms: token,ssh,password # the order of authentication mechanisms in the code button pop up. Removing parts removes them from the drop-down
   continuous-integration:
@@ -81,10 +106,17 @@ artemis:
     enabled: false
     account-management-requests-per-minute: 5
     authentication-requests-per-minute: 30
+    login-options-requests-per-minute: 30
+    # Addresses exempt from every rate limit, as literal IPv4/IPv6 addresses or CIDR blocks. The limits
+    # are per client address, which protects against one abusive client but throttles a load generator
+    # almost immediately, since a benchmark drives thousands of logins from a single address. Leave
+    # empty unless you operate the address in question.
+    # exempt-addresses:
+    #   - 203.0.113.10
+    #   - 2001:db8::/64
   athena:
     url: http://localhost:5100
     secret: abcdef12345
-    restricted-modules: module_text_llm,module_programming_llm
   apollon:
     conversion-service-url: http://localhost:8080
   hyperion:
@@ -103,13 +135,16 @@ artemis:
     # *-model values are Azure deployment aliases — replace with your own deployment names.
     chat-model: gpt-5.4-mini
     temperature: 0.8
-    flavor-strip-model: gpt-5.4-mini # Azure deployment name of a small/fast model used to strip narrative scaffolding from exercise text before downstream LLM processing. Set to an empty string to disable stripping (raw passthrough).
-    flavor-strip-reasoning-effort: medium # Reasoning effort passed via AzureOpenAiChatOptions.reasoningEffort (e.g. low|medium|high). Leave blank to omit the parameter. "medium" is the v3 default — the multi-step constraint checks (keep_verbatim list + heading rule + metacognitive gate) require multi-step reasoning that "low" effort skips.
+    flavor-strip-model: gpt-5.6-luna # Model/deployment for narrative stripping; blank disables stripping (raw passthrough).
+    flavor-strip-reasoning-effort: high # Blank omits reasoning effort and uses flavor-strip-temperature.
     flavor-strip-temperature: 1.0 # Temperature for the flavor-strip LLM call. Some models (e.g. gpt-5 family) only accept the default value of 1.
     orchestrator:
-      model: gpt-5.4
+      # Autonomous Atlas and flavor stripping use the isolated Responses adapter by default. Set responses-api-enabled
+      # to false and select a chat-completions deployment here to restore the shared ChatClient path.
+      model: gpt-5.6-luna
       temperature: 1.0
-      reasoning-effort: medium
+      reasoning-effort: xhigh
+      responses-api-enabled: true
       # Automatic competency orchestration (Feature.AtlasAgent). Disabled by default;
       # admins flip the toggle to opt the instance in. The scheduler ticks at scheduler-rate-ms and only
       # claims a course's bucket once debounce-window-seconds have elapsed since the last content edit.
@@ -129,12 +164,59 @@ artemis:
     programming-exercises-retrigger-submission-without-result-time: 0 0 2 * * * # every day at 2am
     continuous-plagiarism-control-trigger-time: 0 0 5 * * * # every day at 5am
     vulnerability-scan-time: 0 0 8 * * MON # every Monday at 8am
+    feature-usage-digest-time: 0 0 9 * * MON # every Monday at 9am, an hour after the vulnerability report so both do not arrive at once
+    # Data-privacy cleanup jobs (only run when the matching artemis.cleanup.*-schedule-enabled flag is true).
+    old-courses-warning-time: 0 0 2 * * SUN # every Sunday at 2am: archive + warn instructors of old courses due for reset
+    old-courses-reset-time: 0 0 3 * * SUN # every Sunday at 3am: reset student data of old courses past the grace period
+    old-feedback-cleanup-time: 0 30 4 * * SUN # every Sunday at 4:30am: delete feedback of non-latest results of old courses
+    old-submission-versions-cleanup-time: 0 45 4 * * SUN # every Sunday at 4:45am: delete submission versions of old courses
+    not-enrolled-users-warning-time: 0 0 5 1 * * # 1st of every month at 5am: warn inactive users enrolled in no course
+    not-enrolled-users-cleanup-time: 0 0 6 1 * * # 1st of every month at 6am: soft-delete warned users enrolled in no course
+    plagiarism-cases-cleanup-time: 0 30 3 * * SUN # every Sunday at 3:30am: delete plagiarism cases of courses ended > 5 years ago
 
   data-export:
     days-between-data-exports: 14
 
+  cleanup: # Data-privacy (GDPR) retention cutoffs and schedule kill switches for the admin data cleanup jobs.
+    # Legal basis (defaults chosen for TUM / Bavaria; adjust per your institution's regulations):
+    #  - GDPR Art. 5(1)(e) storage limitation + Art. 17 (erasure): personal data must be deleted once no longer needed.
+    #  - Grade-relevant courses hold examination data (Prüfungsunterlagen). For Bavarian universities these must be kept
+    #    5 years (Bavarian State Ministry circular; the 2-year RaPO period applies to Fachhochschulen, not universities),
+    #    then destroyed. The authoritative long-term grade/degree record (reduced exam file, 50 years) is kept in the
+    #    campus-management system (e.g. TUMonline), not in Artemis. See the privacy statement (BayHSchG Art. 61, TUM APSO).
+    #  - Non-grade-relevant courses carry no exam-retention obligation, so their student data is minimized after 1 year.
+    #  NOTE: a pending objection/legal proceeding legally extends retention. Enable the affected course's data-retention
+    #  hold (course settings -> data privacy) until the proceeding concludes: held courses are skipped by the warning and
+    #  reset jobs for as long as the hold lasts, regardless of the cutoffs below.
+    grade-relevant-retention-years: 5 # reset student data of grade-relevant courses 5 years after they end
+    non-grade-relevant-retention-years: 1 # reset student data of non-grade-relevant courses 1 year after they end
+    reset-warning-grace-period-days: 30 # days between warning instructors and actually resetting the student data
+    old-feedback-cutoff-weeks: 8 # weeks after course end before feedback of non-latest results is purged (final result's feedback is kept)
+    old-submission-versions-cutoff-weeks: 8 # weeks after course end before submission versions (editor history) are purged
+    not-enrolled-users-inactivity-months: 6 # months of inactivity (by last login) before a not-enrolled user is warned and later deleted
+    not-enrolled-users-warning-grace-period-days: 30 # days between warning a not-enrolled user and deleting the account (logging in cancels it)
+    # Schedule kill switches (all off by default: nothing runs automatically until an admin opts in).
+    old-courses-warning-schedule-enabled: false
+    old-courses-reset-schedule-enabled: false
+    old-feedback-schedule-enabled: false
+    old-submission-versions-schedule-enabled: false
+    not-enrolled-users-warning-schedule-enabled: false
+    not-enrolled-users-schedule-enabled: false
+    plagiarism-cases-schedule-enabled: false
+
   plagiarism-checks:
     plagiarism-results-limit: 100
+
+  feature-usage: # Built-in feature usage analysis. Counts how often each REST endpoint, git operation and instrumented
+    # background feature is used, so admins and developers can see which features matter and which are dead weight.
+    # Aggregate only: a call increments a counter keyed by feature, UTC day and the caller's role bucket. No login,
+    # user id or address is read or stored, so this is not personal data and needs no opt-in.
+    enabled: true
+    retention-period: 400 # days before a daily bucket is deleted (covers the 180 day window plus a year-over-year comparison)
+    flush-interval: 5m # how often each node writes its accumulated counters to the database
+    digest: # weekly summary email to the administrators, modelled on the weekly vulnerability report
+      enabled: true
+      recipients: [] # empty falls back to info.contact, where the other administrative mails go
 
   science: # The science module is used for research purposes such as the collection of data.
     event-logging: # event logging is used to collect data for research purposes. It is disabled by default.
@@ -145,6 +227,23 @@ artemis:
     url: <your-pyris-url>
     secret-token: <your-secret>
     response-streaming-enabled: true
+    proactive:
+      # Nightly cleanup of episodes that never reached an outcome. Everything else goes with the course's student-data reset.
+      cleanup-cron: "0 30 3 * * *"
+      abandoned-episode-retention: 7d
+      # A student reply counts as engagement with a proactive hint only within this window of the hint.
+      engaged-reply-window: 10m
+      persist-max-attempts: 3
+      # An accepted trigger blocks the next one for the same student, exercise and intent for this long. The Iris
+      # budget only counts persisted messages, so a run ending silent or ambient-unrevealed would otherwise be free.
+      # Keep this below the editor's detector cooldown; equal values make ordinary triggers collide on timer drift.
+      trigger-cooldown: 60s
+      # Global kill switch for the legacy proactive triggers (failed build, stalled progress). A course can opt out
+      # on its own; this turns them off everywhere regardless.
+      legacy-build-triggers: true
+      struggle:
+        # Confidence Pyris has to report before an unsolicited decision is delivered; below it the run goes silent.
+        confidence-threshold: 0.6
     dashboard:
       max-query-window-days: 90
       stale-threshold-minutes: 5
@@ -161,6 +260,21 @@ artemis:
         minimum-eligible-sessions: 10
         minimum-user-messages: 20
         recipients: []
+
+  # Deimos uses its own LLM config (not spring.ai.openai.*) to isolate student code from the shared Atlas/Hyperion endpoint
+  deimos:
+    enabled: true
+    executor:
+      core-pool-size: 2
+      max-pool-size: 4
+      queue-capacity: 25
+    llm:
+      base-url: https://gpu.aet.cit.tum.de
+      api-key: dummy-key
+      model: openai/gpt-oss-120b
+      # The SDK appends /chat/completions itself; this path is stripped down to the prefix (e.g. /api)
+      completions-path: /api/chat/completions
+      temperature: 0
 
   weaviate:
     enabled: false
@@ -181,7 +295,7 @@ spring:
     openai:
       ## Variant 1 (active here): Azure OpenAI / Microsoft Foundry
       base-url: https://endpoint.openai.azure.com
-      api-key: my-api-key-for-azure-openai
+      api-key: <api-key>
       microsoft-foundry: true # auto-detected for *.openai.azure.com base URLs; set explicitly for custom domains
       # HTTP client request timeout (default 60s) — LLM tool-calling loops can need several minutes.
       # Must be set at this level (spring.ai.openai.timeout); the chat-level timeout key does not feed the HTTP client.

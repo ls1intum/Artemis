@@ -3,6 +3,7 @@ import { SidebarCardSmallComponent } from 'app/course/sidebar/sidebar-card-small
 import { SidebarCardMediumComponent } from 'app/course/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardLargeComponent } from 'app/course/sidebar/sidebar-card-large/sidebar-card-large.component';
 import { SidebarCardElement, SidebarTypes } from 'app/foundation/types/sidebar';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Directive({
     selector: '[jhiSidebarCard]',
@@ -15,6 +16,8 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
     readonly sidebarType = input<SidebarTypes>();
     readonly itemSelected = input<boolean>();
     readonly groupKey = input<string>();
+    /** Id of the entity the detail route currently shows; only the medium card declares a matching input. */
+    readonly activeItemId = input<number>();
 
     readonly onUpdateSidebar = output<void>();
 
@@ -29,6 +32,7 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
             this.sidebarType();
             this.itemSelected();
             this.groupKey();
+            this.activeItemId();
             if (this.componentRef) {
                 this.assignAttributes();
             }
@@ -65,12 +69,18 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
                 this.componentRef.setInput('groupKey', this.groupKey());
             }
 
+            // Only SidebarCardMediumComponent declares this input, so setting it unconditionally would throw on the
+            // small and large cards.
+            if (this.componentRef.instance instanceof SidebarCardMediumComponent) {
+                this.componentRef.setInput('activeItemId', this.activeItemId());
+            }
+
             this.componentRef.setInput('itemSelected', this.itemSelected());
             this.componentRef.setInput('sidebarType', this.sidebarType());
             const sidebarItem = this.sidebarItem();
             if (sidebarItem) {
                 // Do not mutate the signal input value; pass a shallow copy with the cleaned-up title instead.
-                this.componentRef.setInput('sidebarItem', { ...sidebarItem, title: this.removeChannelPrefix(sidebarItem.title) });
+                this.componentRef.setInput('sidebarItem', cloneWith(sidebarItem, { title: this.removeChannelPrefix(sidebarItem.title) }));
             }
         }
     }

@@ -4,8 +4,6 @@ title: Telemetry
 sidebar_label: Telemetry
 ---
 
-# Telemetry
-
 To help to improve Artemis, we collect some data when the application starts.
 This feature can be disabled by setting `telemetry.enabled` in the `application-prod.yml` to `false`.
 When this is set to false, no data is sent to the Artemis maintainer team.
@@ -19,7 +17,7 @@ Artemis collects the following data at the startup of an instance:
 * The name of the admin, set in `info.operatorAdminName` (optional)
 * The server's URL
 * The operator's name
-* The used profiles (e.g. Jenkins, LocalVC, Aeolus, ...)
+* The used profiles (e.g. Jenkins, LocalVC, LocalCI, ...)
 
 Example configuration in `application-prod.yml`:
 ```yaml

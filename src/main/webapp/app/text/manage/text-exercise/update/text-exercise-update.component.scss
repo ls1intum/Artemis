@@ -1,0 +1,22 @@
+.grading-layout {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 2rem;
+    margin-bottom: 1rem;
+
+    .exercise-timeline {
+        flex: 0 1 auto;
+    }
+
+    .grading-options {
+        flex: 1 1 20rem;
+        min-width: min(100%, 20rem);
+    }
+
+    .score-fields {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+        gap: 1rem;
+    }
+}

@@ -155,12 +155,13 @@
             "archive": {
                 "title": "Archive",
                 "sort": "Sort",
-                "tip": "The archive enables you to view all your past courses, organized by semester. Click on a semester to expand and see the courses you were enrolled in during that period.",
+                "tip": "The archive shows all your past courses, grouped by semester where available. Courses without a semester appear under Semester-independent.",
                 "noCoursesPreviousSemester": "No courses found from previous semesters",
                 "winterSemester": "Winter semester 20{{ param }}",
-                "summerSemester": "Summer semester 20{{ param }}"
+                "summerSemester": "Summer semester 20{{ param }}",
+                "semesterIndependent": "Semester-independent",
+                "manage": "Manage"
             },
-            "showActive": "Show only active courses",
             "totalScore": "Total Score:",
             "title": "Title",
             "color": "Color",
@@ -198,14 +199,6 @@
                 "title": "More feedback request due date in days after result date",
                 "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to request more feedback after this due date."
             },
-            "customizeGroupNames": {
-                "title": "Customize Group Names",
-                "description": "Customizing the group names should not be necessary and may cause users to lose access to this course. Make sure you have a good reason for customizing the group names."
-            },
-            "studentGroupName": "Students",
-            "teachingAssistantGroupName": "Tutors",
-            "editorGroupName": "Editors",
-            "instructorGroupName": "Instructors",
             "description": "Course Description",
             "organizations": "Course Organizations",
             "startDate": "Start",
@@ -213,10 +206,12 @@
             "semester": "Semester",
             "language": "Language",
             "ltiConfiguration": "LTI Configuration",
-            "recentlyAccessed": "Recently accessed",
             "maxPoints": {
                 "title": "Max. Points for Course",
-                "info": "This value is used for example calculations (e.g. in the grading key) and does not influence the students' grades. The grades are calculated based on the points achievable in the course."
+                "info": "This value is used for example calculations (e.g. in the grading key) and does not influence the students' grades. The grades are calculated based on the points achievable in the course.",
+                "min": "Max points must be at least 1.",
+                "max": "Max points must not exceed {{ max }}.",
+                "wholeNumber": "Max points must be a whole number."
             },
             "accuracyOfScores": {
                 "title": "Decimal Places for Score Calculations",
@@ -229,14 +224,47 @@
                 "description": "Activate this checkbox for courses used for testing.",
                 "plural": "Test Courses"
             },
+            "gradeRelevant": {
+                "title": "Grade-relevant course",
+                "description": "Grade-relevant courses (e.g. their results count towards official grades or exam records) keep student data for the legally required retention period (by default 5 years). Deactivate this for courses that are not grade-relevant, so their student data is deleted earlier (by default after 1 year), following data-privacy law."
+            },
+            "dataRetentionHold": {
+                "title": "Data-retention hold",
+                "description": "Activate this while an objection or legal proceeding concerning this course is pending. A pending proceeding legally extends the retention period, so a course on hold is never warned about, nor included in, the automatic deletion of old student data. Deactivate it once the proceeding is resolved."
+            },
             "accessGroups": "Access Groups",
             "learningPaths": {
                 "label": "Learning Paths Enabled",
                 "tooltip": "Enables generation of individualized learning paths for students consisting of competencies and their linked learning materials."
             },
-            "restrictedAthenaModulesAccess": {
-                "label": "Access to Restricted Athena Modules Enabled",
-                "tooltip": "If this option is selected, the course's exercises can also use restricted Athena modules for feedback generation."
+            "athenaConfig": {
+                "title": "Athena AI Feedback",
+                "formativeFeedbackEnabled": {
+                    "label": "Formative feedback requests",
+                    "tooltip": "When enabled, students can request preliminary AI feedback from Athena before the due date.",
+                    "enabledHint": "Students can request preliminary AI feedback on their submissions before the due date.",
+                    "disabledHint": "Students cannot request preliminary AI feedback in this course."
+                },
+                "gradingFeedbackEnabled": {
+                    "label": "Grading feedback suggestions",
+                    "tooltip": "When enabled, Athena will suggest feedback to tutors on submissions for text, programming, and modeling exercises.",
+                    "enabledHint": "Tutors see Athena feedback suggestions while assessing text, programming, and modeling submissions.",
+                    "disabledHint": "Tutors assess submissions in this course without Athena feedback suggestions."
+                }
+            },
+            "autoOrchestration": {
+                "label": "Atlas Auto-Orchestration Enabled",
+                "tooltip": "Lets Atlas automatically review and update this course's competencies whenever an exercise's content changes. Disabled by default; turn it on only for courses where you want the AI to maintain competency links on its own.",
+                "overridePlaceholder": "Use default",
+                "overridePlaceholderWithValue": "Use default ({{ value }})",
+                "debounceWindowSecondsOverride": {
+                    "label": "Debounce Window Override (seconds)",
+                    "hint": "How long to wait after the last content change before running. Leave empty to use the global default."
+                },
+                "maxDailyOrchestrationOverride": {
+                    "label": "Daily Run Limit Override",
+                    "hint": "Maximum number of automatic runs per day for this course. Leave empty to use the global default."
+                }
             },
             "onlineCourse": {
                 "title": "Online Course",
@@ -276,6 +304,7 @@
             "exercise": {
                 "search": {
                     "searchButton": "Search",
+                    "searchLabel": "Filter search field",
                     "searchPlaceholder": "Search...",
                     "resetButton": "Reset",
                     "toggleButton": {
@@ -331,6 +360,9 @@
                 "endDate": {
                     "invalid": "Must be after the start date of the course"
                 },
+                "semester": {
+                    "required": "Please select a semester."
+                },
                 "enrollmentStartDate": {
                     "invalid": "Can't be after the start date of the course and must be before the enrollment end date"
                 },
@@ -360,11 +392,6 @@
                 "profilePicture": "Profile Picture"
             },
             "averageScore": "Average Score",
-            "releasedSoon": "Released Soon",
-            "currentWorking": "Currently In Progress",
-            "inAssessment": "Currently In Assessment",
-            "pastExercises": "Past Exercises ({{ amount }} of {{ total }})",
-            "noExercises": "No active exercises to display",
             "assessmentProgress": "Assessments",
             "releaseDate": "Release",
             "dueDate": "Due",
@@ -390,7 +417,6 @@
             "activeStudents": "Active students: {{ students }}",
             "notStartedYet": "The course has not officially started yet. Official course start:",
             "imageCropper": {
-                "title": "Crop your image",
                 "uploadTitle": "Add an icon"
             },
             "overview": "Overview",
@@ -417,6 +443,9 @@
                     "saving": "Saving..."
                 },
                 "validation": {
+                    "startDateRequired": "Please set a start date for the course.",
+                    "endDateRequired": "Please set an end date for the course.",
+                    "semesterRequired": "Please select a semester for the course.",
                     "startDateBeforeEndDate": "The start date must be before the end date.",
                     "enrollmentStartDateBeforeEndDate": "The enrollment start date must be before the enrollment end date.",
                     "enrollmentRequiresCourseDates": "Enrollment dates require the course to have a start and end date. Please set them in the General Settings step.",
@@ -425,7 +454,9 @@
                     "unenrollmentAfterEnrollmentEnd": "The unenrollment end date must be after the enrollment end date.",
                     "unenrollmentBeforeCourseEndDate": "The unenrollment end date must not be after the course end date.",
                     "accuracyOfScoresRange": "Decimal places for score calculations must be between 0 and 5.",
-                    "maxPointsPositive": "Max points must be greater than 0."
+                    "maxPointsPositive": "Max points must be greater than 0.",
+                    "maxPointsWholeNumber": "Max points must be a whole number.",
+                    "maxPointsTooHigh": "Max points must not exceed {{ max }}."
                 },
                 "generalSettings": {
                     "title": "General",

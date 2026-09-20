@@ -36,15 +36,17 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseService;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseCreateDTO;
-import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithStatisticsDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.UpdateQuizExerciseDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
@@ -54,6 +56,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("authoring/exercise-management")
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizExerciseCreationUpdateResource {
@@ -76,11 +79,14 @@ public class QuizExerciseCreationUpdateResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
+    private final ExerciseVariantGroupService exerciseVariantGroupService;
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
     public QuizExerciseCreationUpdateResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
-            AuthorizationCheckService authCheckService, CourseRepository courseRepository, Optional<AtlasMLApi> atlasMLApi, ExerciseVersionService exerciseVersionService) {
+            AuthorizationCheckService authCheckService, CourseRepository courseRepository, Optional<AtlasMLApi> atlasMLApi, ExerciseVersionService exerciseVersionService,
+            ExerciseVariantGroupService exerciseVariantGroupService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.courseService = courseService;
@@ -88,6 +94,7 @@ public class QuizExerciseCreationUpdateResource {
         this.courseRepository = courseRepository;
         this.atlasMLApi = atlasMLApi;
         this.exerciseVersionService = exerciseVersionService;
+        this.exerciseVariantGroupService = exerciseVariantGroupService;
     }
 
     /**
@@ -107,9 +114,8 @@ public class QuizExerciseCreationUpdateResource {
      */
     @PostMapping(value = "exercise-groups/{exerciseGroupId}/quiz-exercises", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
-    public ResponseEntity<QuizExerciseWithStatisticsDTO> createExamQuizExercise(@PathVariable Long exerciseGroupId,
-            @Valid @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO, @RequestPart(value = "files", required = false) List<MultipartFile> files)
-            throws IOException, URISyntaxException {
+    public ResponseEntity<QuizExerciseDetailsDTO> createExamQuizExercise(@PathVariable Long exerciseGroupId, @Valid @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException, URISyntaxException {
         log.info("REST request to create QuizExercise : {} in exam exercise group {}", quizExerciseDTO, exerciseGroupId);
         QuizExercise quizExercise = quizExerciseDTO.toDomainObject();
         // Competency links are passed separately for proper two-phase persistence
@@ -128,7 +134,7 @@ public class QuizExerciseCreationUpdateResource {
 
         QuizExercise result = quizExerciseService.createQuizExercise(quizExercise, files, true, quizExerciseDTO.competencyLinks());
         exerciseVersionService.createExerciseVersion(result);
-        QuizExerciseWithStatisticsDTO resultDTO = QuizExerciseWithStatisticsDTO.of(result);
+        QuizExerciseDetailsDTO resultDTO = QuizExerciseDetailsDTO.of(result);
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(resultDTO);
     }
@@ -150,9 +156,8 @@ public class QuizExerciseCreationUpdateResource {
      */
     @PostMapping(value = "courses/{courseId}/quiz-exercises", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<QuizExerciseWithStatisticsDTO> createCourseQuizExercise(@PathVariable Long courseId,
-            @Valid @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO, @RequestPart(value = "files", required = false) List<MultipartFile> files)
-            throws IOException, URISyntaxException {
+    public ResponseEntity<QuizExerciseDetailsDTO> createCourseQuizExercise(@PathVariable Long courseId, @Valid @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException, URISyntaxException {
         log.info("REST request to create QuizExercise : {} in course {}", quizExerciseDTO, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         QuizExercise quizExercise = quizExerciseDTO.toDomainObject();
@@ -168,7 +173,7 @@ public class QuizExerciseCreationUpdateResource {
 
         exerciseVersionService.createExerciseVersion(result);
 
-        QuizExerciseWithStatisticsDTO resultDTO = QuizExerciseWithStatisticsDTO.of(result);
+        QuizExerciseDetailsDTO resultDTO = QuizExerciseDetailsDTO.of(result);
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(resultDTO);
     }
@@ -192,11 +197,11 @@ public class QuizExerciseCreationUpdateResource {
      */
     @PutMapping(value = "quiz-exercises/{exerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<QuizExerciseWithStatisticsDTO> updateQuizExercise(@PathVariable Long exerciseId,
-            @RequestPart("exercise") @Valid UpdateQuizExerciseDTO updateQuizExerciseDTO, @RequestPart(value = "files", required = false) List<MultipartFile> files,
-            @RequestParam(value = "notificationText", required = false) String notificationText) throws IOException {
+    public ResponseEntity<QuizExerciseDetailsDTO> updateQuizExercise(@PathVariable Long exerciseId, @RequestPart("exercise") @Valid UpdateQuizExerciseDTO updateQuizExerciseDTO,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files, @RequestParam(value = "notificationText", required = false) String notificationText)
+            throws IOException {
         log.info("REST request to update quiz exercise : {}", exerciseId);
-        QuizExercise quizBase = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(exerciseId);
+        QuizExercise quizBase = quizExerciseRepository.findByIdWithQuestionsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(exerciseId);
 
         // Capture original competency IDs before mergeDTOIntoDomainObject() mutates the entity (L1 cache)
         Set<Long> originalCompetencyIds = quizBase.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
@@ -204,13 +209,19 @@ public class QuizExerciseCreationUpdateResource {
         QuizExercise originalQuiz = quizExerciseService.copyFieldsForUpdate(quizBase);
 
         quizExerciseService.mergeDTOIntoDomainObject(quizBase, updateQuizExerciseDTO);
+
+        // A variant group owns its members' timeline, so pin the dates back to the group before performUpdate() validates.
+        // The guard lives here, not in QuizExerciseService: injecting ExerciseVariantGroupService there would close a bean
+        // cycle (examService -> exerciseDeletionService -> quizExerciseService -> ... -> examService).
+        exerciseVariantGroupService.applyOwningGroupTimeline(quizBase);
+
         QuizExercise result = quizExerciseService.performUpdate(originalQuiz, quizBase, files != null ? files : List.of(), notificationText, originalCompetencyIds);
 
         // Notify AtlasML about the quiz exercise update
         notifyAtlasML(result, OperationTypeDTO.UPDATE, "quiz exercise update");
         exerciseVersionService.createExerciseVersion(result);
 
-        QuizExerciseWithStatisticsDTO resultDTO = QuizExerciseWithStatisticsDTO.of(result);
+        QuizExerciseDetailsDTO resultDTO = QuizExerciseDetailsDTO.of(result);
 
         return ResponseEntity.ok(resultDTO);
     }

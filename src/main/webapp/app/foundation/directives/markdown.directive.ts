@@ -1,6 +1,6 @@
 import { Directive, effect, inject, input, output, signal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import type { PluginSimple } from 'markdown-it';
+import type { MarkdownItPlugin } from 'app/foundation/util/markdown-it.types';
 import { renderMarkdownToHtml, renderPostingMarkdownToHtml } from 'app/foundation/util/markdown-render.util';
 
 /**
@@ -25,7 +25,7 @@ export class MarkdownDirective {
     /** The markdown source text to render. */
     readonly jhiMarkdown = input<string>();
     /** Additional markdown-it plugins to apply (rarely needed). */
-    readonly markdownExtensions = input<PluginSimple[]>([]);
+    readonly markdownExtensions = input<MarkdownItPlugin[]>([]);
     /** Restricts the HTML tags kept during sanitization. */
     readonly markdownAllowedTags = input<string[]>();
     /** Restricts the HTML attributes kept during sanitization. */

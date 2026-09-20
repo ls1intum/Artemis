@@ -26,4 +26,12 @@ public interface ModelingExerciseTestRepository extends ModelingExerciseReposito
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
     Optional<ModelingExercise> findWithStudentParticipationsSubmissionsResultsById(Long exerciseId);
+
+    @NotNull
+    default ModelingExercise findWithCompetencyLinksByIdElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithCompetencyLinksById(exerciseId), exerciseId);
+    }
+
+    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "competencyLinks.competency" })
+    Optional<ModelingExercise> findWithCompetencyLinksById(Long exerciseId);
 }

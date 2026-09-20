@@ -1,46 +1,24 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
- * A ShortAnswerSolution.
+ * A ShortAnswerSolution of a {@link ShortAnswerQuestion}.
+ * <p>
+ * Formerly a JPA entity backed by the {@code short_answer_solution} table; it is now a plain POJO stored inside the question's {@code content} JSON column (see
+ * {@link ShortAnswerQuestionContent}). It no longer holds a back-reference to the question or to its mappings. Mirrors {@link DragItem}.
+ * <p>
+ * It still extends {@link DomainObject} to reuse the {@code id} field and its id-based {@code equals}/{@code hashCode}; the inherited JPA annotations are inert because this class
+ * is no longer an {@code @Entity}. The {@code id} is question-scoped (unique within the owning question, not globally).
  */
-// No @Cache here on purpose: loaded via cascade during quiz submission merge. See #12574 / #12584.
-@Entity
-@Table(name = "short_answer_solution")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ShortAnswerSolution extends DomainObject implements QuizQuestionComponent<ShortAnswerQuestion> {
+public class ShortAnswerSolution extends DomainObject {
 
-    @Column(name = "text")
     private String text;
 
-    @Column(name = "invalid")
     private Boolean invalid = false;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id")
-    @JsonIgnore
-    private ShortAnswerQuestion question;
-
-    // NOTE: without cascade and orphanRemoval, deletion of quizzes might not work properly, so we reference mappings here, even if we do not use them
-    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "solution")
-    @JsonIgnore
-    private Set<ShortAnswerMapping> mappings = new HashSet<>();
 
     public String getText() {
         return text;
@@ -61,19 +39,6 @@ public class ShortAnswerSolution extends DomainObject implements QuizQuestionCom
 
     public void setInvalid(Boolean invalid) {
         this.invalid = invalid;
-    }
-
-    public ShortAnswerQuestion getQuestion() {
-        return question;
-    }
-
-    @Override
-    public void setQuestion(ShortAnswerQuestion shortAnswerQuestion) {
-        this.question = shortAnswerQuestion;
-    }
-
-    public void setMappings(Set<ShortAnswerMapping> mappings) {
-        this.mappings = mappings;
     }
 
     @Override

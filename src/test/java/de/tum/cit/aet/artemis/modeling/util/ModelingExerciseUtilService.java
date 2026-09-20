@@ -16,15 +16,14 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -77,9 +76,6 @@ public class ModelingExerciseUtilService {
     private ModelingSubmissionTestRepository modelingSubmissionRepo;
 
     @Autowired
-    private FeedbackRepository feedbackRepo;
-
-    @Autowired
     private ParticipationUtilService participationUtilService;
 
     @Autowired
@@ -113,13 +109,26 @@ public class ModelingExerciseUtilService {
     }
 
     /**
+     * Creates and saves a Course with a ModelingExercise and enrolls the users identified by the given prefix.
+     *
+     * @param title      The title of the ModelingExercise
+     * @param userPrefix The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @return The created Course with prefix users enrolled
+     */
+    public Course addEnrolledCourseWithOneModelingExercise(String title, String userPrefix) {
+        Course course = addCourseWithOneModelingExercise(title);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
+    }
+
+    /**
      * Creates and saves a Course with a ModelingExercise. The ModelingExercise's DiagramType is set to ClassDiagram.
      *
      * @param title The title of the ModelingExercise
      * @return The created Course
      */
     public Course addCourseWithOneModelingExercise(String title) {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>());
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
                 course);
         modelingExercise.setTitle(title);
@@ -166,8 +175,8 @@ public class ModelingExerciseUtilService {
      *
      * @return The created Course
      */
-    public Course addCourseWithDifferentModelingExercises() {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+    public Course addEnrolledCourseWithDifferentModelingExercises(String userPrefix) {
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>());
         ModelingExercise classExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         classExercise.setTitle("ClassDiagram");
         course.addExercises(classExercise);
@@ -235,6 +244,8 @@ public class ModelingExerciseUtilService {
         Set<Exercise> exercises = storedCourse.getExercises();
         assertThat(exercises).as("eleven exercises got stored").hasSize(11);
         assertThat(exercises).as("Contains all exercises").containsExactlyInAnyOrder(course.getExercises().toArray(new Exercise[] {}));
+
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
     }
 
@@ -250,7 +261,9 @@ public class ModelingExerciseUtilService {
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(model, true);
         var user = userUtilService.getUserByLogin(login);
-        submission = modelSubmissionService.handleModelingSubmission(submission, exercise, user);
+        submission = modelSubmissionService.handleModelingSubmission(submission, exercise, user, null).submission();
+        // the save wrote the foreign key from an id; this utility holds the participation itself and saves again below
+        submission.setParticipation(participation);
         Result result = new Result();
         result.setSubmission(submission);
         result.setExerciseId(exercise.getId());
@@ -368,7 +381,7 @@ public class ModelingExerciseUtilService {
      * @param submissionId The id of the ModelingSubmission
      * @param sentModel    The model that should have been stored
      */
-    public void checkModelingSubmissionCorrectlyStored(Long submissionId, String sentModel) throws JsonProcessingException {
+    public void checkModelingSubmissionCorrectlyStored(Long submissionId, String sentModel) throws JacksonException {
         Optional<ModelingSubmission> modelingSubmission = modelingSubmissionRepo.findById(submissionId);
         assertThat(modelingSubmission).as("submission correctly stored").isPresent();
         checkModelsAreEqual(modelingSubmission.orElseThrow().getModel(), sentModel);
@@ -380,8 +393,8 @@ public class ModelingExerciseUtilService {
      * @param storedModel The model that has been stored
      * @param sentModel   The model that should have been stored
      */
-    public void checkModelsAreEqual(String storedModel, String sentModel) throws JsonProcessingException {
-        ObjectMapper objectMapper = JsonObjectMapper.get();
+    public void checkModelsAreEqual(String storedModel, String sentModel) throws JacksonException {
+        JsonMapper objectMapper = JsonObjectMapper.get();
         JsonNode sentModelNode = objectMapper.readTree(sentModel);
         JsonNode storedModelNode = objectMapper.readTree(storedModel);
         assertThat(storedModelNode).as("model correctly stored").isEqualTo(sentModelNode);
@@ -418,11 +431,11 @@ public class ModelingExerciseUtilService {
      * @return The created Result
      */
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String login, boolean submit) {
-        Feedback feedback1 = feedbackRepo.save(new Feedback().detailText("detail1"));
-        Feedback feedback2 = feedbackRepo.save(new Feedback().detailText("detail2"));
+        // Left unsaved: the assessment below attaches them to the result it creates and writes them from there, and
+        // result_id is not nullable, so saving them detached first fails the insert.
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(feedback1);
-        feedbacks.add(feedback2);
+        feedbacks.add(new Feedback().detailText("detail1"));
+        feedbacks.add(new Feedback().detailText("detail2"));
 
         Result result = assessmentService.saveAndSubmitManualAssessment(exercise, submission, feedbacks, null, null, submit);
         result.setAssessor(userUtilService.getUserByLogin(login));

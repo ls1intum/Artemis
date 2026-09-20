@@ -1,0 +1,10 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "paths": {
+            "app/*": ["./src/main/webapp/app/*"],
+            "src/*": ["./src/*"],
+            "@tumaet/ui-angular": ["./packages/tum-ui/src/public-api.ts"]
+        }
+    }
+}

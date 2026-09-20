@@ -1,0 +1,334 @@
+<h5 *adminTitleBarTitle id="feature-usage-page-heading" class="mb-0" jhiTranslate="artemisApp.featureUsage.title"></h5>
+
+<div *adminTitleBarActions class="flex items-center gap-2">
+    <button tumUiButton severity="secondary" size="small" variant="outlined" (click)="sendDigestEmail()" [disabled]="sendingDigest()" data-testid="send-digest-button">
+        <fa-icon [icon]="sendingDigest() ? faSpinner : faEnvelope" [animation]="sendingDigest() ? 'spin' : undefined" />
+        <span jhiTranslate="artemisApp.featureUsage.sendDigest"></span>
+    </button>
+    <span data-testid="window-selector">
+        <tum-ui-select-button
+            [attr.aria-label]="'artemisApp.featureUsage.window.label' | artemisTranslate"
+            [options]="windowOptions"
+            [ngModel]="selectedWindow()"
+            (ngModelChange)="onWindowChanged($event)"
+            optionLabel="label"
+            optionValue="value"
+            size="small"
+            [itemTemplate]="windowItem"
+        />
+        <ng-template #windowItem let-option>
+            {{ option.label | artemisTranslate }}
+        </ng-template>
+    </span>
+</div>
+
+@if (loading() && !overview()) {
+    <div class="flex justify-center my-5">
+        <fa-icon [icon]="faSpinner" animation="spin" size="3x" />
+    </div>
+} @else if (overview()) {
+    <p class="text-muted-color mb-1" jhiTranslate="artemisApp.featureUsage.description"></p>
+    <!-- Stated on the page, not only in the docs: the decision is made here, and reading these numbers as complete would
+         under-rate every feature that mostly talks over the websocket. -->
+    <p class="text-muted-color text-sm mb-4" jhiTranslate="artemisApp.featureUsage.limitations"></p>
+
+    <div class="grid gap-4 mb-4" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr))">
+        <!-- Every count here is a feature, the same unit the tables below list, so the headline number and the rows an admin
+             then works through cannot disagree. The endpoint totals are kept as the smaller line, because they say how much
+             API surface a feature covers but are not what a decision is made about. -->
+        <tum-ui-card data-testid="kpi-tracked-features">
+            <div class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.trackedFeatures"></div>
+            <div class="text-3xl font-semibold" data-testid="kpi-value">{{ trackedFeatureCount() }}</div>
+            <div
+                class="text-xs text-muted-color"
+                data-testid="kpi-endpoints"
+                jhiTranslate="artemisApp.featureUsage.kpi.endpointDetail"
+                [translateValues]="{ count: overview()?.trackedFeatures ?? 0 }"
+            ></div>
+        </tum-ui-card>
+        <tum-ui-card data-testid="kpi-unused-features">
+            <div class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.unusedFeatures"></div>
+            <div class="text-3xl font-semibold" data-testid="kpi-value" [class.text-state-warning]="unusedRows().length > 0">{{ unusedRows().length }}</div>
+            <div
+                class="text-xs text-muted-color"
+                data-testid="kpi-endpoints"
+                jhiTranslate="artemisApp.featureUsage.kpi.endpointDetail"
+                [translateValues]="{ count: overview()?.unusedFeatures ?? 0 }"
+            ></div>
+        </tum-ui-card>
+        <tum-ui-card data-testid="kpi-retired-features">
+            <div class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.retiredFeatures"></div>
+            <div class="text-3xl font-semibold" data-testid="kpi-value">{{ retiredFeatureCount() }}</div>
+            <div
+                class="text-xs text-muted-color"
+                data-testid="kpi-endpoints"
+                jhiTranslate="artemisApp.featureUsage.kpi.endpointDetail"
+                [translateValues]="{ count: overview()?.retiredFeatures ?? 0 }"
+            ></div>
+        </tum-ui-card>
+        <tum-ui-card data-testid="kpi-total-calls">
+            <div class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.totalCalls"></div>
+            <div class="text-3xl font-semibold" data-testid="kpi-value">{{ overview()?.totalCalls ?? 0 }}</div>
+        </tum-ui-card>
+        <tum-ui-card data-testid="kpi-recording-since">
+            <div class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.recordingSince"></div>
+            <!-- Guarded rather than piped straight through: the date pipe turns an absent value into today, which would
+                 claim evidence that does not exist. -->
+            <div class="text-3xl font-semibold">
+                @if (overview()?.recordingSince) {
+                    {{ overview()?.recordingSince | artemisDate: 'long-date' }}
+                } @else {
+                    -
+                }
+            </div>
+        </tum-ui-card>
+    </div>
+
+    @if (overview()?.totalCalls === 0) {
+        <tum-ui-message class="mb-4 block" severity="info" data-testid="no-usage-message">
+            <span jhiTranslate="artemisApp.featureUsage.noUsageYet"></span>
+        </tum-ui-message>
+    }
+
+    @if (roleDistribution().length) {
+        <tum-ui-card class="mb-4 block" data-testid="role-distribution">
+            <div class="text-sm text-muted-color mb-2" jhiTranslate="artemisApp.featureUsage.roleDistribution"></div>
+            <div class="flex flex-wrap gap-2">
+                @for (share of roleDistribution(); track share.callerRole) {
+                    <tum-ui-tag severity="secondary">{{ share.callerRole }}: {{ share.callCount }}</tum-ui-tag>
+                }
+            </div>
+        </tum-ui-card>
+    }
+
+    <tum-ui-tabs [value]="activeTab()" (valueChange)="activeTab.set($any($event))">
+        <tum-ui-tab-list>
+            <tum-ui-tab [value]="0" jhiTranslate="artemisApp.featureUsage.tab.tree" data-testid="tab-tree" />
+            <tum-ui-tab [value]="1" jhiTranslate="artemisApp.featureUsage.tab.allFeatures" data-testid="tab-all-features" />
+            <tum-ui-tab [value]="2" jhiTranslate="artemisApp.featureUsage.tab.unused" data-testid="tab-unused" />
+            <tum-ui-tab [value]="3" jhiTranslate="artemisApp.featureUsage.tab.adoption" data-testid="tab-adoption" />
+        </tum-ui-tab-list>
+    </tum-ui-tabs>
+
+    <div class="flex flex-wrap gap-2 my-3">
+        <tum-ui-icon-field [icon]="faSearch">
+            <input
+                tumUiInput
+                type="text"
+                [ngModel]="searchTerm()"
+                (ngModelChange)="searchTerm.set($event)"
+                [placeholder]="'artemisApp.featureUsage.search' | artemisTranslate"
+                data-testid="search-input"
+            />
+        </tum-ui-icon-field>
+        <tum-ui-select
+            [options]="moduleOptions()"
+            [ngModel]="selectedModule()"
+            (ngModelChange)="selectedModule.set($event)"
+            optionLabel="label"
+            optionValue="value"
+            size="small"
+            [ariaLabel]="'artemisApp.featureUsage.moduleFilter' | artemisTranslate"
+            data-testid="module-filter"
+        />
+        @if (activeTab() !== TAB_ADOPTION) {
+            <tum-ui-select
+                [options]="callerRoleOptions()"
+                [ngModel]="selectedCallerRole()"
+                (ngModelChange)="onCallerRoleChanged($event)"
+                optionLabel="label"
+                optionValue="value"
+                size="small"
+                [ariaLabel]="'artemisApp.featureUsage.roleFilter' | artemisTranslate"
+                data-testid="role-filter"
+            />
+        }
+        @if (activeTab() === TAB_TREE) {
+            <button tumUiButton severity="secondary" size="small" variant="outlined" (click)="expandAllTreeNodes()" data-testid="expand-all">
+                <span jhiTranslate="artemisApp.featureUsage.expandAll"></span>
+            </button>
+            <button tumUiButton severity="secondary" size="small" variant="outlined" (click)="collapseAllTreeNodes()" data-testid="collapse-all">
+                <span jhiTranslate="artemisApp.featureUsage.collapseAll"></span>
+            </button>
+        }
+    </div>
+
+    @if (activeTab() === TAB_TREE) {
+        <table tumUiTable size="small" style="min-width: 100%" aria-describedby="feature-usage-page-heading" data-testid="feature-tree">
+            <thead>
+                <tr>
+                    <th scope="col" jhiTranslate="artemisApp.featureUsage.column.feature"></th>
+                    <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.calls"></th>
+                    <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.share"></th>
+                    <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.unusedBelow"></th>
+                    <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.errorRate"></th>
+                    <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.meanDuration"></th>
+                    <th scope="col" jhiTranslate="artemisApp.featureUsage.column.lastUsed"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (node of visibleTreeRows(); track node.key) {
+                    <tr [attr.data-testid]="'tree-row-' + node.key">
+                        <td>
+                            <span class="inline-flex items-center gap-2" [style.padding-left.rem]="node.level * 1.25">
+                                @if (node.hasChildren) {
+                                    <button
+                                        tumUiButton
+                                        severity="secondary"
+                                        size="small"
+                                        variant="text"
+                                        (click)="toggleTreeNode(node.key)"
+                                        [attr.aria-expanded]="node.expanded"
+                                        [attr.aria-label]="node.name"
+                                    >
+                                        <fa-icon [icon]="node.expanded ? faChevronDown : faChevronRight" />
+                                    </button>
+                                } @else {
+                                    <span class="inline-block" style="width: 1.5rem"></span>
+                                }
+                                <span [class.font-semibold]="node.level < 2" [class.font-mono]="node.level === 2" [class.text-sm]="node.level === 2">{{ node.name }}</span>
+                                @if (node.level < 2) {
+                                    <span class="text-muted-color text-xs">{{ 'artemisApp.featureUsage.featureCount' | artemisTranslate: { count: node.featureCount } }}</span>
+                                }
+                            </span>
+                        </td>
+                        <td class="text-end">{{ node.callCount }}</td>
+                        <td class="text-end text-muted-color">{{ node.sharePercent | number: '1.0-1' }}%</td>
+                        <td class="text-end" [class.text-state-warning]="node.unusedCount > 0">{{ node.unusedCount }}</td>
+                        <td class="text-end" [class.text-state-danger]="node.errorRate >= 5">{{ node.callCount ? (node.errorRate | number: '1.0-1') + '%' : '-' }}</td>
+                        <td class="text-end">{{ node.callCount ? (node.durationSumMs / node.callCount | number: '1.0-0') : '-' }}</td>
+                        <td>{{ node.lastUsedDay ?? '-' }}</td>
+                    </tr>
+                } @empty {
+                    <tr>
+                        <td colspan="7" class="text-muted-color" jhiTranslate="artemisApp.featureUsage.noMatches"></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    } @else if (activeTab() === TAB_ADOPTION) {
+        <table tumUiTable size="small" style="min-width: 100%" aria-describedby="feature-usage-page-heading" data-testid="adoption-table">
+            <thead>
+                <tr>
+                    <th scope="col" jhiTranslate="artemisApp.featureUsage.column.module"></th>
+                    <th scope="col" jhiTranslate="artemisApp.featureUsage.column.feature"></th>
+                    <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.enabledOn"></th>
+                    <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.share"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (entry of visibleAdoption(); track entry.module + '/' + entry.key) {
+                    <tr>
+                        <td>{{ entry.module }}</td>
+                        <td>{{ entry.key }}</td>
+                        <td class="text-end">{{ entry.count }} / {{ entry.total }}</td>
+                        <td class="text-end">{{ entry.total ? ((entry.count / entry.total) * 100 | number: '1.0-1') : 0 }}%</td>
+                    </tr>
+                } @empty {
+                    <tr>
+                        <td colspan="4" class="text-muted-color" jhiTranslate="artemisApp.featureUsage.noAdoptionData"></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    } @else {
+        <table
+            tumUiTable
+            size="small"
+            style="min-width: 100%"
+            [sortField]="sortField()"
+            [sortOrder]="sortAscending() ? 1 : -1"
+            (sortChange)="onTableSort($event)"
+            aria-describedby="feature-usage-page-heading"
+            data-testid="features-table"
+        >
+            <thead>
+                <tr>
+                    <th scope="col" [tumUiSortableColumn]="'module'"><span jhiTranslate="artemisApp.featureUsage.column.module"></span></th>
+                    <th scope="col" [tumUiSortableColumn]="'name'"><span jhiTranslate="artemisApp.featureUsage.column.feature"></span></th>
+                    <th scope="col" class="text-end" [tumUiSortableColumn]="'callCount'"><span jhiTranslate="artemisApp.featureUsage.column.calls"></span></th>
+                    <th scope="col" class="text-end" [tumUiSortableColumn]="'activeDays'"><span jhiTranslate="artemisApp.featureUsage.column.activeDays"></span></th>
+                    <th scope="col" class="text-end" [tumUiSortableColumn]="'errorRate'"><span jhiTranslate="artemisApp.featureUsage.column.errorRate"></span></th>
+                    <th scope="col" class="text-end" [tumUiSortableColumn]="'meanDurationMs'"><span jhiTranslate="artemisApp.featureUsage.column.meanDuration"></span></th>
+                    <th scope="col" class="text-end" [tumUiSortableColumn]="'maxDurationMs'"><span jhiTranslate="artemisApp.featureUsage.column.maxDuration"></span></th>
+                    <th scope="col" [tumUiSortableColumn]="'lastUsedDay'"><span jhiTranslate="artemisApp.featureUsage.column.lastUsed"></span></th>
+                    <th scope="col"><span class="sr-only" jhiTranslate="artemisApp.featureUsage.column.trend"></span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (row of visibleRows(); track row.key) {
+                    <tr [attr.data-testid]="'feature-row-' + row.key">
+                        <td>{{ row.module }}</td>
+                        <td>
+                            <span class="font-mono text-sm" [title]="row.identifiers.join('\n')">{{ row.name }}</span>
+                            @if (row.endpointCount > 1) {
+                                <tum-ui-tag class="ms-2" severity="info">{{ 'artemisApp.featureUsage.endpointCount' | artemisTranslate: { count: row.endpointCount } }}</tum-ui-tag>
+                            }
+                            @if (row.featureKind !== FeatureKind.REST) {
+                                <tum-ui-tag class="ms-2" severity="secondary">{{ row.featureKind }}</tum-ui-tag>
+                            }
+                            @if (row.retired) {
+                                <tum-ui-tag class="ms-2" severity="secondary"><span jhiTranslate="artemisApp.featureUsage.retiredTag"></span></tum-ui-tag>
+                            } @else if (row.callCount === 0) {
+                                <tum-ui-tag class="ms-2" severity="warn"><span jhiTranslate="artemisApp.featureUsage.unusedTag"></span></tum-ui-tag>
+                            }
+                        </td>
+                        <td class="text-end">{{ row.callCount }}</td>
+                        <td class="text-end">{{ row.activeDays }}</td>
+                        <td class="text-end" [class.text-state-danger]="row.errorRate >= 5">{{ row.callCount ? (row.errorRate | number: '1.0-1') + '%' : '-' }}</td>
+                        <td class="text-end">{{ row.callCount ? row.meanDurationMs : '-' }}</td>
+                        <td class="text-end">{{ row.callCount ? row.maxDurationMs : '-' }}</td>
+                        <td>{{ row.lastUsedDay ?? '-' }}</td>
+                        <td>
+                            @if (row.callCount > 0) {
+                                <button
+                                    tumUiButton
+                                    severity="secondary"
+                                    size="small"
+                                    variant="outlined"
+                                    (click)="showTrend(row)"
+                                    [attr.aria-label]="'artemisApp.featureUsage.column.trend' | artemisTranslate"
+                                >
+                                    <fa-icon [icon]="faChartLine" />
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                } @empty {
+                    <tr>
+                        <td colspan="9" class="text-muted-color" jhiTranslate="artemisApp.featureUsage.noMatches"></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    @if (selectedTrendRow()) {
+        <tum-ui-card class="mt-4 block" data-testid="trend-card">
+            <div class="flex items-center justify-between mb-2">
+                <div>
+                    <span class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.trendTitle"></span>
+                    <span class="ms-2 font-mono text-sm">{{ selectedTrendRow()?.name }}</span>
+                </div>
+                <button tumUiButton severity="secondary" size="small" variant="outlined" (click)="closeTrend()">
+                    <span jhiTranslate="artemisApp.featureUsage.closeTrend"></span>
+                </button>
+            </div>
+            @if (trendChartData()) {
+                <div style="height: 240px">
+                    <tum-ui-line-chart
+                        [labels]="trendChartData()!.labels"
+                        [series]="trendChartData()!.series"
+                        [config]="trendChartConfig"
+                        [ariaLabel]="('artemisApp.featureUsage.trendTitle' | artemisTranslate) + ': ' + (selectedTrendRow()?.name ?? '')"
+                        style="height: 100%"
+                    />
+                </div>
+            } @else {
+                <div class="flex justify-center py-4">
+                    <fa-icon [icon]="faSpinner" animation="spin" size="2x" />
+                </div>
+            }
+        </tum-ui-card>
+    }
+}

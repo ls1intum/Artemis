@@ -51,15 +51,18 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
+import de.tum.cit.aet.artemis.exam.dto.LockedExamSubmissionDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -71,12 +74,12 @@ import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
@@ -85,6 +88,7 @@ import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -166,7 +170,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
 
     private static final int NUMBER_OF_TUTORS = 2;
 
-    private final List<LocalRepository> studentRepos = new ArrayList<>();
+    private final List<LocalVCTestRepository> studentRepos = new ArrayList<>();
 
     private User student1;
 
@@ -175,7 +179,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
     @BeforeEach
     void initTestCase() throws GitAPIException {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
-        course1 = courseUtilService.addEmptyCourse();
+        course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
@@ -189,7 +193,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         }
 
         for (var repo : studentRepos) {
-            repo.resetLocalRepo();
+            repo.deleteWorkingCopy();
         }
 
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
@@ -211,7 +215,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(numberOfGeneratedParticipations).isEqualTo(12);
 
         // Fetch student exams
-        List<StudentExam> studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
+        List<StudentExamDTO> studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK,
+                StudentExamDTO.class);
         assertThat(studentExamsDB).hasSize(3);
         List<StudentParticipation> participationList = new ArrayList<>();
         Exercise[] exercises = examRepository.findAllExercisesWithDetailsByExamId(exam.getId()).toArray(Exercise[]::new);
@@ -228,7 +233,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(examUserRepository.findAllByExamId(exam.getId())).isEmpty();
 
         // Fetch student exams
-        studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
+        studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExamDTO.class);
         assertThat(studentExamsDB).isEmpty();
 
         // Fetch participations
@@ -254,7 +259,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         int numberOfGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
         assertThat(numberOfGeneratedParticipations).isEqualTo(12);
         // Fetch student exams
-        List<StudentExam> studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
+        List<StudentExamDTO> studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK,
+                StudentExamDTO.class);
         assertThat(studentExamsDB).hasSize(3);
         List<StudentParticipation> participationList = new ArrayList<>();
         Exercise[] exercises = examRepository.findAllExercisesWithDetailsByExamId(exam.getId()).toArray(Exercise[]::new);
@@ -273,7 +279,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(examUserRepository.findAllByExamId(exam.getId())).isEmpty();
 
         // Fetch student exams
-        studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
+        studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExamDTO.class);
         assertThat(studentExamsDB).isEmpty();
 
         // Fetch participations
@@ -322,8 +328,9 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(examUserRepository.countByExamId(exam.getId())).isEqualTo(1);
 
         // Ensure that the student exam of student2 was deleted
-        List<StudentExam> studentExams = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
-        assertThat(studentExams).hasSize(1).doesNotContain(studentExam2);
+        List<StudentExamDTO> studentExams = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK,
+                StudentExamDTO.class);
+        assertThat(studentExams).hasSize(1).extracting(StudentExamDTO::id).doesNotContain(studentExam2.getId());
 
         // Ensure that the participations were not deleted
         List<StudentParticipation> participationsStudent2 = studentParticipationRepository
@@ -401,8 +408,9 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(examUserRepository.countByExamId(exam.getId())).isEqualTo(2);
 
         // Ensure that the student exam of student1 was deleted
-        List<StudentExam> studentExams = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
-        assertThat(studentExams).hasSize(2).doesNotContain(studentExam1);
+        List<StudentExamDTO> studentExams = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK,
+                StudentExamDTO.class);
+        assertThat(studentExams).hasSize(2).extracting(StudentExamDTO::id).doesNotContain(studentExam1.getId());
 
         // Ensure that the participations of student1 were deleted
         participationsStudent1 = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(student1.getId(),
@@ -425,7 +433,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(5);
         var examEndDate = ZonedDateTime.now().plusMinutes(20);
-        Course course = courseUtilService.addEmptyCourse();
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam exam = examUtilService.addExam(course, examVisibleDate, examStartDate, examEndDate);
         exam.setNumberOfCorrectionRoundsInExam(numberOfCorrectionRounds);
         exam = examRepository.save(exam);
@@ -712,6 +720,56 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(lockedSubmissions).isEmpty();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLockedSubmissionsForExam_wirePinsAssessmentLocksDTO() throws Exception {
+        User tutor = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+
+        Exam exam = ExamFactory.generateExam(course1);
+        ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroupWithTitle(true, exam, "text group");
+        exam = examRepository.save(exam);
+
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup, "Locked Text Exercise");
+        exerciseRepository.save(textExercise);
+
+        TextSubmission textSubmission = textExerciseUtilService.createSubmissionForTextExercise(textExercise, student1, "some text");
+        StudentParticipation participation = (StudentParticipation) textSubmission.getParticipation();
+
+        // A genuinely LOCKED assessment: a tutor has started an in-progress manual assessment (assessor set,
+        // no completion date yet) on this exam text exercise.
+        Result lockedResult = new Result();
+        lockedResult.setAssessor(tutor);
+        lockedResult.setScore(55D);
+        lockedResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        lockedResult.setSubmission(textSubmission);
+        lockedResult.setExerciseId(textExercise.getId());
+        lockedResult = resultRepository.save(lockedResult);
+        textSubmission.addResult(lockedResult);
+        submissionRepository.save(textSubmission);
+
+        List<LockedExamSubmissionDTO> lockedSubmissions = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/locked-submissions", HttpStatus.OK,
+                LockedExamSubmissionDTO.class);
+
+        assertThat(lockedSubmissions).hasSize(1);
+        LockedExamSubmissionDTO lockedSubmissionDTO = lockedSubmissions.getFirst();
+
+        // Every field the assessment-locks screen reads on the wire, pinned exactly: the polymorphic submission-type
+        // discriminator, participation id, exercise id/type/title, and the (in-progress) result's score/completionDate.
+        assertThat(lockedSubmissionDTO.submissionExerciseType()).isEqualTo("text");
+        assertThat(lockedSubmissionDTO.participation()).isNotNull();
+        assertThat(lockedSubmissionDTO.participation().id()).isEqualTo(participation.getId());
+        assertThat(lockedSubmissionDTO.participation().exercise()).isNotNull();
+        assertThat(lockedSubmissionDTO.participation().exercise().id()).isEqualTo(textExercise.getId());
+        assertThat(lockedSubmissionDTO.participation().exercise().type()).isEqualTo(ExerciseType.TEXT);
+        assertThat(lockedSubmissionDTO.participation().exercise().title()).isEqualTo(textExercise.getTitle());
+        assertThat(lockedSubmissionDTO.participation().submissionCount()).isEqualTo(1);
+        assertThat(lockedSubmissionDTO.results()).hasSize(1);
+        LockedExamSubmissionDTO.LockedSubmissionResultDTO resultDTO = lockedSubmissionDTO.results().getFirst();
+        assertThat(resultDTO.score()).isEqualTo(55D);
+        // The assessment is still in progress, so no completion date has been set yet.
+        assertThat(resultDTO.completionDate()).isNull();
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @CsvSource({ "false, false", "true, false", "false, true", "true, true" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -805,7 +863,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
                         var submittedAnswer = QuizExerciseFactory.generateSubmittedAnswerFor(quizQuestion, true);
                         var quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(submission.getId());
                         quizSubmission.addSubmittedAnswers(submittedAnswer);
-                        quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, participation.getStudent().orElseThrow());
+                        quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, participation.getStudent().orElseThrow(), null);
                     }
                 }
 
@@ -879,7 +937,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(examScores.examId()).isEqualTo(exam.getId());
 
         // Ensure that all exerciseGroups of the exam are present in the DTO
-        Set<Long> exerciseGroupIdsInDTO = examScores.exerciseGroups().stream().map(ExamScoresDTO.ExerciseGroup::id).collect(Collectors.toSet());
+        Set<Long> exerciseGroupIdsInDTO = examScores.exerciseGroups().stream().map(ExamScoresDTO.ExerciseGroupDTO::id).collect(Collectors.toSet());
         Set<Long> exerciseGroupIdsInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getId).collect(Collectors.toSet());
         assertThat(exerciseGroupIdsInExam).isEqualTo(exerciseGroupIdsInDTO);
 
@@ -900,7 +958,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
             // Compare exercise information
             long noOfExerciseGroupParticipations = 0;
             for (var originalExercise : originalExerciseGroup.getExercises()) {
-                // Find the corresponding ExerciseInfo object
+                // Find the corresponding ExerciseInfoDTO object
                 var exerciseDTO = exerciseGroupDTO.containedExercises().stream().filter(exerciseInfo -> exerciseInfo.exerciseId().equals(originalExercise.getId())).findFirst()
                         .orElseThrow();
                 // Check the exercise title
@@ -915,15 +973,15 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
             assertThat(noOfExerciseGroupParticipations).isEqualTo(exerciseGroupDTO.numberOfParticipants());
         }
 
-        // Ensure that all registered students have a StudentResult
-        Set<Long> studentIdsWithStudentResults = examScores.studentResults().stream().map(ExamScoresDTO.StudentResult::userId).collect(Collectors.toSet());
+        // Ensure that all registered students have a StudentResultDTO
+        Set<Long> studentIdsWithStudentResults = examScores.studentResults().stream().map(ExamScoresDTO.StudentResultDTO::userId).collect(Collectors.toSet());
         Set<User> registeredUsers = exam.getRegisteredUsers();
         Set<Long> registeredUsersIds = registeredUsers.stream().map(User::getId).collect(Collectors.toSet());
         assertThat(studentIdsWithStudentResults).isEqualTo(registeredUsersIds);
 
-        // Compare StudentResult with the generated results
+        // Compare StudentResultDTO with the generated results
         for (var studentResult : examScores.studentResults()) {
-            // Find the original user using the id in StudentResult
+            // Find the original user using the id in StudentResultDTO
             User originalUser = userTestRepository.findByIdElseThrow(studentResult.userId());
             StudentExam studentExamOfUser = studentExams.stream().filter(studentExam -> studentExam.getUser().equals(originalUser)).findFirst().orElseThrow();
 
@@ -939,9 +997,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
             assertThat(studentResult.overallPointsAchieved()).isEqualTo(calculatedOverallPoints, withPrecision(epsilon));
 
             double expectedPointsAchievedInFirstCorrection = withSecondCorrectionAndStarted ? calculateOverallPoints(correctionResultScore, studentExamOfUser) : 0.0;
-            if (!withSecondCorrectionAndStarted) {
-                assertThat(studentResult.overallPointsAchievedInFirstCorrection()).isEqualTo(expectedPointsAchievedInFirstCorrection, withPrecision(epsilon));
-            }
+            assertThat(studentResult.overallPointsAchievedInFirstCorrection()).isEqualTo(expectedPointsAchievedInFirstCorrection, withPrecision(epsilon));
 
             // Calculate overall score achieved
             var calculatedOverallScore = calculatedOverallPoints / examScores.maxPoints() * 100;
@@ -980,14 +1036,14 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
             }
 
             // Ensure that the exercise ids of the student exam are the same as the exercise ids in the students exercise results
-            Set<Long> exerciseIdsOfStudentResult = studentResult.exerciseGroupIdToExerciseResult().values().stream().map(ExamScoresDTO.ExerciseResult::exerciseId)
+            Set<Long> exerciseIdsOfStudentResult = studentResult.exerciseGroupIdToExerciseResult().values().stream().map(ExamScoresDTO.ExerciseResultDTO::exerciseId)
                     .collect(Collectors.toSet());
             Set<Long> exerciseIdsInStudentExam = studentExamOfUser.getExercises().stream().map(DomainObject::getId).collect(Collectors.toSet());
             assertThat(exerciseIdsOfStudentResult).isEqualTo(exerciseIdsInStudentExam);
-            for (Map.Entry<Long, ExamScoresDTO.ExerciseResult> entry : studentResult.exerciseGroupIdToExerciseResult().entrySet()) {
+            for (Map.Entry<Long, ExamScoresDTO.ExerciseResultDTO> entry : studentResult.exerciseGroupIdToExerciseResult().entrySet()) {
                 var exerciseResult = entry.getValue();
 
-                // Find the original exercise using the id in ExerciseResult
+                // Find the original exercise using the id in ExerciseResultDTO
                 Exercise originalExercise = studentExamOfUser.getExercises().stream().filter(exercise -> exercise.getId().equals(exerciseResult.exerciseId())).findFirst()
                         .orElseThrow();
 
@@ -1051,7 +1107,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         var usersOfExam = exam.getRegisteredUsers();
         mockDeleteProgrammingExercise(programmingExercise, usersOfExam);
 
-        await().until(() -> participantScoreScheduleService.isIdle());
+        await().atMost(Duration.ofMinutes(2)).until(() -> participantScoreScheduleService.isIdle());
 
         // change back to instructor user
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -1128,7 +1184,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
 
     private void waitForParticipantScores() {
         participantScoreScheduleService.executeScheduledTasks();
-        await().atMost(Duration.ofMinutes(1)).until(() -> participantScoreScheduleService.isIdle());
+        await().atMost(Duration.ofMinutes(2)).until(() -> participantScoreScheduleService.isIdle());
     }
 
     private double calculateOverallPoints(Double correctionResultScore, StudentExam studentExamOfUser) {

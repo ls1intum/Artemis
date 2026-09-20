@@ -3,9 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { TumUiTableComponent } from 'app/shared-ui/tum-ui/table/tum-ui-table.component';
-import { CellTemplateRef, ColumnDef, TumUiTableQueryEvent } from 'app/shared-ui/tum-ui/table/tum-ui-table.types';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { CellTemplateRef, ColumnDef, TumUiButtonComponent, TumUiTableComponent, TumUiTableQueryEvent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -67,7 +65,7 @@ export class VcsAccessTokenOverviewComponent implements OnInit {
     protected readonly VcsAccessTokenType = VcsAccessTokenType;
     protected readonly RepositoryType = RepositoryType;
 
-    private lastQuery: TumUiTableQueryEvent = { page: 0, pageSize: 20 };
+    private lastQuery: TumUiTableQueryEvent = { pageIndex: 0, pageSize: 20 };
 
     ngOnInit(): void {
         this.loadTokens();
@@ -120,7 +118,7 @@ export class VcsAccessTokenOverviewComponent implements OnInit {
             sorted.sort((a, b) => (a[sortField] ?? '').localeCompare(b[sortField] ?? '') * direction);
         }
         this.totalCount.set(sorted.length);
-        const from = event.page * event.pageSize;
+        const from = event.pageIndex * event.pageSize;
         this.rows.set(sorted.slice(from, from + event.pageSize));
     }
 

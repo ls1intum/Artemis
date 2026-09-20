@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseScoresChartService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("analytics/score-charts")
 @RestController
 @RequestMapping("api/exercise/")
 public class ExerciseScoresChartResource {
@@ -75,7 +77,7 @@ public class ExerciseScoresChartResource {
     public ResponseEntity<List<ExerciseScoresDTO>> getCourseExerciseScores(@PathVariable Long courseId) {
         log.debug("REST request to get exercise scores for course with id: {}", courseId);
         Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         // we only consider exercises in which the student had a chance to earn a score (released and due date over)
         List<ExerciseScoresDTO> exerciseScoresDTOList = exerciseScoresChartService.getExerciseScores(filterExercises(course.getExercises()), user);

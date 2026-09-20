@@ -57,8 +57,8 @@ public interface CourseLearnerProfileRepository extends ArtemisJpaRepository<Cou
             FROM CourseLearnerProfile clp
             LEFT JOIN FETCH clp.course
             WHERE clp.learnerProfile.user.login = :login
-                        AND (clp.course.startDate <= :now OR clp.course.startDate IS NULL)
-                        AND (clp.course.endDate >= :now OR clp.course.endDate IS NULL)
+                        AND clp.course.startDate <= :now
+                        AND clp.course.endDate >= :now
             """)
     Set<CourseLearnerProfile> findAllByLoginAndCourseActive(@Param("login") String login, @Param("now") ZonedDateTime now);
 
@@ -78,6 +78,23 @@ public interface CourseLearnerProfileRepository extends ArtemisJpaRepository<Cou
                 AND clp.id = :courseLearnerProfileId
             """)
     Optional<CourseLearnerProfile> findByLoginAndId(@Param("login") String login, @Param("courseLearnerProfileId") long courseLearnerProfileId);
+
+    /**
+     * Finds the profile a user keeps for one course. The learning path reads it where it makes its decisions rather
+     * than through the account, so that loading an account does not pay for a profile almost no caller wants.
+     *
+     * @param userId   the user the profile belongs to
+     * @param courseId the course the profile is kept for
+     * @return the profile, if the user has one for that course
+     */
+    @Query("""
+            SELECT clp
+            FROM CourseLearnerProfile clp
+                LEFT JOIN FETCH clp.course
+            WHERE clp.learnerProfile.user.id = :userId
+                AND clp.course.id = :courseId
+            """)
+    Optional<CourseLearnerProfile> findByUserIdAndCourseId(@Param("userId") long userId, @Param("courseId") long courseId);
 
     /**
      * Find all course learner profiles for a course for export.

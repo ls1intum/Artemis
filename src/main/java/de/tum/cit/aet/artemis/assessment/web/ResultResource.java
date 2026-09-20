@@ -30,11 +30,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.ExternalSubmissionResultDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAnalysisResponseDTO;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackPageableDTO;
+import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
@@ -50,6 +52,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
@@ -68,6 +71,7 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
 /**
@@ -75,6 +79,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("grading/results")
 @RestController
 @RequestMapping("api/assessment/")
 public class ResultResource {
@@ -87,6 +92,8 @@ public class ResultResource {
     private String applicationName;
 
     private final ResultRepository resultRepository;
+
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
     private final ParticipationService participationService;
 
@@ -111,7 +118,7 @@ public class ResultResource {
     public ResultResource(ResultRepository resultRepository, ParticipationService participationService, ResultService resultService, Optional<ExamDateApi> examDateApi,
             ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, ParticipationAuthorizationCheckService participationAuthCheckService,
             UserRepository userRepository, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
@@ -123,6 +130,7 @@ public class ResultResource {
         this.participationRepository = participationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -140,12 +148,11 @@ public class ResultResource {
         final Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
-        final Set<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessorFeedbacksTestCases(exerciseId,
-                false);
+        final Set<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResultsAndParticipant(exerciseId, false);
 
         final Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         final List<Result> results = resultService.resultsForExercise(participations, withSubmissions);
-        final List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = results.stream().map(result -> resultRepository.calculatePointsPerGradingCriterion(result, course))
+        final List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = results.stream().map(result -> resultService.calculatePointsPerGradingCriterion(result, course))
                 .toList();
 
         return ResponseEntity.ok().body(resultsWithPoints);
@@ -158,13 +165,13 @@ public class ResultResource {
      * @param participationId the id of the participation to the result
      * @param resultId        the id of the result to retrieve. If the participation related to the result is not a StudentParticipation or ProgrammingExerciseParticipation, the
      *                            endpoint will return forbidden!
-     * @return the ResponseEntity with status 200 (OK) and with body the result, status 404 (Not Found) if the result does not exist or 403 (forbidden) if the user does not have
-     *         permissions to access the participation.
+     * @return the ResponseEntity with status 200 (OK) and with body the feedback of the result, status 404 (Not Found) if the result does not exist or 403 (forbidden) if the
+     *         user does not have permissions to access the participation.
      */
     @GetMapping("participations/{participationId}/results/{resultId}/details")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long participationId, @PathVariable Long resultId) {
+    public ResponseEntity<List<FeedbackDTO>> getResultDetails(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to get details of Result : {}", resultId);
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
         Participation participation = result.getSubmission().getParticipation();
@@ -175,7 +182,10 @@ public class ResultResource {
 
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
-        return new ResponseEntity<>(resultService.filterFeedbackForClient(result), HttpStatus.OK);
+        // attach the automatic test-case and SCA feedback (stored in compact typed tables) as legacy views
+        programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result);
+
+        return new ResponseEntity<>(resultService.filterFeedbackForClient(result).stream().map(FeedbackDTO::of).toList(), HttpStatus.OK);
     }
 
     /**
@@ -236,19 +246,15 @@ public class ResultResource {
      *
      * @param exerciseId   The exercise ID for which a result should get created
      * @param studentLogin The student login (username) for which a result should get created
-     * @param result       The result to be created
+     * @param resultDTO    The score, rated flag and feedback of the result to be created
      * @return The newly created result
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("exercises/{exerciseId}/external-submission-results")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Result> createResultForExternalSubmission(@PathVariable Long exerciseId, @RequestParam String studentLogin, @RequestBody Result result)
-            throws URISyntaxException {
+    public ResponseEntity<ResultDTO> createResultForExternalSubmission(@PathVariable Long exerciseId, @RequestParam String studentLogin,
+            @RequestBody ExternalSubmissionResultDTO resultDTO) throws URISyntaxException {
         log.debug("REST request to create Result for External Submission for Exercise : {}", exerciseId);
-        if (result.getSubmission() != null && result.getSubmission().getParticipation() != null && result.getSubmission().getParticipation().getExercise() != null
-                && !result.getSubmission().getParticipation().getExercise().getId().equals(exerciseId)) {
-            throw new BadRequestAlertException("exerciseId in RequestBody doesnt match exerciseId in path!", "Exercise", "400");
-        }
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
@@ -273,14 +279,14 @@ public class ResultResource {
                     "External submissions are not supported for Quiz exercises.")).build();
         }
 
-        Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
+        Optional<User> student = userRepository.findOneWithAuthoritiesByLogin(studentLogin);
         if (student.isEmpty() || !authCheckService.isAtLeastStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), student.get())) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "studentNotFound", "The student could not be found in this course.")).build();
         }
 
         // Check if a result exists already for this exercise and student. If so, do nothing and just inform the instructor.
-        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResults(exercise, studentLogin);
+        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentAnyStateWithEagerResults(exercise, student.get());
         if (optionalParticipation.isPresent() && optionalParticipation.get().getSubmissions().stream().anyMatch(submission -> !submission.getResults().isEmpty())) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "resultAlreadyExists", "A result already exists for this student in this exercise."))
@@ -290,13 +296,16 @@ public class ResultResource {
         // Create a participation and a submitted empty submission if they do not exist yet
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(exercise, student.get(), SubmissionType.EXTERNAL);
         Submission submission = participationRepository.findByIdWithSubmissionsElseThrow(participation.getId()).findLatestSubmission().orElseThrow();
+        Result result = resultDTO.toEntity();
         result.setSubmission(submission);
+        // the exercise id is a non-null column on the result; it is derived from the path, never from the request
+        result.setExerciseId(exercise.getId());
 
         // Create a new manual result which can be rated or unrated depending on what was specified in the create form
         Result savedResult = resultService.createNewManualResult(result, result.isRated());
 
         return ResponseEntity.created(new URI("/api/results/" + savedResult.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedResult.getId().toString())).body(savedResult);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedResult.getId().toString())).body(ResultDTO.of(savedResult));
     }
 
     /**

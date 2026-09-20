@@ -7,6 +7,7 @@ import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { FitTextDirective } from 'app/quiz/shared/fit-text/fit-text.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { dragItemPicturePath } from 'app/quiz/shared/util/drag-and-drop-file-url.util';
 import { getIsMobileSignal } from 'app/foundation/util/global.utils';
 
 @Component({
@@ -25,6 +26,32 @@ export class DragItemComponent {
     clickDisabled = input<boolean>();
     invalid = input<boolean>();
     filePreviewPaths = input<Map<string, string>>(new Map<string, string>());
+    // The owning drag-and-drop question id, needed to build the (question-scoped) drag item image URL. Drag item ids are only unique within their question.
+    questionId = input<number>();
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
+
+    /**
+     * Builds the image source for the drag item. A locally uploaded, not-yet-saved image is shown from its client-side preview (a data URL) if present; otherwise the saved picture is
+     * served via the question-scoped file URL {@code files/drag-and-drop/questions/{questionId}/drag-items/{dragItemId}/{filename}}.
+     *
+     * `pictureFilePath` already carries that path on a current response; the rebuild is what keeps a value that does not carry it reachable, since a drag item id is only unique
+     * within its question. {@link dragItemPicturePath} owns that template and explains when such a value still turns up.
+     */
+    protected imageSrc(): string | undefined {
+        const picturePath = this.dragItem().pictureFilePath;
+        if (!picturePath) {
+            return undefined;
+        }
+        const preview = this.filePreviewPaths().get(picturePath);
+        if (preview) {
+            return addPublicFilePrefix(preview);
+        }
+        const questionId = this.questionId();
+        const dragItemId = this.dragItem().id;
+        if (questionId !== undefined && dragItemId !== undefined) {
+            return addPublicFilePrefix(dragItemPicturePath(questionId, dragItemId, picturePath));
+        }
+        return addPublicFilePrefix(picturePath);
+    }
 }

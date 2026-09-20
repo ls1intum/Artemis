@@ -6,6 +6,7 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
+import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -26,6 +27,9 @@ import { StructuredGradingCriterionService } from 'app/exercise/structured-gradi
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { onError } from 'app/foundation/util/global.utils';
+import { AssessmentNotPossibleYetState, alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
+import { AssessmentNotPossibleYetComponent } from 'app/assessment/shared/assessment-not-possible-yet/assessment-not-possible-yet.component';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { filter, finalize } from 'rxjs/operators';
@@ -37,6 +41,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FileService } from 'app/foundation/service/file.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     providers: [FileUploadAssessmentService],
@@ -53,10 +58,12 @@ import { FileService } from 'app/foundation/service/file.service';
         RouterLink,
         UpperCasePipe,
         ArtemisTranslatePipe,
+        AssessmentNotPossibleYetComponent,
     ],
 })
 export class FileUploadAssessmentComponent implements OnInit {
     private alertService = inject(AlertService);
+    private datePipe = inject(ArtemisDatePipe);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
     private fileUploadAssessmentService = inject(FileUploadAssessmentService);
@@ -91,11 +98,21 @@ export class FileUploadAssessmentComponent implements OnInit {
     courseId!: number; // set in ngOnInit() from route params
     readonly hasAssessmentDueDatePassed = signal<boolean>(undefined!);
     readonly correctionRound = signal(0);
+    /**
+     * The round the URL names right now. This component has no resolver, so the `correction-round` parameter can change
+     * without a submission being loaded for it. That value must not become the round of the page on its own: the round
+     * is sent to the server as the round to request and then indexes the results that come back, and those two may not
+     * disagree. It therefore only reaches {@link correctionRound} when a load starts.
+     */
+    private correctionRoundFromUrl = 0;
     resultId!: number; // set in ngOnInit() from route params
     examId = 0;
     exerciseGroupId?: number;
     readonly exerciseDashboardLink = signal<string[]>([]);
     readonly loadingInitialSubmission = signal(true);
+    // Set when the server refuses to open the assessment because the exam is not over yet: the submission exists, so the
+    // page explains the wait instead of showing its "submission not found" state.
+    readonly assessmentNotPossibleYet = signal<AssessmentNotPossibleYetState | undefined>(undefined);
     highlightDifferences = false;
 
     private cancelConfirmationText!: string; // set in constructor from a synchronous translate subscription
@@ -114,6 +131,8 @@ export class FileUploadAssessmentComponent implements OnInit {
         return [...this.unreferencedFeedback()];
     }
 
+    readonly getTotalMaxPoints = getTotalMaxPoints;
+
     public ngOnInit(): void {
         this.busy.set(true);
 
@@ -125,13 +144,13 @@ export class FileUploadAssessmentComponent implements OnInit {
         });
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun.set(queryParams.get('testRun') === 'true');
-            const correctionRoundParam = queryParams.get('correction-round');
-            if (correctionRoundParam) {
-                this.correctionRound.set(parseInt(correctionRoundParam, 10));
-            }
+            // The URL decides the round, and an unusable value means the first one; see parseCorrectionRound for why
+            // Number() alone will not do. Only remembered here, not shown yet; see correctionRoundFromUrl.
+            this.correctionRoundFromUrl = parseCorrectionRound(queryParams.get('correction-round'));
         });
 
         this.route.params.subscribe((params) => {
+            this.resetSubmissionState();
             this.courseId = Number(params['courseId']);
             const exerciseId = Number(params['exerciseId']);
             this.resultId = Number(params['resultId']) || 0;
@@ -147,6 +166,9 @@ export class FileUploadAssessmentComponent implements OnInit {
 
             const submissionValue = params['submissionId'];
             const submissionId = Number(submissionValue);
+            // Taken from the URL once per load, so that the round the submission is requested with is also the round
+            // its results are indexed by, even when the parameter has changed since the last load.
+            this.correctionRound.set(this.correctionRoundFromUrl);
             if (submissionValue === 'new') {
                 this.loadOptimalSubmission(this.exerciseId);
             } else {
@@ -178,7 +200,22 @@ export class FileUploadAssessmentComponent implements OnInit {
                 // Update the url with the new id, without reloading the page, to make the history consistent
                 const submissionId = this.submission()?.id;
                 if (submissionId) {
-                    const newUrl = window.location.hash.replace('#', '').replace('new', `${submissionId}`);
+                    // Build the path through the router. Artemis uses path-based routing, so window.location.hash is
+                    // empty and using it here rewrites the address to the application root once the submission loads.
+                    const newUrl = this.router
+                        .createUrlTree(
+                            getLinkToSubmissionAssessment(
+                                ExerciseType.FILE_UPLOAD,
+                                this.courseId,
+                                this.exerciseId,
+                                submission.participation?.id,
+                                submissionId,
+                                this.examId,
+                                this.exerciseGroupId,
+                            ),
+                            { queryParams: this.route.snapshot.queryParams },
+                        )
+                        .toString();
                     this.location.go(newUrl);
                 }
             },
@@ -186,7 +223,7 @@ export class FileUploadAssessmentComponent implements OnInit {
                 this.loadingInitialSubmission.set(false);
                 if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.navigateBack();
-                } else {
+                } else if (!this.explainIfAssessmentNotPossibleYet(error)) {
                     this.onError('artemisApp.assessment.messages.loadSubmissionFailed');
                 }
             },
@@ -208,11 +245,44 @@ export class FileUploadAssessmentComponent implements OnInit {
                     this.loadingInitialSubmission.set(false);
                     if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                         this.navigateBack();
-                    } else {
+                    } else if (!this.explainIfAssessmentNotPossibleYet(error)) {
                         onError(this.alertService, error);
                     }
                 },
             });
+    }
+
+    /**
+     * Clears everything that belongs to the previously assessed submission. Angular reuses this component for
+     * param-only navigations, so without this the page would keep showing the previous assessment while the next one
+     * loads — and would keep showing it instead of the explanation if that load is refused because the exam is not over
+     * yet, for example because a student was granted more working time in the meantime.
+     */
+    private resetSubmissionState(): void {
+        this.loadingInitialSubmission.set(true);
+        this.isLoading.set(true);
+        this.assessmentNotPossibleYet.set(undefined);
+        this.submission.set(undefined);
+        this.result.set(undefined);
+        this.unreferencedFeedback.set([]);
+        this.complaint.set(undefined!);
+    }
+
+    /**
+     * Keeps the server's "assessment is not possible yet" explanation on the page, in place of the "submission not
+     * found" state that would otherwise contradict it. A toast would fade and leave only the wrong message behind.
+     *
+     * @param error the failed response of the endpoint that opens the assessment
+     * @returns true if the error was the "assessment is not possible yet" one and is now explained on the page
+     */
+    private explainIfAssessmentNotPossibleYet(error: HttpErrorResponse): boolean {
+        const assessmentNotPossibleYet = getAssessmentNotPossibleYetState(error);
+        if (!assessmentNotPossibleYet) {
+            return false;
+        }
+        this.assessmentNotPossibleYet.set(assessmentNotPossibleYet);
+        this.alertService.closeAll();
+        return true;
     }
 
     private initializePropertiesFromSubmission(submission: FileUploadSubmission): void {
@@ -234,9 +304,10 @@ export class FileUploadAssessmentComponent implements OnInit {
         this.course.set(getCourseFromExercise(exercise));
         this.hasAssessmentDueDatePassed.set(!!exercise.assessmentDueDate && dayjs(exercise.assessmentDueDate).isBefore(dayjs()));
         if (this.resultId > 0) {
-            const foundIndex = submission.results?.findIndex((result) => result.id === this.resultId);
-            this.correctionRound.set(foundIndex !== undefined && foundIndex >= 0 ? foundIndex : 0);
-            this.result.set(getSubmissionResultById(submission, this.resultId));
+            const resultForId = getSubmissionResultById(submission, this.resultId);
+            // Read off the result, not off its position in the results array.
+            this.correctionRound.set(resultForId?.correctionRound ?? 0);
+            this.result.set(resultForId);
         } else {
             this.result.set(getLatestSubmissionResult(submission));
         }
@@ -297,7 +368,8 @@ export class FileUploadAssessmentComponent implements OnInit {
                 this.unassessedSubmission = submission;
                 if (!submission) {
                     // there are no unassessed submissions
-                    this.submission.set(undefined);
+                    this.navigateBack();
+                    this.alertService.info('artemisApp.exerciseAssessmentDashboard.noSubmissions');
                     return;
                 }
 
@@ -317,11 +389,17 @@ export class FileUploadAssessmentComponent implements OnInit {
                     this.examId,
                     this.exerciseGroupId,
                 );
-                void this.router.navigate(url);
+                // Carry the correction round and keep the other parameters: the component reads the round from the URL,
+                // so dropping it sent the next submission into the first correction round.
+                void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() }, queryParamsHandling: 'merge' });
             },
             error: (error: HttpErrorResponse) => {
                 this.isLoading.set(false);
-                onError(this.alertService, error);
+                // the current assessment stays on the page, so here the explanation belongs in an alert rather than in
+                // place of it — without this the tutor would read "You are not authorized to access this page"
+                if (!alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
+                    onError(this.alertService, error);
+                }
             },
         });
     }
@@ -343,7 +421,10 @@ export class FileUploadAssessmentComponent implements OnInit {
                     this.alertService.closeAll();
                     this.alertService.success('artemisApp.assessment.messages.saveSuccessful');
                 },
-                error: () => {
+                error: (error: HttpErrorResponse) => {
+                    if (alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
+                        return;
+                    }
                     this.alertService.closeAll();
                     this.alertService.error('artemisApp.assessment.messages.saveFailed');
                 },
@@ -374,7 +455,11 @@ export class FileUploadAssessmentComponent implements OnInit {
                     this.alertService.closeAll();
                     this.alertService.success('artemisApp.assessment.messages.submitSuccessful');
                 },
-                error: (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
+                error: (error: HttpErrorResponse) => {
+                    if (!alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
+                        this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`);
+                    }
+                },
             });
     }
 
@@ -391,7 +476,7 @@ export class FileUploadAssessmentComponent implements OnInit {
         if (confirmCancel) {
             this.isLoading.set(true);
             this.fileUploadAssessmentService
-                .cancelAssessment(submissionId)
+                .cancelAssessment(submissionId, this.result()?.id)
                 .pipe(finalize(() => this.isLoading.set(false)))
                 .subscribe(() => {
                     this.navigateBack();
@@ -404,7 +489,7 @@ export class FileUploadAssessmentComponent implements OnInit {
             return;
         }
         // Commit a new submission reference so the change propagates under zoneless OnPush.
-        this.submission.update((submission) => ({ ...submission!, results: [this.result()!, ...(submission!.results?.slice(1) ?? [])] }));
+        this.submission.update((submission) => cloneWith(submission!, { results: [this.result()!, ...(submission!.results?.slice(1) ?? [])] }));
     }
 
     getComplaint(): void {

@@ -5,7 +5,6 @@ import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/
 import dayjs from 'dayjs/esm';
 import { FinishedBuildJob } from 'app/localci/shared/entities/build-job.model';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
-import { TumUiAutoCompleteCompleteEvent } from 'app/shared-ui/tum-ui/autocomplete/tum-ui-autocomplete.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -75,11 +74,10 @@ describe('FinishedBuildsFilterModalComponent', () => {
     it('should suggest all addresses on an empty query and filter on a term', () => {
         fixture.componentRef.setInput('finishedBuildJobsInput', mockFinishedJobs);
 
-        // Empty query must surface all agent addresses.
-        component.searchBuildAgentAddresses({ query: '' } as TumUiAutoCompleteCompleteEvent);
+        component.searchBuildAgentAddresses({ query: '' });
         expect(component.buildAgentAddressSuggestions()).toEqual(['agent5', 'agent6']);
 
-        component.searchBuildAgentAddresses({ query: 'agent5' } as TumUiAutoCompleteCompleteEvent);
+        component.searchBuildAgentAddresses({ query: 'agent5' });
         expect(component.buildAgentAddressSuggestions()).toEqual(['agent5']);
     });
 

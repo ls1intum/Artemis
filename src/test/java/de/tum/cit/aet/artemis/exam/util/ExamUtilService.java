@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -121,6 +122,9 @@ public class ExamUtilService {
     private UserTestRepository userRepo;
 
     @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
+
+    @Autowired
     private ExerciseGroupRepository exerciseGroupRepository;
 
     @Autowired
@@ -195,6 +199,21 @@ public class ExamUtilService {
      */
     public ModelingExercise addCourseExamExerciseGroupWithOneModelingExercise(String title) {
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
+        ModelingExercise classExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
+        classExercise.setTitle(title);
+        classExercise = modelingExerciseRepository.save(classExercise);
+        return classExercise;
+    }
+
+    /**
+     * Creates and saves a ModelingExercise. Also creates an active Course (with enrolled prefix users) and an Exam with a mandatory ExerciseGroup the Modeling Exercise belongs to.
+     *
+     * @param title      The title of the ModelingExercise
+     * @param userPrefix The prefix used to look up test users for enrollment
+     * @return The created ModelingExercise
+     */
+    public ModelingExercise addEnrolledCourseExamExerciseGroupWithOneModelingExercise(String title, String userPrefix) {
+        ExerciseGroup exerciseGroup = addEnrolledExerciseGroupWithExamAndCourse(true, userPrefix);
         ModelingExercise classExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
         classExercise.setTitle(title);
         classExercise = modelingExerciseRepository.save(classExercise);
@@ -728,8 +747,8 @@ public class ExamUtilService {
         ExerciseGroup programmingGroup = exam.getExerciseGroups().get(4);
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(programmingGroup);
         Set<GradingCriterion> gradingCriteria = ProgrammingExerciseFactory.generateGradingCriteria(programmingExercise);
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         exerciseRepository.save(programmingExercise);
+        saveBuildConfig(programmingExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
 
         programmingGroup.addExercise(programmingExercise);
@@ -879,6 +898,16 @@ public class ExamUtilService {
      * @param withProgrammingExercise True, if a ProgrammingExercise should be added
      * @return The updated Exam
      */
+    /**
+     * Writes the build configuration of an exam programming exercise. The exercise does not carry it - the
+     * configuration is a row of its own that names the exercise - and starting a participation reads the branch off it.
+     *
+     * @param programmingExercise the stored exercise the configuration belongs to
+     */
+    private void saveBuildConfig(ProgrammingExercise programmingExercise) {
+        programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateGradleBuildConfig(), programmingExercise);
+    }
+
     public Exam addExerciseGroupsAndExercisesToExam(Exam exam, boolean withProgrammingExercise) {
         return addExerciseGroupsAndExercisesToExam(exam, withProgrammingExercise, false);
     }
@@ -958,8 +987,8 @@ public class ExamUtilService {
             var exerciseGroup6 = exam.getExerciseGroups().get(6);
             // Programming exercises need a proper setup for 'prepare exam start' to work
             ProgrammingExercise programmingExercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup6, "Programming");
-            programmingExerciseBuildConfigRepository.save(programmingExercise1.getBuildConfig());
             exerciseRepository.save(programmingExercise1);
+            saveBuildConfig(programmingExercise1);
             programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise1);
             programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise1);
 
@@ -1006,8 +1035,8 @@ public class ExamUtilService {
             var exerciseGroup2 = exam.getExerciseGroups().get(2);
             // Programming exercises need a proper setup for 'prepare exam start' to work
             ProgrammingExercise programmingExercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup2);
-            programmingExerciseBuildConfigRepository.save(programmingExercise1.getBuildConfig());
             exerciseRepository.save(programmingExercise1);
+            saveBuildConfig(programmingExercise1);
             programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise1);
             programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise1);
             exerciseGroup2.setExercises(Set.of(programmingExercise1));
@@ -1033,7 +1062,7 @@ public class ExamUtilService {
      * @return The newly created ExerciseGroup
      */
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory) {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
         Exam exam = ExamFactory.generateExam(course);
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(mandatory, exam);
 
@@ -1059,6 +1088,20 @@ public class ExamUtilService {
     }
 
     /**
+     * Creates and saves an Exam with an ExerciseGroup for a newly created, active course with default group names,
+     * enrolling users by login prefix.
+     *
+     * @param mandatory  True, if the ExerciseGroup should be mandatory
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint")
+     * @return The newly created ExerciseGroup with prefix users enrolled in the course
+     */
+    public ExerciseGroup addEnrolledExerciseGroupWithExamAndCourse(boolean mandatory, String userPrefix) {
+        ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(mandatory);
+        userUtilService.enrollPrefixedUsersInCourse(exerciseGroup.getExam().getCourse(), userPrefix);
+        return exerciseGroup;
+    }
+
+    /**
      * Creates and saves an Exam with an ExerciseGroup for a newly created, active course with default group names.
      *
      * @param mandatory                  True, if the ExerciseGroup should be mandatory
@@ -1066,10 +1109,9 @@ public class ExamUtilService {
      * @return The newly created ExerciseGroup
      */
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory, boolean startDateBeforeCurrentTime) {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
         Exam exam;
         if (startDateBeforeCurrentTime) {
-            // Create an exam that is already started
             ZonedDateTime currentTime = now();
             exam = ExamFactory.generateExam(course, currentTime.minusMinutes(10), currentTime.minusMinutes(5), currentTime.plusMinutes(60), false);
         }
@@ -1100,13 +1142,28 @@ public class ExamUtilService {
     }
 
     /**
+     * Creates and saves an Exam with an ExerciseGroup for a newly created, active course with default group names,
+     * enrolling users by login prefix.
+     *
+     * @param mandatory                  True, if the ExerciseGroup should be mandatory
+     * @param startDateBeforeCurrentTime True, if the start date of the created Exam should be before the current time, needed for examLiveEvent tests for already started exams
+     * @param userPrefix                 The login prefix of the test users to enroll (e.g. "examint")
+     * @return The newly created ExerciseGroup with prefix users enrolled in the course
+     */
+    public ExerciseGroup addEnrolledExerciseGroupWithExamAndCourse(boolean mandatory, boolean startDateBeforeCurrentTime, String userPrefix) {
+        ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(mandatory, startDateBeforeCurrentTime);
+        userUtilService.enrollPrefixedUsersInCourse(exerciseGroup.getExam().getCourse(), userPrefix);
+        return exerciseGroup;
+    }
+
+    /**
      * Creates and saves an Exam with an ExerciseGroup for a newly created, active course. The exam has a review date [now; now + 60min].
      *
      * @param mandatory True, if the ExerciseGroup should be mandatory
      * @return The newly created ExerciseGroup
      */
     public ExerciseGroup addExerciseGroupWithExamWithReviewDatesAndCourse(boolean mandatory) {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
         Exam exam = ExamFactory.generateExamWithStudentReviewDates(course);
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(mandatory, exam);
 
@@ -1128,6 +1185,20 @@ public class ExamUtilService {
         assertThat(examDB.getCourse().getId()).as("exam and course are linked correctly").isEqualTo(courseDB.getId());
         assertThat(exerciseGroupDB.getExam().getId()).as("exerciseGroup and exam are linked correctly").isEqualTo(examDB.getId());
 
+        return exerciseGroup;
+    }
+
+    /**
+     * Creates and saves an Exam with an ExerciseGroup for a newly created, active course. The exam has a review date [now; now + 60min].
+     * Enrolls users by login prefix.
+     *
+     * @param mandatory  True, if the ExerciseGroup should be mandatory
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint")
+     * @return The newly created ExerciseGroup with prefix users enrolled in the course
+     */
+    public ExerciseGroup addEnrolledExerciseGroupWithExamWithReviewDatesAndCourse(boolean mandatory, String userPrefix) {
+        ExerciseGroup exerciseGroup = addExerciseGroupWithExamWithReviewDatesAndCourse(mandatory);
+        userUtilService.enrollPrefixedUsersInCourse(exerciseGroup.getExam().getCourse(), userPrefix);
         return exerciseGroup;
     }
 
@@ -1295,17 +1366,15 @@ public class ExamUtilService {
     }
 
     /**
-     * Creates and saves a Course with an Exam with one mandatory ExerciseGroup with one TextExercise.
+     * Creates and saves a Course with an Exam with one mandatory ExerciseGroup with one TextExercise. The exam has a review date [now; now + 60min].
+     * Enrolls users with the given prefix in the course.
      *
-     * @param title The title of the created TextExercise
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "assessmentcomplaint")
      * @return The created TextExercise
      */
-    public TextExercise addCourseExamExerciseGroupWithOneTextExercise(String title) {
-        ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
+    public TextExercise addEnrolledCourseExamWithReviewDatesExerciseGroupWithOneTextExercise(String userPrefix) {
+        ExerciseGroup exerciseGroup = addEnrolledExerciseGroupWithExamWithReviewDatesAndCourse(true, userPrefix);
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
-        if (title != null) {
-            textExercise.setTitle(title);
-        }
         return exerciseRepository.save(textExercise);
     }
 
@@ -1315,7 +1384,51 @@ public class ExamUtilService {
      * @return The created TextExercise
      */
     public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
-        return addCourseExamExerciseGroupWithOneTextExercise(null);
+        ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
+        return exerciseRepository.save(textExercise);
+    }
+
+    /**
+     * Creates and saves a Course with an Exam with one mandatory ExerciseGroup with one TextExercise
+     * with the given title (no users enrolled).
+     *
+     * @param title The title of the created TextExercise
+     * @return The created TextExercise
+     */
+    public TextExercise addCourseExamExerciseGroupWithOneTextExercise(String title) {
+        ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
+        textExercise.setTitle(title);
+        return exerciseRepository.save(textExercise);
+    }
+
+    /**
+     * Creates and saves a Course with an Exam with one mandatory ExerciseGroup with one TextExercise,
+     * enrolling users by login prefix.
+     *
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint")
+     * @return The created TextExercise
+     */
+    public TextExercise addEnrolledCourseExamExerciseGroupWithOneTextExercise(String userPrefix) {
+        return addEnrolledCourseExamExerciseGroupWithOneTextExercise(null, userPrefix);
+    }
+
+    /**
+     * Creates and saves a Course with an Exam with one mandatory ExerciseGroup with one TextExercise,
+     * enrolling users by login prefix.
+     *
+     * @param title      The title of the created TextExercise
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint")
+     * @return The created TextExercise with prefix users enrolled in the course
+     */
+    public TextExercise addEnrolledCourseExamExerciseGroupWithOneTextExercise(String title, String userPrefix) {
+        ExerciseGroup exerciseGroup = addEnrolledExerciseGroupWithExamAndCourse(true, userPrefix);
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
+        if (title != null) {
+            textExercise.setTitle(title);
+        }
+        return exerciseRepository.save(textExercise);
     }
 
     /**
@@ -1324,7 +1437,7 @@ public class ExamUtilService {
      * @return The newly created Exam with two correction rounds
      */
     public Exam setupExamWithTwoCorrectionRounds() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
         course = courseRepo.save(course);
         Exam exam = addExam(course);
         exam.setNumberOfCorrectionRoundsInExam(2);
@@ -1336,6 +1449,19 @@ public class ExamUtilService {
         exam.setVisibleDate(ZonedDateTime.now().minusHours(3));
         exam.setWorkingTime(3600); // 1 hour
         return examRepository.save(exam);
+    }
+
+    /**
+     * Creates and saves an Exam with two correction rounds configured for testing scenarios,
+     * enrolling users by login prefix.
+     *
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint")
+     * @return The newly created Exam with two correction rounds and prefix users enrolled in the course
+     */
+    public Exam setupEnrolledExamWithTwoCorrectionRounds(String userPrefix) {
+        Exam exam = setupExamWithTwoCorrectionRounds();
+        userUtilService.enrollPrefixedUsersInCourse(exam.getCourse(), userPrefix);
+        return exam;
     }
 
     /**

@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.exam.web;
 
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
@@ -37,7 +36,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -58,6 +59,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamUserService;
 @Validated
 @Conditional(ExamEnabled.class)
 @Lazy
+@FeatureUsage("authoring/registration")
 @RestController
 @RequestMapping("api/exam/")
 public class ExamUserResource {
@@ -99,7 +101,7 @@ public class ExamUserResource {
         log.debug("REST request to update {} as exam user to exam : {}", examUserDTO.login(), examId);
 
         examAccessService.checkCourseAndExamAccessForTeachingAssistantElseThrow(courseId, examId);
-        var student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(examUserDTO.login())
+        var student = userRepository.findOneWithAuthoritiesByLogin(examUserDTO.login())
                 .orElseThrow(() -> new EntityNotFoundException("User with login: \"" + examUserDTO.login() + "\" does not exist"));
 
         ExamUser examUser = examUserRepository.findByExamIdAndUserId(examId, student.getId())
@@ -109,13 +111,12 @@ public class ExamUserResource {
             String oldPathString = examUser.getSigningImagePath();
             Path basePath = FilePathConverter.getExamUserSignatureFilePath();
             Path savePath = FileUtil.saveFile(signatureFile, basePath, FilePathType.EXAM_USER_SIGNATURE, false);
-            examUser.setSigningImagePath(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.EXAM_USER_SIGNATURE, examUser.getId()).toString());
+            examUser.setSigningImagePath(savePath.getFileName().toString());
 
             if (oldPathString != null) {
                 // Only delete old file if saving the new one succeeded
-                Path oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(oldPathString), FilePathType.EXAM_USER_SIGNATURE);
                 // Don't throw an exception if the file does not exist as then it's already deleted for some reason
-                fileService.schedulePathForDeletion(oldPath, 0);
+                fileService.schedulePathForDeletion(new FileSystemLocation.ExamUserSignature(oldPathString).path(), 0);
             }
         }
 

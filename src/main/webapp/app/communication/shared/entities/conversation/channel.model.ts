@@ -1,3 +1,4 @@
+import dayjs from 'dayjs/esm';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -40,6 +41,10 @@ export class Channel extends Conversation {
 export class ChannelDTO extends ConversationDTO {
     public subType?: ChannelSubType;
     public subTypeReferenceId?: number;
+    /** Release date (exercise) or start date (lecture, exam) of the referenced item; drives the sidebar's current marker. */
+    public subTypeReferenceStartDate?: dayjs.Dayjs;
+    /** Due date (exercise) or end date (lecture, exam) of the referenced item. */
+    public subTypeReferenceEndDate?: dayjs.Dayjs;
     public name?: string;
     public description?: string;
     public topic?: string;

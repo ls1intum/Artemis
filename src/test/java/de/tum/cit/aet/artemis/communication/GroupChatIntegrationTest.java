@@ -31,6 +31,8 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
 
     private static final String TEST_PREFIX = "grtest";
 
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
     private static final int NUMBER_OF_STUDENTS = 11;
 
     @Autowired
@@ -44,9 +46,10 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
     void setupTestScenario() throws Exception {
         super.setupTestScenario();
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 0, 0, 0);
-        if (userRepository.findOneByLogin(testPrefix + "student42").isEmpty()) {
-            userRepository.save(UserFactory.generateActivatedUser(testPrefix + "student42"));
+        if (userRepository.findOneByLogin(OTHER_PREFIX + "student42").isEmpty()) {
+            userRepository.save(UserFactory.generateActivatedUser(OTHER_PREFIX + "student42"));
         }
+        userUtilService.enrollPrefixedUsersInCourse(exampleCourse, TEST_PREFIX);
     }
 
     @Override
@@ -89,7 +92,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
     void startGroupChat_notAllowedAsNotStudentInCourse_shouldReturnBadRequest() throws Exception {
         // then
         request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats", List.of(testPrefix + "student2", testPrefix + "student3"),
@@ -124,7 +127,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         var post = this.postInConversation(chat.getId(), "student1");
         // then
         // The broadcast wraps the entity in a cycle-free PostBroadcastDTO (see PostingService.broadcastForPost).
-        verify(websocketMessagingService, timeout(2000).times(3)).sendMessage(argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
+        verify(websocketMessagingService, timeout(10000).times(3)).sendMessage(aCanonicalPostBroadcastTopic(),
                 (Object) argThat(argument -> argument instanceof PostBroadcastDTO broadcast && post.id().equals(broadcast.post().id())));
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.NEW_MESSAGE);
 
@@ -185,7 +188,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         GroupChatDTO chat = createGroupChatWithStudent1To3();
         // when
         chat.setName("updated");
-        userUtilService.changeUser(testPrefix + "student42");
+        userUtilService.changeUser(OTHER_PREFIX + "student42");
         request.putWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats/" + chat.getId(), chat, GroupChatDTO.class, HttpStatus.FORBIDDEN);
         // then
         var groupChat = groupChatRepository.findById(chat.getId()).orElseThrow();
@@ -251,7 +254,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         // given
         GroupChatDTO chat = createGroupChatWithStudent1To3();
         // when
-        userUtilService.changeUser(testPrefix + "student42");
+        userUtilService.changeUser(OTHER_PREFIX + "student42");
         request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats/" + chat.getId() + "/register",
                 List.of(testPrefix + "student1", testPrefix + "student2", testPrefix + "student4", testPrefix + "student5"), HttpStatus.FORBIDDEN);
 
@@ -327,7 +330,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         // given
         GroupChatDTO chat = createGroupChatWithStudent1To3();
         // when
-        userUtilService.changeUser(testPrefix + "student42");
+        userUtilService.changeUser(OTHER_PREFIX + "student42");
         request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats/" + chat.getId() + "/deregister", List.of(testPrefix + "student2"),
                 HttpStatus.FORBIDDEN);
         // then
@@ -401,4 +404,18 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
     private GroupChatDTO createGroupChatWithStudent1To3() throws Exception {
         return this.createGroupChat("student2", "student3");
     }
+
+    /**
+     * Matches the two destinations a post broadcast legitimately uses: the per-user conversation topic for a private
+     * conversation, and the course-wide communication topic for a course-wide channel. Which of the two applies depends
+     * on the conversation under test, and some helpers here cover both, so this matcher accepts either shape but
+     * nothing else - in particular neither the retired {@code /topic/metis/} mirror nor an unrelated destination, both
+     * of which a bare {@code anyString()} would have accepted.
+     *
+     * @return a Mockito matcher for a canonical post broadcast destination
+     */
+    private static String aCanonicalPostBroadcastTopic() {
+        return argThat((String topic) -> topic != null && (topic.matches("/topic/user/\\d+/notifications/conversations") || topic.matches("/topic/communication/courses/\\d+")));
+    }
+
 }

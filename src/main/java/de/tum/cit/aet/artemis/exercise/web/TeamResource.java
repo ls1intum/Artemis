@@ -8,11 +8,13 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -48,15 +50,18 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.CourseWithTeamExercisesDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportStrategyType;
 import de.tum.cit.aet.artemis.exercise.dto.TeamInputDTO;
+import de.tum.cit.aet.artemis.exercise.dto.TeamResponseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamSearchUserDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -70,11 +75,15 @@ import de.tum.cit.aet.artemis.exercise.service.team.TeamService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("participation/teams")
 @RestController
 @RequestMapping("api/exercise/")
 public class TeamResource {
 
     private static final Logger log = LoggerFactory.getLogger(TeamResource.class);
+
+    /** Everything a team short name may not contain. */
+    private static final Pattern NON_SHORT_NAME_CHARACTER = Pattern.compile("[^0-9a-z]");
 
     public static final String ENTITY_NAME = "team";
 
@@ -133,12 +142,12 @@ public class TeamResource {
      */
     @PostMapping("exercises/{exerciseId}/teams")
     @EnforceAtLeastTutor
-    public ResponseEntity<Team> createTeam(@RequestBody TeamInputDTO dto, @PathVariable long exerciseId) throws URISyntaxException {
+    public ResponseEntity<TeamResponseDTO> createTeam(@RequestBody TeamInputDTO dto, @PathVariable long exerciseId) throws URISyntaxException {
         log.debug("REST request to save Team : {}", dto);
         if (dto.id() != null) {
             throw new BadRequestAlertException("A new team cannot already have an ID", ENTITY_NAME, "idExists");
         }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
         if (!exercise.isTeamMode()) {
@@ -148,7 +157,7 @@ public class TeamResource {
             throw new BadRequestAlertException("A team with this short name already exists in the course.", ENTITY_NAME, "teamShortNameAlreadyExistsInCourse");
         }
         // Remove all special characters and check if the resulting shortname is valid
-        var shortName = dto.shortName().replaceAll("[^0-9a-z]", "").toLowerCase();
+        var shortName = NON_SHORT_NAME_CHARACTER.matcher(dto.shortName()).replaceAll("").toLowerCase(Locale.ROOT);
         Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(shortName);
         if (!shortNameMatcher.matches()) {
             throw new BadRequestAlertException("The team name must start with a letter.", ENTITY_NAME, "teamShortNameInvalid");
@@ -180,7 +189,7 @@ public class TeamResource {
         savedTeam.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, null, savedTeam);
         return ResponseEntity.created(new URI("/api/teams/" + savedTeam.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedTeam.getId().toString())).body(savedTeam);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedTeam.getId().toString())).body(TeamResponseDTO.of(savedTeam));
     }
 
     /**
@@ -194,7 +203,7 @@ public class TeamResource {
      */
     @PutMapping("exercises/{exerciseId}/teams/{teamId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<Team> updateTeam(@RequestBody TeamInputDTO dto, @PathVariable long exerciseId, @PathVariable long teamId) {
+    public ResponseEntity<TeamResponseDTO> updateTeam(@RequestBody TeamInputDTO dto, @PathVariable long exerciseId, @PathVariable long teamId) {
         log.debug("REST request to update Team : {}", dto);
         if (dto.id() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
@@ -215,7 +224,7 @@ public class TeamResource {
         }
 
         // Prepare auth checks
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         final boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         final boolean isAtLeastTeachingAssistantAndOwner = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)
@@ -263,10 +272,10 @@ public class TeamResource {
 
         savedTeam.filterSensitiveInformation();
         savedTeam.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
-        var participationsOfSavedTeam = studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentIdWithSubmissionsAndResults(exercise.getId(),
-                savedTeam.getId());
+        var participationsOfSavedTeam = studentParticipationRepository.findWithTeamStudentsAndSubmissionsAndResultsByExerciseIdAndTeamId(exercise.getId(), savedTeam.getId());
+        participationsOfSavedTeam.forEach(exercise::filterResultsForStudents);
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, existingTeamCopy, savedTeam, participationsOfSavedTeam);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, dto.id().toString())).body(savedTeam);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, dto.id().toString())).body(TeamResponseDTO.of(savedTeam));
     }
 
     /**
@@ -278,19 +287,19 @@ public class TeamResource {
      */
     @GetMapping("exercises/{exerciseId}/teams/{teamId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Team> getTeam(@PathVariable long exerciseId, @PathVariable long teamId) {
+    public ResponseEntity<TeamResponseDTO> getTeam(@PathVariable long exerciseId, @PathVariable long teamId) {
         log.debug("REST request to get Team : {}", teamId);
         Team team = teamRepository.findWithStudentsByIdElseThrow(teamId);
         if (team.getExercise() != null && !team.getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
         }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user) && !team.hasStudent(user)) {
             throw new AccessForbiddenException();
         }
         team.filterSensitiveInformation();
-        return ResponseEntity.ok().body(team);
+        return ResponseEntity.ok().body(TeamResponseDTO.of(team));
     }
 
     /**
@@ -302,14 +311,14 @@ public class TeamResource {
      */
     @GetMapping("exercises/{exerciseId}/teams")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<Team>> getTeamsForExercise(@PathVariable long exerciseId, @RequestParam(value = "teamOwnerId", required = false) Long teamOwnerId) {
+    public ResponseEntity<List<TeamResponseDTO>> getTeamsForExercise(@PathVariable long exerciseId, @RequestParam(value = "teamOwnerId", required = false) Long teamOwnerId) {
         log.debug("REST request to get all Teams for the exercise with id : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         List<Team> teams = teamRepository.findAllByExerciseIdWithEagerStudents(exercise, teamOwnerId);
         teams.forEach(Team::filterSensitiveInformation);
         teams.forEach(team -> team.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber())));
-        return ResponseEntity.ok().body(teams);
+        return ResponseEntity.ok().body(TeamResponseDTO.of(teams));
     }
 
     /**
@@ -323,7 +332,7 @@ public class TeamResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteTeam(@PathVariable long exerciseId, @PathVariable long teamId) {
         log.info("REST request to delete Team with id {} in exercise with id {}", teamId, exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Team team = teamRepository.findWithStudentsByIdElseThrow(teamId);
         if (team.getExercise() != null && !team.getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
@@ -394,11 +403,11 @@ public class TeamResource {
      */
     @PutMapping("exercises/{exerciseId}/teams/import-from-list")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<Team>> importTeamsFromList(@PathVariable long exerciseId, @RequestBody List<TeamImportDTO> teamDTOs,
+    public ResponseEntity<List<TeamResponseDTO>> importTeamsFromList(@PathVariable long exerciseId, @RequestBody List<TeamImportDTO> teamDTOs,
             @RequestParam TeamImportStrategyType importStrategyType) {
         log.debug("REST request import given teams into destination exercise with id {}", exerciseId);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
 
@@ -424,27 +433,24 @@ public class TeamResource {
         // Send out team assignment update via websockets
         sendTeamAssignmentUpdates(exercise, destinationTeams);
 
-        return ResponseEntity.ok().body(destinationTeams);
+        return ResponseEntity.ok().body(TeamResponseDTO.of(destinationTeams));
     }
 
     /**
-     * PUT /exercises/:destinationExerciseId/teams/import-from-exercise/:sourceExerciseId : copy teams from source exercise into destination exercise
+     * PUT /exercises/:destinationExerciseId/teams/import-from-exercise : copy teams from source exercise into destination exercise
      *
      * @param destinationExerciseId the exercise id of the exercise for which to import teams (= destination exercise)
-     * @param sourceExerciseIdQuery the exercise id of the exercise from which to copy the teams (= source exercise) (provided as a query parameter; preferred)
-     * @param sourceExerciseIdPath  the exercise id of the exercise from which to copy the teams (= source exercise) (provided as a legacy path variable; deprecated)
+     * @param sourceExerciseId      the exercise id of the exercise from which to copy the teams (= source exercise)
      * @param importStrategyType    the import strategy to use when importing the teams
      * @return the ResponseEntity with status 200 (OK) and the list of created teams in body
      */
-    @PutMapping({ "exercises/{exerciseId}/teams/import-from-exercise", "exercises/{exerciseId}/teams/import-from-exercise/{sourceExerciseId}" })
+    @PutMapping("exercises/{exerciseId}/teams/import-from-exercise")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<Team>> importTeamsFromSourceExercise(@PathVariable("exerciseId") long destinationExerciseId,
-            @RequestParam(name = "sourceExerciseId", required = false) Long sourceExerciseIdQuery,
-            @PathVariable(name = "sourceExerciseId", required = false) Long sourceExerciseIdPath, @RequestParam TeamImportStrategyType importStrategyType) {
-        long sourceExerciseId = sourceExerciseIdQuery != null ? sourceExerciseIdQuery : (sourceExerciseIdPath != null ? sourceExerciseIdPath : -1L);
+    public ResponseEntity<List<TeamResponseDTO>> importTeamsFromSourceExercise(@PathVariable("exerciseId") long destinationExerciseId, @RequestParam long sourceExerciseId,
+            @RequestParam TeamImportStrategyType importStrategyType) {
         log.debug("REST request import all teams from source exercise with id {} into destination exercise with id {}", sourceExerciseId, destinationExerciseId);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Exercise destinationExercise = exerciseRepository.findByIdElseThrow(destinationExerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, destinationExercise, user);
 
@@ -472,7 +478,7 @@ public class TeamResource {
         // Send out team assignment update via websockets
         sendTeamAssignmentUpdates(destinationExercise, destinationTeams);
 
-        return ResponseEntity.ok().body(destinationTeams);
+        return ResponseEntity.ok().body(TeamResponseDTO.of(destinationTeams));
     }
 
     /**
@@ -485,10 +491,10 @@ public class TeamResource {
      */
     @GetMapping("courses/{courseId}/teams/{teamShortName}/with-exercises-and-participations")
     @EnforceAtLeastStudent
-    public ResponseEntity<Course> getCourseWithExercisesAndParticipationsForTeam(@PathVariable Long courseId, @PathVariable String teamShortName) {
+    public ResponseEntity<CourseWithTeamExercisesDTO> getCourseWithExercisesAndParticipationsForTeam(@PathVariable Long courseId, @PathVariable String teamShortName) {
         log.debug("REST request to get Course {} with exercises and participations for Team with short name {}", courseId, teamShortName);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         if (!(authCheckService.isAtLeastTeachingAssistantInCourse(course, user) || authCheckService.isStudentInTeam(course, teamShortName, user))) {
             throw new AccessForbiddenException();
         }
@@ -535,8 +541,7 @@ public class TeamResource {
         // Filter sensitive information
         exercises.forEach(Exercise::filterSensitiveInformation);
 
-        course.setExercises(exercises);
-        return ResponseEntity.ok(course);
+        return ResponseEntity.ok(CourseWithTeamExercisesDTO.of(course, exercises));
     }
 
     /**

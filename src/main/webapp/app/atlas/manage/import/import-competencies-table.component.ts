@@ -9,6 +9,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { NgTemplateOutlet } from '@angular/common';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-import-competencies-table',
@@ -33,7 +34,7 @@ export class ImportCompetenciesTableComponent {
      * @param pageNumber The current page number
      */
     onPageChange(pageNumber: number) {
-        this.search.update((search) => ({ ...search, page: pageNumber }));
+        this.search.update((search) => cloneWith(search, { page: pageNumber }));
     }
 
     /** PrimeNG paginator page change (0-indexed) converted to the 1-indexed page used here. */
@@ -46,11 +47,7 @@ export class ImportCompetenciesTableComponent {
      * @param change an object containing the column to sort by and boolean if the sort is ascending
      */
     onSortChange(change: { predicate: string; ascending: boolean }) {
-        this.search.update((search) => ({
-            ...search,
-            sortedColumn: change.predicate,
-            sortingOrder: change.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
-        }));
+        this.search.update((search) => cloneWith(search, { sortedColumn: change.predicate, sortingOrder: change.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING }));
         this.ascending = change.ascending;
     }
 }

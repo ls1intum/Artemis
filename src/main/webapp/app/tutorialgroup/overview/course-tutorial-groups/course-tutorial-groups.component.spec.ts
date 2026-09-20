@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Component, input } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/overview/course-tutorial-groups/course-tutorial-groups.component';
 import { MockDirective, MockProvider } from 'ng-mocks';
@@ -24,6 +24,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { CourseTutorialGroupDetailContainerComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail-container/course-tutorial-group-detail-container.component';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
+import { Course } from 'app/course/shared/entities/course.model';
 
 interface TutorialGroupApiServiceMock {
     getTutorialGroupsForCourse: ReturnType<typeof vi.fn>;
@@ -95,6 +96,10 @@ describe('CourseTutorialGroupsComponent', () => {
     describe('sidebar toggle sync', () => {
         beforeEach(() => {
             vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ tutorialGroups: [], lectures: [] });
+            // The cached course is empty, and the sidebar is now rebuilt for an empty result too, so these mappers are
+            // reached here. MockProvider returns undefined from them; the real ones return an empty array.
+            vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([]);
+            vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
         });
 
         it('should sync the collapse state and a working toggle into an activated tutorial group detail', () => {
@@ -222,12 +227,31 @@ describe('CourseTutorialGroupsComponent', () => {
         expect(component.sidebarData()).toEqual(expectedSidebarData);
     });
 
-    it('should preserve the fully-loaded marker when enriching the cached course with fetched groups and lectures', async () => {
+    it('should not reload groups and lectures when the stored course changes', async () => {
+        const storedCourse = signal<Course | undefined>({ id: 42 } as Course);
+        vi.spyOn(courseStorageService, 'getCourse').mockImplementation(() => storedCourse());
+        vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([]);
+        vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
+        const tutorialGroupFetchSpy = vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse');
+        const tutorialLectureFetchSpy = vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId');
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(tutorialGroupFetchSpy).toHaveBeenCalledOnce();
+        expect(tutorialLectureFetchSpy).toHaveBeenCalledOnce();
+
+        storedCourse.set({ id: 42, title: 'Updated course' } as Course);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(tutorialGroupFetchSpy).toHaveBeenCalledOnce();
+        expect(tutorialLectureFetchSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should enrich the cached course with the fetched groups and lectures', async () => {
         const cachedCourse = { id: 1, lectures: undefined, tutorialGroups: undefined };
         vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(cachedCourse);
-        // The parent course overview has fully loaded the course; enriching it here must keep the marker the
-        // CourseOverviewGuard relies on, otherwise switching to a guarded tab would silently skip the access check.
-        vi.spyOn(courseStorageService, 'isCourseFullyLoaded').mockReturnValue(true);
         const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse').mockImplementation(() => {});
         vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse').mockReturnValue(of(new HttpResponse({ body: [tutorialGroup1] })));
         vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [tutorialLecture1] })));
@@ -237,7 +261,54 @@ describe('CourseTutorialGroupsComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse, true);
+        expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse);
+    });
+
+    it('should clear the sidebar when a refresh returns no groups and no lectures', async () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ tutorialGroups: [tutorialGroup1], lectures: [tutorialLecture1] });
+        vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([getSidebarCardElementForTutorialGroup(tutorialGroup1)]);
+        vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([getSidebarCardElementForTutorialLecture(tutorialLecture1)]);
+        vi.spyOn(courseOverviewService, 'mapTutorialGroupToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialGroup);
+        vi.spyOn(courseOverviewService, 'mapLectureToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialLecture);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(component.sidebarData()?.ungroupedData).toHaveLength(2);
+
+        // The group and the lecture are gone on the server; the refresh legitimately returns nothing. Keeping the old
+        // cards would leave the student clicking entries that no longer exist.
+        vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse').mockReturnValue(of(new HttpResponse({ body: [] })));
+        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [] })));
+        vi.mocked(courseOverviewService.mapTutorialGroupsToSidebarCardElements).mockReturnValue([]);
+        vi.mocked(courseOverviewService.mapLecturesToSidebarCardElements).mockReturnValue([]);
+
+        component.tutorialGroups.set([]);
+        component.tutorialLectures.set([]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.sidebarData()?.ungroupedData).toHaveLength(0);
+    });
+
+    it('should drop deleted tutorial lectures from the stored course, so reopening the tab cannot resurrect them', async () => {
+        const nonTutorialLecture = { id: 99, isTutorialLecture: false } as Lecture;
+        const cachedCourse = { id: 1, tutorialGroups: [], lectures: [tutorialLecture1, nonTutorialLecture] };
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(cachedCourse);
+        const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse').mockImplementation(() => {});
+        vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([]);
+        vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
+        // The tutorial lecture was deleted on the server, so the refresh legitimately returns nothing
+        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [] })));
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+        (component as any).loadAndSetTutorialLectures(1);
+        await fixture.whenStable();
+
+        expect(updateCourseSpy).toHaveBeenCalled();
+        // Merging by id could not express the deletion: nothing in the empty response matched, so the deleted lecture
+        // stayed cached and came straight back the next time the tab read it
+        expect(cachedCourse.lectures).toEqual([nonTutorialLecture]);
     });
 
     it('should navigate to previously selected route', () => {

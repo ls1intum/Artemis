@@ -71,12 +71,14 @@ import { ModalDialogBox } from './pageobjects/exam/ModalDialogBox';
 import { ExamParticipationActions } from './pageobjects/exam/ExamParticipationActions';
 import { AccountManagementAPIRequests } from './requests/AccountManagementAPIRequests';
 import { ProgrammingExerciseSubmissionsPage } from './pageobjects/exercises/programming/ProgrammingExercisesSubmissionsPage';
+import { ProgrammingExerciseExportDialog } from './pageobjects/exercises/programming/ProgrammingExerciseExportDialog';
+import type { StudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
 
 // Define custom types for fixtures
 export type ArtemisCommands = {
     login: (credentials: UserCredentials, url?: string) => Promise<void>;
     waitForExerciseBuildToFinish: (exerciseId: number, interval?: number, timeout?: number, minResults?: number) => Promise<void>;
-    waitForParticipationBuildToFinish: (participationId: number, interval?: number, timeout?: number, initialResultId?: number | null) => Promise<StudentParticipation>;
+    waitForParticipationBuildToFinish: (participationId: number, interval?: number, timeout?: number, initialResultId?: number | null) => Promise<StudentParticipationDTO>;
     toggleSidebar: () => Promise<void>;
     createCompetency: (
         courseId: number,
@@ -140,6 +142,7 @@ export type ArtemisPageObjects = {
     programmingExercisesScaConfig: CodeAnalysisGradingPage;
     programmingExerciseScaFeedback: ScaFeedbackModal;
     programmingExerciseSubmissions: ProgrammingExerciseSubmissionsPage;
+    programmingExerciseExportDialog: ProgrammingExerciseExportDialog;
     quizExerciseCreation: QuizExerciseCreationPage;
     quizExerciseDragAndDropQuiz: DragAndDropQuiz;
     quizExerciseMultipleChoice: MultipleChoiceQuiz;
@@ -423,6 +426,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     programmingExerciseSubmissions: async ({ page }, use) => {
         await use(new ProgrammingExerciseSubmissionsPage(page));
+    },
+    programmingExerciseExportDialog: async ({ page }, use) => {
+        await use(new ProgrammingExerciseExportDialog(page));
     },
     quizExerciseCreation: async ({ page }, use) => {
         await use(new QuizExerciseCreationPage(page));

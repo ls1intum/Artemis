@@ -12,13 +12,14 @@
         >
         @if (nodeOptions().length > 1) {
             <tum-ui-select
+                [ariaLabel]="'metrics.filter' | artemisTranslate"
                 [(ngModel)]="selectedNodeId"
                 [options]="nodeOptions()"
                 optionLabel="label"
                 optionValue="value"
-                (onChange)="onNodeChange()"
+                (selectionChange)="onNodeChange()"
                 size="small"
-                styleClass="w-auto"
+                class="w-auto"
             />
         }
         <tum-ui-button severity="secondary" size="small" variant="outlined" [icon]="faSync" [loading]="isRefreshing()" (clicked)="refresh()" data-testid="refresh-button">

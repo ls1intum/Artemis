@@ -6,27 +6,33 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
+import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
@@ -67,8 +73,6 @@ public class ProgrammingExerciseImportBasicService {
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
-    private final ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService;
-
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
@@ -79,7 +83,7 @@ public class ProgrammingExerciseImportBasicService {
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
-    private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
+    private final ProgrammingExerciseProjectNameService programmingExerciseProjectNameService;
 
     private final UriService uriService;
 
@@ -87,211 +91,247 @@ public class ProgrammingExerciseImportBasicService {
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
+    private final ProgrammingExerciseValidationService programmingExerciseValidationService;
+
+    private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
+
     public ProgrammingExerciseImportBasicService(Optional<VersionControlService> versionControlService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, StaticCodeAnalysisService staticCodeAnalysisService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyRepository submissionPolicyRepository,
-            ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
+            StaticCodeAnalysisService staticCodeAnalysisService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyRepository submissionPolicyRepository,
+            ProgrammingExerciseProjectNameService programmingExerciseProjectNameService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
             ProgrammingExerciseTaskService programmingExerciseTaskService, UriService uriService, ChannelService channelService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyExerciseLinkService competencyExerciseLinkService) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyExerciseLinkService competencyExerciseLinkService,
+            ProgrammingExerciseValidationService programmingExerciseValidationService, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
         this.versionControlService = versionControlService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
-        this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
+        this.programmingExerciseProjectNameService = programmingExerciseProjectNameService;
         this.uriService = uriService;
         this.channelService = channelService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
+        this.programmingExerciseValidationService = programmingExerciseValidationService;
+        this.automaticAfterDueDateService = automaticAfterDueDateService;
     }
 
     /**
-     * Imports a programming exercise creating a new entity, copying all basic
-     * values and saving it in the database.
-     * All basic include everything except for repositories, or build plans on a
-     * remote version control server, or
-     * continuous integration server. <br>
-     * There are however, a couple of things that will never get copied:
+     * Imports a programming exercise by creating a new entity, copying all basic values from the source exercise and
+     * saving it in the database. "Basic" covers everything except the actual repositories and build plans on the version
+     * control and continuous integration servers, which are created by the calling import service afterwards.
+     * <p>
+     * The following are deliberately never copied from the source:
      * <ul>
-     * <li>The ID</li>
-     * <li>The template and solution participation</li>
+     * <li>The id</li>
+     * <li>The template and solution participation (fresh ones are created)</li>
      * <li>The number of complaints, assessments and more feedback requests</li>
-     * <li>The tutor/student participations</li>
+     * <li>The tutor and student participations</li>
      * <li>The questions asked by students</li>
      * <li>The example submissions</li>
      * </ul>
+     * The method runs without an enclosing transaction: every entity it references is fetched and persisted explicitly,
+     * in an order that respects the foreign keys the exercise owns (build config and submission policy first, then the
+     * exercise, then its participations, test cases and tasks).
      *
-     * @param originalProgrammingExercise The template exercise which should get
-     *                                        imported
-     * @param newProgrammingExercise      The new exercise already containing values
-     *                                        which should not get copied, i.e.
-     *                                        overwritten
-     * @return The newly created exercise
+     * @param sourceExercise    the source exercise providing the data to copy into the new exercise
+     * @param sourceBuildConfig the stored build configuration of the source exercise
+     * @param newExercise       the new exercise (potentially already carrying caller-provided overrides) to be persisted
+     * @param newBuildConfig    the build configuration the caller supplied, or {@code null} to copy the source's
+     * @return the newly created exercise, re-fetched with its import-relevant associations initialized
      */
-    @Transactional // TODO: NOT OK --> apply the transaction on a smaller scope
-    // IMPORTANT: the transactional context only works if you invoke this method
-    // from another class
-    public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise originalProgrammingExercise, final ProgrammingExercise newProgrammingExercise) {
-        prepareBasicExerciseInformation(originalProgrammingExercise, newProgrammingExercise);
+    public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise sourceExercise, final ProgrammingExerciseBuildConfig sourceBuildConfig,
+            ProgrammingExercise newExercise, @Nullable ProgrammingExerciseBuildConfig newBuildConfig) {
+        // The channel name is a transient, client-supplied field, so it does not survive the re-fetch at the end of this
+        // method. Capture it here to create the channel with the name the user chose during the import.
+        final String channelName = newExercise.getChannelName();
 
-        // Note: same order as when creating an exercise
-        programmingExerciseParticipationService.setupInitialTemplateParticipation(newProgrammingExercise);
-        programmingExerciseParticipationService.setupInitialSolutionParticipation(newProgrammingExercise);
-        setupTestRepository(newProgrammingExercise);
-        programmingExerciseCreationUpdateService.initParticipations(newProgrammingExercise);
+        final ProgrammingExerciseBuildConfig buildConfig = prepareBasicExerciseInformation(sourceExercise, sourceBuildConfig, newExercise, newBuildConfig);
 
-        newProgrammingExercise.getBuildConfig().setBranch(defaultBranch);
-        if (newProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() == null) {
-            // this means the user did not override the build plan config when importing the
-            // exercise and want to reuse it from the existing exercise
-            newProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalProgrammingExercise.getBuildConfig().getBuildPlanConfiguration());
+        // Set the branch and reuse the source build plan configuration if the caller did not provide one.
+        buildConfig.setBranch(defaultBranch);
+        if (buildConfig.getBuildPlanConfiguration() == null) {
+            buildConfig.setBuildPlanConfiguration(sourceBuildConfig.getBuildPlanConfiguration());
         }
-
-        // Hints, tasks, test cases and static code analysis categories
-        newProgrammingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(newProgrammingExercise.getBuildConfig()));
-
-        Set<GradingCriterion> oldCriteria = originalProgrammingExercise.getGradingCriteria();
-        if (oldCriteria != null) {
-            for (GradingCriterion oldCriterion : oldCriteria) {
-                // 1) Create and copy a new GradingCriterion
-                GradingCriterion copyCriterion = new GradingCriterion();
-                copyCriterion.setId(null); // ensure Hibernate treats it as new
-                copyCriterion.setTitle(oldCriterion.getTitle());
-                copyCriterion.setExercise(newProgrammingExercise);
-
-                // 2) Copy each GradingInstruction (but skip feedbacks)
-                for (GradingInstruction oldInstr : oldCriterion.getStructuredGradingInstructions()) {
-                    GradingInstruction copyInstr = new GradingInstruction();
-                    copyInstr.setId(null);
-                    copyInstr.setCredits(oldInstr.getCredits());
-                    copyInstr.setGradingScale(oldInstr.getGradingScale());
-                    copyInstr.setInstructionDescription(oldInstr.getInstructionDescription());
-                    copyInstr.setFeedback(oldInstr.getFeedback());
-                    copyInstr.setUsageCount(oldInstr.getUsageCount());
-                    // do NOT copy oldInstr.getFeedbacks()
-
-                    // Link the new instruction to its parent:
-                    copyCriterion.addStructuredGradingInstruction(copyInstr);
-                }
-
-                // 3) Add the newly built criterion into the new exercise
-                newProgrammingExercise.getGradingCriteria().add(copyCriterion);
+        // Validate the resolved build config, including values inherited from the source exercise, before it is persisted
+        programmingExerciseValidationService.validateBuildConfigSize(buildConfig);
+        if (automaticAfterDueDateService.isPresent() && newExercise.isCourseExercise()) {
+            try {
+                newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(newExercise, buildConfig));
+            }
+            catch (JacksonException e) {
+                throw new BadRequestAlertException("The build plan configuration is invalid", "programmingExercise", "invalidBuildPlanConfiguration");
             }
         }
+        newExercise.validateDates();
 
-        var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newProgrammingExercise);
-        ProgrammingExercise importedExercise = programmingExerciseRepository.save(newProgrammingExercise);
+        // Persist the submission policy (as a fresh entity) up front for the same reason.
+        importSubmissionPolicy(newExercise);
+
+        // Deep-copy the grading criteria from the source. They are cascaded (CascadeType.ALL) when the exercise is saved
+        // below, so no separate save is needed.
+        copyGradingCriteria(sourceExercise, newExercise);
+
+        // Persist the exercise once (cascading the grading criteria) so that the template and solution participations,
+        // the test cases and the tasks created below can reference it. Competency links are added afterwards because they
+        // must point at the persisted exercise.
+        var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
+        newExercise = programmingExerciseRepository.save(newExercise);
+        // The configuration names the exercise, so it is written once that exercise exists.
+        programmingExerciseBuildConfigRepository.saveForExercise(buildConfig, newExercise);
         if (!competencyLinks.isEmpty()) {
-            competencyExerciseLinkService.addCompetencyLinksForCreation(importedExercise, competencyLinks);
-            importedExercise = programmingExerciseRepository.save(importedExercise);
+            competencyExerciseLinkService.addCompetencyLinksForCreation(newExercise, competencyLinks);
+            newExercise = programmingExerciseRepository.save(newExercise);
         }
 
-        final Map<Long, Long> newTestCaseIdByOldId = importTestCases(originalProgrammingExercise, importedExercise);
-        importTasks(originalProgrammingExercise, importedExercise, newTestCaseIdByOldId);
+        // Set up the template and solution participations (they reference the now-persisted exercise). Same order as when
+        // creating an exercise.
+        programmingExerciseParticipationService.setupInitialTemplateParticipation(newExercise);
+        programmingExerciseParticipationService.setupInitialSolutionParticipation(newExercise);
+        setupTestRepository(newExercise);
 
-        // Set up new exercise submission policy before the solution entries are
-        // imported
-        importSubmissionPolicy(importedExercise);
-        // Having the submission policy in place prevents errors
+        // Copy the test cases, then the tasks. Tasks reference the newly created test cases via the returned id mapping.
+        final Map<Long, Long> newTestCaseIdByOldId = importTestCases(sourceExercise, newExercise);
+        importTasks(sourceExercise, newExercise, newTestCaseIdByOldId);
 
-        // Use the template problem statement (with ids) as a new basis (You cannot edit
-        // the problem statement while importing)
-        // Then replace the old test ids by the newly created ones.
-        importedExercise.setProblemStatement(originalProgrammingExercise.getProblemStatement());
-        programmingExerciseTaskService.updateTestIds(importedExercise, newTestCaseIdByOldId);
+        // The problem statement cannot be edited during import, so copy it from the source and remap the test ids it
+        // embeds to the newly created ones.
+        newExercise.setProblemStatement(sourceExercise.getProblemStatement());
+        programmingExerciseTaskService.updateTestIds(newExercise, newTestCaseIdByOldId);
 
-        // Copy or create SCA categories
-        if (Boolean.TRUE.equals(importedExercise.isStaticCodeAnalysisEnabled()) && Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled())) {
-            importStaticCodeAnalysisCategories(originalProgrammingExercise, importedExercise);
+        // Static code analysis categories: copy them from the source when both exercises use SCA, otherwise create the
+        // default categories for the new exercise.
+        if (Boolean.TRUE.equals(newExercise.isStaticCodeAnalysisEnabled()) && Boolean.TRUE.equals(sourceExercise.isStaticCodeAnalysisEnabled())) {
+            importStaticCodeAnalysisCategories(sourceExercise, newExercise);
         }
-        else if (Boolean.TRUE.equals(importedExercise.isStaticCodeAnalysisEnabled()) && !Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled())) {
-            staticCodeAnalysisService.createDefaultCategories(importedExercise);
-        }
-
-        // An exam exercise can only be in individual mode
-        if (importedExercise.isExamExercise()) {
-            importedExercise.setMode(ExerciseMode.INDIVIDUAL);
-            importedExercise.setTeamAssignmentConfig(null);
+        else if (Boolean.TRUE.equals(newExercise.isStaticCodeAnalysisEnabled())) {
+            staticCodeAnalysisService.createDefaultCategories(newExercise);
         }
 
-        // Re-adding auxiliary repositories
-        final List<AuxiliaryRepository> auxiliaryRepositoriesToBeImported = originalProgrammingExercise.getAuxiliaryRepositories();
+        // Exam exercises are always individual and must not carry a team assignment configuration.
+        if (newExercise.isExamExercise()) {
+            newExercise.setMode(ExerciseMode.INDIVIDUAL);
+            newExercise.setTeamAssignmentConfig(null);
+        }
 
-        for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositoriesToBeImported) {
+        // Copy the auxiliary repositories.
+        for (AuxiliaryRepository auxiliaryRepository : sourceExercise.getAuxiliaryRepositories()) {
             AuxiliaryRepository newAuxiliaryRepository = auxiliaryRepository.cloneObjectForNewExercise();
-            newAuxiliaryRepository = auxiliaryRepositoryRepository.save(newAuxiliaryRepository);
-            importedExercise.addAuxiliaryRepository(newAuxiliaryRepository);
+            // Attach it first: a repository names the exercise it belongs to, and cannot be written without one.
+            newExercise.addAuxiliaryRepository(newAuxiliaryRepository);
+            auxiliaryRepositoryRepository.save(newAuxiliaryRepository);
         }
 
-        ProgrammingExercise savedImportedExercise = programmingExerciseRepository.save(importedExercise);
+        // Final save persisting the participation references, the remapped problem statement, the test repository uri
+        // and the auxiliary repositories set above. This runs without an open session, so the returned exercise must
+        // carry the associations its consumers (the surrounding import flow and the serialized response) read rather
+        // than relying on lazy proxies. saveForCreation re-fetches the complete new-exercise graph for exactly this
+        // reason, so we reuse it here (the import produces a new exercise just like a regular creation).
+        newExercise = programmingExerciseRepository.saveForCreation(newExercise);
+        // Restore the transient channel name on the re-fetched exercise, so the serialized import response reports the
+        // channel the caller asked for.
+        newExercise.setChannelName(channelName);
 
-        channelService.createExerciseChannel(savedImportedExercise, Optional.ofNullable(newProgrammingExercise.getChannelName()));
+        channelService.createExerciseChannel(newExercise, Optional.ofNullable(channelName));
 
-        return savedImportedExercise;
+        return newExercise;
     }
 
     /**
-     * Prepares information directly stored in the exercise for the copy process.
-     * <p>
-     * Replaces attributes in the new exercise that should not be copied from the
-     * previous one.
+     * Deep-copies the grading criteria (with their structured grading instructions) from the source exercise onto the new
+     * exercise. Each copy is a fresh entity (id cleared) linked to {@code newExercise}, so the copies are persisted via
+     * cascade when the exercise is saved. Feedback attached to the source instructions is intentionally not copied, since
+     * the imported exercise starts without assessments.
      *
-     * @param originalProgrammingExercise Some exercise the information is copied
-     *                                        from.
-     * @param newProgrammingExercise      The exercise that is prepared.
+     * @param sourceExercise the exercise whose grading criteria are copied
+     * @param newExercise    the exercise the copied grading criteria are attached to
      */
-    private void prepareBasicExerciseInformation(final ProgrammingExercise originalProgrammingExercise, final ProgrammingExercise newProgrammingExercise) {
-        // Set values we don't want to copy to null
-        setupExerciseForImport(newProgrammingExercise);
-        setupBuildConfig(newProgrammingExercise, originalProgrammingExercise);
-
-        if (originalProgrammingExercise.getBuildConfig().hasBuildPlanAccessSecretSet()) {
-            newProgrammingExercise.getBuildConfig().generateAndSetBuildPlanAccessSecret();
+    private void copyGradingCriteria(final ProgrammingExercise sourceExercise, final ProgrammingExercise newExercise) {
+        Set<GradingCriterion> sourceCriteria = sourceExercise.getGradingCriteria();
+        if (sourceCriteria == null) {
+            return;
+        }
+        for (GradingCriterion sourceCriterion : sourceCriteria) {
+            GradingCriterion criterionCopy = new GradingCriterion();
+            criterionCopy.setId(null);
+            criterionCopy.setTitle(sourceCriterion.getTitle());
+            criterionCopy.setExercise(newExercise);
+            for (GradingInstruction sourceInstruction : sourceCriterion.getStructuredGradingInstructions()) {
+                GradingInstruction instructionCopy = new GradingInstruction();
+                instructionCopy.setId(null);
+                instructionCopy.setCredits(sourceInstruction.getCredits());
+                instructionCopy.setGradingScale(sourceInstruction.getGradingScale());
+                instructionCopy.setInstructionDescription(sourceInstruction.getInstructionDescription());
+                instructionCopy.setFeedback(sourceInstruction.getFeedback());
+                instructionCopy.setUsageCount(sourceInstruction.getUsageCount());
+                criterionCopy.addStructuredGradingInstruction(instructionCopy);
+            }
+            newExercise.getGradingCriteria().add(criterionCopy);
         }
     }
 
     /**
-     * Sets up the test repository for a new exercise by setting the repository URI.
-     * This does not create the actual
-     * repository on the version control server!
+     * Resets the attributes on {@code newExercise} that must not be carried over from the source exercise (id, build
+     * config identity, participations, etc.) so it can be persisted as a brand-new exercise, and copies the build plan
+     * access secret setting from the source.
      *
-     * @param newExercise the new exercises that should be created during import
+     * @param sourceExercise    the exercise being imported from
+     * @param sourceBuildConfig the stored build configuration of that exercise
+     * @param newExercise       the exercise being prepared for persistence
+     * @param newBuildConfig    the build configuration the caller supplied, or {@code null} to copy the source's
+     * @return the build configuration the new exercise is written with
+     */
+    private ProgrammingExerciseBuildConfig prepareBasicExerciseInformation(final ProgrammingExercise sourceExercise, final ProgrammingExerciseBuildConfig sourceBuildConfig,
+            final ProgrammingExercise newExercise, @Nullable final ProgrammingExerciseBuildConfig newBuildConfig) {
+        // Set values we don't want to copy to null
+        setupExerciseForImport(newExercise);
+        ProgrammingExerciseBuildConfig buildConfig = setupBuildConfig(sourceBuildConfig, newBuildConfig);
+
+        if (sourceBuildConfig.hasBuildPlanAccessSecretSet()) {
+            buildConfig.generateAndSetBuildPlanAccessSecret();
+        }
+        return buildConfig;
+    }
+
+    /**
+     * Sets the test repository URI on the new exercise. This only computes and stores the URI; it does not create the
+     * actual repository on the version control server.
+     *
+     * @param newExercise the exercise being imported
      */
     private void setupTestRepository(ProgrammingExercise newExercise) {
         final var testRepoName = newExercise.generateRepositoryName(RepositoryType.TESTS);
         newExercise.setTestRepositoryUri(versionControlService.orElseThrow().getCloneRepositoryUri(newExercise.getProjectKey(), testRepoName).toString());
     }
 
-    private void setupBuildConfig(ProgrammingExercise newExercise, ProgrammingExercise originalExercise) {
-        if (newExercise.getBuildConfig() != null) {
-            var buildConfig = newExercise.getBuildConfig();
-            buildConfig.setId(null);
-            buildConfig.setProgrammingExercise(null);
-            newExercise.setBuildConfig(buildConfig);
+    /**
+     * Prepares the build config of the new exercise so that it can be persisted as a fresh entity. When the caller
+     * already supplied a build config (e.g. the user overrode it during import) its id and back-reference are cleared;
+     * otherwise the config is copied from the source exercise, or a default config is created if the source has none.
+     *
+     * @param sourceBuildConfig the source exercise's build configuration, used when the caller supplied none
+     * @param newBuildConfig    the build configuration the caller supplied, or {@code null}
+     * @return the build configuration to persist for the new exercise
+     */
+    private ProgrammingExerciseBuildConfig setupBuildConfig(ProgrammingExerciseBuildConfig sourceBuildConfig, @Nullable ProgrammingExerciseBuildConfig newBuildConfig) {
+        if (newBuildConfig != null) {
+            newBuildConfig.setId(null);
+            return newBuildConfig;
         }
-        else if (originalExercise.getBuildConfig() != null) {
-            var buildConfig = new ProgrammingExerciseBuildConfig(originalExercise.getBuildConfig());
-            newExercise.setBuildConfig(buildConfig);
-        }
-        else {
-            newExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
-        }
+        return new ProgrammingExerciseBuildConfig(sourceBuildConfig);
     }
 
     /**
-     * Persists the submission policy of the new exercise. We ensure that the
-     * submission policy does not
-     * have any id or programming exercise set.
+     * Persists the submission policy of the new exercise as a fresh entity. Its id and back-reference to the programming
+     * exercise are cleared first so that it is inserted rather than updating the source exercise's policy.
      *
-     * @param newExercise containing the submission policy to persist
+     * @param newExercise the exercise whose submission policy is persisted (no-op if it has none)
      */
     private void importSubmissionPolicy(ProgrammingExercise newExercise) {
         if (newExercise.getSubmissionPolicy() != null) {
@@ -303,20 +343,16 @@ public class ProgrammingExerciseImportBasicService {
     }
 
     /**
-     * Copied test cases from one exercise to another. The test cases will get new
-     * IDs, thus being saved as a new entity.
-     * The remaining contents stay the same, especially the weights.
+     * Copies the test cases from the source exercise to the new exercise. Each copy is persisted as a new entity (new
+     * id); all other values, in particular the weights, are preserved.
      *
-     * @param templateExercise The template exercise which test cases should get
-     *                             copied
-     * @param targetExercise   The new exercise to which all test cases should get
-     *                             copied to
-     * @return A map with the old test case id as a key and the new test case id as
-     *         value
+     * @param sourceExercise the source exercise whose test cases are copied
+     * @param newExercise    the exercise the copied test cases are attached to
+     * @return a map from each source test case id to the id of its newly created copy
      */
-    private Map<Long, Long> importTestCases(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise) {
+    private Map<Long, Long> importTestCases(final ProgrammingExercise sourceExercise, final ProgrammingExercise newExercise) {
         Map<Long, Long> newIdByOldId = new HashMap<>();
-        targetExercise.setTestCases(templateExercise.getTestCases().stream().map(testCase -> {
+        newExercise.setTestCases(sourceExercise.getTestCases().stream().map(testCase -> {
             final var copy = new ProgrammingExerciseTestCase();
 
             // Copy everything except for the referenced exercise
@@ -326,7 +362,7 @@ public class ProgrammingExerciseImportBasicService {
             copy.setWeight(testCase.getWeight());
             copy.setBonusMultiplier(testCase.getBonusMultiplier());
             copy.setBonusPoints(testCase.getBonusPoints());
-            copy.setExercise(targetExercise);
+            copy.setExercise(newExercise);
             copy.setType(testCase.getType());
             programmingExerciseTestCaseRepository.save(copy);
             newIdByOldId.put(testCase.getId(), copy.getId());
@@ -337,48 +373,40 @@ public class ProgrammingExerciseImportBasicService {
     }
 
     /**
-     * Imports tasks from a template exercise to a new exercise. The tasks will get
-     * new IDs, thus being saved as a new entity.
-     * The remaining contents stay the same, especially the test cases.
+     * Copies the tasks from the source exercise to the new exercise. Each copy is persisted as a new entity (new id)
+     * and is linked to the test cases that were already copied to the new exercise.
      *
-     * @param sourceExercise    The template exercise which tasks should get copied
-     * @param targetExercise    The new exercise to which all tasks should get
-     *                              copied to
-     * @param testCaseIdMapping A map with the old test case id as a key and the new
-     *                              test case id as a value
+     * @param sourceExercise    the source exercise whose tasks are copied
+     * @param newExercise       the exercise the copied tasks are attached to
+     * @param testCaseIdMapping a map from each source test case id to the id of its copy (see {@link #importTestCases})
      */
-    private void importTasks(final ProgrammingExercise sourceExercise, final ProgrammingExercise targetExercise, Map<Long, Long> testCaseIdMapping) {
-        // Map the tasks from the template exercise to new tasks in the target exercise
-        List<ProgrammingExerciseTask> newTasks = sourceExercise.getTasks().stream().map(templateTask -> createTaskCopy(templateTask, targetExercise, testCaseIdMapping)).toList();
-
-        // Set the new tasks to the target exercise
-        targetExercise.setTasks(new ArrayList<>(newTasks));
+    private void importTasks(final ProgrammingExercise sourceExercise, final ProgrammingExercise newExercise, Map<Long, Long> testCaseIdMapping) {
+        List<ProgrammingExerciseTask> newTasks = sourceExercise.getTasks().stream().map(sourceTask -> createTaskCopy(sourceTask, newExercise, testCaseIdMapping)).toList();
+        newExercise.setTasks(new ArrayList<>(newTasks));
     }
 
     /**
-     * Creates a copy of a task from a template exercise and links it to the target
-     * exercise. The test cases of the task
-     * are also copied and linked to the new task.
+     * Creates a copy of a single task, links it to the new exercise, and attaches the new exercise's copies of the
+     * task's test cases.
      *
-     * @param sourceTask        The template task which should be copied
-     * @param targetExercise    The new exercise to which the task should be linked
-     * @param testCaseIdMapping A map with the old test case id as a key and the new
-     *                              test case id as a value
-     * @return The new task
+     * @param sourceTask        the task to copy
+     * @param newExercise       the exercise the copied task is linked to
+     * @param testCaseIdMapping a map from each source test case id to the id of its copy (see {@link #importTestCases})
+     * @return the newly created task
      */
-    private ProgrammingExerciseTask createTaskCopy(ProgrammingExerciseTask sourceTask, ProgrammingExercise targetExercise, Map<Long, Long> testCaseIdMapping) {
+    private ProgrammingExerciseTask createTaskCopy(ProgrammingExerciseTask sourceTask, ProgrammingExercise newExercise, Map<Long, Long> testCaseIdMapping) {
         ProgrammingExerciseTask copiedTask = new ProgrammingExerciseTask();
 
         // Copy task properties
         copiedTask.setTaskName(sourceTask.getTaskName());
 
         // Map and set new test cases
-        Set<ProgrammingExerciseTestCase> mappedTestCases = sourceTask.getTestCases().stream().map(testCase -> findMappedTestCase(testCase, targetExercise, testCaseIdMapping))
+        Set<ProgrammingExerciseTestCase> mappedTestCases = sourceTask.getTestCases().stream().map(testCase -> findMappedTestCase(testCase, newExercise, testCaseIdMapping))
                 .collect(Collectors.toSet());
         copiedTask.setTestCases(mappedTestCases);
 
-        // Link the task to the target exercise
-        copiedTask.setExercise(targetExercise);
+        // Link the task to the new exercise
+        copiedTask.setExercise(newExercise);
 
         // Persist the new task
         programmingExerciseTaskRepository.save(copiedTask);
@@ -386,59 +414,52 @@ public class ProgrammingExerciseImportBasicService {
     }
 
     /**
-     * Finds a test case in the target exercise that corresponds to a test case in
-     * the template exercise.
+     * Resolves the new exercise's copy of a source test case via the id mapping.
      *
-     * @param existingTestCase  The test case from the template exercise
-     * @param targetExercise    The new exercise to which the test case should be
-     *                              linked
-     * @param testCaseIdMapping A map with the old test case id as a key and the new
-     *                              test case id as a value
-     * @return The test case in the target exercise
+     * @param existingTestCase  the test case from the source exercise
+     * @param newExercise       the exercise holding the copied test cases
+     * @param testCaseIdMapping a map from each source test case id to the id of its copy (see {@link #importTestCases})
+     * @return the corresponding test case in the new exercise
      */
-    private ProgrammingExerciseTestCase findMappedTestCase(ProgrammingExerciseTestCase existingTestCase, ProgrammingExercise targetExercise, Map<Long, Long> testCaseIdMapping) {
+    private ProgrammingExerciseTestCase findMappedTestCase(ProgrammingExerciseTestCase existingTestCase, ProgrammingExercise newExercise, Map<Long, Long> testCaseIdMapping) {
         Long newTestCaseId = testCaseIdMapping.get(existingTestCase.getId());
 
-        return targetExercise.getTestCases().stream().filter(newTestCase -> Objects.equals(newTestCaseId, newTestCase.getId())).findFirst()
+        return newExercise.getTestCases().stream().filter(newTestCase -> Objects.equals(newTestCaseId, newTestCase.getId())).findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Test case not found for ID: " + newTestCaseId));
     }
 
     /**
-     * Copies static code analysis categories from one exercise to another by
-     * creating new entities and copying the
-     * appropriate fields.
+     * Copies the static code analysis categories from the source exercise to the new exercise. Each category is
+     * persisted as a new entity linked to the new exercise.
      *
-     * @param templateExercise with static code analysis categories which should get
-     *                             copied
-     * @param targetExercise   for which static code analysis categories will be
-     *                             copied
+     * @param sourceExercise the source exercise whose static code analysis categories are copied
+     * @param newExercise    the exercise the copied categories are attached to
      */
-    private void importStaticCodeAnalysisCategories(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise) {
-        if (targetExercise.getStaticCodeAnalysisCategories() == null) {
-            targetExercise.setStaticCodeAnalysisCategories(new HashSet<>());
+    private void importStaticCodeAnalysisCategories(final ProgrammingExercise sourceExercise, final ProgrammingExercise newExercise) {
+        if (newExercise.getStaticCodeAnalysisCategories() == null) {
+            newExercise.setStaticCodeAnalysisCategories(new HashSet<>());
         }
 
-        templateExercise.getStaticCodeAnalysisCategories().forEach(originalCategory -> {
+        sourceExercise.getStaticCodeAnalysisCategories().forEach(originalCategory -> {
             final var categoryCopy = new StaticCodeAnalysisCategory();
             categoryCopy.setName(originalCategory.getName());
             categoryCopy.setPenalty(originalCategory.getPenalty());
             categoryCopy.setMaxPenalty(originalCategory.getMaxPenalty());
             categoryCopy.setState(originalCategory.getState());
-            categoryCopy.setProgrammingExercise(targetExercise);
+            categoryCopy.setProgrammingExercise(newExercise);
 
             final var savedCopy = staticCodeAnalysisCategoryRepository.save(categoryCopy);
-            targetExercise.addStaticCodeAnalysisCategory(savedCopy);
+            newExercise.addStaticCodeAnalysisCategory(savedCopy);
         });
     }
 
     /**
-     * Sets up a new exercise for importing it by setting all values, that should
-     * either never get imported, or
-     * for which we should create new entities (e.g. test cases) to null. This
-     * ensures that we do not copy
-     * anything by accident.
+     * Clears the values that must not be carried over when the new exercise is persisted: identifiers, participations,
+     * statistics counters, and the collections for which fresh entities are created later (e.g. test cases). This
+     * ensures nothing from the source is copied by accident. Team assignment and plagiarism configs are reset or
+     * defaulted depending on whether the exercise belongs to a course or an exam.
      *
-     * @param newExercise the new exercises that should be created during import
+     * @param newExercise the exercise being prepared for persistence
      */
     private void setupExerciseForImport(ProgrammingExercise newExercise) {
         newExercise.setId(null);
@@ -451,8 +472,10 @@ public class ProgrammingExerciseImportBasicService {
 
         newExercise.disconnectRelatedEntities();
 
-        // copy the grading instructions to avoid issues with references to the original
-        // exercise
+        // copy the grading instructions to avoid issues with references to the original exercise. A caller may pass a
+        // skeleton whose collection is null (that is how the generic import services are asked to backfill the source's
+        // criteria); the programming import always takes them from the source, so start from an empty set here.
+        newExercise.ensureGradingCriteriaSet();
         newExercise.setGradingCriteria(newExercise.copyGradingCriteria(new HashMap<>()));
 
         // only copy the config for team programming exercise in courses
@@ -460,7 +483,7 @@ public class ProgrammingExerciseImportBasicService {
             newExercise.setTeamAssignmentConfig(newExercise.getTeamAssignmentConfig().copyTeamAssignmentConfig());
         }
         // We have to rebuild the auxiliary repositories
-        newExercise.setAuxiliaryRepositories(new ArrayList<>());
+        newExercise.setAuxiliaryRepositories(new LinkedHashSet<>());
 
         if (newExercise.isTeamMode()) {
             newExercise.getTeamAssignmentConfig().setId(null);
@@ -483,23 +506,23 @@ public class ProgrammingExerciseImportBasicService {
      * repository. Participation repositories from students or tutors will not get
      * copied!
      *
-     * @param templateExercise The template exercise having a reference to all base
-     *                             repositories
-     * @param newExercise      The new exercise without any repositories
+     * @param sourceExercise The source exercise having a reference to all base
+     *                           repositories
+     * @param newExercise    The new exercise without any repositories
      */
-    public void importRepositories(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
+    public void importRepositories(final ProgrammingExercise sourceExercise, final ProgrammingExercise newExercise) {
         final var targetProjectKey = newExercise.getProjectKey();
-        final var sourceProjectKey = templateExercise.getProjectKey();
+        final var sourceProjectKey = sourceExercise.getProjectKey();
 
         // First, create a new project for our imported exercise
         VersionControlService versionControl = versionControlService.orElseThrow();
         versionControl.createProjectForExercise(newExercise);
         // Copy all repositories
-        String templateRepoName = uriService.getRepositorySlugFromRepositoryUriString(templateExercise.getTemplateRepositoryUri());
-        String testRepoName = uriService.getRepositorySlugFromRepositoryUriString(templateExercise.getTestRepositoryUri());
-        String solutionRepoName = uriService.getRepositorySlugFromRepositoryUriString(templateExercise.getSolutionRepositoryUri());
+        String templateRepoName = uriService.getRepositorySlugFromRepositoryUriString(sourceExercise.getTemplateRepositoryUri());
+        String testRepoName = uriService.getRepositorySlugFromRepositoryUriString(sourceExercise.getTestRepositoryUri());
+        String solutionRepoName = uriService.getRepositorySlugFromRepositoryUriString(sourceExercise.getSolutionRepositoryUri());
 
-        String sourceBranch = programmingExerciseRepository.findBranchByExerciseId(templateExercise.getId());
+        String sourceBranch = programmingExerciseRepository.findBranchByExerciseId(sourceExercise.getId());
 
         // TODO: in case one of those operations fail, we should do error handling and
         // revert all previous operations
@@ -507,19 +530,21 @@ public class ProgrammingExerciseImportBasicService {
         versionControl.copyRepositoryWithHistory(sourceProjectKey, solutionRepoName, sourceBranch, targetProjectKey, RepositoryType.SOLUTION.getName(), null);
         versionControl.copyRepositoryWithHistory(sourceProjectKey, testRepoName, sourceBranch, targetProjectKey, RepositoryType.TESTS.getName(), null);
 
-        List<AuxiliaryRepository> auxRepos = templateExercise.getAuxiliaryRepositories();
-        for (int i = 0; i < auxRepos.size(); i++) {
-            AuxiliaryRepository auxRepo = auxRepos.get(i);
+        // Paired by name, which is what identifies an auxiliary repository within its exercise and is what the copy
+        // carries over from the source.
+        Map<String, AuxiliaryRepository> newAuxiliaryRepositoriesByName = newExercise.getAuxiliaryRepositories().stream()
+                .collect(Collectors.toMap(AuxiliaryRepository::getName, Function.identity()));
+        for (AuxiliaryRepository auxRepo : sourceExercise.getAuxiliaryRepositories()) {
             var repoUri = versionControl.copyRepositoryWithHistory(sourceProjectKey, auxRepo.getRepositoryName(), sourceBranch, targetProjectKey, auxRepo.getName(), null)
                     .toString();
-            AuxiliaryRepository newAuxRepo = newExercise.getAuxiliaryRepositories().get(i);
+            AuxiliaryRepository newAuxRepo = newAuxiliaryRepositoriesByName.get(auxRepo.getName());
             newAuxRepo.setRepositoryUri(repoUri);
             auxiliaryRepositoryRepository.save(newAuxRepo);
         }
 
         try {
-            // Adjust placeholders that were replaced during creation of template exercise
-            programmingExerciseRepositoryService.adjustProjectNames(templateExercise.getTitle(), newExercise);
+            // Adjust placeholders that were replaced during creation of source exercise
+            programmingExerciseProjectNameService.adjustProjectNames(sourceExercise.getTitle(), newExercise);
         }
         catch (GitAPIException | IOException e) {
             log.error("Error during adjustment of placeholders of ProgrammingExercise {}", newExercise.getTitle(), e);

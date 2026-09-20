@@ -8,7 +8,6 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
-import org.apache.hc.core5.net.InetAddressUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -23,17 +22,22 @@ import de.tum.cit.aet.artemis.communication.dto.LinkPreviewDTO;
 import de.tum.cit.aet.artemis.communication.service.linkpreview.LinkPreviewService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 
 /**
  * REST controller for Link Preview.
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("content/link-previews")
 @RestController
 @RequestMapping("api/communication/")
 public class LinkPreviewResource {
 
     private static final Logger log = LoggerFactory.getLogger(LinkPreviewResource.class);
+
+    /** The start of an address in the private 172.16.0.0/12 range. */
+    private static final Pattern PRIVATE_172_RANGE = Pattern.compile("^172\\.(1[6-9]|2[0-9]|3[0-1])\\.");
 
     private final LinkPreviewService linkPreviewService;
 
@@ -105,7 +109,7 @@ public class LinkPreviewResource {
             String host = parsedUrl.getHost();
 
             // Reject if the host is an IP address (IPv4 or IPv6)
-            if (InetAddressUtils.isIPv4(host) || InetAddressUtils.isIPv6(host)) {
+            if (isIpAddress(host)) {
                 return false;
             }
 
@@ -122,8 +126,33 @@ public class LinkPreviewResource {
         }
     }
 
+    private boolean isIpAddress(String host) {
+        if (host.startsWith("[") && host.endsWith("]")) {
+            return true;
+        }
+        String[] parts = host.split("\\.", -1);
+        if (parts.length != 4) {
+            return false;
+        }
+        for (String part : parts) {
+            if (part.isEmpty()) {
+                return false;
+            }
+            try {
+                int value = Integer.parseInt(part);
+                if (value < 0 || value > 255) {
+                    return false;
+                }
+            }
+            catch (NumberFormatException e) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private boolean isPrivateNetwork(String host) {
         return host.equals("localhost") || host.equals("127.0.0.1") || host.equals("::1") || host.equals("0.0.0.0") || host.startsWith("192.168.") || host.startsWith("10.")
-                || Pattern.matches("^172\\.(1[6-9]|2[0-9]|3[0-1])\\.", host);
+                || PRIVATE_172_RANGE.matcher(host).lookingAt();
     }
 }

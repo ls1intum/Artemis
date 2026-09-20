@@ -1,4 +1,5 @@
 import { parseJson } from 'app/foundation/util/json.util';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Supported execution conditions for a build phase.
@@ -52,15 +53,16 @@ export function parseBuildPlanPhases(json: string | undefined): BuildPlanPhases 
     if (!isBuildPlanPhases(data)) {
         return undefined;
     }
-    return {
-        ...data,
-        phases: data.phases.map((parsed: BuildPhase) => ({
-            ...parsed,
-            condition: parsed.condition ?? 'ALWAYS',
-            forceRun: parsed.forceRun ?? false,
-            resultPaths: parsed.resultPaths ?? [],
-        })),
-    };
+    return cloneWith(data, {
+        phases: data.phases.map((parsed: BuildPhase) =>
+            cloneWith(parsed, {
+                script: parsed.script ?? '',
+                condition: parsed.condition ?? 'ALWAYS',
+                forceRun: parsed.forceRun ?? false,
+                resultPaths: parsed.resultPaths ?? [],
+            }),
+        ),
+    });
 }
 
 function isBuildPlanPhases(value: unknown): value is BuildPlanPhases {
@@ -78,7 +80,10 @@ function isBuildPhase(value: unknown): value is BuildPhase {
     const v = value as { name?: unknown; script?: unknown; condition?: unknown; forceRun?: unknown; resultPaths?: unknown };
     return (
         typeof v.name === 'string' &&
-        typeof v.script === 'string' &&
+        // a blank script is dropped on write by @JsonInclude(NON_EMPTY) on BuildPhaseDTO, so a stored plan can have a phase
+        // with no script key at all. Treat it like the other optional fields and default it below, otherwise a single such
+        // phase makes isBuildPlanPhases reject the whole plan and the exercise opens as an empty editor.
+        (v.script === undefined || typeof v.script === 'string') &&
         (v.condition === undefined || isBuildPhaseCondition(v.condition)) &&
         (v.forceRun === undefined || typeof v.forceRun === 'boolean') &&
         (v.resultPaths === undefined || isResultPaths(v.resultPaths))

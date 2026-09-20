@@ -14,15 +14,16 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.AttachmentChangedNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.DuplicateTestCaseNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.ExerciseOpenForPracticeNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.ExerciseUpdatedNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewExerciseNotification;
-import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewManualFeedbackRequestNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.ProgrammingBuildRunUpdateNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.ProgrammingTestCasesChangedNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.QuizExerciseStartedNotification;
@@ -72,21 +73,25 @@ public class GroupNotificationService {
 
     /**
      * Notify student groups about an attachment change.
+     * <p>
+     * An attachment belongs to an attachment video unit, and the unit is what knows the lecture, so the caller passes
+     * the lecture in rather than the attachment carrying a reference to one. The exercise id of the payload stays
+     * {@code null}: an attachment has never belonged to an exercise on any released version.
      *
      * @param attachment that has been changed
+     * @param lecture    the lecture the attachment's unit belongs to, loaded with its course
      */
-    public void notifyStudentGroupAboutAttachmentChange(Attachment attachment) {
+    public void notifyStudentGroupAboutAttachmentChange(Attachment attachment, Lecture lecture) {
         // Do not send a notification before the release date of the attachment.
         if (attachment.getReleaseDate() != null && attachment.getReleaseDate().isAfter(ZonedDateTime.now())) {
             return;
         }
 
-        var course = attachment.getExercise() != null ? attachment.getExercise().getCourseViaExerciseGroupOrCourseMember() : attachment.getLecture().getCourse();
+        var course = lecture.getCourse();
         var recipients = userRepository.getStudents(course);
 
-        var attachmentChangedNotification = new AttachmentChangedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), attachment.getName(),
-                attachment.getExercise() == null ? attachment.getLecture().getTitle() : attachment.getExercise().getTitle(),
-                attachment.getExercise() == null ? null : attachment.getExercise().getId(), attachment.getLecture() == null ? null : attachment.getLecture().getId());
+        var attachmentChangedNotification = new AttachmentChangedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), attachment.getName(), lecture.getTitle(),
+                null, lecture.getId());
 
         courseNotificationService.sendCourseNotification(attachmentChangedNotification, recipients.stream().toList());
     }
@@ -129,15 +134,13 @@ public class GroupNotificationService {
      * @param courseId          the id of the course the quiz belongs to
      * @param courseTitle       the human-readable course title used in the notification body
      * @param courseIcon        the course icon URL used in the notification body (may be {@code null})
-     * @param studentGroupName  the group name used to resolve the recipients via {@link UserRepository}
      * @param quizExerciseId    the id of the quiz that was just started
      * @param notificationTitle the exercise-specific title used in the notification body
      */
     @Async
-    public void notifyStudentGroupAboutQuizExerciseStartAsync(long courseId, String courseTitle, String courseIcon, String studentGroupName, long quizExerciseId,
-            String notificationTitle) {
+    public void notifyStudentsAboutQuizExerciseStartAsync(long courseId, String courseTitle, String courseIcon, long quizExerciseId, String notificationTitle) {
         try {
-            var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(studentGroupName);
+            var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(courseId, Set.of(CourseRole.STUDENT));
             var quizExerciseStartedNotification = new QuizExerciseStartedNotification(courseId, courseTitle, courseIcon, quizExerciseId, notificationTitle);
             courseNotificationService.sendCourseNotification(quizExerciseStartedNotification, recipients.stream().toList());
         }
@@ -167,8 +170,7 @@ public class GroupNotificationService {
         }
 
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(
-                Set.of(course.getEditorGroupName(), course.getInstructorGroupName(), course.getStudentGroupName()));
+        var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR, CourseRole.STUDENT));
 
         var exerciseUpdatedNotification = new ExerciseUpdatedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
                 exercise.getExerciseNotificationTitle(), null, null, exercise.getType());
@@ -206,7 +208,7 @@ public class GroupNotificationService {
      */
     public void notifyEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise) {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(Set.of(course.getEditorGroupName(), course.getInstructorGroupName()));
+        var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR));
 
         ExerciseGroup exerciseGroup = exercise.isExamExercise() ? exercise.getExerciseGroup() : null;
         var exerciseUpdatedNotification = new ExerciseUpdatedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
@@ -223,7 +225,7 @@ public class GroupNotificationService {
      */
     public void notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(ProgrammingExercise exercise) {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(Set.of(course.getEditorGroupName(), course.getInstructorGroupName()));
+        var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR));
 
         ExerciseGroup exerciseGroup = exercise.isExamExercise() ? exercise.getExerciseGroup() : null;
         var programmingTestCasesChangedNotification = new ProgrammingTestCasesChangedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
@@ -239,7 +241,7 @@ public class GroupNotificationService {
      */
     public void notifyEditorAndInstructorGroupsAboutBuildRunUpdate(ProgrammingExercise exercise) {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(Set.of(course.getEditorGroupName(), course.getInstructorGroupName()));
+        var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR));
 
         ExerciseGroup exerciseGroup = exercise.isExamExercise() ? exercise.getExerciseGroup() : null;
         var programmingBuildRunUpdateNotification = new ProgrammingBuildRunUpdateNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
@@ -255,7 +257,7 @@ public class GroupNotificationService {
      */
     public void notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(Exercise exercise) {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(Set.of(course.getEditorGroupName(), course.getInstructorGroupName()));
+        var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR));
         var formattedReleaseDate = exercise.getReleaseDate() != null ? exercise.getReleaseDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) : "-";
         var formattedDueDate = exercise.getDueDate() != null ? exercise.getDueDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) : "-";
 
@@ -265,21 +267,5 @@ public class GroupNotificationService {
                 exerciseGroup != null ? exerciseGroup.getId() : null);
 
         courseNotificationService.sendCourseNotification(duplicateTestCaseNotification, recipients.stream().toList());
-    }
-
-    /**
-     * Notifies a tutor that their feedback was requested.
-     *
-     * @param exercise that has been affected
-     */
-    public void notifyTutorGroupAboutNewFeedbackRequest(Exercise exercise) {
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var recipients = userRepository.getTutors(course);
-
-        Long examId = exercise.isExamExercise() ? exercise.getExerciseGroup().getExam().getId() : null;
-        var manualFeedbackRequestNotification = new NewManualFeedbackRequestNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
-                exercise.getExerciseNotificationTitle(), examId);
-
-        courseNotificationService.sendCourseNotification(manualFeedbackRequestNotification, recipients.stream().toList());
     }
 }

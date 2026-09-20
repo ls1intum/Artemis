@@ -13,12 +13,15 @@ import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { captureException } from '@sentry/angular';
+import { alertIfAssessmentNotPossibleYet } from 'app/assessment/shared/util/assessment-availability.util';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 @Component({
     template: '',
 })
 export abstract class TextAssessmentBaseComponent implements OnInit {
     protected alertService = inject(AlertService);
+    private datePipe = inject(ArtemisDatePipe);
     protected accountService = inject(AccountService);
     protected assessmentsService = inject(TextAssessmentService);
     protected structuredGradingCriterionService = inject(StructuredGradingCriterionService);
@@ -83,6 +86,11 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
     }
 
     protected handleError(error: HttpErrorResponse): void {
+        // The exam may have re-opened (e.g. a working time extension), in which case the server explains when
+        // assessment is possible again; without this the tutor would see the raw HTTP failure text.
+        if (alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
+            return;
+        }
         const errorMessage = error.headers?.get('X-artemisApp-message') || error.message;
         this.alertService.error(errorMessage);
     }

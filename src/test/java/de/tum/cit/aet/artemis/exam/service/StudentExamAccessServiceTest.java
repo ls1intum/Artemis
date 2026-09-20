@@ -57,10 +57,8 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationIndependentT
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
-        course1 = courseUtilService.addEmptyCourse();
+        course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         course2 = courseUtilService.addEmptyCourse();
-        course2.setStudentGroupName("another-group");
-        courseRepository.save(course2);
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         exam1 = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
         studentExam1 = examUtilService.addStudentExam(exam1);

@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -20,6 +22,7 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -203,9 +206,16 @@ public class ExerciseDeletionService {
             programmingExerciseDeletionService.delete(exercise.getId(), deleteBaseReposBuildPlans);
         }
         else {
+            // Quiz drag-and-drop image files were formerly removed by @PostRemove callbacks on the (now JSON-backed) drag items and questions. Since these are no longer JPA
+            // entities, every quiz deletion entry point must trigger the file cleanup explicitly; doing it here in the shared deletion path covers course, exam, and
+            // exercise-group deletions, not only the direct REST deletion in QuizExerciseDeletionResource.
+            // The paths have to be collected BEFORE the exercise row disappears (they live in the question JSON), but the files must only be deleted AFTER the deletion
+            // succeeded — deleting them first would leave a still-existing quiz without its authored images if the refetch or delete below fails.
+            List<Path> dragAndDropImagesToDelete = exercise instanceof QuizExercise ? quizExerciseService.collectDragAndDropImagePaths(exerciseId) : List.of();
             // fetch the exercise again to allow Hibernate to delete it properly
             exercise = exerciseRepository.findByIdWithStudentParticipationsElseThrow(exerciseId);
             exerciseRepository.delete(exercise);
+            FileUtil.deleteFiles(dragAndDropImagesToDelete);
         }
 
         competencyProgressApi.ifPresent(api -> competencyLinks.stream().map(CompetencyExerciseLink::getCompetency).forEach(api::updateProgressByCompetencyAsync));

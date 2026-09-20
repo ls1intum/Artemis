@@ -32,6 +32,8 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
 
     private static final String TEST_PREFIX = "textunitintegrationtest";
 
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
     @Autowired
     private LectureTestRepository lectureRepository;
 
@@ -50,16 +52,16 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-        this.lecture = lectureUtilService.createCourseWithLecture(true);
+        this.lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         this.textUnit = new TextUnit();
         this.textUnit.setName("LoremIpsum");
         this.textUnit.setContent("This is a Test");
 
         // Add users that are not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "editor42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "student42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "tutor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "editor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "instructor42");
 
         competency = competencyUtilService.createCompetency(lecture.getCourse());
     }
@@ -101,7 +103,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor42", roles = "EDITOR")
+    @WithMockUser(username = OTHER_PREFIX + "editor42", roles = "EDITOR")
     void createTextUnit_EditorNotInCourse_shouldReturnForbidden() throws Exception {
         request.postWithResponseBody("/api/lecture/lectures/" + this.lecture.getId() + "/text-units", TextUnitDTO.of(textUnit), TextUnitDTO.class, HttpStatus.FORBIDDEN);
         request.postWithResponseBody("/api/lecture/lectures/" + "2379812738912" + "/text-units", TextUnitDTO.of(textUnit), TextUnitDTO.class, HttpStatus.FORBIDDEN);
@@ -127,7 +129,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     void updateTextUnit_asEditor_shouldKeepOrdering() throws Exception {
         persistTextUnitWithLecture();
 
-        var databaseLecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
+        var databaseLecture = lectureRepository.findByIdWithLectureUnits(lecture.getId()).orElseThrow();
         assertThat(databaseLecture.getLectureUnits()).hasSize(1);
         // Add a second lecture unit
         TextUnit secondTextUnit = lectureUtilService.createTextUnit(lecture);
@@ -135,14 +137,14 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         lecture = lectureRepository.save(lecture);
 
         assertThat(lecture.getLectureUnits()).hasSize(2);
-        databaseLecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
+        databaseLecture = lectureRepository.findByIdWithLectureUnits(lecture.getId()).orElseThrow();
         assertThat(databaseLecture.getLectureUnits()).hasSize(2);
 
         List<LectureUnit> orderedUnits = lecture.getLectureUnits();
 
         // Updating the lecture unit should not change order attribute
         request.putWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", TextUnitDTO.of(secondTextUnit), TextUnitDTO.class, HttpStatus.OK);
-        databaseLecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
+        databaseLecture = lectureRepository.findByIdWithLectureUnits(lecture.getId()).orElseThrow();
         assertThat(lecture.getLectureUnits()).hasSize(2);
 
         List<LectureUnit> updatedOrderedUnits = databaseLecture.getLectureUnits();
@@ -188,7 +190,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     private void persistTextUnitWithLecture() {
-        lecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
+        lecture = lectureRepository.findByIdWithLectureUnits(lecture.getId()).orElseThrow();
         assertThat(lecture.getLectureUnits()).isEmpty();
         lecture.addLectureUnit(textUnit);
         lecture = lectureRepository.save(lecture);
@@ -197,7 +199,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         // use the saved text unit with id from now on
         textUnit = (TextUnit) lecture.getLectureUnits().getFirst();
 
-        lecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
+        lecture = lectureRepository.findByIdWithLectureUnits(lecture.getId()).orElseThrow();
         assertThat(lecture.getLectureUnits()).hasSize(1);
 
         assertThat(textUnit.getLecture()).isNotNull();

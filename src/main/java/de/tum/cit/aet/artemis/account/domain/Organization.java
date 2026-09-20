@@ -9,11 +9,13 @@ import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
 @Table(name = "organization")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@AggregateRoot("Reference data.")
 public class Organization extends DomainObject {
 
     @NonNull

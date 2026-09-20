@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -36,11 +37,11 @@ public record ExerciseSnapshotDTO(
 
         // fields of Exercise class
         // not included fields: teams, studentParticipations, tutorParticipations, exampleSubmission, attachment, course, exerciseGroup
-        Set<CompetencyExerciseLinkSnapshotDTO> competencyLinks, Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests,
-        IncludedInOverallScore includedInOverallScore, String problemStatement, String gradingInstructions, Set<String> categories,
-        TeamAssignmentConfigSnapshotDTO teamAssignmentConfig, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule,
-        Set<GradingCriterionDTO> gradingCriteria, PlagiarismDetectionConfigSnapshotDTO plagiarismDetectionConfig, ProgrammingExerciseSnapshotDTO programmingData,
-        TextExerciseSnapshotDTO textData, ModelingExerciseSnapshotDTO modelingData, QuizExerciseSnapshotDTO quizData, FileUploadExerciseSnapshotDTO fileUploadData
+        Set<CompetencyExerciseLinkSnapshotDTO> competencyLinks, Boolean allowComplaintsForAutomaticAssessments, IncludedInOverallScore includedInOverallScore,
+        String problemStatement, String gradingInstructions, Set<String> categories, TeamAssignmentConfigSnapshotDTO teamAssignmentConfig, Boolean presentationScoreEnabled,
+        Boolean secondCorrectionEnabled, Set<GradingCriterionDTO> gradingCriteria, PlagiarismDetectionConfigSnapshotDTO plagiarismDetectionConfig,
+        ProgrammingExerciseSnapshotDTO programmingData, TextExerciseSnapshotDTO textData, ModelingExerciseSnapshotDTO modelingData, QuizExerciseSnapshotDTO quizData,
+        FileUploadExerciseSnapshotDTO fileUploadData
 
 ) implements Serializable {
 
@@ -52,14 +53,17 @@ public record ExerciseSnapshotDTO(
      *                                    {@code null} for non-programming exercises
      * @return {@link ExerciseSnapshotDTO}
      */
-    public static ExerciseSnapshotDTO of(Exercise exercise, ProgrammingExerciseSnapshotDTO.@Nullable CommitHashesDTO programmingCommitHashes) {
+    public static ExerciseSnapshotDTO of(Exercise exercise, @Nullable ProgrammingExerciseBuildConfig buildConfig,
+            ProgrammingExerciseSnapshotDTO.@Nullable CommitHashesDTO programmingCommitHashes) {
 
         var competencyLinks = CollectionUtil.nullIfEmpty(exercise.getCompetencyLinks().stream().map(CompetencyExerciseLinkSnapshotDTO::of).collect(Collectors.toSet()));
         var gradingCriteria = CollectionUtil.nullIfEmpty(exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet()));
         var categories = CollectionUtil.nullIfEmpty(exercise.getCategories());
         var plagiarismDetectionConfig = PlagiarismDetectionConfigSnapshotDTO.of(exercise.getPlagiarismDetectionConfig());
 
-        var programmingData = exercise instanceof ProgrammingExercise programmingExercise ? ProgrammingExerciseSnapshotDTO.of(programmingExercise, programmingCommitHashes) : null;
+        var programmingData = exercise instanceof ProgrammingExercise programmingExercise
+                ? ProgrammingExerciseSnapshotDTO.of(programmingExercise, buildConfig, programmingCommitHashes)
+                : null;
         var textData = exercise instanceof TextExercise ? TextExerciseSnapshotDTO.of((TextExercise) exercise) : null;
         var modelingData = exercise instanceof ModelingExercise ? ModelingExerciseSnapshotDTO.of((ModelingExercise) exercise) : null;
         var quizData = exercise instanceof QuizExercise ? QuizExerciseSnapshotDTO.of((QuizExercise) exercise) : null;
@@ -67,10 +71,9 @@ public record ExerciseSnapshotDTO(
         return new ExerciseSnapshotDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getChannelName(), exercise.getMaxPoints(),
                 exercise.getBonusPoints(), exercise.getAssessmentType(), toUtc(exercise.getReleaseDate()), toUtc(exercise.getStartDate()), toUtc(exercise.getDueDate()),
                 toUtc(exercise.getAssessmentDueDate()), toUtc(exercise.getExampleSolutionPublicationDate()), exercise.getDifficulty(), exercise.getMode(), competencyLinks,
-                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getIncludedInOverallScore(), exercise.getProblemStatement(),
-                exercise.getGradingInstructions(), categories, TeamAssignmentConfigSnapshotDTO.of(exercise.getTeamAssignmentConfig()), exercise.getPresentationScoreEnabled(),
-                exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), gradingCriteria, plagiarismDetectionConfig, programmingData, textData, modelingData,
-                quizData, fileUploadData);
+                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getIncludedInOverallScore(), exercise.getProblemStatement(), exercise.getGradingInstructions(),
+                categories, TeamAssignmentConfigSnapshotDTO.of(exercise.getTeamAssignmentConfig()), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(),
+                gradingCriteria, plagiarismDetectionConfig, programmingData, textData, modelingData, quizData, fileUploadData);
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

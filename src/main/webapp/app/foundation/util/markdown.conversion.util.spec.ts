@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { MarkdownitTagClass, htmlForMarkdown, markdownForHtml } from './markdown.conversion.util';
-import type { PluginSimple } from 'markdown-it';
-import MarkdownIt from 'markdown-it';
+import type { MarkdownItPlugin } from 'app/foundation/util/markdown-it.types';
+import MarkdownIt, { type MarkdownIt as MarkdownItInstance } from 'markdown-it';
 
 describe('markdown.conversion.util', () => {
     describe('htmlForMarkdown', () => {
@@ -288,7 +288,7 @@ describe('markdown.conversion.util', () => {
         describe('custom extensions', () => {
             it('should apply custom extensions', () => {
                 let extensionCalled = false;
-                const customExtension: PluginSimple = (md: MarkdownIt) => {
+                const customExtension: MarkdownItPlugin = (md) => {
                     extensionCalled = true;
                     md.core.ruler.push('test-extension', () => {});
                 };
@@ -299,11 +299,11 @@ describe('markdown.conversion.util', () => {
 
             it('should apply multiple custom extensions', () => {
                 const callOrder: number[] = [];
-                const extension1: PluginSimple = (md: MarkdownIt) => {
+                const extension1: MarkdownItPlugin = (md) => {
                     callOrder.push(1);
                     md.core.ruler.push('ext1', () => {});
                 };
-                const extension2: PluginSimple = (md: MarkdownIt) => {
+                const extension2: MarkdownItPlugin = (md) => {
                     callOrder.push(2);
                     md.core.ruler.push('ext2', () => {});
                 };
@@ -500,7 +500,7 @@ public class Test {
     });
 
     describe('MarkdownitTagClass', () => {
-        let md: MarkdownIt;
+        let md: MarkdownItInstance;
 
         beforeEach(() => {
             md = new MarkdownIt();

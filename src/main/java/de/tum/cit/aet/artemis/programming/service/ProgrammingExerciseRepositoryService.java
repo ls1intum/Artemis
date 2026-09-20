@@ -14,10 +14,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -35,6 +37,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
@@ -55,6 +58,12 @@ public class ProgrammingExerciseRepositoryService {
 
     private static final String BUILD_GRADLE = "build.gradle";
 
+    private static final String SETTINGS_GRADLE = "settings.gradle";
+
+    private static final String MAVEN_DIR = ".mvn";
+
+    private static final String MAVEN_LOCAL_SETTINGS = "local-settings.xml";
+
     private static final String PACKAGE_NAME_FOLDER_PLACEHOLDER = "${packageNameFolder}";
 
     private static final String PACKAGE_NAME_FILE_PLACEHOLDER = "${packageNameFile}";
@@ -65,6 +74,9 @@ public class ProgrammingExerciseRepositoryService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseRepositoryService.class);
 
+    /** Everything that is neither a letter nor a digit, which a package name may not contain. */
+    private static final Pattern NON_PACKAGE_NAME_CHARACTER = Pattern.compile("[^a-zA-Z\\d]");
+
     private final GitService gitService;
 
     private final UserRepository userRepository;
@@ -73,8 +85,11 @@ public class ProgrammingExerciseRepositoryService {
 
     private final Optional<VersionControlService> versionControlService;
 
+    private final MavenCentralMirrorService mavenCentralMirrorService;
+
     public ProgrammingExerciseRepositoryService(GitService gitService, UserRepository userRepository, ResourceLoaderService resourceLoaderService,
-            Optional<VersionControlService> versionControlService) {
+            Optional<VersionControlService> versionControlService, MavenCentralMirrorService mavenCentralMirrorService) {
+        this.mavenCentralMirrorService = mavenCentralMirrorService;
         this.gitService = gitService;
         this.userRepository = userRepository;
         this.resourceLoaderService = resourceLoaderService;
@@ -100,11 +115,13 @@ public class ProgrammingExerciseRepositoryService {
      * exercise.
      *
      * @param programmingExercise the programming exercise that should be set up
+     * @param buildConfig         its build configuration, which is stored separately and read by the caller
      * @param exerciseCreator     the User that performed the action (used as Git commit author)
      * @param emptyRepositories   if true, clear sources in template, solution, and test repositories after setup
      * @throws GitAPIException If committing, or pushing to the repo throws an exception.
      */
-    void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator, boolean emptyRepositories) throws GitAPIException {
+    void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final ProgrammingExerciseBuildConfig buildConfig, final User exerciseCreator,
+            boolean emptyRepositories) throws GitAPIException {
         if (programmingExercise == null) {
             throw new IllegalArgumentException("ProgrammingExercise must not be null");
         }
@@ -115,7 +132,7 @@ public class ProgrammingExerciseRepositoryService {
         final RepositoryResources solutionResources = getRepositoryResources(programmingExercise, RepositoryType.SOLUTION);
         final RepositoryResources testResources = getRepositoryResources(programmingExercise, RepositoryType.TESTS);
 
-        setupRepositories(programmingExercise, exerciseCreator, exerciseResources, solutionResources, testResources);
+        setupRepositories(programmingExercise, buildConfig, exerciseCreator, exerciseResources, solutionResources, testResources);
 
         if (emptyRepositories) {
             clearRepositoriesForAiGeneration(exerciseResources.repository, solutionResources.repository, testResources.repository, exerciseCreator);
@@ -215,7 +232,7 @@ public class ProgrammingExerciseRepositoryService {
             // Get path, files and prefix for the project-type dependent files. They are copied last and can overwrite the resources from the programming language.
             final Path programmingLanguageProjectTypePath = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(),
                     projectType);
-            final String projectTypePath = projectType.name().toLowerCase();
+            final String projectTypePath = projectType.name().toLowerCase(Locale.ROOT);
             final Path generalProjectTypePrefix = Path.of(programmingLanguage, projectTypePath);
             final Path projectTypeSpecificPrefix = generalProjectTypePrefix.resolve(repositoryTypeTemplateDir);
             final Path projectTypeTemplatePath = programmingLanguageProjectTypePath.resolve(repositoryTypeTemplateDir);
@@ -281,18 +298,19 @@ public class ProgrammingExerciseRepositoryService {
      * Sets up the three initial repositories for a new exercise.
      *
      * @param programmingExercise The exercise that should be set up.
+     * @param buildConfig         Its build configuration, which is stored separately and read by the caller.
      * @param exerciseCreator     The user that wants to create the exercise
      * @param exerciseResources   The resources for the template repository.
      * @param solutionResources   The resources for the solution repository.
      * @param testResources       The resources for the repository containing the tests.
      * @throws GitAPIException Thrown in case pushing a repository fails.
      */
-    private void setupRepositories(final ProgrammingExercise programmingExercise, final User exerciseCreator, final RepositoryResources exerciseResources,
-            final RepositoryResources solutionResources, final RepositoryResources testResources) throws GitAPIException {
+    private void setupRepositories(final ProgrammingExercise programmingExercise, final ProgrammingExerciseBuildConfig buildConfig, final User exerciseCreator,
+            final RepositoryResources exerciseResources, final RepositoryResources solutionResources, final RepositoryResources testResources) throws GitAPIException {
         try {
-            setupTemplateAndPush(exerciseResources, "Exercise", programmingExercise, exerciseCreator);
-            setupTemplateAndPush(solutionResources, "Solution", programmingExercise, exerciseCreator);
-            setupTestTemplateAndPush(testResources, programmingExercise, exerciseCreator);
+            setupTemplateAndPush(exerciseResources, "Exercise", programmingExercise, buildConfig, exerciseCreator);
+            setupTemplateAndPush(solutionResources, "Solution", programmingExercise, buildConfig, exerciseCreator);
+            setupTestTemplateAndPush(testResources, programmingExercise, buildConfig, exerciseCreator);
         }
         catch (Exception ex) {
             // if any exception occurs, try to at least push an empty commit, so that the
@@ -396,11 +414,13 @@ public class ProgrammingExerciseRepositoryService {
      *
      * @param templateName        The name of the template
      * @param programmingExercise the programming exercise
+     * @param buildConfig         its build configuration, which is stored separately and read by the caller
      * @param user                The user that triggered the action (used as Git commit author)
      * @throws IOException     Thrown in case resources could be copied into the local repository.
      * @throws GitAPIException Thrown in case pushing to the version control system failed.
      */
-    private void setupTemplateAndPush(RepositoryResources resources, String templateName, ProgrammingExercise programmingExercise, User user) throws IOException, GitAPIException {
+    private void setupTemplateAndPush(RepositoryResources resources, String templateName, ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig,
+            User user) throws IOException, GitAPIException {
         // Only copy template if repo is empty
         if (!gitService.getFiles(resources.repository).isEmpty()) {
             return;
@@ -417,11 +437,11 @@ public class ProgrammingExerciseRepositoryService {
             FileUtil.copyResources(resources.staticCodeAnalysisResources, resources.staticCodeAnalysisPrefix, repoLocalPath, true);
         }
 
-        replacePlaceholders(programmingExercise, resources.repository);
+        replacePlaceholders(programmingExercise, buildConfig, resources.repository);
         commitAndPushRepository(resources.repository, templateName + "-Template pushed by Artemis", true, user);
     }
 
-    private static Path getRepoAbsoluteLocalPath(final Repository repository) {
+    private static Path getRepoAbsoluteLocalPath(@NonNull final Repository repository) {
         return repository.getLocalPath().toAbsolutePath();
     }
 
@@ -430,19 +450,21 @@ public class ProgrammingExerciseRepositoryService {
      *
      * @param resources           The resources which should get added to the template
      * @param programmingExercise The related programming exercise for which the template should get created
+     * @param buildConfig         its build configuration, which is stored separately and read by the caller
      * @param user                the user who has initiated the generation of the programming exercise
      * @throws IOException     Thrown in case copying files fails.
      * @throws GitAPIException Thrown in case pushing the updates to the version control system fails.
      */
-    private void setupTestTemplateAndPush(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final User user) throws IOException, GitAPIException {
+    private void setupTestTemplateAndPush(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final ProgrammingExerciseBuildConfig buildConfig,
+            final User user) throws IOException, GitAPIException {
         // Only copy template if repo is empty
         if (gitService.getFiles(resources.repository).isEmpty()
                 && (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN)) {
-            setupJVMTestTemplateAndPush(resources, programmingExercise, user);
+            setupJVMTestTemplateAndPush(resources, programmingExercise, buildConfig, user);
         }
         else {
             // If there is no special test structure for a programming language, just copy all the test files.
-            setupTemplateAndPush(resources, "Test", programmingExercise, user);
+            setupTemplateAndPush(resources, "Test", programmingExercise, buildConfig, user);
         }
     }
 
@@ -451,12 +473,13 @@ public class ProgrammingExerciseRepositoryService {
      *
      * @param resources           The resources the repository should be filled with.
      * @param programmingExercise The programming exercise the new repository belongs to.
+     * @param buildConfig         Its build configuration, which is stored separately and read by the caller.
      * @param user                The user that is creating the exercise.
      * @throws IOException     Thrown in case copying files fails.
      * @throws GitAPIException Thrown in case pushing the updates to the version control system fails.
      */
-    private void setupJVMTestTemplateAndPush(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final User user)
-            throws IOException, GitAPIException {
+    private void setupJVMTestTemplateAndPush(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final ProgrammingExerciseBuildConfig buildConfig,
+            final User user) throws IOException, GitAPIException {
         final ProjectType projectType = programmingExercise.getProjectType();
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
 
@@ -482,15 +505,17 @@ public class ProgrammingExerciseRepositoryService {
         final Map<String, Boolean> sectionsMap = new HashMap<>();
         // Keep or delete static code analysis configuration in the build configuration file
         sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
+        // Keep or delete the Maven Central mirror declarations, depending on whether this instance configured one
+        mavenCentralMirrorService.addTemplateSections(sectionsMap);
 
-        if (programmingExercise.getBuildConfig().hasSequentialTestRuns()) {
+        if (buildConfig.hasSequentialTestRuns()) {
             setupTestTemplateSequentialTestRuns(resources, templatePath, projectTemplatePath, projectType, sectionsMap);
         }
         else {
             setupTestTemplateRegularTestRuns(resources, programmingExercise, templatePath, sectionsMap);
         }
 
-        replacePlaceholders(programmingExercise, resources.repository);
+        replacePlaceholders(programmingExercise, buildConfig, resources.repository);
         commitAndPushRepository(resources.repository, "Test-Template pushed by Artemis", true, user);
     }
 
@@ -573,13 +598,14 @@ public class ProgrammingExerciseRepositoryService {
     }
 
     /**
-     * Fills in placeholders in the build tool project definition file based on the enabled exercise features.
+     * Fills in the optional sections of the build tool project files, based on the enabled exercise features and the
+     * instance configuration. Package-private for testing.
      *
      * @param repoLocalPath  The local path to the repository.
      * @param projectType    The exercise project type.
      * @param activeFeatures The active features in the exercise.
      */
-    private void setupBuildToolProjectFile(final Path repoLocalPath, final ProjectType projectType, final Map<String, Boolean> activeFeatures) {
+    void setupBuildToolProjectFile(final Path repoLocalPath, final ProjectType projectType, final Map<String, Boolean> activeFeatures) {
         final String projectFileFileName;
         if (projectType != null && projectType.isGradle()) {
             projectFileFileName = BUILD_GRADLE;
@@ -589,6 +615,22 @@ public class ProgrammingExerciseRepositoryService {
         }
 
         FileUtil.replacePlaceholderSections(repoLocalPath.resolve(projectFileFileName).toAbsolutePath(), activeFeatures);
+
+        // Gradle resolves plugins through settings.gradle rather than build.gradle, so its optional sections have to be
+        // resolved as well. The file only exists for Gradle project types.
+        final Path settingsGradlePath = repoLocalPath.resolve(SETTINGS_GRADLE).toAbsolutePath();
+        if (Files.exists(settingsGradlePath)) {
+            FileUtil.replacePlaceholderSections(settingsGradlePath, activeFeatures);
+        }
+
+        // The Maven black-box template pins Maven to its own .mvn/local-settings.xml, which mirrors "*" and therefore
+        // overrides the repositories declared in the pom. Its optional sections decide whether that mirror points at the
+        // configured mirror or stays on Maven Central, so they have to be resolved too. The file only exists for the
+        // black-box project type.
+        final Path mavenLocalSettingsPath = repoLocalPath.resolve(MAVEN_DIR).resolve(MAVEN_LOCAL_SETTINGS).toAbsolutePath();
+        if (Files.exists(mavenLocalSettingsPath)) {
+            FileUtil.replacePlaceholderSections(mavenLocalSettingsPath, activeFeatures);
+        }
     }
 
     private void setupStaticCodeAnalysisConfigFiles(final RepositoryResources resources, final Path templatePath, final Path repoLocalPath) throws IOException {
@@ -642,17 +684,10 @@ public class ProgrammingExerciseRepositoryService {
         // maven configuration should be set for kotlin and older exercises where no project type has been introduced where no project type is defined
         final boolean isMaven = isMavenProject(projectType);
 
-        final String projectFileName;
-        if (isMaven) {
-            projectFileName = POM_XML;
-        }
-        else {
-            projectFileName = BUILD_GRADLE;
-        }
-
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
 
-        FileUtil.replacePlaceholderSections(repoLocalPath.resolve(projectFileName).toAbsolutePath(), sectionsMap);
+        // Shared with the non-sequential path so that both resolve settings.gradle, and not just the main project file.
+        setupBuildToolProjectFile(repoLocalPath, projectType, sectionsMap);
 
         final Optional<Resource> stagePomXml = getStagePomXml(templatePath, projectTemplatePath, isMaven);
 
@@ -742,10 +777,11 @@ public class ProgrammingExerciseRepositoryService {
      * Replace placeholders in repository files (e.g. ${placeholder}).
      *
      * @param programmingExercise The related programming exercise
+     * @param buildConfig         Its build configuration, which is stored separately and read by the caller
      * @param repository          The repository in which the placeholders should get replaced
      * @throws IOException If replacing the directory name, or file variables throws an exception
      */
-    void replacePlaceholders(final ProgrammingExercise programmingExercise, final Repository repository) throws IOException {
+    void replacePlaceholders(final ProgrammingExercise programmingExercise, final ProgrammingExerciseBuildConfig buildConfig, final Repository repository) throws IOException {
         final Map<String, String> replacements = new HashMap<>();
         final ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
 
@@ -753,6 +789,7 @@ public class ProgrammingExerciseRepositoryService {
             case JAVA, KOTLIN -> {
                 FileUtil.replaceVariablesInDirectoryName(getRepoAbsoluteLocalPath(repository), PACKAGE_NAME_FOLDER_PLACEHOLDER, programmingExercise.getPackageFolderName());
                 replacements.put(PACKAGE_NAME_PLACEHOLDER, programmingExercise.getPackageName());
+                mavenCentralMirrorService.addUrlReplacement(replacements);
             }
             case SWIFT -> replaceSwiftPlaceholders(replacements, programmingExercise, repository);
             case GO, DART -> replacements.put(PACKAGE_NAME_PLACEHOLDER, programmingExercise.getPackageName());
@@ -763,9 +800,7 @@ public class ProgrammingExerciseRepositoryService {
 
         replacements.put("${exerciseNamePomXml}", programmingExercise.getTitle().replace(" ", "-")); // Used e.g. in artifactId
         replacements.put("${exerciseName}", programmingExercise.getTitle());
-        replacements.put("${packaging}", programmingExercise.getBuildConfig().hasSequentialTestRuns() ? "pom" : "jar");
-
-        var buildConfig = programmingExercise.getBuildConfig();
+        replacements.put("${packaging}", buildConfig.hasSequentialTestRuns() ? "pom" : "jar");
 
         // replace checkout directory placeholders
         String studentWorkingDirectory = !StringUtils.isBlank(buildConfig.getAssignmentCheckoutPath()) ? buildConfig.getAssignmentCheckoutPath() : Constants.ASSIGNMENT_REPO_NAME;
@@ -806,7 +841,7 @@ public class ProgrammingExerciseRepositoryService {
         final String packageName = programmingExercise.getPackageName();
         // The client already provides a clean package name, but we have to make sure that no one abuses the API for injection.
         // So usually, the name should not change.
-        final String cleanPackageName = packageName.replaceAll("[^a-zA-Z\\d]", "");
+        final String cleanPackageName = NON_PACKAGE_NAME_CHARACTER.matcher(packageName).replaceAll("");
 
         if (ProjectType.PLAIN.equals(programmingExercise.getProjectType())) {
             FileUtil.replaceVariablesInDirectoryName(repositoryLocalPath, PACKAGE_NAME_FOLDER_PLACEHOLDER, cleanPackageName);
@@ -877,90 +912,6 @@ public class ProgrammingExerciseRepositoryService {
             final var testRepositoryUriAsUrl = programmingExercise.getVcsTestRepositoryUri();
             gitService.deleteLocalRepository(testRepositoryUriAsUrl);
         }
-    }
-
-    /**
-     * Creates a map of replacements that should be applied to the repository files when exercise name is changed.
-     *
-     * @param oldRepositoryName   the name of the repository that should be replaced
-     * @param newRepositoryName   the name of the repository that should be used for the replacement
-     * @param programmingLanguage the programming language of the exercise
-     * @return a map of replacements that should be applied
-     */
-    private static Map<String, String> replacementMapping(String oldRepositoryName, String newRepositoryName, ProgrammingLanguage programmingLanguage) {
-        String oldRepositoryNamePomXml = oldRepositoryName.replaceAll(" ", "-");
-        String newRepositoryNamePomXml = newRepositoryName.replaceAll(" ", "-");
-
-        Map<String, String> replacements = new HashMap<>();
-
-        switch (programmingLanguage) {
-            case JAVA, KOTLIN -> {
-                // Maven specific
-                replacements.put("<artifactId>" + oldRepositoryNamePomXml + "</artifactId>", "<artifactId>" + newRepositoryNamePomXml + "</artifactId>");
-                replacements.put("<artifactId>" + oldRepositoryNamePomXml + "-Solution</artifactId>", "<artifactId>" + newRepositoryNamePomXml + "-Solution</artifactId>");
-                replacements.put("<artifactId>" + oldRepositoryNamePomXml + "-Tests</artifactId>", "<artifactId>" + newRepositoryNamePomXml + "-Tests</artifactId>");
-
-                replacements.put("<name>" + oldRepositoryNamePomXml + "</name>", "<name>" + newRepositoryNamePomXml + "</name>");
-                replacements.put("<name>" + oldRepositoryNamePomXml + " Solution</name>", "<name>" + newRepositoryNamePomXml + " Solution</name>");
-                replacements.put("<name>" + oldRepositoryNamePomXml + " Tests</name>", "<name>" + newRepositoryNamePomXml + " Tests</name>");
-                replacements.put("<name>" + oldRepositoryName + " Tests</name>", "<name>" + newRepositoryName + " Tests</name>");
-
-                // Gradle specific
-                replacements.put("rootProject.name = '" + oldRepositoryNamePomXml + "'", "rootProject.name = '" + newRepositoryNamePomXml + "'");
-                replacements.put("rootProject.name = '" + oldRepositoryNamePomXml + "-Solution'", "rootProject.name = '" + newRepositoryNamePomXml + "-Solution'");
-                replacements.put("rootProject.name = '" + oldRepositoryNamePomXml + "-Tests'", "rootProject.name = '" + newRepositoryNamePomXml + "-Tests'");
-
-                replacements.put("\"buildName\":\"" + oldRepositoryNamePomXml + "\"", "\"buildName\":\"" + newRepositoryNamePomXml + "\"");
-                replacements.put("\"buildName\":\"" + oldRepositoryNamePomXml + "-Solution\"", "\"buildName\":\"" + newRepositoryNamePomXml + "-Solution\"");
-                replacements.put("\"buildName\":\"" + oldRepositoryNamePomXml + "-Tests\"", "\"buildName\":\"" + newRepositoryNamePomXml + "-Tests\"");
-
-                replacements.put("testImplementation(':" + oldRepositoryNamePomXml, "testImplementation(':" + newRepositoryNamePomXml);
-                replacements.put("testImplementation(':" + oldRepositoryNamePomXml + "-Solution", "testImplementation(':" + newRepositoryNamePomXml + "-Solution");
-                replacements.put("testImplementation(':" + oldRepositoryNamePomXml + "-Tests", "testImplementation(':" + newRepositoryNamePomXml + "-Tests");
-            }
-        }
-        return replacements;
-    }
-
-    /**
-     * Adjust project names in imported exercise for TEST, BASE and SOLUTION repositories.
-     * Replace values inserted in {@link ProgrammingExerciseRepositoryService#replacePlaceholders(ProgrammingExercise, Repository)}.
-     *
-     * @param oldExerciseTitle the title of the old exercise
-     * @param newExercise      the exercise from which the values that should be inserted are extracted
-     * @throws GitAPIException If the checkout/push of one repository fails
-     * @throws IOException     If the values in the files could not be replaced
-     */
-    void adjustProjectNames(String oldExerciseTitle, ProgrammingExercise newExercise) throws GitAPIException, IOException {
-        // If exercise names are the same, then there is no need for adjustment
-        if (!oldExerciseTitle.equals(newExercise.getTitle())) {
-            final var projectKey = newExercise.getProjectKey();
-            Map<String, String> replacements = replacementMapping(oldExerciseTitle, newExercise.getTitle(), newExercise.getProgrammingLanguage());
-
-            User user = userRepository.getUser();
-
-            adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TEMPLATE), user);
-            adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TESTS), user);
-            adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.SOLUTION), user);
-        }
-    }
-
-    /**
-     * Adjust project names in imported exercise for specific repository.
-     * Replace values inserted in {@link ProgrammingExerciseRepositoryService#replacePlaceholders(ProgrammingExercise, Repository)}.
-     *
-     * @param replacements   the replacements that should be applied
-     * @param projectKey     the project key of the new exercise
-     * @param repositoryName the name of the repository that should be adjusted
-     * @param user           the user which performed the action (used as Git author)
-     * @throws GitAPIException If the checkout/push of one repository fails
-     */
-    private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user) throws GitAPIException {
-        final var repositoryUri = versionControlService.orElseThrow().getCloneRepositoryUri(projectKey, repositoryName);
-        Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true, true);
-        FileUtil.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"));
-        gitService.stageAllChanges(repository);
-        gitService.commitAndPush(repository, "Template adjusted by Artemis", true, user);
     }
 
 }

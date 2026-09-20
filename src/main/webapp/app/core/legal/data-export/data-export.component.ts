@@ -1,7 +1,6 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
-import { cloneDeep } from 'lodash-es';
 import { Subject } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { DataExportService } from 'app/core/legal/data-export/data-export.service';
@@ -16,6 +15,7 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-data-export',
@@ -70,7 +70,7 @@ export class DataExportComponent implements OnInit {
                 });
                 this.dataExportService.canDownloadAnyDataExport().subscribe((dataExport) => {
                     this.dataExport.update((current) => {
-                        const updated: DataExport = cloneDeep(current);
+                        const updated: DataExport = deepClone(current);
                         updated.createdDate = convertDateFromServer(dataExport.createdDate);
                         updated.nextRequestDate = convertDateFromServer(dataExport.nextRequestDate);
                         updated.dataExportState = dataExport.dataExportState;
@@ -79,7 +79,7 @@ export class DataExportComponent implements OnInit {
                     this.canDownload.set(!!dataExport.id);
                     if (dataExport.id) {
                         this.dataExport.update((current) => {
-                            const updated: DataExport = cloneDeep(current);
+                            const updated: DataExport = deepClone(current);
                             updated.id = dataExport.id;
                             return updated;
                         });
@@ -99,7 +99,7 @@ export class DataExportComponent implements OnInit {
                 this.dataExportId.set(response.id);
                 this.canRequestDataExport.set(false);
                 this.state.set(response.dataExportState);
-                this.dataExport.update((current) => ({ ...current, createdDate: response.createdDate }));
+                this.dataExport.update((current) => cloneWith(current, { createdDate: response.createdDate }));
             },
             error: (error: HttpErrorResponse) => {
                 this.dialogErrorSource.next(error.message);

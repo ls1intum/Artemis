@@ -3,6 +3,7 @@ import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumUiButtonDirective, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { QuizReEvaluateWarningComponent } from './warning/quiz-re-evaluate-warning.component';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { HttpResponse } from '@angular/common/http';
@@ -12,12 +13,11 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExercisePopupService } from 'app/quiz/manage/service/quiz-exercise-popup.service';
 import { Duration } from 'app/quiz/manage/interfaces/quiz-exercise-interfaces';
-import { cloneDeep } from 'lodash-es';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExerciseValidationDirective } from 'app/quiz/manage/util/quiz-exercise-validation.directive';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
-import { faExclamationCircle, faExclamationTriangle, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { ReEvaluateDragAndDropQuestionComponent } from 'app/quiz/manage/re-evaluate/drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -27,6 +27,7 @@ import { ReEvaluateShortAnswerQuestionComponent } from './short-answer-question/
 import { JsonPipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/quiz/manage/re-evaluate/multiple-choice-question/re-evaluate-multiple-choice-question.component';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate',
@@ -39,6 +40,8 @@ import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/quiz/manage/re-ev
         FaIconComponent,
         FormsModule,
         NgbTooltip,
+        TumUiButtonDirective,
+        TumUiTooltipDirective,
         FormDateTimePickerComponent,
         IncludedInOverallScorePickerComponent,
         ReEvaluateDragAndDropQuestionComponent,
@@ -65,7 +68,6 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
 
     // Icons
     faUndo = faUndo;
-    faExclamationCircle = faExclamationCircle;
     faExclamationTriangle = faExclamationTriangle;
 
     ngOnInit(): void {
@@ -73,7 +75,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
             this.quizExerciseService.find(params['exerciseId']).subscribe((response: HttpResponse<QuizExercise>) => {
                 this.quizExercise.set(response.body!);
                 this.prepareEntity(this.quizExercise());
-                this.savedEntity = cloneDeep(this.quizExercise());
+                this.savedEntity = deepClone(this.quizExercise());
                 this.updateDuration();
             });
         });
@@ -105,6 +107,21 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
         this.quizExercise().quizQuestions = Array.from(this.quizExercise().quizQuestions!);
     }
 
+    /** Target of the save button's aria-describedby; the reason list is rendered under this id. */
+    protected readonly saveReasonsId = 'quiz-re-evaluate-invalid-reasons';
+
+    isSaveDisabled(): boolean {
+        return !this.pendingChanges() || !this.isValidQuiz() || this.isSaving();
+    }
+
+    // The save button is aria-disabled rather than disabled so it stays focusable and can explain itself,
+    // which leaves it clickable — hence the guard.
+    onSaveClick(): void {
+        if (!this.isSaveDisabled()) {
+            this.save();
+        }
+    }
+
     /**
      * @function save
      * @desc Open Warning-Modal
@@ -122,7 +139,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
         void this.popupService.open(QuizReEvaluateWarningComponent, this.quizExercise(), files).then((res) => {
             res?.onClose.subscribe((confirmed) => {
                 if (confirmed) {
-                    this.savedEntity = cloneDeep(this.quizExercise());
+                    this.savedEntity = deepClone(this.quizExercise());
                     // savedEntity feeds pendingChanges(); re-run cacheValidation so its signal writes re-render under zoneless.
                     this.cacheValidation();
                 }
@@ -153,7 +170,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
      * @desc Resets the whole Quiz
      */
     resetAll(): void {
-        this.quizExercise.set(cloneDeep(this.savedEntity));
+        this.quizExercise.set(deepClone(this.savedEntity));
         this.cacheValidation();
     }
 
@@ -163,6 +180,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
      */
     resetQuizTitle() {
         this.quizExercise().title = this.savedEntity.title;
+        this.cacheValidation();
     }
 
     /**
@@ -175,7 +193,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
         if (index === 0) {
             return;
         }
-        const questionToMove: QuizQuestion = Object.assign({}, this.quizExercise().quizQuestions![index]);
+        const questionToMove: QuizQuestion = deepClone(this.quizExercise().quizQuestions![index]);
         /**
          * The splice() method adds/removes items to/from an array, and returns the removed item(s).
          * We create a copy of the question we want to move and remove it from the questions array.
@@ -195,7 +213,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
         if (index === this.quizExercise().quizQuestions!.length - 1) {
             return;
         }
-        const questionToMove: QuizQuestion = Object.assign({}, this.quizExercise().quizQuestions![index]);
+        const questionToMove: QuizQuestion = deepClone(this.quizExercise().quizQuestions![index]);
         /**
          * The splice() method adds/removes items to/from an array, and returns the removed item(s).
          * We create a copy of the question we want to move and remove it from the questions array.

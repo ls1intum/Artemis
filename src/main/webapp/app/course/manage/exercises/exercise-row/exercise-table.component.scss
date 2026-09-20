@@ -1,0 +1,76 @@
+:host {
+    display: block;
+}
+
+// `tumUiTable` styles the table but adds no scroll wrapper, unlike the p-table it replaced.
+.table-scroll {
+    overflow-x: auto;
+}
+
+// Lighter than the header rule. Alpha on the same token rather than a lighter surface step, so both themes work.
+tbody td {
+    border-bottom-color: color-mix(in srgb, var(--p-content-border-color) 55%, transparent);
+}
+
+.col-icon {
+    width: 2.5rem;
+}
+
+.col-title {
+    width: 28rem;
+    max-width: 28rem;
+    min-width: 14rem;
+}
+
+.col-dates {
+    min-width: 16rem;
+}
+
+// Takes the leftover width; buttons fold into the ellipsis as it shrinks. Rows with quiz buttons (which never fold)
+// raise --actions-min-width so the table scrolls rather than clipping them.
+th.col-actions,
+td.col-actions {
+    width: 100%;
+    max-width: 60rem;
+    min-width: var(--actions-min-width, 4rem);
+    position: relative;
+    overflow: hidden;
+}
+
+.col-group-select {
+    width: 10rem;
+}
+
+.drag-handle {
+    cursor: grab;
+    color: var(--text-color-secondary);
+
+    &:active {
+        cursor: grabbing;
+    }
+
+    &.disabled {
+        cursor: not-allowed;
+        opacity: 0.4;
+    }
+}
+
+// Card shown under the cursor while dragging a row.
+.exercise-drag-preview {
+    display: flex;
+    align-items: center;
+    padding: 0.4rem 0.75rem;
+    background-color: var(--body-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--p-border-radius);
+    box-shadow: 0 5px 12px color-mix(in srgb, var(--black) 20%, transparent);
+}
+
+// Gap where the dragged row sits.
+.cdk-drag-placeholder {
+    opacity: 0.4;
+}
+
+.cdk-drag-animating {
+    transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}

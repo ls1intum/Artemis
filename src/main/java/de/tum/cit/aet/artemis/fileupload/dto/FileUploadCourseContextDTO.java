@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.fileupload.dto;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -10,9 +12,6 @@ import de.tum.cit.aet.artemis.course.domain.Course;
  * @param id                             the ID of the course
  * @param title                          the title of the course
  * @param shortName                      the short name of the course
- * @param teachingAssistantGroupName     the group name used to determine tutor access
- * @param editorGroupName                the group name used to determine editor access
- * @param instructorGroupName            the group name used to determine instructor access
  * @param accuracyOfScores               the accuracy of scores (number of decimal places) for the course
  * @param maxComplaints                  the maximum number of complaints per student
  * @param maxTeamComplaints              the maximum number of complaints per team
@@ -24,9 +23,9 @@ import de.tum.cit.aet.artemis.course.domain.Course;
  * @param requestMoreFeedbackEnabled     whether more-feedback requests are enabled
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadCourseContextDTO(Long id, String title, String shortName, String teachingAssistantGroupName, String editorGroupName, String instructorGroupName,
-        Integer accuracyOfScores, Integer maxComplaints, Integer maxTeamComplaints, int maxComplaintTimeDays, int maxRequestMoreFeedbackTimeDays, int maxComplaintTextLimit,
-        int maxComplaintResponseTextLimit, boolean complaintsEnabled, boolean requestMoreFeedbackEnabled) {
+public record FileUploadCourseContextDTO(Long id, String title, String shortName, @Nullable Integer accuracyOfScores, @Nullable Integer maxComplaints,
+        @Nullable Integer maxTeamComplaints, int maxComplaintTimeDays, int maxRequestMoreFeedbackTimeDays, int maxComplaintTextLimit, int maxComplaintResponseTextLimit,
+        boolean complaintsEnabled, boolean requestMoreFeedbackEnabled) {
 
     /**
      * Factory method to create a {@link FileUploadCourseContextDTO} from a {@link Course} entity.
@@ -34,13 +33,12 @@ public record FileUploadCourseContextDTO(Long id, String title, String shortName
      * @param course the course entity to map, can be null
      * @return the mapped DTO, or null if the input was null
      */
-    public static FileUploadCourseContextDTO of(Course course) {
+    public static @Nullable FileUploadCourseContextDTO of(@Nullable Course course) {
         if (course == null) {
             return null;
         }
-        return new FileUploadCourseContextDTO(course.getId(), course.getTitle(), course.getShortName(), course.getTeachingAssistantGroupName(), course.getEditorGroupName(),
-                course.getInstructorGroupName(), course.getAccuracyOfScores(), course.getMaxComplaints(), course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(),
-                course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(), course.getComplaintsEnabled(),
-                course.getRequestMoreFeedbackEnabled());
+        return new FileUploadCourseContextDTO(course.getId(), course.getTitle(), course.getShortName(), course.getAccuracyOfScores(), course.getMaxComplaints(),
+                course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(), course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(),
+                course.getMaxComplaintResponseTextLimit(), course.getComplaintsEnabled(), course.getRequestMoreFeedbackEnabled());
     }
 }

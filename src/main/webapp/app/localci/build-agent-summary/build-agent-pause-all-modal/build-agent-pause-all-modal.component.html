@@ -1,14 +1,4 @@
-<tum-ui-dialog
-    [(visible)]="visible"
-    [modal]="true"
-    [closable]="true"
-    [closeOnEscape]="true"
-    [dismissableMask]="true"
-    [draggable]="false"
-    [appendTo]="'body'"
-    [style]="{ width: '32rem' }"
-    [header]="'artemisApp.buildAgents.pauseAll' | artemisTranslate"
->
+<tum-ui-dialog [(visible)]="visible" [closable]="true" [closeOnEscape]="true" [dismissableMask]="true" size="small" [header]="'artemisApp.buildAgents.pauseAll' | artemisTranslate">
     <div>
         <div>
             <span jhiTranslate="artemisApp.buildAgents.pauseAllWarning"></span>

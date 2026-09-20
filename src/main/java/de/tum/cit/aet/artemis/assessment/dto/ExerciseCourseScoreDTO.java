@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseCourseScoreDTO(long id, ExerciseType type, @NotNull IncludedInOverallScore includedInOverallScore, @NotNull AssessmentType assessmentType,
         @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, double maxPoints,
-        @Nullable Double bonusPoints, long courseId) {
+        @Nullable Double bonusPoints, long courseId, @Nullable Long variantGroupId, @Nullable Double variantGroupMaxPoints) {
 
     /**
      * JPQL constructor that accepts the raw entity class produced by Hibernate's {@code TYPE(...)} function
@@ -25,9 +25,9 @@ public record ExerciseCourseScoreDTO(long id, ExerciseType type, @NotNull Includ
      */
     public ExerciseCourseScoreDTO(long id, Class<? extends Exercise> type, @NotNull IncludedInOverallScore includedInOverallScore, @NotNull AssessmentType assessmentType,
             @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, double maxPoints,
-            @Nullable Double bonusPoints, long courseId) {
+            @Nullable Double bonusPoints, long courseId, @Nullable Long variantGroupId, @Nullable Double variantGroupMaxPoints) {
         this(id, ExerciseType.getExerciseTypeFromClass(type), includedInOverallScore, assessmentType, dueDate, assessmentDueDate, buildAndTestStudentSubmissionsAfterDueDate,
-                maxPoints, bonusPoints, courseId);
+                maxPoints, bonusPoints, courseId, variantGroupId, variantGroupMaxPoints);
     }
 
     /**
@@ -41,8 +41,11 @@ public record ExerciseCourseScoreDTO(long id, ExerciseType type, @NotNull Includ
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             buildAndTestStudentSubmissionsAfterDueDate = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate();
         }
+        var variantGroup = exercise.getExerciseVariantGroup();
+        Long variantGroupId = variantGroup != null ? variantGroup.getId() : null;
+        Double variantGroupMaxPoints = variantGroup != null ? variantGroup.getMaxPoints() : null;
         return new ExerciseCourseScoreDTO(exercise.getId(), ExerciseType.getExerciseTypeFromClass(exercise.getClass()), exercise.getIncludedInOverallScore(),
                 exercise.getAssessmentType(), exercise.getDueDate(), exercise.getAssessmentDueDate(), buildAndTestStudentSubmissionsAfterDueDate, exercise.getMaxPoints(),
-                exercise.getBonusPoints(), exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+                exercise.getBonusPoints(), exercise.getCourseViaExerciseGroupOrCourseMember().getId(), variantGroupId, variantGroupMaxPoints);
     }
 }

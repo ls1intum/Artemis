@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.time.ZonedDateTime.now;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -13,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -67,6 +68,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
@@ -77,7 +79,6 @@ import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
-import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerMapping;
@@ -100,11 +101,9 @@ import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.ShortAnswerMappingReE
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.ShortAnswerQuestionReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.ShortAnswerSolutionReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.ShortAnswerSpotReEvaluateDTO;
-import de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
-import de.tum.cit.aet.artemis.quiz.repository.ShortAnswerMappingRepository;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -125,7 +124,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final Optional<QuizScheduleService> quizScheduleService;
 
-    private final QuizStatisticService quizStatisticService;
+    private final QuizStatisticsService quizStatisticsService;
 
     private final QuizBatchService quizBatchService;
 
@@ -149,19 +148,21 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final Optional<ExamDateApi> examDateApi;
 
+    private final Optional<LtiApi> ltiApi;
+
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
-            InstanceMessageSendService instanceMessageSendService, Optional<QuizScheduleService> quizScheduleService, QuizStatisticService quizStatisticService,
-            QuizBatchService quizBatchService, ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
-            ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, UserRepository userRepository, QuizBatchRepository quizBatchRepository,
-            ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<SlideApi> slideApi, CompetencyExerciseLinkService competencyExerciseLinkService, Optional<ExamDateApi> examDateApi) {
-        super(dragAndDropMappingRepository, shortAnswerMappingRepository);
+            InstanceMessageSendService instanceMessageSendService, Optional<QuizScheduleService> quizScheduleService, QuizStatisticsService quizStatisticsService,
+            QuizBatchService quizBatchService, ExerciseSpecificationService exerciseSpecificationService, ExerciseService exerciseService, UserRepository userRepository,
+            QuizBatchRepository quizBatchRepository, ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService,
+            Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, CompetencyExerciseLinkService competencyExerciseLinkService,
+            Optional<ExamDateApi> examDateApi, Optional<LtiApi> ltiApi) {
+        super();
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.instanceMessageSendService = instanceMessageSendService;
         this.quizScheduleService = quizScheduleService;
-        this.quizStatisticService = quizStatisticService;
+        this.quizStatisticsService = quizStatisticsService;
         this.quizBatchService = quizBatchService;
         this.exerciseSpecificationService = exerciseSpecificationService;
         this.exerciseService = exerciseService;
@@ -173,6 +174,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.slideApi = slideApi;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.examDateApi = examDateApi;
+        this.ltiApi = ltiApi;
     }
 
     /**
@@ -299,6 +301,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         recalculationNecessary = applyDropLocationsFromDTO(dndDTO.dropLocations(), originalQuestion.getDropLocations()) || recalculationNecessary;
         recalculationNecessary = applyDragItemsFromDTO(dndDTO.dragItems(), originalQuestion.getDragItems()) || recalculationNecessary;
         recalculationNecessary = applyDragAndDropMappingsFromDTO(dndDTO, originalQuestion) || recalculationNecessary;
+        // Drop correct mappings orphaned by a drop-location / drag-item removal above (they resolve to null and are filtered on read, so the mapping apply above never sees them).
+        originalQuestion.removeOrphanCorrectMappings();
         return recalculationNecessary;
     }
 
@@ -352,11 +356,33 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     /**
      * @return a map from DTO tempID to the newly created ShortAnswerSolution entities (for mapping resolution)
      */
-    private static ApplyResult applyShortAnswerSolutionsFromDTOs(List<ShortAnswerSolutionReEvaluateDTO> solutionDTOs, List<ShortAnswerSolution> originalSolution) {
+    private static ApplyResult applyShortAnswerSolutionsFromDTOs(List<ShortAnswerSolutionReEvaluateDTO> solutionDTOs, ShortAnswerQuestion question) {
+        List<ShortAnswerSolution> originalSolution = question.getSolutions();
         boolean recalculationNecessary = false;
         Map<Long, ShortAnswerSolution> tempIdToNewSolution = new HashMap<>();
         List<ShortAnswerSolution> solutionsToRemove = new ArrayList<>();
-        // Only map existing solutions (id != null); new solutions have id=null and are handled separately below
+        // Validate every incoming solution up front, before the toMap below: each must carry exactly one of {id, tempID}, and neither ids nor tempIDs may repeat. A duplicate id
+        // would otherwise blow up the toMap with an uncontrolled IllegalStateException; a duplicate tempID would silently overwrite the tempID -> solution mapping and leave an
+        // orphan solution.
+        Set<Long> seenSolutionIds = new HashSet<>();
+        Set<Long> seenSolutionTempIds = new HashSet<>();
+        for (ShortAnswerSolutionReEvaluateDTO solutionDTO : solutionDTOs) {
+            if (solutionDTO.id() == null && solutionDTO.tempID() == null) {
+                throw new BadRequestException("A new short answer solution must have a tempID to identify it");
+            }
+            if (solutionDTO.id() != null && solutionDTO.tempID() != null) {
+                throw new BadRequestException("An existing short answer solution cannot have a tempID");
+            }
+            if (solutionDTO.id() != null && !seenSolutionIds.add(solutionDTO.id())) {
+                throw new BadRequestException("Duplicate short answer solution id " + solutionDTO.id());
+            }
+            if (solutionDTO.tempID() != null && !seenSolutionTempIds.add(solutionDTO.tempID())) {
+                throw new BadRequestException("Duplicate short answer solution tempID " + solutionDTO.tempID());
+            }
+        }
+        // ids of the solutions that already exist on the question; a DTO carrying an id not in this set is a newly added solution (client-minted, question-scoped id)
+        Set<Long> originalSolutionIds = originalSolution.stream().map(ShortAnswerSolution::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+        // Only map existing solutions (id != null); new solutions (id=null with tempID, or an id not in originalSolutionIds) are handled separately below
         Map<Long, ShortAnswerSolutionReEvaluateDTO> solutionReEvaluateDTOMap = solutionDTOs.stream().filter(dto -> dto.id() != null)
                 .collect(Collectors.toMap(ShortAnswerSolutionReEvaluateDTO::id, Function.identity()));
         for (ShortAnswerSolution originalSolutionItem : originalSolution) {
@@ -373,18 +399,25 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
         }
         originalSolution.removeAll(solutionsToRemove);
+        // First add the new solutions that already carry a client-minted, question-scoped id (their correct mappings resolve them by that id). Adding these before minting the
+        // tempID solutions below guarantees the server-minted ids (max+1) cannot collide with a client-provided one; ids were already validated unique above.
         for (ShortAnswerSolutionReEvaluateDTO solutionDTO : solutionDTOs) {
-            if (solutionDTO.id() == null && solutionDTO.tempID() == null) {
-                throw new BadRequestException("A new short answer solution must have a tempID to identify it");
+            if (solutionDTO.id() != null && !originalSolutionIds.contains(solutionDTO.id())) {
+                ShortAnswerSolution newSolution = new ShortAnswerSolution();
+                newSolution.setId(solutionDTO.id());
+                newSolution.setText(solutionDTO.text());
+                newSolution.setInvalid(solutionDTO.invalid());
+                originalSolution.add(newSolution);
+                recalculationNecessary = true;
             }
-            else if (solutionDTO.id() != null && solutionDTO.tempID() != null) {
-                throw new BadRequestException("An existing short answer solution cannot have a tempID");
-            }
+        }
+        // Then mint the tempID solutions server-side; addSolution's max+1 now accounts for any client-provided ids added above, so the ids never collide.
+        for (ShortAnswerSolutionReEvaluateDTO solutionDTO : solutionDTOs) {
             if (solutionDTO.tempID() != null) {
                 ShortAnswerSolution newSolution = new ShortAnswerSolution();
                 newSolution.setText(solutionDTO.text());
                 newSolution.setInvalid(solutionDTO.invalid());
-                originalSolution.add(newSolution);
+                question.addSolution(newSolution);
                 tempIdToNewSolution.put(solutionDTO.tempID(), newSolution);
                 recalculationNecessary = true;
             }
@@ -504,9 +537,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
 
         recalculationNecessary = applyShortAnswerSpotsFromDTOs(shortAnswerQuestionDTO.spots(), originalQuestion.getSpots()) || recalculationNecessary;
-        ApplyResult solutionResult = applyShortAnswerSolutionsFromDTOs(shortAnswerQuestionDTO.solutions(), originalQuestion.getSolutions());
+        ApplyResult solutionResult = applyShortAnswerSolutionsFromDTOs(shortAnswerQuestionDTO.solutions(), originalQuestion);
         recalculationNecessary = solutionResult.recalculationNecessary() || recalculationNecessary;
         recalculationNecessary = applyShortAnswerMappingFromDTOs(shortAnswerQuestionDTO, originalQuestion, solutionResult.tempIdToNewSolution()) || recalculationNecessary;
+        // Drop correct mappings orphaned by a spot / solution removal above (they resolve to null and are filtered on read, so the mapping apply above never sees them).
+        originalQuestion.removeOrphanCorrectMappings();
 
         return recalculationNecessary;
     }
@@ -556,6 +591,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         List<Result> results = resultRepository.findByExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
         log.info("Found {} results to update for quiz re-evaluate", results.size());
         List<QuizSubmission> submissions = new ArrayList<>();
+        Map<Long, StudentParticipation> affectedParticipations = new LinkedHashMap<>();
         for (Result result : results) {
 
             Set<SubmittedAnswer> submittedAnswersToDelete = new HashSet<>();
@@ -574,23 +610,28 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             // recalculate existing score
             quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
             // update Successful-Flag in Result
+            Double scoreBeforeReevaluation = result.getScore();
             StudentParticipation studentParticipation = (StudentParticipation) result.getSubmission().getParticipation();
             studentParticipation.setExercise(quizExercise);
             result.evaluateQuizSubmission(quizExercise);
+            if (!Objects.equals(scoreBeforeReevaluation, result.getScore())) {
+                affectedParticipations.put(studentParticipation.getId(), studentParticipation);
+            }
 
             submissions.add(quizSubmission);
         }
         // save the updated submissions and results
         quizSubmissionRepository.saveAll(submissions);
         resultRepository.saveAll(results);
+        ltiApi.ifPresent(api -> affectedParticipations.values().forEach(api::onNewResult));
         log.info("{} results have been updated successfully for quiz re-evaluate", results.size());
     }
 
     /**
      * @param quizExerciseDTO      the changed quiz exercise from the client
-     * @param originalQuizExercise the original quiz exercise (with statistics)
+     * @param originalQuizExercise the original quiz exercise
      * @param files                the files that were uploaded
-     * @return the updated quiz exercise with the changed statistics
+     * @return the updated quiz exercise
      */
     public QuizExercise reEvaluate(QuizExerciseReEvaluateDTO quizExerciseDTO, QuizExercise originalQuizExercise, @NonNull List<MultipartFile> files) throws IOException {
         Map<FilePathType, Set<String>> oldPaths = getAllPathsFromDragAndDropQuestionsOfExercise(originalQuizExercise);
@@ -607,20 +648,19 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         QuizExercise savedQuizExercise = save(originalQuizExercise);
 
         if (questionsChanged) {
-            savedQuizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(savedQuizExercise.getId());
-            quizStatisticService.recalculateStatistics(savedQuizExercise);
+            quizStatisticsService.notifyStatisticsChanged(savedQuizExercise.getId());
         }
-        return quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(savedQuizExercise.getId());
+        return quizExerciseRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(savedQuizExercise.getId());
     }
 
     /**
-     * Reset a QuizExercise to its original state, delete statistics and cleanup the schedule service.
+     * Reset a QuizExercise to its original state and clean up the schedule service.
      *
      * @param exerciseId id of the exercise to reset
      */
     public void resetExercise(Long exerciseId) {
         // fetch exercise again to make sure we have an updated version
-        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(exerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndBatchesElseThrow(exerciseId);
 
         if (!quizExercise.isExamExercise()) {
             // do not set the release date of exam exercises
@@ -636,8 +676,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         // in case the quiz has not yet started or the quiz is currently running, we have to clean up
         instanceMessageSendService.sendQuizExerciseStartSchedule(savedQuizExercise.getId());
 
-        // clean up the statistics
-        quizStatisticService.recalculateStatistics(savedQuizExercise);
     }
 
     /**
@@ -727,16 +765,16 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         FilePathType type = FilePathType.DRAG_AND_DROP_BACKGROUND;
         Path basePath = FilePathConverter.getDragAndDropBackgroundFilePath();
 
-        if (Files.exists(FilePathConverter.fileSystemPathForExternalUri(URI.create(path), type))) {
-            Path oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(path), type);
+        Path oldPath = new FileSystemLocation.DragAndDropBackground(path).path();
+        if (Files.exists(oldPath)) {
             Path newPath = FileUtil.copyExistingFileToTarget(oldPath, basePath, type);
             if (newPath == null) {
                 throw new IOException("Failed to copy existing drag and drop background file to new location for path: " + oldPath);
             }
-            question.setBackgroundFilePath(FilePathConverter.externalUriForFileSystemPath(newPath, type, null).toString());
+            question.setBackgroundFilePath(newPath.getFileName().toString());
         }
         else {
-            saveDndQuestionBackground(question, fileMap, null);
+            saveDndQuestionBackground(question, fileMap);
         }
     }
 
@@ -750,20 +788,23 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     private void handleDndQuizDragItemsCreation(DragAndDropQuestion dragAndDropQuestion, Map<String, MultipartFile> fileMap) throws IOException {
         FilePathType type = FilePathType.DRAG_ITEM;
         Path basePath = FilePathConverter.getDragItemFilePath();
+        // A drag item needs an id of its own before it is stored, because the client addresses its picture by it. QuizService.save() would mint the missing ones a moment later
+        // anyway.
+        dragAndDropQuestion.assignMissingComponentIds();
 
         for (var dragItem : dragAndDropQuestion.getDragItems()) {
             if (dragItem.getPictureFilePath() != null) {
                 String path = dragItem.getPictureFilePath();
-                if (Files.exists(FilePathConverter.fileSystemPathForExternalUri(URI.create(path), type))) {
-                    Path oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(path), type);
+                Path oldPath = new FileSystemLocation.DragItem(path).path();
+                if (Files.exists(oldPath)) {
                     Path newPath = FileUtil.copyExistingFileToTarget(oldPath, basePath, type);
                     if (newPath == null) {
                         throw new IOException("Failed to copy existing drag item file to new location for path: " + oldPath);
                     }
-                    dragItem.setPictureFilePath(FilePathConverter.externalUriForFileSystemPath(newPath, type, null).toString());
+                    dragItem.setPictureFilePath(newPath.getFileName().toString());
                 }
                 else {
-                    saveDndDragItemPicture(dragItem, fileMap, null);
+                    saveDndDragItemPicture(dragItem, fileMap);
                 }
             }
         }
@@ -791,13 +832,80 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         Map<String, MultipartFile> fileMap = files.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, file -> file));
         for (var question : quizExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-                handleDndQuestionUpdate(dragAndDropQuestion, oldPaths, filesToRemove, fileMap, dragAndDropQuestion);
+                handleDndQuestionUpdate(dragAndDropQuestion, oldPaths, filesToRemove, fileMap);
             }
         }
-        var allFilesToRemoveMerged = filesToRemove.entrySet().stream()
-                .flatMap(entry -> entry.getValue().stream().map(path -> FilePathConverter.fileSystemPathForExternalUri(URI.create(path), entry.getKey()))).filter(Objects::nonNull)
-                .toList();
+        var allFilesToRemoveMerged = filesToRemove.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(path -> dragAndDropImageLocation(path, entry.getKey())))
+                .filter(Objects::nonNull).toList();
         FileUtil.deleteFiles(allFilesToRemoveMerged);
+    }
+
+    /**
+     * Deletes all drag-and-drop image files (question background images and drag-item pictures) of the given quiz exercise from the file system.
+     * <p>
+     * These files used to be removed by the {@code @PostRemove} lifecycle callbacks on {@code DragAndDropQuestion}/{@code DragItem}. Now that drag-and-drop content lives inside
+     * the
+     * question's JSON {@code content} column and is no longer made up of JPA entities, the cleanup must be triggered explicitly from every quiz deletion entry point. It is invoked
+     * from the shared {@link de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService#delete} path so that course, exam, and exercise-group deletions clean up the images
+     * too,
+     * not only the direct REST deletion.
+     *
+     * @param quizExerciseId the id of the quiz exercise whose drag-and-drop images should be deleted
+     */
+    public void deleteDragAndDropImages(long quizExerciseId) {
+        FileUtil.deleteFiles(collectDragAndDropImagePaths(quizExerciseId));
+    }
+
+    /**
+     * Collects the file-system paths of all drag-and-drop image files (question background images and drag-item pictures) of the given quiz exercise, without deleting anything.
+     * <p>
+     * The paths live inside the question's JSON {@code content}, so they are no longer readable once the exercise row is gone. Callers that delete the exercise must therefore
+     * collect the paths first and delete the files only after the database deletion succeeded — otherwise a failure in between leaves a quiz whose images are already gone.
+     *
+     * @param quizExerciseId the id of the quiz exercise whose drag-and-drop image paths should be collected
+     * @return the resolvable file-system paths of the exercise's drag-and-drop images
+     */
+    public List<Path> collectDragAndDropImagePaths(long quizExerciseId) {
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
+        Map<FilePathType, Set<String>> imagePaths = getAllPathsFromDragAndDropQuestionsOfExercise(quizExercise);
+        return imagePaths.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(path -> resolveFileSystemPathForDeletion(path, entry.getKey())))
+                .filter(Objects::nonNull).toList();
+    }
+
+    /**
+     * Resolves a stored external file URI to its file-system path for deletion, returning {@code null} (and logging) instead of throwing when the path cannot be parsed, so a
+     * single malformed path does not abort the deletion of the remaining files.
+     *
+     * @param pathString   the stored external file URI
+     * @param filePathType the type of file the path refers to
+     * @return the resolved file-system path, or {@code null} if it could not be resolved
+     */
+    private Path resolveFileSystemPathForDeletion(String pathString, FilePathType filePathType) {
+        try {
+            return dragAndDropImageLocation(pathString, filePathType);
+        }
+        catch (IllegalArgumentException e) {
+            log.warn("Could not resolve file {} for deletion", pathString);
+            return null;
+        }
+    }
+
+    /**
+     * The file system location of a drag and drop image, which is either a question background or a drag item picture.
+     * <p>
+     * Both types keep every file of their kind in one directory, so the location needs nothing but the filename. The ids the stored value carries are the ones its URL needs, not
+     * the ones the directory does, which is why nothing here reads them.
+     *
+     * @param storedPath   the stored value of the image
+     * @param filePathType the type of image, which selects the directory
+     * @return the location of the image on disk
+     */
+    private static Path dragAndDropImageLocation(String storedPath, FilePathType filePathType) {
+        return switch (filePathType) {
+            case DRAG_AND_DROP_BACKGROUND -> new FileSystemLocation.DragAndDropBackground(storedPath).path();
+            case DRAG_ITEM -> new FileSystemLocation.DragItem(storedPath).path();
+            default -> throw new IllegalArgumentException("A quiz exercise holds no drag and drop image of type " + filePathType);
+        };
     }
 
     private Map<FilePathType, Set<String>> getAllPathsFromDragAndDropQuestionsOfExercise(QuizExercise quizExercise) {
@@ -819,7 +927,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     private void handleDndQuestionUpdate(DragAndDropQuestion dragAndDropQuestion, Map<FilePathType, Set<String>> oldPaths, Map<FilePathType, Set<String>> filesToRemove,
-            Map<String, MultipartFile> fileMap, DragAndDropQuestion questionUpdate) throws IOException {
+            Map<String, MultipartFile> fileMap) throws IOException {
+        // A drag item added by this update has no id yet, and the client addresses its picture by that id, so mint the missing ids before writing any file. QuizService.save()
+        // would mint them a moment later anyway.
+        dragAndDropQuestion.assignMissingComponentIds();
         String newBackgroundPath = dragAndDropQuestion.getBackgroundFilePath();
 
         // Don't do anything if the path is null because it's getting removed
@@ -831,7 +942,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
             else {
                 // Path changed and file was provided
-                saveDndQuestionBackground(dragAndDropQuestion, fileMap, questionUpdate.getId());
+                saveDndQuestionBackground(dragAndDropQuestion, fileMap);
             }
         }
 
@@ -840,7 +951,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             Set<String> dragItemOldPaths = oldPaths.get(FilePathType.DRAG_ITEM);
             if (newDragItemPath != null && !dragItemOldPaths.contains(newDragItemPath)) {
                 // Path changed and file was provided
-                saveDndDragItemPicture(dragItem, fileMap, null);
+                saveDndDragItemPicture(dragItem, fileMap);
             }
             else if (newDragItemPath != null) {
                 filesToRemove.get(FilePathType.DRAG_ITEM).remove(newDragItemPath);
@@ -875,18 +986,13 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             FilePathType type = entry.getKey();
             Set<String> paths = entry.getValue();
             for (String path : paths) {
+                // The value names a file inside the one directory its type stores files in, so rejecting a traversal is all the checking the value needs. Which directory that is
+                // follows from the type, not from the value, so there is no prefix left to verify.
                 FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(path);
-                URI uri = URI.create(path);
-                Path fsPath = FilePathConverter.fileSystemPathForExternalUri(uri, type);
-
-                if (Files.exists(fsPath)) {
-                    URI intendedSubPath = type == FilePathType.DRAG_AND_DROP_BACKGROUND ? URI.create(FileUtil.BACKGROUND_FILE_SUBPATH) : URI.create(FileUtil.PICTURE_FILE_SUBPATH);
-                    FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(URI.create(path), intendedSubPath);
-                }
 
                 // A path is "new" if it doesn't exist on disk AND it wasn't in the original exercise
                 Set<String> oldPathsForType = oldPaths != null ? oldPaths.getOrDefault(type, Set.of()) : Set.of();
-                Set<String> newPaths = paths.stream().filter(filePath -> !Files.exists(FilePathConverter.fileSystemPathForExternalUri(URI.create(filePath), type)))
+                Set<String> newPaths = paths.stream().filter(filePath -> !Files.exists(dragAndDropImageLocation(filePath, type)))
                         .filter(filePath -> !oldPathsForType.contains(filePath)).collect(Collectors.toSet());
 
                 if (!newPaths.isEmpty()) {
@@ -911,51 +1017,52 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     /**
-     * Saves the background image of a drag and drop question without saving the question itself
+     * Saves the background image of a drag and drop question without saving the question itself. The question is not needed to name the file: every background lives in one
+     * directory and the column stores only the filename.
      *
-     * @param question   the drag and drop question
-     * @param files      all provided files
-     * @param questionId the id of the question, null on creation
+     * @param question the drag and drop question
+     * @param files    all provided files
      */
-    public void saveDndQuestionBackground(DragAndDropQuestion question, Map<String, MultipartFile> files, @Nullable Long questionId) throws IOException {
+    public void saveDndQuestionBackground(DragAndDropQuestion question, Map<String, MultipartFile> files) throws IOException {
         MultipartFile file = files.get(question.getBackgroundFilePath());
         if (file == null) {
             // Should not be reached as the file is validated before
             throw new BadRequestAlertException("The file " + question.getBackgroundFilePath() + " was not provided", ENTITY_NAME, null);
         }
 
-        question.setBackgroundFilePath(
-                saveDragAndDropImage(FilePathConverter.getDragAndDropBackgroundFilePath(), file, FilePathType.DRAG_AND_DROP_BACKGROUND, questionId).toString());
+        Path savePath = copyDragAndDropImageToUploads(FilePathConverter.getDragAndDropBackgroundFilePath(), file);
+        question.setBackgroundFilePath(savePath.getFileName().toString());
     }
 
     /**
-     * Saves the picture of a drag item without saving the drag item itself
+     * Saves the picture of a drag item without saving the drag item itself.
      *
      * @param dragItem the drag item
      * @param files    all provided files
-     * @param entityId The entity id connected to this file, can be question id for background, or the drag item id
-     *                     for drag item images
      */
-    public void saveDndDragItemPicture(DragItem dragItem, Map<String, MultipartFile> files, @Nullable Long entityId) throws IOException {
+    public void saveDndDragItemPicture(DragItem dragItem, Map<String, MultipartFile> files) throws IOException {
         MultipartFile file = files.get(dragItem.getPictureFilePath());
         if (file == null) {
             // Should not be reached as the file is validated before
             throw new BadRequestAlertException("The file " + dragItem.getPictureFilePath() + " was not provided", ENTITY_NAME, null);
         }
 
-        dragItem.setPictureFilePath(saveDragAndDropImage(FilePathConverter.getDragItemFilePath(), file, FilePathType.DRAG_ITEM, entityId).toString());
+        Path savePath = copyDragAndDropImageToUploads(FilePathConverter.getDragItemFilePath(), file);
+        dragItem.setPictureFilePath(savePath.getFileName().toString());
     }
 
     /**
-     * Saves an image for an DragAndDropQuestion. Either a background image or a drag item image.
+     * Copies an uploaded drag-and-drop image into the given upload directory under a generated filename.
      *
-     * @return the public path of the saved image
+     * @param basePath the upload directory the image belongs in
+     * @param file     the uploaded file
+     * @return the file system path the image was written to
      */
-    private URI saveDragAndDropImage(Path basePath, MultipartFile file, FilePathType filePathType, @Nullable Long entityId) throws IOException {
+    private Path copyDragAndDropImageToUploads(Path basePath, MultipartFile file) throws IOException {
         String sanitizedFilename = FileUtil.checkAndSanitizeFilename(file.getOriginalFilename());
         Path savePath = basePath.resolve(FileUtil.generateFilename("dnd_image_", sanitizedFilename, true));
         FileUtils.copyToFile(file.getInputStream(), savePath.toFile());
-        return FilePathConverter.externalUriForFileSystemPath(savePath, filePathType, entityId);
+        return savePath;
     }
 
     /**
@@ -972,16 +1079,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     @Override
     public QuizExercise save(QuizExercise quizExercise) {
         quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
-
-        // create a quizPointStatistic if it does not yet exist
-        if (quizExercise.getQuizPointStatistic() == null) {
-            QuizPointStatistic quizPointStatistic = new QuizPointStatistic();
-            quizExercise.setQuizPointStatistic(quizPointStatistic);
-            quizPointStatistic.setQuiz(quizExercise);
-        }
-
-        // make sure the pointers in the statistics are correct
-        quizExercise.recalculatePointCounters();
 
         QuizExercise savedQuizExercise = super.save(quizExercise);
 
@@ -1027,14 +1124,12 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         Map<String, MultipartFile> fileMap = files.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, Function.identity()));
         for (var question : newQuizExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-                URI publicPathUri = URI.create(dragAndDropQuestion.getBackgroundFilePath());
-                if (!Files.exists(FilePathConverter.fileSystemPathForExternalUri(publicPathUri, FilePathType.DRAG_AND_DROP_BACKGROUND))) {
-                    saveDndQuestionBackground(dragAndDropQuestion, fileMap, dragAndDropQuestion.getId());
+                if (!Files.exists(new FileSystemLocation.DragAndDropBackground(dragAndDropQuestion.getBackgroundFilePath()).path())) {
+                    saveDndQuestionBackground(dragAndDropQuestion, fileMap);
                 }
                 for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
-                    if (dragItem.getPictureFilePath() != null
-                            && !Files.exists(FilePathConverter.fileSystemPathForExternalUri(URI.create(dragItem.getPictureFilePath()), FilePathType.DRAG_ITEM))) {
-                        saveDndDragItemPicture(dragItem, fileMap, dragItem.getId());
+                    if (dragItem.getPictureFilePath() != null && !Files.exists(new FileSystemLocation.DragItem(dragItem.getPictureFilePath()).path())) {
+                        saveDndDragItemPicture(dragItem, fileMap);
                     }
                 }
             }
@@ -1070,7 +1165,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         updatedQuiz.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
 
         // Check if quiz has already started or ended, and reuse the fetched batches
         Set<QuizBatch> batches = checkQuizEditable(originalQuiz);
@@ -1145,20 +1240,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         quizExercise.setIncludedInOverallScore(updateQuizExerciseDTO.includedInOverallScore());
 
         if (updateQuizExerciseDTO.quizQuestions() != null) {
-            // Build a map of existing questions by ID so we can preserve statistics
-            Map<Long, QuizQuestion> existingQuestionsById = quizExercise.getQuizQuestions().stream().filter(q -> q.getId() != null)
-                    .collect(Collectors.toMap(QuizQuestion::getId, Function.identity()));
-
-            // Convert DTOs to new entities to avoid detached entity issues
-            List<QuizQuestion> newQuestions = new ArrayList<>(updateQuizExerciseDTO.quizQuestions().stream().map(dto -> {
-                QuizQuestion newQuestion = dto.toDomainObject();
-                // For existing questions, preserve statistics from the managed entity
-                if (newQuestion.getId() != null && existingQuestionsById.containsKey(newQuestion.getId())) {
-                    QuizQuestion existingQuestion = existingQuestionsById.get(newQuestion.getId());
-                    newQuestion.setQuizQuestionStatistic(existingQuestion.getQuizQuestionStatistic());
-                }
-                return newQuestion;
-            }).toList());
+            // Convert DTOs to new entities to avoid detached entity issues.
+            List<QuizQuestion> newQuestions = new ArrayList<>(updateQuizExerciseDTO.quizQuestions().stream().map(dto -> dto.toDomainObject()).toList());
             quizExercise.setQuizQuestions(newQuestions);
         }
         else {
@@ -1183,7 +1266,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
         copy.setExerciseGroup(quizExercise.getExerciseGroup());
         copy.setQuizQuestions(new ArrayList<>(quizExercise.getQuizQuestions()));
-        copy.setQuizPointStatistic(quizExercise.getQuizPointStatistic());
         copy.setCompetencyLinks(new HashSet<>(quizExercise.getCompetencyLinks()));
         copy.setQuizBatches(new HashSet<>(quizExercise.getQuizBatches()));
         copy.setGradingCriteria(new HashSet<>(quizExercise.getGradingCriteria()));

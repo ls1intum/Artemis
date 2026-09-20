@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
@@ -35,6 +36,8 @@ public class IrisCompetencyGenerationService {
 
     private final PyrisPipelineService pyrisPipelineService;
 
+    private final UserAiPreferenceService userAiPreferenceService;
+
     private final LLMTokenUsageService llmTokenUsageService;
 
     private final CourseRepository courseRepository;
@@ -48,8 +51,10 @@ public class IrisCompetencyGenerationService {
     private final IrisSettingsService irisSettingsService;
 
     public IrisCompetencyGenerationService(PyrisPipelineService pyrisPipelineService, LLMTokenUsageService llmTokenUsageService, CourseRepository courseRepository,
-            IrisWebsocketService websocketService, PyrisJobService pyrisJobService, UserRepository userRepository, IrisSettingsService irisSettingsService) {
+            IrisWebsocketService websocketService, PyrisJobService pyrisJobService, UserRepository userRepository, IrisSettingsService irisSettingsService,
+            UserAiPreferenceService userAiPreferenceService) {
         this.pyrisPipelineService = pyrisPipelineService;
+        this.userAiPreferenceService = userAiPreferenceService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.courseRepository = courseRepository;
         this.websocketService = websocketService;
@@ -75,7 +80,7 @@ public class IrisCompetencyGenerationService {
         // @formatter:off
         pyrisPipelineService.executePipeline(
                 "competency-extraction",
-                user.getSelectedLLMUsage(),
+                userAiPreferenceService.findDecision(user.getId()),
                 settings.variant().jsonValue(),
                 settings.supportLevel().jsonValue(),
                 Optional.empty(),

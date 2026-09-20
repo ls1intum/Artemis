@@ -61,7 +61,7 @@ class GroupNotificationScheduleServiceTest extends AbstractSpringIntegrationLoca
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-        final Course course = courseUtilService.addEmptyCourse();
+        final Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         exercise = TextExerciseFactory.generateTextExercise(null, null, null, course);
         exercise.setMaxPoints(5.0);
         exerciseRepository.saveAndFlush(exercise);

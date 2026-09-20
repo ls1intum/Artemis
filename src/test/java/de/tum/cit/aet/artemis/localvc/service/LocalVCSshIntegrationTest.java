@@ -130,6 +130,72 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         }).isInstanceOf(SshException.class);
     }
 
+    /**
+     * An SSH key is a credential of its own, and nothing else on this path consults the account state, so without the
+     * check in {@code GitPublickeyAuthenticatorService} a deactivated user would keep read and write access to their
+     * repositories with a key issued earlier. Reactivating and connecting again shows the rejection came from the
+     * account state rather than from the key.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testAuthenticationFailureBecauseTheAccountIsDeactivated() throws IOException, GeneralSecurityException {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        KeyPair keyPair = setupKeyPairAndAddToUser();
+        User user = userTestRepository.getUser();
+
+        try {
+            user.setActivated(false);
+            userTestRepository.save(user);
+
+            assertThatThrownBy(() -> authenticateOverSsh(user, keyPair)).isInstanceOf(SshException.class);
+        }
+        finally {
+            // Restored unconditionally, so a failing assertion cannot leave a deactivated fixture user behind.
+            user.setActivated(true);
+            userTestRepository.save(user);
+        }
+
+        assertThat(authenticateOverSsh(user, keyPair)).isTrue();
+    }
+
+    /**
+     * The soft-delete counterpart of {@link #testAuthenticationFailureBecauseTheAccountIsDeactivated()}: a soft-deleted
+     * account is the state an administrator leaves behind when removing a user, and it must close the SSH path too.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testAuthenticationFailureBecauseTheAccountIsSoftDeleted() throws IOException, GeneralSecurityException {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        KeyPair keyPair = setupKeyPairAndAddToUser();
+        User user = userTestRepository.getUser();
+
+        try {
+            user.setDeleted(true);
+            userTestRepository.save(user);
+
+            assertThatThrownBy(() -> authenticateOverSsh(user, keyPair)).isInstanceOf(SshException.class);
+        }
+        finally {
+            user.setDeleted(false);
+            userTestRepository.save(user);
+        }
+
+        assertThat(authenticateOverSsh(user, keyPair)).isTrue();
+    }
+
+    /**
+     * @param user    the user to authenticate as
+     * @param keyPair the key pair to offer
+     * @return whether the session ended up authenticated
+     * @throws IOException if the connection or the authentication itself fails
+     */
+    private boolean authenticateOverSsh(User user, KeyPair keyPair) throws IOException {
+        try (SshClient client = SshClient.setUpDefaultClient()) {
+            client.start();
+            return connect(client, user, keyPair).isAuthenticated();
+        }
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAuthenticationFailure() {

@@ -73,9 +73,12 @@ test.describe('ModelingTeamCollaboration', { tag: '@slow' }, () => {
         const editorA = new ModelingEditor(pageA);
         const editorB = new ModelingEditor(pageB);
 
-        // Starting on both pages is intentional: it forces both clients to join the same Yjs document.
-        await new CourseOverviewPage(pageA).startExercise(modelingExercise.id!);
-        await new CourseOverviewPage(pageB).startExercise(modelingExercise.id!);
+        // Entering on both pages is intentional: it forces both clients to join the same Yjs document.
+        // startOrOpenExercise, not startExercise: this is a TEAM exercise, so A's start creates the
+        // participation for the whole team and B's already-open page swaps its "Start exercise" button
+        // for "Open exercise" as soon as the websocket update lands.
+        await new CourseOverviewPage(pageA).startOrOpenExercise(modelingExercise.id!);
+        await new CourseOverviewPage(pageB).startOrOpenExercise(modelingExercise.id!);
 
         await editorA.waitForEditorReady(modelingExercise.id!);
         await editorB.waitForEditorReady(modelingExercise.id!);

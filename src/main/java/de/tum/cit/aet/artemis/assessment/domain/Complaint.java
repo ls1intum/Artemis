@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 
@@ -51,8 +52,20 @@ public class Complaint extends DomainObject {
     private ComplaintResponse complaintResponse;
 
     @OneToOne
-    @JoinColumn(unique = true)
+    @JoinColumn(unique = true, nullable = false)
+    @Parent
     private Result result;
+
+    /**
+     * The exercise the complained-about result belongs to, denormalized from {@link Result#getExerciseId()}.
+     * <p>
+     * The complaint counts on the course and exam assessment dashboards filter a set of exercise ids. Reaching the
+     * exercise through {@code result} made them scan every complaint in the system to find the handful that
+     * belong to the dashboard being opened. This column is kept in sync by
+     * {@link #setResult(Result)} and {@link #result(Result)}, the only ways a result is attached to a complaint.
+     */
+    @Column(name = "exercise_id", nullable = false)
+    private long exerciseId;
 
     @ManyToOne
     private User student;
@@ -112,12 +125,23 @@ public class Complaint extends DomainObject {
     }
 
     public Complaint result(Result result) {
-        this.result = result;
+        setResult(result);
         return this;
     }
 
     public void setResult(Result result) {
         this.result = result;
+        if (result != null) {
+            this.exerciseId = result.getExerciseId();
+        }
+    }
+
+    public long getExerciseId() {
+        return exerciseId;
+    }
+
+    public void setExerciseId(long exerciseId) {
+        this.exerciseId = exerciseId;
     }
 
     public User getStudent() {
@@ -169,18 +193,6 @@ public class Complaint extends DomainObject {
      */
     public void filterSensitiveInformation() {
         setParticipant(null);
-    }
-
-    /**
-     * Filters out the reviewer, if the user was not the reviewer
-     *
-     * @param user - the user for which the reviewer should not be deleted
-     */
-    public void filterForeignReviewer(User user) {
-        User assessor = result.getAssessor();
-        if (!user.equals(assessor)) {
-            result.filterSensitiveInformation();
-        }
     }
 
     @Override

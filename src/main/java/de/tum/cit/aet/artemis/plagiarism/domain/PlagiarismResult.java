@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.jplag.JPlagResult;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
@@ -58,6 +59,8 @@ public class PlagiarismResult extends AbstractAuditingEntity {
      * Exercise for which plagiarism was detected.
      */
     @ManyToOne
+    @JoinColumn(nullable = false)
+    @Parent
     protected Exercise exercise;
 
     /**

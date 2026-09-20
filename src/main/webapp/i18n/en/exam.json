@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "exam": {
+            "details": "Details",
             "detail": {
                 "sections": {
                     "general": "General Information"
@@ -114,7 +115,7 @@
                 "feedbackRequested": "AI Feedback Requested",
                 "feedbackRequestSent": "AI feedback has been requested for all text and modeling exercises. Results will appear shortly.",
                 "feedbackUsageLoadFailed": "Could not load the remaining AI feedback requests. Please refresh the page to try again.",
-                "noFeedbackSuggestionModuleConfigured": "AI feedback is not configured for any of the exercises in this exam.",
+                "noCourseLevelAthenaFormativeEnabled": "AI feedback is not enabled for this course.",
                 "noSubmissionFound": "You didn't submit any solution for this exercise.",
                 "submissionLinkedToCommit": "The submission is linked to commit",
                 "noCommitHash": "No commit was made",
@@ -171,6 +172,7 @@
             "visible": "Visible",
             "startDate": "Start Date",
             "endDate": "End Date",
+            "examSummaryPublicationDate": "Submission Overview Visible From",
             "publishResultsDate": "Release Date of Results",
             "examStudentReviewTimespan": "Review Timespan",
             "examStudentReviewStart": "Begin of Student Review",
@@ -312,6 +314,7 @@
             "submittedColumn": "Submitted",
             "totalColumn": "Total",
             "exerciseGroupTitle": "Average scores of exercise group \"{{ groupTitle }}\" in comparison",
+            "scoreDistributionTitle": "Distribution of overall exam scores",
             "gradesBeforeBonus": "Grades before bonus",
             "gradesAfterBonus": "Grades after bonus",
             "noStudentResultAvailable": "No student results available",
@@ -330,12 +333,12 @@
             "progress": "Exercise {{ current }} of {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
             "exerciseType": "Type",
-            "examOverview": "Exam Overview",
             "examStatus": "Status",
             "examExercises": "Exam Exercises:",
             "exercisePoints": "Points",
             "exerciseName": "Name",
             "navigation": {
+                "exerciseButton": "Exercise {{ number }}: {{ title }}",
                 "nextButton": "Next",
                 "previousButton": "Previous"
             },
@@ -345,8 +348,6 @@
             "goToExamManagement": "Go to exam management page",
             "goToExamBack": "Go back to continue the exam",
             "submitProgrammingExercise": "Continue",
-            "submitOtherExercise": "Save & continue",
-            "submitLastExercise": "Save",
             "uploadFile": "Upload",
             "greeting": "Welcome to {{ title }}.",
             "finish": "This is the end of {{ title }}.",
@@ -380,7 +381,13 @@
                 "title": "Your exam has been submitted successfully!",
                 "noActionRequired": "Artemis does not require any further action and this window can be closed.",
                 "followExamProtocol": "Be sure to follow your instructor's exam protocol.",
-                "button": "Show exam summary{{countdown}}"
+                "button": "Show exam summary{{countdown}}",
+                "summaryAvailableFrom": "Your submission overview will be available from {{date}}."
+            },
+            "summaryLoadFailed": {
+                "title": "The exam summary could not be loaded.",
+                "explanation": "Your submission and your results are stored on the server, nothing is lost. Please check your internet connection and try again.",
+                "retry": "Retry"
             },
             "saveExercise": "Save exercise",
             "exerciseSaved": "Exercise saved",
@@ -483,6 +490,7 @@
         "examManagement": {
             "reviewDatesInvalidWarning": "End of Student Review is set incorrect or missing",
             "reviewDatesInvalidExplanation": "If the Begin of Student Review is set, the End of Student Review has to be set as well. Furthermore, the End of Student Review has to be chronologically after its Begin.",
+            "titleMissingOrNotValid": "'Title' is missing/invalid",
             "sections": {
                 "configuration": "Exam Configuration",
                 "conduction": "Exam Conduction",
@@ -492,10 +500,15 @@
                 "text": "Exam Texts",
                 "examSolutions": "Exam Solutions"
             },
-            "title": "Exam Management",
+            "title": "Exams",
             "createExam": "Create a new exam",
             "importExam": "Import an exam",
-            "editExam": "Edit an existing exam",
+            "empty": {
+                "title": "No exams yet",
+                "description": "Create an exam or import one from another course to get started.",
+                "documentation": "Learn about exams"
+            },
+            "editExam": "Edit",
             "courseTitle": "Course Title",
             "examId": "Exam ID",
             "examTitle": "Exam Title",
@@ -516,12 +529,13 @@
             "examStudentReviewStart": "Begin of Student Review",
             "examStudentReviewEnd": "End of Student Review",
             "exampleSolutionPublicationDateTooltip": "Students can see the example solutions for all exercises in the exam from this time onwards if they participated in the exam. Leave blank to disable.",
+            "examSummaryPublicationDate": "Submission Overview Visible From",
+            "examSummaryPublicationDateTooltip": "Students can only see the overview of their submitted exam (exam questions, their own answers and the PDF export) from this time onwards. Leave blank to show the overview immediately after submission. This is useful for exams written in several shifts, so early submitters cannot leak the exam content to later shifts.",
             "studentReviewEnabled": "Student review enabled",
             "maxPoints": {
                 "title": "Maximum number of points for exam",
                 "warning": "Updating this field will update the grading scale for the exam if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value. This also affects all students' grades in the exam!"
             },
-            "numberOfExerciseGroups": "Number of exercise groups:",
             "numberOfExercisesInExam": "Number of exercises in exam",
             "numberOfExercisesInExamTooltip": "The number of exercises must be equal to the number of exercise groups",
             "numberOfCorrectionRoundsInExam": "Number of correction rounds in exam",
@@ -562,7 +576,7 @@
             },
             "testRun": {
                 "testRun": "Test Run",
-                "title": "Test Run Management: ",
+                "title": "Test Run Management",
                 "setup": "Create a Test Run",
                 "author": "Author",
                 "setWorkingTime": "Set a working time (minutes and seconds):",
@@ -648,10 +662,10 @@
                     "attendance": "Attendance"
                 },
                 "menu": {
-                    "manageStudents": "Register students",
-                    "examLogistics": "Exam logistics",
-                    "manageStudentExams": "Manage individual exams",
-                    "addStudents": "Add",
+                    "manageStudents": "Students",
+                    "examLogistics": "Logistics",
+                    "manageStudentExams": "Individual exams",
+                    "addStudents": "Register",
                     "importUsers": "Import from CSV",
                     "exportUsers": "Export to CSV",
                     "registerCourseStudents": "Register course students",
@@ -683,9 +697,13 @@
             },
             "exerciseGroups": "Exercise Groups",
             "exerciseGroup": {
-                "create": "Create new Exercise Group",
+                "create": "Create Exercise Group",
                 "import": "Import Exercise Group",
                 "update": "Edit Exercise Group",
+                "addExercise": "Add Exercise",
+                "editNotPossibleExamStarted": "Editing is not possible because the exam has already started.",
+                "editGroup": "Edit group",
+                "deleteGroup": "Delete group",
                 "selectExerciseGroup": "Select Exercise Groups",
                 "selectExerciseGroupExplanation": "Select the individual exercises, which should be imported alongside the exercise groups, by clicking on it",
                 "noExerciseGroup": "The selected exam {{examTitle}} has no exercise groups",
@@ -695,6 +713,7 @@
                 "mandatory": "Mandatory",
                 "optional": "Optional",
                 "noExercises": "No exercises have been added yet.",
+                "noExerciseGroups": "No exercise groups have been created yet.",
                 "titleInfo": "The title of the exercise group is shown to the students as the name of the exercise.",
                 "delete": {
                     "question": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises will also be deleted.",
@@ -727,7 +746,9 @@
                     "isImporting": "The import of the exercise groups and the exercises is currently done on the server. This may take some time",
                     "infoProgrammingExercises": "Programming exercises are imported using their initial configuration. This import functionality cannot be used for changing the submission policy, for activating / deactivating the static code analysis or for creating new build plans. In this case, please import the exercises individually into the exercise groups."
                 },
-                "importSuccessful": "Exercise Groups successfully imported!"
+                "importSuccessful": "Exercise Groups successfully imported!",
+                "moveUp": "Move exercise group up",
+                "moveDown": "Move exercise group down"
             },
             "quizPool": "Quiz Pool",
             "delete": {
@@ -908,9 +929,9 @@
             }
         },
         "studentExamDetail": {
-            "studentExam": "Student exam ({{ examTitle }})",
-            "studentTestExam": "Student test exam ({{ examTitle }})",
-            "testRun": "Test Run ({{ examTitle }})",
+            "studentExam": "Student exam",
+            "studentTestExam": "Student test exam",
+            "testRun": "Test Run",
             "exercises": "Exercises",
             "overview": "Overview",
             "downloadPDF": " Download PDF",

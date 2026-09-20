@@ -35,6 +35,7 @@ import { defaultFirstLayerDialogOptions } from 'app/communication/course-convers
 import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { firstValueFrom } from 'rxjs';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 const PIN_EMOJI_ID = 'pushpin';
 const ARCHIVE_EMOJI_ID = 'open_file_folder';
@@ -402,7 +403,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
                 hasReacted: metaDataMap[reaction.emojiId!] ? metaDataMap[reaction.emojiId!].hasReacted || hasReacted : hasReacted,
                 reactingUsers: metaDataMap[reaction.emojiId!] ? metaDataMap[reaction.emojiId!].reactingUsers.concat(reactingUser) : [reactingUser],
             };
-            return { ...metaDataMap, [reaction.emojiId!]: reactionMetaData };
+            return cloneWith(metaDataMap, { [reaction.emojiId!]: reactionMetaData });
         }, {});
     }
 
@@ -552,16 +553,18 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
                     });
 
                     // Open the forward message dialog using PrimeNG DialogService
-                    const ref = this.dialogService.open(ForwardMessageDialogComponent, {
-                        ...defaultFirstLayerDialogOptions,
-                        closable: false,
-                        data: {
-                            users: [],
-                            channels: this.channels,
-                            postToForward: post,
-                            courseId: this.course()?.id,
-                        },
-                    });
+                    const ref = this.dialogService.open(
+                        ForwardMessageDialogComponent,
+                        cloneWith(defaultFirstLayerDialogOptions, {
+                            closable: false,
+                            data: {
+                                users: [],
+                                channels: this.channels,
+                                postToForward: post,
+                                courseId: this.course()?.id,
+                            },
+                        }),
+                    );
 
                     ref?.onClose.subscribe(async (selection: { channels: Conversation[]; users: UserPublicInfoDTO[]; messageContent: string } | undefined) => {
                         if (selection) {

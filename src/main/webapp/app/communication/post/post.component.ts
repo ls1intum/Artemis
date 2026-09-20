@@ -12,7 +12,7 @@ import { PostingFooterComponent } from 'app/communication/posting-footer/posting
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -140,7 +140,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
                 // Ensure posting is a Post instance; if conversion is needed,
                 // return early — the .set() will re-trigger this effect with the converted value.
                 if (!(posting instanceof Post)) {
-                    this.posting.set(Object.assign(new Post(), posting));
+                    this.posting.set(hydrate(new Post(), posting));
                     return;
                 }
                 this.contextInformation.set(this.metisService.getContextInformation(posting));
@@ -231,7 +231,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
         const screenWidth = window.innerWidth;
 
         if (this.dropdownPosition().x + dropdownWidth > screenWidth) {
-            this.dropdownPosition.update((position) => ({ ...position, x: screenWidth - dropdownWidth - 10 }));
+            this.dropdownPosition.update((position) => cloneWith(position, { x: screenWidth - dropdownWidth - 10 }));
         }
     }
 
@@ -409,7 +409,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
         // This is needed because otherwise instanceof returns 'object'.
         const posting = this.posting();
         if (posting && !(posting instanceof Post)) {
-            this.posting.set(Object.assign(new Post(), posting));
+            this.posting.set(hydrate(new Post(), posting));
         }
     }
 

@@ -93,23 +93,18 @@ public record ExamForAssessmentDashboardDTO(long id, @Nullable String title, @Nu
      * flags the dashboard-information sub-component binds.
      *
      * @param id                         the id of the course
-     * @param instructorGroupName        the instructor group name (client-side instructor access)
-     * @param editorGroupName            the editor group name (client-side editor access)
-     * @param teachingAssistantGroupName the teaching-assistant group name (client-side tutor access)
      * @param complaintsEnabled          whether complaints are enabled (dashboard-information binding)
      * @param requestMoreFeedbackEnabled whether more-feedback requests are enabled (dashboard-information binding)
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record CourseForAssessmentDashboardDTO(long id, @Nullable String instructorGroupName, @Nullable String editorGroupName, @Nullable String teachingAssistantGroupName,
-            boolean complaintsEnabled, boolean requestMoreFeedbackEnabled) {
+    public record CourseForAssessmentDashboardDTO(long id, boolean complaintsEnabled, boolean requestMoreFeedbackEnabled) {
 
         @Nullable
         static CourseForAssessmentDashboardDTO of(@Nullable Course course) {
             if (course == null) {
                 return null;
             }
-            return new CourseForAssessmentDashboardDTO(course.getId(), course.getInstructorGroupName(), course.getEditorGroupName(), course.getTeachingAssistantGroupName(),
-                    course.getComplaintsEnabled(), course.getRequestMoreFeedbackEnabled());
+            return new CourseForAssessmentDashboardDTO(course.getId(), course.getComplaintsEnabled(), course.getRequestMoreFeedbackEnabled());
         }
     }
 

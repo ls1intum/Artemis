@@ -2,9 +2,12 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.regex.Pattern;
+
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Subquery;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -13,6 +16,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -33,6 +38,9 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 @Lazy
 @Service
 public class ExerciseSpecificationService {
+
+    /** A search term that consists of digits only, and can therefore be compared against an id. */
+    private static final Pattern NUMERIC_SEARCH_TERM = Pattern.compile("\\d+");
 
     private final AuthorizationCheckService authCheckService;
 
@@ -62,7 +70,7 @@ public class ExerciseSpecificationService {
             Join<Exam, Course> joinExamCourse = joinExam.join(Exam_.COURSE, JoinType.LEFT);
 
             Predicate idMatchesSearch;
-            if (searchTerm.matches("\\d+")) {
+            if (NUMERIC_SEARCH_TERM.matcher(searchTerm).matches()) {
                 // Ensure the search term is numeric to avoid SQL issues
                 idMatchesSearch = criteriaBuilder.equal(root.get(Exercise_.ID), Long.valueOf(searchTerm));
             }
@@ -79,11 +87,22 @@ public class ExerciseSpecificationService {
 
             Predicate filter;
 
-            if (!authCheckService.isAdmin(user)) {
-                var groups = user.getGroups();
-                Predicate atLeastEditorInCourse = criteriaBuilder.or(joinCourse.get(Course_.instructorGroupName).in(groups), joinCourse.get(Course_.editorGroupName).in(groups));
-                Predicate atLeastEditorInExam = criteriaBuilder.or(joinExamCourse.get(Course_.instructorGroupName).in(groups),
-                        joinExamCourse.get(Course_.editorGroupName).in(groups));
+            if (!authCheckService.isCurrentUserAdminAccessEnabled()) {
+                Subquery<CourseRole> ucrSubqueryCourse = query.subquery(CourseRole.class);
+                var ucrRootCourse = ucrSubqueryCourse.from(UserCourseRole.class);
+                ucrSubqueryCourse.select(ucrRootCourse.get("role"))
+                        .where(criteriaBuilder.and(criteriaBuilder.equal(ucrRootCourse.get("user").get("id"), user.getId()),
+                                criteriaBuilder.equal(ucrRootCourse.get("course").get("id"), joinCourse.get("id")),
+                                ucrRootCourse.get("role").in(CourseRole.INSTRUCTOR, CourseRole.EDITOR)));
+                Predicate atLeastEditorInCourse = criteriaBuilder.exists(ucrSubqueryCourse);
+
+                Subquery<CourseRole> ucrSubqueryExam = query.subquery(CourseRole.class);
+                var ucrRootExam = ucrSubqueryExam.from(UserCourseRole.class);
+                ucrSubqueryExam.select(ucrRootExam.get("role"))
+                        .where(criteriaBuilder.and(criteriaBuilder.equal(ucrRootExam.get("user").get("id"), user.getId()),
+                                criteriaBuilder.equal(ucrRootExam.get("course").get("id"), joinExamCourse.get("id")),
+                                ucrRootExam.get("role").in(CourseRole.INSTRUCTOR, CourseRole.EDITOR)));
+                Predicate atLeastEditorInExam = criteriaBuilder.exists(ucrSubqueryExam);
 
                 Predicate availableCourseExercise = criteriaBuilder.and(matchingCourseExercise, atLeastEditorInCourse);
                 Predicate availableExamExercise = criteriaBuilder.and(matchingExamExercise, atLeastEditorInExam);

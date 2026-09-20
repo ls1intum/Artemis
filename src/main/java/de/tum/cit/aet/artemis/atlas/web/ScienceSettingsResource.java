@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.atlas.dto.ScienceSettingDTO;
 import de.tum.cit.aet.artemis.atlas.repository.ScienceSettingRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 
 /**
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
  */
 @Conditional(AtlasEnabled.class)
 @Lazy
+@FeatureUsage("research/science-settings")
 @RestController
 @RequestMapping("api/atlas/")
 public class ScienceSettingsResource {
@@ -92,7 +94,7 @@ public class ScienceSettingsResource {
                 throw new BadRequestAlertException("Science settings contain invalid entries", "InvalidScienceSettings", "invalidScienceSettings");
             }
         }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         log.debug("REST request to save ScienceSettings : {} for current user {}", scienceSettings, user);
         List<ScienceSetting> persistedSettingList = scienceSettingRepository.replaceScienceSettingsForUser(user, scienceSettings);
         if (persistedSettingList.isEmpty()) {

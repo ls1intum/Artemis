@@ -45,6 +45,20 @@ class ConsistencyCheckLocalVCJenkinsIntegrationTest extends AbstractProgrammingI
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void checkConsistencyOfProgrammingExercise_templateRepositoryMissingOnDisk() throws Exception {
+        mockConnectorRequestsForSetup(consistencyCheckTestService.getNotPersistedExercise(), false, false, false);
+        consistencyCheckTestService.testCheckConsistencyOfProgrammingExercise_templateRepositoryMissingOnDisk();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void checkConsistencyOfProgrammingExercise_templateRepositoryCorruptOnDisk() throws Exception {
+        mockConnectorRequestsForSetup(consistencyCheckTestService.getNotPersistedExercise(), false, false, false);
+        consistencyCheckTestService.testCheckConsistencyOfProgrammingExercise_templateRepositoryCorruptOnDisk();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void checkConsistencyOfProgrammingExercise_buildPlansMissing() throws Exception {
         consistencyCheckTestService.testCheckConsistencyOfProgrammingExercise_buildPlansMissing();
     }

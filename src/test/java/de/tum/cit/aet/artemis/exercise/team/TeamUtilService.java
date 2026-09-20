@@ -52,8 +52,8 @@ public class TeamUtilService {
      * @return The generated Team
      */
     public Team generateTeamForExercise(Exercise exercise, String name, String shortName, String loginPrefix, int numberOfStudents, User owner, String registrationPrefix) {
-        List<User> students = userUtilService.generateActivatedUsersWithRegistrationNumber(shortName + loginPrefix, new String[] { "tumuser", "testgroup" },
-                Set.of(new Authority(Role.STUDENT.getAuthority())), numberOfStudents, registrationPrefix);
+        List<User> students = userUtilService.generateActivatedUsersWithRegistrationNumber(shortName + loginPrefix, Set.of(new Authority(Role.STUDENT.getAuthority())),
+                numberOfStudents, registrationPrefix);
 
         Team team = new Team();
         team.setName(name);

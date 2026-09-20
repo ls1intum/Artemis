@@ -1,6 +1,7 @@
 import { convertDateFromClient } from 'app/foundation/util/date.utils';
-import { Course, CourseInformationSharingConfiguration, Language } from './course.model';
-import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { Course } from './course.model';
+import type { CourseInformationSharingConfiguration, Language } from './course.model';
+import type { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 
 /**
  * DTO for creating a new course.
@@ -13,12 +14,6 @@ export interface CourseCreateDTO {
     shortName: string;
     description?: string;
     semester?: string;
-
-    // Group names
-    studentGroupName?: string;
-    teachingAssistantGroupName?: string;
-    editorGroupName?: string;
-    instructorGroupName?: string;
 
     // Dates (as ISO strings for server)
     startDate?: string;
@@ -52,9 +47,16 @@ export interface CourseCreateDTO {
     presentationScore?: number;
     maxPoints?: number;
     accuracyOfScores?: number;
-    restrictedAthenaModulesAccess: boolean;
     timeZone?: string;
     courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
+
+    // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained)
+    gradeRelevant: boolean;
+
+    // Atlas auto-orchestration configuration (per-course)
+    autoOrchestratorEnabled: boolean;
+    debounceWindowSecondsOverride?: number;
+    maxDailyOrchestrationOverride?: number;
 }
 
 /**
@@ -70,12 +72,6 @@ export function toCourseCreateDTO(course: Course): CourseCreateDTO {
         shortName: course.shortName!,
         description: course.description,
         semester: course.semester,
-
-        // Group names
-        studentGroupName: course.studentGroupName,
-        teachingAssistantGroupName: course.teachingAssistantGroupName,
-        editorGroupName: course.editorGroupName,
-        instructorGroupName: course.instructorGroupName,
 
         // Dates (converted to ISO strings)
         startDate: convertDateFromClient(course.startDate),
@@ -109,9 +105,16 @@ export function toCourseCreateDTO(course: Course): CourseCreateDTO {
         presentationScore: course.presentationScore,
         maxPoints: course.maxPoints,
         accuracyOfScores: course.accuracyOfScores,
-        restrictedAthenaModulesAccess: course.restrictedAthenaModulesAccess ?? false,
         timeZone: course.timeZone,
         courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
+
+        // Grade-relevance defaults to true when the course has no explicit configuration yet.
+        gradeRelevant: course.courseConfiguration?.gradeRelevant ?? true,
+
+        // Atlas auto-orchestration configuration (per-course)
+        autoOrchestratorEnabled: course.courseConfiguration?.autoOrchestratorEnabled ?? false,
+        debounceWindowSecondsOverride: course.courseConfiguration?.debounceWindowSecondsOverride ?? undefined,
+        maxDailyOrchestrationOverride: course.courseConfiguration?.maxDailyOrchestrationOverride ?? undefined,
     };
 }
 
@@ -128,12 +131,6 @@ export interface CourseUpdateDTO {
     shortName: string;
     description?: string;
     semester?: string;
-
-    // Group names
-    studentGroupName?: string;
-    teachingAssistantGroupName?: string;
-    editorGroupName?: string;
-    instructorGroupName?: string;
 
     // Dates (as ISO strings for server)
     startDate?: string;
@@ -169,10 +166,20 @@ export interface CourseUpdateDTO {
     presentationScore?: number;
     maxPoints?: number;
     accuracyOfScores?: number;
-    restrictedAthenaModulesAccess: boolean;
     timeZone?: string;
     courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
     onboardingDone: boolean;
+
+    // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained)
+    gradeRelevant: boolean;
+
+    // Data-privacy / retention: whether a pending objection or legal proceeding suspends the cleanup for this course
+    dataRetentionHold: boolean;
+
+    // Atlas auto-orchestration configuration (per-course)
+    autoOrchestratorEnabled: boolean;
+    debounceWindowSecondsOverride?: number;
+    maxDailyOrchestrationOverride?: number;
 }
 
 /**
@@ -191,12 +198,6 @@ export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
         shortName: course.shortName!,
         description: course.description,
         semester: course.semester,
-
-        // Group names
-        studentGroupName: course.studentGroupName,
-        teachingAssistantGroupName: course.teachingAssistantGroupName,
-        editorGroupName: course.editorGroupName,
-        instructorGroupName: course.instructorGroupName,
 
         // Dates (converted to ISO strings)
         startDate: convertDateFromClient(course.startDate),
@@ -232,9 +233,19 @@ export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
         presentationScore: course.presentationScore,
         maxPoints: course.maxPoints,
         accuracyOfScores: course.accuracyOfScores,
-        restrictedAthenaModulesAccess: course.restrictedAthenaModulesAccess ?? false,
         timeZone: course.timeZone,
         courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
         onboardingDone: course.onboardingDone ?? false,
+
+        // Grade-relevance defaults to true when the course has no explicit configuration yet.
+        gradeRelevant: course.courseConfiguration?.gradeRelevant ?? true,
+
+        // A course without an explicit configuration is not under a retention hold.
+        dataRetentionHold: course.courseConfiguration?.dataRetentionHold ?? false,
+
+        // Atlas auto-orchestration configuration (per-course)
+        autoOrchestratorEnabled: course.courseConfiguration?.autoOrchestratorEnabled ?? false,
+        debounceWindowSecondsOverride: course.courseConfiguration?.debounceWindowSecondsOverride ?? undefined,
+        maxDailyOrchestrationOverride: course.courseConfiguration?.maxDailyOrchestrationOverride ?? undefined,
     };
 }

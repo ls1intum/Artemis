@@ -55,16 +55,6 @@
                     }
                 </ul>
             </dd>
-            <dt class="font-semibold"><span jhiTranslate="artemisApp.userManagement.groups"></span></dt>
-            <dd>
-                <ul class="m-0 list-none p-0">
-                    @for (group of u.groups; track group) {
-                        <li>
-                            <span>{{ group }}</span>
-                        </li>
-                    }
-                </ul>
-            </dd>
         </dl>
         <div class="mt-4">
             <a [routerLink]="['edit']" tumUiButton size="small" severity="warn" data-testid="edit-user-button">

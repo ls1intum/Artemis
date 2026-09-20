@@ -3,7 +3,7 @@
     <div class="mx-1">
         @if (sidebarType() === 'exam') {
             <div class="d-flex justify-content-between align-items-baseline">
-                <span id="test-sidebar-card-title" class="me-2 mb-2" [title]="item.title">
+                <span data-testid="sidebar-card-title" class="me-2 mb-2" [title]="item.title">
                     @if (item.icon) {
                         <fa-icon [fixedWidth]="true" [icon]="item.icon" />
                     }
@@ -79,7 +79,7 @@
         } @else {
             <div class="d-flex justify-content-between align-items-baseline">
                 <span
-                    id="test-sidebar-card-title"
+                    data-testid="sidebar-card-title"
                     class="small text-truncate me-2"
                     [title]="item.title"
                     [class.muted]="item.conversation?.isMuted"
@@ -119,7 +119,10 @@
                 }
             </div>
             <div class="d-flex justify-content-between align-items-baseline small" [ngClass]="{ 'mt-1': item.subtitleLeft }">
-                <small class="me-2 text-truncate">
+                <small class="me-2 text-truncate" [ngClass]="item.subtitleLeftClass" [title]="item.subtitleLeftTooltip">
+                    @if (item.subtitleLeftIcon) {
+                        <fa-icon [icon]="item.subtitleLeftIcon" />
+                    }
                     {{ item.subtitleLeft }}
                 </small>
                 <small class="text-truncate d-inline">

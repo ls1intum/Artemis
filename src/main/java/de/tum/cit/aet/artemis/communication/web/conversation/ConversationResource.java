@@ -4,8 +4,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
+
+import jakarta.persistence.Persistence;
 
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
@@ -39,6 +42,7 @@ import de.tum.cit.aet.artemis.communication.dto.ResponsibleUserDTO;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService.ConversationMemberSearchFilters;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -48,6 +52,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
@@ -55,6 +60,7 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("conversations/conversations")
 @RestController
 @RequestMapping("api/communication/courses/")
 public class ConversationResource extends ConversationManagementResource {
@@ -94,7 +100,10 @@ public class ConversationResource extends ConversationManagementResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         checkCommunicationEnabledElseThrow(course);
 
-        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        // Pre-load course roles: the role check below plus the per-conversation moderator/role checks inside
+        // conversationService.getConversationsOfUser reuse this user, so a single preload avoids a fallback
+        // query per check.
+        var requestingUser = userRepository.getUserWithCourseRolesAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
         var conversations = conversationService.getConversationsOfUser(course, requestingUser);
         return ResponseEntity.ok(new ArrayList<>(conversations));
@@ -112,7 +121,7 @@ public class ConversationResource extends ConversationManagementResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Void> updateIsFavorite(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam boolean isFavorite) {
         checkCommunicationEnabledElseThrow(courseId);
-        var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
+        var requestingUser = this.userRepository.getUserWithAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
         conversationService.setIsFavorite(conversationId, requestingUser, isFavorite);
         return ResponseEntity.ok().build();
@@ -130,7 +139,7 @@ public class ConversationResource extends ConversationManagementResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Void> updateIsHidden(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam boolean isHidden) {
         checkCommunicationEnabledElseThrow(courseId);
-        var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
+        var requestingUser = this.userRepository.getUserWithAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
         conversationService.setIsHidden(conversationId, requestingUser, isHidden);
         return ResponseEntity.ok().build();
@@ -148,7 +157,7 @@ public class ConversationResource extends ConversationManagementResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Void> updateIsMuted(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam boolean isMuted) {
         checkCommunicationEnabledElseThrow(courseId);
-        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var requestingUser = userRepository.getUserWithAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
         conversationService.setIsMuted(conversationId, requestingUser, isMuted);
         return ResponseEntity.ok().build();
@@ -165,7 +174,7 @@ public class ConversationResource extends ConversationManagementResource {
     public ResponseEntity<Boolean> hasUnreadMessages(@PathVariable Long courseId) {
         checkCommunicationEnabledElseThrow(courseId);
 
-        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var requestingUser = userRepository.getUserWithAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
         return ResponseEntity.ok(conversationService.userHasUnreadMessages(courseId, requestingUser));
     }
@@ -182,7 +191,7 @@ public class ConversationResource extends ConversationManagementResource {
     public ResponseEntity<Boolean> markAsRead(@PathVariable Long courseId, @PathVariable Long conversationId) {
         checkCommunicationEnabledElseThrow(courseId);
 
-        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var requestingUser = userRepository.getUserWithAuthorities();
         var conversationFromDatabase = this.conversationService.getConversationById(conversationId);
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
@@ -208,7 +217,7 @@ public class ConversationResource extends ConversationManagementResource {
     public ResponseEntity<Void> markMessageAsUnread(@PathVariable Long courseId, @PathVariable Long conversationId, @PathVariable Long messageId) {
         checkCommunicationEnabledElseThrow(courseId);
 
-        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var requestingUser = userRepository.getUserWithAuthorities();
         var conversationFromDatabase = this.conversationService.getConversationById(conversationId);
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
@@ -230,7 +239,7 @@ public class ConversationResource extends ConversationManagementResource {
     public ResponseEntity<Boolean> isCodeOfConductAccepted(@PathVariable Long courseId) {
         checkCommunicationEnabledElseThrow(courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var requestingUser = userRepository.getUserWithAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
         return ResponseEntity.ok(conductAgreementService.fetchUserAgreesToCodeOfConductInCourse(requestingUser, course));
     }
@@ -246,7 +255,7 @@ public class ConversationResource extends ConversationManagementResource {
     public ResponseEntity<Void> acceptCodeOfConduct(@PathVariable Long courseId) {
         checkCommunicationEnabledElseThrow(courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var requestingUser = userRepository.getUserWithAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
         conductAgreementService.setUserAgreesToCodeOfConductInCourse(requestingUser, course);
         return ResponseEntity.ok().build();
@@ -263,12 +272,12 @@ public class ConversationResource extends ConversationManagementResource {
     public ResponseEntity<List<ResponsibleUserDTO>> getResponsibleUsersForCodeOfConduct(@PathVariable Long courseId) {
         checkCommunicationEnabledElseThrow(courseId);
 
-        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var requestingUser = userRepository.getUserWithAuthorities();
 
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
 
-        var responsibleUsers = userRepository.searchAllWithGroupsByLoginOrNameInGroups(Pageable.unpaged(), "", Set.of(course.getInstructorGroupName()))
+        var responsibleUsers = userRepository.searchAllWithCourseRolesByLoginOrNameInCourse(Pageable.unpaged(), "", course.getId(), Set.of(CourseRole.INSTRUCTOR))
                 .map((user) -> new ResponsibleUserDTO(user.getName(), user.getEmail())).toList();
 
         return ResponseEntity.ok(responsibleUsers);
@@ -297,7 +306,7 @@ public class ConversationResource extends ConversationManagementResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         var conversationFromDatabase = this.conversationService.getConversationById(conversationId);
         checkEntityIdMatchesPathIds(conversationFromDatabase, Optional.of(courseId), Optional.of(conversationId));
-        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var requestingUser = userRepository.getUserWithAuthorities();
         var isAllowedToSearchForMembers = (conversationFromDatabase instanceof Channel channel && channel.getIsCourseWide())
                 || conversationService.isMember(conversationId, requestingUser.getId());
         if (!isAllowedToSearchForMembers) {
@@ -306,12 +315,16 @@ public class ConversationResource extends ConversationManagementResource {
                 throw new AccessForbiddenException("Only members of a conversation or instructors can search the members of a conversation.");
             }
         }
-        var searchTerm = loginOrName != null ? loginOrName.toLowerCase().trim() : "";
+        var searchTerm = loginOrName != null ? loginOrName.toLowerCase(Locale.ROOT).trim() : "";
         var originalPage = conversationService.searchMembersOfConversation(course, conversationFromDatabase, pageable, searchTerm, Optional.ofNullable(filter));
 
         var resultDTO = new ArrayList<ConversationUserDTO>();
         for (var user : originalPage) {
             var dto = new ConversationUserDTO(user);
+            var courseRolesInitialized = Persistence.getPersistenceUtil().isLoaded(user, "courseRoles") && user.getCourseRoles() != null;
+            if (!courseRolesInitialized) {
+                user = userRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(user.getId());
+            }
             UserPublicInfoDTO.assignRoleProperties(course, user, dto);
             if (conversationFromDatabase instanceof Channel channel) {
                 dto.setIsChannelModerator(channelAuthorizationService.isChannelModerator(channel.getId(), user.getId()));

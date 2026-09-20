@@ -52,7 +52,7 @@ public abstract class AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the list of submissions in body
      */
     protected ResponseEntity<List<Submission>> getAllSubmissions(Long exerciseId, boolean submittedOnly, boolean assessedByTutor, int correctionRound) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         if (assessedByTutor) {

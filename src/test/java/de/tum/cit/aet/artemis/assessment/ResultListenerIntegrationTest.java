@@ -91,7 +91,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         idOfStudent1 = student1.getId();
         // creating course
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastReleaseDate, pastDueDate, pastAssessmentDueDate);
         idOfIndividualTextExercise = textExercise.getId();
         Exercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, pastReleaseDate, pastDueDate, pastAssessmentDueDate);
@@ -372,6 +372,10 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
             assertThat(participantScore.getLastResult()).isNull();
         }
         else {
+            // Asserted separately (rather than chaining straight into .getId()) so a still-null lastResult during
+            // the async recompute window raises a retryable AssertionError instead of a NullPointerException, which
+            // Awaitility's untilAsserted() would otherwise propagate immediately instead of retrying.
+            assertThat(participantScore.getLastResult()).as("participant score's last result").isNotNull();
             assertThat(participantScore.getLastResult().getId()).isEqualTo(expectedLastResultId);
         }
         assertThat(participantScore.getLastScore()).isEqualTo(expectedLastScore);
@@ -381,6 +385,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
             assertThat(participantScore.getLastRatedResult()).isNull();
         }
         else {
+            assertThat(participantScore.getLastRatedResult()).as("participant score's last rated result").isNotNull();
             assertThat(participantScore.getLastRatedResult().getId()).isEqualTo(expectedLastRatedResultId);
         }
         assertThat(participantScore.getLastRatedScore()).isEqualTo(expectedLastRatedScore);

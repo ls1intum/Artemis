@@ -18,7 +18,7 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { captureException } from '@sentry/angular';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { UMLDiagramType as UMLDiagramTypes } from '@tumaet/apollon';
+import type { UMLDiagramType } from '@tumaet/apollon';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
@@ -55,10 +55,6 @@ export interface CourseInfoDTO {
     id: number;
     title?: string;
     semester?: string;
-    studentGroupName?: string;
-    teachingAssistantGroupName?: string;
-    editorGroupName?: string;
-    instructorGroupName?: string;
 }
 
 export interface LinkedCourseCompetencyDTO {
@@ -159,15 +155,12 @@ const toCourse = (dto?: CourseInfoDTO): Course | undefined => {
     if (!dto) {
         return undefined;
     }
-    return {
+    const course: Course = {
         id: dto.id,
         title: dto.title,
         semester: dto.semester,
-        studentGroupName: dto.studentGroupName,
-        teachingAssistantGroupName: dto.teachingAssistantGroupName,
-        editorGroupName: dto.editorGroupName,
-        instructorGroupName: dto.instructorGroupName,
     };
+    return course;
 };
 
 const toExercise = (dto?: ExerciseForCompetencyDTO, course?: Course): Exercise | undefined => {
@@ -181,7 +174,7 @@ const toExercise = (dto?: ExerciseForCompetencyDTO, course?: Course): Exercise |
             exercise = new ProgrammingExercise(course, undefined);
             break;
         case ExerciseType.MODELING:
-            exercise = new ModelingExercise(UMLDiagramTypes.ClassDiagram, course, undefined);
+            exercise = new ModelingExercise('ClassDiagram' satisfies UMLDiagramType, course, undefined);
             break;
         case ExerciseType.TEXT:
             exercise = new TextExercise(course, undefined);

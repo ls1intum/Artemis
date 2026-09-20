@@ -13,6 +13,7 @@ import {
     ExerciseEditorSyncService,
     ExerciseEditorSyncTarget,
 } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 
 type CommentThreadArrayResponseType = HttpResponse<CommentThread[]>;
 type CommentThreadResponseType = HttpResponse<CommentThread>;
@@ -152,7 +153,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
      * Creates a thread in the active exercise and reconciles local thread state.
      *
      * @param thread The thread payload.
-     * @param onSuccess Callback invoked only after successful backend persistence.
+     * @param onSuccess Callback invoked only after the server has persisted it.
      */
     createThreadInContext(thread: CreateCommentThread, onSuccess?: ReviewCommentSuccessCallback): void {
         const exerciseId = this.activeExerciseId;
@@ -168,7 +169,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
                 if (!createdThread?.id) {
                     return;
                 }
-                const normalizedThread: CommentThread = createdThread.comments ? createdThread : Object.assign({}, createdThread, { comments: [] });
+                const normalizedThread: CommentThread = createdThread.comments ? createdThread : cloneWith(createdThread, { comments: [] });
                 this.updateThreads((threads) => this.appendThreadToThreads(threads, normalizedThread));
                 onSuccess?.();
             },
@@ -212,7 +213,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
      *
      * @param threadId The target thread id.
      * @param comment The reply payload.
-     * @param onSuccess Callback invoked only after successful backend persistence.
+     * @param onSuccess Callback invoked only after the server has persisted it.
      */
     createReplyInContext(threadId: number, comment: CreateComment, onSuccess?: ReviewCommentSuccessCallback): void {
         const exerciseId = this.activeExerciseId;
@@ -245,7 +246,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
      *
      * @param commentId The comment id to update.
      * @param content The updated content payload.
-     * @param onSuccess Callback invoked only after successful backend persistence.
+     * @param onSuccess Callback invoked only after the server has persisted it.
      */
     updateCommentInContext(commentId: number, content: UpdateCommentContent, onSuccess?: ReviewCommentSuccessCallback): void {
         const exerciseId = this.activeExerciseId;
@@ -277,7 +278,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
      * Marks an inline-fix suggestion as applied for a consistency-check comment in the active exercise context.
      *
      * @param commentId The consistency comment id.
-     * @param onSuccess Callback invoked only after successful backend persistence.
+     * @param onSuccess Callback invoked only after the server has persisted it.
      */
     markInlineFixAppliedInContext(commentId: number, onSuccess?: ReviewCommentSuccessCallback): void {
         const exerciseId = this.activeExerciseId;
@@ -501,7 +502,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
                 if (remainingComments.length === thread.comments.length) {
                     return thread;
                 }
-                return Object.assign({}, thread, { comments: remainingComments });
+                return cloneWith(thread, { comments: remainingComments });
             })
             .filter((thread) => !thread.comments || thread.comments.length > 0);
     }
@@ -525,7 +526,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
             if (createdComment.id !== undefined && comments.some((comment) => comment.id === createdComment.id)) {
                 return thread;
             }
-            return Object.assign({}, thread, { comments: [...comments, createdComment] });
+            return cloneWith(thread, { comments: [...comments, createdComment] });
         });
     }
 
@@ -544,8 +545,8 @@ export class ExerciseReviewCommentService implements OnDestroy {
             if (thread.id !== updatedComment.threadId || !thread.comments) {
                 return thread;
             }
-            return Object.assign({}, thread, {
-                comments: thread.comments.map((comment) => (comment.id === updatedComment.id ? Object.assign({}, comment, updatedComment) : comment)),
+            return cloneWith(thread, {
+                comments: thread.comments.map((comment) => (comment.id === updatedComment.id ? cloneWith(comment, deepClone(updatedComment)) : comment)),
             });
         });
     }
@@ -619,7 +620,9 @@ export class ExerciseReviewCommentService implements OnDestroy {
             if (thread.id !== updatedThread.id) {
                 return thread;
             }
-            return Object.assign({}, thread, updatedThread, { comments: mergedComments });
+            // hydrate mutates its target and deep-clones each source, so `deepClone(thread)` is the detached base and
+            // `thread` itself is copied exactly once.
+            return hydrate(deepClone(thread), updatedThread, { comments: mergedComments });
         });
     }
 
@@ -689,7 +692,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
             if (!affectedThreadIds.has(thread.id)) {
                 return thread;
             }
-            return Object.assign({}, thread, { groupId });
+            return cloneWith(thread, { groupId });
         });
     }
 

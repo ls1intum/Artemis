@@ -20,6 +20,8 @@ import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/d
 import { QuizExerciseManageButtonsComponent } from '../manage-buttons/quiz-exercise-manage-buttons.component';
 import { QuizExerciseLifecycleButtonsComponent } from '../lifecyle-buttons/quiz-exercise-lifecycle-buttons.component';
 import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -31,6 +33,7 @@ import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/
         QuizExerciseLifecycleButtonsComponent,
         ExerciseDetailStatisticsComponent,
         DetailOverviewListComponent,
+        AtlasOrchestrationTriggerComponent,
     ],
 })
 export class QuizExerciseDetailComponent implements OnInit {
@@ -101,8 +104,7 @@ export class QuizExerciseDetailComponent implements OnInit {
         }
         return [
             generalSection,
-            {
-                ...modeSection,
+            cloneWith(modeSection, {
                 details: [
                     ...modeSection.details,
                     { type: DetailType.Boolean, title: 'artemisApp.quizExercise.randomizeQuestionOrder', data: { boolean: exercise.randomizeQuestionOrder } },
@@ -117,7 +119,7 @@ export class QuizExerciseDetailComponent implements OnInit {
                         data: { text: this.translateService.instant('artemisApp.quizExercise.detail.questionCount.value', { mcCount, dndCount, shortCount }) },
                     },
                 ],
-            },
+            }),
             {
                 headline: 'artemisApp.exercise.sections.grading',
                 details: defaultGradingDetails,

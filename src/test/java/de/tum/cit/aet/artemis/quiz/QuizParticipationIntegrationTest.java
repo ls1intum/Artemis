@@ -11,8 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -28,10 +28,11 @@ import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromStudentDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
+import de.tum.cit.aet.artemis.quiz.web.openapi.QuizParticipationResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
- * Integration tests for {@link de.tum.cit.aet.artemis.quiz.web.QuizParticipationResource#getParticipationResult}.
+ * Integration tests for {@link QuizParticipationResource#getParticipationResult}.
  * <p>
  * These tests guard the practice-vs-graded result lookup (issue #12955, PR #12972): practice participations use
  * unrated results, so the endpoint must not filter them out by {@code rated = true}, while graded participations must
@@ -54,7 +55,7 @@ class QuizParticipationIntegrationTest extends AbstractSpringIntegrationIndepend
     private ParticipationTestRepository participationRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @BeforeEach
     void init() {
@@ -163,7 +164,8 @@ class QuizParticipationIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     private QuizExercise createEndedCourseQuiz() {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(5), ZonedDateTime.now().minusMinutes(2), QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(5), ZonedDateTime.now().minusMinutes(2),
+                QuizMode.SYNCHRONIZED);
         quizExercise.setDuration(120);
         return quizExerciseService.save(quizExercise);
     }

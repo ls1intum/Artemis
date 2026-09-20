@@ -15,6 +15,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
@@ -213,7 +214,7 @@ export class AttachmentVideoUnitFormComponent {
 
     submitForm() {
         const formValue = this.form.value;
-        const formProperties: FormProperties = { ...formValue };
+        const formProperties: FormProperties = deepClone(formValue);
         const fileProperties: FileProperties = {
             file: this.file,
             fileName: this.fileName(),

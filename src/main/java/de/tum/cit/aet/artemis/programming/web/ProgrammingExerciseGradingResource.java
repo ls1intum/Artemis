@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseGradingStatisticsDTO;
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingServ
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("configuration/grading")
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExerciseGradingResource {
@@ -67,12 +69,16 @@ public class ProgrammingExerciseGradingResource {
      * @return the number of results that were updated.
      */
     @PutMapping("programming-exercises/{exerciseId}/grading/re-evaluate")
+    // The catalogue files this controller under configuration/grading, which fits reading grading statistics. Re-grading
+    // every submission of an exercise is a different thing an instructor does, heavyweight and rare, so it is worth
+    // counting on its own rather than being averaged into the same figure.
+    @FeatureUsage("configuration/re-evaluate-results")
     @EnforceAtLeastInstructor
     public ResponseEntity<Integer> reEvaluateGradedResults(@PathVariable Long exerciseId) {
         log.debug("REST request to re-evaluate the graded results of exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
 

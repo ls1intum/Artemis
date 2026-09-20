@@ -349,8 +349,12 @@ describe('FileUploadSubmissionService', () => {
         });
 
         it('should preserve non-admin instructor access through the real submission conversion', async () => {
-            const instructorGroupName = 'file-upload-instructors';
-            accountService.userIdentity.set({ id: 10, groups: [instructorGroupName], authorities: [Authority.STUDENT] } as User);
+            const courseId = 300;
+            accountService.userIdentity.set({
+                id: 10,
+                authorities: [Authority.STUDENT],
+                courseRoles: [{ courseId, roles: ['INSTRUCTOR'] }],
+            } as User);
             const exercise: FileUploadExerciseContextDTO = {
                 type: ExerciseType.FILE_UPLOAD,
                 exerciseGroup: {
@@ -358,9 +362,7 @@ describe('FileUploadSubmissionService', () => {
                     exam: {
                         id: 200,
                         course: {
-                            teachingAssistantGroupName: 'file-upload-tutors',
-                            editorGroupName: 'file-upload-editors',
-                            instructorGroupName,
+                            id: courseId,
                         },
                     },
                 },

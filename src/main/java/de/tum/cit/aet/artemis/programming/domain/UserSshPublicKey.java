@@ -11,6 +11,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * A public SSH key of a user.
@@ -24,6 +25,7 @@ public class UserSshPublicKey extends DomainObject {
      */
     @NonNull
     @Column(name = "user_id")
+    @Parent
     private long userId;
 
     /**
@@ -67,11 +69,11 @@ public class UserSshPublicKey extends DomainObject {
     @Column(name = "expiry_date")
     private ZonedDateTime expiryDate = null;
 
-    public @NonNull long getUserId() {
+    public long getUserId() {
         return userId;
     }
 
-    public void setUserId(@NonNull long userId) {
+    public void setUserId(long userId) {
         this.userId = userId;
     }
 

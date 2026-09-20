@@ -4,6 +4,7 @@
             "title": "Iris Dashboard",
             "loading": "Loading...",
             "error": "Failed to load dashboard data. Please try again.",
+            "timeSpanSelectorAriaLabel": "Time span shown in the dashboard",
             "refresh": "Refresh",
             "totalSessions": "Total Sessions",
             "activeSessions": "Active Sessions",

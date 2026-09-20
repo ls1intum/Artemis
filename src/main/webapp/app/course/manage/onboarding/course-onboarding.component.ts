@@ -2,6 +2,7 @@ import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
+import { MAX_GRADING_POINTS } from 'app/foundation/constants/input.constants';
 import { CourseManagementService } from '../services/course-management.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -151,9 +152,25 @@ export class CourseOnboardingComponent implements OnInit {
 
         switch (step) {
             case 0: {
-                // General Settings: startDate < endDate
-                if (current.startDate && current.endDate && dayjs(current.startDate).isAfter(dayjs(current.endDate))) {
+                // General Settings: startDate, endDate and semester are mandatory, and startDate must be before endDate.
+                // The course arrives here already validated by the create endpoint, but the date pickers and the
+                // semester select stay editable in the wizard, so a value set on create can still be cleared here.
+                if (!current.startDate) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.startDateRequired');
+                    return false;
+                }
+                if (!current.endDate) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.endDateRequired');
+                    return false;
+                }
+                // Strictly before, matching Course.validateStartAndEndDate() on the server: equal dates are rejected
+                // there, so accepting them here would only move the failure to the save request.
+                if (!dayjs(current.startDate).isBefore(dayjs(current.endDate))) {
                     this.alertService.error('artemisApp.course.onboarding.validation.startDateBeforeEndDate');
+                    return false;
+                }
+                if (!current.semester?.trim()) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.semesterRequired');
                     return false;
                 }
                 break;
@@ -200,6 +217,14 @@ export class CourseOnboardingComponent implements OnInit {
                 }
                 if (current.maxPoints !== undefined && current.maxPoints <= 0) {
                     this.alertService.error('artemisApp.course.onboarding.validation.maxPointsPositive');
+                    return false;
+                }
+                if (current.maxPoints !== undefined && !Number.isInteger(current.maxPoints)) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.maxPointsWholeNumber');
+                    return false;
+                }
+                if (current.maxPoints !== undefined && current.maxPoints > MAX_GRADING_POINTS) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.maxPointsTooHigh', { max: MAX_GRADING_POINTS });
                     return false;
                 }
                 break;

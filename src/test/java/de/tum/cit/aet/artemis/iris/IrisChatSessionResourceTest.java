@@ -31,6 +31,10 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
@@ -120,6 +124,25 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void overview_listsProactiveOnlySession() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        // A session whose only message is a proactive (PROACTIVE_STRUGGLE) LLM nudge - no USER message - must still be listed.
+        var session = IrisChatSessionFactory.createProgrammingExerciseChatSessionForUser(programmingExercise, user);
+        var msg = new IrisMessage();
+        msg.addContent(new IrisTextMessageContent("Have you considered the empty input?"));
+        msg.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        msg.setSender(IrisMessageSender.LLM);
+        msg.setSession(session);
+        session.getMessages().add(msg);
+        saveChatSessionWithMessages(session);
+
+        List<IrisChatSessionDTO> result = request.getList(overviewUrl(), HttpStatus.OK, IrisChatSessionDTO.class);
+
+        assertThat(findByEntityId(result, programmingExercise.getId()).id()).isEqualTo(session.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void overview_returnsEmptyWhenIrisDisabledForCourse() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         saveChatSessionWithMessages(IrisChatSessionFactory.createCourseSessionForUserWithMessages(course, user));
@@ -135,7 +158,7 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         saveChatSessionWithMessages(IrisChatSessionFactory.createCourseSessionForUserWithMessages(course, user));
 
-        user.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(user, AiSelectionDecision.NO_AI);
         userTestRepository.save(user);
 
         assertThat(request.getList(overviewUrl(), HttpStatus.OK, IrisChatSessionDTO.class)).isEmpty();
@@ -340,7 +363,7 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getCurrent_forbiddenWhenStudentNotEnrolledInCourse() throws Exception {
-        Course otherCourse = courseUtilService.createCourseWithCustomStudentGroupName("iris-resource-restricted", "restricted-students");
+        Course otherCourse = courseUtilService.createCourse();
         activateIrisFor(otherCourse);
 
         request.postWithResponseBody(currentUrl(IrisChatMode.COURSE_CHAT, otherCourse.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.FORBIDDEN);

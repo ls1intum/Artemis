@@ -1,4 +1,4 @@
-import { OnDestroy, Pipe, PipeTransform, inject } from '@angular/core';
+import { Injectable, OnDestroy, Pipe, PipeTransform, inject } from '@angular/core';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -32,6 +32,8 @@ export type DateFormat = 'short' | 'long' | 'short-date' | 'long-date' | 'time';
     name: 'artemisDate',
     pure: false,
 })
+// needed to be injectable in services and components that format dates outside of a template, e.g. for alert messages
+@Injectable({ providedIn: 'root' })
 export class ArtemisDatePipe implements PipeTransform, OnDestroy {
     private readonly translateService = inject(TranslateService);
 

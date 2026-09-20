@@ -155,11 +155,11 @@ describe('TutorialRegistrationsContainerComponent', () => {
             loggedInUserIsAtLeastTutorOfGroup: boolean;
             loggedInUserIsAtLeastInstructorInCourse: boolean;
         };
-        expect(child.courseId).toBe(2);
-        expect(child.tutorialGroupId).toBe(17);
-        expect(child.registeredStudents).toEqual(registeredStudents);
-        expect(child.loggedInUserIsAtLeastTutorOfGroup).toBe(true);
-        expect(child.loggedInUserIsAtLeastInstructorInCourse).toBe(false);
+        expect(child.courseId()).toBe(2);
+        expect(child.tutorialGroupId()).toBe(17);
+        expect(child.registeredStudents()).toEqual(registeredStudents);
+        expect(child.loggedInUserIsAtLeastTutorOfGroup()).toBe(true);
+        expect(child.loggedInUserIsAtLeastInstructorInCourse()).toBe(false);
     });
 
     it('should mark the user as at least tutor of the group when they have editor rights in the course and as instructor when they have instructor rights', () => {

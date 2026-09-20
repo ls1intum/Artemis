@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, effect, inject, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -9,13 +9,12 @@ import { TextExerciseService } from '../service/text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseMode, IncludedInOverallScore, ValidationReason, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { FormsModule, NgForm, NgModel } from '@angular/forms';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/foundation/util/global.utils';
@@ -27,7 +26,7 @@ import { Subscription } from 'rxjs';
 import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -44,11 +43,16 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
-import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
+import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
+import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
+import { getCommonExerciseInvalidReasons, getPlagiarismInvalidReasons } from 'app/exercise/util/exercise-validation.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-text-exercise-update',
     templateUrl: './text-exercise-update.component.html',
+    styleUrl: './text-exercise-update.component.scss',
     imports: [
         FormsModule,
         TranslateDirective,
@@ -61,7 +65,7 @@ import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedbac
         TeamConfigFormGroupComponent,
         MarkdownEditorMonacoComponent,
         CompetencySelectionComponent,
-        FormDateTimePickerComponent,
+        ExerciseGroupTimelineLockComponent,
         IncludedInOverallScorePickerComponent,
         ExerciseUpdatePlagiarismComponent,
         PresentationScoreComponent,
@@ -69,7 +73,8 @@ import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedbac
         FormFooterComponent,
         ArtemisTranslatePipe,
         FeatureOverlayComponent,
-        ExerciseFeedbackSuggestionOptionsComponent,
+        ExerciseTimelineComponent,
+        ExerciseGroupDateNoticeComponent,
     ],
 })
 export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -92,11 +97,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     editForm = viewChild<NgForm>('editForm');
     bonusPoints = viewChild<NgModel>('bonusPoints');
     points = viewChild<NgModel>('points');
-    solutionPublicationDateField = viewChild<FormDateTimePickerComponent>('solutionPublicationDate');
-    releaseDateField = viewChild<FormDateTimePickerComponent>('releaseDate');
-    startDateField = viewChild<FormDateTimePickerComponent>('startDate');
-    dueDateField = viewChild<FormDateTimePickerComponent>('dueDate');
-    assessmentDateField = viewChild<FormDateTimePickerComponent>('assessmentDueDate');
     exerciseUpdatePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
     exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
     teamConfigFormGroupComponent = viewChild.required<TeamConfigFormGroupComponent>('teamConfigFormGroup');
@@ -119,6 +119,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     }
     backupExercise!: TextExercise; // set in ngOnInit() from the route-resolved exercise before save() reads it
     readonly isSaving = signal(false);
+    readonly timelineStatus = signal<TimelineStatus>({ valid: true, empty: false, invalidItems: [] });
     readonly exerciseCategories = signal<ExerciseCategory[]>([]);
     readonly existingCategories = signal<ExerciseCategory[]>([]);
     notificationText?: string;
@@ -129,12 +130,17 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     readonly formSectionStatus = signal<FormSectionStatus[]>(undefined!);
 
     pointsSubscription?: Subscription;
-    bonusPointsSubscription?: Subscription;
     teamSubscription?: Subscription;
 
     constructor() {
         effect(() => {
             this.updateFormSectionsOnIsValidChange();
+        });
+        effect(() => {
+            this.timelineStatus();
+            if (this._textExercise()) {
+                this.validateDate();
+            }
         });
     }
 
@@ -160,9 +166,25 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         this.calculateFormSectionStatus();
     }
 
+    /**
+     * Follows the bonus field as the score mode creates and destroys it.
+     *
+     * The wiring used to run once, when the view was first built, which was enough while the field merely hid itself.
+     * Now that it is removed and rebuilt, a subscription to the control that happened to exist then would stop
+     * reporting the moment the reader switched modes - and the section status would sit on whatever it last heard.
+     * Recalculated on every appearance and disappearance too, since both change what the section is worth.
+     */
+    protected readonly followBonusPointsControl = effect((onCleanup) => {
+        const control = this.bonusPoints();
+        // Untracked: the calculation reads half the form, and tracking all of it here would re-run this on every
+        // keystroke rather than when the control itself comes or goes.
+        untracked(() => this.calculateFormSectionStatus());
+        const subscription = control?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
+        onCleanup(() => subscription?.unsubscribe());
+    });
+
     ngAfterViewInit() {
         this.pointsSubscription = this.points()?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
-        this.bonusPointsSubscription = this.bonusPoints()?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.teamSubscription = this.teamConfigFormGroupComponent().formValidChanges?.subscribe(() => this.calculateFormSectionStatus());
     }
 
@@ -176,7 +198,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         this.activatedRoute.data.subscribe(({ textExercise }) => {
             this.textExercise = textExercise;
 
-            this.backupExercise = cloneDeep(this.textExercise);
+            this.backupExercise = deepClone(this.textExercise);
             this.examCourseId = this.textExercise.course?.id || this.textExercise.exerciseGroup?.exam?.course?.id;
         });
 
@@ -236,7 +258,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
 
     ngOnDestroy() {
         this.pointsSubscription?.unsubscribe();
-        this.bonusPointsSubscription?.unsubscribe();
         this.teamSubscription?.unsubscribe();
     }
 
@@ -252,34 +273,42 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                 { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.textExercise.problemStatement },
                 {
                     title: 'artemisApp.exercise.sections.solution',
-                    valid: Boolean(this.isExamMode() || (!this.textExercise.exampleSolutionPublicationDateError && this.solutionPublicationDateField()?.dateInput.valid)),
-                    empty: !this.textExercise.exampleSolution || (!this.isExamMode() && !this.textExercise.exampleSolutionPublicationDate),
+                    valid: true,
+                    empty: !this.textExercise.exampleSolution,
                 },
                 {
+                    // The example solution publication date lives in the timeline (as for programming exercises), so
+                    // its validity is part of the grading section.
                     title: 'artemisApp.exercise.sections.grading',
                     valid: Boolean(
                         this.points()?.valid &&
-                        this.bonusPoints()?.valid &&
+                        // Absent when the score does not include bonus points, which is not a reason to call the section invalid.
+                        (this.bonusPoints()?.valid ?? true) &&
                         (this.isExamMode() ||
-                            (this.exerciseUpdatePlagiarismComponent()?.isFormValid() &&
-                                !this.textExercise.startDateError &&
-                                !this.textExercise.dueDateError &&
-                                !this.textExercise.assessmentDueDateError &&
-                                this.releaseDateField()?.dateInput.valid &&
-                                this.startDateField()?.dateInput.valid &&
-                                this.dueDateField()?.dateInput.valid &&
-                                this.assessmentDateField()?.dateInput.valid)),
+                            (this.exerciseUpdatePlagiarismComponent()?.isFormValid() && this.timelineStatus().valid && !this.textExercise.exampleSolutionPublicationDateError)),
                     ),
-                    empty:
-                        !this.isExamMode() &&
-                        // if a dayjs object contains an empty date, it is considered "invalid"
-                        (!this.textExercise.startDate?.isValid() ||
-                            !this.textExercise.dueDate?.isValid() ||
-                            !this.textExercise.assessmentDueDate?.isValid() ||
-                            !this.textExercise.releaseDate?.isValid()),
+                    empty: !this.isExamMode() && this.timelineStatus().empty,
                 },
             ]);
         }
+    }
+
+    /** Every reason the exercise cannot be saved; drives the footer's disabled state and its tooltip. */
+    getInvalidReasons(): ValidationReason[] {
+        if (!this.textExercise) {
+            return [];
+        }
+        const titleChannelNameComponent = this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent();
+        return [
+            ...getCommonExerciseInvalidReasons(this.textExercise, {
+                isExamMode: this.isExamMode(),
+                minTitleLength: 3,
+                isTitleDisallowed: !!titleChannelNameComponent?.field_title?.control?.errors?.disallowedValue,
+                isChannelNameRequired: !!titleChannelNameComponent?.isChannelFieldDisplayed(),
+                timelineStatus: this.timelineStatus(),
+            }),
+            ...getPlagiarismInvalidReasons(this.exerciseUpdatePlagiarismComponent()),
+        ];
     }
 
     /**
@@ -309,7 +338,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     save() {
         this.isSaving.set(true);
 
-        new SaveExerciseCommand(this.modalService, this.popupService, this.textExerciseService, this.backupExercise, this.editType, this.alertService)
+        new SaveExerciseCommand(this.modalService, this.popupService, this.textExerciseService, this.backupExercise, this.editType)
             .save(this.textExercise, this.isExamMode(), this.notificationText)
             .subscribe({
                 next: (exercise: TextExercise) => this.onSaveSuccess(exercise),

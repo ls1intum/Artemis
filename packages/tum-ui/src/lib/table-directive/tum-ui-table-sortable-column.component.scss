@@ -1,0 +1,29 @@
+:host {
+    white-space: nowrap;
+}
+
+.tum-ui-sort-button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: inherit;
+    cursor: pointer;
+}
+
+.tum-ui-sort-button:disabled {
+    cursor: default;
+}
+
+.tum-ui-sort-icon {
+    display: inline-block;
+    width: calc(var(--tumaet-ui-spacing) * 3.5);
+    height: calc(var(--tumaet-ui-spacing) * 3.5);
+    margin-inline-start: calc(var(--tumaet-ui-spacing) * 2);
+    vertical-align: middle;
+    flex-shrink: 0;
+}

@@ -8,7 +8,7 @@ import { MockProvider } from 'ng-mocks';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { TextBlockType } from 'app/text/shared/entities/text-block.model';
+import { TextBlock, TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
@@ -152,6 +152,34 @@ describe('TextblockAssessmentCardComponent', () => {
         component.select();
         fixture.changeDetectorRef.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC);
+    });
+
+    /**
+     * Deleting feedback from an automatic text block, i.e. a line of the submission, used to be impossible: the click on the
+     * close control bubbled to the editor host, whose `(click)="select(false)"` calls `TextBlockRef.initFeedback()` and
+     * re-created the feedback that `unselect()` had just removed. A manual block hid the problem, because it is additionally
+     * removed from the list via `didDelete`.
+     *
+     * The click has to go through the DOM: calling `dismiss()` on the editor directly never bubbles, which is why the
+     * existing tests above did not catch this.
+     */
+    it('should delete the feedback of an automatic text block when the close control is clicked', () => {
+        const block = new TextBlock();
+        block.type = TextBlockType.AUTOMATIC;
+        block.text = 'a line of the submission';
+        const textBlockRef = new TextBlockRef(block, { type: FeedbackType.MANUAL, credits: 0, detailText: '' });
+        fixture.componentRef.setInput('textBlockRef', textBlockRef);
+        fixture.changeDetectorRef.detectChanges();
+
+        const dismissIcon = fixture.debugElement.query(By.css('#dismiss-icon'));
+        expect(dismissIcon).toBeTruthy();
+
+        // No change detection afterwards on purpose: the click handlers run synchronously, and in the real page the parent
+        // destroys this editor in response to didSelect(undefined). Re-rendering it here instead would only exercise the
+        // test's own missing parent wiring.
+        dismissIcon.nativeElement.click();
+
+        expect(textBlockRef.feedback).toBeUndefined();
     });
 
     it('should not send assessment event when selecting text block that is unselectable', () => {

@@ -25,7 +25,10 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 
 class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
-    private static final String TEST_PREFIX = "repositoryintegration";
+    private static final String TEST_PREFIX = "apollondiagramresource";
+
+    // Outsider users — different prefix so enrollPrefixedUsersInCourse(course, TEST_PREFIX) never picks them up
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
 
     // A representative non-empty Apollon model JSON. Non-empty matters: @JsonInclude(NON_EMPTY) on the DTO/entity omits an
     // empty jsonRepresentation, so only a non-empty value actually exercises this field's entity->DTO round trip on the wire.
@@ -43,15 +46,16 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor2");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor2");
+        userUtilService.addUsers(OTHER_PREFIX, 0, 1, 0, 1); // outsider tutor and instructor — never enrolled in course
 
         apollonDiagram = ModelingExerciseFactory.generateApollonDiagram(DiagramType.ActivityDiagram, "activityDiagram1");
 
-        course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        course2 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>());
+        course2 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>());
         courseRepository.save(course1);
         courseRepository.save(course2);
+        userUtilService.enrollPrefixedUsersInCourse(course1, TEST_PREFIX);
+        userUtilService.enrollPrefixedUsersInCourse(course2, TEST_PREFIX);
     }
 
     @AfterEach
@@ -111,7 +115,7 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor1", roles = "TA")
     void testCreateApollonDiagram_AccessForbidden() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         request.postWithResponseBody("/api/modeling/courses/" + course1.getId() + "/apollon-diagrams", apollonDiagram, ApollonDiagramDTO.class, HttpStatus.FORBIDDEN);
@@ -182,7 +186,7 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor1", roles = "TA")
     void testUpdateApollonDiagram_AccessForbidden() throws Exception {
         apollonDiagram = apollonDiagramRepository.save(apollonDiagram);
         apollonDiagram.setTitle("updated title");
@@ -220,7 +224,7 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor1", roles = "TA")
     void testGetDiagramsByCourse_AccessForbidden() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         apollonDiagramRepository.save(apollonDiagram);
@@ -282,7 +286,7 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor1", roles = "TA")
     void testGetApollonDiagram_AccessForbidden() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         ApollonDiagram savedDiagram = apollonDiagramRepository.save(apollonDiagram);
@@ -305,14 +309,14 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     /**
-     * Membership oracle guard: an unauthorized caller (tutor2 has a global TA role but is not authorized for course1)
+     * Membership oracle guard: an unauthorized caller (an outsider tutor with a global TA role but no role in course1)
      * must get a uniform 403 regardless of whether the requested id resolves within course1, belongs to a different
      * course, or does not exist at all. Before the authorization-ordering fix, the course-scoped lookup ran before
      * the authorization check, so a course2 id or a non-existing id returned 404 while a course1 id returned 403 -
      * leaking whether a diagram belongs to the path course via the response status code.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor1", roles = "TA")
     void testGetApollonDiagram_unauthorizedForCourse_uniform403() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         ApollonDiagram existingInCourse1 = apollonDiagramRepository.save(apollonDiagram);
@@ -352,7 +356,7 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteApollonDiagram_AccessForbidden() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         ApollonDiagram savedDiagram = apollonDiagramRepository.save(apollonDiagram);

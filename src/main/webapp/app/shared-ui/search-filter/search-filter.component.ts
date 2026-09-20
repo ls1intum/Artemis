@@ -1,17 +1,19 @@
 import { Component, input, output, signal } from '@angular/core';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
-import { InputTextModule } from 'primeng/inputtext';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiSearchFieldComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-search-filter',
     templateUrl: './search-filter.component.html',
     styleUrls: ['./search-filter.component.scss'],
-    imports: [IconFieldModule, InputIconModule, InputTextModule, ArtemisTranslatePipe],
+    imports: [TumUiSearchFieldComponent],
 })
 export class SearchFilterComponent {
     readonly placeholderKey = input<string>('artemisApp.course.exercise.search.searchPlaceholder');
+    /**
+     * Translation key for the accessible name. Without it the field falls back to naming itself after its
+     * placeholder, which says less than a purpose-written label and changes whenever the placeholder copy does.
+     */
+    readonly ariaLabelKey = input<string>('artemisApp.course.exercise.search.searchLabel');
     readonly disabled = input(false);
     readonly newSearchEvent = output<string>();
 
@@ -23,7 +25,6 @@ export class SearchFilterComponent {
     }
 
     resetSearchValue() {
-        this.searchValue.set('');
-        this.newSearchEvent.emit('');
+        this.setSearchValue('');
     }
 }

@@ -16,6 +16,13 @@ const POSSIBLE_FIRST_NAME_HEADERS = ['firstname', 'firstnameofstudent', 'givenna
 const POSSIBLE_LAST_NAME_HEADERS = ['familyname', 'lastname', 'familynameofstudent', 'surname', 'nachname', 'familienname', 'name'];
 const POSSIBLE_ROOM_HEADERS = ['actualroom', 'actualRoom', 'raum', 'room', 'Room'];
 const POSSIBLE_SEAT_HEADERS = ['actualseat', 'actualSeat', 'sitzplatz', 'sitz', 'seat', 'Seat'];
+// Deliberately not the bare 'test', which would collide with unrelated columns.
+const POSSIBLE_IS_TEST_USER_HEADERS = ['istestuser', 'testuser', 'testaccount'];
+const TRUTHY_CELL_VALUES = ['true', '1', 'yes', 'x', 'ja', 'wahr'];
+
+function parseBooleanCell(value?: string): boolean {
+    return value !== undefined && TRUTHY_CELL_VALUES.includes(value.trim().toLowerCase());
+}
 
 export async function readStudentDTOsFromCSVFile(csvFile: File): Promise<StudentParsingResult> {
     const csvUsers: CsvUser[] = await parseCsvUserFromFile(csvFile);
@@ -34,6 +41,7 @@ export async function readStudentDTOsFromCSVFile(csvFile: File): Promise<Student
     const emailHeader = usedHeaders.find((value) => POSSIBLE_EMAIL_HEADERS.includes(value)) || '';
     const firstNameHeader = usedHeaders.find((value) => POSSIBLE_FIRST_NAME_HEADERS.includes(value)) || '';
     const lastNameHeader = usedHeaders.find((value) => POSSIBLE_LAST_NAME_HEADERS.includes(value)) || '';
+    const testUserHeader = usedHeaders.find((value) => POSSIBLE_IS_TEST_USER_HEADERS.includes(value)) || '';
 
     const students = csvUsers.map((user: CsvUser) => {
         return {
@@ -42,6 +50,8 @@ export async function readStudentDTOsFromCSVFile(csvFile: File): Promise<Student
             email: user[emailHeader]?.trim() || '',
             firstName: user[firstNameHeader]?.trim() || '',
             lastName: user[lastNameHeader]?.trim() || '',
+            // Only set when the column is present; otherwise leave undefined so the import does not change the existing flag.
+            isTestUser: testUserHeader ? parseBooleanCell(user[testUserHeader]) : undefined,
         };
     });
     return {

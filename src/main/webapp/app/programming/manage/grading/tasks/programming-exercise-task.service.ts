@@ -13,6 +13,7 @@ import { ProgrammingExerciseGradingService, ProgrammingExerciseTestCaseUpdate } 
 import { AlertService } from 'app/foundation/service/alert.service';
 import { parseJson } from 'app/foundation/util/json.util';
 import { map, mergeMap } from 'rxjs/operators';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Injectable()
 export class ProgrammingExerciseTaskService {
@@ -176,7 +177,7 @@ export class ProgrammingExerciseTaskService {
         this.tasks = serverSideTasks.map((task) => task as ProgrammingExerciseTask);
 
         this.tasks = this.tasks // configureTestCases needs tasks to be set be to be able to use the testCases getter
-            .map((task) => ({ ...task, testCases: task.testCases ?? [] }))
+            .map((task) => cloneWith(task, { testCases: task.testCases ?? [] }))
             .map(this.addGradingStats);
 
         this.removeDuplicateTestCasesFromTasks();

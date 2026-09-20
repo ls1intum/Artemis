@@ -1,5 +1,7 @@
 import { Component, ElementRef, HostListener, computed, effect, inject, input, output, signal, untracked, viewChild, viewChildren } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
@@ -33,7 +35,6 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { finalize } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import dayjs from 'dayjs/esm';
-import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
@@ -50,7 +51,6 @@ import {
 } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
@@ -111,24 +111,23 @@ export class ExerciseHeaderActionsComponent {
     private readonly alertService = inject(AlertService);
     private readonly courseExerciseService = inject(CourseExerciseService);
     private readonly participationService = inject(ParticipationService);
-    private readonly profileService = inject(ProfileService);
     private readonly router = inject(Router);
     private readonly accountService = inject(AccountService);
+    private readonly profileService = inject(ProfileService);
 
     readonly exercise = input.required<Exercise>();
     readonly courseId = input.required<number>();
     readonly smallButtons = input<boolean>(false);
     readonly examMode = input<boolean>(false);
-    readonly isGeneratingFeedback = input<boolean>(false);
     readonly onSubmitExercise = input<() => void>();
     readonly onContinueExercise = input<() => void>();
     readonly onRestartPractice = input<() => boolean>();
     readonly submitDisabled = input<boolean>(false);
     readonly submitLabel = input<string>('entity.action.submit');
+    readonly quizPracticeAttemptFinished = input<boolean>(false);
     readonly plagiarismCaseInfo = input<PlagiarismCaseInfo>();
     readonly participationMode = input<ParticipationMode>('graded');
 
-    readonly generatingFeedback = output<void>();
     readonly newParticipation = output<StudentParticipation>();
     readonly participationModeChange = output<ParticipationMode>();
 
@@ -208,7 +207,21 @@ export class ExerciseHeaderActionsComponent {
         const selection = this.userLLMSelection();
         return selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;
     });
-    readonly showFeedbackPopover = computed(() => !this.examMode() && (this.exercise().allowFeedbackRequests ?? false) && this.hasUserAcceptedLLM());
+    readonly showFeedbackPopover = computed(() => {
+        const exercise = this.exercise();
+        if (exercise.type === ExerciseType.PROGRAMMING && exercise.assessmentType !== AssessmentType.SEMI_AUTOMATIC) {
+            // Athena feedback requests for programming exercises require manual assessment to be enabled
+            return false;
+        }
+        return (
+            !this.examMode() &&
+            this.hasUserAcceptedLLM() &&
+            this.athenaEnabled &&
+            (exercise.course?.athenaFormativeFeedbackEnabled ?? false) &&
+            (exercise.type === ExerciseType.PROGRAMMING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING)
+        );
+    });
+    readonly hasProgrammingSubmission = computed(() => !!this.activeParticipationForCode()?.submissions?.some((submission) => submission.submitted));
 
     readonly beforeDueDate = computed(() => {
         const exercise = this.exercise();
@@ -302,19 +315,34 @@ export class ExerciseHeaderActionsComponent {
         return !this.examMode() && isStartPracticeAvailable(this.exercise(), this._practiceParticipation());
     }
 
+    /**
+     * Whether the quiz "Start practice" button should be shown: in the graded view only until the first practice
+     * attempt exists, and in the practice view only once the current attempt is finished (to start another). It is
+     * hidden while viewing a previous result (where the "Continue" action returns to the latest submission first).
+     * Once a practice attempt exists, a student in the graded view switches to practice mode, which opens the latest
+     * practice result, and starts another attempt from there.
+     */
+    readonly showQuizStartPracticeButton = computed(() => {
+        if (!this.isStartPracticeAvailable() || this.onContinueExercise()) {
+            return false;
+        }
+        if (this.participationMode() === 'practice') {
+            return this.quizPracticeAttemptFinished();
+        }
+        return !this._practiceParticipation();
+    });
+
     startExercise() {
         this._isLoading.set(true);
         const programmingExercise = this._programmingExercise();
         this.courseExerciseService
-            .startExercise(this.exercise().id!)
+            .startExercise(this.exercise().id!, this.exercise())
             .pipe(finalize(() => this._isLoading.set(false)))
             .subscribe({
                 next: (participation) => {
-                    if (participation) {
-                        this.receiveNewParticipation(participation);
-                    }
+                    this.receiveNewParticipation(participation);
                     if (programmingExercise) {
-                        if (participation?.initializationState === InitializationState.INITIALIZED) {
+                        if (participation.initializationState === InitializationState.INITIALIZED) {
                             if (programmingExercise.allowOfflineIde) {
                                 this.alertService.success('artemisApp.exercise.personalRepositoryClone');
                             } else {
@@ -338,14 +366,12 @@ export class ExerciseHeaderActionsComponent {
         this._isLoading.set(true);
         const participation = testRun ? this._practiceParticipation() : this._gradedParticipation();
         this.courseExerciseService
-            .resumeProgrammingExercise(this.exercise().id!, participation!.id!)
+            .resumeProgrammingExercise(this.exercise().id!, participation!.id!, this.exercise())
             .pipe(finalize(() => this._isLoading.set(false)))
             .subscribe({
                 next: (resumedParticipation: StudentParticipation) => {
-                    if (resumedParticipation) {
-                        this.receiveNewParticipation(resumedParticipation);
-                        this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
-                    }
+                    this.receiveNewParticipation(resumedParticipation);
+                    this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
                 },
                 error: (error) => {
                     this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
@@ -383,7 +409,9 @@ export class ExerciseHeaderActionsComponent {
 
     get assignedTeamId(): number | undefined {
         const participations = this._studentParticipations();
-        return participations?.length ? participations[0].team?.id : this.exercise().studentAssignedTeamId;
+        // Fall through rather than branch: the course overview projects the participation without its team, and even
+        // before that a team-mode participation could arrive without one. The exercise carries the resolved team id.
+        return participations?.[0]?.team?.id ?? this.exercise().studentAssignedTeamId;
     }
 
     get allowEditing(): boolean {
@@ -507,7 +535,7 @@ export class ExerciseHeaderActionsComponent {
 
     submitAndShowPopover() {
         this.onSubmitExercise()?.();
-        if (countSuccessfulAthenaFeedbackRequests(this.activeParticipationForCode()) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {
+        if (!this.hasUserAcceptedLLM() || countSuccessfulAthenaFeedbackRequests(this.activeParticipationForCode()) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {
             return;
         }
         this.submitPopoverRef()?.open();

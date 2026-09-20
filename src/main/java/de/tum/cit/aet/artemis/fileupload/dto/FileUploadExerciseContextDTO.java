@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -43,11 +44,12 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
  * @param gradingCriteria                        the grading criteria defined for the exercise
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadExerciseContextDTO(Long id, String title, String problemStatement, String gradingInstructions, String exampleSolution, ZonedDateTime releaseDate,
-        ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Double maxPoints, Double bonusPoints, AssessmentType assessmentType,
-        Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests, ExerciseType type, String filePattern, Boolean teamMode, Boolean isAtLeastTutor,
-        Boolean isAtLeastEditor, Boolean isAtLeastInstructor, FileUploadCourseContextDTO course, FileUploadExerciseGroupContextDTO exerciseGroup,
-        Set<GradingCriterionDTO> gradingCriteria) {
+public record FileUploadExerciseContextDTO(Long id, String title, @Nullable String problemStatement, @Nullable String gradingInstructions, @Nullable String exampleSolution,
+        @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, Double maxPoints,
+        Double bonusPoints, @Nullable AssessmentType assessmentType, @Nullable Boolean allowComplaintsForAutomaticAssessments, @Nullable Boolean allowFeedbackRequests,
+        ExerciseType type, @Nullable String filePattern, boolean teamMode, @Nullable Boolean isAtLeastTutor, @Nullable Boolean isAtLeastEditor,
+        @Nullable Boolean isAtLeastInstructor, @Nullable FileUploadCourseContextDTO course, @Nullable FileUploadExerciseGroupContextDTO exerciseGroup,
+        @Nullable Set<GradingCriterionDTO> gradingCriteria) {
 
     /**
      * Factory method to create a {@link FileUploadExerciseContextDTO} from a {@link FileUploadExercise} entity.
@@ -56,7 +58,7 @@ public record FileUploadExerciseContextDTO(Long id, String title, String problem
      * @param includeGradingCriteria whether to include the grading criteria in the DTO
      * @return the mapped DTO, or null if the input was null
      */
-    public static FileUploadExerciseContextDTO of(FileUploadExercise exercise, boolean includeGradingCriteria) {
+    public static @Nullable FileUploadExerciseContextDTO of(@Nullable FileUploadExercise exercise, boolean includeGradingCriteria) {
         return of(exercise, includeGradingCriteria, null, null, null);
     }
 
@@ -70,8 +72,8 @@ public record FileUploadExerciseContextDTO(Long id, String title, String problem
      * @param isAtLeastInstructor    whether the current user has at least instructor privileges for the exercise
      * @return the mapped DTO, or null if the input was null
      */
-    public static FileUploadExerciseContextDTO of(FileUploadExercise exercise, boolean includeGradingCriteria, Boolean isAtLeastTutor, Boolean isAtLeastEditor,
-            Boolean isAtLeastInstructor) {
+    public static @Nullable FileUploadExerciseContextDTO of(@Nullable FileUploadExercise exercise, boolean includeGradingCriteria, @Nullable Boolean isAtLeastTutor,
+            @Nullable Boolean isAtLeastEditor, @Nullable Boolean isAtLeastInstructor) {
         if (exercise == null) {
             return null;
         }

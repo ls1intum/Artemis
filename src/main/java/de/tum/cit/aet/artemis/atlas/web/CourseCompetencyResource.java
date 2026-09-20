@@ -58,6 +58,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.api.IrisCompetencyApi;
@@ -65,6 +66,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisCompetencyRecommendationDTO;
 
 @Conditional(AtlasEnabled.class)
 @Lazy
+@FeatureUsage("competencies/competencies")
 @RestController
 @RequestMapping("api/atlas/")
 public class CourseCompetencyResource {
@@ -148,7 +150,7 @@ public class CourseCompetencyResource {
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<CourseCompetencyResponseDTO> getCourseCompetency(@PathVariable long competencyId, @PathVariable long courseId) {
         log.info("REST request to get Competency : {}", competencyId);
-        var currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        var currentUser = userRepository.getUserWithAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
         var competency = courseCompetencyService.findCompetencyWithExercisesAndLectureUnitsAndProgressForUser(competencyId, currentUser.getId());
         checkCourseForCompetency(course, competency);
@@ -169,7 +171,7 @@ public class CourseCompetencyResource {
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<CourseCompetencyResponseDTO>> getCourseCompetenciesWithProgress(@PathVariable long courseId, @RequestParam(defaultValue = "false") boolean filter) {
         log.debug("REST request to get competencies for course with id: {}", courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         final var competencies = courseCompetencyService.findCourseCompetenciesWithProgressForUserByCourseId(courseId, user.getId(), filter);
         return ResponseEntity.ok(competencies.stream().map(CourseCompetencyResponseDTO::of).toList());
     }
@@ -187,7 +189,7 @@ public class CourseCompetencyResource {
     public ResponseEntity<CompetencyProgressDTO> getCompetencyStudentProgress(@PathVariable long courseId, @PathVariable long competencyId,
             @RequestParam(defaultValue = "false") boolean refresh) {
         log.debug("REST request to get student progress for competency: {}", competencyId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
         var competency = courseCompetencyRepository.findByIdElseThrow(competencyId);
         checkCourseForCompetency(course, competency);
@@ -247,7 +249,7 @@ public class CourseCompetencyResource {
     @GetMapping("course-competencies/for-import")
     @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<CourseCompetencyResponseDTO>> getCompetenciesForImport(CompetencyPageableSearchDTO search) {
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         var result = courseCompetencyService.getOnPageWithSizeForImport(search, user);
         var resultDto = new SearchResultPageDTO<>(result.getResultsOnPage().stream().map(CourseCompetencyResponseDTO::ofWithCourse).toList(), result.getNumberOfPages());
         return ResponseEntity.ok(resultDto);
@@ -362,7 +364,7 @@ public class CourseCompetencyResource {
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<Void> generateCompetenciesFromCourseDescription(@PathVariable Long courseId, @Valid @RequestBody CompetencyGenerationRequestDTO input) {
         var api = irisCompetencyApi.orElseThrow();
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
         var currentCompetencyDTOs = Optional.ofNullable(input.currentCompetencies()).orElse(List.of());
         if (currentCompetencyDTOs.stream().anyMatch(Objects::isNull)) {
@@ -405,7 +407,7 @@ public class CourseCompetencyResource {
     @EnforceAtLeastStudentInExercise
     public ResponseEntity<List<CompetencyContributionDTO>> getCompetencyContributionsForExercise(@PathVariable long exerciseId) {
         log.debug("REST request to get competency contributions for exercise: {}", exerciseId);
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         final var competencyContributions = courseCompetencyService.getCompetencyContributionsForExercise(exerciseId, user.getId());
 
         return ResponseEntity.ok(competencyContributions);
@@ -421,7 +423,7 @@ public class CourseCompetencyResource {
     @EnforceAtLeastStudentInLectureUnit
     public ResponseEntity<List<CompetencyContributionDTO>> getCompetencyContributionsForLectureUnit(@PathVariable long lectureUnitId) {
         log.debug("REST request to get competency contributions for lecture unit: {}", lectureUnitId);
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         final var competencyContributions = courseCompetencyService.getCompetencyContributionsForLectureUnit(lectureUnitId, user.getId());
 
         return ResponseEntity.ok(competencyContributions);

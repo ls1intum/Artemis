@@ -4,6 +4,7 @@ import {
     faBell,
     faBookOpen,
     faBroom,
+    faChartLine,
     faClipboardList,
     faCubes,
     faDownload,
@@ -25,7 +26,7 @@ import {
     faUser,
     faUserShield,
 } from '@fortawesome/free-solid-svg-icons';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
+import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -215,6 +216,13 @@ export class AdminSidebarComponent {
                 title: 'Statistics',
                 translation: 'global.menu.admin.sidebar.statistics',
                 testId: 'admin-statistics',
+            },
+            {
+                routerLink: '/admin/feature-usage',
+                icon: faChartLine,
+                title: 'Feature Usage',
+                translation: 'global.menu.admin.sidebar.featureUsage',
+                testId: 'admin-feature-usage',
             },
             {
                 routerLink: '/admin/websocket',

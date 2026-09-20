@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
 import java.nio.file.Path;
-import java.util.regex.Pattern;
 
 public class File extends java.io.File {
 
@@ -35,7 +34,7 @@ public class File extends java.io.File {
         String path = repository.getLocalPath().relativize(super.toPath()).toString();
         // Unify separator
         if (!"/".equals(File.separator)) {
-            path = path.replaceAll(Pattern.quote(File.separator), "/");
+            path = path.replace(File.separator, "/");
         }
         return path;
     }

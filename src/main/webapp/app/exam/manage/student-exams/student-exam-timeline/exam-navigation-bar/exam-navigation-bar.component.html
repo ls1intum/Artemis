@@ -1,0 +1,58 @@
+<div class="row justify-content-between align-items-start exam-navigation pt-3">
+    <div class="col m-0">
+        @if (exercises() && exercises().length > 0) {
+            <div
+                class="col d-none d-lg-block h3 m-0 text-overflow"
+                jhiTranslate="artemisApp.examParticipation.progress"
+                [translateValues]="{ current: exerciseIndex() + 1, all: exercises().length }"
+            ></div>
+            <div
+                class="col d-block d-lg-none h3 m-0 text-overflow"
+                style="flex: 0.2"
+                jhiTranslate="artemisApp.examParticipation.progressSmall"
+                [translateValues]="{ current: exerciseIndex() + 1, all: exercises().length }"
+            ></div>
+        }
+    </div>
+    <div class="col">
+        <div class="d-flex justify-content-center">
+            <div class="navigation-item">
+                <button class="btn btn-secondary w-100" (click)="changePage(exerciseIndex() - 1)" [disabled]="exerciseIndex() <= 0">
+                    <span aria-hidden="true">&laquo;</span>
+                    <span class="visually-hidden" jhiTranslate="artemisApp.examParticipation.navigation.previousButton"></span>
+                </button>
+            </div>
+            @for (exercise of exercises(); track exercise; let i = $index) {
+                @if (
+                    i >=
+                        exerciseIndex() -
+                            itemsVisiblePerSide() -
+                            (exerciseIndex() + 1 + itemsVisiblePerSide() > exercises().length ? exerciseIndex() + 1 + itemsVisiblePerSide() - exercises().length : 0) &&
+                    i <= exerciseIndex() + itemsVisiblePerSide() - (exerciseIndex() - itemsVisiblePerSide() <= 0 ? exerciseIndex() - itemsVisiblePerSide() : 0)
+                ) {
+                    <div class="navigation-item">
+                        <button id="exam-exercise-{{ i }}" class="btn btn-primary w-100" [ngClass]="getExerciseButtonStatus(i)" (click)="changePage(i)">
+                            <fa-icon [icon]="faCheck" [attr.aria-hidden]="true" />
+                            <span
+                                class="visually-hidden"
+                                jhiTranslate="artemisApp.examParticipation.navigation.exerciseButton"
+                                [translateValues]="{ number: i + 1, title: exercise.title }"
+                            ></span>
+                        </button>
+                        <div class="exerciseIndex">{{ i + 1 }}</div>
+                    </div>
+                }
+            }
+            <div class="navigation-item">
+                <button class="btn btn-secondary w-100" (click)="changePage(exerciseIndex() + 1)" [disabled]="exerciseIndex() >= exercises().length - 1 || exerciseIndex() < 0">
+                    <span aria-hidden="true">&raquo;</span>
+                    <span class="visually-hidden" jhiTranslate="artemisApp.examParticipation.navigation.nextButton"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Empty third column: it balances the first one so that the middle column stays centered in the
+         `justify-content-between` row. It used to hold the save button, the hand-in-early button and the exam timer,
+         none of which apply to the timeline. -->
+    <div class="col"></div>
+</div>

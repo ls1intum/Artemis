@@ -28,8 +28,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nimbusds.jwt.SignedJWT;
+
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -38,6 +39,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -59,6 +61,7 @@ import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
  */
 @Conditional(LtiEnabled.class)
 @Lazy
+@FeatureUsage("lti/launch")
 @RestController
 @RequestMapping("api/lti/")
 public class LtiResource {
@@ -169,7 +172,7 @@ public class LtiResource {
      * @throws BadRequestAlertException If LTI is not configured for the course, if no valid deep linking type is provided,
      *                                      or if content IDs are required but not provided for the specified resource type.
      */
-    @PostMapping({ "lti13/courses/{courseId}/deep-linking", "lti13/deep-linking/{courseId}" })
+    @PostMapping("lti13/courses/{courseId}/deep-linking")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "resourceType") DeepLinkingType resourceType,
             @RequestParam(name = "contentIds", required = false) Set<Long> contentIds, @RequestParam(name = "ltiIdToken") String ltiIdToken,
@@ -229,7 +232,9 @@ public class LtiResource {
             throw new BadRequestAlertException("clientId must not be blank", "LTI", "clientIdBlank");
         }
         clientId = clientId.trim();
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        // Pre-load the current user's course roles so the per-course isInstructorInCourse check inside
+        // findAllOnlineCoursesForPlatformForUser resolves in memory instead of one EXISTS query per online course.
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         log.debug("REST request to get all online courses the user {} has access to", user.getLogin());
 
         Set<Course> courses = courseService.findAllOnlineCoursesForPlatformForUser(clientId, user);

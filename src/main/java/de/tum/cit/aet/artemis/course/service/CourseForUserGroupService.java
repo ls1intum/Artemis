@@ -39,11 +39,11 @@ public class CourseForUserGroupService {
      * @return a list of courses that the user is associated with
      */
     public List<Course> getCoursesForTutors(User user, boolean onlyActive) {
-        List<Course> userCourses = courseRepository.findCoursesForAtLeastTutorWithGroups(user.getGroups(), authCheckService.isAdmin(user));
+        List<Course> userCourses = courseRepository.findCoursesForAtLeastTutor(user.getId(), authCheckService.isCurrentUserAdminAccessEnabled());
         if (onlyActive) {
             // only include courses that have NOT been finished
             final var now = ZonedDateTime.now();
-            userCourses = userCourses.stream().filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(now)).toList();
+            userCourses = userCourses.stream().filter(course -> course.getEndDate().isAfter(now)).toList();
         }
         return userCourses;
     }

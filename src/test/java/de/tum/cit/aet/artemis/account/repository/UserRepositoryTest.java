@@ -3,7 +3,10 @@ package de.tum.cit.aet.artemis.account.repository;
 import static de.tum.cit.aet.artemis.account.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -11,9 +14,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -32,6 +38,9 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
     private UserTestRepository userRepository;
 
     @Autowired
+    private UserActivityService userActivityService;
+
+    @Autowired
     private UserUtilService userUtilService;
 
     @Autowired
@@ -48,24 +57,128 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testFindAllNotEnrolledUsers() {
-        List<User> expected = userRepository
-                .saveAll(userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), new String[] {}, Set.of(), 1, 3));
+        List<User> expected = userRepository.saveAllOrUpdate(userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), Set.of(), 1, 3));
         // Should not find administrators
-        List<User> unexpected = userRepository.saveAll(
-                userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), new String[] {}, Set.of(Authority.ADMIN_AUTHORITY), 4, 4));
+        List<User> unexpected = userRepository
+                .saveAllOrUpdate(userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), Set.of(Authority.ADMIN_AUTHORITY), 4, 4));
         // Should not find super administrators
-        List<User> superAdmins = userRepository.saveAll(
-                userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), new String[] {}, Set.of(Authority.SUPER_ADMIN_AUTHORITY), 5, 5));
+        List<User> superAdmins = userRepository
+                .saveAllOrUpdate(userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), Set.of(Authority.SUPER_ADMIN_AUTHORITY), 5, 5));
         unexpected.addAll(superAdmins);
         // Should not find deleted users
-        List<User> deleted = userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), new String[] {}, Set.of(), 6, 7);
+        List<User> deleted = userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), Set.of(), 6, 7);
         deleted.forEach(user -> user.setDeleted(true));
-        unexpected.addAll(userRepository.saveAll(deleted));
+        unexpected.addAll(userRepository.saveAllOrUpdate(deleted));
+        unexpected.add(irisBot(ZonedDateTime.now().minusYears(1).toInstant()));
 
         final List<String> actual = userRepository.findAllNotEnrolledUsers();
 
         assertThat(actual).doesNotContainAnyElementsOf(unexpected.stream().map(User::getLogin).toList());
         assertThat(actual).containsAll(expected.stream().map(User::getLogin).toList());
+    }
+
+    /**
+     * Phase 1 selection: verifies which not-enrolled, inactive, not-yet-warned users are picked to be warned. Every
+     * "must survive" user violates exactly one guard (recently active / enrolled / admin / super-admin / Iris bot /
+     * already deleted / already warned), so a broken clause makes the corresponding assertion fail.
+     */
+    @Test
+    void testFindNotEnrolledUsersToWarn() {
+        final Instant cutoff = ZonedDateTime.now().minusMonths(6).toInstant();
+        final Instant longAgo = ZonedDateTime.now().minusYears(1).toInstant();
+
+        User toWarn = createUser(TEST_PREFIX + "warncand", false, Set.of(), false, longAgo); // -> warn
+        User recent = createUser(TEST_PREFIX + "warnrecent", false, Set.of(), false, ZonedDateTime.now().toInstant()); // active -> keep
+        User enrolled = createUser(TEST_PREFIX + "warnenrolled", true, Set.of(), false, longAgo); // enrolled -> keep
+        User admin = createUser(TEST_PREFIX + "warnadmin", false, Set.of(Authority.ADMIN_AUTHORITY), false, longAgo); // admin -> keep
+        User superAdmin = createUser(TEST_PREFIX + "warnsuper", false, Set.of(Authority.SUPER_ADMIN_AUTHORITY), false, longAgo); // super admin -> keep
+        User irisBot = irisBot(longAgo); // protected bot -> keep
+        User deleted = createUser(TEST_PREFIX + "warndeleted", false, Set.of(), true, longAgo); // already deleted -> keep
+        User alreadyWarned = createUser(TEST_PREFIX + "warnalready", false, Set.of(), false, longAgo); // already warned -> keep
+        userActivityService.recordDeletionWarning(alreadyWarned.getLogin(), longAgo);
+
+        final List<String> logins = userRepository.findNotEnrolledUsersToWarn(cutoff).stream().map(User::getLogin).toList();
+
+        assertThat(logins).contains(toWarn.getLogin());
+        assertThat(logins).doesNotContain(recent.getLogin(), enrolled.getLogin(), admin.getLogin(), superAdmin.getLogin(), irisBot.getLogin(), deleted.getLogin(),
+                alreadyWarned.getLogin());
+    }
+
+    /**
+     * Phase 2 selection: verifies which warned users are picked for deletion. Only a warned, past-grace, still-inactive
+     * account with no login since the warning is selected; within-grace, logged-in-since, and never-warned accounts are
+     * spared.
+     */
+    @Test
+    void testFindNotEnrolledUserLoginsToDelete() {
+        final Instant graceCutoff = ZonedDateTime.now().minusDays(30).toInstant();
+        final Instant longAgo = ZonedDateTime.now().minusYears(1).toInstant();
+        final Instant warnedPastGrace = ZonedDateTime.now().minusDays(31).toInstant();
+        final Instant warnedWithinGrace = ZonedDateTime.now().minusDays(5).toInstant();
+
+        User due = createUser(TEST_PREFIX + "delcand", false, Set.of(), false, longAgo);
+        userActivityService.recordDeletionWarning(due.getLogin(), warnedPastGrace); // warned past grace, no login since -> delete
+        User withinGrace = createUser(TEST_PREFIX + "delgrace", false, Set.of(), false, longAgo);
+        userActivityService.recordDeletionWarning(withinGrace.getLogin(), warnedWithinGrace); // still within grace -> keep
+        User loggedInSince = createUser(TEST_PREFIX + "delloggedin", false, Set.of(), false, ZonedDateTime.now().toInstant());
+        userActivityService.recordDeletionWarning(loggedInSince.getLogin(), warnedPastGrace); // logged in after warning -> keep
+        User notWarned = createUser(TEST_PREFIX + "delnotwarned", false, Set.of(), false, longAgo); // never warned -> keep
+        User irisBot = irisBot(longAgo);
+        userActivityService.recordDeletionWarning(irisBot.getLogin(), warnedPastGrace); // protected bot -> keep
+
+        final List<String> logins = userRepository.findNotEnrolledUserLoginsToDelete(graceCutoff);
+
+        assertThat(logins).contains(due.getLogin());
+        assertThat(logins).doesNotContain(withinGrace.getLogin(), loggedInSince.getLogin(), notWarned.getLogin(), irisBot.getLogin());
+    }
+
+    /**
+     * Verifies that the warning is cleared for users who "came back" (re-enrolled or logged in after being warned) while
+     * being kept for those who are still not-enrolled and inactive.
+     */
+    @Test
+    void testClearDeletionWarningForReturnedUsers() {
+        final Instant longAgo = ZonedDateTime.now().minusYears(1).toInstant();
+        final Instant warned = ZonedDateTime.now().minusDays(10).toInstant();
+
+        User stillInactive = createUser(TEST_PREFIX + "clrinactive", false, Set.of(), false, longAgo);
+        userActivityService.recordDeletionWarning(stillInactive.getLogin(), warned);
+        User reEnrolled = createUser(TEST_PREFIX + "clrenrolled", true, Set.of(), false, longAgo);
+        userActivityService.recordDeletionWarning(reEnrolled.getLogin(), warned);
+        User loggedInSince = createUser(TEST_PREFIX + "clrloggedin", false, Set.of(), false, ZonedDateTime.now().toInstant());
+        userActivityService.recordDeletionWarning(loggedInSince.getLogin(), warned);
+
+        userActivityService.clearDeletionWarningForReturnedUsers();
+
+        assertThat(userActivityService.findDeletionWarningSentDate(stillInactive.getId())).isNotNull();
+        assertThat(userActivityService.findDeletionWarningSentDate(reEnrolled.getId())).isNull();
+        assertThat(userActivityService.findDeletionWarningSentDate(loggedInSince.getId())).isNull();
+    }
+
+    /**
+     * Creates a not-enrolled-user-cleanup test fixture: a saved user with the given authorities/deleted flag and a
+     * backdated last login date (set via a bulk update so it is the effective activity signal). An enrolled user is
+     * given a course role, which is what "enrolled" means since course group names were replaced by user course roles.
+     */
+    private User createUser(String login, boolean enrolled, Set<Authority> authorities, boolean deleted, Instant lastLoginDate) {
+        User user = userUtilService.createAndSaveUser(login);
+        user.setAuthorities(authorities);
+        user.setDeleted(deleted);
+        user = userRepository.save(user);
+        if (enrolled) {
+            userUtilService.enrollUserInCourse(user, courseUtilService.createCourse(), CourseRole.STUDENT);
+        }
+        userActivityService.recordLogin(user.getLogin(), lastLoginDate);
+        return user;
+    }
+
+    private User irisBot(Instant lastLoginDate) {
+        User irisBot = userRepository.findOneByLogin(User.IRIS_BOT_LOGIN).orElseGet(() -> userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN));
+        irisBot.setAuthorities(Set.of());
+        irisBot.setDeleted(false);
+        irisBot = userRepository.save(irisBot);
+        userActivityService.recordLogin(irisBot.getLogin(), lastLoginDate);
+        return irisBot;
     }
 
     @Test
@@ -79,6 +192,16 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         admin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
         admin = userRepository.save(admin);
 
+        User inactiveSuperAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "inactivesuperadmin");
+        inactiveSuperAdmin.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY));
+        inactiveSuperAdmin.setActivated(false);
+        inactiveSuperAdmin = userRepository.save(inactiveSuperAdmin);
+
+        User deletedSuperAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "deletedsuperadmin");
+        deletedSuperAdmin.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY));
+        deletedSuperAdmin.setDeleted(true);
+        deletedSuperAdmin = userRepository.save(deletedSuperAdmin);
+
         // Create a regular user
         User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser");
 
@@ -87,6 +210,8 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
 
         // Test that regular admin is not identified as super admin
         assertThat(userRepository.isSuperAdmin(admin.getLogin())).isFalse();
+        assertThat(userRepository.isSuperAdmin(inactiveSuperAdmin.getLogin())).isFalse();
+        assertThat(userRepository.isSuperAdmin(deletedSuperAdmin.getLogin())).isFalse();
 
         // Test that regular user is not identified as super admin
         assertThat(userRepository.isSuperAdmin(regularUser.getLogin())).isFalse();
@@ -108,19 +233,25 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         admin.setDeleted(false);
         admin = userRepository.save(admin);
 
-        // Create an inactive admin user (still has admin authority, so should return true)
+        // Create an inactive admin user. Inactive accounts must not receive administrative access.
         User inactiveAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "inactiveadmin");
         inactiveAdmin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
         inactiveAdmin.setActivated(false);
         inactiveAdmin = userRepository.save(inactiveAdmin);
 
+        User deletedAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "deletedadmin");
+        deletedAdmin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
+        deletedAdmin.setDeleted(true);
+        deletedAdmin = userRepository.save(deletedAdmin);
+
         // Create a regular user
         User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser");
 
-        // Test that super admin, regular admin, and inactive admin (has authority) are identified as admin
+        // Test that only active, non-deleted administrator accounts are identified as administrators.
         assertThat(userRepository.isAdmin(superAdmin.getLogin())).isTrue();
         assertThat(userRepository.isAdmin(admin.getLogin())).isTrue();
-        assertThat(userRepository.isAdmin(inactiveAdmin.getLogin())).isTrue();
+        assertThat(userRepository.isAdmin(inactiveAdmin.getLogin())).isFalse();
+        assertThat(userRepository.isAdmin(deletedAdmin.getLogin())).isFalse();
 
         // Test that regular user is not identified as admin
         assertThat(userRepository.isAdmin(regularUser.getLogin())).isFalse();
@@ -136,9 +267,8 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         User superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
 
         // Create regular admin users
-        List<User> admins = userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), new String[] {}, Set.of(Authority.ADMIN_AUTHORITY), 1,
-                2);
-        admins = userRepository.saveAll(admins);
+        List<User> admins = userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), Set.of(Authority.ADMIN_AUTHORITY), 1, 2);
+        admins = userRepository.saveAllOrUpdate(admins);
 
         // Create an inactive admin user (should not be included)
         User inactiveAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "inactiveadmin");
@@ -169,7 +299,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void testSuperAdminHasAccessToCourse() {
+    void testAdminAuthoritiesDoNotCountAsCourseMembership() {
         // Create a super admin user
         userUtilService.addSuperAdmin(TEST_PREFIX);
         User superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
@@ -185,17 +315,17 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         // Create a regular user who is not enrolled
         User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser");
 
-        // Test that super admin has access
-        assertThat(userRepository.isAtLeastStudentInCourse(superAdmin.getLogin(), course.getId())).isTrue();
-        assertThat(userRepository.isAtLeastTeachingAssistantInCourse(superAdmin.getLogin(), course.getId())).isTrue();
-        assertThat(userRepository.isAtLeastEditorInCourse(superAdmin.getLogin(), course.getId())).isTrue();
-        assertThat(userRepository.isAtLeastInstructorInCourse(superAdmin.getLogin(), course.getId())).isTrue();
+        // Super administrator authority alone does not grant resource membership
+        assertThat(userRepository.isAtLeastStudentInCourse(superAdmin.getLogin(), course.getId())).isFalse();
+        assertThat(userRepository.isAtLeastTeachingAssistantInCourse(superAdmin.getLogin(), course.getId())).isFalse();
+        assertThat(userRepository.isAtLeastEditorInCourse(superAdmin.getLogin(), course.getId())).isFalse();
+        assertThat(userRepository.isAtLeastInstructorInCourse(superAdmin.getLogin(), course.getId())).isFalse();
 
-        // Test that admin has access
-        assertThat(userRepository.isAtLeastStudentInCourse(admin.getLogin(), course.getId())).isTrue();
-        assertThat(userRepository.isAtLeastTeachingAssistantInCourse(admin.getLogin(), course.getId())).isTrue();
-        assertThat(userRepository.isAtLeastEditorInCourse(admin.getLogin(), course.getId())).isTrue();
-        assertThat(userRepository.isAtLeastInstructorInCourse(admin.getLogin(), course.getId())).isTrue();
+        // Administrator authority alone does not grant resource membership
+        assertThat(userRepository.isAtLeastStudentInCourse(admin.getLogin(), course.getId())).isFalse();
+        assertThat(userRepository.isAtLeastTeachingAssistantInCourse(admin.getLogin(), course.getId())).isFalse();
+        assertThat(userRepository.isAtLeastEditorInCourse(admin.getLogin(), course.getId())).isFalse();
+        assertThat(userRepository.isAtLeastInstructorInCourse(admin.getLogin(), course.getId())).isFalse();
 
         // Verify regular user does not have access
         assertThat(userRepository.isAtLeastStudentInCourse(regularUser.getLogin(), course.getId())).isFalse();
@@ -205,7 +335,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void testSuperAdminHasAccessToExercise() {
+    void testAdminAuthoritiesDoNotCountAsExerciseMembership() {
         // Create a super admin user
         userUtilService.addSuperAdmin(TEST_PREFIX);
         User superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
@@ -216,23 +346,23 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         admin = userRepository.save(admin);
 
         // Create a course and exercise without the super admin or admin being enrolled
-        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+        Course course = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
         Exercise exercise = course.getExercises().iterator().next();
 
         // Create a regular user who is not enrolled
         User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser");
 
-        // Test that super admin has access
-        assertThat(userRepository.isAtLeastStudentInExercise(superAdmin.getLogin(), exercise.getId())).isTrue();
-        assertThat(userRepository.isAtLeastTeachingAssistantInExercise(superAdmin.getLogin(), exercise.getId())).isTrue();
-        assertThat(userRepository.isAtLeastEditorInExercise(superAdmin.getLogin(), exercise.getId())).isTrue();
-        assertThat(userRepository.isAtLeastInstructorInExercise(superAdmin.getLogin(), exercise.getId())).isTrue();
+        // Super administrator authority alone does not grant resource membership
+        assertThat(userRepository.isAtLeastStudentInExercise(superAdmin.getLogin(), exercise.getId())).isFalse();
+        assertThat(userRepository.isAtLeastTeachingAssistantInExercise(superAdmin.getLogin(), exercise.getId())).isFalse();
+        assertThat(userRepository.isAtLeastEditorInExercise(superAdmin.getLogin(), exercise.getId())).isFalse();
+        assertThat(userRepository.isAtLeastInstructorInExercise(superAdmin.getLogin(), exercise.getId())).isFalse();
 
-        // Test that admin has access
-        assertThat(userRepository.isAtLeastStudentInExercise(admin.getLogin(), exercise.getId())).isTrue();
-        assertThat(userRepository.isAtLeastTeachingAssistantInExercise(admin.getLogin(), exercise.getId())).isTrue();
-        assertThat(userRepository.isAtLeastEditorInExercise(admin.getLogin(), exercise.getId())).isTrue();
-        assertThat(userRepository.isAtLeastInstructorInExercise(admin.getLogin(), exercise.getId())).isTrue();
+        // Administrator authority alone does not grant resource membership
+        assertThat(userRepository.isAtLeastStudentInExercise(admin.getLogin(), exercise.getId())).isFalse();
+        assertThat(userRepository.isAtLeastTeachingAssistantInExercise(admin.getLogin(), exercise.getId())).isFalse();
+        assertThat(userRepository.isAtLeastEditorInExercise(admin.getLogin(), exercise.getId())).isFalse();
+        assertThat(userRepository.isAtLeastInstructorInExercise(admin.getLogin(), exercise.getId())).isFalse();
 
         // Verify regular user does not have access
         assertThat(userRepository.isAtLeastStudentInExercise(regularUser.getLogin(), exercise.getId())).isFalse();
@@ -242,7 +372,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void testSuperAdminHasAccessToParticipation() {
+    void testAdminAuthoritiesDoNotCountAsParticipationMembership() {
         // Create a super admin user
         userUtilService.addSuperAdmin(TEST_PREFIX);
         User superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
@@ -253,7 +383,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         admin = userRepository.save(admin);
 
         // Create a course, exercise, and participation without the super admin or admin being enrolled
-        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+        Course course = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
         Exercise exercise = course.getExercises().iterator().next();
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "student");
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, student.getLogin());
@@ -261,17 +391,17 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         // Create a regular user who is not enrolled
         User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser");
 
-        // Test that super admin has access
-        assertThat(userRepository.isAtLeastStudentInParticipation(superAdmin.getLogin(), participation.getId())).isTrue();
-        assertThat(userRepository.isAtLeastTeachingAssistantInParticipation(superAdmin.getLogin(), participation.getId())).isTrue();
-        assertThat(userRepository.isAtLeastEditorInParticipation(superAdmin.getLogin(), participation.getId())).isTrue();
-        assertThat(userRepository.isAtLeastInstructorInParticipation(superAdmin.getLogin(), participation.getId())).isTrue();
+        // Super administrator authority alone does not grant resource membership
+        assertThat(userRepository.isAtLeastStudentInParticipation(superAdmin.getLogin(), participation.getId())).isFalse();
+        assertThat(userRepository.isAtLeastTeachingAssistantInParticipation(superAdmin.getLogin(), participation.getId())).isFalse();
+        assertThat(userRepository.isAtLeastEditorInParticipation(superAdmin.getLogin(), participation.getId())).isFalse();
+        assertThat(userRepository.isAtLeastInstructorInParticipation(superAdmin.getLogin(), participation.getId())).isFalse();
 
-        // Test that admin has access
-        assertThat(userRepository.isAtLeastStudentInParticipation(admin.getLogin(), participation.getId())).isTrue();
-        assertThat(userRepository.isAtLeastTeachingAssistantInParticipation(admin.getLogin(), participation.getId())).isTrue();
-        assertThat(userRepository.isAtLeastEditorInParticipation(admin.getLogin(), participation.getId())).isTrue();
-        assertThat(userRepository.isAtLeastInstructorInParticipation(admin.getLogin(), participation.getId())).isTrue();
+        // Administrator authority alone does not grant resource membership
+        assertThat(userRepository.isAtLeastStudentInParticipation(admin.getLogin(), participation.getId())).isFalse();
+        assertThat(userRepository.isAtLeastTeachingAssistantInParticipation(admin.getLogin(), participation.getId())).isFalse();
+        assertThat(userRepository.isAtLeastEditorInParticipation(admin.getLogin(), participation.getId())).isFalse();
+        assertThat(userRepository.isAtLeastInstructorInParticipation(admin.getLogin(), participation.getId())).isFalse();
 
         // Verify regular user does not have access
         assertThat(userRepository.isAtLeastStudentInParticipation(regularUser.getLogin(), participation.getId())).isFalse();
@@ -281,7 +411,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void testSuperAdminHasAccessToLecture() {
+    void testAdminAuthoritiesDoNotCountAsLectureMembership() {
         // Create a super admin user
         userUtilService.addSuperAdmin(TEST_PREFIX);
         User superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
@@ -298,17 +428,17 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         // Create a regular user who is not enrolled
         User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser");
 
-        // Test that super admin has access
-        assertThat(userRepository.isAtLeastStudentInLecture(superAdmin.getLogin(), lecture.getId())).isTrue();
-        assertThat(userRepository.isAtLeastTeachingAssistantInLecture(superAdmin.getLogin(), lecture.getId())).isTrue();
-        assertThat(userRepository.isAtLeastEditorInLecture(superAdmin.getLogin(), lecture.getId())).isTrue();
-        assertThat(userRepository.isAtLeastInstructorInLecture(superAdmin.getLogin(), lecture.getId())).isTrue();
+        // Super administrator authority alone does not grant resource membership
+        assertThat(userRepository.isAtLeastStudentInLecture(superAdmin.getLogin(), lecture.getId())).isFalse();
+        assertThat(userRepository.isAtLeastTeachingAssistantInLecture(superAdmin.getLogin(), lecture.getId())).isFalse();
+        assertThat(userRepository.isAtLeastEditorInLecture(superAdmin.getLogin(), lecture.getId())).isFalse();
+        assertThat(userRepository.isAtLeastInstructorInLecture(superAdmin.getLogin(), lecture.getId())).isFalse();
 
-        // Test that admin has access
-        assertThat(userRepository.isAtLeastStudentInLecture(admin.getLogin(), lecture.getId())).isTrue();
-        assertThat(userRepository.isAtLeastTeachingAssistantInLecture(admin.getLogin(), lecture.getId())).isTrue();
-        assertThat(userRepository.isAtLeastEditorInLecture(admin.getLogin(), lecture.getId())).isTrue();
-        assertThat(userRepository.isAtLeastInstructorInLecture(admin.getLogin(), lecture.getId())).isTrue();
+        // Administrator authority alone does not grant resource membership
+        assertThat(userRepository.isAtLeastStudentInLecture(admin.getLogin(), lecture.getId())).isFalse();
+        assertThat(userRepository.isAtLeastTeachingAssistantInLecture(admin.getLogin(), lecture.getId())).isFalse();
+        assertThat(userRepository.isAtLeastEditorInLecture(admin.getLogin(), lecture.getId())).isFalse();
+        assertThat(userRepository.isAtLeastInstructorInLecture(admin.getLogin(), lecture.getId())).isFalse();
 
         // Verify regular user does not have access
         assertThat(userRepository.isAtLeastStudentInLecture(regularUser.getLogin(), lecture.getId())).isFalse();
@@ -318,7 +448,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void testSuperAdminHasAccessToLectureUnit() {
+    void testAdminAuthoritiesDoNotCountAsLectureUnitMembership() {
         // Create a super admin user
         userUtilService.addSuperAdmin(TEST_PREFIX);
         User superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
@@ -336,22 +466,101 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         // Create a regular user who is not enrolled
         User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser");
 
-        // Test that super admin has access
-        assertThat(userRepository.isAtLeastStudentInLectureUnit(superAdmin.getLogin(), lectureUnit.getId())).isTrue();
-        assertThat(userRepository.isAtLeastTeachingAssistantInLectureUnit(superAdmin.getLogin(), lectureUnit.getId())).isTrue();
-        assertThat(userRepository.isAtLeastEditorInLectureUnit(superAdmin.getLogin(), lectureUnit.getId())).isTrue();
-        assertThat(userRepository.isAtLeastInstructorInLectureUnit(superAdmin.getLogin(), lectureUnit.getId())).isTrue();
+        // Super administrator authority alone does not grant resource membership
+        assertThat(userRepository.isAtLeastStudentInLectureUnit(superAdmin.getLogin(), lectureUnit.getId())).isFalse();
+        assertThat(userRepository.isAtLeastTeachingAssistantInLectureUnit(superAdmin.getLogin(), lectureUnit.getId())).isFalse();
+        assertThat(userRepository.isAtLeastEditorInLectureUnit(superAdmin.getLogin(), lectureUnit.getId())).isFalse();
+        assertThat(userRepository.isAtLeastInstructorInLectureUnit(superAdmin.getLogin(), lectureUnit.getId())).isFalse();
 
-        // Test that admin has access
-        assertThat(userRepository.isAtLeastStudentInLectureUnit(admin.getLogin(), lectureUnit.getId())).isTrue();
-        assertThat(userRepository.isAtLeastTeachingAssistantInLectureUnit(admin.getLogin(), lectureUnit.getId())).isTrue();
-        assertThat(userRepository.isAtLeastEditorInLectureUnit(admin.getLogin(), lectureUnit.getId())).isTrue();
-        assertThat(userRepository.isAtLeastInstructorInLectureUnit(admin.getLogin(), lectureUnit.getId())).isTrue();
+        // Administrator authority alone does not grant resource membership
+        assertThat(userRepository.isAtLeastStudentInLectureUnit(admin.getLogin(), lectureUnit.getId())).isFalse();
+        assertThat(userRepository.isAtLeastTeachingAssistantInLectureUnit(admin.getLogin(), lectureUnit.getId())).isFalse();
+        assertThat(userRepository.isAtLeastEditorInLectureUnit(admin.getLogin(), lectureUnit.getId())).isFalse();
+        assertThat(userRepository.isAtLeastInstructorInLectureUnit(admin.getLogin(), lectureUnit.getId())).isFalse();
 
         // Verify regular user does not have access
         assertThat(userRepository.isAtLeastStudentInLectureUnit(regularUser.getLogin(), lectureUnit.getId())).isFalse();
         assertThat(userRepository.isAtLeastTeachingAssistantInLectureUnit(regularUser.getLogin(), lectureUnit.getId())).isFalse();
         assertThat(userRepository.isAtLeastEditorInLectureUnit(regularUser.getLogin(), lectureUnit.getId())).isFalse();
         assertThat(userRepository.isAtLeastInstructorInLectureUnit(regularUser.getLogin(), lectureUnit.getId())).isFalse();
+    }
+
+    @Test
+    void testIsInternalUserByLoginAndByEmail() {
+        User internalUser = userUtilService.createAndSaveUser(TEST_PREFIX + "internal");
+
+        User externalUser = UserFactory.generateActivatedUser(TEST_PREFIX + "external");
+        externalUser.setInternal(false);
+        externalUser = userRepository.save(externalUser);
+
+        User deletedUser = UserFactory.generateActivatedUser(TEST_PREFIX + "deleted");
+        deletedUser.setDeleted(true);
+        deletedUser = userRepository.save(deletedUser);
+
+        assertThat(userRepository.isInternalUserByLogin(internalUser.getLogin())).contains(true);
+        assertThat(userRepository.isInternalUserByLogin(externalUser.getLogin())).contains(false);
+        assertThat(userRepository.isInternalUserByLogin(TEST_PREFIX + "doesnotexist")).isEmpty();
+        // soft-deleted users must not be reported, following the convention documented on this repository
+        assertThat(userRepository.isInternalUserByLogin(deletedUser.getLogin())).isEmpty();
+
+        assertThat(userRepository.isInternalUserByEmailIgnoreCase(internalUser.getEmail())).contains(true);
+        assertThat(userRepository.isInternalUserByEmailIgnoreCase(externalUser.getEmail())).contains(false);
+        assertThat(userRepository.isInternalUserByEmailIgnoreCase(TEST_PREFIX + "doesnotexist@test.de")).isEmpty();
+        assertThat(userRepository.isInternalUserByEmailIgnoreCase(deletedUser.getEmail())).isEmpty();
+        // the lookup by email has to stay case-insensitive, just like the entity based findOneByEmailIgnoreCase it replaces
+        assertThat(userRepository.isInternalUserByEmailIgnoreCase(internalUser.getEmail().toUpperCase(Locale.ROOT))).contains(true);
+    }
+
+    @Test
+    void testFindUserIdsWithDuplicatedEmail() {
+        String sharedEmail = TEST_PREFIX + "shared@test.de";
+        User firstDuplicate = UserFactory.generateActivatedUser(TEST_PREFIX + "dupone");
+        firstDuplicate.setEmail(sharedEmail);
+        firstDuplicate = userRepository.save(firstDuplicate);
+        User secondDuplicate = UserFactory.generateActivatedUser(TEST_PREFIX + "duptwo");
+        secondDuplicate.setEmail(sharedEmail);
+        secondDuplicate = userRepository.save(secondDuplicate);
+
+        User uniqueEmail = userUtilService.createAndSaveUser(TEST_PREFIX + "uniqueemail");
+        User withoutEmail = UserFactory.generateActivatedUser(TEST_PREFIX + "noemail");
+        withoutEmail.setEmail(null);
+        withoutEmail = userRepository.save(withoutEmail);
+
+        // Other test data can hold duplicates of its own, so only the accounts of this test are asserted on.
+        List<Long> affectedIds = userRepository.findUserIdsWithDuplicatedEmail();
+        assertThat(affectedIds).contains(firstDuplicate.getId(), secondDuplicate.getId()).doesNotContain(uniqueEmail.getId(), withoutEmail.getId()).doesNotHaveDuplicates()
+                .isSorted();
+    }
+
+    /**
+     * The active user metrics exclude test users in Java instead of joining {@code jhi_user} into the (very hot)
+     * submission aggregation, so the ids of all test users have to be retrievable on their own.
+     */
+    @Test
+    void testFindAllTestUserIdsReturnsOnlyTestUsers() {
+        User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regular");
+        User testUser = UserFactory.generateActivatedUser(TEST_PREFIX + "flagged");
+        testUser.setTestUser(true);
+        testUser = userRepository.save(testUser);
+
+        Set<Long> testUserIds = userRepository.findAllTestUserIds();
+
+        assertThat(testUserIds).contains(testUser.getId()).doesNotContain(regularUser.getId());
+    }
+
+    /**
+     * Soft-deleted test users stay in the exclusion set: they must never be counted as active users, and keeping them
+     * avoids a second predicate on the hot path.
+     */
+    @Test
+    void testFindAllTestUserIdsIncludesSoftDeletedTestUsers() {
+        User deletedTestUser = UserFactory.generateActivatedUser(TEST_PREFIX + "deletedflagged");
+        deletedTestUser.setTestUser(true);
+        deletedTestUser.setDeleted(true);
+        deletedTestUser = userRepository.save(deletedTestUser);
+
+        Set<Long> testUserIds = userRepository.findAllTestUserIds();
+
+        assertThat(testUserIds).contains(deletedTestUser.getId());
     }
 }

@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -18,11 +20,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportStrategyType;
+import de.tum.cit.aet.artemis.exercise.dto.TeamMemberDTO;
+import de.tum.cit.aet.artemis.exercise.dto.TeamResponseDTO;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
@@ -90,7 +95,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 0, 1, 0, 1);
-        course = courseUtilService.addCourseWithModelingAndTextExercise();
+        course = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
 
         // Make both source and destination exercise team exercises
         sourceExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "Modeling");
@@ -115,7 +120,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         if (type == ImportType.FROM_LIST) {
             url = importFromListUrl(importStrategy);
         }
-        List<Team> destinationTeamsAfter = request.putWithResponseBodyList(url, body, Team.class, HttpStatus.OK);
+        List<TeamResponseDTO> destinationTeamsAfter = request.putWithResponseBodyList(url, body, TeamResponseDTO.class, HttpStatus.OK);
         assertCorrectnessOfImport(addedTeams, destinationTeamsAfter);
     }
 
@@ -313,20 +318,16 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportTeamsFromExerciseForbiddenAsInstructorOfOtherCourse() throws Exception {
-        // If the instructor is not part of the correct course instructor group anymore, they should not be able to import teams
-        course.setInstructorGroupName("Different group name");
-        courseRepository.save(course);
-
+        User instructor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        userUtilService.unenrollUserFromCourse(instructor1, course);
         request.put(importFromSourceExerciseUrl(), null, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportTeamsFromListForbiddenAsInstructorOfOtherCourse() throws Exception {
-        // If the instructor is not part of the correct course instructor group anymore, they should not be able to import teams
-        course.setInstructorGroupName("Different group name");
-        courseRepository.save(course);
-
+        User instructor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        userUtilService.unenrollUserFromCourse(instructor1, course);
         request.put(importFromListUrl(), importedTeamsBody, HttpStatus.FORBIDDEN);
     }
 
@@ -336,13 +337,38 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
      * @param expectedTeamsAfterImport List of teams that are expected to be in the destination exercise now after the import
      * @param actualTeamsAfterImport   List of teams that are actually in the destination exercise after the import according to response
      */
-    private void assertCorrectnessOfImport(List<Team> expectedTeamsAfterImport, List<Team> actualTeamsAfterImport) {
+    private void assertCorrectnessOfImport(List<Team> expectedTeamsAfterImport, List<TeamResponseDTO> actualTeamsAfterImport) {
         List<Team> destinationTeamsInDatabase = teamRepo.findAllByExerciseId(destinationExercise.getId());
-        assertThat(actualTeamsAfterImport).as("Imported teams were persisted into destination exercise.").isEqualTo(destinationTeamsInDatabase);
+        // Keyed by id rather than compared as two sets, so that a response which carries the right ids and the right
+        // team data but pairs them up wrongly fails here.
+        assertThat(actualTeamsAfterImport.stream().collect(Collectors.toMap(TeamResponseDTO::id, TeamImportIntegrationTest::signatureOf)))
+                .as("Imported teams were persisted into destination exercise, each response id carrying that team's data.")
+                .isEqualTo(destinationTeamsInDatabase.stream().collect(Collectors.toMap(Team::getId, TeamImportIntegrationTest::signatureOf)));
 
-        assertThat(actualTeamsAfterImport).as("Teams were correctly imported.").usingRecursiveComparison()
-                .ignoringFields("id", "exercise", "createdDate", "createdBy", "lastModifiedDate", "lastModifiedBy").usingOverriddenEquals()
-                .ignoringOverriddenEqualsForTypes(Team.class).ignoringCollectionOrder().isEqualTo(expectedTeamsAfterImport);
+        assertThat(actualTeamsAfterImport.stream().map(TeamImportIntegrationTest::signatureOf).toList()).as("Teams were correctly imported.")
+                .containsExactlyInAnyOrderElementsOf(expectedTeamsAfterImport.stream().map(TeamImportIntegrationTest::signatureOf).toList());
+    }
+
+    /**
+     * The identity of an imported team as the import must preserve it: what it is called, who is in it and who owns it.
+     *
+     * @param name          the team name
+     * @param shortName     the team short name
+     * @param image         the team image, which the import carries over as well
+     * @param studentLogins the logins of the team members
+     * @param ownerLogin    the login of the owning tutor, or null when the team has none
+     */
+    private record TeamSignature(String name, String shortName, String image, Set<String> studentLogins, String ownerLogin) {
+    }
+
+    private static TeamSignature signatureOf(TeamResponseDTO team) {
+        return new TeamSignature(team.name(), team.shortName(), team.image(), team.students().stream().map(TeamMemberDTO::login).collect(Collectors.toSet()),
+                team.owner() == null ? null : team.owner().login());
+    }
+
+    private static TeamSignature signatureOf(Team team) {
+        return new TeamSignature(team.getName(), team.getShortName(), team.getImage(), team.getStudents().stream().map(User::getLogin).collect(Collectors.toSet()),
+                team.getOwner() == null ? null : team.getOwner().getLogin());
     }
 
     static <T> List<T> addLists(List<T> a, List<T> b) {
@@ -354,6 +380,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         var users = generatedTeams.stream().map(Team::getStudents).flatMap(Collection::stream).toList();
         users.forEach(u -> userUtilService.cleanUpRegistrationNumberForUser(u));
         userTestRepository.saveAll(users);
+        users.forEach(u -> userUtilService.enrollUserInCourse(u, course, CourseRole.STUDENT));
         List<Team> teamsWithLogins = getTeamsIntoLoginOnlyTeams(generatedTeams.subList(0, 2));
         List<Team> teamsWithRegistrationNumbers = getTeamsIntoRegistrationNumberOnlyTeams(generatedTeams.subList(2, 3));
         List<Team> body = Stream.concat(teamsWithLogins.stream(), teamsWithRegistrationNumbers.stream()).toList();

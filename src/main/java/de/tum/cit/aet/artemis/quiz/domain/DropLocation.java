@@ -1,55 +1,32 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
- * A DropLocation.
+ * A DropLocation of a {@link DragAndDropQuestion}.
+ * <p>
+ * Formerly a JPA entity backed by the {@code drop_location} table; it is now a plain POJO stored inside the question's {@code content} JSON column (see
+ * {@link DragAndDropQuestionContent}). It no longer holds a back-reference to the question or to its mappings, and the correctness check that used to live here
+ * ({@code isDropLocationCorrect}) now lives on {@link DragAndDropQuestion#isDropLocationCorrect} because it needs the owning question to resolve mappings by id.
+ * <p>
+ * It still extends {@link DomainObject} to reuse the {@code id} field and its id-based {@code equals}/{@code hashCode}; the inherited JPA annotations are inert because this class
+ * is
+ * no longer an {@code @Entity}. The {@code id} is question-scoped (unique within the owning question, not globally).
  */
-// No @Cache here on purpose: loaded via cascade during quiz submission merge. See #12574 / #12584.
-@Entity
-@Table(name = "drop_location")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class DropLocation extends DomainObject implements QuizQuestionComponent<DragAndDropQuestion> {
+public class DropLocation extends DomainObject {
 
-    @Column(name = "pos_x")
     private Double posX;
 
-    @Column(name = "pos_y")
     private Double posY;
 
-    @Column(name = "width")
     private Double width;
 
-    @Column(name = "height")
     private Double height;
 
-    @Column(name = "invalid")
     private Boolean invalid = false;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id")
-    @JsonIgnore
-    private DragAndDropQuestion question;
-
-    // NOTE: without cascade and orphanRemoval, deletion of quizzes might not work properly, so we reference mappings here, even if we do not use them
-    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "dropLocation")
-    @JsonIgnore
-    private Set<DragAndDropMapping> mappings = new HashSet<>();
 
     public Double getPosX() {
         return posX;
@@ -103,42 +80,12 @@ public class DropLocation extends DomainObject implements QuizQuestionComponent<
         this.height = height;
     }
 
-    public DragAndDropQuestion getQuestion() {
-        return question;
-    }
-
     public Boolean isInvalid() {
         return invalid != null && invalid;
     }
 
-    @Override
-    public void setQuestion(DragAndDropQuestion dragAndDropQuestion) {
-        this.question = dragAndDropQuestion;
-    }
-
     public void setInvalid(Boolean invalid) {
         this.invalid = invalid;
-    }
-
-    public void setMappings(Set<DragAndDropMapping> mappings) {
-        this.mappings = mappings;
-    }
-
-    /**
-     * check if the DropLocation is solved correctly
-     *
-     * @param dndAnswer Answer from the student with the List of submittedMappings from the Result
-     * @return if the drop location is correct
-     */
-    public boolean isDropLocationCorrect(DragAndDropSubmittedAnswer dndAnswer) {
-
-        Set<DragItem> correctDragItems = question.getCorrectDragItemsForDropLocation(this);
-        DragItem selectedDragItem = dndAnswer.getSelectedDragItemForDropLocation(this);
-
-        return ((correctDragItems.isEmpty() && selectedDragItem == null) || (selectedDragItem != null && correctDragItems.contains(selectedDragItem)));
-        // this drop location was meant to stay empty and user didn't drag anything onto it
-        // OR the user dragged one of the correct drag items onto this drop location
-        // => this is correct => Return true;
     }
 
     @Override
@@ -146,5 +93,4 @@ public class DropLocation extends DomainObject implements QuizQuestionComponent<
         return "DropLocation{" + "id=" + getId() + ", posX='" + getPosX() + "'" + ", posY='" + getPosY() + "'" + ", width='" + getWidth() + "'" + ", height='" + getHeight() + "'"
                 + ", invalid='" + isInvalid() + "'" + "}";
     }
-
 }

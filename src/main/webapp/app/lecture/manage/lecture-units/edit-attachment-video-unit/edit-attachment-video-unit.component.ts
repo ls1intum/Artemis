@@ -12,6 +12,7 @@ import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachme
 import { combineLatest } from 'rxjs';
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-edit-attachment-video-unit',
@@ -107,14 +108,14 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
         }
 
         // Create new objects to avoid mutating signal-stored objects
-        const updatedAttachment = Object.assign(new Attachment(), currentAttachment, {
+        const updatedAttachment = hydrate(new Attachment(), currentAttachment, {
             name,
             releaseDate,
             attachmentType: AttachmentType.FILE,
         });
 
         const hasUpload = !!file && file.size > 0;
-        const updatedUnit = Object.assign(new AttachmentVideoUnit(), currentUnit, {
+        const updatedUnit = hydrate(new AttachmentVideoUnit(), currentUnit, {
             name,
             description,
             releaseDate,

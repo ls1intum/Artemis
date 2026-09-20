@@ -36,12 +36,14 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { IrisSlidesContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 import { IrisActivityItem, IrisActivityKind, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
+import { IrisCommand } from 'app/iris/shared/entities/iris-command.model';
+import dayjs from 'dayjs/esm';
 
 describe('IrisChatService', () => {
     let service: IrisChatService;
     let httpService: IrisChatHttpService;
     let wsMock: IrisWebsocketService;
-    let routerMock: { url: string };
+    let routerMock: { url: string; navigate: ReturnType<typeof vi.fn> };
     let accountService: AccountService;
 
     const id = 123;
@@ -70,7 +72,7 @@ describe('IrisChatService', () => {
     };
 
     beforeEach(() => {
-        routerMock = { url: '' };
+        routerMock = { url: '', navigate: vi.fn().mockResolvedValue(true) };
 
         TestBed.configureTestingModule({
             providers: [
@@ -88,6 +90,10 @@ describe('IrisChatService', () => {
         httpService = TestBed.inject(IrisChatHttpService);
         wsMock = TestBed.inject(IrisWebsocketService);
         accountService = TestBed.inject(AccountService);
+
+        // The chat service subscribes to the per-session command channel alongside the message channel;
+        // give it a default subscribeable stream so session loads do not throw in tests that don't care.
+        vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValue(of());
 
         accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
 
@@ -430,7 +436,7 @@ describe('IrisChatService', () => {
         await waitForSessionId();
         await firstValueFrom(service.resendMessage(message));
 
-        expect(httpService.resendMessage).toHaveBeenCalledWith(mockConversation.id, message);
+        expect(httpService.resendMessage).toHaveBeenCalledWith(mockConversation.id, message, wsMock.clientId);
         const messages = await firstValueFrom(service.currentMessages());
         expect(messages).toHaveLength(mockConversation.messages!.length);
         expect(messages.first()).toEqual(message);
@@ -586,6 +592,175 @@ describe('IrisChatService', () => {
             const messages = await firstValueFrom(service.currentMessages());
             expect(messages.map((message) => message.id)).toEqual([60, 61]);
         });
+    });
+
+    it('should add an incoming COMMAND marker message without emitting point-out navigation', async () => {
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        const commandPayload = {
+            type: IrisChatWebsocketPayloadType.MESSAGE,
+            message: {
+                id: 99,
+                sender: IrisSender.COMMAND,
+                content: [{ type: 'json', attributes: { type: 'pointOut', lectureUnitId: 42, page: 3 } }],
+            },
+        } as unknown as IrisChatWebsocketDTO;
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(commandPayload));
+        const navigationSpy = vi.fn();
+        service.pointOut$.subscribe(navigationSpy);
+
+        service.openChat(ChatServiceMode.LECTURE, id);
+        await waitForSessionId();
+
+        // Navigation already happened at command time; the marker is only a clickable history entry.
+        const messages = await firstValueFrom(service.currentMessages());
+        expect(messages.last()).toMatchObject({ id: 99, sender: IrisSender.COMMAND });
+        expect(navigationSpy).not.toHaveBeenCalled();
+    });
+
+    it('should emit a point-out in place while its own lecture is the one on screen', () => {
+        const emitted = vi.fn();
+        service.pointOut$.subscribe(emitted);
+
+        // A point-out that names no lecture has nothing to route by and can only be carried out where it is.
+        service.navigateToPointOut({ lectureUnitId: 7, page: 2, forceOpen: true });
+
+        expect(emitted).toHaveBeenCalledExactlyOnceWith({ lectureUnitId: 7, page: 2, forceOpen: true });
+
+        // The combined view is right there and can move without a reload, so the marker must not route anywhere.
+        service['contextService']['_committed'].set({ mode: ChatServiceMode.LECTURE, entityId: 27 });
+        service['contextService'].setPageContext({ mode: ChatServiceMode.LECTURE, entityId: 27 });
+
+        service.navigateToPointOut({ lectureUnitId: 7, lectureId: 27, page: 2, timestamp: 42, forceOpen: true });
+
+        expect(emitted).toHaveBeenCalledTimes(2);
+        expect(routerMock.navigate).not.toHaveBeenCalled();
+    });
+
+    it('should route a point-out to its lecture when the session is open from somewhere else', () => {
+        // Chat history opens a lecture session from anywhere, the course Iris page above all. The unit that carries a
+        // point-out out only listens while it is on screen, so emitting here would leave the click doing nothing at
+        // all. The deep link reaches the same position through the route instead.
+        service['contextService']['_committed'].set({ mode: ChatServiceMode.LECTURE, entityId: 27 });
+        service['contextService'].setPageContext({ mode: ChatServiceMode.COURSE, entityId: courseId });
+        const emitted = vi.fn();
+        service.pointOut$.subscribe(emitted);
+
+        service.navigateToPointOut({ lectureUnitId: 7, lectureId: 27, page: 2, displayPage: 8, timestamp: 42, forceOpen: true });
+
+        // combined asks for the view Iris pointed in, so the click lands the same way from either page.
+        expect(routerMock.navigate).toHaveBeenCalledWith(['/courses', courseId, 'lectures', 27], {
+            queryParams: { unit: 7, combined: true, page: 2, timestamp: 42 },
+        });
+        // Nothing is emitted, so a lecture page opened later does not act on a stale target as well.
+        expect(emitted).not.toHaveBeenCalled();
+
+        // A point-out that names no page is routed without one, rather than with an empty parameter.
+        service.navigateToPointOut({ lectureUnitId: 7, lectureId: 27, timestamp: 42, forceOpen: true });
+
+        expect(routerMock.navigate).toHaveBeenLastCalledWith(['/courses', courseId, 'lectures', 27], { queryParams: { unit: 7, combined: true, timestamp: 42 } });
+    });
+
+    it('should route a point-out to the lecture it was made in after the chat moved to another one', () => {
+        // A conversation can be switched to another lecture, and the markers made before that keep pointing where they
+        // pointed then. Reading the lecture off the session's context would send this click into lecture 99, which
+        // does not even hold the unit it names.
+        service['contextService']['_committed'].set({ mode: ChatServiceMode.LECTURE, entityId: 99 });
+        service['contextService'].setPageContext({ mode: ChatServiceMode.LECTURE, entityId: 99 });
+        const emitted = vi.fn();
+        service.pointOut$.subscribe(emitted);
+
+        service.navigateToPointOut({ lectureUnitId: 7, lectureId: 27, page: 2, forceOpen: true });
+
+        expect(routerMock.navigate).toHaveBeenCalledWith(['/courses', courseId, 'lectures', 27], { queryParams: { unit: 7, combined: true, page: 2 } });
+        expect(emitted).not.toHaveBeenCalled();
+    });
+
+    it('should forward point-out commands addressed to this tab or to any tab', async () => {
+        vi.spyOn(Date, 'now').mockReturnValue(1_000);
+        const commandSubject = new Subject<IrisCommand>();
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValueOnce(commandSubject.asObservable());
+        const navigated = vi.fn();
+        service.pointOut$.subscribe(navigated);
+
+        service.openChat(ChatServiceMode.LECTURE, id);
+        await waitForSessionId();
+        commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 3 }, correlationId: 'corr-1', expiresAt: 5_000 });
+        commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 4 }, correlationId: 'corr-2', targetClientId: wsMock.clientId, expiresAt: 5_000 });
+
+        expect(navigated).toHaveBeenNthCalledWith(1, { lectureUnitId: 42, page: 3, correlationId: 'corr-1', expiresAt: 5_000 });
+        expect(navigated).toHaveBeenNthCalledWith(2, { lectureUnitId: 42, page: 4, correlationId: 'corr-2', expiresAt: 5_000 });
+    });
+
+    it('should reject a point-out whose server deadline is missing or expired', async () => {
+        vi.spyOn(Date, 'now').mockReturnValue(5_000);
+        const commandSubject = new Subject<IrisCommand>();
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValueOnce(commandSubject.asObservable());
+        const ackSpy = vi.spyOn(wsMock, 'sendCommandAck');
+        const navigated = vi.fn();
+        service.pointOut$.subscribe(navigated);
+
+        service.openChat(ChatServiceMode.LECTURE, id);
+        await waitForSessionId();
+        commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 3 }, correlationId: 'missing' });
+        commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 4 }, correlationId: 'expired', expiresAt: 5_000 });
+
+        expect(navigated).not.toHaveBeenCalled();
+        expect(ackSpy).toHaveBeenNthCalledWith(1, { correlationId: 'missing', applied: false });
+        expect(ackSpy).toHaveBeenNthCalledWith(2, { correlationId: 'expired', applied: false });
+    });
+
+    it('should ignore commands addressed to another tab', async () => {
+        const commandSubject = new Subject<IrisCommand>();
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValueOnce(commandSubject.asObservable());
+        const ackSpy = vi.spyOn(wsMock, 'sendCommandAck');
+        const navigated = vi.fn();
+        service.pointOut$.subscribe(navigated);
+        service.openChat(ChatServiceMode.LECTURE, id);
+        await waitForSessionId();
+        commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 3 }, correlationId: 'corr-3', targetClientId: 'another-tab' });
+        commandSubject.next({ type: 'highlightTerm', parameters: { slide: 4 }, correlationId: 'corr-4', targetClientId: 'another-tab' });
+
+        expect(navigated).not.toHaveBeenCalled();
+        expect(ackSpy).not.toHaveBeenCalled();
+    });
+
+    it('should acknowledge an unsupported command for this tab as not applied', async () => {
+        const commandSubject = new Subject<IrisCommand>();
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValueOnce(commandSubject.asObservable());
+        const ackSpy = vi.spyOn(wsMock, 'sendCommandAck');
+        service.openChat(ChatServiceMode.LECTURE, id);
+        await waitForSessionId();
+        commandSubject.next({ type: 'highlightTerm', parameters: { slide: 4 }, correlationId: 'corr-5', targetClientId: wsMock.clientId });
+
+        expect(ackSpy).toHaveBeenCalledExactlyOnceWith({ correlationId: 'corr-5', applied: false });
+    });
+
+    it('should send the tab client id along with a user message', async () => {
+        // Without it the server cannot address a mid-answer command back to the tab the student is sitting in front of.
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        const createdMessage = mockUserMessageWithContent('test message');
+        const stub = vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
+
+        service.openChat(ChatServiceMode.COURSE, id);
+        await waitForSessionId();
+        await firstValueFrom(service.sendMessage('test message'));
+
+        expect(stub).toHaveBeenCalledWith(id, expect.objectContaining({ clientId: wsMock.clientId }));
     });
 
     it('should set live assistant draft from websocket partial without incrementing new message counter', async () => {
@@ -1163,6 +1338,103 @@ describe('IrisChatService', () => {
 
             expect(emissions).toBe(1);
         });
+
+        /**
+         * The chatbot decides whether to show the "Choose Your AI Experience" modal from the cached
+         * `userIdentity().selectedLLMUsage`. Publishing the decision only after the PUT resolved made a widget
+         * that is re-created in that window read the stale value and ask again (nightly Iris e2e #13301), so
+         * the cache must reflect the choice as soon as it is made.
+         */
+        it.each([LLMSelectionDecision.CLOUD_AI, LLMSelectionDecision.LOCAL_AI, LLMSelectionDecision.NO_AI])(
+            'should publish %s to the account cache while the request is still in flight',
+            (decision) => {
+                accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
+                userMock.updateLLMSelectionDecision.mockReturnValue(new Subject<HttpResponse<void>>().asObservable());
+
+                service.updateLLMUsageConsent(decision);
+
+                expect(accountService.userIdentity()?.selectedLLMUsage).toBe(decision);
+            },
+        );
+
+        it('should revert to "no decision yet" — without stamping a timestamp — when persisting it fails', () => {
+            accountService.userIdentity.set({ selectedLLMUsage: undefined, selectedLLMUsageTimestamp: undefined } as User);
+            userMock.updateLLMSelectionDecision.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.CLOUD_AI);
+
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBeUndefined();
+            // A rollback must not claim the user decided just now: the settings page renders this timestamp.
+            expect(accountService.userIdentity()?.selectedLLMUsageTimestamp).toBeUndefined();
+        });
+
+        /**
+         * The consent handler only has to CREATE the session that could not exist before the user opted in —
+         * it must not tear down a session that is already established, which would discard the message the
+         * user has meanwhile sent (its response is dropped once `sessionId` changes) and leave an empty chat.
+         */
+        it('should keep an already established session when the accepted decision is persisted', async () => {
+            const unsubscribeSpy = vi.spyOn(wsMock, 'unsubscribeFromSession');
+            await startSessionWithWebsocket(new Subject<IrisChatWebsocketDTO>());
+            expect(service.sessionId).toBe(id);
+            const messagesBefore = service.messages.getValue();
+            expect(messagesBefore).not.toHaveLength(0);
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.CLOUD_AI);
+
+            expect(unsubscribeSpy).not.toHaveBeenCalled();
+            expect(service.sessionId).toBe(id);
+            // The reported symptom was an empty chat, so assert on what the user actually sees.
+            expect(service.messages.getValue()).toEqual(messagesBefore);
+        });
+
+        it('should roll back to the last server-confirmed decision, not to a previous unpersisted one', () => {
+            accountService.userIdentity.set({ selectedLLMUsage: undefined, selectedLLMUsageTimestamp: undefined } as User);
+            // The first request never settles (it is cancelled by the second call), so CLOUD_AI is never persisted.
+            userMock.updateLLMSelectionDecision
+                .mockReturnValueOnce(new Subject<HttpResponse<void>>().asObservable())
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.CLOUD_AI);
+            service.updateLLMUsageConsent(LLMSelectionDecision.LOCAL_AI);
+
+            // Reverting to CLOUD_AI would claim a decision the server may never have stored, which would
+            // suppress the AI-selection modal forever while the server keeps rejecting session creation.
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBeUndefined();
+            expect(accountService.userIdentity()?.selectedLLMUsageTimestamp).toBeUndefined();
+        });
+
+        it('should keep the decision cached after it was persisted successfully', () => {
+            accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.CLOUD_AI);
+
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.CLOUD_AI);
+        });
+
+        /**
+         * Right after the decision is cached the chat renders, but the session only exists once the consent request
+         * has landed. A send in that window must report the failure — the caller clears the textarea either way.
+         */
+        it('should surface an error instead of silently dropping a message sent before a session exists', async () => {
+            const errors: (IrisErrorMessageKey | undefined)[] = [];
+            service.currentError().subscribe((error) => errors.push(error));
+
+            await expect(firstValueFrom(service.sendMessage('hello'))).rejects.toThrow('Not initialized');
+
+            expect(errors).toContain(IrisErrorMessageKey.SEND_MESSAGE_FAILED);
+        });
+
+        it('should revert the cached decision to the previous one when persisting a change fails', () => {
+            const previousTimestamp = dayjs().subtract(3, 'day');
+            accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI, selectedLLMUsageTimestamp: previousTimestamp } as User);
+            userMock.updateLLMSelectionDecision.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.NO_AI);
+
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.CLOUD_AI);
+            expect(accountService.userIdentity()?.selectedLLMUsageTimestamp).toBe(previousTimestamp);
+        });
     });
 
     describe('authentication state changes', () => {
@@ -1397,6 +1669,32 @@ describe('IrisChatService', () => {
             await callerResult;
 
             expect(scopedService.error.getValue()).toBeUndefined();
+        });
+
+        /**
+         * The rollback snapshot is captured per consent request and deliberately not overwritten while one is in
+         * flight. It therefore has to be discarded when a logout cancels that request, or the next user's failed
+         * consent update would restore the previous user's decision into their identity cache.
+         */
+        it('should not restore the decision of a previous user after an authentication reset cancelled their consent request', () => {
+            customAccountService.userIdentity.set({ id: 99, selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
+            userMock.updateLLMSelectionDecision.mockReset();
+            userMock.updateLLMSelectionDecision.mockReturnValueOnce(new Subject<HttpResponse<void>>().asObservable());
+
+            // First user picks a decision; the request never settles.
+            scopedService.updateLLMUsageConsent(LLMSelectionDecision.CLOUD_AI);
+
+            // They log out, which cancels the in-flight consent request, and a different user logs in.
+            authState.next(undefined);
+            customAccountService.userIdentity.set({ id: 100, selectedLLMUsage: undefined } as User);
+            authState.next({ id: 100 } as User);
+
+            // The new user's consent update fails, triggering a rollback.
+            userMock.updateLLMSelectionDecision.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            scopedService.updateLLMUsageConsent(LLMSelectionDecision.LOCAL_AI);
+
+            // Must roll back to the NEW user's own previous state, never to NO_AI from the first user.
+            expect(customAccountService.userIdentity()?.selectedLLMUsage).toBeUndefined();
         });
     });
 });

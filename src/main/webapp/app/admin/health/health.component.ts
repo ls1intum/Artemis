@@ -13,10 +13,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
-import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
-
+import { TumUiButtonComponent, TumUiTableDirective, TumUiTagComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 /**
  * Component for displaying system health status.
  * Shows health of various system components like database, mail, etc.
@@ -35,6 +32,7 @@ import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-toolt
         HealthModalComponent,
         TumUiTagComponent,
         TumUiButtonComponent,
+        TumUiTableDirective,
         TumUiTooltipDirective,
     ],
 })

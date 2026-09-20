@@ -183,15 +183,21 @@ public class ArtemisMetricsEndpoint {
     /**
      * Collects metrics for all Hazelcast IMaps used as distributed state.
      * <p>
-     * This includes Spring {@code @Cacheable} caches backed by
-     * {@link com.hazelcast.spring.cache.HazelcastCacheManager} as well as application-level
-     * IMaps (rate-limit buckets, atlas session state, course notification cache, etc.).
+     * This includes the Spring {@code @Cacheable} caches, which the distributed data provider backs with IMaps on this
+     * provider, as well as application-level IMaps (rate-limit buckets, atlas session state, course notification cache,
+     * etc.).
      * Hibernate L2 cache is disabled cluster-wide, so there are no JCache / ICache regions
      * to read — see {@code documentation/docs/developer/guidelines/caching.mdx}.
      * <p>
      * Statistics are read from {@code IMap.getLocalMapStats()} (local-only); the entry
      * count uses {@code stats.getOwnedEntryCount()} rather than {@code map.size()} to
      * avoid the cluster-wide network round-trip implied by the latter.
+     * <p>
+     * <strong>Hazelcast-only by nature.</strong> These counters come from Hazelcast's per-map local statistics, which
+     * Redis has no equivalent for: Redis reports server-wide keyspace and memory figures, not per-structure hit/miss
+     * counts. When Hazelcast is not the configured provider there is no {@code HazelcastInstance} bean, the lookup below
+     * fails, and this returns an empty map so the endpoint still serves its other sections. Dashboards that read these
+     * counters therefore go blank on a Redis-only node rather than reporting wrong numbers.
      */
     private Map<String, CacheStats> cacheMetrics() {
         Map<String, CacheStats> result = new TreeMap<>();

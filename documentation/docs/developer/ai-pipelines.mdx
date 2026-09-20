@@ -4,8 +4,6 @@ title: AI Pipelines and Service Boundaries
 sidebar_label: AI Pipelines
 ---
 
-# AI Pipelines and Service Boundaries
-
 This catalog describes the **Artemis-owned control plane** for AI-enabled workflows: the requests Artemis creates, the data and authorization it owns, and the integration contracts it exposes. It is not generated API documentation and does not replace the implementation documentation of Iris, Athena, AtlasML, Logos, or Memiris.
 
 Use this page together with the [Artemis Intelligence ecosystem map](../admin/artemis-intelligence). It intentionally avoids deployment-specific hosts, credentials, model assignments, provider aliases, capacity, topology, and rollout state. Feature flags and configuration determine whether a boundary is enabled; they do not establish how a particular deployment is configured.
@@ -119,6 +117,8 @@ Atlas contains two related but distinct Artemis-side responsibilities: native co
 `CompetencyOrchestrationResource` starts programming-exercise orchestration and additionally requires `Feature.AtlasAgent`. `CompetencyOrchestrationService` coordinates the workflow, while `AtlasAgentToolCallbackService` handles agent-tool callbacks. The supporting tool services (`AtlasAgentToolsService`, `CompetencyExpertToolsService`, `CompetencyMappingToolsService`, `ExerciseMappingToolsService`, and `OrchestratorToolsService`) apply Artemis-owned competency, mapping, and course operations. Their results are persisted in Artemis through the normal competency and course services.
 
 `ContentExtractionService` is a native Atlas preprocessing flow for supported programming exercises. It uses Artemis Spring AI to identify narrowly removable flavor-text edits, applies those edits locally, and supplies the resulting learning-focused content before competency orchestration and optional AtlasML mapping suggestions. If the chat client or flavor-strip model is unavailable, it passes the raw content through unchanged.
+
+Autonomous rounds and flavor stripping use an isolated Responses `ChatClient` by default; interactive Atlas and other modules retain the shared client. The adapter preserves ordered Responses output items, including encrypted reasoning, while the Spring AI tool advisor executes callbacks. Each run owns one shared tool budget and a `completeOrchestration(verified, message)` terminal decision. A successful index refresh after the latest work is required for verified completion. Budget exhaustion or missing/unverified completion is terminal and preserves applied actions without automatically replaying the run. See [Atlas model configuration](../admin/artemis-intelligence#atlas-model-configuration) for defaults and the explicit transport fallback.
 
 ### Optional AtlasML REST boundary
 

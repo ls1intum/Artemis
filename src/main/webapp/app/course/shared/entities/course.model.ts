@@ -9,11 +9,13 @@ import { Organization } from 'app/admin/organization-management/organization.mod
 import { Post } from 'app/communication/shared/entities/post.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
+import { CourseConfiguration } from 'app/course/shared/entities/course-configuration.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { LearningPath } from 'app/atlas/shared/entities/learning-path.model';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export enum CourseInformationSharingConfiguration {
     COMMUNICATION_AND_MESSAGING = 'COMMUNICATION_AND_MESSAGING',
@@ -56,10 +58,6 @@ export class Course implements BaseEntity {
     public title?: string;
     public description?: string;
     public shortName?: string;
-    public studentGroupName?: string;
-    public teachingAssistantGroupName?: string;
-    public editorGroupName?: string;
-    public instructorGroupName?: string;
     public startDate?: dayjs.Dayjs;
     public endDate?: dayjs.Dayjs;
     public enrollmentStartDate?: dayjs.Dayjs;
@@ -89,7 +87,8 @@ export class Course implements BaseEntity {
     public maxRequestMoreFeedbackTimeDays?: number;
     public maxPoints?: number;
     public accuracyOfScores?: number;
-    public restrictedAthenaModulesAccess?: boolean;
+    public athenaGradingFeedbackEnabled?: boolean;
+    public athenaFormativeFeedbackEnabled?: boolean;
     public tutorialGroupsConfiguration?: TutorialGroupsConfiguration;
     // Note: Currently just used in the scope of the tutorial groups feature
     public timeZone?: string;
@@ -118,6 +117,7 @@ export class Course implements BaseEntity {
     public organizations?: Organization[];
     public tutorialGroups?: TutorialGroup[];
     public onlineCourseConfiguration?: OnlineCourseConfiguration;
+    public courseConfiguration?: CourseConfiguration;
     public courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
     public courseInformationSharingMessagingCodeOfConduct?: string;
 
@@ -128,7 +128,6 @@ export class Course implements BaseEntity {
     public relativeScore?: number;
     public absoluteScore?: number;
     public maxScore?: number;
-    public irisEnabledInCourse?: boolean;
 
     public courseArchivePath?: string;
     public onboardingDone?: boolean;
@@ -150,7 +149,8 @@ export class Course implements BaseEntity {
         this.requestMoreFeedbackEnabled = true; // default value
         this.maxRequestMoreFeedbackTimeDays = 7; // default value
         this.accuracyOfScores = 1; // default value
-        this.restrictedAthenaModulesAccess = false; // default value
+        this.athenaGradingFeedbackEnabled = false; // default value
+        this.athenaFormativeFeedbackEnabled = false; // default value
         this.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
 
         this.courseIconPath = addPublicFilePrefix(this.courseIcon);
@@ -163,10 +163,12 @@ export class Course implements BaseEntity {
      * @returns The class instance
      */
     static from(object: Course): Course {
-        const course = Object.assign(new Course(), object);
+        const course = hydrate(new Course(), object);
         if (course.exercises) {
             course.exercises.forEach((exercise) => {
-                exercise.numberOfSubmissions = Object.assign(new DueDateStat(), exercise.numberOfSubmissions);
+                // `?? {}` keeps the previous Object.assign behaviour, which left the fresh stat untouched when
+                // the exercise carried no submission counts.
+                exercise.numberOfSubmissions = hydrate(new DueDateStat(), exercise.numberOfSubmissions ?? {});
             });
         }
         return course;
@@ -180,11 +182,15 @@ export class CourseForImportDTO {
     semester?: string;
 }
 
-export const enum CourseGroup {
+/**
+ * URL path segments used by the REST API and Angular router to identify course roles.
+ * These are the string values sent to/from the server; they are distinct from the {@link CourseRole} Java enum.
+ */
+export const enum CourseRoleSlug {
     STUDENTS = 'students',
     TUTORS = 'tutors',
     EDITORS = 'editors',
     INSTRUCTORS = 'instructors',
 }
 
-export const courseGroups = [CourseGroup.STUDENTS, CourseGroup.TUTORS, CourseGroup.EDITORS, CourseGroup.INSTRUCTORS];
+export const courseRoleSegments = [CourseRoleSlug.STUDENTS, CourseRoleSlug.TUTORS, CourseRoleSlug.EDITORS, CourseRoleSlug.INSTRUCTORS];

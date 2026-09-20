@@ -1,9 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { faExclamationTriangle, faGripLines } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { faCheck, faDownLeftAndUpRightToCenter, faExclamationTriangle, faTriangleExclamation, faUpRightAndDownLeftFromCenter, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { captureException } from '@sentry/angular';
 import { type CollaborationUser, UMLDiagramType, UMLModel, collabColorFromName, importDiagram } from '@tumaet/apollon';
@@ -18,7 +20,7 @@ import { ParticipationWebsocketService } from 'app/course/shared/services/partic
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { getUnreferencedFeedback } from 'app/exercise/result/result.utils';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
 import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
@@ -28,14 +30,17 @@ import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-a
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
-import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
+import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
+import { ModelingAssessmentPanelDirective } from 'app/modeling/manage/assess/modeling-assessment-panel.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { parseJson } from 'app/foundation/util/json.util';
@@ -48,7 +53,8 @@ import { ModelingAssessmentComponent } from '../../manage/assess/modeling-assess
 import { AssessmentNamesForModelId, getNamesForAssessments } from '../../manage/assess/modeling-assessment.util';
 import { ApollonModelData, countModelElements, hasModelElements, isModelEmpty as isApollonModelEmpty } from '../../shared/apollon-model.util';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
+
+const FEEDBACK_PREVIEW_HIGHLIGHT = 'var(--apollon-interactive-selection)';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -56,7 +62,6 @@ import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback
     styleUrls: ['./modeling-submission.component.scss'],
     imports: [
         ResizeableContainerComponent,
-        FullscreenComponent,
         ModelingEditorComponent,
         FaIconComponent,
         TeamSubmissionSyncComponent,
@@ -65,10 +70,13 @@ import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback
         RatingComponent,
         ComplaintsStudentViewComponent,
         MarkdownDirective,
-        UnifiedFeedbackComponent,
+        ArtemisTranslatePipe,
+        ModelingAssessmentPanelDirective,
+        NgTemplateOutlet,
     ],
+    host: { '(window:beforeunload)': 'unloadNotification($event)' },
 })
-export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate, ExerciseSubmission {
     private websocketService = inject(WebsocketService);
     private modelingSubmissionService = inject(ModelingSubmissionService);
     private modelingAssessmentService = inject(ModelingAssessmentService);
@@ -77,10 +85,50 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private accountService = inject(AccountService);
     private translateService = inject(TranslateService);
+    private localeConversionService = inject(LocaleConversionService);
 
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
 
     readonly modelingEditor = viewChild(ModelingEditorComponent);
+    readonly modelingAssessment = viewChild(ModelingAssessmentComponent);
+    protected readonly faEnterFullscreen = faUpRightAndDownLeftFromCenter;
+    protected readonly faExitFullscreen = faDownLeftAndUpRightToCenter;
+
+    protected feedbackTone(feedback: Feedback): 'positive' | 'negative' | 'zero' {
+        const credits = feedback.credits ?? 0;
+        if (credits > 0) {
+            return 'positive';
+        }
+        return credits < 0 ? 'negative' : 'zero';
+    }
+
+    protected feedbackToneIcon(feedback: Feedback): IconDefinition {
+        const tone = this.feedbackTone(feedback);
+        if (tone === 'positive') {
+            return faCheck;
+        }
+        return tone === 'negative' ? faXmark : faTriangleExclamation;
+    }
+
+    protected feedbackPoints(feedback: Feedback): string {
+        const credits = feedback.credits ?? 0;
+        const formatted = this.localeConversionService.toLocaleString(credits, this.course()?.accuracyOfScores);
+        const label = this.translateService.instant(`artemisApp.assessment.detail.points.${Math.abs(credits) === 1 ? 'one' : 'many'}`, {
+            points: formatted,
+        });
+        return credits > 0 ? `+${label}` : label;
+    }
+
+    protected feedbackElementName(feedback: Feedback): string | undefined {
+        const names = this.assessmentsNames();
+        const referenceId = feedback.referenceId;
+        const assessment = names && referenceId ? names[referenceId] : undefined;
+        if (!assessment?.name) {
+            return undefined;
+        }
+        const name = assessment.name.replace('::', ' › ');
+        return assessment.type ? `${assessment.type} ${name}` : name;
+    }
 
     participationId = input<number>();
     inputExercise = input<ModelingExercise>();
@@ -105,9 +153,13 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     readonly result = signal<Result | undefined>(undefined);
     readonly resultWithComplaint = signal<Result | undefined>(undefined);
 
-    selectedElementIds: string[] = [];
+    readonly selectedElementIds = signal<string[]>([]);
+    protected readonly previewedFeedbackReferenceId = signal<string | undefined>(undefined);
+    protected readonly highlightedFeedbackElements = computed(() => {
+        const referenceId = this.previewedFeedbackReferenceId();
+        return referenceId ? new Map([[referenceId, FEEDBACK_PREVIEW_HIGHLIGHT]]) : undefined;
+    });
 
-    /** Local user passed to Apollon collaboration awareness (presence + remote selection highlights in team exercises). */
     protected readonly apollonCollaborationUser = signal<CollaborationUser | undefined>(undefined);
 
     readonly submission = signal<ModelingSubmission>(undefined!);
@@ -120,46 +172,62 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     readonly assessmentsNames = signal<AssessmentNamesForModelId>({});
     totalScore = 0;
 
-    readonly umlModel = signal<UMLModel>(undefined!); // input model for Apollon
-    readonly hasElements = signal(false); // indicates if the current model has at least one element
+    readonly umlModel = signal<UMLModel>(undefined!);
+    readonly hasElements = signal(false);
     readonly isSaving = signal(false);
     readonly isChanged = signal(false);
     readonly retryStarted = signal(false);
     autoSaveInterval?: number;
+    private teamSyncInterval?: number;
     readonly autoSaveTimer = signal(0);
 
-    explanation = ''; // current explanation on text editor
+    explanation = '';
 
     automaticSubmissionSubscription?: Subscription;
 
-    // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate = false;
     readonly isLoading = signal(true);
-    readonly isLate = signal<boolean>(undefined!); // indicates if the submission is late
-    readonly isGeneratingFeedback = signal(false);
+    readonly isLate = signal<boolean>(undefined!);
     ComplaintType = ComplaintType;
     readonly examMode = signal(false);
 
-    // submission sync with team members
     private submissionChange = new Subject<ModelingSubmission>();
     protected submissionObservable = this.submissionChange.asObservable();
     protected submissionPatchObservable = new Subject<SubmissionPatch>();
 
-    // private modelingEditorInitialized = new ReplaySubject<void>();
-    resizeOptions = { verticalResize: true };
-
-    // Icons
-    faGripLines = faGripLines;
     farListAlt = faListAlt;
     faExclamationTriangle = faExclamationTriangle;
 
-    // mode
     readonly isFeedbackView = signal(false);
+
+    protected hasAssessmentToShow(): boolean {
+        return !!this.assessmentResult()?.feedbacks?.length || !!this.result();
+    }
+
+    protected showComplaintSection(): boolean {
+        return (
+            !!this.result() &&
+            !this.examMode() &&
+            !this.isFeedbackView() &&
+            !isPracticeMode(this.participation()) &&
+            this.result()!.assessmentType !== AssessmentType.AUTOMATIC_ATHENA
+        );
+    }
+
+    readonly canSubmitExercise = computed(() => this.shouldShowLiveEditor());
+
+    protected shouldShowLiveEditor(): boolean {
+        return (
+            !!this.submission() &&
+            (this.isActive || this.isLate()) &&
+            !(this.result() && !this.isAutomaticResult) &&
+            (!this.isLate() || !this.submission().submitted) &&
+            !this.isFeedbackView()
+        );
+    }
 
     private routeParams = toSignal(this.route.params);
 
-    // since participationId can come from parent component (readonly signal) or from route, we use an internal writeable
-    // variable
     private effectiveParticipationId = computed(() => {
         return this.participationId() ?? Number(this.routeParams()?.['participationId']);
     });
@@ -177,11 +245,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         this.resultId = Number(params['resultId']) || undefined;
                         this.isFeedbackView.set(!!this.submissionId);
 
-                        // If participationId exists and feedback view is needed, fetch history results first
                         if (this.effectiveParticipationId() && this.isFeedbackView()) {
                             return this.fetchSubmissionHistory().pipe(switchMap(() => this.fetchLatestSubmission()));
                         }
-                        // Otherwise, directly fetch the latest submission
                         return this.fetchLatestSubmission();
                     }),
                 )
@@ -207,7 +273,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private initializeApollonCollaborationUser(): void {
         void this.accountService.identity().then((user: User | undefined) => {
             if (!user) {
-                // Without an identity the editor cannot mount its collaboration layer; surface it instead of failing silently.
                 captureException('Modeling team exercise: no user identity available for Apollon collaboration.');
                 return;
             }
@@ -232,13 +297,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         return this.modelingSubmissionService.getLatestSubmissionForModelingEditor(this.effectiveParticipationId()).pipe(
             catchError((error: HttpErrorResponse) => {
                 onError(this.alertService, error);
-                return of(null); // Return null on error
+                return of(null);
             }),
         );
     }
 
-    // Fetch the results and sort them
-    // Fetch the submissions and sort them by the latest result's completionDate in descending order
     private fetchSubmissionHistory() {
         return this.modelingSubmissionService.getSubmissionsWithResultsForParticipation(this.effectiveParticipationId()).pipe(
             catchError((error: HttpErrorResponse) => {
@@ -251,7 +314,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         const latestResultA = this.sortResultsByCompletionDate(a.results ?? [])[0];
                         const latestResultB = this.sortResultsByCompletionDate(b.results ?? [])[0];
 
-                        // Use the latest result's completionDate for comparison
                         const dateA = latestResultA?.completionDate ? dayjs(latestResultA.completionDate).valueOf() : 0;
                         const dateB = latestResultB?.completionDate ? dayjs(latestResultB.completionDate).valueOf() : 0;
 
@@ -260,22 +322,21 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 );
                 const sortedResultHistory = this.sortedSubmissionHistory()
                     .map((submission) => {
-                        let latestResult: Result | undefined; // Initialize latestResult
+                        let latestResult: Result | undefined;
 
                         if (submission?.results && submission.results.length > 0) {
-                            // Sort results inline to find the latest one
                             const sortedResults = [...submission.results].sort((a, b) => {
                                 const dateA = a.completionDate ? dayjs(a.completionDate).valueOf() : 0;
                                 const dateB = b.completionDate ? dayjs(b.completionDate).valueOf() : 0;
-                                return dateB - dateA; // Descending order (latest date first)
+                                return dateB - dateA;
                             });
-                            latestResult = sortedResults[0]; // Get the first element after sorting
+                            latestResult = sortedResults[0];
                         }
 
                         if (latestResult) {
-                            latestResult.submission = submission; // Attach submission if result exists
+                            latestResult.submission = submission;
                         }
-                        return latestResult; // Return the latest result (or undefined if no results)
+                        return latestResult;
                     })
                     .filter((result): result is Result => !!result);
                 this.sortedResultHistory.set(sortedResultHistory);
@@ -295,13 +356,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         return !!(this.inputExercise() || this.inputSubmission() || this.inputParticipation());
     }
 
-    /**
-     * Uses values directly passed to this component instead of subscribing to a participation to save resources
-     *
-     * <i>e.g. used within {@link ExamResultSummaryComponent} and the respective {@link ModelingExamSummaryComponent}
-     * as directly after the exam no grading is present and only the student solution shall be displayed </i>
-     * @private
-     */
     private setupComponentWithInputValues() {
         const inputExercise = this.inputExercise();
         if (inputExercise) {
@@ -319,15 +373,27 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.updateModelAndExplanation();
     }
 
-    /**
-     * Updates the modeling submission with the given modeling submission.
-     */
+    /** Clears state because Angular reuses this component across participation IDs. */
+    private resetSubmissionScopedState(): void {
+        this.result.set(undefined);
+        this.assessmentResult.set(undefined);
+        this.resultWithComplaint.set(undefined);
+        this.assessmentsNames.set({});
+        this.totalScore = 0;
+        this.selectedElementIds.set([]);
+        this.previewedFeedbackReferenceId.set(undefined);
+        this.retryStarted.set(false);
+        this.isChanged.set(false);
+        this.isSaving.set(false);
+    }
+
     private updateModelingSubmission(modelingSubmission: ModelingSubmission): void {
         if (!modelingSubmission) {
             this.alertService.error('artemisApp.apollonDiagram.submission.noSubmission');
         }
 
-        // If isFeedbackView is true and submissionId is present, we want to find the corresponding submission and not get the latest one
+        this.resetSubmissionScopedState();
+
         if (this.isFeedbackView() && this.submissionId && this.sortedSubmissionHistory()) {
             const matchingSubmission = this.sortedSubmissionHistory().find((submission) => submission.id === this.submissionId);
 
@@ -340,15 +406,12 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
         this.submission.set(modelingSubmission);
 
-        // reconnect participation <--> result
-        // Skip reducing to single result when viewing a specific result in feedback view
         if (getLatestSubmissionResult(modelingSubmission) && !(this.isFeedbackView() && this.resultId)) {
             modelingSubmission.results = [getLatestSubmissionResult(modelingSubmission)!];
         }
         this.participation.set(modelingSubmission.participation as StudentParticipation);
         this.isOwnerOfParticipation.set(this.accountService.isOwnerOfParticipation(this.participation()));
 
-        // reconnect participation <--> submission
         this.participation().submissions = [omit(modelingSubmission, 'participation')];
 
         this.modelingExercise.set(this.participation().exercise as ModelingExercise);
@@ -358,7 +421,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (this.modelingExercise().diagramType == undefined) {
             this.modelingExercise().diagramType = UMLDiagramType.ClassDiagram;
         }
-        // checks if the student started the exercise after the due date
         this.isLate.set(
             this.modelingExercise() &&
                 !!this.modelingExercise().dueDate &&
@@ -376,10 +438,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.result.set(getLatestSubmissionResult(this.submission()));
             if (this.isFeedbackView() && this.submissionId) {
                 if (this.resultId) {
-                    // Find the specific result by resultId (from clicked result in timeline)
                     this.result.set(this.submission().results?.find((result) => result.id === this.resultId));
                 } else {
-                    // Fallback: Find the result with most recent completionDate
                     this.result.set(this.sortedResultHistory().find((result) => result.submission?.id === this.submissionId));
                 }
             }
@@ -387,13 +447,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.resultWithComplaint.set(getFirstResultWithComplaint(this.submission()));
         const result = this.result();
         if (this.submission().submitted && result && result.completionDate) {
-            // Check if feedbacks are loaded
             if (result.feedbacks && result.feedbacks.length > 0) {
-                // Feedbacks are already loaded, use them directly
                 this.assessmentResult.set(this.modelingAssessmentService.convertResult(result));
                 this.prepareAssessmentData();
             } else if (!this.isAutomaticResult && this.isFeedbackView() && this.resultId && this.submissionId) {
-                // Feedbacks not loaded for manual result, fetch from backend using specific resultId
                 this.modelingAssessmentService.getAssessment(this.submissionId, this.resultId).subscribe({
                     next: (assessmentResult: Result) => {
                         this.assessmentResult.set(assessmentResult);
@@ -406,7 +463,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     },
                 });
             } else {
-                // Feedbacks already loaded or automatic result
                 this.assessmentResult.set(this.modelingAssessmentService.convertResult(result));
                 this.prepareAssessmentData();
             }
@@ -425,11 +481,24 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.explanation = this.submission().explanationText ?? '';
     }
 
-    /**
-     * If the submission is submitted, subscribe to new results for the participation.
-     * Otherwise, subscribe to the automatic submission (which happens when the submission is un-submitted and the exercise due date is over).
-     */
+    private refreshNonCollaborativeEditorFromSavedSubmission(): void {
+        const model = this.submission().model;
+        // Importing a persisted team snapshot can discard newer edits in the live Yjs document.
+        if (this.modelingExercise().teamMode || !model) {
+            return;
+        }
+        this.umlModel.set(importDiagram(parseJson(model)));
+        this.hasElements.set(hasModelElements(this.umlModel()));
+    }
+
     private subscribeToWebsockets(): void {
+        this.automaticSubmissionSubscription?.unsubscribe();
+        this.automaticSubmissionSubscription = undefined;
+        this.manualResultUpdateListener?.unsubscribe();
+        this.manualResultUpdateListener = undefined;
+        this.athenaResultUpdateListener?.unsubscribe();
+        this.athenaResultUpdateListener = undefined;
+
         if (this.submission() && this.submission().id) {
             if (this.submission().submitted) {
                 this.subscribeToNewResultsWebsocket();
@@ -439,11 +508,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
     }
 
-    /**
-     * Subscribes to the websocket channel for automatic submissions. In the server the AutomaticSubmissionService regularly checks for unsubmitted submissions, if the
-     * corresponding exercise has finished. If it has, the submission is automatically submitted and sent over this websocket channel. Here we listen to the channel and update the
-     * view accordingly.
-     */
     private subscribeToAutomaticSubmissionWebsocket(): void {
         if (!this.submission() || !this.submission().id) {
             return;
@@ -454,11 +518,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             .subscribe((submission: ModelingSubmission) => {
                 if (submission.submitted) {
                     this.submission.set(submission);
-                    // Team mode: leave the live collaborative editor (Yjs) untouched — see submit().
-                    if (!this.modelingExercise().teamMode && this.submission().model) {
-                        this.umlModel.set(importDiagram(parseJson(this.submission().model!)));
-                        this.hasElements.set(hasModelElements(this.umlModel()));
-                    }
+                    this.refreshNonCollaborativeEditorFromSavedSubmission();
                     const latestResult = getLatestSubmissionResult(this.submission());
                     if (latestResult && latestResult.completionDate && (this.isAfterAssessmentDueDate || latestResult.assessmentType === AssessmentType.AUTOMATIC_ATHENA)) {
                         this.modelingAssessmentService.getAssessment(this.submission().id!).subscribe((assessmentResult: Result) => {
@@ -471,10 +531,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             });
     }
 
-    /**
-     * Subscribes to the websocket channel for new results. When an assessment is submitted the new result is sent over this websocket channel. Here we listen to the channel
-     * and show the new assessment information to the student.
-     */
     private subscribeToNewResultsWebsocket(): void {
         if (!this.participation()?.id) {
             return;
@@ -482,7 +538,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
         const resultStream$ = this.participationWebsocketService.subscribeForLatestResultOfParticipation(this.participation().id!, true);
 
-        // Handle initial results (no skip)
         this.manualResultUpdateListener = resultStream$
             .pipe(
                 filter((result): result is Result => !!result),
@@ -490,7 +545,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             )
             .subscribe(this.handleManualAssessment.bind(this));
 
-        // Handle Athena results (with skip)
         this.athenaResultUpdateListener = resultStream$
             .pipe(
                 skip(1),
@@ -500,10 +554,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             .subscribe(this.handleAthenaAssessment.bind(this));
     }
 
-    /**
-     * Handles manual assessments (non-Athena). Converts the result, prepares the assessment data, and informs the user of a new assessment.
-     * @param result - The result of the assessment.
-     */
     private handleManualAssessment(result: Result): void {
         if (!result.completionDate) {
             return;
@@ -513,10 +563,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.alertService.info('artemisApp.modelingEditor.newAssessment');
     }
 
-    /**
-     * Handles Athena assessments. Converts the result, prepares the assessment data, and provides feedback based on the result's success or failure.
-     * @param result - The result of the Athena assessment.
-     */
     private handleAthenaAssessment(result: Result): void {
         if (result.completionDate) {
             this.assessmentResult.set(this.modelingAssessmentService.convertResult(result));
@@ -529,17 +575,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         } else if (result.successful === false) {
             this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
         }
-
-        this.isGeneratingFeedback.set(false);
     }
 
-    /**
-     * This function sets and starts an auto-save timer that automatically saves changes
-     * to the model after at most 60 seconds.
-     */
     private setAutoSaveTimer(): void {
+        clearInterval(this.autoSaveInterval);
         this.autoSaveTimer.set(0);
-        // auto save of submission if there are changes
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer.update((timer) => timer + 1);
             this.isChanged.set(!this.canDeactivate());
@@ -549,46 +589,26 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }, AUTOSAVE_CHECK_INTERVAL);
     }
 
-    /**
-     * Check every 2 seconds, if the user made changes for the submission in a team exercise: if yes, send it to the sever
-     */
     private setupSubmissionStreamForTeam(): void {
+        clearInterval(this.teamSyncInterval);
         const teamSyncInterval = window.setInterval(() => {
             this.isChanged.set(!this.canDeactivate());
             if (this.isChanged()) {
-                // make sure this.submission() includes the newest content of the apollon editor
                 this.updateSubmissionWithCurrentValues();
-                // notify the team sync component to send this.submission() to the server (and all online team members)
                 this.submissionChange.next(this.submission());
             }
         }, AUTOSAVE_TEAM_EXERCISE_INTERVAL);
+        this.teamSyncInterval = teamSyncInterval;
 
         this.cleanup(() => clearInterval(teamSyncInterval));
     }
 
-    /**
-     * Emits submission patches when receiving patches from the modeling editor.
-     * These patches need to be synced with other team members in team exercises.
-     * The observable through which the patches are emitted is passed to the team sync
-     * component, who then sends the patches to the server and other team members.
-     * @param patch The patch to update the submission with.
-     */
     onModelPatch(patch: string) {
         if (this.modelingExercise().teamMode) {
-            const submissionPatch = new SubmissionPatch(patch);
-            submissionPatch.participation = this.participation();
-            if (submissionPatch.participation?.exercise) {
-                submissionPatch.participation.exercise.studentParticipations = [];
-            }
-            this.submissionPatchObservable.next(Object.assign({}, submissionPatch));
+            this.submissionPatchObservable.next(new SubmissionPatch(patch));
         }
     }
 
-    /**
-     * Runs given cleanup logic when the component is destroyed.
-     * @param teardown The cleanup logic to run when the component is destroyed.
-     * @private
-     */
     private cleanup(teardown: TeardownLogic) {
         this.subscription ??= new Subscription();
         this.subscription.add(teardown);
@@ -596,7 +616,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     saveDiagram(): void {
         if (this.isSaving()) {
-            // don't execute the function if it is already currently executing
             return;
         }
         this.updateSubmissionWithCurrentValues();
@@ -607,7 +626,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.modelingSubmissionService.update(this.submission(), this.modelingExercise().id!).subscribe({
                 next: (response) => {
                     this.submission.set(response.body!);
-                    // reconnect so that the submission status is displayed correctly in the result.component
                     this.submission().participation!.submissions = [this.submission()];
                     this.participationWebsocketService.addParticipation(this.submission().participation as StudentParticipation, this.modelingExercise());
                     this.result.set(getLatestSubmissionResult(this.submission()));
@@ -628,9 +646,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
     }
 
-    submit(): void {
+    submitExercise(): void {
         if (this.isSaving()) {
-            // don't execute the function if it is already currently executing
             return;
         }
         this.updateSubmissionWithCurrentValues();
@@ -644,16 +661,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.modelingSubmissionService.update(this.submission(), this.modelingExercise().id!).subscribe({
                 next: (response) => {
                     this.submission.set(response.body!);
-                    // In team mode the live collaborative editor is the single source of truth (Yjs); re-importing
-                    // the saved snapshot would reset the shared document and discard a teammate's concurrent edits.
-                    if (!this.modelingExercise().teamMode && this.submission().model) {
-                        this.umlModel.set(importDiagram(parseJson(this.submission().model!)));
-                        this.hasElements.set(hasModelElements(this.umlModel()));
-                    }
+                    this.refreshNonCollaborativeEditorFromSavedSubmission();
                     this.submissionChange.next(this.submission());
                     this.participation.set(this.submission().participation as StudentParticipation);
                     this.participation().exercise = this.modelingExercise();
-                    // reconnect so that the submission status is displayed correctly in the result.component
                     this.submission().participation!.submissions = [this.submission()];
                     this.participationWebsocketService.addParticipation(this.participation(), this.modelingExercise());
                     this.modelingExercise().studentParticipations = [this.participation()];
@@ -704,19 +715,12 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.isSaving.set(false);
     }
 
-    /**
-     * This is called when the team sync component receives
-     * patches from the server. Updates the modeling editor with the received patch.
-     * @param submissionPatch
-     */
     onReceiveSubmissionPatchFromTeam(submissionPatch: SubmissionPatch) {
         this.modelingEditor()?.importPatch(submissionPatch.patch);
     }
 
     onTeamSyncReconnected() {
-        const editor = this.modelingEditor();
-        editor?.broadcastFullState();
-        editor?.reannounceLocalAwareness();
+        this.modelingEditor()?.resynchronizeCollaborationAfterReconnect();
     }
 
     private isModelEmpty(model?: string): boolean {
@@ -736,9 +740,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.athenaResultUpdateListener?.unsubscribe();
     }
 
-    /**
-     * Check whether a assessmentResult exists and if, returns the unreferenced feedback of it
-     */
     get unreferencedFeedback(): Feedback[] | undefined {
         const feedbacks = this.assessmentResult()?.feedbacks;
         if (feedbacks) {
@@ -748,9 +749,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         return undefined;
     }
 
-    /**
-     * Find "Referenced Feedback" item for Result, if it exists.
-     */
     get referencedFeedback(): Feedback[] | undefined {
         const feedbacks = this.assessmentResult()?.feedbacks;
         if (feedbacks) {
@@ -760,25 +758,15 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         return undefined;
     }
 
-    /*
-     * Check if the result's assessment type is Athena
-     */
     get isAutomaticResult(): boolean {
         return this.result()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
     }
 
-    /*
-     * Check if the latest submission has an Athena result
-     */
     get hasAthenaResultForLatestSubmission(): boolean {
         const latestResult = getLatestSubmissionResult(this.submission());
         return latestResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
     }
 
-    /**
-     * Updates the model of the submission with the current Apollon model state
-     * and the explanation text of submission with current explanation if explanation is defined
-     */
     updateSubmissionWithCurrentValues(): void {
         if (!this.submission()) {
             this.submission.set(new ModelingSubmission());
@@ -796,16 +784,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
     }
 
-    /**
-     * Prepare assessment data for displaying the assessment information to the student.
-     */
     private prepareAssessmentData(): void {
         this.initializeAssessmentInfo();
     }
 
-    /**
-     * Retrieves names for displaying the assessment and calculates the total score
-     */
     private initializeAssessmentInfo(): void {
         const assessmentResult = this.assessmentResult();
         if (assessmentResult?.feedbacks && this.umlModel()) {
@@ -818,28 +800,28 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
     }
 
-    /**
-     * Handles changes of the model element selection in Apollon. This is used for displaying
-     * only the feedback of the selected model elements.
-     * @param selectedElementIds the new selection
-     */
     onSelectedElementIdsChanged(selectedElementIds: string[]) {
-        this.selectedElementIds = selectedElementIds;
+        this.selectedElementIds.set(selectedElementIds);
     }
 
-    /**
-     * Checks whether a model element in the modeling editor is selected.
-     */
-    shouldBeDisplayed(feedback: Feedback): boolean {
-        // If no elements are selected, show all feedback
-        if (this.selectedElementIds.length === 0) {
-            return true;
-        }
-        if (!feedback.referenceId) {
-            return false;
-        }
+    isFeedbackForSelection(feedback: Feedback): boolean {
+        const selected = this.selectedElementIds();
+        return selected.length > 0 && !!feedback.referenceId && selected.includes(feedback.referenceId);
+    }
 
-        return this.selectedElementIds.includes(feedback.referenceId);
+    previewFeedbackTarget(feedback: Feedback): void {
+        this.previewedFeedbackReferenceId.set(feedback.referenceId);
+    }
+
+    clearFeedbackPreview(): void {
+        this.previewedFeedbackReferenceId.set(undefined);
+    }
+
+    showFeedbackOnDiagram(feedback: Feedback): void {
+        if (!feedback.referenceId) {
+            return;
+        }
+        this.modelingAssessment()?.revealAssessment(feedback.referenceId);
     }
 
     canDeactivate(): boolean {
@@ -852,12 +834,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         return !this.modelHasUnsavedChanges(model) && explanationIsUpToDate;
     }
 
-    /**
-     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
-     * NOTE: while the beforeunload event might be deprecated in the future, it is currently the only way to display a confirmation dialog when the user tries to leave the page
-     * @param event the beforeunload event
-     */
-    @HostListener('window:beforeunload', ['$event'])
     unloadNotification(event: BeforeUnloadEvent) {
         if (!this.canDeactivate()) {
             event.preventDefault();
@@ -866,9 +842,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         return true;
     }
 
-    /**
-     * Checks whether there are pending changes in the current model. Returns true if there are unsaved changes, false otherwise.
-     */
     private modelHasUnsavedChanges(model: UMLModel): boolean {
         const submissionModel = this.submission()?.model;
         if (!submissionModel) {
@@ -881,10 +854,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
     }
 
-    /**
-     * counts the number of model elements
-     * is used in the submit() function
-     */
     calculateNumberOfModelElements(): number {
         const submissionModel = this.submission()?.model;
         if (submissionModel) {
@@ -894,9 +863,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         return 0;
     }
 
-    /**
-     * The exercise is still active if it's due date hasn't passed yet.
-     */
     get isActive(): boolean {
         return this.modelingExercise() && !this.examMode() && (!hasExerciseDueDatePassed(this.modelingExercise(), this.participation()) || !!this.participation()?.testRun);
     }

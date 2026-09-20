@@ -97,7 +97,7 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         // Pyris is not running in integration tests — stub the FAQ deletion to prevent PyrisConnectorException
         doNothing().when(pyrisFaqApi).deleteFaq(any());
@@ -111,7 +111,7 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, exercise));
 
         long exerciseId = exercise.getId();
-        request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertExerciseNotInWeaviate(weaviateService, exerciseId));
     }
@@ -124,7 +124,7 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertLectureExistsInWeaviate(weaviateService, lecture));
 
         long lectureId = lecture.getId();
-        request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertLectureNotInWeaviate(weaviateService, lectureId));
     }
@@ -138,7 +138,7 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertLectureUnitExistsInWeaviate(weaviateService, textUnit.getId()));
 
         long textUnitId = textUnit.getId();
-        request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertLectureUnitNotInWeaviate(weaviateService, textUnitId));
     }
@@ -151,7 +151,7 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertExamExistsInWeaviate(weaviateService, exam.getId()));
 
         long examId = exam.getId();
-        request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertExamNotInWeaviate(weaviateService, examId));
     }
@@ -175,7 +175,7 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
         long faq1Id = savedFaq1.getId();
         long faq2Id = savedFaq2.getId();
 
-        request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             assertFaqNotInWeaviate(weaviateService, faq1Id);
@@ -196,7 +196,7 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertChannelExistsInWeaviate(weaviateService, createdChannel));
 
         long channelId = createdChannel.getId();
-        request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertChannelNotInWeaviate(weaviateService, channelId));
     }
@@ -208,7 +208,7 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertCourseExistsInWeaviate(weaviateService, course));
 
         long courseId = course.getId();
-        request.delete("/api/core/admin/courses/" + courseId, HttpStatus.OK);
+        request.delete("/api/admin/courses/" + courseId, HttpStatus.OK);
 
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertCourseNotInWeaviate(weaviateService, courseId));
     }

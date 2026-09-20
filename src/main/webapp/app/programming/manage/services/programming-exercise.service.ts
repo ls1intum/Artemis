@@ -11,7 +11,7 @@ import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/progr
 import { toUpdateProgrammingExerciseDTO } from 'app/programming/manage/services/update-programming-exercise-dto.model';
 import { toProgrammingExerciseTimelineUpdateDTO } from 'app/programming/manage/services/programming-exercise-timeline-update-dto.model';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
-import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getNewestResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -21,6 +21,7 @@ import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { CheckoutDirectoriesDto } from 'app/programming/shared/entities/checkout-directories-dto';
 import { ProgrammingExerciseTheiaConfig } from 'app/programming/shared/entities/programming-exercise-theia.config';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -105,9 +106,7 @@ export class ProgrammingExerciseService {
         return this.http
             .get<PlagiarismResultDTO>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
                 observe: 'response',
-                params: {
-                    ...options?.toParams(),
-                },
+                params: deepClone(options?.toParams()),
             })
             .pipe(map((response: HttpResponse<PlagiarismResultDTO>) => response.body!));
     }
@@ -121,9 +120,7 @@ export class ProgrammingExerciseService {
         return this.http.get(`${this.resourceUrl}/${exerciseId}/check-plagiarism-jplag-report`, {
             observe: 'response',
             responseType: 'blob',
-            params: {
-                ...options?.toParams(),
-            },
+            params: deepClone(options?.toParams()),
         });
     }
 
@@ -152,7 +149,8 @@ export class ProgrammingExerciseService {
      */
     importExercise(adaptedSourceProgrammingExercise: ProgrammingExercise, importOptions: ImportOptions): Observable<EntityResponseType> {
         const options = createRequestOption(importOptions);
-        const exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(adaptedSourceProgrammingExercise);
+        // Route through convertDataFromClient like automaticSetup and importFromFile do, so competency-link back-references are stripped.
+        const exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(this.convertDataFromClient(adaptedSourceProgrammingExercise));
 
         ExerciseService.stringifyExerciseCategories(exercise);
         return this.http
@@ -326,11 +324,10 @@ export class ProgrammingExerciseService {
 
         // important: sort to get the latest submission (the order of the server can be random)
         this.sortService.sortByProperty(submissions, 'submissionDate', true);
-        const results = submissions.sort().last()?.results;
-        if (results && results.length > 0) {
-            return results.last();
-        }
-        return undefined;
+        // No second sort here: sortByProperty above established the order, and calling sort() without a comparator
+        // on the submissions would compare them as strings, where every element is equal and nothing is reordered.
+        // By id, not by position: the server holds a submission's results in a set, so the response order is arbitrary.
+        return getNewestResult(submissions.last()?.results);
     }
 
     /**
@@ -373,10 +370,10 @@ export class ProgrammingExerciseService {
     /**
      * Deletes the programming exercise with the corresponding programming exercise Id
      * @param programmingExerciseId of the programming exercise to delete
-     * @param deleteStudentReposBuildPlans indicates if the StudentReposBuildPlans should be also deleted or not
-     * @param deleteBaseReposBuildPlans indicates if the BaseReposBuildPlans should be also deleted or not
+     * @param deleteStudentReposBuildPlans indicates if the StudentReposBuildPlans should be also deleted or not; omit both flags to use the server defaults
+     * @param deleteBaseReposBuildPlans indicates if the BaseReposBuildPlans should be also deleted or not; omit both flags to use the server defaults
      */
-    delete(programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean): Observable<HttpResponse<void>> {
+    delete(programmingExerciseId: number, deleteStudentReposBuildPlans?: boolean, deleteBaseReposBuildPlans?: boolean): Observable<HttpResponse<void>> {
         let params = new HttpParams();
         if (deleteBaseReposBuildPlans != undefined && deleteStudentReposBuildPlans != undefined) {
             params = params.set('deleteStudentReposBuildPlans', deleteStudentReposBuildPlans.toString());
@@ -391,10 +388,9 @@ export class ProgrammingExerciseService {
      * @param exercise for which the data should be converted
      */
     convertDataFromClient(exercise: ProgrammingExercise) {
-        const copy = {
-            ...ExerciseService.convertExerciseDatesFromClient(exercise),
+        const copy = cloneWith(ExerciseService.convertExerciseDatesFromClient(exercise), {
             buildAndTestStudentSubmissionsAfterDueDate: convertDateFromClient(exercise.buildAndTestStudentSubmissionsAfterDueDate),
-        };
+        });
         // Remove exercise from template & solution participation to avoid circular dependency issues.
         // Also remove the results, as they can have circular structures as well and don't have to be saved here.
         if (copy.templateParticipation) {
@@ -402,6 +398,10 @@ export class ProgrammingExerciseService {
         }
         if (copy.solutionParticipation) {
             copy.solutionParticipation = _omit(copy.solutionParticipation, ['exercise', 'results']);
+        }
+        // Each competency link back-references this exercise, which would make the payload circular.
+        if (copy.competencyLinks) {
+            copy.competencyLinks = copy.competencyLinks.map((link) => _omit(link, ['exercise']));
         }
 
         return copy as ProgrammingExercise;
