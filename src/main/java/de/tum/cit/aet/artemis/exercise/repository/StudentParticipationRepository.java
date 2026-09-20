@@ -890,6 +890,25 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     List<StudentParticipation> findAllWithTeamStudentsByExerciseIdAndTeamStudentIdWithSubmissionsAndResults(@Param("exerciseId") long exerciseId,
             @Param("studentId") long studentId);
 
+    /**
+     * Loads the participations included in a team's assignment update, including the members, submissions and results.
+     *
+     * @param exerciseId the exercise being updated
+     * @param teamId     the team receiving the assignment
+     * @return the team's participations in the exercise
+     */
+    @Query("""
+            SELECT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
+                LEFT JOIN FETCH p.submissions sub
+                LEFT JOIN FETCH sub.results
+            WHERE p.exercise.id = :exerciseId
+                AND t.id = :teamId
+            """)
+    List<StudentParticipation> findWithTeamStudentsAndSubmissionsAndResultsByExerciseIdAndTeamId(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
+
     // NOTE: we should not fetch too elements here so we leave out feedback and test cases, otherwise the query will be very slow
     @Query("""
             SELECT DISTINCT p
