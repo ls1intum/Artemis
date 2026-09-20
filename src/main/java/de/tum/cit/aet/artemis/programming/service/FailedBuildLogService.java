@@ -235,6 +235,28 @@ public class FailedBuildLogService {
         }
     }
 
+    /**
+     * Removes the stored log of one result, leaving the other results of the same submission alone.
+     * <p>
+     * A result that is updated in place keeps its id, so the file a failed build wrote for it would otherwise still be there once a later build of the same result succeeded,
+     * and every read of that result would answer with a failure it no longer had.
+     *
+     * @param exerciseId   the programming exercise the result belongs to
+     * @param submissionId the programming submission the result belongs to
+     * @param resultId     the result to delete the logs of
+     */
+    public void deleteBuildLogs(long exerciseId, long submissionId, long resultId) {
+        Path logPath = pathFor(exerciseId, submissionId, resultId);
+        try {
+            Files.deleteIfExists(logPath);
+        }
+        catch (IOException e) {
+            // Unlike deleting a submission, this is a correction of what a read would show rather than a deletion someone asked for, and failing the build result over it
+            // would turn a stale log into a lost one.
+            log.error("Could not delete the failed build logs of result {} at {}", resultId, logPath, e);
+        }
+    }
+
     private static void deleteRecursively(Path path) throws IOException {
         if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
             return;

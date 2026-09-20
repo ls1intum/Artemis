@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVA;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -115,6 +116,35 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
         assertThat(results).singleElement().extracting(Result::getId).isEqualTo(existingResultId);
         assertThat(buildLogEntryService.getBuildLogs(submission, existingResultId)).extracting(BuildLogEntry::getLog).containsExactly("[ERROR] Log1", "[ERROR] Log2",
                 "[ERROR] Log3");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldDiscardTheStoredBuildLogsWhenTheSameSemiAutomaticResultBuildsSuccessfully() throws Exception {
+        // A semi-automatic result is updated in place and keeps its id, so the file an earlier failed build wrote for it would otherwise be read back under a result that now
+        // stands for a build that succeeded.
+        String userLogin = TEST_PREFIX + "student1";
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA, TEST_PREFIX);
+        var exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
+        programmingExerciseUtilService.addTestCaseToProgrammingExercise(exercise, "test1");
+
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, true);
+        participationUtilService.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, exercise.getId());
+        Result existingResult = submission.getLatestResult();
+        long existingResultId = existingResult.getId();
+
+        buildLogEntryService.saveBuildLogs(List.of(new BuildLogEntry(ZonedDateTime.now(), "[ERROR] the earlier failure")), submission, existingResult);
+        assertThat(buildLogEntryService.getBuildLogs(submission, existingResultId)).as("the failed build's logs are stored to begin with").isNotEmpty();
+
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, JAVA, List.of("test1"), List.of(), new ArrayList<>(), new ArrayList<>());
+        postResult(notification, HttpStatus.OK);
+
+        var results = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participation.getId());
+        assertThat(results).as("the result was updated in place rather than replaced").singleElement().extracting(Result::getId).isEqualTo(existingResultId);
+        assertThat(buildLogEntryService.getBuildLogs(submission, existingResultId)).as("the earlier failure's logs do not survive a successful build of the same result").isEmpty();
+        assertThat(buildLogEntryService.getLatestBuildLogs(submission)).as("and they are not served as the submission's latest ones either").isEmpty();
     }
 
     private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationArguments() {

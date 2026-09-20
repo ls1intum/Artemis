@@ -195,6 +195,24 @@ class FailedBuildLogServiceTest {
     }
 
     @Test
+    void shouldDeleteOneResultsLogsAndKeepTheOtherResultsOfTheSameSubmission() {
+        save(RESULT_ID, new BuildLogEntry(TIME, "the build that still failed"));
+        save(RESULT_ID + 1, new BuildLogEntry(TIME, "the build that succeeded afterwards"));
+
+        failedBuildLogService.deleteBuildLogs(EXERCISE_ID, SUBMISSION_ID, RESULT_ID + 1);
+
+        assertThat(get(RESULT_ID + 1)).as("the logs of the result that was asked for are gone").isEmpty();
+        assertThat(get(RESULT_ID)).as("the other failed results of the submission keep theirs").isPresent();
+    }
+
+    @Test
+    void shouldNotFailWhenDeletingTheLogsOfAResultThatHasNone() {
+        failedBuildLogService.deleteBuildLogs(EXERCISE_ID, SUBMISSION_ID, RESULT_ID);
+
+        assertThat(get(RESULT_ID)).isEmpty();
+    }
+
+    @Test
     void shouldDeleteLogsByTheirResultTimestampAndKeepTheRest() {
         ZonedDateTime now = ZonedDateTime.now();
         save(RESULT_ID, now.minusDays(RETENTION_DAYS + 1L), new BuildLogEntry(TIME, "expired"));

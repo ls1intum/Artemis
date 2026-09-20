@@ -265,6 +265,11 @@ public class ProgrammingExerciseGradingService {
             if (failedBuildLogs != null) {
                 buildLogService.saveBuildLogs(failedBuildLogs, latestSubmission, processedResult);
             }
+            else if (!buildFailed) {
+                // A semi-automatic result is updated in place and keeps its id, so a build that succeeds where an earlier one failed has to take that earlier build's logs
+                // with it. Left behind, they would be read back under a result that now stands for a build that did not fail.
+                buildLogService.deleteBuildLogsOfSucceededResult(latestSubmission, processedResult);
+            }
             return processedResult;
         }
         catch (ContinuousIntegrationException ex) {

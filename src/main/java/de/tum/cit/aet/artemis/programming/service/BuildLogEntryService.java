@@ -114,6 +114,20 @@ public class BuildLogEntryService {
     }
 
     /**
+     * Discards the stored logs of a result whose build did not fail.
+     * <p>
+     * A result that is updated in place rather than replaced keeps its id, so a build that succeeds after an earlier one failed writes nothing and would leave the earlier
+     * failure's file behind under the very id that now stands for a successful build. Only this result's file is removed; other failed results of the same submission keep
+     * theirs.
+     *
+     * @param programmingSubmission submission the result belongs to
+     * @param result                result whose build did not fail
+     */
+    public void deleteBuildLogsOfSucceededResult(ProgrammingSubmission programmingSubmission, Result result) {
+        failedBuildLogService.deleteBuildLogs(exerciseIdOf(programmingSubmission), programmingSubmission.getId(), result.getId());
+    }
+
+    /**
      * Retrieves the latest build logs for a given programming submission.
      *
      * @param programmingSubmission submission for which to retrieve the build logs
