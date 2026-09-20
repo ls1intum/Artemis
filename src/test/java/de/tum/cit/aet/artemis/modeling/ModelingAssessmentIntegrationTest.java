@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -308,6 +309,51 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
             assertThat(feedback.id()).isNotNull();
             assertThat(feedback.type()).isNotNull();
         }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void exampleAssessmentValidatesGradingInstructionOwnership(boolean ownInstruction) throws Exception {
+        var example = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, classExercise, true, true));
+        var criteria = gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(ownInstruction ? classExercise : activityExercise));
+        var instruction = criteria.getFirst().getStructuredGradingInstructions().iterator().next();
+        var feedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("structured feedback");
+        feedback.setGradingInstruction(instruction);
+
+        var result = request.putWithResponseBody("/api/modeling/modeling-submissions/" + example.getId() + "/example-assessment", toFeedbackDTOs(List.of(feedback)),
+                ResultDTO.class, ownInstruction ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
+
+        if (ownInstruction) {
+            assertThat(result.exampleResult()).isTrue();
+            assertThat(resultRepository.findByIdWithEagerFeedbacksElseThrow(result.id()).getFeedbacks()).singleElement()
+                    .satisfies(item -> assertThat(item.getGradingInstruction().getId()).isEqualTo(instruction.getId()));
+        }
+        else {
+            assertThat(modelingSubmissionRepo.findWithEagerResultById(example.getSubmission().getId()).orElseThrow().getResults()).isEmpty();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void assessmentCannotAttachInstructionToResultOfAnotherSubmission() throws Exception {
+        var submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student1");
+        var otherSubmission = modelingExerciseUtilService.addModelingSubmissionFromResources(activityExercise, "test-data/model-submission/model.54727.json",
+                TEST_PREFIX + "student2");
+        var originalFeedback = new Feedback().credits(2.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("original assessment");
+        var otherResult = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, otherSubmission, TEST_PREFIX + "tutor1", List.of(originalFeedback));
+        var originalFeedbackIds = otherResult.getFeedbacks().stream().map(Feedback::getId).toList();
+        var criteria = gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(classExercise));
+        var feedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("instruction from the authorized exercise");
+        feedback.setGradingInstruction(criteria.getFirst().getStructuredGradingInstructions().iterator().next());
+
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/results/" + otherResult.getId() + "/assessment",
+                new ModelingAssessmentDTO(toFeedbackDTOs(List.of(feedback)), null), HttpStatus.BAD_REQUEST);
+
+        var unchangedResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(otherResult.getId());
+        assertThat(unchangedResult.getExerciseId()).isEqualTo(activityExercise.getId());
+        assertThat(unchangedResult.getSubmission().getId()).isEqualTo(otherSubmission.getId());
+        assertThat(unchangedResult.getFeedbacks()).extracting(Feedback::getId).containsExactlyInAnyOrderElementsOf(originalFeedbackIds);
     }
 
     @Test
