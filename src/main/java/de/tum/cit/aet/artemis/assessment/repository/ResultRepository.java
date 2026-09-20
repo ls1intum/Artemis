@@ -928,6 +928,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                   WHERE s2.id = :submissionId
                     AND (
                       r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                      OR r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
                       OR (
                         r2.completionDate IS NOT NULL
                         AND (
