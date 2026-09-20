@@ -16,8 +16,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithAnonymousUser;
@@ -27,6 +29,9 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO;
@@ -653,6 +658,25 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         // verify key has not been changed by the invalid request
         assertThat(email).isEqualTo(emailBefore);
         assertThat(resetKeyHash).isEqualTo(resetKeyHashBefore);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "missing@example.org\r\nFORGED_RESET_EVENT", "unknown-user\nFORGED_RESET_EVENT", "unknown-user\rFORGED_RESET_EVENT" })
+    @WithAnonymousUser
+    void passwordResetDoesNotLogUntrustedIdentifier(String identifier) throws Exception {
+        Logger logger = (Logger) LoggerFactory.getLogger(PublicAccountResource.class);
+        var appender = new ListAppender<ILoggingEvent>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            request.postStringWithoutLocation("/api/core/public/account/reset-password/init", identifier, HttpStatus.OK, null);
+
+            assertThat(appender.list).isNotEmpty().allSatisfy(event -> assertThat(event.getFormattedMessage()).doesNotContain(identifier, "FORGED_RESET_EVENT", "\r", "\n"));
+        }
+        finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
     }
 
     @Test

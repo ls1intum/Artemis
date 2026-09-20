@@ -17,4 +17,12 @@
     tr:last-child td {
         border-bottom-width: 0;
     }
+
+    tr.tum-ui-table-row-highlighted {
+        background-color: var(--tumaet-ui-highlight-background);
+        color: var(--tumaet-ui-highlight-color);
+
+        // Not colour alone, so the row still reads as singled out without relying on hue.
+        font-weight: 500;
+    }
 }
