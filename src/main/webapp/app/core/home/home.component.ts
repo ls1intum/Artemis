@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, DestroyRef, ElementRef, OnDestroy, OnInit, Renderer2, inject, signal, viewChild } from '@angular/core';
+import { AfterViewChecked, Component, DestroyRef, ElementRef, OnDestroy, OnInit, Renderer2, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { User } from 'app/account/user/user.model';
@@ -10,7 +10,7 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { faArrowLeft, faCircleNotch, faKey } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { FormControl, FormsModule, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -21,6 +21,9 @@ import { HttpClient } from '@angular/common/http';
 import { LoginOptionsDTO } from '../auth/login-options.model';
 import { TumUiButtonComponent, TumUiCheckboxComponent, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
 import { NgTemplateOutlet } from '@angular/common';
+
+// Keep aligned with Constants.SIMPLE_EMAIL_REGEX, used by SecurityUtils.isEmail on the server.
+const SIMPLE_EMAIL_REGEX = '^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$';
 
 @Component({
     selector: 'jhi-home',
@@ -91,6 +94,8 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     readonly usernamePlaceholderTranslated = signal('Login or email'); // default, might be overridden
     // if the server is not connected to an external user management, we accept all valid username patterns
     readonly usernameRegexPattern = signal<RegExp>(/^[a-zA-Z0-9.@_-]{4,50}$/); // default (at least 4, at most 50 characters), might be overridden
+    /** Accept server-recognized emails as well as every configured username, including usernames containing @. */
+    readonly identifierRegexPattern = computed(() => new RegExp(`(?:${this.usernameRegexPattern().source})|(?:${SIMPLE_EMAIL_REGEX})`, this.usernameRegexPattern().flags));
     readonly errorMessageUsername = signal('home.errors.usernameIncorrect'); // default, might be overridden
     readonly accountName = signal<string | undefined>(undefined); // additional information in the welcome message
 
@@ -415,13 +420,12 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     }
 
     /**
-     * Validates email addresses independently of the configured username pattern.
-     * Both identifiers must satisfy the existing length constraints.
+     * Accepts identifiers matching either the configured username pattern or the server email pattern,
+     * subject to the existing length constraints.
      */
     checkIdentifierValidity() {
         const meetsLength = this.username !== undefined && this.username.length >= this.USERNAME_MIN_LENGTH && this.username.length <= this.USERNAME_MAX_LENGTH;
 
-        const matchesPattern = this.username?.includes('@') ? Validators.email(new FormControl(this.username)) === null : this.usernameRegexPattern().test(this.username);
-        this.isIdentifierValid.set(meetsLength && matchesPattern);
+        this.isIdentifierValid.set(meetsLength && this.identifierRegexPattern().test(this.username));
     }
 }

@@ -20,8 +20,7 @@
                                     #usernameForm="ngModel"
                                     [(ngModel)]="username"
                                     [ngModelOptions]="{ updateOn: 'change' }"
-                                    [email]="username.includes('@')"
-                                    [pattern]="username.includes('@') ? '' : usernameRegexPattern()"
+                                    [pattern]="identifierRegexPattern()"
                                     autocomplete="username webauthn"
                                     tumUiInput
                                     class="w-100"

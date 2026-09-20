@@ -114,7 +114,7 @@ describe('HomeComponent', () => {
         expect(component.isIdentifierValid()).toBe(false);
     });
 
-    it.each(['pwreset+6139@mailpit.local', "o'brien+tag@example.org"])('should accept an email independently of the configured username pattern: %s', (email) => {
+    it.each(['pwreset+6139@mailpit.local', 'student+tag@example.org'])('should accept an email independently of the configured username pattern: %s', (email) => {
         component.usernameRegexPattern.set(/^[a-z]{7}$/);
         component.username = email;
         component.checkIdentifierValidity();
@@ -128,7 +128,7 @@ describe('HomeComponent', () => {
         expect(component.currentStage()).toBe(2);
     });
 
-    it.each(['user+tag', 'abc', 'user+tag@', 'user+tag@@example.org', 'user name@example.org'])(
+    it.each(['user+tag', 'abc', 'user+tag@', 'user+tag@@example.org', 'user name@example.org', "o'brien+tag@example.org"])(
         'should reject invalid identifiers without looking up login options: %s',
         (identifier) => {
             component.username = identifier;
@@ -151,6 +151,35 @@ describe('HomeComponent', () => {
         expect(component.isIdentifierValid()).toBe(true);
         expect(input.injector.get(NgModel).valid).toBe(true);
         expect(fixture.debugElement.query(By.directive(TumUiButtonComponent)).componentInstance.disabled()).toBe(false);
+    });
+
+    it.each(['user@dept_name', 'user@@department'])('should retain configured username support for @ identifiers: %s', async (identifier) => {
+        const input = fixture.debugElement.query(By.css('#username'));
+        input.nativeElement.value = identifier;
+        input.nativeElement.dispatchEvent(new Event('input'));
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(component.isIdentifierValid()).toBe(true);
+        expect(input.injector.get(NgModel).valid).toBe(true);
+        expect(fixture.debugElement.query(By.directive(TumUiButtonComponent)).componentInstance.disabled()).toBe(false);
+        component.onContinue();
+        const req = httpMock.expectOne((request) => request.url === 'api/core/public/login-options');
+        expect(req.request.params.get('usernameOrEmail')).toBe(identifier);
+        req.flush({ loginMethod: 'PASSWORD' });
+        expect(component.currentStage()).toBe(2);
+    });
+
+    it('should apply the server email grammar to the rendered form', async () => {
+        const input = fixture.debugElement.query(By.css('#username'));
+        input.nativeElement.value = "o'brien+tag@example.org";
+        input.nativeElement.dispatchEvent(new Event('input'));
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(component.isIdentifierValid()).toBe(false);
+        expect(input.injector.get(NgModel).valid).toBe(false);
+        expect(fixture.debugElement.query(By.directive(TumUiButtonComponent)).componentInstance.disabled()).toBe(true);
     });
 
     it('should keep the configured pattern for usernames', () => {
