@@ -49,6 +49,7 @@ describe('Password Component Tests', () => {
             fixture = TestBed.createComponent(PasswordComponent);
             comp = fixture.componentInstance;
             service = TestBed.inject(PasswordService);
+            comp.passwordForm.controls.currentPassword.setValue('oldPassword');
         });
 
         it('should show error if passwords do not match', async () => {
@@ -203,6 +204,30 @@ describe('Password Component Tests', () => {
             expect(comp.error()).toBe(true);
         });
 
+        it.each(['ä'.repeat(37), '€'.repeat(25), '😀'.repeat(19), 'ä'.repeat(36) + 'a'])('should reject new passwords over 72 UTF-8 bytes: %s', async (password) => {
+            const changeSpy = vi.spyOn(service, 'changePassword').mockReturnValue(of(undefined));
+            const confirmSpy = vi.spyOn(TestBed.inject(CredentialRevocationConfirmationService), 'confirm');
+            comp.passwordForm.setValue({ currentPassword: 'oldPassword', newPassword: password, confirmPassword: password });
+
+            expect(comp.passwordForm.controls.newPassword.hasError('maxbytes')).toBe(true);
+            await comp.changePassword();
+
+            expect(confirmSpy).not.toHaveBeenCalled();
+            expect(changeSpy).not.toHaveBeenCalled();
+            expect(comp.success()).toBe(false);
+        });
+
+        it.each(['ä'.repeat(36), '€'.repeat(24), '😀'.repeat(18)])('should change to a password at the 72-byte limit: %s', async (password) => {
+            vi.spyOn(service, 'changePassword').mockReturnValue(of(undefined));
+            comp.passwordForm.setValue({ currentPassword: 'oldPassword', newPassword: password, confirmPassword: password });
+
+            expect(comp.passwordForm.valid).toBe(true);
+            await comp.changePassword();
+
+            expect(comp.success()).toBe(true);
+            expect(service.changePassword).toHaveBeenCalledWith(password, 'oldPassword', undefined);
+        });
+
         it('sets user on init', async () => {
             comp.ngOnInit();
             await vi.waitFor(() => expect(comp.user()).toBeDefined());
@@ -253,6 +278,25 @@ describe('Password Component Tests', () => {
             const options = fixture.nativeElement.querySelector('[data-testid="password-revocation-options"]');
             expect(options).not.toBeNull();
             expect(options.querySelectorAll('tum-ui-checkbox')).toHaveLength(3);
+        });
+
+        it('explains the byte limit and allows submission after shortening the new password', () => {
+            comp.passwordForm.setValue({ currentPassword: 'oldPassword', newPassword: 'ä'.repeat(37), confirmPassword: 'ä'.repeat(37) });
+            comp.passwordForm.markAllAsTouched();
+            fixture.detectChanges();
+
+            const password = fixture.nativeElement.querySelector('#newPassword') as HTMLInputElement;
+            const error = fixture.nativeElement.querySelector(`#${password.getAttribute('aria-describedby')}`) as HTMLElement;
+            expect(error.hidden).toBe(false);
+            expect(error.textContent).toContain('global.messages.validate.newpassword.maxbytes');
+            expect(password.getAttribute('aria-invalid')).toBe('true');
+            expect((fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement).disabled).toBe(true);
+
+            comp.passwordForm.patchValue({ newPassword: 'ä'.repeat(36), confirmPassword: 'ä'.repeat(36) });
+            fixture.detectChanges();
+
+            expect(password.getAttribute('aria-invalid')).toBeNull();
+            expect((fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement).disabled).toBe(false);
         });
 
         it('should read the checked state off the change event of each option', () => {

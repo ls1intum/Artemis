@@ -14,6 +14,8 @@ import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,6 +121,21 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
         // make request
         request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.CREATED, null);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "a,73,72", "ä,37,36", "€,25,24", "😀,19,18" })
+    void registrationRejectsOversizedPasswordAndAcceptsByteLimit(String character, int invalidLength, int validLength) throws Exception {
+        ManagedUserVM userVM = new ManagedUserVM(UserFactory.generateActivatedUser("byteboundary" + invalidLength));
+        userVM.setPassword(character.repeat(invalidLength));
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.BAD_REQUEST, null);
+        assertThat(userTestRepository.findOneByLogin(userVM.getLogin())).isEmpty();
+
+        String password = character.repeat(validLength);
+        userVM.setPassword(password);
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.CREATED, null);
+        User registered = userTestRepository.findOneByLogin(userVM.getLogin()).orElseThrow();
+        assertThat(passwordService.checkPasswordMatch(password, registered.getPassword())).isTrue();
     }
 
     @Test
@@ -485,6 +502,22 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(passwordService.checkPasswordMatch(updatedPassword, updatedUser.get().getPassword())).isTrue();
     }
 
+    @ParameterizedTest
+    @CsvSource({ "a,73,72", "ä,37,36", "€,25,24", "😀,19,18" })
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void passwordChangeRejectsOversizedPasswordAndAcceptsByteLimit(String character, int invalidLength, int validLength) throws Exception {
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER, passwordService.hashPassword(UserFactory.USER_PASSWORD));
+        String originalHash = user.getPassword();
+        var invalidRequest = new PasswordChangeDTO(UserFactory.USER_PASSWORD, character.repeat(invalidLength), null);
+        request.postWithoutLocation("/api/account/change-password", invalidRequest, HttpStatus.BAD_REQUEST, null);
+        assertThat(userTestRepository.findById(user.getId()).orElseThrow().getPassword()).isEqualTo(originalHash);
+
+        String password = character.repeat(validLength);
+        var validRequest = new PasswordChangeDTO(UserFactory.USER_PASSWORD, password, null);
+        request.postWithoutLocation("/api/account/change-password", validRequest, HttpStatus.OK, null);
+        assertThat(passwordService.checkPasswordMatch(password, userTestRepository.findById(user.getId()).orElseThrow().getPassword())).isTrue();
+    }
+
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
     void changePasswordExternalUser() throws Throwable {
@@ -640,6 +673,32 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     void passwordResetFinishInvalidPassword() throws Throwable {
         KeyAndPasswordVM finishResetData = new KeyAndPasswordVM("0123456789", "0123456789", "", null);
         request.postWithoutLocation("/api/core/public/account/reset-password/finish", finishResetData, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "a,73,72", "ä,37,36", "€,25,24", "😀,19,18" })
+    void passwordResetRejectsOversizedPasswordAndAllowsRetry(String character, int invalidLength, int validLength) throws Exception {
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        String originalPassword = user.getPassword();
+        doNothing().when(mailService).sendPasswordResetMail(any());
+        request.postStringWithoutLocation("/api/core/public/account/reset-password/init", user.getLogin(), HttpStatus.OK, null);
+        ArgumentCaptor<MailRecipientDTO> recipientCaptor = ArgumentCaptor.forClass(MailRecipientDTO.class);
+        verify(mailService).sendPasswordResetMail(recipientCaptor.capture());
+        var resetKey = recipientCaptor.getValue().resetKey();
+        assertThat(resetKey).isNotNull();
+        String resetKeyHash = userRecoveryKeyService.findResetKeyHash(user.getId());
+
+        var invalidRequest = new KeyAndPasswordVM(resetKey.id(), resetKey.secret(), character.repeat(invalidLength), null);
+        request.postWithoutLocation("/api/core/public/account/reset-password/finish", invalidRequest, HttpStatus.BAD_REQUEST, null);
+        assertThat(userTestRepository.findById(user.getId()).orElseThrow().getPassword()).isEqualTo(originalPassword);
+        assertThat(userRecoveryKeyService.findResetKeyId(user.getId())).isEqualTo(resetKey.id());
+        assertThat(userRecoveryKeyService.findResetKeyHash(user.getId())).isEqualTo(resetKeyHash);
+
+        String validPassword = character.repeat(validLength);
+        var validRequest = new KeyAndPasswordVM(resetKey.id(), resetKey.secret(), validPassword, null);
+        request.postWithoutLocation("/api/core/public/account/reset-password/finish", validRequest, HttpStatus.OK, null);
+        assertThat(passwordService.checkPasswordMatch(validPassword, userTestRepository.findById(user.getId()).orElseThrow().getPassword())).isTrue();
+        assertThat(userRecoveryKeyService.findResetKeyId(user.getId())).isNull();
     }
 
     @Test
