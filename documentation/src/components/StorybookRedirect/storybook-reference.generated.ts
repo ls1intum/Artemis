@@ -20,6 +20,8 @@ export function storybookStoryFromHash(hash: string): string {
             return 'data-display-card--docs';
         case 'data-display-chip':
             return 'data-display-chip--docs';
+        case 'data-display-empty-state':
+            return 'data-display-empty-state--docs';
         case 'data-display-list':
             return 'data-display-list--docs';
         case 'data-display-native-table':

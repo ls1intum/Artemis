@@ -63,6 +63,14 @@ export class MockComplaintService implements IComplaintService {
         return of(MockComplaintArrayResponse);
     }
 
+    findAllWithoutStudentInformationForCourseId(courseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
+        return of(MockComplaintArrayResponse);
+    }
+
+    findAllWithoutStudentInformationForExerciseId(exerciseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
+        return of(MockComplaintArrayResponse);
+    }
+
     findAllByTutorIdForCourseId(tutorId: number, courseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
         return of(MockComplaintArrayResponse);
     }

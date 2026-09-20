@@ -5,7 +5,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -23,6 +25,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
 import de.tum.cit.aet.artemis.localvc.service.vcs.AbstractVersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -42,6 +45,9 @@ public class LocalVCService extends AbstractVersionControlService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCService.class);
 
+    /** Marks a broken repository that was moved aside so a copy can recreate it, see {@link #quarantineBrokenRepository}. */
+    private static final String QUARANTINE_DIRECTORY_SUFFIX = ".broken-";
+
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
@@ -51,10 +57,11 @@ public class LocalVCService extends AbstractVersionControlService {
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCBasePath;
 
-    public LocalVCService(UriService uriService, GitService gitService, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+    public LocalVCService(UriService uriService, BareGitRepositoryService bareGitRepositoryService,
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
-        super(gitService, uriService, studentParticipationRepository, programmingExerciseRepository, templateProgrammingExerciseParticipationRepository,
+        super(bareGitRepositoryService, uriService, studentParticipationRepository, programmingExerciseRepository, templateProgrammingExerciseParticipationRepository,
                 programmingExerciseBuildConfigRepository);
     }
 
@@ -145,6 +152,32 @@ public class LocalVCService extends AbstractVersionControlService {
             throw new LocalVCInternalException("Resolved repository path is outside the local VC base path.");
         }
         return Files.exists(repositoryPath);
+    }
+
+    @Override
+    protected boolean quarantineBrokenRepository(LocalVCRepositoryUri repositoryUri) {
+        Path repositoryPath = resolveContainedRepositoryPath(repositoryUri);
+        if (repositoryPath == null) {
+            throw new LocalVCInternalException("Resolved repository path is outside the local VC base path.");
+        }
+        // A sibling, so the rename stays within one file system, and without the ".git" suffix a repository URL resolves to, so the leftover cannot be served while it is
+        // waiting to be deleted.
+        Path quarantinePath = repositoryPath.resolveSibling(repositoryPath.getFileName() + QUARANTINE_DIRECTORY_SUFFIX + UUID.randomUUID());
+        try {
+            FileUtil.publishAtomically(repositoryPath, quarantinePath);
+        }
+        catch (NoSuchFileException alreadyTakenByAnotherRequest) {
+            return false;
+        }
+        catch (IOException e) {
+            throw new LocalVCInternalException("Could not move the broken repository at " + repositoryPath + " aside", e);
+        }
+        // Only this call can reach the quarantined directory, so deleting it can never take a repository another request owns. A leftover here costs disk space and nothing
+        // else, which is why a failure to remove it does not fail the copy that is about to succeed.
+        if (!FileUtils.deleteQuietly(quarantinePath.toFile())) {
+            log.warn("Could not delete the broken repository moved aside to {}", quarantinePath);
+        }
+        return true;
     }
 
     @Override

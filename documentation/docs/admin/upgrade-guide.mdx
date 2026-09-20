@@ -7,16 +7,39 @@ sidebar_label: Upgrade Guide
 import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 
-This page documents the required upgrade path for Artemis. Due to database migration consolidation at each major version, administrators **must deploy specific intermediate versions** before upgrading to the next major release.
+This page documents the required upgrade path for Artemis, what the database migration does on startup, and how to verify that it worked.
+
+## How the Schema Is Applied
+
+Artemis keeps its schema in Liquibase changelogs, organised into four directories that every startup reads in order:
+
+| Directory | Contents |
+|-----------|----------|
+| `baseline/` | The whole schema as of the last consolidation, in a single file |
+| `history/` | Every changelog that baseline already contains, grouped by generation (`v10/`, `v11/`, …) |
+| `changelog/` | Migrations written since the last consolidation |
+| `data/` | Seed data for test environments |
+
+Which of these actually execute depends on the database Artemis finds:
+
+- **An empty database** applies the baseline, which creates the schema in one step. The changelogs under `history/` are *recorded* as applied without being executed, because the baseline already contains everything they describe. Anything under `changelog/` then runs normally.
+- **An existing database** already has the changelogs under `history/` recorded from when it ran them, so Liquibase skips them. The baseline marks itself as applied without executing, because the schema it would create is already there. Only the changelogs under `changelog/` run.
+
+Both routes end with the same schema, so it makes no difference to the running instance whether it was installed fresh or upgraded over several years. A check on every Artemis pull request applies both routes to an empty database and compares the results on MySQL and PostgreSQL.
 
 ## Why Intermediate Versions Are Required
 
-With every major release (e.g., 8.0.0, 9.0.0), Artemis consolidates all incremental database changelogs from the previous release cycle into a single initial schema. This dramatically improves application startup time (especially for tests) and simplifies the migration history.
+Consolidation adds a baseline **alongside** the changelogs it summarises; it never rewrites them. An upgrade therefore needs no intermediate version on account of consolidation alone.
 
-However, this means the new major version's schema **assumes all previous incremental migrations have already been applied**. If you skip the required intermediate version, the consolidated schema will conflict with your existing database and Artemis will refuse to start.
+An intermediate version is required when the chain of changelogs leading to your database's state is no longer complete in the release you are installing. Two things cause that:
+
+- **Releases up to 9.x reused changeset identifiers.** Each consolidation replaced the contents of the initial schema file while keeping the same changeset identifiers, so a database that recorded the previous major version's initial schema no longer matched the file. Upgrading repaired this on the way past, but only from the one version it was written for. This is why upgrading to 10.0.0 still requires passing through 9.9.3.
+- **A retired generation.** When upgrades from a generation are no longer supported, its directory under `history/` is removed. A database that never ran those changelogs can then no longer be brought forward, and the release notes name the version to pass through.
+
+From 10.0.0 onwards each baseline has its own file and its own changeset identifiers, so identifiers never collide again. A new required version appears only when a generation is retired, which is an explicit decision announced in the release notes rather than an automatic consequence of every major release.
 
 <Callout variant={CalloutVariant.warning}>
-  <strong>Important:</strong> If Artemis detects that the required intermediate version was not deployed, it will exit with error code 15 and a message indicating which version must be deployed first.
+  <strong>Important:</strong> If Artemis detects that the required intermediate version was not deployed, it exits with code 15 before touching the database, and the message names the version to deploy first.
 </Callout>
 
 ## Upgrade Path Table
@@ -29,6 +52,7 @@ The table below shows the required intermediate version for each major release. 
 | 7.0.0          | 6.9.6                         | 8.0.0       |
 | 8.0.0          | 7.10.5                        | 9.0.0       |
 | 9.0.0          | 8.8.6                         | 10.0.0      |
+| 10.0.0         | 9.9.3                         | 11.0.0      |
 
 ### How to Read This Table
 
@@ -46,27 +70,30 @@ A fresh installation (empty database) can always use the latest version directly
 
 Minor and patch version upgrades within the same major version require **no special steps**. Simply deploy the new version. All incremental Liquibase changelogs will be applied automatically.
 
-### Upgrading Across One Major Version (e.g., 8.8.6 → 9.0.0)
+### Upgrading Across One Major Version (e.g., 9.9.3 → 10.0.0)
 
-1. Deploy and start the **required intermediate version** (e.g., 8.8.6) to ensure all incremental migrations are applied.
+1. Deploy and start the **required intermediate version** (e.g., 9.9.3) to ensure all incremental migrations are applied.
 2. Wait for Artemis to fully start (check logs for "Started ArtemisApp").
 3. Stop Artemis.
-4. Deploy and start the new major version (e.g., 9.0.0).
-5. The migration system will automatically:
-   - Detect the previous version from the `artemis_version` table.
-   - Nullify the initial schema checksum so Liquibase recalculates it.
-   - Apply a cleanup changeset that removes old changelog entries from `DATABASECHANGELOG`.
-   - Apply any new incremental changelogs.
-   - Update the `artemis_version` table.
+4. Take a backup of the database. This is the point to take one: it is the last state the previous release can read.
+5. Deploy and start the new major version (e.g., 10.0.0).
+6. Artemis then:
+   - Reads the previous version from the `artemis_version` table and compares it against the required version.
+   - Marks the baseline as applied without executing it, because your database already has that schema.
+   - Applies the changelogs written since the last consolidation.
+   - Writes the new version to the `artemis_version` table.
 
-### Upgrading Across Multiple Major Versions (e.g., 6.5.0 → 9.0.0)
+Artemis is not deployed as a rolling update. Stop every instance, start the first one alone and let it finish the migration, then start the rest. See [Multiple Artemis Instances](./production-setup/multiple-artemis-instances) for the full procedure.
+
+### Upgrading Across Multiple Major Versions (e.g., 6.5.0 → 10.0.0)
 
 You must upgrade through each intermediate version sequentially:
 
 1. **6.5.0 → 6.9.6** (deploy 6.9.6, start, wait for full initialization)
 2. **6.9.6 → 7.10.5** (deploy 7.10.5, start, wait for full initialization)
 3. **7.10.5 → 8.8.6** (deploy 8.8.6, start, wait for full initialization)
-4. **8.8.6 → 9.0.0** (deploy 9.0.0, start, wait for full initialization)
+4. **8.8.6 → 9.9.3** (deploy 9.9.3, start, wait for full initialization)
+5. **9.9.3 → 10.0.0** (deploy 10.0.0, start, wait for full initialization)
 
 <Callout variant={CalloutVariant.info}>
   Each intermediate version must be fully started at least once so that all database migrations are applied before proceeding to the next version.
@@ -81,6 +108,48 @@ If you attempt to start a major version without having deployed the required int
 3. No database changes will be made.
 
 To resolve this, deploy the required intermediate version first, start Artemis, wait for it to fully initialize, stop it, and then deploy the desired major version.
+
+## Verifying a Migration
+
+Artemis reports what it did with the schema in the startup log.
+
+On an **empty database**, the folded history is recorded before the baseline runs:
+
+```
+Empty database: recording the folded changelog history from classpath:config/liquibase/history/master.xml without executing it
+Recorded the folded changelog history
+```
+
+On an **existing database**, that line is absent and Liquibase reports only the changelogs that still had to run. In both cases the last migration step logs the version being stored:
+
+```
+Updating latest version to 10.0 in database
+```
+
+To confirm afterwards, check that the recorded version matches the release you deployed:
+
+```sql
+SELECT latest_version FROM artemis_version;
+```
+
+Liquibase records every changeset it applied or recorded in `DATABASECHANGELOG`. A row whose `EXECTYPE` is `MARK_RAN` was deliberately skipped, which on an upgraded database is the normal state of the baseline row. An empty `DATABASECHANGELOG` on an instance that has started successfully means Liquibase was disabled, usually through the `no-liquibase` profile.
+
+### If a Migration Fails
+
+A failing changeset stops the startup and the instance does not serve requests. The log names the changeset that failed and the statement it was running.
+
+The steps below are for a migration failing on an existing database. A **fresh installation** failing while it records the folded history is a different case and needs nothing from you: the log reads *"Recording the folded changelog history left N changeset(s) unrecorded"*, Artemis discards what it had recorded, and the next start repeats the whole step from the empty database it began with. Only if that message is followed by one saying the partial history could **not** be discarded do you have to act — drop the database and start again, because a half-recorded history would otherwise make the next start run the folded changelogs as ordinary migrations.
+
+1. Do not start the remaining instances. Only the first instance migrates, so the others are still stopped at this point.
+2. Read the failing changeset identifier from the log. Every changeset before it is committed and recorded; the failing one is not recorded.
+3. Resolve the underlying cause. A migration that adds a constraint usually fails because existing data violates it, and the log names the table and column.
+4. Restart the instance. Liquibase resumes at the changeset that failed and does not repeat the ones already recorded.
+
+<Callout variant={CalloutVariant.warning}>
+  On MySQL, every DDL statement commits by itself. A changeset that fails partway through therefore leaves the statements it already ran in place while staying unrecorded, so the automatic retry on the next start can fail again on an object that now already exists. Inspect the schema against the failing changeset before restarting, and restore the backup if it is not obvious what has already been applied. PostgreSQL rolls the whole changeset back and does not have this problem.
+</Callout>
+
+Restore the backup taken in step 4 of the upgrade procedure if the cause cannot be resolved. Reverting to the previous release on its own is not enough: the schema does not revert with it, and the older release may not be able to read the migrated schema.
 
 ## Version-Specific Migration Steps
 
@@ -149,24 +218,31 @@ Keep the internal administrator configured in `artemis.user-management.internal-
 
 ## Database Compatibility
 
-Artemis supports both **MySQL** and **PostgreSQL**. The migration system works identically on both databases. The initial schema uses database-agnostic Liquibase types with additional database-specific changesets for:
+Artemis supports both **MySQL** and **PostgreSQL**. The migration system works identically on both databases. The baseline is written in database-agnostic Liquibase types, in three changesets:
 
-- **MySQL**: Columns with `enum` types for data integrity and storage optimization.
-- **PostgreSQL**: Columns with `varchar`/`text`/`bytea` types as appropriate for PostgreSQL.
+- One shared changeset for everything both databases express the same way.
+- One for MySQL and H2, covering the columns those spell differently, such as `enum` and `varbinary`.
+- One for PostgreSQL, covering the same columns as `varchar`, `text` and `bytea`.
+
+Every Artemis pull request applies the baseline and the changelogs it summarises to empty MySQL and PostgreSQL databases, and on each of them compares the baseline against the history it folds. A baseline that has drifted from its changelogs on either database therefore cannot reach a release.
 
 <Callout variant={CalloutVariant.info}>
-  Ensure your database is backed up before performing any major version upgrade.
+  Ensure your database is backed up before performing any major version upgrade. Reverting to the previous release does not revert the schema, so a backup taken immediately before the migration is the only reliable way back.
 </Callout>
 
 ## Technical Details
 
-The migration path logic is implemented in `DatabaseMigration.java`. It runs before Liquibase on every application startup and checks the `artemis_version` table to determine the previous version. The `MigrationPath` class defines version boundaries:
+The migration path check is implemented in `DatabaseMigration.java`. It runs before Liquibase on every application startup and reads the `artemis_version` table to determine the previous version. The `MigrationPath` class defines version boundaries:
 
 ```
-MigrationPath("8.8.6")
-  → requiredVersion = 8.8.6
-  → upgradeVersion  = 9.0.0  (next major)
-  → nextUpgradeVersion = 10.0.0  (major after that)
+MigrationPath("9.9.3")
+  → requiredVersion = 9.9.3
+  → upgradeVersion  = 10.0.0  (next major)
+  → nextUpgradeVersion = 11.0.0  (major after that)
 ```
 
-When `currentVersion ∈ [upgradeVersion, nextUpgradeVersion)` and `previousVersion >= requiredVersion`, the system nullifies the initial schema checksum (once) to allow Liquibase to recalculate it against the consolidated schema. This runs only on the first startup after the schema consolidation — subsequent startups detect that the consolidation is already complete and skip this step.
+When the version being started falls in `[upgradeVersion, nextUpgradeVersion)` and the recorded previous version is older than `requiredVersion`, Artemis logs the error and exits with code 15 before Liquibase runs. A database with no recorded version is a fresh installation and is always accepted.
+
+Applying the changelogs is the job of `ArtemisSpringLiquibase.java`. It recognises an empty database — no `DATABASECHANGELOG` table, or one with no rows — and records the folded history with Liquibase's `changelog-sync` before running the update, using the same contexts and labels as the update itself.
+
+A database is empty only until Liquibase has written its first row, so the recording happens exactly once in the life of an installation. There is nothing to configure and nothing to run by hand.

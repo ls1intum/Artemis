@@ -294,20 +294,20 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
         final var participations = programmingExerciseParticipationRepository.findWithSubmissionsAndTeamStudentsByExerciseId(exercise.getId());
         for (final var participation : participations) {
-            if (exercise.getDueDate() == null || participation.getIndividualDueDate() == null) {
+            final ZonedDateTime individualDueDate = participation.getIndividualDueDate();
+            if (exercise.getDueDate() == null || individualDueDate == null) {
                 scheduleService.cancelAllScheduledParticipationTasks(exercise.getId(), participation.getId());
             }
             else {
-                scheduleParticipationWithIndividualDueDate(now, exercise, participation, isScoreUpdateNeeded);
+                scheduleParticipationWithIndividualDueDate(now, exercise, participation, individualDueDate, isScoreUpdateNeeded);
             }
         }
     }
 
+    // The individual due date arrives as a parameter rather than being read back off the participation: the caller's branch is what establishes it is non-null, and passing
+    // it makes that part of this method's signature instead of a comment a later edit can fall out of step with.
     private void scheduleParticipationWithIndividualDueDate(ZonedDateTime now, ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation,
-            boolean isScoreUpdateNeeded) {
-        // Only reached from the branch in scheduleParticipationTasks that has already established a non-null individual
-        // due date, which is what the method name promises. Read once rather than through three getter calls.
-        final ZonedDateTime individualDueDate = participation.getIndividualDueDate();
+            @NonNull ZonedDateTime individualDueDate, boolean isScoreUpdateNeeded) {
         final boolean isBeforeDueDate = now.isBefore(individualDueDate);
         // Update scores on due date
         if (isBeforeDueDate) {

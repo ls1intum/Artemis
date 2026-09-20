@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.service.sharing.ExerciseSharingService;
 import de.tum.cit.aet.artemis.programming.service.sharing.ProgrammingExerciseImportFromSharingService;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorService;
@@ -104,11 +105,15 @@ public class ExerciseSharingResource {
 
     private final ProgrammingExerciseImportFromSharingService programmingExerciseImportFromSharingService;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     public ExerciseSharingResource(ExerciseSharingService exerciseSharingService, SharingConnectorService sharingConnectorService,
-            ProgrammingExerciseImportFromSharingService programmingExerciseImportFromSharingService) {
+            ProgrammingExerciseImportFromSharingService programmingExerciseImportFromSharingService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.exerciseSharingService = exerciseSharingService;
         this.programmingExerciseImportFromSharingService = programmingExerciseImportFromSharingService;
         this.sharingConnectorService = sharingConnectorService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     /**
@@ -163,7 +168,9 @@ public class ExerciseSharingResource {
         }
         try {
             ProgrammingExercise exercise = programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(sharingSetupInfo);
-            return ResponseEntity.ok().body(ProgrammingExerciseResponseDTO.of(exercise));
+            // The configuration is a row of its own that names the exercise, so the response reads it here.
+            return ResponseEntity.ok()
+                    .body(ProgrammingExerciseResponseDTO.of(exercise, programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId())));
         }
         catch (GitAPIException | SharingException | IOException | URISyntaxException e) {
             log.error("Error importing exercise from sharing platform", e);

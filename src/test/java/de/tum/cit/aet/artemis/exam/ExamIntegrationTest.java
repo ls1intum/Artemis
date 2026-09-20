@@ -3147,8 +3147,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         }
         Exercise importedProgrammingExercise = received.getExerciseGroups().get(4).getExercises().iterator().next();
         ProgrammingExercise importedExerciseWithAllData = programmingExerciseRepository
-                .findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigAndGradingCriteria(
-                        importedProgrammingExercise.getId())
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndGradingCriteria(importedProgrammingExercise.getId())
                 .orElseThrow();
         assertThat(importedExerciseWithAllData.getGradingCriteria()).hasSize(2);
     }
