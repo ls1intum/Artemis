@@ -68,6 +68,10 @@ public class SecurityFrameworkService {
     /**
      * Activates the sandbox: generates the implicit default policy for the given framework version, commits
      * it to the exercise-tests repository (via Ares2) and stores the resulting ACTIVE state in memory.
+     *
+     * @param exercise         the programming exercise to activate the Security Framework for
+     * @param frameworkVersion the framework version to generate the policy with
+     * @return the resulting ACTIVE config
      */
     public SecurityFrameworkConfigDTO activate(ProgrammingExercise exercise, String frameworkVersion) {
         validateFrameworkVersion(frameworkVersion);
@@ -81,6 +85,9 @@ public class SecurityFrameworkService {
     /**
      * Deactivates the sandbox: removes the policy from the exercise-tests repository (via Ares2) and stores
      * the resulting INACTIVE state in memory.
+     *
+     * @param exercise the programming exercise to deactivate the Security Framework for
+     * @return the resulting INACTIVE config
      */
     public SecurityFrameworkConfigDTO deactivate(ProgrammingExercise exercise) {
         ares2SecurityPolicyService.removePolicy(exercise);
@@ -92,6 +99,10 @@ public class SecurityFrameworkService {
 
     /**
      * Re-syncs an already active exercise onto a different framework version (re-generates and re-commits the policy).
+     *
+     * @param exercise         the programming exercise whose Security Framework version is changed
+     * @param frameworkVersion the framework version to switch to
+     * @return the resulting ACTIVE config on the new version
      */
     public SecurityFrameworkConfigDTO updateFrameworkVersion(ProgrammingExercise exercise, String frameworkVersion) {
         validateFrameworkVersion(frameworkVersion);
