@@ -73,9 +73,16 @@ public class SearchableEntityAccessFilterService {
     private record StudentExamInfo(Set<Long> registeredExamIds, Set<Long> assignedExamExerciseIds) {
     }
 
+    /**
+     * Never returns null: an unavailable {@link StudentExamApi} (module not loaded in this deployment)
+     * means registrations and assignments are simply unknown, not "assume access". Returning empty sets
+     * instead of null makes every caller take the same restrictive path it already takes for a student
+     * confirmed to have no registrations, rather than a separate, more permissive "data unavailable"
+     * fallback that would show every started exam exercise and every visible exam to every student.
+     */
     private StudentExamInfo fetchStudentExamInfo(long userId, List<Long> studentCourseIds) {
         if (studentCourseIds.isEmpty() || studentExamRepository.isEmpty()) {
-            return null;
+            return new StudentExamInfo(Set.of(), Set.of());
         }
         StudentExamApi api = studentExamRepository.get();
         Set<Long> registeredExamIds = api.findRegisteredNonTestExamIdsByUserIdAndCourseIds(userId, studentCourseIds);
@@ -146,7 +153,7 @@ public class SearchableEntityAccessFilterService {
         List<Filter> disjuncts = new ArrayList<>();
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE)) {
             if (isAdmin && !hasCourseScope) {
-                disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.EXERCISE));
+                disjuncts.add(adminUnscopedFilter(SearchableEntitySchema.TypeValues.EXERCISE, excludeCourseIds));
             }
             else {
                 Filter disjunct = buildExerciseDisjunct(roleSets, studentExamInfo);
@@ -158,7 +165,7 @@ public class SearchableEntityAccessFilterService {
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.LECTURE)) {
             if (isAdmin && !hasCourseScope) {
-                disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.LECTURE));
+                disjuncts.add(adminUnscopedFilter(SearchableEntitySchema.TypeValues.LECTURE, excludeCourseIds));
             }
             else {
                 Filter disjunct = buildLectureDisjunct(roleSets);
@@ -169,7 +176,7 @@ public class SearchableEntityAccessFilterService {
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.LECTURE_UNIT)) {
             if (isAdmin && !hasCourseScope) {
-                disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.LECTURE_UNIT));
+                disjuncts.add(adminUnscopedFilter(SearchableEntitySchema.TypeValues.LECTURE_UNIT, excludeCourseIds));
             }
             else {
                 Filter disjunct = buildLectureUnitDisjunct(roleSets);
@@ -180,7 +187,7 @@ public class SearchableEntityAccessFilterService {
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.EXAM)) {
             if (isAdmin && !hasCourseScope) {
-                disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.EXAM));
+                disjuncts.add(adminUnscopedFilter(SearchableEntitySchema.TypeValues.EXAM, excludeCourseIds));
             }
             else {
                 Filter disjunct = buildExamDisjunct(roleSets, studentExamInfo);
@@ -200,7 +207,7 @@ public class SearchableEntityAccessFilterService {
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.FAQ)) {
             if (isAdmin && !hasCourseScope) {
-                disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.FAQ));
+                disjuncts.add(adminUnscopedFilter(SearchableEntitySchema.TypeValues.FAQ, excludeCourseIds));
             }
             else {
                 Filter disjunct = buildFaqDisjunct(roleSets);
@@ -218,7 +225,7 @@ public class SearchableEntityAccessFilterService {
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.COURSE)) {
             if (isAdmin && !hasCourseScope) {
-                disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.COURSE));
+                disjuncts.add(adminUnscopedFilter(SearchableEntitySchema.TypeValues.COURSE, excludeCourseIds));
             }
             else {
                 Filter disjunct = buildCourseDisjunct(roleSets);
@@ -335,21 +342,16 @@ public class SearchableEntityAccessFilterService {
         Filter releasedRegularExercises = Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(false),
                 Filter.or(Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).lte(now), Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).isNull()));
 
-        if (studentExamInfo != null && !studentExamInfo.assignedExamExerciseIds().isEmpty()) {
+        if (!studentExamInfo.assignedExamExerciseIds().isEmpty()) {
             // Only show exam exercises that are assigned to the student's individual exam
             Filter assignedExamExercises = Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true),
                     Filter.property(SearchableEntitySchema.Properties.EXAM_START_DATE).lte(now),
                     Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).containsAny(studentExamInfo.assignedExamExerciseIds().toArray(new Long[0])));
             return Filter.or(releasedRegularExercises, assignedExamExercises);
         }
-        if (studentExamInfo != null) {
-            // Student has no assigned exam exercises (not registered for any exam)
-            return releasedRegularExercises;
-        }
-        // Fallback: studentExamInfo not available, use original behavior
-        Filter startedExamExercises = Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true),
-                Filter.property(SearchableEntitySchema.Properties.EXAM_START_DATE).lte(now));
-        return Filter.or(releasedRegularExercises, startedExamExercises);
+        // No assigned exam exercises: either confirmed not registered for any exam, or registration
+        // data is unavailable (see fetchStudentExamInfo) — either way, no exam exercise is safe to show.
+        return releasedRegularExercises;
     }
 
     /**
@@ -459,11 +461,6 @@ public class SearchableEntityAccessFilterService {
     private static Filter buildStudentExamFilter(List<Long> studentCourseIds, StudentExamInfo studentExamInfo, OffsetDateTime now) {
         Filter courseFilter = courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, studentCourseIds);
         Filter visibleFilter = Filter.property(SearchableEntitySchema.Properties.VISIBLE_DATE).lte(now);
-
-        if (studentExamInfo == null) {
-            // Fallback: studentExamInfo not available, show all visible exams (original behavior)
-            return Filter.and(courseFilter, visibleFilter);
-        }
 
         List<Filter> branches = new ArrayList<>();
         // Test exams: always visible to students in their courses
@@ -592,6 +589,21 @@ public class SearchableEntityAccessFilterService {
             return Filter.property(property).eq(courseIds.getFirst());
         }
         return Filter.property(property).containsAny(courseIds.toArray(new Long[0]));
+    }
+
+    private static Filter courseIdNotIn(String property, List<Long> courseIds) {
+        return courseIdIn(property, courseIds).not();
+    }
+
+    /**
+     * Type filter for the admin-unscoped fast path, which otherwise has no per-course role set to apply
+     * exclusions through: {@code accessibleCourses} is narrowed by {@code excludeCourseIds}, but an admin
+     * with no course scope skips role classification entirely for most types, so without this the
+     * exclusion would apply to nothing and an excluded course's rows would still match on type alone.
+     */
+    private static Filter adminUnscopedFilter(String type, List<Long> excludeCourseIds) {
+        Filter typeFilter = typeEquals(type);
+        return excludeCourseIds.isEmpty() ? typeFilter : Filter.and(typeFilter, courseIdNotIn(SearchableEntitySchema.Properties.COURSE_ID, excludeCourseIds));
     }
 
     private static Filter combineOr(Collection<Filter> filters) {

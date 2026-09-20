@@ -126,4 +126,58 @@ class SearchableEntityAccessFilterServiceTest {
 
         assertThat(result.hasAccess()).isFalse();
     }
+
+    @Test
+    void studentExerciseFilterNeverAdmitsExamExercisesWithoutStudentExamData() {
+        // filterService is built with Optional.empty() for StudentExamApi (line 32): every test in
+        // this class already exercises the "unavailable" path. fetchStudentExamInfo must fail CLOSED
+        // there (empty registration/assignment sets), not fall back to a permissive filter that shows
+        // every started exam exercise regardless of whether this student is actually assigned to it.
+        User user = new User();
+        user.setId(1L);
+        Course courseA = courseWithId(9L);
+        when(courseRepository.findAllAccessibleCoursesForUser(1L, false)).thenReturn(List.of(courseA));
+
+        var result = filterService.buildSearchableItemFilter(user, null, List.of(), Set.of(SearchableEntitySchema.TypeValues.EXERCISE));
+
+        String filter = result.filter().toString();
+        assertThat(filter).contains("is_exam_exercise Equal false");
+        assertThat(filter).doesNotContain("is_exam_exercise Equal true");
+    }
+
+    @Test
+    void studentExamFilterOnlyShowsTestExamsWithoutStudentExamData() {
+        // Same fail-closed expectation for the exam type disjunct: without registration data, a
+        // student sees test exams (always visible) but no regular exam, not every visible exam.
+        User user = new User();
+        user.setId(1L);
+        Course courseA = courseWithId(9L);
+        when(courseRepository.findAllAccessibleCoursesForUser(1L, false)).thenReturn(List.of(courseA));
+
+        var result = filterService.buildSearchableItemFilter(user, null, List.of(), Set.of(SearchableEntitySchema.TypeValues.EXAM));
+
+        String filter = result.filter().toString();
+        assertThat(filter).contains("test_exam Equal true");
+        assertThat(filter).doesNotContain("entity_id ContainsAny");
+    }
+
+    @Test
+    void adminExclusionAppliesToTheUnscopedTypeOnlyFilter() {
+        // An admin with no courseIds ceiling skips role classification entirely for most types
+        // (the isAdmin && !hasCourseScope branch uses a bare type filter, no per-course role set to
+        // apply an exclusion through) — accessibleCourses is narrowed by excludeCourseIds, but that
+        // narrowing must also reach the actual Weaviate filter, not just the role/course-name bookkeeping.
+        when(authCheckService.isCurrentUserAdminAccessEnabled()).thenReturn(true);
+        when(courseRepository.findAll()).thenReturn(List.of(courseWithId(9L), courseWithId(5L)));
+        User user = new User();
+        user.setId(1L);
+
+        var result = filterService.buildSearchableItemFilter(user, null, List.of(5L), Set.of(SearchableEntitySchema.TypeValues.EXERCISE));
+
+        assertThat(result.hasAccess()).isTrue();
+        String filter = result.filter().toString();
+        assertThat(filter).contains("type Equal exercise");
+        // The negated clause excluding course 5, not merely a mention of it.
+        assertThat(filter).containsPattern("[Nn]ot?e? Filter\\(course_id Equal 5\\)");
+    }
 }
