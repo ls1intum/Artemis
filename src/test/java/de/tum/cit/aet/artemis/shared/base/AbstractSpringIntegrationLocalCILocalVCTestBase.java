@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.localci.service.LocalCITriggerService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localci.service.TestBuildAgentConfiguration;
 import de.tum.cit.aet.artemis.localci.test_repository.BuildJobTestRepository;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
@@ -80,6 +81,10 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     // Spy is only used for simulating non-feasible failure scenarios. Please use the real bean otherwise.
     @MockitoSpyBean
     protected GitService gitServiceSpy;
+
+    // Spy is only used for simulating non-feasible failure scenarios. Please use the real bean otherwise.
+    @MockitoSpyBean
+    protected BareGitRepositoryService bareGitRepositoryServiceSpy;
 
     @Autowired
     protected LocalVCLocalCITestService localVCLocalCITestService;
@@ -235,9 +240,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(gitServiceSpy, continuousIntegrationService, localCITriggerService, buildAgentConfiguration, resourceLoaderService, programmingMessagingService,
-                competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, pyrisPipelineService, pyrisEventService, ldapUserService,
-                ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel);
+        Mockito.reset(gitServiceSpy, bareGitRepositoryServiceSpy, continuousIntegrationService, localCITriggerService, buildAgentConfiguration, resourceLoaderService,
+                programmingMessagingService, competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, pyrisPipelineService, pyrisEventService,
+                ldapUserService, ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel);
         super.resetSpyBeans();
     }
 

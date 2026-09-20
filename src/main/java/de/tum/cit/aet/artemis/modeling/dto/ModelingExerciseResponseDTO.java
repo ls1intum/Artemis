@@ -13,6 +13,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseForQuizExerciseDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseManagementExerciseDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -40,7 +41,7 @@ public record ModelingExerciseResponseDTO(Long id, String title, String shortNam
         CourseForQuizExerciseDTO course, Long exerciseGroupId, Long examId, ZonedDateTime examPublishResultsDate, TeamAssignmentConfigDTO teamAssignmentConfig,
         List<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, PlagiarismDetectionConfigDTO plagiarismDetectionConfig,
         boolean gradingInstructionFeedbackUsed, Set<ModelingExampleSubmissionDTO> exampleSubmissions, Boolean teamMode, ModelingExerciseExamGroupDTO exerciseGroup,
-        ExerciseVariantGroupReferenceDTO exerciseVariantGroup) implements Serializable {
+        ExerciseVariantGroupReferenceDTO exerciseVariantGroup) implements Serializable, CourseManagementExerciseDTO {
 
     /**
      * Creates a {@link ModelingExerciseResponseDTO} from the given {@link ModelingExercise}.

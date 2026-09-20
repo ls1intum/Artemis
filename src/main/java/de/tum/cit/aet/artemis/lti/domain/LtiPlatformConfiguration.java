@@ -16,6 +16,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
@@ -25,6 +26,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @Entity
 @Table(name = "lti_platform_configuration")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@AggregateRoot("Server-wide platform registration.")
 public class LtiPlatformConfiguration extends DomainObject {
 
     /** Entity name for LTI platform configuration. */

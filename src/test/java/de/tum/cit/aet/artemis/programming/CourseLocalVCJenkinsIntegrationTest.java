@@ -404,6 +404,12 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetCourseWithExercisesQueryCountStaysBoundedWithAllExerciseTypes() throws Exception {
+        courseTestService.testGetCourseWithExercisesQueryCountStaysBoundedWithAllExerciseTypes();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetCourseWithOrganizations() throws Exception {
         courseTestService.testGetCourseWithOrganizations();
     }
@@ -801,6 +807,12 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCleanupCourseAsInstructor() throws Exception {
         courseTestService.testCleanupCourseAsInstructor();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetCourseIncludesArchivePathWhenCourseIsArchived() throws Exception {
+        courseTestService.testGetCourseIncludesArchivePathWhenCourseIsArchived();
     }
 
     @Test

@@ -31,12 +31,14 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparisonSide;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonStatusDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismSubmissionRepository;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService;
 
 /**
@@ -59,6 +61,8 @@ public class PlagiarismResource {
 
     private final PlagiarismComparisonRepository plagiarismComparisonRepository;
 
+    private final PlagiarismSubmissionRepository plagiarismSubmissionRepository;
+
     private final PlagiarismService plagiarismService;
 
     private final PlagiarismResultRepository plagiarismResultRepository;
@@ -70,9 +74,11 @@ public class PlagiarismResource {
 
     private static final String OTHER_SUBMISSION = "Other submission";
 
-    public PlagiarismResource(PlagiarismComparisonRepository plagiarismComparisonRepository, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
-            UserRepository userRepository, PlagiarismService plagiarismService, PlagiarismResultRepository plagiarismResultRepository, ExerciseRepository exerciseRepository) {
+    public PlagiarismResource(PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismSubmissionRepository plagiarismSubmissionRepository,
+            CourseRepository courseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, PlagiarismService plagiarismService,
+            PlagiarismResultRepository plagiarismResultRepository, ExerciseRepository exerciseRepository) {
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
+        this.plagiarismSubmissionRepository = plagiarismSubmissionRepository;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
@@ -130,8 +136,10 @@ public class PlagiarismResource {
         User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
-        var comparisonA = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsAndElementsAElseThrow(comparisonId);
-        var comparisonB = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsAndElementsBElseThrow(comparisonId);
+        var comparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(comparisonId);
+        // Read one side at a time: both element lists are bags, and a single query cannot fetch two of those.
+        var submissionA = plagiarismSubmissionRepository.findWithElementsByComparisonIdAndSide(comparisonId, PlagiarismComparisonSide.FIRST).orElse(null);
+        var submissionB = plagiarismSubmissionRepository.findWithElementsByComparisonIdAndSide(comparisonId, PlagiarismComparisonSide.SECOND).orElse(null);
 
         var comparisonCourseId = plagiarismComparisonRepository.findCourseIdByIdElseThrow(comparisonId);
         if (!Objects.equals(comparisonCourseId, courseId)) {
@@ -140,10 +148,10 @@ public class PlagiarismResource {
 
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
             // Note: this calls also checks that the student is allowed to see the complaint, and throws otherwise
-            checkStudentAccess(comparisonA.getSubmissionA(), comparisonB.getSubmissionB(), user.getLogin());
+            checkStudentAccess(submissionA, submissionB, user.getLogin());
         }
 
-        return ResponseEntity.ok(PlagiarismComparisonDTO.fromComparison(comparisonA, comparisonB));
+        return ResponseEntity.ok(PlagiarismComparisonDTO.fromComparison(comparison, submissionA, submissionB));
     }
 
     /**

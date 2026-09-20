@@ -46,7 +46,35 @@ class ContentExtractionServiceFlavorStripTest {
 
     @BeforeEach
     void setUp() {
-        service = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, "gpt-5.4-mini", "low", 1.0);
+        service = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, "gpt-5.6-luna", "high", 1.0);
+    }
+
+    @Test
+    void responsesEnabledUsesLunaHighAndNeverFallsBackToSharedChat() {
+        var responseClient = org.mockito.Mockito.mock(ChatClient.class, Answers.RETURNS_DEEP_STUBS);
+        var properties = new de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", true, 300, 10, 30000L, 10);
+        var selected = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, "gpt-5.6-luna", "high", 1.0, properties,
+                new de.tum.cit.aet.artemis.atlas.config.AtlasResponsesApiConfiguration.AtlasResponsesChatClient(responseClient));
+        when(templateService.render(anyString(), any())).thenReturn("system");
+        var options = org.mockito.ArgumentCaptor.forClass(OpenAiChatOptions.Builder.class);
+        when(responseClient.prompt().system(anyString()).user(anyString()).options(options.capture()).call().entity(eq(FlavorStripEditsDTO.class)))
+                .thenReturn(new FlavorStripEditsDTO(List.of(new FlavorStripEditsDTO.EditDTO("flavor", "Alice. ", ""))));
+        assertThat(selected.stripFlavorText("Alice. Calculate 2 + 3.")).isEqualTo("Calculate 2 + 3.");
+        assertThat(options.getValue().build().getDeploymentName()).isEqualTo("gpt-5.6-luna");
+        assertThat(options.getValue().build().getReasoningEffort()).isEqualTo("high");
+        assertThat(options.getValue().build().getTemperature()).isNull();
+        verifyNoInteractions(chatClient);
+        var missing = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, "gpt-5.6-luna", "high", 1.0, properties, null);
+        assertThat(missing.stripFlavorText("Keep this.")).isEqualTo("Keep this.");
+        verifyNoInteractions(chatClient);
+    }
+
+    @Test
+    void responsesDisabledUsesSharedChatAndPreservesRawFallback() {
+        var properties = new de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", false, 300, 10, 30000L, 10);
+        service = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, "gpt-5.6-luna", "high", 1.0, properties, null);
+        stubLlm(new FlavorStripEditsDTO(List.of()));
+        assertThat(service.stripFlavorText("Keep this.")).isEqualTo("Keep this.");
     }
 
     private void stubLlm(FlavorStripEditsDTO edits) {
@@ -78,7 +106,7 @@ class ContentExtractionServiceFlavorStripTest {
 
     @Test
     void stripFlavorText_nullChatClient_returnsRawAndNeverCallsTemplateService() {
-        ContentExtractionService noClientService = new ContentExtractionService(null, templateService, quizExerciseRepository, "gpt-5.4-mini", "low", 1.0);
+        ContentExtractionService noClientService = new ContentExtractionService(null, templateService, quizExerciseRepository, "gpt-5.6-luna", "high", 1.0);
 
         assertThat(noClientService.stripFlavorText("Keep this text.")).isEqualTo("Keep this text.");
         verifyNoInteractions(templateService);

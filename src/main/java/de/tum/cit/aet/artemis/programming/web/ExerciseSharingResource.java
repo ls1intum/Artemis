@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.service.sharing.ExerciseSharingService;
 import de.tum.cit.aet.artemis.programming.service.sharing.ProgrammingExerciseImportFromSharingService;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorService;
@@ -104,11 +105,15 @@ public class ExerciseSharingResource {
 
     private final ProgrammingExerciseImportFromSharingService programmingExerciseImportFromSharingService;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     public ExerciseSharingResource(ExerciseSharingService exerciseSharingService, SharingConnectorService sharingConnectorService,
-            ProgrammingExerciseImportFromSharingService programmingExerciseImportFromSharingService) {
+            ProgrammingExerciseImportFromSharingService programmingExerciseImportFromSharingService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.exerciseSharingService = exerciseSharingService;
         this.programmingExerciseImportFromSharingService = programmingExerciseImportFromSharingService;
         this.sharingConnectorService = sharingConnectorService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     /**
@@ -163,7 +168,9 @@ public class ExerciseSharingResource {
         }
         try {
             ProgrammingExercise exercise = programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(sharingSetupInfo);
-            return ResponseEntity.ok().body(ProgrammingExerciseResponseDTO.of(exercise));
+            // The configuration is a row of its own that names the exercise, so the response reads it here.
+            return ResponseEntity.ok()
+                    .body(ProgrammingExerciseResponseDTO.of(exercise, programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId())));
         }
         catch (GitAPIException | SharingException | IOException | URISyntaxException e) {
             log.error("Error importing exercise from sharing platform", e);
@@ -196,23 +203,20 @@ public class ExerciseSharingResource {
     }
 
     /**
-     * POST {@code api/programming/sharing/export/{exerciseId}}
+     * POST {@code api/programming/sharing/export}
      * <p>
      * Exports a programming exercise to the Sharing Platform and returns a one-time URL that the client
      * can follow. The method appends a {@code callBack} parameter (the UI-return URL) to the generated link.
      * </p>
      *
-     * @param callBackUrl     URL the Sharing Platform should redirect to after export completes
-     * @param exerciseIdQuery Artemis exercise identifier to export (provided as a query parameter; preferred)
-     * @param exerciseIdPath  Artemis exercise identifier to export (provided as a legacy path variable; deprecated)
+     * @param callBackUrl URL the Sharing Platform should redirect to after export completes
+     * @param exerciseId  Artemis exercise identifier to export
      * @return {@code 200 OK} with a JSON-quoted URL string pointing to the Sharing Platform;
      *         {@code 500 Internal Server Error} if export fails
      */
-    @PostMapping({ SHARING_EXPORT_RESOURCE_PATH, SHARING_EXPORT_RESOURCE_PATH + "/{exerciseId}" })
+    @PostMapping(SHARING_EXPORT_RESOURCE_PATH)
     @EnforceAtLeastEditor
-    public ResponseEntity<String> exportExerciseToSharing(@RequestBody String callBackUrl, @RequestParam(name = "exerciseId", required = false) Long exerciseIdQuery,
-            @PathVariable(name = "exerciseId", required = false) Long exerciseIdPath) {
-        Long exerciseId = exerciseIdQuery != null ? exerciseIdQuery : exerciseIdPath;
+    public ResponseEntity<String> exportExerciseToSharing(@RequestBody String callBackUrl, @RequestParam(name = "exerciseId") Long exerciseId) {
         try {
             URI uriRedirect = exerciseSharingService.exportExerciseToSharing(exerciseId).toURI();
             uriRedirect = UriBuilder.fromUri(uriRedirect).queryParam("callBack", callBackUrl).build();

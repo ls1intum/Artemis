@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import inet.ipaddr.IPAddress;
 import inet.ipaddr.IPAddressString;
 
@@ -24,6 +25,7 @@ public class ExamSession extends AbstractAuditingEntity {
 
     @ManyToOne
     @JoinColumn(name = "student_exam_id", nullable = false)
+    @Parent
     private StudentExam studentExam;
 
     @Column(name = "session_token")

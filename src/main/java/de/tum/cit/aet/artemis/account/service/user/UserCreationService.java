@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
@@ -26,6 +27,7 @@ import org.springframework.util.StringUtils;
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -37,6 +39,7 @@ import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
@@ -85,7 +88,7 @@ public class UserCreationService {
      * <p>
      * The account is created <b>activated</b> unless its own owner is expected to activate it, which requires
      * {@code isInternal}: only an internal account gets {@code activated = false} and an activation key. See
-     * {@link User#activated} for why an externally managed account must never be created unactivated, and for why this is
+     * {@link User#getActivated()} for why an externally managed account must never be created unactivated, and for why this is
      * deliberately not narrowed further to instances that have self-registration enabled.
      *
      * @param login              user login string
@@ -202,19 +205,11 @@ public class UserCreationService {
             user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
         }
         saveUser(user);
-        // An administrator-created account gets a reset key so its owner can set their own password.
-        userRecoveryKeyService.storeResetKey(user.getId(), RandomUtil.generateResetKey(), Instant.now());
 
         log.debug("Created Information for User: {}", user);
         return user;
     }
 
-    /**
-     * Updates the authorities for the user according to the ones set in the DTO.
-     *
-     * @param userDTO The source for the authorities that should be set.
-     * @param user    The target user where the authorities are set.
-     */
     private void setUserAuthorities(final ManagedUserVM userDTO, final User user) {
         // A user needs to have at least some role, otherwise an authentication token can never be constructed
         if (userDTO.getAuthorities() == null || userDTO.getAuthorities().isEmpty()) {
@@ -315,7 +310,7 @@ public class UserCreationService {
         // top of that stays opt-in, because the admin form asks for it separately.
         boolean revokeCredentialsAfterPasswordChange = isPasswordBeingChanged && updatedUserDTO.isRevokeCredentials();
         boolean credentialsChanged = isBeingDeactivated || isPasswordBeingChanged;
-        user.setOrganizations(updatedUserDTO.getOrganizations());
+        user.setOrganizations(updatedUserDTO.getOrganizations() == null ? null : resolveOrganizations(updatedUserDTO.getOrganizations()));
         setUserAuthorities(updatedUserDTO, user);
 
         log.debug("Changed Information for User: {}", user);
@@ -359,6 +354,35 @@ public class UserCreationService {
         }
         return savedUser;
     }
+
+    /**
+     * Loads the organizations an admin referenced by id and rejects references without an id or with an unknown id.
+     *
+     * @param organizationDTOs the organization references from the admin form
+     * @return the managed organizations, as a fresh set the user entity can own
+     */
+    private Set<Organization> resolveOrganizations(Set<OrganizationDTO> organizationDTOs) {
+        Set<Long> organizationIds = new HashSet<>();
+        for (OrganizationDTO organizationDTO : organizationDTOs) {
+            if (organizationDTO == null || organizationDTO.id() == null) {
+                throw new BadRequestAlertException("Every organization reference must contain an ID", "userManagement", "invalidOrganizationReference");
+            }
+            organizationIds.add(organizationDTO.id());
+        }
+        List<Organization> organizations = organizationRepository.findAllById(organizationIds);
+        if (organizations.size() != organizationIds.size()) {
+            organizations.forEach(organization -> organizationIds.remove(organization.getId()));
+            throw new BadRequestAlertException("Organization with ID " + organizationIds.iterator().next() + " does not exist", "userManagement", "invalidOrganizationReference");
+        }
+        return new HashSet<>(organizations);
+    }
+
+    /**
+     * Updates the authorities for the user according to the ones set in the DTO.
+     *
+     * @param userDTO The source for the authorities that should be set.
+     * @param user    The target user where the authorities are set.
+     */
 
     /**
      * Activates an account, clears its activation key, and records the change in the audit log.

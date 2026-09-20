@@ -20,5 +20,5 @@ public interface UserRecoveryKeyRepository extends ArtemisJpaRepository<UserReco
 
     Optional<UserRecoveryKey> findByActivationKey(String activationKey);
 
-    Optional<UserRecoveryKey> findByResetKey(String resetKey);
+    Optional<UserRecoveryKey> findByResetKeyId(String resetKeyId);
 }
