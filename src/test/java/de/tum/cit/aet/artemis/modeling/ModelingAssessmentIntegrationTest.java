@@ -312,22 +312,33 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = { false, true })
+    @ValueSource(strings = { "own", "foreign", "missing" })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void exampleAssessmentValidatesGradingInstructionOwnership(boolean ownInstruction) throws Exception {
+    void exampleAssessmentValidatesGradingInstructionOwnership(String instructionSource) throws Exception {
+        boolean ownInstruction = instructionSource.equals("own");
         var example = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, classExercise, true, true));
         var criteria = gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(ownInstruction ? classExercise : activityExercise));
-        var instruction = criteria.getFirst().getStructuredGradingInstructions().iterator().next();
+        var instruction = criteria.stream().flatMap(criterion -> criterion.getStructuredGradingInstructions().stream()).filter(item -> item.getUsageCount() == 1).findFirst()
+                .orElseThrow();
         var feedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("structured feedback");
         feedback.setGradingInstruction(instruction);
+        if (instructionSource.equals("missing")) {
+            var missingInstruction = new GradingInstruction();
+            missingInstruction.setId(Long.MAX_VALUE);
+            feedback.setGradingInstruction(missingInstruction);
+        }
 
-        var result = request.putWithResponseBody("/api/modeling/modeling-submissions/" + example.getId() + "/example-assessment", toFeedbackDTOs(List.of(feedback)),
-                ResultDTO.class, ownInstruction ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
+        var repeatedFeedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("repeated instruction");
+        repeatedFeedback.setGradingInstruction(feedback.getGradingInstruction());
+
+        var result = request.putWithResponseBody("/api/modeling/modeling-submissions/" + example.getId() + "/example-assessment",
+                toFeedbackDTOs(List.of(feedback, repeatedFeedback)), ResultDTO.class, ownInstruction ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
 
         if (ownInstruction) {
             assertThat(result.exampleResult()).isTrue();
-            assertThat(resultRepository.findByIdWithEagerFeedbacksElseThrow(result.id()).getFeedbacks()).singleElement()
-                    .satisfies(item -> assertThat(item.getGradingInstruction().getId()).isEqualTo(instruction.getId()));
+            assertThat(result.score()).isEqualTo(100.0 / classExercise.getMaxPoints());
+            assertThat(resultRepository.findByIdWithEagerFeedbacksElseThrow(result.id()).getFeedbacks()).hasSize(2)
+                    .allSatisfy(item -> assertThat(item.getGradingInstruction().getId()).isEqualTo(instruction.getId()));
         }
         else {
             assertThat(modelingSubmissionRepo.findWithEagerResultById(example.getSubmission().getId()).orElseThrow().getResults()).isEmpty();
