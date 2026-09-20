@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import org.jspecify.annotations.Nullable;
 
@@ -21,8 +22,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * candidates the same way they scope the palette's own visible results.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record GlobalSearchAskRequestDTO(@NotBlank String query, @Min(1) @Max(5) int limit, @NotNull UUID runId, @Nullable List<Long> courseIds,
-        @Nullable List<Long> excludeCourseIds) {
+public record GlobalSearchAskRequestDTO(@NotBlank String query, @Min(1) @Max(5) int limit, @NotNull UUID runId,
+        @Nullable @Size(max = GlobalSearchLectureRequestDTO.MAX_COURSE_ID_FILTERS) List<Long> courseIds,
+        @Nullable @Size(max = GlobalSearchLectureRequestDTO.MAX_COURSE_ID_FILTERS) List<Long> excludeCourseIds) {
 
     public GlobalSearchAskRequestDTO(String query, int limit, UUID runId) {
         this(query, limit, runId, null, null);
