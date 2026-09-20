@@ -83,6 +83,22 @@ describe('renderCitationMarkers', () => {
         expect([...result.citedNumbers]).toEqual([2]);
     });
 
+    it('leaves a bracketed index inside an indented code block untouched', () => {
+        const answer = ['See below.[1]', '', '    const x = values[1];', '    return x;', '', 'Done.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('    const x = values[1];\n    return x;');
+        expect(result.html).toContain('See below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
+
+    it('protects an indented code block at the very start of the answer', () => {
+        const answer = ['    values[1] = 2;', '', 'Explained above.[1]'].join('\n');
+        const result = renderCitationMarkers(answer, 1);
+        expect(result.html).toContain('    values[1] = 2;');
+        expect(result.html).toContain('Explained above.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+    });
+
     it('does not let an unclosed backtick swallow a later paragraph as code', () => {
         // A code span's content may cross one line break but must not cross a blank line: CommonMark
         // inline parsing never spans a paragraph boundary either way, and without this bound one stray

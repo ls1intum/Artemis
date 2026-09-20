@@ -40,18 +40,14 @@ const SINGLE_MARKER_REGEX = /\[(\d+)\]/g;
  * untouched: a bracketed expression like an array index (`list[0]`) is common in course content and must
  * render as code, not as a citation chip.
  *
- * Indented code blocks (4+ leading spaces, no delimiter) are deliberately NOT covered: unlike a fence or
- * span they have no closing delimiter to key off, and CommonMark only treats one as a code block when it
- * is NOT a continuation line of a list item — telling the two apart needs the same list-nesting state a
- * full block parser tracks, which this synchronous, per-animation-tick scan (see `citationView` in the
- * answer component) cannot afford to become. The markdown-it pipeline this answer already renders
- * through (`app/foundation/util/markdown-render.util`) gets this right natively via its own token walk;
- * moving citation-chip insertion into a markdown-it plugin there would close this gap for real, but it
- * needs the reveal-animation pipeline to move off a synchronous computed signal first — worth a
- * dedicated follow-up rather than folding into this fix. No answer this util has seen has used one;
- * every model defaults to fenced blocks for code.
+ * Indented code blocks (4+ leading spaces, no delimiter) are matched too, bounded to a run of such lines
+ * that starts at the very beginning of the answer or right after a blank line — the same structural rule
+ * CommonMark itself uses to tell a real indented code block from a paragraph or list item's continuation
+ * line. This is not full list-nesting awareness (a full block parser's job), but the answer prompt only
+ * ever instructs flat, single-line list items (`global_search_prompts.py`: "Use \n for new list items"),
+ * so a genuine multi-line list continuation is not a realistic shape for this scan to misfire on.
  */
-const CODE_SEGMENT_REGEX = /(`{3,})[\s\S]*?\1|~~~+[\s\S]*?~~~+|(`+)(?:(?!\n[ \t]*\n)[\s\S])*?\2(?!`)/g;
+const CODE_SEGMENT_REGEX = /(`{3,})[\s\S]*?\1|~~~+[\s\S]*?~~~+|(`+)(?:(?!\n[ \t]*\n)[\s\S])*?\2(?!`)|(?:^|\n\n)[ \t]{4,}[^\n]*(?:\n[ \t]{4,}[^\n]*)*/g;
 
 export interface CitationRenderResult {
     /** The answer markdown with marker runs replaced by `<sup>` chip elements. */
