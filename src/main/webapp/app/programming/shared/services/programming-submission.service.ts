@@ -232,9 +232,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param participationId
      */
     private fetchLatestPendingSubmissionByParticipationId(participationId: number): Observable<ProgrammingSubmission | undefined> {
-        return this.http
-            .get<ProgrammingSubmission>('api/programming/programming-exercise-participations/' + participationId + '/latest-pending-submission')
-            .pipe(catchError(() => of(undefined)));
+        return this.http.get<ProgrammingSubmission>('api/programming/programming-exercise-participations/' + participationId + '/latest-pending-submission');
     }
 
     /**
@@ -549,8 +547,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             }),
             catchError(() => {
                 if (isStillWaiting()) {
-                    this.emitFailedSubmission(participationId, exerciseId);
-                    return of(undefined);
+                    // A failed request cannot confirm a missing result. Keep the build pending and retry later.
+                    this.startResultWaitingTimer(participationId);
                 }
                 return EMPTY;
             }),
@@ -754,7 +752,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         this.submissionSubjects[participationId] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
         if (fetchPending) {
             this.fetchLatestPendingSubmissionByParticipationId(participationId)
-                .pipe(switchMap((submission) => this.processPendingSubmission(submission, participationId, exerciseId, personal)))
+                .pipe(
+                    catchError(() => of(undefined)),
+                    switchMap((submission) => this.processPendingSubmission(submission, participationId, exerciseId, personal)),
+                )
                 .subscribe();
         } else {
             // only process, but do not try to fetchPending the latest one, e.g. because it was already downloaded shortly before (example: exam start)

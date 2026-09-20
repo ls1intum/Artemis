@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import dayjs from 'dayjs/esm';
-import { BehaviorSubject, Subject, distinctUntilChanged, lastValueFrom, of } from 'rxjs';
+import { BehaviorSubject, Subject, distinctUntilChanged, lastValueFrom, of, throwError } from 'rxjs';
 import { User } from 'app/account/user/user.model';
 import { range as _range } from 'lodash-es';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
@@ -857,7 +857,31 @@ describe('ProgrammingSubmissionService', () => {
             expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
         });
 
-        it('does not overwrite a result that arrives while the active-build check is in flight', async () => {
+        it.each(['result', 'pending submission'])('retries an inconclusive %s request without failing the build', async (failedRequest) => {
+            pending.estimatedCompletionDate = dayjs().add(30, 'seconds');
+            httpGetStub.mockReturnValue(of(pending));
+            submissionService.getLatestPendingSubmissionByParticipationId(participationId, exerciseId, true).subscribe((state) => states.push(state));
+            const failedRequestStub = failedRequest === 'result' ? getLatestResultStub : httpGetStub;
+            failedRequestStub.mockReturnValueOnce(throwError(() => new Error('Temporary connection failure')));
+
+            await vi.advanceTimersByTimeAsync(120_001);
+
+            expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+            expect(states.some((state) => state.submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION)).toBe(false);
+            expect(getLatestResultStub).toHaveBeenCalledOnce();
+
+            await vi.advanceTimersByTimeAsync(120_000);
+
+            expect(getLatestResultStub).toHaveBeenCalledTimes(2);
+            expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+
+            // A successful response confirming no active submission still terminates the wait.
+            httpGetStub.mockReturnValue(of(undefined));
+            await vi.advanceTimersByTimeAsync(120_000);
+            expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
+        });
+
+        it.each(['success', 'error'])('does not overwrite a result that arrives while the active-build check is in flight (%s)', async (response) => {
             pending.submissionDate = dayjs();
             pending.estimatedCompletionDate = dayjs().add(30, 'seconds');
             const delayedPending = new Subject<ProgrammingSubmission>();
@@ -866,12 +890,17 @@ describe('ProgrammingSubmissionService', () => {
             await vi.advanceTimersByTimeAsync(120_001);
 
             wsLatestResultSubject.next({ id: 31, submission: pending });
-            delayedPending.next(pending);
-            delayedPending.complete();
+            if (response === 'success') {
+                delayedPending.next(pending);
+                delayedPending.complete();
+            } else {
+                delayedPending.error(new Error('Temporary connection failure'));
+            }
             await vi.advanceTimersByTimeAsync(120_000);
 
             expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION);
             expect(states.some((state) => state.submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION)).toBe(false);
+            expect(getLatestResultStub).toHaveBeenCalledOnce();
         });
     });
 
