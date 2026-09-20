@@ -64,6 +64,15 @@ describe('renderCitationMarkers', () => {
         expect([...result.citedNumbers]).toEqual([2]);
     });
 
+    it('leaves a bracketed index inside a double-backtick span untouched', () => {
+        // CommonMark lets a code span use a longer backtick run so its content can contain a literal
+        // backtick; a regex that only recognizes single backticks would stop at that interior backtick
+        // and leak the rest, including the bracketed index, as citable prose.
+        const result = renderCitationMarkers('Escape a backtick with ``list[0] contains a ` character``.[2]', 2);
+        expect(result.html).toBe('Escape a backtick with ``list[0] contains a ` character``.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([2]);
+    });
+
     it('leaves a fenced code block untouched, including a real citation-shaped marker after it', () => {
         const answer = ['See the loop below.[1]', '```python', 'for i in range(3):', '    print(items[i])', '```', 'Iteration order matches the list.[2]'].join('\n');
         const result = renderCitationMarkers(answer, 2);

@@ -27,11 +27,13 @@ const SINGLE_MARKER_REGEX = /\[(\d+)\]/g;
 
 /**
  * A fenced code block (```...```` incl. language tag, possibly spanning lines) or an inline code span
- * (`...`, single backtick, no line breaks). Content matched here is left untouched: a bracketed
- * expression like an array index (`list[0]`) is common in course content and must render as code, not
- * as a citation chip.
+ * delimited by a run of one or more backticks, closed by a run of the same length (no line breaks).
+ * CommonMark allows longer runs specifically so the span can contain a literal backtick, e.g. ``a ` b``
+ * uses two backticks as delimiters; matching only a single backtick would stop at the interior one and
+ * leak the rest as prose. Content matched here is left untouched: a bracketed expression like an array
+ * index (`list[0]`) is common in course content and must render as code, not as a citation chip.
  */
-const CODE_SEGMENT_REGEX = /```[\s\S]*?```|`[^`\n]*`/g;
+const CODE_SEGMENT_REGEX = /```[\s\S]*?```|(`+)[^\n]*?\1(?!`)/g;
 
 export interface CitationRenderResult {
     /** The answer markdown with marker runs replaced by `<sup>` chip elements. */
