@@ -1047,13 +1047,16 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Optional<StudentParticipation> findWithEagerSubmissionsResultsFeedbacksById(@Param("participationId") long participationId);
 
     @Query("""
-            SELECT DISTINCT p.id
+            SELECT p.id
             FROM StudentParticipation p
-                JOIN p.submissions s
-                JOIN s.results r
             WHERE p.exercise.id = :exerciseId
                 AND (p.student.firstName LIKE %:partialStudentName% OR p.student.lastName LIKE %:partialStudentName%)
-                AND r.completionDate IS NOT NULL
+                AND EXISTS (
+                    SELECT r.id
+                    FROM Result r
+                    WHERE r.submission.participation = p
+                        AND r.completionDate IS NOT NULL
+                )
             """)
     List<Long> findIdsByExerciseIdAndStudentName(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName, Pageable pageable);
 
@@ -1063,11 +1066,15 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     @Query("""
             SELECT COUNT(p)
             FROM StudentParticipation p
-                JOIN Result r ON r.submission.participation.id = p.id
             WHERE p.exercise.id = :exerciseId
                 AND (p.student.firstName LIKE %:partialStudentName%
                     OR p.student.lastName LIKE %:partialStudentName%)
-                AND r.completionDate IS NOT NULL
+                AND EXISTS (
+                    SELECT r.id
+                    FROM Result r
+                    WHERE r.submission.participation = p
+                        AND r.completionDate IS NOT NULL
+                )
             """)
     long countByExerciseIdAndStudentName(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName);
 
@@ -1087,7 +1094,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             return Page.empty(pageable);
         }
         List<StudentParticipation> result = findStudentParticipationWithSubmissionsAndResultsByIdIn(ids);
-        return new PageImpl<>(result, pageable, countByExerciseIdAndStudentName(exerciseId, partialStudentName));
+        Map<Long, StudentParticipation> resultById = result.stream().collect(toMap(StudentParticipation::getId, participation -> participation));
+        List<StudentParticipation> orderedResult = ids.stream().map(resultById::get).filter(Objects::nonNull).toList();
+        return new PageImpl<>(orderedResult, pageable, countByExerciseIdAndStudentName(exerciseId, partialStudentName));
     }
 
     @Query("""
