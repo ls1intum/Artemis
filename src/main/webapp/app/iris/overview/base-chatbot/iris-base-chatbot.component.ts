@@ -91,6 +91,7 @@ import { EXERCISE_PLACEHOLDER_LABEL_KEYS, LECTURE_PLACEHOLDER_LABEL_KEYS } from 
 import { createActiveSuggestionChips } from './iris-chatbot-suggestion-chips';
 import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
 import { IrisContextSwitchDividerComponent } from 'app/iris/overview/context-selection/iris-context-switch-divider.component';
+import { IrisPointOutMarkerComponent } from 'app/iris/overview/point-out-marker/iris-point-out-marker.component';
 import { routeForContext } from 'app/iris/overview/context-selection/iris-context.util';
 import { IrisActivityItem, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
@@ -154,6 +155,7 @@ const MIN_DISPLAYED_ACTIVITY_DURATION_SECONDS = 0.5 * 10 ** -ACTIVITY_DURATION_D
         MenuModule,
         ContextSelectionComponent,
         IrisContextSwitchDividerComponent,
+        IrisPointOutMarkerComponent,
         CourseSidebarToggleButtonComponent,
     ],
     providers: [ConfirmationService],

@@ -28,6 +28,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import tools.jackson.databind.JsonNode;
@@ -110,7 +111,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
 
     @BeforeEach
     void setup() {
-        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
     }
@@ -545,6 +546,102 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
                 });
             }
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void exportByParticipationIds_asTutor_ignoresIdentityRevealingOptions() throws Exception {
+        var participation = seedStudentParticipationOnTopOfTheExerciseSetup(TEST_PREFIX + "student1");
+        var repository = RepositoryExportTestUtil.getWorkingCopyForParticipation(localVCLocalCITestService, participation);
+        String pom = "<project><name>Exercise</name><artifactId>exercise</artifactId></project>";
+        String project = "<projectDescription><name>Exercise</name></projectDescription>";
+        RepositoryExportTestUtil.writeFilesAndPush(repository, Map.of("pom.xml", pom, ".project", project), "project files");
+        var options = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
+
+        File archive = request.postWithResponseBodyFile(exportByParticipationIdsUrl(programmingExercise, participation), options, HttpStatus.OK);
+
+        byte[] zip = Files.readAllBytes(archive.toPath());
+        assertThat(ZipTestUtil.listEntryNames(zip)).noneMatch(name -> name.contains(TEST_PREFIX + "student1"));
+        assertThat(ZipTestUtil.readEntryAsString(zip, "-student-submission.git/pom.xml")).isEqualTo(pom);
+        assertThat(ZipTestUtil.readEntryAsString(zip, "-student-submission.git/.project")).isEqualTo(project);
+        assertThat(ZipTestUtil.readEntryAsString(zip, "-student-submission.git/src/Main.java")).isEqualTo("public class Main {}");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void exportByParticipantIdentifiers_asTutor_forbidden() throws Exception {
+        assertExportByParticipantIdentifiersForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void exportByParticipantIdentifiers_asEditor_forbidden() throws Exception {
+        assertExportByParticipantIdentifiersForbidden();
+    }
+
+    private void assertExportByParticipantIdentifiersForbidden() throws Exception {
+        seedStudentParticipations(TEST_PREFIX + "student1");
+        request.post("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participant-identifiers/" + TEST_PREFIX + "student1",
+                new RepositoryExportOptionsDTO(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void exportByParticipantIdentifiers_asInstructor_keepsNamedExport() throws Exception {
+        seedStudentParticipations(TEST_PREFIX + "student1");
+        File archive = request.postWithResponseBodyFile(
+                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participant-identifiers/" + TEST_PREFIX + "student1",
+                new RepositoryExportOptionsDTO(), HttpStatus.OK);
+        assertThat(ZipTestUtil.readEntryAsString(Files.readAllBytes(archive.toPath()), TEST_PREFIX + "student1/src/Main.java")).isEqualTo("public class Main {}");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void exportByParticipationIds_asTutor_cannotExportAll() throws Exception {
+        var participation = seedStudentParticipationOnTopOfTheExerciseSetup(TEST_PREFIX + "student1");
+        request.post(exportByParticipationIdsUrl(programmingExercise, participation), ARCHIVAL_OPTIONS, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void exportByParticipationIds_fromAnotherExercise_forbidden() throws Exception {
+        var participation = seedStudentParticipations(TEST_PREFIX + "student1").getFirst();
+        var otherCourse = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        var otherExercise = ExerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
+        request.post(exportByParticipationIdsUrl(otherExercise, participation), new RepositoryExportOptionsDTO(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void exportStudentSnapshot_asTutor_hidesParticipantInFilename() throws Exception {
+        File archive = exportStudentSnapshot();
+        assertThat(archive.getName()).doesNotContain(TEST_PREFIX + "student1").endsWith("-student-submission.git.zip");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void exportStudentSnapshot_asOwner_keepsParticipantInFilename() throws Exception {
+        assertThat(exportStudentSnapshot().getName()).contains(TEST_PREFIX + "student1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void exportStudentSnapshot_asInstructor_keepsParticipantInFilename() throws Exception {
+        assertThat(exportStudentSnapshot().getName()).contains(TEST_PREFIX + "student1");
+    }
+
+    private File exportStudentSnapshot() throws Exception {
+        var participation = seedStudentParticipations(TEST_PREFIX + "student1").getFirst();
+        File archive = request.getFile(
+                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-repository?participationId=" + participation.getId(), HttpStatus.OK);
+        byte[] zip = Files.readAllBytes(archive.toPath());
+        assertThat(ZipTestUtil.readEntryAsString(zip, "src/Main.java")).isEqualTo("public class Main {}");
+        assertThat(ZipTestUtil.listEntryNames(zip)).noneMatch(name -> name.contains(".git/"));
+        return archive;
+    }
+
+    private String exportByParticipationIdsUrl(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
+        return "/api/programming/programming-exercises/" + exercise.getId() + "/export-repos-by-participation-ids/" + participation.getId();
     }
 
     @Test
