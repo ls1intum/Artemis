@@ -153,7 +153,9 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
     @ExceptionHandler
     public ResponseEntity<ProblemDetail> handleDataIntegrityViolationException(DataIntegrityViolationException ex, NativeWebRequest request) {
         if (violatesUniqueUserEmailIndex(ex)) {
-            log.warn("Rejected a user write that would have duplicated an email address: {}", ExceptionUtils.getRootCauseMessage(ex));
+            // Deliberately without the cause: both databases put the duplicated value in the message they raise, so logging it would write the address of a real account into
+            // the log of an entirely ordinary conflict. The classification below is the only thing that needs to read it.
+            log.warn("Rejected a user write that would have duplicated an email address");
             return handleEmailAlreadyUsedException(new EmailAlreadyUsedException(), request);
         }
         return handleGenericException(ex, request);
