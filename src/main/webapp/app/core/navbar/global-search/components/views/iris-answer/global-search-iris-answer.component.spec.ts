@@ -557,6 +557,21 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             expect(component['irisResult']()).toEqual({ answer: 'Final answer.[1]', sources: SOURCES, entitySources: [] });
             expect(component['isSettled']()).toBe(true);
         });
+
+        it('stops rescheduling the reveal instead of looping forever on an unclosed marker with no more text coming', () => {
+            // A citation marker left open at the very end of what's been streamed blocks reveal
+            // progress until the stream completes or a later update closes it — mid-stream (not yet
+            // complete), rescheduling regardless of that would loop forever with zero progress each
+            // cycle if nothing else ever arrives to unblock it.
+            startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'See the source[1', partialSeq: 1 });
+            fixture.detectChanges();
+
+            vi.advanceTimersByTime(10000);
+            fixture.detectChanges();
+
+            expect(component['revealTimeout']).toBeUndefined();
+        });
     });
 
     describe('inline citations', () => {
@@ -882,6 +897,22 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             fixture.detectChanges();
 
             expect(component['phase']()).toBe('failed');
+            expect(component['revealTimeout']).toBeUndefined();
+        });
+
+        it('clears a pending reveal timer when a streamed partial ends with a considered no-answer result', () => {
+            // The same partial-then-terminal race as the failure case above: a reveal timer left
+            // running here would keep revealing text belonging to a draft the no-answer card is about
+            // to replace, and streamComplete never gets set on this path to make it stop on its own.
+            startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'A draft that was mid-reveal.', partialSeq: 1 });
+            fixture.detectChanges();
+            expect(component['revealTimeout']).toBeDefined();
+
+            askSubject.next({ runId: 'run-1', isThinking: false });
+            fixture.detectChanges();
+
+            expect(component['phase']()).toBe('noAnswer');
             expect(component['revealTimeout']).toBeUndefined();
         });
 

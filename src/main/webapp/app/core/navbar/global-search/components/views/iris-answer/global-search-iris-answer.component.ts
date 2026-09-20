@@ -383,7 +383,11 @@ export class GlobalSearchIrisAnswerComponent {
         }
         if (!update.answer) {
             // Iris ran and chose not to answer. Saying so and then leaving beats vanishing mid-thought,
-            // which is indistinguishable from the feature being broken.
+            // which is indistinguishable from the feature being broken. A reveal timer from an earlier
+            // streamed partial (this terminal update can follow one) must not keep running: it is
+            // revealing text that is about to be replaced by the no-answer card, and streamComplete
+            // never gets set on this path, so nothing else would ever stop it.
+            this.clearTimers();
             this.phase.set('noAnswer');
             this.dismissTimeout = setTimeout(() => this.isDismissed.set(true), NO_ANSWER_HOLD_MS);
             return;
@@ -412,10 +416,15 @@ export class GlobalSearchIrisAnswerComponent {
                 return;
             }
             const next = this.nextRevealIndex(text, from);
-            if (next > from) {
-                this.revealStart.set(from);
-                this.revealedLength.set(next);
+            if (next === from) {
+                // No progress: blocked on an incomplete citation marker with the stream not (yet)
+                // complete. Rescheduling here regardless would loop forever if no further update ever
+                // arrives to complete the marker or mark the stream done — the next partial or terminal
+                // update calls scheduleReveal() again, which is the only thing that can make progress.
+                return;
             }
+            this.revealStart.set(from);
+            this.revealedLength.set(next);
             if (this.revealedLength() < text.length) {
                 this.revealTimeout = setTimeout(step, this.revealDelay(text.length - this.revealedLength()));
             }
