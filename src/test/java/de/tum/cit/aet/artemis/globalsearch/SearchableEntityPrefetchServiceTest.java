@@ -43,7 +43,7 @@ class SearchableEntityPrefetchServiceTest {
         var course = new de.tum.cit.aet.artemis.course.domain.Course();
         course.setId(9L);
         course.setTitle("Patterns in Software Engineering");
-        when(accessFilterService.buildSearchableItemFilter(any(), any(), anySet()))
+        when(accessFilterService.buildSearchableItemFilter(any(), any(), any(), anySet()))
                 .thenReturn(new SearchableEntityAccessFilterService.FilterBuildResult(null, true, Map.of(9L, course), java.util.Set.of(), java.util.Set.of()));
         when(weaviateService.searchEntityCandidatesForAnswer(any(), any(), anyInt())).thenReturn(rows);
     }
@@ -61,7 +61,7 @@ class SearchableEntityPrefetchServiceTest {
         row.put(SearchableEntitySchema.Properties.DUE_DATE, OffsetDateTime.of(2026, 5, 17, 18, 24, 0, 0, ZoneOffset.UTC));
         givenAccessibleRows(List.of(row));
 
-        List<SearchableEntityCandidateDTO> candidates = prefetchService.prefetchCandidates(new User(), "flyweight", 10, null);
+        List<SearchableEntityCandidateDTO> candidates = prefetchService.prefetchCandidates(new User(), "flyweight", 10, null, List.of());
 
         assertThat(candidates).hasSize(1);
         SearchableEntityCandidateDTO candidate = candidates.getFirst();
@@ -82,7 +82,7 @@ class SearchableEntityPrefetchServiceTest {
         Map<String, Object> course = new HashMap<>(Map.of(SearchableEntitySchema.Properties.TYPE, "course", SearchableEntitySchema.Properties.ENTITY_ID, 9L));
         givenAccessibleRows(List.of(unit, channel, course));
 
-        List<SearchableEntityCandidateDTO> candidates = prefetchService.prefetchCandidates(new User(), "q", 10, null);
+        List<SearchableEntityCandidateDTO> candidates = prefetchService.prefetchCandidates(new User(), "q", 10, null, List.of());
 
         assertThat(candidates).extracting(SearchableEntityCandidateDTO::link).containsExactly("/courses/9/lectures/44", "/courses/9/communication?conversationId=61", "/courses/9");
     }
@@ -98,7 +98,7 @@ class SearchableEntityPrefetchServiceTest {
                 SearchableEntitySchema.Properties.COURSE_ID, 9L, SearchableEntitySchema.Properties.CHANNEL_ID, 61L, SearchableEntitySchema.Properties.POST_ID, 77L));
         givenAccessibleRows(List.of(post, answerPost));
 
-        List<SearchableEntityCandidateDTO> candidates = prefetchService.prefetchCandidates(new User(), "q", 10, null);
+        List<SearchableEntityCandidateDTO> candidates = prefetchService.prefetchCandidates(new User(), "q", 10, null, List.of());
 
         assertThat(candidates).extracting(SearchableEntityCandidateDTO::link).containsExactly("/courses/9/communication?conversationId=61&focusPostId=77",
                 "/courses/9/communication?conversationId=61&messageId=77&focusReplyId=88");
@@ -106,9 +106,9 @@ class SearchableEntityPrefetchServiceTest {
 
     @Test
     void returnsEmptyWithoutAccessibleCourses() {
-        when(accessFilterService.buildSearchableItemFilter(any(), any(), anySet()))
+        when(accessFilterService.buildSearchableItemFilter(any(), any(), any(), anySet()))
                 .thenReturn(new SearchableEntityAccessFilterService.FilterBuildResult(null, false, null, null, null));
 
-        assertThat(prefetchService.prefetchCandidates(new User(), "q", 10, null)).isEmpty();
+        assertThat(prefetchService.prefetchCandidates(new User(), "q", 10, null, List.of())).isEmpty();
     }
 }

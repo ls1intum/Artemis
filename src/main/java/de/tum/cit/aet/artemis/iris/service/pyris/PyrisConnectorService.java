@@ -264,18 +264,20 @@ public class PyrisConnectorService {
      * @param entityCandidates pre-fetched, access-filtered entity candidates for the answer pipeline (may be null or empty)
      * @param courseIds        optional course scope from the search UI's active course filter, {@code null} for unscoped
      *                             (search everything the access context permits)
+     * @param excludeCourseIds course ids to hide regardless of {@code courseIds}; only needed for a caller with no
+     *                             {@code courseIds} ceiling to narrow itself (unrestricted access)
      * @param searchesNothing  whether the caller already resolved the scope to nothing (e.g. every requested course
      *                             was excluded); distinct from an unscoped {@code courseIds}, and passed as its own
      *                             field since an empty {@code courseIds} list does not survive the wire
      */
     public void executeGlobalSearchIrisAnswer(String query, int limit, String jobToken, AiSelectionDecision aiSelection, @Nullable PyrisAccessContextDTO accessContext,
-            @Nullable List<PyrisEntityCandidateDTO> entityCandidates, @Nullable List<Long> courseIds, boolean searchesNothing) {
+            @Nullable List<PyrisEntityCandidateDTO> entityCandidates, @Nullable List<Long> courseIds, @Nullable List<Long> excludeCourseIds, boolean searchesNothing) {
         var endpoint = "/api/v1/pipelines/global-search/run";
         try {
             // streamResponse: Pyris posts throttled partial-answer snapshots while the LLM generates,
             // which this service forwards to the client as partial WebSocket updates.
             var settings = new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, null, IrisSupportLevel.MODERATE.jsonValue(), Boolean.TRUE);
-            var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, accessContext, entityCandidates, courseIds, searchesNothing);
+            var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, accessContext, entityCandidates, courseIds, excludeCourseIds, searchesNothing);
             var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, Void.class);
             if (response.getStatusCode().value() != HttpStatus.ACCEPTED.value()) {
                 log.warn("Unexpected status {} from Pyris search/ask async", response.getStatusCode().value());

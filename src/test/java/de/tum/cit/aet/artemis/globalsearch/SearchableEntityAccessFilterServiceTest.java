@@ -49,7 +49,7 @@ class SearchableEntityAccessFilterServiceTest {
         when(courseRepository.findByIdElseThrow(9L)).thenReturn(courseA);
         when(courseRepository.findByIdElseThrow(11L)).thenReturn(courseB);
 
-        var result = filterService.buildSearchableItemFilter(user, List.of(9L, 11L), Set.of(SearchableEntitySchema.TypeValues.EXERCISE));
+        var result = filterService.buildSearchableItemFilter(user, List.of(9L, 11L), List.of(), Set.of(SearchableEntitySchema.TypeValues.EXERCISE));
 
         assertThat(result.hasAccess()).isTrue();
         assertThat(result.accessibleCoursesById()).containsOnlyKeys(9L, 11L);
@@ -70,7 +70,7 @@ class SearchableEntityAccessFilterServiceTest {
         org.mockito.Mockito.doThrow(new de.tum.cit.aet.artemis.core.exception.AccessForbiddenException("no access")).when(authCheckService)
                 .checkHasAtLeastRoleInCourseElseThrow(eq(Role.STUDENT), eq(courseB), eq(user));
 
-        assertThatThrownBy(() -> filterService.buildSearchableItemFilter(user, List.of(9L, 11L), Set.of(SearchableEntitySchema.TypeValues.EXERCISE)))
+        assertThatThrownBy(() -> filterService.buildSearchableItemFilter(user, List.of(9L, 11L), List.of(), Set.of(SearchableEntitySchema.TypeValues.EXERCISE)))
                 .isInstanceOf(de.tum.cit.aet.artemis.core.exception.AccessForbiddenException.class);
     }
 
@@ -81,7 +81,7 @@ class SearchableEntityAccessFilterServiceTest {
         Course courseA = courseWithId(9L);
         when(courseRepository.findAllAccessibleCoursesForUser(1L, false)).thenReturn(List.of(courseA));
 
-        var result = filterService.buildSearchableItemFilter(user, null, Set.of(SearchableEntitySchema.TypeValues.EXERCISE));
+        var result = filterService.buildSearchableItemFilter(user, null, List.of(), Set.of(SearchableEntitySchema.TypeValues.EXERCISE));
 
         assertThat(result.hasAccess()).isTrue();
         assertThat(result.accessibleCoursesById()).containsOnlyKeys(9L);
@@ -94,7 +94,35 @@ class SearchableEntityAccessFilterServiceTest {
         user.setId(1L);
         when(courseRepository.findAllAccessibleCoursesForUser(1L, false)).thenReturn(List.of());
 
-        var result = filterService.buildSearchableItemFilter(user, List.of(), Set.of(SearchableEntitySchema.TypeValues.EXERCISE));
+        var result = filterService.buildSearchableItemFilter(user, List.of(), List.of(), Set.of(SearchableEntitySchema.TypeValues.EXERCISE));
+
+        assertThat(result.hasAccess()).isFalse();
+    }
+
+    @Test
+    void excludedCourseIsRemovedFromTheUnscopedFallback() {
+        // The scenario this exists for: an unrestricted caller with no courseIds ceiling to narrow
+        // itself, so exclusions must be applied to the unscoped fallback rather than dropped.
+        User user = new User();
+        user.setId(1L);
+        Course courseA = courseWithId(9L);
+        Course courseB = courseWithId(11L);
+        when(courseRepository.findAllAccessibleCoursesForUser(1L, false)).thenReturn(List.of(courseA, courseB));
+
+        var result = filterService.buildSearchableItemFilter(user, null, List.of(11L), Set.of(SearchableEntitySchema.TypeValues.EXERCISE));
+
+        assertThat(result.hasAccess()).isTrue();
+        assertThat(result.accessibleCoursesById()).containsOnlyKeys(9L);
+    }
+
+    @Test
+    void excludingEveryAccessibleCourseDeniesAccess() {
+        User user = new User();
+        user.setId(1L);
+        Course courseA = courseWithId(9L);
+        when(courseRepository.findAllAccessibleCoursesForUser(1L, false)).thenReturn(List.of(courseA));
+
+        var result = filterService.buildSearchableItemFilter(user, null, List.of(9L), Set.of(SearchableEntitySchema.TypeValues.EXERCISE));
 
         assertThat(result.hasAccess()).isFalse();
     }

@@ -190,11 +190,6 @@ public class IrisGlobalSearchResource {
         // failure, and must never leave an orphaned job token behind for that case.
         var excludedCourseIds = requestDTO.excludeCourseIds() == null ? List.<Long>of() : requestDTO.excludeCourseIds();
         var scope = lectureSearchScope(requestDTO.courseIds(), excludedCourseIds, accessContext);
-        // searchesNothing (every requested course excluded) still answers rather than short-circuiting
-        // like /lecture-search does: an explicit EMPTY list (not null/unscoped) tells both the entity
-        // filter and Pyris there is no lecture content to search, while pre-authorized entity candidates
-        // (public FAQs, catalog entries) are independent of this scope and can still ground an answer.
-        List<Long> resolvedCourseIds = scope.searchesNothing() ? List.of() : scope.courseIds();
         pyrisJobService.addGlobalSearchAnswerJob(principal.getName(), requestDTO.runId().toString());
         // Note: do NOT remove the job on exception here. Transport-level failures are ambiguous —
         // Pyris may have received the request and already started the pipeline. Removing the token
@@ -206,19 +201,25 @@ public class IrisGlobalSearchResource {
         // A Weaviate hiccup here must not fail the whole answer: the job token above is already
         // registered, so surfacing a 500 would strand it until the Hazelcast TTL clears it and give
         // the student nothing, when the lecture-content-only answer could still have succeeded.
-        List<PyrisEntityCandidateDTO> entityCandidates = fetchEntityCandidates(user, requestDTO, resolvedCourseIds);
+        // searchesNothing (every requested course excluded) still answers rather than short-circuiting
+        // like /lecture-search does, but "search nothing" means nothing: entity candidates are skipped
+        // entirely rather than falling back to an unscoped candidate search (an empty, non-null
+        // courseIds list is read as "unscoped" by the access filter, not "scoped to nothing").
+        List<PyrisEntityCandidateDTO> entityCandidates = scope.searchesNothing() ? List.of() : fetchEntityCandidates(user, requestDTO, scope.courseIds(), scope.excludeCourseIds());
         pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), selectedLlmUsage, accessContext,
-                entityCandidates, scope.courseIds(), scope.searchesNothing());
+                entityCandidates, scope.courseIds(), scope.excludeCourseIds(), scope.searchesNothing());
         return ResponseEntity.accepted().build();
     }
 
-    private List<PyrisEntityCandidateDTO> fetchEntityCandidates(User user, GlobalSearchAskRequestDTO requestDTO, @Nullable List<Long> courseIds) {
+    private List<PyrisEntityCandidateDTO> fetchEntityCandidates(User user, GlobalSearchAskRequestDTO requestDTO, @Nullable List<Long> courseIds,
+            @Nullable List<Long> excludeCourseIds) {
         if (searchableEntityPrefetchApi.isEmpty()) {
             return List.of();
         }
         try {
-            return searchableEntityPrefetchApi.get().prefetchCandidates(user, requestDTO.query(), ENTITY_CANDIDATE_LIMIT, courseIds).stream().map(PyrisEntityCandidateDTO::of)
-                    .toList();
+            var excludedIds = excludeCourseIds == null ? List.<Long>of() : excludeCourseIds;
+            return searchableEntityPrefetchApi.get().prefetchCandidates(user, requestDTO.query(), ENTITY_CANDIDATE_LIMIT, courseIds, excludedIds).stream()
+                    .map(PyrisEntityCandidateDTO::of).toList();
         }
         catch (WeaviateException e) {
             log.warn("Entity candidate prefetch failed for global search run {}; answering from lecture content only: {}", requestDTO.runId(), e.getMessage());

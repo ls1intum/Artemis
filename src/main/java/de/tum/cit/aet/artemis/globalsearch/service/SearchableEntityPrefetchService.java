@@ -54,14 +54,16 @@ public class SearchableEntityPrefetchService {
     /**
      * Runs the access-filtered entity search for the given user and maps the rows to candidates.
      *
-     * @param user      the requesting user (with course roles loaded)
-     * @param query     the search query
-     * @param limit     the maximum number of candidates
-     * @param courseIds optional course ids to scope the candidates to (empty/null for unscoped)
+     * @param user             the requesting user (with course roles loaded)
+     * @param query            the search query
+     * @param limit            the maximum number of candidates
+     * @param courseIds        optional course ids to scope the candidates to (empty/null for unscoped)
+     * @param excludeCourseIds course ids to hide regardless of {@code courseIds}; only needed for a caller with no
+     *                             {@code courseIds} ceiling to narrow itself
      * @return the candidates, empty when the user has no accessible courses
      */
-    public List<SearchableEntityCandidateDTO> prefetchCandidates(User user, String query, int limit, @Nullable List<Long> courseIds) {
-        var filterResult = accessFilterService.buildSearchableItemFilter(user, courseIds, PREFETCH_TYPES);
+    public List<SearchableEntityCandidateDTO> prefetchCandidates(User user, String query, int limit, @Nullable List<Long> courseIds, List<Long> excludeCourseIds) {
+        var filterResult = accessFilterService.buildSearchableItemFilter(user, courseIds, excludeCourseIds, PREFETCH_TYPES);
         if (!filterResult.hasAccess()) {
             return List.of();
         }

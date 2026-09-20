@@ -91,19 +91,22 @@ public class SearchableEntityAccessFilterService {
      * <li>an {@code OR}-of-{@code AND}s filter with one disjunct per requested type otherwise</li>
      * </ul>
      *
-     * @param user           the requesting user (with course roles loaded)
-     * @param courseIds      optional course ids to scope the search to (empty/null for unscoped)
-     * @param requestedTypes the entity types to include
+     * @param user             the requesting user (with course roles loaded)
+     * @param courseIds        optional course ids to scope the search to (empty/null for unscoped)
+     * @param excludeCourseIds course ids to hide regardless of {@code courseIds} or the unscoped fallback; only
+     *                             needed for a caller with no {@code courseIds} ceiling to narrow itself
+     * @param requestedTypes   the entity types to include
      * @return the compound filter plus the per-request access context (accessible courses, staff and editor course ids)
      */
-    public FilterBuildResult buildSearchableItemFilter(User user, @Nullable List<Long> courseIds, Set<String> requestedTypes) {
+    public FilterBuildResult buildSearchableItemFilter(User user, @Nullable List<Long> courseIds, List<Long> excludeCourseIds, Set<String> requestedTypes) {
         // Decide if the filters should be applied
         boolean isAdmin = authCheckService.isCurrentUserAdminAccessEnabled();
         boolean hasCourseScope = courseIds != null && !courseIds.isEmpty();
+        boolean hasExclusions = !excludeCourseIds.isEmpty();
         boolean needsCommFiltering = requestedTypes.contains(SearchableEntitySchema.TypeValues.CHANNEL) || requestedTypes.contains(SearchableEntitySchema.TypeValues.POST)
                 || requestedTypes.contains(SearchableEntitySchema.TypeValues.ANSWER_POST);
 
-        if (isAdmin && !hasCourseScope && !needsCommFiltering) {
+        if (isAdmin && !hasCourseScope && !hasExclusions && !needsCommFiltering) {
             return new FilterBuildResult(buildTypeDiscriminatorFilter(requestedTypes), true, null, null, null);
         }
         List<Course> accessibleCourses;
@@ -119,9 +122,12 @@ public class SearchableEntityAccessFilterService {
         }
         else {
             accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getId(), false);
-            if (accessibleCourses.isEmpty()) {
-                return new FilterBuildResult(null, false, null, null, null);
-            }
+        }
+        if (hasExclusions) {
+            accessibleCourses = accessibleCourses.stream().filter(course -> !excludeCourseIds.contains(course.getId())).toList();
+        }
+        if (accessibleCourses.isEmpty()) {
+            return new FilterBuildResult(null, false, null, null, null);
         }
         List<Course> accessibleCoursesEnabledCommunication = accessibleCourses.stream()
                 .filter(course -> course.getCourseInformationSharingConfiguration().isAnyCommunicationEnabled()).toList();

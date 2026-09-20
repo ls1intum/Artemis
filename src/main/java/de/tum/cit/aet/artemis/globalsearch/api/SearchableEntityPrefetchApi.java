@@ -31,13 +31,15 @@ public class SearchableEntityPrefetchApi extends AbstractGlobalSearchApi {
     /**
      * Runs the access-filtered entity search for the given user.
      *
-     * @param user      the requesting user (with course roles loaded)
-     * @param query     the search query
-     * @param limit     the maximum number of candidates
-     * @param courseIds optional course ids to scope the candidates to (empty/null for unscoped)
+     * @param user             the requesting user (with course roles loaded)
+     * @param query            the search query
+     * @param limit            the maximum number of candidates
+     * @param courseIds        optional course ids to scope the candidates to (empty/null for unscoped)
+     * @param excludeCourseIds course ids to hide regardless of {@code courseIds}; only needed for a caller with no
+     *                             {@code courseIds} ceiling to narrow itself
      * @return the candidates, empty when the user has no accessible courses
      */
-    public List<SearchableEntityCandidateDTO> prefetchCandidates(User user, String query, int limit, @Nullable List<Long> courseIds) {
-        return searchableEntityPrefetchService.prefetchCandidates(user, query, limit, courseIds);
+    public List<SearchableEntityCandidateDTO> prefetchCandidates(User user, String query, int limit, @Nullable List<Long> courseIds, List<Long> excludeCourseIds) {
+        return searchableEntityPrefetchService.prefetchCandidates(user, query, limit, courseIds, excludeCourseIds);
     }
 }

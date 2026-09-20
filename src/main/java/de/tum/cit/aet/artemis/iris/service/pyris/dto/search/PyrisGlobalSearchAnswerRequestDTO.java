@@ -21,6 +21,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSetti
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisGlobalSearchAnswerRequestDTO(@NotBlank String query, @Min(1) @Max(5) int limit, PyrisPipelineExecutionSettingsDTO settings,
         @Nullable PyrisAccessContextDTO accessContext, @Nullable List<PyrisEntityCandidateDTO> entityCandidates, @Nullable List<Long> courseIds,
+        // Only needed for a caller with no courseIds ceiling to narrow itself (unrestricted access): every other
+        // caller already has exclusions baked into courseIds by lectureSearchScope.
+        @Nullable List<Long> excludeCourseIds,
         // Disambiguates an all-excluded course scope from "unscoped" without relying on an empty courseIds list
         // surviving the wire: the class-level NON_EMPTY policy drops both null and an empty list identically, so
         // Pyris could not otherwise tell "no scope requested" from "every requested course was excluded".
