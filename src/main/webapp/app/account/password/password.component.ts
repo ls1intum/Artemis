@@ -1,3 +1,4 @@
+import { passwordMaxBytesValidator } from 'app/account/shared/password-max-bytes.validator';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -5,7 +6,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { CredentialRevocationChoice, PasswordService } from './password.service';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'app/app.constants';
+import { PASSWORD_MAX_BYTES, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'app/app.constants';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { PasswordStrengthBarComponent } from './password-strength-bar.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -52,6 +53,8 @@ export class PasswordComponent implements OnInit {
     readonly PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
     /** Maximum allowed password length exposed for template validation messages */
     readonly PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
+    /** Maximum UTF-8 byte length supported by BCrypt. */
+    readonly PASSWORD_MAX_BYTES = PASSWORD_MAX_BYTES;
 
     /** Indicates the new password and confirmation do not match */
     readonly doNotMatch = signal(false);
@@ -80,7 +83,7 @@ export class PasswordComponent implements OnInit {
         currentPassword: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
         newPassword: new FormControl('', {
             nonNullable: true,
-            validators: [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)],
+            validators: [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH), passwordMaxBytesValidator],
         }),
         confirmPassword: new FormControl('', {
             nonNullable: true,
@@ -148,6 +151,11 @@ export class PasswordComponent implements OnInit {
 
         if (newPassword.value !== confirmPassword.value) {
             this.doNotMatch.set(true);
+            return;
+        }
+
+        if (this.passwordForm.invalid) {
+            this.passwordForm.markAllAsTouched();
             return;
         }
 

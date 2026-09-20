@@ -347,7 +347,7 @@ public class PublicAccountResource {
             }
         }
         else {
-            log.warn("Password reset requested for non-existing mail or username '{}'", mailUsername);
+            log.warn("Password reset requested for a non-existing account");
             accountSecurityEventService.recordPasswordResetRequestRejected("unknown-identifier");
         }
         return ResponseEntity.ok().build();

@@ -240,6 +240,8 @@ export class TutorialGroupsManagementComponent {
     // TutorialGroup.id is optional, and two rows sharing an undefined key would be NG0955 plus lost row reuse.
     protected readonly trackByRow: TrackByFunction<TutorialGroupRow> = (index, row) => row.group.id ?? index;
 
+    protected readonly isOwnGroup = (row: TutorialGroupRow) => row.group.isUserTutor === true;
+
     protected readonly faPlus = faPlus;
     protected readonly faGear = faGear;
     protected readonly faUmbrellaBeach = faUmbrellaBeach;
