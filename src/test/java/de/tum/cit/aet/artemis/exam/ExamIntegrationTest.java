@@ -661,43 +661,57 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(updatedExam.getExamSummaryPublicationDate()).isCloseTo(savedExam.getExamSummaryPublicationDate(), within(1, ChronoUnit.SECONDS));
     }
 
-    @ParameterizedTest
-    @ValueSource(ints = { -3000, -3001, 2_589_001, 5_000_000, Integer.MAX_VALUE, Integer.MIN_VALUE })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateExamWorkingTime_rejectsInvalidRealExamDuration(int delta) throws Exception {
-        Exam exam = examUtilService.addExam(course1);
-        exam.setStartDate(exam.getStartDate().truncatedTo(ChronoUnit.SECONDS));
-        exam.setWorkingTime(3000);
-        exam.setEndDate(exam.getStartDate().plusSeconds(3000));
-        exam = examRepository.save(exam);
-        StudentExam studentExam = examUtilService.addStudentExamWithUserAndWorkingTime(exam, student1, 3600);
-        ZonedDateTime originalEndDate = exam.getEndDate();
-
-        request.patch("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/working-time", delta, HttpStatus.BAD_REQUEST);
-
-        Exam unchangedExam = examRepository.findByIdElseThrow(exam.getId());
-        assertThat(unchangedExam.getWorkingTime()).isEqualTo(3000);
-        assertThat(unchangedExam.getEndDate().toInstant()).isEqualTo(originalEndDate.toInstant());
-        assertThat(studentExamRepository.findByIdElseThrow(studentExam.getId()).getWorkingTime()).isEqualTo(3600);
+    private static Stream<Arguments> invalidWorkingTimeChanges() {
+        return Stream.of(false, true)
+                .flatMap(testExam -> Stream.of(-3000, -3001, 2_589_001, 5_000_000, Integer.MAX_VALUE, Integer.MIN_VALUE).map(delta -> Arguments.of(testExam, delta)));
     }
 
     @ParameterizedTest
-    @ValueSource(ints = { 1, 2_592_000 })
+    @MethodSource("invalidWorkingTimeChanges")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateExamWorkingTime_acceptsRealExamDurationBounds(int workingTime) throws Exception {
+    void testUpdateExamWorkingTime_rejectsInvalidWorkingTime(boolean testExam, int delta) throws Exception {
         Exam exam = examUtilService.addExam(course1);
+        exam.setTestExam(testExam);
         exam.setStartDate(exam.getStartDate().truncatedTo(ChronoUnit.SECONDS));
         exam.setWorkingTime(3000);
-        exam.setEndDate(exam.getStartDate().plusSeconds(3000));
+        exam.setEndDate(exam.getStartDate().plusSeconds(testExam ? 6600 : 3000));
         exam = examRepository.save(exam);
+        StudentExam studentExam = examUtilService.addStudentExamWithUserAndWorkingTime(exam, student1, 3600);
+        ZonedDateTime originalEndDate = exam.getEndDate();
+        String examUrl = "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId();
 
-        Exam updatedExam = request.patchWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/working-time", workingTime - 3000, Exam.class,
-                HttpStatus.OK);
+        request.patch(examUrl + "/working-time", delta, HttpStatus.BAD_REQUEST);
 
-        assertThat(updatedExam.getWorkingTime()).isEqualTo(workingTime);
-        Exam savedExam = examRepository.findByIdElseThrow(exam.getId());
-        assertThat(savedExam.getWorkingTime()).isEqualTo(workingTime);
-        assertThat(savedExam.getEndDate().toInstant()).isEqualTo(savedExam.getStartDate().plusSeconds(workingTime).toInstant());
+        ExamDTO unchangedExam = request.get(examUrl, HttpStatus.OK, ExamDTO.class);
+        assertThat(unchangedExam.workingTime()).isEqualTo(3000);
+        assertThat(unchangedExam.endDate().toInstant()).isEqualTo(originalEndDate.toInstant());
+        List<StudentExamDTO> studentExams = request.getList(examUrl + "/student-exams", HttpStatus.OK, StudentExamDTO.class);
+        assertThat(studentExams).filteredOn(candidate -> candidate.id() == studentExam.getId()).singleElement()
+                .satisfies(unchangedStudentExam -> assertThat(unchangedStudentExam.workingTime()).isEqualTo(3600));
+    }
+
+    private static Stream<Arguments> validWorkingTimeBounds() {
+        return Stream.of(false, true).flatMap(testExam -> Stream.of(1, 2_592_000).map(workingTime -> Arguments.of(testExam, workingTime)));
+    }
+
+    @ParameterizedTest
+    @MethodSource("validWorkingTimeBounds")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExamWorkingTime_acceptsWorkingTimeBounds(boolean testExam, int workingTime) throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        exam.setTestExam(testExam);
+        exam.setStartDate(exam.getStartDate().truncatedTo(ChronoUnit.SECONDS));
+        exam.setWorkingTime(3000);
+        exam.setEndDate(exam.getStartDate().plusSeconds(testExam ? 6600 : 3000));
+        exam = examRepository.save(exam);
+        String examUrl = "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId();
+
+        ExamDTO updatedExam = request.patchWithResponseBody(examUrl + "/working-time", workingTime - 3000, ExamDTO.class, HttpStatus.OK);
+
+        assertThat(updatedExam.workingTime()).isEqualTo(workingTime);
+        ExamDTO savedExam = request.get(examUrl, HttpStatus.OK, ExamDTO.class);
+        assertThat(savedExam.workingTime()).isEqualTo(workingTime);
+        assertThat(savedExam.endDate().toInstant()).isEqualTo(savedExam.startDate().plusSeconds(workingTime + (testExam ? 3600 : 0)).toInstant());
     }
 
     @Test

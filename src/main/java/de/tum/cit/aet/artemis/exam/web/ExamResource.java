@@ -160,6 +160,8 @@ public class ExamResource {
 
     private static final String ENTITY_NAME = "exam";
 
+    private static final int MAX_WORKING_TIME_SECONDS = 2_592_000;
+
     private final ChannelRepository channelRepository;
 
     @Value("${jhipster.clientApp.name}")
@@ -415,23 +417,20 @@ public class ExamResource {
         var originalExamDuration = exam.getDuration();
         final ZonedDateTime originalLatestExamEndDateWithGrace = automaticAfterDueDateService.map(service -> service.getLatestExamEndDateWithGrace(exam)).orElse(null);
 
+        // Validate before mutating, using long arithmetic so extreme deltas cannot wrap around.
+        long newWorkingTime = (long) exam.getWorkingTime() + workingTimeChange;
+        long newDuration = (long) originalExamDuration + workingTimeChange;
+        if (newWorkingTime <= 0 || newDuration <= 0 || (exam.isTestExam() && newWorkingTime > newDuration)) {
+            throw new BadRequestAlertException("The working time must be positive and fit within the exam's working window.", ENTITY_NAME, "examTimes");
+        }
+        checkExamWorkingTimeLimitElseThrow(newWorkingTime);
+        if (!exam.isTestExam()) {
+            checkExamWorkingTimeLimitElseThrow(newDuration);
+        }
+
         // 1. Update the end date & working time of the exam
         exam.setEndDate(exam.getEndDate().plusSeconds(workingTimeChange));
-        exam.setWorkingTime(exam.getWorkingTime() + workingTimeChange);
-
-        // Validate the resulting working time for real exams
-        if (!exam.isTestExam()) {
-            if (exam.getWorkingTime() <= 0) {
-                throw new BadRequestAlertException("The working time of a real exam must be positive.", ENTITY_NAME, "examTimes");
-            }
-            final int maxWorkingTimeSeconds = 2_592_000;
-            if (exam.getWorkingTime() > maxWorkingTimeSeconds) {
-                throw new BadRequestAlertException("The working time is too long. Maximum allowed is 30 days (43200 minutes).", ENTITY_NAME, "examWorkingTimeTooHigh");
-            }
-            if (!exam.getEndDate().isAfter(exam.getStartDate())) {
-                throw new BadRequestAlertException("The end date must be after the start date.", ENTITY_NAME, "examTimes");
-            }
-        }
+        exam.setWorkingTime((int) newWorkingTime);
 
         // The submission overview must never become visible while a student is still writing, so validate against the
         // PROJECTED latest individual end date: step 2 rescales the existing individual extensions by the same duration
@@ -601,12 +600,7 @@ public class ExamResource {
      * @param exam the exam to be checked
      */
     private void checkExamNumericFieldLimitsElseThrow(Exam exam) {
-        // Max working time: 30 days = 2592000 seconds
-        final int maxWorkingTimeSeconds = 2_592_000;
-        final int workingTimeToCheck = exam.isTestExam() ? exam.getWorkingTime() : exam.getDuration();
-        if (workingTimeToCheck > maxWorkingTimeSeconds) {
-            throw new BadRequestAlertException("The working time is too long. Maximum allowed is 30 days (43200 minutes).", ENTITY_NAME, "examWorkingTimeTooHigh");
-        }
+        checkExamWorkingTimeLimitElseThrow(exam.isTestExam() ? exam.getWorkingTime() : exam.getDuration());
 
         // Grace period: max 1 hour = 3600 seconds
         if (exam.getGracePeriod() != null && exam.getGracePeriod() > 3600) {
@@ -622,6 +616,12 @@ public class ExamResource {
         // Number of exercises: max 100
         if (exam.getNumberOfExercisesInExam() != null && exam.getNumberOfExercisesInExam() > 100) {
             throw new BadRequestAlertException("The number of exercises is too high. Maximum allowed is 100.", ENTITY_NAME, "examNumberOfExercisesTooHigh");
+        }
+    }
+
+    private void checkExamWorkingTimeLimitElseThrow(long workingTime) {
+        if (workingTime > MAX_WORKING_TIME_SECONDS) {
+            throw new BadRequestAlertException("The working time is too long. Maximum allowed is 30 days (43200 minutes).", ENTITY_NAME, "examWorkingTimeTooHigh");
         }
     }
 
