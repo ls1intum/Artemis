@@ -146,6 +146,7 @@ describe('Course Management Exercises Component', () => {
         comp.onSearchChange('zzz_nomatch_zzz');
         const filteredCount = comp.cards().reduce((sum, b) => sum + b.exercises.length, 0);
         expect(filteredCount).toBeLessThan(initialCount);
+        expect(comp.cards()).toHaveLength(0);
     });
 
     it('should only mark itself loaded after the initial load (gating the empty state)', () => {

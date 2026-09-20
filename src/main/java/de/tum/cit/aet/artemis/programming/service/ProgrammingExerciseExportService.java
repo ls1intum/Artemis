@@ -735,7 +735,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                 filterLateSubmissions(repositoryExportOptions, relevantCommitHash, participation, repository);
             }
 
-            if (repositoryExportOptions.addParticipantName()) {
+            if (repositoryExportOptions.addParticipantName() && !repositoryExportOptions.anonymizeRepository()) {
                 log.debug("Adding student or team name to participation {}", participation);
                 addParticipantIdentifierToProjectName(repository, programmingExercise, participation);
             }

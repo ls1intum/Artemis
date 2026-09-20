@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -402,18 +403,14 @@ public class ProgrammingExerciseExportImportResource {
      * @throws IOException if something during the zip process went wrong
      */
     @PostMapping("programming-exercises/{exerciseId}/export-repos-by-participant-identifiers/{participantIdentifiers}")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastInstructor
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable long exerciseId, @PathVariable String participantIdentifiers,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
 
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         var user = userRepository.getUserWithAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, user);
-        if (repositoryExportOptions.exportAllParticipants()) {
-            // only instructors are allowed to download all repos
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
 
         if (repositoryExportOptions.filterLateSubmissionsDate() == null) {
             repositoryExportOptions = repositoryExportOptions.copyWith(true, programmingExercise.getDueDate());
@@ -437,7 +434,7 @@ public class ProgrammingExerciseExportImportResource {
      *
      * @param exerciseId              the id of the exercise to get the repos from
      * @param participationIds        the participationIds seperated via semicolon to get their submissions (used for double-blind assessment)
-     * @param repositoryExportOptions the options that should be used for the export. Export all students is not supported here!
+     * @param repositoryExportOptions the options that should be used for the export; exporting all participants requires instructor access
      * @return ResponseEntity with status
      * @throws IOException if submissions can't be zippedRequestBody
      */
@@ -449,6 +446,10 @@ public class ProgrammingExerciseExportImportResource {
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         var user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, user);
+
+        if (repositoryExportOptions.exportAllParticipants()) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
+        }
 
         // Only instructors or higher may override the anonymization setting
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise, user)) {
@@ -480,6 +481,9 @@ public class ProgrammingExerciseExportImportResource {
         }
         else {
             participations = programmingExerciseStudentParticipationRepository.findByIds(participationIds);
+            if (participations.stream().anyMatch(participation -> !exercise.getId().equals(participation.getExercise().getId()))) {
+                throw new AccessForbiddenException("The selected participations do not belong to the requested exercise");
+            }
         }
 
         return participations;
