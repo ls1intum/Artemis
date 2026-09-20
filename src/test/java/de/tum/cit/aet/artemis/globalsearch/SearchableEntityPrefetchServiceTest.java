@@ -40,12 +40,26 @@ class SearchableEntityPrefetchServiceTest {
     }
 
     private void givenAccessibleRows(List<Map<String, Object>> rows) {
+        givenAccessibleRows(rows, java.util.Set.of(), java.util.Set.of());
+    }
+
+    private void givenAccessibleRows(List<Map<String, Object>> rows, java.util.Set<Long> editorCourseIds, java.util.Set<Long> staffCourseIds) {
         var course = new de.tum.cit.aet.artemis.course.domain.Course();
         course.setId(9L);
         course.setTitle("Patterns in Software Engineering");
         when(accessFilterService.buildSearchableItemFilter(any(), any(), any(), anySet()))
-                .thenReturn(new SearchableEntityAccessFilterService.FilterBuildResult(null, true, Map.of(9L, course), java.util.Set.of(), java.util.Set.of()));
+                .thenReturn(new SearchableEntityAccessFilterService.FilterBuildResult(null, true, Map.of(9L, course), staffCourseIds, editorCourseIds));
         when(weaviateService.searchEntityCandidatesForAnswer(any(), any(), anyInt())).thenReturn(rows);
+    }
+
+    private static Map<String, Object> examRow() {
+        return new HashMap<>(
+                Map.of(SearchableEntitySchema.Properties.TYPE, "exam", SearchableEntitySchema.Properties.ENTITY_ID, 30L, SearchableEntitySchema.Properties.COURSE_ID, 9L));
+    }
+
+    private static Map<String, Object> examExerciseRow() {
+        return new HashMap<>(Map.of(SearchableEntitySchema.Properties.TYPE, "exercise", SearchableEntitySchema.Properties.ENTITY_ID, 42L,
+                SearchableEntitySchema.Properties.COURSE_ID, 9L, SearchableEntitySchema.Properties.EXAM_ID, 30L));
     }
 
     @Test
@@ -102,6 +116,40 @@ class SearchableEntityPrefetchServiceTest {
 
         assertThat(candidates).extracting(SearchableEntityCandidateDTO::link).containsExactly("/courses/9/communication?conversationId=61&focusPostId=77",
                 "/courses/9/communication?conversationId=61&messageId=77&focusReplyId=88");
+    }
+
+    @Test
+    void editorGetsExamManagementAndExerciseGroupsLinks() {
+        // Mirrors GlobalSearchNavigationViewComponent.navigateToExam/navigateToExercise: an editor
+        // manages the exam and its exercise groups, not the student-facing routes.
+        givenAccessibleRows(List.of(examRow(), examExerciseRow()), java.util.Set.of(9L), java.util.Set.of(9L));
+
+        List<SearchableEntityCandidateDTO> candidates = prefetchService.prefetchCandidates(new User(), "q", 10, null, List.of());
+
+        assertThat(candidates).extracting(SearchableEntityCandidateDTO::link).containsExactly("/course-management/9/exams/30", "/course-management/9/exams/30/exercise-groups");
+    }
+
+    @Test
+    void teachingAssistantGetsAssessmentDashboardLinks() {
+        // A TA (staff but not editor) assesses; the exam-exercise link is scoped to the specific exercise,
+        // the exam link is not (there is no single "assess this exam" exercise to jump to).
+        givenAccessibleRows(List.of(examRow(), examExerciseRow()), java.util.Set.of(), java.util.Set.of(9L));
+
+        List<SearchableEntityCandidateDTO> candidates = prefetchService.prefetchCandidates(new User(), "q", 10, null, List.of());
+
+        assertThat(candidates).extracting(SearchableEntityCandidateDTO::link).containsExactly("/course-management/9/exams/30/assessment-dashboard",
+                "/course-management/9/exams/30/assessment-dashboard/42");
+    }
+
+    @Test
+    void studentGetsTheExamViewForBothTheExamAndItsExercises() {
+        // A student citing an exam exercise lands on the exam overview, not a specific exercise route —
+        // mirroring navigateToExercise's student branch, which has no standalone exam-exercise page.
+        givenAccessibleRows(List.of(examRow(), examExerciseRow()), java.util.Set.of(), java.util.Set.of());
+
+        List<SearchableEntityCandidateDTO> candidates = prefetchService.prefetchCandidates(new User(), "q", 10, null, List.of());
+
+        assertThat(candidates).extracting(SearchableEntityCandidateDTO::link).containsExactly("/courses/9/exams/30", "/courses/9/exams/30");
     }
 
     @Test
