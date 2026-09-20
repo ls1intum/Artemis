@@ -121,7 +121,8 @@ class DistributedDataSurfaceTest {
      * Stored types this package cannot name directly, because they are package-private where they are declared.
      * Loaded by name so that they are still covered rather than quietly left out.
      */
-    private static final List<String> ROOTS_BY_NAME = List.of("de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService$RunInfo");
+    private static final List<String> ROOTS_BY_NAME = List.of("de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService$RunInfo",
+            "de.tum.cit.aet.artemis.iris.service.pyris.IrisCommandCoordinationService$AckMessage");
 
     /**
      * Cache annotations that can write a method's return value. {@link Caching} is included because it may wrap either
