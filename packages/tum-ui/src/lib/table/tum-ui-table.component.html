@@ -88,7 +88,7 @@
         }
 
         <tr cdk-header-row *cdkHeaderRowDef="displayedColumns(); sticky: scrollable()" class="tum:bg-content-background"></tr>
-        <tr cdk-row *cdkRowDef="let row; columns: displayedColumns()"></tr>
+        <tr cdk-row *cdkRowDef="let row; columns: displayedColumns()" [class.tum-ui-table-row-highlighted]="rowHighlighted()?.(row) ?? false"></tr>
 
         <tr *cdkNoDataRow>
             <td [attr.colspan]="displayedColumns().length" class="tum:bg-content-background tum:px-4 tum:py-6 tum:text-center tum:text-muted">
