@@ -40,14 +40,20 @@ const SINGLE_MARKER_REGEX = /\[(\d+)\]/g;
  * untouched: a bracketed expression like an array index (`list[0]`) is common in course content and must
  * render as code, not as a citation chip.
  *
- * Indented code blocks (4+ leading spaces, no delimiter) are matched too, bounded to a run of such lines
- * that starts at the very beginning of the answer or right after a blank line — the same structural rule
- * CommonMark itself uses to tell a real indented code block from a paragraph or list item's continuation
- * line. This is not full list-nesting awareness (a full block parser's job), but the answer prompt only
- * ever instructs flat, single-line list items (`global_search_prompts.py`: "Use \n for new list items"),
- * so a genuine multi-line list continuation is not a realistic shape for this scan to misfire on.
+ * Indented code blocks (no delimiter) are matched too, bounded to a run of such lines that starts at the
+ * very beginning of the answer or right after a blank line — the same structural rule CommonMark itself
+ * uses to tell a real indented code block from a paragraph or list item's continuation line. This is not
+ * full list-nesting awareness (a full block parser's job), but the answer prompt only ever instructs flat,
+ * single-line list items (`global_search_prompts.py`: "Use \n for new list items"), so a genuine
+ * multi-line list continuation is not a realistic shape for this scan to misfire on.
+ *
+ * "Indented" is CommonMark's column rule, not a raw character count: a line indented by one tab (which
+ * advances to the next 4-column stop, so it never needs 4 of them) counts exactly the same as one indented
+ * by 4 spaces. And the blank line separating a code block from what comes before can itself carry
+ * trailing whitespace — still blank, so it must not be required to be a bare `\n\n`.
  */
-const CODE_SEGMENT_REGEX = /(`{3,})[\s\S]*?\1|~~~+[\s\S]*?~~~+|(`+)(?:(?!\n[ \t]*\n)[\s\S])*?\2(?!`)|(?:^|\n\n)[ \t]{4,}[^\n]*(?:\n[ \t]{4,}[^\n]*)*/g;
+const CODE_SEGMENT_REGEX =
+    /(`{3,})[\s\S]*?\1|~~~+[\s\S]*?~~~+|(`+)(?:(?!\n[ \t]*\n)[\s\S])*?\2(?!`)|(?:^|\n[ \t]*\n)(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*(?:\n(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*)*/g;
 
 export interface CitationRenderResult {
     /** The answer markdown with marker runs replaced by `<sup>` chip elements. */

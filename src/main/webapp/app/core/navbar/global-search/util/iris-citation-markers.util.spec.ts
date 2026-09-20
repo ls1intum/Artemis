@@ -99,6 +99,26 @@ describe('renderCitationMarkers', () => {
         expect(result.html).toContain('Explained above.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
     });
 
+    it('protects an indented code block that uses a tab instead of four spaces', () => {
+        // A tab advances to the next 4-column stop on its own, so CommonMark counts it as satisfying
+        // the indentation requirement the same as 4 literal spaces; a character-count check would miss it.
+        const answer = ['See below.[1]', '', '\tconst x = values[1];', '', 'Done.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('\tconst x = values[1];');
+        expect(result.html).toContain('See below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+    });
+
+    it('recognizes a whitespace-only line as the blank line before an indented block', () => {
+        // A line containing only trailing spaces is still a blank line in CommonMark; requiring a bare
+        // "\n\n" would miss the block that follows one and leak its content, including values[1], as prose.
+        const answer = 'See below.[1]\n   \n    const x = values[1];\n\nDone.[2]';
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('    const x = values[1];');
+        expect(result.html).toContain('See below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+    });
+
     it('does not let an unclosed backtick swallow a later paragraph as code', () => {
         // A code span's content may cross one line break but must not cross a blank line: CommonMark
         // inline parsing never spans a paragraph boundary either way, and without this bound one stray
