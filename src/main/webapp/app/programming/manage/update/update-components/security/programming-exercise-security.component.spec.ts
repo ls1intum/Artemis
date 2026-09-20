@@ -11,7 +11,7 @@ import { SecurityFrameworkService } from 'app/programming/shared/services/securi
 import { ProgrammingExerciseSecurityComponent } from 'app/programming/manage/update/update-components/security/programming-exercise-security.component';
 
 const VERSIONS = [
-    { version: '3.4.1', label: '3.4.1 (latest)' },
+    { version: '3.4.1', label: '3.4.1', latest: true },
     { version: '3.3.0', label: '3.3.0' },
     { version: '3.2.2', label: '3.2.2' },
 ];
@@ -181,5 +181,64 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         expect(comp.config().frameworkVersion).toBe('3.3.0');
         expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
         expect(service.updateFrameworkVersion).not.toHaveBeenCalled();
+    });
+
+    it('on ERROR keeps the toggle off after a failed activation', () => {
+        initEdit(inactiveConfig());
+        service.activate.mockReturnValueOnce(throwError(() => new Error('SYNC_FAILED')));
+        comp.onToggleChanged(true);
+        expect(comp.status()).toBe(SecurityActivationStatus.ERROR);
+        expect(comp.isToggleOn()).toBe(false);
+    });
+
+    it('on ERROR keeps the toggle on after a failed deactivation', () => {
+        initEdit(activeConfig());
+        service.deactivate.mockReturnValueOnce(throwError(() => new Error('SYNC_FAILED')));
+        comp.onToggleChanged(false);
+        expect(comp.status()).toBe(SecurityActivationStatus.ERROR);
+        expect(comp.isToggleOn()).toBe(true);
+    });
+
+    it('surfaces a load error instead of a misleading INACTIVE, and recovers on retry', () => {
+        service.getConfig.mockReturnValue(throwError(() => new Error('LOAD_FAILED')));
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 42;
+        exercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput('selectedProgrammingLanguage', ProgrammingLanguage.JAVA);
+        fixture.detectChanges();
+        expect(comp.loadFailed()).toBe(true);
+
+        service.getConfig.mockReturnValue(of(activeConfig()));
+        comp.retryLoadConfig();
+        expect(comp.loadFailed()).toBe(false);
+        expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
+    });
+
+    it('commitStagedActivation is a no-op success when nothing was staged', () => {
+        initCreate();
+        let result: boolean | undefined;
+        comp.commitStagedActivation(99).subscribe((value) => (result = value));
+        expect(result).toBe(true);
+        expect(service.activate).not.toHaveBeenCalled();
+    });
+
+    it('commitStagedActivation persists a staged create-mode activation and reports success', () => {
+        initCreate();
+        comp.onToggleChanged(true);
+        service.activate.mockReturnValue(of(activeConfig()));
+        let result: boolean | undefined;
+        comp.commitStagedActivation(99).subscribe((value) => (result = value));
+        expect(service.activate).toHaveBeenCalledWith(99, '3.4.1');
+        expect(result).toBe(true);
+    });
+
+    it('commitStagedActivation reports failure (never a false success) when activation fails', () => {
+        initCreate();
+        comp.onToggleChanged(true);
+        service.activate.mockReturnValue(throwError(() => new Error('SYNC_FAILED')));
+        let result: boolean | undefined;
+        comp.commitStagedActivation(99).subscribe((value) => (result = value));
+        expect(result).toBe(false);
     });
 });
