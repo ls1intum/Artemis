@@ -584,6 +584,25 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
+        void shouldNotWriteDisplayPageNumbersWhenLosingTheRaceOnSuccess() {
+            // A callback that loses the atomic claim (a content-triggered requeue or newer
+            // activation already moved this run on) must never touch the attachment:
+            // cleanupForReprocessing may have already cleared the display page number mapping in
+            // preparation for different content, and writing this stale callback's numbers over
+            // that would resurrect stale data for the wrong attachment version.
+            Attachment attachment = new Attachment();
+            testUnit.setAttachment(attachment);
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.completeIngestionIfLive(anyLong(), anyString(), any())).thenReturn(0);
+
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, List.of(1, 2, -1));
+
+            verify(attachmentRepository, never()).save(any());
+        }
+
+        @Test
         void shouldDropTheLoserOfARacingDuplicateFailureCallback() {
             // Same race as above, but the loser is a failure callback: the conditional failure write
             // updates zero rows, and the run must not be treated as having freed a dispatch slot.

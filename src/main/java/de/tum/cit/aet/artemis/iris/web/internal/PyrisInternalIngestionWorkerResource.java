@@ -106,7 +106,22 @@ public class PyrisInternalIngestionWorkerResource {
                 log.info("Claimed unit {} disappeared before preparation, skipping", claim.lectureUnitId());
                 continue;
             }
-            PyrisPreparedLectureIngestionJobDTO prepared = pyrisWebhookService.prepareLectureUnitIngestion(unit, claim.contentFingerprint(), claim.forceReingest());
+            PyrisPreparedLectureIngestionJobDTO prepared;
+            try {
+                prepared = pyrisWebhookService.prepareLectureUnitIngestion(unit, claim.contentFingerprint(), claim.forceReingest());
+            }
+            catch (Exception e) {
+                // Isolate each claimed item: claimUnitsForWorker already claimed the whole batch, so
+                // one unexpected preparation failure (e.g. the attachment became unreadable between
+                // claim and preparation) must not abort jobs already activated earlier in this loop.
+                // prepareLectureUnitIngestion registers its job token only after this step succeeds
+                // (see PyrisWebhookService#prepareLectureAdditionJob), so a failure here never leaks
+                // one. The claim itself is left untouched and self-heals the same way an abandoned
+                // claim always does: an IDLE claim is released by releaseAbandonedIdleClaims, and a
+                // retry claim's lease lapses on its own.
+                log.error("Failed to prepare claimed unit {} for the worker: {}", claim.lectureUnitId(), e.getMessage());
+                continue;
+            }
             if (prepared == null) {
                 processingStateCallbackApi.get().markClaimedUnitSkipped(claim.lectureUnitId(), claim.claimedAt());
                 continue;

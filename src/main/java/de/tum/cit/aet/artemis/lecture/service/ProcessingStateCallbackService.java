@@ -609,13 +609,6 @@ public class ProcessingStateCallbackService {
         }
 
         if (success) {
-            // Save the display page numbers BEFORE the atomic terminal write below: a crash between the
-            // two then leaves the run in flight (healed by re-dispatch, which idempotently overwrites the
-            // mapping) instead of a DONE state whose page numbers are permanently missing. A concurrent
-            // duplicate callback for this exact run (racing before either claims below) may redundantly
-            // repeat this write, which is harmless: it is the same job's own data either way.
-            saveDisplayPageNumbers(state, displayPageNumbers);
-
             // Atomically claim the terminal transition and write the DONE state in one statement: see
             // LectureUnitProcessingStateRepository#completeIngestionIfLive for why a separate token clear
             // followed by a later whole-entity save can strand or overwrite a row.
@@ -624,6 +617,13 @@ public class ProcessingStateCallbackService {
                 return;
             }
             log.info("Processing completed successfully for unit {}", lectureUnitId);
+            // Only write the display page numbers once this callback is confirmed to still own the
+            // run (the claim above). A callback that lost that race must never touch the attachment:
+            // a content-triggered requeue or a newer activation landing in the window before the claim
+            // may have already cleared this mapping (see
+            // LectureContentProcessingService#cleanupForReprocessing) in preparation for different
+            // content, and an unconditioned write here would resurrect the stale mapping over it.
+            saveDisplayPageNumbers(state, displayPageNumbers);
             // Mirror the just-persisted transition onto this in-memory copy purely to report accurate
             // state in the notification below, without a second read.
             state.transitionTo(ProcessingPhase.DONE);
