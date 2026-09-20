@@ -266,6 +266,51 @@ describe('Example Modeling Submission Component', () => {
             completeAssessment(0);
         });
 
+        it.each([undefined, Number.NaN])('keeps feedback with credit %s unsaved when switching back to an edited model', (credits) => {
+            comp['updateAssessment']({ id: 1, feedbacks: [deepClone(mockFeedbackWithoutReference)] } as Result);
+            const invalidFeedback = { ...mockFeedbackWithoutReference, credits };
+            comp.onUnReferencedFeedbackChanged([invalidFeedback]);
+            comp.showSubmission();
+            expect(assessmentRequests).toHaveLength(0);
+
+            currentModel.title = 'Edited model';
+            comp.showAssessment();
+            completeUpdate(0);
+            expect(JSON.parse(comp.modelingSubmission.model!).title).toBe('Edited model');
+            expect(assessmentRequests).toHaveLength(0);
+            expect(comp.unreferencedFeedback()).toEqual([invalidFeedback]);
+            expect(comp.feedbackChanged()).toBe(true);
+        });
+
+        it('rejects an invalid captured assessment even after its live feedback has been corrected', () => {
+            comp.onUnReferencedFeedbackChanged([{ ...mockFeedbackWithoutReference, credits: undefined }]);
+            comp.upsertExampleModelingSubmission();
+            const corrected = { ...mockFeedbackWithoutReference, credits: 4 };
+            comp.onUnReferencedFeedbackChanged([corrected]);
+            completeUpdate(0);
+            expect(assessmentRequests).toHaveLength(0);
+            expect(comp.feedbackChanged()).toBe(true);
+
+            comp.saveExampleAssessment();
+            expect(assessmentRequests[0].feedbacks).toEqual([corrected]);
+            completeAssessment(0);
+            expect(comp.feedbackChanged()).toBe(false);
+        });
+
+        it('saves valid captured feedback while retaining a newer invalid edit as dirty', () => {
+            const validFeedback = { ...mockFeedbackWithoutReference, credits: 4 };
+            comp.onUnReferencedFeedbackChanged([validFeedback]);
+            comp.upsertExampleModelingSubmission();
+            const invalidFeedback = { ...validFeedback, credits: undefined };
+            comp.onUnReferencedFeedbackChanged([invalidFeedback]);
+            completeUpdate(0);
+            expect(assessmentRequests[0].feedbacks).toEqual([validFeedback]);
+            completeAssessment(0);
+            expect(comp.unreferencedFeedback()).toEqual([invalidFeedback]);
+            expect(comp.assessmentsAreValid()).toBe(false);
+            expect(comp.feedbackChanged()).toBe(true);
+        });
+
         it('keeps the editor input stable when a model save returns after another edit', () => {
             fixture.detectChanges();
             const editor = fixture.debugElement.query((element) => element.componentInstance instanceof StubModelingEditorComponent)

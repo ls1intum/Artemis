@@ -146,8 +146,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             return { valid: true, totalScore: 0 };
         }
 
-        const credits = feedbacks.map((feedback) => feedback.credits);
-        if (!credits.every((credit) => credit != undefined && !isNaN(credit))) {
+        if (!this.hasValidFeedbackScores(feedbacks)) {
             return { valid: false, error: 'The score field must be a number and can not be empty!' };
         }
 
@@ -363,10 +362,18 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         this.saveRequests.next(() => this.saveAssessment(assessment));
     }
 
+    private hasValidFeedbackScores(feedbacks: Feedback[]): boolean {
+        return feedbacks.every(({ credits }) => credits != undefined && !isNaN(credits));
+    }
+
     private saveAssessment(assessment: AssessmentSave): Observable<Result> {
         // A model saved earlier in the queue may have deleted references this intent still contains.
         if (this.modelingSubmission?.model) {
             this.pruneAssessment(assessment, importDiagram(parseJson(this.modelingSubmission.model)));
+        }
+        if (!this.hasValidFeedbackScores(assessment.feedbacks)) {
+            this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
+            return EMPTY;
         }
         const current = this.exampleSubmission();
         let metadataSave: Observable<unknown> = of(undefined);
