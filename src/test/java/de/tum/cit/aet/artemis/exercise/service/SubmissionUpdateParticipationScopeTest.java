@@ -29,6 +29,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -178,7 +179,7 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
     }
 
     private void sendTextViaWebsocket(long participationId, long submissionId) {
-        var payload = new TeamTextSubmissionUpdateDTO(submissionId, UPDATE_TEXT, Language.ENGLISH, true, null);
+        var payload = new TeamTextSubmissionUpdateDTO(submissionId, UPDATE_TEXT, Language.ENGLISH, true);
         try {
             participationTeamWebsocketService.updateTextSubmission(participationId, payload, principal("student1"));
         }
@@ -424,7 +425,7 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
         clearInvocations(websocketMessagingService);
 
         if (websocket) {
-            var payload = new TeamTextSubmissionUpdateDTO(submissionId, UPDATE_TEXT, Language.ENGLISH, true, null);
+            var payload = new TeamTextSubmissionUpdateDTO(submissionId, UPDATE_TEXT, Language.ENGLISH, true);
             assertThatExceptionOfType(ResponseStatusException.class)
                     .isThrownBy(() -> participationTeamWebsocketService.updateTextSubmission(participationId, payload, principal("student1")))
                     .satisfies(exception -> assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
@@ -438,6 +439,24 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
         assertThat(studentParticipationRepository.findByIdElseThrow(participationId).getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
         assertThat(submissionVersionRepository.count()).isEqualTo(versionCount);
         verify(websocketMessagingService, never()).sendMessage(eq("/topic/participations/" + participationId + "/team/text-submissions"), any(Object.class));
+    }
+
+    @Test
+    void textSubmissionUpdateRejectsResultCreatedAfterPrecheck() {
+        TextSubmission stored = (TextSubmission) participationUtilService.addSubmission(ownTeamParticipation,
+                ParticipationFactory.generateTextSubmission(EXISTING_TEXT, Language.ENGLISH, true));
+        assertThat(resultRepository.existsBySubmissionId(stored.getId())).isFalse();
+
+        TextSubmission assessed = (TextSubmission) participationUtilService.addResultToSubmission(stored, AssessmentType.MANUAL);
+        Long resultId = assessed.getLatestResult().getId();
+
+        int updatedRows = textSubmissionRepository.updateExistingSubmission(stored.getId(), ownTeamParticipation.getId(), UPDATE_TEXT, Language.ENGLISH, true,
+                ZonedDateTime.parse("2026-01-01T00:00:00Z"), stored.getType());
+
+        assertThat(updatedRows).as("the atomic update notices the result inserted after the precheck").isZero();
+        TextSubmission preserved = textSubmissionRepository.findByIdWithParticipationExerciseResultAssessorElseThrow(stored.getId());
+        assertThat(preserved.getText()).isEqualTo(EXISTING_TEXT);
+        assertThat(preserved.getResults()).singleElement().extracting(result -> result.getId()).isEqualTo(resultId);
     }
 
     @ParameterizedTest
