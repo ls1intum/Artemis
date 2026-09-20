@@ -25,6 +25,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { By } from '@angular/platform-browser';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
 
 describe('ParticipationComponent', () => {
@@ -68,6 +70,7 @@ describe('ParticipationComponent', () => {
                 MockProvider(ParticipationService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(EventManager),
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -95,6 +98,76 @@ describe('ParticipationComponent', () => {
 
             expect(exerciseFindStub).toHaveBeenCalledExactlyOnceWith(1);
             expect(component.exercise()).toEqual(exercise);
+        });
+    });
+
+    describe('Anonymous participation list', () => {
+        it.each([false, true])('should show participation IDs without identity search or team links for tutors (team mode: %s)', async (teamMode) => {
+            const tutorExercise = { ...exercise, course: undefined, type: ExerciseType.PROGRAMMING, isAtLeastTutor: true, isAtLeastInstructor: false, teamMode };
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: tutorExercise })));
+            vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [sampleDto], totalElements: 1 }));
+
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+            componentFixture.detectChanges();
+
+            expect(component.columns()[0]).toMatchObject({ headerKey: 'artemisApp.participation.participationId', field: 'participationId', sort: true });
+            expect(
+                component.columns().some((column) => column.headerKey === 'artemisApp.participation.students' || column.headerKey === 'artemisApp.participation.repository'),
+            ).toBe(false);
+            const table: HTMLElement = componentFixture.nativeElement.querySelector('jhi-table-view');
+            expect(table.querySelector('tbody td')?.textContent?.trim()).toBe(String(sampleDto.participationId));
+            expect(table.textContent).not.toContain(sampleDto.participantName);
+            expect(table.querySelector('a[href*="/teams/"]')).toBeNull();
+            expect(table.querySelector('jhi-search-filter')).toBeNull();
+        });
+
+        it.each([false, true])('should retain identity columns and search for instructors (team mode: %s)', (teamMode) => {
+            component.exercise.set({ ...exercise, teamMode, isAtLeastInstructor: true });
+
+            expect(component.tableOptions().showSearch).not.toBe(false);
+            expect(component.columns()[0]).toMatchObject({
+                headerKey: teamMode ? 'artemisApp.participation.team' : 'artemisApp.participation.student',
+                field: 'participantName',
+                sort: true,
+            });
+            expect(component.columns().some((column) => column.headerKey === 'artemisApp.participation.students')).toBe(teamMode);
+        });
+
+        it.each(['participantName', 'participantIdentifier', 'buildPlanId'])(
+            'should discard stale identity search and sorting for tutors while retaining filters and paging (%s)',
+            (sortField) => {
+                component.exercise.set({ ...exercise, isAtLeastInstructor: false });
+                component.activeFilter.set(FilterProp.NO_SUBMISSIONS);
+                const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+
+                component.onLazyLoad({ first: 50, rows: 25, globalFilter: 'alice', sortField });
+
+                expect(searchSpy).toHaveBeenCalledWith(
+                    exercise.id,
+                    expect.objectContaining({ page: 2, pageSize: 25, searchTerm: '', sortedColumn: 'id', filterProp: FilterProp.NO_SUBMISSIONS }),
+                );
+            },
+        );
+
+        it('should retain instructor identity search and sorting', () => {
+            component.exercise.set({ ...exercise, isAtLeastInstructor: true });
+            const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+
+            component.onLazyLoad({ globalFilter: 'alice', sortField: 'participantName' });
+
+            expect(searchSpy).toHaveBeenCalledWith(exercise.id, expect.objectContaining({ searchTerm: 'alice', sortedColumn: 'participantName' }));
+        });
+
+        it('should identify an anonymous participation in the due-date success message', () => {
+            const dto: ParticipationManagementDTO = { participationId: 42, submissionCount: 1, testRun: false };
+            vi.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(of(new HttpResponse({ body: [] })));
+            const successSpy = vi.spyOn(alertService, 'success');
+            component.startEditDueDate(dto);
+
+            component.saveIndividualDueDate(dto);
+
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.participation.updateDueDates.success', { name: '42' });
         });
     });
 
