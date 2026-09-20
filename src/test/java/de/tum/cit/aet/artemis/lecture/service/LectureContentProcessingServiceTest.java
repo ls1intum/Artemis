@@ -119,8 +119,9 @@ class LectureContentProcessingServiceTest {
         websocketMessagingService = mock(WebsocketMessagingService.class);
         contentFingerprintService = mock(LectureUnitContentFingerprintService.class);
         when(contentFingerprintService.computeFingerprint(any())).thenReturn("v1:test-fingerprint");
-        // The atomic terminal-callback claim succeeds by default; duplicate-claim tests override this
-        when(processingStateRepository.clearIngestionJobTokenIfMatches(anyLong(), anyString())).thenReturn(1);
+        // The atomic terminal-callback claims succeed by default; duplicate-claim tests override these
+        when(processingStateRepository.completeIngestionIfLive(anyLong(), anyString(), any())).thenReturn(1);
+        when(processingStateRepository.failIfStillLive(anyLong(), any(), any(), anyInt(), any(), any(), any())).thenReturn(1);
         callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository, Optional.of(irisLectureApi),
                 websocketMessagingService, contentFingerprintService, distributedDataProviderMock(), featureToggleService, 2, 20, Duration.ofSeconds(90), 8);
         recoveryService = new ProcessingStateRecoveryService(processingStateRepository, transcriptionRepository, websocketMessagingService);
@@ -531,7 +532,6 @@ class LectureContentProcessingServiceTest {
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             // Mock dispatch after completion
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
@@ -547,7 +547,6 @@ class LectureContentProcessingServiceTest {
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             testState.setForceReingest(true);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, null);
@@ -561,7 +560,6 @@ class LectureContentProcessingServiceTest {
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             testState.setContentFingerprint("v1:dispatched-fingerprint");
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, null);
@@ -570,18 +568,34 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
-        void shouldDropTheLoserOfARacingDuplicateCallback() {
+        void shouldDropTheLoserOfARacingDuplicateSuccessCallback() {
             // Two callbacks with the same live token race: the atomic claim lets exactly one through.
-            // This test simulates the loser, whose conditional token clear updates zero rows.
+            // This test simulates the loser, whose conditional completion write updates zero rows.
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.clearIngestionJobTokenIfMatches(anyLong(), anyString())).thenReturn(0);
+            when(processingStateRepository.completeIngestionIfLive(anyLong(), anyString(), any())).thenReturn(0);
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, null);
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
             verify(processingStateRepository, never()).save(any());
+            verify(processingStateRepository, never()).countByPhaseIn(any());
+        }
+
+        @Test
+        void shouldDropTheLoserOfARacingDuplicateFailureCallback() {
+            // Same race as above, but the loser is a failure callback: the conditional failure write
+            // updates zero rows, and the run must not be treated as having freed a dispatch slot.
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.failIfStillLive(anyLong(), any(), any(), anyInt(), any(), any(), any())).thenReturn(0);
+
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null, null);
+
+            verify(processingStateRepository, never()).save(any());
+            verify(processingStateRepository, never()).countByPhaseIn(any());
         }
 
         @Test
@@ -591,7 +605,6 @@ class LectureContentProcessingServiceTest {
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, null);
@@ -606,7 +619,6 @@ class LectureContentProcessingServiceTest {
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
             when(attachmentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -625,7 +637,6 @@ class LectureContentProcessingServiceTest {
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, null);
@@ -641,7 +652,6 @@ class LectureContentProcessingServiceTest {
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, List.of(1, 2, -1));
@@ -656,7 +666,6 @@ class LectureContentProcessingServiceTest {
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             testState.setRetryCount(0);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null, null);
@@ -674,7 +683,6 @@ class LectureContentProcessingServiceTest {
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             testState.setRetryCount(MAX_PROCESSING_RETRIES - 1);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null, null);
@@ -711,7 +719,6 @@ class LectureContentProcessingServiceTest {
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             testState.setRetryCount(0);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, "YOUTUBE_PRIVATE", null);
@@ -729,7 +736,6 @@ class LectureContentProcessingServiceTest {
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             testState.setRetryCount(0);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, "YOUTUBE_DOWNLOAD_FAILED", null);
@@ -1086,7 +1092,6 @@ class LectureContentProcessingServiceTest {
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             testState.setRetryCount(1);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             ZonedDateTime beforeCall = ZonedDateTime.now();
@@ -1120,7 +1125,6 @@ class LectureContentProcessingServiceTest {
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(completedTranscription));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             // When: Ingestion fails

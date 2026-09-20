@@ -161,24 +161,45 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     List<LectureUnitProcessingState> findByCourseId(@Param("courseId") Long courseId);
 
     /**
-     * Atomically clear the ingestion job token of a state, but only when it still carries the expected token.
+     * Atomically complete a run as DONE, but only while it still carries the expected token in an
+     * in-flight phase: combines the terminal-callback claim with the terminal state write in one
+     * statement, rather than clearing the token first and writing the rest in a later whole-entity
+     * {@code save}.
      * <p>
-     * This is the claim step for terminal callbacks: exactly one caller wins the update, so two concurrent
-     * callbacks for the same run (for example a success and a failure racing each other) cannot both write
-     * a terminal state. A return value of 0 means another callback already claimed the token.
+     * That two-step version left two gaps a single statement closes. A crash between the clear and the
+     * save stranded the row in an active phase with a null token, which {@link #failIfStillLive} could
+     * never reclaim: its predicate compares {@code ingestionJobToken = :token}, and SQL equality against
+     * NULL is never true, so a stuck-detection pass that read the null token as {@code tokenAtRead} could
+     * not match it either. And a content-triggered requeue or a newer activation landing in that same
+     * window (both of which need the token already cleared to proceed) could be overwritten by the stale
+     * whole-entity save, which would blindly confirm the old fingerprint as current even though a newer
+     * generation had already started.
+     * <p>
+     * Exactly one caller wins the update, so two concurrent callbacks for the same run (a success and a
+     * failure racing each other) cannot both write a terminal state; a return value of 0 means either the
+     * run already moved on or another callback already claimed it. Mirrors {@link
+     * LectureUnitProcessingState#transitionTo} for the DONE phase, plus the token clear and fingerprint
+     * confirmation applied on a successful {@code handleIngestionComplete}.
      *
      * @param id    the id of the processing state row
      * @param token the job token the callback carried
-     * @return the number of updated rows: 1 if this call claimed the token, 0 if it was already claimed or changed
+     * @param now   recorded as the new {@code startedAt} and {@code lastUpdated}
+     * @return the number of updated rows: 1 if this call completed the run, 0 if it was no longer in flight under this token
      */
     @Transactional // ok because of modifying query
     @Modifying
     @Query("""
             UPDATE LectureUnitProcessingState ps
-            SET ps.ingestionJobToken = NULL
-            WHERE ps.id = :id AND ps.ingestionJobToken = :token
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.DONE, ps.startedAt = :now, ps.lastUpdated = :now,
+                ps.errorKey = NULL, ps.retryEligibleAt = NULL, ps.revivalCount = 0,
+                ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL,
+                ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL,
+                ps.ingestionJobToken = NULL, ps.confirmedFingerprint = ps.contentFingerprint, ps.forceReingest = NULL
+            WHERE ps.id = :id
+            AND ps.ingestionJobToken = :token
+            AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.TRANSCRIBING, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING)
             """)
-    int clearIngestionJobTokenIfMatches(@Param("id") long id, @Param("token") String token);
+    int completeIngestionIfLive(@Param("id") long id, @Param("token") String token, @Param("now") ZonedDateTime now);
 
     /**
      * Find all processing states for a course with their lecture units fetched.

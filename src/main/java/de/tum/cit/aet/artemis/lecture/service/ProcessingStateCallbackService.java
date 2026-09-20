@@ -608,25 +608,28 @@ public class ProcessingStateCallbackService {
             return;
         }
 
-        // Atomically claim the terminal transition: only the first callback carrying the live token
-        // clears it. Two concurrent callbacks for the same run (e.g. a success and a failure racing)
-        // would otherwise both pass the in-memory token check above and both write a terminal state.
-        if (processingStateRepository.clearIngestionJobTokenIfMatches(state.getId(), jobToken) == 0) {
-            log.info("Ignoring concurrent duplicate completion callback for unit {} (token already claimed)", lectureUnitId);
-            return;
-        }
-
         if (success) {
-            log.info("Processing completed successfully for unit {}", lectureUnitId);
-            // Save the display page numbers BEFORE the terminal state write: a crash between the two
-            // then leaves the run in flight (healed by re-dispatch, which idempotently overwrites the
-            // mapping) instead of a DONE state whose page numbers are permanently missing.
+            // Save the display page numbers BEFORE the atomic terminal write below: a crash between the
+            // two then leaves the run in flight (healed by re-dispatch, which idempotently overwrites the
+            // mapping) instead of a DONE state whose page numbers are permanently missing. A concurrent
+            // duplicate callback for this exact run (racing before either claims below) may redundantly
+            // repeat this write, which is harmless: it is the same job's own data either way.
             saveDisplayPageNumbers(state, displayPageNumbers);
+
+            // Atomically claim the terminal transition and write the DONE state in one statement: see
+            // LectureUnitProcessingStateRepository#completeIngestionIfLive for why a separate token clear
+            // followed by a later whole-entity save can strand or overwrite a row.
+            if (processingStateRepository.completeIngestionIfLive(state.getId(), jobToken, ZonedDateTime.now()) == 0) {
+                log.info("Ignoring completion callback for unit {}: the run is no longer in flight under this token", lectureUnitId);
+                return;
+            }
+            log.info("Processing completed successfully for unit {}", lectureUnitId);
+            // Mirror the just-persisted transition onto this in-memory copy purely to report accurate
+            // state in the notification below, without a second read.
             state.transitionTo(ProcessingPhase.DONE);
             state.setIngestionJobToken(null);
             state.setConfirmedFingerprint(state.getContentFingerprint());
             state.setForceReingest(null);
-            processingStateRepository.save(state);
 
             // Notify UI via WebSocket
             TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
@@ -634,8 +637,13 @@ public class ProcessingStateCallbackService {
         }
         else {
             log.warn("Processing failed for unit {} (errorCode={})", lectureUnitId, errorCode);
-            // handleProcessingFailure saves the state and sends WebSocket notification internally
-            handleProcessingFailure(state, errorCode);
+            // Atomically claim the terminal transition and write the FAILED state in one statement, for
+            // the same reason as the success branch above. handleProcessingFailureIfStillLive already
+            // does this via failIfStillLive, guarded on the phase and token just confirmed live above.
+            if (!handleProcessingFailureIfStillLive(state, errorCode)) {
+                log.info("Ignoring completion callback for unit {}: the run is no longer in flight under this token", lectureUnitId);
+                return;
+            }
         }
 
         // Fill the freed slot with the next pending job
