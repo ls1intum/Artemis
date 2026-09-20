@@ -21,6 +21,7 @@ const course = { id: SEED_COURSES.textAssessment.id } as any;
 
 test.describe('Text exercise assessment', { tag: '@slow' }, () => {
     let exercise: TextExercise;
+    let participationId: number;
     let dueDate: dayjs.Dayjs;
     let assessmentDueDate: dayjs.Dayjs;
     test.beforeAll('Create exercise and make a submission', async ({ browser }) => {
@@ -33,12 +34,47 @@ test.describe('Text exercise assessment', { tag: '@slow' }, () => {
         assessmentDueDate = dueDate.add(10, 'seconds');
         exercise = await exerciseAPIRequests.createTextExerciseWithDates({ course }, dayjs(), dueDate, assessmentDueDate);
         await Commands.login(page, studentOne);
-        await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
+        const participationResponse = await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
+        expect(participationResponse.status()).toBe(201);
+        const participation: { id: number } = await participationResponse.json();
+        participationId = participation.id;
         const submission = await Fixtures.get('loremIpsum-short.txt');
         await exerciseAPIRequests.makeTextExerciseSubmission(exercise.id!, submission!);
         const now = dayjs();
         if (now.isBefore(dueDate)) {
             await page.waitForTimeout(dueDate.diff(now, 'ms') + 2000);
+        }
+    });
+
+    test('Tutor sees anonymous participation and score lists without identity search', async ({ login, page }) => {
+        await login(tutor);
+        for (const view of [
+            { route: 'participations', endpoint: 'page', component: 'jhi-participation' },
+            { route: 'scores', endpoint: 'scores', component: 'jhi-exercise-scores' },
+        ]) {
+            const [response] = await Promise.all([
+                page.waitForResponse(
+                    (candidate) =>
+                        new URL(candidate.url()).pathname === `/api/exercise/exercises/${exercise.id}/participations/${view.endpoint}` && candidate.request().method() === 'GET',
+                ),
+                page.goto(`/course-management/${course.id}/text-exercises/${exercise.id}/${view.route}`),
+            ]);
+            expect(response.status()).toBe(200);
+            const participations: Record<string, unknown>[] = await response.json();
+            expect(participations.map((participation) => participation.participationId)).toContain(participationId);
+            for (const participation of participations) {
+                for (const field of ['participantName', 'participantIdentifier', 'studentId', 'studentLogin', 'teamId', 'teamStudents', 'repositoryUri', 'buildPlanId']) {
+                    expect(participation, `${view.route} must not reveal ${field}`).not.toHaveProperty(field);
+                }
+            }
+
+            const component = page.locator(view.component);
+            const table = component.getByRole('table');
+            await expect(table.getByRole('columnheader', { name: /Participation ID/ })).toBeVisible();
+            await expect(table.getByRole('cell').first()).toHaveText(String(participationId));
+            await expect(table).not.toContainText(studentOne.username);
+            await expect(table).not.toContainText(studentOne.displayName!);
+            await expect(component.getByTestId('search-filter')).toHaveCount(0);
         }
     });
 

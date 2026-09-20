@@ -209,6 +209,18 @@ public class CourseUtilService {
      *
      * @return The created course.
      */
+    /**
+     * Writes a build configuration for an exercise a fixture just stored, unless it already has one. The exercise does
+     * not carry it: the configuration is a row of its own that names the exercise.
+     *
+     * @param programmingExercise the stored exercise the configuration belongs to
+     */
+    private void saveBuildConfigIfMissing(ProgrammingExercise programmingExercise) {
+        if (programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).isEmpty()) {
+            programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
+        }
+    }
+
     public Course createCourse() {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         return courseRepo.save(course);
@@ -293,6 +305,7 @@ public class CourseUtilService {
 
         lectureRepo.save(lecture);
         exerciseRepository.save(programmingExercise);
+        saveBuildConfigIfMissing(programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId()));
 
         return courseRepo.save(course);
     }
@@ -460,8 +473,8 @@ public class CourseUtilService {
         modelingExercise = exerciseRepository.save(modelingExercise);
         textExercise = exerciseRepository.save(textExercise);
         exerciseRepository.save(fileUploadExercise);
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         exerciseRepository.save(programmingExercise);
+        saveBuildConfigIfMissing(programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId()));
         exerciseRepository.save(quizExercise);
 
         if (withParticipations) {
@@ -593,8 +606,8 @@ public class CourseUtilService {
         modelingExercise = exerciseRepository.save(modelingExercise);
         textExercise = exerciseRepository.save(textExercise);
         fileUploadExercise = exerciseRepository.save(fileUploadExercise);
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExercise = exerciseRepository.save(programmingExercise);
+        saveBuildConfigIfMissing(programmingExercise);
         quizExercise = exerciseRepository.save(quizExercise);
 
         // Get user and setup participations
@@ -710,6 +723,7 @@ public class CourseUtilService {
         exerciseRepository.save(textExercise);
         exerciseRepository.save(fileUploadExercise);
         exerciseRepository.save(programmingExercise);
+        saveBuildConfigIfMissing(programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId()));
         exerciseRepository.save(quizExercise);
 
         // Connect participations with submissions
@@ -766,8 +780,8 @@ public class CourseUtilService {
         modelingExercise = exerciseRepository.save(modelingExercise);
         textExercise = exerciseRepository.save(textExercise);
         fileUploadExercise = exerciseRepository.save(fileUploadExercise);
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExercise = exerciseRepository.save(programmingExercise);
+        saveBuildConfigIfMissing(programmingExercise);
         quizExercise = exerciseRepository.save(quizExercise);
 
         // Get user and setup participations
@@ -889,6 +903,7 @@ public class CourseUtilService {
         exerciseRepository.save(textExercise);
         exerciseRepository.save(fileUploadExercise);
         exerciseRepository.save(programmingExercise);
+        saveBuildConfigIfMissing(programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId()));
         exerciseRepository.save(quizExercise);
 
         // Connect participations with submissions
@@ -960,9 +975,8 @@ public class CourseUtilService {
             ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, "TSTEXC", "Programming", false);
             programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
-            var savedBuildConfig = programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-            programmingExercise.setBuildConfig(savedBuildConfig);
             programmingExercise = programmingExerciseRepository.save(programmingExercise);
+            saveBuildConfigIfMissing(programmingExercise);
             course.addExercises(programmingExercise);
             programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
             programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);

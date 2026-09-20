@@ -117,6 +117,8 @@ public class ParticipationUpdateResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, existingParticipation.getExercise(), null);
 
         Course course = existingParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        boolean hideParticipant = !authCheckService.isAtLeastInstructorInCourse(course, user) && !authCheckService.isOwnerOfParticipation(existingParticipation);
+        String participantLabel = hideParticipant ? existingParticipation.getId().toString() : existingParticipation.getParticipant().getName();
         Double newPresentationScore = dto.presentationScore();
 
         if (newPresentationScore != null && existingParticipation.getExercise().getPresentationScoreEnabled() != null
@@ -148,7 +150,7 @@ public class ParticipationUpdateResource {
                 if (presentationCountForParticipant >= gradingScale.get().getPresentationsNumber()) {
                     throw new BadRequestAlertException("Participant already gave the maximum number of presentations", ENTITY_NAME,
                             "invalid.presentations.maxNumberOfPresentationsExceeded",
-                            Map.of("name", existingParticipation.getParticipant().getName(), "presentationsNumber", gradingScale.get().getPresentationsNumber()));
+                            Map.of("name", participantLabel, "presentationsNumber", gradingScale.get().getPresentationsNumber()));
                 }
             }
         }
@@ -168,8 +170,9 @@ public class ParticipationUpdateResource {
         existingParticipation.setPresentationScore(newPresentationScore);
 
         StudentParticipation updatedParticipation = studentParticipationRepository.saveAndFlush(existingParticipation);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, existingParticipation.getParticipant().getName()))
-                .body(StudentParticipationDTO.ofAfterUpdate(updatedParticipation));
+        var response = StudentParticipationDTO.ofAfterUpdate(updatedParticipation);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participantLabel))
+                .body(hideParticipant ? response.withoutParticipantInformation() : response);
     }
 
     /**

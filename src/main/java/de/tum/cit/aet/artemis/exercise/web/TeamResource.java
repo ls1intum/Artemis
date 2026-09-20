@@ -272,8 +272,8 @@ public class TeamResource {
 
         savedTeam.filterSensitiveInformation();
         savedTeam.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
-        var participationsOfSavedTeam = studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentIdWithSubmissionsAndResults(exercise.getId(),
-                savedTeam.getId());
+        var participationsOfSavedTeam = studentParticipationRepository.findWithTeamStudentsAndSubmissionsAndResultsByExerciseIdAndTeamId(exercise.getId(), savedTeam.getId());
+        participationsOfSavedTeam.forEach(exercise::filterResultsForStudents);
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, existingTeamCopy, savedTeam, participationsOfSavedTeam);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, dto.id().toString())).body(TeamResponseDTO.of(savedTeam));
     }

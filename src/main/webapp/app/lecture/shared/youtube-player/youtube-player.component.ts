@@ -11,7 +11,7 @@ const READINESS_TIMEOUT_MS = 10_000;
 const POLL_INTERVAL_MS = 250;
 
 /** Minimal shape of the YouTube player instance we interact with (subset of the YT.Player / Angular wrapper API). */
-type YoutubePlayerApi = Pick<YouTubePlayer, 'getCurrentTime' | 'seekTo'>;
+type YoutubePlayerApi = Pick<YouTubePlayer, 'getCurrentTime' | 'getDuration' | 'pauseVideo' | 'seekTo'>;
 
 /** Minimal shape of the event emitted by the YouTube player's `ready` output. */
 interface YoutubePlayerReadyEvent {
@@ -66,6 +66,15 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     resizerHandle = viewChild<ElementRef<HTMLButtonElement>>('resizerHandle');
 
     private youtubePlayer: YoutubePlayerApi | null = null;
+    /**
+     * Whether the player has been handed over *and* knows how long the video is, which is what makes a requested
+     * position judgeable. Angular creates this wrapper component well before the iframe API calls back with
+     * {@link onPlayerReady}, and a seek in between silently does nothing; a player that cannot yet state a duration
+     * reports 0 and would accept a target beyond the end. Callers that must state whether they really got there (the
+     * Iris point-out ack) wait for this signal rather than the wrapper's mere existence.
+     */
+    private readonly seekableState = signal(false);
+    readonly isSeekable = this.seekableState.asReadonly();
     private pollHandle: ReturnType<typeof setInterval> | null = null;
     private readinessHandle: ReturnType<typeof setTimeout> | null = null;
     private destroyed = false;
@@ -227,6 +236,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         this.hasEverPlayed.set(false); // Reset for new video
         // Use the Angular wrapper when available so seek calls can be queued reliably.
         this.youtubePlayer = this.playerComponent() ?? this.youtubePlayer ?? event?.target ?? null;
+        this.refreshSeekability();
         const initial = this.startSeconds();
         if (initial !== undefined && this.youtubePlayer) {
             if (!this.playerComponent() && this.lastInitialTimestamp !== initial) {
@@ -242,6 +252,9 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     onStateChange(event: { data: number }): void {
         this.playerState = event.data;
         if (!this.youtubePlayer) return;
+        // The duration usually arrives with the ready callback, but a player that was still parsing reports it only
+        // from its first state change onwards — so re-read it here instead of leaving the video stuck as unseekable.
+        this.refreshSeekability();
         if (event.data === YT_STATE_PLAYING) {
             this.hasEverPlayed.set(true);
             this.startPolling();
@@ -255,10 +268,45 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         this.playerFailed.emit();
     }
 
-    seekTo(seconds: number, _resumePlayback = true): void {
-        if (!this.youtubePlayer) return;
-        this.youtubePlayer.seekTo(seconds, true);
+    /** Re-reads the player's duration, which is 0 for as long as it cannot state one. */
+    private refreshSeekability(): void {
+        this.seekableState.set((this.youtubePlayer?.getDuration() ?? 0) > 0);
+    }
+
+    /** {@link seekTo}'s condition on its own, for a caller that has to know all its targets hold up before moving any. */
+    canSeekTo(seconds: number): boolean {
+        if (!this.youtubePlayer) {
+            return false;
+        }
+        const duration = this.youtubePlayer.getDuration();
+        return seconds >= 0 && (duration <= 0 || seconds <= duration);
+    }
+
+    /**
+     * Seeks the video to the given position.
+     * @param seconds the position to seek to
+     * @param resumePlayback whether to start playing from there
+     * @return whether the video moved to the requested position: neither a call made before {@link onPlayerReady} nor
+     *         a target outside the video counts, the latter because YouTube would clamp it to the end, which is not
+     *         what was asked for. While the player cannot state a duration it reports 0, and the target cannot be
+     *         judged against that; a caller that must *state* the outcome (the Iris point-out ack) waits for
+     *         {@link isSeekable} first, so it never has to trust the answer given in that window.
+     */
+    seekTo(seconds: number, resumePlayback = true): boolean {
+        if (!this.canSeekTo(seconds)) {
+            return false;
+        }
+        // Guaranteed by canSeekTo, which returns false without a player.
+        const player = this.youtubePlayer!;
+        const wasPlaying = this.isPlaying();
+        player.seekTo(seconds, true);
+        // YouTube starts playing a video that had not been started yet, where the native player just moves its
+        // position. Left as it is, an Iris point-out would set a YouTube lecture playing but not a streamed one.
+        if (!resumePlayback && !wasPlaying) {
+            player.pauseVideo();
+        }
         this.updateCurrentSegment(seconds);
+        return true;
     }
 
     getCurrentSlideNumber(): number | undefined {

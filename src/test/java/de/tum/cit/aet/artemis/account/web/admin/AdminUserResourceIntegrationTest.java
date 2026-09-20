@@ -20,6 +20,8 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -34,6 +36,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.account.dto.UserDeletionResultStatus;
 import de.tum.cit.aet.artemis.account.service.UserActivityService;
+import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.account.service.user.deletion.PermanentUserDeletionService;
 import de.tum.cit.aet.artemis.account.service.user.deletion.UserDeletionMode;
@@ -70,6 +73,9 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     private UserService userService;
 
     @Autowired
+    private PasswordService passwordService;
+
+    @Autowired
     private OrganizationUtilService organizationUtilService;
 
     @Autowired
@@ -104,6 +110,70 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         // Admin endpoints validate the current account state in addition to the authorities in the mock security context.
         userUtilService.addAdmin("");
         userUtilService.addSuperAdmin("");
+    }
+
+    @Nested
+    class AdminPasswordByteLimit {
+
+        @ParameterizedTest
+        @CsvSource({ "a,73,72", "ä,37,36", "€,25,24", "😀,19,18" })
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void createRejectsOversizedPasswordAndAcceptsByteLimit(String character, int invalidLength, int validLength) throws Exception {
+            ManagedUserVM dto = userUtilService.createManagedUserVM(TEST_PREFIX + "bytecreate" + invalidLength);
+            dto.setInternal(true);
+            dto.setPassword(character.repeat(invalidLength));
+            mockMvc.perform(post("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(dto)))
+                    .andExpect(status().isForbidden());
+            assertThat(userTestRepository.findOneByLogin(dto.getLogin())).isEmpty();
+
+            dto.setPassword(character.repeat(validLength));
+            mockMvc.perform(post("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(dto))).andExpect(status().isCreated());
+            User created = userTestRepository.findOneByLogin(dto.getLogin()).orElseThrow();
+            assertThat(passwordService.checkPasswordMatch(dto.getPassword(), created.getPassword())).isTrue();
+        }
+
+        @ParameterizedTest
+        @CsvSource({ "a,73,72", "ä,37,36", "€,25,24", "😀,19,18" })
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void updateRejectsOversizedPasswordWithoutMutationAndAcceptsByteLimit(String character, int invalidLength, int validLength) throws Exception {
+            User user = userUtilService.createAndSaveUser(TEST_PREFIX + "byteupdate" + invalidLength);
+            String originalHash = user.getPassword();
+            ManagedUserVM dto = userUtilService.createManagedUserVM(user.getLogin());
+            dto.setId(user.getId());
+            dto.setInternal(true);
+            dto.setFirstName("Updated");
+            dto.setPassword(character.repeat(invalidLength));
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(dto)))
+                    .andExpect(status().isForbidden());
+            User unchanged = userTestRepository.findById(user.getId()).orElseThrow();
+            assertThat(unchanged.getPassword()).isEqualTo(originalHash);
+            assertThat(unchanged.getFirstName()).isEqualTo(user.getFirstName());
+            assertThat(userActivityService.findCredentialsChangedDate(user.getId())).isNull();
+
+            dto.setPassword(character.repeat(validLength));
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(dto))).andExpect(status().isOk());
+            User updated = userTestRepository.findById(user.getId()).orElseThrow();
+            assertThat(passwordService.checkPasswordMatch(dto.getPassword(), updated.getPassword())).isTrue();
+            assertThat(updated.getFirstName()).isEqualTo("Updated");
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void omittedPasswordStillGeneratesOnCreateAndPreservesOnUpdate() throws Exception {
+            ManagedUserVM dto = userUtilService.createManagedUserVM(TEST_PREFIX + "optionalpassword");
+            dto.setInternal(true);
+            dto.setPassword(null);
+            mockMvc.perform(post("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(dto))).andExpect(status().isCreated());
+            User created = userTestRepository.findOneByLogin(dto.getLogin()).orElseThrow();
+            assertThat(created.getPassword()).isNotBlank();
+
+            dto.setId(created.getId());
+            dto.setFirstName("Updated");
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(dto))).andExpect(status().isOk());
+            User updated = userTestRepository.findById(created.getId()).orElseThrow();
+            assertThat(updated.getPassword()).isEqualTo(created.getPassword());
+            assertThat(updated.getFirstName()).isEqualTo("Updated");
+        }
     }
 
     @Nested

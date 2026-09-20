@@ -17,6 +17,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +28,7 @@ import de.jplag.Submission;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 
 @Entity
 @Table(name = "plagiarism_submission")
@@ -108,7 +110,9 @@ public class PlagiarismSubmission extends DomainObject {
     public static PlagiarismSubmission fromJPlagSubmission(Submission jplagSubmission, Exercise exercise, File submissionDirectory) {
         PlagiarismSubmission submission = new PlagiarismSubmission();
 
-        String[] submissionIdAndStudentLogin = jplagSubmission.getName().split("[-.]");
+        // Text exports append .txt; programming submission names are repository directories without an extension.
+        String submissionName = exercise.getExerciseType() == ExerciseType.TEXT ? Strings.CS.removeEnd(jplagSubmission.getName(), ".txt") : jplagSubmission.getName();
+        String[] submissionIdAndStudentLogin = submissionName.split("-", 2);
 
         long submissionId = 0;
         String studentLogin = "unknown";

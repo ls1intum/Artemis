@@ -29,7 +29,8 @@
                 "info": "Choose a new password",
                 "success": "Your password has been reset.",
                 "success-part2": "Please sign in.",
-                "keymissing": "The reset key is missing.",
+                "keyidmissing": "The reset key id is missing.",
+                "keysecretmissing": "The reset key secret is missing.",
                 "error": "Your password couldn't be reset. The reset link is either invalid, has already been used, or has expired (valid for 24 hours)."
             },
             "revocation": {

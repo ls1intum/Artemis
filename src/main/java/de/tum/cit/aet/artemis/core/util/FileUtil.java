@@ -99,7 +99,7 @@ public class FileUtil {
      * its own and is not part of this change; they keep the width they have.
      * <p>
      * The Liquibase column definitions state the same number literally, in
-     * {@code src/main/resources/config/liquibase/changelog/00000000000000_initial_schema.xml}, where both {@code exam_user} columns have been {@code varchar(100)} since the
+     * {@code src/main/resources/config/liquibase/history/v10/00000000000000_initial_schema.xml}, where both {@code exam_user} columns have been {@code varchar(100)} since the
      * schema was created.
      */
     public static final int GENERATED_FILENAME_MAX_LENGTH = 100;
