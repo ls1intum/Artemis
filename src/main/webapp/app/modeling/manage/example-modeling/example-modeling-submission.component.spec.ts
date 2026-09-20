@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject, of, throwError } from 'rxjs';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
-import { ChangeDetectorRef, Component, input } from '@angular/core';
+import { ChangeDetectorRef, Component, forwardRef, input } from '@angular/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -39,6 +39,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-modeling-editor',
     template: '',
+    providers: [{ provide: ModelingEditorComponent, useExisting: forwardRef(() => StubModelingEditorComponent) }],
 })
 class StubModelingEditorComponent {
     umlModel = input<UMLModel>();
@@ -309,6 +310,31 @@ describe('Example Modeling Submission Component', () => {
             expect(comp.unreferencedFeedback()).toEqual([invalidFeedback]);
             expect(comp.assessmentsAreValid()).toBe(false);
             expect(comp.feedbackChanged()).toBe(true);
+        });
+
+        it.each([false, true])('preserves the stored model and feedback without an editor (dirty: %s)', (dirty) => {
+            const savedFeedback = deepClone(mockFeedbackWithReference);
+            comp['updateAssessment']({ id: 1, feedbacks: [savedFeedback] } as Result);
+            const currentFeedback = dirty ? { ...savedFeedback, text: 'Unsaved feedback' } : savedFeedback;
+            comp.onReferencedFeedbackChanged([currentFeedback]);
+            const storedModel = comp.modelingSubmission.model;
+            vi.mocked(comp.modelingEditor).mockReturnValue(undefined);
+
+            comp.upsertExampleModelingSubmission();
+            expect(updateRequests).toHaveLength(0);
+            expect(assessmentRequests).toHaveLength(0);
+            expect(comp.modelingSubmission.model).toBe(storedModel);
+            expect(comp.referencedFeedback()).toEqual([currentFeedback]);
+            expect(comp.feedbackChanged()).toBe(dirty);
+
+            vi.mocked(comp.modelingEditor).mockReturnValue({ getCurrentModel: () => currentModel } as ModelingEditorComponent);
+            comp.upsertExampleModelingSubmission();
+            completeUpdate(0);
+            expect(assessmentRequests[0].feedbacks).toEqual([currentFeedback]);
+            completeAssessment(0);
+            expect(comp.modelingSubmission.model).toBe(storedModel);
+            expect(comp.referencedFeedback()).toEqual([currentFeedback]);
+            expect(comp.feedbackChanged()).toBe(false);
         });
 
         it('keeps the editor input stable when a model save returns after another edit', () => {
@@ -711,12 +737,14 @@ describe('Example Modeling Submission Component', () => {
         comp.exercise.set(exercise);
         comp.exampleSubmission.set(exampleSubmission);
         comp.modelingSubmission = new ModelingSubmission();
-        // No editor is rendered here, so the current model is empty and the referenced feedback belongs to a deleted element.
+        // The rendered editor has an empty model, so the referenced feedback belongs to a deleted element.
         comp['updateAssessment']({ id: 1, feedbacks: [mockFeedbackWithReference] } as Result);
-        vi.spyOn(comp as any, 'modelChanged').mockReturnValue(true);
+        vi.spyOn(comp, 'ngOnInit').mockImplementation(() => {});
+        fixture.detectChanges();
 
         comp.showAssessment();
         await fixture.whenStable();
+        expect(service.update).toHaveBeenCalledOnce();
 
         // the server kept the old model, so its feedback must survive and must not be queued for the assessment endpoint
         expect(comp.referencedFeedback()).toEqual([mockFeedbackWithReference]);
@@ -735,12 +763,14 @@ describe('Example Modeling Submission Component', () => {
         comp.exercise.set(exercise);
         comp.exampleSubmission.set(exampleSubmission);
         comp.modelingSubmission = new ModelingSubmission();
-        // No editor is rendered here, so the current model is empty and the referenced feedback belongs to a deleted element.
+        // The rendered editor has an empty model, so the referenced feedback belongs to a deleted element.
         comp['updateAssessment']({ id: 1, feedbacks: [mockFeedbackWithReference] } as Result);
-        vi.spyOn(comp as any, 'modelChanged').mockReturnValue(true);
+        vi.spyOn(comp, 'ngOnInit').mockImplementation(() => {});
+        fixture.detectChanges();
 
         comp.showAssessment();
         await fixture.whenStable();
+        expect(service.update).toHaveBeenCalledOnce();
 
         expect(comp.referencedFeedback()).toEqual([]);
         expect(saveAssessmentSpy).toHaveBeenCalledOnce();

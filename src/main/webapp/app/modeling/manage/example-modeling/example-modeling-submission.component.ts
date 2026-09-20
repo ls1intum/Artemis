@@ -267,6 +267,9 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     private queueModelSave(saveAssessment: boolean): void {
         // Capture the editor before a mode switch destroys it, and isolate queued intent from subsequent edits.
         const model = deepClone(this.modelingEditor()?.getCurrentModel());
+        if (!model) {
+            return;
+        }
         const explanation = this.explanationText();
         const assessment = this.captureAssessmentSave();
         this.saveRequests.next(() =>
@@ -282,7 +285,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         );
     }
 
-    private saveModel(model: UMLModel | undefined, explanation: string, assessment: AssessmentSave): Observable<boolean> {
+    private saveModel(model: UMLModel, explanation: string, assessment: AssessmentSave): Observable<boolean> {
         const creating = this.isNewSubmission() || !this.modelingSubmission;
         const submission = deepClone(this.modelingSubmission ?? new ModelingSubmission());
         submission.model = JSON.stringify(model);
