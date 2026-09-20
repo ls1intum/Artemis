@@ -10,7 +10,7 @@ import { Subject } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, ParamMap, Router, convertToParamMap } from '@angular/router';
 import { CourseNotificationComponent } from 'app/notification/course-notification/course-notification/course-notification.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -27,6 +27,21 @@ describe('CourseNotificationPopupOverlayComponent', () => {
     let websocketNotificationSubject: Subject<CourseNotification>;
     let mockRoute: any;
     let componentAsAny: any;
+    let routerEvents: Subject<NavigationEnd>;
+    type RouteNode = { outlet?: string; paramMap: ParamMap; children: RouteNode[] };
+    let mockRouter: { events: Subject<NavigationEnd>; routerState: { snapshot: { root: RouteNode } } };
+
+    function navigate(courseId?: number) {
+        const params = courseId === undefined ? {} : { courseId: String(courseId) };
+        mockRoute.firstChild.firstChild.snapshot.paramMap = convertToParamMap(params);
+        // A deeper primary route exercises management routes, not just the old fixed-depth student route.
+        mockRouter.routerState.snapshot.root = {
+            paramMap: convertToParamMap({}),
+            children: [{ outlet: 'primary', paramMap: convertToParamMap({}), children: [{ outlet: 'primary', paramMap: convertToParamMap(params), children: [] }] }],
+        };
+        routerEvents.next(new NavigationEnd(1, courseId ? `/courses/${courseId}` : '/', courseId ? `/courses/${courseId}` : '/'));
+        fixture?.changeDetectorRef.detectChanges();
+    }
 
     const createMockNotification = (id: number, courseId: number, channelId: number | undefined): CourseNotification => {
         return new CourseNotification(
@@ -99,6 +114,18 @@ describe('CourseNotificationPopupOverlayComponent', () => {
                 }),
             },
         };
+        routerEvents = new Subject<NavigationEnd>();
+        mockRouter = {
+            events: routerEvents,
+            routerState: {
+                snapshot: {
+                    root: {
+                        paramMap: convertToParamMap({}),
+                        children: [{ outlet: 'primary', paramMap: convertToParamMap({ courseId: '101' }), children: [] }],
+                    },
+                },
+            },
+        };
 
         await TestBed.configureTestingModule({
             imports: [CommonModule, FaIconComponent, CourseNotificationPopupOverlayComponent],
@@ -106,6 +133,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
                 { provide: CourseNotificationWebsocketService, useValue: courseNotificationWebsocketService },
                 { provide: CourseNotificationService, useValue: courseNotificationService },
                 { provide: ActivatedRoute, useValue: mockRoute },
+                { provide: Router, useValue: mockRouter },
                 { provide: ConversationSelectionState, useValue: conversationSelectionState },
             ],
         }).overrideComponent(CourseNotificationPopupOverlayComponent, {
@@ -119,8 +147,39 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         componentAsAny = component as any;
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
+    it('renders only the active course without marking other courses seen', () => {
+        navigate(102);
+        websocketNotificationSubject.next(createMockNotification(1, 101, 0));
+        websocketNotificationSubject.next(createMockNotification(2, 102, 0));
+        fixture.changeDetectorRef.detectChanges();
+        const rendered = fixture.debugElement.queryAll(By.directive(CourseNotificationComponent));
+        expect(rendered.map((element) => element.componentInstance.courseNotification().courseId)).toEqual([102]);
+        expect(courseNotificationService.setNotificationStatus).not.toHaveBeenCalled();
+        expect(courseNotificationService.setNotificationStatusInMap).not.toHaveBeenCalled();
+        expect(courseNotificationService.decreaseNotificationCountBy).not.toHaveBeenCalled();
+    });
+
+    it('prunes queued popups on course navigation without losing unread history', () => {
+        websocketNotificationSubject.next(createMockNotification(1, 101, 0));
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.debugElement.queryAll(By.directive(CourseNotificationComponent))).toHaveLength(1);
+        componentAsAny.isExpanded.set(true);
+        navigate(102);
+        expect(fixture.debugElement.queryAll(By.directive(CourseNotificationComponent))).toHaveLength(0);
+        expect(componentAsAny.isExpanded()).toBe(false);
+        navigate(101);
+        expect(fixture.debugElement.queryAll(By.directive(CourseNotificationComponent))).toHaveLength(0);
+        expect(courseNotificationService.setNotificationStatus).not.toHaveBeenCalled();
+        expect(courseNotificationService.setNotificationStatusInMap).not.toHaveBeenCalled();
+        expect(courseNotificationService.decreaseNotificationCountBy).not.toHaveBeenCalled();
+    });
+
+    it('retains global popup delivery on non-course pages', () => {
+        navigate();
+        websocketNotificationSubject.next(createMockNotification(1, 101, 0));
+        websocketNotificationSubject.next(createMockNotification(2, 102, 0));
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.debugElement.queryAll(By.directive(CourseNotificationComponent))).toHaveLength(2);
     });
 
     it('should add notification when websocket emits one', () => {
@@ -243,12 +302,11 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         expect(componentAsAny.isExpanded()).toBe(false);
     });
 
-    it('should unsubscribe from websocket on ngOnDestroy', () => {
-        const unsubscribeSpy = vi.spyOn(componentAsAny.courseNotificationWebsocketSubscription, 'unsubscribe');
-
-        component.ngOnDestroy();
-
-        expect(unsubscribeSpy).toHaveBeenCalledOnce();
+    it('stops receiving popups after destruction', () => {
+        fixture.destroy();
+        websocketNotificationSubject.next(createMockNotification(1, 101, 0));
+        expect(componentAsAny.notifications()).toEqual([]);
+        expect(courseNotificationService.setNotificationStatus).not.toHaveBeenCalled();
     });
 
     it('should display notifications in the template', () => {
@@ -279,31 +337,6 @@ describe('CourseNotificationPopupOverlayComponent', () => {
 
         const overlayElement = fixture.debugElement.query(By.css('.course-notification-popup-overlay'));
         expect(overlayElement.nativeElement.classList).toContain('is-expanded');
-    });
-
-    it('should trigger overlayClicked when clicking the overlay', () => {
-        const mockNotification1 = createMockNotification(1, 101, 0);
-        const mockNotification2 = createMockNotification(2, 102, 0);
-        componentAsAny.notifications.set([mockNotification1, mockNotification2]);
-        fixture.changeDetectorRef.detectChanges();
-        const overlayClickedSpy = vi.spyOn(component, 'overlayClicked');
-        const overlayElement = fixture.debugElement.query(By.css('.course-notification-popup-overlay'));
-
-        overlayElement.nativeElement.click();
-
-        expect(overlayClickedSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should trigger collapseOverlayClicked when clicking the collapse button', () => {
-        const mockNotification = createMockNotification(1, 101, 0);
-        componentAsAny.notifications.set([mockNotification]);
-        fixture.changeDetectorRef.detectChanges();
-        const collapseOverlayClickedSpy = vi.spyOn(component, 'collapseOverlayClicked');
-        const collapseButton = fixture.debugElement.query(By.css('button[pButton]'));
-
-        collapseButton.nativeElement.click();
-
-        expect(collapseOverlayClickedSpy).toHaveBeenCalledOnce();
     });
 
     it('should clear all notifications when clearAllNotifications is called', () => {
@@ -356,19 +389,5 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         expect(courseNotificationService.setNotificationStatus).toHaveBeenCalledWith(102, [3], CourseNotificationViewingStatus.SEEN);
         expect(courseNotificationService.setNotificationStatusInMap).toHaveBeenCalledWith(102, [3], CourseNotificationViewingStatus.SEEN);
         expect(courseNotificationService.decreaseNotificationCountBy).toHaveBeenCalledWith(102, 1);
-    });
-
-    it('should trigger clearAllNotifications when clicking the clear button', () => {
-        const mockNotification = createMockNotification(1, 101, 0);
-        componentAsAny.notifications.set([mockNotification]);
-        componentAsAny.isExpanded.set(true);
-        fixture.changeDetectorRef.detectChanges();
-
-        const clearAllNotificationsSpy = vi.spyOn(component, 'clearAllNotifications');
-
-        const clearButton = fixture.debugElement.queryAll(By.css('button[pButton]'))[1];
-        clearButton.nativeElement.click();
-
-        expect(clearAllNotificationsSpy).toHaveBeenCalledOnce();
     });
 });

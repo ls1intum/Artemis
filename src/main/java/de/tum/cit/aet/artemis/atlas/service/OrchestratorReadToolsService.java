@@ -57,7 +57,7 @@ public class OrchestratorReadToolsService {
      * oversized exercise (e.g. a quiz whose assembled questions + answers are large) cannot inflate
      * per-call tokens now that this tool extracts real content for every exercise type.
      */
-    private static final int MAX_EXERCISE_CONTENT_LENGTH = 8_000;
+    private static final int MAX_EXERCISE_CONTENT_LENGTH = 16_000;
 
     /** Cap on the title returned by {@link #getExerciseContent}; matches the batch path's {@code EXERCISE_TITLE_MAX}. */
     private static final int MAX_EXERCISE_TITLE_LENGTH = 200;

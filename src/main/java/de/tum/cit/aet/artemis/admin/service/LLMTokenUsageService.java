@@ -175,11 +175,20 @@ public class LLMTokenUsageService {
     public void trackChatResponseTokenUsage(@Nullable ChatResponse chatResponse, LLMServiceType serviceType, String pipelineId,
             Function<LLMTokenUsageBuilder, LLMTokenUsageBuilder> builderFunction) {
         try {
-            if (chatResponse == null || chatResponse.getMetadata() == null || chatResponse.getMetadata().getUsage() == null) {
+            if (chatResponse == null) {
+                log.warn("Failed to store token usage for pipeline [{}]: chat response is missing.", pipelineId);
                 return;
             }
             ChatResponseMetadata metadata = chatResponse.getMetadata();
+            if (metadata == null) {
+                log.warn("Failed to store token usage for pipeline [{}]: response metadata is missing.", pipelineId);
+                return;
+            }
             Usage usage = metadata.getUsage();
+            if (usage == null) {
+                log.warn("Failed to store token usage for pipeline [{}]: usage metadata is missing.", pipelineId);
+                return;
+            }
             if (usage instanceof org.springframework.ai.chat.metadata.EmptyUsage) {
                 return;
             }

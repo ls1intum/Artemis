@@ -35,10 +35,12 @@ export class CourseNotificationWebsocketService implements OnDestroy {
 
     constructor() {
         this.userSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
-            if (user && (this.currentUser === undefined || this.currentUser.id !== user.id)) {
-                this.currentUser = user;
-
+            if (!user) {
                 this.cleanupSubscriptions();
+                this.currentUser = undefined;
+            } else if (this.currentUser === undefined || this.currentUser.id !== user.id) {
+                this.cleanupSubscriptions();
+                this.currentUser = user;
                 this.subscribeToUserCourses();
             }
         });
@@ -65,11 +67,15 @@ export class CourseNotificationWebsocketService implements OnDestroy {
                 return;
             }
 
-            courses.forEach((course) => {
-                if (course.id) {
-                    this.subscribeToCourseTopic(course.id);
+            const courseIds = new Set(courses.map((course) => course.id).filter((id): id is number => id !== undefined && Number.isSafeInteger(id) && id > 0));
+            for (const id of Object.keys(this.courseWebsocketSubscriptions)) {
+                const courseId = Number(id);
+                if (!courseIds.has(courseId)) {
+                    this.courseWebsocketSubscriptions[courseId].unsubscribe();
+                    delete this.courseWebsocketSubscriptions[courseId];
                 }
-            });
+            }
+            courseIds.forEach((courseId) => this.subscribeToCourseTopic(courseId));
         });
     }
 
@@ -86,6 +92,9 @@ export class CourseNotificationWebsocketService implements OnDestroy {
             return this.courseWebsocketSubscriptions[courseId];
         }
         this.courseWebsocketSubscriptions[courseId] = this.websocketService.subscribe('/user/topic/notification/' + courseId).subscribe((notification: CourseNotification) => {
+            if (!notification || notification.courseId !== courseId) {
+                return;
+            }
             const category = courseNotificationEnumValueFromName(CourseNotificationCategory, notification.category);
             const status = courseNotificationEnumValueFromName(CourseNotificationViewingStatus, notification.status);
             // Skip malformed or forward-incompatible payloads whose category/status do not map to a known enum value.
@@ -94,7 +103,7 @@ export class CourseNotificationWebsocketService implements OnDestroy {
             }
             const courseNotification = new CourseNotification(
                 notification.notificationId!,
-                notification.courseId!,
+                notification.courseId,
                 notification.notificationType!,
                 category,
                 status,

@@ -1,4 +1,5 @@
-import { Component, HostListener, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, HostListener, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
@@ -11,7 +12,7 @@ import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/bu
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { ConfirmAutofocusModalResult, openConfirmAutofocusDialog } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { DialogService } from 'primeng/dynamicdialog';
-import { Observable, Subscription, firstValueFrom, map } from 'rxjs';
+import { Observable, Subscription, finalize, firstValueFrom, map, switchMap, takeWhile } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
@@ -72,6 +73,7 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private translateService = inject(TranslateService);
     private websocketService = inject(WebsocketService);
+    private readonly destroyRef = inject(DestroyRef);
 
     readonly courseDescriptionForm = viewChild.required(CourseDescriptionFormComponent);
 
@@ -88,19 +90,38 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
     //Other constants
     protected readonly ButtonType = ButtonType;
     readonly documentationType: DocumentationType = 'GenerateCompetencies';
-    private websocketSubscription?: Subscription;
+    private generationSubscription?: Subscription;
+    private courseEpoch = 0;
 
     ngOnInit(): void {
-        this.activatedRoute.params.subscribe((params) => {
-            this.courseId = Number(params['courseId']);
-            firstValueFrom(this.courseManagementService.find(this.courseId))
-                .then((course) => this.courseDescriptionForm().setCourseDescription(course.body?.description ?? ''))
-                .catch((res: HttpErrorResponse) => onError(this.alertService, res));
+        this.activatedRoute.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+            const courseId = Number(params['courseId']);
+            if (courseId === this.courseId) {
+                return;
+            }
+            this.generationSubscription?.unsubscribe();
+            const epoch = ++this.courseEpoch;
+            this.courseId = courseId;
+            this.competencies.clear();
+            this.isLoading.set(false);
+            this.submitted = false;
+            // Description loading is asynchronous so the child view exists before its form is populated.
+            firstValueFrom(this.courseManagementService.find(courseId))
+                .then((course) => {
+                    if (!this.destroyRef.destroyed && this.courseEpoch === epoch && this.courseId === courseId) {
+                        this.courseDescriptionForm().setCourseDescription(course.body?.description ?? '');
+                    }
+                })
+                .catch((res: HttpErrorResponse) => {
+                    if (!this.destroyRef.destroyed && this.courseEpoch === epoch && this.courseId === courseId) {
+                        onError(this.alertService, res);
+                    }
+                });
         });
     }
 
     ngOnDestroy(): void {
-        this.websocketSubscription?.unsubscribe();
+        this.generationSubscription?.unsubscribe();
     }
 
     /**
@@ -108,41 +129,46 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
      * @param courseDescription
      */
     getCompetencyRecommendations(courseDescription: string) {
+        if (this.isLoading()) {
+            return;
+        }
+        const courseId = this.courseId;
+        const epoch = this.courseEpoch;
         this.isLoading.set(true);
-        this.getCurrentCompetencies().subscribe((currentCompetencies) => {
-            this.courseCompetencyService.generateCompetenciesFromCourseDescription(this.courseId, courseDescription, currentCompetencies).subscribe({
-                next: () => {
-                    const websocketTopic = `/user/topic/iris/competencies/${this.courseId}`;
-                    this.websocketSubscription = this.websocketService.subscribe<CompetencyGenerationStatusUpdate>(websocketTopic).subscribe({
-                        next: (update: CompetencyGenerationStatusUpdate) => {
-                            if (update.result) {
-                                for (const competency of update.result) {
-                                    this.addCompetencyToForm(competency);
-                                }
-                            }
-                            if (update.runState === IrisRunState.FINISHED) {
-                                this.alertService.success('artemisApp.competency.generate.courseDescription.success', { noOfCompetencies: update.result?.length });
-                            } else if (update.runState === IrisRunState.FAILED) {
-                                this.alertService.warning('artemisApp.competency.generate.courseDescription.warning');
-                            }
-                            if (update.runState !== IrisRunState.RUNNING) {
-                                this.websocketSubscription?.unsubscribe();
-                                this.isLoading.set(false);
-                            }
-                        },
-                        error: (res: HttpErrorResponse) => {
-                            onError(this.alertService, res);
-                            this.websocketSubscription?.unsubscribe();
-                            this.isLoading.set(false);
-                        },
-                    });
+        // One subscription owns HTTP preparation, generation and streaming; route changes cancel every stage.
+        this.generationSubscription = this.getCurrentCompetencies(courseId)
+            .pipe(
+                switchMap((currentCompetencies) => this.courseCompetencyService.generateCompetenciesFromCourseDescription(courseId, courseDescription, currentCompetencies)),
+                switchMap(() => this.websocketService.subscribe<CompetencyGenerationStatusUpdate>(`/user/topic/iris/competencies/${courseId}`)),
+                takeWhile((update) => update.runState === IrisRunState.RUNNING, true),
+                finalize(() => {
+                    if (!this.destroyRef.destroyed && this.courseEpoch === epoch) {
+                        this.isLoading.set(false);
+                    }
+                }),
+            )
+            .subscribe({
+                next: (update) => {
+                    if (this.destroyRef.destroyed || this.courseEpoch !== epoch || this.courseId !== courseId) {
+                        return;
+                    }
+                    if (update.result) {
+                        for (const competency of update.result) {
+                            this.addCompetencyToForm(competency);
+                        }
+                    }
+                    if (update.runState === IrisRunState.FINISHED) {
+                        this.alertService.success('artemisApp.competency.generate.courseDescription.success', { noOfCompetencies: update.result?.length });
+                    } else if (update.runState === IrisRunState.FAILED) {
+                        this.alertService.warning('artemisApp.competency.generate.courseDescription.warning');
+                    }
                 },
                 error: (res: HttpErrorResponse) => {
-                    onError(this.alertService, res);
-                    this.isLoading.set(false);
+                    if (!this.destroyRef.destroyed && this.courseEpoch === epoch && this.courseId === courseId) {
+                        onError(this.alertService, res);
+                    }
                 },
             });
-        });
     }
 
     /**
@@ -150,9 +176,9 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
      * and the competency recommendations that are currently in the form.
      * @private
      */
-    private getCurrentCompetencies(): Observable<CompetencyRecommendation[]> {
+    private getCurrentCompetencies(courseId: number): Observable<CompetencyRecommendation[]> {
         const currentCompetencySuggestions = this.competencies.getRawValue().map((c) => c.competency);
-        const courseCompetenciesObservable = this.courseCompetencyService.getAllForCourse(this.courseId);
+        const courseCompetenciesObservable = this.courseCompetencyService.getAllForCourse(courseId);
         if (courseCompetenciesObservable) {
             return courseCompetenciesObservable.pipe(
                 map((competencies) => competencies.body?.map((c) => ({ title: c.title, description: c.description, taxonomy: c.taxonomy }))),
