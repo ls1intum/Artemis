@@ -96,11 +96,7 @@
 </ng-template>
 
 <ng-template #tutorColumn let-params>
-    @if (params.data.group.isUserTutor) {
-        <span jhiTranslate="global.generic.you"></span>
-    } @else {
-        <span>{{ params.data.tutor }}</span>
-    }
+    <span>{{ params.data.tutor }}</span>
 </ng-template>
 
 <ng-template #utilizationColumn let-params>
