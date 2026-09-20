@@ -7,6 +7,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * client-side {@code SecurityFrameworkConfig}. {@code lastCommitHash}/{@code lastSyncedAt} are only set
  * once a policy has been committed.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record SecurityFrameworkConfigDTO(String status, String frameworkVersion, String lastCommitHash, String lastSyncedAt) {
 }
