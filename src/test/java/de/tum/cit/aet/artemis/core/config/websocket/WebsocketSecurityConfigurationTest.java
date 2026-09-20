@@ -92,9 +92,9 @@ class WebsocketSecurityConfigurationTest {
 
     @ParameterizedTest
     @NullAndEmptySource
-    @ValueSource(strings = { " ", "/topic/**", "/topic/*", "/topic/>", "/topic/{courseId}", "/topic/a,/topic/b", "/topic/a?option=true", "/topic/notification/42-uservictim",
-            "/topic/iris/competencies/42-uservictim", "/topic/communication/notification/42", "/topic/unresolved-user", "/topic/unresolved-user/child", "/topic/user-registry",
-            "/topic/user-registry/child" })
+    @ValueSource(strings = { " ", "/topic/**", "/topic/*", "/topic/#", "/topic/>", "/topic/{courseId}", "/topic/a,/topic/b", "/topic/a?option=true",
+            "/topic/notification/42-uservictim", "/topic/iris/competencies/42-uservictim", "/topic/communication/notification/42", "/topic/unresolved-user",
+            "/topic/unresolved-user/child", "/topic/user-registry", "/topic/user-registry/child" })
     void unsafeSubscriptionsDeniedEvenForAdministrator(String destination) {
         assertThat(allowed(message(SimpMessageType.SUBSCRIBE, destination, "admin"))).isFalse();
     }

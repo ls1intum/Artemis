@@ -87,7 +87,7 @@ public class WebsocketSecurityConfiguration {
         }
         for (int i = 0; i < destination.length(); i++) {
             switch (destination.charAt(i)) {
-                case '*', '?', '{', '}', '>', ',' -> {
+                case '*', '#', '?', '{', '}', '>', ',' -> {
                     return true;
                 }
                 default -> {
