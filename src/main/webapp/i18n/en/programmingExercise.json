@@ -305,6 +305,9 @@
                     "error": "Sync failed · couldn't reach the exercise-tests repository."
                 },
                 "retry": "Retry",
+                "activationFailedOnCreate": "The exercise was created, but activating the Security Framework failed. You can activate it from the exercise's edit page.",
+                "loadError": "Couldn't load the security status.",
+                "latestSuffix": "(latest)",
                 "deactivateWarning": "Deactivating creates a new commit that removes the security policy and enforcement hooks from the exercise-tests repository."
             },
             "appName": "App Name",

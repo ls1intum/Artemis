@@ -988,19 +988,36 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private onSaveSuccess(exercise: ProgrammingExercise) {
-        this.isSaving.set(false);
+        this.commitStagedSecurityThenNavigate(exercise, () => this.navigateAfterSave(exercise));
+    }
 
-        // A Security Framework activation staged during create mode is persisted now that the exercise
-        // exists, before navigating away. No-op in edit mode or when nothing was staged.
-        const commitStagedSecurity = this.securityComponent()?.commitStagedActivation(exercise.id) ?? of(undefined);
-        commitStagedSecurity.subscribe(() => {
-            if (this.goBackAfterSaving) {
-                this.navigationUtilService.navigateBack();
-                return;
+    private navigateAfterSave(exercise: ProgrammingExercise) {
+        if (this.goBackAfterSaving) {
+            this.navigationUtilService.navigateBack();
+            return;
+        }
+
+        this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
+        this.calendarService.reloadEvents();
+    }
+
+    /**
+     * Persists a Security Framework activation staged during create mode (no-op in edit mode or when
+     * nothing was staged), then runs {@link navigate}. The form stays locked (isSaving) until the
+     * activation settles, and the instructor is warned if it failed instead of navigating away as if
+     * the sandbox were active.
+     */
+    private commitStagedSecurityThenNavigate(exercise: ProgrammingExercise, navigate: () => void) {
+        const commitStagedSecurity = this.securityComponent()?.commitStagedActivation(exercise.id) ?? of(true);
+        commitStagedSecurity.subscribe((activated) => {
+            this.isSaving.set(false);
+            if (!activated) {
+                this.alertService.addAlert({
+                    type: AlertType.WARNING,
+                    message: 'artemisApp.programmingExercise.security.activationFailedOnCreate',
+                });
             }
-
-            this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
-            this.calendarService.reloadEvents();
+            navigate();
         });
     }
 
@@ -1010,7 +1027,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * @param exercise the created exercise
      */
     private onSaveSuccessWithAi(exercise: ProgrammingExercise) {
-        this.isSaving.set(false);
         this.isGeneratingWithAi.set(false);
 
         if (!exercise?.id) {
@@ -1018,7 +1034,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             return;
         }
 
-        this.openCodeEditorForTemplate(exercise);
+        // Persist any staged Security Framework activation before navigating to the code editor.
+        this.commitStagedSecurityThenNavigate(exercise, () => this.openCodeEditorForTemplate(exercise));
     }
 
     /**
@@ -1028,12 +1045,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      */
     private openCodeEditorForTemplate(exercise: ProgrammingExercise) {
         if (!exercise?.id || !exercise.templateParticipation?.id) {
-            this.onSaveSuccess(exercise);
+            this.navigateAfterSave(exercise);
             return;
         }
         const courseId = exercise.course?.id ?? exercise.exerciseGroup?.exam?.course?.id;
         if (!courseId) {
-            this.onSaveSuccess(exercise);
+            this.navigateAfterSave(exercise);
             return;
         }
         const navigationExtras = { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } };

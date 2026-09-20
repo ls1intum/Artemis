@@ -276,11 +276,11 @@
             },
             "security": {
                 "title": "Sicherheit",
-                "description": "Aktivieren Sie die Security-Framework-Sandbox für diese Aufgabe. Feingranulare Pfadberechtigungen werden im erweiterten Modus konfiguriert.",
+                "description": "Aktiviere die Security-Framework-Sandbox für diese Aufgabe. Feingranulare Pfadberechtigungen werden im erweiterten Modus konfiguriert.",
                 "activateLabel": "Security Framework aktivieren",
                 "subtitle": "Sicherheitsframework für Programmieraufgaben",
                 "frameworkVersion": "Framework-Version",
-                "frameworkVersionHelp": "Welche Security-Framework-Version die Richtlinie dieser Aufgabe erzeugt und durchsetzt. Wählen Sie eine ältere Version nur, wenn die Aufgabe ein älteres Sandbox-Verhalten reproduzieren muss.",
+                "frameworkVersionHelp": "Welche Security-Framework-Version die Richtlinie dieser Aufgabe erzeugt und durchsetzt. Wähle eine ältere Version nur, wenn die Aufgabe ein älteres Sandbox-Verhalten reproduzieren muss.",
                 "status": {
                     "inactive": "Inaktiv",
                     "generating": "Wird erstellt",
@@ -305,6 +305,9 @@
                     "error": "Synchronisierung fehlgeschlagen · exercise-tests-Repository nicht erreichbar."
                 },
                 "retry": "Erneut versuchen",
+                "activationFailedOnCreate": "Die Aufgabe wurde erstellt, aber das Aktivieren des Security Frameworks ist fehlgeschlagen. Du kannst es auf der Bearbeitungsseite der Aufgabe aktivieren.",
+                "loadError": "Sicherheitsstatus konnte nicht geladen werden.",
+                "latestSuffix": "(neueste)",
                 "deactivateWarning": "Beim Deaktivieren wird ein neuer Commit erstellt, der die Sicherheitsrichtlinie und die Enforcement-Hooks aus dem exercise-tests-Repository entfernt."
             },
             "appName": "App-Name",

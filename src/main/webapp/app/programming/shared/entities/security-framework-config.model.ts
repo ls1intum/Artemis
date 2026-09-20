@@ -29,6 +29,8 @@ export const TRANSIENT_SECURITY_STATUSES: ReadonlySet<SecurityActivationStatus> 
 export interface SecurityFrameworkVersionOption {
     version: string;
     label: string;
+    /** True for the newest release; the component appends a localized "(latest)" suffix to its label. */
+    latest?: boolean;
 }
 
 /**

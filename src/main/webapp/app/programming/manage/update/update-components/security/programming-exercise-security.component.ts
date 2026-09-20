@@ -3,13 +3,20 @@ import { FormsModule } from '@angular/forms';
 import { TumUiMessageComponent, TumUiSelectComponent, TumUiToggleSwitchComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleNotch, faQuestionCircle, faRotateRight, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { Observable, catchError, of } from 'rxjs';
+import { Observable, catchError, map, of } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { SecurityActivationStatus, SecurityFrameworkConfig, TRANSIENT_SECURITY_STATUSES, isSecurityActive } from 'app/programming/shared/entities/security-framework-config.model';
+import {
+    SecurityActivationStatus,
+    SecurityFrameworkConfig,
+    SecurityFrameworkVersionOption,
+    TRANSIENT_SECURITY_STATUSES,
+    isSecurityActive,
+} from 'app/programming/shared/entities/security-framework-config.model';
 import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
 
 /**
@@ -44,6 +51,7 @@ export class ProgrammingExerciseSecurityComponent {
     private static readonly SUPPORTED_LANGUAGES: ReadonlySet<ProgrammingLanguage> = new Set([ProgrammingLanguage.JAVA]);
 
     private readonly securityService = inject(SecurityFrameworkService);
+    private readonly translateService = inject(TranslateService);
 
     protected readonly SecurityActivationStatus = SecurityActivationStatus;
     protected readonly faQuestionCircle = faQuestionCircle;
@@ -65,17 +73,35 @@ export class ProgrammingExerciseSecurityComponent {
         return language !== undefined && ProgrammingExerciseSecurityComponent.SUPPORTED_LANGUAGES.has(language);
     });
 
-    readonly frameworkVersions = this.securityService.getFrameworkVersions();
+    readonly frameworkVersions = computed<SecurityFrameworkVersionOption[]>(() =>
+        this.securityService
+            .getFrameworkVersions()
+            .map((option) =>
+                option.latest ? cloneWith(option, { label: `${option.version} ${this.translateService.instant('artemisApp.programmingExercise.security.latestSuffix')}` }) : option,
+            ),
+    );
 
     /** The one source of truth. Every derived value below reads from this. */
     readonly config = signal<SecurityFrameworkConfig>(this.securityService.getInitialConfigForCreate());
     readonly status = computed(() => this.config().status);
 
+    /** Whether the last *settled* state was active. Used so an ERROR (which can follow an activate or a deactivate) shows the toggle correctly. */
+    private readonly lastSettledActive = signal(false);
+    /** True when loading the persisted config failed, so the card shows a load-error + retry instead of a misleading INACTIVE state. */
+    readonly loadFailed = signal(false);
+
     readonly isActive = computed(() => isSecurityActive(this.config()));
     /** In progress (activating/deactivating): spinner on, controls locked to prevent double-submit. */
     readonly isBusy = computed(() => TRANSIENT_SECURITY_STATUSES.has(this.status()));
     /** The toggle sits "on" whenever the sandbox is on or being turned on (or errored while on). */
-    readonly isToggleOn = computed(() => [SecurityActivationStatus.ACTIVE, SecurityActivationStatus.GENERATING, SecurityActivationStatus.ERROR].includes(this.status()));
+    readonly isToggleOn = computed(() => {
+        const status = this.status();
+        // On ERROR, reflect the last settled state: a failed activation stays off, a failed deactivation/version change stays on.
+        if (status === SecurityActivationStatus.ERROR) {
+            return this.lastSettledActive();
+        }
+        return status === SecurityActivationStatus.ACTIVE || status === SecurityActivationStatus.GENERATING;
+    });
 
     /** Lowercase status name, used to key the state-based CSS class (sf-card--active, etc.). */
     readonly statusVariant = computed(() => this.status().toLowerCase());
@@ -99,13 +125,29 @@ export class ProgrammingExerciseSecurityComponent {
             this.hasSeededInitialConfig = true;
             this.seededWithoutExercise = exerciseId === undefined;
             if (exerciseId !== undefined) {
-                this.securityService.getConfig(exerciseId).subscribe({
-                    next: (config) => this.config.set(config),
-                    // Leave the default INACTIVE config if the state cannot be loaded; the instructor can still activate.
-                    error: () => {},
-                });
+                this.loadConfig(exerciseId);
             }
         });
+    }
+
+    /** Loads the persisted config; a failure surfaces a distinct load-error state instead of a misleading INACTIVE. */
+    private loadConfig(exerciseId: number): void {
+        this.loadFailed.set(false);
+        this.securityService.getConfig(exerciseId).subscribe({
+            next: (config) => {
+                this.config.set(config);
+                this.lastSettledActive.set(isSecurityActive(config));
+            },
+            error: () => this.loadFailed.set(true),
+        });
+    }
+
+    /** Retry loading the persisted config after a load failure. */
+    retryLoadConfig(): void {
+        const exerciseId = this.programmingExercise().id;
+        if (exerciseId !== undefined) {
+            this.loadConfig(exerciseId);
+        }
     }
 
     /**
@@ -118,6 +160,7 @@ export class ProgrammingExerciseSecurityComponent {
         if (exerciseId === undefined) {
             // Create mode: no exercise/repository yet, so stage locally (committed when the exercise is generated).
             this.patchConfig({ status: checked ? SecurityActivationStatus.ACTIVE : SecurityActivationStatus.INACTIVE });
+            this.lastSettledActive.set(checked);
             return;
         }
         if (checked) {
@@ -153,7 +196,7 @@ export class ProgrammingExerciseSecurityComponent {
      */
     private runOperation(transientPatch: Partial<SecurityFrameworkConfig>, run: () => Observable<SecurityFrameworkConfig>): void {
         this.pendingOperation = { transientPatch, run };
-        this.patchConfig({ ...transientPatch, errorDetail: undefined });
+        this.patchConfig(cloneWith(transientPatch, { errorDetail: undefined }));
         run().subscribe({
             next: (next) => {
                 this.pendingOperation = undefined;
@@ -169,22 +212,29 @@ export class ProgrammingExerciseSecurityComponent {
      * Persists a create-mode activation once the exercise exists. In create mode, toggling only stages
      * ACTIVE locally (there is no exercise/repository yet); the parent update component calls this after
      * the exercise is created so the staged activation is committed on the server. No-op in edit mode
-     * (activation already went through the server) or when nothing was staged. Errors are swallowed so
-     * saving and navigation still proceed - the instructor can activate again from the edit page.
+     * (activation already went through the server) or when nothing was staged. Returns whether the
+     * activation succeeded so the parent can warn the instructor (who can retry from the edit page)
+     * instead of navigating away as if the sandbox were active.
      */
-    commitStagedActivation(exerciseId: number | undefined): Observable<unknown> {
+    commitStagedActivation(exerciseId: number | undefined): Observable<boolean> {
         if (!this.seededWithoutExercise || exerciseId === undefined || this.config().status !== SecurityActivationStatus.ACTIVE) {
-            return of(undefined);
+            // Nothing was staged, so there is nothing that could have failed.
+            return of(true);
         }
-        return this.securityService.activate(exerciseId, this.config().frameworkVersion).pipe(catchError(() => of(undefined)));
+        // Report success/failure explicitly (never swallow a failure as success).
+        return this.securityService.activate(exerciseId, this.config().frameworkVersion).pipe(
+            map(() => true),
+            catchError(() => of(false)),
+        );
     }
 
     private patchConfig(patch: Partial<SecurityFrameworkConfig>): void {
-        this.config.set({ ...deepClone(this.config()), ...patch });
+        this.config.set(cloneWith(this.config(), patch));
     }
 
     private settle(next: SecurityFrameworkConfig): void {
         // The server already persisted this state; the returned config is the source of truth.
         this.config.set(next);
+        this.lastSettledActive.set(isSecurityActive(next));
     }
 }

@@ -10,7 +10,7 @@ import { SecurityActivationStatus, SecurityFrameworkConfig, SecurityFrameworkVer
  * compatibility service, and exposes the same list at `.../security-framework/supported-versions`.
  */
 const FRAMEWORK_VERSIONS: SecurityFrameworkVersionOption[] = [
-    { version: '3.4.1', label: '3.4.1 (latest)' },
+    { version: '3.4.1', label: '3.4.1', latest: true },
     { version: '3.3.0', label: '3.3.0' },
     { version: '3.2.2', label: '3.2.2' },
 ];
