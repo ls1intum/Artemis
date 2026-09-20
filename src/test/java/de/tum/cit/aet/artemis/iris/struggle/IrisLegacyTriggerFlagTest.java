@@ -99,7 +99,7 @@ class IrisLegacyTriggerFlagTest extends AbstractIrisIntegrationTest {
         exercise.setProjectType(ProjectType.PLAIN_GRADLE);
         exercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase(Locale.ROOT) + "-tests.git");
         programmingExerciseRepository.save(exercise);
-        exercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exercise.getId()).orElseThrow();
+        exercise = programmingExerciseRepository.findWithAllParticipationsById(exercise.getId()).orElseThrow();
 
         // Set the correct repository URIs for the template and the solution participation.
         String templateRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
@@ -186,7 +186,7 @@ class IrisLegacyTriggerFlagTest extends AbstractIrisIntegrationTest {
         await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(irisChatSessionService, times(1)).handleNewResultEvent(eq(event)));
 
         // after(2000) lets the async dispatch settle, so never() does not race ahead of a call still in flight.
-        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any());
+        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any(), any());
     }
 
     // The per-course half of the switch: the instance-wide flag is a deployment kill switch, this one is what an
@@ -207,7 +207,7 @@ class IrisLegacyTriggerFlagTest extends AbstractIrisIntegrationTest {
         pyrisEventService.trigger(event);
 
         await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(irisChatSessionService, times(1)).handleNewResultEvent(eq(event)));
-        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any());
+        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any(), any());
     }
 
     // The counterpart, so the two tests above cannot pass by the pipeline never firing in this fixture.
@@ -223,6 +223,6 @@ class IrisLegacyTriggerFlagTest extends AbstractIrisIntegrationTest {
         Result result = createFailingSubmission(studentParticipation);
         pyrisEventService.trigger(new NewResultEvent(result));
 
-        verify(pyrisPipelineService, timeout(5000).times(1)).executeChatPipeline(any(), any(), any(), any(), any());
+        verify(pyrisPipelineService, timeout(5000).times(1)).executeChatPipeline(any(), any(), any(), any(), any(), any());
     }
 }

@@ -54,7 +54,7 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
      * @param commitHashes the pre-resolved git commit hashes of the exercise's repositories
      * @return {@link ProgrammingExerciseSnapshotDTO}
      */
-    public static ProgrammingExerciseSnapshotDTO of(ProgrammingExercise exercise, CommitHashesDTO commitHashes) {
+    public static ProgrammingExerciseSnapshotDTO of(ProgrammingExercise exercise, ProgrammingExerciseBuildConfig buildConfig, CommitHashesDTO commitHashes) {
         var templateParticipation = exercise.getTemplateParticipation() != null
                 ? new ParticipationSnapshotDTO(exercise.getTemplateParticipation().getId(), exercise.getTemplateRepositoryUri(), exercise.getTemplateBuildPlanId(),
                         commitHashes.templateCommitHash())
@@ -86,7 +86,7 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
                 exercise.isAllowOnlineIde(), exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getProgrammingLanguage(),
                 exercise.getPackageName(), exercise.getShowTestNamesToStudents(), toUtc(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()), exercise.getProjectKey(),
                 templateParticipation, solutionParticipation, testCases, tasks, analysisCategories, SubmissionPolicySnapshotDTO.of(exercise.getSubmissionPolicy()),
-                exercise.getProjectType(), exercise.isReleaseTestsWithExampleSolution(), ProgrammingExerciseBuildConfigSnapshotDTO.of(exercise.getBuildConfig()), testCommitHash);
+                exercise.getProjectType(), exercise.isReleaseTestsWithExampleSolution(), ProgrammingExerciseBuildConfigSnapshotDTO.of(buildConfig), testCommitHash);
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

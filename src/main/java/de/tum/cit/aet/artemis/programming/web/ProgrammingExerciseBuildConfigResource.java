@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.dto.UpdateBuildPlanConfigurationDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseBuildConfigDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildPlanService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationScheduleService;
@@ -56,6 +57,8 @@ public class ProgrammingExerciseBuildConfigResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     private final ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService;
 
     private final ProgrammingTriggerService programmingTriggerService;
@@ -71,10 +74,12 @@ public class ProgrammingExerciseBuildConfigResource {
     private final ExerciseVersionService exerciseVersionService;
 
     public ProgrammingExerciseBuildConfigResource(ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService, ProgrammingTriggerService programmingTriggerService,
-            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService,
-            UserRepository userRepository, ExerciseService exerciseService, ExerciseVersionService exerciseVersionService) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService,
+            ProgrammingTriggerService programmingTriggerService, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService,
+            ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService, UserRepository userRepository, ExerciseService exerciseService,
+            ExerciseVersionService exerciseVersionService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingExerciseBuildPlanService = programmingExerciseBuildPlanService;
         this.programmingTriggerService = programmingTriggerService;
         this.automaticAfterDueDateService = automaticAfterDueDateService;
@@ -100,15 +105,17 @@ public class ProgrammingExerciseBuildConfigResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<UpdateProgrammingExerciseBuildConfigDTO> updateBuildConfig(@PathVariable long exerciseId, @Valid @RequestBody UpdateBuildPlanConfigurationDTO dto) {
         log.debug("REST request to update the build plan configuration of programming exercise {}", exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithBuildConfigElseThrow(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        // the configuration is a row of its own that names the exercise, so it is read here rather than fetched with the exercise
+        ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId);
         final var user = userRepository.getUserWithAuthorities();
 
         // the offset has to be read before the build plan changes, so that a build and test date an instructor moved
         // manually keeps its distance to the due date instead of being reset to the default offset
         final Duration originalBuildAndTestOffset = automaticAfterDueDateService.map(service -> service.getOriginalBuildAndTestOffset(programmingExercise)).orElse(null);
 
-        ProgrammingExerciseBuildConfig updatedBuildConfig = programmingExerciseBuildPlanService.updateBuildPlanConfiguration(programmingExercise, dto);
-        updateBuildAndTestDate(programmingExercise, originalBuildAndTestOffset);
+        ProgrammingExerciseBuildConfig updatedBuildConfig = programmingExerciseBuildPlanService.updateBuildPlanConfiguration(programmingExercise, buildConfig, dto);
+        updateBuildAndTestDate(programmingExercise, updatedBuildConfig, originalBuildAndTestOffset);
 
         programmingTriggerService.triggerTemplateAndSolutionBuild(exerciseId);
 
@@ -125,14 +132,16 @@ public class ProgrammingExerciseBuildConfigResource {
      * This mirrors what the full programming exercise update does after the build plan configuration changed.
      *
      * @param programmingExercise        the programming exercise whose build plan was updated
+     * @param buildConfig                the build configuration the update persisted, which carries the new build phases
      * @param originalBuildAndTestOffset the offset the build and test date had before the update, so that it is preserved
      */
-    private void updateBuildAndTestDate(ProgrammingExercise programmingExercise, @Nullable Duration originalBuildAndTestOffset) {
+    private void updateBuildAndTestDate(ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig, @Nullable Duration originalBuildAndTestOffset) {
         if (automaticAfterDueDateService.isEmpty()) {
             return;
         }
 
-        final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, originalBuildAndTestOffset);
+        final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, buildConfig,
+                originalBuildAndTestOffset);
         final boolean buildAndTestDateChanged = !Objects.equals(programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate);
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
 

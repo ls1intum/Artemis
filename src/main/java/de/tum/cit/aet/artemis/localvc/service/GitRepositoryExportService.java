@@ -294,11 +294,12 @@ public class GitRepositoryExportService {
      *
      * @param programmingExercise the programming exercise
      * @param participation       the student participation for which to export the repository
+     * @param hideStudentName     whether the archive filename must hide the participant identity
      * @param exportErrors        list of failures that occurred during the export
      * @return an InputStreamResource containing the zipped repository, or null if export failed
      */
     public InputStreamResource exportStudentRepositoryInMemory(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation,
-            List<String> exportErrors) {
+            boolean hideStudentName, List<String> exportErrors) {
         if (participation.getVcsRepositoryUri() == null) {
             log.warn("Cannot export participation {} because its repository URI is null", participation.getId());
             exportErrors.add("Repository URI is null for participation " + participation.getId());
@@ -306,7 +307,7 @@ public class GitRepositoryExportService {
         }
 
         try {
-            String repoName = getStudentRepositoryName(programmingExercise, participation, false);
+            String repoName = getStudentRepositoryName(programmingExercise, participation, hideStudentName);
             // For student repositories, we use snapshot export to exclude .git directory for privacy
             return exportRepositorySnapshot(participation.getVcsRepositoryUri(), repoName);
         }

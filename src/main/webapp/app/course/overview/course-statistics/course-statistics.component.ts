@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, EventEmitter, OnDestroy, OnInit, TemplateRef, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faChartColumn, faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipationResultDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
@@ -43,6 +43,7 @@ import {
     TumUiChartSelectEvent,
     TumUiDoughnutChartComponent,
     TumUiDoughnutChartConfig,
+    TumUiEmptyStateComponent,
 } from '@tumaet/ui-angular';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
@@ -126,6 +127,7 @@ enum ChartBarTitle {
         ExerciseScoresChartComponent,
         KeyValuePipe,
         ArtemisTranslatePipe,
+        TumUiEmptyStateComponent,
     ],
 })
 export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
@@ -305,6 +307,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     // Icons
     faQuestionCircle = faQuestionCircle;
     faClipboard = faClipboard;
+    faChartColumn = faChartColumn;
 
     // The extracted controls template from our template to be rendered in the top bar of "CourseOverviewComponent"
     private readonly controls = viewChild.required<TemplateRef<unknown>>('controls');

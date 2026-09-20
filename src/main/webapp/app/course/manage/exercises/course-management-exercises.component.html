@@ -124,9 +124,37 @@
     }
 
     @if (loaded() && cards().length === 0) {
-        <tum-ui-message severity="secondary">
-            <span jhiTranslate="artemisApp.exerciseManagement.noExercisesMatch" [translateValues]="{ search: search() }"></span>
-        </tum-ui-message>
+        <tum-ui-empty-state
+            class="mt-5"
+            [icon]="search() ? faMagnifyingGlass : faCode"
+            [title]="
+                search()
+                    ? ('artemisApp.exerciseManagement.noExercisesMatch' | artemisTranslate: { search: search() })
+                    : ('artemisApp.exerciseManagement.empty.title' | artemisTranslate)
+            "
+            [description]="search() ? undefined : ('artemisApp.exerciseManagement.empty.description' | artemisTranslate)"
+        >
+            <ng-container tumUiEmptyStateActions>
+                @if (!search() && course()?.isAtLeastEditor) {
+                    <tum-ui-button [icon]="faPlus" (clicked)="openCreateModal()">
+                        <span jhiTranslate="artemisApp.exerciseManagement.empty.create"></span>
+                    </tum-ui-button>
+                    <tum-ui-button [icon]="faFileImport" variant="outlined" (clicked)="openImportModal()">
+                        <span jhiTranslate="artemisApp.exerciseManagement.empty.import"></span>
+                    </tum-ui-button>
+                }
+            </ng-container>
+            <ng-container tumUiEmptyStateDocumentation>
+                @if (!search()) {
+                    <a
+                        href="https://docs.artemis.tum.de/instructor/exercises/intro"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        jhiTranslate="artemisApp.exerciseManagement.empty.documentation"
+                    ></a>
+                }
+            </ng-container>
+        </tum-ui-empty-state>
     }
     <div class="d-flex flex-column gap-3">
         @for (card of cards(); track card.id) {

@@ -17,7 +17,7 @@
         </a>
     }
 </ng-template>
-@if (exams()) {
+@if (exams()?.length) {
     <div class="table-responsive flex-1 overflow-auto" id="exams-table">
         <table class="table table-striped">
             <thead>
@@ -69,4 +69,27 @@
             </tbody>
         </table>
     </div>
+} @else if (exams()) {
+    <tum-ui-empty-state
+        class="mt-5"
+        [icon]="faFileAlt"
+        [title]="'artemisApp.examManagement.empty.title' | artemisTranslate"
+        [description]="'artemisApp.examManagement.empty.description' | artemisTranslate"
+    >
+        <ng-container tumUiEmptyStateActions>
+            @if (course()?.isAtLeastInstructor) {
+                <tum-ui-button size="small" (clicked)="openImportModal()">
+                    <fa-icon [icon]="faFileImport" />
+                    <span jhiTranslate="artemisApp.examManagement.importExam"></span>
+                </tum-ui-button>
+                <a tumUiButton size="small" [routerLink]="['new']">
+                    <fa-icon [icon]="faPlus" />
+                    <span jhiTranslate="artemisApp.examManagement.createExam"></span>
+                </a>
+            }
+        </ng-container>
+        <a tumUiEmptyStateDocumentation href="https://docs.artemis.tum.de/instructor/exams/intro" target="_blank" rel="noopener noreferrer">
+            <span jhiTranslate="artemisApp.examManagement.empty.documentation"></span>
+        </a>
+    </tum-ui-empty-state>
 }
