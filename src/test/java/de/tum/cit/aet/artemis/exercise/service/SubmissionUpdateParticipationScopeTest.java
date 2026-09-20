@@ -178,7 +178,7 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
     }
 
     private void sendTextViaWebsocket(long participationId, long submissionId) {
-        var payload = new TeamTextSubmissionUpdateDTO(submissionId, UPDATE_TEXT, Language.ENGLISH, true, null);
+        var payload = new TeamTextSubmissionUpdateDTO(submissionId, UPDATE_TEXT, Language.ENGLISH, true);
         try {
             participationTeamWebsocketService.updateTextSubmission(participationId, payload, principal("student1"));
         }
@@ -424,7 +424,7 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
         clearInvocations(websocketMessagingService);
 
         if (websocket) {
-            var payload = new TeamTextSubmissionUpdateDTO(submissionId, UPDATE_TEXT, Language.ENGLISH, true, null);
+            var payload = new TeamTextSubmissionUpdateDTO(submissionId, UPDATE_TEXT, Language.ENGLISH, true);
             assertThatExceptionOfType(ResponseStatusException.class)
                     .isThrownBy(() -> participationTeamWebsocketService.updateTextSubmission(participationId, payload, principal("student1")))
                     .satisfies(exception -> assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
