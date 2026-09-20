@@ -508,7 +508,9 @@ export class GlobalSearchIrisAnswerComponent {
      * preventDefault when the target actually IS a citation chip, so Space still scrolls
      * normally everywhere else in the answer region.
      */
-    protected onAnswerKeydownActivate(event: KeyboardEvent): void {
+    // Angular's template type-checker types $event as the base Event for a filtered key
+    // binding like (keydown.enter), not KeyboardEvent, so the parameter matches that here.
+    protected onAnswerKeydownActivate(event: Event): void {
         if (!(event.target as HTMLElement).closest('.iris-cite')) {
             return;
         }
