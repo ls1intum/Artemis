@@ -194,4 +194,15 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
                 participation.getIndividualDueDate(), participation.getPresentationScore(), participation.isTestRun(), participation.getType(), participation.getSubmissionCount(),
                 participant.name(), participant.identifier(), participant.student(), participant.team(), exercise, submissions, repositoryUri, buildPlanId, branch);
     }
+
+    /**
+     * Removes participant information, including repository identifiers that contain the student login or team name.
+     *
+     * @return an anonymous participation response
+     */
+    public StudentParticipationDTO withoutParticipantInformation() {
+        return new StudentParticipationDTO(id, initializationState, initializationDate, individualDueDate, presentationScore, testRun, type, submissionCount, null, null, null,
+                null, exercise, submissions, null, null, null);
+    }
+
 }
