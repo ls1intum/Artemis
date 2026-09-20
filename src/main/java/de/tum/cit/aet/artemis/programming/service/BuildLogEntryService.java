@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
@@ -135,8 +136,34 @@ public class BuildLogEntryService {
      */
     public List<BuildLogEntry> getBuildLogs(ProgrammingSubmission programmingSubmission, long resultId) {
         long exerciseId = exerciseIdOf(programmingSubmission);
-        return failedBuildLogService.getBuildLogs(exerciseId, programmingSubmission.getId(), resultId).orElseGet(() -> programmingSubmissionRepository
-                .findWithEagerBuildLogEntriesById(programmingSubmission.getId()).map(ProgrammingSubmission::getBuildLogEntries).map(List::copyOf).orElseGet(List::of));
+        Optional<List<BuildLogEntry>> storedForResult = failedBuildLogService.getBuildLogs(exerciseId, programmingSubmission.getId(), resultId);
+        if (storedForResult.isPresent()) {
+            return storedForResult.get();
+        }
+
+        // The rows that predate the file store are not attributed to a result, so they may only answer for the one build they can have come from: the submission's newest, and
+        // only while it is still the failed one. Without that gate a submission that failed before this release and has since been rebuilt successfully would answer a request
+        // for the successful result with the earlier failure's logs. Removed together with the table once it has drained.
+        if (!legacyRowsBelongToResult(programmingSubmission, resultId)) {
+            return List.of();
+        }
+        return programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId()).map(ProgrammingSubmission::getBuildLogEntries).map(List::copyOf)
+                .orElseGet(List::of);
+    }
+
+    /**
+     * Decides whether the legacy rows of a submission can be the logs of the requested result. They carry no result of their own, so they are only attributable while the
+     * submission's newest result is the requested one and that build is still failed.
+     *
+     * @param programmingSubmission submission the result belongs to
+     * @param resultId              result whose logs were requested
+     * @return true if the rows can only have come from the requested result
+     */
+    private boolean legacyRowsBelongToResult(ProgrammingSubmission programmingSubmission, long resultId) {
+        if (!programmingSubmission.isBuildFailed()) {
+            return false;
+        }
+        return programmingSubmissionRepository.findLatestResultIdBySubmissionId(programmingSubmission.getId()).filter(latestResultId -> latestResultId == resultId).isPresent();
     }
 
     /**

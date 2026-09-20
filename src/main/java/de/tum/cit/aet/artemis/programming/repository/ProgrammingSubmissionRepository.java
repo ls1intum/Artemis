@@ -82,6 +82,16 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     @Query("SELECT submission.participation.exercise.id FROM ProgrammingSubmission submission WHERE submission.id = :submissionId")
     Optional<Long> findExerciseIdBySubmissionId(@Param("submissionId") long submissionId);
 
+    /**
+     * Reads the id of the submission's newest result straight from the database, deliberately not from an in-memory collection: a submission loaded by result id carries only
+     * that one result, which would make any "is this the newest result" check trivially true.
+     *
+     * @param submissionId the programming submission to read the newest result of
+     * @return the newest result's id, or {@link Optional#empty()} if the submission has no result
+     */
+    @Query("SELECT MAX(result.id) FROM ProgrammingSubmission submission JOIN submission.results result WHERE submission.id = :submissionId")
+    Optional<Long> findLatestResultIdBySubmissionId(@Param("submissionId") long submissionId);
+
     @Query("SELECT submission.id FROM ProgrammingSubmission submission WHERE submission.id IN :submissionIds")
     Set<Long> findExistingIds(@Param("submissionIds") Set<Long> submissionIds);
 
