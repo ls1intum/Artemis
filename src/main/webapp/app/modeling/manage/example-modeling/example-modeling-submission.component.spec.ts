@@ -377,12 +377,12 @@ describe('Example Modeling Submission Component', () => {
             }
             fixture.detectChanges();
             expect(comp.assessments()).toEqual([second, secondUnreferenced]);
-            expect(canvas.resultFeedbacks()).toEqual([second, secondUnreferenced]);
+            expect(canvas.resultFeedbacks()).toEqual([second]);
             expect(assessmentRequests).toHaveLength(2);
             expect(assessmentRequests[1].feedbacks).toEqual([second, secondUnreferenced]);
             completeAssessment(1);
             fixture.detectChanges();
-            expect(canvas.resultFeedbacks()).toEqual([second, secondUnreferenced]);
+            expect(canvas.resultFeedbacks()).toEqual([second]);
         });
 
         it('derives dirtiness when feedback is reverted and keeps failed saves dirty', () => {
@@ -936,6 +936,34 @@ describe('Example Modeling Submission Component', () => {
 
             const details = fixture.nativeElement.querySelector('[assessmentworkspacedetails]') as HTMLElement;
             expect(details.querySelector('jhi-unreferenced-feedback')).not.toBeNull();
+        });
+
+        it('keeps additional practice feedback in the general editor and out of the diagram canvas', async () => {
+            await startPracticeAssessment();
+            const generalEditor = fixture.debugElement.query((element) => element.componentInstance instanceof UnreferencedFeedbackComponent)
+                .componentInstance as UnreferencedFeedbackComponent;
+            generalEditor.addUnreferencedFeedback();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const feedback = comp.unreferencedFeedback()[0];
+            expect(feedback.type).toBe(FeedbackType.MANUAL_UNREFERENCED);
+            expect(feedback.reference).toBe('1');
+            expect(feedback.referenceId).toBeUndefined();
+            expect(generalEditor.feedbacks()).toEqual([feedback]);
+            expect(fixture.nativeElement.querySelector('jhi-unreferenced-feedback-detail')).not.toBeNull();
+            const canvas = fixture.debugElement.query((element) => element.componentInstance instanceof StubModelingAssessmentComponent)
+                .componentInstance as StubModelingAssessmentComponent;
+            expect(canvas.resultFeedbacks()).toEqual([]);
+            expect(comp.assessments()).toEqual([feedback]);
+
+            feedback.credits = 4;
+            generalEditor.updateFeedback(feedback);
+            expect(comp.totalScore()).toBe(4);
+            expect(comp.assessmentsAreValid()).toBe(true);
+            const assessSpy = vi.spyOn(TestBed.inject(TutorParticipationService), 'assessExampleSubmission');
+            comp.checkAssessment();
+            expect(assessSpy.mock.calls[0][0].submission!.results!.at(-1)!.feedbacks).toEqual([feedback]);
         });
 
         it('should count unreferenced feedback towards the score and the submitted assessment', async () => {
