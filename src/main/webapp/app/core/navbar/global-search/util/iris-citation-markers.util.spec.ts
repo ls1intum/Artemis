@@ -73,6 +73,26 @@ describe('renderCitationMarkers', () => {
         expect([...result.citedNumbers]).toEqual([2]);
     });
 
+    it('leaves a tilde-fenced code block untouched', () => {
+        const answer = ['See the loop below.[1]', '~~~python', 'for i in range(3):', '    print(items[i])', '~~~', 'Iteration order matches the list.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('~~~python\nfor i in range(3):\n    print(items[i])\n~~~');
+        expect(result.html).toContain('See the loop below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect(result.html).toContain('Iteration order matches the list.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
+
+    it('leaves a bracketed index inside a four-backtick fence untouched', () => {
+        // A fence needs a longer delimiter than 3 backticks precisely when its own content contains a
+        // triple-backtick span; the delimiter-length backreference must track that, not assume exactly 3.
+        const answer = ['See below.[1]', '````python', 'print(items[0])  # ```not a fence```', '````', 'Done.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('````python\nprint(items[0])  # ```not a fence```\n````');
+        expect(result.html).toContain('See below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
+
     it('leaves a fenced code block untouched, including a real citation-shaped marker after it', () => {
         const answer = ['See the loop below.[1]', '```python', 'for i in range(3):', '    print(items[i])', '```', 'Iteration order matches the list.[2]'].join('\n');
         const result = renderCitationMarkers(answer, 2);

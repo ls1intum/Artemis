@@ -26,14 +26,21 @@ const MARKER_RUN_REGEX = /(?:\[\d+\]){1,}/g;
 const SINGLE_MARKER_REGEX = /\[(\d+)\]/g;
 
 /**
- * A fenced code block (```...```` incl. language tag, possibly spanning lines) or an inline code span
- * delimited by a run of one or more backticks, closed by a run of the same length (no line breaks).
- * CommonMark allows longer runs specifically so the span can contain a literal backtick, e.g. ``a ` b``
- * uses two backticks as delimiters; matching only a single backtick would stop at the interior one and
- * leak the rest as prose. Content matched here is left untouched: a bracketed expression like an array
+ * Every CommonMark code node this answer's markdown could realistically contain, tried longest-and-most-
+ * specific first: a backtick fence of 3+ backticks (incl. language tag, possibly spanning lines, closed
+ * by a same-length run so a fence can itself contain a shorter backtick run), a tilde fence, or an inline
+ * code span delimited by a run of one or more backticks closed by a same-length run (no line breaks;
+ * CommonMark allows a longer run specifically so the span can contain a literal backtick, e.g. ``a ` b``
+ * uses two backticks as delimiters — matching only a single backtick would stop at the interior one and
+ * leak the rest as prose). Content matched here is left untouched: a bracketed expression like an array
  * index (`list[0]`) is common in course content and must render as code, not as a citation chip.
+ *
+ * Indented code blocks (4+ leading spaces, no delimiter) are deliberately NOT covered: unlike a fence or
+ * span, they have no closing delimiter to key off, and a naive line-based match would just as often catch
+ * a nested list item's continuation line, suppressing a real citation in ordinary prose. No answer this
+ * util has seen uses one; every model defaults to fenced blocks for code.
  */
-const CODE_SEGMENT_REGEX = /```[\s\S]*?```|(`+)[^\n]*?\1(?!`)/g;
+const CODE_SEGMENT_REGEX = /(`{3,})[\s\S]*?\1|~~~+[\s\S]*?~~~+|(`+)[^\n]*?\2(?!`)/g;
 
 export interface CitationRenderResult {
     /** The answer markdown with marker runs replaced by `<sup>` chip elements. */
