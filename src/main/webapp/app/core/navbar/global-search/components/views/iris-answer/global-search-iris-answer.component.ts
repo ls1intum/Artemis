@@ -374,6 +374,13 @@ export class GlobalSearchIrisAnswerComponent {
         if (this.currentRunId() !== undefined && update.runId !== this.currentRunId()) {
             return; // stale response from a superseded pipeline run
         }
+        if (update.failed) {
+            // A genuine Pyris-side failure, not a considered "nothing relevant" result — the reader
+            // can retry, unlike noAnswer below, which is a settled outcome and auto-dismisses instead.
+            this.clearTimers();
+            this.phase.set('failed');
+            return;
+        }
         if (!update.answer) {
             // Iris ran and chose not to answer. Saying so and then leaving beats vanishing mid-thought,
             // which is indistinguishable from the feature being broken.

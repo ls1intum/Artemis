@@ -232,8 +232,8 @@ public class PyrisStatusUpdateService {
             pyrisJobService.updateJob(job);
         }
         else if (isTerminal) {
-            irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC,
-                    new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), false, statusUpdate.answer(), statusUpdate.sources(), null, null, statusUpdate.entitySources(), false));
+            irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC, new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), false, statusUpdate.answer(),
+                    statusUpdate.sources(), null, null, statusUpdate.entitySources(), false, runState == PyrisRunState.FAILED));
             pyrisJobService.removeJob(job);
         }
         else {

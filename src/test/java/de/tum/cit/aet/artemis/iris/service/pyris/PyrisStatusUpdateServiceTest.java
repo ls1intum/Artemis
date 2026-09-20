@@ -150,7 +150,7 @@ class PyrisStatusUpdateServiceTest {
         service.handleStatusUpdate(job, terminalUpdate);
 
         verify(irisWebsocketService).send("student1", "global-search-answer",
-                new IrisGlobalSearchAnswerWebsocketDTO("global-run", false, "answer.[1]", null, null, null, List.of(entitySource), false));
+                new IrisGlobalSearchAnswerWebsocketDTO("global-run", false, "answer.[1]", null, null, null, List.of(entitySource), false, false));
         verify(pyrisJobService).removeJob(job);
     }
 
@@ -203,7 +203,10 @@ class PyrisStatusUpdateServiceTest {
 
         service.handleStatusUpdate(failedJob, failedUpdate);
 
-        verify(irisWebsocketService).send("student1", "global-search-answer", new IrisGlobalSearchAnswerWebsocketDTO("global-failed-run", false, null, null));
+        // A genuine failure must be distinguishable from a successful no-answer result (both otherwise
+        // produce the identical isThinking=false, answer=null shape), so the client can offer a retry.
+        verify(irisWebsocketService).send("student1", "global-search-answer",
+                new IrisGlobalSearchAnswerWebsocketDTO("global-failed-run", false, null, null, null, null, null, false, true));
         verify(pyrisJobService).removeJob(failedJob);
     }
 
@@ -262,7 +265,10 @@ class PyrisStatusUpdateServiceTest {
 
         service.handleStatusUpdate(globalJob, new PyrisGlobalSearchAnswerStatusUpdateDTO(null, null, null, null));
 
-        verify(irisWebsocketService).send("student1", "global-search-answer", new IrisGlobalSearchAnswerWebsocketDTO("global-null", false, null, null));
+        // A null run state resolves to FAILED (see the test name), which must reach the client as
+        // failed=true, not the same shape as a considered no-answer result.
+        verify(irisWebsocketService).send("student1", "global-search-answer",
+                new IrisGlobalSearchAnswerWebsocketDTO("global-null", false, null, null, null, null, null, false, true));
         verify(pyrisJobService).removeJob(globalJob);
 
         var lectureJob = new LectureIngestionWebhookJob("lecture-null", 1L, 2L, 42L);

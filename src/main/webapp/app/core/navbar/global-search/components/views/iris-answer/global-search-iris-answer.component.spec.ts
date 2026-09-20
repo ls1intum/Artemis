@@ -902,6 +902,18 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             expect(component['isSettled']()).toBe(true);
         });
 
+        it('offers a retry when Pyris reports a failed run over the WebSocket, not just a transport error', () => {
+            // A genuine Pyris-side failure produces the identical isThinking=false, answer=null shape as a
+            // successful "nothing relevant" result unless failed=true is checked first — without that check
+            // this would wrongly land in the noAnswer phase, with no retry.
+            startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: false, failed: true });
+            fixture.detectChanges();
+
+            expect(component['phase']()).toBe('failed');
+            expect(fixture.nativeElement.querySelector('[data-testid="iris-answer-retry"]')).toBeTruthy();
+        });
+
         it('offers a retry when the pipeline fails', () => {
             mockAsk.mockReturnValueOnce(throwError(() => new Error('pipeline down')));
             startQuery();

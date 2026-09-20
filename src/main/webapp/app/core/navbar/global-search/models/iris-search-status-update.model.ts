@@ -21,4 +21,6 @@ export interface IrisSearchStatusUpdate {
     partialSeq?: number;
     /** The provider is retrying and the streamed draft so far is stale; discard it and wait for the next one. */
     clearDraft?: boolean;
+    /** A genuine Pyris-side failure, distinct from a successful run with no relevant answer. */
+    failed?: boolean;
 }
