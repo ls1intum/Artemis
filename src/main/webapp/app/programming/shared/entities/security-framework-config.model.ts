@@ -36,7 +36,7 @@ export interface SecurityFrameworkVersionOption {
 /**
  * Security Framework activation state for a single programming exercise.
  *
- * This is the contract the mock data layer exposes today and the real backend endpoints
+ * This is the contract the mock data layer exposes today and the real server endpoints
  * (server-side Objective 1) are expected to satisfy once they exist, so swapping the mock service
  * for an HttpClient-backed one should not require any change to the component that renders this.
  */
@@ -49,6 +49,15 @@ export interface SecurityFrameworkConfig {
     lastSyncedAt?: string;
     /** Human-readable reason for the ERROR status, if any (shown in the error line). */
     errorDetail?: string;
+}
+
+/**
+ * The minimal create-mode activation the parent form owns so it survives a simple <-> advanced mode
+ * switch (which destroys the security card). Presence means "staged active"; the version is carried so
+ * the parent can commit it on save even if the card is no longer rendered.
+ */
+export interface SecurityStagedActivation {
+    frameworkVersion: string;
 }
 
 /** True when the sandbox is fully activated and enforcing (derived, never stored separately). */

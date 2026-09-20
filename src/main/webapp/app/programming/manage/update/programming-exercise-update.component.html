@@ -47,6 +47,8 @@
                 <jhi-programming-exercise-security
                     [programmingExercise]="programmingExercise"
                     [selectedProgrammingLanguage]="getProgrammingExerciseCreationConfig().selectedProgrammingLanguage"
+                    [stagedActivation]="stagedSecurityActivation()"
+                    (stagedActivationChange)="stagedSecurityActivation.set($event)"
                 />
                 <hr class="mb-5" />
             }

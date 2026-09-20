@@ -3,7 +3,7 @@ import { AfterViewInit, Component, OnDestroy, OnInit, computed, effect, inject, 
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
-import { Observable, Subject, Subscription, of } from 'rxjs';
+import { Observable, Subject, Subscription, catchError, map, of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingForImport } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -46,6 +46,8 @@ import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
 import { ProgrammingExerciseSecurityComponent } from 'app/programming/manage/update/update-components/security/programming-exercise-security.component';
+import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
+import { SecurityStagedActivation } from 'app/programming/shared/entities/security-framework-config.model';
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
@@ -118,6 +120,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly popupService = inject(ExerciseUpdateWarningService);
     private readonly courseService = inject(CourseManagementService);
     private readonly alertService = inject(AlertService);
+    private readonly securityFrameworkService = inject(SecurityFrameworkService);
     private readonly exerciseService = inject(ExerciseService);
     private readonly fileService = inject(FileService);
     private readonly activatedRoute = inject(ActivatedRoute);
@@ -149,7 +152,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     exerciseDifficultyComponent = viewChild(ProgrammingExerciseModeComponent);
     exerciseLanguageComponent = viewChild(ProgrammingExerciseLanguageComponent);
     exerciseGradingComponent = viewChild(ProgrammingExerciseGradingComponent);
-    securityComponent = viewChild(ProgrammingExerciseSecurityComponent);
+    /** Create-mode Security Framework activation, owned here so it survives the simple <-> advanced mode switch that destroys the card. */
+    readonly stagedSecurityActivation = signal<SecurityStagedActivation | undefined>(undefined);
     exercisePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
 
     packageNamePattern = '';
@@ -1008,7 +1012,14 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * the sandbox were active.
      */
     private commitStagedSecurityThenNavigate(exercise: ProgrammingExercise, navigate: () => void) {
-        const commitStagedSecurity = this.securityComponent()?.commitStagedActivation(exercise.id) ?? of(true);
+        const staged = this.stagedSecurityActivation();
+        const commitStagedSecurity =
+            staged && exercise.id !== undefined
+                ? this.securityFrameworkService.activate(exercise.id, staged.frameworkVersion).pipe(
+                      map(() => true),
+                      catchError(() => of(false)),
+                  )
+                : of(true);
         commitStagedSecurity.subscribe((activated) => {
             this.isSaving.set(false);
             if (!activated) {

@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { SecurityActivationStatus, SecurityFrameworkConfig } from 'app/programming/shared/entities/security-framework-config.model';
+import { SecurityActivationStatus, SecurityFrameworkConfig, SecurityStagedActivation } from 'app/programming/shared/entities/security-framework-config.model';
 import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
 import { ProgrammingExerciseSecurityComponent } from 'app/programming/manage/update/update-components/security/programming-exercise-security.component';
 
@@ -25,7 +25,7 @@ const activeConfig = (version = '3.4.1', hash = 'abc1234'): SecurityFrameworkCon
 });
 
 /**
- * Logic-focused spec: the component's status machine and its single backend contract (getConfig /
+ * Logic-focused spec: the component's status machine and its single server contract (getConfig /
  * activate / deactivate / updateFrameworkVersion), driven through a fully mocked
  * {@link SecurityFrameworkService}. The template is overridden to empty so the transitions are asserted
  * on the component's own signals, independent of the design-system child components.
@@ -102,7 +102,7 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         expect(comp.config().frameworkVersion).toBe('3.3.0');
     });
 
-    it('create mode stages ACTIVE/INACTIVE locally without calling the backend', () => {
+    it('create mode stages ACTIVE/INACTIVE locally without calling the server', () => {
         initCreate();
         comp.onToggleChanged(true);
         expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
@@ -215,30 +215,20 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
     });
 
-    it('commitStagedActivation is a no-op success when nothing was staged', () => {
+    it('emits the staged activation to the parent when toggled in create mode', () => {
         initCreate();
-        let result: boolean | undefined;
-        comp.commitStagedActivation(99).subscribe((value) => (result = value));
-        expect(result).toBe(true);
-        expect(service.activate).not.toHaveBeenCalled();
+        const emitted: (SecurityStagedActivation | undefined)[] = [];
+        comp.stagedActivationChange.subscribe((value) => emitted.push(value));
+        comp.onToggleChanged(true);
+        expect(emitted.at(-1)).toEqual({ frameworkVersion: '3.4.1' });
+        comp.onToggleChanged(false);
+        expect(emitted.at(-1)).toBeUndefined();
     });
 
-    it('commitStagedActivation persists a staged create-mode activation and reports success', () => {
+    it('re-seeds a staged activation provided by the parent, surviving a mode switch', () => {
+        fixture.componentRef.setInput('stagedActivation', { frameworkVersion: '3.3.0' });
         initCreate();
-        comp.onToggleChanged(true);
-        service.activate.mockReturnValue(of(activeConfig()));
-        let result: boolean | undefined;
-        comp.commitStagedActivation(99).subscribe((value) => (result = value));
-        expect(service.activate).toHaveBeenCalledWith(99, '3.4.1');
-        expect(result).toBe(true);
-    });
-
-    it('commitStagedActivation reports failure (never a false success) when activation fails', () => {
-        initCreate();
-        comp.onToggleChanged(true);
-        service.activate.mockReturnValue(throwError(() => new Error('SYNC_FAILED')));
-        let result: boolean | undefined;
-        comp.commitStagedActivation(99).subscribe((value) => (result = value));
-        expect(result).toBe(false);
+        expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
+        expect(comp.config().frameworkVersion).toBe('3.3.0');
     });
 });

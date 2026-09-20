@@ -1,9 +1,9 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TumUiMessageComponent, TumUiSelectComponent, TumUiToggleSwitchComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleNotch, faQuestionCircle, faRotateRight, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { Observable, catchError, map, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -14,6 +14,7 @@ import {
     SecurityActivationStatus,
     SecurityFrameworkConfig,
     SecurityFrameworkVersionOption,
+    SecurityStagedActivation,
     TRANSIENT_SECURITY_STATUSES,
     isSecurityActive,
 } from 'app/programming/shared/entities/security-framework-config.model';
@@ -66,6 +67,10 @@ export class ProgrammingExerciseSecurityComponent {
      * place, which a read through the exercise input alone would not pick up in a zoneless app).
      */
     readonly selectedProgrammingLanguage = input<ProgrammingLanguage | undefined>(undefined);
+    /** Create-mode activation the parent form holds, passed back in so it survives a mode switch that destroys this card. */
+    readonly stagedActivation = input<SecurityStagedActivation | undefined>(undefined);
+    /** Emits the create-mode staged activation (or undefined when cleared) so the parent can persist it on save even if this card is gone. */
+    readonly stagedActivationChange = output<SecurityStagedActivation | undefined>();
 
     readonly isEditMode = computed(() => !!this.programmingExercise().id);
     readonly isSupportedLanguage = computed(() => {
@@ -108,8 +113,6 @@ export class ProgrammingExerciseSecurityComponent {
     readonly showDeactivateWarning = computed(() => this.status() === SecurityActivationStatus.DELETING);
 
     private hasSeededInitialConfig = false;
-    /** True when the component first loaded before the exercise existed (create mode), so a staged activation still needs persisting on save. */
-    private seededWithoutExercise = false;
     /** The last sync operation started, kept so {@link onRetry} can re-run exactly what failed. */
     private pendingOperation?: { transientPatch: Partial<SecurityFrameworkConfig>; run: () => Observable<SecurityFrameworkConfig> };
 
@@ -123,9 +126,15 @@ export class ProgrammingExerciseSecurityComponent {
                 return;
             }
             this.hasSeededInitialConfig = true;
-            this.seededWithoutExercise = exerciseId === undefined;
             if (exerciseId !== undefined) {
                 this.loadConfig(exerciseId);
+            } else {
+                // Create mode: restore an activation staged before a simple <-> advanced mode switch destroyed this card.
+                const staged = this.stagedActivation();
+                if (staged) {
+                    this.config.set({ status: SecurityActivationStatus.ACTIVE, frameworkVersion: staged.frameworkVersion });
+                    this.lastSettledActive.set(true);
+                }
             }
         });
     }
@@ -153,7 +162,7 @@ export class ProgrammingExerciseSecurityComponent {
     /**
      * Create mode has no repository yet, so toggling only stages ACTIVE/INACTIVE locally (committed on
      * Generate). Edit mode runs the real transient flow: GENERATING/DELETING immediately, settling to
-     * ACTIVE/INACTIVE when the (mock) backend responds.
+     * ACTIVE/INACTIVE when the (mock) server responds.
      */
     onToggleChanged(checked: boolean): void {
         const exerciseId = this.programmingExercise().id;
@@ -161,6 +170,7 @@ export class ProgrammingExerciseSecurityComponent {
             // Create mode: no exercise/repository yet, so stage locally (committed when the exercise is generated).
             this.patchConfig({ status: checked ? SecurityActivationStatus.ACTIVE : SecurityActivationStatus.INACTIVE });
             this.lastSettledActive.set(checked);
+            this.stagedActivationChange.emit(checked ? { frameworkVersion: this.config().frameworkVersion } : undefined);
             return;
         }
         if (checked) {
@@ -176,6 +186,10 @@ export class ProgrammingExerciseSecurityComponent {
         const exerciseId = this.programmingExercise().id;
         if (exerciseId === undefined || !this.isActive()) {
             this.patchConfig({ frameworkVersion: newVersion });
+            // Keep the parent's staged copy in sync when a create-mode activation is already staged.
+            if (exerciseId === undefined && this.config().status === SecurityActivationStatus.ACTIVE) {
+                this.stagedActivationChange.emit({ frameworkVersion: newVersion });
+            }
             return;
         }
         this.runOperation({ status: SecurityActivationStatus.GENERATING, frameworkVersion: newVersion }, () => this.securityService.updateFrameworkVersion(exerciseId, newVersion));
@@ -189,7 +203,7 @@ export class ProgrammingExerciseSecurityComponent {
     }
 
     /**
-     * The single place the component talks to the backend: show the transient state immediately, then
+     * The single place the component talks to the server: show the transient state immediately, then
      * settle to the returned config on success, or drop to ERROR on failure - keeping the failed
      * operation so the retry button re-runs exactly it. Defining the error contract here once means
      * every action (activate, deactivate, version change) handles failure identically.
@@ -206,26 +220,6 @@ export class ProgrammingExerciseSecurityComponent {
                 this.patchConfig({ status: SecurityActivationStatus.ERROR, errorDetail: error instanceof Error ? error.message : String(error) });
             },
         });
-    }
-
-    /**
-     * Persists a create-mode activation once the exercise exists. In create mode, toggling only stages
-     * ACTIVE locally (there is no exercise/repository yet); the parent update component calls this after
-     * the exercise is created so the staged activation is committed on the server. No-op in edit mode
-     * (activation already went through the server) or when nothing was staged. Returns whether the
-     * activation succeeded so the parent can warn the instructor (who can retry from the edit page)
-     * instead of navigating away as if the sandbox were active.
-     */
-    commitStagedActivation(exerciseId: number | undefined): Observable<boolean> {
-        if (!this.seededWithoutExercise || exerciseId === undefined || this.config().status !== SecurityActivationStatus.ACTIVE) {
-            // Nothing was staged, so there is nothing that could have failed.
-            return of(true);
-        }
-        // Report success/failure explicitly (never swallow a failure as success).
-        return this.securityService.activate(exerciseId, this.config().frameworkVersion).pipe(
-            map(() => true),
-            catchError(() => of(false)),
-        );
     }
 
     private patchConfig(patch: Partial<SecurityFrameworkConfig>): void {
