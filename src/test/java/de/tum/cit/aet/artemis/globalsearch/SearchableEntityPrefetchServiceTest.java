@@ -153,6 +153,22 @@ class SearchableEntityPrefetchServiceTest {
     }
 
     @Test
+    void examRowReadsItsOwnVisibleDateNotTheExerciseDenormalizedOne() {
+        // EXAM_VISIBLE_DATE is denormalized onto exam-exercise rows only; an exam row carries its own
+        // visibility in VISIBLE_DATE. Reading EXAM_VISIBLE_DATE for an exam row (as if it were an
+        // exercise) would silently send Pyris a null visibleDate even though the value is indexed.
+        Map<String, Object> exam = examRow();
+        exam.put(SearchableEntitySchema.Properties.VISIBLE_DATE, OffsetDateTime.of(2026, 5, 10, 8, 0, 0, 0, ZoneOffset.UTC));
+        Map<String, Object> examExercise = examExerciseRow();
+        examExercise.put(SearchableEntitySchema.Properties.EXAM_VISIBLE_DATE, OffsetDateTime.of(2026, 5, 10, 8, 0, 0, 0, ZoneOffset.UTC));
+        givenAccessibleRows(List.of(exam, examExercise));
+
+        List<SearchableEntityCandidateDTO> candidates = prefetchService.prefetchCandidates(new User(), "q", 10, null, List.of());
+
+        assertThat(candidates).extracting(SearchableEntityCandidateDTO::visibleDate).allSatisfy(date -> assertThat(date).startsWith("2026-05-10T08:00"));
+    }
+
+    @Test
     void returnsEmptyWithoutAccessibleCourses() {
         when(accessFilterService.buildSearchableItemFilter(any(), any(), any(), anySet()))
                 .thenReturn(new SearchableEntityAccessFilterService.FilterBuildResult(null, false, null, null, null));

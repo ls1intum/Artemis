@@ -113,13 +113,18 @@ public class SearchableEntityPrefetchService {
         // route, which always requires a non-null courseId.
         boolean isAtLeastEditor = courseId != null && (editorCourseIds == null || editorCourseIds.contains(courseId));
         boolean isAtLeastStaff = courseId != null && (staffCourseIds == null || staffCourseIds.contains(courseId));
+        // EXAM_VISIBLE_DATE is denormalized onto exam-exercise rows only; an exam row carries its own
+        // visibility in VISIBLE_DATE instead (see SearchableEntitySchema.Properties). Reading the wrong
+        // one for an exam row sends Pyris a null examVisibleDate even though the indexed value exists.
+        String examVisibleDateProperty = SearchableEntitySchema.TypeValues.EXAM.equals(entityType) ? SearchableEntitySchema.Properties.VISIBLE_DATE
+                : SearchableEntitySchema.Properties.EXAM_VISIBLE_DATE;
         return new SearchableEntityCandidateDTO(entityType, entityId, courseId, courseId != null ? courseNameById.get(courseId) : null,
                 asString(properties.get(SearchableEntitySchema.Properties.TITLE)), asString(properties.get(SearchableEntitySchema.Properties.DESCRIPTION)),
                 asString(properties.get(SearchableEntitySchema.Properties.SHORT_NAME)),
                 buildLink(entityType, entityId, courseId, lectureId, examId, channelId, postId, isAtLeastEditor, isAtLeastStaff),
                 asIsoDate(properties.get(SearchableEntitySchema.Properties.RELEASE_DATE)), asIsoDate(properties.get(SearchableEntitySchema.Properties.START_DATE)),
                 asIsoDate(properties.get(SearchableEntitySchema.Properties.DUE_DATE)), asIsoDate(properties.get(SearchableEntitySchema.Properties.END_DATE)),
-                asIsoDate(properties.get(SearchableEntitySchema.Properties.EXAM_VISIBLE_DATE)), asIsoDate(properties.get(SearchableEntitySchema.Properties.EXAM_START_DATE)),
+                asIsoDate(properties.get(examVisibleDateProperty)), asIsoDate(properties.get(SearchableEntitySchema.Properties.EXAM_START_DATE)),
                 asIsoDate(properties.get(SearchableEntitySchema.Properties.EXAM_END_DATE)), asDouble(properties.get(SearchableEntitySchema.Properties.MAX_POINTS)),
                 asLong(properties.get(SearchableEntitySchema.Properties.QUIZ_DURATION)), asString(properties.get(SearchableEntitySchema.Properties.PROGRAMMING_LANGUAGE)),
                 asString(properties.get(SearchableEntitySchema.Properties.EXERCISE_TYPE)), asString(properties.get(SearchableEntitySchema.Properties.UNIT_TYPE)),
