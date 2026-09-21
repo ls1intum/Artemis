@@ -24,6 +24,7 @@ import { CourseAvailableTabsService } from 'app/course/overview/services/course-
 import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
 import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
 import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
+import { CourseExercisesComponent } from 'app/course/overview/course-exercises/course-exercises.component';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -72,6 +73,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     courseActionItems = signal<CourseActionItem[]>([]);
     canUnenroll = signal<boolean>(false);
     activatedComponentReference = signal<SidebarView | undefined>(undefined);
+    isExercisesTabActive = signal<boolean>(false);
 
     // Icons
     faTimes = faTimes;
@@ -279,6 +281,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     }
 
     protected handleComponentActivation(componentRef: unknown): void {
+        this.isExercisesTabActive.set(componentRef instanceof CourseExercisesComponent);
         const sidebarView = isSidebarView(componentRef) ? componentRef : undefined;
         if (sidebarView) {
             this.activatedComponentReference.set(sidebarView);
