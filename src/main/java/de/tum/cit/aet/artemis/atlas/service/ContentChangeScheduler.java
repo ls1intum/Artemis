@@ -155,7 +155,7 @@ public class ContentChangeScheduler {
         CompetencyOrchestrationResultDTO.Status status = result == null ? null : result.status();
         if (result != null && (result.failureReason() == CompetencyOrchestrationResultDTO.FailureReason.TOOL_CALL_LIMIT_EXCEEDED
                 || result.failureReason() == CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION)) {
-            broadcastSummary(courseId, runId, exerciseCount, false);
+            broadcastSummary(courseId, runId, changeCount, false);
             return;
         }
         switch (status) {

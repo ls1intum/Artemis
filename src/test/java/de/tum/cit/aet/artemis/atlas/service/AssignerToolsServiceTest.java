@@ -80,8 +80,8 @@ class AssignerToolsServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new AssignerToolsService(new JsonMapper(), courseCompetencyRepository, exerciseRepository, competencyExerciseLinkRepository,
-                competencyLectureUnitLinkRepository, Optional.of(lectureUnitRepositoryApi), Optional.of(competencyProgressApi));
+        service = new AssignerToolsService(new JsonMapper(), courseCompetencyRepository, exerciseRepository, competencyExerciseLinkRepository, competencyLectureUnitLinkRepository,
+                Optional.of(lectureUnitRepositoryApi), Optional.of(competencyProgressApi));
         appliedActions = Collections.synchronizedList(new ArrayList<>());
         appliedActionsBuffer = new AppliedActionsBuffer(appliedActions);
         Map<String, Object> ctx = new HashMap<>();
@@ -410,7 +410,7 @@ class AssignerToolsServiceTest {
 
     @Test
     void assignLectureUnitToCompetency_lectureApiAbsent_failsClosed() {
-        AssignerToolsService noLectureService = new AssignerToolsService(new ObjectMapper(), courseCompetencyRepository, exerciseRepository, competencyExerciseLinkRepository,
+        AssignerToolsService noLectureService = new AssignerToolsService(new JsonMapper(), courseCompetencyRepository, exerciseRepository, competencyExerciseLinkRepository,
                 competencyLectureUnitLinkRepository, Optional.empty(), Optional.of(competencyProgressApi));
         Course course = courseWithId(COURSE_ID);
         CourseCompetency competency = newCompetency(COMPETENCY_ID, "Target", "Desc", CompetencyTaxonomy.APPLY, course);

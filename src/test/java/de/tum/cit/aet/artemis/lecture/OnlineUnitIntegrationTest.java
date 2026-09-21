@@ -217,7 +217,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         // A valid source URL is required by the resource's source validation.
         this.onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         persistOnlineUnitWithLecture();
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
         this.onlineUnit.setDescription("Genuinely changed description");
         request.putWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/online-units", onlineUnitDtoForRequest(this.onlineUnit), OnlineUnitDTO.class, HttpStatus.OK);
         assertThat(applicationEvents.stream(LectureUnitContentChangedEvent.class)).hasSize(1);
@@ -229,7 +229,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         // Persist with a valid source so the PUT passes source validation without changing description or source.
         this.onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         persistOnlineUnitWithLecture();
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
         // Change only the name; description and source are unchanged, so no content-bearing field changed.
         this.onlineUnit.setName("Renamed but same content");
         request.putWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/online-units", onlineUnitDtoForRequest(this.onlineUnit), OnlineUnitDTO.class, HttpStatus.OK);

@@ -145,7 +145,8 @@ public final class AtlasToolCallBudget {
     }
 
     private static boolean readOnly(String name) {
-        return name.equals("getCompetencyDetails") || name.equals("getExerciseContent") || name.equals("listCompetencyIndex") || name.equals("searchLectureContent");
+        return name.equals("getCompetencyDetails") || name.equals("getExerciseContent") || name.equals("getLectureUnitContent") || name.equals("listCompetencyIndex")
+                || name.equals("searchLectureContent");
     }
 
     private static boolean terminal(String name) {

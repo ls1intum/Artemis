@@ -88,12 +88,12 @@ class ContentChangeSchedulerTest {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
         stubCourseEnabled(true);
-        when(accumulator.claimDueBatch(COURSE_ID, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP)).thenReturn(Optional.of(new BatchClaim(exerciseIds)));
-        when(orchestrationService.runBatch(COURSE_ID, exerciseIds))
+        when(accumulator.claimDueBatch(COURSE_ID, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP)).thenReturn(Optional.of(new BatchClaim(exerciseIds, Set.of())));
+        when(orchestrationService.runBatch(COURSE_ID, exerciseIds, Set.of()))
                 .thenReturn(CompetencyOrchestrationResultDTO.failed("Tool budget exhausted", CompetencyOrchestrationResultDTO.FailureReason.TOOL_CALL_LIMIT_EXCEEDED));
         scheduler.tick();
-        verify(accumulator, never()).requeueAfterFailedRun(anyLong(), any());
-        verify(accumulator, never()).requeueAfterConcurrentRun(anyLong(), any());
+        verify(accumulator, never()).requeueAfterFailedRun(anyLong(), any(), any());
+        verify(accumulator, never()).requeueAfterConcurrentRun(anyLong(), any(), any());
         ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
         assertThat(payload.getValue().exerciseCount()).isEqualTo(2);
@@ -107,12 +107,12 @@ class ContentChangeSchedulerTest {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
         stubCourseEnabled(true);
-        when(accumulator.claimDueBatch(COURSE_ID, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP)).thenReturn(Optional.of(new BatchClaim(exerciseIds)));
-        when(orchestrationService.runBatch(COURSE_ID, exerciseIds))
+        when(accumulator.claimDueBatch(COURSE_ID, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP)).thenReturn(Optional.of(new BatchClaim(exerciseIds, Set.of())));
+        when(orchestrationService.runBatch(COURSE_ID, exerciseIds, Set.of()))
                 .thenReturn(CompetencyOrchestrationResultDTO.failed("Tool budget exhausted", CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION));
         scheduler.tick();
-        verify(accumulator, never()).requeueAfterFailedRun(anyLong(), any());
-        verify(accumulator, never()).requeueAfterConcurrentRun(anyLong(), any());
+        verify(accumulator, never()).requeueAfterFailedRun(anyLong(), any(), any());
+        verify(accumulator, never()).requeueAfterConcurrentRun(anyLong(), any(), any());
         ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
         assertThat(payload.getValue().exerciseCount()).isEqualTo(2);

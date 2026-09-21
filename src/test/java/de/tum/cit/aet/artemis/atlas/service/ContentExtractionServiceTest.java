@@ -217,7 +217,7 @@ class ContentExtractionServiceTest {
         assertThat(result.title()).isEqualTo("Lecture 3 slides");
         assertThat(result.extractedLearningText()).isEqualTo("Covers hashing and collision resolution.");
         assertThat(result.metadata()).containsEntry("lectureUnitType", "attachment").containsEntry("videoSource", "https://videos.example/lecture-3")
-                .containsEntry("attachmentLink", "/api/core/files/lecture-3.pdf");
+                .containsEntry("attachmentLink", "lecture-3.pdf");
     }
 
     @Test

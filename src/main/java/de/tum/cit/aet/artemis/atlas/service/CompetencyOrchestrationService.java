@@ -90,7 +90,7 @@ public class CompetencyOrchestrationService {
     /** Length caps on instructor-controlled strings to bound prompt size and injection surface. */
     private static final int EXERCISE_TITLE_MAX = 200;
 
-    private static final int PROBLEM_STATEMENT_MAX = 8_000;
+    private static final int PROBLEM_STATEMENT_MAX = 16_000;
 
     private static final int COMPETENCY_TITLE_MAX = 200;
 

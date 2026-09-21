@@ -61,7 +61,7 @@ public class OrchestratorReadToolsService {
      * oversized exercise (e.g. a quiz whose assembled questions + answers are large) cannot inflate
      * per-call tokens now that this tool extracts real content for every exercise type.
      */
-    private static final int MAX_EXERCISE_CONTENT_LENGTH = 8_000;
+    private static final int MAX_EXERCISE_CONTENT_LENGTH = 16_000;
 
     /** Cap on the title returned by {@link #getExerciseContent}; matches the batch path's {@code EXERCISE_TITLE_MAX}. */
     private static final int MAX_EXERCISE_TITLE_LENGTH = 200;
@@ -187,6 +187,7 @@ public class OrchestratorReadToolsService {
             + "Text units expose their content; online units expose their description and source metadata; attachment/video units expose their description and file/video metadata. "
             + "A blank attachment/video description means there is no extractable learning text. Exercise-backed lecture units are not supported here; inspect their exercise instead.")
     public String getLectureUnitContent(@ToolParam(description = "id of the lecture unit whose content should be extracted") Long lectureUnitId, ToolContext toolContext) {
+        markWorkerToolActivity(toolContext);
         Long courseId = courseIdFromContext(toolContext);
         if (courseId == null) {
             return missingCourseContextError(objectMapper);
@@ -202,7 +203,8 @@ public class OrchestratorReadToolsService {
             return errorJson(objectMapper, "Lecture unit " + lectureUnitId + " is not a readable lecture unit in the current course.");
         }
         try {
-            ExtractedContentDTO extracted = contentExtractionService.extractContent(lectureUnit, false);
+            ExtractedContentDTO extracted = AtlasToolCallBudget.content(toolContext, "lectureUnit:" + lectureUnitId,
+                    () -> contentExtractionService.extractContent(lectureUnit, false));
             String safeTitle = CompetencyOrchestrationService.sanitizeForPrompt(extracted.title(), MAX_EXERCISE_TITLE_LENGTH);
             String safeText = CompetencyOrchestrationService.sanitizeForPrompt(extracted.extractedLearningText(), MAX_EXERCISE_CONTENT_LENGTH);
             markWorkerRead(toolContext);

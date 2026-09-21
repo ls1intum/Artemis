@@ -135,6 +135,7 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
             WHERE lu.id = :lectureUnitId
             """)
     Optional<LectureUnit> findWithLectureById(@Param("lectureUnitId") long lectureUnitId);
+
     default LectureUnit findByIdWithCompletedUsersElseThrow(long lectureUnitId) {
         return getValueElseThrow(findByIdWithCompletedUsers(lectureUnitId), lectureUnitId);
     }
