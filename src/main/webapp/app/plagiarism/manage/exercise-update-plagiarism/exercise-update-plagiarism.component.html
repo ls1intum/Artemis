@@ -55,9 +55,11 @@
                         formControlName="similarityThreshold"
                         required
                     />
-                    @if (form.get('similarityThreshold')?.hasError('notInteger') && form.get('similarityThreshold')?.touched) {
-                        <small class="form-text text-danger" jhiTranslate="artemisApp.plagiarism.validation.mustBeInteger"></small>
-                    }
+                    <div class="validation-slot">
+                        @if (form.get('similarityThreshold')?.hasError('notInteger') && form.get('similarityThreshold')?.touched) {
+                            <small class="form-text text-danger" jhiTranslate="artemisApp.plagiarism.validation.mustBeInteger"></small>
+                        }
+                    </div>
                 </div>
             </div>
 
@@ -79,9 +81,11 @@
                         formControlName="minimumScore"
                         required
                     />
-                    @if (form.get('minimumScore')?.hasError('notInteger') && form.get('minimumScore')?.touched) {
-                        <small class="form-text text-danger" jhiTranslate="artemisApp.plagiarism.validation.mustBeInteger"></small>
-                    }
+                    <div class="validation-slot">
+                        @if (form.get('minimumScore')?.hasError('notInteger') && form.get('minimumScore')?.touched) {
+                            <small class="form-text text-danger" jhiTranslate="artemisApp.plagiarism.validation.mustBeInteger"></small>
+                        }
+                    </div>
                 </div>
             </div>
 
@@ -102,9 +106,11 @@
                         formControlName="minimumSize"
                         required
                     />
-                    @if (form.get('minimumSize')?.hasError('notInteger') && form.get('minimumSize')?.touched) {
-                        <small class="form-text text-danger" jhiTranslate="artemisApp.plagiarism.validation.mustBeInteger"></small>
-                    }
+                    <div class="validation-slot">
+                        @if (form.get('minimumSize')?.hasError('notInteger') && form.get('minimumSize')?.touched) {
+                            <small class="form-text text-danger" jhiTranslate="artemisApp.plagiarism.validation.mustBeInteger"></small>
+                        }
+                    </div>
                 </div>
             </div>
 
@@ -129,12 +135,14 @@
                         formControlName="continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod"
                         required
                     />
-                    @if (
-                        form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.hasError('notInteger') &&
-                        form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.touched
-                    ) {
-                        <small class="form-text text-danger" jhiTranslate="artemisApp.plagiarism.validation.mustBeInteger"></small>
-                    }
+                    <div class="validation-slot">
+                        @if (
+                            form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.hasError('notInteger') &&
+                            form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.touched
+                        ) {
+                            <small class="form-text text-danger" jhiTranslate="artemisApp.plagiarism.validation.mustBeInteger"></small>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
