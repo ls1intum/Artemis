@@ -21,6 +21,7 @@ import org.hibernate.annotations.OnDeleteAction;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 @Entity
@@ -33,11 +34,13 @@ public class UserIdeMapping {
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("userId")
     @JsonIgnore
+    @Parent
     private User user;
 
     @ManyToOne
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "ide_id", nullable = false)
+    @Parent
     private Ide ide;
 
     public UserIdeMapping() {

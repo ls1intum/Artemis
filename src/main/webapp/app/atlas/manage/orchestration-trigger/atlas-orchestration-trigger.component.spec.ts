@@ -10,10 +10,11 @@ import { describe, expect, it } from 'vitest';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
+import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
-import { AppliedActionType, CompetencyOrchestrationStatus } from 'app/atlas/shared/dto/competency-orchestration-dto';
+import { AppliedActionType, CompetencyOrchestrationFailureReason, CompetencyOrchestrationStatus } from 'app/atlas/shared/dto/competency-orchestration-dto';
 import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestration-result-dialog/orchestration-result-dialog.component';
 import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
 
@@ -107,6 +108,40 @@ describe('AtlasOrchestrationTriggerComponent', () => {
         expect(dialog.appliedActions()[0].type).toBe(AppliedActionType.Create);
     });
 
+    it('should show a budget-limited partial summary and retained actions', async () => {
+        const addAlertSpy = vi.spyOn(alertService, 'addAlert');
+        vi.spyOn(apiService, 'runForExercise').mockResolvedValue({
+            status: CompetencyOrchestrationStatus.Partial,
+            failureReason: CompetencyOrchestrationFailureReason.ToolCallLimitExceeded,
+            summary: 'Created Loops; two mappings remain unverified.',
+            appliedActions: [{ type: AppliedActionType.Create, competencyId: 7, competencyTitle: 'Loops', detail: 'Created Loops', justification: 'Teaches loops' }],
+        });
+        await comp.triggerAtlasOrchestrator();
+        fixture.detectChanges();
+        expect(addAlertSpy).toHaveBeenCalledWith({ type: AlertType.WARNING, message: 'Created Loops; two mappings remain unverified.', disableTranslation: true });
+        const dialog = fixture.debugElement.query(By.directive(OrchestrationResultDialogComponent)).componentInstance as OrchestrationResultDialogComponent;
+        expect(dialog.summaryMessage()).toBe('Created Loops; two mappings remain unverified.');
+        expect(dialog.appliedActions()).toHaveLength(1);
+    });
+
+    it('should show the terminal failure summary for HTTP 422 without replaying', async () => {
+        const addAlertSpy = vi.spyOn(alertService, 'addAlert');
+        const run = vi.spyOn(apiService, 'runForExercise').mockRejectedValue(
+            new HttpErrorResponse({
+                status: 422,
+                error: {
+                    status: CompetencyOrchestrationStatus.Failed,
+                    failureReason: CompetencyOrchestrationFailureReason.IncompleteOrchestration,
+                    summary: 'Verification remains incomplete.',
+                },
+            }),
+        );
+        await comp.triggerAtlasOrchestrator();
+        fixture.detectChanges();
+        expect(addAlertSpy).toHaveBeenCalledWith({ type: AlertType.DANGER, message: 'Verification remains incomplete.', disableTranslation: true });
+        expect(run).toHaveBeenCalledTimes(1);
+    });
+
     it('should error when Atlas orchestrator returns FAILED', async () => {
         const addAlertSpy = vi.spyOn(alertService, 'addAlert');
         vi.spyOn(apiService, 'runForExercise').mockRejectedValue(
@@ -189,6 +224,30 @@ describe('AtlasOrchestrationTriggerComponent', () => {
                 // Module off: neither the button nor the result dialog is rendered — hosts need no Atlas-specific guard.
                 expect(localFixture.debugElement.query(By.css('button'))).toBeNull();
                 expect(localFixture.debugElement.query(By.directive(OrchestrationResultDialogComponent))).toBeNull();
+            });
+    });
+
+    it('should hide the trigger when Atlas is active but AtlasLLM is not', () => {
+        TestBed.resetTestingModule();
+        return TestBed.configureTestingModule({
+            imports: [],
+            providers: [
+                MockProvider(AlertService),
+                MockProvider(ProfileService, { isModuleFeatureActive: (feature) => feature === MODULE_FEATURE_ATLAS }),
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                provideTranslateService(),
+            ],
+        })
+            .compileComponents()
+            .then(() => {
+                const localFixture = TestBed.createComponent(AtlasOrchestrationTriggerComponent);
+                localFixture.componentRef.setInput('exercise', exercise);
+                localFixture.detectChanges();
+
+                // The orchestrator endpoint only exists behind AtlasLLM, so competencies alone must not offer the button.
+                expect(localFixture.debugElement.query(By.css('button'))).toBeNull();
             });
     });
 });

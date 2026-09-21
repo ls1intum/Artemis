@@ -345,8 +345,9 @@ public class ProgrammingExerciseResultTestService {
                 userPrefix + "tutor1", AssessmentType.SEMI_AUTOMATIC, true);
 
         List<Feedback> feedback = ParticipationFactory.generateManualFeedback();
-        feedback = feedbackRepository.saveAll(feedback);
+        // Attached before it is written: result_id is not nullable, so a detached insert fails outright.
         programmingSubmission.getFirstResult().addFeedbacks(feedback);
+        feedbackRepository.saveAll(feedback);
         resultRepository.save(programmingSubmission.getFirstResult());
 
         final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
@@ -415,9 +416,10 @@ public class ProgrammingExerciseResultTestService {
 
     // Test
     public void shouldCreateResultOnCustomDefaultBranch(String defaultBranch, BuildResultNotification resultNotification) {
-        programmingExercise.getBuildConfig().setBranch(defaultBranch);
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        var buildConfig = programmingExerciseUtilService.saveBuildConfigIfMissing(programmingExercise);
+        buildConfig.setBranch(defaultBranch);
+        programmingExerciseBuildConfigRepository.save(buildConfig);
         solutionParticipation.setProgrammingExercise(programmingExercise);
         programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
         participationUtilService.addSubmission(solutionParticipation,

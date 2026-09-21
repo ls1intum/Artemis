@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.AutoOrchestrationSummaryDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
  * orchestrator invocation, so the model reasons across all changed exercises at once rather than
  * one LLM call per exercise.
  */
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 @Profile(PROFILE_SCHEDULING)
 @Lazy
 @Component
@@ -151,6 +151,11 @@ public class ContentChangeScheduler {
         }
 
         CompetencyOrchestrationResultDTO.Status status = result == null ? null : result.status();
+        if (result != null && (result.failureReason() == CompetencyOrchestrationResultDTO.FailureReason.TOOL_CALL_LIMIT_EXCEEDED
+                || result.failureReason() == CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION)) {
+            broadcastSummary(courseId, runId, exerciseCount, false);
+            return;
+        }
         switch (status) {
             case IN_PROGRESS -> {
                 // Concurrent course orchestration — requeue the whole batch and let the next tick pick

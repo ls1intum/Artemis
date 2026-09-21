@@ -169,6 +169,45 @@ Do not add a lazy association to an `@EntityGraph` or a `JOIN FETCH` just so tha
 
 Give the configuration its own repository and read it where the decision is made. `CourseConfigurationRepository` and `CourseAthenaConfigRepository` are the pattern: a `findByCourseId`, plus a projection of the fields a hot path actually reads.
 
+#### Which side holds the key
+
+A configuration that must not outlive what it configures holds the **parent's** key, not the other way round. A foreign
+key constrains the row that holds it: with the key on the parent, the database can require that parent's configuration
+to exist, but nothing can require the configuration's parent to exist. Deleting the parent by any route other than the
+application's own cascade then leaves the configuration behind, and the schema has no way to refuse it.
+
+Moving the key has a consequence that decides how the parent maps it. JPA makes whichever side holds the column the
+owner, so the parent becomes the inverse side of the `@OneToOne` - and **an inverse one-to-one cannot be proxied**:
+Hibernate issues a select on every parent read to find out whether the row exists, whether or not the caller looks at
+it. `optional = false` does not change this, and no fetch removes it from a query that reaches the parent
+polymorphically, because the subclass attribute is not on the polymorphic type. Mapping `ProgrammingExercise.buildConfig`
+that way cost one select per exercise on the course dashboard and on git authorization, neither of which reads it.
+
+So the parent does not carry the configuration at all - there is no field, mapped or otherwise. Only the configuration
+knows the relation:
+
+```java
+// ProgrammingExerciseBuildConfig - owns the key, so a deleted exercise takes it along
+@OneToOne(fetch = FetchType.LAZY, optional = false)
+@JoinColumn(name = "exercise_id", nullable = false, unique = true)
+@JsonIgnore
+@Parent
+private ProgrammingExercise programmingExercise;
+```
+
+The database refuses a configuration that belongs to no exercise, and a read that does not want the configuration does
+not pay for it. Everything that needs it reads it at that point -
+`ProgrammingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId)` - or takes it as a
+parameter next to the exercise. A shared primary key (`@MapsId`) would keep the association mapped without the select,
+but it cannot be combined with the generated id that `DomainObject` provides.
+
+The API is unaffected, because responses and request bodies are records rather than entities: the configuration is a
+component of `CreateProgrammingExerciseDTO`, `UpdateProgrammingExerciseDTO`, `ImportProgrammingExerciseRequestDTO` and
+`ProgrammingExerciseResponseDTO`, and the endpoints that carry it pass it to the mapper explicitly. An endpoint whose
+client does not read the configuration leaves it out instead of spending a query on it.
+
+Writing follows the key as well: the parent is saved first, then the configuration that names it.
+
 #### Turning an existing association lazy
 
 `open-in-view` is disabled, so the persistence context is already closed when a response is serialized. An association the query did not fetch reads as **absent** - which surfaces either as a `LazyInitializationException` or, where the getter guards with `Hibernate.isInitialized`, as a silently wrong value.
@@ -180,6 +219,11 @@ Making `Course.athenaConfig` lazy was the second kind: its getters answer `false
 A relationship is a reference from one object to another. In a relational database relationships are defined through foreign keys. The source row contains the primary key of the target row to define the relationship (and sometimes the inverse). A query must be performed to read the target objects of the relationship using the foreign key and primary key information. If there is a relationship to a collection of other objects, a `Collection` or `array` type is used to hold the contents of the relationship. In a relational database, collection relations are either defined by the target objects having a foreign key back to the source object's primary key, or by having an intermediate join table to store the relationship (containing both objects' primary keys).
 
 In this section, we depict common entity relationships we use in Artemis and show some code snippets.
+
+Which relationship an entity *belongs to*, and whether the database guarantees it, is recorded per
+entity in [Entity Ownership](/developer/guidelines/entity-ownership). Read it before adding an
+entity: a nullable owning foreign key is how a row ends up unreachable but undeleted, which also
+puts it outside every data privacy cleanup.
 
 ### OneToOne
 
