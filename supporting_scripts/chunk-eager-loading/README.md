@@ -10,15 +10,22 @@ instead of loading it on demand.
 1. Build with `statsJson: true` (an `@angular/build:application` option) to get an esbuild
    metafile — a module → chunk map where every dependency edge is tagged `import-statement`
    (static/eager), `dynamic-import` (lazy), or `url-token` (asset reference).
-2. `analyze_eager_chunks.mjs` computes, for a curated list of route-entry components, the
-   **eager set**: everything reachable from that route's own chunk by following only static
-   edges. That's exactly what downloads the instant the route's chunk loads, regardless of
-   whether the user ever interacts further.
-3. `diff_eager_chunks.mjs` compares a fresh eager-set report against a baseline report. This is a
-   full delta report, not a pass/fail gate: **every** route is shown, classified `regressed` (⚠️),
+2. `discover_route_entries.mjs` scans every `*.route.ts` file under `src/main/webapp/app` and
+   extracts every `loadComponent: () => import(...)` target — i.e. every route Angular itself
+   lazy-loads — deduped by source file (the same detail component reused across several routes
+   only counts once). No hand-maintained list: a new lazy route is picked up automatically the
+   next time this runs, currently around 177 routes.
+3. `analyze_eager_chunks.mjs` computes, for each discovered route component, the **eager set**:
+   everything reachable from that route's own chunk by following only static edges. That's exactly
+   what downloads the instant the route's chunk loads, regardless of whether the user ever
+   interacts further.
+4. `diff_eager_chunks.mjs` compares a fresh eager-set report against a baseline report. This is a
+   full delta report, not a pass/fail gate: **every** route is classified `regressed` (⚠️),
    `improved` (✅), or `unchanged` (➖) based on the same threshold applied in both directions, with
    a chunk-level drill-down for both regressions (what newly became eager) and improvements (what's
-   no longer eager) — not just the routes that got worse.
+   no longer eager). Only non-`unchanged` routes get a table row — with ~177 routes, tabulating
+   every unchanged one would bury the ones that actually need a look; `unchanged` routes are still
+   counted in the summary line, just not listed individually.
 
 No browser or live server is needed — this is a pure build-time static analysis.
 
@@ -71,10 +78,17 @@ Exits with code 1 if any route is classified `regressed` (0 otherwise, regardles
 embeds `meta: { sourceCommit, sourceBranch }` (from `GITHUB_SHA`/`GITHUB_REF_NAME` in CI, or
 `git rev-parse` locally), since any report might later be used as someone else's baseline.
 
-## Adding more routes
+## How routes are named, and what's excluded
 
-Extend the `ROUTE_ENTRIES` map at the top of `analyze_eager_chunks.mjs` with `routeName: sourceFilePath`.
-Currently covers `course-overview` and `course-management-container` (the two components #13027 fixed).
+A route's key is its component's filename minus `.component.ts` (e.g. `course-overview.component.ts`
+→ `course-overview`), matching the names used since this guard's first version. Two unrelated
+components that happen to share a filename are disambiguated with their parent directory name;
+run `node discover_route_entries.mjs` on its own to print the current `{ slug: sourcePath }` map.
+
+Only `loadComponent` targets are discovered, not `loadChildren` (a handful of routes lazy-load a
+child *routes* module rather than a single component) — that's a different chunk shape than the
+"one component, one chunk" model the rest of this guard's analysis assumes, and out of scope for
+the bug class this guards against (see `discover_route_entries.mjs`'s own header comment).
 
 ## Known limitations
 

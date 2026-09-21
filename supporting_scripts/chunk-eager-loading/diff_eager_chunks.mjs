@@ -6,12 +6,14 @@
  * committed baseline file: with as many PRs merging to develop daily as this repo has, a stale
  * committed snapshot is worse than none -- see README.md.
  *
- * Every route is reported, not just the ones that got worse -- this is a delta report, not a
+ * Every route is classified, not just the ones that got worse -- this is a delta report, not a
  * pass/fail gate. A route is classified 'regressed' if EITHER eager chunk count grows by more
  * than CHUNK_COUNT_THRESHOLD, or eager bytes grow by more than BYTES_THRESHOLD_PCT (relative);
  * 'improved' on the same thresholds in the opposite direction; otherwise 'unchanged'. The
- * thresholds exist to guard against small/noisy diffs at either end, not to hide anything -- the
- * full numbers are always in the table regardless of classification.
+ * thresholds exist to guard against small/noisy diffs at either end, not to hide anything -- an
+ * 'unchanged' route is only rolled into the summary count, though, not given its own table row:
+ * with routes now auto-discovered (in the hundreds, not a hand-picked handful), a full table would
+ * bury the ones that actually need a look under a wall of routes nothing happened to.
  *
  * Usage:
  *   node diff_eager_chunks.mjs <fresh-report.json> --baseline <baseline-report.json> [--out <report.md>]
@@ -105,27 +107,38 @@ const STATUS_MARKER = { regressed: '⚠️', improved: '✅', unchanged: '➖' }
 function toMarkdown(diffs, meta) {
     const regressed = diffs.filter((d) => d.status === 'regressed');
     const improved = diffs.filter((d) => d.status === 'improved');
+    const unchanged = diffs.filter((d) => d.status === 'unchanged');
+    const skipped = diffs.filter((d) => d.skipped);
     const lines = [];
     lines.push('### Client Eager-Chunk Loading Report');
 
     const summary = [];
     if (regressed.length) summary.push(`⚠️ ${regressed.length} regression(s)`);
     if (improved.length) summary.push(`✅ ${improved.length} improvement(s)`);
-    lines.push(summary.length ? summary.join(', ') + '.' : '➖ No meaningful change on any route.');
+    if (unchanged.length) summary.push(`➖ ${unchanged.length} unchanged`);
+    if (skipped.length) summary.push(`${skipped.length} skipped`);
+    lines.push(summary.length ? summary.join(', ') + ` (of ${diffs.length} routes).` : '➖ No meaningful change on any route.');
 
     lines.push('');
     lines.push(`_Baseline: \`${meta.sourceBranch}\` @ \`${meta.sourceCommit}\`._`);
-    lines.push('');
-    lines.push('| | Route | Eager chunks | Eager size | Δ chunks | Δ size |');
-    lines.push('|---|---|---|---|---|---|');
-    for (const d of diffs) {
-        if (d.skipped) {
-            lines.push(`| | ${d.route} | - | - | _${d.skipped}_ | - |`);
-            continue;
+
+    // Routes now number in the hundreds (auto-discovered, not a hand-curated handful) -- listing
+    // every unchanged route in the table would bury the routes that actually need a look. Only
+    // regressed/improved/skipped rows earn a table row; unchanged ones are just a count above.
+    const tableWorthy = diffs.filter((d) => d.status !== 'unchanged');
+    if (tableWorthy.length) {
+        lines.push('');
+        lines.push('| | Route | Eager chunks | Eager size | Δ chunks | Δ size |');
+        lines.push('|---|---|---|---|---|---|');
+        for (const d of tableWorthy) {
+            if (d.skipped) {
+                lines.push(`| | ${d.route} | - | - | _${d.skipped}_ | - |`);
+                continue;
+            }
+            lines.push(
+                `| ${STATUS_MARKER[d.status]} | ${d.route} | ${d.fresh.eagerChunkCount} | ${fmtKB(d.fresh.eagerBytes)} | ${d.chunkCountDelta >= 0 ? '+' : ''}${d.chunkCountDelta} | ${fmtKB(d.bytesDelta)} (${fmtPct(d.bytesDeltaPct)}) |`,
+            );
         }
-        lines.push(
-            `| ${STATUS_MARKER[d.status]} | ${d.route} | ${d.fresh.eagerChunkCount} | ${fmtKB(d.fresh.eagerBytes)} | ${d.chunkCountDelta >= 0 ? '+' : ''}${d.chunkCountDelta} | ${fmtKB(d.bytesDelta)} (${fmtPct(d.bytesDeltaPct)}) |`,
-        );
     }
 
     for (const d of regressed) {

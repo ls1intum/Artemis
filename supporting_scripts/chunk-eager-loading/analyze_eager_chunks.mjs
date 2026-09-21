@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Computes, for a curated list of route-entry components, the set of output chunks that
+ * Computes, for every lazy-loaded route component discovered by discover_route_entries.mjs, the set of output chunks that
  * download EAGERLY the instant that route's own chunk loads -- i.e. everything reachable by
  * following only static ("import-statement") edges in the esbuild build graph, stopping at
  * "dynamic-import" (Angular loadComponent()/import()) and "url-token" (asset reference) edges.
@@ -19,13 +19,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
-
-// Route name -> source entry file (as it appears in outputs[x].entryPoint), relative to repo root.
-// Extend this list as more routes are worth guarding.
-const ROUTE_ENTRIES = {
-    'course-overview': 'src/main/webapp/app/course/overview/course-overview/course-overview.component.ts',
-    'course-management-container': 'src/main/webapp/app/course/manage/course-management-container/course-management-container.component.ts',
-};
+import { discoverRouteEntries } from './discover_route_entries.mjs';
 
 const EAGER_KIND = 'import-statement';
 
@@ -161,7 +155,9 @@ function main() {
     }
 
     const metafile = loadMetafile(statsPath);
-    const routes = Object.entries(ROUTE_ENTRIES).map(([routeName, entrySourcePath]) => analyzeRoute(metafile.outputs, routeName, entrySourcePath));
+    const routeEntries = discoverRouteEntries();
+    console.error(`Analyzing ${Object.keys(routeEntries).length} auto-discovered lazy-loaded routes.`);
+    const routes = Object.entries(routeEntries).map(([routeName, entrySourcePath]) => analyzeRoute(metafile.outputs, routeName, entrySourcePath));
 
     const report = {
         generatedAt: new Date().toISOString(),
