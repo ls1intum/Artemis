@@ -227,13 +227,18 @@ public class PyrisStatusUpdateService {
                         clearDraft ? null : statusUpdate.partialResult(), statusUpdate.partialSeq(), clearDraft));
             }
             else {
-                irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC, new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), true, null, null));
+                // No streamed text yet: forward the stage name (and, once found, the distinct course names) so
+                // the client can show what is actually happening instead of one static "thinking" message for
+                // the whole wait. Both are null/empty for an older Pyris that never sends them, which the client
+                // already falls back on its own generic message for.
+                irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC,
+                        IrisGlobalSearchAnswerWebsocketDTO.thinking(job.jobId(), statusUpdate.stage(), statusUpdate.stageSources()));
             }
             pyrisJobService.updateJob(job);
         }
         else if (isTerminal) {
             irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC, new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), false, statusUpdate.answer(),
-                    statusUpdate.sources(), null, null, statusUpdate.entitySources(), false, runState == PyrisRunState.FAILED));
+                    statusUpdate.sources(), null, null, statusUpdate.entitySources(), false, runState == PyrisRunState.FAILED, null, null));
             pyrisJobService.removeJob(job);
         }
         else {

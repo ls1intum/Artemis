@@ -17,7 +17,7 @@
             <span class="iris-card-label fw-bold">Iris</span>
             <span class="iris-ai-badge d-inline-flex align-items-center rounded-pill fw-bold">{{ 'global.search.irisAiBadge' | artemisTranslate }}</span>
             @if (phase() === 'thinking') {
-                <span class="iris-strip-status text-truncate" role="status" data-testid="iris-strip-status">{{ 'global.search.irisAnswerThinking' | artemisTranslate }}</span>
+                <span class="iris-strip-status text-truncate" role="status" data-testid="iris-strip-status">{{ stageStatusKey() | artemisTranslate: stageStatusParams() }}</span>
             }
         </div>
 

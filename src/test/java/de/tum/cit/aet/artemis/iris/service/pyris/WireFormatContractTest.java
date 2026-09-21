@@ -9,6 +9,8 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitWebhookDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
 
 /**
@@ -18,6 +20,8 @@ import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
  * <li>Inbound status update reads {@code error.code}.</li>
  * <li>Inbound ingestion status reads optional {@code displayPageNumbers} from its dedicated field.</li>
  * <li>Inbound status update silently ignores camelCase {@code errorCode} (unknown field), matching Spring Boot's default mapper config.</li>
+ * <li>Inbound global search status update reads the optional {@code stage}/{@code stageSources} fields, and
+ * tolerates their absence (an older Pyris that never sends them) without error.</li>
  * </ul>
  */
 class WireFormatContractTest {
@@ -62,5 +66,28 @@ class WireFormatContractTest {
         // if Pyris accidentally sends "errorCode" instead of "error": {"code": ...}, we will silently see null.
         var dto = mapper.readValue(wire, PyrisLectureIngestionStatusUpdateDTO.class);
         assertThat(dto.error()).isNull();
+    }
+
+    @Test
+    void inboundGlobalSearchStatusUpdateReadsStage() throws Exception {
+        String json = "{\"runState\":\"RUNNING\",\"stage\":\"searching\"}";
+        var dto = mapper.readValue(json, PyrisGlobalSearchAnswerStatusUpdateDTO.class);
+        assertThat(dto.runState()).isEqualTo(PyrisRunState.RUNNING);
+        assertThat(dto.stage()).isEqualTo("searching");
+    }
+
+    @Test
+    void inboundGlobalSearchStatusUpdateToleratesAMissingStageFromAnOlderPyris() throws Exception {
+        String json = "{\"runState\":\"RUNNING\"}";
+        var dto = mapper.readValue(json, PyrisGlobalSearchAnswerStatusUpdateDTO.class);
+        assertThat(dto.stage()).isNull();
+        assertThat(dto.stageSources()).isNull();
+    }
+
+    @Test
+    void inboundGlobalSearchStatusUpdateReadsStageSources() throws Exception {
+        String json = "{\"runState\":\"RUNNING\",\"stage\":\"generating\",\"stageSources\":[\"Advanced Algorithms\",\"Software Engineering\"]}";
+        var dto = mapper.readValue(json, PyrisGlobalSearchAnswerStatusUpdateDTO.class);
+        assertThat(dto.stageSources()).containsExactly("Advanced Algorithms", "Software Engineering");
     }
 }

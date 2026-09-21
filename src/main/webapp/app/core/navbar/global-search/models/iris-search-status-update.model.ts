@@ -23,4 +23,13 @@ export interface IrisSearchStatusUpdate {
     clearDraft?: boolean;
     /** A genuine Pyris-side failure, distinct from a successful run with no relevant answer. */
     failed?: boolean;
+    /**
+     * Short stage name ("searching", "generating") sent alongside a thinking update with no
+     * `partialResult` yet, so the strip status can show what is actually happening instead of one
+     * generic message for the whole wait. Undefined for an older Iris that never sends it, or once
+     * the answer starts streaming — the arriving text is its own progress signal by then.
+     */
+    stage?: string;
+    /** Distinct course names found so far, in ranked order — empty before retrieval finishes, populated alongside `stage: 'generating'`. */
+    stageSources?: string[];
 }

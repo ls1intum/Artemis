@@ -31,14 +31,31 @@ public record IrisGlobalSearchAnswerWebsocketDTO(String runId, boolean isThinkin
         boolean clearDraft,
         // Distinguishes a genuine Pyris-side failure from a successful run with no relevant answer: both otherwise
         // produce isThinking=false, answer=null, which the client would show as "nothing relevant" with no retry.
-        boolean failed) {
+        boolean failed,
+        // Short stage name ("searching", "ranking", "found", "generating") the client shows in place of its generic "thinking" message.
+        // Only ever set on a thinking update with no partialResult yet — once the answer starts streaming, the
+        // arriving text is its own progress signal.
+        @Nullable String stage,
+        // Distinct course names found so far, in ranked order — empty before retrieval finishes, populated once the
+        // "generating" stage fires, so the client can say what it actually found instead of a generic message.
+        @Nullable List<String> stageSources) {
 
     public IrisGlobalSearchAnswerWebsocketDTO(String runId, boolean isThinking, @Nullable String answer, @Nullable List<PyrisLectureSearchResultDTO> sources) {
-        this(runId, isThinking, answer, sources, null, null, null, false, false);
+        this(runId, isThinking, answer, sources, null, null, null, false, false, null, null);
     }
 
     public IrisGlobalSearchAnswerWebsocketDTO(String runId, boolean isThinking, @Nullable String answer, @Nullable List<PyrisLectureSearchResultDTO> sources,
             @Nullable String partialResult, @Nullable Integer partialSeq, boolean clearDraft) {
-        this(runId, isThinking, answer, sources, partialResult, partialSeq, null, clearDraft, false);
+        this(runId, isThinking, answer, sources, partialResult, partialSeq, null, clearDraft, false, null, null);
+    }
+
+    /**
+     * A thinking update with a stage name (and the course names found so far) and nothing else yet — sent as
+     * retrieval/generation cross a boundary. A constructor overload here would clash with the 4-arg
+     * (runId, isThinking, answer, sources) one above: List&lt;String&gt; and List&lt;PyrisLectureSearchResultDTO&gt;
+     * erase to the same raw List type, so a static factory is used instead.
+     */
+    public static IrisGlobalSearchAnswerWebsocketDTO thinking(String runId, @Nullable String stage, @Nullable List<String> stageSources) {
+        return new IrisGlobalSearchAnswerWebsocketDTO(runId, true, null, null, null, null, null, false, false, stage, stageSources);
     }
 }

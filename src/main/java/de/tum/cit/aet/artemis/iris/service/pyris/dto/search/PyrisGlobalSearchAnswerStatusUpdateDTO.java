@@ -16,22 +16,39 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
  * <p>
  * Pyris sends multiple webhooks per request:
  * <ol>
- * <li>Thinking: {@code runState == RUNNING}, {@code answer == null}</li>
+ * <li>Thinking: {@code runState == RUNNING}, {@code answer == null}, optionally {@code stage}</li>
  * <li>Streaming drafts: {@code runState == RUNNING} with {@code partialResult}/{@code partialSeq} while the LLM generates</li>
  * <li>Result: terminal {@code runState}, {@code answer} is the LLM response (or null for nav queries)</li>
  * </ol>
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState runState, @Nullable PyrisStatusErrorDTO error, @Nullable String answer,
-        @Nullable List<PyrisLectureSearchResultDTO> sources, @Nullable String partialResult, @Nullable Integer partialSeq, @Nullable List<PyrisEntitySourceDTO> entitySources) {
+        @Nullable List<PyrisLectureSearchResultDTO> sources, @Nullable String partialResult, @Nullable Integer partialSeq, @Nullable List<PyrisEntitySourceDTO> entitySources,
+        // Short stage name ("searching", "ranking", "found", "generating") sent alongside a thinking update with no partialResult yet.
+        // Optional: an older Pyris that never sends it deserializes to null here, same as any other missing field.
+        @Nullable String stage,
+        // Distinct course names found so far, in ranked order — empty before retrieval finishes, populated once the
+        // "generating" stage fires. Optional, same as stage.
+        @Nullable List<String> stageSources) {
 
     public PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState runState, @Nullable PyrisStatusErrorDTO error, @Nullable String answer,
             @Nullable List<PyrisLectureSearchResultDTO> sources) {
-        this(runState, error, answer, sources, null, null, null);
+        this(runState, error, answer, sources, null, null, null, null, null);
     }
 
     public PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState runState, @Nullable PyrisStatusErrorDTO error, @Nullable String answer,
             @Nullable List<PyrisLectureSearchResultDTO> sources, @Nullable String partialResult, @Nullable Integer partialSeq) {
-        this(runState, error, answer, sources, partialResult, partialSeq, null);
+        this(runState, error, answer, sources, partialResult, partialSeq, null, null, null);
+    }
+
+    public PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState runState, @Nullable PyrisStatusErrorDTO error, @Nullable String answer,
+            @Nullable List<PyrisLectureSearchResultDTO> sources, @Nullable String partialResult, @Nullable Integer partialSeq, @Nullable List<PyrisEntitySourceDTO> entitySources) {
+        this(runState, error, answer, sources, partialResult, partialSeq, entitySources, null, null);
+    }
+
+    public PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState runState, @Nullable PyrisStatusErrorDTO error, @Nullable String answer,
+            @Nullable List<PyrisLectureSearchResultDTO> sources, @Nullable String partialResult, @Nullable Integer partialSeq, @Nullable List<PyrisEntitySourceDTO> entitySources,
+            @Nullable String stage) {
+        this(runState, error, answer, sources, partialResult, partialSeq, entitySources, stage, null);
     }
 }

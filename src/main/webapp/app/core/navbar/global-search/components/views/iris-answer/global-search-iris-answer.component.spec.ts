@@ -160,6 +160,104 @@ describe('GlobalSearchIrisAnswerComponent', () => {
         expect(thinkingWrapper).toBeTruthy();
     });
 
+    it('should fall back to the generic thinking message when no stage has arrived yet', () => {
+        // @ts-expect-error
+        component.phase.set('thinking');
+        fixture.detectChanges();
+
+        const status = fixture.nativeElement.querySelector('[data-testid="iris-strip-status"]');
+        expect(status.textContent).toContain('global.search.irisAnswerThinking');
+    });
+
+    it('should show the searching stage message once the server reports that stage', () => {
+        // @ts-expect-error
+        component.phase.set('thinking');
+        // @ts-expect-error — accessing private signal for testing
+        component.stage.set('searching');
+        fixture.detectChanges();
+
+        const status = fixture.nativeElement.querySelector('[data-testid="iris-strip-status"]');
+        expect(status.textContent).toContain('global.search.irisAnswerStageSearching');
+    });
+
+    it('should show the generating stage message once the server reports that stage', () => {
+        // @ts-expect-error
+        component.phase.set('thinking');
+        // @ts-expect-error
+        component.stage.set('generating');
+        fixture.detectChanges();
+
+        const status = fixture.nativeElement.querySelector('[data-testid="iris-strip-status"]');
+        expect(status.textContent).toContain('global.search.irisAnswerStageGenerating');
+    });
+
+    it('should fall back to the searching message for a found stage with no sources yet', () => {
+        // Should not happen in practice (the pipeline only fires 'found' once retrieval has
+        // something), but a defensively-empty list must not render an empty/broken message.
+        // @ts-expect-error
+        component.phase.set('thinking');
+        // @ts-expect-error
+        component.stage.set('found');
+        fixture.detectChanges();
+
+        expect(component['stageStatusKey']()).toBe('global.search.irisAnswerStageSearching');
+        expect(component['stageStatusParams']()).toEqual({});
+    });
+
+    it('should name the courses found when 1-2 were found', () => {
+        // @ts-expect-error
+        component.phase.set('thinking');
+        // @ts-expect-error
+        component.stage.set('found');
+        // @ts-expect-error — accessing private signal for testing
+        component.stageSources.set(['Advanced Algorithms', 'Software Engineering']);
+        fixture.detectChanges();
+
+        expect(component['stageStatusKey']()).toBe('global.search.irisAnswerStageFoundSources');
+        expect(component['stageStatusParams']()).toEqual({ summary: 'Advanced Algorithms, Software Engineering' });
+    });
+
+    it('should name the first two courses and count the rest when more than 2 were found', () => {
+        // @ts-expect-error
+        component.phase.set('thinking');
+        // @ts-expect-error
+        component.stage.set('found');
+        // @ts-expect-error
+        component.stageSources.set(['Advanced Algorithms', 'Software Engineering', 'Databases', 'Networks']);
+        fixture.detectChanges();
+
+        expect(component['stageStatusKey']()).toBe('global.search.irisAnswerStageFoundSourcesAndMore');
+        expect(component['stageStatusParams']()).toEqual({ summary: 'Advanced Algorithms, Software Engineering', extra: 2 });
+    });
+
+    it('should show the plain generating message even when course names are still set from a prior found stage', () => {
+        // 'generating' never names sources itself — 'found' already said what was found, so
+        // repeating it here would read as a mismatch between the word "generating" and course
+        // names, which is exactly the phrasing a live run was reported not to like.
+        // @ts-expect-error
+        component.phase.set('thinking');
+        // @ts-expect-error
+        component.stage.set('generating');
+        // @ts-expect-error
+        component.stageSources.set(['Advanced Algorithms', 'Software Engineering']);
+        fixture.detectChanges();
+
+        expect(component['stageStatusKey']()).toBe('global.search.irisAnswerStageGenerating');
+    });
+
+    it('should fall back to the generic message for an unrecognized stage value', () => {
+        // Forward-compatible: a future stage name this client does not know about yet must
+        // still show something readable rather than a raw, untranslated key or blank text.
+        // @ts-expect-error
+        component.phase.set('thinking');
+        // @ts-expect-error
+        component.stage.set('reranking');
+        fixture.detectChanges();
+
+        const status = fixture.nativeElement.querySelector('[data-testid="iris-strip-status"]');
+        expect(status.textContent).toContain('global.search.irisAnswerThinking');
+    });
+
     it('should not render the strip status once an answer exists', () => {
         // @ts-expect-error
         component.phase.set('answering');
@@ -438,6 +536,112 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             fixture.detectChanges();
 
             expect(component['phase']()).toBe('thinking');
+        });
+
+        it('should read the stage from a thinking update', () => {
+            fixture.componentRef.setInput('searchQuery', 'what are signals?');
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+
+            askSubject.next({ runId: 'run-1', isThinking: true, stage: 'searching' });
+            fixture.detectChanges();
+
+            expect(component['stage']()).toBe('searching');
+            expect(component['stageStatusKey']()).toBe('global.search.irisAnswerStageSearching');
+        });
+
+        it('should read the course names from a found-stage update', () => {
+            fixture.componentRef.setInput('searchQuery', 'what are signals?');
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+
+            askSubject.next({ runId: 'run-1', isThinking: true, stage: 'found', stageSources: ['Advanced Algorithms'] });
+            fixture.detectChanges();
+
+            expect(component['stageSources']()).toEqual(['Advanced Algorithms']);
+            expect(component['stageStatusKey']()).toBe('global.search.irisAnswerStageFoundSources');
+        });
+
+        it('should show ranking as its own stage', () => {
+            fixture.componentRef.setInput('searchQuery', 'what are signals?');
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+
+            askSubject.next({ runId: 'run-1', isThinking: true, stage: 'ranking' });
+            fixture.detectChanges();
+
+            expect(component['stage']()).toBe('ranking');
+            expect(component['stageStatusKey']()).toBe('global.search.irisAnswerStageRanking');
+        });
+
+        it('should hold a stage on screen for its minimum time before a later one replaces it', () => {
+            // "found" and "generating" can arrive back to back with nothing but a synchronous
+            // check between them server-side — the second must not instantly erase the first.
+            fixture.componentRef.setInput('searchQuery', 'what are signals?');
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+
+            askSubject.next({ runId: 'run-1', isThinking: true, stage: 'found', stageSources: ['Advanced Algorithms'] });
+            fixture.detectChanges();
+            expect(component['stage']()).toBe('found');
+
+            askSubject.next({ runId: 'run-1', isThinking: true, stage: 'generating' });
+            fixture.detectChanges();
+            expect(component['stage']()).toBe('found');
+
+            vi.advanceTimersByTime(700);
+            fixture.detectChanges();
+            expect(component['stage']()).toBe('generating');
+        });
+
+        it('should still show every queued stage even when several arrive faster than the minimum hold time', () => {
+            fixture.componentRef.setInput('searchQuery', 'what are signals?');
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+
+            askSubject.next({ runId: 'run-1', isThinking: true, stage: 'searching' });
+            askSubject.next({ runId: 'run-1', isThinking: true, stage: 'ranking' });
+            askSubject.next({ runId: 'run-1', isThinking: true, stage: 'found', stageSources: ['Advanced Algorithms'] });
+            askSubject.next({ runId: 'run-1', isThinking: true, stage: 'generating' });
+            fixture.detectChanges();
+            expect(component['stage']()).toBe('searching');
+
+            vi.advanceTimersByTime(700);
+            fixture.detectChanges();
+            expect(component['stage']()).toBe('ranking');
+
+            vi.advanceTimersByTime(700);
+            fixture.detectChanges();
+            expect(component['stage']()).toBe('found');
+
+            vi.advanceTimersByTime(700);
+            fixture.detectChanges();
+            expect(component['stage']()).toBe('generating');
+        });
+
+        it('should drop a queued or held stage once real streamed text arrives', () => {
+            fixture.componentRef.setInput('searchQuery', 'what are signals?');
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+
+            askSubject.next({ runId: 'run-1', isThinking: true, stage: 'found', stageSources: ['Advanced Algorithms'] });
+            askSubject.next({ runId: 'run-1', isThinking: true, stage: 'generating' });
+            fixture.detectChanges();
+
+            askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'Signals are', partialSeq: 1 });
+            fixture.detectChanges();
+
+            expect(component['phase']()).toBe('answering');
+            // The still-queued "generating" stage must not fire later and do anything observable.
+            vi.advanceTimersByTime(700);
+            fixture.detectChanges();
+            expect(component['phase']()).toBe('answering');
         });
 
         it('should set irisResult with the answer when the final update is received', () => {
@@ -923,6 +1127,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
         it('folds the no-answer card away once it has been read', () => {
             startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: true });
             askSubject.next({ runId: 'run-1', isThinking: false });
             fixture.detectChanges();
             expect(component['isDismissed']()).toBe(false);
@@ -932,6 +1137,22 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
             expect(component['isDismissed']()).toBe(true);
             expect(fixture.nativeElement.querySelector('.iris-inline-answer').classList).toContain('is-dismissed');
+        });
+
+        it('shows nothing at all for a keyword search Iris never attempted to answer', () => {
+            // No isThinking:true ever arrives here — that only happens on the TRIGGER_AI path,
+            // sent before the pipeline even starts. A terminal update with no answer and no prior
+            // thinking update means the server classified this as a plain navigational/keyword
+            // query (SKIP_AI) and never asked Iris to judge it at all. Observed live: "lecture 2"
+            // showed "Iris looked, but nothing found is relevant enough" — false, since Iris never
+            // looked — for every such keyword search.
+            startQuery();
+            askSubject.next({ runId: 'run-1', isThinking: false });
+            fixture.detectChanges();
+
+            expect(component['phase']()).toBe('idle');
+            expect(fixture.nativeElement.querySelector('[data-testid="iris-no-answer"]')).toBeNull();
+            expect(fixture.nativeElement.querySelector('.iris-inline-answer')).toBeNull();
         });
 
         it('clears a pending reveal timer when the stream fails after a partial already arrived', () => {

@@ -46,6 +46,17 @@ const PARTIAL_CITATION_MARKER_BOUND = 20;
 const NO_ANSWER_HOLD_MS = 5400;
 
 /**
+ * Minimum time a stage message stays on screen before a later one is allowed to replace it.
+ * The pipeline now has four real stages (searching, ranking, found, generating), but some
+ * pairs of them are separated by little to no real work — "found" in particular is followed
+ * almost immediately by "generating", since the only thing between them is a synchronous
+ * check. Without this floor, a real, already-computed status update like "Found material in
+ * X" can be overwritten before the reader has had a chance to read it. This does not invent
+ * any stage or fake any progress — it only paces the DISPLAY of stages that already happened.
+ */
+const MIN_STAGE_VISIBLE_MS = 650;
+
+/**
  * Reveal delays for the streamed answer, in milliseconds, chosen from how many characters are still
  * waiting to be shown.
  *
@@ -109,6 +120,45 @@ export class GlobalSearchIrisAnswerComponent {
     private readonly retryAttempt = signal(0);
     /** True once the "nothing relevant" notice has had its time and the card has folded away. */
     protected readonly isDismissed = signal(false);
+    /** Short stage name currently displayed ("searching", "ranking", "found", "generating"); undefined once streaming starts or for an older Iris that never sends one. Held behind {@link applyStage}'s queue — not set directly from a server update. */
+    private readonly stage = signal<string | undefined>(undefined);
+    /** Distinct course names found so far; empty until `stage: 'found'` fires, and again once `stage: 'generating'` follows it. */
+    private readonly stageSources = signal<string[]>([]);
+    /** How many course names the strip status names explicitly before folding the rest into "+N more". */
+    private readonly MAX_STAGE_SOURCES_NAMED = 2;
+    /**
+     * i18n key for the strip status: a stage-specific message when the server sent a recognized
+     * stage, the generic one otherwise. 'found' is the one stage that names sources — a reader
+     * asked for a checkpoint partway through retrieval, not "generating…" also naming courses,
+     * which read as a mismatch between what the word "generating" describes and what it said.
+     */
+    protected readonly stageStatusKey = computed(() => {
+        const sources = this.stageSources();
+        switch (this.stage()) {
+            case 'searching':
+                return 'global.search.irisAnswerStageSearching';
+            case 'ranking':
+                return 'global.search.irisAnswerStageRanking';
+            case 'found':
+                if (sources.length > this.MAX_STAGE_SOURCES_NAMED) {
+                    return 'global.search.irisAnswerStageFoundSourcesAndMore';
+                }
+                return sources.length > 0 ? 'global.search.irisAnswerStageFoundSources' : 'global.search.irisAnswerStageSearching';
+            case 'generating':
+                return 'global.search.irisAnswerStageGenerating';
+            default:
+                return 'global.search.irisAnswerThinking';
+        }
+    });
+    /** Interpolation params for {@link stageStatusKey}: the named course(s) and, once there are more, how many. */
+    protected readonly stageStatusParams = computed(() => {
+        const sources = this.stageSources();
+        if (sources.length === 0) {
+            return {};
+        }
+        const summary = sources.slice(0, this.MAX_STAGE_SOURCES_NAMED).join(', ');
+        return sources.length > this.MAX_STAGE_SOURCES_NAMED ? { summary, extra: sources.length - this.MAX_STAGE_SOURCES_NAMED } : { summary };
+    });
 
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly INITIAL_VISIBLE_SOURCE_COUNT = 2;
@@ -140,6 +190,9 @@ export class GlobalSearchIrisAnswerComponent {
     private dismissTimeout?: ReturnType<typeof setTimeout>;
     /** Highest `partialSeq` accepted for the active run; undefined until the first seq-carrying partial. */
     private lastPartialSeq?: number;
+    /** Stage updates not yet shown — {@link pumpStageQueue} shows the next one once the current one has had its minimum time (MIN_STAGE_VISIBLE_MS). */
+    private stageQueue: { stage: string | undefined; sources: string[] }[] = [];
+    private stageTimeout?: ReturnType<typeof setTimeout>;
 
     /** The part of the answer the reader can currently see. */
     protected readonly displayedAnswer = computed(() => {
@@ -321,6 +374,8 @@ export class GlobalSearchIrisAnswerComponent {
         this.streamComplete.set(false);
         this.progressiveReveal.set(false);
         this.isDismissed.set(false);
+        this.stage.set(undefined);
+        this.stageSources.set([]);
         this.activeCitations.set(new Set());
         this.citationPopover.set(undefined);
         this.lastPartialSeq = undefined;
@@ -331,6 +386,42 @@ export class GlobalSearchIrisAnswerComponent {
         clearTimeout(this.dismissTimeout);
         this.revealTimeout = undefined;
         this.dismissTimeout = undefined;
+        this.clearStageQueue();
+    }
+
+    /** Cancels any pending stage timer and drops anything still queued, without touching what is currently displayed. */
+    private clearStageQueue(): void {
+        clearTimeout(this.stageTimeout);
+        this.stageTimeout = undefined;
+        this.stageQueue = [];
+    }
+
+    /** Queues a stage update; {@link pumpStageQueue} shows it once the currently displayed one has had its minimum time. */
+    private applyStage(stage: string | undefined, sources: string[]): void {
+        this.stageQueue.push({ stage, sources });
+        this.pumpStageQueue();
+    }
+
+    /**
+     * Shows the next queued stage immediately if nothing is currently being held on screen —
+     * otherwise leaves it queued; the timer set below calls back once the hold expires. A
+     * queue (rather than a "latest wins" debounce) matters here: "found" and "generating" can
+     * arrive back to back with nothing but a synchronous check between them, so a debounce
+     * would let "generating" cancel "found" before it was ever shown at all. Queuing instead
+     * guarantees every stage gets its full MIN_STAGE_VISIBLE_MS, even one immediately followed
+     * by the next.
+     */
+    private pumpStageQueue(): void {
+        if (this.stageTimeout !== undefined || this.stageQueue.length === 0) {
+            return;
+        }
+        const next = this.stageQueue.shift()!;
+        this.stage.set(next.stage);
+        this.stageSources.set(next.sources);
+        this.stageTimeout = setTimeout(() => {
+            this.stageTimeout = undefined;
+            this.pumpStageQueue();
+        }, MIN_STAGE_VISIBLE_MS);
     }
 
     private onThinkingUpdate(update: IrisSearchStatusUpdate): void {
@@ -347,8 +438,12 @@ export class GlobalSearchIrisAnswerComponent {
             if (this.phase() === 'idle') {
                 this.phase.set('thinking');
             }
+            this.applyStage(update.stage, update.stageSources ?? []);
             return;
         }
+        // Real streamed text is its own, stronger progress signal — any stage still queued or
+        // held for its minimum time is no longer relevant and must not delay showing it.
+        this.clearStageQueue();
         // clearDraft is the provider's retry-clear signal for a stale draft; it carries no text of
         // its own (see IrisGlobalSearchAnswerWebsocketDTO on the server), so an empty string stands in.
         const partialResult = update.clearDraft ? '' : update.partialResult!;
@@ -389,6 +484,9 @@ export class GlobalSearchIrisAnswerComponent {
         if (this.currentRunId() !== undefined && update.runId !== this.currentRunId()) {
             return; // stale response from a superseded pipeline run
         }
+        // The run is over either way; a stage still queued or mid-hold from a non-streamed run
+        // that jumped straight from a stage update to the terminal one must not linger.
+        this.clearStageQueue();
         if (update.failed) {
             // A genuine Pyris-side failure, not a considered "nothing relevant" result — the reader
             // can retry, unlike noAnswer below, which is a settled outcome and auto-dismisses instead.
@@ -397,6 +495,15 @@ export class GlobalSearchIrisAnswerComponent {
             return;
         }
         if (!update.answer) {
+            // Still idle means no thinking update ever arrived for this run — the server never even
+            // attempted an AI answer (a navigational/keyword query classified server-side as not
+            // worth asking Iris about), rather than asking and finding nothing. Saying "Iris looked,
+            // but nothing found is relevant" would be false in exactly that case: Iris never looked.
+            // Only a run that actually reached 'thinking' first can meaningfully report a considered
+            // no-answer outcome here.
+            if (this.phase() === 'idle') {
+                return;
+            }
             // Iris ran and chose not to answer. Saying so and then leaving beats vanishing mid-thought,
             // which is indistinguishable from the feature being broken. A reveal timer from an earlier
             // streamed partial (this terminal update can follow one) must not keep running: it is
