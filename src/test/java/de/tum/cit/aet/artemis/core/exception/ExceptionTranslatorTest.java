@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.sql.SQLException;
 
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -42,13 +43,12 @@ class ExceptionTranslatorTest {
     }
 
     /**
-     * The two messages are what PostgreSQL and MySQL actually report. They share only the index name, which is why
-     * that is what the translator matches on.
+     * The two names are what Hibernate extracts on PostgreSQL and on MySQL, which qualifies the key with its table.
      */
     @ParameterizedTest
-    @ValueSource(strings = { "ERROR: duplicate key value violates unique constraint \"jhi_user_email\"", "Duplicate entry 'user@example.com' for key 'jhi_user.jhi_user_email'" })
-    void shouldAnswerADuplicateEmailWithTheEmailAlreadyUsedResponse(String databaseMessage) {
-        ResponseEntity<ProblemDetail> response = translator.handleDataIntegrityViolationException(violation(databaseMessage), request);
+    @ValueSource(strings = { "jhi_user_email", "jhi_user.jhi_user_email" })
+    void shouldAnswerADuplicateEmailWithTheEmailAlreadyUsedResponse(String constraintName) {
+        ResponseEntity<ProblemDetail> response = translator.handleDataIntegrityViolationException(violation(constraintName), request);
 
         EmailAlreadyUsedException expected = new EmailAlreadyUsedException();
         assertThat(response.getStatusCode()).isEqualTo(expected.getStatusCode());
@@ -64,17 +64,31 @@ class ExceptionTranslatorTest {
      */
     @Test
     void shouldAnswerAnyOtherIntegrityViolationWithAServerError() {
-        ResponseEntity<ProblemDetail> response = translator
-                .handleDataIntegrityViolationException(violation("ERROR: insert or update on table \"result\" violates foreign key constraint \"fk_result_submission\""), request);
+        ResponseEntity<ProblemDetail> response = translator.handleDataIntegrityViolationException(violation("fk_result_submission"), request);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     /**
-     * The name never reaches the translator in the exception it handles, only in a cause several levels down, so a
-     * check on the top-level message alone would never match.
+     * The driver puts the value that collided into the message, so a login that reads like the index name must not be
+     * enough to be answered as a duplicate email. This is the message MySQL reports for it.
      */
-    private static DataIntegrityViolationException violation(String databaseMessage) {
-        return new DataIntegrityViolationException("could not execute statement", new SQLException(databaseMessage));
+    @Test
+    void shouldNotAnswerADuplicateLoginThatLooksLikeTheIndexNameAsADuplicateEmail() {
+        DataIntegrityViolationException duplicateLogin = new DataIntegrityViolationException("could not execute statement",
+                new ConstraintViolationException("could not execute statement", new SQLException("Duplicate entry 'jhi_user_email' for key 'jhi_user.login'"), "jhi_user.login"));
+
+        ResponseEntity<ProblemDetail> response = translator.handleDataIntegrityViolationException(duplicateLogin, request);
+
+        assertThat(response.getStatusCode()).as("a duplicate login is not a duplicate email").isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    /**
+     * The constraint name never reaches the translator on the exception it handles, only on a Hibernate cause below it,
+     * which is the shape a real violation has — see {@code UserRepositoryTest.testEmailIsUniqueIgnoringCase}.
+     */
+    private static DataIntegrityViolationException violation(String constraintName) {
+        return new DataIntegrityViolationException("could not execute statement",
+                new ConstraintViolationException("could not execute statement", new SQLException("constraint violated"), constraintName));
     }
 }

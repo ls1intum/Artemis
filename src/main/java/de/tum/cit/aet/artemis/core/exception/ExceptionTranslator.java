@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.exception;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,6 +12,7 @@ import jakarta.ws.rs.NotAllowedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.hibernate.exception.ConstraintViolationException;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -164,16 +166,29 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
     /**
      * Whether an integrity violation comes from the unique index on {@code jhi_user(email)}.
      * <p>
-     * Matched on the index name over the whole cause chain rather than on a message the driver formats, because the two
-     * supported databases word it differently — PostgreSQL reports {@code violates unique constraint "jhi_user_email"}
-     * and MySQL {@code Duplicate entry '…' for key 'jhi_user.jhi_user_email'} — and the index name is the part both of
-     * them carry.
+     * Read from the constraint name Hibernate extracts, not from the message the driver formats. That message also
+     * carries the value that collided, so searching it for the index name says yes to an unrelated constraint whose
+     * duplicated value happens to contain that text: a second account registering the login {@code jhi_user_email}
+     * makes MySQL report {@code Duplicate entry 'jhi_user_email' for key 'jhi_user.login'}, which is a duplicate login
+     * and must not be answered as a duplicate email.
      *
      * @param ex the integrity violation the database raised
      * @return true if the violated index is the unique user email index
      */
     private static boolean violatesUniqueUserEmailIndex(DataIntegrityViolationException ex) {
-        return ExceptionUtils.getThrowableList(ex).stream().map(Throwable::getMessage).anyMatch(message -> Strings.CI.contains(message, UNIQUE_USER_EMAIL_INDEX));
+        return ExceptionUtils.getThrowableList(ex).stream().filter(ConstraintViolationException.class::isInstance)
+                .map(cause -> ((ConstraintViolationException) cause).getConstraintName()).filter(Objects::nonNull).anyMatch(ExceptionTranslator::isUniqueUserEmailIndex);
+    }
+
+    /**
+     * Whether a constraint name denotes the unique index on {@code jhi_user(email)}. MySQL qualifies the key with the
+     * table it belongs to and PostgreSQL does not, so only the part after the last dot is compared.
+     *
+     * @param constraintName the name Hibernate extracted from the violation
+     * @return true if it names the unique user email index
+     */
+    private static boolean isUniqueUserEmailIndex(String constraintName) {
+        return UNIQUE_USER_EMAIL_INDEX.equalsIgnoreCase(constraintName.substring(constraintName.lastIndexOf('.') + 1));
     }
 
     /**
