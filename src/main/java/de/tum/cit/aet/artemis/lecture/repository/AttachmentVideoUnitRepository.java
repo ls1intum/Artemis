@@ -120,6 +120,17 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
      * This supports a bounded rollout backfill for units created before retryable synchronization
      * was introduced.
      *
+     * <p>
+     * The attachment is joined explicitly rather than navigated to as {@code avu.attachment.link}, which is an implicit
+     * inner join: it dropped every unit without an attachment before the surrounding {@code OR} was evaluated, so a unit
+     * carrying only a video was never backfilled.
+     *
+     * <p>
+     * Only units whose content processing finished are considered. Pyris answers a synchronization for anything else
+     * with "lecture unit has not been ingested", so creating a state for one manufactures work that can only fail:
+     * before this condition existed, every eligible unit that had never been ingested was pushed once an hour for as
+     * long as its course stayed active.
+     *
      * @param now      the current time for determining active courses
      * @param pageable pagination to limit results
      * @return attachment video units without an Iris synchronization state
@@ -128,8 +139,14 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
             SELECT avu FROM AttachmentVideoUnit avu
             JOIN avu.lecture l
             JOIN l.course c
+            LEFT JOIN avu.attachment attachment
             LEFT JOIN IrisLectureUnitSyncState syncState ON syncState.lectureUnitId = avu.id AND syncState.visibilityHash IS NOT NULL
             WHERE syncState.id IS NULL
+                AND EXISTS (
+                    SELECT 1 FROM LectureUnitProcessingState processingState
+                    WHERE processingState.lectureUnit.id = avu.id
+                        AND processingState.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.DONE
+                )
                 AND (c.startDate <= :now OR c.startDate IS NULL)
                 AND (c.endDate >= :now OR c.endDate IS NULL)
                 AND c.testCourse = FALSE
@@ -137,7 +154,7 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
                 AND (
                     (avu.videoSource IS NOT NULL AND avu.videoSource <> '')
                     OR
-                    (avu.attachment IS NOT NULL AND LOWER(avu.attachment.link) LIKE '%.pdf')
+                    (attachment IS NOT NULL AND LOWER(attachment.link) LIKE '%.pdf')
                 )
             ORDER BY avu.id
             """)

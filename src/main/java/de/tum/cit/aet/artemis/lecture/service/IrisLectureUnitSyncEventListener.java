@@ -16,6 +16,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.iris.api.dtos.LectureUnitSyncOutcome;
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
@@ -32,6 +33,17 @@ public class IrisLectureUnitSyncEventListener {
     private static final Logger log = LoggerFactory.getLogger(IrisLectureUnitSyncEventListener.class);
 
     private static final int MAX_RETRY_DELAY_MINUTES = 60;
+
+    /**
+     * How often a failing synchronisation is retried before it is treated as permanent. Mirrors the limit the
+     * ingestion state machine applies in {@code ProcessingStateCallbackService}: without one, a unit whose failure
+     * never resolves is pushed to Pyris once an hour for as long as its course stays active.
+     *
+     * <p>
+     * Chosen above the point where the backoff reaches {@link #MAX_RETRY_DELAY_MINUTES}, so that a failure which does
+     * resolve on its own still gets several hours of hourly attempts before the unit is given up on.
+     */
+    private static final int MAX_SYNC_RETRIES = 10;
 
     private static final int RETRY_LEASE_MINUTES = 10;
 
@@ -133,10 +145,17 @@ public class IrisLectureUnitSyncEventListener {
                 return;
             }
 
-            String dispatchResult = Optional.ofNullable(projectedSlideHiddenUntilBySlideNumber)
+            var dispatchResult = Optional.ofNullable(projectedSlideHiddenUntilBySlideNumber)
                     .map(projectedVisibility -> syncDispatchService.triggerSyncForUpdateKind(unit, updateKind, projectedVisibility))
                     .orElseGet(() -> syncDispatchService.triggerSyncForUpdateKind(unit, updateKind));
-            String dispatchedHash = getDispatchedHash(state, updateKind, dispatchResult);
+            if (dispatchResult.outcome() == LectureUnitSyncOutcome.NOT_INGESTED) {
+                // Pyris holds nothing for this unit, so retrying would ask the same question every hour and get the
+                // same answer. The row is settled and the ingestion reopens it once it has something to synchronise.
+                log.debug("Pyris has not ingested lecture unit {}, settling its {} synchronisation", state.getLectureUnitId(), updateKind);
+                syncStateRepository.updateWithLectureUnitLock(state.getLectureUnitId(), IrisLectureUnitSyncEventListener::markNotIngested);
+                return;
+            }
+            String dispatchedHash = dispatchResult.outcome() == LectureUnitSyncOutcome.DISPATCHED ? dispatchedHash(state, updateKind, dispatchResult.visibilityHash()) : null;
             syncStateRepository.updateWithLectureUnitLock(state.getLectureUnitId(),
                     currentState -> Optional.ofNullable(dispatchedHash).ifPresentOrElse(hash -> markSynced(currentState, updateKind, hash), () -> markSkipped(currentState)));
         }
@@ -151,13 +170,16 @@ public class IrisLectureUnitSyncEventListener {
         }
     }
 
-    private static String getDispatchedHash(IrisLectureUnitSyncState state, LectureContentUpdateKind updateKind, String dispatchResult) {
-        if (dispatchResult == null) {
-            return null;
-        }
+    /**
+     * @param state          the state being synchronized
+     * @param updateKind     what was dispatched
+     * @param visibilityHash the hash of the dispatched visibility payload, which only a visibility update carries
+     * @return the hash to record as synchronized
+     */
+    private static String dispatchedHash(IrisLectureUnitSyncState state, LectureContentUpdateKind updateKind, String visibilityHash) {
         return switch (updateKind) {
             case METADATA -> state.getMetadataHash();
-            case VISIBILITY -> dispatchResult;
+            case VISIBILITY -> visibilityHash;
             default -> throw new IllegalArgumentException("Unsupported Iris lecture unit sync update kind: " + updateKind);
         };
     }
@@ -200,11 +222,23 @@ public class IrisLectureUnitSyncEventListener {
         state.setLastErrorKey("DispatchSkipped");
     }
 
+    private static void markNotIngested(IrisLectureUnitSyncState state) {
+        state.setStatus(IrisLectureUnitSyncState.STATUS_NOT_INGESTED);
+        state.setRetryCount(0);
+        state.setNextRetryAt(null);
+        state.setLastErrorKey("NotIngestedInPyris");
+    }
+
     private static void markRetry(IrisLectureUnitSyncState state, Exception exception) {
         int retryCount = state.getRetryCount() + 1;
         state.setRetryCount(retryCount);
+        state.setLastErrorKey(exception.getClass().getSimpleName());
+        if (retryCount >= MAX_SYNC_RETRIES) {
+            state.setStatus(IrisLectureUnitSyncState.STATUS_FAILED);
+            state.setNextRetryAt(null);
+            return;
+        }
         state.setStatus(IrisLectureUnitSyncState.STATUS_DIRTY);
         state.setNextRetryAt(ZonedDateTime.now().plusMinutes(Math.min(MAX_RETRY_DELAY_MINUTES, 1L << Math.min(retryCount, 6))));
-        state.setLastErrorKey(exception.getClass().getSimpleName());
     }
 }

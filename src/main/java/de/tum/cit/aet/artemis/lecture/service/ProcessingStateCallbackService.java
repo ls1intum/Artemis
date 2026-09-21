@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
+import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 
@@ -92,13 +94,36 @@ public class ProcessingStateCallbackService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    private final IrisLectureUnitSyncStateRepository irisLectureUnitSyncStateRepository;
+
     public ProcessingStateCallbackService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            AttachmentRepository attachmentRepository, Optional<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService) {
+            AttachmentRepository attachmentRepository, Optional<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService,
+            IrisLectureUnitSyncStateRepository irisLectureUnitSyncStateRepository) {
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
         this.attachmentRepository = attachmentRepository;
         this.irisLectureApi = irisLectureApi;
         this.websocketMessagingService = websocketMessagingService;
+        this.irisLectureUnitSyncStateRepository = irisLectureUnitSyncStateRepository;
+    }
+
+    /**
+     * Returns a synchronization state that was settled while Pyris did not hold the unit to the retry pass.
+     *
+     * <p>
+     * A row settled as {@link IrisLectureUnitSyncState#STATUS_NOT_INGESTED} or {@link IrisLectureUnitSyncState#STATUS_FAILED} is skipped by the retry query, and the backfill
+     * does not recreate it because a row already exists. Ingestion completing is the event that makes it worth trying again, so that is what reopens it.
+     *
+     * @param state the current synchronization state of the lecture unit
+     */
+    private static void reopenSettledSynchronization(IrisLectureUnitSyncState state) {
+        if (!IrisLectureUnitSyncState.STATUS_NOT_INGESTED.equals(state.getStatus()) && !IrisLectureUnitSyncState.STATUS_FAILED.equals(state.getStatus())) {
+            return;
+        }
+        state.setStatus(IrisLectureUnitSyncState.STATUS_DIRTY);
+        state.setRetryCount(0);
+        state.setLastErrorKey(null);
+        state.setNextRetryAt(ZonedDateTime.now());
     }
 
     // -------------------- Capacity-Aware Dispatch --------------------
@@ -281,6 +306,9 @@ public class ProcessingStateCallbackService {
             state.transitionTo(ProcessingPhase.DONE);
             state.setIngestionJobToken(null);
             processingStateRepository.save(state);
+            // Pyris now holds the unit, so a synchronization settled because it did not is worth trying again. The
+            // transaction and the lock come from the repository method, which is why the transition is passed into it.
+            irisLectureUnitSyncStateRepository.updateWithLectureUnitLock(lectureUnitId, ProcessingStateCallbackService::reopenSettledSynchronization);
             saveDisplayPageNumbers(state, displayPageNumbers);
 
             // Notify UI via WebSocket

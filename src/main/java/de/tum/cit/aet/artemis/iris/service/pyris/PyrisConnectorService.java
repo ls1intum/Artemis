@@ -328,13 +328,20 @@ public class PyrisConnectorService {
      * Executes a lightweight lecture metadata webhook in Pyris.
      *
      * @param dto The DTO sent as a body for the execution
+     * @return whether Pyris accepted the update, false if it does not hold the lecture unit
      */
-    public void executeLectureMetadataWebhook(PyrisLectureUnitMetadataWebhookDTO dto) {
+    public boolean executeLectureMetadataWebhook(PyrisLectureUnitMetadataWebhookDTO dto) {
         var endpoint = "/api/v1/webhooks/lectures/metadata";
         try {
             restTemplate.postForEntity(pyrisUrl + endpoint, dto, Void.class);
+            return true;
         }
         catch (HttpStatusCodeException e) {
+            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                // See executeLectureVisibilityWebhook: a unit Pyris never ingested has no metadata to update either.
+                log.debug("Pyris does not hold lecture unit {}, so its metadata has nothing to update", dto.lectureUnitId());
+                return false;
+            }
             log.error("Failed to send lecture unit metadata {} to Pyris: {}", dto.lectureUnitId(), e.getMessage());
             throw toIrisException(e);
         }
@@ -348,13 +355,21 @@ public class PyrisConnectorService {
      * Executes a lightweight lecture visibility webhook in Pyris.
      *
      * @param dto The DTO sent as a body for the execution
+     * @return whether Pyris accepted the update, false if it does not hold the lecture unit
      */
-    public void executeLectureVisibilityWebhook(PyrisLectureUnitVisibilityWebhookDTO dto) {
+    public boolean executeLectureVisibilityWebhook(PyrisLectureUnitVisibilityWebhookDTO dto) {
         var endpoint = "/api/v1/webhooks/lectures/visibility";
         try {
             restTemplate.postForEntity(pyrisUrl + endpoint, dto, Void.class);
+            return true;
         }
         catch (HttpStatusCodeException e) {
+            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                // Pyris answers 404 for a unit it never ingested. There is no visibility to update, and a retry cannot
+                // create one, so this is reported back as an outcome rather than raised as a failure.
+                log.debug("Pyris does not hold lecture unit {}, so its visibility has nothing to update", dto.lectureUnitId());
+                return false;
+            }
             log.error("Failed to send lecture unit visibility {} to Pyris: {}", dto.lectureUnitId(), e.getMessage());
             throw toIrisException(e);
         }

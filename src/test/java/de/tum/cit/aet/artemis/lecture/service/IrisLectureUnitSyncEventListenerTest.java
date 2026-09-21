@@ -25,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
 
+import de.tum.cit.aet.artemis.iris.api.dtos.LectureUnitSyncOutcome;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.domain.LectureContentUpdateKind;
@@ -58,7 +59,8 @@ class IrisLectureUnitSyncEventListenerTest {
     @BeforeEach
     void setUp() {
         listener = new IrisLectureUnitSyncEventListener(attachmentVideoUnitRepository, syncStateRepository, syncDispatchService, slideRepository, syncService);
-        lenient().when(syncDispatchService.triggerSyncForUpdateKind(any(), eq(LectureContentUpdateKind.METADATA))).thenReturn("metadata-token");
+        lenient().when(syncDispatchService.triggerSyncForUpdateKind(any(), eq(LectureContentUpdateKind.METADATA)))
+                .thenReturn(new IrisLectureUnitSyncDispatchService.DispatchResult(LectureUnitSyncOutcome.DISPATCHED, null));
         lenient().when(syncStateRepository.claimRetry(eq(LECTURE_UNIT_ID), any(), any())).thenAnswer(_ -> syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID));
     }
 
@@ -101,7 +103,8 @@ class IrisLectureUnitSyncEventListenerTest {
         var projectedVisibility = Map.of(1, ZonedDateTime.parse("2026-07-03T10:15:30Z"));
         when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
         when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(state));
-        when(syncDispatchService.triggerSyncForUpdateKind(unit, LectureContentUpdateKind.VISIBILITY, projectedVisibility)).thenReturn("visibility-hash");
+        when(syncDispatchService.triggerSyncForUpdateKind(unit, LectureContentUpdateKind.VISIBILITY, projectedVisibility))
+                .thenReturn(new IrisLectureUnitSyncDispatchService.DispatchResult(LectureUnitSyncOutcome.DISPATCHED, "visibility-hash"));
 
         listener.handleVisibilityDirty(new IrisLectureUnitSyncService.IrisLectureUnitVisibilityDirtyEvent(LECTURE_UNIT_ID, projectedVisibility));
 
@@ -109,6 +112,46 @@ class IrisLectureUnitSyncEventListenerTest {
         verify(syncStateRepository).updateWithLectureUnitLock(eq(LECTURE_UNIT_ID), any());
         assertThat(state.getLastSyncedVisibilityHash()).isEqualTo("visibility-hash");
         assertThat(state.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_CLEAN);
+    }
+
+    @Test
+    void unitPyrisHasNotIngestedIsSettledRatherThanRetriedForever() {
+        enableStateTransitions();
+        var unit = new AttachmentVideoUnit();
+        unit.setId(LECTURE_UNIT_ID);
+        var state = syncState();
+        state.setVisibilityHash("visibility-hash");
+        when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
+        when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(state));
+        when(syncDispatchService.triggerSyncForUpdateKind(eq(unit), eq(LectureContentUpdateKind.VISIBILITY), any()))
+                .thenReturn(new IrisLectureUnitSyncDispatchService.DispatchResult(LectureUnitSyncOutcome.NOT_INGESTED, null));
+
+        listener.handleVisibilityDirty(new IrisLectureUnitSyncService.IrisLectureUnitVisibilityDirtyEvent(LECTURE_UNIT_ID, Map.of()));
+
+        // No retry is scheduled: only an ingestion changes the answer, and that reopens the state itself.
+        assertThat(state.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_NOT_INGESTED);
+        assertThat(state.getNextRetryAt()).isNull();
+        assertThat(state.getRetryCount()).isZero();
+        assertThat(state.getLastSyncedVisibilityHash()).isNull();
+    }
+
+    @Test
+    void retriesStopOnceTheLimitIsReached() {
+        enableStateTransitions();
+        var unit = new AttachmentVideoUnit();
+        unit.setId(LECTURE_UNIT_ID);
+        var state = syncState();
+        state.setMetadataHash("metadata-hash");
+        state.setRetryCount(9);
+        when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
+        when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(state));
+        when(syncDispatchService.triggerSyncForUpdateKind(unit, LectureContentUpdateKind.METADATA)).thenThrow(new IllegalStateException("Pyris is unreachable"));
+
+        listener.handleMetadataDirty(new IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent(LECTURE_UNIT_ID));
+
+        assertThat(state.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_FAILED);
+        assertThat(state.getNextRetryAt()).isNull();
+        assertThat(state.getRetryCount()).isEqualTo(10);
     }
 
     @Test
@@ -145,7 +188,8 @@ class IrisLectureUnitSyncEventListenerTest {
         when(syncStateRepository.claimRetry(eq(LECTURE_UNIT_ID), any(), any())).thenReturn(Optional.of(state));
         when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
         when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(state));
-        when(syncDispatchService.triggerSyncForUpdateKind(unit, LectureContentUpdateKind.VISIBILITY)).thenReturn("persisted-slide-hash");
+        when(syncDispatchService.triggerSyncForUpdateKind(unit, LectureContentUpdateKind.VISIBILITY))
+                .thenReturn(new IrisLectureUnitSyncDispatchService.DispatchResult(LectureUnitSyncOutcome.DISPATCHED, "persisted-slide-hash"));
 
         listener.retryDirtyStates();
 
@@ -166,7 +210,9 @@ class IrisLectureUnitSyncEventListenerTest {
         state.setMetadataHash("metadata-hash");
         when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
         when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(state));
-        when(syncDispatchService.triggerSyncForUpdateKind(unit, LectureContentUpdateKind.METADATA)).thenReturn(null, "metadata-token");
+        when(syncDispatchService.triggerSyncForUpdateKind(unit, LectureContentUpdateKind.METADATA)).thenReturn(
+                new IrisLectureUnitSyncDispatchService.DispatchResult(LectureUnitSyncOutcome.SKIPPED, null),
+                new IrisLectureUnitSyncDispatchService.DispatchResult(LectureUnitSyncOutcome.DISPATCHED, null));
 
         listener.handleMetadataDirty(new IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent(LECTURE_UNIT_ID));
 
