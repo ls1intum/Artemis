@@ -267,8 +267,7 @@ public class ProcessingStateCallbackService {
                 }
                 // Mirror the claim onto the loaded entity, for the reason given on the retry loop above.
                 state.setStartedAt(now);
-                // Isolate each dispatch, as in the retry loop above: one bad unit must not strand the rest
-                // of this pass's claims until the abandoned-claim sweep.
+                // Isolate each dispatch: one bad unit must not strand the rest of this pass's claims.
                 try {
                     dispatchSingleJob(state);
                 }
@@ -533,14 +532,11 @@ public class ProcessingStateCallbackService {
             LectureUnitProcessingState state = stateOpt.get();
             int updated = processingStateRepository.renewLease(state.getId(), token, now, workerBootId);
             if (updated == 0) {
-                // The run finished or moved on between the read above and this write (a terminal
-                // callback cleared the token first); report the token revoked instead of notifying
-                // with a state that no longer reflects reality.
+                // A terminal callback cleared the token first; report revoked, not stale reality.
                 revoked.add(token);
                 continue;
             }
-            // Reflect the just-persisted renewal in this in-memory copy for the notification payload
-            // only; this object is never saved, so it cannot race the atomic update above.
+            // Reflects the just-persisted renewal for the notification only; never saved itself.
             state.renewLease(workerBootId);
             TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(state.getLectureUnit().getId()).map(LectureTranscription::getTranscriptionStatus)
                     .orElse(null);
@@ -609,15 +605,13 @@ public class ProcessingStateCallbackService {
         }
 
         if (success) {
-            // Atomic claim + terminal write in one statement (see completeIngestionIfLive): avoids the
-            // strand/overwrite risk of clearing the token separately from a later whole-entity save.
+            // Atomic claim + terminal write in one statement: see completeIngestionIfLive.
             if (processingStateRepository.completeIngestionIfLive(state.getId(), jobToken, ZonedDateTime.now()) == 0) {
                 log.info("Ignoring completion callback for unit {}: the run is no longer in flight under this token", lectureUnitId);
                 return;
             }
             log.info("Processing completed successfully for unit {}", lectureUnitId);
-            // Written only once ownership is confirmed above; see saveDisplayPageNumbers for the
-            // version guard against a losing callback restoring stale data.
+            // Written only once ownership is confirmed; see saveDisplayPageNumbers for the version guard.
             saveDisplayPageNumbers(state, displayPageNumbers);
             // Mirror the just-persisted transition for an accurate notification, without a second read.
             state.transitionTo(ProcessingPhase.DONE);
@@ -728,9 +722,8 @@ public class ProcessingStateCallbackService {
         ZonedDateTime now = ZonedDateTime.now();
         state.setLastUpdated(now);
         boolean stageAdvanced = state.recordStageProgress(stageName, stageProgress, stageTotal);
-        // Conditional on the token and an in-flight phase, not a blind save: a terminal callback for this
-        // run may have landed between the read above and this write, and would have cleared the token.
-        // Matching on it here is what stops this heartbeat from reviving a run that already finished.
+        // Conditional on the token and in-flight phase: a terminal callback landing first cleared the
+        // token, and matching on it here stops this heartbeat from reviving an already-finished run.
         int applied = processingStateRepository.applyHeartbeat(state.getId(), jobToken, now, state.getCurrentStage(), state.getStageStartedAt(), state.getStageProgress(),
                 state.getStageTotal(), state.getLastProgressAt());
         if (applied == 0) {
@@ -775,21 +768,20 @@ public class ProcessingStateCallbackService {
     private void saveTranscription(long lectureUnitId, LectureUnitProcessingState state, TranscriptionCheckpoint checkpoint) {
         LectureUnit unit = state.getLectureUnit();
 
-        // Find or create transcription entity
-        LectureTranscription transcription = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).orElseGet(() -> {
+        // An existing row is updated conditionally on its own id below, not saved blindly.
+        Optional<LectureTranscription> existing = transcriptionRepository.findByLectureUnit_Id(lectureUnitId);
+        LectureTranscription transcription = existing.orElseGet(() -> {
             var newTranscription = new LectureTranscription(checkpoint.language(), checkpoint.segments(), unit);
             newTranscription.setTranscriptionStatus(TranscriptionStatus.PENDING);
             return newTranscription;
         });
 
-        // Update with latest data
         transcription.setLanguage(checkpoint.language());
         transcription.setSegments(checkpoint.segments());
 
         if (checkpoint.isEnriched()) {
-            // Transition: TRANSCRIBING → INGESTING (keep same job token). Proven before the transcription
-            // write below: a checkpoint that already lost ownership must never persist content a requeue
-            // may have already deleted the stored transcription for.
+            // TRANSCRIBING → INGESTING, proven before the write below: a checkpoint that lost ownership
+            // must never persist content a requeue may have already deleted the transcription for.
             String jobToken = state.getIngestionJobToken();
             ZonedDateTime now = ZonedDateTime.now();
             if (processingStateRepository.transitionToIngestingIfTranscribing(state.getId(), jobToken, now) == 0) {
@@ -799,7 +791,7 @@ public class ProcessingStateCallbackService {
 
             transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
             log.info("Enriched transcription saved for unit {}, transitioning to INGESTING", lectureUnitId);
-            transcriptionRepository.save(transcription);
+            persistTranscription(lectureUnitId, existing, transcription);
 
             // Notify UI via WebSocket, mirroring the just-persisted transition without a second read.
             state.resetRetryCount();
@@ -815,7 +807,19 @@ public class ProcessingStateCallbackService {
 
             transcription.setTranscriptionStatus(TranscriptionStatus.PENDING);
             log.info("Raw transcription checkpoint saved for unit {}, staying in TRANSCRIBING", lectureUnitId);
+            persistTranscription(lectureUnitId, existing, transcription);
+        }
+    }
+
+    /** Conditional update keyed on the row's own id when it existed, else a plain insert. */
+    private void persistTranscription(long lectureUnitId, Optional<LectureTranscription> existing, LectureTranscription transcription) {
+        if (existing.isEmpty()) {
             transcriptionRepository.save(transcription);
+            return;
+        }
+        if (transcriptionRepository.updateContentIfExists(transcription.getId(), transcription.getLanguage(), transcription.getSegments(),
+                transcription.getTranscriptionStatus()) == 0) {
+            log.debug("Skipping transcription write for unit {}: the stored transcription was deleted since this checkpoint's earlier read", lectureUnitId);
         }
     }
 
@@ -859,8 +863,7 @@ public class ProcessingStateCallbackService {
      * @param errorCode machine-readable error code from Pyris (e.g. {@code YOUTUBE_PRIVATE}); may be {@code null}
      */
     void handleProcessingFailure(LectureUnitProcessingState state, @Nullable String errorCode) {
-        // Preserve existing transcription status in the WebSocket notification so the UI
-        // does not lose it when a failure occurs after transcription already completed.
+        // Preserve transcription status in the notification so the UI doesn't lose it on failure.
         TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(state.getLectureUnit().getId()).map(LectureTranscription::getTranscriptionStatus).orElse(null);
 
         LectureIngestionFailureClassifier.FailureComputation computation = LectureIngestionFailureClassifier.computeFailure(state, errorCode);
@@ -984,17 +987,14 @@ public class ProcessingStateCallbackService {
         if (attachment == null) {
             return;
         }
-        // Conditional on the recorded attachment version, not a blind save: a content-triggered
-        // requeue clears the mapping and bumps the version, and this guard stops a stale run's
-        // page numbers from overwriting that.
+        // Conditional on the recorded version: a requeue clears the mapping and bumps it, guarding
+        // against a stale run's page numbers overwriting that.
         if (attachmentRepository.updateDisplayPageNumbersIfVersionMatches(attachment.getId(), displayPageNumbers, state.getAttachmentVersion()) == 0) {
             log.info("Skipping display page number write for unit {}: attachment version changed since this run started", state.getLectureUnit().getId());
         }
     }
 
-    /**
-     * Internal DTO for parsed transcription checkpoint data.
-     */
+    /** Internal DTO for parsed transcription checkpoint data. */
     private record TranscriptionCheckpoint(String language, List<LectureTranscriptionSegment> segments, boolean isEnriched) {
     }
 }

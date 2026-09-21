@@ -379,6 +379,33 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     int releaseAbandonedIdleClaims(@Param("cutoffTime") ZonedDateTime cutoffTime, @Param("now") ZonedDateTime now);
 
     /**
+     * Invalidate an in-flight run's token, atomically, only while it still matches the token a
+     * content-change detection pass just observed.
+     * <p>
+     * Called as the first step of content-triggered reprocessing, before the transcript and
+     * attachment cleanup that follows it deletes stored content: see
+     * {@code LectureContentProcessingService#handleContentChanges}. A checkpoint still holding this
+     * token then fails its own token-match check immediately afterward, rather than succeeding on a
+     * stale snapshot and persisting content the cleanup is about to invalidate, in the window before
+     * the caller's own later full requeue (which resets this and other fields together) is itself
+     * persisted.
+     *
+     * @param id            the processing state to invalidate
+     * @param expectedToken the token last observed for this run
+     * @param now           recorded as the new {@code lastUpdated}
+     * @return 1 when invalidated, 0 when the token had already changed
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.ingestionJobToken = NULL, ps.lastUpdated = :now
+            WHERE ps.id = :id
+            AND ps.ingestionJobToken = :expectedToken
+            """)
+    int invalidateTokenIfMatches(@Param("id") long id, @Param("expectedToken") String expectedToken, @Param("now") ZonedDateTime now);
+
+    /**
      * Apply a heartbeat's stage/progress fields, but only while the run is still in flight under the
      * token that reported them. A terminal callback (success or failure) clears the token before this
      * runs; matching on it here is what stops a heartbeat whose read raced ahead of that terminal write

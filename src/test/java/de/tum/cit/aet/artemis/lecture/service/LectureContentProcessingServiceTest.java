@@ -521,6 +521,97 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
+        void shouldUpdateExistingTranscriptionContentWhenEnriched() {
+            // A row already exists for this unit (an earlier raw checkpoint created it): the update
+            // must go through the id-guarded conditional update, not a blind save, so a content-change
+            // requeue deleting this row between the read and the write cannot be silently resurrected.
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            LectureTranscription existingTranscription = new LectureTranscription();
+            existingTranscription.setId(99L);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(existingTranscription));
+            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
+            when(transcriptionRepository.updateContentIfExists(eq(99L), eq("en"), any(), eq(TranscriptionStatus.COMPLETED))).thenReturn(1);
+
+            String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
+
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+
+            verify(transcriptionRepository).updateContentIfExists(eq(99L), eq("en"), any(), eq(TranscriptionStatus.COMPLETED));
+            verify(transcriptionRepository, never()).save(any());
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+        }
+
+        @Test
+        void shouldNotFailWhenExistingTranscriptionWasDeletedBeforeEnrichedWrite() {
+            // Ownership was proven (the processing-state transition already committed), but the
+            // transcription row was deleted between the read and this write by a content-change
+            // requeue that has already moved the unit on to a fresh generation. The stale content must
+            // be dropped silently -- the state transition itself is not an error and is not undone.
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            LectureTranscription existingTranscription = new LectureTranscription();
+            existingTranscription.setId(99L);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(existingTranscription));
+            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
+            when(transcriptionRepository.updateContentIfExists(eq(99L), any(), any(), any())).thenReturn(0);
+
+            String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
+
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+
+            verify(transcriptionRepository, never()).save(any());
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+        }
+
+        @Test
+        void shouldUpdateExistingTranscriptionContentWhenRaw() {
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            LectureTranscription existingTranscription = new LectureTranscription();
+            existingTranscription.setId(99L);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(existingTranscription));
+            when(processingStateRepository.touchLastUpdated(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
+            when(transcriptionRepository.updateContentIfExists(eq(99L), eq("en"), any(), eq(TranscriptionStatus.PENDING))).thenReturn(1);
+
+            String rawJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":0}]}";
+
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
+
+            verify(transcriptionRepository).updateContentIfExists(eq(99L), eq("en"), any(), eq(TranscriptionStatus.PENDING));
+            verify(transcriptionRepository, never()).save(any());
+        }
+
+        @Test
+        void shouldNotFailWhenExistingTranscriptionWasDeletedBeforeRawWrite() {
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            LectureTranscription existingTranscription = new LectureTranscription();
+            existingTranscription.setId(99L);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(existingTranscription));
+            when(processingStateRepository.touchLastUpdated(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
+            when(transcriptionRepository.updateContentIfExists(eq(99L), any(), any(), any())).thenReturn(0);
+
+            String rawJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":0}]}";
+
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
+
+            verify(transcriptionRepository, never()).save(any());
+        }
+
+        @Test
         void shouldIgnoreCheckpointWithStaleToken() {
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setIngestionJobToken("current-token");
@@ -903,6 +994,45 @@ class LectureContentProcessingServiceTest {
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
             assertThat(testState.getStartedAt()).isNull(); // In queue
             verify(processingStateRepository).save(testState);
+        }
+
+        @Test
+        void shouldInvalidateTokenBeforeCleanupWhenContentChangesMidRun() {
+            // A content change detected while a run is still in flight must invalidate its token
+            // before the transcript/attachment cleanup runs, so a checkpoint still holding that token
+            // fails its own ownership check immediately instead of racing the cleanup with stale
+            // content (see LectureUnitProcessingStateRepository#invalidateTokenIfMatches).
+            testState.setId(50L);
+            testState.setVideoSourceHash("old-hash-12345");
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+            when(processingStateRepository.invalidateTokenIfMatches(eq(50L), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
+
+            service.triggerProcessing(testUnit);
+
+            verify(processingStateRepository).invalidateTokenIfMatches(eq(50L), eq(TEST_JOB_TOKEN), any());
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+        }
+
+        @Test
+        void shouldNotInvalidateTokenWhenNoRunIsInFlight() {
+            // The common case: content changes on a DONE unit with no active token to invalidate.
+            testState.setId(51L);
+            testState.setVideoSourceHash("old-hash-12345");
+            testState.setPhase(ProcessingPhase.DONE);
+            testState.setIngestionJobToken(null);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            service.triggerProcessing(testUnit);
+
+            verify(processingStateRepository, never()).invalidateTokenIfMatches(anyLong(), any(), any());
         }
 
         @Test

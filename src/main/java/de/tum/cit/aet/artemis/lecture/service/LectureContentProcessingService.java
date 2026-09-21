@@ -351,6 +351,16 @@ public class LectureContentProcessingService {
             log.info("Content changed for unit {}, videoAdded: {}, videoRemoved: {}, videoChanged: {}, attachmentAdded: {}, attachmentRemoved: {}, attachmentChanged: {}",
                     unit.getId(), videoAdded, videoRemoved, videoChanged, attachmentAdded, attachmentRemoved, attachmentChanged);
 
+            // Invalidate any in-flight run's token before the cleanup below deletes stored content: a
+            // checkpoint still holding this token then fails its own token-match check immediately,
+            // instead of succeeding on a stale snapshot and persisting content this cleanup is about
+            // to remove. The later full requeue() + save() this method's caller performs still clears
+            // the token again (harmless): this call only narrows the window before that happens.
+            String staleToken = state.getIngestionJobToken();
+            if (hasPersistedState && staleToken != null) {
+                processingStateRepository.invalidateTokenIfMatches(state.getId(), staleToken, ZonedDateTime.now());
+            }
+
             if (videoAdded || videoRemoved || videoChanged) {
                 // Delete stored transcription before Iris cleanup: dispatchPendingJobs() checks
                 // for a COMPLETED transcription to decide whether to skip straight to INGESTING.
