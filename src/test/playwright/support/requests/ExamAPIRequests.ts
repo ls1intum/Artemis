@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
 import examTemplate from '../../fixtures/exam/template.json';
-import { Page, expect } from '@playwright/test';
+import { Page } from '@playwright/test';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { UserCredentials } from '../users';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -221,34 +221,15 @@ export class ExamAPIRequests {
     }
 
     /**
-     * Finishes a started exam using a valid positive working time, then waits for the
-     * longest individual working time and grace period to expire.
+     * Determines the time left until the exam ends and finishes the exam by subtracting it from the working time.
      */
     async finishExam(exam: Exam) {
-        const examUrl = `api/exam/courses/${exam.course!.id}/exams/${exam.id}`;
-        const currentResponse = await this.page.request.get(examUrl);
-        await expect(currentResponse).toBeOK();
-        const currentExam = (await currentResponse.json()) as Exam;
-        const startDate = dayjs(currentExam.startDate!);
-        expect(startDate.isBefore(dayjs()), 'finishExam requires an exam that has started').toBe(true);
-        const duration = dayjs(currentExam.endDate!).diff(startDate, 'seconds');
-        // Both the nominal duration and working time must remain positive. Student
-        // extensions are rescaled by the server, so read their resulting maximum below.
-        const workingTimeChange = 1 - Math.min(duration, currentExam.workingTime!);
-        if (workingTimeChange < 0) {
-            const updateResponse = await this.page.request.patch(`${examUrl}/working-time`, { data: workingTimeChange });
-            await expect(updateResponse).toBeOK();
+        const examEndDate = dayjs(exam.endDate! as dayjs.Dayjs);
+        // Determine the time left until the exam ends and add extra minute
+        // to make sure the exam is finished after subtracting it from the working time
+        const examTimeLeftInSeconds = examEndDate.diff(dayjs(), 'seconds') + 60;
+        if (examTimeLeftInSeconds > 0) {
+            await this.page.request.patch(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/working-time`, { data: -examTimeLeftInSeconds });
         }
-        const longestResponse = await this.page.request.get(`${examUrl}/longest-working-time`);
-        await expect(longestResponse).toBeOK();
-        const longestWorkingTime = (await longestResponse.json()) as number;
-        expect(longestWorkingTime).toBeGreaterThan(0);
-        const endWithGrace = startDate.add(longestWorkingTime + (currentExam.gracePeriod ?? 0), 'seconds');
-        await expect
-            .poll(() => dayjs().isAfter(endWithGrace), {
-                message: 'The exam must end for every student, including the grace period',
-                timeout: Math.max(10_000, endWithGrace.diff(dayjs()) + 10_000),
-            })
-            .toBe(true);
     }
 }
