@@ -26,8 +26,9 @@ const MARKER_RUN_REGEX = /(?:\[\d+\]){1,}/g;
 const SINGLE_MARKER_REGEX = /\[(\d+)\]/g;
 
 /**
- * Every CommonMark code node this answer's markdown could realistically contain, tried longest-and-most-
- * specific first: a backtick fence of 3+ backticks or a tilde fence (incl. language tag, possibly
+ * Every CommonMark code node this answer's markdown could realistically contain, plus KaTeX math (see
+ * the last two alternatives below) — tried longest-and-most-specific first: a backtick fence of 3+
+ * backticks or a tilde fence (incl. language tag, possibly
  * spanning lines), or an inline code span delimited by a run of one or more backticks closed by a
  * same-length run. CommonMark allows a longer run specifically so the span can contain a literal
  * backtick, e.g. ``a ` b`` uses two backticks as delimiters, and a span can itself contain a single line
@@ -107,9 +108,22 @@ const SINGLE_MARKER_REGEX = /\[(\d+)\]/g;
  * advances to the next 4-column stop, so it never needs 4 of them) counts exactly the same as one indented
  * by 4 spaces. And the blank line separating a code block from what comes before can itself carry
  * trailing whitespace — still blank, so it must not be required to be a bare `\n\n`.
+ *
+ * The last two alternatives protect KaTeX math the same way, since the answer prompt's MATH section
+ * (`global_search_prompts.py`) has the model wrap standalone and inline math alike in `$$...$$`/`$...$`,
+ * and a bracketed numeric index is just as natural inside a formula (`$x[1]$`) as inside code — the
+ * server's own citation-marker rule already treats `$$` as marker-adjacent punctuation for the same
+ * reason (`_CITATION_MARKER_RE`'s `(?<=\$\$)` lookbehind). Display math (`$$...$$`) gets the SAME
+ * unterminated-at-EOF fallback as a fence, and for the same reason: a streamed partial can legitimately
+ * contain an opening `$$` whose closer has not arrived yet. Inline math (`$...$`) does NOT: unlike `$$`,
+ * a single `$` is common in ordinary prose as plain currency ("$5 and $10"), so treating an unmatched
+ * opener as protected-through-EOF would swallow every citation after an unrelated stray dollar sign.
+ * Instead it requires an actual matching closer on the SAME line, with the standard convention that
+ * rules out currency text: the opener must not be followed by whitespace and the closer must not be
+ * preceded by it, which "$5 and $10" fails (the second `$` sits right after a space) and "$x[1]$" passes.
  */
-const CODE_SEGMENT_REGEX =
-    /(?<=^|\n)[ ]{0,3}(`{3,})(?=[^`\n]*(?:\n|$))[\s\S]*?(?:\n[ ]{0,3}\1`*[ \t]*(?=\n|$)|$)|(?<=^|\n)[ ]{0,3}(~~~+)[\s\S]*?(?:\n[ ]{0,3}\2~*[ \t]*(?=\n|$)|$)|(?<!`)(?=(`+))\3(?:(?!\n[ \t]*\n)[\s\S])*?(?<!`)\3(?!`)|(?:^|\n[ \t]*\n)(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*(?:\n(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*)*/g;
+const PROTECTED_SEGMENT_REGEX =
+    /(?<=^|\n)[ ]{0,3}(`{3,})(?=[^`\n]*(?:\n|$))[\s\S]*?(?:\n[ ]{0,3}\1`*[ \t]*(?=\n|$)|$)|(?<=^|\n)[ ]{0,3}(~~~+)[\s\S]*?(?:\n[ ]{0,3}\2~*[ \t]*(?=\n|$)|$)|(?<!`)(?=(`+))\3(?:(?!\n[ \t]*\n)[\s\S])*?(?<!`)\3(?!`)|(?:^|\n[ \t]*\n)(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*(?:\n(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*)*|\$\$[\s\S]*?(?:\$\$|$)|\$(?!\$)(?!\s)[^\n$]*?(?<!\s)\$(?!\$)/g;
 
 export interface CitationRenderResult {
     /** The answer markdown with marker runs replaced by `<sup>` chip elements. */
@@ -150,11 +164,11 @@ export function renderCitationMarkers(answer: string | undefined, sourceCount: n
             return numbers.map((n) => `<sup class="iris-cite" data-n="${n}" role="link" tabindex="0">${n}</sup>`).join('');
         });
 
-    // Walk the code segments in order, replacing markers only in the prose between them; code
-    // segments themselves (and any bracketed text inside them) pass through unchanged.
+    // Walk the protected (code and math) segments in order, replacing markers only in the prose
+    // between them; those segments themselves (and any bracketed text inside them) pass through unchanged.
     let html = '';
     let cursor = 0;
-    for (const match of answer.matchAll(CODE_SEGMENT_REGEX)) {
+    for (const match of answer.matchAll(PROTECTED_SEGMENT_REGEX)) {
         const index = match.index ?? 0;
         html += replaceMarkers(answer.slice(cursor, index));
         html += match[0];

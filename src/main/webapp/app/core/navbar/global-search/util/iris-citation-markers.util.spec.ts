@@ -289,6 +289,37 @@ describe('renderCitationMarkers', () => {
         expect(result.html).toContain('Iteration order matches the list.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
         expect([...result.citedNumbers]).toEqual([1, 2]);
     });
+
+    it('leaves a bracketed index inside inline math untouched', () => {
+        const result = renderCitationMarkers('The value is $x[1]$ here.[2]', 2);
+        expect(result.html).toBe('The value is $x[1]$ here.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([2]);
+    });
+
+    it('leaves a bracketed index inside display math untouched', () => {
+        const answer = ['$$', 'x[1] = y', '$$', 'See more.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('$$\nx[1] = y\n$$');
+        expect(result.html).toContain('See more.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([2]);
+    });
+
+    it('does not treat a stray unpaired dollar sign as math and hide citations after it', () => {
+        // "$5 and $10" has no valid inline-math closer (the second $ sits right after a space), so it
+        // must not be protected — and, critically, must not swallow the real citation that follows it.
+        const result = renderCitationMarkers('This costs $5 and $10.[1]', 1);
+        expect(result.html).toBe('This costs $5 and $10.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect([...result.citedNumbers]).toEqual([1]);
+    });
+
+    it('protects a display math block with no closing line through the end of the answer', () => {
+        // Mirrors the fence EOF fallback: a streamed partial can legitimately contain an opening $$
+        // whose closer has not arrived yet, and the in-progress formula must stay protected.
+        const answer = 'Consider $$x[1] = y';
+        const result = renderCitationMarkers(answer, 1);
+        expect(result.html).toBe('Consider $$x[1] = y');
+        expect(result.citedNumbers.size).toBe(0);
+    });
 });
 
 describe('parseCitationNumbers', () => {
