@@ -77,8 +77,7 @@ class ProgrammingVariantAdapterServiceProvisionCleanupTest {
         when(original.getId()).thenReturn(1L);
         when(original.getCategories()).thenReturn(Set.of());
         when(original.getTestCases()).thenReturn(Set.of());
-        when(programmingExerciseRepository
-                .findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigAndGradingCriteria(1L))
+        when(programmingExerciseRepository.findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndGradingCriteria(1L))
                 .thenReturn(Optional.of(original));
         when(programmingExerciseTaskRepository.findByExerciseIdWithTestCases(1L)).thenReturn(Set.of());
         when(programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(1L)).thenReturn(Optional.empty());

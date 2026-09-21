@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -254,7 +255,7 @@ public class ProgrammingSubmissionResource {
         }
         // Loaded with the associations the trigger reads off the exercise, so no participation has to load either of
         // them for itself. The template and solution participations this used to fetch are not read here.
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithBuildConfigAndAuxiliaryRepositoriesById(exerciseId)
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", exerciseId));
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
             throw new AccessForbiddenException();
@@ -308,7 +309,11 @@ public class ProgrammingSubmissionResource {
         }
         // The nested exercise is not part of this list payload (the dashboard already holds the exercise), matching
         // the service, which detaches it from the participations before returning them.
-        var submissionDTOs = programmingSubmissions.stream().map(submission -> ProgrammingSubmissionForAssessmentDTO.ofWithLoadedResults(submission, null)).toList();
+        boolean hideParticipant = !authCheckService.isAtLeastInstructorForExercise(exercise);
+        var submissionDTOs = programmingSubmissions.stream().map(submission -> {
+            var response = ProgrammingSubmissionForAssessmentDTO.ofWithLoadedResults(submission, null);
+            return hideParticipant ? response.withoutParticipantInformation() : response;
+        }).toList();
         return ResponseEntity.ok().body(submissionDTOs);
     }
 
@@ -363,6 +368,8 @@ public class ProgrammingSubmissionResource {
             programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmission(programmingSubmission.getId(), correctionRound);
         }
 
+        // Determine visibility before hideDetails removes participant information from the entity.
+        boolean hideParticipant = !canSeeParticipantInformation(programmingSubmission.getParticipation(), programmingExercise, user);
         // prepare programming submission for response (double-blind assessment: removes the participant for tutors)
         programmingSubmissionService.hideDetails(programmingSubmission, user);
 
@@ -381,7 +388,8 @@ public class ProgrammingSubmissionResource {
             resultsForResponse = List.of(resultForCorrectionRound);
         }
 
-        return ResponseEntity.ok(ProgrammingSubmissionForAssessmentDTO.of(programmingSubmission, ProgrammingExerciseResponseDTO.of(programmingExercise), resultsForResponse));
+        var response = ProgrammingSubmissionForAssessmentDTO.of(programmingSubmission, ProgrammingExerciseResponseDTO.of(programmingExercise), resultsForResponse);
+        return ResponseEntity.ok(hideParticipant ? response.withoutParticipantInformation() : response);
     }
 
     /**
@@ -430,6 +438,7 @@ public class ProgrammingSubmissionResource {
             // NOTE: we explicitly load the feedback for the submission eagerly to avoid org.hibernate.LazyInitializationException
             submission = programmingSubmissionService.lockAndGetProgrammingSubmission(submission.getId(), correctionRound);
         }
+        boolean hideParticipant = !canSeeParticipantInformation(submission.getParticipation(), programmingExercise, user);
         programmingSubmissionService.hideDetails(submission, user);
         // Only the manual results belong in the response. Filtering happens in the mapper, never by mutating the
         // managed submission, whose result collection is mapped with orphanRemoval.
@@ -438,6 +447,12 @@ public class ProgrammingSubmissionResource {
         // attach the synthesized legacy views so the tutor sees the automatic feedback in the editor
         manualResults.forEach(result -> programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, programmingExercise, false));
 
-        return ResponseEntity.ok().body(ProgrammingSubmissionForAssessmentDTO.of(submission, ProgrammingExerciseResponseDTO.of(programmingExercise), manualResults));
+        var response = ProgrammingSubmissionForAssessmentDTO.of(submission, ProgrammingExerciseResponseDTO.of(programmingExercise), manualResults);
+        return ResponseEntity.ok(hideParticipant ? response.withoutParticipantInformation() : response);
+    }
+
+    private boolean canSeeParticipantInformation(Participation participation, Exercise exercise, User user) {
+        return authCheckService.isAtLeastInstructorForExercise(exercise, user)
+                || participation instanceof StudentParticipation studentParticipation && authCheckService.isOwnerOfParticipation(studentParticipation, user);
     }
 }

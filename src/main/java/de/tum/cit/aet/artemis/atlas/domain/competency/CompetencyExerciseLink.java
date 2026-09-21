@@ -14,6 +14,7 @@ import jakarta.persistence.Table;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Entity
@@ -27,6 +28,7 @@ public class CompetencyExerciseLink extends CompetencyLearningObjectLink {
     @JsonIgnoreProperties("competencyLinks")
     @ManyToOne(optional = false)
     @MapsId("exerciseId")
+    @Parent
     private Exercise exercise;
 
     public CompetencyExerciseLink(CourseCompetency competency, Exercise exercise, double weight) {

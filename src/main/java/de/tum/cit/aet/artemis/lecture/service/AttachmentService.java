@@ -62,7 +62,7 @@ public class AttachmentService {
             return;
         }
 
-        List<Slide> hiddenSlides = slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNull(attachmentVideoUnit.getId());
+        List<Slide> hiddenSlides = slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(attachmentVideoUnit.getId());
 
         // If no slides are marked as hidden, remove student version if it exists
         if (hiddenSlides.isEmpty()) {

@@ -11,6 +11,12 @@
         justify-content: center;
         width: 100%;
 
+        // Keep the ring large enough for both value lines; the global w-40 utility means 40%, not 160px.
+        tum-ui-doughnut-chart {
+            width: 160px;
+            height: 160px;
+        }
+
         .doughnut-chart-text {
             position: absolute;
             display: flex;

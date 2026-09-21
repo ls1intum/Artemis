@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.course.domain.Course;
 
 @Entity
@@ -71,6 +72,7 @@ public abstract class Conversation extends DomainObject {
     @ManyToOne
     @JsonIgnore
     @JoinColumn(nullable = false)
+    @Parent
     private Course course;
 
     @CreatedDate

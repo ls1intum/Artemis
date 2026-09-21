@@ -154,11 +154,11 @@ public class ProgrammingExerciseRetrievalResource {
     private ProgrammingExercise findProgrammingExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
         if (includePlagiarismDetectionConfig) {
             var programmingExercise = programmingExerciseRepository
-                    .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigElseThrow(exerciseId);
+                    .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigElseThrow(exerciseId);
             PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(programmingExercise, programmingExerciseRepository);
             return programmingExercise;
         }
-        return programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigElseThrow(exerciseId);
+        return programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndVariantGroupElseThrow(exerciseId);
     }
 
     /**
@@ -197,7 +197,8 @@ public class ProgrammingExerciseRetrievalResource {
 
         // gradingInstructionFeedbackUsed is a transient flag computed above; the grading-instruction editor branches on
         // it, so it is passed into the mapper explicitly.
-        return ResponseEntity.ok().body(ProgrammingExerciseResponseDTO.of(programmingExercise, programmingExercise.isGradingInstructionFeedbackUsed()));
+        var buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId);
+        return ResponseEntity.ok().body(ProgrammingExerciseResponseDTO.of(programmingExercise, buildConfig, programmingExercise.isGradingInstructionFeedbackUsed()));
     }
 
     /**
@@ -234,7 +235,8 @@ public class ProgrammingExerciseRetrievalResource {
         programmingExercise.setStudentParticipations(participations);
 
         programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
-        return ResponseEntity.ok(ProgrammingExerciseResponseDTO.of(programmingExercise));
+        return ResponseEntity
+                .ok(ProgrammingExerciseResponseDTO.of(programmingExercise, programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId)));
     }
 
     /**
@@ -251,7 +253,8 @@ public class ProgrammingExerciseRetrievalResource {
             @RequestParam(defaultValue = "false") boolean withSubmissionResults, @RequestParam(defaultValue = "false") boolean withGradingCriteria) {
         log.debug("REST request to get programming exercise with template and solution participation : {}", exerciseId);
         final var programmingExercise = programmingExerciseService.loadProgrammingExercise(exerciseId, withSubmissionResults, withGradingCriteria);
-        return ResponseEntity.ok(ProgrammingExerciseResponseDTO.of(programmingExercise));
+        return ResponseEntity
+                .ok(ProgrammingExerciseResponseDTO.of(programmingExercise, programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId)));
     }
 
     /**
@@ -266,7 +269,8 @@ public class ProgrammingExerciseRetrievalResource {
 
         log.debug("REST request to get programming exercise with auxiliary repositories: {}", exerciseId);
         final var programmingExercise = programmingExerciseService.loadProgrammingExerciseWithAuxiliaryRepositories(exerciseId);
-        return ResponseEntity.ok(ProgrammingExerciseResponseDTO.of(programmingExercise));
+        return ResponseEntity
+                .ok(ProgrammingExerciseResponseDTO.of(programmingExercise, programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId)));
     }
 
     /**

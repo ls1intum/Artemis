@@ -32,6 +32,8 @@ export interface IComplaintService {
     findAllByCourseId: (courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
     findAllByCourseIdAndExamId: (courseId: number, examId: number) => Observable<EntityResponseTypeArray>;
     findAllByExerciseId: (exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
+    findAllWithoutStudentInformationForCourseId: (courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
+    findAllWithoutStudentInformationForExerciseId: (exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -123,6 +125,17 @@ export class ComplaintService implements IComplaintService {
      */
     findAllWithoutStudentInformationForCourseId(courseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
         const url = `${this.resourceUrl}?courseId=${courseId}&complaintType=${complaintType}&allComplaintsForTutor=true`;
+        return this.requestComplaintsFromUrl(url);
+    }
+
+    /**
+     * Find all complaints of a single exercise and complaintType without student's information.
+     * Used by the tutor "All" scope on exercise-scoped pages, so it cannot leak complaints of other exercises.
+     * @param exerciseId - the exercise id for which the complaints should be retrieved
+     * @param complaintType - the type of complaint
+     */
+    findAllWithoutStudentInformationForExerciseId(exerciseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
+        const url = `${this.resourceUrl}?exerciseId=${exerciseId}&complaintType=${complaintType}&allComplaintsForTutor=true`;
         return this.requestComplaintsFromUrl(url);
     }
 
@@ -275,6 +288,8 @@ export class ComplaintService implements IComplaintService {
         complaint.complaintType = dto.complaintType;
         complaint.accepted = dto.complaintIsAccepted;
         complaint.submittedTime = dto.submittedTime ? dayjs(dto.submittedTime) : undefined;
+        complaint.assessorKey = dto.assessorKey;
+        complaint.assessorLabel = dto.assessorLabel;
 
         if (dto.complaintResponse) {
             complaint.complaintResponse = this.complaintResponseService.convertComplaintResponseFromServer(dto.complaintResponse);

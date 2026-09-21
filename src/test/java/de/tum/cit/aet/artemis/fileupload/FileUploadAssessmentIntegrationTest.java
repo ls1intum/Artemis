@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -83,6 +84,51 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         return ParticipationFactory.applySGIonFeedback(afterReleaseFileUploadExercise);
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void saveAssessmentRejectsForeignGradingInstruction(boolean submit) throws Exception {
+        var submission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessor(afterReleaseFileUploadExercise,
+                ParticipationFactory.generateFileUploadSubmission(true), TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        var originalResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(submission.getLatestResult().getId());
+        var originalFeedbackIds = originalResult.getFeedbacks().stream().map(Feedback::getId).toList();
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("submit", Boolean.toString(submit));
+
+        request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + submission.getId() + "/feedback", assessmentInput(feedbackWithForeignInstruction(), "changed note"),
+                FileUploadResultDTO.class, HttpStatus.BAD_REQUEST, params);
+
+        var unchangedResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(originalResult.getId());
+        assertThat(unchangedResult.getFeedbacks()).extracting(Feedback::getId).containsExactlyInAnyOrderElementsOf(originalFeedbackIds);
+        assertThat(unchangedResult.getScore()).isEqualTo(originalResult.getScore());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    void complaintUpdateRejectsForeignGradingInstructionBeforeResolvingComplaint() throws Exception {
+        var submission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessor(afterReleaseFileUploadExercise,
+                ParticipationFactory.generateFileUploadSubmission(true), TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        var complaint = complaintRepository.save(new Complaint().result(submission.getLatestResult()).complaintText("Please review"));
+        var response = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        var update = new FileUploadAssessmentUpdateDTO(feedbackInputDTOs(feedbackWithForeignInstruction()),
+                new FileUploadComplaintResponseInputDTO(response.getId(), "Accepted", true), null);
+
+        request.putWithResponseBody(API_FILE_UPLOAD_SUBMISSIONS + submission.getId() + "/assessment-after-complaint", update, FileUploadResultDTO.class, HttpStatus.BAD_REQUEST);
+
+        var unchangedComplaint = complaintRepository.findWithEagerComplaintResponseByResultSubmissionId(submission.getId()).orElseThrow();
+        assertThat(unchangedComplaint.isAccepted()).isNull();
+        assertThat(unchangedComplaint.getComplaintResponse().getSubmittedTime()).isNull();
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getResults()).hasSize(1);
+    }
+
+    private List<Feedback> feedbackWithForeignInstruction() {
+        var otherExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "assessed");
+        var criteria = gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(otherExercise));
+        var feedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("foreign grading instruction");
+        feedback.setGradingInstruction(criteria.getFirst().getStructuredGradingInstructions().iterator().next());
+        return List.of(feedback);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSubmitFileUploadAssessment_asInstructor() throws Exception {
@@ -111,7 +157,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
                 CourseAssessmentDashboardDTO.class);
         CourseAssessmentDashboardDTO.AssessmentExerciseDTO exercise = dashboard.exercises().stream().filter(e -> "released".equals(e.title())).findFirst().orElseThrow();
         assertThat(exercise.numberOfAssessmentsOfCorrectionRounds()).hasSize(1);
-        assertThat(exercise.numberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(1L);
+        assertThat(exercise.numberOfAssessmentsOfCorrectionRounds().getFirst().inTime()).isEqualTo(1L);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
