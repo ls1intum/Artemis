@@ -169,6 +169,33 @@ describe('Component Tests', () => {
             expect(comp.success()).toBe(true);
         });
 
+        it.each(['ä'.repeat(37), '€'.repeat(25), '😀'.repeat(19), 'ä'.repeat(36) + 'a'])(
+            'should reject a password exceeding 72 UTF-8 bytes without submitting it: %s',
+            async (password) => {
+                const finishSpy = vi.spyOn(passwordResetFinishService, 'completePasswordReset').mockReturnValue(of({}));
+                const confirmSpy = vi.spyOn(TestBed.inject(CredentialRevocationConfirmationService), 'confirm');
+                comp.passwordForm.setValue({ newPassword: password, confirmPassword: password });
+
+                expect(comp.passwordForm.invalid).toBe(true);
+                expect(comp.passwordForm.controls.newPassword.hasError('maxbytes')).toBe(true);
+                await comp.finishReset();
+
+                expect(confirmSpy).not.toHaveBeenCalled();
+                expect(finishSpy).not.toHaveBeenCalled();
+                expect(comp.error()).toBe(false);
+            },
+        );
+
+        it.each(['ä'.repeat(36), '€'.repeat(24), '😀'.repeat(18), 'a'.repeat(50)])('should accept a password within the byte limit: %s', async (password) => {
+            vi.spyOn(passwordResetFinishService, 'completePasswordReset').mockReturnValue(of({}));
+            comp.passwordForm.setValue({ newPassword: password, confirmPassword: password });
+
+            expect(comp.passwordForm.valid).toBe(true);
+            await comp.finishReset();
+
+            expect(comp.success()).toBe(true);
+        });
+
         it('should notify of generic error', async () => {
             vi.spyOn(passwordResetFinishService, 'completePasswordReset').mockReturnValue(throwError(() => new Error('ERROR')));
             comp.passwordForm.patchValue({
