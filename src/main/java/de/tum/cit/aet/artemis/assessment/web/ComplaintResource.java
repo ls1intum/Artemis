@@ -128,7 +128,7 @@ public class ComplaintResource {
             // Assumes user with participation in an exam exercise can file a complaint for that participation.
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, result.getSubmission().getParticipation().getExercise(), null);
         }
-        savedComplaint = complaintService.createComplaint(complaint, complaint.examId(), principal);
+        savedComplaint = complaintService.createComplaint(complaint, principal);
 
         // Remove assessor information from the client request
         savedComplaint.getResult().filterSensitiveInformation();

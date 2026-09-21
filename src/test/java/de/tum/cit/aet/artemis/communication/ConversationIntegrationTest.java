@@ -5,6 +5,7 @@ import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -536,6 +537,55 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
         // cleanup
         conversationRepository.deleteById(channel.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void searchMembersOfCourseWideChannel_sortedByName_shouldFindMembers() throws Exception {
+        Channel courseWideChannel = conversationUtilService.createCourseWideChannel(exampleCourse, "course-wide-member-search");
+
+        // A course-wide channel has no participants, so the members are looked up over the whole course by a query that selects only the user id. Such a query must not
+        // eliminate duplicates with DISTINCT: PostgreSQL rejects a DISTINCT whose ORDER BY names a column outside the select list, which is what the sort the client sends does.
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("loginOrName", "");
+        params.add("sort", "firstName,asc");
+        params.add("sort", "lastName,asc");
+        params.add("page", "0");
+        params.add("size", "20");
+
+        var members = request.getList("/api/communication/courses/" + exampleCourseId + "/conversations/" + courseWideChannel.getId() + "/members/search", HttpStatus.OK,
+                ConversationUserDTO.class, params);
+        assertThat(members).extracting(ConversationUserDTO::getLogin).contains(testPrefix + "student1", testPrefix + "tutor1", testPrefix + "editor1", testPrefix + "instructor1");
+
+        // filtering by a role routes the same search through a second id-only query
+        params.set("filter", "STUDENT");
+        members = request.getList("/api/communication/courses/" + exampleCourseId + "/conversations/" + courseWideChannel.getId() + "/members/search", HttpStatus.OK,
+                ConversationUserDTO.class, params);
+        assertThat(members).extracting(ConversationUserDTO::getLogin).contains(testPrefix + "student1").doesNotContain(testPrefix + "tutor1");
+
+        // The client asks for the members by name, so the page window has to be cut by that order. Paging by id instead would alphabetise each page on its own while the
+        // pages themselves follow no order the reader can see, which is the same list in a useless sequence.
+        params.remove("filter");
+        params.set("size", "20");
+        List<ConversationUserDTO> allMembers = request.getList("/api/communication/courses/" + exampleCourseId + "/conversations/" + courseWideChannel.getId() + "/members/search",
+                HttpStatus.OK, ConversationUserDTO.class, params);
+        assertThat(allMembers).extracting(ConversationUserDTO::getLogin).contains(testPrefix + "student1", testPrefix + "tutor1", testPrefix + "editor1",
+                testPrefix + "instructor1");
+        assertThat(allMembers).as("the search has to answer in the order the client asked for").extracting(ConversationUserDTO::getFirstName).isSorted();
+        List<String> orderedByName = allMembers.stream().map(ConversationUserDTO::getLogin).toList();
+
+        int pageSize = 2;
+        params.set("size", String.valueOf(pageSize));
+        List<String> paged = new ArrayList<>();
+        for (int page = 0; page * pageSize < orderedByName.size(); page++) {
+            params.set("page", String.valueOf(page));
+            paged.addAll(request.getList("/api/communication/courses/" + exampleCourseId + "/conversations/" + courseWideChannel.getId() + "/members/search", HttpStatus.OK,
+                    ConversationUserDTO.class, params).stream().map(ConversationUserDTO::getLogin).toList());
+        }
+        assertThat(paged).as("the pages read one after another have to give the same order as the unpaged search").containsExactlyElementsOf(orderedByName);
+
+        // cleanup
+        conversationRepository.deleteById(courseWideChannel.getId());
     }
 
     @Test
