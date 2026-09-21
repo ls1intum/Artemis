@@ -11,10 +11,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCog, faShieldHalved } from '@fortawesome/free-solid-svg-icons';
-import { TabsModule } from 'primeng/tabs';
-import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { TumUiMessageComponent, TumUiTabComponent, TumUiTabListComponent, TumUiTabPanelComponent, TumUiTabPanelsComponent, TumUiTabsComponent, TumUiToggleSwitchComponent } from '@tumaet/ui-angular';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 
 /**
@@ -44,14 +42,18 @@ interface FeedbackStyleTick {
     imports: [
         CourseTitleBarTitleComponent,
         CourseTitleBarTitleDirective,
-        TabsModule,
-        MessageModule,
+        TumUiTabsComponent,
+        TumUiTabListComponent,
+        TumUiTabComponent,
+        TumUiTabPanelsComponent,
+        TumUiTabPanelComponent,
+        TumUiMessageComponent,
         FormsModule,
         TranslateDirective,
         ArtemisTranslatePipe,
         FaIconComponent,
         SkeletonModule,
-        ToggleSwitchModule,
+        TumUiToggleSwitchComponent,
         UnifiedFeedbackComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,

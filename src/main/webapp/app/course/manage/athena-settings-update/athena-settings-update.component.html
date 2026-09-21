@@ -3,33 +3,34 @@
 </div>
 
 <div class="athena-settings-content">
-    <p-tabs [value]="activeTab()" (valueChange)="setActiveTab($event)">
-        <p-tablist>
-            <p-tab value="general">
+    <tum-ui-tabs [value]="activeTab()" (valueChange)="setActiveTab($event)">
+        <tum-ui-tab-list>
+            <tum-ui-tab value="general">
                 <fa-icon [icon]="faCog" class="me-2" />
                 <span jhiTranslate="artemisApp.course.athenaConfig.settingsPage.generalTab"></span>
-            </p-tab>
+            </tum-ui-tab>
             @if (isAdmin()) {
-                <p-tab value="admin">
+                <tum-ui-tab value="admin">
                     <fa-icon [icon]="faShieldHalved" class="me-2" />
                     <span jhiTranslate="artemisApp.course.athenaConfig.settingsPage.adminTab"></span>
-                </p-tab>
+                </tum-ui-tab>
             }
-        </p-tablist>
+        </tum-ui-tab-list>
 
-        <p-tabpanels>
+        <tum-ui-tab-panels>
             <!-- ── GENERAL TAB ── -->
-            <p-tabpanel value="general">
+            <tum-ui-tab-panel value="general">
                 <div class="athena-general-panel">
                     @for (feature of features; track feature.key) {
                         @let stateLabelKey = 'artemisApp.course.athenaConfig.' + feature.key + (feature.enabled() ? '.enabledLabel' : '.disabledLabel');
                         @let stateHintKey = 'artemisApp.course.athenaConfig.' + feature.key + (feature.enabled() ? '.enabledHint' : '.disabledHint');
                         <div class="athena-toggle-row">
                             @if (isLoaded()) {
-                                <p-toggleswitch
+                                <tum-ui-toggle-switch
                                     [inputId]="feature.testId + '-toggle'"
                                     [ngModel]="feature.enabled()"
-                                    (ngModelChange)="setEnabled(feature.key, $event)"
+                                    [ngModelOptions]="{ standalone: true }"
+                                    (changed)="setEnabled(feature.key, $event)"
                                     [ariaLabel]="stateLabelKey | artemisTranslate"
                                     [attr.data-testid]="feature.testId"
                                 />
@@ -143,19 +144,19 @@
                         </div>
                     }
                 </div>
-            </p-tabpanel>
+            </tum-ui-tab-panel>
 
             <!-- ── ADMIN TAB ── -->
             @if (isAdmin()) {
-                <p-tabpanel value="admin">
+                <tum-ui-tab-panel value="admin">
                     <div class="athena-admin-panel">
                         <p class="text-muted-color" jhiTranslate="artemisApp.course.athenaConfig.settingsPage.adminOnly"></p>
-                        <p-message severity="info" styleClass="w-full">
+                        <tum-ui-message severity="info" class="w-full">
                             <span jhiTranslate="artemisApp.course.athenaConfig.settingsPage.rateLimit.description" [translateValues]="{ limit: allowedFeedbackRequests() }"></span>
-                        </p-message>
+                        </tum-ui-message>
                     </div>
-                </p-tabpanel>
+                </tum-ui-tab-panel>
             }
-        </p-tabpanels>
-    </p-tabs>
+        </tum-ui-tab-panels>
+    </tum-ui-tabs>
 </div>
