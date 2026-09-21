@@ -86,10 +86,18 @@ export class ResultComponent {
      * Only then may it open the text/modeling submission view. That deep link
      * (`courses/:courseId/exercises/{text,modeling}-exercises/:exerciseId/participate/:participationId/…`) is the
      * student exercise page: it loads the exercise details endpoint, which an exam exercise answers with 403, and in
-     * a course its split panel swaps a participation that is not the viewer's for the viewer's own. Tutor- and
-     * instructor-facing pages therefore pass `false`, which leaves the badge unclickable for those two exercise
-     * types — the assessment editor next to it shows the student's result instead. Every other type opens the
-     * feedback dialog, which renders whichever participation it is handed, so it stays clickable either way.
+     * a course its split panel swaps a participation that is not the viewer's for the viewer's own. Passing `false`
+     * leaves the badge unclickable for those two exercise types — the assessment editor next to it shows the
+     * student's result instead. Every other type opens the feedback dialog, which renders whichever participation it
+     * is handed, so it stays clickable either way.
+     *
+     * **Any view that renders a participation other than the viewer's own must pass `false`**: today the exercise
+     * assessment dashboard, the instructor scores table, the participation submissions view and the
+     * example-submission import modal. {@link UpdatingResultComponent} forwards it for callers that go through the
+     * wrapper. The default cannot be flipped to make that automatic, because a badge on a result the viewer does
+     * own — the exercise page, the course overview cards, the exam summary — has to keep the link, and nothing in
+     * {@link Participation} reliably says whose it is (a tutor sees exam participations anonymised, so an absent
+     * student is not evidence either way).
      */
     readonly isOwnParticipation = input(true);
     readonly missingResultInfo = input(MissingResultInformation.NONE);

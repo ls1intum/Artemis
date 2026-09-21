@@ -204,13 +204,23 @@ test.describe('Text exercise assessment', { tag: '@slow' }, () => {
             }
             const dashboard = `/course-management/${course.id}/assessment-dashboard/${exercise.id}`;
             await login(tutor, dashboard);
-            const badge = page.locator('jhi-result #result-score').first();
+            // Assert on the jhi-result host rather than on #result-score: depending on whether the submission landed
+            // just before or after the (short) due date the component renders HAS_RESULT or LATE, and only the former
+            // has that id. Neither may carry the clickable affordance.
+            const badge = page.locator('jhi-result').first();
             await expect(badge).toBeVisible({ timeout: 20000 });
-            await expect(badge).not.toHaveClass(/clickable-result/);
+            await expect(badge.locator('.clickable-result')).toHaveCount(0);
 
+            let navigated = false;
+            page.on('framenavigated', (frame) => {
+                if (frame === page.mainFrame()) {
+                    navigated = true;
+                }
+            });
             await badge.click();
             // Give a navigation the click must not start the time to commit before asserting it did not happen.
             await page.waitForTimeout(1000);
+            expect(navigated).toBeFalsy();
             await expect(page).toHaveURL(new RegExp(`${dashboard}$`));
         });
 

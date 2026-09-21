@@ -15,12 +15,10 @@
             </h5>
 
             <!--
-                Dropped rather than shrunk on a narrow bar, the way the exercise bar drops its own pills: the same
-                points and dates are on every variant card below, so nothing becomes unreachable. Tailwind's layout
-                utilities rather than Bootstrap's, because `d-flex` is `!important` and would outrank the `display:
-                none` that `.title-bar-optional-control` applies below the threshold.
+                The group score stays on the bar at every width: it is the capped total over the variants, which no
+                variant card repeats, so dropping it would leave the student no way to see their score for the group.
             -->
-            <div class="title-bar-optional-control flex items-center gap-2 shrink-0">
+            <div class="flex items-center gap-2 shrink-0">
                 @if (exerciseSumMaxPoints() > 0) {
                     <jhi-information-box [informationBoxData]="pointsInfoBoxData()" layout="inline">
                         <span contentComponent class="d-flex align-items-center gap-1">
@@ -38,6 +36,15 @@
                         </span>
                     </jhi-information-box>
                 }
+            </div>
+            <!--
+                The dates and the variant count are dropped rather than shrunk on a narrow bar, the way the exercise
+                bar drops its own pills: every variant card below carries the same dates, and the count is the number
+                of cards, so nothing becomes unreachable. Tailwind's layout utilities rather than Bootstrap's, because
+                `d-flex` is `!important` and would outrank the `display: none` that `.title-bar-optional-control`
+                applies below the threshold.
+            -->
+            <div class="title-bar-optional-control flex items-center gap-2 shrink-0">
                 @for (dateBox of groupDateInfoBoxes(); track dateBox.title) {
                     <jhi-information-box [informationBoxData]="dateBox" layout="inline">
                         @switch (dateBox.content.type) {
@@ -76,7 +83,7 @@
                             [class.variant-card--medium]="exercise.difficulty === DifficultyLevel.MEDIUM"
                             [class.variant-card--hard]="exercise.difficulty === DifficultyLevel.HARD"
                         >
-                            <!-- `gap-2` is the gap the shared `.detail-header-card` puts between its title row and its information boxes. -->
+                            <!-- `gap-2`, the same gap the title bar keeps between its own title and information boxes. -->
                             <a class="variant-card__link flex flex-1 flex-col gap-2" [routerLink]="exerciseLink(exercise)">
                                 <div class="d-flex align-items-center gap-2">
                                     <fa-icon [icon]="getIcon(exercise.type)" class="text-secondary" />
