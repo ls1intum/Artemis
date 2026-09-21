@@ -5,9 +5,11 @@ import java.util.List;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
@@ -82,5 +84,35 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
             ORDER BY attachment.id
             """)
     List<AttachmentFileLocationDTO> findAttachmentFileLocationsAfter(@Param("minimumAttachmentId") long minimumAttachmentId, Pageable pageable);
+
+    /**
+     * Update an attachment's display page numbers, atomically: only while it still carries the
+     * expected version.
+     * <p>
+     * A content-triggered requeue clears this mapping and bumps the version when new content
+     * replaces this attachment's PDF (see {@code LectureContentProcessingService#cleanupForReprocessing}).
+     * Matching on the version here is what stops an ingestion callback whose run predates that
+     * requeue from restoring stale page numbers over content that has already changed, without
+     * needing a transaction spanning the processing-state write and this one.
+     * <p>
+     * {@code expectedVersion} of {@code null} imposes no constraint, matching every other
+     * conditional-update guard in this module: a unit whose processing state never recorded an
+     * attachment version (no PDF was ever detected for it) has nothing to compare against.
+     *
+     * @param attachmentId       the attachment to update
+     * @param displayPageNumbers the new mapping
+     * @param expectedVersion    the attachment version the calling run's processing state recorded, or {@code null}
+     * @return 1 when applied, 0 when the attachment's version has since changed
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE Attachment a
+            SET a.displayPageNumbers = :displayPageNumbers
+            WHERE a.id = :attachmentId
+            AND (:expectedVersion IS NULL OR a.version = :expectedVersion)
+            """)
+    int updateDisplayPageNumbersIfVersionMatches(@Param("attachmentId") Long attachmentId, @Param("displayPageNumbers") List<Integer> displayPageNumbers,
+            @Param("expectedVersion") Integer expectedVersion);
 
 }

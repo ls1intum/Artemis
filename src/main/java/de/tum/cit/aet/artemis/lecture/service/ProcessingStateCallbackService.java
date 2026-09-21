@@ -616,9 +616,8 @@ public class ProcessingStateCallbackService {
                 return;
             }
             log.info("Processing completed successfully for unit {}", lectureUnitId);
-            // Only write display page numbers once this callback is confirmed to still own the run: a
-            // losing callback must never touch the attachment, since cleanupForReprocessing may have
-            // already cleared this mapping for different content.
+            // Written only once ownership is confirmed above; see saveDisplayPageNumbers for the
+            // version guard against a losing callback restoring stale data.
             saveDisplayPageNumbers(state, displayPageNumbers);
             // Mirror the just-persisted transition for an accurate notification, without a second read.
             state.transitionTo(ProcessingPhase.DONE);
@@ -788,14 +787,9 @@ public class ProcessingStateCallbackService {
         transcription.setSegments(checkpoint.segments());
 
         if (checkpoint.isEnriched()) {
-            transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
-            log.info("Enriched transcription saved for unit {}, transitioning to INGESTING", lectureUnitId);
-
-            transcriptionRepository.save(transcription);
-
-            // Transition: TRANSCRIBING → INGESTING (keep same job token — Iris continues the pipeline).
-            // Conditional on the token and TRANSCRIBING, not a blind save: see the comment on
-            // LectureUnitProcessingStateRepository#transitionToIngestingIfTranscribing.
+            // Transition: TRANSCRIBING → INGESTING (keep same job token). Proven before the transcription
+            // write below: a checkpoint that already lost ownership must never persist content a requeue
+            // may have already deleted the stored transcription for.
             String jobToken = state.getIngestionJobToken();
             ZonedDateTime now = ZonedDateTime.now();
             if (processingStateRepository.transitionToIngestingIfTranscribing(state.getId(), jobToken, now) == 0) {
@@ -803,23 +797,25 @@ public class ProcessingStateCallbackService {
                 return;
             }
 
-            // Notify UI via WebSocket. The in-memory entity is stale by design (its own write was skipped
-            // in favor of the conditional update above); mirror the same fields onto it purely to report
-            // the state that was just written, without a second read.
+            transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
+            log.info("Enriched transcription saved for unit {}, transitioning to INGESTING", lectureUnitId);
+            transcriptionRepository.save(transcription);
+
+            // Notify UI via WebSocket, mirroring the just-persisted transition without a second read.
             state.resetRetryCount();
             state.transitionTo(ProcessingPhase.INGESTING);
             notifyProcessingStateChange(state, TranscriptionStatus.COMPLETED);
         }
         else {
+            // Same reasoning as the enriched branch above.
+            if (processingStateRepository.touchLastUpdated(state.getId(), state.getIngestionJobToken(), ZonedDateTime.now()) == 0) {
+                log.debug("Ignoring raw checkpoint for unit {}: the run is no longer in flight under this token", lectureUnitId);
+                return;
+            }
+
             transcription.setTranscriptionStatus(TranscriptionStatus.PENDING);
             log.info("Raw transcription checkpoint saved for unit {}, staying in TRANSCRIBING", lectureUnitId);
             transcriptionRepository.save(transcription);
-
-            // Update lastUpdated as heartbeat (prevents stuck detection). Conditional for the same reason
-            // as the enriched branch above.
-            if (processingStateRepository.touchLastUpdated(state.getId(), state.getIngestionJobToken(), ZonedDateTime.now()) == 0) {
-                log.debug("Ignoring raw checkpoint for unit {}: the run is no longer in flight under this token", lectureUnitId);
-            }
         }
     }
 
@@ -988,8 +984,12 @@ public class ProcessingStateCallbackService {
         if (attachment == null) {
             return;
         }
-        attachment.setDisplayPageNumbers(displayPageNumbers);
-        attachmentRepository.save(attachment);
+        // Conditional on the recorded attachment version, not a blind save: a content-triggered
+        // requeue clears the mapping and bumps the version, and this guard stops a stale run's
+        // page numbers from overwriting that.
+        if (attachmentRepository.updateDisplayPageNumbersIfVersionMatches(attachment.getId(), displayPageNumbers, state.getAttachmentVersion()) == 0) {
+            log.info("Skipping display page number write for unit {}: attachment version changed since this run started", state.getLectureUnit().getId());
+        }
     }
 
     /**

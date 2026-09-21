@@ -482,6 +482,45 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
+        void shouldNotSaveEnrichedTranscriptionWhenLosingTheRaceOnCheckpoint() {
+            // A content-triggered requeue (video changed) can delete the stored transcription and
+            // supersede this run between the checkpoint's arrival and this write; the atomic
+            // TRANSCRIBING-to-INGESTING claim proves ownership first, so a checkpoint that has already
+            // lost it must never persist content that could recreate the old video's transcription.
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(0);
+
+            String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
+
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+
+            verify(transcriptionRepository, never()).save(any());
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
+        }
+
+        @Test
+        void shouldNotSaveRawTranscriptionWhenLosingTheRaceOnCheckpoint() {
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(processingStateRepository.touchLastUpdated(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(0);
+
+            String rawJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":0}]}";
+
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
+
+            verify(transcriptionRepository, never()).save(any());
+        }
+
+        @Test
         void shouldIgnoreCheckpointWithStaleToken() {
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setIngestionJobToken("current-token");
@@ -599,7 +638,7 @@ class LectureContentProcessingServiceTest {
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, List.of(1, 2, -1));
 
-            verify(attachmentRepository, never()).save(any());
+            verify(attachmentRepository, never()).updateDisplayPageNumbersIfVersionMatches(any(), any(), any());
         }
 
         @Test
@@ -634,18 +673,41 @@ class LectureContentProcessingServiceTest {
         @Test
         void shouldSaveDisplayPageNumbersOnSuccess() {
             Attachment attachment = new Attachment();
+            attachment.setId(77L);
             testUnit.setAttachment(attachment);
+            testState.setAttachmentVersion(3);
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
-            when(attachmentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(attachmentRepository.updateDisplayPageNumbersIfVersionMatches(any(), any(), any())).thenReturn(1);
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, List.of(1, 2, -1));
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
-            assertThat(testUnit.getAttachment().getDisplayPageNumbers()).containsExactly(1, 2, -1);
-            verify(attachmentRepository).save(attachment);
+            verify(attachmentRepository).updateDisplayPageNumbersIfVersionMatches(77L, List.of(1, 2, -1), 3);
+        }
+
+        @Test
+        void shouldSkipDisplayPageNumbersWriteWhenAttachmentVersionChangedSinceThisRunStarted() {
+            // A content-triggered requeue landing between the completion claim and this write clears
+            // the mapping and bumps the version (cleanupForReprocessing); the conditional update then
+            // matches zero rows, and this run must not treat that as an error or retry the write with
+            // stale data -- the fresh generation's own run is responsible for the mapping now.
+            Attachment attachment = new Attachment();
+            attachment.setId(77L);
+            testUnit.setAttachment(attachment);
+            testState.setAttachmentVersion(3);
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+            when(attachmentRepository.updateDisplayPageNumbersIfVersionMatches(any(), any(), any())).thenReturn(0);
+
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, List.of(1, 2, -1));
+
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
+            verify(attachmentRepository).updateDisplayPageNumbersIfVersionMatches(77L, List.of(1, 2, -1), 3);
         }
 
         @Test
@@ -662,7 +724,7 @@ class LectureContentProcessingServiceTest {
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
             assertThat(testUnit.getAttachment().getDisplayPageNumbers()).containsExactly(1, 2, -1);
-            verify(attachmentRepository, never()).save(attachment);
+            verify(attachmentRepository, never()).updateDisplayPageNumbersIfVersionMatches(any(), any(), any());
         }
 
         @Test
@@ -676,7 +738,7 @@ class LectureContentProcessingServiceTest {
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, List.of(1, 2, -1));
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
-            verify(attachmentRepository, never()).save(any());
+            verify(attachmentRepository, never()).updateDisplayPageNumbersIfVersionMatches(any(), any(), any());
         }
 
         @Test
