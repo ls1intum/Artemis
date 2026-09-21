@@ -134,7 +134,7 @@ class Engine:
         if self.name == "postgres":
             argv = ["psql", "-U", "artemis", "-d", "Artemis", "-t", "-A", "-F", "\t", "-c", query]
         else:
-            argv = ["mysql", "-u", "root", "-N", "-B", "--database", "Artemis", "-e", query]
+            argv = ["mysql", "--default-character-set=utf8mb4", "-u", "root", "-N", "-B", "--database", "Artemis", "-e", query]
         result = run(["docker", "exec", container, *argv])
         if result.returncode != 0:
             raise RuntimeError(f"could not read DATABASECHANGELOG: {result.stderr.strip()}")
@@ -150,7 +150,7 @@ class Engine:
         if self.name == "postgres":
             argv = ["psql", "-U", "artemis", "-d", "Artemis", "-t", "-A", "-c", query]
         else:
-            argv = ["mysql", "-u", "root", "-N", "-B", "--database", "Artemis", "-e", query]
+            argv = ["mysql", "--default-character-set=utf8mb4", "-u", "root", "-N", "-B", "--database", "Artemis", "-e", query]
         result = run(["docker", "exec", container, *argv])
         if result.returncode != 0:
             raise RuntimeError(f"could not count rows in {table}: {result.stderr.strip()}")

@@ -106,7 +106,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     private String lastName;
 
     @Size(max = 20)
-    @Column(name = "registration_number", length = 20)
+    @Column(name = "registration_number", length = 20, unique = true)
     @JsonIgnore
     private String registrationNumber;
 

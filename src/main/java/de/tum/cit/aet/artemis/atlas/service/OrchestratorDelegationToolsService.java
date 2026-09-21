@@ -26,7 +26,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 /** Main-orchestrator tools that synchronously delegate semantic action batches to isolated workers. */
 @Lazy
 @Service
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 public class OrchestratorDelegationToolsService {
 
     private static final Logger log = LoggerFactory.getLogger(OrchestratorDelegationToolsService.class);

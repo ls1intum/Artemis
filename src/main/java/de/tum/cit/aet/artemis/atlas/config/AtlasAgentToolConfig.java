@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.atlas.service.OrchestratorReadToolsService;
  */
 @Lazy
 @Configuration
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 public class AtlasAgentToolConfig {
 
     // ---------------------------------------------------------------------------------------------

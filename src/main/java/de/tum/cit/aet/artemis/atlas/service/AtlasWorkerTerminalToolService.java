@@ -20,13 +20,13 @@ import org.springframework.stereotype.Service;
 
 import tools.jackson.databind.json.JsonMapper;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.WorkerCompletionDTO;
 
 /** One-shot terminal tool shared by the stateless Creator, Assigner, and Editor workers. */
 @Lazy
 @Service
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 public class AtlasWorkerTerminalToolService {
 
     private final JsonMapper objectMapper;

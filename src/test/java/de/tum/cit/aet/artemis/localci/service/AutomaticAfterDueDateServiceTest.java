@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.localci.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.lenient;
@@ -11,6 +13,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -35,6 +38,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.AutomaticAfterDueDatePreviewRequestDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseBuildPlanConfigurationDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
@@ -68,6 +72,12 @@ class AutomaticAfterDueDateServiceTest {
                 Optional.of(examApi));
         // The exercise does not carry its configuration, so the repository hands back the one the fixture built.
         lenient().when(programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(anyLong())).thenAnswer(invocation -> buildConfig);
+        // The exam path reads them all in one query instead, projected down to the build plan, so the same fixture answers for every exercise asked for.
+        lenient().when(programmingExerciseBuildConfigRepository.findBuildPlanConfigurationsByProgrammingExerciseIds(any())).thenAnswer(invocation -> {
+            Collection<Long> exerciseIds = invocation.getArgument(0);
+            return exerciseIds.stream().map(exerciseId -> new ProgrammingExerciseBuildPlanConfigurationDTO(exerciseId, exerciseId, buildConfig.getBuildPlanConfiguration()))
+                    .toList();
+        });
     }
 
     @Test
@@ -221,6 +231,42 @@ class AutomaticAfterDueDateServiceTest {
         assertThat(updatedIds).containsExactly(exerciseId);
         assertThat(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isEqualTo(latestExamEndDate.plusSeconds(120).plusMinutes(15));
         verify(programmingExerciseRepository).saveAll(anyList());
+    }
+
+    /**
+     * The recomputation runs on every change to an exam's timing and reads the build plan of every programming
+     * exercise in it. The exercise does not carry its configuration, so that read is a query of its own - and it has
+     * to stay one query for the whole exam rather than one per exercise.
+     */
+    @Test
+    void updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam_readsEveryBuildPlanInOneQuery() throws JacksonException {
+        var latestExamEndDate = BASE_TIME.plusDays(2);
+        var firstExercise = createExamExercise(BASE_TIME.plusDays(1), BuildPhaseCondition.AFTER_DUE_DATE, 120);
+        firstExercise.setId(101L);
+
+        var exerciseGroup = firstExercise.getExerciseGroup();
+        var exam = exerciseGroup.getExam();
+        exam.setId(100L);
+        var secondExercise = examExerciseIn(exerciseGroup, 102L);
+        var thirdExercise = examExerciseIn(exerciseGroup, 103L);
+        exerciseGroup.setExercises(Set.of(firstExercise, secondExercise, thirdExercise));
+        exam.setExerciseGroups(List.of(exerciseGroup));
+
+        when(examDateApi.getLatestIndividualExamEndDate(exam)).thenReturn(latestExamEndDate);
+        when(programmingExerciseRepository.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam(exam, null);
+
+        // The point of the assertion: one projection over all three, not one read per exercise.
+        verify(programmingExerciseBuildConfigRepository).findBuildPlanConfigurationsByProgrammingExerciseIds(anyCollection());
+        verify(programmingExerciseBuildConfigRepository, never()).getProgrammingExerciseBuildConfigElseThrow(anyLong());
+    }
+
+    private static ProgrammingExercise examExerciseIn(ExerciseGroup exerciseGroup, long id) {
+        var exercise = new ProgrammingExercise();
+        exercise.setId(id);
+        exercise.setExerciseGroup(exerciseGroup);
+        return exercise;
     }
 
     @Test

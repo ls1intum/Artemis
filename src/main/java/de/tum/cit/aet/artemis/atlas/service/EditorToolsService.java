@@ -32,7 +32,7 @@ import org.springframework.stereotype.Service;
 
 import tools.jackson.databind.json.JsonMapper;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -57,7 +57,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
  */
 @Lazy
 @Service
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 public class EditorToolsService {
 
     private static final Logger log = LoggerFactory.getLogger(EditorToolsService.class);

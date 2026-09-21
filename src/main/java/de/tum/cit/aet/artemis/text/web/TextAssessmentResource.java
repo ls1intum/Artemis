@@ -48,7 +48,6 @@ import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.assessment.repository.GradingInstructionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
@@ -123,8 +122,6 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final ResultService resultService;
 
-    private final GradingInstructionRepository gradingInstructionRepository;
-
     private final Optional<AthenaFeedbackApi> athenaFeedbackApi;
 
     private final CourseAthenaConfigRepository courseAthenaConfigRepository;
@@ -133,8 +130,8 @@ public class TextAssessmentResource extends AssessmentResource {
             TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository, UserRepository userRepository,
             TextSubmissionService textSubmissionService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             GradingCriterionRepository gradingCriterionRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
-            FeedbackRepository feedbackRepository, ResultService resultService, GradingInstructionRepository gradingInstructionRepository,
-            LongFeedbackTextRepository longFeedbackTextRepository, Optional<AthenaFeedbackApi> athenaFeedbackApi, CourseAthenaConfigRepository courseAthenaConfigRepository) {
+            FeedbackRepository feedbackRepository, ResultService resultService, LongFeedbackTextRepository longFeedbackTextRepository,
+            Optional<AthenaFeedbackApi> athenaFeedbackApi, CourseAthenaConfigRepository courseAthenaConfigRepository) {
         super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
         this.courseAthenaConfigRepository = courseAthenaConfigRepository;
 
@@ -147,7 +144,6 @@ public class TextAssessmentResource extends AssessmentResource {
         this.feedbackRepository = feedbackRepository;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.resultService = resultService;
-        this.gradingInstructionRepository = gradingInstructionRepository;
         this.longFeedbackTextRepository = longFeedbackTextRepository;
         this.athenaFeedbackApi = athenaFeedbackApi;
     }
@@ -569,7 +565,8 @@ public class TextAssessmentResource extends AssessmentResource {
         feedback.setPositive(dto.positive());
         feedback.setVisibility(dto.visibility());
         if (dto.gradingInstruction() != null && dto.gradingInstruction().id() != null) {
-            final GradingInstruction gradingInstruction = gradingInstructionRepository.findByIdElseThrow(dto.gradingInstruction().id());
+            final GradingInstruction gradingInstruction = new GradingInstruction();
+            gradingInstruction.setId(dto.gradingInstruction().id());
             feedback.setGradingInstruction(gradingInstruction);
         }
         return feedback;

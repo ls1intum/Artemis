@@ -33,7 +33,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
@@ -66,7 +66,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  * Course context is injected via {@code ToolContext} (see {@link OrchestratorToolContextKeys}) so the
  * LLM cannot forge the course id through tool arguments.
  */
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 @Lazy
 @Service
 public class CompetencyOrchestrationService {

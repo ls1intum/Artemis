@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentChatRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentChatResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentHistoryMessageDTO;
@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 /**
  * REST controller for Atlas Agent functionality.
  */
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 @Lazy
 @FeatureUsage("ai/atlas-agent")
 @RestController
