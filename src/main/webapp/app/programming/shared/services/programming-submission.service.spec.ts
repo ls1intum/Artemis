@@ -854,7 +854,41 @@ describe('ProgrammingSubmissionService', () => {
             httpGetStub.mockReturnValue(of({ ...pending, isProcessing: false }));
             await vi.advanceTimersByTimeAsync(120_000);
             expect(getLatestResultStub).toHaveBeenCalledTimes(2);
+            expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+            await vi.advanceTimersByTimeAsync(120_000);
+            expect(getLatestResultStub).toHaveBeenCalledTimes(3);
             expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
+        });
+
+        it.each(['poll', 'websocket', 'missing'])('waits for result persistence after processing ends (%s)', async (resultArrival) => {
+            pending.estimatedCompletionDate = dayjs().add(30, 'seconds');
+            httpGetStub.mockReturnValueOnce(of(pending)).mockReturnValue(of({ ...pending, isProcessing: false }));
+            notifyAllResultSubscribersStub.mockImplementation((receivedResult: Result) => wsLatestResultSubject.next(receivedResult));
+            submissionService.getLatestPendingSubmissionByParticipationId(participationId, exerciseId, true).subscribe((state) => states.push(state));
+
+            await vi.advanceTimersByTimeAsync(120_000);
+
+            expect(getLatestResultStub).toHaveBeenCalledOnce();
+            expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+            const delayedResult = { id: 31, submission: pending };
+            if (resultArrival === 'poll') {
+                getLatestResultStub.mockReturnValue(of(delayedResult));
+            } else if (resultArrival === 'websocket') {
+                wsLatestResultSubject.next(delayedResult);
+            }
+
+            await vi.advanceTimersByTimeAsync(119_999);
+            expect(states.some((state) => state.submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION)).toBe(false);
+            await vi.advanceTimersByTimeAsync(1);
+
+            expect(states.at(-1)?.submissionState).toBe(
+                resultArrival === 'missing' ? ProgrammingSubmissionState.HAS_FAILED_SUBMISSION : ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
+            );
+            if (resultArrival === 'poll') {
+                expect(notifyAllResultSubscribersStub).toHaveBeenCalledExactlyOnceWith(delayedResult);
+            }
+            await vi.advanceTimersByTimeAsync(120_000);
+            expect(getLatestResultStub).toHaveBeenCalledTimes(resultArrival === 'websocket' ? 1 : 2);
         });
 
         it.each(['result', 'pending submission'])('retries an inconclusive %s request without failing the build', async (failedRequest) => {
@@ -877,6 +911,8 @@ describe('ProgrammingSubmissionService', () => {
 
             // A successful response confirming no active submission still terminates the wait.
             httpGetStub.mockReturnValue(of(undefined));
+            await vi.advanceTimersByTimeAsync(120_000);
+            expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
             await vi.advanceTimersByTimeAsync(120_000);
             expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
         });

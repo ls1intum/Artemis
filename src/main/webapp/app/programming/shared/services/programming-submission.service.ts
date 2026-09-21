@@ -540,8 +540,20 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                             // Do not let the terminal-state handler cancel the renewed timer.
                             return EMPTY;
                         }
-                        this.emitFailedSubmission(participationId, exerciseId);
-                        return of(undefined);
+                        // Processing ends before the queued result is persisted. Allow one fallback interval for that handoff.
+                        return timer(this.currentExpectedResultETA).pipe(
+                            filter(isStillWaiting),
+                            switchMap(() => this.participationService.getLatestResultWithFeedback(participationId)),
+                            filter(isStillWaiting),
+                            tap((finalResult) => {
+                                if (this.isResultOfLatestSubmission(finalResult, exerciseId, participationId)) {
+                                    this.participationWebsocketService.notifyAllResultSubscribers(finalResult);
+                                } else {
+                                    this.emitFailedSubmission(participationId, exerciseId);
+                                }
+                            }),
+                            map(() => undefined),
+                        );
                     }),
                 );
             }),
