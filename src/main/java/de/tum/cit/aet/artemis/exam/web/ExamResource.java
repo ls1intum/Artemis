@@ -415,13 +415,17 @@ public class ExamResource {
         // We also need all student exams for updateStudentExamsAndRescheduleExercises.
         Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
         var originalExamDuration = exam.getDuration();
+        int originalWorkingTime = exam.getWorkingTime();
         final ZonedDateTime originalLatestExamEndDateWithGrace = automaticAfterDueDateService.map(service -> service.getLatestExamEndDateWithGrace(exam)).orElse(null);
 
         // Validate before mutating, using long arithmetic so extreme deltas cannot wrap around.
-        long newWorkingTime = (long) exam.getWorkingTime() + workingTimeChange;
+        long newWorkingTime = (long) originalWorkingTime + workingTimeChange;
         long newDuration = (long) originalExamDuration + workingTimeChange;
         if (newWorkingTime <= 0 || newDuration <= 0 || (exam.isTestExam() && newWorkingTime > newDuration)) {
             throw new BadRequestAlertException("The working time must be positive and fit within the exam's working window.", ENTITY_NAME, "examTimes");
+        }
+        if (newDuration > Integer.MAX_VALUE) {
+            throw new BadRequestAlertException("The exam's working window exceeds the supported duration.", ENTITY_NAME, "examTimes");
         }
         checkExamWorkingTimeLimitElseThrow(newWorkingTime);
         if (!exam.isTestExam()) {
@@ -440,7 +444,9 @@ public class ExamResource {
         examRepository.save(exam);
 
         // 2. Re-calculate the working times of all student exams
-        examService.updateStudentExamsAndRescheduleExercises(exam, originalExamDuration, workingTimeChange);
+        // Test exams have an availability window independent of their regular working time.
+        int originalRegularWorkingTime = exam.isTestExam() ? originalWorkingTime : originalExamDuration;
+        examService.updateStudentExamsAndRescheduleExercises(exam, originalRegularWorkingTime, workingTimeChange);
         if (automaticAfterDueDateService.isPresent()) {
             automaticAfterDueDateService.orElseThrow().updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam(exam, originalLatestExamEndDateWithGrace)
                     .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
