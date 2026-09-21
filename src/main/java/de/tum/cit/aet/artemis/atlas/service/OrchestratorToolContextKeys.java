@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.atlas.service;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -49,6 +50,9 @@ public final class OrchestratorToolContextKeys {
     /** Worker-local sequence used to detect calls after worker completion. */
     public static final String TOOL_SEQUENCE_KEY = "toolSequence";
 
+    /** Worker-local marker set when any mutation tool returns an error outcome. */
+    public static final String WORKER_MUTATION_ERROR_KEY = "workerMutationError";
+
     /** Request-scoped counter reserving one slot per nested worker model round. */
     public static final String DELEGATION_COUNT_KEY = "delegationCount";
 
@@ -79,6 +83,10 @@ public final class OrchestratorToolContextKeys {
 
     static AtomicLong newSequenceMarker() {
         return new AtomicLong();
+    }
+
+    static AtomicBoolean newWorkerMutationErrorMarker() {
+        return new AtomicBoolean();
     }
 
     /**
