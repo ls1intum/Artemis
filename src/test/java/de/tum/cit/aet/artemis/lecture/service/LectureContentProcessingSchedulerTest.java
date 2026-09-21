@@ -210,8 +210,10 @@ class LectureContentProcessingSchedulerTest {
             // When
             scheduler.processScheduledRetries();
 
-            // Then: Should delegate to callbackService.handleProcessingFailureIfStillLive
-            verify(callbackService).handleProcessingFailureIfStillLive(testState);
+            // Then: Should delegate to callbackService.handleProcessingFailureIfStillLive, pinning the
+            // lastUpdated the stuck detector observed (recoverStuckState's re-fetch here returns testState
+            // itself, so its own lastUpdated is what gets pinned).
+            verify(callbackService).handleProcessingFailureIfStillLive(testState, null, null, testState.getLastUpdated());
         }
 
         @Test
@@ -228,7 +230,7 @@ class LectureContentProcessingSchedulerTest {
 
             // Then: Should not attempt recovery
             verify(callbackService, never()).handleProcessingFailure(any());
-            verify(callbackService, never()).handleProcessingFailureIfStillLive(any());
+            verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
         }
 
         @Test
@@ -248,7 +250,7 @@ class LectureContentProcessingSchedulerTest {
 
             // Then: Should skip (already scheduled)
             verify(callbackService, never()).handleProcessingFailure(any());
-            verify(callbackService, never()).handleProcessingFailureIfStillLive(any());
+            verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
         }
 
         @Test
@@ -269,7 +271,7 @@ class LectureContentProcessingSchedulerTest {
 
             // Then: The failure path (which burns a retry) must not run
             verify(callbackService, never()).handleProcessingFailure(any());
-            verify(callbackService, never()).handleProcessingFailureIfStillLive(any());
+            verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
         }
 
         @Test
@@ -286,7 +288,7 @@ class LectureContentProcessingSchedulerTest {
 
             scheduler.processScheduledRetries();
 
-            verify(callbackService).handleProcessingFailureIfStillLive(testState);
+            verify(callbackService).handleProcessingFailureIfStillLive(testState, null, null, testState.getLastUpdated());
         }
 
         @Test
@@ -304,7 +306,7 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             verify(reconcileService, never()).resolveStuckIngestionWithoutRetryPenalty(any());
-            verify(callbackService).handleProcessingFailureIfStillLive(testState);
+            verify(callbackService).handleProcessingFailureIfStillLive(testState, null, null, testState.getLastUpdated());
         }
 
         @Test
@@ -328,7 +330,7 @@ class LectureContentProcessingSchedulerTest {
 
             // Then: Should NOT attempt recovery because phase changed
             verify(callbackService, never()).handleProcessingFailure(any());
-            verify(callbackService, never()).handleProcessingFailureIfStillLive(any());
+            verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
         }
     }
 
@@ -441,7 +443,8 @@ class LectureContentProcessingSchedulerTest {
 
             scheduler.processScheduledRetries();
 
-            verify(callbackService).handleProcessingFailureIfStillLive(testState);
+            // failStalledState pins the lastProgressAt this decision was based on.
+            verify(callbackService).handleProcessingFailureIfStillLive(testState, null, testState.getLastProgressAt(), null);
         }
 
         @Test
@@ -462,7 +465,7 @@ class LectureContentProcessingSchedulerTest {
 
             scheduler.processScheduledRetries();
 
-            verify(callbackService).handleProcessingFailureIfStillLive(testState);
+            verify(callbackService).handleProcessingFailureIfStillLive(testState, null, testState.getLastProgressAt(), null);
         }
 
         @Test
@@ -485,7 +488,7 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             verify(callbackService, never()).handleProcessingFailure(any());
-            verify(callbackService, never()).handleProcessingFailureIfStillLive(any());
+            verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
         }
 
         @Test
@@ -527,7 +530,7 @@ class LectureContentProcessingSchedulerTest {
             });
             // Mimics the real UPDATE ... WHERE id AND phase AND token guard against the backing row: applies
             // the failure only while the row still matches what the caller observed at read time.
-            when(raceRepository.failIfStillLive(eq(PROCESSING_STATE_ID), any(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            when(raceRepository.failIfStillLive(eq(PROCESSING_STATE_ID), any(), any(), any(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
                 ProcessingPhase phase = invocation.getArgument(1);
                 String token = invocation.getArgument(2);
                 if (backingRow.getPhase() != phase || !Objects.equals(backingRow.getIngestionJobToken(), token)) {
@@ -574,7 +577,7 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             verify(callbackService, never()).handleProcessingFailure(any());
-            verify(callbackService, never()).handleProcessingFailureIfStillLive(any());
+            verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
         }
 
         @Test
@@ -594,7 +597,7 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             verify(callbackService, never()).handleProcessingFailure(any());
-            verify(callbackService, never()).handleProcessingFailureIfStillLive(any());
+            verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
         }
 
         @Test
@@ -609,7 +612,7 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             verify(callbackService, never()).handleProcessingFailure(any());
-            verify(callbackService, never()).handleProcessingFailureIfStillLive(any());
+            verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
         }
 
         @Test

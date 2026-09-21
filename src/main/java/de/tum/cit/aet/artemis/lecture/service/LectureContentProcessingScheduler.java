@@ -324,7 +324,10 @@ public class LectureContentProcessingScheduler {
         }
         log.warn("stalled-progress unit={} stage={} progress={}/{} frozen_since={} — heartbeats alive but no progress, failing the run for retry",
                 freshState.getLectureUnit().getId(), freshState.getCurrentStage(), freshState.getStageProgress(), freshState.getStageTotal(), freshState.getLastProgressAt());
-        callbackService.handleProcessingFailureIfStillLive(freshState);
+        // Pin the lastProgressAt this decision was based on: a stage heartbeat can advance it (without
+        // touching phase or token) between this re-fetch and the write, and without pinning it the write
+        // would still fail a run that just reported fresh progress.
+        callbackService.handleProcessingFailureIfStillLive(freshState, null, freshState.getLastProgressAt(), null);
     }
 
     /**
@@ -393,8 +396,11 @@ public class LectureContentProcessingScheduler {
         // ensures poison-pill jobs eventually fail permanently instead of looping forever.
         // Committed through handleProcessingFailureIfStillLive, not a plain save: the phase/token
         // re-checks above narrow the race against a concurrent terminal callback but do not close the
-        // remaining gap between this re-fetch and the write itself.
-        callbackService.handleProcessingFailureIfStillLive(freshState);
+        // remaining gap between this re-fetch and the write itself. Pinning lastUpdated closes it: a
+        // checkpoint or heartbeat can bump lastUpdated (without touching phase or retryEligibleAt)
+        // between this re-fetch and the write, and without pinning it the write would still fail a run
+        // that just proved it was alive.
+        callbackService.handleProcessingFailureIfStillLive(freshState, null, null, freshState.getLastUpdated());
     }
 
     /**

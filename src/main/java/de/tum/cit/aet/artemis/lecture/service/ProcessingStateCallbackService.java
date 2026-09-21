@@ -609,23 +609,18 @@ public class ProcessingStateCallbackService {
         }
 
         if (success) {
-            // Atomically claim the terminal transition and write the DONE state in one statement: see
-            // LectureUnitProcessingStateRepository#completeIngestionIfLive for why a separate token clear
-            // followed by a later whole-entity save can strand or overwrite a row.
+            // Atomic claim + terminal write in one statement (see completeIngestionIfLive): avoids the
+            // strand/overwrite risk of clearing the token separately from a later whole-entity save.
             if (processingStateRepository.completeIngestionIfLive(state.getId(), jobToken, ZonedDateTime.now()) == 0) {
                 log.info("Ignoring completion callback for unit {}: the run is no longer in flight under this token", lectureUnitId);
                 return;
             }
             log.info("Processing completed successfully for unit {}", lectureUnitId);
-            // Only write the display page numbers once this callback is confirmed to still own the
-            // run (the claim above). A callback that lost that race must never touch the attachment:
-            // a content-triggered requeue or a newer activation landing in the window before the claim
-            // may have already cleared this mapping (see
-            // LectureContentProcessingService#cleanupForReprocessing) in preparation for different
-            // content, and an unconditioned write here would resurrect the stale mapping over it.
+            // Only write display page numbers once this callback is confirmed to still own the run: a
+            // losing callback must never touch the attachment, since cleanupForReprocessing may have
+            // already cleared this mapping for different content.
             saveDisplayPageNumbers(state, displayPageNumbers);
-            // Mirror the just-persisted transition onto this in-memory copy purely to report accurate
-            // state in the notification below, without a second read.
+            // Mirror the just-persisted transition for an accurate notification, without a second read.
             state.transitionTo(ProcessingPhase.DONE);
             state.setIngestionJobToken(null);
             state.setConfirmedFingerprint(state.getContentFingerprint());
@@ -637,9 +632,7 @@ public class ProcessingStateCallbackService {
         }
         else {
             log.warn("Processing failed for unit {} (errorCode={})", lectureUnitId, errorCode);
-            // Atomically claim the terminal transition and write the FAILED state in one statement, for
-            // the same reason as the success branch above. handleProcessingFailureIfStillLive already
-            // does this via failIfStillLive, guarded on the phase and token just confirmed live above.
+            // Same atomic-claim reasoning as the success branch, via failIfStillLive.
             if (!handleProcessingFailureIfStillLive(state, errorCode)) {
                 log.info("Ignoring completion callback for unit {}: the run is no longer in flight under this token", lectureUnitId);
                 return;
@@ -845,11 +838,14 @@ public class ProcessingStateCallbackService {
         handleProcessingFailure(state, null);
     }
 
-    /**
-     * @see #handleProcessingFailureIfStillLive(LectureUnitProcessingState, String)
-     */
+    /** @see #handleProcessingFailureIfStillLive(LectureUnitProcessingState, String) */
     boolean handleProcessingFailureIfStillLive(LectureUnitProcessingState state) {
         return handleProcessingFailureIfStillLive(state, null);
+    }
+
+    /** @see #handleProcessingFailureIfStillLive(LectureUnitProcessingState, String, ZonedDateTime, ZonedDateTime) */
+    boolean handleProcessingFailureIfStillLive(LectureUnitProcessingState state, @Nullable String errorCode) {
+        return handleProcessingFailureIfStillLive(state, errorCode, null, null);
     }
 
     /**
@@ -882,23 +878,29 @@ public class ProcessingStateCallbackService {
     }
 
     /**
-     * Fail a stalled/stuck run atomically, matching the id, phase and job token the caller observed at
-     * read time, so a terminal callback landing in the gap before this write is never reverted. Only
-     * the scheduler's re-fetch-then-fail paths need this; ordinary dispatch-failure call sites act on a
-     * state they just atomically claimed themselves, synchronously, in the same call.
+     * Fail a stalled/stuck run atomically, matching id/phase/token observed at read time, plus
+     * (optionally) the liveness signal that justified failing it: a heartbeat can advance
+     * lastProgressAt/lastUpdated without touching phase or token, so pinning one of them (see
+     * {@link LectureUnitProcessingStateRepository#failIfStillLive}) stops a heartbeat landing between
+     * the caller's re-fetch and this write from still failing a run that just became live again. Pass
+     * {@code null} for whichever the caller has no observed value for; both are {@code null} for an
+     * ordinary dispatch-failure call, which has no staleness decision to protect.
      *
-     * @param state     the state read just before this call decided to fail it
-     * @param errorCode machine-readable error code from Pyris; may be {@code null}
+     * @param state                  the state read just before this call decided to fail it
+     * @param errorCode              machine-readable error code from Pyris; may be {@code null}
+     * @param expectedLastProgressAt the stall detector's observed value, or {@code null} not to pin it
+     * @param expectedLastUpdated    the stuck detector's observed value, or {@code null} not to pin it
      * @return true when the failure was applied, false when the run had already moved on since the read
      */
-    boolean handleProcessingFailureIfStillLive(LectureUnitProcessingState state, @Nullable String errorCode) {
+    boolean handleProcessingFailureIfStillLive(LectureUnitProcessingState state, @Nullable String errorCode, @Nullable ZonedDateTime expectedLastProgressAt,
+            @Nullable ZonedDateTime expectedLastUpdated) {
         ProcessingPhase phaseAtRead = state.getPhase();
         String tokenAtRead = state.getIngestionJobToken();
 
         LectureIngestionFailureClassifier.FailureComputation computation = LectureIngestionFailureClassifier.computeFailure(state, errorCode);
 
-        int updated = processingStateRepository.failIfStillLive(state.getId(), phaseAtRead, tokenAtRead, computation.retryCount(), computation.errorKey(),
-                computation.retryEligibleAt(), computation.now());
+        int updated = processingStateRepository.failIfStillLive(state.getId(), phaseAtRead, tokenAtRead, expectedLastProgressAt, expectedLastUpdated, computation.retryCount(),
+                computation.errorKey(), computation.retryEligibleAt(), computation.now());
         if (updated == 0) {
             log.debug("Unit {} already moved on since it was read as stalled/stuck (phase {}), dropping the stale failure", state.getLectureUnit().getId(), phaseAtRead);
             return false;

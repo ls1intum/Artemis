@@ -545,14 +545,25 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * clears its token first, so this predicate then matches no row and the failure write is silently
      * dropped instead of overwriting whatever the callback wrote. Same guard shape as
      * {@link #requeueStuckIngestionWithoutPenalty}.
+     * <p>
+     * {@code expectedLastProgressAt}/{@code expectedLastUpdated} additionally pin the liveness signal
+     * that justified the failure, for callers where phase and token alone are not enough: a heartbeat
+     * advances one of these fields without touching phase or token, so a heartbeat landing between the
+     * caller's re-fetch and this write would otherwise let a run that just became live again still be
+     * failed. Pass {@code null} for whichever (or both) the caller does not need to pin — the plain
+     * {@code IS NULL OR =} guard then imposes no constraint on that field, exactly as before this was
+     * added, which is what the ordinary terminal-callback failure path (no liveness signal to pin) relies
+     * on.
      *
-     * @param id              the processing state to fail
-     * @param phase           the phase observed when the run was judged stalled/stuck
-     * @param token           the job token observed at the same time
-     * @param retryCount      the new retry count to persist
-     * @param errorKey        the i18n error key to persist
-     * @param retryEligibleAt when the retry becomes eligible, or {@code null} for a permanent failure
-     * @param now             recorded as the new {@code lastUpdated}
+     * @param id                     the processing state to fail
+     * @param phase                  the phase observed when the run was judged stalled/stuck
+     * @param token                  the job token observed at the same time
+     * @param expectedLastProgressAt the stall detector's observed {@code lastProgressAt}, or {@code null} not to pin it
+     * @param expectedLastUpdated    the stuck detector's observed {@code lastUpdated}, or {@code null} not to pin it
+     * @param retryCount             the new retry count to persist
+     * @param errorKey               the i18n error key to persist
+     * @param retryEligibleAt        when the retry becomes eligible, or {@code null} for a permanent failure
+     * @param now                    recorded as the new {@code lastUpdated}
      * @return 1 when the failure was applied, 0 when the run is no longer the one that was judged stalled/stuck
      */
     @Modifying
@@ -565,9 +576,12 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             WHERE ps.id = :id
             AND ps.phase = :phase
             AND ps.ingestionJobToken = :token
+            AND (:expectedLastProgressAt IS NULL OR ps.lastProgressAt = :expectedLastProgressAt)
+            AND (:expectedLastUpdated IS NULL OR ps.lastUpdated = :expectedLastUpdated)
             """)
-    int failIfStillLive(@Param("id") long id, @Param("phase") ProcessingPhase phase, @Param("token") String token, @Param("retryCount") int retryCount,
-            @Param("errorKey") String errorKey, @Param("retryEligibleAt") ZonedDateTime retryEligibleAt, @Param("now") ZonedDateTime now);
+    int failIfStillLive(@Param("id") long id, @Param("phase") ProcessingPhase phase, @Param("token") String token,
+            @Param("expectedLastProgressAt") ZonedDateTime expectedLastProgressAt, @Param("expectedLastUpdated") ZonedDateTime expectedLastUpdated,
+            @Param("retryCount") int retryCount, @Param("errorKey") String errorKey, @Param("retryEligibleAt") ZonedDateTime retryEligibleAt, @Param("now") ZonedDateTime now);
 
     /**
      * Activate a claim exactly once: turn a claimed row into an in-flight run, but only while it still holds exactly

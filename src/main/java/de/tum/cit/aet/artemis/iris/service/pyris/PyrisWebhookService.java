@@ -290,12 +290,21 @@ public class PyrisWebhookService {
     private PyrisPreparedLectureIngestionJobDTO prepareLectureAdditionJob(PyrisLectureUnitWebhookDTO toUpdateAttachmentVideoUnit, Course course) {
         String jobToken = pyrisJobService.addLectureIngestionWebhookJob(toUpdateAttachmentVideoUnit.courseId(), toUpdateAttachmentVideoUnit.lectureId(),
                 toUpdateAttachmentVideoUnit.lectureUnitId());
-        var settings = irisSettingsService.getSettingsForCourse(course);
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, settings.variant().jsonValue(),
-                settings.supportLevel().jsonValue());
-        PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentVideoUnit,
-                toUpdateAttachmentVideoUnit.lectureUnitId(), settingsDTO);
-        return new PyrisPreparedLectureIngestionJobDTO(jobToken, executionDTO);
+        try {
+            var settings = irisSettingsService.getSettingsForCourse(course);
+            PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, settings.variant().jsonValue(),
+                    settings.supportLevel().jsonValue());
+            PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentVideoUnit,
+                    toUpdateAttachmentVideoUnit.lectureUnitId(), settingsDTO);
+            return new PyrisPreparedLectureIngestionJobDTO(jobToken, executionDTO);
+        }
+        catch (RuntimeException e) {
+            // Everything above the token registration can throw without having created anything else
+            // to clean up (course settings resolution, DTO assembly); only the token needs releasing,
+            // or it would sit unusable in the job map until ingestionJobTimeout expires on its own.
+            pyrisJobService.removeJobByToken(jobToken);
+            throw e;
+        }
     }
 
     /**
