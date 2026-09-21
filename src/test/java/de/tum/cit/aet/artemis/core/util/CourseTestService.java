@@ -1698,7 +1698,7 @@ public class CourseTestService {
 
                 assertThat(exercise.numberOfSubmissions().late()).as("Number of late submissions is correct").isZero();
                 assertThat(exercise.numberOfAssessmentsOfCorrectionRounds()).hasSize(1);
-                assertThat(exercise.numberOfAssessmentsOfCorrectionRounds()[0].inTime()).isZero();
+                assertThat(exercise.numberOfAssessmentsOfCorrectionRounds().getFirst().inTime()).isZero();
                 // Check tutor participation
                 if (!exercise.tutorParticipations().isEmpty()) {
                     CourseAssessmentDashboardDTO.TutorParticipationDTO tutorParticipation = exercise.tutorParticipations().iterator().next();

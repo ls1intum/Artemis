@@ -11,6 +11,8 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import de.tum.cit.aet.artemis.core.domain.Parent;
+
 /**
  * The personal VCS access token of a user, with which they authenticate against the embedded git server instead of
  * with their password.
@@ -30,6 +32,7 @@ public class UserVCSAccessToken {
 
     @Id
     @Column(name = "user_id")
+    @Parent
     private long userId;
 
     @Nullable

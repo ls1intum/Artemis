@@ -57,11 +57,14 @@ public class ProgrammingExerciseBuildConfigService {
      * {"network":"none","env":{"key1":"value1","key2":"value2"}}
      * </pre>
      *
-     * @param buildConfig the build config containing the Docker flags
+     * @param buildConfig         the build config containing the Docker flags
+     * @param programmingExercise the exercise the configuration belongs to, passed in rather than reached through the
+     *                                configuration: it owns the exercise key, so that reference is lazy and does not
+     *                                resolve once the session is closed
      * @return a {@link DockerRunConfig} object initialized with the parsed flags, or {@code null} if the JSON string is empty
      */
     @Nullable
-    public DockerRunConfig getDockerRunConfig(ProgrammingExerciseBuildConfig buildConfig) {
+    public DockerRunConfig getDockerRunConfig(ProgrammingExerciseBuildConfig buildConfig, ProgrammingExercise programmingExercise) {
         DockerFlagsDTO dockerFlagsDTO = parseDockerFlags(buildConfig);
 
         String network = null;
@@ -77,7 +80,7 @@ public class ProgrammingExerciseBuildConfigService {
             memorySwap = dockerFlagsDTO.memorySwap();
         }
 
-        ProgrammingExercise exercise = buildConfig.getProgrammingExercise();
+        ProgrammingExercise exercise = programmingExercise;
         if (exercise == null) {
             return createDockerRunConfig(network, exerciseEnvironment, cpuCount, memory, memorySwap);
         }

@@ -72,7 +72,7 @@ public class AutomaticAfterDueDateResource {
 
         ProgrammingExercise programmingExercise = null;
         if (programmingExerciseId != null) {
-            programmingExercise = programmingExerciseRepository.findByIdWithBuildConfigElseThrow(programmingExerciseId);
+            programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
             authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
         }
         Exam exam = null;

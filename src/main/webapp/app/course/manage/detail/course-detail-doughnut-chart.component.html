@@ -8,7 +8,7 @@
         <h5 class="text-center">{{ 'artemisApp.course.detail.' + doughnutChartTitle() + 'Title' | artemisTranslate }}</h5>
     }
     <div class="doughnut-chart-container position-relative" [ngClass]="titleLink() ? 'clickable' : ''" (click)="openCorrespondingPage()">
-        <div class="doughnut-chart-text">
+        <div class="doughnut-chart-text" data-testid="course-chart-values">
             @if (receivedStats()) {
                 @if (currentPercentage() !== undefined) {
                     <div class="h4">{{ currentPercentage() }}%</div>
@@ -27,7 +27,6 @@
             }
         </div>
         <tum-ui-doughnut-chart
-            class="h-40 w-40"
             [labels]="chartData().labels"
             [series]="chartData().series"
             [config]="chartConfig()"

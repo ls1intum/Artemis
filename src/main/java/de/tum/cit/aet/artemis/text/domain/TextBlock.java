@@ -11,6 +11,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
@@ -20,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * A TextBlock.
@@ -62,6 +64,8 @@ public class TextBlock implements Serializable {
 
     @ManyToOne
     @JsonIgnore
+    @JoinColumn(nullable = false)
+    @Parent
     private TextSubmission submission;
 
     public String getId() {

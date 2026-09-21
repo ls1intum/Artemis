@@ -11,7 +11,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faFile, faFileImport, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardTeacher, faFileImport, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { LectureImportComponent } from 'app/lecture/manage/lecture-import/lecture-import.component';
 import { Subject, from } from 'rxjs';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
@@ -32,6 +32,8 @@ import { PdfDropZoneComponent } from '../pdf-drop-zone/pdf-drop-zone.component';
 import { PdfUploadTarget, PdfUploadTargetDialogComponent } from '../pdf-upload-target-dialog/pdf-upload-target-dialog.component';
 import { AttachmentVideoUnitService } from '../lecture-units/services/attachment-video-unit.service';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiEmptyStateComponent } from '@tumaet/ui-angular';
 
 export enum LectureDateFilter {
     PAST = 'filterPast',
@@ -61,6 +63,8 @@ export enum LectureDateFilter {
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
         PdfDropZoneComponent,
+        ArtemisTranslatePipe,
+        TumUiEmptyStateComponent,
     ],
 })
 export class LectureComponent implements OnInit, OnDestroy {
@@ -76,6 +80,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     readonly lectures = signal<Lecture[]>([]);
     isUploadingPdfs = signal(false);
     readonly filteredLectures = signal<Lecture[]>([]);
+    readonly loaded = signal(false);
     courseId!: number; // set in ngOnInit() from route params
 
     private dialogErrorSource = new Subject<string>();
@@ -93,7 +98,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     faFileImport = faFileImport;
     faTrash = faTrash;
     faPencilAlt = faPencilAlt;
-    faFile = faFile;
+    faChalkboardTeacher = faChalkboardTeacher;
     faPuzzlePiece = faPuzzlePiece;
     faFilter = faFilter;
     faSort = faSort;
@@ -195,6 +200,7 @@ export class LectureComponent implements OnInit, OnDestroy {
                         }),
                     );
                     this.applyFilters();
+                    this.loaded.set(true);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

@@ -1,3 +1,4 @@
+import { passwordMaxBytesValidator } from 'app/account/shared/password-max-bytes.validator';
 import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RegisterService } from 'app/account/register/register.service';
@@ -6,7 +7,7 @@ import { ACCOUNT_REGISTRATION_BLOCKED, EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_US
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
+import { PASSWORD_MAX_BYTES, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 import { PasswordStrengthBarComponent } from '../password/password-strength-bar.component';
@@ -60,6 +61,8 @@ export class RegisterComponent implements AfterViewInit {
     readonly USERNAME_MAX_LENGTH = USERNAME_MAX_LENGTH;
     readonly PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
     readonly PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
+    /** Maximum UTF-8 byte length supported by BCrypt. */
+    readonly PASSWORD_MAX_BYTES = PASSWORD_MAX_BYTES;
 
     /** Indicates password and confirmation do not match */
     readonly doNotMatch = signal(false);
@@ -110,7 +113,7 @@ export class RegisterComponent implements AfterViewInit {
             }),
             password: new FormControl('', {
                 nonNullable: true,
-                validators: [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)],
+                validators: [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH), passwordMaxBytesValidator],
             }),
             confirmPassword: new FormControl('', {
                 nonNullable: true,
@@ -144,6 +147,11 @@ export class RegisterComponent implements AfterViewInit {
 
         if (password.value !== confirmPassword.value) {
             this.doNotMatch.set(true);
+            return;
+        }
+
+        if (this.registerForm.invalid) {
+            this.registerForm.markAllAsTouched();
             return;
         }
 

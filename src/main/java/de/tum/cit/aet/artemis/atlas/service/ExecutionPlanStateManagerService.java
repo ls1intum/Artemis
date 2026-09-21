@@ -18,7 +18,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 
 /**
  * State manager for multi-step execution plans in the Atlas Agent system.
@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
  */
 @Lazy
 @Service
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 public class ExecutionPlanStateManagerService {
 
     private static final Logger log = LoggerFactory.getLogger(ExecutionPlanStateManagerService.class);

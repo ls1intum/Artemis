@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -70,6 +72,36 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
 
     private Result manualResult;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void manualResultValidatesGradingInstructionOwnership(boolean ownInstruction) throws Exception {
+        var instructionExercise = ownInstruction ? programmingExercise
+                : programmingExerciseUtilService.addProgrammingExerciseToCourse(
+                        courseRepository.findByIdWithEagerExercisesElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId()), false);
+        var criteria = gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(instructionExercise));
+        long instructionId = criteria.getFirst().getStructuredGradingInstructions().iterator().next().getId();
+        var feedback = Map.of("detailText", "structured feedback", "credits", 1, "type", "MANUAL_UNREFERENCED", "gradingInstruction", Map.of("id", instructionId));
+        // Reusing one instruction is valid; a client-supplied exercise id must not authorize a foreign instruction.
+        var body = Map.of("rated", true, "score", 20, "exerciseId", instructionExercise.getId(), "feedbacks", List.of(feedback, feedback));
+        var originalResultIds = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(programmingExerciseStudentParticipation.getId()).stream()
+                .map(Result::getId).toList();
+        var result = request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", body,
+                ProgrammingAssessmentResultDTO.class, ownInstruction ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
+
+        if (ownInstruction) {
+            assertThat(resultRepository.findByIdWithEagerFeedbacksElseThrow(result.id()).getFeedbacks()).hasSize(2)
+                    .allSatisfy(item -> assertThat(item.getGradingInstruction().getId()).isEqualTo(instructionId));
+        }
+        else {
+            assertThat(resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(programmingExerciseStudentParticipation.getId())).extracting(Result::getId)
+                    .containsExactlyInAnyOrderElementsOf(originalResultIds);
+        }
+    }
 
     @BeforeEach
     void initTestCase() {
@@ -328,7 +360,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
                 CourseAssessmentDashboardDTO.class);
         CourseAssessmentDashboardDTO.AssessmentExerciseDTO exercise = dashboard.exercises().iterator().next();
         assertThat(exercise.numberOfAssessmentsOfCorrectionRounds()).hasSize(1);
-        assertThat(exercise.numberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(1L);
+        assertThat(exercise.numberOfAssessmentsOfCorrectionRounds().getFirst().inTime()).isEqualTo(1L);
     }
 
     @Test
@@ -960,7 +992,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
         exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().getFirst();
         ProgrammingExercise exercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
         exerciseGroup1.addExercise(exercise);
 

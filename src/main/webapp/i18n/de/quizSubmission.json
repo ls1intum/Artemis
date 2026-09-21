@@ -1,5 +1,12 @@
 {
     "artemisApp": {
+        "quizSubmissionFromStudent": {
+            "submittedAnswers[]": {
+                "submittedTexts[]": {
+                    "text": "Kurzantwort"
+                }
+            }
+        },
         "quizSubmission": {
             "home": {
                 "title": "Einreichungen",

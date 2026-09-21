@@ -236,8 +236,7 @@ public class ParticipationTeamWebsocketService {
     public void updateTextSubmission(@DestinationVariable Long participationId, @Payload TeamTextSubmissionUpdateDTO update, Principal principal) {
         long start = System.currentTimeMillis();
         TextSubmission textSubmission = new TextSubmission();
-        // A submission the client already holds a result for starts a new submission rather than overwriting the assessed one.
-        textSubmission.setId(update.hasResults() ? null : update.id());
+        textSubmission.setId(update.id());
         textSubmission.setText(update.text());
         textSubmission.setLanguage(update.language());
         textSubmission.setSubmitted(Boolean.TRUE.equals(update.submitted()));
