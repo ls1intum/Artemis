@@ -124,6 +124,10 @@ class AssessmentIdValidationTest extends AbstractSpringIntegrationIndependentBat
         Result assessedResult = resultRepository.findByIdElseThrow(fixture.resultId());
         ComplaintResponse complaintResponse = complaintUtilService.createComplaintAndResponse(assessedResult, TEST_PREFIX + "tutor3").complaintResponse();
         Complaint complaint = complaintResponse.getComplaint();
+        // the endpoint resolves the complaint before it updates the assessment, and the two steps commit separately, so a
+        // request refused for a foreign feedback id must not have resolved the complaint either
+        Object acceptedBefore = scalar("SELECT c.accepted FROM Complaint c WHERE c.id = :id", complaint.getId());
+        Object submittedTimeBefore = scalar("SELECT cr.submittedTime FROM ComplaintResponse cr WHERE cr.id = :id", complaintResponse.getId());
 
         TextAssessmentUpdateDTO body = new TextAssessmentUpdateDTO(
                 List.of(new FeedbackDTO(fixture.otherFeedbackId(), "text", null, true, null, 1.0, true, FeedbackType.MANUAL_UNREFERENCED, null, null, null)),
@@ -134,6 +138,10 @@ class AssessmentIdValidationTest extends AbstractSpringIntegrationIndependentBat
 
         assertThat(scalar("SELECT f.result.id FROM Feedback f WHERE f.id = :id", fixture.otherFeedbackId())).as("the feedback stays on the result that owns it")
                 .isEqualTo(fixture.otherResultId());
+        assertThat(scalar("SELECT c.accepted FROM Complaint c WHERE c.id = :id", complaint.getId())).as("the complaint is not resolved by the refused request")
+                .isEqualTo(acceptedBefore);
+        assertThat(scalar("SELECT cr.submittedTime FROM ComplaintResponse cr WHERE cr.id = :id", complaintResponse.getId()))
+                .as("the complaint response is not submitted by the refused request").isEqualTo(submittedTimeBefore);
     }
 
     @Test
