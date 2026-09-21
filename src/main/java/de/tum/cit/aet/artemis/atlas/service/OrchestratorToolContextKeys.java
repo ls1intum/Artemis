@@ -53,6 +53,9 @@ public final class OrchestratorToolContextKeys {
     /** Worker-local marker set when any mutation tool returns an error outcome. */
     public static final String WORKER_MUTATION_ERROR_KEY = "workerMutationError";
 
+    /** Count of completed mutation outcomes, including errors and explicit no-ops. */
+    public static final String WORKER_MUTATION_OUTCOME_COUNT_KEY = "workerMutationOutcomeCount";
+
     /** Request-scoped counter reserving one slot per nested worker model round. */
     public static final String DELEGATION_COUNT_KEY = "delegationCount";
 

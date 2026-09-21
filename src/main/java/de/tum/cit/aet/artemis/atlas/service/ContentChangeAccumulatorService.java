@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
@@ -153,22 +154,28 @@ public class ContentChangeAccumulatorService {
     }
 
     /**
-     * Record a lecture-unit change for a course. Caller must have already filtered ExerciseUnits and
-     * other ineligible content — this method does not revalidate. Mirrors {@link #record(long, long)}
-     * for exercises; both feed the same per-course bucket so a mixed burst of edits collapses into one run.
+     * Refresh a buffered lecture unit using its current persisted eligibility. Evaluate the lookup
+     * inside the course lock so delayed asynchronous events cannot overwrite newer eligibility.
+     * Ineligible units are removed without resetting quota or dropping other queued content.
      *
-     * @param courseId      the course the lecture unit belongs to
-     * @param lectureUnitId id of the lecture unit that changed
+     * @param courseId      the owning course
+     * @param lectureUnitId the changed lecture unit
+     * @param isEligible    lookup of the current persisted state, evaluated under the course lock
      */
-    public void recordLectureUnit(long courseId, long lectureUnitId) {
+    public void refreshLectureUnit(long courseId, long lectureUnitId, BooleanSupplier isEligible) {
         Instant now = Instant.now(clock);
         LocalDate today = LocalDate.now(clock);
         DistributedMap<Long, ContentChangeAccumulator> currentMap = map();
         currentMap.lock(courseId);
         try {
             ContentChangeAccumulator current = currentMap.get(courseId);
-            ContentChangeAccumulator next = current == null ? ContentChangeAccumulator.empty(now, today) : current;
-            currentMap.put(courseId, next.withLectureUnit(lectureUnitId, now));
+            if (isEligible.getAsBoolean()) {
+                ContentChangeAccumulator next = current == null ? ContentChangeAccumulator.empty(now, today) : current;
+                currentMap.put(courseId, next.withLectureUnit(lectureUnitId, now));
+            }
+            else if (current != null && current.lectureUnitIds().contains(lectureUnitId)) {
+                currentMap.put(courseId, current.withoutLectureUnit(lectureUnitId));
+            }
         }
         finally {
             currentMap.unlock(courseId);

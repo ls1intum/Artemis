@@ -154,6 +154,20 @@ public final class OrchestratorToolHelpers {
         }
     }
 
+    /** Records a completed mutation outcome without treating it as a successful write. */
+    private static void markWorkerMutationOutcome(@Nullable ToolContext toolContext) {
+        Object value = contextValue(toolContext, OrchestratorToolContextKeys.WORKER_MUTATION_OUTCOME_COUNT_KEY);
+        if (value instanceof AtomicInteger count) {
+            count.incrementAndGet();
+        }
+    }
+
+    /** Serialises an explicit idempotent no-op and records it as worker completion evidence. */
+    static String mutationNoOpJson(JsonMapper objectMapper, String message, @Nullable ToolContext toolContext) {
+        markWorkerMutationOutcome(toolContext);
+        return toJson(objectMapper, Map.of("status", "noop", "message", message));
+    }
+
     /** Records that a worker mutation tool returned an error outcome. */
     static void markWorkerMutationError(@Nullable ToolContext toolContext) {
         Object value = contextValue(toolContext, OrchestratorToolContextKeys.WORKER_MUTATION_ERROR_KEY);
@@ -387,6 +401,7 @@ public final class OrchestratorToolHelpers {
      * @return the JSON error string
      */
     static String mutationErrorJson(JsonMapper objectMapper, String message, @Nullable ToolContext toolContext) {
+        markWorkerMutationOutcome(toolContext);
         markWorkerMutationError(toolContext);
         return errorJson(objectMapper, message);
     }

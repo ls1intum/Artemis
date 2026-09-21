@@ -9,6 +9,7 @@ import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.isBla
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.markWorkerToolActivity;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.missingCourseContextError;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.mutationErrorJson;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.mutationNoOpJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.parseTaxonomyOrThrow;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.toJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.tryReserveWriteSlot;
@@ -169,7 +170,7 @@ public class EditorToolsService {
             }
         }
         if (changes.isEmpty()) {
-            return toJson(objectMapper, Map.of("status", "noop", "message", "No fields changed for competency " + competencyId + "."));
+            return mutationNoOpJson(objectMapper, "No fields changed for competency " + competencyId + ".", toolContext);
         }
         try {
             competencyValidator.checkForUpdate(existing);

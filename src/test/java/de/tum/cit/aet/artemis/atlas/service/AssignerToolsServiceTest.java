@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -88,6 +89,8 @@ class AssignerToolsServiceTest {
         Map<String, Object> ctx = new HashMap<>();
         ctx.put(OrchestratorToolContextKeys.COURSE_ID_KEY, COURSE_ID);
         ctx.put(OrchestratorToolContextKeys.WORKER_MUTATION_ERROR_KEY, OrchestratorToolContextKeys.newWorkerMutationErrorMarker());
+        ctx.put(OrchestratorToolContextKeys.WORKER_MUTATION_OUTCOME_COUNT_KEY, new AtomicInteger());
+        ctx.put(OrchestratorToolContextKeys.WORKER_COMPLETION_KEY, OrchestratorToolContextKeys.newWorkerCompletionHolder());
         ctx.put(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY, appliedActionsBuffer);
         toolContext = new ToolContext(ctx);
     }
@@ -172,6 +175,7 @@ class AssignerToolsServiceTest {
         String result = service.assignExerciseToCompetency(5L, 20L, 0.5, " ", toolContext);
 
         assertThat(result).contains("justification is required");
+        assertThat(new AtlasWorkerTerminalToolService(new JsonMapper()).completeWorkerTask(false, "justification is required", toolContext)).contains("\"completed\":true");
         verify(competencyExerciseLinkRepository, never()).save(any(CompetencyExerciseLink.class));
         assertThat(appliedActions).isEmpty();
     }
@@ -189,6 +193,7 @@ class AssignerToolsServiceTest {
         String result = service.assignExerciseToCompetency(5L, 20L, 1.0, JUSTIFICATION, toolContext);
 
         assertThat(result).contains("noop");
+        assertThat(new AtlasWorkerTerminalToolService(new JsonMapper()).completeWorkerTask(true, "Already in the requested state", toolContext)).contains("\"completed\":true");
         verify(competencyExerciseLinkRepository, never()).save(any(CompetencyExerciseLink.class));
         verify(competencyProgressApi, never()).updateProgressByLearningObjectAsync(any());
         assertThat(appliedActions).isEmpty();
@@ -235,6 +240,7 @@ class AssignerToolsServiceTest {
         String result = service.unassignExerciseFromCompetency(5L, 20L, JUSTIFICATION, toolContext);
 
         assertThat(result).contains("noop");
+        assertThat(new AtlasWorkerTerminalToolService(new JsonMapper()).completeWorkerTask(true, "Already in the requested state", toolContext)).contains("\"completed\":true");
         verify(competencyExerciseLinkRepository, never()).delete(any(CompetencyExerciseLink.class));
         assertThat(appliedActions).isEmpty();
     }
@@ -244,6 +250,7 @@ class AssignerToolsServiceTest {
         String result = service.unassignExerciseFromCompetency(5L, 20L, "", toolContext);
 
         assertThat(result).contains("justification is required");
+        assertThat(new AtlasWorkerTerminalToolService(new JsonMapper()).completeWorkerTask(false, "justification is required", toolContext)).contains("\"completed\":true");
         verify(competencyExerciseLinkRepository, never()).delete(any(CompetencyExerciseLink.class));
         assertThat(appliedActions).isEmpty();
     }
@@ -364,6 +371,7 @@ class AssignerToolsServiceTest {
         String result = service.assignLectureUnitToCompetency(COMPETENCY_ID, LECTURE_UNIT_ID, 0.5, JUSTIFICATION, toolContext);
 
         assertThat(result).contains("noop");
+        assertThat(new AtlasWorkerTerminalToolService(new JsonMapper()).completeWorkerTask(true, "Already in the requested state", toolContext)).contains("\"completed\":true");
         verify(competencyLectureUnitLinkRepository, never()).save(any(CompetencyLectureUnitLink.class));
         verify(competencyProgressApi, never()).updateProgressByLearningObjectAsync(any());
         assertThat(appliedActions).isEmpty();
@@ -485,6 +493,7 @@ class AssignerToolsServiceTest {
         String result = service.unassignLectureUnitFromCompetency(COMPETENCY_ID, LECTURE_UNIT_ID, JUSTIFICATION, toolContext);
 
         assertThat(result).contains("noop");
+        assertThat(new AtlasWorkerTerminalToolService(new JsonMapper()).completeWorkerTask(true, "Already in the requested state", toolContext)).contains("\"completed\":true");
         verify(competencyLectureUnitLinkRepository, never()).delete(any(CompetencyLectureUnitLink.class));
         assertThat(appliedActions).isEmpty();
         assertThat(OrchestratorToolHelpers.hasWorkerMutationError(toolContext)).isFalse();

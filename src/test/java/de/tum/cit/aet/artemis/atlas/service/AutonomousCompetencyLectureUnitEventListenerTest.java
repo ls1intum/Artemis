@@ -1,11 +1,16 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Clock;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,14 +18,19 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
+import de.tum.cit.aet.artemis.atlas.domain.competency.ContentChangeAccumulator;
 import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -49,11 +59,14 @@ class AutonomousCompetencyLectureUnitEventListenerTest {
     @Mock
     private CourseConfigurationRepository courseConfigurationRepository;
 
+    @Mock
+    private LectureUnitRepositoryApi lectureUnitRepositoryApi;
+
     private AutonomousCompetencyLectureUnitEventListener listener;
 
     @BeforeEach
     void setUp() {
-        listener = new AutonomousCompetencyLectureUnitEventListener(accumulator, featureToggleService, courseConfigurationRepository);
+        listener = new AutonomousCompetencyLectureUnitEventListener(accumulator, featureToggleService, courseConfigurationRepository, Optional.of(lectureUnitRepositoryApi));
     }
 
     private void stubCourseEnabled(boolean enabled) {
@@ -65,10 +78,11 @@ class AutonomousCompetencyLectureUnitEventListenerTest {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         stubCourseEnabled(true);
         TextUnit unit = courseLectureUnit();
+        when(lectureUnitRepositoryApi.findWithLectureById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
 
         listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(unit));
 
-        verify(accumulator).recordLectureUnit(COURSE_ID, LECTURE_UNIT_ID);
+        verifyRefresh(true);
     }
 
     @Test
@@ -77,7 +91,7 @@ class AutonomousCompetencyLectureUnitEventListenerTest {
 
         listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(courseLectureUnit()));
 
-        verify(accumulator, never()).recordLectureUnit(anyLong(), anyLong());
+        verify(accumulator, never()).refreshLectureUnit(anyLong(), anyLong(), any());
         verify(accumulator, never()).flush(anyLong());
     }
 
@@ -89,7 +103,7 @@ class AutonomousCompetencyLectureUnitEventListenerTest {
         listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(courseLectureUnit()));
 
         verify(accumulator).flush(COURSE_ID);
-        verify(accumulator, never()).recordLectureUnit(anyLong(), anyLong());
+        verify(accumulator, never()).refreshLectureUnit(anyLong(), anyLong(), any());
     }
 
     @Test
@@ -100,7 +114,7 @@ class AutonomousCompetencyLectureUnitEventListenerTest {
 
         listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(exerciseUnit));
 
-        verify(accumulator, never()).recordLectureUnit(anyLong(), anyLong());
+        verify(accumulator, never()).refreshLectureUnit(anyLong(), anyLong(), any());
         verify(accumulator, never()).flush(anyLong());
     }
 
@@ -110,7 +124,7 @@ class AutonomousCompetencyLectureUnitEventListenerTest {
 
         listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(null));
 
-        verify(accumulator, never()).recordLectureUnit(anyLong(), anyLong());
+        verify(accumulator, never()).refreshLectureUnit(anyLong(), anyLong(), any());
     }
 
     @Test
@@ -122,7 +136,7 @@ class AutonomousCompetencyLectureUnitEventListenerTest {
 
         listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(unit));
 
-        verify(accumulator, never()).recordLectureUnit(anyLong(), anyLong());
+        verify(accumulator, never()).refreshLectureUnit(anyLong(), anyLong(), any());
     }
 
     @ParameterizedTest
@@ -132,10 +146,11 @@ class AutonomousCompetencyLectureUnitEventListenerTest {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         stubCourseEnabled(true);
         AttachmentVideoUnit unit = attachmentUnit(description);
+        when(lectureUnitRepositoryApi.findWithLectureById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
 
         listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(unit));
 
-        verify(accumulator, never()).recordLectureUnit(anyLong(), anyLong());
+        verifyRefresh(false);
     }
 
     @Test
@@ -143,9 +158,11 @@ class AutonomousCompetencyLectureUnitEventListenerTest {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         stubCourseEnabled(true);
 
-        listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(attachmentUnit("Recursion basics")));
+        AttachmentVideoUnit unit = attachmentUnit("Recursion basics");
+        when(lectureUnitRepositoryApi.findWithLectureById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
+        listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(unit));
 
-        verify(accumulator).recordLectureUnit(COURSE_ID, LECTURE_UNIT_ID);
+        verifyRefresh(true);
     }
 
     @Test
@@ -156,7 +173,54 @@ class AutonomousCompetencyLectureUnitEventListenerTest {
         listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(attachmentUnit("")));
 
         verify(accumulator).flush(COURSE_ID);
-        verify(accumulator, never()).recordLectureUnit(anyLong(), anyLong());
+        verify(accumulator, never()).refreshLectureUnit(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void nonblankToBlankBurst_removesPreviouslyBufferedId() {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        stubCourseEnabled(true);
+        LocalDataProviderService provider = new LocalDataProviderService();
+        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("test", 1.0, "", "test", "high", false, 60, 3, 30000L, 10);
+        ContentChangeAccumulatorService realAccumulator = new ContentChangeAccumulatorService(Optional.of(provider), Clock.systemUTC(), properties, courseConfigurationRepository);
+        listener = new AutonomousCompetencyLectureUnitEventListener(realAccumulator, featureToggleService, courseConfigurationRepository, Optional.of(lectureUnitRepositoryApi));
+        AttachmentVideoUnit nonblank = attachmentUnit("Recursion basics");
+        AttachmentVideoUnit blank = attachmentUnit(" ");
+        when(lectureUnitRepositoryApi.findWithLectureById(LECTURE_UNIT_ID)).thenReturn(Optional.of(nonblank), Optional.of(blank));
+
+        listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(nonblank));
+        assertThat(provider.<Long, ContentChangeAccumulator>getMap(ContentChangeAccumulatorService.MAP_NAME).get(COURSE_ID).lectureUnitIds()).containsExactly(LECTURE_UNIT_ID);
+        listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(blank));
+
+        assertThat(realAccumulator.claimBatchNow(COURSE_ID)).isEmpty();
+    }
+
+    @Test
+    void delayedEligibleEvent_usesCurrentBlankDescription() {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        stubCourseEnabled(true);
+        when(lectureUnitRepositoryApi.findWithLectureById(LECTURE_UNIT_ID)).thenReturn(Optional.of(attachmentUnit(" ")));
+
+        listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(attachmentUnit("Earlier description")));
+
+        verifyRefresh(false);
+    }
+
+    @Test
+    void delayedBlankEvent_preservesCurrentlyEligibleUnit() {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        stubCourseEnabled(true);
+        when(lectureUnitRepositoryApi.findWithLectureById(LECTURE_UNIT_ID)).thenReturn(Optional.of(attachmentUnit("Current description")));
+
+        listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(attachmentUnit("")));
+
+        verifyRefresh(true);
+    }
+
+    private void verifyRefresh(boolean eligible) {
+        ArgumentCaptor<BooleanSupplier> lookup = ArgumentCaptor.forClass(BooleanSupplier.class);
+        verify(accumulator).refreshLectureUnit(eq(COURSE_ID), eq(LECTURE_UNIT_ID), lookup.capture());
+        assertThat(lookup.getValue().getAsBoolean()).isEqualTo(eligible);
     }
 
     private AttachmentVideoUnit attachmentUnit(String description) {

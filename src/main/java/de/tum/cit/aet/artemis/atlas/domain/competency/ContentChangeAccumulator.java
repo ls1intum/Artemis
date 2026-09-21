@@ -54,6 +54,13 @@ public record ContentChangeAccumulator(Set<Long> exerciseIds, Set<Long> lectureU
         return new ContentChangeAccumulator(exerciseIds, merged, now, dailyRunCount, dailyRunCountDate);
     }
 
+    /** Removes an ineligible lecture unit while preserving other content, debounce timing, and quota. */
+    public ContentChangeAccumulator withoutLectureUnit(long lectureUnitId) {
+        Set<Long> remaining = new HashSet<>(lectureUnitIds);
+        remaining.remove(lectureUnitId);
+        return new ContentChangeAccumulator(exerciseIds, remaining, lastEventTime, dailyRunCount, dailyRunCountDate);
+    }
+
     /**
      * Clears both buffered id sets after the scheduler claims them; the daily counter is bumped only
      * when {@code countAgainstCap} is {@code true} (i.e. the batch actually triggers an

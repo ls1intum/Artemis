@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Optional;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -41,7 +42,7 @@ import de.tum.cit.aet.artemis.lecture.domain.event.LectureUnitContentChangedEven
 @Component
 public class AutonomousCompetencyLectureUnitEventListener {
 
-    private static final Logger log = LoggerFactory.getLogger(AutonomousCompetencyLectureUnitEventListener.class);
+    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
     private final ContentChangeAccumulatorService accumulator;
 
@@ -50,19 +51,18 @@ public class AutonomousCompetencyLectureUnitEventListener {
     private final CourseConfigurationRepository courseConfigurationRepository;
 
     public AutonomousCompetencyLectureUnitEventListener(ContentChangeAccumulatorService accumulator, FeatureToggleService featureToggleService,
-            CourseConfigurationRepository courseConfigurationRepository) {
+            CourseConfigurationRepository courseConfigurationRepository, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi) {
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.accumulator = accumulator;
         this.featureToggleService = featureToggleService;
         this.courseConfigurationRepository = courseConfigurationRepository;
     }
 
     /**
-     * Fires on every {@link LectureUnitContentChangedEvent}. The method is a no-op when the global
-     * toggle is off, when the unit is ineligible for orchestration, or when any null guard trips; in the
-     * success path it merges the lecture-unit id into the per-course accumulator for the scheduler to
-     * pick up. When the owning course has auto-orchestration disabled the method flushes the course's
-     * accumulator bucket (dropping any ids buffered while it was enabled) and returns without recording,
-     * so disabling acts as an immediate per-course kill switch.
+     * Fires on every {@link LectureUnitContentChangedEvent}. When both orchestration switches are
+     * enabled, refreshes the queued id using the current persisted content: eligible units are
+     * recorded and ineligible units are removed. Disabled courses flush their entire bucket so a
+     * later re-enable cannot resurrect stale changes. Null or unpersisted event units are ignored.
      *
      * @param event the just-published event carrying the changed lecture unit
      */
@@ -94,10 +94,10 @@ public class AutonomousCompetencyLectureUnitEventListener {
             accumulator.flush(courseId);
             return;
         }
-        if (!ContentExtractionService.isLectureUnitEligibleForOrchestration(lectureUnit)) {
-            return;
-        }
-        log.debug("atlas.automatic recorded lecture-unit change courseId={} lectureUnitId={}", courseId, lectureUnit.getId());
-        accumulator.recordLectureUnit(courseId, lectureUnit.getId());
+        accumulator.refreshLectureUnit(courseId, lectureUnit.getId(),
+                () -> lectureUnitRepositoryApi.flatMap(api -> api.findWithLectureById(lectureUnit.getId()))
+                        .filter(current -> current.getLecture() != null && current.getLecture().getCourse() != null
+                                && Long.valueOf(courseId).equals(current.getLecture().getCourse().getId()))
+                        .map(ContentExtractionService::isLectureUnitEligibleForOrchestration).orElse(false));
     }
 }

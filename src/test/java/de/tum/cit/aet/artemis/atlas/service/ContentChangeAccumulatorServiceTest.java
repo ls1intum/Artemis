@@ -66,6 +66,42 @@ class ContentChangeAccumulatorServiceTest {
     }
 
     @Test
+    void refreshLectureUnit_nonblankToBlankBurstDoesNotClaimOrConsumeQuota() {
+        service.refreshLectureUnit(1L, 30L, () -> true);
+        clock.advanceSeconds(5);
+        service.refreshLectureUnit(1L, 30L, () -> false);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+
+        assertThat(service.listDueCourseIds()).isEmpty();
+        assertThat(service.claimDueBatch(1L)).isEmpty();
+        for (int i = 0; i < DAILY_CAP; i++) {
+            service.record(1L, 100L + i);
+            clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+            assertThat(service.claimDueBatch(1L)).isPresent();
+        }
+    }
+
+    @Test
+    void refreshLectureUnit_removalPreservesOtherContentDebounceAndSpentQuota() {
+        stubCourseConfig(1L, null, 2);
+        service.record(1L, 99L);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.claimDueBatch(1L)).isPresent();
+        service.record(1L, 10L);
+        service.refreshLectureUnit(1L, 30L, () -> true);
+        service.refreshLectureUnit(1L, 31L, () -> true);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS);
+        service.refreshLectureUnit(1L, 30L, () -> false);
+
+        BatchClaim claim = service.claimDueBatch(1L).orElseThrow();
+        assertThat(claim.exerciseIds()).containsExactly(10L);
+        assertThat(claim.lectureUnitIds()).containsExactly(31L);
+        service.record(1L, 100L);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.claimDueBatch(1L)).isEmpty();
+    }
+
+    @Test
     void record_mergesMultipleEventsIntoSameCourseBucket() {
         service.record(1L, 10L);
         clock.advanceSeconds(5);
@@ -248,10 +284,10 @@ class ContentChangeAccumulatorServiceTest {
     }
 
     @Test
-    void recordLectureUnit_claimDrainsBothExerciseAndLectureUnitSets() {
+    void refreshLectureUnit_claimDrainsBothExerciseAndLectureUnitSets() {
         service.record(1L, 10L);
-        service.recordLectureUnit(1L, 30L);
-        service.recordLectureUnit(1L, 31L);
+        service.refreshLectureUnit(1L, 30L, () -> true);
+        service.refreshLectureUnit(1L, 31L, () -> true);
         clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
 
         Optional<BatchClaim> claim = service.claimDueBatch(1L);
@@ -265,7 +301,7 @@ class ContentChangeAccumulatorServiceTest {
 
     @Test
     void listDueCourseIds_includesCoursesWithOnlyLectureUnitChanges() {
-        service.recordLectureUnit(1L, 30L);
+        service.refreshLectureUnit(1L, 30L, () -> true);
         clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
 
         assertThat(service.listDueCourseIds()).containsExactly(1L);
@@ -274,7 +310,7 @@ class ContentChangeAccumulatorServiceTest {
     @Test
     void requeueAfterFailedRun_reMergesBothSets() {
         service.record(1L, 10L);
-        service.recordLectureUnit(1L, 30L);
+        service.refreshLectureUnit(1L, 30L, () -> true);
         clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
         BatchClaim claim = service.claimDueBatch(1L).orElseThrow();
 
@@ -289,7 +325,7 @@ class ContentChangeAccumulatorServiceTest {
     @Test
     void requeueAfterConcurrentRun_reMergesBothSetsAndRefundsQuota() {
         service.record(1L, 10L);
-        service.recordLectureUnit(1L, 30L);
+        service.refreshLectureUnit(1L, 30L, () -> true);
 
         // More requeue cycles than the daily cap: the reservation must be refunded each time so the mixed batch stays claimable.
         for (int i = 0; i < DAILY_CAP + 2; i++) {

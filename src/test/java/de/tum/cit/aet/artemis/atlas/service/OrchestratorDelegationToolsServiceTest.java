@@ -127,7 +127,6 @@ class OrchestratorDelegationToolsServiceTest {
                 any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
                     Map<String, Object> workerContext = invocation.getArgument(3);
                     ToolContext workerToolContext = new ToolContext(workerContext);
-                    OrchestratorToolHelpers.markWorkerRead(workerToolContext);
                     OrchestratorToolHelpers.markWorkerToolActivity(workerToolContext);
                     OrchestratorToolHelpers.mutationErrorJson(new JsonMapper(), "Competency not found: 9", workerToolContext);
                     workerTerminal.completeWorkerTask(true, "Assigned the requested exercise", workerToolContext);
@@ -138,6 +137,27 @@ class OrchestratorDelegationToolsServiceTest {
 
         assertThat(result.success()).isFalse();
         assertThat(result.message()).isEqualTo("Assigner worker reported success after a mutation tool error.");
+        assertThat(result.appliedActions()).isEmpty();
+    }
+
+    @Test
+    void delegateToAssigner_mutationErrorPreservesSpecificFailureWithoutPriorRead() {
+        Map<String, Object> parent = parentContext();
+        ChatResponse response = response("worker response");
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                    Map<String, Object> workerContext = invocation.getArgument(3);
+                    ToolContext workerToolContext = new ToolContext(workerContext);
+                    OrchestratorToolHelpers.markWorkerToolActivity(workerToolContext);
+                    OrchestratorToolHelpers.mutationErrorJson(new JsonMapper(), "Competency not found: 9", workerToolContext);
+                    workerTerminal.completeWorkerTask(false, "Competency not found: 9", workerToolContext);
+                    return response;
+                });
+
+        WorkerResultDTO result = service.delegateToAssigner("Assign exercise 7 to competency 9", new ToolContext(parent));
+
+        assertThat(result.success()).isFalse();
+        assertThat(result.message()).isEqualTo("Competency not found: 9");
         assertThat(result.appliedActions()).isEmpty();
     }
 
@@ -162,6 +182,26 @@ class OrchestratorDelegationToolsServiceTest {
     }
 
     @Test
+    void workerCannotCompleteWithoutAnOutcomeEvenWithEarlierActions() {
+        Map<String, Object> parent = parentContext();
+        buffer(parent).actions().add(AppliedActionDTO.create(2L, "Earlier", "Created earlier", "Earlier worker"));
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                    Map<String, Object> workerContext = invocation.getArgument(3);
+                    ToolContext workerToolContext = new ToolContext(workerContext);
+                    OrchestratorToolHelpers.markWorkerToolActivity(workerToolContext);
+                    assertThat(workerTerminal.completeWorkerTask(true, "Done", workerToolContext)).contains("Inspect course state");
+                    return response("worker response");
+                });
+
+        WorkerResultDTO result = service.delegateToAssigner("Assign exercise 7 to competency 9", new ToolContext(parent));
+
+        assertThat(result.success()).isFalse();
+        assertThat(result.message()).contains("without calling completeWorkerTask");
+        assertThat(result.appliedActions()).isEmpty();
+    }
+
+    @Test
     void delegateToAssigner_explicitNoOpCanCompleteSuccessfully() {
         Map<String, Object> parent = parentContext();
         ChatResponse response = response("worker response");
@@ -169,8 +209,8 @@ class OrchestratorDelegationToolsServiceTest {
                 any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
                     Map<String, Object> workerContext = invocation.getArgument(3);
                     ToolContext workerToolContext = new ToolContext(workerContext);
-                    OrchestratorToolHelpers.markWorkerRead(workerToolContext);
                     OrchestratorToolHelpers.markWorkerToolActivity(workerToolContext);
+                    OrchestratorToolHelpers.mutationNoOpJson(new JsonMapper(), "The exercise is already assigned", workerToolContext);
                     workerTerminal.completeWorkerTask(true, "The exercise is already assigned", workerToolContext);
                     return response;
                 });
