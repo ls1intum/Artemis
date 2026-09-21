@@ -723,6 +723,89 @@ public int hashCode() {
     Apply the constant <code>hashCode()</code> override <em>only</em> on entities that are the child side of a <code>Set</code>-mapped <code>@OneToMany</code> and may be constructed transient by application code (importers, DTO mappers, factories). Entities used as keys in large <code>HashMap</code>s or caches should keep the id-based default, since the linear-scan degradation matters at scale.
 </Callout>
 
+## Queries That Behave Differently on MySQL and PostgreSQL
+
+Artemis runs on both MySQL and PostgreSQL. A query can work on one and fail on the other, or, worse, return
+different rows without any error. Integration tests run against PostgreSQL only, so a MySQL-only difference
+never shows up locally, and a difference that changes the result rather than raising an error shows up in
+neither.
+
+### Compare Case Explicitly
+
+MySQL compares with the `utf8mb4_unicode_ci` collation, which ignores case, so `LIKE '%max%'` matches
+`Max Mustermann`. PostgreSQL compares case sensitively and the same pattern matches nothing. A search written
+without this in mind therefore returns an empty list rather than an error, and nothing in the log says so.
+
+Lower case both sides rather than relying on a collation. In JPQL, keep it inside the query so that no caller
+can defeat it:
+
+```java
+@Query("""
+        SELECT user
+        FROM User user
+        WHERE LOWER(user.login) LIKE CONCAT(LOWER(CAST(:loginOrName AS string)), '%')
+            OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
+        """)
+Page<User> searchAllByLoginOrName(Pageable pageable, @Param("loginOrName") String loginOrName);
+```
+
+The `CAST` is what makes the parameter a string for the database rather than only for Java. Without it, a
+parameter that arrives as `null`, which an optional filter does on every request that leaves it out, is sent
+untyped, PostgreSQL reads it as `bytea`, and the query fails with
+`function lower(bytea) does not exist` rather than returning nothing. A parameter that is never null works
+without the cast, so the failure appears the first time somebody makes the filter optional.
+
+With the Criteria API, wrap the path in `lower` and lower case the pattern in Java with an explicit locale:
+
+```java
+String pattern = "%" + searchTerm.toLowerCase(Locale.ROOT) + "%";
+Predicate titleMatches = criteriaBuilder.like(criteriaBuilder.lower(root.get(Exercise_.TITLE)), pattern);
+```
+
+<Callout variant={CalloutVariant.warning}>
+  Lower casing one side only is worse than lower casing neither: <code>LOWER(column) LIKE '%Max%'</code> can never match. If the column is wrapped, the parameter has to be wrapped too.
+</Callout>
+
+A comparison wrapped in `LOWER` cannot use a plain index on the column. Where a search runs against a large
+table, add a functional index for it, for example `CREATE INDEX user_login_lower ON jhi_user (LOWER(login))`.
+A pattern with a leading wildcard cannot use an index on either database, so a full-text search is the answer
+where that becomes the bottleneck.
+
+### ORDER BY With SELECT DISTINCT
+
+PostgreSQL requires every `ORDER BY` expression of a `SELECT DISTINCT` to appear in the select list, and
+rejects the query with `for SELECT DISTINCT, ORDER BY expressions must appear in select list`. The
+combination is easy to miss, because a repository method that selects an id can receive the order from a
+`Pageable` the caller builds, so neither the query nor the call site shows it.
+
+Duplicates usually come from a join that only filters. Replace it with `EXISTS`: the `DISTINCT` is then
+unnecessary, and the caller's order stays legal.
+
+```java
+@Query("""
+        SELECT user.id
+        FROM User user
+        WHERE EXISTS (
+                SELECT 1
+                FROM UserCourseRole ucr
+                WHERE ucr.user.id = user.id AND ucr.course.id = :courseId
+            )
+        """)
+List<Long> findUserIdsInCourse(@Param("courseId") long courseId, Pageable pageable);
+```
+
+### Order Pages Totally
+
+A page window only means something if the order is total. Rows an order cannot tell apart are free to change
+places between two queries, so one of them can appear on two pages and another on none. Append the id to
+whatever order the caller asked for rather than replacing it, so that the requested order still decides the
+page.
+
+### Name Every Grouped Column
+
+MySQL accepts a selected column that is neither aggregated nor named in the `GROUP BY`; PostgreSQL rejects it.
+Name every non-aggregated column of the select list in the `GROUP BY`.
+
 ## Solutions for Known Issues
 
 ### LazyInitializationException

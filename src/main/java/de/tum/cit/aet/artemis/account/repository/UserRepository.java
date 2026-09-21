@@ -383,8 +383,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND ucr.role = :role
             WHERE user.deleted = FALSE
                 AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                    LOWER(user.login) LIKE CONCAT(LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
             """)
     List<User> searchByLoginOrNameInCourseWithRole(@Param("courseId") long courseId, @Param("role") CourseRole role, @Param("loginOrName") String loginOrName);
@@ -401,7 +401,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
             WHERE user.deleted = FALSE
                 AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId)
-                AND CONCAT(user.firstName, ' ', user.lastName) LIKE %:nameOfUser%
+                AND LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:nameOfUser AS string)), '%')
             ORDER BY CONCAT(user.firstName, ' ', user.lastName)
             """)
     List<User> searchByNameInCourse(@Param("courseId") long courseId, @Param("nameOfUser") String nameOfUser);
@@ -415,8 +415,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND conversation.id = :conversationId
                 AND (
                     :loginOrName = ''
-                    OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                    OR LOWER(user.login) LIKE CONCAT(LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
             """)
     List<User> findUsersByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId, Pageable pageable);
@@ -430,8 +430,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND conversation.id = :conversationId
                 AND (
                     :loginOrName = ''
-                    OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                    OR LOWER(user.login) LIKE CONCAT(LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
             """)
     long countUsersByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
@@ -463,8 +463,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE user.deleted = FALSE
                 AND (
                     :loginOrName = ''
-                    OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                    OR LOWER(user.login) LIKE CONCAT(LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
             ORDER BY user.id ASC
             """)
@@ -479,8 +479,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE user.deleted = FALSE
                 AND (
                     :loginOrName = ''
-                    OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                    OR LOWER(user.login) LIKE CONCAT(LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
             """)
     long countUsersByLoginOrNameInConversationWithCourseRoles(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
@@ -519,8 +519,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND conversation.id = :conversationId
                 AND (
                     :loginOrName = ''
-                    OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                    OR LOWER(user.login) LIKE CONCAT(LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 ) AND conversationParticipant.isModerator = TRUE
             """)
     List<User> findModeratorsByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId, Pageable pageable);
@@ -534,8 +534,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND conversation.id = :conversationId
                 AND (
                     :loginOrName = ''
-                    OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                    OR LOWER(user.login) LIKE CONCAT(LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 ) AND conversationParticipant.isModerator = TRUE
             """)
     long countModeratorsByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
@@ -664,8 +664,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
             WHERE user.deleted = FALSE
                 AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                    LOWER(user.login) LIKE CONCAT(LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
             """)
     Page<User> searchAllByLoginOrName(Pageable page, @Param("loginOrName") String loginOrName);
@@ -775,8 +775,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             JOIN UserCourseRole ucr ON ucr.user.id = user.id AND ucr.course.id = :courseId
             WHERE user.deleted = FALSE
                 AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                    LOWER(user.login) LIKE CONCAT(LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
             """)
     List<Long> findUserIdsByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, Pageable pageable);
@@ -787,8 +787,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             JOIN UserCourseRole ucr ON ucr.user.id = user.id AND ucr.course.id = :courseId
             WHERE user.deleted = FALSE
                 AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                    LOWER(user.login) LIKE CONCAT(LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
             """)
     long countUserIdsByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
@@ -820,8 +820,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND ucr.role IN :roles
             WHERE user.deleted = FALSE
                 AND (
-                    user.login LIKE %:loginOrName%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
+                    LOWER(user.login) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
             """)
     List<Long> findUserIdsByLoginOrNameInCourseWithRoles(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles,
@@ -835,8 +835,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND ucr.role IN :roles
             WHERE user.deleted = FALSE
                 AND (
-                    user.login LIKE %:loginOrName%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
+                    LOWER(user.login) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
             """)
     long countUsersByLoginOrNameInCourseWithRoles(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles);
@@ -890,8 +890,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE user.deleted = FALSE
                 AND user.id <> :idOfUser
                 AND (
-                    user.login LIKE %:loginOrName%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
+                    LOWER(user.login) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
             """)
     List<Long> findUserIdsByLoginOrNameInCourseWithRolesNotUserId(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles,
@@ -906,8 +906,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE user.deleted = FALSE
                 AND user.id <> :idOfUser
                 AND (
-                    user.login LIKE %:loginOrName%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
+                    LOWER(user.login) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
             """)
     long countUsersByLoginOrNameInCourseWithRolesNotUserId(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles,
