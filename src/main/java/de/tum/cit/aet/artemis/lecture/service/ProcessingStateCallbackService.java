@@ -108,16 +108,23 @@ public class ProcessingStateCallbackService {
     }
 
     /**
-     * Returns a synchronization state that was settled while Pyris did not hold the unit to the retry pass.
+     * Returns a synchronization state to the retry pass now that Pyris holds the lecture unit.
      *
      * <p>
      * A row settled as {@link IrisLectureUnitSyncState#STATUS_NOT_INGESTED} or {@link IrisLectureUnitSyncState#STATUS_FAILED} is skipped by the retry query, and the backfill
      * does not recreate it because a row already exists. Ingestion completing is the event that makes it worth trying again, so that is what reopens it.
      *
+     * <p>
+     * A row that is {@link IrisLectureUnitSyncState#STATUS_IN_PROGRESS} is reopened as well, because the claim commits before the Pyris request leaves. Such a request was
+     * issued while the unit was not ingested and can still answer "not ingested" after this transition; reopening here is what tells the listener that its answer describes a
+     * state of the world that no longer holds.
+     *
      * @param state the current synchronization state of the lecture unit
      */
-    private static void reopenSettledSynchronization(IrisLectureUnitSyncState state) {
-        if (!IrisLectureUnitSyncState.STATUS_NOT_INGESTED.equals(state.getStatus()) && !IrisLectureUnitSyncState.STATUS_FAILED.equals(state.getStatus())) {
+    private static void reopenSynchronization(IrisLectureUnitSyncState state) {
+        boolean reopenable = IrisLectureUnitSyncState.STATUS_NOT_INGESTED.equals(state.getStatus()) || IrisLectureUnitSyncState.STATUS_FAILED.equals(state.getStatus())
+                || IrisLectureUnitSyncState.STATUS_IN_PROGRESS.equals(state.getStatus());
+        if (!reopenable) {
             return;
         }
         state.setStatus(IrisLectureUnitSyncState.STATUS_DIRTY);
@@ -306,9 +313,10 @@ public class ProcessingStateCallbackService {
             state.transitionTo(ProcessingPhase.DONE);
             state.setIngestionJobToken(null);
             processingStateRepository.save(state);
-            // Pyris now holds the unit, so a synchronization settled because it did not is worth trying again. The
-            // transaction and the lock come from the repository method, which is why the transition is passed into it.
-            irisLectureUnitSyncStateRepository.updateWithLectureUnitLock(lectureUnitId, ProcessingStateCallbackService::reopenSettledSynchronization);
+            // Pyris now holds the unit, so a synchronization settled or in flight because it did not is worth trying
+            // again. The transaction and the lock come from the repository method, which is why the transition is
+            // passed into it.
+            irisLectureUnitSyncStateRepository.updateWithLectureUnitLock(lectureUnitId, ProcessingStateCallbackService::reopenSynchronization);
             saveDisplayPageNumbers(state, displayPageNumbers);
 
             // Notify UI via WebSocket

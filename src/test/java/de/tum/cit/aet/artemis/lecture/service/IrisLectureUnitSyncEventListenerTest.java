@@ -121,6 +121,8 @@ class IrisLectureUnitSyncEventListenerTest {
         unit.setId(LECTURE_UNIT_ID);
         var state = syncState();
         state.setVisibilityHash("visibility-hash");
+        // What claimRetry leaves behind for the duration of the request.
+        state.setStatus(IrisLectureUnitSyncState.STATUS_IN_PROGRESS);
         when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
         when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(state));
         when(syncDispatchService.triggerSyncForUpdateKind(eq(unit), eq(LectureContentUpdateKind.VISIBILITY), any()))
@@ -133,6 +135,33 @@ class IrisLectureUnitSyncEventListenerTest {
         assertThat(state.getNextRetryAt()).isNull();
         assertThat(state.getRetryCount()).isZero();
         assertThat(state.getLastSyncedVisibilityHash()).isNull();
+    }
+
+    @Test
+    void notIngestedAnswerDoesNotSettleAStateThatIngestionReopenedMeanwhile() {
+        enableStateTransitions();
+        var unit = new AttachmentVideoUnit();
+        unit.setId(LECTURE_UNIT_ID);
+        var claimed = syncState();
+        claimed.setVisibilityHash("visibility-hash");
+        claimed.setStatus(IrisLectureUnitSyncState.STATUS_IN_PROGRESS);
+        // The claim commits before the request leaves, so an ingestion can complete while Pyris is still being asked
+        // and reopen the row. The answer then describes a unit Pyris did not hold at the time but does now.
+        var reopened = syncState();
+        reopened.setVisibilityHash("visibility-hash");
+        reopened.setStatus(IrisLectureUnitSyncState.STATUS_DIRTY);
+        reopened.setNextRetryAt(ZonedDateTime.now());
+        when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
+        when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(claimed), Optional.of(reopened));
+        when(syncDispatchService.triggerSyncForUpdateKind(eq(unit), eq(LectureContentUpdateKind.VISIBILITY), any()))
+                .thenReturn(new IrisLectureUnitSyncDispatchService.DispatchResult(LectureUnitSyncOutcome.NOT_INGESTED, null));
+
+        listener.handleVisibilityDirty(new IrisLectureUnitSyncService.IrisLectureUnitVisibilityDirtyEvent(LECTURE_UNIT_ID, Map.of()));
+
+        // Settling here would strand the unit: the backfill does not recreate a row that exists, and the ingestion
+        // that would have reopened it has already run.
+        assertThat(reopened.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_DIRTY);
+        assertThat(reopened.getNextRetryAt()).isNotNull();
     }
 
     @Test

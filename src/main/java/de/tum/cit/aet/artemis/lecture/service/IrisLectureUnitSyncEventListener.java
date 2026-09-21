@@ -222,7 +222,22 @@ public class IrisLectureUnitSyncEventListener {
         state.setLastErrorKey("DispatchSkipped");
     }
 
+    /**
+     * Settles a state whose synchronization Pyris answered with "not ingested".
+     *
+     * <p>
+     * Only a row that is still the claimed one is settled. The claim commits before the request leaves, so an ingestion
+     * can complete while the request is in flight and reopen the row to {@link IrisLectureUnitSyncState#STATUS_DIRTY}.
+     * The answer then describes a lecture unit Pyris did not hold yet but does now, and settling on it would strand a
+     * unit that has just become synchronizable: the backfill does not recreate a row that exists, and the ingestion
+     * that would have reopened it has already run.
+     *
+     * @param state the current synchronization state of the lecture unit
+     */
     private static void markNotIngested(IrisLectureUnitSyncState state) {
+        if (!IrisLectureUnitSyncState.STATUS_IN_PROGRESS.equals(state.getStatus())) {
+            return;
+        }
         state.setStatus(IrisLectureUnitSyncState.STATUS_NOT_INGESTED);
         state.setRetryCount(0);
         state.setNextRetryAt(null);
