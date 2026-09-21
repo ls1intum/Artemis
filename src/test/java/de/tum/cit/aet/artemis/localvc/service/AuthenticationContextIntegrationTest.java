@@ -4,7 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.net.UnknownHostException;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -16,7 +19,7 @@ import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndepend
 class AuthenticationContextIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 
     @Test
-    void testSessionContext_getIpAddress() {
+    void testSessionContext_getIpAddress_unresolved() {
         ServerSession session = mock(ServerSession.class);
         InetSocketAddress clientAddress = InetSocketAddress.createUnresolved("192.168.1.10", 22);
         when(session.getClientAddress()).thenReturn(clientAddress);
@@ -25,8 +28,8 @@ class AuthenticationContextIntegrationTest extends AbstractProgrammingIntegratio
 
         String ipAddress = sessionContext.getIpAddress();
 
-        assertThat(ipAddress).contains("192.168.1.10");
-        assertThat(ipAddress).contains("22");
+        // The address alone, never the port: the access log column holds an ip address and the rate limiter keys on one
+        assertThat(ipAddress).isEqualTo("192.168.1.10");
     }
 
     @Test
@@ -39,7 +42,47 @@ class AuthenticationContextIntegrationTest extends AbstractProgrammingIntegratio
 
         String ipAddress = sessionContext.getIpAddress();
 
-        assertThat(ipAddress).contains("10.0.0.50");
+        assertThat(ipAddress).isEqualTo("10.0.0.50");
+    }
+
+    @Test
+    void testSessionContext_getIpAddress_withHostname() throws UnknownHostException {
+        // A peer whose reverse lookup supplied a hostname, as production ssh clients arrive. The socket address then
+        // prints as hostname/address:port, which is longer than the varchar(45) vcs_access_log.ip_address column.
+        InetSocketAddress clientAddress = new InetSocketAddress(InetAddress.getByAddress("host-203-0-113-42.dialup.example.net", new byte[] { (byte) 203, 0, (byte) 113, 42 }),
+                52134);
+        assertThat(clientAddress.toString()).hasSizeGreaterThan(45);
+
+        ServerSession session = mock(ServerSession.class);
+        when(session.getClientAddress()).thenReturn(clientAddress);
+
+        String ipAddress = new AuthenticationContext.Session(session).getIpAddress();
+
+        assertThat(ipAddress).isEqualTo("203.0.113.42");
+        assertThat(ipAddress).hasSizeLessThanOrEqualTo(45);
+    }
+
+    @Test
+    void testSessionContext_getIpAddress_ipv6() throws UnknownHostException {
+        InetSocketAddress clientAddress = new InetSocketAddress(InetAddress.getByName("2001:db8::1"), 22);
+
+        ServerSession session = mock(ServerSession.class);
+        when(session.getClientAddress()).thenReturn(clientAddress);
+
+        String ipAddress = new AuthenticationContext.Session(session).getIpAddress();
+
+        assertThat(ipAddress).isEqualTo("2001:db8:0:0:0:0:0:1");
+    }
+
+    @Test
+    void testSessionContext_getIpAddress_nonIpSocket() {
+        ServerSession session = mock(ServerSession.class);
+        when(session.getClientAddress()).thenReturn(new SocketAddress() {
+        });
+
+        String ipAddress = new AuthenticationContext.Session(session).getIpAddress();
+
+        assertThat(ipAddress).isNull();
     }
 
     @Test
