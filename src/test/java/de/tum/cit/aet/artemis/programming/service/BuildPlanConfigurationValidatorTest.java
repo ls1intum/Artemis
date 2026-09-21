@@ -92,11 +92,11 @@ class BuildPlanConfigurationValidatorTest {
     }
 
     @Test
-    void testRejectsEmptyRepositorySelection() {
-        // an empty selection would be dropped on write and come back as "all repositories of the exercise"
+    void testAcceptsEmptyRepositorySelection() {
+        // an empty selection scopes the container to the assignment repository alone; it is kept on write, see BuildContainerDTO
         var container = new BuildContainerDTO("student_tests", DOCKER_IMAGE, List.of(), List.of(phase("test")));
 
-        assertThat(errorKeyOf(planOf(container))).isEqualTo("emptyBuildContainerRepositories");
+        assertThatCode(() -> BuildPlanConfigurationValidator.validate(planOf(container))).doesNotThrowAnyException();
     }
 
     @Test

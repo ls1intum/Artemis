@@ -114,6 +114,21 @@ class BuildPlanPhasesDTOTest {
     }
 
     @Test
+    void testDistinguishesUnscopedFromScopedToNothingAcrossSerialization() throws Exception {
+        // null repositories means unscoped (checkout the exercise repositories); an empty list means scoped to nothing
+        // (only the assignment repository). The empty list must survive serialization, otherwise a container scoped to
+        // exclude every sensitive repository would be turned back into an unscoped container that receives all of them.
+        var unscoped = new BuildContainerDTO("unscoped", DOCKER_IMAGE, null, List.of(phase("test")));
+        var scopedToNothing = new BuildContainerDTO("scoped", DOCKER_IMAGE, List.of(), List.of(phase("test")));
+        var json = new BuildPlanPhasesDTO(null, null, List.of(unscoped, scopedToNothing)).toBuildPlanConfiguration();
+
+        var containers = BuildPlanPhasesDTO.fromBuildPlanConfiguration(json).effectiveContainers();
+
+        assertThat(containers.getFirst().repositories()).as("unscoped container keeps a null repository list").isNull();
+        assertThat(containers.getLast().repositories()).as("scoped-to-nothing container keeps its empty repository list").isEmpty();
+    }
+
+    @Test
     void testKeepsContainersOfMultiContainerConfiguration() throws Exception {
         var tests = new BuildContainerDTO("student_tests", DOCKER_IMAGE, List.of(phase("test")));
         var lint = new BuildContainerDTO("lint", "ghcr.io/example/lint:latest", List.of(phase("checkstyle")));
