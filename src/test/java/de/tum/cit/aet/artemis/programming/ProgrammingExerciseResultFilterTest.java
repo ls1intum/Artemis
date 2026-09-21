@@ -17,15 +17,21 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
 class ProgrammingExerciseResultFilterTest {
 
+    private static final ZonedDateTime COMPLETED_RESULT_DATE = ZonedDateTime.parse("2020-01-01T12:00:00Z");
+
+    private static final ZonedDateTime PAST_ASSESSMENT_DUE_DATE = ZonedDateTime.parse("2019-12-31T12:00:00Z");
+
+    private static final ZonedDateTime FUTURE_ASSESSMENT_DUE_DATE = ZonedDateTime.parse("2200-01-01T12:00:00Z");
+
     @ParameterizedTest
     @EnumSource(AssessmentType.class)
     void filterResultsBeforeAssessmentDueDate(AssessmentType assessmentType) {
         var exercise = new ProgrammingExercise();
-        exercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(1));
+        exercise.setAssessmentDueDate(FUTURE_ASSESSMENT_DUE_DATE);
         var participation = new ProgrammingExerciseStudentParticipation();
         var submission = new ProgrammingSubmission();
         participation.setSubmissions(Set.of(submission));
-        var result = new Result().assessmentType(assessmentType).completionDate(ZonedDateTime.now().minusMinutes(1));
+        var result = new Result().assessmentType(assessmentType).completionDate(COMPLETED_RESULT_DATE);
         submission.setResults(new HashSet<>(Set.of(result)));
 
         exercise.filterResultsForStudents(participation);
@@ -37,7 +43,7 @@ class ProgrammingExerciseResultFilterTest {
             assertThat(submission.getResults()).isEmpty();
         }
 
-        exercise.setAssessmentDueDate(ZonedDateTime.now().minusDays(1));
+        exercise.setAssessmentDueDate(PAST_ASSESSMENT_DUE_DATE);
         submission.setResults(new HashSet<>(Set.of(result)));
         exercise.filterResultsForStudents(participation);
         assertThat(submission.getResults()).containsExactly(result);

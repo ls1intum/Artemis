@@ -92,6 +92,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
     private static final String TEST_PREFIX = "resultserviceintegration";
 
+    private static final ZonedDateTime RESULT_REFERENCE_DATE = ZonedDateTime.parse("2025-01-15T10:00:00Z");
+
     @Autowired
     private FeedbackRepository feedbackRepository;
 
@@ -206,15 +208,14 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @ParameterizedTest
     @EnumSource(AssessmentType.class)
     void reloadLatestResultWithFeedbackBeforeAssessmentDueDate(AssessmentType assessmentType) {
-        var now = ZonedDateTime.now();
-        programmingExercise.setAssessmentDueDate(now.plusDays(1));
+        programmingExercise.setAssessmentDueDate(RESULT_REFERENCE_DATE.plusDays(1));
         programmingExerciseRepository.save(programmingExercise);
         var submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
-        var result = participationUtilService.addResultToSubmission(assessmentType, now.minusMinutes(1), submission);
+        var result = participationUtilService.addResultToSubmission(assessmentType, RESULT_REFERENCE_DATE.minusMinutes(1), submission);
         var feedback = new Feedback().type(FeedbackType.AUTOMATIC).text("Athena feedback").detailText("Check the loop boundary.");
         participationUtilService.addFeedbackToResult(feedback, result);
 
-        var reloaded = resultRepository.findLatestResultWithFeedbacksBySubmissionId(submission.getId(), now);
+        var reloaded = resultRepository.findLatestResultWithFeedbacksBySubmissionId(submission.getId(), RESULT_REFERENCE_DATE);
         if (assessmentType == AssessmentType.AUTOMATIC || assessmentType == AssessmentType.AUTOMATIC_ATHENA) {
             assertThat(reloaded).isPresent();
             assertThat(reloaded.orElseThrow().getId()).isEqualTo(result.getId());
@@ -227,7 +228,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
             assertThat(reloaded).isEmpty();
         }
 
-        assertThat(resultRepository.findLatestResultWithFeedbacksBySubmissionId(submission.getId(), now.plusDays(2))).isPresent();
+        assertThat(resultRepository.findLatestResultWithFeedbacksBySubmissionId(submission.getId(), RESULT_REFERENCE_DATE.plusDays(2))).isPresent();
     }
 
     @Test
