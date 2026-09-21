@@ -763,11 +763,20 @@ Predicate titleMatches = criteriaBuilder.like(criteriaBuilder.lower(root.get(Exe
 ```
 
 <Callout variant={CalloutVariant.warning}>
-  Lower casing one side only is worse than lower casing neither: <code>LOWER(column) LIKE '%Max%'</code> can never match. If the column is wrapped, the parameter has to be wrapped too.
+  Lower casing one side only is the worst of the three, because it hides itself: <code>LOWER(column) LIKE '%Max%'</code> still matches on MySQL, whose collation ignores case anyway, and matches nothing on PostgreSQL. Whenever the column is wrapped, the parameter has to be wrapped with it.
 </Callout>
 
 A comparison wrapped in `LOWER` cannot use a plain index on the column. Where a search runs against a large
-table, add a functional index for it, for example `CREATE INDEX user_login_lower ON jhi_user (LOWER(login))`.
+table, add a functional index for it. The two databases spell it differently, so a changelog needs one
+changeset per database type:
+
+```sql
+-- PostgreSQL
+CREATE INDEX user_login_lower ON jhi_user (LOWER(login));
+-- MySQL, which needs the expression in its own parentheses
+CREATE INDEX user_login_lower ON jhi_user ((LOWER(login)));
+```
+
 A pattern with a leading wildcard cannot use an index on either database, so a full-text search is the answer
 where that becomes the bottleneck.
 
