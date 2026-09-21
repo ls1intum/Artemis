@@ -220,10 +220,10 @@ where you can. Local check: `supporting_scripts/find_slow_queries.py`.
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/ArchitectureTest.java`.
 
 **Why.** A CLOB on PostgreSQL is a large object: Hibernate writes the value into `pg_largeobject` and
-stores the object's id in the column, then reads the column back as that id. Every long text column
-here is Liquibase `clob` - `longtext` on MySQL, `text` on PostgreSQL - so the column holds the text
-itself, and a row written by anything but that same mapping fails the read with `Bad value for type
-long`, taking the whole query with it rather than just the one column. The large objects are never
+stores the object's id in the column, then reads the column back as that id. The long text columns
+here are Liquibase `longtext`, and `tool_activity` is `clob`; both become `text` on PostgreSQL, so
+the column holds the text itself, and a row written by anything but that same mapping fails the read
+with `Bad value for type long`, taking the whole query with it rather than just the one column. The large objects are never
 reclaimed either, because nothing unlinks them when the row is deleted.
 
 **What to write instead.** Nothing: a `String`, or an attribute converted to one, round-trips as text
