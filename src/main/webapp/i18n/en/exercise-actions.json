@@ -13,7 +13,7 @@
             "resumeExercise": "Resume exercise",
             "requestAutomaticFeedback": "Request AI feedback",
             "aiFeedbackAvailableHint": "This exercise supports AI-generated feedback.",
-            "enableAiFeedback": "Enable AI feedback",
+            "enableAiFeedback": "Enable AI Experience",
             "enableAiFeedbackTooltip": "Choose your AI Experience to request AI-generated feedback for this exercise.",
             "resumeExercisePractice": "Resume practice in exercise",
             "resumeExerciseError": "Error trying to resume the exercise",

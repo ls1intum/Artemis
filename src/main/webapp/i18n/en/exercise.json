@@ -237,6 +237,7 @@
             "aiFeedbackPopover": {
                 "title": "AI Feedback",
                 "description": "Get AI-generated feedback for your submission. It's preliminary and can include mistakes. Consider checking important information.",
+                "descriptionDisabled": "This exercise supports AI-generated feedback on your submission. Enable AI Experience for this and future exercises.",
                 "selectedAiType": "Using: {{ type }}",
                 "dontShowAgain": "Don't show this again",
                 "aiType": {
