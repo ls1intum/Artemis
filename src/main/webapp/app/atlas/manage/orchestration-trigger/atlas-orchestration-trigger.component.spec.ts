@@ -204,11 +204,13 @@ describe('AtlasOrchestrationTriggerComponent', () => {
         expect(runSpy).toHaveBeenCalledWith(55);
     });
 
-    it('should hide the text label for compact lecture-unit actions', () => {
+    it('should keep an accessible name when hiding the compact action label', () => {
         fixture.componentRef.setInput('showLabel', false);
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('button span'))).toBeNull();
+        const button = fixture.debugElement.query(By.css('button'));
+        expect(button.query(By.css('span'))).toBeNull();
+        expect(button.nativeElement.getAttribute('aria-label')).toBe('artemisApp.atlasOrchestrator.button');
     });
 
     it('should apply the provided buttonClass to the trigger button', () => {

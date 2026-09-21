@@ -659,20 +659,30 @@ class CompetencyOrchestrationServiceTest {
     }
 
     @Test
-    void runBatch_blankContentLectureUnitOnly_returnsNoOp() {
+    void runBatch_blankAttachmentDescription_returnsNoOpWithoutExtractionOrLock() {
         AttachmentVideoUnit lectureUnit = courseAttachmentVideoUnit(30L);
-        when(exerciseRepository.findAllById(any())).thenReturn(List.<Exercise>of());
-        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(any())).thenReturn(List.<LectureUnit>of(lectureUnit));
-        stubRunMap();
-        // A file/video-only unit yields blank learning text; source metadata must not make it eligible.
-        when(contentExtractionService.extractContent(lectureUnit))
-                .thenReturn(new ExtractedContentDTO("Unit Title", "  ", Map.of("lectureUnitType", "attachment", "videoSource", "https://video.test/30")));
+        when(exerciseRepository.findAllById(any())).thenReturn(List.of());
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(any())).thenReturn(List.of(lectureUnit));
 
         CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(), Set.of(30L));
 
         assertThat(result.status()).isEqualTo(NO_OP);
+        verify(contentExtractionService, never()).extractContent(lectureUnit);
         verify(orchestratorPlanningToolsService, never()).listCompetencyIndex(anyLong());
-        verify(runMap).remove(COURSE_ID);
+        verify(runMap, never()).put(anyLong(), any());
+    }
+
+    @Test
+    void runLectureUnitWithQueuedFlush_blankAttachmentDescription_returnsUnsupportedBeforeClaiming() {
+        AttachmentVideoUnit lectureUnit = courseAttachmentVideoUnit(30L);
+        when(lectureUnitRepositoryApi.findWithLectureById(30L)).thenReturn(Optional.of(lectureUnit));
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runLectureUnitWithQueuedFlush(30L);
+
+        assertThat(result.status()).isEqualTo(FAILED);
+        assertThat(result.failureReason()).isEqualTo(CompetencyOrchestrationResultDTO.FailureReason.UNSUPPORTED_LEARNING_OBJECT);
+        verify(runMap, never()).put(anyLong(), any());
+        verify(contentChangeAccumulatorService, never()).claimBatchNow(anyLong());
     }
 
     @Test

@@ -5,6 +5,7 @@
         (click)="triggerAtlasOrchestrator()"
         [disabled]="orchestrationRunning()"
         pTooltip="{{ 'artemisApp.atlasOrchestrator.tooltip' | artemisTranslate }}"
+        [attr.aria-label]="'artemisApp.atlasOrchestrator.button' | artemisTranslate"
         [class]="buttonClass()"
     >
         <fa-icon [icon]="faWandMagicSparkles" />
