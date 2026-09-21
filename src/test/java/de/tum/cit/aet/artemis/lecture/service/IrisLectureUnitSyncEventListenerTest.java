@@ -165,6 +165,27 @@ class IrisLectureUnitSyncEventListenerTest {
     }
 
     @Test
+    void aFailingSecondLegDoesNotRestartTheRetriesOfASettledRow() {
+        enableStateTransitions();
+        var unit = new AttachmentVideoUnit();
+        unit.setId(LECTURE_UNIT_ID);
+        // The metadata leg of this claim already settled the row, and the visibility leg is still dirty and now fails.
+        var settled = syncState();
+        settled.setVisibilityHash("visibility-hash");
+        settled.setStatus(IrisLectureUnitSyncState.STATUS_NOT_INGESTED);
+        settled.setLastErrorKey("NotIngestedInPyris");
+        when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
+        when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(settled));
+        when(syncDispatchService.triggerSyncForUpdateKind(eq(unit), eq(LectureContentUpdateKind.VISIBILITY), any())).thenThrow(new IllegalStateException("Pyris is unreachable"));
+
+        listener.handleVisibilityDirty(new IrisLectureUnitSyncService.IrisLectureUnitVisibilityDirtyEvent(LECTURE_UNIT_ID, Map.of()));
+
+        assertThat(settled.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_NOT_INGESTED);
+        assertThat(settled.getRetryCount()).isZero();
+        assertThat(settled.getNextRetryAt()).isNull();
+    }
+
+    @Test
     void retriesStopOnceTheLimitIsReached() {
         enableStateTransitions();
         var unit = new AttachmentVideoUnit();

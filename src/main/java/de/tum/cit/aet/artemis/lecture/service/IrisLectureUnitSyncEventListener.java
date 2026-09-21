@@ -268,6 +268,11 @@ public class IrisLectureUnitSyncEventListener {
     }
 
     private static void markRetry(IrisLectureUnitSyncState state, Exception exception) {
+        if (isSettled(state)) {
+            // As in markSkipped: the metadata leg can settle the row and the visibility leg of the same claim can then
+            // fail, and restarting the retries here would undo a settle that the failure says nothing about.
+            return;
+        }
         int retryCount = state.getRetryCount() + 1;
         state.setRetryCount(retryCount);
         state.setLastErrorKey(exception.getClass().getSimpleName());
