@@ -73,6 +73,17 @@ describe('renderCitationMarkers', () => {
         expect([...result.citedNumbers]).toEqual([2]);
     });
 
+    it('does not close a one-backtick span on the tail of an internal two-backtick run', () => {
+        // CommonMark's closing delimiter must be a COMPLETE run of the same length as the opener: a
+        // 2-backtick run inside a 1-backtick span cannot close it, so the whole `a``values[1]` stays one
+        // span. A closer check that only looks at the character AFTER the backreference (not before) would
+        // wrongly treat the second of those two internal backticks as a standalone 1-backtick closer,
+        // ending the span early and leaking values[1] as citable prose.
+        const result = renderCitationMarkers('See `a``values[1]` here.[2]', 2);
+        expect(result.html).toBe('See `a``values[1]` here.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([2]);
+    });
+
     it('leaves a bracketed index inside a code span that wraps onto the next line untouched', () => {
         // CommonMark folds a line break inside a code span to a space at render time, so a span can
         // legitimately cross one newline within the same paragraph; excluding newlines entirely would
