@@ -173,6 +173,27 @@ describe('renderCitationMarkers', () => {
         expect([...result.citedNumbers]).toEqual([1, 2]);
     });
 
+    it('closes a tilde fence on a longer closing run than the opening', () => {
+        // CommonMark permits a closing run with AT LEAST as many characters as the opening — a ~~~
+        // block can legally close with ~~~~. An exact-length-only backreference would leave it
+        // unclosed, falling through and exposing values[1] inside it as citable prose.
+        const answer = ['See below.[1]', '~~~python', 'const x = values[1];', '~~~~', 'Done.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('~~~python\nconst x = values[1];\n~~~~');
+        expect(result.html).toContain('See below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
+
+    it('closes a backtick fence on a longer closing run than the opening', () => {
+        const answer = ['See below.[1]', '```python', 'items[0] = "```"', '````', 'Done.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('```python\nitems[0] = "```"\n````');
+        expect(result.html).toContain('See below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
+
     it('leaves a fenced code block untouched, including a real citation-shaped marker after it', () => {
         const answer = ['See the loop below.[1]', '```python', 'for i in range(3):', '    print(items[i])', '```', 'Iteration order matches the list.[2]'].join('\n');
         const result = renderCitationMarkers(answer, 2);

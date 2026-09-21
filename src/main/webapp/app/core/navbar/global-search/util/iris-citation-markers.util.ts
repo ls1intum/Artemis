@@ -39,11 +39,13 @@ const SINGLE_MARKER_REGEX = /\[(\d+)\]/g;
  * mid-sentence). Content matched here is left untouched: a bracketed expression like an array index
  * (`list[0]`) is common in course content and must render as code, not as a citation chip.
  *
- * A fence's closing delimiter must be a LEGAL closing-fence line: a same-length run of the fence
- * character, alone on its line (only leading indentation and trailing whitespace allowed) — not merely
- * the same characters appearing anywhere later in the content. Without this, a fence whose content
- * itself contains the delimiter mid-line (e.g. a quoted string literal like `"```"` inside a code
- * sample) would close early and leak the rest of the real fenced block as prose.
+ * A fence's closing delimiter must be a LEGAL closing-fence line: a run of the fence character AT LEAST
+ * as long as the opening run (CommonMark permits a longer closer, e.g. a ~~~ fence closed by ~~~~),
+ * alone on its line (only leading indentation and trailing whitespace allowed) — not merely the same
+ * characters appearing anywhere later in the content. Without the line-alone requirement, a fence whose
+ * content itself contains the delimiter mid-line (e.g. a quoted string literal like `"```"` inside a
+ * code sample) would close early and leak the rest of the real fenced block as prose; without the
+ * at-least-as-long requirement, a valid longer closer is not recognized as closing the fence at all.
  *
  * Indented code blocks (no delimiter) are matched too, bounded to a run of such lines that starts at the
  * very beginning of the answer or right after a blank line — the same structural rule CommonMark itself
@@ -58,7 +60,7 @@ const SINGLE_MARKER_REGEX = /\[(\d+)\]/g;
  * trailing whitespace — still blank, so it must not be required to be a bare `\n\n`.
  */
 const CODE_SEGMENT_REGEX =
-    /(`{3,})[\s\S]*?\n[ ]{0,3}\1[ \t]*(?=\n|$)|(~~~+)[\s\S]*?\n[ ]{0,3}\2[ \t]*(?=\n|$)|(`+)(?:(?!\n[ \t]*\n)[\s\S])*?\3(?!`)|(?:^|\n[ \t]*\n)(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*(?:\n(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*)*/g;
+    /(`{3,})[\s\S]*?\n[ ]{0,3}\1`*[ \t]*(?=\n|$)|(~~~+)[\s\S]*?\n[ ]{0,3}\2~*[ \t]*(?=\n|$)|(`+)(?:(?!\n[ \t]*\n)[\s\S])*?\3(?!`)|(?:^|\n[ \t]*\n)(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*(?:\n(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*)*/g;
 
 export interface CitationRenderResult {
     /** The answer markdown with marker runs replaced by `<sup>` chip elements. */
