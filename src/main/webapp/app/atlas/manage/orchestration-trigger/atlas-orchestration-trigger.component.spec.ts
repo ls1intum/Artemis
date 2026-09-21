@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
+import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
@@ -223,6 +224,30 @@ describe('AtlasOrchestrationTriggerComponent', () => {
                 // Module off: neither the button nor the result dialog is rendered — hosts need no Atlas-specific guard.
                 expect(localFixture.debugElement.query(By.css('button'))).toBeNull();
                 expect(localFixture.debugElement.query(By.directive(OrchestrationResultDialogComponent))).toBeNull();
+            });
+    });
+
+    it('should hide the trigger when Atlas is active but AtlasLLM is not', () => {
+        TestBed.resetTestingModule();
+        return TestBed.configureTestingModule({
+            imports: [],
+            providers: [
+                MockProvider(AlertService),
+                MockProvider(ProfileService, { isModuleFeatureActive: (feature) => feature === MODULE_FEATURE_ATLAS }),
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                provideTranslateService(),
+            ],
+        })
+            .compileComponents()
+            .then(() => {
+                const localFixture = TestBed.createComponent(AtlasOrchestrationTriggerComponent);
+                localFixture.componentRef.setInput('exercise', exercise);
+                localFixture.detectChanges();
+
+                // The orchestrator endpoint only exists behind AtlasLLM, so competencies alone must not offer the button.
+                expect(localFixture.debugElement.query(By.css('button'))).toBeNull();
             });
     });
 });

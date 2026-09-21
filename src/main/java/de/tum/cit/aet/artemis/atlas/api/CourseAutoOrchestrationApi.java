@@ -4,7 +4,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService;
 
 /**
@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService;
  * and are read and written by the course update flow directly.
  */
 @Controller
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 @Lazy
 public class CourseAutoOrchestrationApi extends AbstractAtlasApi {
 

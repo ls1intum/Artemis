@@ -442,6 +442,23 @@ class ArchitectureTest extends AbstractArchitectureTest {
         noMethodLevelCache.check(productionClasses);
     }
 
+    @Test
+    void testNoLobAnnotation() {
+        String reason = "a @Lob is a large object on PostgreSQL: Hibernate writes the value into pg_largeobject, stores the object's id in the column, and reads the column "
+                + "back as that id. Every long text column here is declared clob in Liquibase, which is longtext on MySQL and text on PostgreSQL, so the mapping and the column "
+                + "disagree: a row holding the text itself - as MySQL writes it, and as every row written before the move to PostgreSQL is stored - fails the read with \"Bad "
+                + "value for type long\" and takes the whole query with it, which is how one unreadable message brought down every Iris chat session load for its user. The "
+                + "objects are never reclaimed either, because nothing unlinks them when the row is deleted. A String or a converted attribute needs no annotation: bound and "
+                + "extracted as text it round-trips on both databases whatever its length, since a length in the mapping only shapes generated DDL and Artemis generates none. "
+                + "Full rationale: documentation/docs/developer/guidelines/database.mdx.";
+
+        ArchRule noFieldLevelLob = noFields().should().beAnnotatedWith("jakarta.persistence.Lob").because(reason);
+        ArchRule noMethodLevelLob = noMethods().should().beAnnotatedWith("jakarta.persistence.Lob").because(reason);
+
+        noFieldLevelLob.check(productionClasses);
+        noMethodLevelLob.check(productionClasses);
+    }
+
     /**
      * The association annotations that must not fetch eagerly.
      * <p>

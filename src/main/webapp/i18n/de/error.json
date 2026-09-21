@@ -112,6 +112,8 @@
         "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten: {{error}}",
         "exerciseNotDefined": "Die Aufgabe ist nicht definiert.",
         "exerciseIdMismatch": "Die Aufgaben-IDs stimmen nicht überein.",
+        "feedbackIdMismatch": "Die Bewertung enthält Feedback eines anderen Ergebnisses.",
+        "textBlockSubmissionMismatch": "Die Bewertung enthält einen Textblock einer anderen Abgabe.",
         "solutionEntryError": "Fehler beim Laden der extrahierten Aufgaben aus der Aufgabenstellung.",
         "systemNotificationNeedsBothDates": "Sowohl das Mitteilungsdatum als auch das Ablaufdatum müssen gesetzt sein.",
         "systemNotificationNeedsNotificationBeforeExpiration": "Das Ablaufdatum muss nach dem Mitteilungsdatum liegen.",
