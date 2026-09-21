@@ -260,27 +260,49 @@ export class GlobalSearchIrisAnswerComponent {
     });
 
     /**
-     * Whether `start` falls strictly inside a complete inline code span in `text` — between a backtick
-     * and its later matching closing backtick, both already present. Splicing the fade-tail `<span>` at
-     * such a position corrupts the markdown: markdown-it treats an HTML tag placed inside a code span as
+     * Whether `start` falls strictly inside a complete inline code span in `text`. A CommonMark code
+     * span is delimited by a RUN of backticks (one or more) on each side, and the closer must be a run
+     * of the SAME length as the opener — `` `` `` (a run of two) is one delimiter, not two single
+     * backticks that cancel each other out, precisely so a span's own content can safely contain a
+     * shorter run (`` `foo` `` inside it). Pairing individual backtick characters instead of matching
+     * runs by length would treat a double-backtick-delimited span as two empty, self-canceling spans and
+     * miss a boundary that falls inside its real content. Splicing the fade-tail `<span>` at such a
+     * position corrupts the markdown: markdown-it treats an HTML tag placed inside a code span as
      * literal text rather than a real element, so the raw `<span>` markup stays visible until a later
      * reveal step moves the boundary past the span. Skipping the animation for that one reveal step is a
      * small cosmetic cost, not worth risking a corrupted render for.
      */
     private startsInsideInlineCode(text: string, start: number): boolean {
-        let spanStart = -1;
-        for (let i = 0; i < text.length; i++) {
+        const runs: [number, number][] = [];
+        for (let i = 0; i < text.length;) {
             if (text[i] !== '`') {
+                i++;
                 continue;
             }
-            if (spanStart === -1) {
-                spanStart = i;
-            } else {
-                if (spanStart < start && start <= i) {
-                    return true;
-                }
-                spanStart = -1;
+            const runStart = i;
+            while (i < text.length && text[i] === '`') {
+                i++;
             }
+            runs.push([runStart, i]);
+        }
+
+        let openIdx = 0;
+        while (openIdx < runs.length) {
+            const [, openEnd] = runs[openIdx];
+            const openLength = runs[openIdx][1] - runs[openIdx][0];
+            let closeIdx = openIdx + 1;
+            while (closeIdx < runs.length && runs[closeIdx][1] - runs[closeIdx][0] !== openLength) {
+                closeIdx++;
+            }
+            if (closeIdx >= runs.length) {
+                openIdx++;
+                continue;
+            }
+            const [closeStart] = runs[closeIdx];
+            if (openEnd < start && start <= closeStart) {
+                return true;
+            }
+            openIdx = closeIdx + 1;
         }
         return false;
     }

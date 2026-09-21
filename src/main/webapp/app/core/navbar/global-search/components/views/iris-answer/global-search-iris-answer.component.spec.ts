@@ -1171,6 +1171,29 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             expect(html).not.toContain('iris-answer-tail');
         });
 
+        it('does not inject the fade-tail span inside a double-backtick-delimited code span either', () => {
+            // A double-backtick run ("``") is a single CommonMark delimiter, not two single backticks
+            // that cancel each other out — this is what lets the span's own content safely contain a
+            // literal single backtick. Pairing individual backtick characters would miss this entirely.
+            startQuery();
+            // @ts-expect-error — accessing protected signal for testing
+            component.phase.set('answering');
+            // @ts-expect-error — accessing private signal for testing
+            component.progressiveReveal.set(true);
+            const answer = 'See ``foo bar`` for details.';
+            // @ts-expect-error — accessing protected signal for testing
+            component.irisResult.set({ answer, sources: [] });
+            // @ts-expect-error — accessing private signal for testing
+            component.revealStart.set(answer.indexOf('bar'));
+            // @ts-expect-error — accessing private signal for testing
+            component.revealedLength.set(answer.length);
+            fixture.detectChanges();
+
+            // @ts-expect-error — accessing protected computed for testing
+            const html = component.citationView().html;
+            expect(html).not.toContain('iris-answer-tail');
+        });
+
         it('shows an answer delivered in one piece immediately', () => {
             startQuery();
             askSubject.next({ runId: 'run-1', isThinking: false, answer: 'Signals are reactive.', sources: [] });
