@@ -29,19 +29,19 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.messaging.access.intercept.MessageAuthorizationContext;
 
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.service.ElevatedAccessService;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class CourseTopicAuthorizationManagerTest {
 
     @Mock
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     @Mock
-    private CourseRepository courseRepository;
+    private CourseTestRepository courseRepository;
 
     @Mock
     private ObjectProvider<ElevatedAccessService> elevationProvider;

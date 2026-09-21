@@ -65,6 +65,7 @@ class CourseNotificationWebappServiceTest {
 
     @Test
     void shouldCompleteNormallyWhenEverySendSucceeds() {
+        mockSuccessfulWebsocketDelivery();
         CourseNotificationDTO notification = createTestNotification(123L);
         List<CourseNotificationRecipientDTO> recipients = List.of(createTestUser(1L, "user1"));
 
@@ -75,6 +76,7 @@ class CourseNotificationWebappServiceTest {
 
     @Test
     void shouldSendNotificationToEachRecipientWhenMultipleRecipientsProvided() {
+        mockSuccessfulWebsocketDelivery();
         CourseNotificationDTO notification = createTestNotification(123L);
         List<CourseNotificationRecipientDTO> recipients = List.of(createTestUser(1L, "user1"), createTestUser(2L, "user2"), createTestUser(3L, "user3"));
 
@@ -102,6 +104,7 @@ class CourseNotificationWebappServiceTest {
 
     @Test
     void shouldSendToCorrectTopicWhenCourseIdProvided() {
+        mockSuccessfulWebsocketDelivery();
         long courseId = 456L;
         CourseNotificationDTO notification = createTestNotification(courseId);
         var user = createTestUser(1L, "testuser");
@@ -115,6 +118,7 @@ class CourseNotificationWebappServiceTest {
 
     @Test
     void twoCoursesDeliverOnlyToTheirOwnRecipientsAndPersonalAggregateFeeds() {
+        mockSuccessfulWebsocketDelivery();
         CourseNotificationDTO courseA = createTestNotification(42L);
         CourseNotificationDTO courseB = createTestNotification(43L);
         var shared = createTestUser(3L, "shared");
@@ -131,6 +135,10 @@ class CourseNotificationWebappServiceTest {
         verify(websocketMessagingService).sendMessageToUser("shared", "/topic/notification/43", courseB);
         verify(websocketMessagingService).sendMessageToUser("shared", "/topic/notification/all", courseB);
         verifyNoMoreInteractions(websocketMessagingService);
+    }
+
+    private void mockSuccessfulWebsocketDelivery() {
+        when(websocketMessagingService.sendMessageToUser(anyString(), anyString(), any())).thenReturn(CompletableFuture.completedFuture(null));
     }
 
     private CourseNotificationRecipientDTO createTestUser(Long id, String login) {
