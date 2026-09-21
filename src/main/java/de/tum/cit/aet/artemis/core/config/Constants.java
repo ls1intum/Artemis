@@ -474,6 +474,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_ATLASML = "atlasml";
 
     /**
+     * The name of the module feature used for the LLM-backed part of Atlas.
+     */
+    public static final String MODULE_FEATURE_ATLASLLM = "atlasllm";
+
+    /**
      * The name of the module feature used for Hyperion functionality.
      */
     public static final String MODULE_FEATURE_HYPERION = "hyperion";
@@ -567,6 +572,13 @@ public final class Constants {
      * The name of the property used to enable or disable AtlasML functionality.
      */
     public static final String ATLASML_ENABLED_PROPERTY_NAME = "artemis.atlas.atlasml.enabled";
+
+    /**
+     * The name of the property used to enable or disable the LLM-backed part of Atlas: the chat agent, the autonomous
+     * competency orchestrator, and the tool surfaces they call. Disabled by default, because none of it can work
+     * without a configured chat model, and every bean behind it is dead weight on an installation that has none.
+     */
+    public static final String ATLASLLM_ENABLED_PROPERTY_NAME = "artemis.atlas.atlasllm.enabled";
 
     /**
      * The name of the property used to enable or disable Hyperion functionality.
