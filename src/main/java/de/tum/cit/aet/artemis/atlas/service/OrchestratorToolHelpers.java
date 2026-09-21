@@ -4,6 +4,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -151,6 +152,20 @@ public final class OrchestratorToolHelpers {
         if (value instanceof AtomicInteger readCount) {
             readCount.incrementAndGet();
         }
+    }
+
+    /** Records that a worker mutation tool returned an error outcome. */
+    static void markWorkerMutationError(@Nullable ToolContext toolContext) {
+        Object value = contextValue(toolContext, OrchestratorToolContextKeys.WORKER_MUTATION_ERROR_KEY);
+        if (value instanceof AtomicBoolean mutationError) {
+            mutationError.set(true);
+        }
+    }
+
+    /** Returns whether any mutation tool in the current worker returned an error outcome. */
+    static boolean hasWorkerMutationError(@Nullable ToolContext toolContext) {
+        Object value = contextValue(toolContext, OrchestratorToolContextKeys.WORKER_MUTATION_ERROR_KEY);
+        return value instanceof AtomicBoolean mutationError && mutationError.get();
     }
 
     /** Records one worker tool invocation and returns its sequence position. */
@@ -306,15 +321,16 @@ public final class OrchestratorToolHelpers {
      *
      * @param objectMapper  the mapper used to serialise the error payload
      * @param justification the justification supplied by the model
+     * @param toolContext   worker context in which mutation failures are recorded
      * @return a JSON error string, or {@code null} when valid
      */
     @Nullable
-    static String validateJustification(JsonMapper objectMapper, @Nullable String justification) {
+    static String validateJustification(JsonMapper objectMapper, @Nullable String justification, @Nullable ToolContext toolContext) {
         if (isBlank(justification)) {
-            return errorJson(objectMapper, "justification is required.");
+            return mutationErrorJson(objectMapper, "justification is required.", toolContext);
         }
         if (justification.length() > MAX_JUSTIFICATION_LENGTH) {
-            return errorJson(objectMapper, "justification must be at most " + MAX_JUSTIFICATION_LENGTH + " characters.");
+            return mutationErrorJson(objectMapper, "justification must be at most " + MAX_JUSTIFICATION_LENGTH + " characters.", toolContext);
         }
         return null;
     }
@@ -323,10 +339,11 @@ public final class OrchestratorToolHelpers {
      * Pre-serialized error returned when the write-quota cap is reached.
      *
      * @param objectMapper the mapper used to serialise the payload
+     * @param toolContext  worker context in which the failure is recorded
      * @return the JSON error string
      */
-    static String writeQuotaError(JsonMapper objectMapper) {
-        return errorJson(objectMapper, "Write tool call cap (" + OrchestratorToolContextKeys.MAX_WRITE_CALLS + ") reached for this run; finalize and return.");
+    static String writeQuotaError(JsonMapper objectMapper, @Nullable ToolContext toolContext) {
+        return mutationErrorJson(objectMapper, "Write tool call cap (" + OrchestratorToolContextKeys.MAX_WRITE_CALLS + ") reached for this run; finalize and return.", toolContext);
     }
 
     /**
@@ -340,6 +357,17 @@ public final class OrchestratorToolHelpers {
     }
 
     /**
+     * Pre-serialized missing-context error for mutation tools.
+     *
+     * @param objectMapper the mapper used to serialise the payload
+     * @param toolContext  worker context in which the failure is recorded
+     * @return the JSON error string
+     */
+    static String missingCourseContextError(JsonMapper objectMapper, @Nullable ToolContext toolContext) {
+        return mutationErrorJson(objectMapper, "No course context available for this tool call.", toolContext);
+    }
+
+    /**
      * Serialise a single-field error payload to JSON.
      *
      * @param objectMapper the mapper
@@ -348,6 +376,19 @@ public final class OrchestratorToolHelpers {
      */
     static String errorJson(JsonMapper objectMapper, String message) {
         return toJson(objectMapper, Map.of("error", message));
+    }
+
+    /**
+     * Record a mutation failure and serialise its error payload.
+     *
+     * @param objectMapper the mapper
+     * @param message      the error message
+     * @param toolContext  worker context in which the failure is recorded
+     * @return the JSON error string
+     */
+    static String mutationErrorJson(JsonMapper objectMapper, String message, @Nullable ToolContext toolContext) {
+        markWorkerMutationError(toolContext);
+        return errorJson(objectMapper, message);
     }
 
     /**

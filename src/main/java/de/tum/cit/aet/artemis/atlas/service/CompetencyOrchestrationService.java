@@ -94,9 +94,9 @@ public class CompetencyOrchestrationService {
 
     private static final int LECTURE_UNIT_NAME_MAX = 200;
 
-    private static final int TYPE_LABEL_MAX = 50;
+    static final int TYPE_LABEL_MAX = 50;
 
-    private static final int LECTURE_UNIT_METADATA_VALUE_MAX = 1_000;
+    static final int LECTURE_UNIT_METADATA_VALUE_MAX = 1_000;
 
     private final ExerciseRepository exerciseRepository;
 

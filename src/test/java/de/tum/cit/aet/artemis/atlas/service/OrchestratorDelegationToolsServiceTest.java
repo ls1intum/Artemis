@@ -120,6 +120,69 @@ class OrchestratorDelegationToolsServiceTest {
     }
 
     @Test
+    void delegateToAssigner_mutationErrorCannotBecomeWorkerSuccess() {
+        Map<String, Object> parent = parentContext();
+        ChatResponse response = response("worker response");
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                    Map<String, Object> workerContext = invocation.getArgument(3);
+                    ToolContext workerToolContext = new ToolContext(workerContext);
+                    OrchestratorToolHelpers.markWorkerRead(workerToolContext);
+                    OrchestratorToolHelpers.markWorkerToolActivity(workerToolContext);
+                    OrchestratorToolHelpers.mutationErrorJson(new JsonMapper(), "Competency not found: 9", workerToolContext);
+                    workerTerminal.completeWorkerTask(true, "Assigned the requested exercise", workerToolContext);
+                    return response;
+                });
+
+        WorkerResultDTO result = service.delegateToAssigner("Assign exercise 7 to competency 9", new ToolContext(parent));
+
+        assertThat(result.success()).isFalse();
+        assertThat(result.message()).isEqualTo("Assigner worker reported success after a mutation tool error.");
+        assertThat(result.appliedActions()).isEmpty();
+    }
+
+    @Test
+    void delegateToCreator_mutationErrorPreservesPartialActions() {
+        Map<String, Object> parent = parentContext();
+        buffer(parent).actions().add(AppliedActionDTO.edit(1L, "Existing", "Earlier edit", "Earlier worker"));
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                    Map<String, Object> workerContext = invocation.getArgument(3);
+                    ToolContext workerToolContext = new ToolContext(workerContext);
+                    buffer(workerContext).actions().add(AppliedActionDTO.create(2L, "Loops", "Created competency", "Exercise teaches loops"));
+                    OrchestratorToolHelpers.mutationErrorJson(new JsonMapper(), "Second creation failed", workerToolContext);
+                    workerTerminal.completeWorkerTask(true, "Created both competencies", workerToolContext);
+                    return response("worker response");
+                });
+
+        WorkerResultDTO result = service.delegateToCreator("Create two competencies", new ToolContext(parent));
+
+        assertThat(result.success()).isFalse();
+        assertThat(result.appliedActions()).singleElement().extracting(AppliedActionDTO::type).isEqualTo(AppliedActionDTO.ActionType.CREATE);
+    }
+
+    @Test
+    void delegateToAssigner_explicitNoOpCanCompleteSuccessfully() {
+        Map<String, Object> parent = parentContext();
+        ChatResponse response = response("worker response");
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                    Map<String, Object> workerContext = invocation.getArgument(3);
+                    ToolContext workerToolContext = new ToolContext(workerContext);
+                    OrchestratorToolHelpers.markWorkerRead(workerToolContext);
+                    OrchestratorToolHelpers.markWorkerToolActivity(workerToolContext);
+                    workerTerminal.completeWorkerTask(true, "The exercise is already assigned", workerToolContext);
+                    return response;
+                });
+
+        WorkerResultDTO result = service.delegateToAssigner("Assign exercise 7 to competency 9", new ToolContext(parent));
+
+        assertThat(result.success()).isTrue();
+        assertThat(result.message()).isEqualTo("The exercise is already assigned");
+        assertThat(result.appliedActions()).isEmpty();
+    }
+
+    @Test
     void delegateToCreator_failedMutationAttemptAfterTerminalReturnsStructuredFailureWithActionSlice() {
         Map<String, Object> parent = parentContext();
         ChatResponse response = response("worker response");

@@ -58,7 +58,7 @@ public class AutonomousCompetencyLectureUnitEventListener {
 
     /**
      * Fires on every {@link LectureUnitContentChangedEvent}. The method is a no-op when the global
-     * toggle is off, when the unit is an {@link ExerciseUnit}, or when any null guard trips; in the
+     * toggle is off, when the unit is ineligible for orchestration, or when any null guard trips; in the
      * success path it merges the lecture-unit id into the per-course accumulator for the scheduler to
      * pick up. When the owning course has auto-orchestration disabled the method flushes the course's
      * accumulator bucket (dropping any ids buffered while it was enabled) and returns without recording,
@@ -92,6 +92,9 @@ public class AutonomousCompetencyLectureUnitEventListener {
             // Per-course kill switch is off: drop anything buffered while it was on so a later re-enable
             // or scheduler tick cannot resurrect stale changes for a disabled course.
             accumulator.flush(courseId);
+            return;
+        }
+        if (!ContentExtractionService.isLectureUnitEligibleForOrchestration(lectureUnit)) {
             return;
         }
         log.debug("atlas.automatic recorded lecture-unit change courseId={} lectureUnitId={}", courseId, lectureUnit.getId());

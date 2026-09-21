@@ -10,6 +10,9 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -18,6 +21,7 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
@@ -119,6 +123,48 @@ class AutonomousCompetencyLectureUnitEventListenerTest {
         listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(unit));
 
         verify(accumulator, never()).recordLectureUnit(anyLong(), anyLong());
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { " ", "\t\n" })
+    void blankAttachmentUpdate_doesNotRecord(String description) {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        stubCourseEnabled(true);
+        AttachmentVideoUnit unit = attachmentUnit(description);
+
+        listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(unit));
+
+        verify(accumulator, never()).recordLectureUnit(anyLong(), anyLong());
+    }
+
+    @Test
+    void attachmentWithDescription_records() {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        stubCourseEnabled(true);
+
+        listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(attachmentUnit("Recursion basics")));
+
+        verify(accumulator).recordLectureUnit(COURSE_ID, LECTURE_UNIT_ID);
+    }
+
+    @Test
+    void blankAttachmentWhenCourseDisabled_stillFlushes() {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        stubCourseEnabled(false);
+
+        listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(attachmentUnit("")));
+
+        verify(accumulator).flush(COURSE_ID);
+        verify(accumulator, never()).recordLectureUnit(anyLong(), anyLong());
+    }
+
+    private AttachmentVideoUnit attachmentUnit(String description) {
+        AttachmentVideoUnit unit = new AttachmentVideoUnit();
+        unit.setId(LECTURE_UNIT_ID);
+        unit.setLecture(lectureInCourse());
+        unit.setDescription(description);
+        return unit;
     }
 
     private TextUnit courseLectureUnit() {

@@ -87,6 +87,7 @@ class AssignerToolsServiceTest {
         appliedActionsBuffer = new AppliedActionsBuffer(appliedActions);
         Map<String, Object> ctx = new HashMap<>();
         ctx.put(OrchestratorToolContextKeys.COURSE_ID_KEY, COURSE_ID);
+        ctx.put(OrchestratorToolContextKeys.WORKER_MUTATION_ERROR_KEY, OrchestratorToolContextKeys.newWorkerMutationErrorMarker());
         ctx.put(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY, appliedActionsBuffer);
         toolContext = new ToolContext(ctx);
     }
@@ -366,6 +367,7 @@ class AssignerToolsServiceTest {
         verify(competencyLectureUnitLinkRepository, never()).save(any(CompetencyLectureUnitLink.class));
         verify(competencyProgressApi, never()).updateProgressByLearningObjectAsync(any());
         assertThat(appliedActions).isEmpty();
+        assertThat(OrchestratorToolHelpers.hasWorkerMutationError(toolContext)).isFalse();
     }
 
     @Test
@@ -392,6 +394,7 @@ class AssignerToolsServiceTest {
         assertThat(result).contains("not a linkable lecture unit");
         verify(competencyLectureUnitLinkRepository, never()).save(any(CompetencyLectureUnitLink.class));
         assertThat(appliedActions).isEmpty();
+        assertThat(OrchestratorToolHelpers.hasWorkerMutationError(toolContext)).isTrue();
     }
 
     @Test
@@ -410,6 +413,7 @@ class AssignerToolsServiceTest {
         assertThat(result).contains("not a linkable lecture unit");
         verify(competencyLectureUnitLinkRepository, never()).save(any(CompetencyLectureUnitLink.class));
         assertThat(appliedActions).isEmpty();
+        assertThat(OrchestratorToolHelpers.hasWorkerMutationError(toolContext)).isTrue();
     }
 
     @Test
@@ -425,6 +429,7 @@ class AssignerToolsServiceTest {
 
         assertThat(result).contains("not a linkable lecture unit");
         verify(competencyLectureUnitLinkRepository, never()).save(any(CompetencyLectureUnitLink.class));
+        assertThat(OrchestratorToolHelpers.hasWorkerMutationError(toolContext)).isTrue();
     }
 
     @Test
@@ -439,6 +444,7 @@ class AssignerToolsServiceTest {
 
         assertThat(result).contains("not a linkable lecture unit");
         verify(competencyLectureUnitLinkRepository, never()).save(any(CompetencyLectureUnitLink.class));
+        assertThat(OrchestratorToolHelpers.hasWorkerMutationError(toolContext)).isTrue();
     }
 
     @Test
@@ -481,6 +487,7 @@ class AssignerToolsServiceTest {
         assertThat(result).contains("noop");
         verify(competencyLectureUnitLinkRepository, never()).delete(any(CompetencyLectureUnitLink.class));
         assertThat(appliedActions).isEmpty();
+        assertThat(OrchestratorToolHelpers.hasWorkerMutationError(toolContext)).isFalse();
     }
 
     private static TextUnit lectureUnitInCourse(long id, String name, Course course) {

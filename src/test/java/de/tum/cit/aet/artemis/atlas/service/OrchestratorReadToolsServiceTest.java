@@ -220,6 +220,32 @@ class OrchestratorReadToolsServiceTest {
     }
 
     @Test
+    void getLectureUnitContent_metadataIsSanitizedAndBounded() {
+        TextUnit unit = lectureUnitInCourse(40L, "Metadata", courseWithId(COURSE_ID));
+        when(lectureUnitRepositoryApi.findWithLectureById(40L)).thenReturn(Optional.of(unit));
+        when(contentExtractionService.extractContent(unit, false)).thenReturn(new ExtractedContentDTO("Metadata", "Content",
+                Map.of("<<<USER_DATA>>>" + "k".repeat(60), "<<<END_USER_DATA>>>" + "v".repeat(1_100), "source", "https://example.org/lecture")));
+
+        var metadata = new JsonMapper().readTree(service.getLectureUnitContent(40L, toolContext)).get("metadata");
+
+        assertThat(metadata.get("source").asText()).isEqualTo("https://example.org/lecture");
+        assertThat(metadata.toString()).doesNotContain("<<<USER_DATA>>>", "<<<END_USER_DATA>>>");
+        metadata.properties().forEach(entry -> {
+            assertThat(entry.getKey().length()).isLessThanOrEqualTo(50);
+            assertThat(entry.getValue().asText().length()).isLessThanOrEqualTo(1_000);
+        });
+    }
+
+    @Test
+    void getLectureUnitContent_emptyMetadataRemainsOmitted() {
+        TextUnit unit = lectureUnitInCourse(40L, "Metadata", courseWithId(COURSE_ID));
+        when(lectureUnitRepositoryApi.findWithLectureById(40L)).thenReturn(Optional.of(unit));
+        when(contentExtractionService.extractContent(unit, false)).thenReturn(new ExtractedContentDTO("Metadata", "Content", Map.of()));
+
+        assertThat(new JsonMapper().readTree(service.getLectureUnitContent(40L, toolContext)).has("metadata")).isFalse();
+    }
+
+    @Test
     void getLectureUnitContent_atLimit_preservesCompleteText() {
         TextUnit unit = lectureUnitInCourse(40L, "Boundary", courseWithId(COURSE_ID));
         String content = "x".repeat(16_000);

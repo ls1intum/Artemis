@@ -11,7 +11,9 @@ import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.missi
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.toJson;
 
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -207,7 +209,10 @@ public class OrchestratorReadToolsService {
             String safeTitle = CompetencyOrchestrationService.sanitizeForPrompt(extracted.title(), MAX_EXERCISE_TITLE_LENGTH);
             String safeText = CompetencyOrchestrationService.sanitizeForPrompt(extracted.extractedLearningText(), MAX_EXERCISE_CONTENT_LENGTH);
             markWorkerRead(toolContext);
-            return toJson(objectMapper, new ExtractedContentDTO(safeTitle, safeText, extracted.metadata()));
+            Map<String, String> safeMetadata = new LinkedHashMap<>();
+            extracted.metadata().forEach((key, value) -> safeMetadata.put(CompetencyOrchestrationService.sanitizeForPrompt(key, CompetencyOrchestrationService.TYPE_LABEL_MAX),
+                    CompetencyOrchestrationService.sanitizeForPrompt(value, CompetencyOrchestrationService.LECTURE_UNIT_METADATA_VALUE_MAX)));
+            return toJson(objectMapper, new ExtractedContentDTO(safeTitle, safeText, safeMetadata));
         }
         catch (RuntimeException ex) {
             log.warn("getLectureUnitContent failed for lecture unit {}: {}", lectureUnitId, ex.getMessage(), ex);
