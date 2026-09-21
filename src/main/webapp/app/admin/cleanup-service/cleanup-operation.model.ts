@@ -15,9 +15,17 @@ export type OperationName =
     | 'deleteNotEnrolledUsers'
     | 'deletePlagiarismCases';
 
+/**
+ * What an operation actually does to the affected entities. Drives the wording and the icon of the confirmation button
+ * in both the table and the modal: "Delete" is wrong for an operation that only emails a warning, or that resets a
+ * course's student data while keeping the course itself.
+ */
+export type CleanupAction = 'delete' | 'warn' | 'reset';
+
 /** Instantiated in code; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class CleanupOperation {
     name!: OperationName;
+    action!: CleanupAction;
     // Optional (not `!`): clearing a picker sets these to undefined so validateDates can invalidate the row.
     deleteFrom: dayjs.Dayjs | undefined;
     deleteTo: dayjs.Dayjs | undefined;

@@ -3,7 +3,7 @@
     "description": "Playwright tests for Artemis",
     "private": true,
     "license": "MIT",
-    "packageManager": "pnpm@11.27.0",
+    "packageManager": "pnpm@12.5.1",
     "devDependencies": {
         "@eslint/js": "10.0.1",
         "@playwright/test": "1.63.0",

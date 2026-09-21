@@ -191,6 +191,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         striped: true,
         scrollable: true,
         scrollHeight: 'flex',
+        showSearch: !!this.exercise()?.isAtLeastInstructor,
         searchPlaceholder: this.exercise()?.teamMode ? 'artemisApp.exercise.searchForTeams' : 'artemisApp.exercise.searchForStudents',
         rowActionsAlignment: 'start',
     }));
@@ -201,13 +202,15 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         const compact = this.isLaptopOrSmaller();
 
         const cols: ColumnDef<ParticipationScoreDTO>[] = [
-            {
-                headerKey: ex.teamMode ? 'artemisApp.participation.team' : 'artemisApp.participation.student',
-                field: 'participantName',
-                width: '140px',
-                sort: true,
-                templateRef: this.nameCellTemplate(),
-            },
+            ex.isAtLeastInstructor
+                ? {
+                      headerKey: ex.teamMode ? 'artemisApp.participation.team' : 'artemisApp.participation.student',
+                      field: 'participantName',
+                      width: '140px',
+                      sort: true,
+                      templateRef: this.nameCellTemplate(),
+                  }
+                : { headerKey: 'artemisApp.participation.participationId', field: 'participationId', width: '140px', sort: true },
         ];
 
         cols.push(
@@ -314,6 +317,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         const requestId = ++this.currentLoadRequestId;
         const base = buildDbQueryFromLazyEvent(this.lastLazyEvent);
         const search: ParticipationScoreSearch = cloneWith(base, {
+            searchTerm: ex.isAtLeastInstructor ? base.searchTerm : '',
+            sortedColumn: !ex.isAtLeastInstructor && ['participantName', 'participantIdentifier', 'buildPlanId'].includes(base.sortedColumn) ? 'id' : base.sortedColumn,
             filterProp: this.activeFilter() !== FilterProp.ALL ? this.activeFilter() : undefined,
             scoreRangeLower: this.rangeFilter()?.lowerBound,
             scoreRangeUpper: this.rangeFilter()?.upperBound,

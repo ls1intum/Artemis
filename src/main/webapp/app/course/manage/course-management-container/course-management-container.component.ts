@@ -51,6 +51,7 @@ import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants'
 import { Subscription } from 'rxjs';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { AutoOrchestrationNotificationService } from 'app/atlas/shared/services/auto-orchestration-notification.service';
+import { MODULE_FEATURE_ATLASLLM } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-course-management-container',
@@ -153,11 +154,14 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             .getFeatureToggleActive(FeatureToggle.AtlasAgent)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((isActive) => {
-                this.autoOrchestrationActive = isActive;
+                // The runtime toggle alone is not enough. Auto orchestration runs only where AtlasLLM is configured,
+                // and without it nothing ever publishes to the topic, so subscribing would open a channel that stays
+                // silent forever.
+                this.autoOrchestrationActive = isActive && this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLASLLM);
                 const currentCourseId = this.courseId();
-                if (isActive && currentCourseId !== undefined) {
+                if (this.autoOrchestrationActive && currentCourseId !== undefined) {
                     this.subscribeToAutoOrchestrationNotifications(currentCourseId);
-                } else if (!isActive && this.autoOrchestrationCourseId !== undefined) {
+                } else if (!this.autoOrchestrationActive && this.autoOrchestrationCourseId !== undefined) {
                     this.autoOrchestrationNotificationService.unsubscribeFromCourse(this.autoOrchestrationCourseId);
                     this.autoOrchestrationCourseId = undefined;
                 }
