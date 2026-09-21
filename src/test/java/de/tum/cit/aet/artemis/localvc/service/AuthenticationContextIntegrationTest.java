@@ -75,6 +75,21 @@ class AuthenticationContextIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
+    void testSessionContext_getIpAddress_unresolvedHostname() {
+        // An unresolved address keeps whatever string it was created from, so a hostname arrives here unshortened and
+        // uncheckable. It is not an address, and at this length it would not fit the ip_address column either.
+        String hostname = "a-very-long-student-machine-name.subdomain.students.example.net";
+        assertThat(hostname).hasSizeGreaterThan(45);
+
+        ServerSession session = mock(ServerSession.class);
+        when(session.getClientAddress()).thenReturn(InetSocketAddress.createUnresolved(hostname, 22));
+
+        String ipAddress = new AuthenticationContext.Session(session).getIpAddress();
+
+        assertThat(ipAddress).isNull();
+    }
+
+    @Test
     void testSessionContext_getIpAddress_nonIpSocket() {
         ServerSession session = mock(ServerSession.class);
         when(session.getClientAddress()).thenReturn(new SocketAddress() {

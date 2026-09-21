@@ -8,6 +8,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.apache.sshd.server.session.ServerSession;
 import org.jspecify.annotations.Nullable;
 
+import de.tum.cit.aet.artemis.core.util.IpAddresses;
+
 public sealed interface AuthenticationContext {
 
     record Session(ServerSession session) implements AuthenticationContext {
@@ -37,17 +39,22 @@ public sealed interface AuthenticationContext {
      * the rate limiter compare against, so every reader of a peer address wants the same string.
      *
      * @param address the peer address, already the real client where the proxy protocol is in use
-     * @return the numeric address, the host string where the address was never resolved, or null if it is not an ip socket
+     * @return the numeric address, or null where the peer is not an ip socket and where an unresolved address names a
+     *         host rather than an address
      */
     @Nullable
     static String hostAddressOf(@Nullable SocketAddress address) {
         if (!(address instanceof InetSocketAddress inetSocketAddress)) {
             return null;
         }
-        // An unresolved address carries no InetAddress; its host string is the literal the address was created from.
-        if (inetSocketAddress.getAddress() == null) {
-            return inetSocketAddress.getHostString();
+        if (inetSocketAddress.getAddress() != null) {
+            return inetSocketAddress.getAddress().getHostAddress();
         }
-        return inetSocketAddress.getAddress().getHostAddress();
+        // An unresolved address carries no InetAddress, only the string it was created from. That string is an address
+        // when the socket was created from a literal, but it is a hostname when it was created from a name, and a
+        // hostname is neither what the callers compare nor something the ip_address column can be relied on to hold.
+        // Yield it only when it parses as a single literal address.
+        String hostString = inetSocketAddress.getHostString();
+        return IpAddresses.canonical(hostString) != null ? hostString : null;
     }
 }
