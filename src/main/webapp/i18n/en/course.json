@@ -291,7 +291,7 @@
                     "adminOnly": "These settings are visible to administrators only.",
                     "rateLimit": {
                         "label": "Allowed feedback requests",
-                        "description": "Students may request at most {{ limit }} automatic Athena feedback results per submission attempt on this Artemis instance."
+                        "description": "Students may request at most {{ limit }} automatic Athena feedback results per exercise participation on this Artemis instance."
                     }
                 },
                 "aboutAthenaModal": {
@@ -310,7 +310,7 @@
                     "suggestionsNotGradesTitle": "Suggestions, not final grades",
                     "suggestionsNotGradesDesc": "Tutors review and adjust every suggestion before it reaches a student; Athena never publishes a grade on its own.",
                     "requestLimitTitle": "A limited number of requests",
-                    "requestLimitDesc": "Each submission attempt allows only a limited number of automatic feedback results, shown on the Admin tab of the settings page.",
+                    "requestLimitDesc": "Each exercise participation allows only a limited number of automatic feedback results, shown on the Admin tab of the settings page.",
                     "configurablePerFeatureTitle": "Configurable per feature",
                     "configurablePerFeatureDesc": "Grading and formative feedback can be switched independently from the settings page."
                 }
