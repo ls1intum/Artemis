@@ -116,6 +116,7 @@ export class CourseGroupComponent {
         scrollable: true,
         scrollHeight: 'flex',
         searchPlaceholder: 'artemisApp.course.courseGroup.searchForUsers',
+        initialSortField: 'name',
     };
 
     readonly columns = computed<ColumnDef<CourseRoleMember>[]>(() => [

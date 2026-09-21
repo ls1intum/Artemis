@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.account.repository;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
 import jakarta.persistence.criteria.Expression;
@@ -25,6 +24,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject_;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole_;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.util.StringUtil;
 
 /**
  * This class contains possible specifications to query for specified users.
@@ -236,8 +236,7 @@ public class UserSpecs {
         if (searchTerm == null || searchTerm.isBlank()) {
             return (root, query, cb) -> cb.conjunction();
         }
-        String escaped = searchTerm.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
-        String pattern = "%" + escaped + "%";
+        String pattern = "%" + StringUtil.escapeForLikeLowerCase(searchTerm) + "%";
         return (root, query, cb) -> {
             var fullName = cb.lower(cb.concat(cb.concat(cb.coalesce(root.get(User_.FIRST_NAME), ""), " "), cb.coalesce(root.get(User_.LAST_NAME), "")));
             return cb.or(cb.like(cb.lower(root.get(User_.LOGIN)), pattern, '\\'), cb.like(fullName, pattern, '\\'),
@@ -247,13 +246,13 @@ public class UserSpecs {
     }
 
     /**
-     * Orders {@code User} results by the given column, applying it as a {@code CriteriaQuery.orderBy()} side effect
-     * (mirrors {@code OrganizationSpecs.orderedForMembers}). {@code "name"} sorts by the concatenated
-     * {@code firstName + ' ' + lastName} expression, not by the two columns as a tuple, since the two orderings can
-     * disagree (e.g. "Ann"/"Zulu" vs "Ann Maria"/"Alpha"). Always adds an {@code id} tiebreaker, and is a no-op for
-     * the count query since ordering there is meaningless.
+     * Orders {@code User} results by the given column, applying it as a {@code CriteriaQuery.orderBy()} side effect. Shared by the paged course-role
+     * member list and the organization member list. {@code "name"} sorts by the concatenated {@code firstName + ' ' + lastName} expression, not by the
+     * two columns as a tuple, since the two orderings can disagree (e.g. "Ann"/"Zulu" vs "Ann Maria"/"Alpha"). {@code "id"} is what an unsorted
+     * table sends, so it sorts by id in the requested direction; an unrecognised column falls back to the id tiebreaker alone. Always adds an
+     * {@code id} tiebreaker, and is a no-op for the count query since ordering there is meaningless.
      *
-     * @param sortedColumn {@code "login"}, {@code "email"}, {@code "visibleRegistrationNumber"}, or {@code "name"} (default)
+     * @param sortedColumn {@code "login"}, {@code "email"}, {@code "visibleRegistrationNumber"}, {@code "name"} or {@code "id"}
      * @param sortingOrder ascending or descending; {@code null} means ascending
      * @return specification that sets ORDER BY as a side effect and always returns {@code null} as predicate
      */
@@ -270,9 +269,13 @@ public class UserSpecs {
                 case "login" -> orders.add(asc ? cb.asc(root.get(User_.LOGIN)) : cb.desc(root.get(User_.LOGIN)));
                 case "email" -> orders.add(asc ? cb.asc(root.get(User_.EMAIL)) : cb.desc(root.get(User_.EMAIL)));
                 case "visibleRegistrationNumber" -> orders.add(asc ? cb.asc(root.get(User_.REGISTRATION_NUMBER)) : cb.desc(root.get(User_.REGISTRATION_NUMBER)));
-                default -> {
+                case "name" -> {
                     Expression<String> fullName = cb.concat(cb.concat(cb.coalesce(root.get(User_.FIRST_NAME), ""), " "), cb.coalesce(root.get(User_.LAST_NAME), ""));
                     orders.add(asc ? cb.asc(fullName) : cb.desc(fullName));
+                }
+                case "id" -> orders.add(asc ? cb.asc(root.get(User_.ID)) : cb.desc(root.get(User_.ID)));
+                default -> {
+                    // unrecognised column: the id tiebreaker below is the only ordering
                 }
             }
 

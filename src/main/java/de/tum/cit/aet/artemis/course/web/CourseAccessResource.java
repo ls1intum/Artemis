@@ -549,7 +549,6 @@ public class CourseAccessResource {
             @Valid CourseRoleMembersSearchDTO search) {
         log.debug("REST request to get paged users in course role for course: {}, role: {}", courseId, courseRoleSlug);
         courseRepository.findByIdElseThrow(courseId);
-        checkPageOffsetElseThrow(search.page(), search.pageSize());
         CourseRole role = resolveCourseRole(courseRoleSlug);
         Page<CourseRoleMemberDTO> page = courseAccessService.getPagedUsersInCourseRole(courseId, role, search);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
@@ -570,29 +569,13 @@ public class CourseAccessResource {
     @GetMapping("courses/{courseId}/{courseRoleSlug}/users/search")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<UserForRegistrationDTO>> searchUsersForCourseRole(@PathVariable Long courseId, @PathVariable String courseRoleSlug, @RequestParam String searchTerm,
-            @RequestParam(defaultValue = "0") @Min(0) int page, @RequestParam(defaultValue = "10") @Min(1) @Max(200) int size) {
+            @RequestParam(defaultValue = "0") @Min(0) @Max(100_000) int page, @RequestParam(defaultValue = "10") @Min(1) @Max(200) int size) {
         log.debug("REST request to search users for course {} role {} with term: {}", courseId, courseRoleSlug, searchTerm);
         courseRepository.findByIdElseThrow(courseId);
-        checkPageOffsetElseThrow(page, size);
         CourseRole role = resolveCourseRole(courseRoleSlug);
         Page<UserForRegistrationDTO> result = courseAccessService.searchUsersForCourseRole(courseId, role, searchTerm, page, size);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), result);
         return new ResponseEntity<>(result.getContent(), headers, HttpStatus.OK);
-    }
-
-    /**
-     * Rejects a page/pageSize combination whose offset ({@code page * pageSize}) would exceed {@link Integer#MAX_VALUE}.
-     * {@link PageRequest#of} accepts any non-negative {@code page}, and the resulting offset is later narrowed to an
-     * {@code int} by the JPA/Hibernate query pipeline; an offset beyond that range surfaces as a 500, not a 400.
-     *
-     * @param page     zero-based page index
-     * @param pageSize number of results per page
-     * @throws ResponseStatusException with status 400 (Bad Request) if the offset would overflow
-     */
-    private static void checkPageOffsetElseThrow(int page, int pageSize) {
-        if ((long) page * (long) pageSize > Integer.MAX_VALUE) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The requested page is out of range.");
-        }
     }
 
     /**
@@ -614,7 +597,7 @@ public class CourseAccessResource {
      * POST /courses/:courseId/:courseRoleSlug : Add multiple users to the course with the given role.
      * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login).
      * The courseRoleSlug path variable is the role string as used in the REST URL ('students', 'tutors', 'editors', 'instructors')
-     * and is converted to a {@link de.tum.cit.aet.artemis.core.domain.CourseRole} internally.
+     * and is converted to a {@link de.tum.cit.aet.artemis.core.domain.CourseRole}; an unknown slug is rejected with 400 (Bad Request).
      *
      * @param courseId       the id of the course
      * @param studentDtos    the list of users (with at least one unique identifier) to register
@@ -626,7 +609,8 @@ public class CourseAccessResource {
     public ResponseEntity<List<StudentDTO>> addUsersToCourseRole(@PathVariable Long courseId, @PathVariable String courseRoleSlug, @RequestBody List<StudentDTO> studentDtos) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, courseRepository.findByIdElseThrow(courseId), null);
         log.debug("REST request to add {} as {} to course {}", studentDtos, courseRoleSlug, courseId);
-        List<StudentDTO> notFoundStudentsDtos = courseAccessService.registerUsersForCourse(courseId, studentDtos, courseRoleSlug);
+        CourseRole role = resolveCourseRole(courseRoleSlug);
+        List<StudentDTO> notFoundStudentsDtos = courseAccessService.registerUsersForCourse(courseId, studentDtos, role);
         return ResponseEntity.ok().body(notFoundStudentsDtos);
     }
 }

@@ -15,12 +15,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * {@link org.springframework.data.domain.PageRequest#of} (which throws, producing a 500) or loading the whole membership.
  * Mirrors {@code ExamStudentSearchDTO} for the analogous exam-members endpoint.
  *
- * @param page         zero-based page index
+ * @param page         zero-based page index, at most 100,000 (keeps {@code page * pageSize} far below the {@code int} range the JPA pipeline narrows the offset to)
  * @param pageSize     number of results per page (1-200)
  * @param sortingOrder ascending or descending
  * @param sortedColumn the column to sort by
- * @param searchTerm   the text to filter members by (login or full name)
+ * @param searchTerm   the text to filter members by (login, full name, email or registration number)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseRoleMembersSearchDTO(@Min(0) int page, @Min(1) @Max(200) int pageSize, SortingOrder sortingOrder, String sortedColumn, String searchTerm) {
+public record CourseRoleMembersSearchDTO(@Min(0) @Max(100_000) int page, @Min(1) @Max(200) int pageSize, SortingOrder sortingOrder, String sortedColumn, String searchTerm) {
 }

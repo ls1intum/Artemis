@@ -3864,6 +3864,14 @@ public class CourseTestService {
     }
 
     /**
+     * Test: bulk-registering users under an unrecognized course-role slug is rejected with 400 instead of failing with a server error.
+     */
+    public void addUsersToCourseRole_unknownSlug_returnsBadRequest() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        request.postWithoutLocation("/api/course/courses/" + course.getId() + "/unknownRole", List.of(), HttpStatus.BAD_REQUEST, null);
+    }
+
+    /**
      * Test: a {@code size} of 0 is rejected with 400.
      */
     public void searchUsersForCourseRole_rejectsZeroSize() throws Exception {

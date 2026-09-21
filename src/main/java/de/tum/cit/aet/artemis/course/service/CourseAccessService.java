@@ -34,7 +34,6 @@ import de.tum.cit.aet.artemis.core.dto.CourseRoleMembersSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.EnrollmentService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -135,18 +134,17 @@ public class CourseAccessService {
      * Add multiple users to the course with the role derived from the given role string.
      * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login).
      *
-     * @param courseId       the id of the course
-     * @param studentDTOs    the list of users (with at least one unique identifier)
-     * @param courseRoleSlug the role path segment from the REST URL ('students', 'tutors', 'editors', 'instructors'), converted to {@link CourseRole} internally
+     * @param courseId    the id of the course
+     * @param studentDTOs the list of users (with at least one unique identifier)
+     * @param courseRole  the role to grant the found users
      * @return the list of users who could not be registered because they were not found in the Artemis database
      */
-    public List<StudentDTO> registerUsersForCourse(Long courseId, List<StudentDTO> studentDTOs, String courseRoleSlug) {
+    public List<StudentDTO> registerUsersForCourse(Long courseId, List<StudentDTO> studentDTOs, CourseRole courseRole) {
         var course = courseRepository.findByIdElseThrow(courseId);
         if (course.getLearningPathsEnabled()) {
             course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(course.getId());
         }
         final Course finalCourse = course;
-        CourseRole courseRole = CourseRole.fromRole(Role.fromString(courseRoleSlug));
         List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
         List<User> foundUsers = new ArrayList<>();
         for (var studentDto : studentDTOs) {
@@ -169,7 +167,7 @@ public class CourseAccessService {
             });
         }
         if (isStaffRole(courseRole)) {
-            foundUsers.forEach(user -> repositoryVcsAccessTokenService.ensureTokensForStaffUserInCourseAsync(user, finalCourse));
+            repositoryVcsAccessTokenService.ensureTokensForStaffUsersInCourseAsync(foundUsers, finalCourse);
         }
 
         return notFoundStudentsDTOs;
@@ -241,10 +239,7 @@ public class CourseAccessService {
      */
     @NonNull
     public Page<CourseRoleMemberDTO> getPagedUsersInCourseRole(long courseId, CourseRole role, CourseRoleMembersSearchDTO search) {
-        Page<User> page = userRepository.searchUsersInCourseRole(search, courseId, role);
-        List<CourseRoleMemberDTO> members = page.getContent().stream()
-                .map(user -> new CourseRoleMemberDTO(user.getId(), user.getLogin(), user.getName(), user.getEmail(), user.getRegistrationNumber(), user.getImageUrl())).toList();
-        return new PageImpl<>(members, page.getPageable(), page.getTotalElements());
+        return userRepository.searchUsersInCourseRole(search, courseId, role).map(CourseRoleMemberDTO::of);
     }
 
     /**

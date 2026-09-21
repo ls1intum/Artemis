@@ -4,7 +4,7 @@ import { CoursesForDashboardDTO, CoursesForDashboardResponseDTO, coursesForDashb
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
-import { PageableResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
+import { PageableResult, SearchTermPageableSearch, toPageableResult } from 'app/foundation/pagination/pageable-table';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { User, UserNameAndLoginDTO, UserPublicInfoDTO } from 'app/account/user/user.model';
@@ -553,16 +553,9 @@ export class CourseManagementService implements OnDestroy {
      * @param search         pagination, search term, and sort info
      */
     getPagedUsersInCourseRole(courseId: number, courseRoleSlug: CourseRoleSlug, search: SearchTermPageableSearch): Observable<PageableResult<CourseRoleMember>> {
-        const params: Record<string, string | number> = {
-            page: search.page,
-            pageSize: search.pageSize,
-            sortingOrder: search.sortingOrder,
-            sortedColumn: search.sortedColumn,
-            searchTerm: search.searchTerm,
-        };
         return this.http
-            .get<CourseRoleMember[]>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}/paged`, { params, observe: 'response' })
-            .pipe(map((res) => ({ content: res.body ?? [], totalElements: Number(res.headers.get('X-Total-Count') ?? 0) })));
+            .get<CourseRoleMember[]>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}/paged`, { params: createRequestOption(search), observe: 'response' })
+            .pipe(map(toPageableResult));
     }
 
     /**
@@ -580,7 +573,7 @@ export class CourseManagementService implements OnDestroy {
                 params: { searchTerm, page, size },
                 observe: 'response',
             })
-            .pipe(map((res) => ({ content: res.body ?? [], totalElements: Number(res.headers.get('X-Total-Count') ?? 0) })));
+            .pipe(map(toPageableResult));
     }
 
     /**

@@ -195,7 +195,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
         assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), templateUri)).isEmpty();
 
         List<StudentDTO> notFound = courseAccessService.registerUsersForCourse(course.getId(), List.of(new StudentDTO(joiningStaff.getLogin(), null, null, null, null)),
-                "instructors");
+                CourseRole.INSTRUCTOR);
         assertThat(notFound).isEmpty();
 
         await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> {

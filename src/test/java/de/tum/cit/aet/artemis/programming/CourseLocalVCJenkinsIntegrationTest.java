@@ -708,6 +708,12 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void addUsersToCourseRole_unknownSlug_returnsBadRequest() throws Exception {
+        courseTestService.addUsersToCourseRole_unknownSlug_returnsBadRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getPagedUsersInCourseRole_rejectsOverflowingOffset() throws Exception {
         courseTestService.getPagedUsersInCourseRole_rejectsOverflowingOffset();
     }
