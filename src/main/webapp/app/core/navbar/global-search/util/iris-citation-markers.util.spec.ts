@@ -213,6 +213,27 @@ describe('renderCitationMarkers', () => {
         expect([...result.citedNumbers]).toEqual([1]);
     });
 
+    it('treats a mid-line triple-backtick run as an inline span, not an unanchored fence', () => {
+        // A fence opener is only legal at the start of a line. A triple-backtick inline span used
+        // mid-sentence must fall through to the exact-length inline-span alternative instead — an
+        // unanchored fence alternative would treat it as an unterminated fence opener (its own closer
+        // is mid-line too, so no legal closing FENCE LINE ever follows) and, via the EOF fallback
+        // above, swallow everything after it, including the real [2] citation.
+        const answer = 'Use ```values[1]``` here.[2]';
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('```values[1]```');
+        expect(result.html).toContain('here.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([2]);
+    });
+
+    it('still opens a fence at the very start of the answer', () => {
+        const answer = ['```python', 'const x = values[1];', '```', 'Done.[1]'].join('\n');
+        const result = renderCitationMarkers(answer, 1);
+        expect(result.html).toContain('```python\nconst x = values[1];\n```');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect([...result.citedNumbers]).toEqual([1]);
+    });
+
     it('leaves a fenced code block untouched, including a real citation-shaped marker after it', () => {
         const answer = ['See the loop below.[1]', '```python', 'for i in range(3):', '    print(items[i])', '```', 'Iteration order matches the list.[2]'].join('\n');
         const result = renderCitationMarkers(answer, 2);
@@ -220,6 +241,30 @@ describe('renderCitationMarkers', () => {
         expect(result.html).toContain('See the loop below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
         expect(result.html).toContain('Iteration order matches the list.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
         expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
+
+    it('separates a marker from a standalone display-math equation it directly follows', () => {
+        // @vscode/markdown-it-katex only recognizes a display block's closing $$ when it is the
+        // last thing on its line; a marker chip glued directly onto it (as the prompt instructs:
+        // "directly after the claim") makes the scanner miss the closer and swallow everything
+        // after it as unparsed "math" up to the next accidental $$ pair, producing a KaTeX parse
+        // error instead of a citation. Separating them onto their own lines keeps the equation a
+        // legal, closed display block.
+        const answer = ['The equation is given as:', '', '$$\\hat{y}_i = \\theta x$$[1]', '', 'Done.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('$$\\hat{y}_i = \\theta x$$\n<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
+
+    it('leaves a marker after inline display math sharing its line with other prose untouched', () => {
+        // The prompt's own inline example ("the parameter $$\theta$$") shares its line with prose,
+        // so it never reaches markdown-it-katex's line-alone display-block scanner; a marker here
+        // is not the sole content of the line and must not be pulled onto its own line.
+        const answer = 'The parameter $$\\theta$$[1] controls the slope.';
+        const result = renderCitationMarkers(answer, 1);
+        expect(result.html).toBe('The parameter $$\\theta$$<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup> controls the slope.');
+        expect([...result.citedNumbers]).toEqual([1]);
     });
 });
 
