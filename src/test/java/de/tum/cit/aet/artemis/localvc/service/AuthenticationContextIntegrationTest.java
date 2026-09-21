@@ -21,34 +21,26 @@ class AuthenticationContextIntegrationTest extends AbstractProgrammingIntegratio
     @Test
     void testSessionContext_getIpAddress_unresolved() {
         ServerSession session = mock(ServerSession.class);
-        InetSocketAddress clientAddress = InetSocketAddress.createUnresolved("192.168.1.10", 22);
-        when(session.getClientAddress()).thenReturn(clientAddress);
+        when(session.getClientAddress()).thenReturn(InetSocketAddress.createUnresolved("192.168.1.10", 22));
 
-        AuthenticationContext.Session sessionContext = new AuthenticationContext.Session(session);
+        String ipAddress = new AuthenticationContext.Session(session).getIpAddress();
 
-        String ipAddress = sessionContext.getIpAddress();
-
-        // The address alone, never the port: the access log column holds an ip address and the rate limiter keys on one
         assertThat(ipAddress).isEqualTo("192.168.1.10");
     }
 
     @Test
     void testSessionContext_getIpAddress_withResolved() {
         ServerSession session = mock(ServerSession.class);
-        InetSocketAddress clientAddress = new InetSocketAddress("10.0.0.50", 2222);
-        when(session.getClientAddress()).thenReturn(clientAddress);
+        when(session.getClientAddress()).thenReturn(new InetSocketAddress("10.0.0.50", 2222));
 
-        AuthenticationContext.Session sessionContext = new AuthenticationContext.Session(session);
-
-        String ipAddress = sessionContext.getIpAddress();
+        String ipAddress = new AuthenticationContext.Session(session).getIpAddress();
 
         assertThat(ipAddress).isEqualTo("10.0.0.50");
     }
 
     @Test
     void testSessionContext_getIpAddress_withHostname() throws UnknownHostException {
-        // A peer whose reverse lookup supplied a hostname, as production ssh clients arrive. The socket address then
-        // prints as hostname/address:port, which is longer than the varchar(45) vcs_access_log.ip_address column.
+        // A peer whose reverse lookup supplied a hostname, as production ssh clients arrive
         InetSocketAddress clientAddress = new InetSocketAddress(InetAddress.getByAddress("host-203-0-113-42.dialup.example.net", new byte[] { (byte) 203, 0, (byte) 113, 42 }),
                 52134);
         assertThat(clientAddress.toString()).hasSizeGreaterThan(45);
@@ -59,7 +51,6 @@ class AuthenticationContextIntegrationTest extends AbstractProgrammingIntegratio
         String ipAddress = new AuthenticationContext.Session(session).getIpAddress();
 
         assertThat(ipAddress).isEqualTo("203.0.113.42");
-        assertThat(ipAddress).hasSizeLessThanOrEqualTo(45);
     }
 
     @Test
@@ -76,8 +67,7 @@ class AuthenticationContextIntegrationTest extends AbstractProgrammingIntegratio
 
     @Test
     void testSessionContext_getIpAddress_unresolvedHostname() {
-        // An unresolved address keeps whatever string it was created from, so a hostname arrives here unshortened and
-        // uncheckable. It is not an address, and at this length it would not fit the ip_address column either.
+        // An unresolved address keeps whatever string it was created from, so a hostname arrives here unshortened
         String hostname = "a-very-long-student-machine-name.subdomain.students.example.net";
         assertThat(hostname).hasSizeGreaterThan(45);
 

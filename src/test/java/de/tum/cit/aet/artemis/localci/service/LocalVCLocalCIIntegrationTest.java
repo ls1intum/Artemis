@@ -270,9 +270,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         vcsAccessLogRepository.deleteAll();
         vcsAccessLogRepository.flush();
 
-        // An ssh peer the way a production node sees it: the address carries a reverse-resolved hostname, so the socket
-        // address prints as hostname/address:port. That string is neither an ip address nor short enough for the
-        // varchar(45) ip_address column, and storing it lost the entire audit entry to a failed insert.
+        // An ssh peer the way a production node sees it: the address carries a reverse-resolved hostname
         var clientAddress = new InetSocketAddress(InetAddress.getByAddress("host-203-0-113-42.dialup.example.net", new byte[] { (byte) 203, 0, (byte) 113, 42 }), 52134);
         assertThat(clientAddress.toString()).as("the address the session prints exceeds the ip_address column").hasSizeGreaterThan(45);
 
@@ -280,7 +278,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         when(session.getClientAddress()).thenReturn(clientAddress);
         String ipAddress = new AuthenticationContext.Session(session).getIpAddress();
 
-        // Storing the printed socket address here failed the insert with "value too long for type character varying(45)"
+        // Storing the printed socket address here failed with "value too long for type character varying(45)", which
+        // lost the entire audit entry
         var accessLog = new VcsAccessLog(student1, participation, student1.getName(), student1.getEmail(), RepositoryActionType.PULL, AuthenticationMechanism.SSH, "", ipAddress);
         vcsAccessLogRepository.saveAndFlush(accessLog);
 

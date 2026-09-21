@@ -33,14 +33,13 @@ public sealed interface AuthenticationContext {
     /**
      * Extracts the plain address of a socket peer, for the access log and for rate limiting.
      * <p>
-     * Deliberately not {@link SocketAddress#toString()}: that prints {@code hostname/192.0.2.1:52134}, which is not an
-     * address at all and, once a reverse lookup supplies a long hostname, does not fit the {@code vcs_access_log.ip_address}
-     * column either, so the whole audit entry is lost to a failed insert. The numeric form is also what the allowlist and
-     * the rate limiter compare against, so every reader of a peer address wants the same string.
+     * Deliberately not {@link SocketAddress#toString()}, which prints {@code hostname/192.0.2.1:52134}: that is not an
+     * address, and once a reverse lookup supplies a long hostname it no longer fits the {@code vcs_access_log.ip_address}
+     * column, losing the audit entry to a failed insert. A hostname is rejected wherever else it appears for the same
+     * reason, and because it is not what the allowlist and the rate limiter compare against.
      *
      * @param address the peer address, already the real client where the proxy protocol is in use
-     * @return the numeric address, or null where the peer is not an ip socket and where an unresolved address names a
-     *         host rather than an address
+     * @return the numeric address, or null if the peer is not an ip socket or is named by a hostname
      */
     @Nullable
     static String hostAddressOf(@Nullable SocketAddress address) {
@@ -50,10 +49,7 @@ public sealed interface AuthenticationContext {
         if (inetSocketAddress.getAddress() != null) {
             return inetSocketAddress.getAddress().getHostAddress();
         }
-        // An unresolved address carries no InetAddress, only the string it was created from. That string is an address
-        // when the socket was created from a literal, but it is a hostname when it was created from a name, and a
-        // hostname is neither what the callers compare nor something the ip_address column can be relied on to hold.
-        // Yield it only when it parses as a single literal address.
+        // An unresolved address was never looked up, so its host string is an address only if it was created from one.
         String hostString = inetSocketAddress.getHostString();
         return IpAddresses.canonical(hostString) != null ? hostString : null;
     }
