@@ -193,6 +193,27 @@ test.describe('Text exercise assessment', { tag: '@slow' }, () => {
             await expect(page.locator('jhi-participation-submission jhi-result').first()).toContainText(`${percentage}%`, { timeout: 20000 });
         });
 
+        test('Result badge on the assessment dashboard does not leave for the student exercise page', async ({ login, page }) => {
+            test.slow();
+            // #13921: the badge used to deep-link into `courses/…/text-exercises/…/participate/:participationId/…`,
+            // the student exercise page. For an exam exercise that page 403s, and in a course it swaps in the viewer's
+            // own participation — so a tutor never saw the student's result. The assessment button beside it does.
+            const now = dayjs();
+            if (now.isBefore(assessmentDueDate)) {
+                await page.waitForTimeout(assessmentDueDate.diff(now, 'ms') + 2000);
+            }
+            const dashboard = `/course-management/${course.id}/assessment-dashboard/${exercise.id}`;
+            await login(tutor, dashboard);
+            const badge = page.locator('jhi-result #result-score').first();
+            await expect(badge).toBeVisible({ timeout: 20000 });
+            await expect(badge).not.toHaveClass(/clickable-result/);
+
+            await badge.click();
+            // Give a navigation the click must not start the time to commit before asserting it did not happen.
+            await page.waitForTimeout(1000);
+            await expect(page).toHaveURL(new RegExp(`${dashboard}$`));
+        });
+
         test('Student sees feedback after assessment due date and complains', async ({ login, page, courseManagementAPIRequests, exerciseResult, textExerciseFeedback }) => {
             const now = dayjs();
             if (now.isBefore(assessmentDueDate)) {

@@ -1,16 +1,28 @@
 @if (group(); as group) {
     <div class="exercise-page d-flex flex-column h-100 overflow-hidden">
-        <div class="detail-header-card module-bg rounded-3 p-2 shell-divider-b">
-            <div class="detail-header-title-row gap-2">
-                <h5 class="mb-0">
-                    <fa-icon [icon]="faLayerGroup" />
-                    {{ group.title }}
-                </h5>
-            </div>
+        <!--
+            The same title bar the exercise page renders, so a group and the variants it links to read alike: one row
+            at the shell's title-bar height, with the sidebar's expand button in it while the sidebar is collapsed.
+            `px-*` rather than `p-*`, so Bootstrap's !important spacing does not overrule the class's vertical padding.
+        -->
+        <div class="page-top-bar module-bg rounded-3 px-3 shell-divider-b d-flex align-items-center gap-2">
+            @if (showSidebarToggle() && isSidebarCollapsed()) {
+                <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
+            }
+            <h5 class="mb-0 text-truncate">
+                <fa-icon [icon]="faLayerGroup" />
+                {{ group.title }}
+            </h5>
 
-            <div class="d-flex flex-wrap gap-2">
+            <!--
+                Dropped rather than shrunk on a narrow bar, the way the exercise bar drops its own pills: the same
+                points and dates are on every variant card below, so nothing becomes unreachable. Tailwind's layout
+                utilities rather than Bootstrap's, because `d-flex` is `!important` and would outrank the `display:
+                none` that `.title-bar-optional-control` applies below the threshold.
+            -->
+            <div class="title-bar-optional-control flex items-center gap-2 shrink-0">
                 @if (exerciseSumMaxPoints() > 0) {
-                    <jhi-information-box [informationBoxData]="pointsInfoBoxData()">
+                    <jhi-information-box [informationBoxData]="pointsInfoBoxData()" layout="inline">
                         <span contentComponent class="d-flex align-items-center gap-1">
                             <span>{{ achievedGroupPoints() }} / {{ effectiveGroupMaxPoints() }}</span>
                             @if (capReducesMaxPoints()) {
@@ -27,7 +39,7 @@
                     </jhi-information-box>
                 }
                 @for (dateBox of groupDateInfoBoxes(); track dateBox.title) {
-                    <jhi-information-box [informationBoxData]="dateBox">
+                    <jhi-information-box [informationBoxData]="dateBox" layout="inline">
                         @switch (dateBox.content.type) {
                             @case ('timeAgo') {
                                 <!-- Dynamic state colour: bind the brand token directly rather than composing a Bootstrap class name. -->
@@ -41,7 +53,7 @@
                         }
                     </jhi-information-box>
                 }
-                <jhi-information-box [informationBoxData]="variantsInfoBoxData()" />
+                <jhi-information-box [informationBoxData]="variantsInfoBoxData()" layout="inline" />
             </div>
         </div>
 

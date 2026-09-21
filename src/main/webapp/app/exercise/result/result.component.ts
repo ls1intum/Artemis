@@ -80,6 +80,18 @@ export class ResultComponent {
     readonly showIcon = input(true);
     readonly isInSidebarCard = input(false);
     readonly showCompletion = input(true);
+    /**
+     * Whether the badge is shown to the owner of the participation it belongs to.
+     *
+     * Only then may it open the text/modeling submission view. That deep link
+     * (`courses/:courseId/exercises/{text,modeling}-exercises/:exerciseId/participate/:participationId/…`) is the
+     * student exercise page: it loads the exercise details endpoint, which an exam exercise answers with 403, and in
+     * a course its split panel swaps a participation that is not the viewer's for the viewer's own. Tutor- and
+     * instructor-facing pages therefore pass `false`, which leaves the badge unclickable for those two exercise
+     * types — the assessment editor next to it shows the student's result instead. Every other type opens the
+     * feedback dialog, which renders whichever participation it is handed, so it stays clickable either way.
+     */
+    readonly isOwnParticipation = input(true);
     readonly missingResultInfo = input(MissingResultInformation.NONE);
     readonly estimatedCompletionDate = input<dayjs.Dayjs>();
     readonly buildStartDate = input<dayjs.Dayjs>();
@@ -140,6 +152,12 @@ export class ResultComponent {
 
     readonly resultTooltip = computed<string | undefined>(() => (this.displayableResult() ? this.buildResultTooltip() : undefined));
 
+    /** Whether the details of this result open as the student submission view rather than as the feedback dialog. */
+    private readonly opensSubmissionView = computed(() => {
+        const type = this.resolvedExercise()?.type;
+        return type === ExerciseType.TEXT || type === ExerciseType.MODELING;
+    });
+
     /**
      * Whether clicking the badge can open the result details.
      *
@@ -147,8 +165,15 @@ export class ResultComponent {
      * the feedback dialog ({@link FeedbackComponent}) requires a participation. A result without one — an example
      * submission, for instance — has no detail view to open, so the badge must not advertise itself as clickable.
      * Quizzes show their scoring next to the questions instead of in a dialog, and sidebar cards navigate as a whole.
+     * Someone else's text or modeling participation has no view either, see {@link isOwnParticipation}.
      */
-    readonly canShowDetails = computed(() => !this.isInSidebarCard() && this.resolvedExercise()?.type !== ExerciseType.QUIZ && this.resolvedParticipation() !== undefined);
+    readonly canShowDetails = computed(
+        () =>
+            !this.isInSidebarCard() &&
+            this.resolvedExercise()?.type !== ExerciseType.QUIZ &&
+            this.resolvedParticipation() !== undefined &&
+            (this.isOwnParticipation() || !this.opensSubmissionView()),
+    );
 
     readonly badge = computed<Badge | undefined>(() => {
         const participation = this.resolvedParticipation();
@@ -241,7 +266,7 @@ export class ResultComponent {
 
         const exerciseService = this.exerciseCacheService ?? this.exerciseService;
         const exercise = this.resolvedExercise();
-        if (exercise?.type === ExerciseType.TEXT || exercise?.type === ExerciseType.MODELING) {
+        if (this.opensSubmissionView() && exercise) {
             const courseId = getCourseFromExercise(exercise)?.id;
             const submissionId = result.submission?.id;
 
