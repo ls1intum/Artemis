@@ -213,6 +213,27 @@ describe('renderCitationMarkers', () => {
         expect([...result.citedNumbers]).toEqual([1]);
     });
 
+    it('treats a mid-line triple-backtick run as an inline span, not an unanchored fence', () => {
+        // A fence opener is only legal at the start of a line. A triple-backtick inline span used
+        // mid-sentence must fall through to the exact-length inline-span alternative instead — an
+        // unanchored fence alternative would treat it as an unterminated fence opener (its own closer
+        // is mid-line too, so no legal closing FENCE LINE ever follows) and, via the EOF fallback
+        // above, swallow everything after it, including the real [2] citation.
+        const answer = 'Use ```values[1]``` here.[2]';
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('```values[1]```');
+        expect(result.html).toContain('here.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([2]);
+    });
+
+    it('still opens a fence at the very start of the answer', () => {
+        const answer = ['```python', 'const x = values[1];', '```', 'Done.[1]'].join('\n');
+        const result = renderCitationMarkers(answer, 1);
+        expect(result.html).toContain('```python\nconst x = values[1];\n```');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect([...result.citedNumbers]).toEqual([1]);
+    });
+
     it('leaves a fenced code block untouched, including a real citation-shaped marker after it', () => {
         const answer = ['See the loop below.[1]', '```python', 'for i in range(3):', '    print(items[i])', '```', 'Iteration order matches the list.[2]'].join('\n');
         const result = renderCitationMarkers(answer, 2);
