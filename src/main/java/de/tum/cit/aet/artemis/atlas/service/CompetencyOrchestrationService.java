@@ -51,8 +51,6 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
-import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 /**
@@ -405,7 +403,8 @@ public class CompetencyOrchestrationService {
             return CompetencyOrchestrationResultDTO.failed("Lecture units are unavailable.", CompetencyOrchestrationResultDTO.FailureReason.UNSUPPORTED_LEARNING_OBJECT);
         }
         LectureUnit clicked = lectureUnitRepositoryApi.get().findWithLectureById(lectureUnitId).orElse(null);
-        if (clicked == null || clicked instanceof ExerciseUnit || clicked.getLecture() == null || clicked.getLecture().getCourse() == null) {
+        if (clicked == null || !ContentExtractionService.isLectureUnitEligibleForOrchestration(clicked) || clicked.getLecture() == null
+                || clicked.getLecture().getCourse() == null) {
             return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator only operates on content-bearing course lecture units.",
                     CompetencyOrchestrationResultDTO.FailureReason.UNSUPPORTED_LEARNING_OBJECT);
         }
@@ -481,12 +480,10 @@ public class CompetencyOrchestrationService {
     }
 
     /**
-     * Resolves a set of lecture-unit ids into the units eligible for orchestration, dropping unknown
-     * units, {@link ExerciseUnit}s (never orchestrated — {@code CourseCompetency.prePersistOrUpdate}
-     * strips their links) and — as a defence against a stale/corrupt accumulator entry — any whose
-     * owning course does not match {@code courseId}. The lecture (and its course) is fetch-joined so
-     * the course-ownership check needs no lazy traversal. Order of {@code lectureUnitIds} is preserved.
-     * Returns an empty list immediately when no ids are requested or the lecture module is unavailable.
+     * Resolves lecture-unit ids into orchestratable, course-owned units. Unknown units, unsupported
+     * subtypes, blank-description attachment/video units, and wrong-course units are skipped.
+     * The lecture and course are fetch-joined for the ownership check. Input order is preserved.
+     * Returns an empty list when no ids are requested or the lecture module is unavailable.
      */
     private List<LectureUnit> resolveBatchLectureUnits(long courseId, Collection<Long> lectureUnitIds) {
         if (lectureUnitIds.isEmpty() || lectureUnitRepositoryApi.isEmpty()) {
@@ -503,8 +500,8 @@ public class CompetencyOrchestrationService {
                 log.info("Atlas orchestrator (batch) skipping lecture unit {}: not found", id);
                 continue;
             }
-            if (lectureUnit instanceof ExerciseUnit) {
-                log.info("Atlas orchestrator (batch) skipping exercise-backed lecture unit {}", id);
+            if (!ContentExtractionService.isLectureUnitEligibleForOrchestration(lectureUnit)) {
+                log.info("Atlas orchestrator (batch) skipping unsupported lecture unit {}", id);
                 continue;
             }
             var lecture = lectureUnit.getLecture();
@@ -620,7 +617,7 @@ public class CompetencyOrchestrationService {
                     boolean blankLearningText = extracted.extractedLearningText() == null || extracted.extractedLearningText().isBlank();
                     boolean hasSourceMetadata = extracted.metadata().entrySet().stream()
                             .anyMatch(entry -> !"lectureUnitType".equals(entry.getKey()) && entry.getValue() != null && !entry.getValue().isBlank());
-                    if (blankLearningText && (lectureUnit instanceof AttachmentVideoUnit || !hasSourceMetadata)) {
+                    if (blankLearningText && !hasSourceMetadata) {
                         log.debug("Atlas orchestrator (batch) skipping lecture unit {} for course {}: no learning text", lectureUnit.getId(), courseId);
                         continue;
                     }

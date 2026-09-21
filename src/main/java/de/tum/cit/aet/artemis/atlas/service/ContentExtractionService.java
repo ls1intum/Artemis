@@ -196,6 +196,23 @@ public class ContentExtractionService {
     }
 
     /**
+     * Whether Atlas can inspect and mutate competency links for the given lecture unit.
+     * Attachment/video units require instructor-authored descriptive text because Atlas does not
+     * inspect attachments, videos, or transcripts.
+     *
+     * @param lectureUnit the lecture unit to validate
+     * @return whether the unit has a supported, learning-relevant representation
+     */
+    public static boolean isLectureUnitEligibleForOrchestration(LectureUnit lectureUnit) {
+        return switch (lectureUnit) {
+            case TextUnit ignored -> true;
+            case OnlineUnit ignored -> true;
+            case AttachmentVideoUnit attachmentVideoUnit -> attachmentVideoUnit.getDescription() != null && !attachmentVideoUnit.getDescription().isBlank();
+            default -> false;
+        };
+    }
+
+    /**
      * Remove narrative scaffolding from the given raw text via a small/fast LLM, keeping only
      * pedagogically relevant content. The LLM returns a list of SEARCH/REPLACE edits
      * ({@link FlavorStripEditsDTO}) which are applied locally to the raw text. This minimizes

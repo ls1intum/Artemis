@@ -390,9 +390,9 @@ public class AssignerToolsService {
     }
 
     /**
-     * Loads a lecture unit (with its lecture eagerly fetched) and returns it only when it is a linkable,
-     * course-scoped unit: an {@link ExerciseUnit} or a unit outside the current course yields {@code null},
-     * as does an absent lecture module. Callers turn {@code null} into {@link #lectureUnitLookupError}.
+     * Loads a lecture unit (with its lecture eagerly fetched) and returns it only when it is eligible
+     * for orchestration and belongs to the current course. Callers turn {@code null} into
+     * {@link #lectureUnitLookupError}.
      */
     @Nullable
     private LectureUnit findLectureUnitInCourse(long lectureUnitId, long courseId) {
@@ -400,7 +400,7 @@ public class AssignerToolsService {
             return null;
         }
         LectureUnit lectureUnit = lectureUnitRepositoryApi.get().findWithLectureById(lectureUnitId).orElse(null);
-        if (lectureUnit == null || lectureUnit instanceof ExerciseUnit || !lectureUnitBelongsToCourse(lectureUnit, courseId)) {
+        if (lectureUnit == null || !ContentExtractionService.isLectureUnitEligibleForOrchestration(lectureUnit) || !lectureUnitBelongsToCourse(lectureUnit, courseId)) {
             return null;
         }
         return lectureUnit;

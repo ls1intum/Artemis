@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
@@ -385,6 +386,24 @@ class AssignerToolsServiceTest {
         exerciseUnit.setLecture(lectureInCourse(course));
         when(courseCompetencyRepository.findById(COMPETENCY_ID)).thenReturn(Optional.of(competency));
         when(lectureUnitRepositoryApi.findWithLectureById(LECTURE_UNIT_ID)).thenReturn(Optional.of(exerciseUnit));
+
+        String result = service.assignLectureUnitToCompetency(COMPETENCY_ID, LECTURE_UNIT_ID, 1.0, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("not a linkable lecture unit");
+        verify(competencyLectureUnitLinkRepository, never()).save(any(CompetencyLectureUnitLink.class));
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void assignLectureUnitToCompetency_blankAttachmentDescription_isRejected() {
+        Course course = courseWithId(COURSE_ID);
+        CourseCompetency competency = newCompetency(COMPETENCY_ID, "Target", "Desc", CompetencyTaxonomy.APPLY, course);
+        AttachmentVideoUnit unit = new AttachmentVideoUnit();
+        unit.setId(LECTURE_UNIT_ID);
+        unit.setDescription(" ");
+        unit.setLecture(lectureInCourse(course));
+        when(courseCompetencyRepository.findById(COMPETENCY_ID)).thenReturn(Optional.of(competency));
+        when(lectureUnitRepositoryApi.findWithLectureById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
 
         String result = service.assignLectureUnitToCompetency(COMPETENCY_ID, LECTURE_UNIT_ID, 1.0, JUSTIFICATION, toolContext);
 

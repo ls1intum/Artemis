@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
@@ -275,6 +276,21 @@ class OrchestratorReadToolsServiceTest {
 
         assertThat(result).contains("not a readable lecture unit");
         verify(contentExtractionService, never()).extractContent(exerciseUnit, false);
+    }
+
+    @Test
+    void getLectureUnitContent_blankAttachmentDescription_isRejectedWithoutExtraction() {
+        AttachmentVideoUnit unit = new AttachmentVideoUnit();
+        unit.setDescription(" ");
+        Lecture lecture = new Lecture();
+        lecture.setCourse(courseWithId(COURSE_ID));
+        unit.setLecture(lecture);
+        when(lectureUnitRepositoryApi.findWithLectureById(40L)).thenReturn(Optional.of(unit));
+
+        String result = service.getLectureUnitContent(40L, toolContext);
+
+        assertThat(result).contains("not a readable lecture unit");
+        verify(contentExtractionService, never()).extractContent(unit, false);
     }
 
     @Test

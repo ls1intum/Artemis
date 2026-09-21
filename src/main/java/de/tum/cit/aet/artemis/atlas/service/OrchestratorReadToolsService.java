@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
-import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 /**
@@ -199,7 +198,7 @@ public class OrchestratorReadToolsService {
             return errorJson(objectMapper, "Lecture unit " + lectureUnitId + " is not available in the current course.");
         }
         LectureUnit lectureUnit = lectureUnitRepositoryApi.get().findWithLectureById(lectureUnitId).orElse(null);
-        if (lectureUnit == null || lectureUnit instanceof ExerciseUnit || !lectureUnitBelongsToCourse(lectureUnit, courseId)) {
+        if (lectureUnit == null || !ContentExtractionService.isLectureUnitEligibleForOrchestration(lectureUnit) || !lectureUnitBelongsToCourse(lectureUnit, courseId)) {
             return errorJson(objectMapper, "Lecture unit " + lectureUnitId + " is not a readable lecture unit in the current course.");
         }
         try {
