@@ -122,7 +122,7 @@ public class ProgrammingExerciseDeletionResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> reset(@PathVariable Long exerciseId, @RequestBody ProgrammingExerciseResetOptionsDTO programmingExerciseResetOptionsDTO) {
         log.debug("REST request to reset programming exercise {} with options {}", exerciseId, programmingExerciseResetOptionsDTO);
-        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesAndBuildConfigElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
         final var user = userRepository.getUserWithAuthorities();
 
         if (programmingExerciseResetOptionsDTO.recreateBuildPlans()) {

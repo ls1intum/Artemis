@@ -137,7 +137,7 @@
                     <div assessmentWorkspaceCanvas class="example-submission-assessment-canvas">
                         <jhi-modeling-assessment
                             [umlModel]="umlModel()"
-                            [resultFeedbacks]="result()?.feedbacks || []"
+                            [resultFeedbacks]="referencedFeedback()"
                             [diagramType]="currentExercise.diagramType"
                             [readOnly]="readOnly()"
                             [explanation]="explanationText()"

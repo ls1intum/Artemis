@@ -802,6 +802,13 @@ public class UserTestService {
                 HttpStatus.OK);
         assertThat(newToken).isNotEqualTo(token);
 
+        // creating a second token for the same participation is rejected with a conflict, not an internal server error
+        request.put("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), null, HttpStatus.CONFLICT);
+
+        // the rejected request left the existing token untouched
+        var tokenAfterConflict = request.get("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.OK, String.class);
+        assertThat(tokenAfterConflict).isEqualTo(newToken);
+
         submissionRepository.delete(submission);
         participationVCSAccessTokenRepository.deleteAll();
         participationRepository.deleteById(submission.getParticipation().getId());

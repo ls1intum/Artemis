@@ -890,6 +890,25 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     List<StudentParticipation> findAllWithTeamStudentsByExerciseIdAndTeamStudentIdWithSubmissionsAndResults(@Param("exerciseId") long exerciseId,
             @Param("studentId") long studentId);
 
+    /**
+     * Loads the participations included in a team's assignment update, including the members, submissions and results.
+     *
+     * @param exerciseId the exercise being updated
+     * @param teamId     the team receiving the assignment
+     * @return the team's participations in the exercise
+     */
+    @Query("""
+            SELECT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
+                LEFT JOIN FETCH p.submissions sub
+                LEFT JOIN FETCH sub.results
+            WHERE p.exercise.id = :exerciseId
+                AND t.id = :teamId
+            """)
+    List<StudentParticipation> findWithTeamStudentsAndSubmissionsAndResultsByExerciseIdAndTeamId(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
+
     // NOTE: we should not fetch too elements here so we leave out feedback and test cases, otherwise the query will be very slow
     @Query("""
             SELECT DISTINCT p
@@ -1047,13 +1066,16 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Optional<StudentParticipation> findWithEagerSubmissionsResultsFeedbacksById(@Param("participationId") long participationId);
 
     @Query("""
-            SELECT DISTINCT p.id
+            SELECT p.id
             FROM StudentParticipation p
-                JOIN p.submissions s
-                JOIN s.results r
             WHERE p.exercise.id = :exerciseId
                 AND (p.student.firstName LIKE %:partialStudentName% OR p.student.lastName LIKE %:partialStudentName%)
-                AND r.completionDate IS NOT NULL
+                AND EXISTS (
+                    SELECT r.id
+                    FROM Result r
+                    WHERE r.submission.participation = p
+                        AND r.completionDate IS NOT NULL
+                )
             """)
     List<Long> findIdsByExerciseIdAndStudentName(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName, Pageable pageable);
 
@@ -1063,11 +1085,15 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     @Query("""
             SELECT COUNT(p)
             FROM StudentParticipation p
-                JOIN Result r ON r.submission.participation.id = p.id
             WHERE p.exercise.id = :exerciseId
                 AND (p.student.firstName LIKE %:partialStudentName%
                     OR p.student.lastName LIKE %:partialStudentName%)
-                AND r.completionDate IS NOT NULL
+                AND EXISTS (
+                    SELECT r.id
+                    FROM Result r
+                    WHERE r.submission.participation = p
+                        AND r.completionDate IS NOT NULL
+                )
             """)
     long countByExerciseIdAndStudentName(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName);
 
@@ -1087,7 +1113,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             return Page.empty(pageable);
         }
         List<StudentParticipation> result = findStudentParticipationWithSubmissionsAndResultsByIdIn(ids);
-        return new PageImpl<>(result, pageable, countByExerciseIdAndStudentName(exerciseId, partialStudentName));
+        Map<Long, StudentParticipation> resultById = result.stream().collect(toMap(StudentParticipation::getId, participation -> participation));
+        List<StudentParticipation> orderedResult = ids.stream().map(resultById::get).filter(Objects::nonNull).toList();
+        return new PageImpl<>(orderedResult, pageable, countByExerciseIdAndStudentName(exerciseId, partialStudentName));
     }
 
     @Query("""

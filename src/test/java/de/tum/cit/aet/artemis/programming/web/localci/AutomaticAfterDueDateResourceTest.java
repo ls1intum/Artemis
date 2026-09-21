@@ -214,11 +214,7 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
      */
     private void attachAfterDueDateBuildPhase(ProgrammingExercise exercise) throws JacksonException {
         var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, java.util.List.of("build/test-results/*.xml"));
-        ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
-        if (buildConfig == null) {
-            buildConfig = new ProgrammingExerciseBuildConfig();
-            buildConfig.setProgrammingExercise(exercise);
-        }
+        ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId());
         buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(java.util.List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
         programmingExerciseBuildConfigRepository.save(buildConfig);
     }

@@ -173,11 +173,6 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details", nullable = false)
     private boolean releaseTestsWithExampleSolution = false;
 
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(unique = true, name = "programming_exercise_build_config_id", table = "programming_exercise_details")
-    @JsonIgnoreProperties("programmingExercise")
-    private ProgrammingExerciseBuildConfig buildConfig;
-
     /**
      * Convenience getter. The actual URI is stored in the {@link TemplateProgrammingExerciseParticipation}
      *
@@ -451,14 +446,6 @@ public class ProgrammingExercise extends Exercise {
         this.submissionPolicy = submissionPolicy;
     }
 
-    public ProgrammingExerciseBuildConfig getBuildConfig() {
-        return buildConfig;
-    }
-
-    public void setBuildConfig(ProgrammingExerciseBuildConfig buildConfig) {
-        this.buildConfig = buildConfig;
-    }
-
     /**
      * Gets a URI of the templateRepositoryUri if there is one
      *
@@ -633,9 +620,6 @@ public class ProgrammingExercise extends Exercise {
         setTestRepositoryUri(null);
         setTemplateBuildPlanId(null);
         setSolutionBuildPlanId(null);
-        if (buildConfig != null && Hibernate.isInitialized(buildConfig)) {
-            buildConfig.filterSensitiveInformation();
-        }
         super.filterSensitiveInformation();
     }
 
@@ -709,8 +693,10 @@ public class ProgrammingExercise extends Exercise {
     /**
      * Validates general programming exercise settings
      * 1. Validates the programming language
+     *
+     * @param buildConfig the build configuration of this exercise, which is stored separately and read by the caller
      */
-    public void validateProgrammingSettings() {
+    public void validateProgrammingSettings(ProgrammingExerciseBuildConfig buildConfig) {
 
         // Check if a participation mode was selected
         if (!Boolean.TRUE.equals(isAllowOnlineEditor()) && !Boolean.TRUE.equals(isAllowOfflineIde()) && !isAllowOnlineIde()) {
@@ -743,15 +729,16 @@ public class ProgrammingExercise extends Exercise {
      * 5. Static code analysis max penalty must be positive
      *
      * @param programmingLanguageFeature describes the features available for the programming language of the programming exercise
+     * @param buildConfig                the build configuration of this exercise, which is stored separately and read by the caller
      */
-    public void validateStaticCodeAnalysisSettings(ProgrammingLanguageFeature programmingLanguageFeature) {
+    public void validateStaticCodeAnalysisSettings(ProgrammingLanguageFeature programmingLanguageFeature, ProgrammingExerciseBuildConfig buildConfig) {
         // Check if the static code analysis flag was set
         if (isStaticCodeAnalysisEnabled() == null) {
             throw new BadRequestAlertException("The static code analysis flag must be set to true or false", "Exercise", "staticCodeAnalysisFlagNotSet");
         }
 
         // Check that programming exercise doesn't have sequential test runs and static code analysis enabled
-        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && getBuildConfig().hasSequentialTestRuns()) {
+        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && buildConfig.hasSequentialTestRuns()) {
             throw new BadRequestAlertException("The static code analysis with sequential test runs is not supported at the moment", "Exercise", "staticCodeAnalysisAndSequential");
         }
 

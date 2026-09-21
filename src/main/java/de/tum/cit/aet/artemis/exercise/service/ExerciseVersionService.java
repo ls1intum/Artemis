@@ -43,7 +43,9 @@ import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewVersionChang
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadApi;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.modeling.api.ModelingRepositoryApi;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
@@ -94,6 +96,8 @@ public class ExerciseVersionService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     private final QuizExerciseRepository quizExerciseRepository;
 
     private final Optional<TextRepositoryApi> textRepositoryApi;
@@ -119,13 +123,15 @@ public class ExerciseVersionService {
     private final Executor exerciseVersionExecutor;
 
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
-            QuizExerciseRepository quizExerciseRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<ModelingRepositoryApi> modelingRepositoryApi,
-            Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ExerciseEditorSyncService exerciseEditorSyncService, ChannelRepository channelRepository,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, QuizExerciseRepository quizExerciseRepository,
+            Optional<TextRepositoryApi> textRepositoryApi, Optional<ModelingRepositoryApi> modelingRepositoryApi, Optional<FileUploadApi> fileUploadApi,
+            UserRepository userRepository, ExerciseEditorSyncService exerciseEditorSyncService, ChannelRepository channelRepository,
             ExerciseReviewVersionChangeService exerciseReviewVersionChangeService, ApplicationEventPublisher eventPublisher, JsonMapper objectMapper,
             @Qualifier("exerciseVersionTaskExecutor") Executor exerciseVersionExecutor) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.quizExerciseRepository = quizExerciseRepository;
         this.textRepositoryApi = textRepositoryApi;
         this.modelingRepositoryApi = modelingRepositoryApi;
@@ -253,7 +259,10 @@ public class ExerciseVersionService {
             exerciseVersion.setExerciseId(targetExercise.getId());
             exerciseVersion.setAuthorId(author.getId());
             var programmingCommitHashes = ExerciseVersionCommitHashResolver.resolveForExercise(exercise, gitService);
-            ExerciseSnapshotDTO rawSnapshot = ExerciseSnapshotDTO.of(exercise, programmingCommitHashes);
+            // The build configuration is a row of its own that names the exercise, so the snapshot reads it here.
+            var buildConfig = exercise instanceof ProgrammingExercise ? programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId())
+                    : null;
+            ExerciseSnapshotDTO rawSnapshot = ExerciseSnapshotDTO.of(exercise, buildConfig, programmingCommitHashes);
             // Normalize through JSON round-trip to ensure consistent null/empty list handling
             // (@JsonInclude(NON_EMPTY) causes empty lists to become null after deserialization)
             ExerciseSnapshotDTO exerciseSnapshot = objectMapper.readValue(objectMapper.writeValueAsString(rawSnapshot), ExerciseSnapshotDTO.class);

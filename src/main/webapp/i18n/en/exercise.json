@@ -201,6 +201,7 @@
             "participations": "Participations",
             "submissions": "Submissions",
             "teams": "Teams",
+            "complaints": "Complaints",
             "export": {
                 "options": "Export Options:",
                 "names": "Export Names",
