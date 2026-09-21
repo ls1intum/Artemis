@@ -320,7 +320,14 @@ export class GlobalSearchIrisAnswerComponent {
      * at tildes at all.
      */
     private isInsideOpenFence(text: string, start: number): boolean {
-        const fenceLineRe = /^ {0,3}(`{3,}|~{3,})/;
+        // An opener may carry a trailing info string ("```js"); a closer may not — CommonMark requires
+        // a closing fence line to contain nothing but the delimiter run and optional trailing spaces or
+        // tabs. Reusing the looser opener pattern for closers too would let an ordinary content line
+        // that merely STARTS with a same-length run (e.g. an example fence written inside the block,
+        // "```not-a-closer") prematurely "close" this scanner's state while CommonMark still treats
+        // everything after it as fenced content.
+        const openerLineRe = /^ {0,3}(`{3,}|~{3,})/;
+        const closerLineRe = /^ {0,3}(`{3,}|~{3,})[ \t]*$/;
         let openChar: string | undefined;
         let openLength = 0;
         let contentStart = -1;
@@ -330,20 +337,23 @@ export class GlobalSearchIrisAnswerComponent {
             const line = lines[li];
             const lineStart = pos;
             const nextPos = lineStart + line.length + (li < lines.length - 1 ? 1 : 0);
-            const match = fenceLineRe.exec(line);
             if (openChar === undefined) {
+                const match = openerLineRe.exec(line);
                 if (match) {
                     openChar = match[1][0];
                     openLength = match[1].length;
                     contentStart = nextPos;
                 }
-            } else if (match && match[1][0] === openChar && match[1].length >= openLength) {
-                if (contentStart <= start && start <= lineStart) {
-                    return true;
+            } else {
+                const match = closerLineRe.exec(line);
+                if (match && match[1][0] === openChar && match[1].length >= openLength) {
+                    if (contentStart <= start && start <= lineStart) {
+                        return true;
+                    }
+                    openChar = undefined;
+                    openLength = 0;
+                    contentStart = -1;
                 }
-                openChar = undefined;
-                openLength = 0;
-                contentStart = -1;
             }
             pos = nextPos;
         }

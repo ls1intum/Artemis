@@ -1239,6 +1239,29 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             expect(html).not.toContain('iris-answer-tail');
         });
 
+        it('does not treat a fence-like content line inside the block as its closer', () => {
+            // "```not-a-closer" starts with a same-length run but has non-whitespace after it, so
+            // CommonMark does NOT treat it as the closing fence — everything after it, up to the
+            // REAL closer on its own line, is still fenced content.
+            startQuery();
+            // @ts-expect-error — accessing protected signal for testing
+            component.phase.set('answering');
+            // @ts-expect-error — accessing private signal for testing
+            component.progressiveReveal.set(true);
+            const answer = '```js\nfoo\n```not-a-closer\nbar\n```';
+            // @ts-expect-error — accessing protected signal for testing
+            component.irisResult.set({ answer, sources: [] });
+            // @ts-expect-error — accessing private signal for testing
+            component.revealStart.set(answer.indexOf('bar'));
+            // @ts-expect-error — accessing private signal for testing
+            component.revealedLength.set(answer.length);
+            fixture.detectChanges();
+
+            // @ts-expect-error — accessing protected computed for testing
+            const html = component.citationView().html;
+            expect(html).not.toContain('iris-answer-tail');
+        });
+
         it('shows an answer delivered in one piece immediately', () => {
             startQuery();
             askSubject.next({ runId: 'run-1', isThinking: false, answer: 'Signals are reactive.', sources: [] });
