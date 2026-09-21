@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.domain.competency.ContentChangeAccumulator;
 import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
@@ -40,7 +40,7 @@ import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
  * which the core/scheduling nodes Atlas runs on always activate. {@link #resolveMap()} fails fast when
  * none is present rather than silently degrading to node-local state.
  */
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 @Lazy
 @Service
 public class ContentChangeAccumulatorService {

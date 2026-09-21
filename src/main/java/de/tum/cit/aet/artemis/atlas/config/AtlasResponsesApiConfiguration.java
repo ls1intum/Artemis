@@ -32,8 +32,16 @@ import io.micrometer.observation.ObservationRegistry;
  */
 @Lazy
 @Configuration(proxyBeanMethods = false)
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 @ConditionalOnProperty(prefix = "artemis.atlas.orchestrator", name = "responses-api-enabled", havingValue = "true", matchIfMissing = true)
+// The beans below are the only ones in Atlas that cannot be built without Spring AI: they need OpenAiCommonProperties,
+// which only OpenAiChatAutoConfiguration contributes, and that autoconfiguration keys on exactly this property. Without
+// the condition, enabling AtlasLLM on an installation that has no chat model configured fails the whole context instead
+// of leaving the adapter out, because a bean definition that cannot be created is fatal where an absent one is not.
+// matchIfMissing mirrors OpenAiChatAutoConfiguration exactly, so this is true precisely when that autoconfiguration
+// contributed the properties. Artemis sets the property to "none" in application.yml, so "missing" only occurs where
+// the defaults are not on the classpath at all.
+@ConditionalOnProperty(name = "spring.ai.model.chat", havingValue = "openai", matchIfMissing = true)
 public class AtlasResponsesApiConfiguration {
 
     /** Name of the provider-aware raw client bean used by the Atlas adapter. */

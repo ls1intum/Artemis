@@ -132,6 +132,12 @@ artemis:
     #     input-cost-per-million-eur: 2.30
     #     output-cost-per-million-eur: 13.80
   atlas:
+    atlasllm:
+      # The LLM-backed part of Atlas: the chat agent, the autonomous competency orchestrator, and the tool surfaces
+      # they call. Disabled by default. None of it works without spring.ai.model.chat and spring.ai.openai below, and
+      # leaving it off keeps roughly thirty beans, a scheduler and an event listener out of the context entirely.
+      # Competencies, learning paths and learner profiles are the Atlas module itself and stay available either way.
+      enabled: false
     # *-model values are Azure deployment aliases — replace with your own deployment names.
     chat-model: gpt-5.4-mini
     temperature: 0.8

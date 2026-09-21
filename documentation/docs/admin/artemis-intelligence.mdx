@@ -39,11 +39,15 @@ Conversely, source-level implementation choices such as Artemis Global Search sc
 
 ## Atlas model configuration
 
+The LLM-backed part of Atlas is off by default and is turned on with `artemis.atlas.atlasllm.enabled`. It covers the course chat agent, autonomous competency orchestration, the tool surfaces they call, and the Responses adapter, and it needs a chat model configured under `spring.ai`. Leaving it off keeps competencies, learning paths, and learner profiles available and loads none of those beans, so an installation without an LLM starts faster and runs neither the content-change scheduler nor the autonomous exercise event listener. It is separate from `artemis.atlas.atlasml.enabled`, which gates the external AtlasML service; either can be enabled without the other.
+
 Autonomous competency orchestration uses `gpt-5.6-luna` with `xhigh` reasoning. Narrative flavor stripping uses the same model with `high` reasoning. Interactive Atlas chat has its own `artemis.atlas.chat-model` setting.
 
 ```yaml
 artemis:
     atlas:
+        atlasllm:
+            enabled: true
         flavor-strip-model: gpt-5.6-luna
         flavor-strip-reasoning-effort: high
         orchestrator:
