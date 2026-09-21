@@ -1130,6 +1130,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.setPackageNamePattern(language);
         this.selectedProgrammingLanguage = language;
         this.programmingExerciseLanguageForAi.set(language);
+        // The Security Framework only supports Java, so discard any staged activation when switching to another
+        // language. Otherwise the staged signal would survive the (hidden) security card and trigger a doomed
+        // activation request on save, which the server now also rejects.
+        if (language !== ProgrammingLanguage.JAVA) {
+            this.stagedSecurityActivation.set(undefined);
+        }
         return language;
     }
 

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.security.SecurityActivationStatus;
 import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkConfigDTO;
 
@@ -74,6 +75,7 @@ public class SecurityFrameworkService {
      * @return the resulting ACTIVE config
      */
     public SecurityFrameworkConfigDTO activate(ProgrammingExercise exercise, String frameworkVersion) {
+        validateJavaExercise(exercise);
         validateFrameworkVersion(frameworkVersion);
         String commitHash = ares2SecurityPolicyService.createAndCommitPolicy(exercise, frameworkVersion);
         SecurityFrameworkConfigDTO config = new SecurityFrameworkConfigDTO(SecurityActivationStatus.ACTIVE.name(), frameworkVersion, commitHash, Instant.now().toString());
@@ -105,6 +107,7 @@ public class SecurityFrameworkService {
      * @return the resulting ACTIVE config on the new version
      */
     public SecurityFrameworkConfigDTO updateFrameworkVersion(ProgrammingExercise exercise, String frameworkVersion) {
+        validateJavaExercise(exercise);
         validateFrameworkVersion(frameworkVersion);
         SecurityFrameworkConfigDTO current = configByExerciseId.get(exercise.getId());
         if (current == null || !SecurityActivationStatus.ACTIVE.name().equals(current.status())) {
@@ -116,6 +119,20 @@ public class SecurityFrameworkService {
         configByExerciseId.put(exercise.getId(), config);
         log.debug("Re-synced the Security Framework of exercise {} to framework {} (commit {})", exercise.getId(), frameworkVersion, commitHash);
         return config;
+    }
+
+    /**
+     * The Security Framework only targets Java exercises (the sole language the sandbox and its policy generation
+     * support), which the client already gates on. Enforce the same on the server so no other language can be driven
+     * into an ACTIVE state - for example by staging activation while the exercise is Java and then switching its
+     * language before saving, which leaves the staged signal intact.
+     *
+     * @param exercise the programming exercise to check
+     */
+    private void validateJavaExercise(ProgrammingExercise exercise) {
+        if (exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
+            throw new BadRequestAlertException("The Security Framework is only supported for Java programming exercises.", ENTITY_NAME, "onlyJavaSupported");
+        }
     }
 
     private void validateFrameworkVersion(String frameworkVersion) {
