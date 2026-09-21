@@ -51,6 +51,17 @@ const SINGLE_MARKER_REGEX = /\[(\d+)\]/g;
  * another backtick, so only a run's true first (and, symmetrically, true last) character can start or end
  * a match.
  *
+ * The opener's run length is captured ATOMICALLY — via a lookahead (`(?=(`+))` followed by a
+ * backreference to consume it) rather than a plain `(`+)` — so a run that fails to find a matching-length
+ * closer can never backtrack into trying a SHORTER prefix of that same run as a fresh opener. Without
+ * this, e.g. `` Use ``Claim.[1]` after `` (a 2-backtick run with no later 2-backtick closer, followed by
+ * an unrelated stray 1-backtick) would have a plain greedy `(`+)` fail to close as a 2-backtick span, then
+ * backtrack to re-try the SAME position as a 1-backtick opener — which DOES find that later stray
+ * backtick as a spurious closer, hiding `Claim.[1]` as "code" it was never meant to be. CommonMark itself
+ * has no such retry: an opening run with no matching-length closer anywhere later is literal text, full
+ * stop, and the parser resumes looking for a NEW, independent opener strictly after it — never by
+ * re-reading part of the same run.
+ *
  * A fence's closing delimiter must be a LEGAL closing-fence line: a run of the fence character AT LEAST
  * as long as the opening run (CommonMark permits a longer closer, e.g. a ~~~ fence closed by ~~~~),
  * alone on its line (only leading indentation and trailing whitespace allowed) — not merely the same
@@ -98,7 +109,7 @@ const SINGLE_MARKER_REGEX = /\[(\d+)\]/g;
  * trailing whitespace — still blank, so it must not be required to be a bare `\n\n`.
  */
 const CODE_SEGMENT_REGEX =
-    /(?<=^|\n)[ ]{0,3}(`{3,})(?=[^`\n]*(?:\n|$))[\s\S]*?(?:\n[ ]{0,3}\1`*[ \t]*(?=\n|$)|$)|(?<=^|\n)[ ]{0,3}(~~~+)[\s\S]*?(?:\n[ ]{0,3}\2~*[ \t]*(?=\n|$)|$)|(?<!`)(`+)(?:(?!\n[ \t]*\n)[\s\S])*?(?<!`)\3(?!`)|(?:^|\n[ \t]*\n)(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*(?:\n(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*)*/g;
+    /(?<=^|\n)[ ]{0,3}(`{3,})(?=[^`\n]*(?:\n|$))[\s\S]*?(?:\n[ ]{0,3}\1`*[ \t]*(?=\n|$)|$)|(?<=^|\n)[ ]{0,3}(~~~+)[\s\S]*?(?:\n[ ]{0,3}\2~*[ \t]*(?=\n|$)|$)|(?<!`)(?=(`+))\3(?:(?!\n[ \t]*\n)[\s\S])*?(?<!`)\3(?!`)|(?:^|\n[ \t]*\n)(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*(?:\n(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*)*/g;
 
 export interface CitationRenderResult {
     /** The answer markdown with marker runs replaced by `<sup>` chip elements. */

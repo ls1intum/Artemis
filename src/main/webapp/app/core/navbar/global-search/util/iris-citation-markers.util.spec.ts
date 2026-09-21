@@ -84,6 +84,19 @@ describe('renderCitationMarkers', () => {
         expect([...result.citedNumbers]).toEqual([2]);
     });
 
+    it('does not retry an unmatched multi-backtick opener as a shorter one', () => {
+        // CommonMark: an opening backtick run with no LATER run of the exact same length anywhere is
+        // literal text, full stop — the parser never re-reads part of that same failed run as a fresh,
+        // shorter opener. A greedy `(`+)` capture that backtracks to a shorter prefix once the full-length
+        // closer is never found would wrongly treat the tail of this failed 2-backtick run plus a later,
+        // unrelated stray backtick as a matching 1-backtick span, hiding the real citation as "code".
+        const result = renderCitationMarkers('Use ``Claim.[1]` after.[2]', 2);
+        expect(result.html).toBe(
+            'Use ``Claim.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>` after.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>',
+        );
+        expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
+
     it('leaves a bracketed index inside a code span that wraps onto the next line untouched', () => {
         // CommonMark folds a line break inside a code span to a space at render time, so a span can
         // legitimately cross one newline within the same paragraph; excluding newlines entirely would
