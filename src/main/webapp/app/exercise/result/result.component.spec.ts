@@ -362,7 +362,7 @@ describe('ResultComponent', () => {
         ]);
     });
 
-    describe("a result on someone else's participation", () => {
+    describe('a result the viewer does not own', () => {
         // #13921: the tutor and instructor pages render the badge for a participation that is not the viewer's. The
         // text/modeling deep link is the student exercise page, which 403s for an exam exercise and swaps in the
         // viewer's own participation in a course, so the badge must not offer it there.
