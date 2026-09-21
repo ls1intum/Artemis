@@ -347,7 +347,7 @@ public class LectureContentProcessingScheduler {
             log.info("Found {} stuck processing states in phase {} older than {} minutes", stuckStates.size(), phase, timeoutMinutes);
 
             for (LectureUnitProcessingState state : stuckStates) {
-                recoverStuckState(state, phase);
+                recoverStuckState(state, phase, cutoff, absoluteCutoff);
             }
         }
     }
@@ -356,10 +356,12 @@ public class LectureContentProcessingScheduler {
      * Recover a single stuck processing state by resetting to IDLE for re-dispatch.
      * Re-fetches state from DB to avoid overwriting concurrent user changes.
      *
-     * @param state the stuck processing state to recover (used only for ID lookup)
-     * @param phase the expected processing phase
+     * @param state          the stuck processing state to recover (used only for ID lookup)
+     * @param phase          the expected processing phase
+     * @param cutoff         the no-callback cutoff the batch read used to find this candidate
+     * @param absoluteCutoff the absolute-timeout cutoff the batch read used to find this candidate
      */
-    private void recoverStuckState(LectureUnitProcessingState state, ProcessingPhase phase) {
+    private void recoverStuckState(LectureUnitProcessingState state, ProcessingPhase phase, ZonedDateTime cutoff, ZonedDateTime absoluteCutoff) {
         LectureUnitProcessingState freshState = processingStateRepository.findById(state.getId()).orElse(null);
         if (freshState == null) {
             log.debug("State {} no longer exists, skipping recovery", state.getId());
@@ -387,7 +389,7 @@ public class LectureContentProcessingScheduler {
         // A stuck INGESTING run may have completed with only its terminal callback lost. In that case
         // the census evidence lets us requeue without charging the retry budget, so a series of lost
         // callbacks can never mark a fully ingested unit as permanently failed.
-        if (phase == ProcessingPhase.INGESTING && reconcileService.resolveStuckIngestionWithoutRetryPenalty(freshState)) {
+        if (phase == ProcessingPhase.INGESTING && reconcileService.resolveStuckIngestionWithoutRetryPenalty(freshState, cutoff, absoluteCutoff)) {
             return;
         }
 

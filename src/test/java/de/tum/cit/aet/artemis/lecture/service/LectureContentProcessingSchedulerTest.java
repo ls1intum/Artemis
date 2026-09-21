@@ -264,7 +264,7 @@ class LectureContentProcessingSchedulerTest {
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.INGESTING)), any(ZonedDateTime.class), any(ZonedDateTime.class)))
                     .thenReturn(List.of(testState));
             when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
-            when(reconcileService.resolveStuckIngestionWithoutRetryPenalty(testState)).thenReturn(true);
+            when(reconcileService.resolveStuckIngestionWithoutRetryPenalty(eq(testState), any(), any())).thenReturn(true);
 
             // When
             scheduler.processScheduledRetries();
@@ -284,7 +284,7 @@ class LectureContentProcessingSchedulerTest {
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.INGESTING)), any(ZonedDateTime.class), any(ZonedDateTime.class)))
                     .thenReturn(List.of(testState));
             when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
-            when(reconcileService.resolveStuckIngestionWithoutRetryPenalty(testState)).thenReturn(false);
+            when(reconcileService.resolveStuckIngestionWithoutRetryPenalty(eq(testState), any(), any())).thenReturn(false);
 
             scheduler.processScheduledRetries();
 
@@ -305,7 +305,7 @@ class LectureContentProcessingSchedulerTest {
 
             scheduler.processScheduledRetries();
 
-            verify(reconcileService, never()).resolveStuckIngestionWithoutRetryPenalty(any());
+            verify(reconcileService, never()).resolveStuckIngestionWithoutRetryPenalty(any(), any(), any());
             verify(callbackService).handleProcessingFailureIfStillLive(testState, null, null, testState.getLastUpdated());
         }
 

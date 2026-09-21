@@ -512,17 +512,21 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
 
     /**
      * Requeue a stuck INGESTING run without charging its retry budget, atomically: only while it is still
-     * exactly the run whose census evidence justified skipping the failure penalty. The census lookup that
-     * precedes this call is a slow external round-trip; a terminal callback finishing (or otherwise
-     * changing) this run in that window clears its token first, so this predicate then matches no row and
-     * the stuck-recovery requeue is silently dropped instead of overwriting whatever the terminal callback
-     * wrote. Same field set as {@link #reclaimLapsedLease}, since both put the run back to a fresh IDLE
-     * state.
+     * exactly the run whose census evidence justified skipping the failure penalty, AND it still matches the
+     * same no-callback-or-absolute-timeout predicate {@link #findStuckStates} used to find it. The census
+     * lookup that precedes this call is a slow external round-trip; a terminal callback finishing (or
+     * otherwise changing) this run in that window clears its token first, so the id/token guard alone already
+     * catches that. But a heartbeat or status callback can also land in that window without touching phase or
+     * token -- proving the run is not actually stuck -- and without re-checking the stuck predicate this write
+     * would still wipe that live run back to IDLE and schedule a duplicate dispatch. Same field set as
+     * {@link #reclaimLapsedLease}, since both put the run back to a fresh IDLE state.
      *
-     * @param id    the processing state to requeue
-     * @param token the job token observed when the census evidence was decided
-     * @param now   recorded as the new {@code lastUpdated}
-     * @return 1 when requeued, 0 when the run is no longer in flight under this token
+     * @param id                 the processing state to requeue
+     * @param token              the job token observed when the census evidence was decided
+     * @param cutoffTime         the same no-callback cutoff {@link #findStuckStates} used to find this candidate
+     * @param absoluteCutoffTime the same absolute-timeout cutoff {@link #findStuckStates} used to find this candidate
+     * @param now                recorded as the new {@code lastUpdated}
+     * @return 1 when requeued, 0 when the run is no longer in flight under this token or is no longer stuck
      */
     @Modifying
     @Transactional // ok because of modifying query
@@ -535,8 +539,11 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             WHERE ps.id = :id
             AND ps.ingestionJobToken = :token
             AND ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING
+            AND (((ps.lastHeartbeatAt IS NULL OR ps.lastProgressAt IS NULL) AND ps.lastUpdated < :cutoffTime) OR ps.startedAt < :absoluteCutoffTime)
+            AND ps.retryEligibleAt IS NULL
             """)
-    int requeueStuckIngestionWithoutPenalty(@Param("id") long id, @Param("token") String token, @Param("now") ZonedDateTime now);
+    int requeueStuckIngestionWithoutPenalty(@Param("id") long id, @Param("token") String token, @Param("cutoffTime") ZonedDateTime cutoffTime,
+            @Param("absoluteCutoffTime") ZonedDateTime absoluteCutoffTime, @Param("now") ZonedDateTime now);
 
     /**
      * Fail a stalled or stuck run atomically, but only while it is still exactly the run that was judged

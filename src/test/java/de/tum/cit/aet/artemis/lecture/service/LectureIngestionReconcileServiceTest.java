@@ -45,6 +45,10 @@ class LectureIngestionReconcileServiceTest {
 
     private static final String FINGERPRINT = "v1:current-fingerprint";
 
+    private static final ZonedDateTime CUTOFF = ZonedDateTime.now().minusMinutes(10);
+
+    private static final ZonedDateTime ABSOLUTE_CUTOFF = ZonedDateTime.now().minusHours(1);
+
     private LectureIngestionReconcileService reconcileService;
 
     private LectureUnitProcessingStateRepository processingStateRepository;
@@ -718,13 +722,35 @@ class LectureIngestionReconcileServiceTest {
         @Test
         void shouldRequeueWithoutRetryPenaltyWhenStampMatches() {
             givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
-            when(processingStateRepository.requeueStuckIngestionWithoutPenalty(eq(state.getId()), eq("token-123"), any())).thenReturn(1);
+            when(processingStateRepository.requeueStuckIngestionWithoutPenalty(eq(state.getId()), eq("token-123"), eq(CUTOFF), eq(ABSOLUTE_CUTOFF), any())).thenReturn(1);
 
-            boolean resolved = reconcileService.resolveStuckIngestionWithoutRetryPenalty(state);
+            boolean resolved = reconcileService.resolveStuckIngestionWithoutRetryPenalty(state, CUTOFF, ABSOLUTE_CUTOFF);
 
             assertThat(resolved).isTrue();
-            verify(processingStateRepository).requeueStuckIngestionWithoutPenalty(eq(state.getId()), eq("token-123"), any());
+            verify(processingStateRepository).requeueStuckIngestionWithoutPenalty(eq(state.getId()), eq("token-123"), eq(CUTOFF), eq(ABSOLUTE_CUTOFF), any());
             verify(processingStateRepository, never()).save(state);
+        }
+
+        @Test
+        void shouldNotRequeueWhenAHeartbeatLandsDuringTheCensusCall() {
+            // The census lookup is a slow external round-trip; a heartbeat can land while it is in
+            // flight and prove the run was never actually stuck. The atomic requeue re-checks the same
+            // stuck predicate findStuckStates used to find this candidate, so it must not fire here --
+            // simulated directly on the mocked repository, since the real predicate lives in the query.
+            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
+            when(processingStateRepository.requeueStuckIngestionWithoutPenalty(eq(state.getId()), eq("token-123"), eq(CUTOFF), eq(ABSOLUTE_CUTOFF), any())).thenReturn(0);
+            LectureUnitProcessingState reloaded = new LectureUnitProcessingState(unit);
+            reloaded.setId(state.getId());
+            reloaded.setPhase(ProcessingPhase.INGESTING);
+            reloaded.setIngestionJobToken("token-123");
+            when(processingStateRepository.findById(state.getId())).thenReturn(Optional.of(reloaded));
+
+            boolean resolved = reconcileService.resolveStuckIngestionWithoutRetryPenalty(state, CUTOFF, ABSOLUTE_CUTOFF);
+
+            // 0 rows with the token still intact means the run proved liveness, not that it moved on
+            // to a terminal state elsewhere; nothing here should be treated as a fallback failure.
+            assertThat(resolved).isTrue();
+            verify(processingStateRepository, never()).save(any());
         }
 
         @Test
@@ -735,9 +761,9 @@ class LectureIngestionReconcileServiceTest {
             // this now-stale snapshot either, since whatever happened to the run is already correctly
             // reflected in the database.
             givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
-            when(processingStateRepository.requeueStuckIngestionWithoutPenalty(eq(state.getId()), eq("token-123"), any())).thenReturn(0);
+            when(processingStateRepository.requeueStuckIngestionWithoutPenalty(eq(state.getId()), eq("token-123"), eq(CUTOFF), eq(ABSOLUTE_CUTOFF), any())).thenReturn(0);
 
-            boolean resolved = reconcileService.resolveStuckIngestionWithoutRetryPenalty(state);
+            boolean resolved = reconcileService.resolveStuckIngestionWithoutRetryPenalty(state, CUTOFF, ABSOLUTE_CUTOFF);
 
             assertThat(resolved).isTrue();
             assertThat(state.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
@@ -759,9 +785,9 @@ class LectureIngestionReconcileServiceTest {
             reloaded.setIngestionJobToken(null);
             when(processingStateRepository.findById(state.getId())).thenReturn(Optional.of(reloaded));
             givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
-            when(processingStateRepository.requeueStuckIngestionWithoutPenalty(eq(state.getId()), eq("token-123"), any())).thenReturn(0);
+            when(processingStateRepository.requeueStuckIngestionWithoutPenalty(eq(state.getId()), eq("token-123"), eq(CUTOFF), eq(ABSOLUTE_CUTOFF), any())).thenReturn(0);
 
-            boolean resolved = reconcileService.resolveStuckIngestionWithoutRetryPenalty(state);
+            boolean resolved = reconcileService.resolveStuckIngestionWithoutRetryPenalty(state, CUTOFF, ABSOLUTE_CUTOFF);
 
             assertThat(resolved).isFalse();
             verify(processingStateRepository, never()).save(any());
@@ -771,7 +797,7 @@ class LectureIngestionReconcileServiceTest {
         void shouldNotResolveWhenStampDiffers() {
             givenCensus(censusEntry(unit.getId(), "v1:previous-run", 1));
 
-            assertThat(reconcileService.resolveStuckIngestionWithoutRetryPenalty(state)).isFalse();
+            assertThat(reconcileService.resolveStuckIngestionWithoutRetryPenalty(state, CUTOFF, ABSOLUTE_CUTOFF)).isFalse();
             assertThat(state.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
         }
 
@@ -779,21 +805,21 @@ class LectureIngestionReconcileServiceTest {
         void shouldNotResolveWhenUnitAbsentFromCensus() {
             givenCensus();
 
-            assertThat(reconcileService.resolveStuckIngestionWithoutRetryPenalty(state)).isFalse();
+            assertThat(reconcileService.resolveStuckIngestionWithoutRetryPenalty(state, CUTOFF, ABSOLUTE_CUTOFF)).isFalse();
         }
 
         @Test
         void shouldNotResolveWithoutCensus() {
             when(irisLectureApi.getIngestionCensus(COURSE_ID)).thenReturn(null);
 
-            assertThat(reconcileService.resolveStuckIngestionWithoutRetryPenalty(state)).isFalse();
+            assertThat(reconcileService.resolveStuckIngestionWithoutRetryPenalty(state, CUTOFF, ABSOLUTE_CUTOFF)).isFalse();
         }
 
         @Test
         void shouldNotResolveWithoutDispatchedFingerprint() {
             state.setContentFingerprint(null);
 
-            assertThat(reconcileService.resolveStuckIngestionWithoutRetryPenalty(state)).isFalse();
+            assertThat(reconcileService.resolveStuckIngestionWithoutRetryPenalty(state, CUTOFF, ABSOLUTE_CUTOFF)).isFalse();
             verify(irisLectureApi, never()).getIngestionCensus(anyLong());
         }
 
@@ -801,7 +827,7 @@ class LectureIngestionReconcileServiceTest {
         void shouldNotResolveTranscribingStates() {
             state.setPhase(ProcessingPhase.TRANSCRIBING);
 
-            assertThat(reconcileService.resolveStuckIngestionWithoutRetryPenalty(state)).isFalse();
+            assertThat(reconcileService.resolveStuckIngestionWithoutRetryPenalty(state, CUTOFF, ABSOLUTE_CUTOFF)).isFalse();
             verify(irisLectureApi, never()).getIngestionCensus(anyLong());
         }
     }
@@ -812,7 +838,7 @@ class LectureIngestionReconcileServiceTest {
                 contentFingerprintService, processingService, 5, 10, 0.8, Duration.ofHours(1), 10);
 
         assertThat(withoutIris.walkNextCourses()).isZero();
-        assertThat(withoutIris.resolveStuckIngestionWithoutRetryPenalty(state)).isFalse();
+        assertThat(withoutIris.resolveStuckIngestionWithoutRetryPenalty(state, CUTOFF, ABSOLUTE_CUTOFF)).isFalse();
     }
 
     /**

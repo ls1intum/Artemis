@@ -506,10 +506,12 @@ public class LectureIngestionReconcileService {
      * callback costs a retry, and enough lost callbacks in a row mark a perfectly ingested unit as
      * permanently FAILED.
      *
-     * @param state the stuck processing state, in phase INGESTING
+     * @param state              the stuck processing state, in phase INGESTING
+     * @param cutoffTime         the no-callback cutoff the caller's stuck-state batch read used
+     * @param absoluteCutoffTime the absolute-timeout cutoff the caller's stuck-state batch read used
      * @return true if the state was requeued without retry penalty; false if the normal failure handling should proceed
      */
-    public boolean resolveStuckIngestionWithoutRetryPenalty(LectureUnitProcessingState state) {
+    public boolean resolveStuckIngestionWithoutRetryPenalty(LectureUnitProcessingState state, ZonedDateTime cutoffTime, ZonedDateTime absoluteCutoffTime) {
         if (irisLectureApi.isEmpty() || state.getPhase() != ProcessingPhase.INGESTING || state.getContentFingerprint() == null) {
             return false;
         }
@@ -525,11 +527,14 @@ public class LectureIngestionReconcileService {
         }
         // The census lookup above is a slow external round-trip; a terminal callback can finish this run
         // (or it can otherwise move on) while it is in flight. Requeue atomically, guarded on the same
-        // token this decision was made against: 0 rows affected means the run already moved on in that
-        // window. What "moved on" means still needs one more check below -- it is usually a completed
-        // callback (already correctly reflected in the database, nothing to do), but it can also be a
-        // callback that only half-finished, which this guard's null-bound "= :token" can never match.
-        int updated = processingStateRepository.requeueStuckIngestionWithoutPenalty(state.getId(), state.getIngestionJobToken(), ZonedDateTime.now());
+        // token this decision was made against and on still matching the same stuck predicate that found
+        // this candidate: 0 rows affected means either the run already moved on in that window, or a
+        // heartbeat/callback proved it was never actually stuck to begin with. What "moved on" means still
+        // needs one more check below -- it is usually a completed callback (already correctly reflected in
+        // the database, nothing to do), but it can also be a callback that only half-finished, which this
+        // guard's null-bound "= :token" can never match.
+        int updated = processingStateRepository.requeueStuckIngestionWithoutPenalty(state.getId(), state.getIngestionJobToken(), cutoffTime, absoluteCutoffTime,
+                ZonedDateTime.now());
         if (updated == 0) {
             // 0 rows can mean the run already moved on to a state written elsewhere (nothing more to
             // do here) -- but it can also mean handleIngestionComplete's own token-clear-then-save
