@@ -38,9 +38,10 @@ import io.micrometer.observation.ObservationRegistry;
 // which only OpenAiChatAutoConfiguration contributes, and that autoconfiguration keys on exactly this property. Without
 // the condition, enabling AtlasLLM on an installation that has no chat model configured fails the whole context instead
 // of leaving the adapter out, because a bean definition that cannot be created is fatal where an absent one is not.
-// matchIfMissing mirrors OpenAiChatAutoConfiguration exactly, so this is true precisely when that autoconfiguration
-// contributed the properties. Artemis sets the property to "none" in application.yml, so "missing" only occurs where
-// the defaults are not on the classpath at all.
+// matchIfMissing mirrors OpenAiChatAutoConfiguration, so this is true only when that autoconfiguration contributed the
+// properties. Deliberately not the other way round: six OpenAI autoconfigurations contribute OpenAiCommonProperties,
+// one per model kind, so an embedding-only installation has the bean while this adapter still has no chat deployment to
+// talk to. Artemis sets the property to "none" in application.yml, so "missing" only occurs off that classpath.
 @ConditionalOnProperty(name = "spring.ai.model.chat", havingValue = "openai", matchIfMissing = true)
 public class AtlasResponsesApiConfiguration {
 
