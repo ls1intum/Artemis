@@ -104,6 +104,53 @@ describe('GlobalSearchIrisAnswerComponent', () => {
         expect(card).toBeTruthy();
     });
 
+    it('should pulse the card itself, not just the logo, while thinking', () => {
+        // @ts-expect-error
+        component.phase.set('thinking');
+        fixture.detectChanges();
+
+        const card = fixture.nativeElement.querySelector('.iris-inline-answer');
+        expect(card.classList).toContain('is-working');
+    });
+
+    it('should stop pulsing the card the moment answering starts, even mid-stream', () => {
+        // The arriving text is itself the progress signal once streaming starts; a card still pulsing
+        // on top of it would compete with that instead of reinforcing it.
+        // @ts-expect-error
+        component.phase.set('answering');
+        // @ts-expect-error — accessing protected signal for testing
+        component.irisResult.set({ answer: 'Signals are reactive primi', sources: [] });
+        // @ts-expect-error
+        component.progressiveReveal.set(true);
+        // @ts-expect-error
+        component.streamComplete.set(false);
+        fixture.detectChanges();
+
+        expect(component['isStreaming']()).toBe(true); // sanity: genuinely still streaming, not settled
+        const card = fixture.nativeElement.querySelector('.iris-inline-answer');
+        expect(card.classList).not.toContain('is-working');
+    });
+
+    it('should stop pulsing the card once the answer has settled', () => {
+        // @ts-expect-error
+        component.phase.set('answering');
+        // @ts-expect-error — accessing protected signal for testing
+        component.irisResult.set({ answer: 'Signals are reactive primitives.', sources: [] });
+        fixture.detectChanges();
+
+        const card = fixture.nativeElement.querySelector('.iris-inline-answer');
+        expect(card.classList).not.toContain('is-working');
+    });
+
+    it('should not pulse the card for a quiet ending', () => {
+        // @ts-expect-error
+        component.phase.set('noAnswer');
+        fixture.detectChanges();
+
+        const card = fixture.nativeElement.querySelector('.iris-inline-answer');
+        expect(card.classList).not.toContain('is-working');
+    });
+
     it('should render the strip status while thinking', () => {
         // @ts-expect-error
         component.phase.set('thinking');

@@ -4,10 +4,19 @@
     border-radius: 0.75rem;
     border: 1px solid color-mix(in srgb, var(--bs-primary) 18%, transparent);
     background: color-mix(in srgb, var(--bs-primary) 4.5%, transparent);
+    /* border-color/background stay undelayed — they only ever animate for is-quiet, a separate, earlier
+       moment (the note settling in) unrelated to dismissing it. border-width/margin are the outer half
+       of the dismiss motion: synced to the SAME duration, with NO delay, as the header and body height
+       collapses below, so every shape-changing property reaches zero together in one motion. Deliberately
+       no opacity fade here: once height and border/margin all hit zero at once there is nothing left to
+       render regardless of opacity, so fading it too only added a second, competing "also going
+       transparent" effect on top of the shrink — reading as two things happening, not the shrink alone
+       that would mirror the pure height-driven grow on open. */
     transition:
         border-color 0.3s ease,
         background 0.3s ease,
-        opacity 0.3s ease;
+        border-width 0.34s cubic-bezier(0.4, 0, 0.2, 1),
+        margin 0.34s cubic-bezier(0.4, 0, 0.2, 1);
 
     /* An ending that has had its say recedes and then takes its space back, rather than sitting on
        top of the results for the rest of the search. */
@@ -19,8 +28,26 @@
     &.is-dismissed {
         margin: 0 !important;
         border-width: 0;
-        opacity: 0;
         pointer-events: none;
+    }
+
+    /* Same "still working" signal as the logo pulse below, carried onto the card itself: a reader
+       glancing at the card, not just the small logo icon, can tell Iris hasn't finished. A soft glow
+       breathing outward reads as ambient, ongoing processing; a flat border/background color flash
+       (the first version of this) read more like a plain UI blink than anything AI-associated. */
+    &.is-working {
+        animation: iris-card-glow 1.8s ease-in-out infinite;
+    }
+}
+
+@keyframes iris-card-glow {
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--bs-primary) 12%, transparent);
+    }
+
+    50% {
+        box-shadow: 0 0 7px 1px color-mix(in srgb, var(--bs-primary) 16%, transparent);
     }
 }
 
@@ -29,10 +56,33 @@
     /* Transparent while the card is a strip: a divider under a collapsed body is a line to nowhere. */
     border-bottom: 1px solid transparent;
     border-radius: 0.75rem 0.75rem 0 0;
-    transition: border-color 0.32s ease;
+    /* Generous bound for a single row of logo + label + badge + status text — not measured, just large
+       enough to never clip it, so `is-dismissed` can animate it away without a JS height read. */
+    max-height: 2.5rem;
+    overflow: hidden;
+    /* max-height/padding-block run on the exact same duration/easing, with no delay, as the body's own
+       collapse below and the outer border-width/margin above, so the header, body and outer shape all
+       reach zero together as one motion. border-color stays on its own separate transition: it only
+       ever animates for is-open, opening the card, a different moment entirely. */
+    transition:
+        border-color 0.32s ease,
+        max-height 0.34s cubic-bezier(0.4, 0, 0.2, 1),
+        padding-block 0.34s cubic-bezier(0.4, 0, 0.2, 1);
 
     .is-open > & {
         border-bottom-color: color-mix(in srgb, var(--bs-primary) 12%, transparent);
+    }
+
+    /* Collapses the header along with the body (see is-dismissed on iris-card-body-wrapper below),
+       so the results below reclaim the space instead of a blank header-height gap being left behind.
+       border-bottom-color must go back to transparent here too: max-height/overflow only clip CONTENT,
+       never a border, so the 1px divider is-open colored in would otherwise keep rendering as a visible
+       hairline sitting on a collapsed, zero-height box — phase stays 'noAnswer' (is-open true) even
+       once dismissed, so without this override that color is still active the whole time. */
+    .is-dismissed > & {
+        max-height: 0;
+        padding-block: 0;
+        border-bottom-color: transparent;
     }
 }
 
@@ -382,7 +432,8 @@
         transition: none;
     }
 
-    .iris-logo-pulse {
+    .iris-logo-pulse,
+    .iris-inline-answer.is-working {
         animation: none;
     }
 }

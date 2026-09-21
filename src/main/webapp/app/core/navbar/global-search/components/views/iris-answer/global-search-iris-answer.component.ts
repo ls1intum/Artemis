@@ -161,6 +161,21 @@ export class GlobalSearchIrisAnswerComponent {
     protected readonly isSettled = computed(() => !this.isStreaming());
     /** The card is a slim strip until there is something to show inside it. */
     protected readonly isOpen = computed(() => this.phase() === 'answering' || this.phase() === 'noAnswer' || this.phase() === 'failed');
+    /**
+     * Whether Iris is working with nothing yet on screen to show it — pulses the logo and the card.
+     * True only for 'thinking': the moment an answer starts streaming in, the arriving text is itself
+     * the progress signal, and a card still pulsing on top of it reads as competing noise rather than
+     * reinforcement.
+     */
+    protected readonly isWorking = computed(() => this.phase() === 'thinking');
+    /**
+     * Whether the card currently renders anything at all, dismissed cards included since those have
+     * collapsed back to nothing. Public so the parent view can decide whether the results list below
+     * still needs its own top margin — a margin conditioned on the feature being enabled instead would
+     * stay reserved even after a "nothing relevant" card folds away, leaving the exact gap that
+     * collapsing the card was meant to give back.
+     */
+    readonly occupiesSpace = computed(() => this.phase() !== 'idle' && !this.isDismissed());
 
     /**
      * Answer markdown with `[n]` citation markers converted to chip elements, plus the cited numbers.

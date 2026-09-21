@@ -6,18 +6,14 @@
         [class.is-open]="isOpen()"
         [class.is-dismissed]="isDismissed()"
         [class.is-quiet]="phase() === 'noAnswer' || phase() === 'failed'"
+        [class.is-working]="isWorking()"
         (mouseleave)="clearCitationHighlight()"
         (keydown.escape)="clearCitationHighlight()"
     >
         <!-- Header. While Iris works it also carries the status, set in the answer's own type so the
              card speaks in one voice rather than introducing a label style of its own. -->
         <div class="iris-card-header d-flex align-items-center gap-2">
-            <jhi-iris-logo
-                [size]="IrisLogoSize.TEXT"
-                [class.iris-logo-pulse]="!isSettled() && phase() !== 'noAnswer' && phase() !== 'failed'"
-                [style.filter]="'none'"
-                aria-hidden="true"
-            />
+            <jhi-iris-logo [size]="IrisLogoSize.TEXT" [class.iris-logo-pulse]="isWorking()" [style.filter]="'none'" aria-hidden="true" />
             <span class="iris-card-label fw-bold">Iris</span>
             <span class="iris-ai-badge d-inline-flex align-items-center rounded-pill fw-bold">{{ 'global.search.irisAiBadge' | artemisTranslate }}</span>
             @if (phase() === 'thinking') {
