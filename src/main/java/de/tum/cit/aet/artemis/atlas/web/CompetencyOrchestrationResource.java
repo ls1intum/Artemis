@@ -81,7 +81,7 @@ public class CompetencyOrchestrationResource {
         return ResponseEntity.status(httpStatusFor(result)).body(result);
     }
 
-    /** Maps orchestration outcome to HTTP status so frontend error handling does not need to parse the response body. */
+    /** Maps orchestration outcomes to HTTP statuses so the web client does not need to parse the response body for error handling. */
     private static HttpStatus httpStatusFor(CompetencyOrchestrationResultDTO result) {
         return switch (result.status()) {
             case SUCCESS, NO_OP -> HttpStatus.OK;
