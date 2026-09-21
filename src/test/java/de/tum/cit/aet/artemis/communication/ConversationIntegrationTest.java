@@ -567,9 +567,12 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         // pages themselves follow no order the reader can see, which is the same list in a useless sequence.
         params.remove("filter");
         params.set("size", "20");
-        List<String> orderedByName = request.getList("/api/communication/courses/" + exampleCourseId + "/conversations/" + courseWideChannel.getId() + "/members/search",
-                HttpStatus.OK, ConversationUserDTO.class, params).stream().map(ConversationUserDTO::getLogin).toList();
-        assertThat(orderedByName).contains(testPrefix + "student1", testPrefix + "tutor1", testPrefix + "editor1", testPrefix + "instructor1");
+        List<ConversationUserDTO> allMembers = request.getList("/api/communication/courses/" + exampleCourseId + "/conversations/" + courseWideChannel.getId() + "/members/search",
+                HttpStatus.OK, ConversationUserDTO.class, params);
+        assertThat(allMembers).extracting(ConversationUserDTO::getLogin).contains(testPrefix + "student1", testPrefix + "tutor1", testPrefix + "editor1",
+                testPrefix + "instructor1");
+        assertThat(allMembers).as("the search has to answer in the order the client asked for").extracting(ConversationUserDTO::getFirstName).isSorted();
+        List<String> orderedByName = allMembers.stream().map(ConversationUserDTO::getLogin).toList();
 
         int pageSize = 2;
         params.set("size", String.valueOf(pageSize));
