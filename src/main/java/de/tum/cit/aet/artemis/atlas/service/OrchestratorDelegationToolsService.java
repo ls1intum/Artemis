@@ -137,6 +137,7 @@ public class OrchestratorDelegationToolsService {
         workerContext.put(OrchestratorToolContextKeys.WORKER_COMPLETION_KEY, completionHolder);
         workerContext.put(OrchestratorToolContextKeys.TOOL_SEQUENCE_KEY, OrchestratorToolContextKeys.newSequenceMarker());
         workerContext.put(OrchestratorToolContextKeys.WORKER_COMPLETION_SEQUENCE_KEY, OrchestratorToolContextKeys.newSequenceMarker());
+        workerContext.put(OrchestratorToolContextKeys.WORKER_MUTATION_OUTCOME_COUNT_KEY, new AtomicInteger());
         workerContext.put(OrchestratorToolContextKeys.WORKER_MUTATION_ERROR_KEY, OrchestratorToolContextKeys.newWorkerMutationErrorMarker());
         workerContext.put(OrchestratorToolContextKeys.WORKER_READ_COUNT_KEY, new AtomicInteger());
         workerContext.put(OrchestratorToolContextKeys.WORKER_ACTION_START_KEY, actionStart);

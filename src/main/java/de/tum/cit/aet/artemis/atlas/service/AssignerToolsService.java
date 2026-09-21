@@ -9,6 +9,7 @@ import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.markW
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.matchAllowedBand;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.missingCourseContextError;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.mutationErrorJson;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.mutationNoOpJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.toJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.tryReserveWriteSlot;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.validateJustification;
@@ -151,8 +152,8 @@ public class AssignerToolsService {
         String detail;
         if (existingLink != null) {
             if (Double.compare(existingLink.getWeight(), effectiveWeight) == 0) {
-                return toJson(objectMapper, Map.of("status", "noop", "message",
-                        "Exercise " + exerciseId + " is already linked to competency " + competencyId + " with weight " + formatWeight(effectiveWeight) + "."));
+                return mutationNoOpJson(objectMapper,
+                        "Exercise " + exerciseId + " is already linked to competency " + competencyId + " with weight " + formatWeight(effectiveWeight) + ".", toolContext);
             }
             existingLink.setWeight(effectiveWeight);
             competencyExerciseLinkRepository.save(existingLink);
@@ -211,7 +212,7 @@ public class AssignerToolsService {
 
         CompetencyExerciseLink existingLink = competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(exerciseId, competencyId).orElse(null);
         if (existingLink == null) {
-            return toJson(objectMapper, Map.of("status", "noop", "message", "Exercise " + exerciseId + " is not linked to competency " + competencyId + "."));
+            return mutationNoOpJson(objectMapper, "Exercise " + exerciseId + " is not linked to competency " + competencyId + ".", toolContext);
         }
 
         Exercise exercise = existingLink.getExercise();

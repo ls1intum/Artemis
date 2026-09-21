@@ -36,7 +36,7 @@ public class AtlasWorkerTerminalToolService {
     }
 
     /**
-     * Completes a worker request after it has inspected course state or applied an action.
+     * Completes a worker request after it has inspected course state or received a mutation outcome.
      *
      * @param success     whether the assigned semantic batch was completed
      * @param message     concise outcome or actionable failure reason
@@ -55,7 +55,7 @@ public class AtlasWorkerTerminalToolService {
             return errorJson(objectMapper, "No worker completion context available.");
         }
         if (!hasWorkerEvidence(toolContext)) {
-            return errorJson(objectMapper, "Inspect course state or apply an action before completing the worker task.");
+            return errorJson(objectMapper, "Inspect course state or receive a mutation outcome before completing the worker task.");
         }
         WorkerCompletionDTO completion = new WorkerCompletionDTO(success, message);
         if (!holder.compareAndSet(null, completion)) {
@@ -74,7 +74,9 @@ public class AtlasWorkerTerminalToolService {
         OrchestratorToolContextKeys.AppliedActionsBuffer buffer = OrchestratorToolHelpers.appliedActionsBufferFromContext(toolContext);
         Object startValue = toolContext.getContext().get(OrchestratorToolContextKeys.WORKER_ACTION_START_KEY);
         int start = startValue instanceof Number number ? number.intValue() : 0;
-        return hasRead || buffer != null && buffer.actions().size() > start;
+        Object mutationValue = toolContext.getContext().get(OrchestratorToolContextKeys.WORKER_MUTATION_OUTCOME_COUNT_KEY);
+        boolean hasMutationOutcome = mutationValue instanceof AtomicInteger count && count.get() > 0;
+        return hasRead || hasMutationOutcome || buffer != null && buffer.actions().size() > start;
     }
 
     @Nullable
