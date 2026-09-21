@@ -43,15 +43,16 @@ export class AtlasOrchestrationTriggerComponent {
     readonly buttonClass = input<string>('btn btn-primary btn-sm');
 
     /**
-     * Whether orchestration can run on this instance at all. Owned here so host pages stay free of Atlas
-     * knowledge: a host only decides instructor / non-exam visibility, and this component self-hides when
-     * the module is off (the {@code AtlasAgent} feature toggle is a separate, finer runtime gate on the button).
+     * Whether this instance can run competency orchestration at all. Owned here so host pages stay free of Atlas
+     * knowledge: a host only decides instructor / non-exam visibility, and this component self-hides otherwise (the
+     * {@code AtlasAgent} feature toggle is a separate, finer runtime gate on the button).
      * <p>
-     * Both module features are required. Atlas alone carries competencies and learning paths, while the orchestrator
-     * and the endpoint this button calls live behind AtlasLLM, which is off unless the instance configured a chat
-     * model. Without that second check the button would be offered on every Atlas instance and answer with a 404.
+     * Deliberately not named after the Atlas module, because the two are independent: Atlas can be active on its own
+     * and carries competencies and learning paths either way. Orchestration additionally needs AtlasLLM, which is off
+     * unless the instance configured a chat model, and without that the endpoint this button calls is not registered.
      */
-    protected readonly atlasModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS) && this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLASLLM);
+    protected readonly orchestrationAvailable =
+        this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS) && this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLASLLM);
 
     protected readonly orchestrationDialogVisible = signal(false);
     protected readonly orchestrationDialogMessage = signal('');
