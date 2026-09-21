@@ -54,6 +54,50 @@ export interface CourseSummary {
 }
 
 test.describe('Course management', { tag: '@fast' }, () => {
+    test('keeps the course chart values inside the doughnut rings', async ({ page, login, courseManagementAPIRequests }) => {
+        await login(admin);
+        const course = await courseManagementAPIRequests.createCourse();
+        try {
+            await page.setViewportSize({ width: 1400, height: 1800 });
+            await page.goto(`/course-management/${course.id}`);
+            const charts = page.locator('jhi-course-detail-doughnut-chart');
+            await expect(charts.first().getByTestId('course-chart-values')).toContainText('0%');
+            for (const width of [1400, 800]) {
+                await page.setViewportSize({ width, height: 1800 });
+                for (const chart of await charts.all()) {
+                    await expect
+                        .poll(() =>
+                            chart.evaluate((element) => {
+                                const svg = element.querySelector<SVGSVGElement>('svg[role="img"]')!;
+                                const canvas = svg.getBoundingClientRect();
+                                const label = element.querySelector('[data-testid="course-chart-values"]')!.getBoundingClientRect();
+                                const centerX = canvas.width / 2;
+                                const centerY = canvas.height / 2;
+                                // Measure the inner edge of the rendered ring, independently of its configured size.
+                                const radii = Array.from(svg.querySelectorAll<SVGPathElement>('path[d]:not([d=""])')).flatMap((path) => {
+                                    const length = path.getTotalLength();
+                                    return Array.from({ length: 101 }, (_, index) => {
+                                        const point = path.getPointAtLength((length * index) / 100).matrixTransform(path.getScreenCTM()!);
+                                        return Math.hypot(point.x - canvas.x - centerX, point.y - canvas.y - centerY);
+                                    });
+                                });
+                                if (!radii.length) {
+                                    return false;
+                                }
+                                const innerRadius = Math.min(...radii);
+                                return [label.left, label.right].every((x) =>
+                                    [label.top, label.bottom].every((y) => Math.hypot(x - canvas.x - centerX, y - canvas.y - centerY) < innerRadius),
+                                );
+                            }),
+                        )
+                        .toBe(true);
+                }
+            }
+        } finally {
+            await courseManagementAPIRequests.deleteCourse(course, admin);
+        }
+    });
+
     test.describe('Manual student selection', () => {
         let course: Course;
 

@@ -65,31 +65,6 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
     int countFeedbackForOrphanResults();
 
     /**
-     * Deletes {@link Feedback} entries with a {@code null} result.
-     *
-     * @return the number of deleted entities
-     */
-    @Modifying
-    @Transactional // ok because of delete
-    @Query("""
-            DELETE FROM Feedback f
-            WHERE f.result IS NULL
-            """)
-    int deleteOrphanFeedback();
-
-    /**
-     * Counts {@link Feedback} entries with a {@code null} result.
-     *
-     * @return the number of entities that would be deleted
-     */
-    @Query("""
-            SELECT COUNT(f)
-            FROM Feedback f
-            WHERE f.result IS NULL
-            """)
-    int countOrphanFeedback();
-
-    /**
      * Deletes {@link Feedback} entries associated with rated {@link Result} (accessed via its submission)
      * that are not the latest rated result for a {@link Participation}, within courses conducted between the specified date range.
      * This query removes old feedback entries that are not part of the latest rated results, for courses whose

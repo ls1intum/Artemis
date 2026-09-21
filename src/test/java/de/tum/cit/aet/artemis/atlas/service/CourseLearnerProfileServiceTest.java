@@ -32,8 +32,6 @@ class CourseLearnerProfileServiceTest {
     @Mock
     private LearnerProfileRepository learnerProfileRepository;
 
-    // while it's not used directly, the mock is needed for the service to work properly, otherwise the test fails with database exceptions
-    @SuppressWarnings("unused")
     @Mock
     private LearnerProfileService learnerProfileService;
 
@@ -59,9 +57,8 @@ class CourseLearnerProfileServiceTest {
         User user = new User();
         user.setId(2L);
         LearnerProfile learnerProfile = new LearnerProfile();
-        user.setLearnerProfile(learnerProfile);
         learnerProfile.setUser(user);
-        when(learnerProfileRepository.findByUserElseThrow(user)).thenReturn(learnerProfile);
+        when(learnerProfileService.getOrCreateLearnerProfile(user)).thenReturn(learnerProfile);
         when(courseLearnerProfileRepository.save(any(CourseLearnerProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         courseLearnerProfileService.createCourseLearnerProfile(course, user);
@@ -80,15 +77,13 @@ class CourseLearnerProfileServiceTest {
         user2.setLogin("user2");
         LearnerProfile lp1 = new LearnerProfile();
         LearnerProfile lp2 = new LearnerProfile();
-        user1.setLearnerProfile(lp1);
-        user2.setLearnerProfile(lp2);
         lp1.setUser(user1);
         lp2.setUser(user2);
         Set<User> users = new HashSet<>();
         users.add(user1);
         users.add(user2);
-        when(learnerProfileRepository.findByUserElseThrow(user1)).thenReturn(lp1);
-        when(learnerProfileRepository.findByUserElseThrow(user2)).thenReturn(lp2);
+        when(learnerProfileService.getOrCreateLearnerProfile(user1)).thenReturn(lp1);
+        when(learnerProfileService.getOrCreateLearnerProfile(user2)).thenReturn(lp2);
         when(learnerProfileRepository.findAllByUserIn(users)).thenReturn(Set.of(lp1, lp2));
         when(courseLearnerProfileRepository.findByLoginAndCourse(user1.getLogin(), course)).thenReturn(Optional.empty());
         when(courseLearnerProfileRepository.findByLoginAndCourse(user2.getLogin(), course)).thenReturn(Optional.empty());
@@ -109,9 +104,6 @@ class CourseLearnerProfileServiceTest {
         course.setId(1L);
         User user = new User();
         user.setId(2L);
-        LearnerProfile learnerProfile = new LearnerProfile();
-        user.setLearnerProfile(learnerProfile);
-        learnerProfile.setUser(user);
 
         courseLearnerProfileService.deleteCourseLearnerProfile(course, user);
         verify(courseLearnerProfileRepository).deleteByCourseAndUser(course, user);

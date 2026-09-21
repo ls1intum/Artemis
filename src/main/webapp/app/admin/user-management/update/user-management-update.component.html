@@ -82,7 +82,11 @@
                     </div>
 
                     @if (!useRandomPassword()) {
-                        <tum-ui-form-field class="mb-3" controlId="password" [invalid]="editForm.get('password')!.dirty && editForm.get('password')!.invalid">
+                        <tum-ui-form-field
+                            class="mb-3"
+                            controlId="password"
+                            [invalid]="(editForm.get('password')!.dirty || editForm.get('password')!.touched) && editForm.get('password')!.invalid"
+                        >
                             <span tumUiFormFieldLabel jhiTranslate="global.menu.account.password"></span>
                             <input
                                 type="password"
@@ -95,6 +99,9 @@
                                 formControlName="password"
                             />
                             <ng-container tumUiFormFieldError>
+                                @if (editForm.get('password')!.errors?.maxbytes) {
+                                    <small jhiTranslate="global.messages.validate.newpassword.maxbytes" [translateValues]="{ max: PASSWORD_MAX_BYTES }"></small>
+                                }
                                 @if (editForm.get('password')!.errors?.maxlength) {
                                     <small
                                         jhiTranslate="artemisApp.userManagement.inputConstraints"

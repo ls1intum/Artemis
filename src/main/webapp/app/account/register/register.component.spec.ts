@@ -50,6 +50,7 @@ describe('Register Component Tests', () => {
             registerService = TestBed.inject(RegisterService);
             comp = fixture.componentInstance;
             translateService.use('en');
+            comp.registerForm.patchValue({ firstName: 'Test', lastName: 'User', login: 'testuser', email: 'test@example.org' });
         });
 
         it('should ensure the two passwords entered match', () => {
@@ -73,11 +74,11 @@ describe('Register Component Tests', () => {
             comp.register();
 
             const expectedUser = new User();
-            expectedUser.email = '';
-            expectedUser.firstName = '';
-            expectedUser.lastName = '';
+            expectedUser.email = 'test@example.org';
+            expectedUser.firstName = 'Test';
+            expectedUser.lastName = 'User';
             expectedUser.password = 'password';
-            expectedUser.login = '';
+            expectedUser.login = 'testuser';
             expectedUser.langKey = 'en';
             expect(registerService.registerUser).toHaveBeenCalledWith(expectedUser);
             expect(comp.success()).toBe(true);
@@ -162,6 +163,28 @@ describe('Register Component Tests', () => {
             expect(comp.error()).toBe(false);
         });
 
+        it.each(['ä'.repeat(37), '€'.repeat(25), '😀'.repeat(19), 'ä'.repeat(36) + 'a'])('should reject passwords over 72 UTF-8 bytes: %s', (password) => {
+            const registerSpy = vi.spyOn(registerService, 'registerUser').mockReturnValue(of(undefined));
+            comp.registerForm.patchValue({ firstName: 'Test', lastName: 'User', login: 'testuser', email: 'test@example.org', password, confirmPassword: password });
+
+            expect(comp.registerForm.controls.password.hasError('maxbytes')).toBe(true);
+            comp.register();
+
+            expect(registerSpy).not.toHaveBeenCalled();
+            expect(comp.success()).toBe(false);
+        });
+
+        it.each(['ä'.repeat(36), '€'.repeat(24), '😀'.repeat(18)])('should register with a password at the 72-byte limit: %s', (password) => {
+            vi.spyOn(registerService, 'registerUser').mockReturnValue(of(undefined));
+            comp.registerForm.patchValue({ firstName: 'Test', lastName: 'User', login: 'testuser', email: 'test@example.org', password, confirmPassword: password });
+
+            expect(comp.registerForm.valid).toBe(true);
+            comp.register();
+
+            expect(comp.success()).toBe(true);
+            expect(registerService.registerUser).toHaveBeenCalledWith(expect.objectContaining({ password }));
+        });
+
         it('should focus login input if login is defined', () => {
             // Create a mock element and spy on focus
             const mockElement = document.createElement('input');
@@ -223,6 +246,32 @@ describe('Register Component Tests', () => {
         it('keeps the submit button disabled while the form is invalid', () => {
             expect(comp.registerForm.invalid).toBe(true);
             expect((fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement).disabled).toBe(true);
+        });
+
+        it('explains the byte limit and allows submission after shortening the password', () => {
+            comp.registerForm.setValue({
+                firstName: 'Test',
+                lastName: 'User',
+                login: 'testuser',
+                email: 'test@example.org',
+                password: 'ä'.repeat(37),
+                confirmPassword: 'ä'.repeat(37),
+            });
+            comp.registerForm.markAllAsTouched();
+            fixture.detectChanges();
+
+            const password = input('password');
+            const error = fixture.nativeElement.querySelector(`#${password.getAttribute('aria-describedby')}`) as HTMLElement;
+            expect(error.hidden).toBe(false);
+            expect(error.textContent).toContain('global.messages.validate.newpassword.maxbytes');
+            expect(password.getAttribute('aria-invalid')).toBe('true');
+            expect((fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement).disabled).toBe(true);
+
+            comp.registerForm.patchValue({ password: 'ä'.repeat(36), confirmPassword: 'ä'.repeat(36) });
+            fixture.detectChanges();
+
+            expect(password.getAttribute('aria-invalid')).toBeNull();
+            expect((fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement).disabled).toBe(false);
         });
 
         it('announces a validation error and describes the control by it', () => {

@@ -326,6 +326,26 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id, false, true);
     });
 
+    it('should load an anonymous submission for tutor assessment', async () => {
+        const anonymousSubmission = structuredClone(submission);
+        const anonymousParticipation = anonymousSubmission.participation as ProgrammingExerciseStudentParticipation;
+        delete anonymousParticipation.student;
+        delete anonymousParticipation.repositoryUri;
+        lockAndGetProgrammingSubmissionParticipationStub.mockReturnValue(scheduled([anonymousSubmission], asapScheduler));
+
+        comp.ngOnInit();
+        await flushMicrotasks();
+
+        expect(comp.loadingInitialSubmission()).toBe(false);
+        expect(comp.participationCouldNotBeFetched()).toBe(false);
+        expect(comp.participation()?.id).toBe(participation.id);
+        expect(comp.participation()?.student).toBeUndefined();
+        expect(comp.participation()?.repositoryUri).toBeUndefined();
+        expect(comp.exercise()?.id).toBe(exercise.id);
+        expect(comp.manualResult()?.id).toBe(result.id);
+        expect(comp.isAssessor()).toBe(true);
+    });
+
     it('should update assessor correctly if the manual assessment is overridden', async () => {
         const user2 = <User>{ id: 100 };
         const updateAfterNewAssessment = vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(of(overrideEntityResponse));

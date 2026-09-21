@@ -335,8 +335,8 @@ public class LectureService {
         if (displayPageNumbers == null || displayPageNumbers.isEmpty()) {
             return displayPageNumbers;
         }
-        Set<Integer> hiddenSlideNumbers = slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNull(unit.getId()).stream().map(Slide::getSlideNumber).filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+        Set<Integer> hiddenSlideNumbers = slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(unit.getId()).stream().map(Slide::getSlideNumber)
+                .filter(Objects::nonNull).collect(Collectors.toSet());
         if (hiddenSlideNumbers.isEmpty()) {
             return displayPageNumbers;
         }

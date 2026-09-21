@@ -26,7 +26,7 @@ public interface PlagiarismResultRepository extends ArtemisJpaRepository<Plagiar
 
     Optional<PlagiarismResult> findFirstByExerciseIdOrderByLastModifiedDateDesc(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = "comparisons")
+    @EntityGraph(type = LOAD, attributePaths = { "comparisons", "comparisons.submissions" })
     PlagiarismResult findPlagiarismResultById(long plagiarismResultId);
 
     /**
@@ -70,9 +70,6 @@ public interface PlagiarismResultRepository extends ArtemisJpaRepository<Plagiar
         if (plagiarismResult != null) {
             for (var comparison : plagiarismResult.getComparisons()) {
                 comparison.setPlagiarismResult(null);
-                // avoid circular dependency during serialization
-                comparison.getSubmissionA().setPlagiarismComparison(null);
-                comparison.getSubmissionB().setPlagiarismComparison(null);
             }
         }
     }

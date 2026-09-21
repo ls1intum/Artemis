@@ -9,6 +9,8 @@ import jakarta.persistence.Table;
 
 import org.jspecify.annotations.Nullable;
 
+import de.tum.cit.aet.artemis.core.domain.Parent;
+
 /**
  * The account's lifecycle timestamps: when it was last used, whether it has been warned that it is about to be deleted
  * for inactivity, and when its credentials last changed.
@@ -24,6 +26,7 @@ public class UserActivity {
 
     @Id
     @Column(name = "user_id")
+    @Parent
     private long userId;
 
     @Nullable
