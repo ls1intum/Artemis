@@ -91,6 +91,22 @@ public class SearchableEntityAccessFilterService {
     }
 
     /**
+     * Convenience overload for a caller with no hidden-type or lenient-course-id needs: hides nothing
+     * beyond {@code requestedTypes} itself, and rejects (rather than silently drops) an inaccessible or
+     * unknown id in {@code courseIds}.
+     *
+     * @param user             the requesting user (with course roles loaded)
+     * @param courseIds        optional course ids to scope the search to (empty/null for unscoped)
+     * @param excludeCourseIds course ids to hide regardless of {@code courseIds} or the unscoped fallback
+     * @param requestedTypes   the entity types to include
+     * @return the compound filter plus the per-request access context
+     * @see #buildSearchableItemFilter(User, List, List, Set, Set, boolean)
+     */
+    public FilterBuildResult buildSearchableItemFilter(User user, @Nullable List<Long> courseIds, List<Long> excludeCourseIds, Set<String> requestedTypes) {
+        return buildSearchableItemFilter(user, courseIds, excludeCourseIds, requestedTypes, Set.of(), true);
+    }
+
+    /**
      * Builds the compound per-type filter for the current request. Returns:
      * <ul>
      * <li>{@code hasAccess = false} if the user has no accessible courses (caller short-circuits with empty list)</li>
@@ -98,14 +114,22 @@ public class SearchableEntityAccessFilterService {
      * <li>an {@code OR}-of-{@code AND}s filter with one disjunct per requested type otherwise</li>
      * </ul>
      *
-     * @param user             the requesting user (with course roles loaded)
-     * @param courseIds        optional course ids to scope the search to (empty/null for unscoped)
-     * @param excludeCourseIds course ids to hide regardless of {@code courseIds} or the unscoped fallback; only
-     *                             needed for a caller with no {@code courseIds} ceiling to narrow itself
-     * @param requestedTypes   the entity types to include
+     * @param user                        the requesting user (with course roles loaded)
+     * @param courseIds                   optional course ids to scope the search to (empty/null for unscoped)
+     * @param excludeCourseIds            course ids to hide regardless of {@code courseIds} or the unscoped fallback; only
+     *                                        needed for a caller with no {@code courseIds} ceiling to narrow itself
+     * @param requestedTypes              the entity types to include
+     * @param hiddenTypes                 types the caller explicitly hid (distinct from a type simply not being requested): suppresses the
+     *                                        exam-exercise auto-inclusion below when the caller hid exercises specifically, rather than just not
+     *                                        asking for them
+     * @param rejectInaccessibleCourseIds when {@code true}, an inaccessible or unknown id anywhere in {@code courseIds} throws and rejects the
+     *                                        whole request (no caller-visible partial result from an incompletely-checked course); when
+     *                                        {@code false}, such ids are silently dropped so an OR across several courses never fails outright on
+     *                                        one stale id
      * @return the compound filter plus the per-request access context (accessible courses, staff and editor course ids)
      */
-    public FilterBuildResult buildSearchableItemFilter(User user, @Nullable List<Long> courseIds, List<Long> excludeCourseIds, Set<String> requestedTypes) {
+    public FilterBuildResult buildSearchableItemFilter(User user, @Nullable List<Long> courseIds, List<Long> excludeCourseIds, Set<String> requestedTypes, Set<String> hiddenTypes,
+            boolean rejectInaccessibleCourseIds) {
         // Decide if the filters should be applied
         boolean isAdmin = authCheckService.isCurrentUserAdminAccessEnabled();
         boolean hasCourseScope = courseIds != null && !courseIds.isEmpty();
@@ -114,18 +138,26 @@ public class SearchableEntityAccessFilterService {
                 || requestedTypes.contains(SearchableEntitySchema.TypeValues.ANSWER_POST);
 
         if (isAdmin && !hasCourseScope && !hasExclusions && !needsCommFiltering) {
-            return new FilterBuildResult(buildTypeDiscriminatorFilter(requestedTypes), true, null, null, null);
+            return new FilterBuildResult(buildTypeDiscriminatorFilter(requestedTypes, hiddenTypes), true, null, null, null);
         }
         List<Course> accessibleCourses;
         if (isAdmin && !hasCourseScope) {
             accessibleCourses = courseRepository.findAll();
         }
         else if (hasCourseScope) {
-            accessibleCourses = courseIds.stream().map(id -> {
-                Course course = courseRepository.findByIdElseThrow(id);
-                authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-                return course;
-            }).toList();
+            if (rejectInaccessibleCourseIds) {
+                accessibleCourses = courseIds.stream().map(id -> {
+                    Course course = courseRepository.findByIdElseThrow(id);
+                    authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+                    return course;
+                }).toList();
+            }
+            else if (isAdmin) {
+                accessibleCourses = new ArrayList<>(courseRepository.findAllById(new HashSet<>(courseIds)));
+            }
+            else {
+                accessibleCourses = courseRepository.findAllAccessibleCoursesForUserAndIdIn(user.getId(), false, new HashSet<>(courseIds));
+            }
         }
         else {
             accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getId(), false);
@@ -196,9 +228,12 @@ public class SearchableEntityAccessFilterService {
                 }
             }
 
-            // When the exam filter is active, also include exercises that belong to exams
+            // When the exam filter is active, also include exercises that belong to exams. Absent is not
+            // the same as excluded: exercises may be missing because only exams were asked for (include
+            // exam exercises), or because the caller hid them specifically (do not).
             boolean isExerciseTypeAlreadyRequested = requestedTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE);
-            if (!isExerciseTypeAlreadyRequested) {
+            boolean areExercisesHidden = hiddenTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE);
+            if (!isExerciseTypeAlreadyRequested && !areExercisesHidden) {
                 Filter examExerciseDisjunct = buildExamExerciseDisjunct(roleSets, studentExamInfo);
                 if (examExerciseDisjunct != null) {
                     disjuncts.add(examExerciseDisjunct);
@@ -563,14 +598,16 @@ public class SearchableEntityAccessFilterService {
 
     // -- Shared helpers --
 
-    private static Filter buildTypeDiscriminatorFilter(Set<String> types) {
+    private static Filter buildTypeDiscriminatorFilter(Set<String> types, Set<String> hiddenTypes) {
         List<Filter> typeFilters = new ArrayList<>(types.size());
         for (String type : types) {
             typeFilters.add(typeEquals(type));
         }
 
-        boolean isExamRequestedButExercisesAreNotIncludedYet = types.contains(SearchableEntitySchema.TypeValues.EXAM)
-                && !types.contains(SearchableEntitySchema.TypeValues.EXERCISE);
+        // Absent is not the same as excluded: exercises may be missing because only exams were asked for, in which
+        // case exam exercises belong in the answer, or because the caller hid them, in which case they do not.
+        boolean isExamRequestedButExercisesAreNotIncludedYet = types.contains(SearchableEntitySchema.TypeValues.EXAM) && !types.contains(SearchableEntitySchema.TypeValues.EXERCISE)
+                && !hiddenTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE);
         if (isExamRequestedButExercisesAreNotIncludedYet) {
             typeFilters.add(Filter.and(typeEquals(SearchableEntitySchema.TypeValues.EXERCISE), Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true)));
         }

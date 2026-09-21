@@ -162,6 +162,41 @@ class SearchableEntityAccessFilterServiceTest {
     }
 
     @Test
+    void hiddenTypesSuppressesTheExamExerciseAutoInclusion() {
+        // Parity with the palette (GlobalSearchResource): a caller that explicitly hid exercises must
+        // not have them reappear via the exam type's own auto-inclusion of exam exercises, even though
+        // "exercise" is equally absent from requestedTypes in both the "not asked for" and "hidden" case.
+        User user = new User();
+        user.setId(1L);
+        Course courseA = courseWithId(9L);
+        when(courseRepository.findAllAccessibleCoursesForUser(1L, false)).thenReturn(List.of(courseA));
+
+        var result = filterService.buildSearchableItemFilter(user, null, List.of(), Set.of(SearchableEntitySchema.TypeValues.EXAM),
+                Set.of(SearchableEntitySchema.TypeValues.EXERCISE), true);
+
+        assertThat(result.hasAccess()).isTrue();
+        assertThat(result.filter().toString()).doesNotContain("type Equal exercise");
+    }
+
+    @Test
+    void lenientCourseIdsDropsAnInaccessibleOneInsteadOfThrowing() {
+        // Parity with the palette (GlobalSearchResource): rejectInaccessibleCourseIds=false must not
+        // reach findByIdElseThrow/checkHasAtLeastRoleInCourseElseThrow at all for a scoped request; an
+        // inaccessible or unknown id is silently absent from the batch lookup's result instead.
+        User user = new User();
+        user.setId(1L);
+        Course courseA = courseWithId(9L);
+        when(courseRepository.findAllAccessibleCoursesForUserAndIdIn(1L, false, Set.of(9L, 11L))).thenReturn(List.of(courseA));
+
+        var result = filterService.buildSearchableItemFilter(user, List.of(9L, 11L), List.of(), Set.of(SearchableEntitySchema.TypeValues.EXERCISE), Set.of(), false);
+
+        assertThat(result.hasAccess()).isTrue();
+        assertThat(result.accessibleCoursesById()).containsOnlyKeys(9L);
+        verify(courseRepository, never()).findByIdElseThrow(any());
+        verify(authCheckService, never()).checkHasAtLeastRoleInCourseElseThrow(any(), any(), any());
+    }
+
+    @Test
     void adminExclusionAppliesToTheUnscopedTypeOnlyFilter() {
         // An admin with no courseIds ceiling skips role classification entirely for most types
         // (the isAdmin && !hasCourseScope branch uses a bare type filter, no per-course role set to
