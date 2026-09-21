@@ -26,23 +26,6 @@ const MARKER_RUN_REGEX = /(?:\[\d+\]){1,}/g;
 const SINGLE_MARKER_REGEX = /\[(\d+)\]/g;
 
 /**
- * A display-math block (`$$...$$` alone on its line, per the answer prompt's instruction for a
- * standalone equation) immediately followed by a marker run and nothing else on that line.
- *
- * `@vscode/markdown-it-katex` only recognizes a display block's closing `$$` when it is the LAST
- * thing on its (trimmed) line; anything else trailing it — including a marker chip inserted right
- * here, with no separating whitespace, exactly as the prompt's citation rule instructs ("directly
- * after the claim") — makes the line no longer look closed. The scanner then keeps consuming
- * subsequent lines looking for a genuine closer, swallowing everything up to the next accidental
- * `$$` pair (or the rest of the answer) as "math," which is what actually produced the KaTeX parse
- * errors: not corrupted LaTeX, a genuinely unclosed block. Inline math sharing its line with other
- * prose (`` the parameter `$$\theta$$` is `` per the prompt's own inline example) is a different,
- * unaffected code path — this only matches a marker run that is the SOLE thing following the
- * closer, which is exactly the standalone-equation shape and never the inline one.
- */
-const DISPLAY_MATH_MARKER_REGEX = /^(\$\$[\s\S]*?\$\$)((?:\[\d+\]){1,})$/gm;
-
-/**
  * Every CommonMark code node this answer's markdown could realistically contain, tried longest-and-most-
  * specific first: a backtick fence of 3+ backticks or a tilde fence (incl. language tag, possibly
  * spanning lines), or an inline code span delimited by a run of one or more backticks closed by a
@@ -71,16 +54,6 @@ const DISPLAY_MATH_MARKER_REGEX = /^(\$\$[\s\S]*?\$\$)((?:\[\d+\]){1,})$/gm;
  * Without this fallback, that in-progress code block's content (e.g. `values[1]`) would fall through to
  * the citation scan on every render until the closer finally arrives.
  *
- * A run of 3+ backticks or tildes only opens a FENCE at a legal fence-opening position: the very start
- * of the answer, or right after a newline (CommonMark also allows up to 3 leading spaces there, which
- * this scan does not special-case since the prompt never indents a fence opener). Anywhere else — most
- * commonly a multi-backtick inline span used mid-sentence, e.g. `` ```values[1]``` `` — a leading
- * backtick run is NOT a fence opener and must fall through to the inline-span alternative instead. This
- * matters together with the EOF fallback above: an unanchored fence alternative would misread a mid-line
- * multi-backtick span as an unterminated fence opener (no legal closing FENCE LINE ever follows one,
- * since its own closer is mid-line too) and, via that EOF fallback, swallow everything from the span to
- * the end of the answer as "code," dropping every real citation after it.
- *
  * Indented code blocks (no delimiter) are matched too, bounded to a run of such lines that starts at the
  * very beginning of the answer or right after a blank line — the same structural rule CommonMark itself
  * uses to tell a real indented code block from a paragraph or list item's continuation line. This is not
@@ -94,7 +67,7 @@ const DISPLAY_MATH_MARKER_REGEX = /^(\$\$[\s\S]*?\$\$)((?:\[\d+\]){1,})$/gm;
  * trailing whitespace — still blank, so it must not be required to be a bare `\n\n`.
  */
 const CODE_SEGMENT_REGEX =
-    /(?<=^|\n)(`{3,})[\s\S]*?(?:\n[ ]{0,3}\1`*[ \t]*(?=\n|$)|$)|(?<=^|\n)(~~~+)[\s\S]*?(?:\n[ ]{0,3}\2~*[ \t]*(?=\n|$)|$)|(`+)(?:(?!\n[ \t]*\n)[\s\S])*?\3(?!`)|(?:^|\n[ \t]*\n)(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*(?:\n(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*)*/g;
+    /(`{3,})[\s\S]*?(?:\n[ ]{0,3}\1`*[ \t]*(?=\n|$)|$)|(~~~+)[\s\S]*?(?:\n[ ]{0,3}\2~*[ \t]*(?=\n|$)|$)|(`+)(?:(?!\n[ \t]*\n)[\s\S])*?\3(?!`)|(?:^|\n[ \t]*\n)(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*(?:\n(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*)*/g;
 
 export interface CitationRenderResult {
     /** The answer markdown with marker runs replaced by `<sup>` chip elements. */
@@ -118,7 +91,6 @@ export function renderCitationMarkers(answer: string | undefined, sourceCount: n
     if (!answer || sourceCount <= 0) {
         return { html: answer, citedNumbers: new Set() };
     }
-    answer = answer.replace(DISPLAY_MATH_MARKER_REGEX, '$1\n$2');
     const cited = new Set<number>();
     const replaceMarkers = (prose: string): string =>
         prose.replace(MARKER_RUN_REGEX, (run) => {
