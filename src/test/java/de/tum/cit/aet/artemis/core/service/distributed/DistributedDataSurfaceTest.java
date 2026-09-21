@@ -271,6 +271,27 @@ class DistributedDataSurfaceTest {
     }
 
     /**
+     * Serializability is a property of the same surface, so it is checked here rather than by a rule of its own.
+     * The recorded surface has always reported it per type; this makes it a requirement instead of a note, because
+     * a type that fails it does not fail at build time but on the first call that stores it in production.
+     */
+    @Test
+    void testEveryStoredTypeIsSerializable() {
+        Set<Class<?>> visited = new LinkedHashSet<>();
+        roots().forEach(root -> collect(root, visited));
+
+        var notSerializable = visited.stream().filter(type -> !Serializable.class.isAssignableFrom(type)).map(Class::getName).sorted().toList();
+
+        assertThat(notSerializable).as("""
+                A type stored in the distributed store does not implement Serializable.
+
+                Map values are encoded with Java serialization, so storing such a value throws NotSerializableException \
+                and the request that wrote it answers 500. Let the type implement Serializable and give it an explicit \
+                serialVersionUID, or keep it out of the distributed store.
+                """).isEmpty();
+    }
+
+    /**
      * @return the shape of every stored type, one per line, in a stable order
      */
     private static String renderSurface() {
