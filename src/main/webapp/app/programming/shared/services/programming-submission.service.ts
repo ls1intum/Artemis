@@ -515,9 +515,15 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         if (submissionId === undefined) {
             return EMPTY;
         }
+        // Each renewed build wait has a new timer, even when the submission ID stays the same.
+        const waitingTimer = this.resultTimerSubscriptions[participationId];
         const isStillWaiting = () => {
             const current = this.exerciseBuildState[exerciseId]?.[participationId];
-            return current?.submission?.id === submissionId && current?.submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;
+            return (
+                this.resultTimerSubscriptions[participationId] === waitingTimer &&
+                current?.submission?.id === submissionId &&
+                current?.submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION
+            );
         };
         return this.participationService.getLatestResultWithFeedback(participationId).pipe(
             filter(isStillWaiting),
