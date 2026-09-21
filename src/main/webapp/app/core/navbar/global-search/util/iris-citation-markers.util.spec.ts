@@ -151,6 +151,28 @@ describe('renderCitationMarkers', () => {
         expect([...result.citedNumbers]).toEqual([1, 2]);
     });
 
+    it('does not close a fence early on a delimiter embedded mid-line inside its own content', () => {
+        // A closing fence must be a legal closing-fence LINE (the delimiter alone, give or take
+        // whitespace) — not merely the same characters appearing anywhere later in the content. A quoted
+        // string literal containing the fence delimiter must not end the block early and leak the rest,
+        // including a real bracketed expression on a later line, as citable prose.
+        const answer = ['See below.[1]', '```python', 'const marker = "```";', 'const x = values[1];', '```', 'Done.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('```python\nconst marker = "```";\nconst x = values[1];\n```');
+        expect(result.html).toContain('See below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
+
+    it('does not close a tilde fence early on a delimiter embedded mid-line inside its own content', () => {
+        const answer = ['See below.[1]', '~~~python', 'const marker = "~~~";', 'const x = values[1];', '~~~', 'Done.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('~~~python\nconst marker = "~~~";\nconst x = values[1];\n~~~');
+        expect(result.html).toContain('See below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
+
     it('leaves a fenced code block untouched, including a real citation-shaped marker after it', () => {
         const answer = ['See the loop below.[1]', '```python', 'for i in range(3):', '    print(items[i])', '```', 'Iteration order matches the list.[2]'].join('\n');
         const result = renderCitationMarkers(answer, 2);
