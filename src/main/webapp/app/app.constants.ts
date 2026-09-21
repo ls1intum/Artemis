@@ -62,6 +62,8 @@ export const MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN = 'passkey-admin';
 
 export const MODULE_FEATURE_ATLAS = 'atlas';
 
+export const MODULE_FEATURE_ATLASLLM = 'atlasllm';
+
 export const MODULE_FEATURE_HYPERION = 'hyperion';
 
 export const MODULE_FEATURE_DEIMOS = 'deimos';
@@ -100,6 +102,7 @@ export type ModuleFeature =
     | typeof MODULE_FEATURE_PASSKEY
     | typeof MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN
     | typeof MODULE_FEATURE_ATLAS
+    | typeof MODULE_FEATURE_ATLASLLM
     | typeof MODULE_FEATURE_HYPERION
     | typeof MODULE_FEATURE_DEIMOS
     | typeof MODULE_FEATURE_IRIS

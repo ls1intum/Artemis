@@ -49,6 +49,10 @@
                     "name": "Atlas (Adaptive Learning)",
                     "description": "Enables competency-based learning features including learning paths, competency tracking, and analytics."
                 },
+                "atlasllm": {
+                    "name": "Atlas AI (LLM)",
+                    "description": "Enables the Atlas course chat agent and the autonomous competency orchestrator. Requires a configured chat model. Competencies, learning paths and analytics work without it."
+                },
                 "hyperion": {
                     "name": "Hyperion (Exercise Creation)",
                     "description": "Enables AI-assisted exercise creation using Hyperion for generating programming exercises."

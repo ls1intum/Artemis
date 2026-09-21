@@ -250,6 +250,8 @@ artemis:
     # Required module feature toggles
     atlas:
       enabled: true
+      atlasllm:
+        enabled: false   # Atlas chat agent and competency orchestration; needs a chat model under spring.ai (see artemis-intelligence.mdx). Competencies and learning paths work without it.
     exam:
       enabled: true
     fileupload:
