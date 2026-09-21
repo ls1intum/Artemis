@@ -104,6 +104,27 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void saveFirstAssessmentRejectsForeignFeedbackWithoutCreatingResult() throws Exception {
+        // a submission that has not been assessed yet, so the save would create a new result
+        var submission = fileUploadExerciseUtilService.addFileUploadSubmission(afterReleaseFileUploadExercise, ParticipationFactory.generateFileUploadSubmission(true),
+                TEST_PREFIX + "student1");
+        // a feedback stored on the result of another submission
+        var otherSubmission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessor(afterReleaseFileUploadExercise,
+                ParticipationFactory.generateFileUploadSubmission(true), TEST_PREFIX + "student2", TEST_PREFIX + "tutor1");
+        var otherFeedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("detail of the other result");
+        participationUtilService.addFeedbackToResult(otherFeedback, otherSubmission.getLatestResult());
+
+        var foreignFeedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("changed");
+        foreignFeedback.setId(otherFeedback.getId());
+        request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + submission.getId() + "/feedback", assessmentInput(List.of(foreignFeedback), "note"),
+                FileUploadResultDTO.class, HttpStatus.BAD_REQUEST, new LinkedMultiValueMap<>());
+
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getResults())
+                .as("the refused first assessment leaves no result on the submission").isEmpty();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void complaintUpdateRejectsForeignGradingInstructionBeforeResolvingComplaint() throws Exception {
         var submission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessor(afterReleaseFileUploadExercise,
