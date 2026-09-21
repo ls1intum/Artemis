@@ -1,17 +1,12 @@
-@if (!showConfirm()) {
-    <button type="button" class="confirm-icon-button" [attr.aria-label]="initialTooltip() ?? ''" [tumUiTooltip]="initialTooltip() ?? ''" (click)="toggle()">
-        <fa-icon [icon]="initialIcon()" />
-    </button>
-} @else {
-    <button
-        type="button"
-        class="confirm-icon-button confirm-icon-danger"
-        [attr.aria-label]="confirmTooltip() ?? ''"
-        [tumUiTooltip]="confirmTooltip() ?? ''"
-        (mouseleave)="toggle()"
-        (blur)="toggle()"
-        (click)="confirmAction()"
-    >
-        <fa-icon [icon]="confirmIcon()" [size]="iconSize()" />
-    </button>
-}
+<button
+    type="button"
+    class="confirm-icon-button"
+    [class.confirm-icon-danger]="showConfirm()"
+    [attr.aria-label]="activeTooltip()"
+    [tumUiTooltip]="activeTooltip()"
+    (mouseleave)="revertIfConfirming()"
+    (blur)="revertIfConfirming()"
+    (click)="handleActivate()"
+>
+    <fa-icon [icon]="activeIcon()" [size]="showConfirm() ? iconSize() : undefined" />
+</button>
