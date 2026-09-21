@@ -325,6 +325,9 @@ public class AssessmentService {
         }
         resultService.validateGradingInstructions(feedbackList, exerciseId);
 
+        // run before a missing result is created, since saveNewEmptyResult commits the empty result on its own and a request refused afterwards would leave it behind
+        checkFeedbackBelongsToResultElseThrow(feedbackList, result);
+
         if (result == null) {
             result = submissionService.saveNewEmptyResult(submission, exerciseId);
         }
@@ -333,8 +336,6 @@ public class AssessmentService {
         if (result.getHasComplaint().isEmpty()) {
             result.setHasComplaint(false);
         }
-
-        checkFeedbackBelongsToResultElseThrow(feedbackList, result);
 
         result.setExampleResult(submission.isExampleSubmission());
         result.setAssessmentType(AssessmentType.MANUAL);
@@ -371,13 +372,14 @@ public class AssessmentService {
      * result instead of being added to it.
      *
      * @param feedbackList the feedback list sent by the client
-     * @param result       the result the assessment is saved to
+     * @param result       the result the assessment is saved to, or {@code null} if it does not exist yet
      */
     protected void checkFeedbackBelongsToResultElseThrow(final Collection<Feedback> feedbackList, final Result result) {
         if (feedbackList == null) {
             return;
         }
-        final Set<Long> ownFeedbackIds = result.getFeedbacks().stream().map(Feedback::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+        // a result that does not exist yet owns no feedback, so any stored feedback id is foreign
+        final Set<Long> ownFeedbackIds = result == null ? Set.of() : result.getFeedbacks().stream().map(Feedback::getId).filter(Objects::nonNull).collect(Collectors.toSet());
         // a negative id belongs to a synthesized view of the typed automatic feedback of a programming exercise and not to a stored row
         if (feedbackList.stream().map(Feedback::getId).anyMatch(id -> id != null && id > 0 && !ownFeedbackIds.contains(id))) {
             throw new BadRequestAlertException("The assessment contains feedback of another result", "Feedback", "feedbackIdMismatch");
