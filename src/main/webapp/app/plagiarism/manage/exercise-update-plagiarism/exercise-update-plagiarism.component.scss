@@ -22,12 +22,15 @@
 
 .form-group.d-flex {
     padding-top: 0.6rem;
-    padding-bottom: 0.6rem;
 }
 
 .form-group.d-flex .form-control {
     min-height: 42px;
     margin-top: auto;
+}
+
+.form-group.d-flex .validation-slot {
+    min-height: 1.6rem;
 }
 
 .form-control.mt-auto {
@@ -41,6 +44,5 @@
 
     .form-group.d-flex {
         padding-top: 0.5rem;
-        padding-bottom: 0.5rem;
     }
 }
