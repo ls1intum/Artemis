@@ -498,10 +498,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
      */
     default Page<User> searchAllWithCourseRolesByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId, long courseId, Set<CourseRole> roles) {
-        // Use an unsorted pageable for the ID lookup: SELECT DISTINCT user.id cannot ORDER BY firstName/lastName (not in SELECT)
         // The final result ordering is applied by findUsersByIdsWithCourseRolesOrdered.
-        Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-        List<Long> ids = findUserIdsByLoginOrNameInConversationWithCourseRoles(loginOrName, conversationId, courseId, roles, unsortedPageable);
+        List<Long> ids = findUserIdsByLoginOrNameInConversationWithCourseRoles(loginOrName, conversationId, courseId, roles, withoutSort(pageable));
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
@@ -761,6 +759,21 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     }
 
     /**
+     * Drops the caller's sort from a pageable. Queries that select only {@code user.id} while eliminating duplicates cannot be ordered by a name column, because PostgreSQL
+     * requires every {@code ORDER BY} expression of a {@code SELECT DISTINCT} to appear in the select list. Those queries order by the id themselves for stable paging, and the
+     * display order is re-applied when the entities are fetched by id.
+     *
+     * @param pageable the pageable as it arrives from the caller
+     * @return the same page window without any sort
+     */
+    private static Pageable withoutSort(Pageable pageable) {
+        if (pageable.isUnpaged()) {
+            return Pageable.unpaged();
+        }
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+    }
+
+    /**
      * Find all users by their logins with their organizations eagerly loaded.
      *
      * @param logins the logins to look up
@@ -778,6 +791,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                     user.login LIKE :#{#loginOrName}%
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
+            ORDER BY user.id ASC
             """)
     List<Long> findUserIdsByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, Pageable pageable);
 
@@ -803,7 +817,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
      */
     default Page<User> searchAllWithCourseRolesByLoginOrNameInCourseAndReturnPage(Pageable pageable, String loginOrName, long courseId) {
-        List<Long> userIds = findUserIdsByLoginOrNameInCourse(loginOrName, courseId, pageable);
+        List<Long> userIds = findUserIdsByLoginOrNameInCourse(loginOrName, courseId, withoutSort(pageable));
         if (userIds.isEmpty()) {
             return new PageImpl<>(List.of(), pageable, 0);
         }
@@ -823,6 +837,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                     user.login LIKE %:loginOrName%
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
                 )
+            ORDER BY user.id ASC
             """)
     List<Long> findUserIdsByLoginOrNameInCourseWithRoles(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles,
             Pageable pageable);
@@ -851,7 +866,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return a paginated list of matching {@link User} entities, or an empty page if none found
      */
     default Page<User> searchAllWithCourseRolesByLoginOrNameInCourse(Pageable pageable, String loginOrName, long courseId, Set<CourseRole> roles) {
-        List<Long> ids = findUserIdsByLoginOrNameInCourseWithRoles(loginOrName, courseId, roles, pageable);
+        List<Long> ids = findUserIdsByLoginOrNameInCourseWithRoles(loginOrName, courseId, roles, withoutSort(pageable));
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
@@ -870,7 +885,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return a paginated list of matching users as {@link UserDTO}, or an empty page if none found
      */
     default Page<UserDTO> searchUsersByLoginOrNameInCourseWithRolesAndConvertToDTO(Pageable pageable, String loginOrName, long courseId, Set<CourseRole> roles) {
-        List<Long> ids = findUserIdsByLoginOrNameInCourseWithRoles(loginOrName, courseId, roles, pageable);
+        List<Long> ids = findUserIdsByLoginOrNameInCourseWithRoles(loginOrName, courseId, roles, withoutSort(pageable));
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
@@ -893,6 +908,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                     user.login LIKE %:loginOrName%
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
                 )
+            ORDER BY user.id ASC
             """)
     List<Long> findUserIdsByLoginOrNameInCourseWithRolesNotUserId(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles,
             @Param("idOfUser") long idOfUser, Pageable pageable);
@@ -934,7 +950,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
      */
     default Page<User> searchAllWithCourseRolesByLoginOrNameInCourseNotUserId(Pageable pageable, String loginOrName, long courseId, Set<CourseRole> roles, long idOfUser) {
-        List<Long> ids = findUserIdsByLoginOrNameInCourseWithRolesNotUserId(loginOrName, courseId, roles, idOfUser, pageable);
+        List<Long> ids = findUserIdsByLoginOrNameInCourseWithRolesNotUserId(loginOrName, courseId, roles, idOfUser, withoutSort(pageable));
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }

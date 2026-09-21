@@ -539,6 +539,34 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void searchMembersOfCourseWideChannel_sortedByName_shouldFindMembers() throws Exception {
+        Channel courseWideChannel = conversationUtilService.createCourseWideChannel(exampleCourse, "course-wide-member-search");
+
+        // A course-wide channel has no participants, so the members are looked up over the whole course. That lookup selects only the user id and eliminates duplicates,
+        // which means PostgreSQL rejects it as soon as the sort the client sends is appended, because first name and last name are not part of the select list.
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("loginOrName", "");
+        params.add("sort", "firstName,asc");
+        params.add("sort", "lastName,asc");
+        params.add("page", "0");
+        params.add("size", "20");
+
+        var members = request.getList("/api/communication/courses/" + exampleCourseId + "/conversations/" + courseWideChannel.getId() + "/members/search", HttpStatus.OK,
+                ConversationUserDTO.class, params);
+        assertThat(members).extracting(ConversationUserDTO::getLogin).contains(testPrefix + "student1", testPrefix + "tutor1", testPrefix + "editor1", testPrefix + "instructor1");
+
+        // filtering by a role routes the same search through a second id-only query
+        params.set("filter", "STUDENT");
+        members = request.getList("/api/communication/courses/" + exampleCourseId + "/conversations/" + courseWideChannel.getId() + "/members/search", HttpStatus.OK,
+                ConversationUserDTO.class, params);
+        assertThat(members).extracting(ConversationUserDTO::getLogin).contains(testPrefix + "student1").doesNotContain(testPrefix + "tutor1");
+
+        // cleanup
+        conversationRepository.deleteById(courseWideChannel.getId());
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void unreadMessages_shouldReturnCorrectValue_NoMessage() throws Exception {
         boolean unreadMessages = request.get("/api/communication/courses/" + exampleCourseId + "/unread-messages", HttpStatus.OK, Boolean.class);
