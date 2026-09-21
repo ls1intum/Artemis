@@ -194,6 +194,25 @@ describe('renderCitationMarkers', () => {
         expect([...result.citedNumbers]).toEqual([1, 2]);
     });
 
+    it('protects a backtick fence with no closing line through the end of the answer', () => {
+        // CommonMark treats end-of-document as an implicit close for an unterminated fence. This matters
+        // because the answer streams in sentence by sentence: a partial draft can legitimately have
+        // emitted an opening fence but not its closer yet, and the code inside it must stay protected.
+        const answer = ['See below.[1]', '```python', 'const x = values[1];'].join('\n');
+        const result = renderCitationMarkers(answer, 1);
+        expect(result.html).toContain('```python\nconst x = values[1];');
+        expect(result.html).toContain('See below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect([...result.citedNumbers]).toEqual([1]);
+    });
+
+    it('protects a tilde fence with no closing line through the end of the answer', () => {
+        const answer = ['See below.[1]', '~~~python', 'const x = values[1];'].join('\n');
+        const result = renderCitationMarkers(answer, 1);
+        expect(result.html).toContain('~~~python\nconst x = values[1];');
+        expect(result.html).toContain('See below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect([...result.citedNumbers]).toEqual([1]);
+    });
+
     it('leaves a fenced code block untouched, including a real citation-shaped marker after it', () => {
         const answer = ['See the loop below.[1]', '```python', 'for i in range(3):', '    print(items[i])', '```', 'Iteration order matches the list.[2]'].join('\n');
         const result = renderCitationMarkers(answer, 2);

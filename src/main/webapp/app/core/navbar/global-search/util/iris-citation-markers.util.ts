@@ -47,6 +47,13 @@ const SINGLE_MARKER_REGEX = /\[(\d+)\]/g;
  * code sample) would close early and leak the rest of the real fenced block as prose; without the
  * at-least-as-long requirement, a valid longer closer is not recognized as closing the fence at all.
  *
+ * A fence with no legal closing line anywhere in the rest of the answer is still protected through the
+ * end of the answer, since CommonMark treats end-of-document as an implicit close for an unterminated
+ * fence. This is not an edge case here: the answer streams into the client sentence by sentence, so a
+ * partial draft can legitimately contain an opening fence whose closer the model has not emitted yet.
+ * Without this fallback, that in-progress code block's content (e.g. `values[1]`) would fall through to
+ * the citation scan on every render until the closer finally arrives.
+ *
  * Indented code blocks (no delimiter) are matched too, bounded to a run of such lines that starts at the
  * very beginning of the answer or right after a blank line — the same structural rule CommonMark itself
  * uses to tell a real indented code block from a paragraph or list item's continuation line. This is not
@@ -60,7 +67,7 @@ const SINGLE_MARKER_REGEX = /\[(\d+)\]/g;
  * trailing whitespace — still blank, so it must not be required to be a bare `\n\n`.
  */
 const CODE_SEGMENT_REGEX =
-    /(`{3,})[\s\S]*?\n[ ]{0,3}\1`*[ \t]*(?=\n|$)|(~~~+)[\s\S]*?\n[ ]{0,3}\2~*[ \t]*(?=\n|$)|(`+)(?:(?!\n[ \t]*\n)[\s\S])*?\3(?!`)|(?:^|\n[ \t]*\n)(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*(?:\n(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*)*/g;
+    /(`{3,})[\s\S]*?(?:\n[ ]{0,3}\1`*[ \t]*(?=\n|$)|$)|(~~~+)[\s\S]*?(?:\n[ ]{0,3}\2~*[ \t]*(?=\n|$)|$)|(`+)(?:(?!\n[ \t]*\n)[\s\S])*?\3(?!`)|(?:^|\n[ \t]*\n)(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*(?:\n(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*)*/g;
 
 export interface CitationRenderResult {
     /** The answer markdown with marker runs replaced by `<sup>` chip elements. */
