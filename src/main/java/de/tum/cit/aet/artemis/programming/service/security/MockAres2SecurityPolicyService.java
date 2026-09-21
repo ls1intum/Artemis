@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.security;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SECURITY_FRAMEWORK;
 
 import java.util.HexFormat;
 import java.util.concurrent.ThreadLocalRandom;
@@ -17,8 +17,13 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * Mock stand-in for Ares2's policy generation and repository sync. Instead of generating a real policy
  * and committing it to the exercise-tests repository, it logs the request and returns a synthetic commit
  * hash. Replace with a real Ares2-backed implementation when that integration lands.
+ * <p>
+ * Because it installs nothing, it - and the whole Security Framework feature - is registered only under the
+ * {@code securityframework} profile ({@link de.tum.cit.aet.artemis.core.config.Constants#PROFILE_SECURITY_FRAMEWORK}),
+ * never in a normal deployment. A deployment without that profile has no policy implementation and does not expose
+ * the feature at all, so activation can never report a committed and enforcing policy where none was installed.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_SECURITY_FRAMEWORK)
 @Lazy
 @Service
 public class MockAres2SecurityPolicyService implements Ares2SecurityPolicyService {

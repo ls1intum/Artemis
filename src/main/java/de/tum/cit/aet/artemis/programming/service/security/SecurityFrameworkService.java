@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.security;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SECURITY_FRAMEWORK;
 
 import java.time.Instant;
 import java.util.List;
@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkConfigDTO;
  * {@link Ares2FrameworkCompatibilityService} (both mocked until the real Ares2 integration exists). The
  * client owns the transient GENERATING/DELETING states while these calls are in flight.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_SECURITY_FRAMEWORK)
 @Lazy
 @Service
 public class SecurityFrameworkService {

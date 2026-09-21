@@ -417,6 +417,15 @@ public final class Constants {
     public static final String PROFILE_CORE = "core";
 
     /**
+     * The name of the Spring profile that enables the Security Framework prototype (Objective 1). The feature sits
+     * behind the Ares2 mock boundary and must not run in a normal deployment: only when this profile is active are
+     * the (mock) Ares2 beans, the {@code SecurityFrameworkService} and its REST controller created. Until the real
+     * Ares2 integration exists, this keeps activation from ever reporting a committed and enforcing policy where no
+     * policy is actually installed.
+     */
+    public static final String PROFILE_SECURITY_FRAMEWORK = "securityframework";
+
+    /**
      * The name of the Spring profile used for activating the scheduling functionality.
      * NOTE: please only use this profile if the service is not used in non-scheduling services or resources, otherwise the multi node configuration does not work.
      * If you need to communicate scheduling changes (e.g. based on exercise / lecture / slides changes) to node1 with scheduling active,

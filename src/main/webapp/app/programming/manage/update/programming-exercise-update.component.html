@@ -42,7 +42,7 @@
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
             />
             <hr class="mb-5" />
-            @if (isSimpleMode()) {
+            @if (isSimpleMode() && securityFrameworkEnabled()) {
                 <!-- Security Framework activation (Objective 1). Advanced-mode path-level permissions are a separate, not-yet-built step. -->
                 <jhi-programming-exercise-security
                     [programmingExercise]="programmingExercise"

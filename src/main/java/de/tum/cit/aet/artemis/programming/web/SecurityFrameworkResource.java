@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SECURITY_FRAMEWORK;
 
 import java.util.List;
 
@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.programming.service.security.SecurityFrameworkServ
  * states are a client concern - each endpoint here returns the settled config once the (mocked) Ares2
  * sync completes.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_SECURITY_FRAMEWORK)
 @Lazy
 @FeatureUsage("configuration/security-framework")
 @RestController

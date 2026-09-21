@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.security;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SECURITY_FRAMEWORK;
 
 import java.util.List;
 
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
  * Mock stand-in for Ares2's compatibility checks: a fixed list of supported framework versions. Replace
  * with a real Ares2-backed implementation when that integration lands.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_SECURITY_FRAMEWORK)
 @Lazy
 @Service
 public class MockAres2FrameworkCompatibilityService implements Ares2FrameworkCompatibilityService {
