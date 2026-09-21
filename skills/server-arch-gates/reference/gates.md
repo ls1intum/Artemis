@@ -212,6 +212,26 @@ or a bean can trip it, and the failure surfaces in a step whose name does not me
 Query Quality Check job in `.github/workflows/ci-quality.yml`. Reuse an existing counted method
 where you can. Local check: `supporting_scripts/find_slow_queries.py`.
 
+## Column mapping
+
+**Rule.** No field or method is annotated `@Lob`.
+
+**Enforced by.** `testNoLobAnnotation` in
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/ArchitectureTest.java`.
+
+**Why.** A CLOB on PostgreSQL is a large object: Hibernate writes the value into `pg_largeobject` and
+stores the object's id in the column, then reads the column back as that id. Every long text column
+here is Liquibase `clob` - `longtext` on MySQL, `text` on PostgreSQL - so the column holds the text
+itself, and a row written by anything but that same mapping fails the read with `Bad value for type
+long`, taking the whole query with it rather than just the one column. The large objects are never
+reclaimed either, because nothing unlinks them when the row is deleted.
+
+**What to write instead.** Nothing: a `String`, or an attribute converted to one, round-trips as text
+on both databases whatever its length, since a length in the mapping only shapes generated DDL and
+Artemis generates none (`Exercise.problemStatement`). For a structured value,
+`@JdbcTypeCode(SqlTypes.JSON)` over a `json` column (`IrisMessage.accessedMemories`) - at the cost of
+the column's equality operator on PostgreSQL, so a query fetching the entity cannot use `DISTINCT`.
+
 ## Database
 
 **No triggers and no stored routines.** The entity design is the place to express this instead.
