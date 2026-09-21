@@ -1,10 +1,13 @@
 package de.tum.cit.aet.artemis.iris.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -114,6 +117,22 @@ class IrisGlobalSearchResourceTest {
         verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(eq(requestDTO.query()), eq(requestDTO.limit()), eq(requestDTO.runId().toString()),
                 eq(AiSelectionDecision.CLOUD_AI), any(), eq(List.of()), eq((List<Long>) null), eq((List<Long>) null), eq(false));
         verify(pyrisJobService).addGlobalSearchAnswerJob(anyString(), anyString());
+    }
+
+    @Test
+    void ask_whenEntityPrefetchThrowsUnexpectedly_neverRegistersTheJobToken() {
+        // Anything other than WeaviateException (a stale/inaccessible course ID rejected by the strict
+        // access-filter path, or a repository/mapping failure) is not caught by fetchEntityCandidates.
+        // Prefetch must run BEFORE the job token is registered, so a synchronous failure here never
+        // leaves an orphaned distributed entry for a request Pyris was never asked to answer.
+        when(searchableEntityPrefetchApi.prefetchCandidates(eq(testUser), anyString(), anyInt(), eq((List<Long>) null), eq(List.of())))
+                .thenThrow(new RuntimeException("course 42 is no longer accessible"));
+
+        var requestDTO = new GlobalSearchAskRequestDTO("what is backpropagation", 5, UUID.randomUUID());
+
+        assertThatThrownBy(() -> resource.ask(requestDTO, principal)).isInstanceOf(RuntimeException.class).hasMessage("course 42 is no longer accessible");
+        verify(pyrisJobService, never()).addGlobalSearchAnswerJob(anyString(), anyString());
+        verify(pyrisConnectorService, never()).executeGlobalSearchIrisAnswer(any(), anyInt(), anyString(), any(), any(), any(), any(), any(), anyBoolean());
     }
 
     @Test

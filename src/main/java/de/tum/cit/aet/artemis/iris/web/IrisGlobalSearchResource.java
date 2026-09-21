@@ -190,22 +190,25 @@ public class IrisGlobalSearchResource {
         // failure, and must never leave an orphaned job token behind for that case.
         var excludedCourseIds = requestDTO.excludeCourseIds() == null ? List.<Long>of() : requestDTO.excludeCourseIds();
         var scope = lectureSearchScope(requestDTO.courseIds(), excludedCourseIds, accessContext);
-        pyrisJobService.addGlobalSearchAnswerJob(principal.getName(), requestDTO.runId().toString());
-        // Note: do NOT remove the job on exception here. Transport-level failures are ambiguous —
-        // Pyris may have received the request and already started the pipeline. Removing the token
-        // would break WebSocket routing for any callbacks that arrive later.
-        // Jobs expire automatically via the Hazelcast TTL (default 5 minutes).
         // Entity candidates are pre-fetched with the palette's access filtering, because channel
         // membership, exam registrations and role-dependent release rules only exist in the Artemis
         // database; Pyris renders them into cards and reranks them against the lecture content.
-        // A Weaviate hiccup here must not fail the whole answer: the job token above is already
-        // registered, so surfacing a 500 would strand it until the Hazelcast TTL clears it and give
-        // the student nothing, when the lecture-content-only answer could still have succeeded.
+        // Pre-fetched BEFORE the job token is registered, same reasoning as scope above: its strict
+        // access-filter path can throw synchronously on a stale or inaccessible course ID, and a
+        // repository or mapping failure can escape too, none of it a transport-level ambiguity, so
+        // none of it may leave an orphaned token behind either. A genuine Weaviate hiccup is still
+        // swallowed below rather than failing the whole answer, since the lecture-content-only
+        // answer could still succeed.
         // searchesNothing (every requested course excluded) still answers rather than short-circuiting
         // like /lecture-search does, but "search nothing" means nothing: entity candidates are skipped
         // entirely rather than falling back to an unscoped candidate search (an empty, non-null
         // courseIds list is read as "unscoped" by the access filter, not "scoped to nothing").
         List<PyrisEntityCandidateDTO> entityCandidates = scope.searchesNothing() ? List.of() : fetchEntityCandidates(user, requestDTO, scope.courseIds(), scope.excludeCourseIds());
+        pyrisJobService.addGlobalSearchAnswerJob(principal.getName(), requestDTO.runId().toString());
+        // Note: do NOT remove the job on exception here. Transport-level failures are ambiguous —
+        // Pyris may have received the request and already started the pipeline. Removing the token
+        // would break WebSocket routing for any callbacks that arrive later.
+        // Jobs expire automatically via the Hazelcast TTL (default 5 minutes).
         pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), selectedLlmUsage, accessContext,
                 entityCandidates, scope.courseIds(), scope.excludeCourseIds(), scope.searchesNothing());
         return ResponseEntity.accepted().build();
