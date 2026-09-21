@@ -812,8 +812,10 @@ page.
 
 ### Name Every Grouped Column
 
-MySQL accepts a selected column that is neither aggregated nor named in the `GROUP BY`; PostgreSQL rejects it.
-Name every non-aggregated column of the select list in the `GROUP BY`.
+Both databases reject a selected column that is neither aggregated nor grouped, but they draw the line in
+different places: MySQL applies `ONLY_FULL_GROUP_BY`, which is on by default and recognises some functional
+dependencies, and PostgreSQL accepts columns that are functionally dependent on a grouped primary key. Name
+every non-aggregated column of the select list in the `GROUP BY` and the query means the same thing on both.
 
 ## Solutions for Known Issues
 
