@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.AutoOrchestrationSummaryDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
  * orchestrator invocation, so the model reasons across all changed exercises at once rather than
  * one LLM call per exercise.
  */
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 @Profile(PROFILE_SCHEDULING)
 @Lazy
 @Component
