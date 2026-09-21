@@ -255,9 +255,35 @@ export class GlobalSearchIrisAnswerComponent {
         const bound = this.sources().length + this.entitySources().length || (this.isSettled() ? 0 : PARTIAL_CITATION_MARKER_BOUND);
         const start = this.revealStart();
         const tail = text.slice(start);
-        const animated = this.isStreaming() && start > 0 && tail.length > 0 && !tail.includes('\n');
+        const animated = this.isStreaming() && start > 0 && tail.length > 0 && !tail.includes('\n') && !this.startsInsideInlineCode(text, start);
         return renderCitationMarkers(animated ? `${text.slice(0, start)}<span class="iris-answer-tail">${tail}</span>` : text, bound);
     });
+
+    /**
+     * Whether `start` falls strictly inside a complete inline code span in `text` — between a backtick
+     * and its later matching closing backtick, both already present. Splicing the fade-tail `<span>` at
+     * such a position corrupts the markdown: markdown-it treats an HTML tag placed inside a code span as
+     * literal text rather than a real element, so the raw `<span>` markup stays visible until a later
+     * reveal step moves the boundary past the span. Skipping the animation for that one reveal step is a
+     * small cosmetic cost, not worth risking a corrupted render for.
+     */
+    private startsInsideInlineCode(text: string, start: number): boolean {
+        let spanStart = -1;
+        for (let i = 0; i < text.length; i++) {
+            if (text[i] !== '`') {
+                continue;
+            }
+            if (spanStart === -1) {
+                spanStart = i;
+            } else {
+                if (spanStart < start && start <= i) {
+                    return true;
+                }
+                spanStart = -1;
+            }
+        }
+        return false;
+    }
     /** Whether the answer carries inline citations; gates the chip numbering. */
     protected readonly hasCitations = computed(() => this.citationView().citedNumbers.size > 0);
     /** Only a settled answer can be clamped: a toggle means nothing while the text is still arriving. */

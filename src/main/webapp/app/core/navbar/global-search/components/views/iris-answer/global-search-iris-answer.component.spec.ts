@@ -1148,6 +1148,29 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             expect(component['displayedAnswer']()).not.toContain('[1');
         });
 
+        it('does not inject the fade-tail span inside a complete inline code span, which would corrupt the markdown', () => {
+            // Reproduces revealing the second word of `foo bar`: the reveal boundary lands between the
+            // words, strictly inside the backtick pair. Splicing the span there would put an HTML tag
+            // inside markdown-it's inline code span, which renders it as literal text instead of a chip.
+            startQuery();
+            // @ts-expect-error — accessing protected signal for testing
+            component.phase.set('answering');
+            // @ts-expect-error — accessing private signal for testing
+            component.progressiveReveal.set(true);
+            const answer = 'See `foo bar` for details.';
+            // @ts-expect-error — accessing protected signal for testing
+            component.irisResult.set({ answer, sources: [] });
+            // @ts-expect-error — accessing private signal for testing
+            component.revealStart.set(answer.indexOf('bar'));
+            // @ts-expect-error — accessing private signal for testing
+            component.revealedLength.set(answer.length);
+            fixture.detectChanges();
+
+            // @ts-expect-error — accessing protected computed for testing
+            const html = component.citationView().html;
+            expect(html).not.toContain('iris-answer-tail');
+        });
+
         it('shows an answer delivered in one piece immediately', () => {
             startQuery();
             askSubject.next({ runId: 'run-1', isThinking: false, answer: 'Signals are reactive.', sources: [] });
