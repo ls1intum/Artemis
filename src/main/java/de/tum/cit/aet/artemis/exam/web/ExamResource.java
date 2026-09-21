@@ -432,6 +432,18 @@ public class ExamResource {
             checkExamWorkingTimeLimitElseThrow(newDuration);
         }
 
+        // Test exams have an availability window independent of their regular working time.
+        int originalRegularWorkingTime = exam.isTestExam() ? originalWorkingTime : originalExamDuration;
+        // Validate every student projection before saving the exam, so overflow cannot leave a partial update.
+        try {
+            for (StudentExam studentExam : exam.getStudentExams()) {
+                ExamDateService.projectWorkingTimeAfterDurationChange(studentExam.getWorkingTime(), originalRegularWorkingTime, workingTimeChange);
+            }
+        }
+        catch (ArithmeticException exception) {
+            throw new BadRequestAlertException("The resulting student working time exceeds the supported range.", ENTITY_NAME, "examTimes");
+        }
+
         // 1. Update the end date & working time of the exam
         exam.setEndDate(exam.getEndDate().plusSeconds(workingTimeChange));
         exam.setWorkingTime((int) newWorkingTime);
@@ -444,8 +456,6 @@ public class ExamResource {
         examRepository.save(exam);
 
         // 2. Re-calculate the working times of all student exams
-        // Test exams have an availability window independent of their regular working time.
-        int originalRegularWorkingTime = exam.isTestExam() ? originalWorkingTime : originalExamDuration;
         examService.updateStudentExamsAndRescheduleExercises(exam, originalRegularWorkingTime, workingTimeChange);
         if (automaticAfterDueDateService.isPresent()) {
             automaticAfterDueDateService.orElseThrow().updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam(exam, originalLatestExamEndDateWithGrace)

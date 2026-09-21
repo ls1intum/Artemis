@@ -718,6 +718,36 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
                 .satisfies(updatedStudentExam -> assertThat(updatedStudentExam.workingTime()).isEqualTo(extendedWorkingTime));
     }
 
+    private static Stream<Arguments> projectedStudentWorkingTimeBounds() {
+        return Stream.of(false, true)
+                .flatMap(testExam -> Stream.of(Arguments.of(testExam, 2_592_000, false), Arguments.of(testExam, 2_486_000, false), Arguments.of(testExam, 2_485_513, true)));
+    }
+
+    @ParameterizedTest
+    @MethodSource("projectedStudentWorkingTimeBounds")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExamWorkingTime_validatesProjectedStudentWorkingTime(boolean testExam, int studentWorkingTime, boolean representable) throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        exam.setTestExam(testExam);
+        exam.setStartDate(exam.getStartDate().truncatedTo(ChronoUnit.SECONDS));
+        exam.setWorkingTime(3000);
+        exam.setEndDate(exam.getStartDate().plusSeconds(testExam ? 6600 : 3000));
+        exam = examRepository.save(exam);
+        StudentExam studentExam = examUtilService.addStudentExamWithUserAndWorkingTime(exam, student1, 3000);
+        String examUrl = "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId();
+        // These individual allowances are accepted by the public endpoint before scaling the regular working time.
+        request.patch(examUrl + "/student-exams/" + studentExam.getId() + "/working-time", studentWorkingTime, HttpStatus.OK);
+
+        request.patch(examUrl + "/working-time", 2_589_000, representable ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
+
+        ExamDTO savedExam = request.get(examUrl, HttpStatus.OK, ExamDTO.class);
+        assertThat(savedExam.workingTime()).isEqualTo(representable ? 2_592_000 : 3000);
+        assertThat(savedExam.endDate().toInstant()).isEqualTo(exam.getEndDate().plusSeconds(representable ? 2_589_000 : 0).toInstant());
+        List<StudentExamDTO> studentExams = request.getList(examUrl + "/student-exams", HttpStatus.OK, StudentExamDTO.class);
+        assertThat(studentExams).filteredOn(candidate -> candidate.id() == studentExam.getId()).singleElement()
+                .satisfies(savedStudentExam -> assertThat(savedStudentExam.workingTime()).isEqualTo(representable ? 2_147_483_232 : studentWorkingTime));
+    }
+
     @ParameterizedTest
     @ValueSource(ints = { -1, 0 })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
