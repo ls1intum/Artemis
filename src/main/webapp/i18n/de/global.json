@@ -377,6 +377,7 @@
                     "required": "Bitte gib dein aktuelles Passwort ein."
                 },
                 "newpassword": {
+                    "maxbytes": "Dein Passwort ist zu lang. Verwende höchstens {{max}} UTF-8-Bytes; Umlaute und Emojis können jeweils mehrere Bytes benötigen.",
                     "required": "Ein neues Passwort wird benötigt.",
                     "minlength": "Das neue Passwort muss mindestens {{min}} Zeichen lang sein",
                     "maxlength": "Das neue Passwort darf nicht länger als {{max}} Zeichen sein",
