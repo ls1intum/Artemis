@@ -226,6 +226,29 @@ describe('renderCitationMarkers', () => {
         expect([...result.citedNumbers]).toEqual([2]);
     });
 
+    it('opens an indented tilde fence up to 3 leading spaces in', () => {
+        // CommonMark allows a fence opener up to 3 columns in (4+ makes it an indented code block
+        // instead). An anchor that only recognized a fence starting at column 0 would miss this one
+        // entirely, letting values[1] inside it fall through as citable prose.
+        const answer = ['See below.[1]', '   ~~~python', '   const x = values[1];', '   ~~~', 'Done.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('   ~~~python\n   const x = values[1];\n   ~~~');
+        expect(result.html).toContain('See below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
+
+    it('treats a line-start triple-backtick run with a backtick in its info string as an inline span, not a fence', () => {
+        // CommonMark: a backtick fence's info string may not itself contain a backtick. Without that
+        // check, this line-start run is misread as a fence opener whose closer is mid-line — no legal
+        // closing FENCE LINE ever follows it, so the EOF fallback would swallow the real [2] citation.
+        const answer = ['```values[1]``` more text.', 'Done.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('```values[1]```');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([2]);
+    });
+
     it('still opens a fence at the very start of the answer', () => {
         const answer = ['```python', 'const x = values[1];', '```', 'Done.[1]'].join('\n');
         const result = renderCitationMarkers(answer, 1);

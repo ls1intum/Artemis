@@ -55,14 +55,23 @@ const SINGLE_MARKER_REGEX = /\[(\d+)\]/g;
  * the citation scan on every render until the closer finally arrives.
  *
  * A run of 3+ backticks or tildes only opens a FENCE at a legal fence-opening position: the very start
- * of the answer, or right after a newline (CommonMark also allows up to 3 leading spaces there, which
- * this scan does not special-case since the prompt never indents a fence opener). Anywhere else — most
- * commonly a multi-backtick inline span used mid-sentence, e.g. `` ```values[1]``` `` — a leading
- * backtick run is NOT a fence opener and must fall through to the inline-span alternative instead. This
- * matters together with the EOF fallback above: an unanchored fence alternative would misread a mid-line
- * multi-backtick span as an unterminated fence opener (no legal closing FENCE LINE ever follows one,
- * since its own closer is mid-line too) and, via that EOF fallback, swallow everything from the span to
- * the end of the answer as "code," dropping every real citation after it.
+ * of the answer, or right after a newline, with up to 3 leading spaces (CommonMark allows the fence
+ * character itself to sit up to 3 columns in; 4+ leading spaces makes it an indented code block instead,
+ * which the last alternative below already covers). Anywhere else — most commonly a multi-backtick
+ * inline span used mid-sentence, e.g. `` ```values[1]``` `` — a leading backtick run is NOT a fence
+ * opener and must fall through to the inline-span alternative instead. This matters together with the
+ * EOF fallback above: an unanchored fence alternative would misread a mid-line multi-backtick span as an
+ * unterminated fence opener (no legal closing FENCE LINE ever follows one, since its own closer is
+ * mid-line too) and, via that EOF fallback, swallow everything from the span to the end of the answer as
+ * "code," dropping every real citation after it.
+ *
+ * A backtick fence's opening line may not itself contain a backtick after the opening run (CommonMark:
+ * "If the info string comes after a backtick fence, it may not contain any backtick characters" — this
+ * restriction does not apply to tilde fences). Without checking for one, a line-start triple-backtick
+ * run whose own closer sits later on the SAME line, e.g. `` ```values[1]``` `` `, is misread as a fence
+ * opener too: no legal closing FENCE LINE ever follows it either, so the same EOF fallback would swallow
+ * everything after it. Requiring the rest of the opening line to be backtick-free sends that case to the
+ * inline-span alternative instead, which closes correctly at the matching backtick run.
  *
  * Indented code blocks (no delimiter) are matched too, bounded to a run of such lines that starts at the
  * very beginning of the answer or right after a blank line — the same structural rule CommonMark itself
@@ -77,7 +86,7 @@ const SINGLE_MARKER_REGEX = /\[(\d+)\]/g;
  * trailing whitespace — still blank, so it must not be required to be a bare `\n\n`.
  */
 const CODE_SEGMENT_REGEX =
-    /(?<=^|\n)(`{3,})[\s\S]*?(?:\n[ ]{0,3}\1`*[ \t]*(?=\n|$)|$)|(?<=^|\n)(~~~+)[\s\S]*?(?:\n[ ]{0,3}\2~*[ \t]*(?=\n|$)|$)|(`+)(?:(?!\n[ \t]*\n)[\s\S])*?\3(?!`)|(?:^|\n[ \t]*\n)(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*(?:\n(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*)*/g;
+    /(?<=^|\n)[ ]{0,3}(`{3,})(?=[^`\n]*(?:\n|$))[\s\S]*?(?:\n[ ]{0,3}\1`*[ \t]*(?=\n|$)|$)|(?<=^|\n)[ ]{0,3}(~~~+)[\s\S]*?(?:\n[ ]{0,3}\2~*[ \t]*(?=\n|$)|$)|(`+)(?:(?!\n[ \t]*\n)[\s\S])*?\3(?!`)|(?:^|\n[ \t]*\n)(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*(?:\n(?:[ ]{4,}|[ ]{0,3}\t)[^\n]*)*/g;
 
 export interface CitationRenderResult {
     /** The answer markdown with marker runs replaced by `<sup>` chip elements. */
