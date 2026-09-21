@@ -80,6 +80,36 @@ function computeEagerSet(outputs, startChunk) {
     return visited;
 }
 
+const APP_PREFIX = 'src/main/webapp/app/';
+const TOP_MODULE_COUNT = 2;
+
+/** Readable owner of one metafile input: the npm package for vendor code, the bare file name for app code. */
+function ownerOf(inputPath) {
+    const normalized = inputPath.replace(/\\/g, '/');
+    const pkg = normalized.match(/.*node_modules\/((?:@[^/]+\/)?[^/]+)/);
+    if (pkg) return pkg[1];
+    return normalized.startsWith(APP_PREFIX) ? normalized.slice(normalized.lastIndexOf('/') + 1) : normalized;
+}
+
+/**
+ * Names the largest contributors to a chunk so a reader can tell WHY it is in a route's eager set:
+ * a content-hashed filename like chunk-PSZYCLZY.js says nothing, "course/overview/course-exercises/
+ * course-exercises.component.ts" does. Bytes are summed per owner, so a package that spreads over
+ * hundreds of files counts once.
+ */
+function describeChunk(inputs) {
+    const bytesByOwner = new Map();
+    for (const [path, info] of Object.entries(inputs ?? {})) {
+        const owner = ownerOf(path);
+        bytesByOwner.set(owner, (bytesByOwner.get(owner) ?? 0) + (info.bytesInOutput ?? 0));
+    }
+    const ranked = [...bytesByOwner.entries()].sort((a, b) => b[1] - a[1]);
+    return {
+        topModules: ranked.slice(0, TOP_MODULE_COUNT).map(([owner]) => owner),
+        moreModules: Math.max(0, ranked.length - TOP_MODULE_COUNT),
+    };
+}
+
 function analyzeRoute(outputs, routeName, entrySourcePath) {
     const match = findEntryChunk(outputs, entrySourcePath);
     if (!match) {
@@ -88,15 +118,28 @@ function analyzeRoute(outputs, routeName, entrySourcePath) {
     const [entryChunk] = match;
     const eagerSet = computeEagerSet(outputs, entryChunk);
 
+    // Static-import edges inside the eager set, recorded so the diff can tell the chunk a change
+    // was introduced through from the dependency tree it dragged in behind it.
+    const parentsByChunk = new Map([...eagerSet].map((file) => [file, []]));
+    for (const file of eagerSet) {
+        for (const imp of outputs[file].imports ?? []) {
+            if (imp.kind === EAGER_KIND && parentsByChunk.has(imp.path)) parentsByChunk.get(imp.path).push(file);
+        }
+    }
+
     const chunks = [...eagerSet]
         .map((file) => ({
             chunk: file,
             // Stable identity across builds: output filenames are content-hashed and change on
             // every commit even for logically unchanged chunks, so filename can't be used to
             // detect "is this chunk new" across builds. The set of source inputs is stable.
-            moduleKey: Object.keys(outputs[file].inputs ?? {}).sort().join('|'),
+            moduleKey: Object.keys(outputs[file].inputs ?? {})
+                .sort()
+                .join('|'),
             entryPoint: outputs[file].entryPoint ?? null,
             bytes: outputs[file].bytes,
+            parents: parentsByChunk.get(file),
+            ...describeChunk(outputs[file].inputs),
         }))
         .sort((a, b) => b.bytes - a.bytes);
 

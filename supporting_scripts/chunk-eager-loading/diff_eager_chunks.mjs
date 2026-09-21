@@ -61,6 +61,73 @@ function loadJson(path) {
     return JSON.parse(readFileSync(path, 'utf8'));
 }
 
+/**
+ * A long list of changed chunks is mostly one static import's dependency tree, so the size-sorted
+ * list buries the actual cause. The roots are the changed chunks that the rest of the change hangs
+ * off -- candidates are changed chunks an UNCHANGED chunk (or the route's own chunk) imports, and
+ * the greedy pick below keeps the ones that explain the most changed bytes -- each with the changed
+ * subtree it drags in behind it. Needs the per-chunk `parents` edges, which reports from before
+ * they were recorded lack; those yield no roots and the plain list is shown instead.
+ */
+function findRoots(route, changedKeys) {
+    if (!route.chunks.every((c) => Array.isArray(c.parents))) return [];
+    const byFile = new Map(route.chunks.map((c) => [c.chunk, c]));
+    const isChanged = (file) => changedKeys.has(byFile.get(file).moduleKey);
+    const children = new Map(route.chunks.map((c) => [c.chunk, []]));
+    for (const c of route.chunks) {
+        for (const parent of c.parents) children.get(parent).push(c.chunk);
+    }
+
+    const roots = [];
+    for (const c of route.chunks.filter((chunk) => isChanged(chunk.chunk))) {
+        const unchangedParents = c.parents.filter((p) => !isChanged(p));
+        if (c.parents.length > 0 && unchangedParents.length === 0) continue; // only reached through another changed chunk
+
+        const subtree = new Set([c.chunk]);
+        const stack = [c.chunk];
+        while (stack.length > 0) {
+            for (const child of children.get(stack.pop())) {
+                if (isChanged(child) && !subtree.has(child)) {
+                    subtree.add(child);
+                    stack.push(child);
+                }
+            }
+        }
+        roots.push({
+            chunk: c.chunk,
+            topModules: c.topModules ?? [],
+            moreModules: c.moreModules ?? 0,
+            via:
+                unchangedParents.length > 0
+                    ? unchangedParents.map((p) => (p === route.entryChunk ? route.route : (byFile.get(p).topModules?.[0] ?? p)))
+                    : ["the route's own chunk"],
+            subtree,
+        });
+    }
+
+    // esbuild lists every chunk a chunk needs, not only the immediate ones, so a route's own chunk
+    // is a direct parent of nearly everything and "has an unchanged parent" alone cannot separate
+    // the cause from its dependencies. What does separate them is reach: the chunk at the top of
+    // the added tree needs the most other changed chunks. Pick greedily -- the root covering the most
+    // not-yet-explained bytes, then the next for whatever is left -- so each chunk is attributed to
+    // exactly one root and independent causes still show up as separate entries.
+    const explained = new Set();
+    const chosen = [];
+    for (let remaining = roots; remaining.length > 0;) {
+        const scored = remaining.map((root) => {
+            const files = [...root.subtree].filter((file) => !explained.has(file));
+            return { root, files, bytes: files.reduce((sum, file) => sum + byFile.get(file).bytes, 0) };
+        });
+        const best = scored.reduce((a, b) => (b.bytes > a.bytes ? b : a));
+        if (best.files.length === 0) break;
+        best.files.forEach((file) => explained.add(file));
+        const { subtree: _subtree, ...root } = best.root;
+        chosen.push({ ...root, subtreeCount: best.files.length, subtreeBytes: best.bytes });
+        remaining = remaining.filter((r) => r !== best.root);
+    }
+    return chosen;
+}
+
 function diffRoute(routeName, baselineRoute, freshRoute) {
     if (!baselineRoute || baselineRoute.error) return { route: routeName, skipped: baselineRoute?.error ? `baseline error: ${baselineRoute.error}` : 'no baseline data' };
     if (!freshRoute || freshRoute.error) return { route: routeName, skipped: freshRoute?.error ? `fresh error: ${freshRoute.error}` : 'no fresh data' };
@@ -90,6 +157,8 @@ function diffRoute(routeName, baselineRoute, freshRoute) {
         bytesDeltaPct,
         newChunks,
         removedChunks,
+        newRoots: findRoots(freshRoute, new Set(newChunks.map((c) => c.moduleKey))),
+        removedRoots: findRoots(baselineRoute, new Set(removedChunks.map((c) => c.moduleKey))),
     };
 }
 
@@ -103,6 +172,59 @@ function fmtPct(pct) {
 }
 
 const STATUS_MARKER = { regressed: '⚠️', improved: '✅', unchanged: '➖' };
+
+/**
+ * One drill-down bullet. The content-hashed filename alone says nothing about why a chunk is
+ * there, so the largest source modules are appended. Reports from before that field existed
+ * (an older baseline) simply omit it.
+ */
+function chunkLine(c) {
+    const modules = (c.topModules ?? []).map((m) => `\`${m}\``).join(', ');
+    const more = c.moreModules > 0 ? ` (+${c.moreModules} more)` : '';
+    return `- \`${c.chunk}\`${c.entryPoint ? ` (${c.entryPoint})` : ''} — ${fmtKB(c.bytes)}${modules ? ` — ${modules}${more}` : ''}`;
+}
+
+const MAX_LISTED_ROOTS = 5;
+const MAX_LISTED_CHUNKS = 15;
+
+/**
+ * Renders one route's drill-down. When the reports carry import edges, the roots (the static
+ * imports that caused the change) come first and the full size-sorted chunk list is folded away;
+ * without edges (an older baseline) only the plain list is shown, as before.
+ */
+function renderDrillDown(lines, heading, rootsLabel, roots, chunks) {
+    lines.push('');
+    if (roots.length === 0) {
+        lines.push(`${heading}:`);
+        appendChunkList(lines, chunks);
+        return;
+    }
+    lines.push(`${heading}, through ${roots.length} static import(s):`);
+    for (const r of roots.slice(0, MAX_LISTED_ROOTS)) {
+        const modules = r.topModules.map((m) => `\`${m}\``).join(', ');
+        const more = r.moreModules > 0 ? ` (+${r.moreModules} more)` : '';
+        const via = [...new Set(r.via)].map((v) => `\`${v}\``).join(', ');
+        lines.push(`- ${rootsLabel} ${via}: ${modules}${more} (\`${r.chunk}\`) — ${r.subtreeCount} chunk(s), ${fmtKB(r.subtreeBytes)} including its dependencies`);
+    }
+    if (roots.length > MAX_LISTED_ROOTS) {
+        lines.push(`- _...and ${roots.length - MAX_LISTED_ROOTS} more._`);
+    }
+    lines.push('');
+    lines.push(`<details><summary>All ${chunks.length} chunk(s), largest first</summary>`);
+    lines.push('');
+    appendChunkList(lines, chunks);
+    lines.push('');
+    lines.push('</details>');
+}
+
+function appendChunkList(lines, chunks) {
+    for (const c of chunks.slice(0, MAX_LISTED_CHUNKS)) {
+        lines.push(chunkLine(c));
+    }
+    if (chunks.length > MAX_LISTED_CHUNKS) {
+        lines.push(`- _...and ${chunks.length - MAX_LISTED_CHUNKS} more._`);
+    }
+}
 
 function toMarkdown(diffs, meta) {
     const regressed = diffs.filter((d) => d.status === 'regressed');
@@ -143,26 +265,12 @@ function toMarkdown(diffs, meta) {
 
     for (const d of regressed) {
         if (d.newChunks.length === 0) continue; // size-only regression, nothing new to list
-        lines.push('');
-        lines.push(`**${d.route}** — ${d.newChunks.length} new chunk(s) became eager-reachable:`);
-        for (const c of d.newChunks.slice(0, 15)) {
-            lines.push(`- \`${c.chunk}\`${c.entryPoint ? ` (${c.entryPoint})` : ''} — ${fmtKB(c.bytes)}`);
-        }
-        if (d.newChunks.length > 15) {
-            lines.push(`- _...and ${d.newChunks.length - 15} more._`);
-        }
+        renderDrillDown(lines, `**${d.route}** — ${d.newChunks.length} new chunk(s) became eager-reachable`, 'Pulled in by', d.newRoots, d.newChunks);
     }
 
     for (const d of improved) {
         if (d.removedChunks.length === 0) continue; // size-only improvement, nothing removed to list
-        lines.push('');
-        lines.push(`**${d.route}** — ${d.removedChunks.length} chunk(s) are no longer eager-reachable:`);
-        for (const c of d.removedChunks.slice(0, 15)) {
-            lines.push(`- \`${c.chunk}\`${c.entryPoint ? ` (${c.entryPoint})` : ''} — ${fmtKB(c.bytes)}`);
-        }
-        if (d.removedChunks.length > 15) {
-            lines.push(`- _...and ${d.removedChunks.length - 15} more._`);
-        }
+        renderDrillDown(lines, `**${d.route}** — ${d.removedChunks.length} chunk(s) are no longer eager-reachable`, 'No longer pulled in by', d.removedRoots, d.removedChunks);
     }
 
     return lines.join('\n');
