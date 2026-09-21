@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.localci.repository;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.Locale;
 
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
@@ -106,8 +107,8 @@ public final class BuildJobSpecs {
      * evaluated once per {@code build_job} row, whereas the uncorrelated form lets the optimizer drop the branch entirely when no course title matches — the common case
      * when searching by repository name.
      * <p>
-     * Both sides use a leading wildcard, which no index can serve; making this sargable would need prefix matching or a full-text index and is deliberately out of scope. Case
-     * sensitivity is intentionally left as-is (the database collation decides, as before) so that this stays a pure performance change.
+     * Both sides use a leading wildcard, which no index can serve; making this sargable would need prefix matching or a full-text index and is deliberately out of scope. Both
+     * sides are lower cased, because PostgreSQL compares case sensitively and leaving the question to the collation would make the same search behave differently per database.
      *
      * @param searchTerm the term to search for, or null/blank for no filter
      * @return specification matching the search term, or null
@@ -116,12 +117,12 @@ public final class BuildJobSpecs {
         if (searchTerm == null || searchTerm.isBlank()) {
             return null;
         }
-        final String pattern = "%" + searchTerm + "%";
+        final String pattern = "%" + searchTerm.toLowerCase(Locale.ROOT) + "%";
         return (root, query, cb) -> {
             Subquery<Long> matchingCourseIds = query.subquery(Long.class);
             Root<Course> course = matchingCourseIds.from(Course.class);
-            matchingCourseIds.select(course.get(DomainObject_.ID)).where(cb.like(course.get(Course_.TITLE), pattern));
-            return cb.or(cb.like(root.get(BuildJob_.REPOSITORY_NAME), pattern), root.get(BuildJob_.COURSE_ID).in(matchingCourseIds));
+            matchingCourseIds.select(course.get(DomainObject_.ID)).where(cb.like(cb.lower(course.get(Course_.TITLE)), pattern));
+            return cb.or(cb.like(cb.lower(root.get(BuildJob_.REPOSITORY_NAME)), pattern), root.get(BuildJob_.COURSE_ID).in(matchingCourseIds));
         };
     }
 
