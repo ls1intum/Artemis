@@ -259,7 +259,7 @@ public class LocalCIResultProcessingService {
         BuildStatus buildStatus = determineBuildStatus(buildJob, buildException);
 
         SecurityUtils.setSystemAuthorizationObject();
-        Optional<Participation> participationOptional = participationRepository.findWithProgrammingExerciseWithBuildConfigById(buildJob.participationId());
+        Optional<Participation> participationOptional = participationRepository.findWithProgrammingExerciseById(buildJob.participationId());
 
         try {
             if (participationOptional.isPresent()) {
@@ -267,7 +267,7 @@ public class LocalCIResultProcessingService {
 
                 // In case the participation does not contain the exercise, we have to load it from the database
                 if (participation.getProgrammingExercise() == null) {
-                    participation.setProgrammingExercise(programmingExerciseRepository.getProgrammingExerciseWithBuildConfigFromParticipation(participation));
+                    participation.setProgrammingExercise(programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation));
                 }
 
                 boolean testsExpected = buildJob.buildConfig().areTestsExpected();
@@ -292,7 +292,7 @@ public class LocalCIResultProcessingService {
             processedResults.incrementAndGet();
             ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participationOptional.orElse(null);
             if (programmingExerciseParticipation != null && programmingExerciseParticipation.getExercise() == null) {
-                ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigFromParticipation(programmingExerciseParticipation);
+                ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingExerciseParticipation);
                 programmingExerciseParticipation.setExercise(exercise);
                 programmingExerciseParticipation.setProgrammingExercise(exercise);
             }
@@ -420,14 +420,14 @@ public class LocalCIResultProcessingService {
                 return false;
             }
             BuildJob buildJob = anyJob.get();
-            Optional<Participation> participationOptional = participationRepository.findWithProgrammingExerciseWithBuildConfigById(buildJob.getParticipationId());
+            Optional<Participation> participationOptional = participationRepository.findWithProgrammingExerciseById(buildJob.getParticipationId());
             if (participationOptional.isEmpty()) {
                 log.warn("Participation with id {} of build group {} has been deleted. The group is not finalized.", buildJob.getParticipationId(), buildGroupId);
                 return false;
             }
             ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
             if (participation.getProgrammingExercise() == null) {
-                participation.setProgrammingExercise(programmingExerciseRepository.getProgrammingExerciseWithBuildConfigFromParticipation(participation));
+                participation.setProgrammingExercise(programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation));
             }
             // Every job of the group has finished (that is what the query selected), so the number of finished jobs is the
             // number the group waited for. The result completes when its last job did.

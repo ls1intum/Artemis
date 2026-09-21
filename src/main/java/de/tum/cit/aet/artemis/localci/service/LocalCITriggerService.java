@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -173,7 +174,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      */
     @Override
     public SharedBuildTriggerData prepareSharedTriggerData(ProgrammingExercise exercise) {
-        return SharedBuildTriggerData.of(getCommitHashOrNull(exercise.getVcsTestRepositoryUri(), "test repository"), loadBuildStatistics(exercise));
+        return SharedBuildTriggerData.of(getCommitHashOrNull(exercise.getVcsTestRepositoryUri(), "test repository"), loadBuildStatistics(exercise), loadBuildConfig(exercise));
     }
 
     /**
@@ -257,7 +258,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         String buildJobId = String.valueOf(participation.getId()) + submissionDate.toInstant().toEpochMilli();
 
-        var programmingExerciseBuildConfig = loadBuildConfig(programmingExercise);
+        var programmingExerciseBuildConfig = sharedData.resolved() ? sharedData.buildConfig() : loadBuildConfig(programmingExercise);
 
         var buildStatistics = sharedData.resolved() ? sharedData.buildStatistics() : loadBuildStatistics(programmingExercise);
 
@@ -354,7 +355,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
 
-        List<AuxiliaryRepository> auxiliaryRepositories;
+        Collection<AuxiliaryRepository> auxiliaryRepositories;
 
         // If the auxiliary repositories are not initialized, we need to fetch them from the database.
         if (Hibernate.isInitialized(participation.getProgrammingExercise().getAuxiliaryRepositories())) {
@@ -446,8 +447,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      */
     private List<ContainerBuild> resolveContainerBuilds(ProgrammingExerciseParticipation participation, String commitHashToBuild, String assignmentCommitHash,
             String testCommitHash, ProgrammingExerciseBuildConfig buildConfig) throws LocalCIException {
-        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-        programmingExercise.setBuildConfig(buildConfig);
         BuildPlanPhasesDTO buildPlanPhasesDTO;
         try {
             buildPlanPhasesDTO = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildConfig.getBuildPlanConfiguration());
@@ -495,9 +494,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         ProjectType projectType = programmingExercise.getProjectType();
         boolean staticCodeAnalysisEnabled = programmingExercise.isStaticCodeAnalysisEnabled();
         boolean sequentialTestRunsEnabled = buildConfig.hasSequentialTestRuns();
-        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
+        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig, programmingExercise);
 
-        final List<BuildPhaseDTO> phases = container == null ? buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise) : container.phases();
+        final List<BuildPhaseDTO> phases = container == null ? buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise, buildConfig) : container.phases();
         final String configuredDockerImage = container == null ? buildPlanPhasesDTO.dockerImage() : container.dockerImage();
         final String dockerImage = configuredDockerImage == null ? buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise) : configuredDockerImage;
 
@@ -506,7 +505,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         final Set<String> resultPathsSet = BuildPhaseEvaluationService.gatherResultPaths(activePhases);
         final List<String> resultPaths = finalizeResultPaths(buildConfig, resultPathsSet.stream());
 
-        final String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(programmingExercise.getBuildConfig(), activePhases);
+        final String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(buildConfig, activePhases);
 
         // the exercise timeout has to cover the slowest container; a container can bound its own job more tightly
         final int timeoutSeconds = container != null && container.timeoutSeconds() != null ? container.timeoutSeconds() : buildConfig.getTimeoutSeconds();
@@ -523,7 +522,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     }
 
     private ProgrammingExerciseBuildConfig loadBuildConfig(ProgrammingExercise programmingExercise) {
-        return programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise);
+        return programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
     }
 
     /**

@@ -13,7 +13,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
@@ -48,10 +48,11 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         String projectKey = programmingExercise.getProjectKey();
         programmingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
         // Set the branch to null to force the usage of LocalVCService#getDefaultBranch().
-        programmingExercise.getBuildConfig().setBranch(null);
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setBranch(null);
+        programmingExerciseBuildConfigRepository.save(buildConfig);
         programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         // Prepare the template repository to copy the student assignment repository from.
         String templateRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
@@ -62,16 +63,16 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
 
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
-                StudentParticipation.class, HttpStatus.CREATED);
+        StudentParticipationDTO participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
+                StudentParticipationDTO.class, HttpStatus.CREATED);
         assertThat(participation).isNotNull();
-        assertThat(participation.isPracticeMode()).isFalse();
-        assertThat(participation.getStudent()).contains(user);
+        assertThat(participation.testRun()).isFalse();
+        assertThat(participation.student().getId()).isEqualTo(user.getId());
         LocalVCRepositoryUri studentAssignmentRepositoryUri = new LocalVCRepositoryUri(localVCBaseUri, projectKey,
                 projectKey.toLowerCase(Locale.ROOT) + "-" + TEST_PREFIX + "student1");
         assertThat(studentAssignmentRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
 
-        var vcsAccessToken = request.get("/api/account/participation-vcs-access-token?participationId=" + participation.getId(), HttpStatus.OK, String.class);
+        var vcsAccessToken = request.get("/api/account/participation-vcs-access-token?participationId=" + participation.id(), HttpStatus.OK, String.class);
         assertThat(vcsAccessToken).isNotNull();
         assertThat(vcsAccessToken).startsWith("vcpat");
 
@@ -84,7 +85,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         String projectKey = programmingExercise.getProjectKey();
         programmingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         // Prepare the template repository to copy the student assignment repository from.
         String templateRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
@@ -95,8 +96,8 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         LocalVCTestRepository templateRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug);
 
-        StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
-                StudentParticipation.class, HttpStatus.CREATED);
+        StudentParticipationDTO participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
+                StudentParticipationDTO.class, HttpStatus.CREATED);
         assertThat(participation).isNotNull();
 
         // The stored template repository URI should have been repaired to the canonical local VC format
@@ -112,7 +113,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         String projectKey = programmingExercise.getProjectKey();
         programmingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         // Prepare the template repository (with the conventional slug) to copy the student assignment repository from.
         String templateRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
@@ -123,8 +124,8 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         LocalVCTestRepository templateRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateRepositorySlug);
 
-        StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
-                StudentParticipation.class, HttpStatus.CREATED);
+        StudentParticipationDTO participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
+                StudentParticipationDTO.class, HttpStatus.CREATED);
         assertThat(participation).isNotNull();
 
         // The stored template repository URI should have been repaired to point to the existing repository
@@ -140,7 +141,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         String projectKey = programmingExercise.getProjectKey();
         programmingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         // The stored URI points to a repository that really exists, but in a different project. The copy always reads from the project key of this exercise, so
         // accepting the stored URI would make the copy look for a repository that does not exist and skip the repair entirely (see issue #12840).
@@ -155,8 +156,8 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + foreignProjectKey + "/" + foreignRepositorySlug + ".git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
 
-        StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
-                StudentParticipation.class, HttpStatus.CREATED);
+        StudentParticipationDTO participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
+                StudentParticipationDTO.class, HttpStatus.CREATED);
         assertThat(participation).isNotNull();
 
         // The URI must be repaired to the conventional repository of this exercise, not left pointing at the other project

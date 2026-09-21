@@ -18,7 +18,6 @@ import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
@@ -68,41 +67,12 @@ public class RepositoryParticipationService {
     }
 
     /**
-     * Checks out the repository for the given participation and returns its files together with their content.
-     * <p>
-     * The owning {@link ProgrammingExercise} is taken as an explicit parameter and attached to the participation here, so
-     * resolving the branch (which needs the exercise id) never relies on a lazily-loaded back-reference being hydrated
-     * by the caller. This avoids a hidden precondition (and a {@code LazyInitializationException} when the participation
-     * was loaded in a different persistence context).
-     * <p>
-     * This method performs <strong>no</strong> authorization check — the caller is responsible for ensuring the current
-     * user may read the participation's repository.
-     *
-     * @param participation the (solution/template/student) participation whose repository files are requested
-     * @param exercise      the owning programming exercise (used to resolve the repository branch)
-     * @param omitBinaries  whether to omit binary files to reduce the payload size
-     * @return a map of file path to file content
-     */
-    public Map<String, String> getFilesContentFromWorkingCopy(ProgrammingExerciseParticipation participation, ProgrammingExercise exercise, boolean omitBinaries) {
-        participation.setProgrammingExercise(exercise);
-        try {
-            Repository repository = getRepositoryFromGitService(true, participation);
-            return repositoryService.getFilesContentFromWorkingCopy(repository, omitBinaries);
-        }
-        catch (GitAPIException e) {
-            throw new InternalServerErrorException("Could not retrieve the repository files content for participation " + participation.getId());
-        }
-    }
-
-    /**
      * Returns the files of the participation's repository as they are in its latest commit, read directly from the bare
      * repository.
      * <p>
-     * Prefer this over {@link #getFilesContentFromWorkingCopy(ProgrammingExerciseParticipation, ProgrammingExercise, boolean)}
-     * whenever the caller only needs the committed state. The working copy variant checks the repository out on the
-     * server and pulls it on every single request, which costs a clone, a pull and disk space, while this one reads the
-     * bare repository in place. Only use the working copy when uncommitted changes made through the online editor have
-     * to be visible.
+     * Reading the bare repository in place is what makes this cheap. Checking the working copy out on the server
+     * instead costs a clone, a pull and disk space on every single request, which is only worth paying when
+     * uncommitted changes made through the online editor have to be visible.
      * <p>
      * Binary files are never included, because the content is returned as a {@link String}.
      *

@@ -15,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 @Entity
 @Table(name = "build_job")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@AggregateRoot("Build queue record; `result_id` is a reference, not a parent.")
 public class BuildJob extends DomainObject {
 
     @Column(name = "build_job_id")

@@ -598,7 +598,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
     void testInstructorResultsPreservedWhenStudentContainerTimesOutEndToEnd() throws Exception {
         String instructorImage = "mc-instructor:timeout";
         String studentImage = "mc-student:timeout";
-        ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+        ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
         int originalTimeout = buildConfig.getTimeoutSeconds();
         try (ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1)) {
             configureTwoContainerPlan(instructorImage, studentImage);
@@ -683,7 +683,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         BuildContainerDTO instructorContainer = new BuildContainerDTO(INSTRUCTOR_CONTAINER, instructorImage, List.of(new BuildContainerRepositoryDTO(RepositoryType.TESTS)),
                 List.of(instructorPhase));
         BuildContainerDTO studentContainer = new BuildContainerDTO(STUDENT_CONTAINER, studentImage, List.of(), List.of(studentPhase));
-        ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+        ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
         buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(instructorContainer, studentContainer)).toBuildPlanConfiguration());
         programmingExerciseBuildConfigRepository.save(buildConfig);
     }

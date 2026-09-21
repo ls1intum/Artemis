@@ -46,7 +46,7 @@ public final class BuildPlanConfigurationValidator {
 
     /**
      * Validates that a build plan can be executed, i.e. that it defines at least one container, that the container names
-     * are unique, and that every container has valid build phases. A legacy build plan that carries a flat list of phases
+     * are unique, and that every container has a usable Docker image and valid build phases. A legacy build plan that carries a flat list of phases
      * is validated as the single container it is normalized into.
      *
      * @param buildPlan the build plan to validate
@@ -62,16 +62,29 @@ public final class BuildPlanConfigurationValidator {
         final Set<String> containerNames = new HashSet<>();
         for (final BuildContainerDTO container : containers) {
             validateContainerName(container, containerNames);
+            validateDockerImageOf(container);
             validatePhasesOf(container);
         }
     }
 
     private static void validateContainerName(BuildContainerDTO container, Set<String> alreadyUsedNames) {
+        // bean validation only covers the build plan endpoint; a build plan that arrives as JSON inside the build config of
+        // an exercise update can still carry a null container
+        if (container == null) {
+            throw badRequest("Invalid build container name", "invalidBuildContainerName", Map.of("container", ""));
+        }
         if (container.name() == null || !BuildContainerDTO.BUILD_CONTAINER_NAME_PATTERN.matcher(container.name()).matches()) {
             throw badRequest("Invalid build container name", "invalidBuildContainerName", Map.of("container", String.valueOf(container.name())));
         }
         if (!alreadyUsedNames.add(container.name().toLowerCase(Locale.ROOT))) {
             throw badRequest("Build container names must be unique", "duplicateBuildContainerName", Map.of("container", container.name()));
+        }
+    }
+
+    private static void validateDockerImageOf(BuildContainerDTO container) {
+        // null selects the default image of the exercise; a blank image would be persisted verbatim and fail every build
+        if (container.dockerImage() != null && container.dockerImage().isBlank()) {
+            throw new BadRequestAlertException("The Docker image must not be blank", ENTITY_NAME, "blankDockerImage");
         }
     }
 

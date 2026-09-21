@@ -1,22 +1,25 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { convertDateFromClient } from 'app/foundation/util/date.utils';
+import { convertDateFromClient, convertDateStringFromServer } from 'app/foundation/util/date.utils';
 
 export interface CleanupServiceExecutionRecordDTO {
     executionDate: dayjs.Dayjs;
     jobType: string;
 }
 
-export interface CleanupCount {
-    totalCount: number;
-}
+/**
+ * A count response read dynamically: one number per affected entity type, whatever the server reports. The concrete
+ * types below name their entities and are declared as type aliases, so that they stay assignable here while still
+ * rejecting a misspelled key (an interface extending this index signature would accept any key).
+ *
+ * There is deliberately no `totalCount`: no server count DTO has such a field, and declaring one made the dialog list a
+ * phantom, untranslated `totalCount` row while the real counts were still loading.
+ */
+export type CleanupCount = Record<string, number>;
 
-export interface OrphanCleanupCountDTO extends CleanupCount {
-    orphanFeedback: number;
-    orphanLongFeedbackText: number;
-    orphanTextBlock: number;
+export type OrphanCleanupCountDTO = {
     orphanStudentScore: number;
     orphanTeamScore: number;
     orphanFeedbackForOrphanResults: number;
@@ -25,49 +28,91 @@ export interface OrphanCleanupCountDTO extends CleanupCount {
     orphanRating: number;
     orphanResultsWithoutParticipation: number;
     orphanFeedbackMessage: number;
-}
+};
 
-export interface PlagiarismComparisonCleanupCountDTO extends CleanupCount {
+export type PlagiarismComparisonCleanupCountDTO = {
     plagiarismComparison: number;
     plagiarismElements: number;
     plagiarismSubmissions: number;
     plagiarismMatches: number;
-}
+};
 
-export interface NonLatestNonRatedResultsCleanupCountDTO extends CleanupCount {
+export type NonLatestNonRatedResultsCleanupCountDTO = {
     longFeedbackText: number;
     textBlock: number;
     feedback: number;
-}
+};
 
-export interface NonLatestRatedResultsCleanupCountDTO extends CleanupCount {
+export type NonLatestRatedResultsCleanupCountDTO = {
     longFeedbackText: number;
     textBlock: number;
     feedback: number;
-}
+};
 
-export interface SubmissionVersionsCleanupCountDTO extends CleanupCount {
+export type SubmissionVersionsCleanupCountDTO = {
     submissionVersions: number;
-}
+};
 
-export interface OldCoursesCleanupCountDTO extends CleanupCount {
+export type OldCoursesCleanupCountDTO = {
     courses: number;
-}
+};
 
-export interface OldFeedbackCleanupCountDTO extends CleanupCount {
+export type OldFeedbackCleanupCountDTO = {
     longFeedbackText: number;
     textBlock: number;
     feedback: number;
-}
+};
 
-export interface NotEnrolledUsersCleanupCountDTO extends CleanupCount {
+export type NotEnrolledUsersCleanupCountDTO = {
     users: number;
     blockedUsers: number;
+};
+
+export type PlagiarismCasesCleanupCountDTO = {
+    plagiarismCases: number;
+};
+
+/**
+ * The effective retention cutoffs of the age-based cleanup operations. Every cutoff comes as the configured period plus
+ * the concrete point in time the operation would apply if it ran now, so the admin page can name the affected data
+ * instead of vaguely referring to the configuration in the YAML.
+ */
+export interface CleanupConfiguration {
+    gradeRelevantRetentionYears: number;
+    gradeRelevantCoursesEndedBefore: dayjs.Dayjs;
+    nonGradeRelevantRetentionYears: number;
+    nonGradeRelevantCoursesEndedBefore: dayjs.Dayjs;
+    resetWarningGracePeriodDays: number;
+    coursesWarnedBefore: dayjs.Dayjs;
+    oldFeedbackCutoffWeeks: number;
+    oldFeedbackCoursesEndedBefore: dayjs.Dayjs;
+    oldSubmissionVersionsCutoffWeeks: number;
+    oldSubmissionVersionsCoursesEndedBefore: dayjs.Dayjs;
+    notEnrolledUsersInactivityMonths: number;
+    usersInactiveBefore: dayjs.Dayjs;
+    notEnrolledUsersWarningGracePeriodDays: number;
+    usersWarnedBefore: dayjs.Dayjs;
 }
 
-export interface PlagiarismCasesCleanupCountDTO extends CleanupCount {
-    plagiarismCases: number;
+/** The configuration as it arrives on the wire, with the cutoffs still ISO strings. */
+interface CleanupConfigurationResponse extends Omit<CleanupConfiguration, CleanupConfigurationDateField> {
+    gradeRelevantCoursesEndedBefore: string;
+    nonGradeRelevantCoursesEndedBefore: string;
+    coursesWarnedBefore: string;
+    oldFeedbackCoursesEndedBefore: string;
+    oldSubmissionVersionsCoursesEndedBefore: string;
+    usersInactiveBefore: string;
+    usersWarnedBefore: string;
 }
+
+type CleanupConfigurationDateField =
+    | 'gradeRelevantCoursesEndedBefore'
+    | 'nonGradeRelevantCoursesEndedBefore'
+    | 'coursesWarnedBefore'
+    | 'oldFeedbackCoursesEndedBefore'
+    | 'oldSubmissionVersionsCoursesEndedBefore'
+    | 'usersInactiveBefore'
+    | 'usersWarnedBefore';
 
 @Injectable({ providedIn: 'root' })
 export class DataCleanupService {
@@ -187,6 +232,31 @@ export class DataCleanupService {
      */
     deletePlagiarismCases(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
         return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/plagiarism-cases`, { observe: 'response' });
+    }
+
+    /**
+     * Send GET request to get the effective retention cutoffs of the age-based operations.
+     * The cutoffs arrive as ISO strings and are converted to dayjs here, so callers can format them directly.
+     */
+    getCleanupConfiguration(): Observable<CleanupConfiguration> {
+        return this.http.get<CleanupConfigurationResponse>(`${this.adminResourceUrl}/configuration`).pipe(
+            map((configuration) => ({
+                gradeRelevantRetentionYears: configuration.gradeRelevantRetentionYears,
+                gradeRelevantCoursesEndedBefore: cutoff(configuration.gradeRelevantCoursesEndedBefore),
+                nonGradeRelevantRetentionYears: configuration.nonGradeRelevantRetentionYears,
+                nonGradeRelevantCoursesEndedBefore: cutoff(configuration.nonGradeRelevantCoursesEndedBefore),
+                resetWarningGracePeriodDays: configuration.resetWarningGracePeriodDays,
+                coursesWarnedBefore: cutoff(configuration.coursesWarnedBefore),
+                oldFeedbackCutoffWeeks: configuration.oldFeedbackCutoffWeeks,
+                oldFeedbackCoursesEndedBefore: cutoff(configuration.oldFeedbackCoursesEndedBefore),
+                oldSubmissionVersionsCutoffWeeks: configuration.oldSubmissionVersionsCutoffWeeks,
+                oldSubmissionVersionsCoursesEndedBefore: cutoff(configuration.oldSubmissionVersionsCoursesEndedBefore),
+                notEnrolledUsersInactivityMonths: configuration.notEnrolledUsersInactivityMonths,
+                usersInactiveBefore: cutoff(configuration.usersInactiveBefore),
+                notEnrolledUsersWarningGracePeriodDays: configuration.notEnrolledUsersWarningGracePeriodDays,
+                usersWarnedBefore: cutoff(configuration.usersWarnedBefore),
+            })),
+        );
     }
 
     /**
@@ -317,4 +387,30 @@ export class DataCleanupService {
     countPlagiarismCases(): Observable<HttpResponse<PlagiarismCasesCleanupCountDTO>> {
         return this.http.get<PlagiarismCasesCleanupCountDTO>(`${this.adminResourceUrl}/plagiarism-cases/count`, { observe: 'response' });
     }
+}
+
+/** An ISO-8601 instant as the server serializes a `ZonedDateTime`, captured down to its calendar date. */
+const ISO_INSTANT = /^(\d{4})-(\d{2})-(\d{2})T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
+
+/**
+ * Parses a cutoff sent by the server, rejecting anything that is not exactly one calendar instant.
+ *
+ * Both lenient outcomes of a bare `dayjs()` are wrong here, on the one page whose purpose is stating exact dates:
+ * `dayjs(undefined)` yields *now*, and `dayjs('2024-02-30T00:00:00Z')` yields 1 March with `isValid()` true, because
+ * dayjs normalizes an out-of-range day instead of refusing it. Both would read as a plausible but wrong cutoff, so the
+ * shape and the calendar date are checked before the value is accepted.
+ */
+function cutoff(value: string): dayjs.Dayjs {
+    const match = ISO_INSTANT.exec(value ?? '');
+    const parsed = match && convertDateStringFromServer(value);
+    if (!parsed?.isValid() || !isRealCalendarDate(match![1], match![2], match![3])) {
+        throw new Error(`The cleanup configuration has no usable cutoff: received ${String(value)}`);
+    }
+    return parsed;
+}
+
+/** Whether the year/month/day triple survives a UTC round trip, i.e. is a date that exists. */
+function isRealCalendarDate(year: string, month: string, day: string): boolean {
+    const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+    return date.getUTCFullYear() === Number(year) && date.getUTCMonth() === Number(month) - 1 && date.getUTCDate() === Number(day);
 }

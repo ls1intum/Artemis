@@ -195,6 +195,9 @@ export class UserManagementUpdateComponent implements OnInit {
         // temporarily store the user organizations because they are not part of the edit form
         const userOrganizations = this.user().organizations;
         const updatedUser: User = this.editForm.getRawValue();
+        // An omitted password generates a random one for new users and keeps it unchanged for existing users.
+        // The form clears the control to an empty string, which the server rejects as a too-short password.
+        updatedUser.password = updatedUser.password || undefined;
         updatedUser.organizations = userOrganizations;
         if (updatedUser.id) {
             updatedUser.revokeCredentials = !!updatedUser.password && this.revokeCredentials();

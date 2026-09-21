@@ -50,9 +50,9 @@ import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.ut
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
-import { TumUiDoughnutChartComponent, TumUiDoughnutChartConfig } from '@tumaet/ui-angular';
+import { TumUiButtonDirective, TumUiDoughnutChartComponent, TumUiDoughnutChartConfig } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
-import { faCheckCircle, faCircleInfo, faExclamationTriangle, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faCircleInfo, faExclamationTriangle, faFlag, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { isManualResult } from 'app/exercise/result/result.utils';
 import { TutorParticipationGraphComponent } from 'app/exercise/dashboards/tutor-participation-graph/tutor-participation-graph.component';
@@ -100,6 +100,7 @@ export interface ExampleSubmissionQueryParams {
         TutorParticipationGraphComponent,
         SecondCorrectionEnableButtonComponent,
         TumUiDoughnutChartComponent,
+        TumUiButtonDirective,
         SidePanelComponent,
         TranslateDirective,
         RouterLink,
@@ -292,6 +293,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     faSort = faSort;
     faExclamationTriangle = faExclamationTriangle;
     faListAlt = faListAlt;
+    faFlag = faFlag;
     faCircleInfo = faCircleInfo;
 
     /**

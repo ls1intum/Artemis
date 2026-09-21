@@ -1620,7 +1620,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
         assertThat(studentExamRepository.findAllTestRunsByExamId(exam.getId())).hasSize(3);
 
-        request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
         assertThat(courseRepository.findById(course.getId())).isEmpty();
         assertThat(examRepository.findById(exam.getId())).isEmpty();
@@ -3147,8 +3147,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         }
         Exercise importedProgrammingExercise = received.getExerciseGroups().get(4).getExercises().iterator().next();
         ProgrammingExercise importedExerciseWithAllData = programmingExerciseRepository
-                .findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigAndGradingCriteria(
-                        importedProgrammingExercise.getId())
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndGradingCriteria(importedProgrammingExercise.getId())
                 .orElseThrow();
         assertThat(importedExerciseWithAllData.getGradingCriteria()).hasSize(2);
     }

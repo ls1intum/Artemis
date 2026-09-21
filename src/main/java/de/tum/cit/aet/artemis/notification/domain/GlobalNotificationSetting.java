@@ -10,6 +10,7 @@ import jakarta.persistence.UniqueConstraint;
 import org.jspecify.annotations.NonNull;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 @Entity
 @Table(name = "global_notification_setting", uniqueConstraints = @UniqueConstraint(columnNames = { "user_id", "global_notification_type" }))
@@ -17,6 +18,7 @@ public class GlobalNotificationSetting extends DomainObject {
 
     @NonNull
     @Column(name = "user_id", nullable = false)
+    @Parent
     private Long userId;
 
     @Enumerated(EnumType.STRING)

@@ -1,7 +1,11 @@
 package de.tum.cit.aet.artemis.localci.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -9,6 +13,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -34,6 +39,7 @@ import de.tum.cit.aet.artemis.programming.dto.AutomaticAfterDueDatePreviewReques
 import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseBuildPlanConfigurationDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
@@ -59,10 +65,20 @@ class AutomaticAfterDueDateServiceTest {
 
     private AutomaticAfterDueDateService service;
 
+    private ProgrammingExerciseBuildConfig buildConfig;
+
     @BeforeEach
     void setUp() {
         service = new AutomaticAfterDueDateService(programmingExerciseRepository, Optional.of(examDateApi), buildPhasesTemplateService, programmingExerciseBuildConfigRepository,
                 Optional.of(examApi));
+        // The exercise does not carry its configuration, so the repository hands back the one the fixture built.
+        lenient().when(programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(anyLong())).thenAnswer(invocation -> buildConfig);
+        // The exam path reads them all in one query instead, projected down to the build plan, so the same fixture answers for every exercise asked for.
+        lenient().when(programmingExerciseBuildConfigRepository.findBuildPlanConfigurationsByProgrammingExerciseIds(any())).thenAnswer(invocation -> {
+            Collection<Long> exerciseIds = invocation.getArgument(0);
+            return exerciseIds.stream().map(exerciseId -> new ProgrammingExerciseBuildPlanConfigurationDTO(exerciseId, exerciseId, buildConfig.getBuildPlanConfiguration()))
+                    .toList();
+        });
     }
 
     @Test
@@ -70,7 +86,7 @@ class AutomaticAfterDueDateServiceTest {
         var dueDate = BASE_TIME.plusDays(1);
         var exercise = createCourseExercise(dueDate, BuildPhaseCondition.AFTER_DUE_DATE);
 
-        var result = service.computeBuildAndTestDate(exercise, null);
+        var result = service.computeBuildAndTestDate(exercise, buildConfig, null);
 
         assertThat(result).isEqualTo(dueDate.plusMinutes(15));
     }
@@ -80,7 +96,7 @@ class AutomaticAfterDueDateServiceTest {
         var exercise = createCourseExercise(null, BuildPhaseCondition.AFTER_DUE_DATE);
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(BASE_TIME.plusHours(2));
 
-        var result = service.computeBuildAndTestDate(exercise, null);
+        var result = service.computeBuildAndTestDate(exercise, buildConfig, null);
 
         assertThat(result).isNull();
     }
@@ -91,7 +107,7 @@ class AutomaticAfterDueDateServiceTest {
         var exercise = createCourseExercise(dueDate, BuildPhaseCondition.ALWAYS);
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(BASE_TIME.plusHours(2));
 
-        var result = service.computeBuildAndTestDate(exercise, null);
+        var result = service.computeBuildAndTestDate(exercise, buildConfig, null);
 
         assertThat(result).isNull();
     }
@@ -102,14 +118,14 @@ class AutomaticAfterDueDateServiceTest {
         var updatedDueDate = originalDueDate.plusHours(3);
         var exercise = createCourseExercise(originalDueDate, BuildPhaseCondition.AFTER_DUE_DATE);
 
-        var firstResult = service.computeBuildAndTestDate(exercise, null);
+        var firstResult = service.computeBuildAndTestDate(exercise, buildConfig, null);
         assertThat(firstResult).isEqualTo(originalDueDate.plusMinutes(15));
 
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(firstResult);
         exercise.setDueDate(updatedDueDate);
 
         var offset = Duration.between(originalDueDate, firstResult);
-        var secondResult = service.computeBuildAndTestDate(exercise, offset);
+        var secondResult = service.computeBuildAndTestDate(exercise, buildConfig, offset);
         assertThat(secondResult).isEqualTo(updatedDueDate.plusMinutes(15));
     }
 
@@ -121,7 +137,7 @@ class AutomaticAfterDueDateServiceTest {
         var exercise = createCourseExercise(updatedDueDate, BuildPhaseCondition.AFTER_DUE_DATE);
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(originalBuildAndTestDate);
 
-        var result = service.computeBuildAndTestDate(exercise, Duration.between(originalDueDate, originalBuildAndTestDate));
+        var result = service.computeBuildAndTestDate(exercise, buildConfig, Duration.between(originalDueDate, originalBuildAndTestDate));
 
         assertThat(result).isEqualTo(updatedDueDate.plusMinutes(15));
     }
@@ -131,15 +147,15 @@ class AutomaticAfterDueDateServiceTest {
         var dueDate = BASE_TIME.plusDays(1);
         var exercise = createCourseExercise(dueDate, BuildPhaseCondition.ALWAYS);
 
-        var firstResult = service.computeBuildAndTestDate(exercise, null);
+        var firstResult = service.computeBuildAndTestDate(exercise, buildConfig, null);
         assertThat(firstResult).isNull();
 
-        exercise.setBuildConfig(createBuildConfig(BuildPhaseCondition.AFTER_DUE_DATE));
-        var secondResult = service.computeBuildAndTestDate(exercise, null);
+        buildConfig = createBuildConfig(BuildPhaseCondition.AFTER_DUE_DATE);
+        var secondResult = service.computeBuildAndTestDate(exercise, buildConfig, null);
         assertThat(secondResult).isEqualTo(dueDate.plusMinutes(15));
 
-        exercise.setBuildConfig(createBuildConfig(BuildPhaseCondition.ALWAYS));
-        var thirdResult = service.computeBuildAndTestDate(exercise, null);
+        buildConfig = createBuildConfig(BuildPhaseCondition.ALWAYS);
+        var thirdResult = service.computeBuildAndTestDate(exercise, buildConfig, null);
         assertThat(thirdResult).isNull();
     }
 
@@ -154,9 +170,9 @@ class AutomaticAfterDueDateServiceTest {
                 List.of(new BuildPhaseDTO("build", "echo build", BuildPhaseCondition.ALWAYS, false, List.of())));
         var secondContainer = new BuildContainerDTO("tests", "ghcr.io/example-image",
                 List.of(new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"))));
-        exercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(firstContainer, secondContainer)).toBuildPlanConfiguration());
+        buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(firstContainer, secondContainer)).toBuildPlanConfiguration());
 
-        var result = service.computeBuildAndTestDate(exercise, null);
+        var result = service.computeBuildAndTestDate(exercise, buildConfig, null);
 
         assertThat(result).isEqualTo(dueDate.plusMinutes(15));
     }
@@ -205,7 +221,7 @@ class AutomaticAfterDueDateServiceTest {
         when(examDateApi.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam())).thenReturn(latestExamEndDate);
         when(examApi.findByExerciseId(exercise.getId())).thenReturn(Optional.of(exercise.getExam()));
 
-        var result = service.computeBuildAndTestDate(exercise, null);
+        var result = service.computeBuildAndTestDate(exercise, buildConfig, null);
 
         assertThat(result).isEqualTo(latestExamEndDate.plusSeconds(180).plusMinutes(15));
     }
@@ -236,12 +252,49 @@ class AutomaticAfterDueDateServiceTest {
         verify(programmingExerciseRepository).saveAll(anyList());
     }
 
+    /**
+     * The recomputation runs on every change to an exam's timing and reads the build plan of every programming
+     * exercise in it. The exercise does not carry its configuration, so that read is a query of its own - and it has
+     * to stay one query for the whole exam rather than one per exercise.
+     */
+    @Test
+    void updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam_readsEveryBuildPlanInOneQuery() throws JacksonException {
+        var latestExamEndDate = BASE_TIME.plusDays(2);
+        var firstExercise = createExamExercise(BASE_TIME.plusDays(1), BuildPhaseCondition.AFTER_DUE_DATE, 120);
+        firstExercise.setId(101L);
+
+        var exerciseGroup = firstExercise.getExerciseGroup();
+        var exam = exerciseGroup.getExam();
+        exam.setId(100L);
+        var secondExercise = examExerciseIn(exerciseGroup, 102L);
+        var thirdExercise = examExerciseIn(exerciseGroup, 103L);
+        exerciseGroup.setExercises(Set.of(firstExercise, secondExercise, thirdExercise));
+        exam.setExerciseGroups(List.of(exerciseGroup));
+
+        when(examDateApi.getLatestIndividualExamEndDate(exam)).thenReturn(latestExamEndDate);
+        when(programmingExerciseRepository.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam(exam, null);
+
+        // The point of the assertion: one projection over all three, not one read per exercise.
+        verify(programmingExerciseBuildConfigRepository).findBuildPlanConfigurationsByProgrammingExerciseIds(anyCollection());
+        verify(programmingExerciseBuildConfigRepository, never()).getProgrammingExerciseBuildConfigElseThrow(anyLong());
+    }
+
+    private static ProgrammingExercise examExerciseIn(ExerciseGroup exerciseGroup, long id) {
+        var exercise = new ProgrammingExercise();
+        exercise.setId(id);
+        exercise.setExerciseGroup(exerciseGroup);
+        return exercise;
+    }
+
     @Test
     void updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam_doesNotSaveWhenDateUnchanged() throws JacksonException {
         var examId = 43L;
         var dueDate = BASE_TIME.plusDays(1);
         var latestExamEndDate = BASE_TIME.plusDays(2);
         var exercise = createExamExercise(dueDate, BuildPhaseCondition.AFTER_DUE_DATE, 90);
+        exercise.setId(44L);
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(latestExamEndDate.plusSeconds(90).plusMinutes(15));
 
         var exam = exercise.getExerciseGroup().getExam();
@@ -379,17 +432,21 @@ class AutomaticAfterDueDateServiceTest {
         assertThat(previewDate).isEqualTo(latestExamEndDate.plusSeconds(120).plusMinutes(15));
     }
 
-    private static ProgrammingExercise createCourseExercise(ZonedDateTime dueDate, BuildPhaseCondition phaseCondition) throws JacksonException {
+    /**
+     * Builds an exercise and stores the configuration it is read with in {@link #buildConfig}: the exercise does not
+     * carry its configuration, so both are handed to the service side by side.
+     */
+    private ProgrammingExercise createCourseExercise(ZonedDateTime dueDate, BuildPhaseCondition phaseCondition) throws JacksonException {
         var exercise = new ProgrammingExercise();
         exercise.setDueDate(dueDate);
-        exercise.setBuildConfig(createBuildConfig(phaseCondition));
+        buildConfig = createBuildConfig(phaseCondition);
         return exercise;
     }
 
-    private static ProgrammingExercise createExamExercise(ZonedDateTime dueDate, BuildPhaseCondition phaseCondition, int gracePeriod) throws JacksonException {
+    private ProgrammingExercise createExamExercise(ZonedDateTime dueDate, BuildPhaseCondition phaseCondition, int gracePeriod) throws JacksonException {
         var exercise = new ProgrammingExercise();
         exercise.setDueDate(dueDate);
-        exercise.setBuildConfig(createBuildConfig(phaseCondition));
+        buildConfig = createBuildConfig(phaseCondition);
 
         var exam = new Exam();
         exam.setGracePeriod(gracePeriod);

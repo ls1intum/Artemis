@@ -14,8 +14,27 @@
         @for (operation of cleanupOperations(); track operation.name) {
             <tr [attr.data-testid]="'cleanup-row-' + operation.name">
                 <td>
-                    <span [jhiTranslate]="'cleanupService.operation.' + operation.name"></span>
-                    <jhi-help-icon class="ps-1" text="{{ 'cleanupService.tooltip.' + operation.name }}" />
+                    <div>
+                        <span [jhiTranslate]="'cleanupService.operation.' + operation.name"></span>
+                        <jhi-help-icon class="ps-1" text="{{ 'cleanupService.tooltip.' + operation.name }}" />
+                    </div>
+                    <!-- A line that quotes a cutoff would render as a sentence with a hole in it before the configuration
+                         arrives, so it waits for it, and says so instead of staying half-written if the request failed. -->
+                    @let description = descriptions()[operation.name];
+                    @if (description || !quotesCutoff[operation.name]) {
+                        <div
+                            class="text-muted-color text-sm"
+                            [attr.data-testid]="'cleanup-description-' + operation.name"
+                            [jhiTranslate]="'cleanupService.description.' + operation.name"
+                            [translateValues]="description"
+                        ></div>
+                    } @else if (configurationFailed()) {
+                        <div
+                            class="text-muted-color text-sm"
+                            [attr.data-testid]="'cleanup-description-' + operation.name"
+                            jhiTranslate="cleanupService.descriptionUnavailable"
+                        ></div>
+                    }
                 </td>
                 <td>
                     @if (!operation.ageBased) {
@@ -62,15 +81,14 @@
                 <td>
                     <button
                         tumUiButton
-                        id="execute-operation"
-                        severity="danger"
+                        [severity]="actionPresentation[operation.action].severity"
                         size="small"
                         [disabled]="!operation.datesValid() || !operation.deleteFromValid() || !operation.deleteToValid()"
                         (click)="openCleanupOperationModal(operation)"
                         data-testid="execute-operation"
                     >
-                        <fa-icon [icon]="faTrash" />
-                        <span jhiTranslate="entity.action.delete"></span>
+                        <fa-icon [icon]="actionPresentation[operation.action].icon" />
+                        <span [jhiTranslate]="actionPresentation[operation.action].labelKey"></span>
                     </button>
                 </td>
             </tr>

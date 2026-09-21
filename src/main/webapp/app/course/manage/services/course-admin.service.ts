@@ -1,31 +1,27 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 import { Course } from 'app/course/shared/entities/course.model';
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
-import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseSummaryDTO } from 'app/course/shared/entities/course-summary.model';
 import { CourseOperationProgressDTO } from 'app/course/shared/entities/course-operation-progress.model';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { toCourseCreateDTO } from 'app/course/shared/entities/course-update-dto.model';
 
-export type EntityResponseType = HttpResponse<Course>;
-export type EntityArrayResponseType = HttpResponse<Course[]>;
-
 @Injectable({ providedIn: 'root' })
 export class CourseAdminService {
     private http = inject(HttpClient);
-    private courseManagementService = inject(CourseManagementService);
 
     private resourceUrl = 'api/admin/courses';
 
     /**
-     * creates a course using a POST request
+     * Creates a course using a POST request. The server answers with the id of the new course only;
+     * the course management shell loads the course itself when the client navigates there.
      * @param course - the course to be created on the server
      * @param courseImage - the course icon file
      */
-    create(course: Course, courseImage?: Blob): Observable<EntityResponseType> {
+    create(course: Course, courseImage?: Blob): Observable<HttpResponse<{ id: number }>> {
         const dto = toCourseCreateDTO(course);
         const formData = new FormData();
         formData.append('course', objectToJsonBlob(dto));
@@ -34,9 +30,7 @@ export class CourseAdminService {
             formData.append('file', courseImage, 'placeholderName.png');
         }
 
-        return this.http
-            .post<Course>(this.resourceUrl, formData, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.courseManagementService.processCourseEntityResponseType(res)));
+        return this.http.post<{ id: number }>(this.resourceUrl, formData, { observe: 'response' });
     }
 
     /**

@@ -96,7 +96,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
                 List.of(new BuildPhaseDTO("phase_a", "echo a", BuildPhaseCondition.ALWAYS, false, List.of("results/a/*.xml"))));
         BuildContainerDTO containerB = new BuildContainerDTO("container_b", "image-b:2",
                 List.of(new BuildPhaseDTO("phase_b", "echo b", BuildPhaseCondition.ALWAYS, false, List.of("results/b/*.xml"))));
-        ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+        ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
         buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(containerA, containerB)).toBuildPlanConfiguration());
         programmingExerciseBuildConfigRepository.save(buildConfig);
 
@@ -199,7 +199,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
                 List.of(new BuildPhaseDTO("phase_a", "echo a", BuildPhaseCondition.ALWAYS, false, List.of("results/a/*.xml"))));
         BuildContainerDTO studentContainer = new BuildContainerDTO("student_tests", "image-b:2",
                 List.of(new BuildPhaseDTO("phase_b", "echo b", BuildPhaseCondition.ALWAYS, false, List.of("results/b/*.xml"))));
-        ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+        ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
         buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(instructorContainer, studentContainer)).toBuildPlanConfiguration());
         programmingExerciseBuildConfigRepository.save(buildConfig);
 

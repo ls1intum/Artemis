@@ -235,7 +235,7 @@ public class CourseDataRetentionService {
     }
 
     private boolean isPastRetentionDeadline(Course course, ZonedDateTime now) {
-        return course.getEndDate() != null && course.getEndDate().isBefore(now.minusYears(retentionYears(course)));
+        return course.getEndDate().isBefore(now.minusYears(retentionYears(course)));
     }
 
     private int retentionYears(Course course) {
