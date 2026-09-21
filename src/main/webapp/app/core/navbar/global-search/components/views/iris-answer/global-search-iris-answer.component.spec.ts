@@ -1194,6 +1194,51 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             expect(html).not.toContain('iris-answer-tail');
         });
 
+        it('does not inject the fade-tail span inside a still-streaming backtick fence with no closer yet', () => {
+            // The closing ``` has not arrived, but the block is already "inside code" as far as
+            // Markdown is concerned from the moment the opening fence line appeared — the closer
+            // does not need to exist yet for that to be true, unlike an inline span.
+            startQuery();
+            // @ts-expect-error — accessing protected signal for testing
+            component.phase.set('answering');
+            // @ts-expect-error — accessing private signal for testing
+            component.progressiveReveal.set(true);
+            const answer = '```js\nconst value = foo bar';
+            // @ts-expect-error — accessing protected signal for testing
+            component.irisResult.set({ answer, sources: [] });
+            // @ts-expect-error — accessing private signal for testing
+            component.revealStart.set(answer.indexOf('bar'));
+            // @ts-expect-error — accessing private signal for testing
+            component.revealedLength.set(answer.length);
+            fixture.detectChanges();
+
+            // @ts-expect-error — accessing protected computed for testing
+            const html = component.citationView().html;
+            expect(html).not.toContain('iris-answer-tail');
+        });
+
+        it('does not inject the fade-tail span inside a tilde fence either', () => {
+            // CommonMark's other fenced-code-block delimiter; the inline-span guard only ever looks
+            // at backticks, so a tilde fence needs its own check.
+            startQuery();
+            // @ts-expect-error — accessing protected signal for testing
+            component.phase.set('answering');
+            // @ts-expect-error — accessing private signal for testing
+            component.progressiveReveal.set(true);
+            const answer = '~~~js\nconst value = foo bar\n~~~';
+            // @ts-expect-error — accessing protected signal for testing
+            component.irisResult.set({ answer, sources: [] });
+            // @ts-expect-error — accessing private signal for testing
+            component.revealStart.set(answer.indexOf('bar'));
+            // @ts-expect-error — accessing private signal for testing
+            component.revealedLength.set(answer.length);
+            fixture.detectChanges();
+
+            // @ts-expect-error — accessing protected computed for testing
+            const html = component.citationView().html;
+            expect(html).not.toContain('iris-answer-tail');
+        });
+
         it('shows an answer delivered in one piece immediately', () => {
             startQuery();
             askSubject.next({ runId: 'run-1', isThinking: false, answer: 'Signals are reactive.', sources: [] });

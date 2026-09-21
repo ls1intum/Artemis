@@ -255,7 +255,8 @@ export class GlobalSearchIrisAnswerComponent {
         const bound = this.sources().length + this.entitySources().length || (this.isSettled() ? 0 : PARTIAL_CITATION_MARKER_BOUND);
         const start = this.revealStart();
         const tail = text.slice(start);
-        const animated = this.isStreaming() && start > 0 && tail.length > 0 && !tail.includes('\n') && !this.startsInsideInlineCode(text, start);
+        const animated =
+            this.isStreaming() && start > 0 && tail.length > 0 && !tail.includes('\n') && !this.startsInsideInlineCode(text, start) && !this.isInsideOpenFence(text, start);
         return renderCitationMarkers(animated ? `${text.slice(0, start)}<span class="iris-answer-tail">${tail}</span>` : text, bound);
     });
 
@@ -305,6 +306,48 @@ export class GlobalSearchIrisAnswerComponent {
             openIdx = closeIdx + 1;
         }
         return false;
+    }
+
+    /**
+     * Whether `start` falls inside a fenced code block (a line starting with a run of 3+ backticks
+     * or 3+ tildes, CommonMark's other code-block form) that opened somewhere earlier in `text` and
+     * has no matching closing fence within `text` yet. Unlike an inline span, a fence does not need
+     * its closer to have arrived to already be "inside code" as far as Markdown is concerned — while
+     * the block is still streaming, splicing the fade-tail `<span>` into a line of its content (even
+     * one with no backticks of its own, like a line of code) corrupts it the same way an inline span
+     * does, just for the duration of the whole block instead of one word. {@link startsInsideInlineCode}
+     * only pairs backtick runs that both already arrived, so it cannot see this case, and never looks
+     * at tildes at all.
+     */
+    private isInsideOpenFence(text: string, start: number): boolean {
+        const fenceLineRe = /^ {0,3}(`{3,}|~{3,})/;
+        let openChar: string | undefined;
+        let openLength = 0;
+        let contentStart = -1;
+        let pos = 0;
+        const lines = text.split('\n');
+        for (let li = 0; li < lines.length; li++) {
+            const line = lines[li];
+            const lineStart = pos;
+            const nextPos = lineStart + line.length + (li < lines.length - 1 ? 1 : 0);
+            const match = fenceLineRe.exec(line);
+            if (openChar === undefined) {
+                if (match) {
+                    openChar = match[1][0];
+                    openLength = match[1].length;
+                    contentStart = nextPos;
+                }
+            } else if (match && match[1][0] === openChar && match[1].length >= openLength) {
+                if (contentStart <= start && start <= lineStart) {
+                    return true;
+                }
+                openChar = undefined;
+                openLength = 0;
+                contentStart = -1;
+            }
+            pos = nextPos;
+        }
+        return openChar !== undefined && start >= contentStart;
     }
     /** Whether the answer carries inline citations; gates the chip numbering. */
     protected readonly hasCitations = computed(() => this.citationView().citedNumbers.size > 0);
