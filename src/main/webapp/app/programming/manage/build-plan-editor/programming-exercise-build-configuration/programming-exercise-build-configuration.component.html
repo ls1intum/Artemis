@@ -1,0 +1,145 @@
+<div class="mb-2">
+    <div class="mb-2">
+        <label>
+            <span jhiTranslate="artemisApp.programmingExercise.dockerImage"></span>
+        </label>
+        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.customizeDockerImage" />
+        <input
+            type="text"
+            class="form-control"
+            name="dockerImage"
+            id="field_dockerImage"
+            [ngModel]="dockerImage()"
+            [placeholder]="dockerImagePlaceholder()"
+            (ngModelChange)="dockerImageChange.emit($event)"
+        />
+    </div>
+    <div class="mb-2">
+        <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.title"></span>
+        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.envVars.description" />
+        <jhi-table-view id="envVarsTable" [cols]="envVarColumns()" [vals]="envVars()" [rowActions]="envVarActionsRef" [options]="envVarTableOptions" />
+        <button class="btn btn-sm btn-primary mb-2" (click)="addEnvVar()">
+            <fa-icon [icon]="faPlus" />
+            <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.addEnvVar"></span>
+        </button>
+        @if (!areDockerFlagsWithinSizeLimit()) {
+            <div class="text-state-danger mt-1" jhiTranslate="artemisApp.programmingExercise.buildConfig.dockerFlagsTooLong"></div>
+        }
+    </div>
+    <div class="d-flex align-items-center justify-content-start gap-4 mb-2">
+        <div>
+            <label>
+                <span jhiTranslate="artemisApp.programmingExercise.timeout.title"></span>
+            </label>
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.timeout.customize" />
+        </div>
+        <div class="w-50">
+            <input
+                class="w-100 mt-1"
+                type="range"
+                min="{{ timeoutMinValue() }}"
+                max="{{ timeoutMaxValue() }}"
+                step="1"
+                value="{{ timeoutDefaultValue() }}"
+                id="field_timeout"
+                [ngModel]="displayTimeout()"
+                (ngModelChange)="timeoutChange!.emit($event)"
+            />
+        </div>
+        <span class="slider-label">
+            <span class="slider-value">{{ displayTimeout() }} s</span>
+            @if (usesDefaultTimeout()) {
+                <span class="text-muted ms-1" jhiTranslate="artemisApp.programmingExercise.timeout.usesDefault"></span>
+            }
+        </span>
+    </div>
+    @if (isLanguageSupported()) {
+        <div class="mb-2">
+            <label for="networkMode">
+                <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.title"></span>
+                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.description" />
+            </label>
+            <select id="networkMode" class="form-select mb-2" [ngModel]="network() ?? ''" (ngModelChange)="onNetworkChange($event)">
+                <option value="" jhiTranslate="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.defaultOption"></option>
+                @if (allowedCustomNetworks()?.length) {
+                    @for (customNetwork of allowedCustomNetworks(); track customNetwork) {
+                        @if (customNetwork === 'none') {
+                            <option value="none" jhiTranslate="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.noneOption"></option>
+                        } @else {
+                            <option [value]="customNetwork">{{ customNetwork }}</option>
+                        }
+                    }
+                }
+            </select>
+            @if (network() === 'none') {
+                <div class="alert alert-warning mb-2" role="alert">
+                    <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.disableNetworkAccessWarning"></span>
+                </div>
+            }
+        </div>
+    }
+    <div class="mb-2">
+        <label>
+            <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.cpuCount.label"></span>
+        </label>
+        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.cpuCount.help" />
+        <input
+            type="text"
+            class="form-control"
+            name="cpuCount"
+            id="field_dockerCpuCount"
+            [class.is-invalid]="!isCpuCountValid()"
+            [value]="cpuCount()"
+            (input)="onCpuCountChange($event)"
+        />
+        @if (!isCpuCountValid()) {
+            <div class="text-state-danger mt-1" jhiTranslate="artemisApp.programmingExercise.dockerFlags.cpuCount.invalid"></div>
+        }
+    </div>
+
+    <div class="mb-2">
+        <label>
+            <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.memory.label"></span>
+        </label>
+        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.memory.help" />
+        <input type="text" class="form-control" name="memory" id="field_memory" [class.is-invalid]="!isMemoryValid()" [value]="memory()" (input)="onMemoryChange($event)" />
+        @if (!isMemoryValid()) {
+            <div class="text-state-danger mt-1" jhiTranslate="artemisApp.programmingExercise.dockerFlags.memory.invalid"></div>
+        }
+    </div>
+
+    <div class="mb-2">
+        <label>
+            <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.memorySwap.label"></span>
+        </label>
+        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.memorySwap.help" />
+        <input
+            type="text"
+            class="form-control"
+            name="memorySwap"
+            id="field_memorySwap"
+            [class.is-invalid]="!isMemorySwapValid()"
+            [value]="memorySwap()"
+            (input)="onMemorySwapChange($event)"
+        />
+        @if (!isMemorySwapValid()) {
+            <div class="text-state-danger mt-1" jhiTranslate="artemisApp.programmingExercise.dockerFlags.memorySwap.invalid"></div>
+        }
+    </div>
+</div>
+
+<!-- Env var cell templates -->
+<ng-template #envVarKeyTemplate let-cell>
+    <jhi-table-editable-field [id]="'key' + cell.rowIndex" [value]="cell.data[0] || ''" [onValueUpdate]="onEnvVarsKeyChange(cell.data)" [isRequired]="true" />
+</ng-template>
+
+<ng-template #envVarValueTemplate let-cell>
+    <jhi-table-editable-field [id]="'value' + cell.rowIndex" [value]="cell.data[1] || ''" [onValueUpdate]="onEnvVarsValueChange(cell.data)" [isRequired]="true" />
+</ng-template>
+
+<ng-template #envVarActionsRef let-row>
+    <button type="button" class="btn btn-sm btn-danger" (click)="removeEnvVar(row)">
+        <fa-icon [icon]="faTrash" />
+        <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.removeEnvVar"></span>
+    </button>
+</ng-template>

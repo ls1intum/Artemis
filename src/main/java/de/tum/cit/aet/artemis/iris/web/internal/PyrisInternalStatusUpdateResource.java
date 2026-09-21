@@ -18,15 +18,19 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.annotations.Internal;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.service.pyris.IrisCommandService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisStatusUpdateService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisCommandDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisCommandResultDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
@@ -34,6 +38,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 
 /**
@@ -52,9 +57,12 @@ public class PyrisInternalStatusUpdateResource {
 
     private final PyrisStatusUpdateService pyrisStatusUpdateService;
 
-    public PyrisInternalStatusUpdateResource(PyrisJobService pyrisJobService, PyrisStatusUpdateService pyrisStatusUpdateService) {
+    private final IrisCommandService irisCommandService;
+
+    public PyrisInternalStatusUpdateResource(PyrisJobService pyrisJobService, PyrisStatusUpdateService pyrisStatusUpdateService, IrisCommandService irisCommandService) {
         this.pyrisJobService = pyrisJobService;
         this.pyrisStatusUpdateService = pyrisStatusUpdateService;
+        this.irisCommandService = irisCommandService;
     }
 
     /**
@@ -80,6 +88,31 @@ public class PyrisInternalStatusUpdateResource {
         pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
 
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST internal/pipelines/chat/runs/:runId/command : Execute a command Iris wants to perform on the client mid-pipeline (e.g. point the student to a slide page / video
+     * timestamp in the combined view) and return synchronously whether it was carried out. The call blocks until the client acknowledges or a timeout elapses, so the Pyris agent
+     * tool learns the real outcome before formulating its answer.
+     * <p>
+     * Uses custom token based authentication.
+     *
+     * @param runId   the ID of the job
+     * @param command the command to execute
+     * @param request the HTTP request
+     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request header
+     * @throws AccessForbiddenException if the token is invalid
+     * @return the {@link PyrisCommandResultDTO} once the client responds or the wait times out
+     */
+    @PostMapping("pipelines/chat/runs/{runId}/command")
+    @Internal
+    public ResponseEntity<PyrisCommandResultDTO> executeChatCommand(@PathVariable String runId, @RequestBody PyrisCommandDTO command, HttpServletRequest request) {
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, ChatJob.class);
+        if (!Objects.equals(job.jobId(), runId)) {
+            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
+        }
+
+        return ResponseEntity.ok(irisCommandService.executeCommand(job, command, pyrisJobService.getChatJobClientId(job.jobId())));
     }
 
     /**
@@ -156,6 +189,30 @@ public class PyrisInternalStatusUpdateResource {
 
         pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
 
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST internal/pipelines/struggle-intervention/runs/:runId/status : Send the struggle-intervention response in a status update
+     * <p>
+     * Uses custom token based authentication.
+     *
+     * @param runId           the ID of the job
+     * @param statusUpdateDTO the status update
+     * @param request         the HTTP request
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
+     * @throws AccessForbiddenException if the token is invalid
+     */
+    @PostMapping("pipelines/struggle-intervention/runs/{runId}/status")
+    @Internal
+    public ResponseEntity<Void> setStruggleInterventionJobStatus(@PathVariable String runId, @RequestBody PyrisStruggleInterventionStatusUpdateDTO statusUpdateDTO,
+            HttpServletRequest request) {
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, StruggleInterventionJob.class);
+        if (!Objects.equals(job.jobId(), runId)) {
+            throw new ConflictException("Run ID in URL does not match the authenticated job", "Job", "runIdMismatch");
+        }
+        pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
         return ResponseEntity.ok().build();
     }
 

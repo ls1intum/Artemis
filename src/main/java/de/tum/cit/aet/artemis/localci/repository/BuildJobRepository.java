@@ -61,7 +61,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
      * <p>
      * Built with the Criteria API rather than JPQL on purpose. The previous implementation expressed every optional filter as {@code (:param IS NULL OR column = :param)} in one
      * statement; MySQL cannot fold those branches away, so it could not estimate the selectivity of any filter and instead satisfied the {@code ORDER BY} by scanning
-     * {@code idx_build_job_build_submission_date} in reverse over the whole table. On production a course-scoped call took 17 s and examined 1.83 M rows to return nothing.
+     * {@code idx_build_job_build_submission_date} in reverse over the whole table, so a course-scoped call examined most of it only to return nothing.
      * With {@link BuildJobSpecs} an absent filter contributes no SQL at all, so the optimizer sees a real {@code course_id = ?} and can use {@code idx_build_job_course_id}.
      * <p>
      * Uses {@code findBy(...).slice(...)} rather than {@code findAll(spec, pageable)} because the latter returns a {@code Page} and issues an additional {@code COUNT(*)} over

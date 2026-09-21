@@ -77,6 +77,7 @@ import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingServ
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.Commit;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -86,6 +87,7 @@ import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.RepositoryVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
@@ -121,6 +123,8 @@ public class LocalVCServletService {
     private final UserRepository userRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     private final RepositoryAccessService repositoryAccessService;
 
@@ -217,8 +221,10 @@ public class LocalVCServletService {
             Optional<VcsAccessLogService> vcsAccessLogService, AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService,
             ExerciseVersionService exerciseVersionService, UserVcsAccessTokenService userVcsAccessTokenService, Optional<DistributedDataAccessService> distributedDataAccessService,
             Optional<BuildAgentAddressRegistryService> buildAgentAddressRegistryService, Optional<BuildJobCloneTokenService> buildJobCloneTokenService,
-            BuildAgentNetworkPolicy buildAgentNetworkPolicy, MailSendingService mailSendingService, DistributedDataProvider distributedDataProvider) {
+            BuildAgentNetworkPolicy buildAgentNetworkPolicy, MailSendingService mailSendingService, DistributedDataProvider distributedDataProvider,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.authenticationManager = authenticationManager;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.repositoryAccessService = repositoryAccessService;
@@ -949,8 +955,7 @@ public class LocalVCServletService {
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(repository.getDirectory().toPath());
         String projectKey = localVCRepositoryUri.getProjectKey();
 
-        ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey, true);
-        return exercise.getBuildConfig().isAllowBranching();
+        return getBuildConfigOrThrow(projectKey).isAllowBranching();
     }
 
     public static enum BranchingStatus {
@@ -968,15 +973,15 @@ public class LocalVCServletService {
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(repository.getDirectory().toPath());
         String projectKey = localVCRepositoryUri.getProjectKey();
 
-        ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey, true);
+        ProgrammingExerciseBuildConfig buildConfig = getBuildConfigOrThrow(projectKey);
 
-        if (!exercise.getBuildConfig().isAllowBranching() || exercise.getBuildConfig().getBranchRegex() == null) {
+        if (!buildConfig.isAllowBranching() || buildConfig.getBranchRegex() == null) {
             return BranchingStatus.BRANCHING_DISABLED;
         }
 
         Pattern pattern;
         try {
-            pattern = Pattern.compile(exercise.getBuildConfig().getBranchRegex());
+            pattern = Pattern.compile(buildConfig.getBranchRegex());
         }
         catch (PatternSyntaxException e) {
             return BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
@@ -995,17 +1000,28 @@ public class LocalVCServletService {
         return new LocalVCRepositoryUri(localVCBaseUri, repositoryPath);
     }
 
-    private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey, boolean withBuildConfig) {
+    private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {
         try {
-            return programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, true, withBuildConfig);
+            return programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, false);
         }
         catch (EntityNotFoundException e) {
             throw new LocalVCInternalException("Could not find single programming exercise with project key " + projectKey, e);
         }
     }
 
-    private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {
-        return getProgrammingExerciseOrThrow(projectKey, false);
+    /**
+     * Reads the build configuration of the single exercise in a project, without loading the exercise itself: the
+     * configuration is a row of its own that names the exercise.
+     *
+     * @param projectKey the project key taken from the repository URI
+     * @return the build configuration of the exercise in that project
+     */
+    private ProgrammingExerciseBuildConfig getBuildConfigOrThrow(String projectKey) {
+        List<ProgrammingExerciseBuildConfig> buildConfigs = programmingExerciseBuildConfigRepository.findAllByProjectKey(projectKey);
+        if (buildConfigs.size() != 1) {
+            throw new LocalVCInternalException("Could not find single programming exercise with project key " + projectKey);
+        }
+        return buildConfigs.getFirst();
     }
 
     /**

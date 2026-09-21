@@ -293,10 +293,12 @@ public class ResultResource {
                     .build();
         }
 
+        Result result = resultDTO.toEntity();
+        resultService.validateGradingInstructions(result.getFeedbacks(), exercise.getId());
+
         // Create a participation and a submitted empty submission if they do not exist yet
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(exercise, student.get(), SubmissionType.EXTERNAL);
         Submission submission = participationRepository.findByIdWithSubmissionsElseThrow(participation.getId()).findLatestSubmission().orElseThrow();
-        Result result = resultDTO.toEntity();
         result.setSubmission(submission);
         // the exercise id is a non-null column on the result; it is derived from the path, never from the request
         result.setExerciseId(exercise.getId());

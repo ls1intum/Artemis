@@ -180,6 +180,7 @@
     @if (isEditingDueDate(cell.data.participationId)) {
         <div class="btn-group" style="min-width: 250px">
             <jhi-date-time-picker
+                #individualDueDate="ngModel"
                 [ngModel]="getPendingDueDate(cell.data.participationId)"
                 (ngModelChange)="setPendingDueDate(cell.data.participationId, $event)"
                 [shouldDisplayTimeZoneWarning]="false"
@@ -189,7 +190,7 @@
                 [labelName]="'artemisApp.participation.individualDueDate' | artemisTranslate"
                 [hideLabelName]="true"
             />
-            <button class="btn btn-outline-success btn-sm" [disabled]="isSaving()" (click)="saveIndividualDueDate(cell.data)" title="Save">
+            <button class="btn btn-outline-success btn-sm" [disabled]="isSaving() || individualDueDate.invalid" (click)="saveIndividualDueDate(cell.data)" title="Save">
                 <fa-icon [icon]="faCheck" />
             </button>
             <button class="btn btn-outline-danger btn-sm" [disabled]="isSaving()" (click)="cancelEditDueDate(cell.data)" title="Discard">

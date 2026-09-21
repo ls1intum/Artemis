@@ -26,6 +26,7 @@
         "exerciseGroupCannotChange": "Die Aufgabengruppe darf hier nicht geändert werden.",
         "noCourseIdOrExerciseGroupId": "Für einen Import muss entweder courseId oder exerciseGroupId gesetzt sein.",
         "concurrencyFailure": "Ein:e Nutzer:in hat diese Daten zeitgleich mit dir geändert. Deine Änderungen wurden abgelehnt.",
+        "courseOperationInProgress": "Für diesen Kurs wird bereits ein Zurücksetzen, Löschen oder Archivieren ausgeführt. Warte, bis der Vorgang abgeschlossen ist, bevor du einen weiteren startest.",
         "validation": "Validierungsfehler auf dem Server.",
         "resultStringNull": "Fehler! Ein Ergebnistext ist erforderlich.",
         "resultStringTooLong": "Fehler! Der Ergebnistext ist zu lange (max. 255 Zeichen)",
@@ -322,6 +323,11 @@
         },
         "fileReadError": "Beim Lesen der Dateien des betreffenden Commits ist ein Fehler aufgetreten. Bitte versuche es erneut.",
         "buildConfigMissing": "Die Build-Konfiguration der Programmieraufgabe fehlt.",
+        "blankDockerImage": "Das Docker-Image darf nicht leer sein.",
+        "noBuildPhases": "Der Build-Plan muss mindestens eine Build-Phase enthalten.",
+        "invalidBuildPhaseName": "Ein Build-Phasenname ist ungültig oder verwendet einen reservierten Namen. Bitte wähle einen anderen Namen.",
+        "duplicateBuildPhaseNames": "Build-Phasennamen müssen eindeutig sein.",
+        "buildPlanConfigurationTooLarge": "Die Build-Plan-Konfiguration ist zu groß, um verarbeitet zu werden. Bitte reduziere die Größe deiner Build-Phasen.",
         "sharingInfoMissing": "Die Informationen der Sharing-Plattform fehlen.",
         "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten."
     }

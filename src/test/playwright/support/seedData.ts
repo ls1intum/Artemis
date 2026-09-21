@@ -1,7 +1,7 @@
 /**
  * Known seed entity references from Liquibase E2E seed data.
  * These entities are pre-created by the changelog at
- * src/main/resources/config/liquibase/changelog/20260304120000_e2e_seed_data.xml
+ * src/main/resources/config/liquibase/data/20260304120000_e2e_seed_data.xml
  * and are available when SPRING_LIQUIBASE_CONTEXTS includes "e2e".
  *
  * All IDs use high ranges (9000+) to avoid conflicts with runtime-created data.

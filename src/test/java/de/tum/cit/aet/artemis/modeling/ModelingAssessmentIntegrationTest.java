@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -310,6 +311,62 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         }
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "own", "foreign", "missing" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void exampleAssessmentValidatesGradingInstructionOwnership(String instructionSource) throws Exception {
+        boolean ownInstruction = instructionSource.equals("own");
+        var example = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, classExercise, true, true));
+        var criteria = gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(ownInstruction ? classExercise : activityExercise));
+        var instruction = criteria.stream().flatMap(criterion -> criterion.getStructuredGradingInstructions().stream()).filter(item -> item.getUsageCount() == 1).findFirst()
+                .orElseThrow();
+        var feedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("structured feedback");
+        feedback.setGradingInstruction(instruction);
+        if (instructionSource.equals("missing")) {
+            var missingInstruction = new GradingInstruction();
+            missingInstruction.setId(Long.MAX_VALUE);
+            feedback.setGradingInstruction(missingInstruction);
+        }
+
+        var repeatedFeedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("repeated instruction");
+        repeatedFeedback.setGradingInstruction(feedback.getGradingInstruction());
+
+        var result = request.putWithResponseBody("/api/modeling/modeling-submissions/" + example.getId() + "/example-assessment",
+                toFeedbackDTOs(List.of(feedback, repeatedFeedback)), ResultDTO.class, ownInstruction ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
+
+        if (ownInstruction) {
+            assertThat(result.exampleResult()).isTrue();
+            assertThat(result.score()).isEqualTo(100.0 / classExercise.getMaxPoints());
+            assertThat(resultRepository.findByIdWithEagerFeedbacksElseThrow(result.id()).getFeedbacks()).hasSize(2)
+                    .allSatisfy(item -> assertThat(item.getGradingInstruction().getId()).isEqualTo(instruction.getId()));
+        }
+        else {
+            assertThat(modelingSubmissionRepo.findWithEagerResultById(example.getSubmission().getId()).orElseThrow().getResults()).isEmpty();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void assessmentCannotAttachInstructionToResultOfAnotherSubmission() throws Exception {
+        var submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student1");
+        var otherSubmission = modelingExerciseUtilService.addModelingSubmissionFromResources(activityExercise, "test-data/model-submission/model.54727.json",
+                TEST_PREFIX + "student2");
+        var originalFeedback = new Feedback().credits(2.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("original assessment");
+        var otherResult = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, otherSubmission, TEST_PREFIX + "tutor1", List.of(originalFeedback));
+        var originalFeedbackIds = otherResult.getFeedbacks().stream().map(Feedback::getId).toList();
+        var criteria = gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(classExercise));
+        var feedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("instruction from the authorized exercise");
+        feedback.setGradingInstruction(criteria.getFirst().getStructuredGradingInstructions().iterator().next());
+
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/results/" + otherResult.getId() + "/assessment",
+                new ModelingAssessmentDTO(toFeedbackDTOs(List.of(feedback)), null), HttpStatus.BAD_REQUEST);
+
+        var unchangedResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(otherResult.getId());
+        assertThat(unchangedResult.getExerciseId()).isEqualTo(activityExercise.getId());
+        assertThat(unchangedResult.getSubmission().getId()).isEqualTo(otherSubmission.getId());
+        assertThat(unchangedResult.getFeedbacks()).extracting(Feedback::getId).containsExactlyInAnyOrderElementsOf(originalFeedbackIds);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExampleAssessmentAsTutorNoTutorial() throws Exception {
@@ -387,7 +444,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
                 CourseAssessmentDashboardDTO.class);
         CourseAssessmentDashboardDTO.AssessmentExerciseDTO exercise = dashboard.exercises().stream().filter(e -> "ClassDiagram".equals(e.title())).findFirst().orElseThrow();
         assertThat(exercise.numberOfAssessmentsOfCorrectionRounds()).hasSize(1);
-        assertThat(exercise.numberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(1L);
+        assertThat(exercise.numberOfAssessmentsOfCorrectionRounds().getFirst().inTime()).isEqualTo(1L);
     }
 
     @Test

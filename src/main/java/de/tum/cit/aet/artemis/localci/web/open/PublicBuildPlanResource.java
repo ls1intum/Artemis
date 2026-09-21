@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.localci.config.LocalCILegacyRestPaths;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 
 @Profile(PROFILE_JENKINS)
 @Lazy
@@ -37,8 +38,11 @@ public class PublicBuildPlanResource {
 
     private final BuildPlanRepository buildPlanRepository;
 
-    public PublicBuildPlanResource(BuildPlanRepository buildPlanRepository) {
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    public PublicBuildPlanResource(BuildPlanRepository buildPlanRepository, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.buildPlanRepository = buildPlanRepository;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     /**
@@ -53,12 +57,14 @@ public class PublicBuildPlanResource {
     public ResponseEntity<String> getBuildPlan(@PathVariable Long exerciseId, @RequestParam("secret") String secret) {
         log.debug("REST request to get build plan for programming exercise with id {}", exerciseId);
 
-        final BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesWithBuildConfigElseThrow(exerciseId);
+        final BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(exerciseId);
         // orElseThrow is safe here since the query above ensures that we find a build plan that is attached to that exercise
         final ProgrammingExercise programmingExercise = buildPlan.getProgrammingExerciseById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Could not find connected exercise for build plan."));
+        // The configuration is a row of its own and is not loaded with the exercise, so it is read here.
+        var buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
 
-        if (!programmingExercise.getBuildConfig().hasBuildPlanAccessSecretSet() || !constantTimeEquals(secret, programmingExercise.getBuildConfig().getBuildPlanAccessSecret())) {
+        if (!buildConfig.hasBuildPlanAccessSecretSet() || !constantTimeEquals(secret, buildConfig.getBuildPlanAccessSecret())) {
             throw new AccessForbiddenException();
         }
 
