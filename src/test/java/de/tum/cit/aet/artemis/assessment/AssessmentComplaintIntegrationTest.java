@@ -1077,6 +1077,21 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void submitComplaintForExamExerciseWithMismatchedExamId_badRequest() throws Exception {
+        final TextExercise examExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        final long otherExamId = examUtilService.addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise().getExerciseGroup().getExam().getId();
+        final TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
+        final TextSubmission savedSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1");
+        final var examExerciseComplaint = new ComplaintRequestDTO(savedSubmission.getLatestResult().getId(), "This is not fair", ComplaintType.COMPLAINT, Optional.of(otherExamId));
+
+        request.post("/api/assessment/complaints", examExerciseComplaint, HttpStatus.BAD_REQUEST);
+
+        assertThat(complaintRepo.findByResultId(savedSubmission.getLatestResult().getId())).as("no complaint is stored outside the review period of the exam").isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void submitComplaintForExamExerciseOutsideOfStudentReviewTime_badRequest() throws Exception {
         final TextExercise examExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
         final long examId = examExercise.getExerciseGroup().getExam().getId();
