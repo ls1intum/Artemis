@@ -12,7 +12,15 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCog, faShieldHalved } from '@fortawesome/free-solid-svg-icons';
 import { SkeletonModule } from 'primeng/skeleton';
-import { TumUiMessageComponent, TumUiTabComponent, TumUiTabListComponent, TumUiTabPanelComponent, TumUiTabPanelsComponent, TumUiTabsComponent, TumUiToggleSwitchComponent } from '@tumaet/ui-angular';
+import {
+    TumUiMessageComponent,
+    TumUiTabComponent,
+    TumUiTabListComponent,
+    TumUiTabPanelComponent,
+    TumUiTabPanelsComponent,
+    TumUiTabsComponent,
+    TumUiToggleSwitchComponent,
+} from '@tumaet/ui-angular';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 
 /**
