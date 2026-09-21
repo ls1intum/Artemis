@@ -214,6 +214,26 @@ Writing follows the key as well: the parent is saved first, then the configurati
 
 Making `Course.athenaConfig` lazy was the second kind: its getters answer `false` when it was not loaded, so every response whose query did not resolve it would have reported Athena as switched off and quietly removed the feature from the client. Find every place that reads it, give each an explicit read, and pin the result - `AthenaConfigWireContractTest` does that for the endpoints the webapp reads those two flags from.
 
+### A long text column is text, not a LOB
+
+Never annotate a field `@Lob`. `ArchitectureTest.testNoLobAnnotation` fails the build for any that is.
+
+A CLOB on PostgreSQL is a **large object**: Hibernate writes the value into `pg_largeobject` and stores the object's id in the column, then reads the column back as that id. Every long text column in Artemis is declared `clob` in Liquibase, which is `longtext` on MySQL and `text` on PostgreSQL, so the column holds text and the mapping expects an object id. The two agree only as long as the same mapping wrote the row: a row holding the text itself - as MySQL writes it, and as every row written before the move to PostgreSQL is stored - fails the read with `Bad value for type long` and takes the whole query with it, not just the one column. On `IrisMessage.toolActivity` that meant one unreadable message made every Iris session load for that user fail.
+
+The large objects are also never reclaimed. Nothing unlinks them when the message is deleted, so they accumulate outside the table and are invisible to a table-size check.
+
+A `String`, or an attribute converted to one, needs no annotation at all: bound and extracted as text it round-trips on both databases whatever its length, since a length in the mapping only ever shapes generated DDL and Artemis generates none. `Exercise.problemStatement` is the pattern - a plain `@Column` over a `longtext`.
+
+```java
+// IrisMessage - a converted list in a clob column, mapped as the text it is
+@Nullable
+@Convert(converter = IrisMessageToolActivityConverter.class)
+@Column(name = "tool_activity")
+private List<PyrisActivityDTO> toolActivity;
+```
+
+Where the value is structured rather than free text, `@JdbcTypeCode(SqlTypes.JSON)` over a `json` column is the other option - `IrisMessage.accessedMemories` uses it. It costs the column its equality operator on PostgreSQL, which is why a query fetching such an entity cannot use `DISTINCT`; `IrisChatSessionRepository.findAllWithMessagesByCourseId` returns a `Set` and deduplicates in Java for exactly that reason.
+
 ## Relationships
 
 A relationship is a reference from one object to another. In a relational database relationships are defined through foreign keys. The source row contains the primary key of the target row to define the relationship (and sometimes the inverse). A query must be performed to read the target objects of the relationship using the foreign key and primary key information. If there is a relationship to a collection of other objects, a `Collection` or `array` type is used to hold the contents of the relationship. In a relational database, collection relations are either defined by the target objects having a foreign key back to the source object's primary key, or by having an intermediate join table to store the relationship (containing both objects' primary keys).
