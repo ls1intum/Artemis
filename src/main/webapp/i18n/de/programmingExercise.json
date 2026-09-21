@@ -291,7 +291,7 @@
                 "desc": {
                     "inactive": "Für diese Aufgabe nicht aktiviert. Der Code der Studierenden läuft ohne Sandbox.",
                     "generating": "Eine implizite Standard-Sicherheitsrichtlinie wird erstellt – keine manuelle Richtliniendatei nötig.",
-                    "activeEdit": "Sicherheitsrichtlinie in das exercise-tests-Repository committet.",
+                    "activeEdit": "Sandbox für diese Aufgabe aktiviert. Erzeugung und Durchsetzung der Richtlinie sind an die Ares2-Integration delegiert.",
                     "activeCreate": "Die Sicherheitsrichtlinie wird beim Generieren der Aufgabe committet.",
                     "deleting": "Das Security Framework wird aus dieser Aufgabe entfernt.",
                     "error": "Die Sicherheitsrichtlinie konnte nicht synchronisiert werden. Die Sandbox ist noch nicht aktiv."
@@ -299,7 +299,7 @@
                 "sync": {
                     "inactive": "Nicht synchronisiert – eine Richtlinie wird beim Aktivieren committet.",
                     "generating": "Richtlinie wird in das exercise-tests-Repository committet …",
-                    "active": "Synchronisiert · Commit {{hash}}",
+                    "active": "Sandbox aktiv · Richtlinie wird über die Ares2-Integration verwaltet.",
                     "activeCreate": "Noch nicht synchronisiert – die Richtlinie wird beim Generieren der Aufgabe committet.",
                     "deleting": "Sandbox-Effekte werden im exercise-tests-Repository zurückgenommen …",
                     "error": "Synchronisierung fehlgeschlagen · exercise-tests-Repository nicht erreichbar."

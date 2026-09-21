@@ -291,7 +291,7 @@
                 "desc": {
                     "inactive": "Not activated for this exercise. Student code runs without a sandbox.",
                     "generating": "Generating an implicit default security policy — no manual policy file needed.",
-                    "activeEdit": "Security policy committed to the exercise-tests repository.",
+                    "activeEdit": "Sandbox activated for this exercise. Policy generation and enforcement are delegated to the Ares2 integration.",
                     "activeCreate": "The security policy will be committed when you generate the exercise.",
                     "deleting": "Removing the Security Framework from this exercise.",
                     "error": "Couldn't sync the security policy. The sandbox is not enforcing yet."
@@ -299,7 +299,7 @@
                 "sync": {
                     "inactive": "Not synced — a policy will be committed when you activate.",
                     "generating": "Committing policy to the exercise-tests repository…",
-                    "active": "Synced · commit {{hash}}",
+                    "active": "Sandbox active · policy managed by the Ares2 integration.",
                     "activeCreate": "Not synced yet — the policy is committed when you generate the exercise.",
                     "deleting": "Reverting sandbox effects in the exercise-tests repository…",
                     "error": "Sync failed · couldn't reach the exercise-tests repository."

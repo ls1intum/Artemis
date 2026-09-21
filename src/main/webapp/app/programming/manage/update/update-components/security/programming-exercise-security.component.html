@@ -103,7 +103,7 @@
                         }
                         @case (SecurityActivationStatus.ACTIVE) {
                             @if (isEditMode()) {
-                                <span>{{ 'artemisApp.programmingExercise.security.sync.active' | artemisTranslate: { hash: config().lastCommitHash } }}</span>
+                                <span jhiTranslate="artemisApp.programmingExercise.security.sync.active"></span>
                             } @else {
                                 <span jhiTranslate="artemisApp.programmingExercise.security.sync.activeCreate"></span>
                             }
