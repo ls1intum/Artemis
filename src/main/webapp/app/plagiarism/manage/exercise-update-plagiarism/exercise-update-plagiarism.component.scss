@@ -20,17 +20,13 @@
     font-size: 0.95em;
 }
 
-.form-group.d-flex {
+.settings-field {
     padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
 }
 
-.form-group.d-flex .form-control {
+.settings-field .form-control {
     min-height: 42px;
-    margin-top: auto;
-}
-
-.form-group.d-flex .validation-slot {
-    min-height: 1.6rem;
 }
 
 .form-control.mt-auto {
@@ -42,7 +38,8 @@
         display: inline-flex;
     }
 
-    .form-group.d-flex {
+    .settings-field {
         padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
     }
 }
