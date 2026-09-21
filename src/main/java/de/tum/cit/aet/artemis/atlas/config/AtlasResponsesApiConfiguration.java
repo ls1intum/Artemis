@@ -34,14 +34,14 @@ import io.micrometer.observation.ObservationRegistry;
 @Configuration(proxyBeanMethods = false)
 @Conditional(AtlasLLMEnabled.class)
 @ConditionalOnProperty(prefix = "artemis.atlas.orchestrator", name = "responses-api-enabled", havingValue = "true", matchIfMissing = true)
-// The beans below are the only ones in Atlas that cannot be built without Spring AI: they need OpenAiCommonProperties,
-// which only OpenAiChatAutoConfiguration contributes, and that autoconfiguration keys on exactly this property. Without
-// the condition, enabling AtlasLLM on an installation that has no chat model configured fails the whole context instead
-// of leaving the adapter out, because a bean definition that cannot be created is fatal where an absent one is not.
-// matchIfMissing mirrors OpenAiChatAutoConfiguration, so this is true only when that autoconfiguration contributed the
-// properties. Deliberately not the other way round: six OpenAI autoconfigurations contribute OpenAiCommonProperties,
-// one per model kind, so an embedding-only installation has the bean while this adapter still has no chat deployment to
-// talk to. Artemis sets the property to "none" in application.yml, so "missing" only occurs off that classpath.
+// The beans below are the only ones in Atlas that cannot be built without Spring AI, because they need
+// OpenAiCommonProperties. Without this condition, enabling AtlasLLM on an installation that has no chat model fails the
+// whole context rather than leaving the adapter out: a bean definition that cannot be created is fatal, where an absent
+// one is not. The value and matchIfMissing are copied from OpenAiChatAutoConfiguration so that the two cannot drift.
+// The condition is deliberately stricter than "the properties bean exists": six OpenAI autoconfigurations contribute
+// it, one per model kind, so an embedding-only installation has the bean while this adapter still has no chat
+// deployment to talk to. Artemis pins the property to "none" in application.yml, so "missing" only occurs off that
+// classpath.
 @ConditionalOnProperty(name = "spring.ai.model.chat", havingValue = "openai", matchIfMissing = true)
 public class AtlasResponsesApiConfiguration {
 
