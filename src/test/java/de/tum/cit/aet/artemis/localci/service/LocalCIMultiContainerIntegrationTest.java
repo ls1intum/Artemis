@@ -598,10 +598,12 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
     void testInstructorResultsPreservedWhenStudentContainerTimesOutEndToEnd() throws Exception {
         String instructorImage = "mc-instructor:timeout";
         String studentImage = "mc-student:timeout";
+        // The build configuration is stored apart from the exercise, so it is read after the two-container plan was saved:
+        // an instance read before would write the previous plan back together with the timeout below.
+        configureTwoContainerPlan(instructorImage, studentImage);
         ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
         int originalTimeout = buildConfig.getTimeoutSeconds();
         try (ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1)) {
-            configureTwoContainerPlan(instructorImage, studentImage);
             mockContainerLifecycle(instructorImage, "mc-instructor-timeout");
             mockContainerLifecycle(studentImage, "mc-student-timeout");
             dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-timeout", RESULTS_DIRECTORY_REGEX, structuralResults());
