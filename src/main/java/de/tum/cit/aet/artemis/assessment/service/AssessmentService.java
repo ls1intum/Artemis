@@ -128,6 +128,7 @@ public class AssessmentService {
      * @return the updated Result
      */
     public Result updateAssessmentAfterComplaint(Result originalResult, Exercise exercise, AssessmentUpdateBaseDTO assessmentUpdate) {
+        resultService.validateGradingInstructions(assessmentUpdate.feedbacks(), exercise.getId());
         if (assessmentUpdate.complaintResponse() == null) {
             throw new BadRequestAlertException("Complaint response must not be null.", "AssessmentUpdate", "notnull");
         }
@@ -312,6 +313,11 @@ public class AssessmentService {
         if (resultId != null) {
             result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessmentNoteById(resultId).orElse(null);
         }
+
+        if (result != null && (result.getSubmission() == null || !result.getSubmission().getId().equals(submission.getId()))) {
+            throw new BadRequestAlertException("The result does not belong to the assessed submission.", "result", "resultSubmissionMismatch");
+        }
+        resultService.validateGradingInstructions(feedbackList, exerciseId);
 
         if (result == null) {
             result = submissionService.saveNewEmptyResult(submission, exerciseId);
