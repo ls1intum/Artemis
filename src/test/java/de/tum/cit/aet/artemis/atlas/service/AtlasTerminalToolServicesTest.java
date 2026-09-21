@@ -34,7 +34,7 @@ class AtlasTerminalToolServicesTest {
         Map<String, Object> context = workerContext();
         ToolContext toolContext = new ToolContext(context);
 
-        assertThat(workerTerminal.completeWorkerTask(true, "Done", toolContext)).contains("Inspect course state or apply an action");
+        assertThat(workerTerminal.completeWorkerTask(true, "Done", toolContext)).contains("Inspect course state or receive a mutation outcome");
         assertThat(workerHolder(context)).hasValue(null);
 
         ((AtomicInteger) context.get(OrchestratorToolContextKeys.WORKER_READ_COUNT_KEY)).incrementAndGet();
