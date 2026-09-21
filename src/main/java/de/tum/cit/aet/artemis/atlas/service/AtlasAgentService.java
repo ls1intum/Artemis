@@ -26,7 +26,7 @@ import org.springframework.stereotype.Service;
 
 import tools.jackson.databind.json.JsonMapper;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentChatResponseDTO;
@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
  */
 @Lazy
 @Service
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 public class AtlasAgentService {
 
     private static final Logger log = LoggerFactory.getLogger(AtlasAgentService.class);
