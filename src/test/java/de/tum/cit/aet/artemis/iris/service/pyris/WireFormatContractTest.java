@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
  * <li>Inbound status update silently ignores camelCase {@code errorCode} (unknown field), matching Spring Boot's default mapper config.</li>
  * <li>Inbound global search status update reads the optional {@code stage}/{@code stageSources} fields, and
  * tolerates their absence (an older Pyris that never sends them) without error.</li>
+ * <li>Inbound global search status update reads the optional {@code citationSourceTypes} field the same way.</li>
  * </ul>
  */
 class WireFormatContractTest {
@@ -89,5 +90,19 @@ class WireFormatContractTest {
         String json = "{\"runState\":\"RUNNING\",\"stage\":\"generating\",\"stageSources\":[\"Advanced Algorithms\",\"Software Engineering\"]}";
         var dto = mapper.readValue(json, PyrisGlobalSearchAnswerStatusUpdateDTO.class);
         assertThat(dto.stageSources()).containsExactly("Advanced Algorithms", "Software Engineering");
+    }
+
+    @Test
+    void inboundGlobalSearchStatusUpdateReadsCitationSourceTypes() throws Exception {
+        String json = "{\"runState\":\"FINISHED\",\"answer\":\"About the course.[1] About the slide.[2]\",\"citationSourceTypes\":[\"entity\",\"lecture\"]}";
+        var dto = mapper.readValue(json, PyrisGlobalSearchAnswerStatusUpdateDTO.class);
+        assertThat(dto.citationSourceTypes()).containsExactly("entity", "lecture");
+    }
+
+    @Test
+    void inboundGlobalSearchStatusUpdateToleratesAMissingCitationSourceTypesFromAnOlderPyris() throws Exception {
+        String json = "{\"runState\":\"FINISHED\",\"answer\":\"answer\"}";
+        var dto = mapper.readValue(json, PyrisGlobalSearchAnswerStatusUpdateDTO.class);
+        assertThat(dto.citationSourceTypes()).isNull();
     }
 }

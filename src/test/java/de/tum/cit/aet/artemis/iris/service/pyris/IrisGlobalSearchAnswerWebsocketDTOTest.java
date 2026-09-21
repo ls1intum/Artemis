@@ -15,7 +15,7 @@ class IrisGlobalSearchAnswerWebsocketDTOTest {
     void clearDraftSurvivesSerializationEvenThoughItsFalseByDefault() {
         // clearDraft=true must reach the client distinguishable from "no partial result in this message", which an
         // empty-string partialResult could not do on its own once NON_EMPTY strips it identically to null.
-        var dto = new IrisGlobalSearchAnswerWebsocketDTO("run-1", true, null, null, null, 7, null, true, false, null, null);
+        var dto = new IrisGlobalSearchAnswerWebsocketDTO("run-1", true, null, null, null, 7, null, true, false, null, null, null);
 
         String json = JsonObjectMapper.get().writeValueAsString(dto);
 
@@ -27,12 +27,31 @@ class IrisGlobalSearchAnswerWebsocketDTOTest {
     void failedSurvivesSerializationDistinguishingItFromASuccessfulNoAnswerResult() {
         // failed=true must reach the client distinguishable from a successful run with no relevant answer, which
         // otherwise produces the identical isThinking=false, answer=null shape.
-        var dto = new IrisGlobalSearchAnswerWebsocketDTO("run-1", false, null, null, null, null, null, false, true, null, null);
+        var dto = new IrisGlobalSearchAnswerWebsocketDTO("run-1", false, null, null, null, null, null, false, true, null, null, null);
 
         String json = JsonObjectMapper.get().writeValueAsString(dto);
 
         assertThat(json).as("failed is a boolean, never stripped by NON_EMPTY regardless of its value").contains("\"failed\":true");
         assertThat(json).as("answer stays omitted for a failed run").doesNotContain("\"answer\"");
+    }
+
+    @Test
+    void citationSourceTypesSurviveSerializationOnTheTerminalUpdate() {
+        var dto = new IrisGlobalSearchAnswerWebsocketDTO("run-1", false, "About the course.[1] About the slide.[2]", null, null, null, null, false, false, null, null,
+                List.of("entity", "lecture"));
+
+        String json = JsonObjectMapper.get().writeValueAsString(dto);
+
+        assertThat(json).contains("\"citationSourceTypes\":[\"entity\",\"lecture\"]");
+    }
+
+    @Test
+    void missingCitationSourceTypesIsOmittedFromSerializationForAnOlderPyrisThatNeverSendsIt() {
+        var dto = new IrisGlobalSearchAnswerWebsocketDTO("run-1", false, "answer", null);
+
+        String json = JsonObjectMapper.get().writeValueAsString(dto);
+
+        assertThat(json).as("citationSourceTypes is additive; an update that never set it must not serialize an empty array").doesNotContain("\"citationSourceTypes\"");
     }
 
     @Test

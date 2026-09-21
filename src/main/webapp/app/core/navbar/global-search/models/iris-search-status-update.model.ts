@@ -32,4 +32,11 @@ export interface IrisSearchStatusUpdate {
     stage?: string;
     /** Distinct course names found so far, in ranked order — empty before retrieval finishes, populated alongside `stage: 'generating'`. */
     stageSources?: string[];
+    /**
+     * For marker 1..N in `answer`'s citation numbering (in order), which of `sources`/`entitySources` that marker
+     * resolves into — the two arrays are only ordered relative to their OWN type, so this is the only way to tell
+     * which array a given marker belongs to once citations interleave between lecture and entity sources. Only
+     * ever set on a terminal (`isThinking: false`) update, alongside `sources`/`entitySources`.
+     */
+    citationSourceTypes?: ('lecture' | 'entity')[];
 }

@@ -1013,6 +1013,70 @@ describe('GlobalSearchIrisAnswerComponent', () => {
         });
     });
 
+    describe('citation source types (entity cited before any lecture source)', () => {
+        const LECTURE_SOURCES = [SOURCES[0]];
+
+        beforeEach(() => {
+            // @ts-expect-error — accessing protected signal for testing
+            component.phase.set('answering');
+            // @ts-expect-error — accessing protected signal for testing
+            component.irisResult.set({
+                answer: 'About the course.[1] About the slide.[2]',
+                sources: LECTURE_SOURCES,
+                entitySources: ENTITY_SOURCES,
+                citationSourceTypes: ['entity', 'lecture'],
+            });
+            fixture.detectChanges();
+        });
+
+        it('numbers the entity chip [1] and the lecture chip [2] instead of the old fixed lecture-then-entity block order', () => {
+            const entityChip = fixture.nativeElement.querySelector('[data-testid="iris-entity-chip"]');
+            const lectureChip = fixture.nativeElement.querySelector('.iris-chip:not([data-testid="iris-entity-chip"])');
+            expect(entityChip.querySelector('[data-testid="iris-chip-number"]').textContent.trim()).toBe('1');
+            expect(lectureChip.querySelector('[data-testid="iris-chip-number"]').textContent.trim()).toBe('2');
+        });
+
+        it('opens the entity source when its inline [1] citation is clicked, not the lecture source', () => {
+            const router = TestBed.inject(Router);
+            const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+            const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+            const body = fixture.nativeElement.querySelector('.iris-answer-text');
+            body.innerHTML = '<p>About the course.<sup class="iris-cite" data-n="1">1</sup></p>';
+            body.querySelector('.iris-cite').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            expect(navigateByUrlSpy).toHaveBeenCalledWith('/courses/9/exercises/42');
+            expect(navigateSpy).not.toHaveBeenCalled();
+        });
+
+        it('opens the lecture source when its inline [2] citation is clicked, not the entity source', () => {
+            const router = TestBed.inject(Router);
+            const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+            const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+            const body = fixture.nativeElement.querySelector('.iris-answer-text');
+            body.innerHTML = '<p>About the slide.<sup class="iris-cite" data-n="2">2</sup></p>';
+            body.querySelector('.iris-cite').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            expect(navigateSpy).toHaveBeenCalledWith(['/u/1'], { queryParams: SOURCES[0].lectureUnit.queryParams });
+            expect(navigateByUrlSpy).not.toHaveBeenCalled();
+        });
+
+        it('carries citationSourceTypes from the terminal update into the result', () => {
+            fixture.componentRef.setInput('searchQuery', 'course versus slide');
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+            askSubject.next({
+                runId: 'run-1',
+                isThinking: false,
+                answer: 'About the course.[1] About the slide.[2]',
+                sources: LECTURE_SOURCES,
+                entitySources: ENTITY_SOURCES,
+                citationSourceTypes: ['entity', 'lecture'],
+            });
+            fixture.detectChanges();
+            // @ts-expect-error — protected signal
+            expect(component.irisResult()?.citationSourceTypes).toEqual(['entity', 'lecture']);
+        });
+    });
+
     describe('SOURCE_ICONS', () => {
         it('should map lecture_unit_slide to faFilePdf', () => {
             expect(component['SOURCE_ICONS']['lecture_unit_slide']).toBe(faFilePdf);

@@ -38,15 +38,20 @@ public record IrisGlobalSearchAnswerWebsocketDTO(String runId, boolean isThinkin
         @Nullable String stage,
         // Distinct course names found so far, in ranked order — empty before retrieval finishes, populated once the
         // "generating" stage fires, so the client can say what it actually found instead of a generic message.
-        @Nullable List<String> stageSources) {
+        @Nullable List<String> stageSources,
+        // For marker 1..N in `answer`'s citation numbering, which of sources/entitySources that marker resolves
+        // into ("lecture" or "entity") — the two arrays are only ordered relative to their OWN type, so the client
+        // cannot otherwise tell which array a given marker belongs to once citations interleave between types.
+        // Only ever set on a terminal (isThinking=false) update, alongside sources/entitySources.
+        @Nullable List<String> citationSourceTypes) {
 
     public IrisGlobalSearchAnswerWebsocketDTO(String runId, boolean isThinking, @Nullable String answer, @Nullable List<PyrisLectureSearchResultDTO> sources) {
-        this(runId, isThinking, answer, sources, null, null, null, false, false, null, null);
+        this(runId, isThinking, answer, sources, null, null, null, false, false, null, null, null);
     }
 
     public IrisGlobalSearchAnswerWebsocketDTO(String runId, boolean isThinking, @Nullable String answer, @Nullable List<PyrisLectureSearchResultDTO> sources,
             @Nullable String partialResult, @Nullable Integer partialSeq, boolean clearDraft) {
-        this(runId, isThinking, answer, sources, partialResult, partialSeq, null, clearDraft, false, null, null);
+        this(runId, isThinking, answer, sources, partialResult, partialSeq, null, clearDraft, false, null, null, null);
     }
 
     /**
@@ -56,6 +61,6 @@ public record IrisGlobalSearchAnswerWebsocketDTO(String runId, boolean isThinkin
      * erase to the same raw List type, so a static factory is used instead.
      */
     public static IrisGlobalSearchAnswerWebsocketDTO thinking(String runId, @Nullable String stage, @Nullable List<String> stageSources) {
-        return new IrisGlobalSearchAnswerWebsocketDTO(runId, true, null, null, null, null, null, false, false, stage, stageSources);
+        return new IrisGlobalSearchAnswerWebsocketDTO(runId, true, null, null, null, null, null, false, false, stage, stageSources, null);
     }
 }

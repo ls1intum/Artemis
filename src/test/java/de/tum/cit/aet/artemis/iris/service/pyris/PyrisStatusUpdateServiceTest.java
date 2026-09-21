@@ -150,7 +150,22 @@ class PyrisStatusUpdateServiceTest {
         service.handleStatusUpdate(job, terminalUpdate);
 
         verify(irisWebsocketService).send("student1", "global-search-answer",
-                new IrisGlobalSearchAnswerWebsocketDTO("global-run", false, "answer.[1]", null, null, null, List.of(entitySource), false, false, null, null));
+                new IrisGlobalSearchAnswerWebsocketDTO("global-run", false, "answer.[1]", null, null, null, List.of(entitySource), false, false, null, null, null));
+        verify(pyrisJobService).removeJob(job);
+    }
+
+    @Test
+    void globalSearchCitationSourceTypesAreForwardedOnTheTerminalUpdate() {
+        var job = new GlobalSearchAnswerJob("global-run", "student1");
+        var entitySource = new PyrisEntitySourceDTO("exercise", 42L, new PyrisLectureSearchResultDTO.CourseDTO(9L, "Patterns"), "W03E03 Flyweight Pattern",
+                "Programming exercise: 'W03E03 Flyweight Pattern'", "/courses/9/exercises/42", "programming");
+        var terminalUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.FINISHED, null, "About the course.[1] About the slide.[2]", null, null, null,
+                List.of(entitySource), null, null, List.of("entity", "lecture"));
+
+        service.handleStatusUpdate(job, terminalUpdate);
+
+        verify(irisWebsocketService).send("student1", "global-search-answer", new IrisGlobalSearchAnswerWebsocketDTO("global-run", false,
+                "About the course.[1] About the slide.[2]", null, null, null, List.of(entitySource), false, false, null, null, List.of("entity", "lecture")));
         verify(pyrisJobService).removeJob(job);
     }
 
@@ -230,7 +245,7 @@ class PyrisStatusUpdateServiceTest {
         // A genuine failure must be distinguishable from a successful no-answer result (both otherwise
         // produce the identical isThinking=false, answer=null shape), so the client can offer a retry.
         verify(irisWebsocketService).send("student1", "global-search-answer",
-                new IrisGlobalSearchAnswerWebsocketDTO("global-failed-run", false, null, null, null, null, null, false, true, null, null));
+                new IrisGlobalSearchAnswerWebsocketDTO("global-failed-run", false, null, null, null, null, null, false, true, null, null, null));
         verify(pyrisJobService).removeJob(failedJob);
     }
 
@@ -292,7 +307,7 @@ class PyrisStatusUpdateServiceTest {
         // A null run state resolves to FAILED (see the test name), which must reach the client as
         // failed=true, not the same shape as a considered no-answer result.
         verify(irisWebsocketService).send("student1", "global-search-answer",
-                new IrisGlobalSearchAnswerWebsocketDTO("global-null", false, null, null, null, null, null, false, true, null, null));
+                new IrisGlobalSearchAnswerWebsocketDTO("global-null", false, null, null, null, null, null, false, true, null, null, null));
         verify(pyrisJobService).removeJob(globalJob);
 
         var lectureJob = new LectureIngestionWebhookJob("lecture-null", 1L, 2L, 42L);
