@@ -203,11 +203,9 @@ export class ExerciseDetailsStudentActionsComponent {
             .pipe(finalize(() => this._isLoading.set(false)))
             .subscribe({
                 next: (participation) => {
-                    if (participation) {
-                        this.receiveNewParticipation(participation);
-                    }
+                    this.receiveNewParticipation(participation);
                     if (programmingExercise) {
-                        if (participation?.initializationState === InitializationState.INITIALIZED) {
+                        if (participation.initializationState === InitializationState.INITIALIZED) {
                             if (programmingExercise.allowOfflineIde) {
                                 this.alertService.success('artemisApp.exercise.personalRepositoryClone');
                             } else {
@@ -237,17 +235,9 @@ export class ExerciseDetailsStudentActionsComponent {
             .resumeProgrammingExercise(this.exercise().id!, participation!.id!, this.exercise())
             .pipe(finalize(() => this._isLoading.set(false)))
             .subscribe({
-                next: (resumedParticipation: StudentParticipation | null) => {
-                    if (resumedParticipation) {
-                        // Otherwise the client would think that all results are loaded, but there would not be any (=> no graded result).
-                        const currentParticipations = this._studentParticipations();
-                        const replacedIndex = currentParticipations.indexOf(participation!);
-                        const updatedParticipations = [...currentParticipations];
-                        updatedParticipations[replacedIndex] = resumedParticipation;
-                        this._studentParticipations.set(updatedParticipations);
-                        this.updateParticipations();
-                        this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
-                    }
+                next: (resumedParticipation: StudentParticipation) => {
+                    this.receiveNewParticipation(resumedParticipation);
+                    this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
                 },
                 error: (error) => {
                     this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);

@@ -1,0 +1,17 @@
+<div class="tum-ui-empty-state-icon tum:flex tum:shrink-0 tum:items-center tum:justify-center" aria-hidden="true">
+    <fa-icon [icon]="icon()" />
+</div>
+
+<h2 class="tum-ui-empty-state-title">{{ title() }}</h2>
+
+@if (description(); as descriptionText) {
+    <p class="tum-ui-empty-state-description">{{ descriptionText }}</p>
+}
+
+<div class="tum-ui-empty-state-actions tum:flex tum:flex-wrap tum:items-center tum:justify-center">
+    <ng-content select="[tumUiEmptyStateActions]" />
+</div>
+
+<div class="tum-ui-empty-state-documentation">
+    <ng-content select="[tumUiEmptyStateDocumentation]" />
+</div>

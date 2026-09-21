@@ -12,17 +12,22 @@ import java.util.Set;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
  * An {@code ExerciseVariantGroup} bundles a set of {@link Exercise}s that are interchangeable variants of one another
@@ -72,11 +77,29 @@ public class ExerciseVariantGroup extends DomainObject {
     @Column(name = "example_solution_publication_date")
     private ZonedDateTime exampleSolutionPublicationDate;
 
+    /**
+     * The course the group belongs to. The key lives here rather than on the course so that a group cannot exist
+     * without one: a course-less group is invisible to every course query and would linger forever.
+     */
+    @ManyToOne
+    @JoinColumn(name = "course_id", nullable = false)
+    @JsonIgnore
+    @Parent
+    private Course course;
+
     // Ignore "course" as well to break the Course -> exerciseVariantGroups -> group -> exercises -> exercise.course cycle,
     // mirroring the guard on Course.exercises.
     @OneToMany(mappedBy = "exerciseVariantGroup", fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = { "exerciseVariantGroup", "course" }, allowSetters = true)
     private Set<Exercise> exercises = new HashSet<>();
+
+    public Course getCourse() {
+        return course;
+    }
+
+    public void setCourse(Course course) {
+        this.course = course;
+    }
 
     public String getTitle() {
         return title;

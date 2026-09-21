@@ -11,7 +11,7 @@ description: Get a local Artemis development environment running from a fresh cl
 | ------ | ---------------- | --------------------------------------------------------------------- |
 | JDK    | 25               | Pinned by the Gradle toolchain                                        |
 | Node   | 24.20.0 or newer | Pinned in `gradle.properties` and `package.json`                      |
-| pnpm   | 11.25.0          | Pinned by the `packageManager` field; activate with `corepack enable` |
+| pnpm   | 12.5.1           | Pinned by the `packageManager` field; activate with `corepack enable` |
 | Docker | current          | Required for the database and for server tests                        |
 
 Run `corepack enable` once. It activates the exact pnpm version the repository pins, which avoids a

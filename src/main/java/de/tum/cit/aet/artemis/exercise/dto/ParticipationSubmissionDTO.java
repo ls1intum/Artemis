@@ -49,11 +49,27 @@ public record ParticipationSubmissionDTO(Long id, @Nullable Boolean submitted, @
             resultDTOs = submission.getResults().stream().filter(Objects::nonNull).map(ParticipationSubmissionResultDTO::of).toList();
         }
         String commitHash = submission instanceof ProgrammingSubmission programmingSubmission ? programmingSubmission.getCommitHash() : null;
-        String text = includeContent && submission instanceof TextSubmission textSubmission ? textSubmission.getText() : null;
-        Language language = includeContent && submission instanceof TextSubmission textSubmission ? textSubmission.getLanguage() : null;
-        String model = includeContent && submission instanceof ModelingSubmission modelingSubmission ? modelingSubmission.getModel() : null;
-        String explanationText = includeContent && submission instanceof ModelingSubmission modelingSubmission ? modelingSubmission.getExplanationText() : null;
-        String filePath = includeContent && submission instanceof FileUploadSubmission fileUploadSubmission ? fileUploadSubmission.getFilePath() : null;
+        String text = null;
+        Language language = null;
+        String model = null;
+        String explanationText = null;
+        String filePath = null;
+        if (includeContent) {
+            switch (submission) {
+                case TextSubmission textSubmission -> {
+                    text = textSubmission.getText();
+                    language = textSubmission.getLanguage();
+                }
+                case ModelingSubmission modelingSubmission -> {
+                    model = modelingSubmission.getModel();
+                    explanationText = modelingSubmission.getExplanationText();
+                }
+                case FileUploadSubmission fileUploadSubmission -> filePath = fileUploadSubmission.getFilePath();
+                // A quiz submission's submitted answers are deliberately not part of this payload.
+                default -> {
+                }
+            }
+        }
         return new ParticipationSubmissionDTO(submission.getId(), submission.isSubmitted(), submission.getSubmissionDate(), submission.getSubmissionExerciseType(), commitHash,
                 text, language, model, explanationText, filePath, resultDTOs);
     }
