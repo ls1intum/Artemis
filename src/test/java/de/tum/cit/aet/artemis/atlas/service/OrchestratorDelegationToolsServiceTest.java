@@ -142,6 +142,26 @@ class OrchestratorDelegationToolsServiceTest {
     }
 
     @Test
+    void delegateToCreator_mutationErrorPreservesPartialActions() {
+        Map<String, Object> parent = parentContext();
+        buffer(parent).actions().add(AppliedActionDTO.edit(1L, "Existing", "Earlier edit", "Earlier worker"));
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                    Map<String, Object> workerContext = invocation.getArgument(3);
+                    ToolContext workerToolContext = new ToolContext(workerContext);
+                    buffer(workerContext).actions().add(AppliedActionDTO.create(2L, "Loops", "Created competency", "Exercise teaches loops"));
+                    OrchestratorToolHelpers.mutationErrorJson(new JsonMapper(), "Second creation failed", workerToolContext);
+                    workerTerminal.completeWorkerTask(true, "Created both competencies", workerToolContext);
+                    return response("worker response");
+                });
+
+        WorkerResultDTO result = service.delegateToCreator("Create two competencies", new ToolContext(parent));
+
+        assertThat(result.success()).isFalse();
+        assertThat(result.appliedActions()).singleElement().extracting(AppliedActionDTO::type).isEqualTo(AppliedActionDTO.ActionType.CREATE);
+    }
+
+    @Test
     void delegateToAssigner_explicitNoOpCanCompleteSuccessfully() {
         Map<String, Object> parent = parentContext();
         ChatResponse response = response("worker response");
