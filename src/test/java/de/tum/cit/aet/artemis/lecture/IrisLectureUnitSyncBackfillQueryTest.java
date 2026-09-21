@@ -48,9 +48,13 @@ class IrisLectureUnitSyncBackfillQueryTest extends AbstractSpringIntegrationInde
         savePhase(stillIngesting, ProcessingPhase.INGESTING);
         savePhase(ingested, ProcessingPhase.DONE);
 
-        var found = attachmentVideoUnitRepository.findUnitsMissingIrisSyncStateFromActiveCourses(ZonedDateTime.now(), PageRequest.of(0, 50));
+        // The query is global and the backfill scheduler shares this bucket, so only the units of this test are read
+        // out of the page rather than asserting on its contents as a whole.
+        List<Long> ours = List.of(neverProcessed.getId(), stillIngesting.getId(), ingested.getId());
+        var found = attachmentVideoUnitRepository.findUnitsMissingIrisSyncStateFromActiveCourses(ZonedDateTime.now(), PageRequest.of(0, 500)).stream()
+                .map(AttachmentVideoUnit::getId).filter(ours::contains).toList();
 
-        assertThat(found).extracting(AttachmentVideoUnit::getId).contains(ingested.getId()).doesNotContain(neverProcessed.getId(), stillIngesting.getId());
+        assertThat(found).containsExactly(ingested.getId());
     }
 
     private void savePhase(AttachmentVideoUnit unit, ProcessingPhase phase) {

@@ -313,15 +313,22 @@ public class ProcessingStateCallbackService {
             state.transitionTo(ProcessingPhase.DONE);
             state.setIngestionJobToken(null);
             processingStateRepository.save(state);
-            // Pyris now holds the unit, so a synchronization settled or in flight because it did not is worth trying
-            // again. The transaction and the lock come from the repository method, which is why the transition is
-            // passed into it.
-            irisLectureUnitSyncStateRepository.updateWithLectureUnitLock(lectureUnitId, ProcessingStateCallbackService::reopenSynchronization);
             saveDisplayPageNumbers(state, displayPageNumbers);
 
             // Notify UI via WebSocket
             TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
             notifyProcessingStateChange(state, txStatus);
+
+            // Pyris now holds the unit, so a synchronization settled or in flight because it did not is worth trying
+            // again. The transaction and the lock come from the repository method, which is why the transition is
+            // passed into it. Last, and guarded: it takes a row lock, and failing to reopen a synchronization must not
+            // cost the completion itself, whose bookkeeping cannot be replayed once the job token has been cleared.
+            try {
+                irisLectureUnitSyncStateRepository.updateWithLectureUnitLock(lectureUnitId, ProcessingStateCallbackService::reopenSynchronization);
+            }
+            catch (RuntimeException e) {
+                log.warn("Could not reopen the Iris synchronization of lecture unit {} after ingestion: {}", lectureUnitId, e.getMessage());
+            }
         }
         else {
             log.warn("Processing failed for unit {} (errorCode={})", lectureUnitId, errorCode);

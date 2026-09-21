@@ -179,8 +179,10 @@ class IrisLectureUnitSyncEventListenerTest {
         listener.handleMetadataDirty(new IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent(LECTURE_UNIT_ID));
 
         assertThat(state.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_FAILED);
-        assertThat(state.getNextRetryAt()).isNull();
         assertThat(state.getRetryCount()).isEqualTo(10);
+        // Out of the hot retry path, but not abandoned: an installation that lost Pyris for half a day recovers on its
+        // own rather than needing every row to be reset by hand.
+        assertThat(state.getNextRetryAt()).isAfter(ZonedDateTime.now().plusHours(23));
     }
 
     @Test

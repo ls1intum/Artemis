@@ -100,6 +100,7 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
             SELECT avu FROM AttachmentVideoUnit avu
             JOIN avu.lecture l
             JOIN l.course c
+            LEFT JOIN avu.attachment attachment
             LEFT JOIN LectureUnitProcessingState ps ON ps.lectureUnit.id = avu.id
             WHERE ps.id IS NULL
                 AND (c.startDate <= :now OR c.startDate IS NULL)
@@ -109,7 +110,7 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
                 AND (
                     (avu.videoSource IS NOT NULL AND avu.videoSource <> '')
                     OR
-                    (avu.attachment IS NOT NULL AND LOWER(avu.attachment.link) LIKE '%.pdf')
+                    (attachment IS NOT NULL AND LOWER(attachment.link) LIKE '%.pdf')
                 )
             ORDER BY avu.id
             """)
@@ -129,7 +130,9 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
      * Only units whose content processing finished are considered. Pyris answers a synchronization for anything else
      * with "lecture unit has not been ingested", so creating a state for one manufactures work that can only fail:
      * before this condition existed, every eligible unit that had never been ingested was pushed once an hour for as
-     * long as its course stayed active.
+     * long as its course stayed active. Reaching {@code DONE} is a good indication rather than a guarantee, since a
+     * unit whose course has Iris disabled also completes without being ingested; such a unit reports its
+     * synchronization as skipped instead of failing.
      *
      * @param now      the current time for determining active courses
      * @param pageable pagination to limit results

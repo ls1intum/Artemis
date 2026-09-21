@@ -19,6 +19,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
@@ -418,6 +420,43 @@ class LectureContentProcessingServiceTest {
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
             assertThat(testState.getIngestionJobToken()).isNull();
+        }
+
+        @Test
+        void shouldReopenASettledOrInFlightIrisSynchronizationButLeaveACleanOneAlone() {
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, null);
+
+            var transitionCaptor = ArgumentCaptor.forClass(Consumer.class);
+            verify(irisLectureUnitSyncStateRepository).updateWithLectureUnitLock(eq(testUnit.getId()), transitionCaptor.capture());
+            Consumer<IrisLectureUnitSyncState> reopen = transitionCaptor.getValue();
+
+            // Pyris now holds the unit, so a state that gave up because it did not is worth trying again, and so is one
+            // whose request is still in flight, since its answer describes a state of the world that no longer holds.
+            for (String settled : List.of(IrisLectureUnitSyncState.STATUS_NOT_INGESTED, IrisLectureUnitSyncState.STATUS_FAILED, IrisLectureUnitSyncState.STATUS_IN_PROGRESS)) {
+                var state = new IrisLectureUnitSyncState();
+                state.setStatus(settled);
+                state.setRetryCount(7);
+                state.setLastErrorKey("NotIngestedInPyris");
+                reopen.accept(state);
+                assertThat(state.getStatus()).as("a %s state has to be reopened", settled).isEqualTo(IrisLectureUnitSyncState.STATUS_DIRTY);
+                assertThat(state.getRetryCount()).isZero();
+                assertThat(state.getLastErrorKey()).isNull();
+                assertThat(state.getNextRetryAt()).isNotNull();
+            }
+
+            // A clean state is left alone: reopening it without clearing the synced hashes would find nothing to
+            // dispatch and would cycle the row through the retry pass on every lease.
+            var clean = new IrisLectureUnitSyncState();
+            clean.setStatus(IrisLectureUnitSyncState.STATUS_CLEAN);
+            reopen.accept(clean);
+            assertThat(clean.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_CLEAN);
+            assertThat(clean.getNextRetryAt()).isNull();
         }
 
         @Test

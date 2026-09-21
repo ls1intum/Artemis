@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -41,9 +42,16 @@ public class IrisLectureUnitSyncEventListener {
      *
      * <p>
      * Chosen above the point where the backoff reaches {@link #MAX_RETRY_DELAY_MINUTES}, so that a failure which does
-     * resolve on its own still gets several hours of hourly attempts before the unit is given up on.
+     * resolve on its own still gets several hours of hourly attempts before the unit leaves the hot retry path. It is
+     * deliberately larger than the ingestion limit, whose attempts are far more expensive than one webhook call.
      */
     private static final int MAX_SYNC_RETRIES = 10;
+
+    /**
+     * How long a state that exhausted its retries waits before it is tried once more. Long enough that a permanent
+     * failure costs one request a day, short enough that an installation recovers on its own after a long outage.
+     */
+    private static final Duration COLD_RETRY_DELAY = Duration.ofHours(24);
 
     private static final int RETRY_LEASE_MINUTES = 10;
 
@@ -83,8 +91,10 @@ public class IrisLectureUnitSyncEventListener {
      */
     @Scheduled(fixedRate = 300000)
     public void retryDirtyStates() {
-        syncStateRepository.findTop50ByStatusInAndNextRetryAtLessThanEqualOrderByNextRetryAtAsc(
-                List.of(IrisLectureUnitSyncState.STATUS_DIRTY, IrisLectureUnitSyncState.STATUS_IN_PROGRESS), ZonedDateTime.now()).forEach(candidate -> {
+        syncStateRepository
+                .findTop50ByStatusInAndNextRetryAtLessThanEqualOrderByNextRetryAtAsc(
+                        List.of(IrisLectureUnitSyncState.STATUS_DIRTY, IrisLectureUnitSyncState.STATUS_IN_PROGRESS, IrisLectureUnitSyncState.STATUS_FAILED), ZonedDateTime.now())
+                .forEach(candidate -> {
                     ZonedDateTime claimTime = ZonedDateTime.now();
                     syncStateRepository.claimRetry(candidate.getLectureUnitId(), claimTime, claimTime.plusMinutes(RETRY_LEASE_MINUTES)).ifPresent(this::synchronizeDirtyState);
                 });
@@ -217,9 +227,22 @@ public class IrisLectureUnitSyncEventListener {
     }
 
     private static void markSkipped(IrisLectureUnitSyncState state) {
+        if (isSettled(state)) {
+            // The two legs of a claim are dispatched one after the other, so the first can settle the row while the
+            // second is still deciding. Rescheduling here would undo that settle and restart the loop it ended.
+            return;
+        }
         state.setStatus(IrisLectureUnitSyncState.STATUS_DIRTY);
         state.setNextRetryAt(ZonedDateTime.now().plusMinutes(RETRY_LEASE_MINUTES));
         state.setLastErrorKey("DispatchSkipped");
+    }
+
+    /**
+     * @param state a synchronization state
+     * @return whether it has been settled, which the retry pass only revisits once its cold retry time is due
+     */
+    private static boolean isSettled(IrisLectureUnitSyncState state) {
+        return IrisLectureUnitSyncState.STATUS_NOT_INGESTED.equals(state.getStatus()) || IrisLectureUnitSyncState.STATUS_FAILED.equals(state.getStatus());
     }
 
     /**
@@ -249,8 +272,11 @@ public class IrisLectureUnitSyncEventListener {
         state.setRetryCount(retryCount);
         state.setLastErrorKey(exception.getClass().getSimpleName());
         if (retryCount >= MAX_SYNC_RETRIES) {
+            // Left out of the hot retry path, but not abandoned: an outage longer than the backoff budget would
+            // otherwise settle every dirty unit of the installation with nothing to bring it back, since these units
+            // are already ingested and no further ingestion will reopen them.
             state.setStatus(IrisLectureUnitSyncState.STATUS_FAILED);
-            state.setNextRetryAt(null);
+            state.setNextRetryAt(ZonedDateTime.now().plus(COLD_RETRY_DELAY));
             return;
         }
         state.setStatus(IrisLectureUnitSyncState.STATUS_DIRTY);
