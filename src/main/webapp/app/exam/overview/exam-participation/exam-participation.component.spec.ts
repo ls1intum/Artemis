@@ -1953,6 +1953,16 @@ describe('ExamParticipationComponent', () => {
         expect(fixture).toBeTruthy();
         const examBarDebugElement = fixture.debugElement.query(By.css('jhi-exam-bar'));
         expect(examBarDebugElement).toBeTruthy();
+
+        // #13916: the exercise column is sized by CSS alone. It used to get `h-100` from a `scrollHeight >
+        // clientHeight` measurement of the very element it sizes, so each state produced the other and the scroll
+        // bar flickered in and out on every change-detection pass. `min-h-100` fills the column when the exercise is
+        // short and lets it grow when the exercise is tall, with no measurement in the loop.
+        const column = fixture.debugElement.query(By.css('.content-exam-height > div'));
+        expect(column).toBeTruthy();
+        const columnClasses: string[] = [...column.nativeElement.classList];
+        expect(columnClasses).toEqual(expect.arrayContaining(['min-h-100', 'd-flex', 'flex-column']));
+        expect(columnClasses).not.toContain('h-100');
     });
 
     it('should not display exam bar and timer when exam was not submitted', () => {
