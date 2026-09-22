@@ -4,7 +4,6 @@ apply plugin: 'org.cyclonedx.bom'
 
 dependencies {
     implementation project(':aiworker:api')
-    implementation project(':hyperion')
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-opentelemetry'
     implementation 'org.springframework.boot:spring-boot-starter-artemis'
@@ -15,13 +14,6 @@ dependencies {
     implementation 'tools.jackson.core:jackson-databind'
     implementation 'tools.jackson.dataformat:jackson-dataformat-yaml'
     implementation 'org.springframework.ai:spring-ai-client-chat'
-    implementation('org.springframework.ai:spring-ai-starter-model-openai') {
-        // The OpenAI SDK uses OkHttp; the worker needs no reactive web application stack.
-        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-webclient'
-    }
-    implementation 'net.sourceforge.plantuml:plantuml-mit:1.2026.7'
-    implementation 'com.thoughtworks.qdox:qdox:2.2.0'
-    implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'com.tngtech.archunit:archunit:1.5.0'
     testImplementation 'org.apache.artemis:artemis-server'
@@ -33,7 +25,7 @@ springBoot {
 }
 
 jar {
-    enabled = false
+    enabled = true
 }
 
 bootJar {
@@ -61,20 +53,15 @@ test {
     systemProperty 'io.netty.noUnsafe', 'false'
 }
 
-// Use Artemis's canonical build recipe and teaching fixtures without maintaining a competing worker copy.
-processResources {
-    from(rootProject.file('src/main/resources')) {
-        include 'templates/phases/java/plain_gradle.yaml'
-        include 'templates/java/exercise/**'
-        include 'templates/java/solution/**'
-        include 'templates/java/gradle_gradle/**'
-        include 'templates/java/test/testFiles/**'
-        include 'templates/java/test/gradle/**'
-        include 'templates/hyperion/**'
-    }
-}
 
-// Canonical teaching resources contain Gradle's wrapper JAR, which is not worker code.
-jacocoTestReport {
-    classDirectories.setFrom(sourceSets.main.output.classesDirs)
+// Verify the actual deployable dependency graph, not a filtered test classloader.
+tasks.named('verifyRuntimeBoundary') {
+    doLast {
+        def forbidden = configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.findAll {
+            it.name == 'hyperion' || it.moduleVersion.id.group in ['org.eclipse.jgit', 'com.thoughtworks.qdox', 'net.sourceforge.plantuml'] || it.name.contains('openai')
+        }
+        if (!forbidden.empty) {
+            throw new GradleException("Workload dependencies in generic AI Worker: ${forbidden*.moduleVersion*.id}")
+        }
+    }
 }

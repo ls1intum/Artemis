@@ -29,6 +29,41 @@ class WorkerSupervisorTest {
     private static final String IMAGE = "sha256:" + "a".repeat(64);
 
     @Test
+    void blockedRejectionPublicationDoesNotHoldTheCommandListener() throws Exception {
+        var events = new LinkedBlockingQueue<WorkerEventDTO>();
+        var publishing = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        try (var commands = java.util.concurrent.Executors.newSingleThreadExecutor(); var worker = new WorkerSupervisorService(settings(), event -> {
+            if (event.type() == WorkerEventType.ERROR) {
+                publishing.countDown();
+                try {
+                    assertThat(release.await(5, TimeUnit.SECONDS)).isTrue();
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            events.add(event);
+        }, () -> (TestWorkload) (a, c, p, s) -> result(), () -> {
+        }, () -> IMAGE, System::nanoTime)) {
+            var valid = start(worker, events);
+            var id = new ExecutionIdentityDTO("rejected", "resource-2", UUID.randomUUID(), valid.identity().workerId(), valid.identity().workerIncarnation(), 1);
+            var rejected = new WorkerCommandDTO(WorkerCommandDTO.PROTOCOL_VERSION, WorkerCommandType.START, id,
+                    new ExecutionAssignmentDTO(id, CAPABILITY, valid.assignment().deadline(), IMAGE, "input"));
+            try {
+                var admission = commands.submit(() -> worker.accept(rejected));
+                assertThat(publishing.await(5, TimeUnit.SECONDS)).isTrue();
+                admission.get(1, TimeUnit.SECONDS);
+                commands.submit(() -> worker.accept(new WorkerCommandDTO(WorkerCommandDTO.PROTOCOL_VERSION, WorkerCommandType.RENEW, id, null))).get(1, TimeUnit.SECONDS);
+                commands.submit(() -> worker.accept(new WorkerCommandDTO(WorkerCommandDTO.PROTOCOL_VERSION, WorkerCommandType.CANCEL, id, null))).get(1, TimeUnit.SECONDS);
+            }
+            finally {
+                release.countDown();
+            }
+        }
+    }
+
+    @Test
     void finishRequestsCooperativeCompletionWithoutCancellingOrDiscardingEvidence() throws Exception {
         var events = new LinkedBlockingQueue<WorkerEventDTO>();
         var entered = new CountDownLatch(1);
@@ -100,7 +135,10 @@ class WorkerSupervisorTest {
             var rejected = new WorkerCommandDTO(WorkerCommandDTO.PROTOCOL_VERSION, WorkerCommandType.START, id,
                     new ExecutionAssignmentDTO(id, a.capability(), a.deadline(), IMAGE, a.payload()));
             worker.accept(rejected);
-            worker.heartbeat();
+            org.awaitility.Awaitility.await().untilAsserted(() -> {
+                worker.heartbeat();
+                assertThat(events).anyMatch(event -> event.type() == WorkerEventType.ERROR);
+            });
             assertThat(take(events, WorkerEventType.ERROR).identity()).isEqualTo(id);
             assertThat(take(events, WorkerEventType.HEARTBEAT).capacity().executions()).isEmpty();
             worker.accept(rejected);

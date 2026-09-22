@@ -61,6 +61,10 @@ public class WorkerSupervisorService implements AutoCloseable {
 
     private final ExecutorService cancellationExecutor;
 
+    private final ExecutorService deliveryExecutor = Executors.newSingleThreadExecutor(Thread.ofPlatform().name("aiworker-delivery").factory());
+
+    private final AtomicBoolean deliveryScheduled = new AtomicBoolean();
+
     private final LongSupplier nanoTime;
 
     private final UUID incarnation = UUID.randomUUID();
@@ -149,7 +153,17 @@ public class WorkerSupervisorService implements AutoCloseable {
         synchronized (this) {
             acceptCommand(command);
         }
-        flushTerminal();
+        // Broker publication must never hold the sole command listener: renewals and cancellation are time-critical.
+        if (deliveryScheduled.compareAndSet(false, true)) {
+            deliveryExecutor.submit(() -> {
+                try {
+                    flushTerminal();
+                }
+                finally {
+                    deliveryScheduled.set(false);
+                }
+            });
+        }
     }
 
     private void acceptCommand(WorkerCommandDTO command) {
@@ -404,6 +418,7 @@ public class WorkerSupervisorService implements AutoCloseable {
             draining = true;
             active.values().forEach(this::cancel);
         }
+        deliveryExecutor.shutdownNow();
         executor.shutdown();
         cancellationExecutor.shutdown();
         try {

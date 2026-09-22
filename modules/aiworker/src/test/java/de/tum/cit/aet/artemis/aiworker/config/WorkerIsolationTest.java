@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.convert.ApplicationConversionService;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
-import org.springframework.boot.test.context.FilteredClassLoader;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.jms.config.DefaultJmsListenerContainerFactory;
 
@@ -46,7 +45,7 @@ class WorkerIsolationTest {
         DockerClient docker = mock(DockerClient.class, RETURNS_DEEP_STUBS);
         when(docker.listContainersCmd().withShowAll(true).exec()).thenReturn(List.of());
         when(docker.inspectImageCmd(image).exec().getId()).thenReturn(image);
-        new ApplicationContextRunner().withClassLoader(new FilteredClassLoader("de.tum.cit.aet.artemis.hyperion")).withInitializer(new ConfigDataApplicationContextInitializer())
+        new ApplicationContextRunner().withInitializer(new ConfigDataApplicationContextInitializer())
                 .withInitializer(context -> context.getBeanFactory().setConversionService(ApplicationConversionService.getSharedInstance()))
                 .withUserConfiguration(AiWorkerApplication.class).withBean("testDocker", DockerClient.class, () -> docker, definition -> definition.setPrimary(true))
                 .withBean("testPublisher", WorkerEventPublisher.class, () -> events::add, definition -> definition.setPrimary(true))

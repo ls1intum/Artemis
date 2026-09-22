@@ -30,11 +30,6 @@ class AiWorkerArchitectureTest {
     }
 
     @Test
-    void workloadConsumersOnlyAccessPublicApiAndDtos() {
-        noClasses().that().resideOutsideOfPackage("..aiworker..").should().dependOnClassesThat().resideInAnyPackage("..aiworker.service..", "..aiworker.config..").check(CLASSES);
-    }
-
-    @Test
     void workerCannotAccessDatabaseOrClusterProviders() {
         noClasses().should().dependOnClassesThat().resideInAnyPackage("java.sql..", "javax.sql..", "jakarta.persistence..", "org.springframework.data..", "org.hibernate..",
                 "com.hazelcast..", "org.redisson..", "org.springframework.jdbc..", "jakarta.servlet..", "org.springframework.web.servlet..", "org.springframework.web.socket..")
@@ -49,7 +44,8 @@ class AiWorkerArchitectureTest {
     }
 
     @Test
-    void importedClassesCoverBothFeatureModulesAndTheStandaloneImplementation() {
+    void importedClassesCoverOnlyInfrastructureAndTheStandaloneImplementation() {
+        assertThat(CLASSES.stream().map(type -> type.getName())).noneMatch(name -> name.contains(".hyperion."));
         assertThat(CLASSES.stream().map(type -> type.getName())).contains("de.tum.cit.aet.artemis.aiworker.service.sandbox.DockerSandboxService",
                 "de.tum.cit.aet.artemis.aiworker.api.SandboxApi", "de.tum.cit.aet.artemis.aiworker.service.WorkerSupervisorService");
     }
