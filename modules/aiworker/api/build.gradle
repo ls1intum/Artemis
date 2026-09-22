@@ -1,0 +1,11 @@
+apply from: rootProject.file('gradle/isolated-module.gradle')
+
+base {
+    archivesName = 'aiworker-api'
+}
+
+dependencies {
+    api 'org.apache.commons:commons-compress:1.28.0'
+    implementation 'tools.jackson.core:jackson-databind'
+    testImplementation 'com.tngtech.archunit:archunit:1.5.0'
+}
