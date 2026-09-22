@@ -1,5 +1,6 @@
 :host {
     display: block;
+    min-width: 0;
 }
 
 .tum-ui-panel-header {
@@ -7,6 +8,10 @@
     justify-content: space-between;
     align-items: center;
     padding: calc(var(--tumaet-ui-spacing) * 4.5);
+}
+
+.tum-ui-panel-header[hidden] {
+    display: none;
 }
 
 .tum-ui-panel-header-toggleable {
@@ -48,6 +53,8 @@
 
 .tum-ui-panel-content-container {
     display: grid;
+    min-width: 0;
+    overflow: hidden;
     grid-template-rows: 1fr;
     transition: grid-template-rows 0.2s ease-in-out;
 }
@@ -58,6 +65,7 @@
 
 .tum-ui-panel-content-wrapper {
     min-height: 0;
+    min-width: 0;
     overflow: hidden;
 }
 
@@ -69,4 +77,22 @@
     .tum-ui-panel-content-container {
         transition: none;
     }
+}
+
+:host([data-density='compact']) {
+    .tum-ui-panel-header {
+        padding: var(--tumaet-ui-spacing) calc(var(--tumaet-ui-spacing) * 2);
+    }
+
+    .tum-ui-panel-title {
+        line-height: 1.5;
+    }
+
+    .tum-ui-panel-content {
+        padding: 0 calc(var(--tumaet-ui-spacing) * 2) calc(var(--tumaet-ui-spacing) * 1.5);
+    }
+}
+
+:host([data-density='flush']) .tum-ui-panel-content {
+    padding: 0;
 }

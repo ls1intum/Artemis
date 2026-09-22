@@ -33,6 +33,7 @@ function displayLabel(value: unknown): string | undefined {
     host: {
         role: 'group',
         class: 'tum-ui-select-button',
+        '[attr.data-size]': 'size()',
         '[attr.aria-disabled]': 'effectiveDisabled() || null',
     },
     providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => TumUiSelectButtonComponent), multi: true }],

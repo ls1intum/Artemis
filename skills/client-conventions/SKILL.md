@@ -85,6 +85,20 @@ If TUM UI lacks a reusable capability, add or evolve a package component around 
 stable Angular CDK primitives, and keep Artemis-specific composition in the application. See
 `documentation/docs/developer/guidelines/tum-ui-kit.mdx`.
 
+### TUM UI consumer contracts
+
+`localRules/tum-ui-no-restyle` checks application templates, including inline component templates
+through Angular ESLint. Use public inputs for appearance and native classes for host layout.
+Do not use `styleClass`, opaque class bindings on TUM UI controls, package-owned CSS classes,
+or selectors reaching into package internals. Signal conditions such as `[class.w-full]="wide()"`
+are supported. Package implementations are outside this consumer rule.
+
+Stylelint uses built-in selector and selector/property rules to reject private TUM UI classes and
+direct host appearance overrides in application stylesheets. Do not remove a necessary visual or
+layout behavior merely to pass lint: move reusable fixes into the package and test them in its
+browser stories. See the consumer style checks in the TUM UI guideline for the exact scope and
+analysis limits. Rule/configuration tests run with `pnpm run test:rules`.
+
 ## Other rules worth knowing
 
 Prefer `undefined` over `null`. Aim for full type safety; `localRules/no-as-any-cast` and

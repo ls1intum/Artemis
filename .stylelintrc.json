@@ -69,6 +69,27 @@
                     "/.+/": ["/--bs-/", "/(?:rgb|hsl)a?\\(/"]
                 }
             }
+        },
+        {
+            "files": ["src/main/webapp/app/**/*.scss", "src/main/webapp/app/**/*.css"],
+            "rules": {
+                "selector-disallowed-list": [
+                    ["/\\.tum-ui-[\\w-]+/", "/\\[class[^\\]]*tum-ui-/"],
+                    {
+                        "message": "Do not target private TUM UI classes. Use a public component input, a --tumaet-ui-* theme property, or fix the package."
+                    }
+                ],
+                "rule-selector-property-disallowed-list": [
+                    {
+                        "/(?![^()]*\\))(?:(?:^|[\\s>+~,])tum-ui-[\\w-]+|\\[(?:tumUiButton|tumUiInput|tumUiTextarea)\\])(?:[.#][\\w-]+|\\[[^\\]]*\\]|:[\\w-]+(?:\\([^()]*\\))?)*\\s*(?=,|$)/": [
+                            "/^(?:all|appearance|padding|background|color|border|font|line-height|letter-spacing|word-spacing|box-shadow|text-shadow|text-transform|text-decoration|text-indent|text-underline-offset|opacity|filter|backdrop-filter|mix-blend-mode|hyphens|list-style|outline|fill|stroke)(?:-|$)/"
+                        ]
+                    },
+                    {
+                        "message": "TUM UI owns appearance. Use public inputs or extend the package; host layout remains allowed."
+                    }
+                ]
+            }
         }
     ],
     "rules": {

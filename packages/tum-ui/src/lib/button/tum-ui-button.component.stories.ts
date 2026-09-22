@@ -2,7 +2,7 @@ import { argsToTemplate } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import type { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { fn } from 'storybook/test';
+import { expect, fn } from 'storybook/test';
 import { TumUiButtonComponent } from './tum-ui-button.component';
 import { TumUiButtonSeverity, TumUiButtonSize, TumUiButtonVariant } from './tum-ui-button.variants';
 
@@ -104,5 +104,17 @@ export const IconOnly: Story = {
         icon: faDownload,
         label: '',
         rounded: true,
+    },
+};
+
+export const FullWidth: Story = {
+    render: (args) => ({
+        props: args,
+        template: '<tum-ui-button style="display: block; width: 100%;" [severity]="severity" [size]="size" (clicked)="clicked($event)">{{ label }}</tum-ui-button>',
+    }),
+    play: async ({ args, canvas }) => {
+        const button = canvas.getByRole('button', { name: args.label });
+        const host = button.parentElement!;
+        await expect(button.getBoundingClientRect().width).toBeCloseTo(host.getBoundingClientRect().width, 0);
     },
 };

@@ -21,7 +21,6 @@
                 @if (selectable()) {
                     <tum-ui-tag
                         severity="secondary"
-                        styleClass="font-normal!"
                         [value]="
                             'artemisApp.assessmentInstructions.appliedCount'
                                 | artemisTranslate: { applied: appliedCountPerCriterion()[criterionIndex], total: criterion.instructions.length }

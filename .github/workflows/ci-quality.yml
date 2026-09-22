@@ -103,9 +103,9 @@ jobs:
       - name: TypeScript Code Style
         run: pnpm run lint
         if: ${{ !cancelled() }}
-      - name: TUM UI Styles
-        run: pnpm run tum-ui:stylelint
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
+      - name: Client Styles
+        run: pnpm run stylelint
+        if: ${{ !cancelled() }}
       - name: Install Playwright Dependencies
         run: pnpm install --frozen-lockfile
         working-directory: src/test/playwright

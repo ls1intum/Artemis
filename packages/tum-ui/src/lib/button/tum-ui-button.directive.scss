@@ -32,6 +32,11 @@
     // Stated here rather than left to a utility class: an application's unlayered rules can set cursor:pointer on
     // enabled buttons, and unlayered always beats a cascade layer, whatever the specificity of the utility.
     &[aria-disabled='true'] {
+        opacity: 0.6;
         cursor: not-allowed;
     }
+}
+
+:host([data-rounded='true']) {
+    border-radius: 9999px;
 }

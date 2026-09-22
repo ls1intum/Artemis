@@ -178,7 +178,7 @@
         "tum-ui:test": "pnpm --dir packages/tum-ui run test",
         "tum-ui:test:coverage": "pnpm --dir packages/tum-ui run test:coverage",
         "tum-ui:test:watch": "pnpm --dir packages/tum-ui run test:watch",
-        "tum-ui:validate": "pnpm run lint && pnpm run compile:tests && pnpm run test:rules && pnpm run tum-ui:stylelint && pnpm run tum-ui:test:coverage && pnpm run tum-ui:pack:check && pnpm run tum-ui:source:check:prepared && pnpm --dir packages/tum-ui run storybook:validate && pnpm run docs:test:prepared",
+        "tum-ui:validate": "pnpm run lint && pnpm run compile:tests && pnpm run test:rules && pnpm run stylelint && pnpm run tum-ui:test:coverage && pnpm run tum-ui:pack:check && pnpm run tum-ui:source:check:prepared && pnpm --dir packages/tum-ui run storybook:validate && pnpm run docs:test:prepared",
         "setupCourse": "node supporting_scripts/course-scripts/setup-course/setup-course.mjs",
         "vitest": "vitest",
         "vitest:run": "vitest run",
@@ -197,6 +197,7 @@
         "sbom:filter-shipped": "node supporting_scripts/sbom-filter-by-bundle.mjs build/reports/client-sbom-full.json build/reports/client-sbom.json build/resources/main/static",
         "sbom:generate": "pnpm run sbom:generate-full && pnpm run sbom:filter-shipped",
         "migrate:status": "node supporting_scripts/migration/migrate.mjs status",
-        "migrate:check": "node supporting_scripts/migration/migrate.mjs check"
+        "migrate:check": "node supporting_scripts/migration/migrate.mjs check",
+        "stylelint": "stylelint \"src/main/webapp/app/**/*.{css,scss}\" && pnpm run tum-ui:stylelint"
     }
 }

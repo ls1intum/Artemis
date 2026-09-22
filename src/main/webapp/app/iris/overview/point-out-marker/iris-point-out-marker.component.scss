@@ -7,8 +7,6 @@
 // The attribute form of the kit button (see TumUiButtonDirective) instead of <tum-ui-button>, so the rules below
 // can reach the button element — inside the element component it is style-encapsulated. Renders identically.
 button[tumUiButton] {
-    border-radius: 9999px;
-
     // Kit buttons are single-line, which clipped long labels (they embed the lecture unit name).
     max-width: 100%;
     white-space: normal;

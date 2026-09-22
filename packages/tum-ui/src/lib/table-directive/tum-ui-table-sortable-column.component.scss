@@ -5,6 +5,9 @@
 .tum-ui-sort-button {
     display: flex;
     align-items: center;
+
+    // Honour host layout without consumers reaching into the private button.
+    justify-content: inherit;
     width: 100%;
     padding: 0;
     border: 0;

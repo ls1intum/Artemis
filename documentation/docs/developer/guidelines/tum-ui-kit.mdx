@@ -124,6 +124,43 @@ Apply application layout classes directly to the component host with the native 
 Do not add `styleClass`-style compatibility inputs or expose internal element classes. Add a
 semantic input or theme token only when the customization is a supported component contract.
 
+### Consumer style checks
+
+`localRules/tum-ui-no-restyle` runs on application HTML and on inline component templates extracted
+by Angular ESLint. It checks `tum-ui-*` elements and the native button, input, and textarea directives.
+The package implementation remains free to style its own internals.
+
+- Use public inputs for appearance. Known colour, typography, padding, border, radius, and shadow
+  utilities are rejected, including responsive/state variants, important modifiers, and arbitrary values.
+- Keep host layout in native `class` and style bindings. Margin, width, positioning, and dynamic layout
+  measurements remain allowed; supported `--tumaet-ui-*` theme properties remain customizable.
+- Write complete class names in conditions, arrays, maps, or `[class.name]` bindings. Opaque class
+  expressions such as `[class]="getClasses()"` are rejected on checked components. This is a limit of
+  static verification, not a ban on signals: the condition in `[class.w-full]="wide()"` may be a signal.
+- Do not pass `styleClass`, paint package-owned `tum-ui-*` classes onto elements, or target private
+  package classes through arbitrary selectors. Static `styleClass` attributes are not Angular input
+  bindings and can otherwise silently do nothing.
+- Stylelint's built-in `selector-disallowed-list` rejects private TUM UI class selectors in application
+  stylesheets. `rule-selector-property-disallowed-list` rejects appearance properties on explicitly
+  selected TUM UI element hosts and native TUM UI buttons, inputs, and textareas. Package stylesheets are excluded.
+
+These checks do not simulate the CSS cascade. They do not resolve custom application classes,
+TypeScript host metadata, imported/computed class values, generic ancestor selectors, nested host selectors in SCSS, or every
+equivalent CSS spelling. Passing lint is not proof of visual consistency. CSS and theme changes
+still need review and browser tests. The policy deliberately does not ban every arbitrary layout
+value or assume every class must come from Tailwind.
+
+Use `size`, `variant`, and `severity` on buttons; the native button directive also supports
+`rounded`. Panels support `density="compact"` for navigation and `density="flush"` for content
+such as tables that owns its spacing. Set `[showHeader]="false"` for an unused panel header;
+toggleable panels retain their disclosure control regardless of that input. Native sortable headers
+forward the host's `justify-content` to the sort button, so a `justify-end` host layout class aligns
+numeric headers without referencing private markup.
+
+Run `pnpm run test:rules` for the rule fixtures and configuration integration tests, and
+`pnpm run lint` plus `pnpm run stylelint` before submitting changes. Run the package's
+browser stories when a supported appearance or layout contract changes.
+
 ### Translation contract
 
 Package-owned text uses `tumUi.*` keys and has English defaults. A host can implement

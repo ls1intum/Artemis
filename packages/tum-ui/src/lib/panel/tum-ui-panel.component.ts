@@ -12,6 +12,7 @@ let nextPanelId = 0;
     imports: [FaIconComponent],
     host: {
         class: 'tum-ui-panel tum:border tum:border-border tum:rounded-md tum:bg-content-background tum:text-text',
+        '[attr.data-density]': 'density()',
         '[attr.data-collapsed]': 'toggleable() && collapsed()',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -24,6 +25,12 @@ export class TumUiPanelComponent {
      * alongside it — projected markup does not label the toggle.
      */
     readonly header = input<string>('');
+
+    /** Compact panels fit navigation; flush panels let tables own their cell spacing. */
+    readonly density = input<'default' | 'compact' | 'flush'>('default');
+
+    /** Hide an unused header. Toggleable panels always retain their disclosure control. */
+    readonly showHeader = input(true, { transform: booleanAttribute });
 
     /** Enables disclosure behavior for the projected content. */
     readonly toggleable = input(false, { transform: booleanAttribute });

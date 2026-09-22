@@ -74,6 +74,20 @@ describe('TumUiPanelComponent', () => {
         expect(content.hasAttribute('inert')).toBe(true);
     });
 
+    it('hides an unused header and restores it when disclosure is enabled', () => {
+        fixture.componentRef.setInput('showHeader', false);
+        fixture.detectChanges();
+        const header = fixture.nativeElement.querySelector('.tum-ui-panel-header') as HTMLElement;
+        expect(header.hidden).toBe(true);
+        expect(fixture.nativeElement.querySelector('button')).toBeNull();
+
+        fixture.componentRef.setInput('toggleable', true);
+        fixture.detectChanges();
+        expect(header.hidden).toBe(false);
+        expect(header.textContent).toContain('Configuration');
+        expect(toggler()!.getAttribute('aria-expanded')).toBe('true');
+    });
+
     it('toggles collapsed on click and emits the two-way change', () => {
         fixture.componentRef.setInput('toggleable', true);
         fixture.detectChanges();

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input } from '@angular/core';
 import { TumUiButtonSeverity, TumUiButtonSize, TumUiButtonVariant, tumUiButtonClasses } from './tum-ui-button.variants';
 
 @Component({
@@ -7,12 +7,15 @@ import { TumUiButtonSeverity, TumUiButtonSize, TumUiButtonVariant, tumUiButtonCl
     styleUrl: './tum-ui-button.directive.scss',
     host: {
         '[class]': 'hostClasses()',
+        '[attr.data-rounded]': 'rounded()',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiButtonDirective {
     readonly severity = input<TumUiButtonSeverity>('primary');
     readonly size = input<TumUiButtonSize>('default');
+
+    readonly rounded = input(false, { transform: booleanAttribute });
 
     readonly variant = input<TumUiButtonVariant>('solid');
 

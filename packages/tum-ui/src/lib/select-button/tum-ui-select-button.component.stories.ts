@@ -1,7 +1,7 @@
 import { FormsModule } from '@angular/forms';
 import { moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { expect, fn } from 'storybook/test';
+import { expect, fn, within } from 'storybook/test';
 
 import { formStoryDecorator } from '../../../.storybook/story-decorators';
 import { TumUiSelectButtonComponent, TumUiSelectButtonSize } from './tum-ui-select-button.component';
@@ -88,6 +88,18 @@ export const Default: Story = {};
 export const Small: Story = {
     args: {
         size: 'small',
+    },
+    render: (args) => ({
+        props: args,
+        template: `
+            <tum-ui-select-button aria-label="Small interval" [options]="options" optionLabel="label" optionValue="value" [size]="size" [(ngModel)]="selected" />
+            <tum-ui-select-button aria-label="Default interval" [options]="options" optionLabel="label" optionValue="value" [(ngModel)]="selected" />
+        `,
+    }),
+    play: async ({ canvas }) => {
+        const small = within(canvas.getByRole('group', { name: 'Small interval' })).getByRole('button', { name: 'Day' });
+        const normal = within(canvas.getByRole('group', { name: 'Default interval' })).getByRole('button', { name: 'Day' });
+        await expect(Number.parseFloat(getComputedStyle(small).paddingBlockStart)).toBeLessThan(Number.parseFloat(getComputedStyle(normal).paddingBlockStart));
     },
 };
 

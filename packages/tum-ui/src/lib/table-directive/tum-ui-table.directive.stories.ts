@@ -53,7 +53,7 @@ const meta = {
                     <thead>
                         <tr>
                             <th tumUiSortableColumn="name">Participant</th>
-                            <th tumUiSortableColumn="score">Score</th>
+                            <th tumUiSortableColumn="score" style="text-align: end; justify-content: end;">Score</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -79,5 +79,7 @@ export const Default: Story = {
     play: async ({ canvas }) => {
         const participantHeader = canvas.getByRole('columnheader', { name: /Participant/ });
         await expect(participantHeader).toHaveAttribute('aria-sort', 'ascending');
+        const score = canvas.getByRole('button', { name: /Score/ });
+        await expect(getComputedStyle(score).justifyContent).toBe('end');
     },
 };

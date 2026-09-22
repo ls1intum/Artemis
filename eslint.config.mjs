@@ -612,6 +612,17 @@ export default tseslint.config(
         },
     },
     {
+        files: ['src/main/webapp/app/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        processor: angular.processInlineTemplates,
+    },
+    {
+        files: ['src/main/webapp/app/**/*.html'],
+        languageOptions: { parser: angularTemplateParser },
+        plugins: { localRules: localRulesPlugin },
+        rules: { 'localRules/tum-ui-no-restyle': 'error' },
+    },
+    {
         // Forbid raw Tailwind color palette classes (e.g. text-green-500) and hand-written PrimeNG component root
         // classes (e.g. class="p-button") in ALL client templates: Tailwind + PrimeNG are loaded app-wide, so both
         // are wrong everywhere — use semantic brand tokens and real PrimeNG components instead. The stylelint

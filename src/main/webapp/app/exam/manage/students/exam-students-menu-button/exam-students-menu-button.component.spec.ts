@@ -1,3 +1,4 @@
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExamStudentsMenuButtonComponent } from './exam-students-menu-button.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -35,6 +36,13 @@ describe('ExamStudentsMenuButtonComponent', () => {
         expect(component.model()).toEqual(items);
         expect(component.label()).toBe('Menu Label');
         expect(component.buttonIconClass()).toBe('fa fa-user');
+    });
+
+    it('passes the public size input to the TUM UI button', () => {
+        fixture.componentRef.setInput('size', 'small');
+        fixture.detectChanges();
+        const button = fixture.debugElement.query(By.directive(TumUiButtonDirective)).componentInstance as TumUiButtonDirective;
+        expect(button.size()).toBe('small');
     });
 
     it('should trigger toggleMenu when button is clicked in template', () => {

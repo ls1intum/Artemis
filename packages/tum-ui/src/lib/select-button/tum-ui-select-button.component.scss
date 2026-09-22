@@ -73,3 +73,11 @@
         border-color: Highlight;
     }
 }
+
+:host([data-size='small']) .tum-ui-select-button-option {
+    padding: calc(var(--tumaet-ui-spacing) * 1.5) calc(var(--tumaet-ui-spacing) * 2.5);
+}
+
+:host([data-size='large']) .tum-ui-select-button-option {
+    padding: calc(var(--tumaet-ui-spacing) * 2.5) calc(var(--tumaet-ui-spacing) * 4);
+}

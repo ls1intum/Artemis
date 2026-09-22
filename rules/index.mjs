@@ -1,3 +1,4 @@
+import tumUiNoRestyle from './tum-ui-no-restyle.mjs';
 import requireSignalReferenceNgbModalInput from './require-signal-reference-ngb-modal-input.mjs';
 import enforceSignalApis from './enforce-signal-apis.mjs';
 import enforceCleanupOnDestroy from './enforce-cleanup-on-destroy.mjs';
@@ -15,6 +16,7 @@ import noBindInTemplateBinding from './no-bind-in-template-binding.mjs';
 
 export default {
     rules: {
+        'tum-ui-no-restyle': tumUiNoRestyle,
         'require-signal-reference-ngb-modal-input': requireSignalReferenceNgbModalInput,
         'enforce-signal-apis': enforceSignalApis,
         'enforce-cleanup-on-destroy': enforceCleanupOnDestroy,

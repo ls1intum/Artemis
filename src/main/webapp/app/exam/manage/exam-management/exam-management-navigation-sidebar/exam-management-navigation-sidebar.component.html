@@ -17,6 +17,7 @@
                     @for (exam of exams(); track exam.id) {
                         <div [id]="'exam-' + exam.id">
                             <tum-ui-panel
+                                density="compact"
                                 [toggleable]="true"
                                 [collapsed]="!expandedExams().has(exam.id!)"
                                 (collapsedChange)="toggleExam(exam.id!)"
@@ -26,9 +27,19 @@
                                     ((exam.testExam ? 'artemisApp.examManagement.testExam.testExam' : 'artemisApp.examManagement.testExam.realExam') | artemisTranslate) +
                                     ')'
                                 "
-                                (click)="onPanelClick(exam.id!, $event)"
                             >
-                                <div tumUiPanelHeader class="flex items-center gap-2 min-w-0 mr-2 flex-1 cursor-pointer select-none">
+                                <button
+                                    tumUiPanelHeader
+                                    tumUiButton
+                                    type="button"
+                                    variant="text"
+                                    severity="secondary"
+                                    size="small"
+                                    class="min-w-0 mr-2 flex-1 justify-start"
+                                    [attr.aria-expanded]="expandedExams().has(exam.id!)"
+                                    [attr.aria-controls]="'exam-navigation-' + exam.id"
+                                    (click)="toggleExam(exam.id!)"
+                                >
                                     <fa-icon
                                         [icon]="exam.testExam ? faVial : faGraduationCap"
                                         [tumUiTooltip]="
@@ -36,8 +47,8 @@
                                         "
                                     />
                                     <span class="truncate font-medium">{{ exam.title }}</span>
-                                </div>
-                                <div class="flex flex-col gap-1">
+                                </button>
+                                <div [id]="'exam-navigation-' + exam.id" class="flex flex-col gap-1">
                                     @if (course().isAtLeastInstructor) {
                                         <jhi-sidebar-subpage-item [subjectId]="exam.id" subpage="" [icon]="faInfoCircle" [title]="'artemisApp.exam.details' | artemisTranslate" />
                                         <jhi-sidebar-subpage-item [subjectId]="exam.id" subpage="edit" [icon]="faWrench" [title]="'entity.action.edit' | artemisTranslate" />

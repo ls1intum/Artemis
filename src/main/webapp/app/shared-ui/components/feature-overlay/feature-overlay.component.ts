@@ -8,7 +8,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     template: `
         <div class="d-inline-block" ngbTooltip="{{ enabled() ? null : ('featureOverview.overlay.title' | artemisTranslate) }}" [placement]="placement()">
             <div [ngClass]="{ 'pe-none': !enabled(), 'opacity-50': !enabled() }">
-                <ng-content></ng-content>
+                <ng-content />
             </div>
         </div>
     `,
