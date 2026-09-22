@@ -288,6 +288,12 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         long buildJobDataNanos = System.nanoTime() - stageStart;
         stageStart = System.nanoTime();
 
+        // Every job of the build is saved before any of them is published. The sweep in LocalCIResultProcessingService
+        // treats a group as complete once every job it finds in the database has finished, so a job that was published
+        // before a sibling's row existed could finish, and the group be finalized without that sibling, if this method
+        // fails or the node dies between the two. A row saved but never published stays QUEUED, which the missing-job
+        // check turns into a retry of the whole build; a group can therefore not lose a container silently either way.
+        List<BuildJobQueueItem> queueItems = new ArrayList<>(containerBuilds.size());
         for (int containerIndex = 0; containerIndex < containerBuilds.size(); containerIndex++) {
             ContainerBuild containerBuild = containerBuilds.get(containerIndex);
             BuildConfig buildConfig = containerBuild.buildConfig();
@@ -316,11 +322,15 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             // This prevents potential race conditions where a build agent pulls the job from the queue very quickly before it is persisted,
             // leading to a failed update operation due to a missing record.
             buildJobRepository.save(new BuildJob(buildJobQueueItem, BuildStatus.QUEUED, null));
+            queueItems.add(buildJobQueueItem);
+        }
+        for (BuildJobQueueItem buildJobQueueItem : queueItems) {
             buildJobQueue.add(buildJobQueueItem);
-            log.info("Added build job {} for exercise {} and participation {} and container {} with priority {} to the queue", jobId, programmingExercise.getShortName(),
-                    participation.getId(), containerName, priority);
+            log.info("Added build job {} for exercise {} and participation {} and container {} with priority {} to the queue", buildJobQueueItem.id(),
+                    programmingExercise.getShortName(), participation.getId(), buildJobQueueItem.buildGroup() == null ? null : buildJobQueueItem.buildGroup().containerName(),
+                    priority);
 
-            distributedDataAccessService.getDistributedDockerImageCleanupInfo().put(buildConfig.dockerImage(), jobTimingInfo.submissionDate());
+            distributedDataAccessService.getDistributedDockerImageCleanupInfo().put(buildJobQueueItem.buildConfig().dockerImage(), jobTimingInfo.submissionDate());
         }
 
         long persistAndEnqueueNanos = System.nanoTime() - stageStart;
