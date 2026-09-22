@@ -73,16 +73,24 @@ public interface LectureTranscriptionRepository extends ArtemisJpaRepository<Lec
 
     /**
      * Insert a unit's first transcription row, atomically conditional on the run that produced it
-     * still owning the unit's processing state at the instant of the insert itself -- not at some
-     * earlier read.
+     * still owning the unit's processing state at the instant the insert commits -- not at some
+     * earlier read, and not merely at the instant its own statement began.
      * <p>
      * A first checkpoint has no existing row to guard an {@code UPDATE} on (see
      * {@link #updateContentIfExists}), so a read-then-insert shape always leaves a gap between
      * checking the token and writing: a content-triggered requeue can invalidate the token and find
      * no row to delete in exactly that gap, and an unconditioned insert afterward would persist stale
-     * content the fresh generation could mistake for its own. JPQL has no bulk insert statement, so
-     * this is a native, portable {@code INSERT ... SELECT ... WHERE EXISTS}, which folds the ownership
-     * check into the same statement as the write instead of a separate query before it.
+     * content the fresh generation could mistake for its own. Folding the check into the {@code EXISTS}
+     * subquery closes that gap for a token change that lands before this statement starts, but a plain
+     * subquery is still only a non-locking snapshot: a concurrent invalidation could otherwise commit
+     * between this statement's snapshot and its own commit, and neither write would ever see the
+     * other. {@code FOR UPDATE} on the subquery closes that remaining window -- it blocks until any
+     * transaction holding the matching processing-state row's lock (such as
+     * {@link LectureUnitProcessingStateRepository#invalidateTokenIfMatches}) commits or rolls back,
+     * and then re-checks the row's now-current state before this insert proceeds, so the two writes
+     * are serialized on the same row instead of racing past each other. JPQL has no bulk insert
+     * statement, so this is a native, portable {@code INSERT ... SELECT ... WHERE EXISTS}, which folds
+     * the ownership check into the same statement as the write instead of a separate query before it.
      *
      * @param lectureUnitId       the unit this transcription belongs to
      * @param language            the checkpoint's language
@@ -100,6 +108,7 @@ public interface LectureTranscriptionRepository extends ArtemisJpaRepository<Lec
             WHERE EXISTS (
                 SELECT 1 FROM lecture_unit_processing_state
                 WHERE lecture_unit_id = :lectureUnitId AND ingestion_job_token = :expectedToken
+                FOR UPDATE
             )
             """, nativeQuery = true)
     int insertIfTokenMatches(@Param("lectureUnitId") Long lectureUnitId, @Param("language") String language, @Param("segments") String segments,

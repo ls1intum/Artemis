@@ -1,14 +1,25 @@
 package de.tum.cit.aet.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.sql.SQLException;
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import javax.sql.DataSource;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -49,12 +60,19 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
     @Autowired
     private LectureUtilService lectureUtilService;
 
+    @Autowired
+    private PlatformTransactionManager transactionManager;
+
+    @Autowired
+    private DataSource dataSource;
+
     private Lecture lecture;
 
     private LectureUnit lectureUnit;
 
     @BeforeEach
     void initTestCase() throws Exception {
+        raiseLockTimeoutOnH2();
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 2);
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, 1);
         Course course = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
@@ -64,6 +82,19 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
         this.lectureUnit = lectureUtilService.createAttachmentVideoUnit(lecture, false);
         lectureUtilService.addLectureUnitsToLecture(lecture, List.of(this.lectureUnit));
         userUtilService.createAndSaveUser(TEST_PREFIX + "outsider");
+    }
+
+    // insertIfTokenMatches's FOR UPDATE blocks on this. H2 gives up after one second by default, so raise its
+    // limit rather than loosen the assertion; a no-op on the other engines.
+    private void raiseLockTimeoutOnH2() throws SQLException {
+        try (var connection = dataSource.getConnection()) {
+            if (!connection.getMetaData().getURL().startsWith("jdbc:h2:")) {
+                return;
+            }
+            try (var statement = connection.createStatement()) {
+                statement.execute("SET DEFAULT_LOCK_TIMEOUT 10000");
+            }
+        }
     }
 
     @Test
@@ -206,6 +237,66 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
         int inserted = lectureTranscriptionRepository.insertIfTokenMatches(lectureUnit.getId(), "en", segmentsJson, TranscriptionStatus.COMPLETED.name(), "any-token");
 
         assertThat(inserted).isZero();
+        assertThat(lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnit.getId())).isEmpty();
+    }
+
+    /**
+     * The window a plain {@code EXISTS} subquery cannot cover: a concurrent invalidation that commits
+     * strictly between this statement's snapshot and its own commit, rather than before it starts. The
+     * mismatch tests above change the token before {@code insertIfTokenMatches} runs at all, so they
+     * cannot exercise this. Here, a transaction that has already taken {@code invalidateTokenIfMatches}'s
+     * row lock -- but not yet committed it -- must make a concurrent {@code insertIfTokenMatches} block,
+     * not race past it on a stale snapshot; and once that lock is released, the insert must observe the
+     * now-invalidated token and skip, not resurrect a row the invalidation was about to orphan.
+     */
+    @Test
+    void testInsertIfTokenMatches_blocksOnAndThenObservesAConcurrentInvalidation() throws Exception {
+        LectureUnitProcessingState state = new LectureUnitProcessingState(lectureUnit);
+        state.setIngestionJobToken("in-flight-token");
+        processingStateRepository.save(state);
+        long stateId = state.getId();
+
+        var segments = List.of(new LectureTranscriptionSegment(0.0, 10.0, "Should not persist", 1));
+        String segmentsJson = new LectureTranscriptionSegmentConverter().convertToDatabaseColumn(segments);
+
+        var holderHasLock = new CountDownLatch(1);
+        var releaseHolder = new CountDownLatch(1);
+        var holder = Executors.newSingleThreadExecutor();
+        var inserter = Executors.newSingleThreadExecutor();
+        try {
+            // One transaction invalidates the token and holds the processing-state row's lock open until released.
+            var holding = holder.submit(() -> new TransactionTemplate(transactionManager).execute(status -> {
+                int invalidated = processingStateRepository.invalidateTokenIfMatches(stateId, "in-flight-token", ZonedDateTime.now());
+                holderHasLock.countDown();
+                try {
+                    releaseHolder.await(30, TimeUnit.SECONDS);
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                return invalidated;
+            }));
+            assertThat(holderHasLock.await(10, TimeUnit.SECONDS)).isTrue();
+
+            var insertResult = inserter.submit(
+                    () -> lectureTranscriptionRepository.insertIfTokenMatches(lectureUnit.getId(), "en", segmentsJson, TranscriptionStatus.COMPLETED.name(), "in-flight-token"));
+
+            // The assertion that makes this a test about the lock: without FOR UPDATE, the insert completes here,
+            // on a snapshot taken before the invalidation committed.
+            assertThatThrownBy(() -> insertResult.get(2, TimeUnit.SECONDS)).as("the insert must block while the processing-state row is locked by the invalidation")
+                    .isInstanceOf(TimeoutException.class);
+
+            releaseHolder.countDown();
+            assertThat(holding.get(30, TimeUnit.SECONDS)).isEqualTo(1);
+            // Once unblocked, the insert re-checks the row's now-current (invalidated) token and must skip.
+            assertThat(insertResult.get(30, TimeUnit.SECONDS)).isZero();
+        }
+        finally {
+            releaseHolder.countDown();
+            holder.shutdownNow();
+            inserter.shutdownNow();
+        }
+
         assertThat(lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnit.getId())).isEmpty();
     }
 }
