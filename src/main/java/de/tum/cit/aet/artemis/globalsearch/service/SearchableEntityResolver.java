@@ -8,12 +8,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
-import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
-import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
@@ -28,6 +23,7 @@ import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.FaqSearchableEnt
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntityPostRepository;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 
@@ -46,7 +42,9 @@ import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
  * Because every apply reflects current truth rather than a captured intent, a backed-off or reordered upsert can
  * never resurrect a deleted or hidden entity, and content never goes stale. All the associations the DTOs read
  * (course, lecture, channel, exam) are eager {@code @ManyToOne}s, so a plain {@code findById} materializes them
- * without a fetch join or an open-session-in-view.
+ * without a fetch join or an open-session-in-view. Post and answer post are the exception: their {@code findById}
+ * also drags in unrelated {@code FetchType.EAGER} collections (reactions, and for a post its answers), so those two
+ * go through {@link SearchableEntityPostRepository}'s scalar projections instead of {@code findById}.
  */
 @Lazy
 @Service
@@ -57,9 +55,7 @@ public class SearchableEntityResolver {
 
     private final FaqRepository faqRepository;
 
-    private final PostRepository postRepository;
-
-    private final AnswerPostRepository answerPostRepository;
+    private final SearchableEntityPostRepository searchableEntityPostRepository;
 
     private final ChannelRepository channelRepository;
 
@@ -71,13 +67,12 @@ public class SearchableEntityResolver {
 
     private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
-    public SearchableEntityResolver(CourseRepository courseRepository, FaqRepository faqRepository, PostRepository postRepository, AnswerPostRepository answerPostRepository,
+    public SearchableEntityResolver(CourseRepository courseRepository, FaqRepository faqRepository, SearchableEntityPostRepository searchableEntityPostRepository,
             ChannelRepository channelRepository, ExerciseSearchableEntityLoadService exerciseLoadService, Optional<ExamRepositoryApi> examRepositoryApi,
             Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi) {
         this.courseRepository = courseRepository;
         this.faqRepository = faqRepository;
-        this.postRepository = postRepository;
-        this.answerPostRepository = answerPostRepository;
+        this.searchableEntityPostRepository = searchableEntityPostRepository;
         this.channelRepository = channelRepository;
         this.exerciseLoadService = exerciseLoadService;
         this.examRepositoryApi = examRepositoryApi;
@@ -105,8 +100,9 @@ public class SearchableEntityResolver {
             case SearchableEntitySchema.TypeValues.FAQ -> faqRepository.findById(entityId).map(faq -> FaqSearchableEntityDTO.fromFaq(faq).toPropertyMap());
             case SearchableEntitySchema.TypeValues.CHANNEL -> channelRepository.findById(entityId).filter(ChannelSearchableEntityDTO::isIndexable)
                     .map(channel -> ChannelSearchableEntityDTO.fromChannel(channel).toPropertyMap());
-            case SearchableEntitySchema.TypeValues.POST -> postRepository.findById(entityId).flatMap(SearchableEntityResolver::resolvePost);
-            case SearchableEntitySchema.TypeValues.ANSWER_POST -> answerPostRepository.findById(entityId).flatMap(SearchableEntityResolver::resolveAnswerPost);
+            case SearchableEntitySchema.TypeValues.POST -> searchableEntityPostRepository.findIndexablePostProjection(entityId).map(PostSearchableEntityDTO::toPropertyMap);
+            case SearchableEntitySchema.TypeValues.ANSWER_POST ->
+                searchableEntityPostRepository.findIndexableAnswerPostProjection(entityId).map(AnswerPostSearchableEntityDTO::toPropertyMap);
             default -> throw new IllegalStateException("Unknown searchable entity type for re-derivation: " + type);
         };
     }
@@ -119,25 +115,5 @@ public class SearchableEntityResolver {
      */
     private static <A> A requireModule(Optional<A> api, String module, String type, long entityId) {
         return api.orElseThrow(() -> new IllegalStateException("Cannot re-derive " + type + " " + entityId + ": the " + module + " module is not available on this node"));
-    }
-
-    /**
-     * A post is indexable only when it lives in an indexable channel; other conversation kinds are never indexed.
-     */
-    private static Optional<Map<String, Object>> resolvePost(Post post) {
-        if (post.getConversation() instanceof Channel channel && PostSearchableEntityDTO.isIndexable(channel)) {
-            return Optional.of(PostSearchableEntityDTO.fromPost(post, channel).toPropertyMap());
-        }
-        return Optional.empty();
-    }
-
-    /**
-     * An answer post follows the indexability of its parent post's channel.
-     */
-    private static Optional<Map<String, Object>> resolveAnswerPost(AnswerPost answerPost) {
-        if (answerPost.getPost() != null && answerPost.getPost().getConversation() instanceof Channel channel && PostSearchableEntityDTO.isIndexable(channel)) {
-            return Optional.of(AnswerPostSearchableEntityDTO.fromAnswerPost(answerPost, channel).toPropertyMap());
-        }
-        return Optional.empty();
     }
 }

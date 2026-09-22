@@ -12,8 +12,13 @@ import static org.mockito.Mockito.doNothing;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.Optional;
 
+import jakarta.persistence.EntityManagerFactory;
+
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -25,12 +30,14 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.dto.CreatePostConversationDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
+import de.tum.cit.aet.artemis.communication.repository.ReactionRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
@@ -39,6 +46,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityResolver;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
@@ -376,6 +384,90 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
 
             // Assert the group chat post was NOT indexed
             assertThat(queryPostProperties(weaviateService, gcPost.id())).isNull();
+        }
+    }
+
+    @Nested
+    class ResolverProjectionTests {
+
+        @Autowired
+        private SearchableEntityResolver searchableEntityResolver;
+
+        @Autowired
+        private ReactionRepository reactionRepository;
+
+        @Autowired
+        private EntityManagerFactory entityManagerFactory;
+
+        private Statistics statistics;
+
+        @BeforeEach
+        void enableStatistics() {
+            statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+            statistics.setStatisticsEnabled(true);
+        }
+
+        private void addReaction(Post post, AnswerPost answerPost, String emojiId) {
+            Reaction reaction = new Reaction();
+            reaction.setUser(instructor);
+            reaction.setEmojiId(emojiId);
+            reaction.setPost(post);
+            reaction.setAnswerPost(answerPost);
+            reactionRepository.save(reaction);
+        }
+
+        /**
+         * Regression test for a resolve that instantiated the whole {@code Post} entity, dragging in its
+         * {@code FetchType.EAGER} reactions and answers (and each answer's own reactions) to build a property map
+         * that needs none of it. Resolving a post must go through the scalar projection alone.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testResolvingAPostNeverLoadsItsEagerReactionsAndAnswersGraph() {
+            Channel channel = createPublicChannel("resolver-post-test");
+            Post post = createAndSavePost(channel);
+            addReaction(post, null, "smiley");
+            addReaction(post, null, "tada");
+            AnswerPost answer = createAndSaveAnswerPost(post);
+            addReaction(null, answer, "smiley");
+            statistics.clear();
+
+            Optional<Map<String, Object>> resolved = searchableEntityResolver.resolve(SearchableEntitySchema.TypeValues.POST, post.getId());
+
+            assertThat(resolved).contains(PostSearchableEntityDTO.fromPost(post, channel).toPropertyMap());
+            assertThat(statistics.getEntityStatistics(Post.class.getName()).getLoadCount()).as("resolving a post must not load the Post entity").isZero();
+            assertThat(statistics.getEntityStatistics(AnswerPost.class.getName()).getLoadCount()).as("resolving a post must not load its answers").isZero();
+            assertThat(statistics.getEntityStatistics(Reaction.class.getName()).getLoadCount()).as("resolving a post must not load its reactions").isZero();
+        }
+
+        /**
+         * Same regression as above, but for the answer post branch and its own {@code FetchType.EAGER} reactions plus
+         * its default-eager {@code Post} association.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testResolvingAnAnswerPostNeverLoadsItsEagerReactionsOrParentPost() {
+            Channel channel = createPublicChannel("resolver-answer-test");
+            Post post = createAndSavePost(channel);
+            AnswerPost answer = createAndSaveAnswerPost(post);
+            addReaction(null, answer, "smiley");
+            statistics.clear();
+
+            Optional<Map<String, Object>> resolved = searchableEntityResolver.resolve(SearchableEntitySchema.TypeValues.ANSWER_POST, answer.getId());
+
+            assertThat(resolved).contains(AnswerPostSearchableEntityDTO.fromAnswerPost(answer, channel).toPropertyMap());
+            assertThat(statistics.getEntityStatistics(AnswerPost.class.getName()).getLoadCount()).as("resolving an answer post must not load the AnswerPost entity").isZero();
+            assertThat(statistics.getEntityStatistics(Post.class.getName()).getLoadCount()).as("resolving an answer post must not load its parent Post entity").isZero();
+            assertThat(statistics.getEntityStatistics(Reaction.class.getName()).getLoadCount()).as("resolving an answer post must not load its reactions").isZero();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testResolvingAPostInAPrivateChannelResolvesToEmpty() {
+            Channel channel = createPrivateChannel("resolver-priv-test");
+            Post post = createAndSavePost(channel);
+
+            assertThat(searchableEntityResolver.resolve(SearchableEntitySchema.TypeValues.POST, post.getId())).isEmpty();
         }
     }
 }
