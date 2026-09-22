@@ -35,7 +35,8 @@ class AgentLoopRunnerTest {
     void toolEnabledEntryPointsRequireSafetyHooks() {
         assertThat(java.util.Arrays.stream(AgentLoopRunner.class.getMethods()).filter(method -> method.getName().equals("run") || method.getName().equals("runSession")))
                 .allSatisfy(method -> assertThat(method.getParameterTypes()).contains(SubmitVetoAware.class).doesNotContain(Object.class));
-        org.assertj.core.api.Assertions.assertThatNullPointerException().isThrownBy(() -> runner(mock(ChatModel.class)).run("system", "brief", null, 1, () -> false, null, null));
+        org.assertj.core.api.Assertions.assertThatIllegalArgumentException()
+                .isThrownBy(() -> runner(mock(ChatModel.class)).run("system", "brief", null, 1, () -> false, null, null));
     }
 
     @ParameterizedTest

@@ -255,7 +255,9 @@ public class AgentLoopRunner {
      */
     public AgentLoopSession runSession(String systemPrompt, @Nullable List<Message> priorConversation, String userPrompt, SubmitVetoAware tools, int maxTurns,
             BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> stepListener) {
-        java.util.Objects.requireNonNull(tools, "Tool-enabled sessions require sandbox and submission safety hooks");
+        if (tools == null) {
+            throw new IllegalArgumentException("Tool-enabled sessions require sandbox and submission safety hooks");
+        }
         ToolCallbackProvider provider = MethodToolCallbackProvider.builder().toolObjects(tools).build();
         return runSessionWithCallbacks(systemPrompt, priorConversation, userPrompt, tools, provider.getToolCallbacks(), maxTurns, cancelled, usageSink, stepListener);
     }
