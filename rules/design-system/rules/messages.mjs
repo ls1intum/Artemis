@@ -12,7 +12,6 @@ const MESSAGE_KEYS = new Set([
     ...UNIVERSAL_KEYS,
     'category',
     'variants',
-    'wrapper',
     'sizes',
     'entries',
     'tokens',

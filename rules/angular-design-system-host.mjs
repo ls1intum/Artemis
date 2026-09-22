@@ -199,7 +199,6 @@ export function createAngularHostAdapter(context, index) {
                                     componentFile: component.file,
                                     variants: component.inputs.get('variant') ?? [],
                                     sizes: component.inputs.get('size') ?? [],
-                                    wrapper: null,
                                     attribute: record.name,
                                     node: record.at,
                                     enclosingContainer: () => null,

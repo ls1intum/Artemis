@@ -137,7 +137,6 @@ export function createAngularDesignSystemPlugin({ root = process.cwd(), componen
                                     componentFile: component?.file ?? null,
                                     variants: component?.inputs.get('variant') ?? [],
                                     sizes: component?.inputs.get('size') ?? [],
-                                    wrapper: null,
                                     attribute: attribute.name,
                                     node: at,
                                     enclosingContainer: (accepts) => {
