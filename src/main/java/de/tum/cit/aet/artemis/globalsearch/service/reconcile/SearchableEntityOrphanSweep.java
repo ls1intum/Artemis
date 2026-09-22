@@ -23,10 +23,14 @@ import de.tum.cit.aet.artemis.globalsearch.domain.ReconcilePass;
 import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntityReconcileState;
 import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntitySyncState;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
+import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntityReconcileStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityIndexScanService;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityIndexScanService.IndexedRow;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Walks the index itself and repairs what it finds there, which is the only check that reads what is actually
@@ -37,9 +41,19 @@ import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityIndexScanServ
  * diverged through a restore, a write that reported success without persisting, or an edit made outside Artemis?
  * <p>
  * This is the only pass that removes anything, so its guards matter more than its logic. It refuses to act on a
- * type it does not manage, on a type whose module is disabled, and on a result so surprising that a bug is the
- * likelier explanation. It also cannot remove more than a set number of rows in one tick, which bounds the damage
- * of being wrong about all of the above.
+ * type it does not manage and on a type whose module is disabled. It also never deletes off one suspicious
+ * reading: a type whose orphan ratio comes back over {@link WeaviateReconcileProperties#orphanAbortRatio()} is
+ * only logged and skipped the first time, not acted on. The deterministic UUID scheme scatters one type's rows
+ * across the whole keyspace (see {@code WeaviateUuidUtil}), so consecutive ticks sample different, independent
+ * slices of it rather than reading the same rows twice; only once the same type comes back over the ratio again,
+ * on a later tick, does the pass trust the reading enough to act, since a stale scan or a bug in the eligibility
+ * check is very unlikely to reproduce identically on an unrelated later sample. Once trusted, a type stays
+ * trusted on every later tick, however many it takes to fully drain a genuinely large batch, until a tick finds
+ * it healthy again. It also cannot remove more than a set number of rows in one tick, which bounds the damage of
+ * being wrong about all of the above even once trusted. One type failing every guard never withholds a tick's
+ * progress from the others: each type in a scanned page is judged and acted on independently, and the cursor
+ * always advances regardless of the outcome, so no type can block the rest of the collection from ever being
+ * looked at again.
  * <p>
  * Rows written while a scan is in flight need no separate fence. Removal is decided against the database as it is
  * now rather than against anything the scan read, so a row that changed underneath makes no difference to it. A
@@ -65,19 +79,24 @@ public class SearchableEntityOrphanSweep {
 
     private final WeaviateReconcileProperties reconcileProperties;
 
+    private final JsonMapper objectMapper;
+
     public SearchableEntityOrphanSweep(SearchableEntityIndexScanService indexScanService, SearchableEntityIdEnumerator idEnumerator,
             SearchableEntitySyncStateRepository syncStateRepository, SearchableEntityReconcileStateRepository reconcileStateRepository, ReconcileEnqueueService enqueueService,
-            WeaviateReconcileProperties reconcileProperties) {
+            WeaviateReconcileProperties reconcileProperties, JsonMapper objectMapper) {
         this.indexScanService = indexScanService;
         this.idEnumerator = idEnumerator;
         this.syncStateRepository = syncStateRepository;
         this.reconcileStateRepository = reconcileStateRepository;
         this.enqueueService = enqueueService;
         this.reconcileProperties = reconcileProperties;
+        this.objectMapper = objectMapper;
     }
 
     /**
-     * Reads one bounded slice of the index, repairs what is wrong with it, and saves where it got to.
+     * Reads one bounded slice of the index, repairs what is wrong with it, and saves where it got to. Always
+     * advances, whatever it found: a type withheld by the abort ratio is remembered for next time, not left to
+     * block every type and every row behind it in the scan order forever.
      */
     public void sweep() {
         String runId = ReconcileRunId.next();
@@ -93,12 +112,9 @@ public class SearchableEntityOrphanSweep {
             return;
         }
 
-        Outcome outcome = repair(runId, slice.rows());
-        if (outcome == null) {
-            // The pass aborted. Leave the cursor where it was so the next tick re-reads the same slice rather than
-            // stepping over whatever caused it.
-            return;
-        }
+        Map<String, Integer> streaks = deserializeStreaks(state.getOrphanAbortStreaks());
+        Outcome outcome = repair(runId, slice.rows(), streaks);
+        state.setOrphanAbortStreaks(serializeStreaks(streaks));
 
         state.recordProgress(slice.rows().size(), outcome.repaired(), outcome.removed());
         if (slice.nextCursor() == null) {
@@ -116,22 +132,21 @@ public class SearchableEntityOrphanSweep {
 
     /**
      * Decides what to do with each scanned row, grouping by type so each type costs one lookup rather than one per
-     * row.
-     * <p>
-     * Validating every type's orphan ratio happens as its own pass, strictly before any enqueueing: a type
-     * processed early must never get its deletes durably queued only for a later type in the same tick to then
-     * trip the abort. That ordering would both defeat the abort's purpose for the type it did catch in time, and
-     * make its "nothing was removed" log line false for what an earlier type already had enqueued.
+     * row. Each type is judged and acted on independently, in the same pass: one type withheld by the abort ratio
+     * must never cost another, healthy type its repairs for the tick.
      *
-     * @return what was queued, or {@code null} if the pass aborted and nothing should be recorded
+     * @param streaks each type's consecutive-tick-over-ratio count, read before this call and updated in place so
+     *                    the caller can persist it
+     * @return what was queued
      */
-    private Outcome repair(String runId, List<IndexedRow> rows) {
+    private Outcome repair(String runId, List<IndexedRow> rows, Map<String, Integer> streaks) {
         // A LinkedHashMap keeps type processing order reproducible (scan order) rather than left to HashMap's
         // unspecified iteration, which matters now that log lines and the delete/repair caps are order-sensitive.
         Map<String, List<IndexedRow>> rowsByType = rows.stream().filter(row -> row.entityType() != null && row.entityId() != null)
                 .collect(Collectors.groupingBy(IndexedRow::entityType, LinkedHashMap::new, Collectors.toCollection(ArrayList::new)));
 
-        List<TypeBatch> batches = new ArrayList<>();
+        long repaired = 0;
+        long removed = 0;
         for (var entry : rowsByType.entrySet()) {
             String entityType = entry.getKey();
             if (!reconcileProperties.managesEntityType(entityType)) {
@@ -150,48 +165,46 @@ public class SearchableEntityOrphanSweep {
             }
 
             List<IndexedRow> orphans = candidates.stream().filter(row -> !shouldBeIndexed.get().contains(row.entityId())).toList();
-            batches.add(new TypeBatch(entityType, candidates, orphans));
-        }
-
-        for (TypeBatch batch : batches) {
-            if (abortsOnOrphanRatio(runId, batch.entityType(), batch.orphans().size(), batch.candidates().size())) {
-                return null;
+            if (!trusted(runId, entityType, orphans.size(), candidates.size(), streaks)) {
+                continue;
             }
-        }
 
-        long repaired = 0;
-        long removed = 0;
-        for (TypeBatch batch : batches) {
-            removed += remove(runId, batch.entityType(), batch.orphans(), removed);
-            repaired += repairDivergent(runId, batch.entityType(), batch.candidates(), batch.orphans(), repaired);
+            removed += remove(runId, entityType, orphans, removed);
+            repaired += repairDivergent(runId, entityType, candidates, orphans, repaired);
         }
         return new Outcome(repaired, removed);
     }
 
     /**
-     * One scanned type's candidates and the subset of them that no longer have an entity behind them, computed
-     * once and shared between the validation pass and the acting pass so the lookup that produced it is not
-     * repeated.
+     * Whether this type's scanned candidates are safe to act on, updating its streak in {@code streaks} as a side
+     * effect.
+     * <p>
+     * A ratio at or under the threshold is unremarkable: the type is healthy, any earlier streak is cleared, and
+     * processing proceeds as normal. A ratio over the threshold is trusted only once it has now happened twice in
+     * a row, since the previous tick that examined this type also found it over the ratio; a single reading, on
+     * its own, is refused and remembered instead of acted on.
      */
-    private record TypeBatch(String entityType, List<IndexedRow> candidates, List<IndexedRow> orphans) {
-    }
-
-    /**
-     * Refuses to act when the result is too surprising to trust. Most rows looking orphaned means the lookup, the
-     * scan, or this pass is wrong far more often than it means the index really is that far out of step, and
-     * deleting on that reading is unrecoverable.
-     */
-    private boolean abortsOnOrphanRatio(String runId, String entityType, int orphanCount, int candidateCount) {
+    private boolean trusted(String runId, String entityType, int orphanCount, int candidateCount, Map<String, Integer> streaks) {
         if (candidateCount == 0 || orphanCount == 0) {
-            return false;
+            streaks.remove(entityType);
+            return true;
         }
         double ratio = (double) orphanCount / candidateCount;
         if (ratio <= reconcileProperties.orphanAbortRatio()) {
-            return false;
+            streaks.remove(entityType);
+            return true;
         }
-        log.error("[index {}] aborted: {} of {} scanned {} rows had no entity behind them, above the {} threshold. Nothing was removed.", runId, orphanCount, candidateCount,
-                entityType, reconcileProperties.orphanAbortRatio());
-        return true;
+
+        int previousStreak = streaks.getOrDefault(entityType, 0);
+        streaks.put(entityType, previousStreak + 1);
+        if (previousStreak >= 1) {
+            log.warn("[index {}] {} of {} scanned {} rows had no entity behind them, above the {} threshold for the second time in a row; proceeding", runId, orphanCount,
+                    candidateCount, entityType, reconcileProperties.orphanAbortRatio());
+            return true;
+        }
+        log.error("[index {}] {} of {} scanned {} rows had no entity behind them, above the {} threshold; skipping this type this tick, acting only if it happens again", runId,
+                orphanCount, candidateCount, entityType, reconcileProperties.orphanAbortRatio());
+        return false;
     }
 
     private long remove(String runId, String entityType, List<IndexedRow> orphans, long alreadyRemoved) {
@@ -243,6 +256,11 @@ public class SearchableEntityOrphanSweep {
         return repaired;
     }
 
+    /**
+     * Deliberately does not touch {@link SearchableEntityReconcileState#getOrphanAbortStreaks()}: a type's
+     * standing does not depend on where the cursor happens to be, and wiping it on every lap would let a type
+     * that keeps tripping the ratio demand a fresh two-tick confirmation every single cycle, forever.
+     */
     private void finishCycle(String runId, SearchableEntityReconcileState state) {
         ZonedDateTime cycleStartedAt = state.getCycleStartedAt();
         String elapsed = cycleStartedAt == null ? "unknown" : Duration.between(cycleStartedAt, ZonedDateTime.now()).toString();
@@ -250,6 +268,31 @@ public class SearchableEntityOrphanSweep {
                 state.getRowsRemoved(), elapsed);
         state.startNewCycle();
         reconcileStateRepository.save(state);
+    }
+
+    private Map<String, Integer> deserializeStreaks(String json) {
+        if (json == null) {
+            return new HashMap<>();
+        }
+        try {
+            return new HashMap<>(objectMapper.readValue(json, new TypeReference<Map<String, Integer>>() {
+            }));
+        }
+        catch (JacksonException e) {
+            throw new WeaviateException("Failed to deserialize orphan abort streaks: " + e.getMessage(), e);
+        }
+    }
+
+    private String serializeStreaks(Map<String, Integer> streaks) {
+        if (streaks.isEmpty()) {
+            return null;
+        }
+        try {
+            return objectMapper.writeValueAsString(streaks);
+        }
+        catch (JacksonException e) {
+            throw new WeaviateException("Failed to serialize orphan abort streaks: " + e.getMessage(), e);
+        }
     }
 
     private record Outcome(long repaired, long removed) {

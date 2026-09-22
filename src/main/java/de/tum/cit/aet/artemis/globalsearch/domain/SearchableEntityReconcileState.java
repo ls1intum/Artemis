@@ -57,6 +57,17 @@ public class SearchableEntityReconcileState extends DomainObject {
     @Column(name = "rows_removed", nullable = false)
     private long rowsRemoved = 0;
 
+    /**
+     * ORPHAN only: per-type count of consecutive ticks a type's orphan ratio has come back over
+     * {@code orphanAbortRatio}, JSON-encoded ({@code {"course":1}}). A type is trusted to actually delete only once
+     * this reaches two: one suspicious reading could be a stale scan or a bug in the eligibility check, but a
+     * second one on an unrelated later tick, sampling a different slice of the type's rows, is not the same fluke
+     * happening twice. Deliberately not reset by {@link #startNewCycle()}: a type's standing doesn't depend on
+     * where the cursor happens to be, and a full lap is far more ticks than this needs to hold across.
+     */
+    @Column(name = "orphan_abort_streaks", length = 1000)
+    private String orphanAbortStreaks;
+
     public SearchableEntityReconcileState() {
         // Default constructor for JPA
     }
@@ -165,10 +176,18 @@ public class SearchableEntityReconcileState extends DomainObject {
         this.rowsRemoved = rowsRemoved;
     }
 
+    public String getOrphanAbortStreaks() {
+        return orphanAbortStreaks;
+    }
+
+    public void setOrphanAbortStreaks(String orphanAbortStreaks) {
+        this.orphanAbortStreaks = orphanAbortStreaks;
+    }
+
     @Override
     public String toString() {
         return "SearchableEntityReconcileState{" + "id=" + getId() + ", pass=" + pass + ", positionEntityType='" + positionEntityType + '\'' + ", positionEntityId="
                 + positionEntityId + ", entitiesChecked=" + entitiesChecked + ", repairsEnqueued=" + repairsEnqueued + ", rowsRemoved=" + rowsRemoved + ", lastRunAt=" + lastRunAt
-                + '}';
+                + ", orphanAbortStreaks='" + orphanAbortStreaks + '\'' + '}';
     }
 }
