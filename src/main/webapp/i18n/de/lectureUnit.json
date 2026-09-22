@@ -122,7 +122,12 @@
                     "readingSlides": "Folien werden gelesen",
                     "summarizingSlides": "Folien werden zusammengefasst",
                     "summarizingTranscript": "Transkript wird zusammengefasst",
-                    "indexingTranscript": "Transkript wird indiziert"
+                    "indexingTranscript": "Transkript wird indiziert",
+                    "downloadingVideo": "Video wird heruntergeladen",
+                    "extractingAudio": "Audio wird extrahiert",
+                    "transcribingAudio": "Audio wird transkribiert",
+                    "detectingSlides": "Folien werden erkannt",
+                    "aligningSlides": "Folien werden zugeordnet"
                 },
                 "error": {
                     "invalidUnitType": "Ungültiger Vorlesungseinheitentyp für Verarbeitung",

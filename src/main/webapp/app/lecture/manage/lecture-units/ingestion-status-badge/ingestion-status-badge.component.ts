@@ -66,6 +66,11 @@ export class IngestionStatusBadgeComponent {
      * (embedding -> Indexing, audit -> Verifying) reuse it instead of duplicating the string.
      */
     private static readonly STAGE_LABEL_KEYS: Record<string, string> = {
+        download: 'artemisApp.attachmentVideoUnit.processing.stage.downloadingVideo',
+        'audio-extraction': 'artemisApp.attachmentVideoUnit.processing.stage.extractingAudio',
+        transcribing: 'artemisApp.attachmentVideoUnit.processing.stage.transcribingAudio',
+        'slide-detection': 'artemisApp.attachmentVideoUnit.processing.stage.detectingSlides',
+        alignment: 'artemisApp.attachmentVideoUnit.processing.stage.aligningSlides',
         vision: 'artemisApp.attachmentVideoUnit.processing.stage.readingSlides',
         'segment-summaries': 'artemisApp.attachmentVideoUnit.processing.stage.summarizingSlides',
         embedding: 'artemisApp.attachmentVideoUnit.processingIngesting',
@@ -220,8 +225,13 @@ export class IngestionStatusBadgeComponent {
         switch (this.state()) {
             case 'queued':
                 return 'artemisApp.attachmentVideoUnit.awaitingProcessing';
-            case 'transcribing':
-                return 'artemisApp.attachmentVideoUnit.processingTranscribing';
+            case 'transcribing': {
+                // Follows the stage ledger like the indexing phases do. Without this the badge sat on a
+                // flat "Transcribing" for the whole download/extract/whisper run, which is the longest
+                // part of ingestion and the one where standing still looks most like being stuck.
+                const transcribeStage = this.status()?.stageName;
+                return (transcribeStage && IngestionStatusBadgeComponent.STAGE_LABEL_KEYS[transcribeStage]) || 'artemisApp.attachmentVideoUnit.processingTranscribing';
+            }
             case 'indexing':
             case 'verifying': {
                 const stageName = this.status()?.stageName;

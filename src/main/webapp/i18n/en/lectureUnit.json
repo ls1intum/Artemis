@@ -122,7 +122,12 @@
                     "readingSlides": "Reading slides",
                     "summarizingSlides": "Summarizing slides",
                     "summarizingTranscript": "Summarizing transcript",
-                    "indexingTranscript": "Indexing transcript"
+                    "indexingTranscript": "Indexing transcript",
+                    "downloadingVideo": "Downloading video",
+                    "extractingAudio": "Extracting audio",
+                    "transcribingAudio": "Transcribing audio",
+                    "detectingSlides": "Detecting slides",
+                    "aligningSlides": "Aligning slides"
                 },
                 "error": {
                     "invalidUnitType": "Invalid lecture unit type for processing",
