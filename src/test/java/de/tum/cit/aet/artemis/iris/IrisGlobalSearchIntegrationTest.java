@@ -389,6 +389,21 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
         request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.UNAUTHORIZED);
     }
 
+    /**
+     * Both course lists are client-controlled, and the access filter performs a repository lookup and role check
+     * per included id. The endpoint refuses an oversized list instead, mirroring /lecture-search.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void ask_withMoreCourseIdsThanAllowed_shouldReturnBadRequest() throws Exception {
+        var tooManyCourseIds = LongStream.rangeClosed(1, GlobalSearchLectureRequestDTO.MAX_COURSE_ID_FILTERS + 1).boxed().toList();
+
+        request.postWithoutResponseBody("/api/iris/search-answer", new GlobalSearchAskRequestDTO("machine learning", 5, UUID.randomUUID(), tooManyCourseIds, null),
+                HttpStatus.BAD_REQUEST);
+        request.postWithoutResponseBody("/api/iris/search-answer", new GlobalSearchAskRequestDTO("machine learning", 5, UUID.randomUUID(), null, tooManyCourseIds),
+                HttpStatus.BAD_REQUEST);
+    }
+
     // ==================== access context consistency with Artemis roles ====================
 
     @Test

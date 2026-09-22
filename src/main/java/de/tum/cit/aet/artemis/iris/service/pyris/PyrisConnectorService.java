@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryConnecti
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryWithRelationsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisAccessContextDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisEntityCandidateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
@@ -260,17 +261,28 @@ public class PyrisConnectorService {
      * 1. A "thinking" update (~2 ms after this call) when the query is classified as a real question.
      * 2. A "result" update when the LLM finishes, containing the answer (or null for navigation queries).
      *
-     * @param query         the user's question
-     * @param limit         the maximum number of source segments to retrieve
-     * @param jobToken      the Hazelcast job token used for callback authentication and WebSocket routing
-     * @param aiSelection   the user's LLM selection (LOCAL_AI or CLOUD_AI)
-     * @param accessContext the requesting user's role-grouped course access, applied by Pyris as an opaque filter (may be null)
+     * @param query            the user's question
+     * @param limit            the maximum number of source segments to retrieve
+     * @param jobToken         the Hazelcast job token used for callback authentication and WebSocket routing
+     * @param aiSelection      the user's LLM selection (LOCAL_AI or CLOUD_AI)
+     * @param accessContext    the requesting user's role-grouped course access, applied by Pyris as an opaque filter (may be null)
+     * @param entityCandidates pre-fetched, access-filtered entity candidates for the answer pipeline (may be null or empty)
+     * @param courseIds        optional course scope from the search UI's active course filter, {@code null} for unscoped
+     *                             (search everything the access context permits)
+     * @param excludeCourseIds course ids to hide regardless of {@code courseIds}; only needed for a caller with no
+     *                             {@code courseIds} ceiling to narrow itself (unrestricted access)
+     * @param searchesNothing  whether the caller already resolved the scope to nothing (e.g. every requested course
+     *                             was excluded); distinct from an unscoped {@code courseIds}, and passed as its own
+     *                             field since an empty {@code courseIds} list does not survive the wire
      */
-    public void executeGlobalSearchIrisAnswer(String query, int limit, String jobToken, AiSelectionDecision aiSelection, @Nullable PyrisAccessContextDTO accessContext) {
+    public void executeGlobalSearchIrisAnswer(String query, int limit, String jobToken, AiSelectionDecision aiSelection, @Nullable PyrisAccessContextDTO accessContext,
+            @Nullable List<PyrisEntityCandidateDTO> entityCandidates, @Nullable List<Long> courseIds, @Nullable List<Long> excludeCourseIds, boolean searchesNothing) {
         var endpoint = "/api/v1/pipelines/global-search/run";
         try {
-            var settings = new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, null, IrisSupportLevel.MODERATE.jsonValue());
-            var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, accessContext);
+            // streamResponse: Pyris posts throttled partial-answer snapshots while the LLM generates,
+            // which this service forwards to the client as partial WebSocket updates.
+            var settings = new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, null, IrisSupportLevel.MODERATE.jsonValue(), Boolean.TRUE);
+            var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, accessContext, entityCandidates, courseIds, excludeCourseIds, searchesNothing);
             var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, Void.class);
             if (response.getStatusCode().value() != HttpStatus.ACCEPTED.value()) {
                 log.warn("Unexpected status {} from Pyris search/ask async", response.getStatusCode().value());
