@@ -1,4 +1,5 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 import { IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
@@ -88,15 +89,23 @@ export const routes: Routes = [
     },
     {
         path: 'programming-exercises/:exerciseId/generation/runs/:runId',
-        redirectTo: ({ params }) =>
-            `/course-management/${params['courseId']}/programming-exercises/${params['exerciseId']}?aiRun=authoring:${params['exerciseId']}:${encodeURIComponent(params['runId'])}`,
-        pathMatch: 'full',
+        canActivate: [
+            ({ params }) =>
+                inject(Router).createUrlTree(['/course-management', params['courseId'], 'programming-exercises', params['exerciseId']], {
+                    queryParams: { aiRun: `authoring:${params['exerciseId']}:${params['runId']}` },
+                }),
+        ],
+        children: [],
     },
     {
         path: 'programming-exercises/:exerciseId/generation',
-        redirectTo: ({ params, queryParams }) =>
-            `/course-management/${params['courseId']}/programming-exercises/${params['exerciseId']}?aiRun=authoring:${params['exerciseId']}:${encodeURIComponent(queryParams['run'] ?? 'latest')}`,
-        pathMatch: 'full',
+        canActivate: [
+            ({ params, queryParams }) =>
+                inject(Router).createUrlTree(['/course-management', params['courseId'], 'programming-exercises', params['exerciseId']], {
+                    queryParams: { aiRun: `authoring:${params['exerciseId']}:${queryParams['run'] ?? 'latest'}` },
+                }),
+        ],
+        children: [],
     },
     {
         path: 'programming-exercises/:exerciseId/version-history',

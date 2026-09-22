@@ -18,6 +18,7 @@ describe('programming exercise generation routes', () => {
         TestBed.configureTestingModule({
             providers: [
                 provideRouter([
+                    { path: '', outlet: 'navbar', component: GenerationPageStub },
                     {
                         path: 'course-management/:courseId',
                         children: [...legacyRoutes, { path: 'programming-exercises/:exerciseId', component: GenerationPageStub }],
@@ -27,6 +28,7 @@ describe('programming exercise generation routes', () => {
         });
         const harness = await RouterTestingHarness.create();
         await harness.navigateByUrl(`/course-management/7/programming-exercises/12/${legacyPath}`, GenerationPageStub);
+        expect(TestBed.inject(Router).routerState.snapshot.root.children.some((route) => route.outlet === 'navbar')).toBe(true);
         expect(TestBed.inject(Router).url).toBe(`/course-management/7/programming-exercises/12?aiRun=authoring:12:${runId}`);
     });
 });
