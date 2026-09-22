@@ -165,4 +165,63 @@
             </ul>
         </div>
     }
+
+    <!-- Content whose lecture unit is gone from both the database and the index. It has no lecture to sit under, and the
+         coverage row counts it as orphaned, so it gets a group of its own rather than being dropped from the tree. -->
+    @if (orphanedContentUnits().length > 0) {
+        <div>
+            <span
+                id="browser-tree-orphaned-label"
+                class="px-2 text-[0.7rem] font-semibold tracking-wider uppercase text-muted-color"
+                jhiTranslate="artemisApp.courseIngestionDashboard.browser.orphanedContent"
+            ></span>
+            <ul class="list-none p-0 m-0 mt-1 flex flex-col" aria-labelledby="browser-tree-orphaned-label">
+                @for (unit of orphanedContentUnits(); track unit.unitId) {
+                    <li>
+                        <div class="flex items-center gap-1">
+                            <button
+                                type="button"
+                                class="tree-toggle shrink-0 w-5 h-5 inline-flex items-center justify-center rounded bg-transparent border-0 cursor-pointer"
+                                [attr.aria-expanded]="isExpanded(unit.key)"
+                                [attr.aria-label]="'artemisApp.courseIngestionDashboard.browser.toggleUnit' | artemisTranslate"
+                                (click)="toggle(unit.key)"
+                                [attr.data-testid]="'tree-toggle-orphaned:' + unit.unitId"
+                            >
+                                <fa-icon [icon]="isExpanded(unit.key) ? faChevronDown : faChevronRight" class="text-xs" />
+                            </button>
+                            <!-- Deliberately not a button: the unit is gone, so there is no record of it to select. The
+                                 collections underneath are what can still be opened. -->
+                            <span class="flex-1 min-w-0 flex items-center gap-2 px-2 py-1" [attr.data-testid]="'tree-node-orphaned:' + unit.unitId">
+                                <span class="flex-1 truncate">{{ 'artemisApp.courseIngestionDashboard.browser.orphanedUnit' | artemisTranslate: { id: unit.unitId } }}</span>
+                                <span
+                                    class="inline-block size-2 shrink-0 rounded-full bg-current text-state-danger"
+                                    [attr.aria-label]="'artemisApp.courseIngestionDashboard.browser.dotIncomplete' | artemisTranslate"
+                                ></span>
+                            </span>
+                        </div>
+
+                        @if (isExpanded(unit.key)) {
+                            <ul class="list-none p-0 m-0 ms-5 flex flex-col">
+                                @for (content of unit.content; track content.key) {
+                                    <li>
+                                        <button
+                                            type="button"
+                                            class="tree-node w-full flex items-center gap-2 px-2 py-1 rounded bg-transparent border-0 text-start cursor-pointer"
+                                            [class.active]="selectedKey() === content.key"
+                                            [attr.aria-current]="selectedKey() === content.key ? 'true' : undefined"
+                                            (click)="select(content.selection)"
+                                            [attr.data-testid]="'tree-node-' + content.key"
+                                        >
+                                            <fa-icon [icon]="contentIcons[content.contentKey]" class="text-muted-color text-xs" />
+                                            <span class="flex-1 truncate" [jhiTranslate]="'artemisApp.courseIngestionDashboard.browser.content_' + content.contentKey"></span>
+                                        </button>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </li>
+                }
+            </ul>
+        </div>
+    }
 </nav>

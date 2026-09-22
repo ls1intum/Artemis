@@ -96,6 +96,8 @@
                 "toggleUnit": "Inhalte dieser Einheit ein- oder ausblenden",
                 "untitledLecture": "Vorlesung ohne Titel",
                 "untitledUnit": "Einheit ohne Titel",
+                "orphanedContent": "Verwaiste Inhalte",
+                "orphanedUnit": "Lerneinheit {{ id }}, gelöscht",
                 "contentLabel": {
                     "page": "Seite {{ page }}",
                     "segment": "Segment @ {{ seconds }}s",

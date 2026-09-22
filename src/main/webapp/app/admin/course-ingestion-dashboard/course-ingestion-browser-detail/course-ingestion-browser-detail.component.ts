@@ -254,8 +254,11 @@ export class CourseIngestionBrowserDetailComponent {
                     selection: { kind: 'lecture', lectureId: unit.lectureId },
                 });
             }
-            if (current.kind === 'collection') {
-                crumbs.push({ label: unit?.title, fallbackKey: 'artemisApp.courseIngestionDashboard.browser.untitledUnit', selection: { kind: 'unit', unitId } });
+            // Content whose unit is gone from the index has nothing to go back up to: the unit has no pane of its own,
+            // so a crumb for it would read "untitled unit" and lead nowhere. Its content is reached from the orphaned
+            // group in the tree instead.
+            if (current.kind === 'collection' && unit !== undefined) {
+                crumbs.push({ label: unit.title, fallbackKey: 'artemisApp.courseIngestionDashboard.browser.untitledUnit', selection: { kind: 'unit', unitId } });
             }
             return crumbs;
         }

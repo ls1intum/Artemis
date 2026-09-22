@@ -122,6 +122,32 @@ describe('CourseIngestionBrowserTreeComponent', () => {
         expect(query('tree-node-lecture:20')?.textContent).not.toContain('Stale draft title');
     });
 
+    it('should group content whose lecture unit is gone, so orphans can still be opened', () => {
+        // Unit 99 holds slides in Iris but has no lecture_unit entity: its database row and its indexed record are both
+        // gone. The coverage row counts those objects as orphaned, so dropping them from the tree would name a number
+        // with nothing behind it.
+        fixture.componentRef.setInput('contentPresence', [...contentPresence, { key: 'slides', unitIds: [11, 99] }]);
+        fixture.detectChanges();
+
+        expect(query('tree-node-orphaned:99')).toBeTruthy();
+        // Not a button: the unit itself has nothing left to show, only the content underneath it.
+        expect(query('tree-node-orphaned:99')?.tagName).toBe('SPAN');
+
+        click('tree-toggle-orphaned:99');
+
+        const collection = query('tree-node-coll:99:slides');
+        expect(collection).toBeTruthy();
+        (collection as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        expect(component.selection()).toEqual({ kind: 'collection', unitId: 99, key: 'slides' });
+    });
+
+    it('should not group a unit that still has a node of its own', () => {
+        // Unit 11 is indexed and nested under lecture 20, so it is reachable there and must not be repeated as orphaned.
+        expect(query('tree-node-orphaned:11')).toBeFalsy();
+    });
+
     it('should give a unit a node only for the collections that actually hold content for it', () => {
         click('tree-toggle-lecture:20');
         click('tree-toggle-unit:11');

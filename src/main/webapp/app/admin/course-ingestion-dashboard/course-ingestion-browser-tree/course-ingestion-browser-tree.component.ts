@@ -72,6 +72,16 @@ interface UnitNode extends TreeNode {
     complete: boolean;
 }
 
+/**
+ * Content left in an Iris collection for a lecture unit that no longer exists in the database or the index. It has no
+ * title and no completeness: the unit is gone, so the id is all that identifies it and the content is stale by
+ * definition.
+ */
+interface OrphanedContentNode extends TreeNode {
+    unitId: number;
+    content: ContentNode[];
+}
+
 /** One lecture in the tree. {@link indexed} is false when only its units are indexed and the lecture itself is not. */
 interface LectureNode extends TreeNode {
     lectureId: number;
@@ -170,6 +180,7 @@ export class CourseIngestionBrowserTreeComponent {
         }
 
         const unitsByLecture = new Map<number, UnitNode[]>();
+        const unitIdsWithANode = new Set<number>();
         for (const entity of entities) {
             if (entity.type !== 'lecture_unit') {
                 continue;
@@ -193,6 +204,7 @@ export class CourseIngestionBrowserTreeComponent {
                 complete: !unitsWithGaps.has(entity.entityId),
             };
             unitsByLecture.set(lectureId, [...(unitsByLecture.get(lectureId) ?? []), unit]);
+            unitIdsWithANode.add(entity.entityId);
         }
 
         // The union of indexed lectures and lectures referenced by an indexed unit, so a unit is never dropped just
@@ -215,6 +227,35 @@ export class CourseIngestionBrowserTreeComponent {
                 };
             })
             .sort((a, b) => a.title.localeCompare(b.title));
+    });
+
+    /**
+     * Content whose lecture unit is gone from both the database and the index, grouped on its own because there is no
+     * lecture left to nest it under.
+     *
+     * The coverage row counts these objects as orphans, so without a node for them the modal names a number an
+     * administrator cannot then look at. The unit itself is not selectable: nothing is stored about it any more, only
+     * the content it left behind, which is what the collections underneath open.
+     */
+    protected readonly orphanedContentUnits = computed<OrphanedContentNode[]>(() => {
+        const presence = this.contentPresence();
+        const unitIdsWithALectureNode = new Set(this.lectures().flatMap((lecture) => lecture.units.map((unit) => unit.unitId)));
+        const orphanedUnitIds = [...new Set(presence.flatMap((entry) => entry.unitIds))].filter((unitId) => !unitIdsWithALectureNode.has(unitId)).sort((a, b) => a - b);
+
+        return orphanedUnitIds.map((unitId) => {
+            const selection: BrowserSelection = { kind: 'unit', unitId };
+            return {
+                key: selectionKey(selection),
+                selection,
+                unitId,
+                content: presence
+                    .filter((entry) => entry.unitIds.includes(unitId))
+                    .map((entry) => {
+                        const contentSelection: BrowserSelection = { kind: 'collection', unitId, key: entry.key };
+                        return { key: selectionKey(contentSelection), selection: contentSelection, contentKey: entry.key };
+                    }),
+            };
+        });
     });
 
     /** Which lecture each unit belongs to, so the ancestors of any selection can be derived from the tree itself. */
