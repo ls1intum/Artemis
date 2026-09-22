@@ -177,7 +177,7 @@ export class CourseSidebarComponent {
         }
         const courseId = this.course()?.id;
         if (courseId) {
-            this.scienceService.logEvent(ScienceEventType.IRIS__OPENED_SIDEBAR, courseId);
+            this.scienceService.logEvent(ScienceEventType.IRIS__OPENED_SIDEBAR, courseId, courseId);
         }
     }
 
@@ -190,7 +190,7 @@ export class CourseSidebarComponent {
         if (!irisItem || irisItem.hidden) {
             return;
         }
-        this.scienceService.logEvent(ScienceEventType.IRIS__ENTRYPOINT_IMPRESSION, courseId);
+        this.scienceService.logEvent(ScienceEventType.IRIS__ENTRYPOINT_IMPRESSION, courseId, courseId);
         this.irisImpressionLoggedForCourseId.set(courseId);
     }
 }

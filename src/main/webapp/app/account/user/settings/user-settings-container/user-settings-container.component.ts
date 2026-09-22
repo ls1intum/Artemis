@@ -43,9 +43,8 @@ export class UserSettingsContainerComponent implements OnInit {
     // whenever the identity changes.
     readonly isAtLeastTutor = computed(() => this.accountService.isAtLeastTutor());
     readonly isAiEnabled = signal(false);
-    // The science settings live in the atlas module (server-side ScienceSettingsResource is @Conditional(AtlasEnabled)).
-    // When atlas is disabled the science-settings endpoint does not exist, so the tab must be hidden instead of opening
-    // an empty page (issue #13173).
+    // The science consent endpoints live in the atlas module (server-side ScienceResource is @Conditional(AtlasEnabled)).
+    // When atlas is disabled they do not exist, so the tab must be hidden instead of opening an empty page (issue #13173).
     readonly isAtlasEnabled = signal(false);
     // The learner profile composes sections from the atlas and the iris module, so its tab needs at least one of them.
     // The module state is read into signals in ngOnInit rather than from inside the computed, which may only read

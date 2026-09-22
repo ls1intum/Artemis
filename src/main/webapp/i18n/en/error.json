@@ -329,6 +329,10 @@
         "duplicateBuildPhaseNames": "Build phase names must be unique.",
         "buildPlanConfigurationTooLarge": "The build plan configuration is too large to be processed. Please reduce the size of your build phases.",
         "sharingInfoMissing": "The sharing platform information is missing.",
-        "problemStatementTooLong": "The problem statement must not exceed 100,000 characters."
+        "problemStatementTooLong": "The problem statement must not exceed 100,000 characters.",
+        "scienceExportInvalidDateRange": "The export start date must be before the end date.",
+        "scienceExportFailed": "The export could not be created. No file was kept.",
+        "scienceCourseNotEnabled": "This course does not collect science data.",
+        "scienceExportMissingEventTypes": "Select at least one event type for the export."
     }
 }

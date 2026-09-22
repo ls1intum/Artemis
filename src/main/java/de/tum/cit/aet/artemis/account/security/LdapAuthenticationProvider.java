@@ -149,6 +149,7 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
      * @return The saved or updated user
      */
     private User saveUserIfNeeded(User user, LdapUserDto ldapUserDto) {
+        final String previousLogin = user.getLogin();
         boolean saveNeeded = false;
         if (!Objects.equals(user.getLogin(), ldapUserDto.getLogin())) {
             user.setLogin(ldapUserDto.getLogin());
@@ -175,6 +176,7 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
         // only save the user in the database in case it has changed
         if (saveNeeded) {
             user = userRepository.save(user);
+            userCreationService.renameScienceEventIdentityIfLoginChanged(previousLogin, user.getLogin());
         }
         return user;
     }

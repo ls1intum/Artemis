@@ -1,221 +1,203 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { SettingId } from 'app/foundation/constants/user-settings.constants';
-import { Subject, of } from 'rxjs';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
-import { ScienceSetting } from 'app/account/user/settings/science-settings/science-settings-structure';
-import { SCIENCE_SETTING_LOCAL_STORAGE_KEY, ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
-import { UserSettingsService } from 'app/account/user/settings/directive/user-settings.service';
+import { SCIENCE_SETTING_LOCAL_STORAGE_KEY, ScienceCourseConsent, ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { Setting } from 'app/account/user/settings/user-settings.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { firstValueFrom } from 'rxjs';
 
-const scienceSetting: ScienceSetting = {
-    settingId: SettingId.SCIENCE__GENERAL__ACTIVITY_TRACKING,
-    changed: false,
-    descriptionKey: 'activityDescription',
-    key: 'activity',
-    active: false,
-};
+/** In-memory stand-in: the real service reads `localStorage`, which the test environment does not provide. */
+class MockLocalStorageService {
+    private readonly entries = new Map<string, unknown>();
 
-const scienceSettingActive: ScienceSetting = {
-    settingId: SettingId.SCIENCE__GENERAL__ACTIVITY_TRACKING,
-    changed: false,
-    descriptionKey: 'activityDescription',
-    key: 'activity',
+    store<T>(key: string, value: T): void {
+        this.entries.set(key, value);
+    }
+
+    retrieve<T>(key: string): T | undefined {
+        return this.entries.get(key) as T | undefined;
+    }
+
+    remove(key: string): void {
+        this.entries.delete(key);
+    }
+}
+
+const activeConsent: ScienceCourseConsent = {
+    courseId: 1,
+    courseTitle: 'Course 1',
+    courseShortName: 'C1',
     active: true,
+    scienceEnabled: true,
 };
 
-const scienceSettingsForTesting: ScienceSetting[] = [scienceSetting];
+const inactiveConsent: ScienceCourseConsent = {
+    courseId: 2,
+    courseTitle: 'Course 2',
+    courseShortName: 'C2',
+    active: false,
+    scienceEnabled: true,
+};
+
+const undecidedConsent: ScienceCourseConsent = {
+    courseId: 3,
+    courseTitle: 'Course 3',
+    courseShortName: 'C3',
+    scienceEnabled: true,
+};
 
 describe('ScienceSettingsService', () => {
     let scienceSettingsService: ScienceSettingsService;
-    let userSettingsService: UserSettingsService;
     let localStorageService: LocalStorageService;
     let profileService: ProfileService;
+    let httpMock: HttpTestingController;
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: ProfileService, useClass: MockProfileService }],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
+            ],
         });
         await TestBed.compileComponents();
-        scienceSettingsService = TestBed.inject(ScienceSettingsService);
-        userSettingsService = TestBed.inject(UserSettingsService);
-        localStorageService = TestBed.inject(LocalStorageService);
         profileService = TestBed.inject(ProfileService);
-
         const profileInfo = new ProfileInfo();
         profileInfo.activeModuleFeatures = [MODULE_FEATURE_ATLAS];
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+
+        scienceSettingsService = TestBed.inject(ScienceSettingsService);
+        localStorageService = TestBed.inject(LocalStorageService);
+        httpMock = TestBed.inject(HttpTestingController);
     });
 
     afterEach(() => {
+        httpMock.verify();
         vi.restoreAllMocks();
         localStorageService.remove(SCIENCE_SETTING_LOCAL_STORAGE_KEY);
     });
 
-    it('should refresh settings after user settings changed', () => {
-        const changes$ = new Subject<string>();
-        // Point the service's observable to our controllable subject
-        userSettingsService.userSettingsChangeEvent = changes$.asObservable();
+    it('should republish the cache when another tab writes a decision', () => {
+        // The listener used to compare against a 'jhi-' prefix that nothing writes, so a decision taken in one tab
+        // never reached another - which is only visible through the real event name and the real key.
+        localStorageService.store(SCIENCE_SETTING_LOCAL_STORAGE_KEY, [activeConsent]);
+        const emitted: ScienceCourseConsent[][] = [];
+        scienceSettingsService.getScienceSettingsUpdates().subscribe((consents) => emitted.push(consents));
 
-        const spy = vi.spyOn(userSettingsService, 'loadSettings').mockReturnValue(of(new HttpResponse<Setting[]>({ body: scienceSettingsForTesting })));
+        dispatchEvent(new StorageEvent('storage', { key: SCIENCE_SETTING_LOCAL_STORAGE_KEY }));
 
-        scienceSettingsService['listenForScienceSettingsChanges']();
-
-        expect(spy).not.toHaveBeenCalled();
-
-        // Simulate the user settings change
-        changes$.next('');
-
-        expect(spy).toHaveBeenCalledOnce();
-        expect(scienceSettingsService.getScienceSettings()).toEqual(scienceSettingsForTesting);
+        expect(emitted.at(-1)).toEqual([activeConsent]);
     });
 
-    it('should provide getters for science settings and updates to it', () => {
-        vi.spyOn(userSettingsService, 'loadSettings').mockReturnValue(of(new HttpResponse<Setting[]>({ body: scienceSettingsForTesting })));
-        scienceSettingsService.refreshScienceSettings();
+    it('should ignore storage events for unrelated keys', () => {
+        const emitted: ScienceCourseConsent[][] = [];
+        scienceSettingsService.getScienceSettingsUpdates().subscribe((consents) => emitted.push(consents));
+        const emissionsBefore = emitted.length;
 
-        const settings = scienceSettingsService.getScienceSettings();
-        expect(settings.length).toBeGreaterThan(0);
-        expect(settings).toEqual(scienceSettingsForTesting);
+        dispatchEvent(new StorageEvent('storage', { key: 'something.else' }));
 
-        // Subscribing to the updates
-        scienceSettingsService.getScienceSettingsUpdates().subscribe((updatedSettings) => {
-            expect(updatedSettings).toEqual(settings);
-        });
+        expect(emitted).toHaveLength(emissionsBefore);
     });
 
-    it('should not refresh settings when ATLAS module is not active', () => {
-        const profileInfo = new ProfileInfo();
-        profileInfo.activeModuleFeatures = [];
+    it('should refresh per-course science consents from the science endpoint', () => {
+        const storeSpy = vi.spyOn(localStorageService, 'store');
+
+        scienceSettingsService.refreshScienceSettings().subscribe();
+
+        const request = httpMock.expectOne({ method: 'GET', url: 'api/atlas/science/consents' });
+        request.flush([activeConsent, inactiveConsent]);
+
+        expect(storeSpy).toHaveBeenCalledWith(SCIENCE_SETTING_LOCAL_STORAGE_KEY, [activeConsent, inactiveConsent]);
+        expect(localStorageService.retrieve(SCIENCE_SETTING_LOCAL_STORAGE_KEY)).toEqual([activeConsent, inactiveConsent]);
+    });
+
+    it('should return an empty list without a request when the atlas module is inactive', async () => {
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
 
-        const spy = vi.spyOn(userSettingsService, 'loadSettings');
-
-        scienceSettingsService.refreshScienceSettings();
-
-        expect(spy).not.toHaveBeenCalled();
+        await expect(firstValueFrom(scienceSettingsService.refreshScienceSettings())).resolves.toEqual([]);
+        httpMock.expectNone({ method: 'GET', url: 'api/atlas/science/consents' });
     });
 
-    it('should return true for eventLoggingAllowed when no settings exist', () => {
-        vi.spyOn(localStorageService, 'retrieve').mockReturnValue(undefined);
+    it('should keep the cached consents when refreshing fails', () => {
+        localStorageService.store(SCIENCE_SETTING_LOCAL_STORAGE_KEY, [activeConsent]);
+        const emitted: ScienceCourseConsent[][] = [];
+        scienceSettingsService.getScienceSettingsUpdates().subscribe((consents) => emitted.push(consents));
 
-        const result = scienceSettingsService.eventLoggingAllowed();
+        scienceSettingsService.refreshScienceSettings().subscribe({ error: () => undefined });
+        httpMock.expectOne({ method: 'GET', url: 'api/atlas/science/consents' }).flush('boom', { status: 500, statusText: 'Server Error' });
 
-        expect(result).toBe(true);
+        expect(emitted.at(-1)).toEqual([activeConsent]);
+        expect(localStorageService.retrieve(SCIENCE_SETTING_LOCAL_STORAGE_KEY)).toEqual([activeConsent]);
     });
 
-    it('should return true for eventLoggingAllowed when activity setting is active', () => {
-        vi.spyOn(localStorageService, 'retrieve').mockReturnValue([scienceSettingActive]);
+    it('should replace a stored consent in place so the list keeps its order', () => {
+        localStorageService.store(SCIENCE_SETTING_LOCAL_STORAGE_KEY, [activeConsent, inactiveConsent]);
 
-        const result = scienceSettingsService.eventLoggingAllowed();
+        scienceSettingsService.saveConsentForCourse(inactiveConsent.courseId, true).subscribe();
+        const request = httpMock.expectOne({ method: 'PUT', url: `api/atlas/science/courses/${inactiveConsent.courseId}/consent` });
+        expect(request.request.body).toEqual({ active: true });
+        const updatedConsent = { ...inactiveConsent, active: true };
+        request.flush(updatedConsent);
 
-        expect(result).toBe(true);
+        expect(localStorageService.retrieve(SCIENCE_SETTING_LOCAL_STORAGE_KEY)).toEqual([activeConsent, updatedConsent]);
     });
 
-    it('should return false for eventLoggingAllowed when activity setting is not active', () => {
-        vi.spyOn(localStorageService, 'retrieve').mockReturnValue([scienceSetting]);
+    it('should append a consent for a course the cache has not seen yet', () => {
+        localStorageService.store(SCIENCE_SETTING_LOCAL_STORAGE_KEY, [activeConsent]);
 
-        const result = scienceSettingsService.eventLoggingAllowed();
+        scienceSettingsService.saveConsentForCourse(undecidedConsent.courseId, true).subscribe();
+        const updatedConsent = { ...undecidedConsent, active: true };
+        httpMock.expectOne({ method: 'PUT', url: `api/atlas/science/courses/${undecidedConsent.courseId}/consent` }).flush(updatedConsent);
 
-        expect(result).toBe(false);
+        expect(localStorageService.retrieve(SCIENCE_SETTING_LOCAL_STORAGE_KEY)).toEqual([activeConsent, updatedConsent]);
     });
 
-    it('should return true for eventLoggingAllowed when activity setting is missing', () => {
-        const settingWithDifferentKey: ScienceSetting = {
-            settingId: SettingId.SCIENCE__GENERAL__ACTIVITY_TRACKING,
-            changed: false,
-            descriptionKey: 'otherDescription',
-            key: 'other',
-            active: false,
-        };
-        vi.spyOn(localStorageService, 'retrieve').mockReturnValue([settingWithDifferentKey]);
+    it('should not touch the cache when deleting science data', () => {
+        localStorageService.store(SCIENCE_SETTING_LOCAL_STORAGE_KEY, [activeConsent]);
 
-        const result = scienceSettingsService.eventLoggingAllowed();
+        scienceSettingsService.deleteScienceDataForCourse(activeConsent.courseId).subscribe();
+        httpMock.expectOne({ method: 'DELETE', url: `api/atlas/science/courses/${activeConsent.courseId}/data` }).flush(null);
 
-        expect(result).toBe(true);
+        expect(localStorageService.retrieve(SCIENCE_SETTING_LOCAL_STORAGE_KEY)).toEqual([activeConsent]);
     });
 
-    it('should initialize and set up storage event listener', () => {
-        const addEventListenerSpy = vi.spyOn(globalThis, 'addEventListener');
-        vi.spyOn(localStorageService, 'retrieve').mockReturnValue(scienceSettingsForTesting);
-
-        scienceSettingsService.initialize();
-
-        expect(addEventListenerSpy).toHaveBeenCalledWith('storage', expect.any(Function));
-    });
-
-    it('should handle storage event for science settings key', async () => {
-        vi.spyOn(localStorageService, 'retrieve').mockReturnValue(scienceSettingsForTesting);
-
-        scienceSettingsService.initialize();
-
-        // Simulate storage event
-        const event = new StorageEvent('storage', {
-            key: 'jhi-' + SCIENCE_SETTING_LOCAL_STORAGE_KEY,
-        });
-        window.dispatchEvent(event);
-
-        // Give time for the subject to emit
-        await new Promise((resolve) => setTimeout(resolve, 10));
-
-        // The subject should have emitted the settings
-        let receivedSettings: ScienceSetting[] = [];
-        scienceSettingsService.getScienceSettingsUpdates().subscribe((settings) => {
-            receivedSettings = settings;
+    describe('eventLoggingAllowed', () => {
+        beforeEach(() => {
+            localStorageService.store(SCIENCE_SETTING_LOCAL_STORAGE_KEY, [
+                activeConsent,
+                inactiveConsent,
+                undecidedConsent,
+                { ...activeConsent, courseId: 4, scienceEnabled: false },
+            ]);
         });
 
-        expect(receivedSettings).toEqual(scienceSettingsForTesting);
-    });
-
-    it('should not update subject for storage event with different key', async () => {
-        const retrieveSpy = vi.spyOn(localStorageService, 'retrieve').mockReturnValue(scienceSettingsForTesting);
-
-        scienceSettingsService.initialize();
-
-        // Clear the call count after initialize
-        retrieveSpy.mockClear();
-
-        // Simulate storage event with different key
-        const event = new StorageEvent('storage', {
-            key: 'some-other-key',
+        it('should allow logging for a course with an active consent', () => {
+            expect(scienceSettingsService.eventLoggingAllowed(activeConsent.courseId)).toBe(true);
         });
-        window.dispatchEvent(event);
 
-        await new Promise((resolve) => setTimeout(resolve, 10));
+        it('should refuse logging without a course id', () => {
+            expect(scienceSettingsService.eventLoggingAllowed(undefined)).toBe(false);
+        });
 
-        // Should not have called retrieve again for different key
-        expect(retrieveSpy).not.toHaveBeenCalled();
-    });
+        it('should refuse logging for an opted-out course', () => {
+            expect(scienceSettingsService.eventLoggingAllowed(inactiveConsent.courseId)).toBe(false);
+        });
 
-    it('should store settings when provided', () => {
-        const storeSpy = vi.spyOn(localStorageService, 'store');
-        vi.spyOn(localStorageService, 'retrieve').mockReturnValue(scienceSettingsForTesting);
+        it('should refuse logging while the student has not decided', () => {
+            expect(scienceSettingsService.eventLoggingAllowed(undecidedConsent.courseId)).toBe(false);
+        });
 
-        scienceSettingsService['storeScienceSettings'](scienceSettingsForTesting);
+        it('should refuse logging for a course that no longer collects science data', () => {
+            expect(scienceSettingsService.eventLoggingAllowed(4)).toBe(false);
+        });
 
-        expect(storeSpy).toHaveBeenCalledWith(SCIENCE_SETTING_LOCAL_STORAGE_KEY, scienceSettingsForTesting);
-    });
-
-    it('should remove settings when undefined is provided', () => {
-        const removeSpy = vi.spyOn(localStorageService, 'remove');
-        vi.spyOn(localStorageService, 'retrieve').mockReturnValue([]);
-
-        scienceSettingsService['storeScienceSettings'](undefined);
-
-        expect(removeSpy).toHaveBeenCalledWith(SCIENCE_SETTING_LOCAL_STORAGE_KEY);
-    });
-
-    it('should return empty array when no stored settings exist', () => {
-        vi.spyOn(localStorageService, 'retrieve').mockReturnValue(undefined);
-
-        const result = scienceSettingsService.getScienceSettings();
-
-        expect(result).toEqual([]);
+        it('should refuse logging for an unknown course', () => {
+            expect(scienceSettingsService.eventLoggingAllowed(999)).toBe(false);
+        });
     });
 });

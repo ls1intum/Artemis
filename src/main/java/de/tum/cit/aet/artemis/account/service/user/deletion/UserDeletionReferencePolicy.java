@@ -52,6 +52,10 @@ public enum UserDeletionReferencePolicy {
     RESULT_ASSESSOR("result", "assessor_id", UserDeletionDataCategory.ASSESSMENT, UserDeletionAction.DETACH_ACTOR, true),
     REVIEW_COMMENT_AUTHOR("review_comment", "author_id", UserDeletionDataCategory.ASSESSMENT, UserDeletionAction.DETACH_ACTOR, true),
     SAVED_POST("saved_post", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
+    // The row records a decision the account holder made, not research data: the science events themselves are keyed by
+    // login and have no foreign key here, so deleting the account with its consent row removes the decision and leaves
+    // nothing pointing at the person. Not a blocker for the same reason - there is no retention cleanup that owns it.
+    SCIENCE_COURSE_CONSENT("science_course_consent", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
     STUDENT_EXAM("student_exam", "user_id", UserDeletionDataCategory.EXAM, UserDeletionAction.DELETE, true),
     SUBMISSION_VERSION_AUTHOR("submission_version", "author_id", UserDeletionDataCategory.ASSESSMENT, UserDeletionAction.DELETE, true),
     TEAM_MEMBERSHIP("team_student", "student_id", UserDeletionDataCategory.TEAM, UserDeletionAction.REMOVE_MEMBERSHIP, true),

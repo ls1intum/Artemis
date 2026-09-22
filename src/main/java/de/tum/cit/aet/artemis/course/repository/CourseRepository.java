@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.course.dto.ActiveCourseDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseContentAvailabilityDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseSelectionDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -214,6 +215,24 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
                 AND c.learningPathsEnabled=true
             """)
     List<Course> findAllActiveForUserAndLearningPathsEnabled(@Param("now") ZonedDateTime now);
+
+    /**
+     * Returns every course, reduced to what identifies it in a chooser.
+     *
+     * Deliberately a projection rather than the entity: the caller needs a label and an id, and loading courses in full
+     * to render a dropdown is the kind of query this codebase does not write.
+     *
+     * Ordered by id rather than by start date, which is nullable and which MySQL and PostgreSQL sort opposite ways when
+     * it is null. The id is monotonic, so newest first means the same thing on both.
+     *
+     * @return all courses, most recently created first
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.course.dto.CourseSelectionDTO(c.id, c.title, c.shortName, c.semester)
+            FROM Course c
+            ORDER BY c.id DESC
+            """)
+    List<CourseSelectionDTO> findAllForSelection();
 
     /**
      * Returns all active non-test courses with the count of enrolled students in each.

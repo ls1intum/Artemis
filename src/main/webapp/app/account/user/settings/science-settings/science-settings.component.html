@@ -1,38 +1,58 @@
 <div>
-    <h2>
-        <!--UserSettingsCategory-->
-        {{ 'artemisApp.userSettings.categories.' + userSettingsCategory | artemisTranslate }}
-    </h2>
-    <div class="userSettings-info flex">
-        <fa-icon class="ng-fa-icon" [icon]="faInfoCircle" />
-        <span class="ps-1" jhiTranslate="artemisApp.userSettings.scienceSettingsInfo"></span>
-    </div>
-    @if (!featureToggleActive()) {
-        <div class="userSettings-info mt-2 flex">
-            <fa-icon class="ng-fa-icon" [icon]="faInfoCircle" />
-            <span class="ps-1" jhiTranslate="artemisApp.userSettings.scienceSettingsFeatureDisabled"></span>
-        </div>
-    }
+    <h2 jhiTranslate="artemisApp.userSettings.scienceSettingsPage.title"></h2>
+    <tum-ui-message severity="info" [icon]="faInfoCircle">
+        <span jhiTranslate="artemisApp.userSettings.scienceSettingsPage.description"></span>
+    </tum-ui-message>
 </div>
-@if (userSettings()) {
-    <tum-ui-list [ariaLabel]="'artemisApp.userSettings.categories.' + userSettingsCategory | artemisTranslate">
-        @for (settingGroup of userSettings().groups; track settingGroup) {
-            @for (setting of settingGroup.settings; track setting) {
-                <li tumUiListItem *jhiHasAnyAuthority="settingGroup.restrictionLevels">
-                    <div class="flex items-start gap-2">
-                        <tum-ui-toggle-switch
-                            [inputId]="setting.settingId"
-                            [ngModel]="setting.active"
-                            [ngModelOptions]="{ standalone: true }"
-                            (changed)="toggleSetting(setting, $event)"
-                        />
-                        <label [for]="setting.settingId">
-                            <span class="font-medium">{{ 'artemisApp.userSettings.settingNames.' + setting.key | artemisTranslate }}:</span>
-                            {{ 'artemisApp.userSettings.settingDescriptions.' + setting.descriptionKey | artemisTranslate }}
-                        </label>
+
+@if (scienceFeatureActive()) {
+    <tum-ui-list class="mt-4 block" [ariaLabel]="'artemisApp.userSettings.scienceSettingsPage.title' | artemisTranslate" data-testid="science-consent-list">
+        @for (consent of consents(); track consent.courseId) {
+            <li tumUiListItem inline data-testid="science-consent-row">
+                <div class="min-w-0">
+                    <div class="font-medium" data-testid="science-consent-course-title">{{ consent.courseTitle }}</div>
+                    <div class="text-muted-color text-sm">
+                        {{ consent.courseShortName }}
+                        @if (!consent.scienceEnabled) {
+                            <span jhiTranslate="artemisApp.userSettings.scienceSettingsPage.disabled"></span>
+                        }
                     </div>
-                </li>
-            }
+                </div>
+                <div class="flex items-center gap-4">
+                    <label class="flex items-center gap-2" for="science-course-{{ consent.courseId }}">
+                        <tum-ui-toggle-switch
+                            inputId="science-course-{{ consent.courseId }}"
+                            data-testid="science-consent-toggle"
+                            [ngModel]="consent.active === true"
+                            [ngModelOptions]="{ standalone: true }"
+                            [disabled]="!consent.scienceEnabled && consent.active !== true"
+                            (changed)="toggleConsent(consent, $event)"
+                        />
+                        <span jhiTranslate="artemisApp.userSettings.scienceSettingsPage.contribute"></span>
+                    </label>
+                    <button
+                        type="button"
+                        tumUiButton
+                        severity="danger"
+                        size="small"
+                        variant="outlined"
+                        data-testid="science-consent-delete-data"
+                        [attr.aria-label]="
+                            'artemisApp.userSettings.scienceSettingsPage.deleteData'
+                                | artemisTranslate: { courseTitle: consent.courseTitle ?? ('artemisApp.userSettings.scienceSettingsPage.thisCourse' | artemisTranslate) }
+                        "
+                        (click)="deleteData(consent)"
+                    >
+                        <fa-icon [icon]="faTrash" />
+                    </button>
+                </div>
+            </li>
+        } @empty {
+            <li tumUiListItem data-testid="science-consent-empty" jhiTranslate="artemisApp.userSettings.scienceSettingsPage.empty"></li>
         }
     </tum-ui-list>
+} @else {
+    <div class="mt-4" data-testid="science-consent-feature-disabled" jhiTranslate="artemisApp.userSettings.scienceSettingsPage.featureDisabled"></div>
 }
+
+<tum-ui-confirm-dialog />

@@ -611,7 +611,9 @@ describe('CourseExerciseDetailsComponent', () => {
 
     it('should log event on init', () => {
         fixture.detectChanges();
-        expect(logEventStub).toHaveBeenCalledExactlyOnceWith(ScienceEventType.EXERCISE__OPEN, exercise.id);
+        // The course is named rather than left to be inferred from the route: consent is per course, so an event
+        // attributed to the wrong one is a consent violation.
+        expect(logEventStub).toHaveBeenCalledExactlyOnceWith(ScienceEventType.EXERCISE__OPEN, exercise.id, parentParams.courseId);
     });
 
     it('should not show discussion section when communication is disabled', async () => {
