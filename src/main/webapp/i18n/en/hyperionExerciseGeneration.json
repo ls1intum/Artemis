@@ -209,7 +209,7 @@
                 },
                 "outcome": {
                     "savedTitle": "Draft saved to your exercise",
-                    "savedBody": "The sample solution passes all {{testCount}} tests and the starter code fails them, as it should. Review the problem statement and the tests before you release the exercise.",
+                    "savedBody": "The verified exercise draft has been saved. Review the problem statement and the tests before you release the exercise.",
                     "reviewTitle": "Draft saved — please review it",
                     "reviewBody": "Artemis saved the draft, but not every check came back clean. Open the code editor, fix what the findings point at, then release.",
                     "partialTitle": "Only part of the draft was saved",

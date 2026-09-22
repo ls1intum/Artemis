@@ -337,7 +337,6 @@ export class HyperionRunPageComponent {
             severity: OUTCOME_SEVERITY[outcome],
             titleKey: `artemisApp.hyperion.generation.outcome.${copy}Title`,
             bodyKey: `artemisApp.hyperion.generation.outcome.${copy}Body`,
-            bodyParams: { testCount: verdict?.testCount ?? 0 },
             terminationReasonKey:
                 (outcome === 'failed' || outcome === 'cancelled') && terminal?.terminationReason
                     ? `artemisApp.hyperion.generation.terminationReason.${terminal.terminationReason}`

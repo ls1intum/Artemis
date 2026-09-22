@@ -209,7 +209,7 @@
                 },
                 "outcome": {
                     "savedTitle": "Entwurf in deiner Aufgabe gespeichert",
-                    "savedBody": "Die Musterlösung besteht alle {{testCount}} Tests, und der Startcode scheitert daran, wie vorgesehen. Prüfe Aufgabenstellung und Tests, bevor du die Aufgabe freigibst.",
+                    "savedBody": "Der überprüfte Aufgabenentwurf wurde gespeichert. Prüfe Aufgabenstellung und Tests, bevor du die Aufgabe freigibst.",
                     "reviewTitle": "Entwurf gespeichert — bitte prüfen",
                     "reviewBody": "Artemis hat den Entwurf gespeichert, aber nicht jede Prüfung war sauber. Öffne den Code-Editor, behebe die gemeldeten Punkte und gib die Aufgabe dann frei.",
                     "partialTitle": "Nur ein Teil des Entwurfs wurde gespeichert",

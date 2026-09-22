@@ -12,7 +12,7 @@
         <div class="flex min-w-0 flex-col gap-2">
             <!-- The verdict is the answer, so it is the largest thing on the page once a run is over. -->
             <h2 class="text-xl font-medium" id="hyperion-run-outcome-title">{{ view().titleKey | artemisTranslate }}</h2>
-            <p class="m-0 text-sm wrap-anywhere">{{ view().bodyKey | artemisTranslate: view().bodyParams }}</p>
+            <p class="m-0 text-sm wrap-anywhere">{{ view().bodyKey | artemisTranslate }}</p>
             @if (view().terminationReasonKey; as reasonKey) {
                 <p class="m-0 text-sm wrap-anywhere" data-testid="hyperion-run-outcome-reason" [jhiTranslate]="reasonKey"></p>
             }

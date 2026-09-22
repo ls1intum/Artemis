@@ -18,7 +18,6 @@ export interface HyperionRunOutcomeView {
     titleKey: string;
     bodyKey: string;
     /** Interpolation for the body; the saved outcome names the number of tests. */
-    bodyParams?: Record<string, number>;
     /** Translated cause of a failure or cancellation, from the terminal event's termination reason. */
     terminationReasonKey?: string;
     checks: readonly HyperionRunOutcomeCheck[];
