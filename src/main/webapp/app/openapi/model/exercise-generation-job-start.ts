@@ -10,4 +10,6 @@
 
 export interface ExerciseGenerationJobStart {
     jobId: string;
+    exerciseId?: number;
+    sourceExerciseId?: number;
 }

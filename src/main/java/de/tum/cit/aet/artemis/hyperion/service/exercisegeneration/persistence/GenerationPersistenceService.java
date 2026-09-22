@@ -346,7 +346,13 @@ public class GenerationPersistenceService {
         return Map.copyOf(copy);
     }
 
-    private String repositoryBranch(ProgrammingExercise exercise) {
+    /**
+     * Resolves the concrete branch shared by persistence and its durable recovery record.
+     *
+     * @param exercise destination exercise
+     * @return configured branch, or the deployment default
+     */
+    public String repositoryBranch(ProgrammingExercise exercise) {
         String branch = buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).getBranch();
         return branch == null || branch.isBlank() ? defaultBranch : branch;
     }

@@ -1,3 +1,4 @@
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -8,8 +9,13 @@ describe('supportsAiVariantGeneration', () => {
 
     const quizWith = (overrides: Partial<QuizExercise>) => ({ id: 1, type: ExerciseType.QUIZ, ...overrides }) as QuizExercise;
 
-    it('should support programming exercises', () => {
-        expect(supportsAiVariantGeneration(exerciseOfType(ExerciseType.PROGRAMMING))).toBe(true);
+    it('supports only programming configurations verified by the isolated authoring worker', () => {
+        const exercise = { id: 1, type: ExerciseType.PROGRAMMING, programmingLanguage: ProgrammingLanguage.JAVA, projectType: ProjectType.PLAIN_GRADLE } as ProgrammingExercise;
+        expect(supportsAiVariantGeneration(exercise)).toBe(true);
+        expect(supportsAiVariantGeneration({ ...exercise, projectType: ProjectType.PLAIN_MAVEN } as ProgrammingExercise)).toBe(false);
+        expect(supportsAiVariantGeneration({ ...exercise, programmingLanguage: ProgrammingLanguage.PYTHON } as ProgrammingExercise)).toBe(false);
+        expect(supportsAiVariantGeneration({ ...exercise, staticCodeAnalysisEnabled: true } as ProgrammingExercise)).toBe(false);
+        expect(supportsAiVariantGeneration(exerciseOfType(ExerciseType.PROGRAMMING))).toBe(false);
     });
 
     it.each([ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD])('should not support %s exercises', (type) => {

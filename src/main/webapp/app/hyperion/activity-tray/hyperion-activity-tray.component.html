@@ -1,0 +1,143 @@
+@if (rows().length || hasMoreHistory() || loadFailed()) {
+    <button
+        tumUiButton
+        variant="text"
+        severity="secondary"
+        size="small"
+        class="flex items-center gap-2 whitespace-nowrap"
+        data-testid="ai-activity-trigger"
+        [tumUiPopoverTrigger]="tray"
+    >
+        <fa-icon [icon]="icons.faWandMagicSparkles" />
+        <span>{{ 'artemisApp.hyperion.activity.title' | artemisTranslate }}</span>
+        @if (runningCount()) {
+            <span class="inline-flex items-center gap-1" data-testid="ai-activity-running"
+                ><fa-icon [icon]="icons.faSpinner" animation="spin" />{{ 'artemisApp.hyperion.jobs.summaryRunning' | artemisTranslate: { count: runningCount() } }}</span
+            >
+        }
+        @if (attentionCount()) {
+            <span class="inline-flex items-center gap-1" data-testid="ai-activity-attention"
+                ><fa-icon [icon]="icons.faTriangleExclamation" />{{ 'artemisApp.hyperion.jobs.summaryAttention' | artemisTranslate: { count: attentionCount() } }}</span
+            >
+        }
+        @if (finishedCount()) {
+            <span class="inline-flex items-center gap-1" data-testid="ai-activity-finished"
+                ><fa-icon [icon]="icons.faCheck" />{{ 'artemisApp.hyperion.jobs.summaryFinished' | artemisTranslate: { count: finishedCount() } }}</span
+            >
+        }
+    </button>
+    <tum-ui-popover #tray placement="bottom" [ariaLabel]="'artemisApp.hyperion.activity.title' | artemisTranslate" (openChange)="refresh($event)">
+        <section class="flex w-[min(26rem,calc(100vw-2rem))] flex-col gap-3" data-testid="ai-activity-tray">
+            <div class="flex items-center justify-between gap-2">
+                <span role="heading" aria-level="2" class="text-base font-semibold">{{ 'artemisApp.hyperion.activity.title' | artemisTranslate }}</span>
+                @if (hiddenCount()) {
+                    <button tumUiButton variant="text" size="small" [attr.aria-pressed]="showHistory()" data-testid="ai-activity-history" (click)="showHistory.set(!showHistory())">
+                        {{ 'artemisApp.hyperion.activity.history' | artemisTranslate: { count: hiddenCount() } }}
+                    </button>
+                }
+            </div>
+            <p class="m-0 text-sm text-muted-color">{{ 'artemisApp.hyperion.activity.subtitle' | artemisTranslate }}</p>
+            @if (loadFailed()) {
+                <tum-ui-message severity="error" data-testid="ai-activity-load-error">
+                    {{ 'artemisApp.hyperion.jobs.loadFailed' | artemisTranslate }}
+                    <button tumUiButton variant="text" size="small" (click)="refresh(true)">{{ 'artemisApp.hyperion.jobs.retry' | artemisTranslate }}</button>
+                </tum-ui-message>
+            }
+            <ul class="m-0 flex max-h-[60vh] list-none flex-col gap-2 overflow-y-auto p-1" [attr.aria-label]="'artemisApp.hyperion.activity.title' | artemisTranslate">
+                @for (row of visibleRows(); track row.key) {
+                    <li class="rounded-lg border border-border p-3" [class.border-state-warning]="row.attention" data-testid="ai-activity-entry" [attr.data-job-key]="row.key">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-xs font-medium text-muted-color">{{ row.kindKey | artemisTranslate }}</span>
+                            @if (!row.recoveryRequired) {
+                                <button
+                                    tumUiButton
+                                    variant="text"
+                                    size="small"
+                                    severity="secondary"
+                                    data-testid="ai-activity-dismiss"
+                                    [attr.aria-label]="'artemisApp.hyperion.jobs.dismiss' | artemisTranslate"
+                                    (click)="dismiss(row)"
+                                >
+                                    <fa-icon [icon]="icons.faXmark" />
+                                </button>
+                            }
+                        </div>
+                        <button tumUiButton variant="text" severity="secondary" class="w-full justify-start text-start" (click)="open(row)" data-testid="ai-activity-open">
+                            <span class="flex min-w-0 flex-col gap-1 text-start font-semibold">
+                                {{ row.title || (row.kindKey | artemisTranslate) }}
+                                @if (row.targetTitle) {
+                                    <span class="mt-1 flex items-center gap-2 text-sm"><fa-icon [icon]="icons.faArrowRight" />{{ row.targetTitle }}</span>
+                                }
+                            </span>
+                        </button>
+                        <div class="mt-2 flex items-center gap-2 text-sm text-default">
+                            @if (row.active) {
+                                <fa-icon [icon]="icons.faSpinner" animation="spin" />
+                            }
+                            @if (row.attention) {
+                                <fa-icon [icon]="icons.faTriangleExclamation" />
+                            }
+                            <span data-testid="ai-activity-status">{{ row.statusKey | artemisTranslate }}</span>
+                        </div>
+                        @if (row.steps.length) {
+                            <ol class="my-3 flex list-none gap-1 p-0" data-testid="ai-activity-steps">
+                                @for (step of row.steps; track step.labelKey; let i = $index) {
+                                    <li
+                                        class="flex min-w-0 flex-1 flex-col items-center gap-1 text-center text-xs"
+                                        [class.text-state-info]="step.current"
+                                        [class.font-semibold]="step.current"
+                                        [attr.aria-current]="step.current ? 'step' : null"
+                                    >
+                                        <span class="flex size-5 items-center justify-center rounded-full border border-border" [class.border-state-info]="step.current">{{
+                                            i + 1
+                                        }}</span>
+                                        <span class="w-full break-words" [attr.title]="step.labelKey | artemisTranslate">{{ step.labelKey | artemisTranslate }}</span>
+                                    </li>
+                                }
+                            </ol>
+                        }
+                        @if (row.message) {
+                            <p class="mt-2 mb-0 line-clamp-3 text-sm text-muted-color" data-testid="ai-activity-message">{{ row.message }}</p>
+                        }
+                        @if (row.recoveryRequired) {
+                            <p class="mt-2 mb-0 text-sm text-default" data-testid="ai-activity-recovery">
+                                {{ 'artemisApp.hyperion.activity.recoveryRequired' | artemisTranslate }}
+                            </p>
+                        }
+                        @if (row.canCancel) {
+                            <button
+                                tumUiButton
+                                variant="outlined"
+                                severity="danger"
+                                size="small"
+                                class="mt-2"
+                                [disabled]="cancelling().has(row.key)"
+                                data-testid="ai-activity-cancel"
+                                (click)="cancel(row)"
+                            >
+                                {{ 'artemisApp.exerciseVariantGeneration.tray.cancel' | artemisTranslate }}
+                            </button>
+                        }
+                    </li>
+                }
+            </ul>
+            @if (hasMoreHistory()) {
+                <button tumUiButton variant="text" size="small" (click)="loadMoreHistory()" data-testid="ai-activity-load-more">
+                    {{ 'artemisApp.hyperion.activity.loadMore' | artemisTranslate }}
+                </button>
+            }
+            @if (!visibleRows().length) {
+                <p class="text-sm text-muted-color">{{ 'artemisApp.hyperion.activity.dismissedHint' | artemisTranslate }}</p>
+            }
+        </section>
+    </tum-ui-popover>
+}
+<tum-ui-confirm-dialog />
+@for (monitor of quizInspector(); track monitor.key) {
+    <jhi-exercise-variant-ai-modal-wizard [visible]="true" (visibleChange)="closeInspector($event)" [monitorJobId]="monitor.runId" />
+}
+@for (monitor of inspector(); track monitor.key) {
+    <tum-ui-dialog size="large" [visible]="true" (visibleChange)="closeInspector($event)" [header]="'artemisApp.hyperion.activity.title' | artemisTranslate">
+        <jhi-hyperion-run-page [inspectedExerciseId]="monitor.exerciseId" [inspectedRunId]="monitor.runId" />
+    </tum-ui-dialog>
+}

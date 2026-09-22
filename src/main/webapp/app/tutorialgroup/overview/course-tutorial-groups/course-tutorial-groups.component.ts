@@ -145,7 +145,7 @@ export class CourseTutorialGroupsComponent implements SidebarView {
     private loadAndSetTutorialGroups(courseId: number) {
         this.tutorialGroupApiService
             .getTutorialGroupsForCourse(courseId)
-            .pipe(map((tutorialGroups: TutorialGroup[]) => convertTutorialGroupArrayDatesFromServer(tutorialGroups)))
+            .pipe(map(convertTutorialGroupArrayDatesFromServer))
             .subscribe({
                 next: (tutorialGroups) => {
                     this.tutorialGroups.set(tutorialGroups);

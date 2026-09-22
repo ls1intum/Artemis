@@ -1,7 +1,11 @@
 <div class="mx-auto flex max-w-4xl flex-col gap-4 px-0 py-4 sm:px-4" data-testid="hyperion-run-page">
+    @if (inspectedExerciseId() && canonicalLink(); as link) {
+        <a [routerLink]="link" data-testid="hyperion-run-full-page">{{ 'artemisApp.hyperion.activity.openFullPage' | artemisTranslate }}</a>
+    }
     <jhi-hyperion-run-header
         [exerciseTitle]="exercise()?.title"
         [adapting]="adapting()"
+        [variant]="variant()"
         [metaLabelKeys]="metaLabelKeys()"
         [statusState]="statusDotState()"
         [statusLabelKey]="statusLabelKey()"

@@ -8,7 +8,6 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
-
 export interface AnswerOptionWithoutSolution {
     id?: number;
     text?: string;

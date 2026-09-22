@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20260922000742-01-durable-authoring-restore" author="FelixTJDietrich">
+        <comment>Retain interrupted restoration obligations when every distributed data member restarts.</comment>
+        <addColumn tableName="hyperion_authoring_run">
+            <column name="restore_started_at" type="datetime(3)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

@@ -83,6 +83,52 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
         exerciseId = programmingExerciseRepository.save(programmingExercise).getId();
     }
 
+    private static final String VARIANT_REQUEST = """
+            {"domainText":"A library","placement":{"type":"STANDALONE"}}
+            """;
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void programmingVariant_cannotUseLegacyQuizPipeline() throws Exception {
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        exercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        programmingExerciseRepository.save(exercise);
+        request.performMvcRequest(post("/api/hyperion/exercises/" + exerciseId + "/generate-variant").contentType(MediaType.APPLICATION_JSON).content(VARIANT_REQUEST))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("unsupportedType"));
+    }
+
+    @Test
+    @WithAnonymousUser
+    void programmingVariant_anonymous_isUnauthorized() throws Exception {
+        request.performMvcRequest(
+                post("/api/hyperion/programming-exercises/" + exerciseId + "/generation/variants").contentType(MediaType.APPLICATION_JSON).content(VARIANT_REQUEST))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void programmingVariant_student_isForbidden() throws Exception {
+        request.performMvcRequest(
+                post("/api/hyperion/programming-exercises/" + exerciseId + "/generation/variants").contentType(MediaType.APPLICATION_JSON).content(VARIANT_REQUEST))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void programmingVariant_foreignInstructor_isForbidden() throws Exception {
+        request.performMvcRequest(
+                post("/api/hyperion/programming-exercises/" + exerciseId + "/generation/variants").contentType(MediaType.APPLICATION_JSON).content(VARIANT_REQUEST))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void programmingVariant_editor_rejectsUnsupportedConfigurationBeforeProvisioning() throws Exception {
+        request.performMvcRequest(
+                post("/api/hyperion/programming-exercises/" + exerciseId + "/generation/variants").contentType(MediaType.APPLICATION_JSON).content(VARIANT_REQUEST))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("unsupportedGenerationLanguage"));
+    }
+
     @Test
     void mutationGuardAcceptsDatelessAndFutureDraftsButRejectsReleasedExercises() {
         var exercise = programmingExerciseRepository.findById(exerciseId).orElseThrow();
@@ -151,6 +197,32 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
         exercise.setExerciseGroup(exam.getExerciseGroups().getFirst());
         programmingExerciseRepository.saveAndFlush(exercise);
         return exam;
+    }
+
+    @Test
+    @WithAnonymousUser
+    void capabilitiesRequireAuthentication() throws Exception {
+        request.performMvcRequest(get("/api/hyperion/programming-exercises/{exerciseId}/generation/capabilities", exerciseId)).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void capabilitiesRejectStudents() throws Exception {
+        request.performMvcRequest(get("/api/hyperion/programming-exercises/{exerciseId}/generation/capabilities", exerciseId)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void capabilitiesRejectForeignInstructors() throws Exception {
+        request.performMvcRequest(get("/api/hyperion/programming-exercises/{exerciseId}/generation/capabilities", exerciseId)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void capabilitiesTellEditorsWhenTheConfigurationIsUnsupported() throws Exception {
+        request.performMvcRequest(get("/api/hyperion/programming-exercises/{exerciseId}/generation/capabilities", exerciseId)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.supported").value(false)).andExpect(jsonPath("$.canCreateVariant").value(false))
+                .andExpect(jsonPath("$.restriction").value("unsupportedGenerationLanguage"));
     }
 
     @Test
@@ -323,37 +395,37 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     @Test
     @WithAnonymousUser
     void revertExerciseGeneration_anonymous_returnsUnauthorized() throws Exception {
-        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert", exerciseId)).andExpect(status().isUnauthorized());
+        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generation/runs/adapt-job/revert", exerciseId)).andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void revertExerciseGeneration_student_returnsForbidden() throws Exception {
-        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert", exerciseId)).andExpect(status().isForbidden());
+        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generation/runs/adapt-job/revert", exerciseId)).andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void revertExerciseGeneration_tutor_returnsForbidden() throws Exception {
-        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert", exerciseId)).andExpect(status().isForbidden());
+        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generation/runs/adapt-job/revert", exerciseId)).andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void revertExerciseGeneration_editor_passesAuthorizationAndReturnsNotFound() throws Exception {
-        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert", exerciseId)).andExpect(status().isNotFound());
+        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generation/runs/adapt-job/revert", exerciseId)).andExpect(status().isNotFound());
     }
 
     @Test
     @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void revertExerciseGeneration_wrongCourseInstructor_returnsForbidden() throws Exception {
-        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert", exerciseId)).andExpect(status().isForbidden());
+        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generation/runs/adapt-job/revert", exerciseId)).andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void revertExerciseGeneration_admin_passesAuthorizationAndReturnsNotFound() throws Exception {
-        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert", exerciseId)).andExpect(status().isNotFound());
+        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generation/runs/adapt-job/revert", exerciseId)).andExpect(status().isNotFound());
     }
 
     @Test

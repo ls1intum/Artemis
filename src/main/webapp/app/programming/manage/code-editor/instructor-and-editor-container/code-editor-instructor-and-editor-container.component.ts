@@ -1,3 +1,4 @@
+import { generationCapabilityBlocker, hasSupportedProgrammingConfiguration, injectGenerationCapabilities } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
 import { ChangeDetectionStrategy, Component, DestroyRef, Injector, OnDestroy, computed, inject, linkedSignal, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -440,13 +441,17 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /** Whether this deployment offers whole-exercise adaptation for the open exercise; why it may still be blocked is {@link adaptBlockedReason}. */
-    protected readonly adaptOffered = computed(() => this.hyperionGenerationSupported && !!this.exercise()?.id);
+    protected readonly adaptOffered = computed(
+        () => this.hyperionGenerationSupported && !!this.exercise()?.id && (this.exercise()?.isAtLeastEditor ?? false) && hasSupportedProgrammingConfiguration(this.exercise()),
+    );
 
     /** Whether the run machinery (status polling, editing locks, reload after a save) applies to this exercise at all. */
     protected readonly generationSupported = computed(() => {
         const exercise = this.exercise();
         return this.adaptOffered() && (exercise?.isAtLeastEditor ?? false) && supportsHyperionExerciseGeneration(exercise?.programmingLanguage, exercise?.projectType);
     });
+
+    private readonly generationCapabilities = injectGenerationCapabilities(this.exercise, this.generationSupported);
 
     protected readonly isExerciseGenerationRunning = computed(() => {
         const activity = this.generationActivity;
@@ -479,6 +484,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (blocker) {
             return HYPERION_GENERATION_BLOCKER_KEY + blocker;
         }
+        const capabilityBlocker = generationCapabilityBlocker(this.generationCapabilities.value());
+        if (capabilityBlocker) return capabilityBlocker;
         if (this.repositorySetupBusy()) {
             return HYPERION_GENERATION_BLOCKER_KEY + 'repositorySetupBusy';
         }

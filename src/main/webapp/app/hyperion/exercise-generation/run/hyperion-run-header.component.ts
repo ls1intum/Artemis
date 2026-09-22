@@ -61,6 +61,7 @@ export class HyperionRunHeaderComponent {
     private readonly confirmationService = inject(TumUiConfirmationService);
     private readonly translateService = inject(TranslateService);
 
+    readonly variant = input(false);
     readonly adapting = input(false);
     readonly exerciseTitle = input<string | undefined>();
     /** Translation keys for the meta line, e.g. Java · Gradle · Medium. Never raw enum values. */

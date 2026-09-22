@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.Mockito.mock;
 
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
@@ -19,9 +20,11 @@ import org.testcontainers.DockerClientFactory;
 
 import de.tum.cit.aet.artemis.core.config.RedissonCodecConfiguration;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisClientListResolver;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisNodeIdentity;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistributedDataProviderService;
+import de.tum.cit.aet.artemis.hyperion.test_repository.AuthoringRunTestRepository;
 import de.tum.cit.aet.artemis.shared.ValkeyTestContainerFactory;
 
 @EnabledIf("isDockerAvailable")
@@ -48,6 +51,9 @@ class GenerationRedisCoordinationTest {
                 var secondProvider = new RedissonDistributedDataProviderService(secondClient, resolver, secondIdentity);
                 var first = new GenerationExternalMutationService(firstProvider, 1);
                 var second = new GenerationExternalMutationService(secondProvider, 1);
+                assertThatThrownBy(() -> first.claimExternalMutationSlot(42)).isInstanceOf(ServiceUnavailableAlertException.class);
+                assertThatThrownBy(() -> second.claimParticipationSlot(42)).isInstanceOf(ServiceUnavailableAlertException.class);
+                new GenerationRecoveryBootstrapService(mock(AuthoringRunTestRepository.class), firstProvider).initialize();
 
                 assertThat(firstProvider.getLocalNodeId()).isNotEqualTo(secondProvider.getLocalNodeId());
                 assertThat(firstProvider.getCoordinationSnapshot().orElseThrow().ownerNodeIds()).containsExactlyInAnyOrder(firstIdentity.connectionName(),

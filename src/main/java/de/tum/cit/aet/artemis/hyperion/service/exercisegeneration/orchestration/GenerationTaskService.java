@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -43,12 +44,13 @@ import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.protocol.VerificationResult;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderUsageSink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationFileUpdate;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationRevertService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.history.GenerationRunJournalService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationIncompleteException;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationPersistenceService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationReviewService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationRequestService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.variant.GenerationVariantService;
 import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -69,6 +71,8 @@ import io.micrometer.observation.ObservationRegistry;
 public class GenerationTaskService {
 
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
+
+    private final GenerationRunJournalService journal;
 
     private final ProgrammingExerciseBuildConfigRepository buildConfigRepository;
 
@@ -92,8 +96,6 @@ public class GenerationTaskService {
 
     private final HyperionGenerationBudgetService generationBudgetService;
 
-    private final ExerciseGenerationRevertService generationRevertService;
-
     private final TaskScheduler taskScheduler;
 
     private final ObservationRegistry observationRegistry;
@@ -109,45 +111,59 @@ public class GenerationTaskService {
 
     private final GenerationShutdownGuard shutdownGuard;
 
+    private final GenerationVariantService variants;
+
     // Required: with the package-private test constructor also present, Spring cannot pick an injection constructor without it.
     @Autowired
     public GenerationTaskService(ProgrammingExerciseBuildConfigRepository buildConfigRepository, GenerationOrchestrationService orchestrator,
             GenerationPersistenceService persistenceService, GenerationReviewService reviewService, HyperionWebsocketService websocket, GenerationJobService jobService,
             ProgrammingExerciseRepository programmingExerciseRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            HyperionGenerationBudgetService generationBudgetService, ExerciseGenerationRevertService generationRevertService,
-            @Qualifier("taskScheduler") TaskScheduler taskScheduler, ObservationRegistry observationRegistry, HyperionAgentProperties agentProperties,
-            @Value("${artemis.hyperion.agent.owner-heartbeat-interval:PT15S}") Duration ownerHeartbeatInterval, GenerationShutdownGuard shutdownGuard) {
+            HyperionGenerationBudgetService generationBudgetService, GenerationRunJournalService journal, @Qualifier("taskScheduler") TaskScheduler taskScheduler,
+            ObservationRegistry observationRegistry, HyperionAgentProperties agentProperties,
+            @Value("${artemis.hyperion.agent.owner-heartbeat-interval:PT15S}") Duration ownerHeartbeatInterval, GenerationShutdownGuard shutdownGuard,
+            GenerationVariantService variants) {
         this(buildConfigRepository, orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository, auxiliaryRepositoryRepository,
-                generationBudgetService, generationRevertService, taskScheduler, observationRegistry, agentProperties.getMaxJobDuration(), agentProperties.getMaxTokensPerJob(),
-                ownerHeartbeatInterval, shutdownGuard, agentProperties.getCachedInputTokenWeight());
+                generationBudgetService, journal, taskScheduler, observationRegistry, agentProperties.getMaxJobDuration(), agentProperties.getMaxTokensPerJob(),
+                ownerHeartbeatInterval, shutdownGuard, agentProperties.getCachedInputTokenWeight(), variants);
     }
 
     GenerationTaskService(ProgrammingExerciseBuildConfigRepository buildConfigRepository, GenerationOrchestrationService orchestrator,
             GenerationPersistenceService persistenceService, GenerationReviewService reviewService, HyperionWebsocketService websocket, GenerationJobService jobService,
             ProgrammingExerciseRepository programmingExerciseRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            HyperionGenerationBudgetService generationBudgetService, ExerciseGenerationRevertService generationRevertService, TaskScheduler taskScheduler,
-            ObservationRegistry observationRegistry, Duration maxJobDuration, long maxTokensPerJob, Duration ownerHeartbeatInterval) {
+            HyperionGenerationBudgetService generationBudgetService, GenerationRunJournalService journal, TaskScheduler taskScheduler, ObservationRegistry observationRegistry,
+            Duration maxJobDuration, long maxTokensPerJob, Duration ownerHeartbeatInterval) {
         this(buildConfigRepository, orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository, auxiliaryRepositoryRepository,
-                generationBudgetService, generationRevertService, taskScheduler, observationRegistry, maxJobDuration, maxTokensPerJob, ownerHeartbeatInterval,
-                new GenerationShutdownGuard());
+                generationBudgetService, journal, taskScheduler, observationRegistry, maxJobDuration, maxTokensPerJob, ownerHeartbeatInterval, new GenerationShutdownGuard());
     }
 
     GenerationTaskService(ProgrammingExerciseBuildConfigRepository buildConfigRepository, GenerationOrchestrationService orchestrator,
             GenerationPersistenceService persistenceService, GenerationReviewService reviewService, HyperionWebsocketService websocket, GenerationJobService jobService,
             ProgrammingExerciseRepository programmingExerciseRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            HyperionGenerationBudgetService generationBudgetService, ExerciseGenerationRevertService generationRevertService, TaskScheduler taskScheduler,
-            ObservationRegistry observationRegistry, Duration maxJobDuration, long maxTokensPerJob, Duration ownerHeartbeatInterval, GenerationShutdownGuard shutdownGuard) {
+            HyperionGenerationBudgetService generationBudgetService, GenerationRunJournalService journal, TaskScheduler taskScheduler, ObservationRegistry observationRegistry,
+            Duration maxJobDuration, long maxTokensPerJob, Duration ownerHeartbeatInterval, GenerationShutdownGuard shutdownGuard) {
         this(buildConfigRepository, orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository, auxiliaryRepositoryRepository,
-                generationBudgetService, generationRevertService, taskScheduler, observationRegistry, maxJobDuration, maxTokensPerJob, ownerHeartbeatInterval, shutdownGuard,
+                generationBudgetService, journal, taskScheduler, observationRegistry, maxJobDuration, maxTokensPerJob, ownerHeartbeatInterval, shutdownGuard,
                 HyperionAgentProperties.DEFAULT_CACHED_INPUT_TOKEN_WEIGHT);
     }
 
     GenerationTaskService(ProgrammingExerciseBuildConfigRepository buildConfigRepository, GenerationOrchestrationService orchestrator,
             GenerationPersistenceService persistenceService, GenerationReviewService reviewService, HyperionWebsocketService websocket, GenerationJobService jobService,
             ProgrammingExerciseRepository programmingExerciseRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            HyperionGenerationBudgetService generationBudgetService, ExerciseGenerationRevertService generationRevertService, TaskScheduler taskScheduler,
-            ObservationRegistry observationRegistry, Duration maxJobDuration, long maxTokensPerJob, Duration ownerHeartbeatInterval, GenerationShutdownGuard shutdownGuard,
-            double cachedInputTokenWeight) {
+            HyperionGenerationBudgetService generationBudgetService, GenerationRunJournalService journal, TaskScheduler taskScheduler, ObservationRegistry observationRegistry,
+            Duration maxJobDuration, long maxTokensPerJob, Duration ownerHeartbeatInterval, GenerationShutdownGuard shutdownGuard, double cachedInputTokenWeight) {
+        this(buildConfigRepository, orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository, auxiliaryRepositoryRepository,
+                generationBudgetService, journal, taskScheduler, observationRegistry, maxJobDuration, maxTokensPerJob, ownerHeartbeatInterval, shutdownGuard,
+                cachedInputTokenWeight, null);
+    }
+
+    GenerationTaskService(ProgrammingExerciseBuildConfigRepository buildConfigRepository, GenerationOrchestrationService orchestrator,
+            GenerationPersistenceService persistenceService, GenerationReviewService reviewService, HyperionWebsocketService websocket, GenerationJobService jobService,
+            ProgrammingExerciseRepository programmingExerciseRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+            HyperionGenerationBudgetService generationBudgetService, GenerationRunJournalService journal, TaskScheduler taskScheduler, ObservationRegistry observationRegistry,
+            Duration maxJobDuration, long maxTokensPerJob, Duration ownerHeartbeatInterval, GenerationShutdownGuard shutdownGuard, double cachedInputTokenWeight,
+            @Nullable GenerationVariantService variants) {
+        this.journal = journal;
+        this.variants = variants;
         this.cachedInputTokenWeight = cachedInputTokenWeight;
         this.buildConfigRepository = buildConfigRepository;
         HyperionGenerationTimeouts.validateMaxJobDuration(maxJobDuration);
@@ -163,7 +179,6 @@ public class GenerationTaskService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.generationBudgetService = generationBudgetService;
-        this.generationRevertService = generationRevertService;
         this.taskScheduler = taskScheduler;
         this.observationRegistry = observationRegistry;
         this.maxJobDuration = maxJobDuration;
@@ -210,6 +225,7 @@ public class GenerationTaskService {
         GenerationProgressEmitter emitter = new GenerationProgressEmitter((progressEvent, terminal) -> {
             boolean accepted = jobService.recordEvent(exerciseId, jobId, progressEvent, terminal);
             if (terminal && accepted) {
+                journal.completed(jobId, progressEvent);
                 observation.lowCardinalityKeyValue("artemis.hyperion.outcome", progressEvent.type().name().toLowerCase(Locale.ROOT));
             }
             return accepted;
@@ -243,6 +259,22 @@ public class GenerationTaskService {
                         .withTerminationReason(TerminationReason.DEADLINE_EXCEEDED));
                 return;
             }
+            deadlineFuture = scheduleDeadline(deadlineExceeded, event.deadlineAt());
+            heartbeatFuture = scheduleHeartbeat(exerciseId, jobId, heartbeatLost);
+            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "Starting exercise authoring"));
+            emitter.phase(Phase.PREPARING, "Preparing the protected draft and isolated workspace");
+            if (event.variantPreparation() != null) {
+                shutdownGuard.enterPointOfNoReturn();
+                try {
+                    variants.prepareInfrastructure(event);
+                }
+                finally {
+                    shutdownGuard.leavePointOfNoReturn();
+                }
+                if (!jobService.allowCancellationAfterPreparation(exerciseId, jobId)) {
+                    throw new IllegalStateException("Variant preparation lost its destination reservation");
+                }
+            }
             // The event's exercise was loaded on the request thread, so on this executor thread its lazy associations (buildConfig, template/solution participations) are
             // detached and touching one during seeding would throw. Re-load with those associations initialized, and fail closed if the exercise has since been deleted.
             ProgrammingExercise exercise = programmingExerciseRepository.findWithAllParticipationsById(exerciseId).orElse(null);
@@ -259,10 +291,6 @@ public class GenerationTaskService {
                                 .withTerminationReason(TerminationReason.NOT_STARTED));
                 return;
             }
-            deadlineFuture = scheduleDeadline(deadlineExceeded, event.deadlineAt());
-            heartbeatFuture = scheduleHeartbeat(exerciseId, jobId, heartbeatLost);
-            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "Starting exercise generation"));
-            emitter.phase(Phase.PREPARING, "Preparing an isolated workspace and build environment");
             Consumer<ChatResponse> usageSink = budgetedUsageSink(
                     jobService.tokenUsageSink(courseIdOf(exercise), exerciseId, user.getId(), jobId, liveUsage::recordAccountedRequest), exerciseId, jobId, tokenBudgetExceeded,
                     tokenAccountingFailed, runTokenBudget, liveUsage);
@@ -351,8 +379,10 @@ public class GenerationTaskService {
                         try {
                             exerciseToPersist = reloadDraftExerciseBeforeLiveMutation(exerciseId);
                             persistResult = persistenceService.persist(exerciseToPersist, user, outcome, event.expectedProblemStatement(), event.expectedTitle(), jobId,
-                                    event.mode(), () -> canContinueSave(exerciseId, jobId, heartbeatLost) && isStillDraftWithoutParticipations(exerciseId),
-                                    () -> generationRevertService.invalidateBaseline(exerciseId));
+                                    event.mode(), () -> canContinueSave(exerciseId, jobId, heartbeatLost) && isStillDraftWithoutParticipations(exerciseId), () -> {
+                                        journal.beforeMutation(jobId, exerciseToPersist, user, outcome.seedRepositoryHeads(),
+                                                persistenceService.repositoryBranch(exerciseToPersist));
+                                    });
                             savedToExercise = true;
                         }
                         catch (GenerationIncompleteException e) {
@@ -386,12 +416,38 @@ public class GenerationTaskService {
                             reportUncertainLiveSave(verdict, emitter, terminationReason);
                             return;
                         }
-                        if (isNoOpPersist(persistResult)) {
-                            boolean instructorReviewRequired = outcome.specFidelityReport().hasBlockingFindings();
+                        List<String> placementWarnings = List.of();
+                        if (event.variantPreparation() != null) {
+                            try {
+                                journal.beforeMutation(jobId, exerciseToPersist, user, outcome.seedRepositoryHeads(), persistenceService.repositoryBranch(exerciseToPersist));
+                                placementWarnings = variants.place(event, () -> {
+                                    if (!canContinueSave(exerciseId, jobId, heartbeatLost)) {
+                                        throw new IllegalStateException("Variant placement lost its destination reservation");
+                                    }
+                                });
+                            }
+                            catch (RuntimeException placementFailure) {
+                                log.error("Verified variant {} was saved, but placement did not complete", exerciseId, placementFailure);
+                                emitter.milestone(ExerciseGenerationEventDTO
+                                        .done("The verified variant was saved, but its requested placement did not complete. Inspect the exercise and group before continuing.",
+                                                ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict, true,
+                                                persistResult.postPersistHeads().entrySet().stream()
+                                                        .collect(Collectors.toUnmodifiableMap(entry -> entry.getKey().name().toLowerCase(Locale.ROOT), Map.Entry::getValue)),
+                                                persistResult.savedExerciseVersionId())
+                                        .withTerminationReason(terminationReason));
+                                return;
+                            }
+                        }
+                        if (isNoOpPersist(persistResult) && event.variantPreparation() == null) {
+                            boolean instructorReviewRequired = outcome.specFidelityReport().hasBlockingFindings() || !placementWarnings.isEmpty();
                             int reviewNoteCount = outcome.specFidelityReport().findings().isEmpty() ? 0
                                     : reviewService.attachFindings(exerciseToPersist, user, outcome.specFidelityReport());
-                            String message = "The generated exercise already matched the current exercise. No changes were needed.";
-                            if (instructorReviewRequired) {
+                            String message = event.variantPreparation() == null ? "The generated exercise already matched the current exercise. No changes were needed."
+                                    : "The variant matched its copied source. No artifact changes were needed.";
+                            if (!placementWarnings.isEmpty()) {
+                                message += " " + String.join(" ", placementWarnings);
+                            }
+                            if (outcome.specFidelityReport().hasBlockingFindings()) {
                                 message += " Automated quality review found issues that require instructor review.";
                             }
                             if (reviewNoteCount == GenerationReviewService.REVIEW_COMMENTS_FAILED) {
@@ -412,10 +468,16 @@ public class GenerationTaskService {
                                             .withTerminationReason(terminationReason));
                             return;
                         }
-                        boolean revertUnavailable = !generationRevertService.recordBaseline(exerciseToPersist, jobId, event.mode(), persistResult.prePersistHeads(),
-                                persistResult.postPersistHeads(), event.expectedProblemStatement(), event.expectedTitle(), persistResult.persistedProblemStatement(),
-                                persistResult.persistedTitle(), persistResult.repositoryBranch(), persistResult.previousGrading(), persistResult.savedGrading());
                         if (!canContinueSave(exerciseId, jobId, heartbeatLost)) {
+                            reportUncertainLiveSave(verdict, emitter, terminationReason);
+                            return;
+                        }
+                        Long savedVersionId;
+                        try {
+                            savedVersionId = journal.afterMutation(jobId, exerciseToPersist, user, persistResult);
+                        }
+                        catch (GenerationIncompleteException recoveryFailure) {
+                            log.error("Saved exercise {} without a complete recovery record", exerciseId, recoveryFailure);
                             reportUncertainLiveSave(verdict, emitter, terminationReason);
                             return;
                         }
@@ -426,13 +488,12 @@ public class GenerationTaskService {
                         if (outcome.specFidelityReport().findings().isEmpty()) {
                             reviewNoteCount = reviewService.attachFindings(exerciseToPersist, user, outcome.specFidelityReport());
                         }
-                        else if (persistResult.savedExerciseVersionId() == null) {
+                        else if (savedVersionId == null) {
                             log.warn("Could not attach generation review findings to exercise {} because its save did not create an identifiable exercise version", exerciseId);
                             reviewNoteCount = GenerationReviewService.REVIEW_COMMENTS_FAILED;
                         }
                         else {
-                            reviewNoteCount = reviewService.attachFindings(exerciseToPersist, user, outcome.specFidelityReport(), persistResult.savedExerciseVersionId(),
-                                    Map.copyOf(savedRepositoryHeads));
+                            reviewNoteCount = reviewService.attachFindings(exerciseToPersist, user, outcome.specFidelityReport(), savedVersionId, Map.copyOf(savedRepositoryHeads));
                         }
                         String reviewNotes = reviewNoteCount == GenerationReviewService.REVIEW_COMMENTS_FAILED
                                 ? " Review notes could not be attached; inspect the generated exercise manually."
@@ -440,23 +501,28 @@ public class GenerationTaskService {
                                         : reviewNoteCount > 1 ? " " + reviewNoteCount + " review notes were added for your attention." : "";
                         String savedMessage = event.mode() == GenerationMode.ADAPT ? "The exercise was adapted and saved. Review the changes."
                                 : "The exercise was generated and saved. Review the changes.";
-                        if (revertUnavailable) {
-                            savedMessage += " Automatic revert is unavailable for this run.";
+                        if (event.variantPreparation() != null) {
+                            savedMessage = "The verified variant was saved as a separate exercise. The source content was not changed.";
+                        }
+                        if (!placementWarnings.isEmpty()) {
+                            savedMessage += " " + String.join(" ", placementWarnings);
                         }
                         if (!canContinueSave(exerciseId, jobId, heartbeatLost)) {
                             reportUncertainLiveSave(verdict, emitter, terminationReason);
                             return;
                         }
-                        boolean instructorReviewRequired = outcome.specFidelityReport().hasBlockingFindings();
-                        if (instructorReviewRequired) {
+                        boolean instructorReviewRequired = outcome.specFidelityReport().hasBlockingFindings() || !placementWarnings.isEmpty();
+                        if (outcome.specFidelityReport().hasBlockingFindings()) {
                             savedMessage += " Automated quality review found issues that require instructor review.";
                         }
-                        emitter.milestone(ExerciseGenerationEventDTO.done(savedMessage + reviewNotes,
-                                instructorReviewRequired ? ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW : ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, verdict,
-                                true,
-                                persistResult.postPersistHeads().entrySet().stream()
-                                        .collect(Collectors.toUnmodifiableMap(entry -> entry.getKey().name().toLowerCase(Locale.ROOT), Map.Entry::getValue)),
-                                persistResult.savedExerciseVersionId()).withTerminationReason(terminationReason));
+                        emitter.milestone(ExerciseGenerationEventDTO
+                                .done(savedMessage + reviewNotes,
+                                        instructorReviewRequired ? ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW : ExerciseGenerationEventDTO.CompletionStatus.SUCCESS,
+                                        verdict, true,
+                                        persistResult.postPersistHeads().entrySet().stream().collect(
+                                                Collectors.toUnmodifiableMap(entry -> entry.getKey().name().toLowerCase(Locale.ROOT), Map.Entry::getValue)),
+                                        savedVersionId)
+                                .withTerminationReason(terminationReason));
                     }
                 }
             }
@@ -481,7 +547,14 @@ public class GenerationTaskService {
             cancelScheduled(heartbeatFuture);
             // Seal cancellation and exceptional exits that did not publish a worker terminal event.
             jobService.sealTokenAccountingOnWorkerExit(exerciseId, jobId);
-            clearJobAndReleaseBudget(exerciseId, jobId, event, tokenAccountingFailed.get());
+            try {
+                if (event.variantPreparation() != null) {
+                    variants.releaseSource(event);
+                }
+            }
+            finally {
+                clearJobAndReleaseBudget(exerciseId, jobId, event, tokenAccountingFailed.get());
+            }
         }
     }
 

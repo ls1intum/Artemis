@@ -22,11 +22,8 @@
         @if (currAccount() && !isExamActive() && !isExamStarted() && globalSearchEnabled()) {
             <jhi-global-search-navbar />
         }
-        @if (hyperionExerciseGenerationEnabled() && !isExamActive() && !isExamStarted()) {
-            <jhi-hyperion-jobs-indicator />
-        }
-        @if (variantGenerationService.hasJobs()) {
-            <jhi-variant-generation-tray />
+        @if (currAccount() && !isExamActive() && !isExamStarted() && (hyperionExerciseGenerationEnabled() || hyperionEnabled())) {
+            <jhi-hyperion-activity-tray [authoringEnabled]="hyperionExerciseGenerationEnabled()" />
         }
         @if (!currAccount() && languages && languages.length > 1) {
             <div ngbDropdown class="dropdown pointer" display="dynamic">

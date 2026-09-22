@@ -9,7 +9,11 @@ import {
     TumUiTagComponent,
     TumUiTooltipDirective,
 } from '@tumaet/ui-angular';
-import { Component, OnDestroy, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, DestroyRef, Injector, OnDestroy, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AccountService } from 'app/core/auth/account.service';
+import { HyperionProgrammingVariantApi } from 'app/openapi/api/hyperion-programming-variant-api';
+import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
 import { NgTemplateOutlet } from '@angular/common';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { Router } from '@angular/router';
@@ -112,6 +116,8 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     private readonly confirmationService = inject(TumUiConfirmationService);
     private readonly translateService = inject(TranslateService);
     private readonly router = inject(Router);
+    private readonly injector = inject(Injector);
+    private readonly destroyRef = inject(DestroyRef);
 
     readonly visible = input<boolean>(false);
     /** Required for the wizard flow (steps 1–3); may be absent in monitor mode (tray host has no exercise). */
@@ -467,6 +473,10 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         };
         this.resetJobState();
         this.wizardStep.set(4);
+        if (sourceExercise.type === ExerciseType.PROGRAMMING) {
+            this.startProgrammingVariant(sourceExercise, request);
+            return;
+        }
         this.variantGenerationService.startGeneration(sourceExercise.id, request, sourceExercise.title).subscribe({
             next: (jobId) => this.attachToJob(jobId),
             error: () => {
@@ -476,6 +486,49 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
                 this.wizardStep.set(5);
             },
         });
+    }
+
+    /** Programming variants share the authoring registry, verification and persistence lifecycle. */
+    private startProgrammingVariant(source: Exercise, request: VariantGenerationRequest): void {
+        const accountService = this.injector.get(AccountService);
+        const login = accountService.userIdentity()?.login;
+        const courseId = source.course?.id ?? source.exerciseGroup?.exam?.course?.id ?? this.courseId();
+        const failed = () => {
+            this.failureDetail.set(this.translateService.instant('artemisApp.exerciseVariantGeneration.wizard.startFailed'));
+            this.jobPhase.set('FAILED');
+            this.wizardStep.set(5);
+        };
+        if (!login || !courseId) {
+            failed();
+            return;
+        }
+        const registry = this.injector.get(HyperionJobRegistryService);
+        this.injector
+            .get(HyperionProgrammingVariantApi)
+            .generateProgrammingVariant(source.id!, request)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (job) => {
+                    if (accountService.userIdentity()?.login !== login) return;
+                    if (!job.exerciseId || !job.jobId) {
+                        failed();
+                        return;
+                    }
+                    registry.track({
+                        jobId: job.jobId,
+                        exerciseId: job.exerciseId,
+                        sourceExerciseId: source.id,
+                        courseId,
+                        exerciseTitle: source.title ?? '',
+                        mode: 'ADAPT',
+                    });
+                    this.close();
+                    void this.router.navigate(['/course-management', courseId, 'programming-exercises', job.exerciseId, 'generation']);
+                },
+                error: () => {
+                    if (accountService.userIdentity()?.login === login) failed();
+                },
+            });
     }
 
     /** Explicit cooperative cancel while running — distinct from closing the dialog. */

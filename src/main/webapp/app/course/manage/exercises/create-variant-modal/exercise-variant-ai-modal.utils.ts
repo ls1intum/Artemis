@@ -1,3 +1,4 @@
+import { hasSupportedProgrammingConfiguration } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
 import { TumUiTagSeverity } from '@tumaet/ui-angular';
 import { DifficultyLevel, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -6,19 +7,14 @@ import { VariantGenerationRequest } from 'app/openapi/model/variant-generation-r
 
 export type PlacementChoice = 'existing-group' | 'new-group' | 'standalone';
 
-/**
- * Whether the "Create Variant with AI" action is offered for an exercise. Mirrors the server's support rule
- * (`VariantTypeRegistryService.isSupported`), which is the authority and rejects everything else at the REST boundary:
- * only programming and quiz exercises have variant adapters, and a quiz with drag-and-drop questions is out of
- * scope because its content lives in the background image and drag-item geometry, which the agent cannot re-theme.
- */
+/** Quiz keeps its existing support rule; programming uses the isolated authoring configuration. */
 export function supportsAiVariantGeneration(exercise: Exercise | undefined): boolean {
     if (!exercise) {
         return false;
     }
     switch (exercise.type) {
         case ExerciseType.PROGRAMMING:
-            return true;
+            return hasSupportedProgrammingConfiguration(exercise);
         case ExerciseType.QUIZ:
             return !quizHasDragAndDropQuestions(exercise);
         default:

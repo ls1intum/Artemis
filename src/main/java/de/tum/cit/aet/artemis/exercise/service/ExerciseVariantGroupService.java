@@ -215,14 +215,48 @@ public class ExerciseVariantGroupService {
         }
     }
 
+    /**
+     * Applies placement while the caller already owns the authoring slot; re-acquiring it would conflict with the same run.
+     *
+     * @param exerciseId      destination protected by the caller's authoring job
+     * @param group           validated course group
+     * @param verifyOwnership exact ownership check, repeated before each placement step
+     */
+    public void assignToGroupWhileAuthoring(long exerciseId, ExerciseVariantGroup group, Runnable verifyOwnership) {
+        verifyOwnership.run();
+        assignCurrentExerciseToGroup(programmingExerciseRepository.findByIdElseThrow(exerciseId), group, verifyOwnership, false);
+    }
+
+    /**
+     * Adds a programming source only if it is still ungrouped, under the ordinary exclusive mutation lease.
+     *
+     * @param exerciseId source exercise
+     * @param group      validated course group
+     * @return false when another operation already grouped the source
+     */
+    public boolean assignProgrammingSourceIfUngrouped(long exerciseId, ExerciseVariantGroup group) {
+        try (var lease = mutationGuard.claimExternalMutation(exerciseId)) {
+            ProgrammingExercise current = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+            if (current.isExamExercise() || !java.util.Objects.equals(current.getCourseViaExerciseGroupOrCourseMember().getId(), group.getCourse().getId())) {
+                return false;
+            }
+            return exerciseVariantGroupRepository.claimAndAssignExerciseIfUngrouped(exerciseId, group.getId(), () -> assignCurrentExerciseToGroup(current, group));
+        }
+    }
+
     private void assignCurrentExerciseToGroup(Exercise exercise, @Nullable ExerciseVariantGroup group) {
+        assignCurrentExerciseToGroup(exercise, group, () -> {
+        }, true);
+    }
+
+    private void assignCurrentExerciseToGroup(Exercise exercise, @Nullable ExerciseVariantGroup group, Runnable verifyOwnership, boolean adoptDraftDates) {
         boolean groupTimelineChanged = false;
         if (group != null) {
             // Joining stamps the group's timeline onto the exercise, so a started/ended quiz can't be added at all — there
             // is no "no-op" case to allow through here, unlike a group update.
             rejectIfQuizMemberNotEditable(exercise);
             // Let a brand-new, empty group adopt its first exercise's dates instead of forcing everything to null.
-            groupTimelineChanged = adoptMissingDatesFromExercise(group, exercise);
+            groupTimelineChanged = adoptDraftDates && adoptMissingDatesFromExercise(group, exercise);
         }
         // Joining changes the dates as much as a group edit, so snapshot here too; unassignment makes the side effects no-ops.
         TimelineSnapshot snapshot = TimelineSnapshot.of(exercise);
@@ -235,9 +269,12 @@ public class ExerciseVariantGroupService {
             applyGroupTimeline(group, programmingExercise);
             validateProgrammingExerciseTimeline(programmingExercise, originalBuildAndTestOffset);
             if (groupTimelineChanged) {
+                verifyOwnership.run();
                 exerciseVariantGroupRepository.save(group);
             }
+            verifyOwnership.run();
             exerciseRepository.save(programmingExercise);
+            verifyOwnership.run();
             runProgrammingPostTimelineUpdateSideEffects(updateProgrammingExerciseTimeline(programmingExercise, group, originalBuildAndTestOffset));
             return;
         }
@@ -246,8 +283,10 @@ public class ExerciseVariantGroupService {
         }
         validateDates(exercise);
         if (groupTimelineChanged && group != null) {
+            verifyOwnership.run();
             exerciseVariantGroupRepository.save(group);
         }
+        verifyOwnership.run();
         Exercise saved = exerciseRepository.save(exercise);
         runPostTimelineUpdateSideEffects(saved, snapshot);
     }

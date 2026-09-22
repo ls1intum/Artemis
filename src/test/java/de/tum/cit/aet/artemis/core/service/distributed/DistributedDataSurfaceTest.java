@@ -106,6 +106,7 @@ class DistributedDataSurfaceTest {
      * nodes, the entries the Hyperion, OIDC and Atlas agent caches hold, and the concrete envelopes published through
      * distributed topics and map/queue notification topics.
      */
+    // Whole-exercise replay (including variant source identity) is new in this release; no previously released wire type changes.
     private static final List<Class<?>> DECLARED_ROOTS = List.of(BuildJobQueueItem.class, ResultQueueItem.class, BuildAgentInformation.class, Feature.class,
             BuildAgentAddressInfo.class, ClusterNodeInfo.class, HyperionCodeGenerationJobService.JobInfo.class, GenerationJobService.JobInfo.class,
             GenerationJobService.JobTranscript.class, GenerationJobService.JobFileChangeIndex.class, GenerationJobService.JobArtifacts.class, ExerciseGenerationBaseline.class,

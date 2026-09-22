@@ -23,9 +23,15 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.
 
 class GenerationExternalMutationServiceTest {
 
+    private static LocalDataProviderService initializedProvider() {
+        var provider = new LocalDataProviderService();
+        new GenerationRecoveryBootstrapService(org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.test_repository.AuthoringRunTestRepository.class), provider).initialize();
+        return provider;
+    }
+
     @Test
     void sharedCopyRecoveryRequiresEveryRecordedOwnerToBeAbsent() {
-        var provider = new LocalDataProviderService();
+        var provider = initializedProvider();
         var service = new GenerationExternalMutationService(provider, 1);
         String first = service.claimParticipationSlot(42);
         String second = service.claimParticipationSlot(42);
@@ -44,7 +50,7 @@ class GenerationExternalMutationServiceTest {
     void disabledWriterNodeStillProtectsGenerationWithoutInstantiatingEngine() {
         try (var context = new AnnotationConfigApplicationContext()) {
             context.getEnvironment().setActiveProfiles("localvc");
-            context.registerBean(DistributedDataProvider.class, LocalDataProviderService::new);
+            context.registerBean(DistributedDataProvider.class, GenerationExternalMutationServiceTest::initializedProvider);
             context.register(GenerationExternalMutationService.class, HyperionExerciseMutationApi.class);
             context.refresh();
             var api = context.getBean(HyperionExerciseMutationApi.class);
@@ -69,7 +75,7 @@ class GenerationExternalMutationServiceTest {
 
     @Test
     void generationActiveIsAReadOnlyViewOfAnySlotAndWorksWithoutTheGenerationEngine() {
-        var provider = new LocalDataProviderService();
+        var provider = initializedProvider();
         var service = new GenerationExternalMutationService(provider, 1);
         var api = new HyperionExerciseMutationApi(service);
         DistributedMap<String, JobInfo> jobs = provider.getMap(GenerationJobService.JOB_MAP_NAME);
@@ -92,7 +98,7 @@ class GenerationExternalMutationServiceTest {
 
     @Test
     void delayedReleaseDoesNotClearReplacement() {
-        var provider = new LocalDataProviderService();
+        var provider = initializedProvider();
         var service = new GenerationExternalMutationService(provider, 1);
         String old = service.claimExternalMutationSlot(42);
         service.clearExternalMutationSlot(42, old);
@@ -107,7 +113,7 @@ class GenerationExternalMutationServiceTest {
 
     @Test
     void recoveryRequiresExactDepartedOwnerAndMajority() {
-        var provider = spy(new LocalDataProviderService());
+        var provider = spy(initializedProvider());
         var service = new GenerationExternalMutationService(provider, 3);
         doReturn(Optional.of(new CoordinationSnapshot(Set.of("local-node", "other", "third"), true))).when(provider).getCoordinationSnapshot();
         DistributedMap<String, JobInfo> jobs = provider.getMap(GenerationJobService.JOB_MAP_NAME);
@@ -128,7 +134,7 @@ class GenerationExternalMutationServiceTest {
 
     @Test
     void disabledGenerationRecoveryNeverReleasesGenerationOrUnknownOwner() {
-        var provider = new LocalDataProviderService();
+        var provider = initializedProvider();
         var service = new GenerationExternalMutationService(provider, 1);
         DistributedMap<String, JobInfo> jobs = provider.getMap(GenerationJobService.JOB_MAP_NAME);
         JobInfo generation = new JobInfo("generation", "owner", 42, Instant.now(), null, "departed", Instant.now(), false, null);
@@ -146,7 +152,7 @@ class GenerationExternalMutationServiceTest {
 
     @Test
     void unknownCoordinationNeverBypassesWriterProtection() {
-        var provider = spy(new LocalDataProviderService());
+        var provider = spy(initializedProvider());
         doReturn(Optional.empty()).when(provider).getCoordinationSnapshot();
         var service = new GenerationExternalMutationService(provider, 1);
         assertThatThrownBy(() -> service.claimExternalMutationSlot(42)).isInstanceOf(ServiceUnavailableAlertException.class);
@@ -156,7 +162,7 @@ class GenerationExternalMutationServiceTest {
 
     @Test
     void missingTopologyDoesNotBypassTheGuard() {
-        var provider = spy(new LocalDataProviderService());
+        var provider = spy(initializedProvider());
         var service = new GenerationExternalMutationService(provider, 1);
         doReturn(Optional.empty()).when(provider).getCoordinationSnapshot();
         assertThatThrownBy(() -> service.claimExternalMutationSlot(42)).isInstanceOf(ServiceUnavailableAlertException.class);

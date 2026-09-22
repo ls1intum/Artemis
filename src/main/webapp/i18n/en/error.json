@@ -331,7 +331,8 @@
         "sharingInfoMissing": "The sharing platform information is missing.",
         "problemStatementTooLong": "The problem statement must not exceed 100,000 characters.",
         "generationBriefRequired": "Enter a brief before generating an exercise without a problem statement.",
+        "generationRecoveryInitializing": "Exercise recovery is initializing. Wait a moment, then try again.",
         "generationCapacityUnavailable": "Artemis has no free capacity for AI generation right now. Nothing has been generated — try again in a few minutes.",
-        "exerciseGenerationRunning": "An AI run is currently changing this exercise. Wait for it to finish, then try again."
+        "exerciseGenerationRunning": "Another operation or an unfinished recovery is protecting this exercise. Try again later; contact an administrator if recovery is required."
     }
 }

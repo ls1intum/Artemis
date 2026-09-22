@@ -1,0 +1,8 @@
+/* Navbar chrome stays dark in both themes; the portalled tray retains the page theme. */
+:host {
+    --tumaet-ui-text-color: white;
+
+    --tumaet-ui-muted-color: color-mix(in srgb, white 72%, transparent);
+    --tumaet-ui-hover-background: color-mix(in srgb, white 12%, transparent);
+    --tumaet-ui-border-color: color-mix(in srgb, white 24%, transparent);
+}

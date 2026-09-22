@@ -13,10 +13,6 @@ export interface CourseForQuizExercise {
     title?: string;
     description?: string;
     shortName?: string;
-    studentGroupName?: string;
-    teachingAssistantGroupName?: string;
-    editorGroupName?: string;
-    instructorGroupName?: string;
     startDate?: string;
     endDate?: string;
     enrollmentStartDate?: string;
@@ -37,6 +33,8 @@ export interface CourseForQuizExercise {
     complaintsEnabled?: boolean;
     requestMoreFeedbackEnabled?: boolean;
     accuracyOfScores?: number;
+    athenaGradingFeedbackEnabled?: boolean;
+    athenaFormativeFeedbackEnabled?: boolean;
 }
 
 export type CourseForQuizExerciseLanguageEnum = 'ENGLISH' | 'GERMAN';

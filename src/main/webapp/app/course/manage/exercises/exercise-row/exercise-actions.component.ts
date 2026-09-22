@@ -1,3 +1,4 @@
+import { injectGenerationCapabilities } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -62,6 +63,11 @@ export class ExerciseActionsComponent {
     private readonly translateService = inject(TranslateService);
     private readonly profileService = inject(ProfileService);
     private readonly featureToggleService = inject(FeatureToggleService);
+
+    private readonly generationCapabilities = injectGenerationCapabilities(
+        this.exercise,
+        computed(() => this.exercise().isAtLeastEditor ?? false),
+    );
 
     private readonly localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
     /**
@@ -206,7 +212,7 @@ export class ExerciseActionsComponent {
         }
         // Sits between the info/success-colored buttons above and the warning-colored edit buttons below, matching its
         // own warning color. Only offered for exercise types the generator supports; the server rejects the rest.
-        if (ex.isAtLeastEditor && supportsAiVariantGeneration(ex)) {
+        if (ex.isAtLeastEditor && supportsAiVariantGeneration(ex) && (ex.type !== ExerciseType.PROGRAMMING || this.generationCapabilities.value()?.canCreateVariant === true)) {
             items.push({
                 id: 'create-variant-ai',
                 labelKey: 'artemisApp.exerciseManagement.action.createVariantWithAi',

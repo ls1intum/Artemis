@@ -1,8 +1,9 @@
+import { injectGenerationCapabilities } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
 import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faRobot } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
 import { supportsAiVariantGeneration } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal.utils';
 
@@ -61,7 +62,17 @@ export class CreateVariantWithAiButtonComponent {
     readonly styleClass = input<string>('');
 
     /** Only editors may generate variants, and only for exercise types the generator supports. */
-    readonly supported = computed(() => (this.exercise().isAtLeastEditor ?? false) && supportsAiVariantGeneration(this.exercise()));
+    private readonly generationCapabilities = injectGenerationCapabilities(
+        this.exercise,
+        computed(() => this.exercise().isAtLeastEditor ?? false),
+    );
+
+    readonly supported = computed(
+        () =>
+            (this.exercise().isAtLeastEditor ?? false) &&
+            supportsAiVariantGeneration(this.exercise()) &&
+            (this.exercise().type !== ExerciseType.PROGRAMMING || this.generationCapabilities.value()?.canCreateVariant === true),
+    );
 
     readonly isExamExercise = computed(() => !!this.exercise().exerciseGroup);
 

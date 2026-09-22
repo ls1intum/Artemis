@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 @Service
 public class UserDeletionPlanService {
 
-    private static final String POLICY_VERSION = "3";
+    private static final String POLICY_VERSION = "4";
 
     private final UserRepository userRepository;
 

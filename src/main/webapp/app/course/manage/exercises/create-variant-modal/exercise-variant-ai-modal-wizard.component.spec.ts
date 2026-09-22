@@ -1,3 +1,8 @@
+import { signal } from '@angular/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { HyperionProgrammingVariantApi } from 'app/openapi/api/hyperion-programming-variant-api';
+import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
+import { ExerciseGenerationJobStart } from 'app/openapi/model/exercise-generation-job-start';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -32,7 +37,7 @@ describe('ExerciseVariantAiModalWizardComponent (exam path)', () => {
     };
     let groupServiceMock: { getGroupsForCourse: ReturnType<typeof vi.fn> };
 
-    const examExercise: Exercise = { id: 55, title: 'Sorting: Exam Edition', type: ExerciseType.PROGRAMMING, difficulty: DifficultyLevel.HARD } as Exercise;
+    const examExercise: Exercise = { id: 55, title: 'Sorting: Exam Edition', type: ExerciseType.QUIZ, difficulty: DifficultyLevel.HARD } as Exercise;
 
     beforeEach(async () => {
         generationServiceMock = {
@@ -270,7 +275,7 @@ describe('ExerciseVariantAiModalWizardComponent (storytelling)', () => {
 
         fixture = TestBed.createComponent(ExerciseVariantAiModalWizardComponent);
         component = fixture.componentInstance;
-        fixture.componentRef.setInput('sourceExercise', { id: 1, title: 'Sorting', type: ExerciseType.PROGRAMMING } as Exercise);
+        fixture.componentRef.setInput('sourceExercise', { id: 1, title: 'Sorting', type: ExerciseType.QUIZ } as Exercise);
         fixture.componentRef.setInput('courseId', 7);
         fixture.componentRef.setInput('visible', true);
         fixture.detectChanges();
@@ -537,7 +542,7 @@ describe('ExerciseVariantAiModalWizardComponent (fresh reopen for parallel gener
 
         fixture = TestBed.createComponent(ExerciseVariantAiModalWizardComponent);
         component = fixture.componentInstance;
-        fixture.componentRef.setInput('sourceExercise', { id: 1, title: 'Sorting', type: ExerciseType.PROGRAMMING } as Exercise);
+        fixture.componentRef.setInput('sourceExercise', { id: 1, title: 'Sorting', type: ExerciseType.QUIZ } as Exercise);
         fixture.componentRef.setInput('courseId', 7);
         fixture.componentRef.setInput('visible', true);
         fixture.detectChanges();
@@ -616,7 +621,7 @@ describe('ExerciseVariantAiModalWizardComponent (late job-detail response)', () 
 
         fixture = TestBed.createComponent(ExerciseVariantAiModalWizardComponent);
         component = fixture.componentInstance;
-        fixture.componentRef.setInput('sourceExercise', { id: 1, title: 'Sorting', type: ExerciseType.PROGRAMMING } as Exercise);
+        fixture.componentRef.setInput('sourceExercise', { id: 1, title: 'Sorting', type: ExerciseType.QUIZ } as Exercise);
         fixture.componentRef.setInput('courseId', 7);
         fixture.componentRef.setInput('visible', true);
         fixture.detectChanges();
@@ -877,5 +882,97 @@ describe('ExerciseVariantAiModalWizardComponent (cancelled with a surviving clon
         component['handleEvent']({ type: 'CANCELLED' });
 
         expect(getJobDetail).toHaveBeenCalledWith('job-1');
+    });
+});
+
+describe('ExerciseVariantAiModalWizardComponent (shared programming authoring)', () => {
+    let fixture: ComponentFixture<ExerciseVariantAiModalWizardComponent>;
+    let component: ExerciseVariantAiModalWizardComponent;
+    const identity = signal<{ login: string } | undefined>({ login: 'instructor' });
+    const response = () => new Subject<ExerciseGenerationJobStart>();
+    let started: ReturnType<typeof response>;
+    const track = vi.fn();
+    const startProgramming = vi.fn();
+    const startQuiz = vi.fn();
+
+    beforeEach(async () => {
+        vi.clearAllMocks();
+        identity.set({ login: 'instructor' });
+        started = response();
+        startProgramming.mockReturnValue(started);
+        await TestBed.configureTestingModule({
+            imports: [ExerciseVariantAiModalWizardComponent],
+            providers: [
+                { provide: Router, useValue: routerMock },
+                { provide: AccountService, useValue: { userIdentity: identity } },
+                { provide: HyperionProgrammingVariantApi, useValue: { generateProgrammingVariant: startProgramming } },
+                { provide: HyperionJobRegistryService, useValue: { track } },
+                { provide: ExerciseVariantGenerationService, useValue: { startGeneration: startQuiz, getJobDetail: () => of(), jobEvents: () => of() } },
+                { provide: ExerciseVariantGroupService, useValue: { getGroupsForCourse: () => of([]) } },
+                { provide: ExerciseService, useValue: { find: () => of({ body: undefined }) } },
+                {
+                    provide: TranslateService,
+                    useValue: { instant: (key: string) => key, get: (key: string) => of(key), onLangChange: of(), onTranslationChange: of(), onDefaultLangChange: of() },
+                },
+            ],
+        })
+            .overrideComponent(ExerciseVariantAiModalWizardComponent, {
+                remove: { imports: [ArtemisTranslatePipe] },
+                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key ?? '')] },
+            })
+            .compileComponents();
+        fixture = TestBed.createComponent(ExerciseVariantAiModalWizardComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('sourceExercise', { id: 12, title: 'Stacks', type: ExerciseType.PROGRAMMING });
+        fixture.componentRef.setInput('courseId', 7);
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        fixture.destroy();
+        TestBed.resetTestingModule();
+    });
+
+    it('sends structured intent to the common lifecycle and tracks the destination separately from its source', () => {
+        component.changeDomain.set(true);
+        component.domainText.set(' spacecraft ');
+        component.startGeneration();
+        expect(startProgramming).toHaveBeenCalledWith(12, expect.objectContaining({ domainText: 'spacecraft' }));
+        expect(startQuiz).not.toHaveBeenCalled();
+        started.next({ jobId: 'run', exerciseId: 81, sourceExerciseId: 12 });
+        expect(track).toHaveBeenCalledWith(expect.objectContaining({ jobId: 'run', exerciseId: 81, sourceExerciseId: 12, courseId: 7, mode: 'ADAPT' }));
+        expect(routerMock.navigate).toHaveBeenCalledWith(['/course-management', 7, 'programming-exercises', 81, 'generation']);
+    });
+
+    it('does not attach an old account response to the new account', () => {
+        component.startGeneration();
+        identity.set({ login: 'another-instructor' });
+        started.next({ jobId: 'run', exerciseId: 81 });
+        expect(track).not.toHaveBeenCalled();
+        expect(routerMock.navigate).not.toHaveBeenCalled();
+    });
+
+    it('keeps start failures visible without pretending a quiz job was created', () => {
+        component.startGeneration();
+        started.error(new Error('capacity unavailable'));
+        expect(component.wizardStep()).toBe(5);
+        expect(component.jobPhase()).toBe('FAILED');
+        expect(track).not.toHaveBeenCalled();
+        expect(startQuiz).not.toHaveBeenCalled();
+    });
+
+    it('does not dispatch without a course context', () => {
+        fixture.componentRef.setInput('courseId', undefined);
+        component.startGeneration();
+        expect(startProgramming).not.toHaveBeenCalled();
+        expect(component.jobPhase()).toBe('FAILED');
+    });
+
+    it('detaches a late response after destruction', () => {
+        component.startGeneration();
+        fixture.destroy();
+        started.next({ jobId: 'run', exerciseId: 81 });
+        expect(track).not.toHaveBeenCalled();
+        expect(routerMock.navigate).not.toHaveBeenCalled();
     });
 });

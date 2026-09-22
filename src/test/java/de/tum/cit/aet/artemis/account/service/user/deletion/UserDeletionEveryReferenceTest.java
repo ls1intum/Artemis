@@ -12,6 +12,7 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -21,6 +22,10 @@ import de.tum.cit.aet.artemis.account.dto.UserDeletionResultStatus;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.history.GenerationVersionRecoveryService;
+import de.tum.cit.aet.artemis.hyperion.test_repository.AuthoringRunTestRepository;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
@@ -66,6 +71,12 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
     @Autowired
     private CourseUtilService courseUtilService;
 
+    @Autowired
+    private ExerciseVersionTestRepository versions;
+
+    @Autowired
+    private AuthoringRunTestRepository runs;
+
     private User target;
 
     private User bystander;
@@ -97,8 +108,55 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         assertThat(permanentUserDeletionService.deleteByAdmin(targetId, impact.impactFingerprint(), "an-admin").status()).isEqualTo(UserDeletionResultStatus.DELETED);
 
         assertThat(userTestRepository.findById(targetId)).isEmpty();
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM hyperion_authoring_run WHERE job_id = ? AND owner_id IS NULL AND restore_started_at IS NOT NULL AND status = 'PARTIAL'", Long.class,
+                "deletion-" + targetId)).as("account deletion preserves unresolved exercise recovery").isEqualTo(1L);
         assertThat(counts(target)).as("nothing may be left pointing at the deleted account").isEmpty();
         assertThat(userTestRepository.findById(bystander.getId())).as("the account that shares the seeded parents survives").isPresent();
+    }
+
+    @Test
+    void deletingAuthorPreservesLinkedRecoveryVersionsAndTheirVisibleHistory() {
+        long exerciseId = transactionTemplate.execute(status -> {
+            long id = insert("exercise", values("discriminator", "P", "title", "Recovery exercise", "course_id", course.getId()));
+            long before = recoveryVersion(id, "before");
+            long after = recoveryVersion(id, "after");
+            recoveryVersion(id, "unlinked");
+            insert("hyperion_authoring_run",
+                    values("job_id", "recovery-" + target.getId(), "exercise_id", id, "owner_id", target.getId(), "kind", "ADAPT", "status", "SAVED", "repository_branch",
+                            "teaching", "before_version_id", before, "after_version_id", after, "mutation_started_at", Timestamp.from(Instant.now()), "started_at",
+                            Timestamp.from(Instant.now()), "restore_started_at", Timestamp.from(Instant.now())));
+            return id;
+        });
+        var recovery = new GenerationVersionRecoveryService(runs, versions);
+        var original = recovery.find(exerciseId).orElseThrow();
+        var impact = userDeletionPlanService.createImpact(userTestRepository.findByIdForDeletion(target.getId()).orElseThrow(), UserDeletionMode.ADMIN_FORCED);
+
+        assertThat(permanentUserDeletionService.deleteByAdmin(target.getId(), impact.impactFingerprint(), "an-admin").status()).isEqualTo(UserDeletionResultStatus.DELETED);
+
+        var retained = recovery.find(exerciseId).orElseThrow();
+        assertThat(retained).isEqualTo(original);
+        assertThat(retained.baseline().repositoryHeads()).containsEntry(RepositoryType.TEMPLATE, "before-template");
+        assertThat(retained.baseline().expectedCurrentHeads()).containsEntry(RepositoryType.TESTS, "after-tests");
+        assertThat(retained.baseline().previousGrading().tests().get("checksStack").weight()).isEqualTo(2.0);
+        assertThat(versions.findAllByExerciseId(exerciseId)).hasSize(2).allSatisfy(version -> assertThat(version.getAuthorId()).isNull());
+        assertThat(versions.findAllByExerciseIdOrderByCreatedDateDesc(exerciseId, PageRequest.of(0, 10)).getContent()).hasSize(2)
+                .allSatisfy(version -> assertThat(version.author()).isNull());
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM hyperion_authoring_run WHERE exercise_id = ? AND owner_id IS NULL AND restore_started_at IS NOT NULL",
+                Long.class, exerciseId)).isEqualTo(1L);
+    }
+
+    private long recoveryVersion(long exerciseId, String prefix) {
+        String snapshot = """
+                {"id":%d,"title":"%s","programmingData":{
+                    "templateParticipation":{"id":1,"commitId":"%s-template"},
+                    "solutionParticipation":{"id":2,"commitId":"%s-solution"},
+                    "testsCommitId":"%s-tests",
+                    "testCases":[{"id":1,"testName":"checksStack","weight":2.0,"visibility":"ALWAYS","active":true}]
+                }}
+                """.formatted(exerciseId, prefix, prefix, prefix, prefix);
+        return insert("exercise_version", values("exercise_id", exerciseId, "author_id", target.getId(), "exercise_snapshot", new Json(snapshot), "created_by", "test",
+                "created_date", Timestamp.from(Instant.now())));
     }
 
     private Map<UserDeletionReferencePolicy, Long> counts(User user) {
@@ -182,8 +240,11 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         seed(UserDeletionReferencePolicy.IRIS_PROACTIVE_EPISODE, userId, values("exercise_id", exerciseId, "episode_id", "episode-for-deletion", "last_triggered_at", now));
 
         // EXERCISES, ASSESSMENT and the rest of the course
-        seed(UserDeletionReferencePolicy.PARTICIPATION, userId, values("discriminator", "SP", "exercise_id", exerciseId));
-        seed(UserDeletionReferencePolicy.PARTICIPANT_SCORE, userId, values("exercise_id", exerciseId, "discriminator", "SS"));
+        long targetParticipation = insert("participation", values("discriminator", "SP", "exercise_id", exerciseId, "student_id", userId));
+        long targetSubmission = insert("submission", values("discriminator", "T", "participation_id", targetParticipation));
+        long targetResult = insert("result", values("submission_id", targetSubmission, "exercise_id", exerciseId));
+        // A score without its last result is stale and the live scheduler correctly removes it, invalidating the deletion preview.
+        seed(UserDeletionReferencePolicy.PARTICIPANT_SCORE, userId, values("exercise_id", exerciseId, "discriminator", "SS", "last_result_id", targetResult));
         seed(UserDeletionReferencePolicy.RESULT_ASSESSOR, userId, values("submission_id", submissionId, "exercise_id", exerciseId));
         seed(UserDeletionReferencePolicy.ASSESSMENT_NOTE_CREATOR, userId, values("result_id", resultId));
         seed(UserDeletionReferencePolicy.COMPLAINT_STUDENT, userId, values("result_id", resultId, "complaint_type", "COMPLAINT", "exercise_id", exerciseId));
@@ -192,6 +253,8 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         seed(UserDeletionReferencePolicy.SUBMISSION_VERSION_AUTHOR, userId, values("submission_id", submissionId));
         seed(UserDeletionReferencePolicy.EXERCISE_VERSION_AUTHOR, userId,
                 values("exercise_id", exerciseId, "exercise_snapshot", new Json("{}"), "created_by", "test", "created_date", now));
+        seed(UserDeletionReferencePolicy.HYPERION_AUTHORING_OWNER, userId,
+                values("job_id", "deletion-" + userId, "exercise_id", exerciseId, "kind", "ADAPT", "status", "PARTIAL", "started_at", now, "restore_started_at", now));
         seed(UserDeletionReferencePolicy.REVIEW_COMMENT_AUTHOR, userId,
                 values("thread_id", threadId, "content", new Json("{}"), "created_date", now, "created_by", "test", "type", "COMMENT"));
         seed(UserDeletionReferencePolicy.TEAM_MEMBERSHIP, userId, values("team_id", teamId));

@@ -96,11 +96,12 @@
                     "cancelling": "Cancelling",
                     "saved": "Draft saved",
                     "needsReview": "Draft saved — needs your review",
-                    "partial": "Partly saved",
+                    "partial": "Recovery required",
                     "failed": "Generation failed",
                     "cancelled": "Cancelled",
                     "notStarted": "No run yet",
-                    "unknown": "Status unavailable"
+                    "unknown": "Status unavailable",
+                    "reverted": "Restored"
                 },
                 "run": {
                     "newRunHint": "Enter the brief or feedback for this new run. Previous instructions and selected review comments are not carried over.",
@@ -278,7 +279,6 @@
                     "requiresEditor": "You need editor rights in this course to change the exercise with AI.",
                     "unsupportedLanguage": "AI authoring supports Java exercises only.",
                     "unsupportedProjectType": "This Java exercise builds with Maven or another tool. AI authoring only verifies Gradle builds; the build tool cannot be changed after creation, so create a Gradle exercise to use it.",
-                    "examExercise": "AI authoring is not available for exam exercises.",
                     "staticCodeAnalysis": "Disable static code analysis in the exercise settings first. The AI verifier does not model its penalties.",
                     "sequentialTestRuns": "Disable sequential test runs in the exercise settings first. The AI verifier runs all tests in one pass.",
                     "auxiliaryRepositories": "Remove the auxiliary repositories first. AI authoring writes only the template, solution, and test repositories.",
@@ -286,29 +286,16 @@
                     "studentParticipations": "Students have already started this exercise. AI authoring only changes exercises without participations.",
                     "problemStatementBusy": "Wait for the current problem statement refinement to finish.",
                     "consistencyCheckBusy": "Wait for the current consistency check to finish.",
-                    "repositorySetupBusy": "Wait until the repository operation has finished."
+                    "repositorySetupBusy": "Wait until the repository operation has finished.",
+                    "capabilitiesUnavailable": "Checking whether this exercise can be changed. If this persists, reload the page.",
+                    "preparationOnly": "AI authoring is available only during preparation, before student exams or test runs are assigned."
                 }
             },
             "jobs": {
-                "label": "AI generation",
-                "ariaLabel": "AI generation runs",
-                "title": "AI generation runs",
-                "empty": "No generation runs yet.",
-                "emptyHint": "A run appears here as soon as you start one from an exercise.",
                 "dismiss": "Dismiss this run",
-                "summaryRunning": "AI running: {{count}}",
+                "summaryRunning": "{{count}} running",
                 "summaryAttention": "{{count}} to check",
                 "summaryFinished": "{{count}} finished",
-                "runningMinutes": "running for {{minutes}} min",
-                "runningUnderMinute": "just started",
-                "ranMinutes": "ran for {{minutes}} min",
-                "ranUnderMinute": "ran for under a minute",
-                "state": {
-                    "idle": "Nothing running",
-                    "running": "Generating",
-                    "attention": "Needs your attention",
-                    "success": "Finished"
-                },
                 "loadFailed": "The generation runs could not be loaded.",
                 "retry": "Try again"
             },
@@ -365,7 +352,7 @@
                     "notSaved": "Not saved",
                     "cancelled": "Not saved — cancelled",
                     "failed": "Not saved — failed",
-                    "partial": "Not fully saved — manual review required"
+                    "partial": "Recovery required — do not release this exercise"
                 },
                 "terminalStatus": {
                     "DONE": "Generation finished",
@@ -447,6 +434,30 @@
                 "mode": {
                     "GENERATE": "Generate",
                     "ADAPT": "Adapt"
+                }
+            },
+            "activity": {
+                "title": "AI activity",
+                "subtitle": "Your authoring runs, together. Closing this panel does not stop them.",
+                "history": "Dismissed ({{ count }})",
+                "dismissedHint": "All runs are dismissed. Open the history to find them again.",
+                "recoveryRequired": "This run needs recovery. Open its details before continuing to edit.",
+                "cancelAuthoring": "Stop this authoring run? Already saved changes are not undone by cancellation.",
+                "kind": {
+                    "create": "Create exercise",
+                    "adapt": "Adapt exercise",
+                    "variant": "Create variant",
+                    "quizVariant": "Quiz variant"
+                },
+                "loadMore": "Load older runs",
+                "openFullPage": "Open full page",
+                "stage": {
+                    "prepare": "Prepare",
+                    "design": "Author",
+                    "revise": "Adapt",
+                    "build": "Verify",
+                    "review": "Review",
+                    "save": "Save"
                 }
             }
         }

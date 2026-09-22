@@ -4,7 +4,13 @@
             <p
                 class="mt-0 mb-1 text-sm font-medium text-muted-color"
                 data-testid="hyperion-run-intent"
-                [jhiTranslate]="adapting() ? 'artemisApp.hyperion.generation.run.adaptationTitle' : 'artemisApp.hyperion.generation.run.title'"
+                [jhiTranslate]="
+                    variant()
+                        ? 'artemisApp.hyperion.activity.kind.variant'
+                        : adapting()
+                          ? 'artemisApp.hyperion.generation.run.adaptationTitle'
+                          : 'artemisApp.hyperion.generation.run.title'
+                "
             ></p>
             <!-- Sized by this component's own stylesheet, which is what removes the `!` the type utilities needed here. -->
             <h1 class="hyperion-run-title wrap-anywhere" data-testid="hyperion-run-title">{{ exerciseTitle() }}</h1>

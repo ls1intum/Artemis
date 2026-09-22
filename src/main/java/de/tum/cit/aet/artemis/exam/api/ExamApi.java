@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exam.api;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -61,4 +62,18 @@ public class ExamApi extends AbstractExamApi {
     public Optional<Exam> findByExerciseId(Long exerciseId) {
         return examService.findByExerciseId(exerciseId);
     }
+
+    /**
+     * Serializes exercise preparation with exam assignment, in the exam repository's transaction.
+     * The callback must recheck eligibility under this lock and perform database preparation only, never remote work.
+     *
+     * @param examId      owning exam
+     * @param preparation database-only preparation
+     * @param <T>         preparation result
+     * @return result after the transaction commits
+     */
+    public <T> T withExercisePreparationLock(long examId, Supplier<T> preparation) {
+        return examService.withExercisePreparationLock(examId, preparation);
+    }
+
 }

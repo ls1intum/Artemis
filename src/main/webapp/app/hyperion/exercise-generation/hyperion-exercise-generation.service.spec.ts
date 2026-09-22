@@ -64,11 +64,33 @@ describe('HyperionExerciseGenerationService', () => {
         request.flush(null);
     });
 
-    it('reverts the last generated change', () => {
-        service.revertExerciseGeneration(42).subscribe((result) => expect(result.fullyReverted).toBe(true));
-        const request = httpMock.expectOne('/api/hyperion/programming-exercises/42/generate-exercise/revert');
+    it('reverts only the explicitly selected run', () => {
+        service.revertExerciseGeneration(42, 'j1').subscribe((result) => expect(result.fullyReverted).toBe(true));
+        const request = httpMock.expectOne('/api/hyperion/programming-exercises/42/generation/runs/j1/revert');
         expect(request.request.method).toBe('POST');
         request.flush({ fullyReverted: true, revertedRepositories: ['template', 'solution', 'tests'], completedAt: '2026-07-10T20:00:00Z' });
+    });
+
+    it('discovers durable history with the server cursor', () => {
+        service.getRuns(27).subscribe((page) => expect(page.runs).toEqual([]));
+        const request = httpMock.expectOne('/api/hyperion/authoring-runs?beforeId=27');
+        expect(request.request.method).toBe('GET');
+        request.flush({ runs: [] });
+    });
+
+    it('reauthorizes retained identities with one bounded read-only batch', () => {
+        service.getRunAccess(['authorized', 'revoked']).subscribe((ids) => expect(ids).toEqual(['authorized']));
+        const request = httpMock.expectOne('/api/hyperion/authoring-runs/access');
+        expect(request.request.method).toBe('POST');
+        expect(request.request.body).toEqual(['authorized', 'revoked']);
+        request.flush(['authorized']);
+    });
+
+    it('reads the selected run rather than the latest exercise run', () => {
+        service.getRunStatus(42, 'older-run').subscribe();
+        const request = httpMock.expectOne('/api/hyperion/programming-exercises/42/generation/runs/older-run');
+        expect(request.request.method).toBe('GET');
+        request.flush({ jobId: 'older-run', events: [], fileChanges: [] });
     });
 
     it('subscribes to the owner-private stream topic', () => {

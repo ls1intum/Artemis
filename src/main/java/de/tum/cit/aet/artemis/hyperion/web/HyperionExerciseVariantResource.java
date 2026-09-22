@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 
 /**
- * REST controller for AI exercise-variant generation — ONE endpoint set for all exercise types;
+ * REST controller for quiz variant generation. Programming variants use the isolated authoring lifecycle;
  * the exercise type is read from the source exercise server-side and the
  * {@link VariantTypeRegistryService} resolves the adapters.
  */

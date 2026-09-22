@@ -1,3 +1,4 @@
+import { HyperionExerciseGenerationApi } from 'app/openapi/api/hyperion-exercise-generation-api';
 import { HttpErrorResponse } from '@angular/common/http';
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -147,6 +148,10 @@ function createMockExercise(overrides: Partial<ProgrammingExercise> = {}): Progr
 
 function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
     return [
+        {
+            provide: HyperionExerciseGenerationApi,
+            useValue: { getGenerationCapabilities: () => of({ supported: true, canGenerate: true, canAdapt: true, canCreateVariant: true }) },
+        },
         { provide: AlertService, useClass: MockAlertService },
         { provide: ProfileService, useClass: MockProfileService },
         { provide: Router, useClass: MockRouter },
@@ -1434,6 +1439,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
             }),
         );
 
+        TestBed.tick();
         attachToJob = vi.fn();
         openEditorBottomPanel = vi.fn();
         setCodeEditorContainer(comp, { ...createDefaultContainerStub(), openEditorBottomPanel });
@@ -1499,6 +1505,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         // Mutating the exercise in place mirrors production, where the object identity is kept and the change is
         // published through the always-notifying exercise signal.
         comp.exercise.update((exercise) => Object.assign(exercise!, { projectType: projectType as ProjectType | undefined }));
+        TestBed.tick();
 
         expect((comp as any).adaptBlockedReason()).toBeUndefined();
         expect((comp as any).canAdaptNow()).toBe(true);
@@ -1517,7 +1524,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     ])('blocks Java generation for unsupported project type %s', (projectType) => {
         comp.exercise.update((exercise) => Object.assign(exercise!, { projectType }));
 
-        expect((comp as any).adaptOffered()).toBe(true);
+        expect((comp as any).adaptOffered()).toBe(false);
         expect((comp as any).adaptBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.unsupportedProjectType');
         expect((comp as any).canAdaptNow()).toBe(false);
         const onCancel = vi.fn();
@@ -1530,7 +1537,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     it('names the missing editor role first, before any exercise blocker', () => {
         comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: false, releaseDate: undefined }));
 
-        expect((comp as any).adaptOffered()).toBe(true);
+        expect((comp as any).adaptOffered()).toBe(false);
         expect((comp as any).adaptBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.requiresEditor');
         expect((comp as any).refineBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.requiresEditor');
         expect((comp as any).consistencyBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.requiresEditor');
@@ -2158,6 +2165,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         // A draft without a release date is what an instructor authors on; it stays adaptable.
         comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, releaseDate: undefined }));
+        TestBed.tick();
         expect((comp as any).generationSupported()).toBe(true);
         expect((comp as any).adaptBlockedReason()).toBeUndefined();
 

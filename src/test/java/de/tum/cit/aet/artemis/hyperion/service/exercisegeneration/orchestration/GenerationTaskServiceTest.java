@@ -60,7 +60,7 @@ import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderUsageSink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationFileUpdate;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationRevertService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.history.GenerationRunJournalService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationGrading;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationIncompleteException;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationPersistenceService;
@@ -103,7 +103,7 @@ class GenerationTaskServiceTest {
 
     private HyperionGenerationBudgetService generationBudgetService;
 
-    private ExerciseGenerationRevertService generationRevertService;
+    private GenerationRunJournalService journal;
 
     private TaskScheduler taskScheduler;
 
@@ -126,7 +126,7 @@ class GenerationTaskServiceTest {
         auxiliaryRepositoryRepository = mock(de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository.class);
         when(auxiliaryRepositoryRepository.findByExerciseId(any())).thenReturn(List.of());
         generationBudgetService = mock(HyperionGenerationBudgetService.class);
-        generationRevertService = mock(ExerciseGenerationRevertService.class);
+        journal = mock(GenerationRunJournalService.class);
         taskScheduler = mock(TaskScheduler.class);
 
         ScheduledFuture<?> scheduledFuture = mock(ScheduledFuture.class);
@@ -134,7 +134,7 @@ class GenerationTaskServiceTest {
         org.mockito.Mockito.doReturn(scheduledFuture).when(taskScheduler).scheduleWithFixedDelay(any(Runnable.class), any(java.time.Duration.class));
 
         taskService = new GenerationTaskService(buildConfigRepository, orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository,
-                auxiliaryRepositoryRepository, generationBudgetService, generationRevertService, taskScheduler, ObservationRegistry.NOOP, java.time.Duration.ofMinutes(30), 250_000,
+                auxiliaryRepositoryRepository, generationBudgetService, journal, taskScheduler, ObservationRegistry.NOOP, java.time.Duration.ofMinutes(30), 250_000,
                 java.time.Duration.ofSeconds(15));
 
         user = new User();
@@ -155,7 +155,70 @@ class GenerationTaskServiceTest {
         when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any()))
                 .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of(RepositoryType.SOLUTION, "solution-commit"), exercise.getProblemStatement(),
                         exercise.getTitle(), "main", true, 17L, GenerationGrading.Snapshot.EMPTY, GenerationGrading.Snapshot.EMPTY));
-        when(generationRevertService.recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString(), any(), any())).thenReturn(true);
+        org.mockito.Mockito.doAnswer(invocation -> ((GenerationPersistenceService.PersistResult) invocation.getArgument(3)).savedExerciseVersionId()).when(journal)
+                .afterMutation(anyString(), any(), any(), any());
+    }
+
+    private GenerationTaskService variantTask(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.variant.GenerationVariantService variants) {
+        return new GenerationTaskService(buildConfigRepository, orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository,
+                auxiliaryRepositoryRepository, generationBudgetService, journal, taskScheduler, ObservationRegistry.NOOP, java.time.Duration.ofMinutes(30), 250_000,
+                java.time.Duration.ofSeconds(15), new de.tum.cit.aet.artemis.hyperion.config.GenerationShutdownGuard(),
+                de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties.DEFAULT_CACHED_INPUT_TOKEN_WEIGHT, variants);
+    }
+
+    private GenerationStartedEvent variantEvent() {
+        return new GenerationStartedEvent(JOB_ID, user, exercise, "Change the domain", GenerationMode.ADAPT, exercise.getProblemStatement(), exercise.getTitle(), null, "budget",
+                null, null, new GenerationVariantPreparation(999L, "source-copy", null));
+    }
+
+    @Test
+    void variantUsesTheSameWorkerAndPersistenceAndPlacesOnlyAfterVerification() {
+        var variants = mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.variant.GenerationVariantService.class);
+        when(jobService.allowCancellationAfterPreparation(EXERCISE_ID, JOB_ID)).thenReturn(true);
+        when(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(EXERCISE_ID)).thenReturn(true);
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
+        GenerationStartedEvent event = variantEvent();
+
+        variantTask(variants).runAsync(event);
+
+        var order = org.mockito.Mockito.inOrder(variants, jobService, orchestrator, persistenceService);
+        order.verify(variants).prepareInfrastructure(event);
+        order.verify(jobService).allowCancellationAfterPreparation(EXERCISE_ID, JOB_ID);
+        order.verify(orchestrator).generate(any(), eq(user), eq("Change the domain"), eq(JOB_ID), eq(GenerationMode.ADAPT), any(), any(), any(), any(), any(), any(), any());
+        order.verify(persistenceService).persist(any(), eq(user), any(), any(), any(), eq(JOB_ID), eq(GenerationMode.ADAPT), any(), any());
+        order.verify(variants).place(eq(event), any());
+        verify(variants).releaseSource(event);
+        assertThat(sentEvents().getLast().completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.SUCCESS);
+    }
+
+    @Test
+    void variantPreparationFailureNeverStartsTheWorkerAndStillReleasesItsSource() {
+        var variants = mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.variant.GenerationVariantService.class);
+        GenerationStartedEvent event = variantEvent();
+        org.mockito.Mockito.doThrow(new IllegalStateException("copy failed")).when(variants).prepareInfrastructure(event);
+
+        variantTask(variants).runAsync(event);
+
+        verify(orchestrator, never()).generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        verify(variants).releaseSource(event);
+        verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
+        assertThat(sentEvents().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
+    }
+
+    @Test
+    void variantPlacementFailureReportsSavedPartialOutputRatherThanAnUnchangedExercise() {
+        var variants = mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.variant.GenerationVariantService.class);
+        when(jobService.allowCancellationAfterPreparation(EXERCISE_ID, JOB_ID)).thenReturn(true);
+        when(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(EXERCISE_ID)).thenReturn(true);
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
+        when(variants.place(any(), any())).thenThrow(new IllegalStateException("placement failed"));
+
+        variantTask(variants).runAsync(variantEvent());
+
+        assertThat(sentEvents().getLast().completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.PARTIAL);
+        assertThat(sentEvents().getLast().message()).contains("variant was saved", "placement did not complete");
     }
 
     @ParameterizedTest
@@ -327,8 +390,8 @@ class GenerationTaskServiceTest {
         verify(jobService).enterNonCancellablePhase(EXERCISE_ID, JOB_ID);
         var order = Mockito.inOrder(orchestrator, persistenceService);
         order.verify(persistenceService).persist(eq(exercise), eq(user), any(GenerationOutcome.class), any(), any(), eq(JOB_ID), eq(GenerationMode.GENERATE), any(), any());
-        verify(generationRevertService).invalidateBaseline(EXERCISE_ID);
-        verify(generationRevertService).recordBaseline(eq(exercise), eq(JOB_ID), eq(GenerationMode.GENERATE), any(), any(), any(), any(), any(), any(), eq("main"), any(), any());
+        verify(journal).beforeMutation(eq(JOB_ID), any(), eq(user), any(), any());
+        verify(journal).afterMutation(eq(JOB_ID), any(), eq(user), any());
         verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
         List<ExerciseGenerationEventDTO> events = sentEvents();
         assertThat(events.stream().map(ExerciseGenerationEventDTO::type)).startsWith(ExerciseGenerationEventDTO.Type.STARTED).endsWith(ExerciseGenerationEventDTO.Type.DONE);
@@ -428,7 +491,7 @@ class GenerationTaskServiceTest {
         verify(jobService).requestSystemCancellation(eq(EXERCISE_ID), eq(JOB_ID), argThat(message -> message.contains("lost ownership")));
         verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
         verify(reviewService, never()).attachFindings(any(), any(), any());
-        verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString(), any(), any());
+        verify(journal, never()).afterMutation(anyString(), any(), any(), any());
     }
 
     @Test
@@ -449,7 +512,7 @@ class GenerationTaskServiceTest {
         assertThat(terminal.message()).contains("ownership");
         verify(jobService).requestSystemCancellation(eq(EXERCISE_ID), eq(JOB_ID), argThat(message -> message.contains("lost ownership")));
         verify(reviewService, never()).attachFindings(any(), any(), any());
-        verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString(), any(), any());
+        verify(journal, never()).afterMutation(anyString(), any(), any(), any());
     }
 
     @Test
@@ -477,9 +540,9 @@ class GenerationTaskServiceTest {
         assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.PARTIAL);
         assertThat(terminal.liveExerciseChanged()).isTrue();
         assertThat(terminal.message()).contains("Saving did not complete", "manual review is required");
-        verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString(), any(), any());
+        verify(journal, never()).afterMutation(anyString(), any(), any(), any());
         verify(reviewService, never()).attachFindings(any(), any(), any());
-        verify(generationRevertService).invalidateBaseline(EXERCISE_ID);
+        verify(journal).beforeMutation(eq(JOB_ID), any(), eq(user), any(), any());
     }
 
     @ParameterizedTest(name = "post-save continuation stops at {0}")
@@ -508,7 +571,8 @@ class GenerationTaskServiceTest {
             return new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle(), "main", true, null,
                     GenerationGrading.Snapshot.EMPTY, GenerationGrading.Snapshot.EMPTY);
         });
-        when(generationRevertService.recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString(), any(), any())).thenReturn(true);
+        org.mockito.Mockito.doAnswer(invocation -> ((GenerationPersistenceService.PersistResult) invocation.getArgument(3)).savedExerciseVersionId()).when(journal)
+                .afterMutation(anyString(), any(), any(), any());
         when(reviewService.attachFindings(any(), any(), any())).thenAnswer(invocation -> {
             if (stop == PostSaveStop.HEARTBEAT_BEFORE_SUCCESS) {
                 heartbeat.getValue().run();
@@ -525,11 +589,11 @@ class GenerationTaskServiceTest {
         assertThat(terminal.message()).contains("save may already have completed", "manual review is required");
         switch (stop) {
             case HEARTBEAT_BEFORE_BASELINE, OWNERSHIP_BEFORE_BASELINE -> {
-                verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString(), any(), any());
+                verify(journal, never()).afterMutation(anyString(), any(), any(), any());
                 verify(reviewService, never()).attachFindings(any(), any(), any());
             }
             case HEARTBEAT_BEFORE_SUCCESS -> {
-                verify(generationRevertService).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString(), any(), any());
+                verify(journal).afterMutation(eq(JOB_ID), any(), eq(user), any());
                 verify(reviewService).attachFindings(any(), any(), any());
             }
         }
@@ -552,8 +616,7 @@ class GenerationTaskServiceTest {
 
         verify(persistenceService).persist(eq(exercise), eq(user), any(GenerationOutcome.class), eq("Original problem statement"), eq("Original title"), eq(JOB_ID),
                 eq(GenerationMode.ADAPT), any(), any());
-        verify(generationRevertService).recordBaseline(eq(exercise), eq(JOB_ID), eq(GenerationMode.ADAPT), any(), any(), eq("Original problem statement"), eq("Original title"),
-                eq("Persisted statement"), eq("Persisted title"), eq("release"), any(), any());
+        verify(journal).afterMutation(eq(JOB_ID), any(), eq(user), any());
         assertThat(sentEvents().getLast().message()).contains("adapted and saved").doesNotContain("generated and saved");
     }
 
@@ -585,7 +648,7 @@ class GenerationTaskServiceTest {
         assertThat(terminal.savedExerciseVersionId()).isEqualTo(17L);
         assertThat(terminal.message()).contains("saved", "instructor review", "1 review note");
         verify(persistenceService).persist(any(), any(), any(), any(), any(), eq(JOB_ID), eq(GenerationMode.GENERATE), any(), any());
-        verify(generationRevertService).recordBaseline(any(), eq(JOB_ID), eq(GenerationMode.GENERATE), any(), any(), any(), any(), any(), any(), anyString(), any(), any());
+        verify(journal).afterMutation(eq(JOB_ID), any(), eq(user), any());
         verify(reviewService).attachFindings(eq(exercise), eq(user), eq(report), eq(17L), eq(Map.of(RepositoryType.SOLUTION, "solution-commit")));
     }
 
@@ -624,7 +687,7 @@ class GenerationTaskServiceTest {
         assertThat(terminal.liveExerciseChanged()).isNull();
         assertThat(terminal.savedRepositoryCommits()).isNull();
         assertThat(terminal.savedExerciseVersionId()).isNull();
-        verify(generationRevertService).invalidateBaseline(EXERCISE_ID);
+        verify(journal).beforeMutation(eq(JOB_ID), any(), eq(user), any(), any());
     }
 
     @Test
@@ -642,7 +705,7 @@ class GenerationTaskServiceTest {
         assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.PARTIAL);
         assertThat(terminal.liveExerciseChanged()).isTrue();
         assertThat(terminal.savedRepositoryCommits()).containsExactlyInAnyOrderEntriesOf(Map.of("solution", "solution-commit", "tests", "tests-commit"));
-        verify(generationRevertService).invalidateBaseline(EXERCISE_ID);
+        verify(journal).beforeMutation(eq(JOB_ID), any(), eq(user), any(), any());
     }
 
     @Test
@@ -664,8 +727,8 @@ class GenerationTaskServiceTest {
         assertThat(terminal.liveExerciseChanged()).isFalse();
         assertThat(terminal.message()).contains("No changes were needed");
         assertThat(terminal.savedRepositoryCommits()).isNullOrEmpty();
-        verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString(), any(), any());
-        verify(generationRevertService, never()).invalidateBaseline(EXERCISE_ID);
+        verify(journal, never()).afterMutation(anyString(), any(), any(), any());
+        verify(journal, never()).beforeMutation(anyString(), any(), any(), any(), any());
         verify(reviewService, never()).attachFindings(any(), any(), any());
     }
 
@@ -684,7 +747,7 @@ class GenerationTaskServiceTest {
         assertThat(terminal.liveExerciseChanged()).isFalse();
         assertThat(terminal.message()).contains("No changes were needed", "instructor review", "1 review note");
         verify(reviewService).attachFindings(exercise, user, report);
-        verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString(), any(), any());
+        verify(journal, never()).afterMutation(anyString(), any(), any(), any());
     }
 
     @Test
@@ -699,19 +762,20 @@ class GenerationTaskServiceTest {
         assertThat(terminal.liveExerciseChanged()).isTrue();
         assertThat(terminal.savedExerciseVersionId()).isEqualTo(23L);
         assertThat(terminal.message()).contains("adapted and saved").doesNotContain("No changes were needed");
-        verify(generationRevertService).recordBaseline(any(), eq(JOB_ID), eq(GenerationMode.ADAPT), any(), any(), any(), any(), any(), any(), anyString(), any(), any());
+        verify(journal).afterMutation(eq(JOB_ID), any(), eq(user), any());
     }
 
     @Test
-    void mechanicallyVerifiedRun_whenRevertCheckpointFails_reportsSuccessfulSaveWithoutHidingTheDegradation() {
-        when(generationRevertService.recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString(), any(), any())).thenReturn(false);
+    void mechanicallyVerifiedRun_whenRecoveryRecordFails_reportsPartialInsteadOfClaimingSuccess() {
+        org.mockito.Mockito.doThrow(new GenerationIncompleteException("version link failed", new IllegalStateException())).when(journal).afterMutation(anyString(), any(), any(),
+                any());
 
         run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
 
         ExerciseGenerationEventDTO terminal = sentEvents().getLast();
-        assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.SUCCESS);
+        assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.PARTIAL);
         assertThat(terminal.liveExerciseChanged()).isTrue();
-        assertThat(terminal.message()).contains("generated and saved", "Automatic revert is unavailable");
+        assertThat(terminal.message()).contains("save may already have completed", "manual review");
     }
 
     @Test
@@ -744,8 +808,7 @@ class GenerationTaskServiceTest {
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.ADAPT));
 
         verify(persistenceService).persist(eq(exerciseToPersist), eq(user), any(GenerationOutcome.class), any(), any(), eq(JOB_ID), eq(GenerationMode.ADAPT), any(), any());
-        verify(generationRevertService).recordBaseline(eq(exerciseToPersist), eq(JOB_ID), eq(GenerationMode.ADAPT), any(), any(), eq(exercise.getProblemStatement()),
-                eq(exercise.getTitle()), eq("Exact persisted statement"), eq("Exact persisted title"), eq("release"), any(), any());
+        verify(journal).afterMutation(eq(JOB_ID), any(), eq(user), any());
         verify(reviewService).attachFindings(eq(exerciseToPersist), eq(user), any());
     }
 
@@ -757,8 +820,7 @@ class GenerationTaskServiceTest {
 
         run(GenerationMode.ADAPT, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
 
-        verify(generationRevertService).recordBaseline(eq(exercise), eq(JOB_ID), eq(GenerationMode.ADAPT), any(), any(), any(), any(), eq(exercise.getProblemStatement()),
-                eq(exercise.getTitle()), eq("main"), any(), any());
+        verify(journal).afterMutation(eq(JOB_ID), any(), eq(user), any());
         assertThat(sentEvents().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.DONE);
     }
 
@@ -943,14 +1005,14 @@ class GenerationTaskServiceTest {
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
 
         assertThat(sentEvents().getLast().completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.PARTIAL);
-        verify(generationRevertService).invalidateBaseline(EXERCISE_ID);
+        verify(journal).beforeMutation(eq(JOB_ID), any(), eq(user), any(), any());
     }
 
     @Test
     void tokenBudgetExceeded_mechanicallyVerifiedCandidate_isSavedInsteadOfDiscarded() {
         // The budget stops further model calls, but saving a candidate that already passed verification consumes no provider tokens.
         taskService = new GenerationTaskService(buildConfigRepository, orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository,
-                auxiliaryRepositoryRepository, generationBudgetService, generationRevertService, taskScheduler, ObservationRegistry.NOOP, java.time.Duration.ofMinutes(30), 10,
+                auxiliaryRepositoryRepository, generationBudgetService, journal, taskScheduler, ObservationRegistry.NOOP, java.time.Duration.ofMinutes(30), 10,
                 java.time.Duration.ofSeconds(15));
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             @SuppressWarnings("unchecked")
@@ -996,7 +1058,7 @@ class GenerationTaskServiceTest {
     void liveSpendOnAStreamedEvent_isTheSameBillableTotalTheBudgetGuardCharges() {
         // One number, two consumers: the bar the instructor watches and the guard that stops the run must be the same total, cached input discounted alike.
         taskService = new GenerationTaskService(buildConfigRepository, orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository,
-                auxiliaryRepositoryRepository, generationBudgetService, generationRevertService, taskScheduler, ObservationRegistry.NOOP, java.time.Duration.ofMinutes(30), 700,
+                auxiliaryRepositoryRepository, generationBudgetService, journal, taskScheduler, ObservationRegistry.NOOP, java.time.Duration.ofMinutes(30), 700,
                 java.time.Duration.ofSeconds(15));
         when(jobService.tokenUsageSink(any(), any(), any(), any(), any())).thenAnswer(invocation -> {
             Consumer<LLMRequest> liveUsageSink = invocation.getArgument(4);
@@ -1036,7 +1098,7 @@ class GenerationTaskServiceTest {
     @Test
     void tokenBudgetExceeded_withoutAVerifiedCandidate_endsCancelledWithoutPersisting() {
         taskService = new GenerationTaskService(buildConfigRepository, orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository,
-                auxiliaryRepositoryRepository, generationBudgetService, generationRevertService, taskScheduler, ObservationRegistry.NOOP, java.time.Duration.ofMinutes(30), 10,
+                auxiliaryRepositoryRepository, generationBudgetService, journal, taskScheduler, ObservationRegistry.NOOP, java.time.Duration.ofMinutes(30), 10,
                 java.time.Duration.ofSeconds(15));
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             @SuppressWarnings("unchecked")
@@ -1325,8 +1387,8 @@ class GenerationTaskServiceTest {
     void tokenBudget_isTheRunsOwnBoundRatherThanTheDeploymentDefault() {
         // Admission reserved the run's own bound; spending the deployment default would overshoot the reservation other jobs are admitted against.
         taskService = new GenerationTaskService(buildConfigRepository, orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository,
-                auxiliaryRepositoryRepository, generationBudgetService, generationRevertService, taskScheduler, ObservationRegistry.NOOP, java.time.Duration.ofMinutes(30),
-                1_000_000, java.time.Duration.ofSeconds(15));
+                auxiliaryRepositoryRepository, generationBudgetService, journal, taskScheduler, ObservationRegistry.NOOP, java.time.Duration.ofMinutes(30), 1_000_000,
+                java.time.Duration.ofSeconds(15));
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             @SuppressWarnings("unchecked")
             Consumer<ChatResponse> usageSink = invocation.getArgument(8);

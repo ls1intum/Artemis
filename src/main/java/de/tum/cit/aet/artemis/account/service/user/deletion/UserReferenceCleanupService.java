@@ -84,7 +84,8 @@ public class UserReferenceCleanupService {
         bindings.put(UserDeletionReferencePolicy.TUTOR_PARTICIPATION, bind(assessment::countTutorParticipations, assessment::deleteTutorParticipations));
 
         bindings.put(UserDeletionReferencePolicy.SUBMISSION_VERSION_AUTHOR, bind(exercise::countSubmissionVersions, exercise::deleteSubmissionVersions));
-        bindings.put(UserDeletionReferencePolicy.EXERCISE_VERSION_AUTHOR, bind(exercise::countExerciseVersions, exercise::deleteExerciseVersions));
+        bindings.put(UserDeletionReferencePolicy.EXERCISE_VERSION_AUTHOR, bind(exercise::countExerciseVersions, exercise::resolveExerciseVersionAuthors));
+        bindings.put(UserDeletionReferencePolicy.HYPERION_AUTHORING_OWNER, bind(exercise::countAuthoringRuns, exercise::detachAuthoringRuns));
         bindings.put(UserDeletionReferencePolicy.REVIEW_COMMENT_AUTHOR, bind(exercise::countReviewComments, exercise::detachReviewComments));
         bindings.put(UserDeletionReferencePolicy.TEAM_OWNER, bind(exercise::countOwnedTeams, exercise::detachOwnedTeams));
         bindings.put(UserDeletionReferencePolicy.PARTICIPATION, bind(exercise::countStudentParticipations, exercise::deleteStudentParticipations));
