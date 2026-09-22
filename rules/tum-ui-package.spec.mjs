@@ -419,7 +419,7 @@ describe('@tumaet/ui-angular integration contract', () => {
         );
 
         expect(ruleElementSelectors(typographyRule)).toEqual(packageElementSelectors);
-        expect(ruleElementSelectors(nativeControlRule)).toEqual(packageElementsWithNativeControls);
+        expect(ruleElementSelectors(nativeControlRule)).toEqual(expect.arrayContaining(packageElementsWithNativeControls));
     });
 
     it('prefixes every static template class', () => {

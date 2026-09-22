@@ -1,6 +1,6 @@
 {
     "name": "@tumaet/ui-angular",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Signal-first Angular UI components for TUM applications",
     "license": "MIT",
     "repository": {

@@ -45,6 +45,7 @@ export class TumUiOverlayService {
     createConnectedOverlay(origin: ElementRef<HTMLElement> | HTMLElement, placement: TumUiOverlayPlacement, options: TumUiConnectedOverlayOptions = {}): OverlayRef {
         const originElement = origin instanceof ElementRef ? origin.nativeElement : origin;
         const overlayRef = this.overlay.create({
+            panelClass: 'tum-ui-overlay',
             positionStrategy: this.positionStrategy(origin, placement),
             scrollStrategy: this.overlay.scrollStrategies.reposition(),
             hasBackdrop: options.hasBackdrop ?? false,
