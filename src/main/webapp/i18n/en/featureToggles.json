@@ -209,12 +209,12 @@
                 },
                 "GlobalSearchReconcile": {
                     "name": "Global Search Reconcile",
-                    "description": "Periodically re-syncs the global search index against the database: indexes entities the search index never confirmed holding, and repairs ones whose stored content has drifted from what was last written. Does not delete anything.",
-                    "disableWarning": "Search results may go stale where an entity was never indexed or its content has drifted, until this is switched back on."
+                    "description": "Periodically re-syncs the global search index against the database: indexes entities the search index never confirmed holding, repairs ones whose stored content has drifted from what was last written, and removes an entity's row once it is directly confirmed deleted or no longer visible. Every removal here is confirmed against the database itself, unlike \"Remove Orphaned Entries\" below, which infers removals from the index alone.",
+                    "disableWarning": "Search results may go stale where an entity was never indexed, its content has drifted, or it was deleted or hidden, until this is switched back on."
                 },
                 "GlobalSearchReconcileOrphan": {
                     "name": "Global Search Reconcile: Remove Orphaned Entries",
-                    "description": "Scans the global search index for entries whose entity no longer exists and removes them. The only global search reconcile pass that deletes; switch on Global Search Reconcile first and observe it before enabling this.",
+                    "description": "Scans the global search index for entries whose entity no longer exists and removes them, inferred from the index alone rather than confirmed per entity against the database. Switch on Global Search Reconcile first and observe it before enabling this.",
                     "disableWarning": "Search results may include entries for entities that were deleted, until this is switched back on."
                 }
             }

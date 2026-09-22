@@ -26,7 +26,9 @@ import org.springframework.validation.annotation.Validated;
  *
  * @param missingSweepEnabled    seeds the toggle covering the pass that finds never-indexed entities
  * @param driftSweepEnabled      seeds the toggle covering the pass that re-derives entities and compares content
- * @param orphanSweepEnabled     seeds the toggle covering the pass that scans the index; the only one that deletes
+ * @param orphanSweepEnabled     seeds the toggle covering the pass that scans the index; its deletions are inferred
+ *                                   from the index alone rather than confirmed per entity against the database,
+ *                                   unlike drift's own database-confirmed deletions
  * @param entityTypes            the entity types all three passes manage; posts and answer posts are excluded because they
  *                                   dominate the corpus and would stretch every other type's revisit period. A type left out
  *                                   here is never repaired and never deleted

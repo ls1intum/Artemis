@@ -209,12 +209,12 @@
                 },
                 "GlobalSearchReconcile": {
                     "name": "Globale Suche: Abgleich",
-                    "description": "Gleicht den Suchindex der globalen Suche regelmäßig mit der Datenbank ab: Indiziert Objekte, für die der Suchindex nie eine erfolgreiche Aufnahme bestätigt hat, und repariert Einträge, deren gespeicherter Inhalt vom zuletzt geschriebenen Stand abweicht. Löscht nichts.",
-                    "disableWarning": "Suchergebnisse können veraltet sein, wenn ein Objekt nie indiziert wurde oder sich sein Inhalt verändert hat, bis dies wieder eingeschaltet wird."
+                    "description": "Gleicht den Suchindex der globalen Suche regelmäßig mit der Datenbank ab: Indiziert Objekte, für die der Suchindex nie eine erfolgreiche Aufnahme bestätigt hat, repariert Einträge, deren gespeicherter Inhalt vom zuletzt geschriebenen Stand abweicht, und entfernt ein Objekt, sobald direkt in der Datenbank bestätigt wurde, dass es gelöscht oder nicht mehr sichtbar ist. Jede Entfernung hier wird direkt anhand der Datenbank bestätigt, im Gegensatz zu „Globale Suche: Abgleich – verwaiste Einträge entfernen“ unten, die Entfernungen allein aus dem Index ableitet.",
+                    "disableWarning": "Suchergebnisse können veraltet sein, wenn ein Objekt nie indiziert wurde, sich sein Inhalt verändert hat oder es gelöscht oder ausgeblendet wurde, bis dies wieder eingeschaltet wird."
                 },
                 "GlobalSearchReconcileOrphan": {
                     "name": "Globale Suche: Abgleich – verwaiste Einträge entfernen",
-                    "description": "Durchsucht den Suchindex der globalen Suche nach Einträgen, deren zugehöriges Objekt nicht mehr existiert, und entfernt sie. Der einzige Abgleichsschritt der globalen Suche, der löscht; zuerst „Globale Suche: Abgleich“ einschalten und beobachten, bevor dies aktiviert wird.",
+                    "description": "Durchsucht den Suchindex der globalen Suche nach Einträgen, deren zugehöriges Objekt nicht mehr existiert, und entfernt sie – abgeleitet allein aus dem Index, nicht für jedes Objekt einzeln anhand der Datenbank bestätigt. Zuerst „Globale Suche: Abgleich“ einschalten und beobachten, bevor dies aktiviert wird.",
                     "disableWarning": "Suchergebnisse können Einträge für bereits gelöschte Objekte enthalten, bis dies wieder eingeschaltet wird."
                 }
             }
