@@ -151,6 +151,23 @@ describe('CourseIngestionBrowserComponent', () => {
         expect(component.isEmpty()).toBe(false);
     });
 
+    it('should still open the browser for a course that is only missing things', async () => {
+        // Nothing indexed at all, so every gap is a missing entity. This is the most broken a course can be and the
+        // one an admin most needs to look inside, which reporting it as empty would prevent entirely.
+        vi.spyOn(service, 'getCourseBrowserData').mockReturnValue(
+            of({ entities: [], contentPresence: [], missingEntities: [{ type: 'course', entityId: 7, title: 'Dash Test A' }], contentGaps: [] }),
+        );
+
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(component.isEmpty()).toBe(false);
+        expect(document.querySelector('[data-testid="browser-master-detail"]')).toBeTruthy();
+        expect(document.querySelector('[data-testid="browser-empty"]')).toBeFalsy();
+    });
+
     it('should drop the loaded data on close so reopening shows current state', async () => {
         vi.spyOn(service, 'getCourseBrowserData').mockReturnValue(of(browserData));
         fixture.componentRef.setInput('visible', true);

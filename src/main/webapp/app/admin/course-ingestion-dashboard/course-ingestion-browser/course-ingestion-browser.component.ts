@@ -50,10 +50,16 @@ export class CourseIngestionBrowserComponent {
         this.incompleteTypeCount() === 1 ? 'artemisApp.courseIngestionDashboard.browser.typeIncomplete' : 'artemisApp.courseIngestionDashboard.browser.typesIncomplete',
     );
 
-    /** True once loading finished and the index turned out to hold nothing at all for this course. */
+    /**
+     * True once loading finished and there is genuinely nothing to show. A course with nothing indexed still has
+     * missing entities and content gaps, and those are the whole reason to open it: reporting it as empty would hide
+     * the most broken course in the matrix behind a message saying there is nothing to see.
+     */
     readonly isEmpty = computed(() => {
         const loaded = this.data();
-        return loaded !== undefined && loaded.entities.length === 0 && loaded.contentPresence.length === 0;
+        return (
+            loaded !== undefined && loaded.entities.length === 0 && loaded.contentPresence.length === 0 && loaded.missingEntities.length === 0 && loaded.contentGaps.length === 0
+        );
     });
 
     /** The course the current data was loaded for, so a re-render of the same course does not refetch it. */
