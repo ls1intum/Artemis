@@ -55,7 +55,15 @@
                 },
                 "hyperion": {
                     "name": "Hyperion (Aufgabenerstellung)",
-                    "description": "Aktiviert KI-gestützte Aufgabenerstellung mit Hyperion zur Generierung von Programmieraufgaben."
+                    "description": "Aktiviert die KI-gestützten Autorenwerkzeuge von Hyperion. Die Erzeugung ganzer Aufgaben hat einen eigenen Schalter."
+                },
+                "hyperion-exercise-generation": {
+                    "name": "Hyperion-Aufgabengenerierung",
+                    "description": "Aktiviert die Generierung ganzer Aufgaben auf einem Core-Knoten mit LocalCI und LocalVC. Erfordert Hyperion und einen verfügbaren AI Worker."
+                },
+                "aiworker": {
+                    "name": "AI-Worker-Koordination",
+                    "description": "Verbindet diesen Core-Knoten mit isolierten AI Workern. Unabhängig von Hyperion."
                 },
                 "deimos": {
                     "name": "Deimos (Analyse bösartiger Teilnahmen)",

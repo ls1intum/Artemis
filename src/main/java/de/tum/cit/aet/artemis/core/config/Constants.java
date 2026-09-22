@@ -488,6 +488,9 @@ public final class Constants {
      */
     public static final String MODULE_FEATURE_HYPERION_EXERCISE_GENERATION = "hyperion-exercise-generation";
 
+    /** The independent AI Worker coordinator module feature. */
+    public static final String MODULE_FEATURE_AIWORKER = "aiworker";
+
     /**
      * The name of the module feature used for Deimos malicious participation analysis functionality.
      */
@@ -594,6 +597,9 @@ public final class Constants {
      * The name of the property used to enable or disable whole-exercise generation.
      */
     public static final String HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME = "artemis.hyperion.exercise-generation.enabled";
+
+    /** The property that enables the AI Worker coordinator on a core node. */
+    public static final String AIWORKER_ENABLED_PROPERTY_NAME = "artemis.aiworker.enabled";
 
     /**
      * The name of the property used to enable or disable Iris / Pyris functionality.

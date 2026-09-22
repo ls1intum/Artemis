@@ -31,6 +31,8 @@ describe('AdminSidebarComponent', () => {
     });
 
     it('offers a single AI Generation destination', () => {
+        fixture.componentRef.setInput('hyperionGenerationEnabled', true);
+        fixture.detectChanges();
         const workerEntries = () =>
             component
                 .sidebarGroups()
@@ -38,6 +40,26 @@ describe('AdminSidebarComponent', () => {
                 .filter((item) => item.routerLink === '/admin/ai-generation');
         expect(workerEntries()).toHaveLength(1);
         expect(workerEntries()[0].testId).toBe('admin-ai-generation');
+    });
+
+    it('offers worker monitoring without Hyperion generation', () => {
+        fixture.componentRef.setInput('aiWorkerEnabled', true);
+        fixture.detectChanges();
+        expect(
+            component
+                .sidebarGroups()
+                .flatMap((group) => group.items)
+                .some((item) => item.routerLink === '/admin/ai-generation'),
+        ).toBe(true);
+    });
+
+    it('hides AI Generation when both modules are disabled', () => {
+        expect(
+            component
+                .sidebarGroups()
+                .flatMap((group) => group.items)
+                .some((item) => item.routerLink === '/admin/ai-generation'),
+        ).toBe(false);
     });
 
     it('should create', () => {

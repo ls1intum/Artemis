@@ -13,6 +13,7 @@ import { ExerciseVariantAiModalWizardComponent } from './exercise-variant-ai-mod
 
 describe('CreateVariantWithAiButtonComponent', () => {
     const capabilities = vi.fn();
+    const moduleFeatureActive = vi.fn().mockReturnValue(true);
     const programming = () =>
         Object.assign(new ProgrammingExercise(undefined, undefined), {
             id: 12,
@@ -23,9 +24,10 @@ describe('CreateVariantWithAiButtonComponent', () => {
         });
     beforeEach(() => {
         capabilities.mockReset().mockReturnValue(of({ canCreateVariant: true }));
+        moduleFeatureActive.mockReset().mockReturnValue(true);
         TestBed.configureTestingModule({
             providers: [
-                { provide: ProfileService, useValue: { isModuleFeatureActive: () => true } },
+                { provide: ProfileService, useValue: { isModuleFeatureActive: moduleFeatureActive } },
                 { provide: HyperionExerciseGenerationApi, useValue: { getGenerationCapabilities: capabilities } },
             ],
         }).overrideComponent(CreateVariantWithAiButtonComponent, {
@@ -76,6 +78,12 @@ describe('CreateVariantWithAiButtonComponent', () => {
         expect(fixture.nativeElement.querySelector('button')).not.toBeNull();
         expect(fixture.componentInstance.isExamExercise()).toBe(true);
         expect(fixture.componentInstance.resolvedCourseId()).toBe(7);
+        expect(capabilities).not.toHaveBeenCalled();
+    });
+    it('hides the quiz variant action when Hyperion is disabled', () => {
+        moduleFeatureActive.mockReturnValue(false);
+        const fixture = mount({ id: 13, type: ExerciseType.QUIZ, isAtLeastEditor: true } as Exercise);
+        expect(fixture.nativeElement.querySelector('button')).toBeNull();
         expect(capabilities).not.toHaveBeenCalled();
     });
     it('hides unsupported configurations before requesting capabilities', () => {

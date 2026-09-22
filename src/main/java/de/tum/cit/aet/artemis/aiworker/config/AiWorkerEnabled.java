@@ -4,11 +4,13 @@ import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 
+import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
+
 /** Enables coordinator-side worker infrastructure only on explicitly configured core nodes. */
 public class AiWorkerEnabled implements Condition {
 
     @Override
     public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
-        return context.getEnvironment().getProperty("artemis.aiworker.enabled", Boolean.class, false) && context.getEnvironment().matchesProfiles("core");
+        return new ArtemisConfigHelper().isAiWorkerEnabled(context.getEnvironment());
     }
 }

@@ -55,7 +55,15 @@
                 },
                 "hyperion": {
                     "name": "Hyperion (Exercise Creation)",
-                    "description": "Enables AI-assisted exercise creation using Hyperion for generating programming exercises."
+                    "description": "Enables Hyperion's AI authoring tools. Whole-exercise generation has a separate switch."
+                },
+                "hyperion-exercise-generation": {
+                    "name": "Hyperion Exercise Generation",
+                    "description": "Enables whole-exercise generation on a core node with LocalCI and LocalVC. Requires Hyperion and an available AI Worker."
+                },
+                "aiworker": {
+                    "name": "AI Worker Coordination",
+                    "description": "Connects this core node to isolated AI Workers. Independent of Hyperion."
                 },
                 "deimos": {
                     "name": "Deimos (Malicious Participation Analysis)",

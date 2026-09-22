@@ -1,11 +1,13 @@
 import { injectGenerationCapabilities } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faRobot } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseVariantAiModalWizardComponent } from 'app/hyperion/variants/exercise-variant-ai-modal-wizard.component';
 import { supportsAiVariantGeneration } from 'app/hyperion/variants/exercise-variant-ai-modal.utils';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 /**
  * "Create Variant with AI" button plus the wizard it opens, packaged for hosts that lay out their action buttons
@@ -58,6 +60,8 @@ import { supportsAiVariantGeneration } from 'app/hyperion/variants/exercise-vari
 export class CreateVariantWithAiButtonComponent {
     readonly exercise = input.required<Exercise>();
 
+    private readonly hyperionEnabled = inject(ProfileService).isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+
     /** Spacing utilities of the surrounding button row, applied to the button itself (see the :host note). */
     readonly styleClass = input<string>('');
 
@@ -69,6 +73,7 @@ export class CreateVariantWithAiButtonComponent {
 
     readonly supported = computed(
         () =>
+            this.hyperionEnabled &&
             (this.exercise().isAtLeastEditor ?? false) &&
             supportsAiVariantGeneration(this.exercise()) &&
             (this.exercise().type !== ExerciseType.PROGRAMMING || this.generationCapabilities.value()?.canCreateVariant === true),

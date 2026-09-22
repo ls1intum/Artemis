@@ -14,6 +14,7 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import {
+    MODULE_FEATURE_AIWORKER,
     MODULE_FEATURE_APOLLON,
     MODULE_FEATURE_ATHENA,
     MODULE_FEATURE_ATLAS,
@@ -22,6 +23,7 @@ import {
     MODULE_FEATURE_EXAM,
     MODULE_FEATURE_FILEUPLOAD,
     MODULE_FEATURE_HYPERION,
+    MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
     MODULE_FEATURE_IRIS,
     MODULE_FEATURE_LDAP,
     MODULE_FEATURE_LECTURE,
@@ -123,6 +125,8 @@ export class AdminFeatureToggleComponent implements OnInit {
         MODULE_FEATURE_ATLAS,
         MODULE_FEATURE_ATLASLLM,
         MODULE_FEATURE_HYPERION,
+        MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
+        MODULE_FEATURE_AIWORKER,
         MODULE_FEATURE_DEIMOS,
         MODULE_FEATURE_EXAM,
         MODULE_FEATURE_PLAGIARISM,
@@ -170,6 +174,8 @@ export class AdminFeatureToggleComponent implements OnInit {
         [MODULE_FEATURE_ATLAS]: 'https://docs.artemis.tum.de/instructor/analytics/adaptive-learning',
         [MODULE_FEATURE_ATLASLLM]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
         [MODULE_FEATURE_HYPERION]: 'https://docs.artemis.tum.de/admin/hyperion',
+        [MODULE_FEATURE_HYPERION_EXERCISE_GENERATION]: 'https://docs.artemis.tum.de/admin/hyperion',
+        [MODULE_FEATURE_AIWORKER]: 'https://docs.artemis.tum.de/admin/aiworker',
         [MODULE_FEATURE_DEIMOS]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
         [MODULE_FEATURE_EXAM]: 'https://docs.artemis.tum.de/instructor/exams/intro',
         [MODULE_FEATURE_PLAGIARISM]: 'https://docs.artemis.tum.de/instructor/assessment-grading/plagiarism-check',
