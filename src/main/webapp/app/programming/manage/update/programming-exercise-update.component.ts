@@ -13,6 +13,7 @@ import { switchMap, take, tap } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, ExerciseType, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { AccountService } from 'app/core/auth/account.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
@@ -126,6 +127,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly translateService = inject(TranslateService);
     private readonly profileService = inject(ProfileService);
+    private readonly accountService = inject(AccountService);
     private readonly exerciseGroupService = inject(ExerciseGroupService);
     private readonly programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
@@ -287,6 +289,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     auxiliaryRepositoriesValid = signal<boolean>(true);
     public theiaEnabled = false;
     readonly securityFrameworkEnabled = signal(false);
+    readonly securityFrameworkInstructor = computed(() => this.accountService.isAtLeastInstructorInCourseWithId(this.courseId()));
     readonly plagiarismEnabled = signal(false);
     private _hyperionEnabled = false;
     hyperionEnabledForAi = signal<boolean>(false);
