@@ -934,11 +934,17 @@ public class CompetencyOrchestrationService {
                 .append(")\n");
         String childIndent = lastCompetency ? "    " : "│   ";
         boolean hasLectureUnits = !entry.lectureUnits().isEmpty();
+        boolean hasRelations = !entry.relations().isEmpty();
         List<String> exerciseLines = entry.exercises().stream().map(CompetencyOrchestrationService::formatExerciseLine).toList();
-        appendLeafGroup(sb, childIndent, "exercises", exerciseLines, !hasLectureUnits);
+        appendLeafGroup(sb, childIndent, "exercises", exerciseLines, !hasLectureUnits && !hasRelations);
         if (hasLectureUnits) {
             List<String> lectureUnitLines = entry.lectureUnits().stream().map(CompetencyOrchestrationService::formatLectureUnitLine).toList();
-            appendLeafGroup(sb, childIndent, "lecture units", lectureUnitLines, true);
+            appendLeafGroup(sb, childIndent, "lecture units", lectureUnitLines, !hasRelations);
+        }
+        if (hasRelations) {
+            List<String> relationLines = entry.relations().stream()
+                    .map(relation -> relation.tailCompetencyId() + " --" + relation.relationType() + "--> " + relation.headCompetencyId()).toList();
+            appendLeafGroup(sb, childIndent, "relations", relationLines, true);
         }
     }
 
