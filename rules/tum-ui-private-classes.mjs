@@ -28,7 +28,8 @@ export function createTumUiPrivateClassesRule(sources) {
                             for (const record of records) {
                                 const name = record.name.replace(/^attr\./, '');
                                 if (name.startsWith('class.')) check(name.slice(6), record.at);
-                                else if (name.toLowerCase() === 'class') classExpressionValues(record.expression, record.at, check, () => {});
+                                else if (name.toLowerCase() === 'class' || (record.bound && record.name === 'className'))
+                                    classExpressionValues(record.expression, record.at, check, () => {});
                             }
                         }
                     },
@@ -39,7 +40,13 @@ export function createTumUiPrivateClassesRule(sources) {
                 Element(element) {
                     for (const attribute of [...element.attributes, ...element.inputs]) {
                         const key = attribute.keySpan?.details ?? '';
-                        if (attribute.name.toLowerCase() !== 'class' && attribute.name !== 'ngClass' && !key.startsWith('class.')) continue;
+                        if (
+                            attribute.name.toLowerCase() !== 'class' &&
+                            attribute.name !== 'ngClass' &&
+                            !(attribute.type !== 'TextAttribute' && key === 'className') &&
+                            !key.startsWith('class.')
+                        )
+                            continue;
                         if (key.startsWith('class.')) check(attribute.name, attribute);
                         else if (attribute.type === 'TextAttribute') check(attribute.value, attribute);
                         else

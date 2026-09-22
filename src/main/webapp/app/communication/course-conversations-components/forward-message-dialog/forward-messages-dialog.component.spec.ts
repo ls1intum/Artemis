@@ -304,6 +304,9 @@ describe('ForwardMessageDialogComponent', () => {
 
         expect(component.isMessageValid()).toBe(false);
         expect(sendButton.disabled).toBe(true);
+        const counter: HTMLElement = fixture.debugElement.query(By.css('[data-testid="message-length"]')).nativeElement;
+        expect(counter.classList.contains('text-state-danger')).toBe(true);
+        expect(counter.style.color).toBe('');
     });
 
     it('should enable send button if message is valid', () => {
@@ -317,5 +320,8 @@ describe('ForwardMessageDialogComponent', () => {
 
         expect(component.isMessageValid()).toBe(true);
         expect(sendButton.disabled).toBe(false);
+        const counter: HTMLElement = fixture.debugElement.query(By.css('[data-testid="message-length"]')).nativeElement;
+        expect(counter.classList.contains('text-state-danger')).toBe(false);
+        expect(counter.style.color).toBe('');
     });
 });

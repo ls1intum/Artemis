@@ -9,6 +9,15 @@ export function expressionOf(ast, at, resolve = () => undefined, seen = new Set(
     switch (kind(ast)) {
         case 'LiteralPrimitive':
             return node('Literal', { value: ast.value });
+        case 'Interpolation':
+        case 'TemplateLiteral': {
+            const strings = ast.strings ?? ast.elements.map((element) => element.text);
+            if (!ast.expressions.length) return node('Literal', { value: strings[0] });
+            return node('TemplateLiteral', {
+                quasis: strings.map((value, index) => node('TemplateElement', { value: { cooked: value, raw: value }, tail: index === strings.length - 1 })),
+                expressions: ast.expressions.map((expression) => expressionOf(expression, at, resolve, seen)),
+            });
+        }
         case 'Conditional':
             return node('ConditionalExpression', { consequent: expressionOf(ast.trueExp, at, resolve, seen), alternate: expressionOf(ast.falseExp, at, resolve, seen) });
         case 'Binary':

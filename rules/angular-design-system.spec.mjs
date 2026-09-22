@@ -185,6 +185,32 @@ export class DsField { size = input<'compact' | 'comfortable'>('compact'); }`,
         },
     );
 
+    it.each([
+        '<button dsButton [style.--chart-color]="`red`"></button>',
+        '<button dsButton [style.--chart-color]="`rgb(${channel()}, 0, 0)`"></button>',
+        '<button dsButton style.--chart-color="{{ \'#ff0000\' }}"></button>',
+        '<button dsButton style.--chart-color="{{ \'#ff0000\' }} {{ scale() }}"></button>',
+        '<button dsButton [style.--chart-color]="`${\'red\'} ${scale()}`"></button>',
+    ])('checks custom-property colors in Angular interpolation and template literals: %s', (code) => {
+        expect(messages(code, 'no-inline-styles')).toEqual([expect.objectContaining({ messageId: 'customPropColor' })]);
+    });
+
+    it.each([
+        '<button dsButton [style.--chart-color]="`var(--color-brand)`"></button>',
+        '<button dsButton style.--chart-color="{{ token() }}"></button>',
+        '<button dsButton [style.--chart-color]="`re${part()}d`"></button>',
+        '<button dsButton [style.--chart-color]="`url(${\'red\'})`"></button>',
+        '<button dsButton [style.--chart-color]="`&quot;${\'red\'}&quot;`"></button>',
+        '<button dsButton [style.--chart-color]="`/* ${\'red\'} */`"></button>',
+    ])('keeps token-valued or genuinely unknown custom-property colors valid: %s', (code) => {
+        expect(messages(code, 'no-inline-styles')).toEqual([]);
+    });
+
+    it('reads static template-literal classes without treating them as dynamic', () => {
+        expect(messages('<button dsButton [class]="`p-4`"></button>', 'no-restyle')).toEqual([expect.objectContaining({ messageId: 'spacingClassWithSizes' })]);
+        expect(messages('<button dsButton [class]="`w-full`"></button>', 'require-static-classes')).toEqual([]);
+    });
+
     it('rejects injected style elements instead of silently losing them during Angular parsing', () => {
         expect(messages('<style>button { color: red; }</style>', 'no-inline-styles')).toEqual([expect.objectContaining({ messageId: 'styleElement', line: 1, column: 1 })]);
         expect(messages('<div>&lt;style&gt; is text</div><!-- <style>comment</style> -->', 'no-inline-styles')).toEqual([]);

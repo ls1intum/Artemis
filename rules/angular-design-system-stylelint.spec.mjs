@@ -52,6 +52,10 @@ describe('Angular design-system stylesheet adapter', () => {
         'button[dsButton], .page { font-weight: bold; }',
         ':is(ds-panel, button[dsButton]) { padding: 1rem; }',
         ':where(button[dsButton]).compact { padding: 1rem; }',
+        ':not(:not(button[dsButton])) { padding: 1rem; }',
+        ':not(:not(.ordinary, ds-panel)) { padding: 1rem; }',
+        ':is(.ordinary, :not(:not(button[dsButton]))) { padding: 1rem; }',
+        ':not(:not(:where(button[dsButton]))) { padding: 1rem; }',
         ':nth-child(odd of ds-panel) { padding: 1rem; }',
         ':nth-last-child(2n + 1 of .ordinary, button[dsButton]) { padding: 1rem; }',
         ':NTH-CHILD(2 OF :IS(.ordinary, ds-panel)) { padding: 1rem; }',
@@ -80,6 +84,11 @@ describe('Angular design-system stylesheet adapter', () => {
         'button:not([dsButton]) { padding: 1rem; }',
         'a:not(.btn, [dsButton], .tab-link):hover { text-decoration: none; }',
         ':not(ds-panel) { padding: 1rem; }',
+        ':not(:not(.ordinary)) { padding: 1rem; }',
+        ':not(:not(:not(button[dsButton]))) { padding: 1rem; }',
+        ':not(:not(button[dsButton]), :not(div)) { padding: 1rem; }',
+        '.ordinary:has(:not(:not(button[dsButton]))) { padding: 1rem; }',
+        ':not(:not(button[dsButton])) .ordinary { padding: 1rem; }',
         ':nth-child(2 of .ordinary) { padding: 1rem; }',
         ':nth-child(2n + 1) { padding: 1rem; }',
         ':nth-child(2 of ds-panel .ordinary) { padding: 1rem; }',
@@ -124,6 +133,9 @@ describe('Angular design-system stylesheet adapter', () => {
         'ds-panel { &:hover { @extend .custom-appearance; } }',
         'ds-panel { @media (width > 40rem) { @apply p-4; } }',
         'ds-panel.#{$variant} { padding: 1rem; }',
+        'button[dsButton]#{".compact"} { padding: 1rem; }',
+        'button[dsButton]#{ $suffix } { padding: 1rem; }',
+        'ds-panel#{".compact"} { padding: 1rem; }',
         'ds-panel { &-#{$suffix} { padding: 1rem; } }',
         'ds-panel { #{$property}: 1rem; }',
         'ds-panel { --control-color: #{$color}; }',
@@ -135,6 +147,8 @@ describe('Angular design-system stylesheet adapter', () => {
     it.each([
         '.page { @include appearance; @extend .custom-appearance; }',
         '.page-#{$variant} { padding: 1rem; }',
+        '.page#{".compact"} { padding: 1rem; }',
+        'button:not([dsButton])#{".compact"} { padding: 1rem; }',
         'ds-panel { .content { @include appearance; } }',
         'ds-panel { @at-root .page { @include appearance; } }',
         'ds-panel { $space: 1rem; margin: $space; }',
@@ -142,6 +156,14 @@ describe('Angular design-system stylesheet adapter', () => {
         'ds-panel:where(button[dsButton]) { padding: 1rem; }',
     ])('does not ban unrelated Sass or impossible functional subjects: %s', async (code) => {
         expect(await lint(code)).toEqual([]);
+    });
+
+    it('does not silently accept interpolation Sass resolves to a protected subject', async () => {
+        const source = 'button[dsButton]#{".compact"} { padding: 1rem; }';
+        const compiled = compileString(source).css;
+        expect(compiled).toContain('button[dsButton].compact');
+        expect(await lint(source)).toEqual([expect.objectContaining({ text: expect.stringContaining('Cannot verify an interpolated selector') })]);
+        expect(await lint(compiled)).toEqual([expect.objectContaining({ text: expect.stringContaining('Inline style sets padding') })]);
     });
 
     it('still protects real functional alternatives and package-owned pseudo-elements', async () => {

@@ -19,6 +19,10 @@ function subjects(selector) {
         else if (node.type === 'pseudo') {
             const pseudo = node.value.toLowerCase();
             let alternatives = [':is', ':where'].includes(pseudo) ? node.nodes : undefined;
+            // Only an exact double negation is positive; lists outside the inner :not are intersections.
+            const inner = node.nodes?.length === 1 && node.nodes[0].nodes.length === 1 ? node.nodes[0].nodes[0] : undefined;
+            if (pseudo === ':not' && inner?.type === 'pseudo' && inner.value.toLowerCase() === ':not') alternatives = inner.nodes;
+
             if ([':nth-child', ':nth-last-child'].includes(pseudo)) {
                 const first = node.nodes[0];
                 const of = first?.nodes.findIndex((part) => part.type === 'tag' && part.value.toLowerCase() === 'of') ?? -1;
@@ -83,7 +87,16 @@ export function evaluateStylesheet(root, index, propertyOptions, report) {
         let owner;
         try {
             for (const selector of resolveNestedSelector(cssRule.selector, cssRule)) {
-                owner = selectorParser().astSync(selector).nodes.flatMap(subjects).map(ownerOf).find(Boolean);
+                const interpolation = selector.indexOf('#{');
+                if (interpolation !== -1) {
+                    // Sass fragments look like extra tags to a CSS parser. A protected static prefix still needs a diagnostic.
+                    try {
+                        owner = selectorParser().astSync(selector.slice(0, interpolation)).nodes.flatMap(subjects).map(ownerOf).find(Boolean);
+                    } catch {
+                        // An incomplete prefix (e.g. an attribute value) cannot identify a subject by itself.
+                    }
+                }
+                owner ??= selectorParser().astSync(selector).nodes.flatMap(subjects).map(ownerOf).find(Boolean);
                 if (owner) break;
             }
         } catch {

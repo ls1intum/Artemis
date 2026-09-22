@@ -129,6 +129,11 @@ describe('upstream rules on protected Angular host bindings', () => {
         expect(lint(code, 'require-static-classes')).toEqual([expect.objectContaining({ messageId: 'dynamicClasses' })]);
     });
 
+    it('checks Angular template-literal colors in host bindings through the same expression adapter', () => {
+        const host = JSON.stringify({ '[style.--chart-color]': '`rgb(${channel()}, 0, 0)`' });
+        expect(lint(directive(host), 'no-inline-styles')).toEqual([expect.objectContaining({ messageId: 'customPropColor' })]);
+    });
+
     it('allows host layout under the same upstream policy as templates', () => {
         expect(lint(directive(`{ class:'mt-4 w-full', style:'width:100%' }`), 'no-restyle', { allow: ['layout'] })).toEqual([]);
         expect(lint(directive(`{ style:'width:100%' }`), 'no-inline-styles', { allow: ['width'] })).toEqual([]);

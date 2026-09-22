@@ -13,13 +13,21 @@ const tester = createTemplateRuleTester();
 describe('TUM UI implementation privacy', () => {
     it('protects the reserved namespace even on ordinary ancestors', () => {
         tester.run('tum-ui-private-classes', rule, {
-            valid: ['<div class="page-layout"></div>', '<tum-ui-panel class="w-full" />', '<div class="[&>span]:hidden"></div>'],
+            valid: [
+                '<div class="page-layout"></div>',
+                '<div className="tum-ui-btn"></div>',
+                '<div [attr.className]="\'tum-ui-btn\'"></div>',
+                '<div [className]="\'page-layout\'"></div>',
+                '<tum-ui-panel class="w-full" />',
+                '<div class="[&>span]:hidden"></div>',
+            ],
             invalid: [
                 '<div class="tum-ui-btn"></div>',
                 '<div CLASS="tum-ui-btn"></div>',
                 '<div class="[&_.tum-ui-panel-header]:hidden"></div>',
                 '<div class="[&_[class*=tum-ui-panel]]:hidden"></div>',
                 '<div [class.tum-ui-btn]="active()"></div>',
+                '<div [className]="\'tum-ui-btn\'"></div>',
                 '<div [ngClass]="{\'tum-ui-btn\': active()}"></div>',
             ].map((code) => ({ code, errors: [{ messageId: 'internal' }] })),
         });
@@ -32,16 +40,20 @@ describe('ordinary Angular host implementation privacy', () => {
             valid: [
                 "import {Component} from '@angular/core'; @Component({host:{'[class]':'classes()'}}) class Page {}",
                 "import {Directive} from '@angular/core'; @Directive({host:{class:'page-layout'}}) class Page {}",
+                "import {Component} from '@angular/core'; @Component({host:{className:'tum-ui-btn'}}) class Page {}",
+                "import {Component} from '@angular/core'; @Component({host:{'[attr.className]':'classes'}}) class Page {readonly classes='tum-ui-btn';}",
                 "import {Directive,HostBinding} from '@angular/core'; @Directive() class Page {@HostBinding('class') get classes(){return dynamic();}}",
                 "import {Component} from 'other-library'; @Component({host:{class:'tum-ui-btn'}}) class Page {}",
             ],
             invalid: [
                 "import {Component} from '@angular/core'; @Component({selector:'jhi-page',host:{class:'tum-ui-btn'}}) class Page {}",
+                "import {Component} from '@angular/core'; @Component({host:{'[className]':'classes'}}) class Page {readonly classes='tum-ui-btn';}",
                 "import {Component as View} from '@angular/core'; @View({host:{'[class.tum-ui-btn]':'active()'}}) class Page {}",
                 "import * as ng from '@angular/core'; @ng.Directive({selector:'[behavior]',host:{'[attr.class]':'classes'}}) class Page {readonly classes='tum-ui-btn';}",
                 "import {Component} from '@angular/core'; @Component({host:{'[class]':'active() ? classes : other()'}}) class Page {readonly classes=`tum-ui-btn`;}",
                 "import {Directive,HostBinding} from '@angular/core'; @Directive() class Page {@HostBinding('class') readonly classes='tum-ui-btn';}",
                 "import {Component,HostBinding} from '@angular/core'; @Component({}) class Page {@HostBinding('class') readonly classes='tum-ui-btn';}",
+                "import {Component,HostBinding} from '@angular/core'; @Component({}) class Page {@HostBinding('className') readonly classes='tum-ui-btn';}",
                 "import {Component,HostBinding} from '@angular/core'; @Component({}) class Page {@HostBinding('class.tum-ui-btn') get active(){return true;}}",
             ].map((code) => ({ code, errors: [{ messageId: 'internal' }] })),
         });
@@ -88,6 +100,7 @@ describe('ordinary Angular template implementation privacy', () => {
         ['<div [class]="classes"></div>', 'tum-ui-btn', 1],
         ['<div [class]="classes"></div>', '[&_.tum-ui-btn]:p-4', 1],
         ['<div [ngClass]="[classes]"></div>', 'tum-ui-btn', 1],
+        ['<div [className]="classes"></div>', 'tum-ui-btn', 1],
         ['<div [class]="classes"></div>', 'page-layout', 0],
         ['<div [class]="getClasses()"></div>', 'tum-ui-btn', 0],
         ['@let classes = "page-layout"; <div [class]="classes"></div>', 'tum-ui-btn', 0],

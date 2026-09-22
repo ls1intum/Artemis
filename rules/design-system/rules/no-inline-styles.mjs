@@ -2,6 +2,7 @@
 // class-based enforcement. CSS custom properties are the exception, and a
 // hardcoded color in one is that exception being laundered, so it is
 // followed one hop.
+import valueParser from 'postcss-value-parser';
 import { parseColor } from '../grammar/colors.mjs';
 import { objectEntries, resolveMemberValue } from '../expressions.mjs';
 import { allowListOf, configErrorVisitors, ContractConfigError } from './contracts.mjs';
@@ -10,46 +11,16 @@ import { policySchema } from './policy-schema.mjs';
 const COLOR_FUNCTION = /#[0-9a-f]{3,8}\b|\b(?:rgb|rgba|hsl|hsla|hwb|oklch|oklab|lab|lch|color|color-mix|light-dark)\(/i;
 // URL payloads, quoted strings and comments are not color values.
 function colorValueText(value) {
-    let text = '';
-    let quote = '';
-    let urlDepth = 0;
-    for (let i = 0; i < value.length; i++) {
-        const char = value[i];
-        if (quote) {
-            if (char === '\\') i++;
-            else if (char === quote) quote = '';
-            continue;
+    const parsed = valueParser(value);
+    parsed.walk((node) => {
+        if (node.type === 'string' || node.type === 'comment' || (node.type === 'function' && node.value.toLowerCase() === 'url')) {
+            node.type = 'word';
+            node.value = ' ';
+            delete node.nodes;
+            return false;
         }
-        if (char === '/' && value[i + 1] === '*') {
-            const end = value.indexOf('*/', i + 2);
-            i = end === -1 ? value.length : end + 1;
-            text += ' ';
-            continue;
-        }
-        if (char === '"' || char === "'") {
-            quote = char;
-            text += ' ';
-            continue;
-        }
-        if (char === '\\') {
-            if (!urlDepth) text += value.slice(i, i + 2);
-            i++;
-            continue;
-        }
-        if (urlDepth) {
-            if (char === '(') urlDepth++;
-            else if (char === ')') urlDepth--;
-            continue;
-        }
-        if (value.slice(i, i + 4).toLowerCase() === 'url(' && (i === 0 || !/[\w-]/.test(value[i - 1]))) {
-            urlDepth = 1;
-            i += 3;
-            text += ' ';
-            continue;
-        }
-        text += char;
-    }
-    return text;
+    });
+    return parsed.toString();
 }
 // The value, or any leaf of it outside var(), read as a color.
 function hasRawColor(value) {
@@ -130,9 +101,13 @@ function carriesRawColor(node, context, seen = new Set()) {
     switch (node.type) {
         case 'Literal':
             return typeof node.value === 'string' && hasRawColor(node.value);
-        case 'TemplateLiteral':
-            // Never join fragments into a color name not in the source.
-            return hasRawColor(node.quasis.map((q) => q.value?.cooked ?? '').join('\uFFFC'));
+        case 'TemplateLiteral': {
+            // Preserve CSS context without joining fragments into a color name not in the source.
+            const slots = node.expressions.map((_, index) => `\uFFFC${index}\uFFFC`);
+            const text = node.quasis.map((quasi, index) => (quasi.value?.cooked ?? '') + (slots[index] ?? '')).join('');
+            const visible = colorValueText(text);
+            return hasRawColor(text) || node.expressions.some((expression, index) => visible.includes(slots[index]) && carriesRawColor(expression, context, seen));
+        }
         case 'ConditionalExpression':
             return carriesRawColor(node.consequent, context, seen) || carriesRawColor(node.alternate, context, seen);
         case 'LogicalExpression':

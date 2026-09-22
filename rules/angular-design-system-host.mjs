@@ -111,6 +111,7 @@ export function createAngularHostReader(context) {
                             const bound = name.startsWith('[') && name.endsWith(']');
                             records.push({
                                 name: bound ? name.slice(1, -1) : name,
+                                bound,
                                 expression: bound
                                     ? binding(raw, entry, resolve)
                                     : raw === undefined
@@ -126,7 +127,12 @@ export function createAngularHostReader(context) {
                     const expression = hostBinding.expression;
                     if (expression.type !== 'CallExpression' || angularName(expression.callee) !== 'HostBinding') continue;
                     const name = expression.arguments.length ? valueOf(expression.arguments[0])?.value : keyOf(member.key);
-                    records.push({ name: typeof name === 'string' ? name : 'class', expression: resolve(keyOf(member.key), hostBinding) ?? dynamic(hostBinding), at: hostBinding });
+                    records.push({
+                        name: typeof name === 'string' ? name : 'class',
+                        bound: true,
+                        expression: resolve(keyOf(member.key), hostBinding) ?? dynamic(hostBinding),
+                        at: hostBinding,
+                    });
                 }
             }
             result.push({ selector, records });
