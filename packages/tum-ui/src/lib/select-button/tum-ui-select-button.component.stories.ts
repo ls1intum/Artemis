@@ -85,21 +85,30 @@ type Story = StoryObj<SelectButtonStoryArgs>;
 
 export const Default: Story = {};
 
-export const Small: Story = {
+export const Small: Story = { args: { size: 'small' } };
+
+export const Sizes: Story = {
     args: {
         size: 'small',
     },
     render: (args) => ({
         props: args,
         template: `
-            <tum-ui-select-button aria-label="Small interval" [options]="options" optionLabel="label" optionValue="value" [size]="size" [(ngModel)]="selected" />
+            <tum-ui-select-button aria-label="Small interval" [options]="options" optionLabel="label" optionValue="value" size="small" [(ngModel)]="selected" />
             <tum-ui-select-button aria-label="Default interval" [options]="options" optionLabel="label" optionValue="value" [(ngModel)]="selected" />
+            <tum-ui-select-button aria-label="Large interval" [options]="options" optionLabel="label" optionValue="value" size="large" [(ngModel)]="selected" />
         `,
     }),
-    play: async ({ canvas }) => {
+    play: async ({ canvas, userEvent }) => {
         const small = within(canvas.getByRole('group', { name: 'Small interval' })).getByRole('button', { name: 'Day' });
         const normal = within(canvas.getByRole('group', { name: 'Default interval' })).getByRole('button', { name: 'Day' });
-        await expect(Number.parseFloat(getComputedStyle(small).paddingBlockStart)).toBeLessThan(Number.parseFloat(getComputedStyle(normal).paddingBlockStart));
+        const large = within(canvas.getByRole('group', { name: 'Large interval' })).getByRole('button', { name: 'Day' });
+        await expect(small.getBoundingClientRect().height).toBeLessThan(normal.getBoundingClientRect().height);
+        await expect(large.getBoundingClientRect().height).toBeGreaterThan(normal.getBoundingClientRect().height);
+        const week = within(canvas.getByRole('group', { name: 'Small interval' })).getByRole('button', { name: 'Week' });
+        await userEvent.click(week);
+        await expect(week).toHaveAttribute('aria-pressed', 'true');
+        await expect(small).toHaveAttribute('aria-pressed', 'false');
     },
 };
 

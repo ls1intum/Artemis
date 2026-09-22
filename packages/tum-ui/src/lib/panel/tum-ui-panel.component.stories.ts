@@ -8,7 +8,8 @@ interface PanelStoryArgs {
     content: string;
     toggleable: boolean;
     collapsed: boolean;
-    density: 'default' | 'compact' | 'flush';
+    density: 'default' | 'compact';
+    contentPadding: boolean;
     showHeader: boolean;
 }
 
@@ -21,6 +22,7 @@ const meta = {
         toggleable: false,
         collapsed: false,
         density: 'default',
+        contentPadding: true,
         showHeader: true,
     },
     render: ({ content, ...args }) => {
@@ -79,8 +81,8 @@ export const Compact: Story = {
     },
 };
 
-export const Flush: Story = {
-    args: { density: 'flush', showHeader: false },
+export const Unpadded: Story = {
+    args: { density: 'compact', contentPadding: false, showHeader: false },
     play: async ({ canvas }) => {
         await expect(canvas.getByText('Exercise details')).not.toBeVisible();
         const content = canvas.getByText('Review the problem statement, due date, and grading criteria.');
@@ -93,7 +95,7 @@ export const ScrollableContent: Story = {
     render: () => ({
         template: `
             <div data-testid="panel-container" style="display: flex; width: 20rem; max-width: 100%;">
-                <tum-ui-panel header="Wide table" density="flush" style="flex: 1;" data-testid="panel">
+                <tum-ui-panel header="Wide table" [contentPadding]="false" style="flex: 1;" data-testid="panel">
                     <div data-testid="table-scroll" style="overflow-x: auto;" tabindex="0" role="region" aria-label="Scrollable results">
                         <table style="width: 60rem;">
                             <caption>Results</caption>

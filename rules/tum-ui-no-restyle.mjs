@@ -12,7 +12,7 @@ const GUIDANCE = {
     'tum-ui-button': 'Use size, variant, severity or rounded.',
     tumUiInput: 'Use tumUiInputSize and tumUiInputInvalid.',
     tumUiTextarea: 'Use tumUiInputSize and tumUiInputInvalid.',
-    'tum-ui-panel': 'Use density and showHeader for panel presentation.',
+    'tum-ui-panel': 'Use density, contentPadding and showHeader for panel presentation.',
     'tum-ui-tag': 'Use severity or rounded.',
     'tum-ui-message': 'Use severity.',
 };

@@ -13,6 +13,7 @@ let nextPanelId = 0;
     host: {
         class: 'tum-ui-panel tum:border tum:border-border tum:rounded-md tum:bg-content-background tum:text-text',
         '[attr.data-density]': 'density()',
+        '[attr.data-content-padding]': 'contentPadding()',
         '[attr.data-collapsed]': 'toggleable() && collapsed()',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -26,8 +27,11 @@ export class TumUiPanelComponent {
      */
     readonly header = input<string>('');
 
-    /** Compact panels fit navigation; flush panels let tables own their cell spacing. */
-    readonly density = input<'default' | 'compact' | 'flush'>('default');
+    /** Controls header and body spacing without changing the content layout. */
+    readonly density = input<'default' | 'compact'>('default');
+
+    /** Disable when projected content, such as a table, owns its spacing. */
+    readonly contentPadding = input(true, { transform: booleanAttribute });
 
     /** Hide an unused header. Toggleable panels always retain their disclosure control. */
     readonly showHeader = input(true, { transform: booleanAttribute });

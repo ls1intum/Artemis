@@ -1,6 +1,5 @@
 :host {
     display: block;
-    min-width: 0;
 }
 
 .tum-ui-panel-header {
@@ -53,8 +52,6 @@
 
 .tum-ui-panel-content-container {
     display: grid;
-    min-width: 0;
-    overflow: hidden;
     grid-template-rows: 1fr;
     transition: grid-template-rows 0.2s ease-in-out;
 }
@@ -65,7 +62,6 @@
 
 .tum-ui-panel-content-wrapper {
     min-height: 0;
-    min-width: 0;
     overflow: hidden;
 }
 
@@ -93,6 +89,6 @@
     }
 }
 
-:host([data-density='flush']) .tum-ui-panel-content {
+:host([data-content-padding='false']) .tum-ui-panel-content {
     padding: 0;
 }

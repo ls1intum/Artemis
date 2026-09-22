@@ -110,11 +110,22 @@ export const IconOnly: Story = {
 export const FullWidth: Story = {
     render: (args) => ({
         props: args,
-        template: '<tum-ui-button style="display: block; width: 100%;" [severity]="severity" [size]="size" (clicked)="clicked($event)">{{ label }}</tum-ui-button>',
+        template: `
+            <div data-testid="button-container" style="width: 20rem; max-width: 100%;">
+                <tum-ui-button style="display: block; width: 100%;" (clicked)="clicked($event)">Full width</tum-ui-button>
+                <tum-ui-button>Intrinsic width</tum-ui-button>
+            </div>
+        `,
     }),
-    play: async ({ args, canvas }) => {
-        const button = canvas.getByRole('button', { name: args.label });
-        const host = button.parentElement!;
-        await expect(button.getBoundingClientRect().width).toBeCloseTo(host.getBoundingClientRect().width, 0);
+    play: async ({ args, canvas, userEvent }) => {
+        const container = canvas.getByTestId('button-container');
+        const button = canvas.getByRole('button', { name: 'Full width' });
+        const intrinsic = canvas.getByRole('button', { name: 'Intrinsic width' });
+        await expect(button.getBoundingClientRect().width).toBeCloseTo(container.getBoundingClientRect().width, 0);
+        await expect(intrinsic.getBoundingClientRect().width).toBeLessThan(container.getBoundingClientRect().width);
+        await userEvent.tab();
+        await expect(button).toHaveFocus();
+        await userEvent.keyboard('{Enter}');
+        await expect(args.clicked).toHaveBeenCalledTimes(1);
     },
 };

@@ -151,11 +151,12 @@ still need review and browser tests. The policy deliberately does not ban every 
 value or assume every class must come from Tailwind.
 
 Use `size`, `variant`, and `severity` on buttons; the native button directive also supports
-`rounded`. Panels support `density="compact"` for navigation and `density="flush"` for content
-such as tables that owns its spacing. Set `[showHeader]="false"` for an unused panel header;
+`rounded`. Panels support `density="compact"` for reduced spacing and `[contentPadding]="false"`
+when projected content, such as a table, owns its spacing. These options can be combined. Set `[showHeader]="false"` for an unused panel header;
 toggleable panels retain their disclosure control regardless of that input. Native sortable headers
-forward the host's `justify-content` to the sort button, so a `justify-end` host layout class aligns
-numeric headers without referencing private markup.
+accept `contentAlign` values `start` (default), `center`, and `end` to align the label and sort indicator together.
+Use `contentAlign="end"` for numeric headers; alignment respects writing direction without
+requiring flexbox classes or private selectors.
 
 Run `pnpm run test:rules` for the rule fixtures and configuration integration tests, and
 `pnpm run lint` plus `pnpm run stylelint` before submitting changes. Run the package's

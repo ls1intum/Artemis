@@ -74,6 +74,18 @@ describe('TumUiPanelComponent', () => {
         expect(content.hasAttribute('inert')).toBe(true);
     });
 
+    it('configures body padding independently of density and preserves boolean attribute semantics', () => {
+        fixture.componentRef.setInput('density', 'compact');
+        fixture.componentRef.setInput('contentPadding', 'false');
+        fixture.detectChanges();
+        expect(fixture.nativeElement.getAttribute('data-density')).toBe('compact');
+        expect(fixture.nativeElement.getAttribute('data-content-padding')).toBe('false');
+
+        fixture.componentRef.setInput('contentPadding', '');
+        fixture.detectChanges();
+        expect(fixture.nativeElement.getAttribute('data-content-padding')).toBe('true');
+    });
+
     it('hides an unused header and restores it when disclosure is enabled', () => {
         fixture.componentRef.setInput('showHeader', false);
         fixture.detectChanges();
