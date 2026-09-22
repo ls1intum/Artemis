@@ -142,6 +142,8 @@ export interface MissingEntity {
     entityId: number;
     /** The entity's title or name, absent if it could no longer be resolved. */
     title?: string;
+    /** The parent lecture, set on lecture units so the tree can place one the index does not hold. */
+    lectureId?: number;
 }
 
 /** One lecture unit that should have ingested content but does not. */

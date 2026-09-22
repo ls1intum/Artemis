@@ -179,32 +179,42 @@ export class CourseIngestionBrowserTreeComponent {
             }
         }
 
+        const contentNodesFor = (unitId: number): ContentNode[] =>
+            unitIdsByContentKey
+                .filter((content) => content.unitIds.has(unitId))
+                .map((content) => {
+                    const contentSelection: BrowserSelection = { kind: 'collection', unitId, key: content.key };
+                    return { key: selectionKey(contentSelection), selection: contentSelection, contentKey: content.key };
+                });
+
+        const unitNode = (unitId: number, title: string): UnitNode => {
+            const selection: BrowserSelection = { kind: 'unit', unitId };
+            return { key: selectionKey(selection), selection, unitId, title, content: contentNodesFor(unitId), complete: !unitsWithGaps.has(unitId) };
+        };
+
         const unitsByLecture = new Map<number, UnitNode[]>();
-        const unitIdsWithANode = new Set<number>();
+        const addUnit = (lectureId: number, unit: UnitNode) => unitsByLecture.set(lectureId, [...(unitsByLecture.get(lectureId) ?? []), unit]);
+
         for (const entity of entities) {
-            if (entity.type !== 'lecture_unit') {
+            if (entity.type !== 'lecture_unit' || entity.lectureId === undefined) {
                 continue;
             }
-            const lectureId = entity.lectureId;
-            if (lectureId === undefined) {
+            addUnit(entity.lectureId, unitNode(entity.entityId, entity.title ?? ''));
+        }
+
+        // A unit the database still has but the index does not belongs under its lecture like any other: only its
+        // metadata is absent, which the scoreboard already counts, while its content is real. Leaving it out was what
+        // made that content look like the leftovers of a unit nobody has any more. A unit with nothing stored is left
+        // out, the same way a lecture with nothing under it gets no node.
+        const unitIdsFromTheIndex = new Set(entities.filter((entity) => entity.type === 'lecture_unit').map((entity) => entity.entityId));
+        for (const missing of this.missingEntities()) {
+            if (missing.type !== 'lecture_unit' || missing.lectureId === undefined || unitIdsFromTheIndex.has(missing.entityId)) {
                 continue;
             }
-            const unitSelection: BrowserSelection = { kind: 'unit', unitId: entity.entityId };
-            const unit: UnitNode = {
-                key: selectionKey(unitSelection),
-                selection: unitSelection,
-                unitId: entity.entityId,
-                title: entity.title ?? '',
-                content: unitIdsByContentKey
-                    .filter((content) => content.unitIds.has(entity.entityId))
-                    .map((content) => {
-                        const contentSelection: BrowserSelection = { kind: 'collection', unitId: entity.entityId, key: content.key };
-                        return { key: selectionKey(contentSelection), selection: contentSelection, contentKey: content.key };
-                    }),
-                complete: !unitsWithGaps.has(entity.entityId),
-            };
-            unitsByLecture.set(lectureId, [...(unitsByLecture.get(lectureId) ?? []), unit]);
-            unitIdsWithANode.add(entity.entityId);
+            const unit = unitNode(missing.entityId, missing.title ?? '');
+            if (unit.content.length > 0) {
+                addUnit(missing.lectureId, unit);
+            }
         }
 
         // The union of indexed lectures and lectures referenced by an indexed unit, so a unit is never dropped just
@@ -230,17 +240,27 @@ export class CourseIngestionBrowserTreeComponent {
     });
 
     /**
-     * Content whose lecture unit is gone from both the database and the index, grouped on its own because there is no
-     * lecture left to nest it under.
+     * Content whose lecture unit the database no longer has, grouped on its own because there is no lecture left to
+     * nest it under.
      *
-     * The coverage row counts these objects as orphans, so without a node for them the modal names a number an
-     * administrator cannot then look at. The unit itself is not selectable: nothing is stored about it any more, only
-     * the content it left behind, which is what the collections underneath open.
+     * A unit is only counted here when the index does not hold it and the database does not expect it either. Absence
+     * from the index alone says nothing: a unit whose metadata ingestion failed is still in the database, and its
+     * content is valid rather than stale, so it is drawn under its lecture like any other unit instead.
+     *
+     * The unit itself is not selectable: nothing is stored about it any more, so its collections are all there is to
+     * open, and the coverage row counts those objects as orphans.
      */
     protected readonly orphanedContentUnits = computed<OrphanedContentNode[]>(() => {
         const presence = this.contentPresence();
-        const unitIdsWithALectureNode = new Set(this.lectures().flatMap((lecture) => lecture.units.map((unit) => unit.unitId)));
-        const orphanedUnitIds = [...new Set(presence.flatMap((entry) => entry.unitIds))].filter((unitId) => !unitIdsWithALectureNode.has(unitId)).sort((a, b) => a - b);
+        const knownUnitIds = new Set([
+            ...this.entities()
+                .filter((entity) => entity.type === 'lecture_unit')
+                .map((entity) => entity.entityId),
+            ...this.missingEntities()
+                .filter((missing) => missing.type === 'lecture_unit')
+                .map((missing) => missing.entityId),
+        ]);
+        const orphanedUnitIds = [...new Set(presence.flatMap((entry) => entry.unitIds))].filter((unitId) => !knownUnitIds.has(unitId)).sort((a, b) => a - b);
 
         return orphanedUnitIds.map((unitId) => {
             const selection: BrowserSelection = { kind: 'unit', unitId };

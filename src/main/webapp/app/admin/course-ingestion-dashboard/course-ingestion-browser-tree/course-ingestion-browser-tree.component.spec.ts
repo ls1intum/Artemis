@@ -148,6 +148,31 @@ describe('CourseIngestionBrowserTreeComponent', () => {
         expect(query('tree-node-orphaned:11')).toBeFalsy();
     });
 
+    it('should place a unit the database still has under its lecture rather than calling it deleted', () => {
+        // Unit 30 exists in the database but its metadata never reached the index, while its slides did. Absence from
+        // `entities` alone must not be read as deletion: the unit is live and its content is valid, not stale.
+        fixture.componentRef.setInput('missingEntities', [...missingEntities, { type: 'lecture_unit', entityId: 30, title: 'Late slides', lectureId: 20 }]);
+        fixture.componentRef.setInput('contentPresence', [...contentPresence, { key: 'slides', unitIds: [30] }]);
+        fixture.detectChanges();
+
+        expect(query('tree-node-orphaned:30')).toBeFalsy();
+
+        click('tree-toggle-lecture:20');
+        expect(query('tree-node-unit:30')?.textContent).toContain('Late slides');
+
+        click('tree-toggle-unit:30');
+        expect(query('tree-node-coll:30:slides')).toBeTruthy();
+    });
+
+    it('should leave a unit the database still has out of the tree when nothing is stored for it', () => {
+        // Its metadata gap is already counted in the scoreboard, and there is nothing under it to open.
+        fixture.componentRef.setInput('missingEntities', [...missingEntities, { type: 'lecture_unit', entityId: 31, title: 'Nothing stored', lectureId: 20 }]);
+        fixture.detectChanges();
+
+        click('tree-toggle-lecture:20');
+        expect(query('tree-node-unit:31')).toBeFalsy();
+    });
+
     it('should give a unit a node only for the collections that actually hold content for it', () => {
         click('tree-toggle-lecture:20');
         click('tree-toggle-unit:11');

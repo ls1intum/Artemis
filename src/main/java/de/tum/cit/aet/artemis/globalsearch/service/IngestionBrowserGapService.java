@@ -106,7 +106,7 @@ public class IngestionBrowserGapService {
         List<MissingEntityDTO> missing = new ArrayList<>();
         missing.addAll(resolve(SearchableEntitySchema.TypeValues.EXERCISE, expected.exercises().get(courseId), presentByType, this::exerciseTitles));
         missing.addAll(resolve(SearchableEntitySchema.TypeValues.LECTURE, expected.lectures().get(courseId), presentByType, this::lectureTitles));
-        missing.addAll(resolve(SearchableEntitySchema.TypeValues.LECTURE_UNIT, expected.lectureUnits().get(courseId), presentByType, this::lectureUnitTitles));
+        missing.addAll(resolveLectureUnits(expected.lectureUnits().get(courseId), presentByType));
         missing.addAll(resolve(SearchableEntitySchema.TypeValues.EXAM, expected.exams().get(courseId), presentByType, this::examTitles));
         missing.addAll(resolve(SearchableEntitySchema.TypeValues.FAQ, expected.faqs().get(courseId), presentByType, this::faqTitles));
         missing.addAll(resolve(SearchableEntitySchema.TypeValues.CHANNEL, expected.channels().get(courseId), presentByType, this::channelTitles));
@@ -161,7 +161,29 @@ public class IngestionBrowserGapService {
             return List.of();
         }
         Map<Long, String> titles = titleLookup.apply(missingIds);
-        return missingIds.stream().map(id -> new MissingEntityDTO(type, id, titles.get(id))).toList();
+        return missingIds.stream().map(id -> new MissingEntityDTO(type, id, titles.get(id), null)).toList();
+    }
+
+    /**
+     * Lecture units are resolved with their parent lecture as well as their name.
+     * <p>
+     * The browser draws its tree from lecture to unit, so a unit the index does not hold still needs to say which
+     * lecture it sits under. Without that the only thing distinguishing it from content whose unit the database has
+     * lost is an absence, and the browser would have to call a unit that still exists deleted.
+     */
+    private List<MissingEntityDTO> resolveLectureUnits(Set<Long> expectedIds, Map<String, Set<Long>> presentByType) {
+        Set<Long> missingIds = difference(expectedIds, presentByType.get(SearchableEntitySchema.TypeValues.LECTURE_UNIT));
+        if (missingIds.isEmpty()) {
+            return List.of();
+        }
+        Map<Long, LectureUnit> unitsById = lectureUnitRepositoryApi.map(api -> api.findAllByIdsWithLecture(missingIds)).orElseGet(List::of).stream()
+                .filter(unit -> unit.getId() != null).collect(Collectors.toMap(LectureUnit::getId, unit -> unit, (first, second) -> first));
+
+        return missingIds.stream().map(id -> {
+            LectureUnit unit = unitsById.get(id);
+            Long lectureId = unit != null && unit.getLecture() != null ? unit.getLecture().getId() : null;
+            return new MissingEntityDTO(SearchableEntitySchema.TypeValues.LECTURE_UNIT, id, unit == null ? null : unit.getName(), lectureId);
+        }).toList();
     }
 
     /** Expected minus present, treating either side's absence as an empty set. */
