@@ -73,7 +73,8 @@ function createShortAnswerSubmittedAnswerFromStudentDTO(submittedAnswer: ShortAn
                 const text = submittedText.text;
                 const spotId = submittedText.spot?.id;
 
-                if (text !== undefined && spotId !== undefined) {
+                // Unanswered spots are omitted: practice/preview DTOs require submitted texts to be nonblank.
+                if (text?.trim() && spotId !== undefined) {
                     texts.push({ text, spotId });
                 }
 

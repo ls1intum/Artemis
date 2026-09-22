@@ -17,6 +17,7 @@ import {
     MODULE_FEATURE_APOLLON,
     MODULE_FEATURE_ATHENA,
     MODULE_FEATURE_ATLAS,
+    MODULE_FEATURE_ATLASLLM,
     MODULE_FEATURE_DEIMOS,
     MODULE_FEATURE_EXAM,
     MODULE_FEATURE_FILEUPLOAD,
@@ -120,6 +121,7 @@ export class AdminFeatureToggleComponent implements OnInit {
     private readonly displayedModuleFeatures: ModuleFeature[] = [
         MODULE_FEATURE_IRIS,
         MODULE_FEATURE_ATLAS,
+        MODULE_FEATURE_ATLASLLM,
         MODULE_FEATURE_HYPERION,
         MODULE_FEATURE_DEIMOS,
         MODULE_FEATURE_EXAM,
@@ -166,6 +168,7 @@ export class AdminFeatureToggleComponent implements OnInit {
     private readonly moduleDocumentationLinks: Partial<Record<ModuleFeature, string>> = {
         [MODULE_FEATURE_IRIS]: 'https://docs.artemis.tum.de/admin/extensions-setup#edutelligence--iris',
         [MODULE_FEATURE_ATLAS]: 'https://docs.artemis.tum.de/instructor/analytics/adaptive-learning',
+        [MODULE_FEATURE_ATLASLLM]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
         [MODULE_FEATURE_HYPERION]: 'https://docs.artemis.tum.de/admin/hyperion',
         [MODULE_FEATURE_DEIMOS]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
         [MODULE_FEATURE_EXAM]: 'https://docs.artemis.tum.de/instructor/exams/intro',

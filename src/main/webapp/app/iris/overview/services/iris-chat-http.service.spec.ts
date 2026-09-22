@@ -29,7 +29,7 @@ describe('IrisChatHttpService', () => {
         it('should create a message', async () => {
             const returnedFromService = { ...mockClientMessage, id: 0 };
             const expected = { ...returnedFromService, id: 0 };
-            const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text('test message')], 123, {});
+            const requestDTO: IrisMessageRequestDTO = { content: [IrisMessageContentDTO.text('test message')], messageDifferentiator: 123, uncommittedFiles: {} };
             service
                 .createMessage(2, requestDTO)
                 .pipe(take(1))
@@ -45,13 +45,14 @@ describe('IrisChatHttpService', () => {
             const returnedFromService = { ...mockClientMessage, id: 0 };
             const expected = returnedFromService;
             service
-                .resendMessage(mockConversation.id, returnedFromService)
+                .resendMessage(mockConversation.id, returnedFromService, 'client-1')
                 .pipe(take(1))
                 .subscribe((resp) => {
                     expect(resp.body).toEqual(expected);
                     expect(resp.body!.id).toEqual(expected.id);
                 });
             const req = httpMock.expectOne({ method: 'POST' });
+            expect(req.request.params.get('clientId')).toBe('client-1');
             req.flush(returnedFromService);
         });
 

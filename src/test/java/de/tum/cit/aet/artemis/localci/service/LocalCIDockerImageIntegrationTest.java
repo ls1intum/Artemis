@@ -305,12 +305,13 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.C);
         programmingExercise.setProjectType(projectType);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
-        programmingExercise.getBuildConfig().setBuildScript(null);
-        var phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise);
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setBuildScript(null);
+        var phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise, buildConfig);
         var dockerImage = buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise);
         var buildPlanPhasesDTO = new BuildPlanPhasesDTO(phases, dockerImage);
-        programmingExercise.getBuildConfig().setBuildPlanConfiguration(buildPlanPhasesDTO.toBuildPlanConfiguration());
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+        buildConfig.setBuildPlanConfiguration(buildPlanPhasesDTO.toBuildPlanConfiguration());
+        programmingExerciseBuildConfigRepository.save(buildConfig);
         // Capture the managed entity returned by merge() to avoid stale detached entity issues
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
     }

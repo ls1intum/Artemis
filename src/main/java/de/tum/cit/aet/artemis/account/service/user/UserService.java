@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.account.service.user;
 
 import static de.tum.cit.aet.artemis.account.domain.Authority.SUPER_ADMIN_AUTHORITY;
 import static de.tum.cit.aet.artemis.account.domain.User.IRIS_BOT_LOGIN;
+import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MAX_BYTES;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MIN_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
@@ -14,7 +15,8 @@ import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 import static org.apache.commons.lang3.StringUtils.lowerCase;
 
-import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -53,10 +55,10 @@ import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
+import de.tum.cit.aet.artemis.core.dto.PasswordResetKeyDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
@@ -69,7 +71,7 @@ import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingService;
@@ -86,6 +88,8 @@ import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 public class UserService {
 
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
+
+    private static final Duration MAX_RESET_KEY_LIFETIME = Duration.ofSeconds(86400L);
 
     @Value("${artemis.user-management.internal-admin.username:#{null}}")
     private Optional<String> artemisInternalAdminUsername;
@@ -330,14 +334,18 @@ public class UserService {
      * Reset user password for given reset key
      *
      * @param newPassword      new password string
-     * @param key              reset key
+     * @param keyId            reset key id
+     * @param keySecret        reset key secret (not the hashed version)
      * @param revocationChoice which of the user's other credentials to revoke alongside the reset
      * @return user for whom the password was performed
      */
-    public Optional<User> completePasswordReset(String newPassword, String key, CredentialRevocationChoiceDTO revocationChoice) {
-        log.debug("Reset user password for reset key {}", key);
-        return userRecoveryKeyService.findByResetKey(key).filter(row -> row.getResetDate() != null && row.getResetDate().isAfter(Instant.now().minusSeconds(86400)))
-                .flatMap(row -> userRepository.findById(row.getUserId())).map(user -> {
+    public Optional<User> completePasswordReset(String newPassword, String keyId, String keySecret, CredentialRevocationChoiceDTO revocationChoice) {
+        log.debug("Reset user password for reset key with id {}", keyId);
+        return userRecoveryKeyService.findByResetKeyId(keyId)
+                .filter(userKey -> userKey.getResetDate() != null && userKey.getResetDate().isAfter(Instant.now().minus(MAX_RESET_KEY_LIFETIME))
+                        && userKey.getResetKeyHash() != null && passwordService.checkPasswordMatch(keySecret, userKey.getResetKeyHash()))
+                .flatMap(userKey -> userRepository.findById(userKey.getUserId())).map(user -> {
+                    // Hashing can reject the password; keep the reset link usable if it fails.
                     user.setPassword(passwordService.hashPassword(newPassword));
                     userRecoveryKeyService.clearResetKey(user.getId());
                     saveUser(user);
@@ -369,14 +377,17 @@ public class UserService {
      * Set password reset data for a user if eligible
      *
      * @param user user requesting reset
-     * @return true if the user is eligible
+     * @return The newly created reset key for resetting the password; {@code Optional.empty()} iff. not eligible.
      */
-    public boolean prepareUserForPasswordReset(User user) {
+    public Optional<PasswordResetKeyDTO> prepareUserForPasswordReset(User user) {
         if (user.getActivated() && user.isInternal()) {
-            userRecoveryKeyService.storeResetKey(user.getId(), RandomUtil.generateResetKey(), Instant.now());
-            return true;
+            String resetKeyId = RandomUtil.generateResetKeyId();
+            String resetKeySecret = RandomUtil.generateResetKeySecret();
+            String resetKeyHash = passwordService.hashPassword(resetKeySecret);
+            userRecoveryKeyService.storeResetKey(user.getId(), resetKeyId, resetKeyHash, Instant.now());
+            return Optional.of(new PasswordResetKeyDTO(resetKeyId, resetKeySecret));
         }
-        return false;
+        return Optional.empty();
     }
 
     /**
@@ -505,7 +516,7 @@ public class UserService {
      * <p>
      * The account is created externally managed and activated: it authenticates against the directory, so Artemis has no
      * activation step to offer it. Creating it unactivated instead used to leave imported students unable to use their
-     * repositories - see {@link User#activated}.
+     * repositories - see {@link User#getActivated()}.
      *
      * @param userIdentifier       the userIdentifier of the user (e.g. login, email, registration number)
      * @param userSupplierFunction the function that supplies the user, typically a call to ldapUserService, e.g. "() -> ldapUserService.orElseThrow().findByLogin(email)"
@@ -564,7 +575,6 @@ public class UserService {
             globalNotificationSettingService.deleteAllByUserId(user.getId());
             userCourseRoleRepository.deleteByUser_Id(user.getId());
             user.setDeleted(true);
-            user.setLearnerProfile(null);
             anonymizeUser(user);
             log.warn("Soft Deleted User: {}", user);
         });
@@ -606,7 +616,7 @@ public class UserService {
         scienceEventApi.ifPresent(api -> api.renameIdentity(originalLogin, anonymizedLogin));
 
         if (userImageString != null) {
-            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(userImageString), FilePathType.PROFILE_PICTURE), 0);
+            fileService.schedulePathForDeletion(new FileSystemLocation.ProfilePicture(userImageString).path(), 0);
         }
     }
 
@@ -674,7 +684,7 @@ public class UserService {
      * <p>
      * The password can be null, then a random one will be generated ({@code Create}) or it won't be changed ({@code Update}).
      * <p>
-     * If the password is not null, its length has to be at least {@code PASSWORD_MIN_LENGTH}.
+     * If the password is not null, it must satisfy the character length limits and the BCrypt UTF-8 byte limit.
      *
      * @param password The password to check
      */
@@ -687,6 +697,9 @@ public class UserService {
         }
         if (password.length() > PASSWORD_MAX_LENGTH) {
             throw new AccessForbiddenException("The password has to be less than " + PASSWORD_MAX_LENGTH + " characters long");
+        }
+        if (password.getBytes(StandardCharsets.UTF_8).length > PASSWORD_MAX_BYTES) {
+            throw new AccessForbiddenException("The password must not exceed " + PASSWORD_MAX_BYTES + " UTF-8 bytes");
         }
     }
 
@@ -780,7 +793,7 @@ public class UserService {
      * and all three being blank returns empty immediately.
      * <p>
      * An account created from the directory here is created activated, like one created on first login - see
-     * {@link User#activated}.
+     * {@link User#getActivated()}.
      *
      * @param registrationNumber the registration number of the user
      * @param login              the login of the user
@@ -873,7 +886,6 @@ public class UserService {
      *
      * @param user            the user associated with the vcs access token
      * @param participationId the participation's participationId associated with the vcs access token
-     *
      * @return the users participation vcs access token, or throws an exception if it does not exist
      */
     public ParticipationVCSAccessToken getParticipationVcsAccessTokenForUserAndParticipationIdOrElseThrow(User user, Long participationId) {
@@ -885,7 +897,6 @@ public class UserService {
      *
      * @param user            the user associated with the vcs access token
      * @param participationId the participation's participationId associated with the vcs access token
-     *
      * @return the users newly created participation vcs access token, or throws an exception if it already existed
      */
     public ParticipationVCSAccessToken createParticipationVcsAccessTokenForUserAndParticipationIdOrElseThrow(User user, Long participationId) {

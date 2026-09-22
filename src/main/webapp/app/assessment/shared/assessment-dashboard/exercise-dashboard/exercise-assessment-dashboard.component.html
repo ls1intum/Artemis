@@ -143,11 +143,24 @@
                             <div class="col-7" jhiTranslate="artemisApp.exerciseAssessmentDashboard.ratings"></div>
                             <div class="col-5">{{ ratingsDashboardInfo().total }} | {{ ratingsDashboardInfo().tutor }}</div>
                         </div>
-                        <div class="row g-0 mb-1">
-                            <a [routerLink]="exerciseDetailsLink()" [queryParams]="" class="btn btn-info btn-sm me-1 mb-3" id="exercise-details">
+                        <div class="mt-1 grid gap-2" [class.grid-cols-2]="complaintsEnabled()">
+                            <a tumUiButton severity="secondary" size="small" [routerLink]="exerciseDetailsLink()" id="exercise-details">
                                 <fa-icon [icon]="faListAlt" [fixedWidth]="true" />
-                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseAssessmentDashboard.exerciseDetails"></span>
+                                <span class="hidden md:inline" jhiTranslate="artemisApp.exerciseAssessmentDashboard.exerciseDetails"></span>
                             </a>
+                            @if (complaintsEnabled()) {
+                                <a
+                                    tumUiButton
+                                    severity="secondary"
+                                    size="small"
+                                    [routerLink]="complaintsLink()"
+                                    data-testid="exercise-complaints"
+                                    [attr.aria-label]="'artemisApp.exercise.complaints' | artemisTranslate"
+                                >
+                                    <fa-icon [icon]="faFlag" [fixedWidth]="true" />
+                                    <span class="hidden md:inline" jhiTranslate="artemisApp.exercise.complaints"></span>
+                                </a>
+                            }
                         </div>
                     </jhi-side-panel>
 
@@ -445,6 +458,7 @@
                                                                     [result]="getSubmissionResultByCorrectionRound(submission, correctionRound)"
                                                                     [participation]="submission.participation!"
                                                                     [exercise]="exercise()"
+                                                                    [isOwnParticipation]="false"
                                                                 />
                                                             </td>
                                                             @if (exercise().type === ExerciseType.TEXT) {
@@ -569,6 +583,7 @@
                                                         [result]="submissionWithComplaint.submission.latestResult"
                                                         [participation]="submissionWithComplaint.complaint.result!.submission!.participation!"
                                                         [exercise]="exercise()"
+                                                        [isOwnParticipation]="false"
                                                     />
                                                 </td>
                                                 <td>
@@ -673,7 +688,7 @@
                                                 <td>{{ i + 1 }}</td>
                                                 <td>{{ moreFeedbackRequest.complaint.submittedTime | artemisDate }}</td>
                                                 <td>
-                                                    <jhi-result [result]="moreFeedbackRequest.complaint.result" [exercise]="exercise()" />
+                                                    <jhi-result [result]="moreFeedbackRequest.complaint.result" [exercise]="exercise()" [isOwnParticipation]="false" />
                                                 </td>
                                                 <td>
                                                     @if (moreFeedbackRequest.complaint.accepted === undefined) {
