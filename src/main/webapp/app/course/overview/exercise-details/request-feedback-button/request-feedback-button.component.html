@@ -1,15 +1,4 @@
 @if (!isExamExercise() && requestFeedbackEnabled() && athenaEnabled()) {
-    @if (showOptInPrompt() && showHint()) {
-        <div class="ai-feedback-hint flex items-center gap-2" [id]="'ai-feedback-hint-' + exercise().id">
-            <span class="text-muted" [jhiTranslate]="aiFeedbackHintKey()"></span>
-            <ng-container [ngTemplateOutlet]="feedbackButton" />
-        </div>
-    } @else {
-        <ng-container [ngTemplateOutlet]="feedbackButton" />
-    }
-}
-
-<ng-template #feedbackButton>
     @if (asTumUiButton()) {
         <tum-ui-button
             [size]="smallButtons() ? 'small' : 'default'"
@@ -34,4 +23,4 @@
             <span [class]="alwaysShowLabel() ? '' : 'd-none d-md-inline'" [jhiTranslate]="buttonLabelKey()"></span>
         </button>
     }
-</ng-template>
+}

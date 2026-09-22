@@ -12,8 +12,6 @@
             "startPractice": "Start practice",
             "resumeExercise": "Resume exercise",
             "requestAutomaticFeedback": "Request AI feedback",
-            "aiFeedbackAvailableHint": "This exercise supports AI-generated feedback.",
-            "aiFeedbackAvailableHintNoAi": "AI feedback is disabled because you selected No AI.",
             "chooseAiExperience": "Choose AI Experience",
             "changeAiExperience": "Change AI Experience",
             "resumeExercisePractice": "Resume practice in exercise",

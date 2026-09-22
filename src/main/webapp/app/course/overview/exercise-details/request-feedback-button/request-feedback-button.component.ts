@@ -1,5 +1,4 @@
 import { Component, OnDestroy, OnInit, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
 import { Subscription, filter, skip } from 'rxjs';
 import { TumUiButtonComponent } from '@tumaet/ui-angular';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -45,7 +44,7 @@ function isPendingAthenaFeedbackResult(result: Result | undefined): boolean {
 
 @Component({
     selector: 'jhi-request-feedback-button',
-    imports: [TumUiButtonComponent, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective, NgTemplateOutlet],
+    imports: [TumUiButtonComponent, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
     templateUrl: './request-feedback-button.component.html',
 })
 export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
@@ -69,9 +68,6 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     readonly hasUserAcceptedLLMUsage = signal(false);
     /** A deliberate No AI choice, as opposed to no choice yet: the prompt then offers to change the selection instead of making one. */
     readonly hasChosenNoAi = computed(() => this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.NO_AI);
-    readonly aiFeedbackHintKey = computed(() =>
-        this.hasChosenNoAi() ? 'artemisApp.exerciseActions.aiFeedbackAvailableHintNoAi' : 'artemisApp.exerciseActions.aiFeedbackAvailableHint',
-    );
     readonly aiExperienceActionKey = computed(() => (this.hasChosenNoAi() ? 'artemisApp.exerciseActions.changeAiExperience' : 'artemisApp.exerciseActions.chooseAiExperience'));
     currentFeedbackRequestCount = signal(0);
     readonly feedbackRequestLimit = DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT;
@@ -89,10 +85,8 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     smallButtons = input<boolean>(false);
     exercise = input.required<Exercise>();
     readonly participationId = input<number>();
-    /** Whether the "enable AI feedback" hint text is rendered next to the button, or just the bare button. */
-    readonly showHint = input<boolean>(true);
     /**
-     * Whether a user without an AI-enabled AI Experience gets the dedicated prompt (hint and Choose/Change AI Experience button).
+     * Whether a user without an AI-enabled AI Experience gets the dedicated prompt (a Choose/Change AI Experience button).
      * Off by default, so every user sees the plain "Request AI feedback" button, whose click still opens the AI Experience
      * selection first if needed; the exercise header and its post-submission popover opt in.
      */

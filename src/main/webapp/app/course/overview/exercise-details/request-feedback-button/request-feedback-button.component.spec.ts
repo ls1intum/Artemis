@@ -395,12 +395,11 @@ describe('RequestFeedbackButtonComponent', () => {
     });
 
     it.each([
-        { selection: undefined, hintKey: 'aiFeedbackAvailableHint', actionKey: 'chooseAiExperience' },
-        { selection: LLMSelectionDecision.NO_AI, hintKey: 'aiFeedbackAvailableHintNoAi', actionKey: 'changeAiExperience' },
-    ])('should offer to $actionKey when the AI Experience selection is $selection', ({ selection, hintKey, actionKey }) => {
+        { selection: undefined, actionKey: 'chooseAiExperience' },
+        { selection: LLMSelectionDecision.NO_AI, actionKey: 'changeAiExperience' },
+    ])('should offer to $actionKey when the AI Experience selection is $selection', ({ selection, actionKey }) => {
         vi.spyOn(accountService, 'userIdentity').mockReturnValue({ selectedLLMUsage: selection } as any);
 
-        expect(component.aiFeedbackHintKey()).toBe(`artemisApp.exerciseActions.${hintKey}`);
         expect(component.aiExperienceActionKey()).toBe(`artemisApp.exerciseActions.${actionKey}`);
     });
 
@@ -786,7 +785,7 @@ describe('RequestFeedbackButtonComponent', () => {
     });
 
     describe('when Athena is enabled but user has not accepted LLM usage', () => {
-        it('should show an AI feedback hint instead of the raw feedback link', async () => {
+        it('should show the AI Experience button instead of the raw feedback link', async () => {
             vi.useFakeTimers();
             setAthenaEnabled(true);
             const participation = createParticipation();
@@ -795,13 +794,12 @@ describe('RequestFeedbackButtonComponent', () => {
 
             await initAndTick();
 
-            const hint = debugElement.query(By.css('#ai-feedback-hint-' + exercise.id));
-            expect(hint).not.toBeNull();
+            expect(debugElement.query(By.css('#enable-ai-feedback-' + exercise.id))).not.toBeNull();
             const rawLink = debugElement.query(By.css('a.btn'));
             expect(rawLink).toBeNull();
         });
 
-        it('should open the LLM selection modal when the hint button is clicked, without sending a raw feedback request', async () => {
+        it('should open the LLM selection modal when the AI Experience button is clicked, without sending a raw feedback request', async () => {
             vi.useFakeTimers();
             setAthenaEnabled(true);
             const participation = createParticipation();
@@ -834,7 +832,6 @@ describe('RequestFeedbackButtonComponent', () => {
 
             await initAndTick();
 
-            expect(debugElement.query(By.css('#ai-feedback-hint-' + exercise.id))).toBeNull();
             expect(debugElement.query(By.css('#enable-ai-feedback-' + exercise.id))).toBeNull();
             const button = debugElement.query(By.css('#request-feedback-' + exercise.id));
             expect(button).not.toBeNull();
@@ -845,7 +842,7 @@ describe('RequestFeedbackButtonComponent', () => {
             expect(requestSpy).not.toHaveBeenCalled();
         });
 
-        it('should request feedback automatically after the user accepts AI usage from the hint modal', async () => {
+        it('should request feedback automatically after the user accepts AI usage from the AI Experience modal', async () => {
             vi.useFakeTimers();
             setAthenaEnabled(true);
             const participation = createParticipation();
@@ -864,7 +861,7 @@ describe('RequestFeedbackButtonComponent', () => {
             expect(requestSpy).toHaveBeenCalledWith(exercise.id, participation.id);
         });
 
-        it('should provide an accessible name for the hint button', async () => {
+        it('should provide an accessible name for the AI Experience button', async () => {
             vi.useFakeTimers();
             setAthenaEnabled(true);
             const participation = createParticipation();
@@ -877,7 +874,7 @@ describe('RequestFeedbackButtonComponent', () => {
             expect(button.nativeElement.getAttribute('aria-label')).toBeTruthy();
         });
 
-        it('should disable the hint button once the feedback limit is reached', async () => {
+        it('should disable the AI Experience button once the feedback limit is reached', async () => {
             vi.useFakeTimers();
             setAthenaEnabled(true);
             const participation: StudentParticipation = {

@@ -12,8 +12,6 @@
             "startPractice": "Übung starten",
             "resumeExercise": "Aufgabe fortführen",
             "requestAutomaticFeedback": "AI Feedback anfragen",
-            "aiFeedbackAvailableHint": "Diese Aufgabe unterstützt KI-generiertes Feedback.",
-            "aiFeedbackAvailableHintNoAi": "KI-Feedback ist deaktiviert, weil du „Keine KI“ ausgewählt hast.",
             "chooseAiExperience": "KI-Erfahrung wählen",
             "changeAiExperience": "KI-Erfahrung ändern",
             "resumeExercisePractice": "Üben von Aufgabe fortführen",
