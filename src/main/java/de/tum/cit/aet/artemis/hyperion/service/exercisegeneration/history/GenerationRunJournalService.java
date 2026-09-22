@@ -61,7 +61,11 @@ public class GenerationRunJournalService {
         started(event.run());
     }
 
-    /** Records the admitted run before any asynchronous execution or variant draft commit. */
+    /**
+     * Records the admitted run before any asynchronous execution or variant draft commit.
+     *
+     * @param event admitted run identity and ownership
+     */
     public void started(GenerationStartedEvent event) {
         var run = new AuthoringRun();
         run.setJobId(event.jobId());
