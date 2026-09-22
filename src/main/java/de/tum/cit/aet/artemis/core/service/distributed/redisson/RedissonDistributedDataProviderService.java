@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.config.RedisDistributedDataCondition;
 import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema;
+import de.tum.cit.aet.artemis.core.service.distributed.api.CoordinationSnapshot;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DefaultTimeToLiveDistributedMap;
@@ -60,6 +61,9 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
 
     private final RedisClientListResolver redisClientListResolver;
 
+    /** Stable for this provider lifetime and distinct even when several nodes use the default Redis client name. */
+    private final String localNodeId;
+
     /**
      * Registered client disconnection listeners. The callback receives the disconnected client's name.
      */
@@ -90,7 +94,8 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
      */
     private final Object pollingLock = new Object();
 
-    public RedissonDistributedDataProviderService(RedissonClient redissonClient, RedisClientListResolver redisClientListResolver) {
+    public RedissonDistributedDataProviderService(RedissonClient redissonClient, RedisClientListResolver redisClientListResolver, RedisNodeIdentity identity) {
+        this.localNodeId = identity.connectionName();
         this.redissonClient = redissonClient;
         this.redisClientListResolver = redisClientListResolver;
     }
@@ -191,6 +196,23 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
     @Override
     public String getLocalMemberAddress() {
         return redisClientName;
+    }
+
+    @Override
+    public String getLocalNodeId() {
+        return localNodeId;
+    }
+
+    @Override
+    public Optional<CoordinationSnapshot> getCoordinationSnapshot() {
+        if (!isInstanceRunning()) {
+            return Optional.empty();
+        }
+        var snapshot = redisClientListResolver.resolveClients();
+        if (!snapshot.complete() || !snapshot.coordinationNodeIds().contains(localNodeId)) {
+            return Optional.empty();
+        }
+        return Optional.of(new CoordinationSnapshot(snapshot.coordinationNodeIds(), false));
     }
 
     /**

@@ -58,6 +58,7 @@ import de.tum.cit.aet.artemis.exercise.service.FeedbackRequestService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
@@ -110,12 +111,14 @@ public class ParticipationResource {
 
     private final FeedbackRequestService feedbackRequestService;
 
+    private final Optional<HyperionExerciseMutationApi> hyperionExerciseMutationApi;
+
     public ParticipationResource(ParticipationService participationService, ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             AuthorizationCheckService authCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
             FeatureToggleService featureToggleService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             SubmissionRepository submissionRepository, ExerciseDateService exerciseDateService, ParticipationAuthorizationService participationAuthorizationService,
             Optional<StudentExamApi> studentExamApi, ModuleFeatureService moduleFeatureService, FeedbackRequestService feedbackRequestService,
-            CourseAthenaConfigRepository courseAthenaConfigRepository) {
+            CourseAthenaConfigRepository courseAthenaConfigRepository, Optional<HyperionExerciseMutationApi> hyperionExerciseMutationApi) {
         this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.participationService = participationService;
         this.exerciseRepository = exerciseRepository;
@@ -131,6 +134,7 @@ public class ParticipationResource {
         this.studentExamApi = studentExamApi;
         this.moduleFeatureService = moduleFeatureService;
         this.feedbackRequestService = feedbackRequestService;
+        this.hyperionExerciseMutationApi = hyperionExerciseMutationApi;
     }
 
     /**
@@ -161,7 +165,8 @@ public class ParticipationResource {
             throw new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "teamExercise.cannotStart");
         }
         StudentParticipation participation;
-        try {
+        var reservation = claimParticipationReservation(exercise);
+        try (reservation) {
             participation = participationService.startExercise(exercise, participant, true);
         }
         catch (Exception e) {
@@ -226,7 +231,10 @@ public class ParticipationResource {
                     "practiceModeNoGradedParticipation");
         }
 
-        StudentParticipation participation = participationService.startPracticeMode(exercise, user, optionalGradedStudentParticipation, useGradedParticipation);
+        StudentParticipation participation;
+        try (var reservation = claimParticipationReservation(exercise)) {
+            participation = participationService.startPracticeMode(exercise, user, optionalGradedStudentParticipation, useGradedParticipation);
+        }
 
         return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(StudentParticipationDTO.ofAfterStart(participation, user));
     }
@@ -344,6 +352,16 @@ public class ParticipationResource {
 
         StudentParticipation updatedParticipation = feedbackRequestService.processFeedbackRequest(exercise, participation);
         return ResponseEntity.ok().body(StudentParticipationDTO.ofWithLatestResult(updatedParticipation));
+    }
+
+    /** Holds a shared template-copy reservation without serializing concurrent student starts. */
+    private HyperionExerciseMutationApi.ParticipationReservation claimParticipationReservation(Exercise exercise) {
+        if (exercise instanceof ProgrammingExercise && hyperionExerciseMutationApi.isPresent()) {
+            var api = hyperionExerciseMutationApi.get();
+            return api.reserveParticipation(exercise.getId());
+        }
+        return new HyperionExerciseMutationApi.ParticipationReservation(() -> {
+        });
     }
 
     /**

@@ -34,6 +34,11 @@ public class NonExpiringDistributedMap<K, V> extends DelegatingDistributedMap<K,
         throw rejectExpiry();
     }
 
+    @Override
+    public boolean refreshTimeToLive(K key, Duration timeToLive) {
+        throw rejectExpiry();
+    }
+
     private UnsupportedOperationException rejectExpiry() {
         return new UnsupportedOperationException(
                 "Map '" + name + "' was not created as an expiring map, so entries would never expire. Obtain it via DistributedDataProvider.getExpiringMap(name, ttl).");
