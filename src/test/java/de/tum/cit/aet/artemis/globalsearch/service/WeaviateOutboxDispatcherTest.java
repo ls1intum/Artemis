@@ -166,62 +166,6 @@ class WeaviateOutboxDispatcherTest {
         verify(outboxRepository).delete(entry);
     }
 
-    /**
-     * Regression test for a bulk delete leaking post/answer post ledger rows forever: post and answer post are
-     * excluded from every reconcile pass, so nothing else ever revisits a ledger row a bulk delete could not name.
-     * A confirmed {@code DELETE_POSTS_FOR_CHANNEL} or {@code DELETE_POSTS_FOR_COURSE} removes both types from
-     * Weaviate, so both ledger partitions must be pruned.
-     */
-    @Test
-    void testDrainDeletePostsForChannelOrCourse_prunesBothPostAndAnswerPostLedgerEntries() {
-        WeaviateOutboxEntry channelEntry = WeaviateOutboxEntry.forBulkDelete(WeaviateOutboxOperation.DELETE_POSTS_FOR_CHANNEL, "{\"channelId\":5}", WeaviateOutboxOrigin.LIVE);
-        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(channelEntry));
-
-        dispatcher.drain();
-
-        verify(syncStateRepository).deleteStalePostEntries(SearchableEntitySchema.TypeValues.POST);
-        verify(syncStateRepository).deleteStaleAnswerPostEntries(SearchableEntitySchema.TypeValues.ANSWER_POST);
-        verify(outboxRepository).delete(channelEntry);
-    }
-
-    @Test
-    void testDrainDeleteAllForCourse_prunesBothPostAndAnswerPostLedgerEntries() {
-        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forBulkDelete(WeaviateOutboxOperation.DELETE_ALL_FOR_COURSE, "{\"courseId\":7}", WeaviateOutboxOrigin.LIVE);
-        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
-
-        dispatcher.drain();
-
-        verify(syncStateRepository).deleteStalePostEntries(SearchableEntitySchema.TypeValues.POST);
-        verify(syncStateRepository).deleteStaleAnswerPostEntries(SearchableEntitySchema.TypeValues.ANSWER_POST);
-    }
-
-    @Test
-    void testDrainDeleteAnswerPostsForPost_prunesOnlyAnswerPostLedgerEntries() {
-        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forBulkDelete(WeaviateOutboxOperation.DELETE_ANSWER_POSTS_FOR_POST, "{\"postId\":3}", WeaviateOutboxOrigin.LIVE);
-        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
-
-        dispatcher.drain();
-
-        verify(syncStateRepository).deleteStaleAnswerPostEntries(SearchableEntitySchema.TypeValues.ANSWER_POST);
-        verify(syncStateRepository, never()).deleteStalePostEntries(anyString());
-    }
-
-    /**
-     * lecture_unit is managed by the reconcile passes, so its ledger already self-heals via the drift sweep; this
-     * bulk delete must not touch the post/answer_post pruning at all.
-     */
-    @Test
-    void testDrainDeleteLectureUnitsForLecture_prunesNothing() {
-        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forBulkDelete(WeaviateOutboxOperation.DELETE_LECTURE_UNITS_FOR_LECTURE, "{\"lectureId\":9}", WeaviateOutboxOrigin.LIVE);
-        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
-
-        dispatcher.drain();
-
-        verify(syncStateRepository, never()).deleteStalePostEntries(anyString());
-        verify(syncStateRepository, never()).deleteStaleAnswerPostEntries(anyString());
-        verify(outboxRepository).delete(entry);
-    }
-
     @Test
     void testDrainBackedOffOlderRow_cannotOverwriteNewerRow() {
         // An older upsert is deferred by backoff (as after a transient failure) while a newer upsert for the

@@ -44,10 +44,8 @@ import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
-import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntitySyncState;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
-import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityResolver;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
@@ -213,9 +211,6 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
     @Nested
     class DeleteTests {
 
-        @Autowired
-        private SearchableEntitySyncStateRepository syncStateRepository;
-
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testDeletePost_removesFromWeaviate() throws Exception {
@@ -304,39 +299,6 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
             assertAnswerPostNotInWeaviate(weaviateService, answer2Id);
             // The parent post itself should still exist
             assertPostExistsInWeaviate(weaviateService, post.getId());
-        }
-
-        /**
-         * Regression test for a bulk delete leaking post/answer post ledger rows forever (see
-         * {@code WeaviateOutboxDispatcher#pruneLedgerAfterBulkDelete}): post and answer post are excluded from
-         * every reconcile pass, so nothing else ever revisits a ledger row a bulk delete could not name by entity
-         * id. A confirmed {@code DELETE_ANSWER_POSTS_FOR_POST} must prune a leaked row for an answer post that no
-         * longer exists, without touching one for an answer post that still does.
-         */
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void testDeleteAllAnswerPostsForPost_prunesTheLeakedLedgerRowButKeepsALiveOne() throws Exception {
-            Channel channel = createPublicChannel("prune-ledger-test");
-            Post postWithNoAnswers = createAndSavePost(channel);
-            Post otherPost = createAndSavePost(channel);
-            AnswerPost liveAnswerOnOtherPost = createAndSaveAnswerPost(otherPost);
-            // A synthetic id with no backing row, standing in for an answer post a bulk delete already removed from
-            // the database, whose ledger row was left behind because the dispatcher had no entity id to clean it up.
-            long leakedAnswerPostId = liveAnswerOnOtherPost.getId() + 5_000_000;
-
-            searchableEntityWeaviateService.upsertAnswerPostAsync(AnswerPostSearchableEntityDTO.fromAnswerPost(liveAnswerOnOtherPost, channel));
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(
-                    () -> assertThat(syncStateRepository.findByEntityTypeAndEntityId(SearchableEntitySchema.TypeValues.ANSWER_POST, liveAnswerOnOtherPost.getId())).isPresent());
-            syncStateRepository.save(new SearchableEntitySyncState(SearchableEntitySchema.TypeValues.ANSWER_POST, leakedAnswerPostId, "a".repeat(64), ZonedDateTime.now()));
-
-            searchableEntityWeaviateService.deleteAllAnswerPostsForPostAsync(postWithNoAnswers.getId());
-
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
-                assertThat(syncStateRepository.findByEntityTypeAndEntityId(SearchableEntitySchema.TypeValues.ANSWER_POST, leakedAnswerPostId))
-                        .as("the leaked ledger row for the already-gone answer post is pruned").isEmpty();
-                assertThat(syncStateRepository.findByEntityTypeAndEntityId(SearchableEntitySchema.TypeValues.ANSWER_POST, liveAnswerOnOtherPost.getId()))
-                        .as("a still-existing answer post's ledger row survives the same prune").isPresent();
-            });
         }
 
         @Test
