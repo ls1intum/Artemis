@@ -19,10 +19,10 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.deimos.config.DeimosEnabled;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosFailureType;
@@ -203,10 +203,10 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
                 return Optional.empty();
             }
             JsonNode rationaleNode = root.get(RATIONALE_FIELD);
-            if (rationaleNode == null || !rationaleNode.isTextual() || rationaleNode.asText().isBlank()) {
+            if (rationaleNode == null || !rationaleNode.isString() || rationaleNode.asString().isBlank()) {
                 return Optional.empty();
             }
-            return Optional.of(new DeimosLlmResponse(maliciousNode.asBoolean(), rationaleNode.asText()));
+            return Optional.of(new DeimosLlmResponse(maliciousNode.asBoolean(), rationaleNode.asString()));
         }
         catch (Exception ex) {
             log.debug("Deimos verdict candidate could not be parsed as JSON", ex);
