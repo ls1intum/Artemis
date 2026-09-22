@@ -107,7 +107,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `Complaint` | Result `result_id` | Required | No | Complainant is a student or a team; both columns are nullable. |
 | `ComplaintResponse` | Complaint `complaint_id` | Required | No |  |
 | `ExampleSubmission` | Exercise `exercise_id` | Required | No |  |
-| `Feedback` | Result `result_id` | Optional | **Yes** | Nullable. |
+| `Feedback` | Result `result_id` | Required | No | Cascades. |
 | `FeedbackMessage` | — | Root | No | Reference data. |
 | `GradeStep` | GradingScale `grading_scale_id` | Required | No |  |
 | `GradingCriterion` | Exercise `exercise_id` | Required | No |  |
@@ -148,7 +148,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `ConversationParticipant` | Conversation `conversation_id` and User `user_id` | Required (all) | No |  |
 | `Faq` | Course `course_id` | Required | No |  |
 | `ForwardedMessage` | Post `destination_post_id` or AnswerPost `destination_answer_id` | Required (check constraint) | No | `CHECK_DESTINATION_POST_OR_ANSWER`. |
-| `Post` | Conversation `conversation_id` or PlagiarismCase `plagiarism_case_id` | Optional (alternatives) | **Yes** | Both nullable; nothing enforces at least one. |
+| `Post` | Conversation `conversation_id` or PlagiarismCase `plagiarism_case_id` | Required (alternatives) | No | `CK_POST_HAS_A_PARENT` requires one of the two. |
 | `Reaction` | Post `post_id` or AnswerPost `answer_post_id` | Required (check constraint) | No | `CHECK_REACTION_POST_OR_ANSWER`. |
 | `SavedPost` | User `user_id` | Required | No |  |
 
@@ -297,7 +297,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | Entity | Belongs to | Parent required | Orphan possible | Notes |
 | --- | --- | --- | --- | --- |
 | `QuizBatch` | QuizExercise `quiz_id` | Required | No |  |
-| `QuizQuestion` and 3 subclasses | QuizExercise `exercise_id` | Optional | **Yes** | Nullable. |
+| `QuizQuestion` and 3 subclasses | QuizExercise `exercise_id` | Required | No | Cascades. |
 | `QuizQuestionProgress` | Course, QuizQuestion and User | Required (all) | No | Cascades on all three. |
 | `QuizTrainingLeaderboard` | Course `course_id` and User `user_id` | Required (all) | No | Cascades on both. |
 | `SubmittedAnswer` and 3 subclasses | Submission `submission_id` | Required | No |  |
@@ -356,12 +356,24 @@ UNION ALL SELECT 'text_block.submission_id',                   COUNT(*) FROM tex
 UNION ALL SELECT 'tutor_participation.assessed_exercise_id',   COUNT(*) FROM tutor_participation            WHERE assessed_exercise_id IS NULL
 UNION ALL SELECT 'tutorial_group.course_id',                   COUNT(*) FROM tutorial_group                 WHERE course_id IS NULL
 UNION ALL SELECT 'grading_scale (exactly one parent)',         COUNT(*) FROM grading_scale                  WHERE (course_id IS NULL) = (exam_id IS NULL)
-UNION ALL SELECT 'reaction (exactly one parent)',              COUNT(*) FROM reaction                       WHERE (post_id IS NULL) = (answer_post_id IS NULL);
+UNION ALL SELECT 'reaction (exactly one parent)',              COUNT(*) FROM reaction                       WHERE (post_id IS NULL) = (answer_post_id IS NULL)
+UNION ALL SELECT 'quiz_question.exercise_id (still answered)',  COUNT(*)
+  FROM submitted_answer sa
+    JOIN submission s ON s.id = sa.submission_id
+    JOIN participation p ON p.id = s.participation_id
+    JOIN quiz_question q ON q.id = sa.quiz_question_id
+  WHERE q.exercise_id IS NULL AND p.exercise_id IS NOT NULL;
 ```
 
-The last two rows are the alternative-parent shape: the check constraint requires exactly one of the
-two columns to be set, so both set and neither set are equally wrong, which is what comparing the two
-`IS NULL` tests finds.
+The `grading_scale` and `reaction` rows are the alternative-parent shape: the check constraint requires
+exactly one of the two columns to be set, so both set and neither set are equally wrong, which is what
+comparing the two `IS NULL` tests finds.
+
+The last row is the shape a count cannot summarise on its own. A quiz question without an exercise is
+removed by the migration, on the grounds that nothing lists it — but an answer to it whose submission
+still reaches a participation is listed by that participant, and the participation names the exercise
+the question belonged to. That is a recoverable parent rather than an orphan, so the changeset halts on
+it rather than deleting the answer. Reattach the question to the exercise its answers point at.
 
 To list the rows themselves rather than count them, replace `COUNT(*)` with the columns you need and
 drop the other branches. Attach each row to its parent where the parent can be established, and
@@ -394,8 +406,30 @@ UNION ALL SELECT 'plagiarism_submission with no comparison', COUNT(*)
   FROM plagiarism_submission WHERE plagiarism_comparison_id IS NULL
 UNION ALL SELECT 'plagiarism_submission_element of those submissions', COUNT(*)
   FROM plagiarism_submission_element WHERE plagiarism_submission_id IN
-       (SELECT id FROM plagiarism_submission WHERE plagiarism_comparison_id IS NULL);
+       (SELECT id FROM plagiarism_submission WHERE plagiarism_comparison_id IS NULL)
+UNION ALL SELECT 'post naming neither a conversation nor a plagiarism case', COUNT(*)
+  FROM post WHERE conversation_id IS NULL AND plagiarism_case_id IS NULL
+UNION ALL SELECT 'answer_post of those posts', COUNT(*)
+  FROM answer_post WHERE post_id IN (SELECT id FROM post WHERE conversation_id IS NULL AND plagiarism_case_id IS NULL)
+UNION ALL SELECT 'reaction on those posts and their answers', COUNT(*)
+  FROM reaction WHERE post_id IN (SELECT id FROM post WHERE conversation_id IS NULL AND plagiarism_case_id IS NULL)
+     OR answer_post_id IN (SELECT id FROM answer_post WHERE post_id IN
+       (SELECT id FROM post WHERE conversation_id IS NULL AND plagiarism_case_id IS NULL))
+UNION ALL SELECT 'feedback naming no result', COUNT(*)
+  FROM feedback WHERE result_id IS NULL
+UNION ALL SELECT 'long_feedback_text of that feedback (goes with it)', COUNT(*)
+  FROM long_feedback_text WHERE feedback_id IN (SELECT id FROM feedback WHERE result_id IS NULL)
+UNION ALL SELECT 'quiz_question naming no exercise', COUNT(*)
+  FROM quiz_question WHERE exercise_id IS NULL
+UNION ALL SELECT 'submitted_answer of those questions', COUNT(*)
+  FROM submitted_answer WHERE quiz_question_id IN (SELECT id FROM quiz_question WHERE exercise_id IS NULL);
 ```
+
+The text blocks of deleted feedback are **not** in that list, because they are not deleted. A text block
+belongs to its submission, which `text_block.submission_id` requires, so it keeps a parent and stays listed
+where it always was; the foreign key sets its `feedback_id` to null and the row is otherwise untouched. To
+see how many lose that reference, count
+`text_block WHERE feedback_id IN (SELECT id FROM feedback WHERE result_id IS NULL)`.
 
 Only the account row is cleared rather than deleted: an access log entry that names an account that
 no longer exists still records what happened to the repository, so it keeps everything except the
@@ -403,23 +437,30 @@ name.
 
 ## Where orphans are still possible
 
-Of the 147 tables behind the 186 entities, 85 have a required parent, 24 are roots by design, 18 are
-join entities whose parents are all required and four carry a check constraint over alternative
-parents. That leaves **16 tables where the schema permits an orphan**, in three shapes.
+Of the 147 tables behind the 186 entities, 87 have a required parent, 24 are roots by design, 18 are
+join entities whose parents are all required and five carry a check constraint over alternative
+parents. That leaves **13 tables where the schema permits an orphan**, in two shapes.
 
 ### An owning foreign key that is nullable
 
-`Participation`, `Submission`, `Feedback`, `QuizQuestion`, `PlagiarismSubmissionElement` and
-`KnowledgeArea`.
+`Participation`, `Submission`, `PlagiarismSubmissionElement` and `KnowledgeArea`.
 
 `KnowledgeArea` is held open by the model rather than by old data: it is a tree, so a null parent
-means a root node. The other five hold rows today that carry no evidence of which parent they
+means a root node. The other three hold rows today that carry no evidence of which parent they
 belonged to, so a constraint needs a decision about those rows before a migration.
 
-### Alternative parents with nothing enforcing the choice
+`Feedback.result` and `QuizQuestion.exercise` used to be here and are now required. Both needed a
+decision beyond the rows. Feedback naming no result is listed by nothing and carries no evidence of
+which result it was written for, so the migration deletes it before requiring the column; the
+questions naming no exercise were reachable only through submitted answers whose submissions had
+themselves lost their participation, so settling them meant settling those rows too.
 
-`Post` may belong to a conversation or to a plagiarism case, and the database accepts a row naming
-neither. The rows that do this predate conversations entirely.
+That retires a whole category of the admin cleanup page. Three of its entries asked what hangs off
+feedback naming no result — the feedback itself, its long feedback text and its text blocks — and
+each can now only ever answer nothing, so the queries behind them go with the constraint rather than
+reporting an empty category forever. The operation keeps the rows that still find something: scores
+naming neither a student nor a team, and everything hanging off a result that has lost its
+submission or participation, which is a different orphan and still reachable.
 
 ### One-to-one where the parent holds the pointer
 
@@ -428,6 +469,21 @@ the only thing keeping them reachable is a nullable column on the parent: `Cours
 `CourseConfiguration`, `OnlineCourseConfiguration`, `TutorialGroupsConfiguration`,
 `TeamAssignmentConfig`, `PlagiarismDetectionConfig`, `SubmissionPolicy`, `BuildPlan` and
 `ProgrammingExerciseBuildConfig`.
+
+Moving the key onto the configuration is the fix, and it costs more than the migration. **The
+parent-side association has to go with it**, not merely become `mappedBy`: the non-owning side of a
+`@OneToOne` cannot be lazy, so Hibernate issues a select per configuration to decide between null
+and a proxy. Leaving four such associations on `Course` turns one query for a course into five,
+which is what `CourseConfigurationLoadProfileTest` measures. So each configuration moves together
+with its readers, onto its own repository read at the decision point — the shape
+`CourseConfigurationRepository` and `CourseAthenaConfigRepository` already have.
+
+Three of them carry a further constraint. `BuildPlan` is shared rather than owned: several
+programming exercises point at one build plan, so there is no single parent for it to name, and "at
+least one exercise still points at this row" is not a foreign key — it needs a cleanup instead.
+`SubmissionPolicy` and `ProgrammingExerciseBuildConfig` are written while a programming exercise is
+being created, before the exercise row exists, so moving their key means the exercise has to be
+saved first, reversing an order the creation path relies on in roughly a hundred places.
 
 `ScienceEvent.resourceId`, `ApollonDiagram.courseId` and `ProgrammingExerciseBuildStatistics` hold
 untyped pointers with no foreign key, which is why they are listed as roots above: there is no

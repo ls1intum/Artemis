@@ -21,6 +21,8 @@ import org.eclipse.jgit.treewalk.TreeWalk;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.programming.domain.Repository;
@@ -67,6 +69,40 @@ class BareGitRepositoryCopyTest {
         assertThat(readFileFromBranchHead("abc-student1")).as("the copy carries the content of the source").isEqualTo("template");
         // The configuration is applied to the copy before it is published, so a repository that arrives at its final path is already usable.
         assertThat(headTargetOf("abc-student1")).as("the copy is configured, so HEAD names the default branch").isEqualTo(Constants.R_HEADS + DEFAULT_BRANCH);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "main, false", "master, false", "release/exercise, false", "main, true", "master, true", "release/exercise, true" })
+    void copyRepository_publishesTheSourceBranchOnTheDefaultBranch(String sourceBranch, boolean withHistory) throws Exception {
+        seedRepository("abc-exercise", "initial template", sourceBranch);
+        Path sourceClone = baseDir.resolve("source-clone");
+        ObjectId sourceHead;
+        try (Git source = Git.cloneRepository().setURI(pathFor("abc-exercise").toUri().toString()).setDirectory(sourceClone.toFile()).call()) {
+            FileUtils.write(sourceClone.resolve("README.md").toFile(), "updated template", StandardCharsets.UTF_8);
+            source.add().addFilepattern(".").call();
+            sourceHead = GitService.commit(source).setMessage("Update template").setAuthor("Artemis", "artemis@example.com").setCommitter("Artemis", "artemis@example.com").call()
+                    .getId();
+            source.push().call();
+        }
+
+        try (Repository copy = withHistory ? bareGitRepositoryService.copyBareRepositoryWithHistory(uriFor("abc-exercise"), uriFor("abc-student1"), sourceBranch)
+                : bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), sourceBranch)) {
+            assertThat(copy.resolve(Constants.HEAD)).as("HEAD resolves to the copied commit").isNotNull().isEqualTo(copy.resolve(Constants.R_HEADS + DEFAULT_BRANCH));
+            assertThat(copy.getRefDatabase().getRefsByPrefix(Constants.R_HEADS)).extracting(ref -> ref.getName()).containsExactly(Constants.R_HEADS + DEFAULT_BRANCH);
+        }
+
+        Path checkout = baseDir.resolve("checkout");
+        try (Git clone = Git.cloneRepository().setURI(pathFor("abc-student1").toUri().toString()).setDirectory(checkout.toFile()).call()) {
+            assertThat(clone.getRepository().getBranch()).isEqualTo(DEFAULT_BRANCH);
+            assertThat(checkout.resolve("README.md")).hasContent("updated template");
+            assertThat(clone.log().call()).hasSize(withHistory ? 2 : 1);
+            if (withHistory) {
+                assertThat(clone.getRepository().resolve(Constants.HEAD)).isEqualTo(sourceHead);
+            }
+        }
+        try (org.eclipse.jgit.lib.Repository source = open("abc-exercise")) {
+            assertThat(source.resolve(Constants.R_HEADS + sourceBranch)).as("the source branch stays untouched").isEqualTo(sourceHead);
+        }
     }
 
     @Test
@@ -136,15 +172,19 @@ class BareGitRepositoryCopyTest {
      * A bare repository only receives a branch once something is pushed to it, so the commit is pushed from a throwaway clone that is deleted again afterwards.
      */
     private void seedRepository(String repositorySlug, String content) throws Exception {
+        seedRepository(repositorySlug, content, DEFAULT_BRANCH);
+    }
+
+    private void seedRepository(String repositorySlug, String content, String branch) throws Exception {
         Path bareRepository = pathFor(repositorySlug);
         Files.createDirectories(bareRepository);
-        Git.init().setDirectory(bareRepository.toFile()).setBare(true).setInitialBranch(DEFAULT_BRANCH).call().close();
+        Git.init().setDirectory(bareRepository.toFile()).setBare(true).setInitialBranch(branch).call().close();
         Path seed = baseDir.resolve("seed-" + repositorySlug);
         try (Git clone = Git.cloneRepository().setURI(bareRepository.toUri().toString()).setDirectory(seed.toFile()).call()) {
             FileUtils.write(seed.resolve("README.md").toFile(), content, StandardCharsets.UTF_8);
             clone.add().addFilepattern(".").call();
             GitService.commit(clone).setMessage("Initial commit").setAuthor("Artemis", "artemis@example.com").setCommitter("Artemis", "artemis@example.com").call();
-            clone.push().setRefSpecs(new RefSpec("HEAD:" + Constants.R_HEADS + DEFAULT_BRANCH)).call();
+            clone.push().setRefSpecs(new RefSpec("HEAD:" + Constants.R_HEADS + branch)).call();
         }
         FileUtils.deleteDirectory(seed.toFile());
     }

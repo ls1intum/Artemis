@@ -71,6 +71,21 @@ describe('TumUiTableComponent', () => {
         expect(cellText).toContain('Beta');
     });
 
+    it('marks only the rows the highlight predicate accepts', async () => {
+        fixture.componentRef.setInput('rowHighlighted', (row: Row) => row.name === 'Beta');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const highlighted = fixture.debugElement.queryAll(By.css('tr[cdk-row]')).map((d) => (d.nativeElement as HTMLElement).classList.contains('tum-ui-table-row-highlighted'));
+        expect(highlighted).toEqual([false, true]);
+    });
+
+    it('marks no row when no highlight predicate is given', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const rows = fixture.debugElement.queryAll(By.css('tr[cdk-row]'));
+        expect(rows.every((d) => !(d.nativeElement as HTMLElement).classList.contains('tum-ui-table-row-highlighted'))).toBe(true);
+    });
+
     it('announces the table as busy while loading', () => {
         fixture.componentRef.setInput('loading', true);
         fixture.detectChanges();

@@ -92,7 +92,7 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
         exercise.setProjectType(ProjectType.PLAIN_GRADLE);
         exercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase(Locale.ROOT) + "-tests.git");
         programmingExerciseRepository.save(exercise);
-        exercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exercise.getId()).orElseThrow();
+        exercise = programmingExerciseRepository.findWithAllParticipationsById(exercise.getId()).orElseThrow();
 
         String templateRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
         TemplateProgrammingExerciseParticipation templateParticipation = exercise.getTemplateParticipation();

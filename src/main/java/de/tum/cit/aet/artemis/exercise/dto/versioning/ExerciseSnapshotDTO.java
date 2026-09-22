@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -52,14 +53,17 @@ public record ExerciseSnapshotDTO(
      *                                    {@code null} for non-programming exercises
      * @return {@link ExerciseSnapshotDTO}
      */
-    public static ExerciseSnapshotDTO of(Exercise exercise, ProgrammingExerciseSnapshotDTO.@Nullable CommitHashesDTO programmingCommitHashes) {
+    public static ExerciseSnapshotDTO of(Exercise exercise, @Nullable ProgrammingExerciseBuildConfig buildConfig,
+            ProgrammingExerciseSnapshotDTO.@Nullable CommitHashesDTO programmingCommitHashes) {
 
         var competencyLinks = CollectionUtil.nullIfEmpty(exercise.getCompetencyLinks().stream().map(CompetencyExerciseLinkSnapshotDTO::of).collect(Collectors.toSet()));
         var gradingCriteria = CollectionUtil.nullIfEmpty(exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet()));
         var categories = CollectionUtil.nullIfEmpty(exercise.getCategories());
         var plagiarismDetectionConfig = PlagiarismDetectionConfigSnapshotDTO.of(exercise.getPlagiarismDetectionConfig());
 
-        var programmingData = exercise instanceof ProgrammingExercise programmingExercise ? ProgrammingExerciseSnapshotDTO.of(programmingExercise, programmingCommitHashes) : null;
+        var programmingData = exercise instanceof ProgrammingExercise programmingExercise
+                ? ProgrammingExerciseSnapshotDTO.of(programmingExercise, buildConfig, programmingCommitHashes)
+                : null;
         var textData = exercise instanceof TextExercise ? TextExerciseSnapshotDTO.of((TextExercise) exercise) : null;
         var modelingData = exercise instanceof ModelingExercise ? ModelingExerciseSnapshotDTO.of((ModelingExercise) exercise) : null;
         var quizData = exercise instanceof QuizExercise ? QuizExerciseSnapshotDTO.of((QuizExercise) exercise) : null;

@@ -36,7 +36,7 @@ A single class while iterating:
 | A repository                           | Transactions, raw JDBC                              |
 | A DTO record                           | DTO conventions                                     |
 | Anything holding state across requests | Caching, distributed data                           |
-| An entity or an association            | Caching, entity conventions                         |
+| An entity or an association            | Caching, entity conventions, column mapping         |
 | Anything at all in a large file        | Counted gates                                       |
 | Anything that lowercases or uppercases | Case conversion                                     |
 | Anything that serializes JSON          | Jackson version                                      |
@@ -83,6 +83,12 @@ has no per-class exceptions at all; only `core.config` may hold a `DataSource`.
 `src/main/java/de/tum/cit/aet/artemis/core/service/distributed/`. Enforced by
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/DistributedDataProviderArchitectureTest.java`.
 The provider is configurable, so direct usage does not fail loudly, it silently loses the state.
+
+**No `@Lob`.** A CLOB on PostgreSQL is a large object, so the value lands in `pg_largeobject` and the
+column keeps only its id - while the long text columns here are Liquibase `longtext` or `clob`, both
+`text` on PostgreSQL, holding the text itself. A `String` or a converted attribute needs no
+annotation at all; for a structured value use `@JdbcTypeCode(SqlTypes.JSON)` over a `json` column.
+Enforced by `testNoLobAnnotation` in `ArchitectureTest.java`.
 
 **No Hibernate second-level cache.** No `@Cache` on entities or associations. Enforced by
 `testNoHibernateSecondLevelCacheAnnotation` in `ArchitectureTest.java`. For DTO and projection
