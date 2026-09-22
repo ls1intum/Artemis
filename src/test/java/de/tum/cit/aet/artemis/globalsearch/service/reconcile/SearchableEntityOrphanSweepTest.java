@@ -196,20 +196,50 @@ class SearchableEntityOrphanSweepTest {
     }
 
     @Test
-    void testATypeIsTrustedOnlyAfterTheSameRatioReproducesOnALaterTick() {
+    void testATypeIsTrustedOnlyOnceADifferentSetOfRowsAlsoLooksOrphaned() {
         configure(0.25, COURSE);
         scanReturns(row(COURSE, 1L, "v1:a"), row(COURSE, 2L, "v1:b"), row(COURSE, 3L, "v1:c"), row(COURSE, 4L, "v1:d"));
         when(idEnumerator.indexableIdsAmong(eq(COURSE), any())).thenReturn(Optional.of(Set.of(1L)));
 
-        sweep.sweep(); // First sighting: refused, remembered.
+        sweep.sweep(); // First sighting: rows 2, 3, 4 flagged. Refused, remembered.
         verify(enqueueService, never()).enqueueDelete(anyString(), anyLong(), any());
         carryStateForward();
 
-        sweep.sweep(); // Same type, sampled again on an unrelated later tick, still over the ratio: now trusted.
+        // A different page of the same type, flagging a disjoint set of rows: genuinely new evidence, not the
+        // same reading (or the same bug) recurring, so this is trusted.
+        scanReturns(row(COURSE, 5L, "v1:e"), row(COURSE, 6L, "v1:f"), row(COURSE, 7L, "v1:g"), row(COURSE, 8L, "v1:h"));
+        when(idEnumerator.indexableIdsAmong(eq(COURSE), any())).thenReturn(Optional.of(Set.of(5L)));
+        sweep.sweep();
 
-        verify(enqueueService).enqueueDelete(COURSE, 2L, WeaviateOutboxOrigin.RECONCILE_ORPHAN);
-        verify(enqueueService).enqueueDelete(COURSE, 3L, WeaviateOutboxOrigin.RECONCILE_ORPHAN);
-        verify(enqueueService).enqueueDelete(COURSE, 4L, WeaviateOutboxOrigin.RECONCILE_ORPHAN);
+        verify(enqueueService).enqueueDelete(COURSE, 6L, WeaviateOutboxOrigin.RECONCILE_ORPHAN);
+        verify(enqueueService).enqueueDelete(COURSE, 7L, WeaviateOutboxOrigin.RECONCILE_ORPHAN);
+        verify(enqueueService).enqueueDelete(COURSE, 8L, WeaviateOutboxOrigin.RECONCILE_ORPHAN);
+        // The rows flagged only on the refused first sighting are never acted on at all.
+        verify(enqueueService, never()).enqueueDelete(eq(COURSE), eq(2L), any());
+    }
+
+    /**
+     * Regression test for a real bug found in review: the previous design trusted a type as soon as the same
+     * ratio came back over threshold on a later tick, treating that repetition as independent confirmation. It
+     * is not. A collection too small to page past (or any collection where nothing has changed) reads the exact
+     * same rows every tick, and a deterministic bug in the eligibility check reproduces identically on every row
+     * it touches regardless of which rows those are — so the same over-threshold reading recurring, on its own,
+     * proves nothing and must never be trusted, however many times it recurs.
+     */
+    @Test
+    void testTheExactSameFlaggedRowsNeverConfirmNoMatterHowManyTimesTheyRecur() {
+        configure(0.25, COURSE);
+        // A collection smaller than the scan budget: every tick reads this identical page, exactly as scanFrom
+        // behaves once the whole collection fits in one read (its cursor comes back null every time).
+        scanReturns(row(COURSE, 1L, "v1:a"), row(COURSE, 2L, "v1:b"), row(COURSE, 3L, "v1:c"), row(COURSE, 4L, "v1:d"));
+        when(idEnumerator.indexableIdsAmong(eq(COURSE), any())).thenReturn(Optional.of(Set.of(1L)));
+
+        for (int tick = 0; tick < 5; tick++) {
+            sweep.sweep();
+            carryStateForward();
+        }
+
+        verify(enqueueService, never()).enqueueDelete(anyString(), anyLong(), any());
     }
 
     @Test
@@ -217,14 +247,20 @@ class SearchableEntityOrphanSweepTest {
         configure(0.25, COURSE);
         scanReturns(row(COURSE, 1L, "v1:a"), row(COURSE, 2L, "v1:b"), row(COURSE, 3L, "v1:c"), row(COURSE, 4L, "v1:d"));
         when(idEnumerator.indexableIdsAmong(eq(COURSE), any())).thenReturn(Optional.of(Set.of(1L)));
-
         sweep.sweep(); // First sighting: refused.
         carryStateForward();
-        sweep.sweep(); // Second sighting: trusted, acts.
-        sweep.sweep(); // Still over the ratio (a large batch this tiny cap has not fully drained yet), but already
-                       // trusted from the tick before, so it acts again without re-earning that trust from scratch.
 
-        verify(enqueueService, times(2)).enqueueDelete(eq(COURSE), eq(2L), eq(WeaviateOutboxOrigin.RECONCILE_ORPHAN));
+        // A different set earns trust.
+        scanReturns(row(COURSE, 5L, "v1:e"), row(COURSE, 6L, "v1:f"), row(COURSE, 7L, "v1:g"), row(COURSE, 8L, "v1:h"));
+        when(idEnumerator.indexableIdsAmong(eq(COURSE), any())).thenReturn(Optional.of(Set.of(5L)));
+        sweep.sweep(); // Second sighting, a different set: trusted, acts.
+        carryStateForward();
+
+        // The exact same set as the previous tick this time (a large batch this tiny cap has not fully drained
+        // yet), but already trusted, so it acts again without needing yet another different set to re-earn that.
+        sweep.sweep();
+
+        verify(enqueueService, times(2)).enqueueDelete(eq(COURSE), eq(6L), eq(WeaviateOutboxOrigin.RECONCILE_ORPHAN));
     }
 
     @Test

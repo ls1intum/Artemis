@@ -43,17 +43,20 @@ import tools.jackson.databind.json.JsonMapper;
  * This is the only pass that removes anything, so its guards matter more than its logic. It refuses to act on a
  * type it does not manage and on a type whose module is disabled. It also never deletes off one suspicious
  * reading: a type whose orphan ratio comes back over {@link WeaviateReconcileProperties#orphanAbortRatio()} is
- * only logged and skipped the first time, not acted on. The deterministic UUID scheme scatters one type's rows
- * across the whole keyspace (see {@code WeaviateUuidUtil}), so consecutive ticks sample different, independent
- * slices of it rather than reading the same rows twice; only once the same type comes back over the ratio again,
- * on a later tick, does the pass trust the reading enough to act, since a stale scan or a bug in the eligibility
- * check is very unlikely to reproduce identically on an unrelated later sample. Once trusted, a type stays
- * trusted on every later tick, however many it takes to fully drain a genuinely large batch, until a tick finds
- * it healthy again. It also cannot remove more than a set number of rows in one tick, which bounds the damage of
- * being wrong about all of the above even once trusted. One type failing every guard never withholds a tick's
- * progress from the others: each type in a scanned page is judged and acted on independently, and the cursor
- * always advances regardless of the outcome, so no type can block the rest of the collection from ever being
- * looked at again.
+ * only logged and skipped, not acted on, until a later tick reports the same type over the ratio again with a
+ * genuinely different set of flagged rows. Two readings of the exact same rows are not independent evidence,
+ * whatever tick they happen to land on: a page the collection is too small to page past gets re-read unchanged
+ * on every tick, and a deterministic bug in the eligibility check would reproduce identically on every row it
+ * touches regardless of which rows those are, so neither is distinguishable from a real problem by repetition
+ * alone. A different set of flagged rows is what repetition alone cannot fake — the deterministic UUID scheme
+ * scatters one type's rows across the whole keyspace (see {@code WeaviateUuidUtil}), so a large collection's
+ * consecutive ticks naturally sample different slices of it, and once two different samples of the same type
+ * both look orphaned, the pass trusts that enough to act. Once trusted, a type stays trusted on every later
+ * tick, however many it takes to fully drain a genuinely large batch, until a tick finds it healthy again. It
+ * also cannot remove more than a set number of rows in one tick, which bounds the damage of being wrong about
+ * all of the above even once trusted. One type failing every guard never withholds a tick's progress from the
+ * others: each type in a scanned page is judged and acted on independently, and the cursor always advances
+ * regardless of the outcome, so no type can block the rest of the collection from ever being looked at again.
  * <p>
  * Rows written while a scan is in flight need no separate fence. Removal is decided against the database as it is
  * now rather than against anything the scan read, so a row that changed underneath makes no difference to it. A
@@ -112,7 +115,7 @@ public class SearchableEntityOrphanSweep {
             return;
         }
 
-        Map<String, Integer> streaks = deserializeStreaks(state.getOrphanAbortStreaks());
+        Map<String, OrphanStreak> streaks = deserializeStreaks(state.getOrphanAbortStreaks());
         Outcome outcome = repair(runId, slice.rows(), streaks);
         state.setOrphanAbortStreaks(serializeStreaks(streaks));
 
@@ -135,11 +138,11 @@ public class SearchableEntityOrphanSweep {
      * row. Each type is judged and acted on independently, in the same pass: one type withheld by the abort ratio
      * must never cost another, healthy type its repairs for the tick.
      *
-     * @param streaks each type's consecutive-tick-over-ratio count, read before this call and updated in place so
-     *                    the caller can persist it
+     * @param streaks each type's over-ratio standing, read before this call and updated in place so the caller
+     *                    can persist it
      * @return what was queued
      */
-    private Outcome repair(String runId, List<IndexedRow> rows, Map<String, Integer> streaks) {
+    private Outcome repair(String runId, List<IndexedRow> rows, Map<String, OrphanStreak> streaks) {
         // A LinkedHashMap keeps type processing order reproducible (scan order) rather than left to HashMap's
         // unspecified iteration, which matters now that log lines and the delete/repair caps are order-sensitive.
         Map<String, List<IndexedRow>> rowsByType = rows.stream().filter(row -> row.entityType() != null && row.entityId() != null)
@@ -165,7 +168,7 @@ public class SearchableEntityOrphanSweep {
             }
 
             List<IndexedRow> orphans = candidates.stream().filter(row -> !shouldBeIndexed.get().contains(row.entityId())).toList();
-            if (!trusted(runId, entityType, orphans.size(), candidates.size(), streaks)) {
+            if (!trusted(runId, entityType, orphans, candidates.size(), streaks)) {
                 continue;
             }
 
@@ -180,11 +183,17 @@ public class SearchableEntityOrphanSweep {
      * effect.
      * <p>
      * A ratio at or under the threshold is unremarkable: the type is healthy, any earlier streak is cleared, and
-     * processing proceeds as normal. A ratio over the threshold is trusted only once it has now happened twice in
-     * a row, since the previous tick that examined this type also found it over the ratio; a single reading, on
-     * its own, is refused and remembered instead of acted on.
+     * processing proceeds as normal. A ratio over the threshold is never trusted on the reading that first
+     * produced it, and repeating that same reading changes nothing: a page too small to page past reads the same
+     * rows every tick, and a deterministic bug in the eligibility check reproduces on every row it touches
+     * regardless of which rows those are, so an identical set of flagged ids is not new evidence no matter how
+     * many times it recurs. What earns trust is a genuinely different set of flagged ids on a later tick — real
+     * confirmation that this is not the one reading (or the one bug) repeating itself. Once a type is trusted it
+     * stays trusted on every later tick without demanding fresh evidence again, so draining a large batch does
+     * not re-litigate itself each time; only a healthy reading resets that.
      */
-    private boolean trusted(String runId, String entityType, int orphanCount, int candidateCount, Map<String, Integer> streaks) {
+    private boolean trusted(String runId, String entityType, List<IndexedRow> orphans, int candidateCount, Map<String, OrphanStreak> streaks) {
+        int orphanCount = orphans.size();
         if (candidateCount == 0 || orphanCount == 0) {
             streaks.remove(entityType);
             return true;
@@ -195,16 +204,44 @@ public class SearchableEntityOrphanSweep {
             return true;
         }
 
-        int previousStreak = streaks.getOrDefault(entityType, 0);
-        streaks.put(entityType, previousStreak + 1);
-        if (previousStreak >= 1) {
-            log.warn("[index {}] {} of {} scanned {} rows had no entity behind them, above the {} threshold for the second time in a row; proceeding", runId, orphanCount,
-                    candidateCount, entityType, reconcileProperties.orphanAbortRatio());
+        OrphanStreak previous = streaks.get(entityType);
+        if (previous != null && previous.confirmed()) {
+            streaks.put(entityType, previous.seenAgain());
             return true;
         }
-        log.error("[index {}] {} of {} scanned {} rows had no entity behind them, above the {} threshold; skipping this type this tick, acting only if it happens again", runId,
-                orphanCount, candidateCount, entityType, reconcileProperties.orphanAbortRatio());
+
+        int fingerprint = orphans.stream().map(IndexedRow::entityId).sorted().toList().hashCode();
+        if (previous != null && previous.fingerprint() != fingerprint) {
+            log.warn("[index {}] {} of {} scanned {} rows had no entity behind them, above the {} threshold, and a different set than last time; trusting it", runId, orphanCount,
+                    candidateCount, entityType, reconcileProperties.orphanAbortRatio());
+            streaks.put(entityType, new OrphanStreak(fingerprint, true, previous.sightings() + 1));
+            return true;
+        }
+
+        streaks.put(entityType, new OrphanStreak(fingerprint, false, previous == null ? 1 : previous.sightings() + 1));
+        if (previous == null) {
+            log.error("[index {}] {} of {} scanned {} rows had no entity behind them, above the {} threshold; skipping this type this tick, acting only once a different set of "
+                    + "rows shows the same problem", runId, orphanCount, candidateCount, entityType, reconcileProperties.orphanAbortRatio());
+        }
+        else {
+            log.error(
+                    "[index {}] {} of {} scanned {} rows had no entity behind them, above the {} threshold, but the exact same rows as last time (seen {}x); still refusing "
+                            + "without a different set of rows confirming it",
+                    runId, orphanCount, candidateCount, entityType, reconcileProperties.orphanAbortRatio(), previous.sightings() + 1);
+        }
         return false;
+    }
+
+    /**
+     * One type's standing against the abort ratio: the last flagged set of ids (as a fingerprint, not the ids
+     * themselves, since only whether it changed matters), whether that has earned enough trust to act on, and
+     * how many times this type has been seen over the ratio in total, for the log line alone.
+     */
+    private record OrphanStreak(int fingerprint, boolean confirmed, int sightings) {
+
+        private OrphanStreak seenAgain() {
+            return new OrphanStreak(fingerprint, confirmed, sightings + 1);
+        }
     }
 
     private long remove(String runId, String entityType, List<IndexedRow> orphans, long alreadyRemoved) {
@@ -259,7 +296,8 @@ public class SearchableEntityOrphanSweep {
     /**
      * Deliberately does not touch {@link SearchableEntityReconcileState#getOrphanAbortStreaks()}: a type's
      * standing does not depend on where the cursor happens to be, and wiping it on every lap would let a type
-     * that keeps tripping the ratio demand a fresh two-tick confirmation every single cycle, forever.
+     * that keeps tripping the ratio demand fresh confirming evidence every single cycle, forever, even once it
+     * has already earned trust.
      */
     private void finishCycle(String runId, SearchableEntityReconcileState state) {
         ZonedDateTime cycleStartedAt = state.getCycleStartedAt();
@@ -270,12 +308,12 @@ public class SearchableEntityOrphanSweep {
         reconcileStateRepository.save(state);
     }
 
-    private Map<String, Integer> deserializeStreaks(String json) {
+    private Map<String, OrphanStreak> deserializeStreaks(String json) {
         if (json == null) {
             return new HashMap<>();
         }
         try {
-            return new HashMap<>(objectMapper.readValue(json, new TypeReference<Map<String, Integer>>() {
+            return new HashMap<>(objectMapper.readValue(json, new TypeReference<Map<String, OrphanStreak>>() {
             }));
         }
         catch (JacksonException e) {
@@ -283,7 +321,7 @@ public class SearchableEntityOrphanSweep {
         }
     }
 
-    private String serializeStreaks(Map<String, Integer> streaks) {
+    private String serializeStreaks(Map<String, OrphanStreak> streaks) {
         if (streaks.isEmpty()) {
             return null;
         }
