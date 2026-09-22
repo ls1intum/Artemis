@@ -1,3 +1,4 @@
+import { parseJson } from 'app/foundation/util/json.util';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { HyperionRunPageComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-page.component';
 import { ChangeDetectionStrategy, Component, DestroyRef, Injector, computed, inject, input, linkedSignal, viewChild } from '@angular/core';
@@ -69,8 +70,18 @@ export class HyperionActivityTrayComponent {
     private readonly popover = viewChild(TumUiPopoverComponent);
     private readonly login = computed(() => this.account.userIdentity()?.login);
 
-    // Bounded, session-only presentation state. The original job records stay available in history.
-    private readonly dismissed = linkedSignal({ source: this.login, computation: () => new Set<string>() });
+    // Dismissal is scoped to the account and survives reloads; it never changes a job.
+    private readonly dismissed = linkedSignal({
+        source: this.login,
+        computation: (login) => {
+            try {
+                const stored = parseJson<unknown>(localStorage.getItem(`ai-activity-dismissed:${login}`) ?? '[]');
+                return new Set<string>(Array.isArray(stored) ? stored.filter((key): key is string => typeof key === 'string').slice(0, 500) : []);
+            } catch {
+                return new Set<string>();
+            }
+        },
+    });
     private readonly acknowledged = linkedSignal({ source: this.login, computation: () => new Set<string>() });
     protected readonly showHistory = linkedSignal({ source: this.login, computation: () => false });
     protected readonly monitorJobId = computed(() => {
@@ -83,7 +94,7 @@ export class HyperionActivityTrayComponent {
         if (!login || !this.authoringEnabled() || !this.account.hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR)) return [];
         const match = /^authoring:([1-9]\d*):([^:]+)$/.exec(reference ?? '');
         if (!match || !Number.isSafeInteger(Number(match[1]))) return [];
-        return [{ key: `${login}:${reference}`, exerciseId: Number(match[1]), runId: match[2] }];
+        return [{ key: `${login}:${reference}`, exerciseId: Number(match[1]), runId: match[2] === 'latest' ? undefined : match[2] }];
     });
     protected readonly quizInspector = computed(() => (this.monitorVisible() ? [{ key: `${this.login()}:${this.monitorJobId()}`, runId: this.monitorJobId() }] : []));
     protected readonly hasMoreHistory = computed(() => this.registry()?.hasMoreHistory() ?? false);
@@ -106,20 +117,18 @@ export class HyperionActivityTrayComponent {
                 .map(variantActivity),
         ].sort((a, b) => Number(b.recoveryRequired) - Number(a.recoveryRequired) || Number(b.active) - Number(a.active) || b.startedAt - a.startedAt || a.key.localeCompare(b.key));
     });
-    protected readonly visibleRows = computed(() => this.rows().filter((row) => this.showHistory() || row.recoveryRequired || !this.dismissed().has(row.dismissalKey)));
+    protected readonly visibleRows = computed(() => this.rows().filter((row) => this.showHistory() || row.active || !this.dismissed().has(row.key)));
     protected readonly runningCount = computed(() => this.rows().filter((row) => row.active).length);
     protected readonly attentionCount = computed(
-        () => this.visibleRows().filter((row) => row.recoveryRequired || (row.attention && !row.seen && !this.acknowledged().has(row.dismissalKey))).length,
+        () => this.visibleRows().filter((row) => row.recoveryRequired || (row.attention && !row.seen && !this.acknowledged().has(row.key))).length,
     );
-    protected readonly finishedCount = computed(
-        () => this.visibleRows().filter((row) => !row.active && !row.attention && !row.seen && !this.acknowledged().has(row.dismissalKey)).length,
-    );
-    protected readonly hiddenCount = computed(() => this.rows().filter((row) => !row.recoveryRequired && this.dismissed().has(row.dismissalKey)).length);
+    protected readonly finishedCount = computed(() => this.visibleRows().filter((row) => !row.active && !row.attention && !row.seen && !this.acknowledged().has(row.key)).length);
+    protected readonly hiddenCount = computed(() => this.rows().filter((row) => !row.active && this.dismissed().has(row.key)).length);
     protected readonly icons = { faArrowRight, faCheck, faSpinner, faTriangleExclamation, faXmark, facArtemisIntelligence };
 
     protected open(row: HyperionActivityRow): void {
         this.popover()?.close();
-        if (!row.active) this.acknowledged.update((keys) => new Set([row.dismissalKey, ...keys].slice(0, 100)));
+        if (!row.active) this.acknowledged.update((keys) => new Set([row.key, ...keys].slice(0, 100)));
         const reference = row.source.kind === 'authoring' ? `authoring:${row.source.entry.exerciseId}:${row.source.entry.jobId}` : `variant:${row.source.job.jobId}`;
         if (row.source.kind === 'authoring') this.registry()?.markSeen(row.source.entry.jobId);
         void this.router.navigate([], {
@@ -143,8 +152,15 @@ export class HyperionActivityTrayComponent {
     }
 
     protected dismiss(row: HyperionActivityRow): void {
-        if (row.recoveryRequired) return;
-        this.dismissed.update((keys) => new Set([row.dismissalKey, ...keys].slice(0, 100)));
+        if (row.active) return;
+        this.showHistory.set(false);
+        this.dismissed.update((keys) => new Set([row.key, ...keys].slice(0, 500)));
+        try {
+            localStorage.setItem(`ai-activity-dismissed:${this.login()}`, JSON.stringify([...this.dismissed()]));
+        } catch {
+            // Storage can be unavailable; dismissal still works for this session.
+        }
+        if (!this.visibleRows().length) this.popover()?.close();
     }
 
     protected refresh(open: boolean): void {

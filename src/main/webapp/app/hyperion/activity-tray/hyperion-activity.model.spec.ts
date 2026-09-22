@@ -19,7 +19,7 @@ describe('Unified AI activity presentation', () => {
         const authoring = authoringActivity(entry);
         const variant = variantActivity({ jobId: entry.jobId, phase: 'ANALYZING' });
         expect(authoring.key).not.toBe(variant.key);
-        expect(authoring.dismissalKey).not.toBe(variant.dismissalKey);
+        expect(authoring.key).not.toBe(variant.key);
     });
 
     it('distinguishes a programming variant by source and destination without inventing another pipeline', () => {
@@ -35,7 +35,7 @@ describe('Unified AI activity presentation', () => {
         expect(reviewing.steps.findIndex((step) => step.current)).toBe(3);
         expect(repairing.steps.findIndex((step) => step.current)).toBe(1);
         expect(repairing.steps[1].labelKey).toBe('artemisApp.hyperion.activity.stage.revise');
-        expect(reviewing.dismissalKey).toBe(repairing.dismissalKey);
+        expect(reviewing.key).toBe(repairing.key);
     });
 
     it('does not invent a stage before server progress arrives', () => {
@@ -47,7 +47,7 @@ describe('Unified AI activity presentation', () => {
         expect(row.active).toBe(false);
         expect(row.canCancel).toBe(false);
         expect(row.steps).toEqual([]);
-        expect(row.dismissalKey).not.toBe(authoringActivity(entry).dismissalKey);
+        expect(row.key).toBe(authoringActivity(entry).key);
     });
 
     it('does not offer cancellation beyond either workflow persistence boundary', () => {

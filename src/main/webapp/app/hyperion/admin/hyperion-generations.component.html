@@ -19,7 +19,6 @@
     @if (generationEnabled) {
         <section aria-labelledby="hyperion-active-generations-title" class="flex flex-col gap-3">
             <h2 id="hyperion-active-generations-title" class="m-0 text-lg font-semibold" jhiTranslate="artemisApp.hyperion.workers.activeRuns"></h2>
-            <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.workers.cancelHint"></p>
             @if (updatedAt() && !generations().length && !failed()) {
                 <p data-testid="hyperion-no-active-runs" jhiTranslate="artemisApp.hyperion.workers.noActiveRuns"></p>
             }
@@ -69,7 +68,7 @@
                                             data-testid="hyperion-admin-run-kind"
                                         />
                                     </td>
-                                    <td>{{ row.workerId ?? '—' }} / {{ row.slot ?? '—' }}</td>
+                                    <td>{{ row.workerId ?? '—' }}</td>
                                     <td>{{ run.userLogin }}</td>
                                     <td>{{ run.startedAt | date: 'medium' }}</td>
                                     <td>
@@ -117,7 +116,6 @@
         </section>
     }
     <jhi-ai-workers [workers]="workers()" [loading]="loading()" [failed]="workersFailed()" [updatedAt]="updatedAt()" />
-    <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.workers.snapshotHint"></p>
 </section>
 
 <tum-ui-dialog

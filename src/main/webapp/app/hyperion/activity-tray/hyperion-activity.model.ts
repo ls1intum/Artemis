@@ -24,7 +24,6 @@ export interface HyperionActivityRow {
     message?: string;
     startedAt: number;
     /** A hidden running job reappears when its outcome changes, not on every progress event. */
-    dismissalKey: string;
     steps: { labelKey: string; current: boolean; complete: boolean }[];
 }
 
@@ -44,7 +43,6 @@ export function authoringActivity(entry: HyperionJobEntry): HyperionActivityRow 
         canCancel: active && entry.cancellable === true && entry.status !== 'cancelling' && entry.phase !== 'SAVING',
         message: entry.message,
         startedAt: Date.parse(entry.startedAt) || 0,
-        dismissalKey: `authoring:${entry.jobId}:${active ? 'active' : entry.status}`,
         steps: active
             ? HYPERION_STAGES.map((stage, index) => ({
                   labelKey: `artemisApp.hyperion.activity.stage.${stage.key === 'design' && entry.mode === 'ADAPT' ? 'revise' : stage.key}`,
@@ -72,7 +70,6 @@ export function variantActivity(job: VariantJob): HyperionActivityRow {
         canCancel: active && job.phase !== undefined && job.phase !== 'FINALIZING',
         message: job.failureDetail,
         startedAt: Date.parse(job.startedAt ?? '') || 0,
-        dismissalKey: `variant:${job.jobId}:${active ? 'active' : job.phase}`,
         steps: active
             ? VARIANT_STAGES.map((stage, index) => ({
                   labelKey: `artemisApp.hyperion.activity.variantStage.${stage}`,

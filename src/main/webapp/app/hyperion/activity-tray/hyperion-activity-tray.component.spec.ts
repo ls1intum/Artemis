@@ -59,6 +59,7 @@ describe('HyperionActivityTrayComponent', () => {
     };
 
     beforeEach(async () => {
+        localStorage.clear();
         entries = signal<HyperionJobEntry[]>([]);
         jobs = signal<VariantJob[]>([]);
         identity = signal<{ login: string } | undefined>({ login: 'editor' });
@@ -122,40 +123,45 @@ describe('HyperionActivityTrayComponent', () => {
         expect(registry.refresh).not.toHaveBeenCalled();
     });
 
-    it('dismisses only presentation, retains live counts and provides history', () => {
+    it('keeps active work visible and does not offer dismissal', () => {
         entries.set([running]);
         open();
-        query('ai-activity-dismiss')!.click();
-        fixture.detectChanges();
-        expect(entries()).toEqual([running]);
-        expect(query('ai-activity-entry')).toBeNull();
-        expect(query('ai-activity-running')).not.toBeNull();
-        query('ai-activity-history')!.click();
+        expect(query('ai-activity-dismiss')).toBeNull();
+        fixture.componentInstance['dismiss'](fixture.componentInstance['rows']()[0]);
         fixture.detectChanges();
         expect(query('ai-activity-entry')).not.toBeNull();
         expect(generation.cancel).not.toHaveBeenCalled();
     });
 
-    it('redisplays a dismissed active job when it finishes', () => {
-        jobs.set([quiz]);
+    it('hides the header entry after dismissing all completed work and remembers it after reload', () => {
+        jobs.set([{ ...quiz, phase: 'FAILED' }]);
         open();
         query('ai-activity-dismiss')!.click();
         fixture.detectChanges();
-        expect(query('ai-activity-entry')).toBeNull();
-        jobs.set([{ ...quiz, phase: 'FAILED' }]);
+        expect(query('ai-activity-trigger')).toBeNull();
+        jobs.set([{ ...quiz, phase: 'COMPLETED' }]);
         fixture.detectChanges();
-        expect(query('ai-activity-entry')).not.toBeNull();
-        expect(query('ai-activity-attention')).not.toBeNull();
+        expect(query('ai-activity-trigger')).toBeNull();
+        fixture.destroy();
+        fixture = TestBed.createComponent(HyperionActivityTrayComponent);
+        fixture.detectChanges();
+        expect(query('ai-activity-trigger')).toBeNull();
+        jobs.set([{ ...quiz, jobId: 'new-job', phase: 'ANALYZING' }]);
+        fixture.detectChanges();
+        expect(query('ai-activity-trigger')).not.toBeNull();
+        expect(variants.cancelJob).not.toHaveBeenCalled();
     });
 
-    it('never dismisses a partial save or a cancelled variant whose clone survived', () => {
+    it('dismisses terminal warnings without deleting their recovery records', () => {
         entries.set([{ ...running, status: 'partial' }]);
         jobs.set([{ ...quiz, phase: 'CANCELLED', variantExerciseId: 9 }]);
         open();
         expect(document.querySelectorAll('[data-testid="ai-activity-recovery"]')).toHaveLength(2);
-        expect(query('ai-activity-dismiss')).toBeNull();
+        expect(query('ai-activity-dismiss')).not.toBeNull();
         for (const row of fixture.componentInstance['rows']()) fixture.componentInstance['dismiss'](row);
-        expect(fixture.componentInstance['visibleRows']()).toHaveLength(2);
+        expect(fixture.componentInstance['visibleRows']()).toHaveLength(0);
+        expect(entries()).toHaveLength(1);
+        expect(jobs()).toHaveLength(1);
     });
 
     it('opens the exact authoring run in a URL-backed inspector and closes the tray', async () => {

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, input, model, output, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, UrlTree } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBan, faCheckDouble, faChevronDown, faPaperPlane, faSpinner, faTimes, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import {
@@ -57,8 +57,8 @@ export class CodeEditorAiActionsComponent {
     readonly adaptBlockedReason = input<string | undefined>();
     /** Review comments already selected as feedback, shown on the primary action so a selection is never invisible. */
     readonly selectedFeedbackCount = input(0);
-    /** Route to the generation page while a run, or a lost run status, needs the instructor's attention. */
-    readonly progressLink = input<readonly unknown[] | undefined>();
+    /** Link opening the generation dialog while a run, or a lost run status, needs the instructor's attention. */
+    readonly progressLink = input<readonly unknown[] | UrlTree | undefined>();
     readonly progressRunning = input(false);
     /** Whether the problem statement is still the template, which turns "refine" into "generate". */
     readonly problemStatementEmpty = input(false);

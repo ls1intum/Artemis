@@ -63,7 +63,8 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationIndepend
             when(headerAccessorMock.getCommand()).thenReturn(StompCommand.SUBSCRIBE);
             var channel = mock(MessageChannel.class);
 
-            for (String destination : List.of("/topic/admin/queued-jobs", "/topic/admin/running-jobs", "/topic/admin/finished-jobs", "/topic/admin/build-agents")) {
+            for (String destination : List.of("/topic/admin/queued-jobs", "/topic/admin/running-jobs", "/topic/admin/finished-jobs", "/topic/admin/build-agents",
+                    "/topic/admin/ai-workers", "/topic/admin/ai-generations")) {
                 when(headerAccessorMock.getDestination()).thenReturn(destination);
 
                 // An elevated administrator: the session carries the administrator authority.

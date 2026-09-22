@@ -177,7 +177,6 @@ describe('HyperionRunPageComponent', () => {
         fixture = TestBed.createComponent(HyperionRunPageComponent);
         fixture.detectChanges();
         expect(fixture.componentInstance['runId']()).toBe('archived');
-        expect(fixture.componentInstance['canonicalLink']()).toEqual(['/course-management', COURSE_ID, 'programming-exercises', EXERCISE_ID, 'generation']);
         routeQuery.next({ run: 'another-run' });
         fixture.detectChanges();
         expect(fixture.componentInstance['runId']()).toBe('another-run');
@@ -201,9 +200,7 @@ describe('HyperionRunPageComponent', () => {
         expect(fixture.componentInstance['variant']()).toBe(true);
         expect(fixture.componentInstance['startedAt']()).toBe('2025-01-01T00:00:00Z');
         expect(fixture.componentInstance['runAgainAvailable']()).toBe(false);
-        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-run-full-page"]').getAttribute('href')).toBe(
-            `/course-management/${COURSE_ID}/programming-exercises/${EXERCISE_ID}/generation?run=archived`,
-        );
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-run-full-page"]')).toBeNull();
     });
 
     it('keeps the restored outcome after reloading its durable run', () => {

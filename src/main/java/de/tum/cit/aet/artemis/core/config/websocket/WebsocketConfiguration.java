@@ -63,6 +63,7 @@ import org.springframework.web.socket.sockjs.transport.handler.WebSocketTranspor
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.aiworker.service.WorkerMonitoringService;
 import de.tum.cit.aet.artemis.core.config.InetSocketAddressValidator;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -75,6 +76,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationMonitoringWebsocketService;
 
 @Profile(PROFILE_CORE)
 @Configuration
@@ -400,7 +402,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
             final var login = principal.getName();
 
-            if (isBuildQueueAdminDestination(destination) || isBuildAgentDestination(destination) || isBuildJobAdminDestination(destination)) {
+            if (isBuildQueueAdminDestination(destination) || isBuildAgentDestination(destination) || isBuildJobAdminDestination(destination)
+                    || WorkerMonitoringService.TOPIC.equals(destination) || GenerationMonitoringWebsocketService.TOPIC.equals(destination)) {
                 // Request-bound elevation rather than account classification: the session the handshake established
                 // has to prove the configured passkey requirement, so an administrator who signed in with a password
                 // must not reach the admin build queue, job and agent topics on their persisted role alone.

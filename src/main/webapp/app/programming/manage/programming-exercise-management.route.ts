@@ -88,23 +88,15 @@ export const routes: Routes = [
     },
     {
         path: 'programming-exercises/:exerciseId/generation/runs/:runId',
-        redirectTo: ({ params }) => `/course-management/${params['courseId']}/programming-exercises/${params['exerciseId']}/generation?run=${encodeURIComponent(params['runId'])}`,
+        redirectTo: ({ params }) =>
+            `/course-management/${params['courseId']}/programming-exercises/${params['exerciseId']}?aiRun=authoring:${params['exerciseId']}:${encodeURIComponent(params['runId'])}`,
         pathMatch: 'full',
     },
     {
-        // A generation run creates a real exercise and takes many minutes, so it gets a URL: it survives a reload,
-        // it can be shared with a colleague, and an instructor can leave and come back to it.
         path: 'programming-exercises/:exerciseId/generation',
-        loadComponent: () => import('app/hyperion/exercise-generation/run/hyperion-run-page.component').then((m) => m.HyperionRunPageComponent),
-        resolve: {
-            programmingExercise: ProgrammingExerciseResolve,
-        },
-        data: {
-            authorities: IS_AT_LEAST_EDITOR,
-            // Neutral: the same page follows a generation and an adaptation; the run header names which one.
-            pageTitle: 'artemisApp.hyperion.generation.run.breadcrumb',
-        },
-        canActivate: [UserRouteAccessService],
+        redirectTo: ({ params, queryParams }) =>
+            `/course-management/${params['courseId']}/programming-exercises/${params['exerciseId']}?aiRun=authoring:${params['exerciseId']}:${encodeURIComponent(queryParams['run'] ?? 'latest')}`,
+        pathMatch: 'full',
     },
     {
         path: 'programming-exercises/:exerciseId/version-history',

@@ -428,7 +428,7 @@
                 "cancelReason": "Reason (recorded in the administrator audit log)",
                 "cancelFailed": "Cancellation was not accepted. The run may have finished or started saving. Refresh the overview; your reason is retained.",
                 "keepRunning": "Keep running",
-                "workerSlot": "Worker / slot",
+                "workerSlot": "Worker",
                 "kind": "Run",
                 "openRun": "open run",
                 "mode": {
@@ -450,7 +450,6 @@
                     "quizVariant": "Quiz variant"
                 },
                 "loadMore": "Load older runs",
-                "openFullPage": "Open full page",
                 "stage": {
                     "prepare": "Prepare",
                     "design": "Author",

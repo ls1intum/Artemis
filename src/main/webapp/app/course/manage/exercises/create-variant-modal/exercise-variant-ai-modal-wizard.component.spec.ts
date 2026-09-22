@@ -937,12 +937,16 @@ describe('ExerciseVariantAiModalWizardComponent (shared programming authoring)',
     it('shows programming progress inside the wizard and closes without navigating or cancelling', () => {
         fixture.componentRef.setInput('visible', true);
         fixture.detectChanges();
+        const indicator = document.body.querySelector('[data-testid="variant-wizard-step-indicator"]');
+        expect(indicator).not.toBeNull();
         component.changeDomain.set(true);
         component.domainText.set('spacecraft');
         component.startGeneration();
         started.next({ jobId: 'run', exerciseId: 81, sourceExerciseId: 12 });
         fixture.detectChanges();
         expect(document.body.querySelector('jhi-hyperion-run-page')).not.toBeNull();
+        expect(document.body.querySelector('[data-testid="variant-wizard-step-indicator"]')).toBe(indicator);
+        expect(document.body.querySelector('[data-testid="variant-wizard-indicator-Generating"]')?.getAttribute('aria-current')).toBe('step');
         expect(routerMock.navigate).not.toHaveBeenCalled();
         const closed = vi.fn();
         component.visibleChange.subscribe(closed);
@@ -977,6 +981,7 @@ describe('ExerciseVariantAiModalWizardComponent (shared programming authoring)',
         expect(track).toHaveBeenCalledWith(expect.objectContaining({ jobId: 'run', exerciseId: 81, sourceExerciseId: 12, courseId: 7, mode: 'ADAPT' }));
         expect(routerMock.navigate).not.toHaveBeenCalled();
         expect(component.programmingRun()).toEqual({ exerciseId: 81, jobId: 'run' });
+        expect(component.displayWizardStep()).toBe(4);
     });
 
     it('does not attach an old account response to the new account', () => {

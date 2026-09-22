@@ -20,7 +20,16 @@ import { runOutcome } from '../model/hyperion-generation-stages';
     imports: [RouterLink, TumUiButtonDirective, TumUiStatusDotComponent, TranslateDirective, ArtemisTranslatePipe],
     template: `
         @if (status()?.jobId) {
-            <a tumUiButton severity="primary" variant="outlined" size="small" [routerLink]="['generation']" data-testid="hyperion-exercise-open-generation">
+            <a
+                tumUiButton
+                severity="primary"
+                variant="outlined"
+                size="small"
+                [routerLink]="[]"
+                [queryParams]="{ aiRun: 'authoring:' + exercise().id + ':' + status()?.jobId }"
+                queryParamsHandling="merge"
+                data-testid="hyperion-exercise-open-generation"
+            >
                 <tum-ui-status-dot [state]="dotState()" [label]="statusLabelKey() | artemisTranslate" />
                 <span [jhiTranslate]="labelKey()"></span>
             </a>

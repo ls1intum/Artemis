@@ -1,3 +1,5 @@
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { ActiveGeneration } from 'app/openapi/model/active-generation';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { provideRouter } from '@angular/router';
 import { AdminTitleBarComponent } from 'app/admin/shared/admin-title-bar/admin-title-bar.component';
@@ -26,18 +28,23 @@ const WORKERS: WorkerStatus[] = [
 
 describe('HyperionGenerationsComponent', () => {
     let fixture: ComponentFixture<HyperionGenerationsComponent>;
+    let workerUpdates: Subject<WorkerStatus[]>;
+    let generationUpdates: Subject<ActiveGeneration[]>;
     let api: { getWorkers: ReturnType<typeof vi.fn> };
 
     const generationApi = { getActiveGenerations: vi.fn(() => of([])), cancelGeneration: vi.fn(() => of(undefined)) };
 
     beforeEach(() => {
         vi.clearAllMocks();
+        workerUpdates = new Subject<WorkerStatus[]>();
+        generationUpdates = new Subject<ActiveGeneration[]>();
         generationApi.getActiveGenerations.mockReturnValue(of([]));
         generationApi.cancelGeneration.mockReturnValue(of(undefined));
         api = { getWorkers: vi.fn(() => of(WORKERS)) };
         TestBed.configureTestingModule({
             imports: [HyperionGenerationsComponent, AdminTitleBarComponent],
             providers: [
+                { provide: WebsocketService, useValue: { subscribe: (topic: string) => (topic.endsWith('ai-workers') ? workerUpdates : generationUpdates) } },
                 { provide: ProfileService, useValue: { isModuleFeatureActive: () => true } },
                 provideRouter([]),
                 { provide: AdminHyperionGenerationMonitoringApi, useValue: generationApi },
@@ -48,22 +55,21 @@ describe('HyperionGenerationsComponent', () => {
         fixture = TestBed.createComponent(HyperionGenerationsComponent);
     });
 
-    it('refreshes both panels together only while visible and stops polling on destruction', () => {
+    it('loads once and receives live snapshots without polling, then unsubscribes on destruction', () => {
         vi.useFakeTimers();
-        const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
         try {
             fixture.detectChanges();
-            vi.advanceTimersByTime(15_000);
-            expect(api.getWorkers).toHaveBeenCalledTimes(2);
-            expect(generationApi.getActiveGenerations).toHaveBeenCalledTimes(2);
-            visibility.mockReturnValue('hidden');
-            vi.advanceTimersByTime(15_000);
-            expect(api.getWorkers).toHaveBeenCalledTimes(2);
+            vi.advanceTimersByTime(60_000);
+            expect(api.getWorkers).toHaveBeenCalledOnce();
+            expect(generationApi.getActiveGenerations).toHaveBeenCalledOnce();
+            workerUpdates.next([{ workerId: 'new-worker', state: 'AVAILABLE', capacity: 6, availableSlots: 5 }]);
+            generationUpdates.next([{ jobId: 'live-run', exerciseId: 4 }]);
+            expect(fixture.componentInstance['workers']()[0].workerId).toBe('new-worker');
+            expect(fixture.componentInstance['generations']()[0].jobId).toBe('live-run');
             fixture.destroy();
-            vi.advanceTimersByTime(15_000);
-            expect(api.getWorkers).toHaveBeenCalledTimes(2);
+            expect(workerUpdates.observed).toBe(false);
+            expect(generationUpdates.observed).toBe(false);
         } finally {
-            visibility.mockRestore();
             vi.useRealTimers();
         }
     });

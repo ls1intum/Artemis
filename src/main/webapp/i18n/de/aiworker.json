@@ -3,35 +3,26 @@
         "aiworker": {
             "title": "KI-Worker",
             "refresh": "Aktualisieren",
-            "description": "Worker-Zustand und Ausführungskapazität. Prüfung und Abbruch von Aufträgen erfolgen unter Hyperion-Generierungen.",
             "loadFailed": "Worker-Status nicht verfügbar. Die KI-Worker-Koordination ist möglicherweise deaktiviert. Zuvor angezeigte Daten sind veraltet.",
             "updated": "Zuletzt aktualisiert",
             "configured": "Konfigurierte Worker",
             "availableSlots": "Freie / gesamte Slots",
-            "occupied": "Laufende / reservierte Slots",
+            "occupied": "Belegte Plätze",
             "unavailable": "Nicht verfügbar",
-            "retainedReservations": "{{ count }} Offline-Worker halten noch eine Core-Reservierung. Prüfe Ausführung und Eigentümer vor der Wiederherstellung; diese Plätze sind nicht verfügbar.",
+            "retainedReservations": "{{ count }} nicht erreichbare Worker haben nicht abgeschlossene Aufträge. Prüfe ihren Zustand vor einem Neustart.",
             "empty": "Keine Worker konfiguriert.",
             "worker": "Worker",
             "status": "Status",
             "heartbeat": "Letzter Kontakt",
-            "capability": "Auftragstyp / Ausführungsprofil",
-            "diagnostics": "Technische Details",
             "state": {
                 "OFFLINE": "Nicht erreichbar",
                 "NOT_READY": "Nicht bereit",
                 "AVAILABLE": "Verfügbar",
-                "RESERVED": "Vom Core reserviert",
+                "RESERVED": "Wird gestartet",
                 "BUSY": "Wird ausgeführt"
             },
             "unknownCapacity": "Die Kapazität ist erst mit einem aktuellen Heartbeat des Workers bekannt.",
-            "execution": "Slot / Ausführung",
-            "reservation": "Core-Reservierung",
-            "reserved": "Gehalten",
-            "notReserved": "Keine",
-            "incarnation": "Worker-Instanz",
-            "image": "Digest des Sandbox-Images",
-            "snapshotHint": "Wird alle 15 Sekunden aktualisiert, solange diese Seite sichtbar ist. Die Gesamtkapazität berücksichtigt nur Worker mit aktuellem Heartbeat. Freie Slots sind eine Momentaufnahme, keine Reservierung oder Durchsatzgarantie. Ein Lauf benötigt außerdem eine passende Toolchain. CPU-, Arbeitsspeicher- und Anbieterlimits gelten weiterhin."
+            "runningJobs": "Laufende Aufträge"
         }
     }
 }

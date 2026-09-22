@@ -31,9 +31,7 @@ export class AiWorkersComponent {
     protected readonly rows = computed(() =>
         this.workers().map((worker) => ({
             worker,
-            capability: worker.capability ? `${worker.capability.workload} / ${worker.capability.profile} (v${worker.capability.version})` : '—',
             capacityKnown: worker.state !== 'OFFLINE' && worker.capacity !== undefined && worker.availableSlots !== undefined,
-            executions: (worker.executions ?? []).map((execution) => ({ id: execution.executionId, slot: execution.slot === undefined ? undefined : execution.slot + 1 })),
             severity:
                 worker.state === 'AVAILABLE'
                     ? ('success' as const)

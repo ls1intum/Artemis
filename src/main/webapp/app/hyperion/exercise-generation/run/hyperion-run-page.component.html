@@ -1,7 +1,5 @@
 <div class="mx-auto flex w-full max-w-4xl min-w-0 flex-col gap-4" data-testid="hyperion-run-page">
     <jhi-hyperion-run-header
-        [fullPageLink]="inspectedExerciseId() ? canonicalLink() : undefined"
-        [fullPageRunId]="runId()"
         [exerciseTitle]="exercise()?.title"
         [adapting]="adapting()"
         [variant]="variant()"
@@ -20,7 +18,7 @@
         [startPending]="starting()"
         [editorLink]="terminal() && !running() ? editorLink() : undefined"
         [exerciseLink]="exerciseLink()"
-        [stepPosition]="stepPosition()"
+        [stepPosition]="showStepCounter() ? stepPosition() : undefined"
         [stepTotal]="stepTotal"
         [spend]="spend()"
         [fileCount]="fileCount()"
@@ -103,7 +101,7 @@
                 <div class="flex items-center justify-between gap-3">
                     <h2 class="text-xl font-medium" id="hyperion-run-progress-title">{{ 'artemisApp.hyperion.generation.run.progressTitle' | artemisTranslate }}</h2>
                     <div class="flex items-center gap-2">
-                        @if (stepPosition(); as position) {
+                        @if (showStepCounter() && stepPosition(); as position) {
                             <span class="text-sm tabular-nums text-muted-color" data-testid="hyperion-run-step-counter">{{
                                 'artemisApp.hyperion.generation.run.stepCounter' | artemisTranslate: { position, total: stepTotal }
                             }}</span>

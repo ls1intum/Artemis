@@ -315,6 +315,8 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
      * wizard never visits Placement (see `goToPlacement`) — advertising a step that is silently skipped reads as
      * "you will be asked where to place this", which is exactly what exam mode must not do.
      */
+    readonly displayWizardStep = computed(() => (this.programmingRun() ? (this.programmingRunActive() ? 4 : 5) : this.wizardStep()));
+
     readonly wizardSteps = computed(() => WIZARD_STEPS.filter((step) => !(step.step === 3 && this.isExamExercise())));
 
     protected readonly faRobot = faRobot;

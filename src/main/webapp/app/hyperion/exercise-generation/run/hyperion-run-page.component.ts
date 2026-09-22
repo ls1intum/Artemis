@@ -109,15 +109,10 @@ const OUTCOME_COPY: Record<HyperionRunOutcome, string> = {
 })
 export class HyperionRunPageComponent {
     readonly inspectedExerciseId = input<number>();
+    readonly showStepCounter = input(true);
     readonly inspectedRunId = input<string>();
     protected readonly runId = computed(() => this.inspectedRunId() ?? this.routeParams()['runId'] ?? this.routeQuery()['run']);
     protected readonly variant = computed(() => this.facade.run()?.kind === 'VARIANT');
-    protected readonly canonicalLink = computed(() => {
-        const courseId = this.courseId();
-        const exerciseId = this.exerciseId();
-        const runId = this.runId();
-        return courseId && exerciseId && runId ? ['/course-management', courseId, 'programming-exercises', exerciseId, 'generation'] : undefined;
-    });
     private readonly route = inject(ActivatedRoute);
     private readonly profileService = inject(ProfileService);
     private readonly translateService = inject(TranslateService);

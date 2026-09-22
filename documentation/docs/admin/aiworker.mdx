@@ -141,22 +141,28 @@ Open **Administration → AI Generation**. It does not depend on Hyperion being 
 If coordination is disabled, the status endpoint returns 404 and the view reports that
 status is unavailable rather than claiming an empty healthy pool.
 
-| Column                       | Meaning                                                                                             |
-| ---------------------------- | --------------------------------------------------------------------------------------------------- |
-| Worker                       | Configured stable ID; a restarted process has a different incarnation                               |
-| Status                       | Available, busy, reserved by core, not ready, or offline                                            |
-| Available / total slots      | Current admission capacity, not CPU utilization; unknown for offline workers                        |
-| Last contact                 | Time core received the latest accepted heartbeat/evidence, not a worker-clock health guarantee      |
-| Workload / execution profile | Registered workload, qualified profile and payload schema version                                   |
-| Diagnostics                  | Exact executions and one-based slots, reservation indicator, incarnation and immutable image digest |
+| Column             | Meaning                                                            |
+| ------------------ | ------------------------------------------------------------------ |
+| Worker             | Stable worker name                                                 |
+| State              | Available, running, starting, not ready, or offline                |
+| Free / total slots | Current capacity; unavailable workers do not contribute free slots |
+| Last contact       | Time core received the latest accepted heartbeat                   |
+| Running jobs       | Executions reported by the worker; unknown when offline            |
 
-The view refreshes every 15 seconds while visible, avoids overlapping requests, and
-marks a failed refresh rather than presenting stale data as healthy. Capacity is a
-snapshot, not a reservation. The same page shows active Hyperion generations above
-worker capacity, with exercise links and audited, exact-run cancellation. Worker
-monitoring remains available without Hyperion; a worker-status outage does not disable
-cancellation. The infrastructure and feature APIs retain their separate authorization
-and ownership boundaries.
+Like Build Agents, the page loads an initial REST snapshot and receives updates over
+admin-only WebSocket topics. The scheduling node publishes watched snapshots every
+five seconds; there is no browser polling loop. The last-updated time and manual
+refresh remain available. Failed requests are marked rather than presenting stale
+data as healthy. Monitoring requires the standard `scheduling` profile on a core node.
+
+Active generations show the exercise, owner, worker, start time, and whether a run is
+running, saving, or being canceled. Open a run in a dialog without leaving the admin
+page. Cancellation applies to the exact run and requires an audit reason.
+
+Worker monitoring remains available without Hyperion; a worker-status outage does
+not disable generation cancellation. Transport identifiers, capability schema versions,
+and image digests remain available through `GET /api/aiworker/admin/workers` for incident
+investigation, rather than occupying the everyday overview.
 
 Budget memory and CPU for the worker JVM **plus every concurrent sandbox**. The slot
 range is 1–16, default 1. Increasing slots does not relax per-execution resource limits,

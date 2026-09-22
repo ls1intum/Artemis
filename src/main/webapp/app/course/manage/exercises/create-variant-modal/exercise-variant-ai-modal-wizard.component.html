@@ -7,8 +7,31 @@
     [dismissableMask]="false"
     size="medium"
 >
+    <!-- ── Step indicator (wizard flow only — monitor mode has no steps 1–3) ── -->
+    @if (!isMonitorMode()) {
+        <div class="wizard-step-indicator mb-8" data-testid="variant-wizard-step-indicator">
+            @for (step of wizardSteps(); track step.step; let i = $index) {
+                <div
+                    class="wiz-step-item"
+                    [class.wiz-step-item--active]="displayWizardStep() === step.step"
+                    [attr.aria-current]="displayWizardStep() === step.step ? 'step' : null"
+                    [class.wiz-step-item--completed]="displayWizardStep() > step.step"
+                    [attr.data-testid]="'variant-wizard-indicator-' + step.id"
+                >
+                    <div class="wiz-step-circle">
+                        <fa-icon [icon]="step.icon" />
+                    </div>
+                    <div class="wiz-step-label">{{ step.labelKey | artemisTranslate }}</div>
+                </div>
+                @if (i < wizardSteps().length - 1) {
+                    <div class="wiz-step-line" [class.wiz-step-line--completed]="displayWizardStep() > step.step"></div>
+                }
+            }
+        </div>
+    }
+
     @if (programmingRun(); as run) {
-        <jhi-hyperion-run-page [inspectedExerciseId]="run.exerciseId" [inspectedRunId]="run.jobId" />
+        <jhi-hyperion-run-page [showStepCounter]="false" [inspectedExerciseId]="run.exerciseId" [inspectedRunId]="run.jobId" />
         <div class="mt-4 flex justify-end border-t border-border pt-4">
             <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="onClose(false)" data-testid="variant-wizard-run-in-background">
                 {{
@@ -18,28 +41,6 @@
             </tum-ui-button>
         </div>
     } @else {
-        <!-- ── Step indicator (wizard flow only — monitor mode has no steps 1–3) ── -->
-        @if (!isMonitorMode()) {
-            <div class="wizard-step-indicator mb-8" data-testid="variant-wizard-step-indicator">
-                @for (step of wizardSteps(); track step.step; let i = $index) {
-                    <div
-                        class="wiz-step-item"
-                        [class.wiz-step-item--active]="wizardStep() === step.step"
-                        [class.wiz-step-item--completed]="wizardStep() > step.step"
-                        [attr.data-testid]="'variant-wizard-indicator-' + step.id"
-                    >
-                        <div class="wiz-step-circle">
-                            <fa-icon [icon]="step.icon" />
-                        </div>
-                        <div class="wiz-step-label">{{ step.labelKey | artemisTranslate }}</div>
-                    </div>
-                    @if (i < wizardSteps().length - 1) {
-                        <div class="wiz-step-line" [class.wiz-step-line--completed]="wizardStep() > step.step"></div>
-                    }
-                }
-            </div>
-        }
-
         <!-- ── Source → variant flow card + "what is being adapted" chips (steps 4 and 5) ── -->
         @if (wizardStep() === 4 || wizardStep() === 5) {
             <div class="variant-flow-card mb-2" data-testid="variant-wizard-flow">

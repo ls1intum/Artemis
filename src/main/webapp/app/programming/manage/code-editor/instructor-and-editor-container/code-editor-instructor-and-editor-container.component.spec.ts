@@ -1510,7 +1510,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
         expect((comp as any).adaptBlockedReason()).toBe('artemisApp.review.adaptExercise.runInProgress');
         expect((comp as any).refineBlockedReason()).toBe('artemisApp.review.adaptExercise.runInProgress');
         expect((comp as any).consistencyBlockedReason()).toBe('artemisApp.review.adaptExercise.runInProgress');
-        expect((comp as any).progressLink()).toEqual(['/course-management', 1, 'programming-exercises', 42, 'generation']);
+        expect((comp as any).progressLink()).toBeDefined();
+        expect(TestBed.inject(Router).createUrlTree).toHaveBeenCalledWith([], { queryParams: { aiRun: 'authoring:42:latest' }, queryParamsHandling: 'merge' });
         // The run already shows as the progress link's status dot, so the menu trigger does not spin for it as well.
         expect((comp as any).aiActionsBusy()).toBe(false);
     });
@@ -1529,7 +1530,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
 
         (comp as any).generationRefreshFailed.set(true);
         expect((comp as any).adaptBlockedReason()).toBe('artemisApp.review.adaptExercise.reloadRequired');
-        expect((comp as any).progressLink()).toEqual(['/course-management', 1, 'programming-exercises', 42, 'generation']);
+        expect((comp as any).progressLink()).toBeDefined();
+        expect(TestBed.inject(Router).createUrlTree).toHaveBeenCalledWith([], { queryParams: { aiRun: 'authoring:42:latest' }, queryParamsHandling: 'merge' });
     });
 
     it('reports the busy consistency check as the consistency blocker only', () => {
@@ -1559,7 +1561,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
         expect((comp as any).adaptBlockedReason()).toBe('artemisApp.review.adaptExercise.statusUnavailable');
         expect((comp as any).refineBlockedReason()).toBe('artemisApp.review.adaptExercise.statusUnavailable');
         expect((comp as any).consistencyBlockedReason()).toBe('artemisApp.review.adaptExercise.statusUnavailable');
-        expect((comp as any).progressLink()).toEqual(['/course-management', 1, 'programming-exercises', 42, 'generation']);
+        expect((comp as any).progressLink()).toBeDefined();
+        expect(TestBed.inject(Router).createUrlTree).toHaveBeenCalledWith([], { queryParams: { aiRun: 'authoring:42:latest' }, queryParamsHandling: 'merge' });
         expect((comp as any).aiActionsBusy()).toBe(false);
         expect(TestBed.inject(Router).navigate).not.toHaveBeenCalled();
     });

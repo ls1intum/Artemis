@@ -336,13 +336,15 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected readonly generationLink = computed(() => {
         const exerciseId = this.exercise()?.id;
         const courseId = this.exercise()?.course?.id;
-        return exerciseId !== undefined && courseId !== undefined ? ['/course-management', courseId, 'programming-exercises', exerciseId, 'generation'] : undefined;
+        return exerciseId !== undefined && courseId !== undefined
+            ? this.reviewRouter.createUrlTree([], { queryParams: { aiRun: `authoring:${exerciseId}:latest` }, queryParamsHandling: 'merge' })
+            : undefined;
     });
 
     protected openGenerationPage(): void {
         const link = this.generationLink();
         if (link) {
-            void this.reviewRouter.navigate(link);
+            void this.reviewRouter.navigateByUrl(link);
         }
     }
 

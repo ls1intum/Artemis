@@ -1,4 +1,4 @@
-@if (rows().length || hasMoreHistory() || loadFailed()) {
+@if (visibleRows().length || loadFailed()) {
     <button
         tumUiButton
         variant="text"
@@ -53,7 +53,7 @@
                     >
                         <div class="flex items-center justify-between gap-2">
                             <span class="text-xs font-semibold tracking-wide text-muted-color">{{ row.kindKey | artemisTranslate }}</span>
-                            @if (!row.recoveryRequired) {
+                            @if (!row.active) {
                                 <button
                                     tumUiButton
                                     variant="text"

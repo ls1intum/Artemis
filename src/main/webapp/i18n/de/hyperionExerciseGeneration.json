@@ -428,7 +428,7 @@
                 "cancelReason": "Grund (wird im Admin-Protokoll erfasst)",
                 "cancelFailed": "Der Abbruch wurde nicht angenommen. Der Lauf ist möglicherweise beendet oder speichert bereits. Aktualisiere die Übersicht; dein Grund bleibt erhalten.",
                 "keepRunning": "Weiterlaufen lassen",
-                "workerSlot": "Worker / Slot",
+                "workerSlot": "Worker",
                 "kind": "Lauf",
                 "openRun": "Lauf öffnen",
                 "mode": {
@@ -450,7 +450,6 @@
                     "quizVariant": "Quizvariante"
                 },
                 "loadMore": "Ältere Durchläufe laden",
-                "openFullPage": "Vollständige Seite öffnen",
                 "stage": {
                     "prepare": "Vorbereiten",
                     "design": "Erstellen",

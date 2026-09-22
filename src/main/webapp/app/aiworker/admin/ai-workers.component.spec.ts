@@ -38,7 +38,7 @@ describe('AiWorkersComponent', () => {
         const rows = fixture.nativeElement.querySelectorAll('tbody tr');
         expect(rows).toHaveLength(2);
         expect(rows[0].textContent).toContain('ready-worker');
-        expect(rows[0].textContent).toContain('sha256:abc');
+        expect(rows[0].textContent).not.toContain('sha256:abc');
         expect(rows[1].getAttribute('data-state')).toBe('OFFLINE');
         expect(rows[1].textContent).toContain('—');
         expect(fixture.nativeElement.querySelector('caption').textContent).toContain('artemisApp.aiworker.title');
@@ -58,7 +58,7 @@ describe('AiWorkersComponent', () => {
         expect(fixture.componentInstance['occupied']()).toBe(1);
         expect(fixture.componentInstance['unavailable']()).toBe(1);
         expect(fixture.nativeElement.querySelector('[data-testid="ai-workers-retained-reservations"]')).not.toBeNull();
-        expect(fixture.nativeElement.querySelectorAll('details')).toHaveLength(3);
+        expect(fixture.nativeElement.querySelectorAll('details')).toHaveLength(0);
     });
 
     it('counts free slots independently from the number of workers', () => {
@@ -76,10 +76,12 @@ describe('AiWorkersComponent', () => {
         expect(fixture.componentInstance['slots']()).toBe(0);
         expect(fixture.componentInstance['available']()).toBe(0);
         expect(fixture.nativeElement.querySelector('[data-testid="ai-worker-capacity"]').textContent.trim()).toBe('—');
-        expect(fixture.nativeElement.querySelector('[data-testid="ai-worker-toolchain"]').textContent.trim()).toBe('—');
+        expect(fixture.nativeElement.querySelector('[data-testid="ai-worker-running"]').textContent).toContain('—');
+        expect(fixture.nativeElement.textContent).not.toContain('java-gradle');
+        expect(fixture.nativeElement.querySelector('details')).toBeNull();
     });
 
-    it('shows the advertised toolchain and every occupied slot using one-based labels', () => {
+    it('shows running work without exposing transport identifiers', () => {
         fixture.componentRef.setInput('workers', [
             {
                 workerId: 'worker',
@@ -94,10 +96,8 @@ describe('AiWorkersComponent', () => {
             },
         ]);
         fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('[data-testid="ai-worker-toolchain"]').textContent).toContain('hyperion-generation / java-gradle (v1)');
-        const executions = fixture.nativeElement.querySelectorAll('[data-testid="ai-worker-execution"]');
-        expect(executions).toHaveLength(2);
-        expect(executions[0].textContent).toContain('1: execution-one');
-        expect(executions[1].textContent).toContain('2: execution-two');
+        expect(fixture.nativeElement.querySelector('[data-testid="ai-worker-running"]').textContent).toContain('2');
+        expect(fixture.nativeElement.textContent).not.toContain('java-gradle');
+        expect(fixture.nativeElement.querySelector('details')).toBeNull();
     });
 });

@@ -225,7 +225,7 @@ export class HyperionBriefDialogComponent {
         this.registry.track({ jobId, exerciseId, courseId, exerciseTitle: exercise.title ?? '', mode: 'GENERATE' });
         this.visible.set(false);
         this.reset();
-        void this.router.navigate(['/course-management', courseId, 'programming-exercises', exerciseId, 'generation']);
+        void this.router.navigate([], { queryParams: { aiRun: `authoring:${exerciseId}:${jobId}` }, queryParamsHandling: 'merge' });
     }
 
     private errorKeyOf(error: unknown): string | undefined {
