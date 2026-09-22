@@ -6,7 +6,7 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 
-/** Enables coordinator-side worker infrastructure only on explicitly configured core nodes. */
+/** Enables coordinator-side worker infrastructure for an active workload or an explicit standalone setting. */
 public class AiWorkerEnabled implements Condition {
 
     @Override

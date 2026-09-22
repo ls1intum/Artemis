@@ -132,7 +132,7 @@ artemis:
       shutdown-drain-timeout: PT11M
       test-case-sync-timeout: PT10M
   aiworker:
-    enabled: false # Enable independently of Hyperion after provisioning the isolated worker and TLS broker.
+    enabled: false # Optional standalone coordination; Hyperion generation enables this automatically on eligible core nodes.
     # broker-url: tcp://generation-broker:61617?sslEnabled=true&verifyHost=true
     # user: ${AI_WORKER_CORE_BROKER_USER}
     # password: ${AI_WORKER_CORE_BROKER_PASSWORD}

@@ -61,10 +61,6 @@
                     "name": "Hyperion-Aufgabengenerierung",
                     "description": "Aktiviert die Generierung ganzer Aufgaben auf einem Core-Knoten mit LocalCI und LocalVC. Erfordert Hyperion und einen verfügbaren AI Worker."
                 },
-                "aiworker": {
-                    "name": "AI-Worker-Koordination",
-                    "description": "Verbindet diesen Core-Knoten mit isolierten AI Workern. Unabhängig von Hyperion."
-                },
                 "deimos": {
                     "name": "Deimos (Analyse bösartiger Teilnahmen)",
                     "description": "Aktiviert das Deimos-Modul, mit dem Lehrende Teilnahmen an Programmieraufgaben mithilfe eines LLM auf bösartiges Verhalten prüfen können."

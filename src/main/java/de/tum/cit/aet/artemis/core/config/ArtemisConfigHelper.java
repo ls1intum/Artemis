@@ -116,11 +116,12 @@ public class ArtemisConfigHelper {
 
     /**
      * @param environment the Spring environment
-     * @return whether this core node coordinates independent AI Workers
+     * @return whether this core node coordinates AI Workers for generation or an explicitly enabled workload
      */
     public boolean isAiWorkerEnabled(Environment environment) {
         return environment.acceptsProfiles(org.springframework.core.env.Profiles.of(Constants.PROFILE_CORE))
-                && environment.getProperty(AIWORKER_ENABLED_PROPERTY_NAME, Boolean.class, false);
+                && (environment.getProperty(AIWORKER_ENABLED_PROPERTY_NAME, Boolean.class, false)
+                        || (environment.getProperty(HYPERION_ENABLED_PROPERTY_NAME, Boolean.class, false) && isHyperionExerciseGenerationEnabled(environment)));
     }
 
     /**

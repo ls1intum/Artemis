@@ -127,6 +127,22 @@ class ModuleFeatureInfoContributorTest {
         assertThat(((List<?>) builder.build().get(ACTIVE_MODULE_FEATURES)).stream().map(Object::toString)).containsExactly(Constants.MODULE_FEATURE_AIWORKER);
     }
 
+    @Test
+    void testGenerationReportsAiWorkerWithoutSeparateOptIn() {
+        for (String key : modulePropertyNames) {
+            mockProperty(key, false);
+        }
+        mockProperty(Constants.HYPERION_ENABLED_PROPERTY_NAME, true);
+        mockProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, true);
+        when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(true);
+
+        Info.Builder builder = new Info.Builder();
+        new ModuleFeatureInfoContributor(mockEnv).contribute(builder);
+
+        assertThat(((List<?>) builder.build().get(ACTIVE_MODULE_FEATURES)).stream().map(Object::toString)).containsExactlyInAnyOrder(Constants.MODULE_FEATURE_HYPERION,
+                Constants.MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, Constants.MODULE_FEATURE_AIWORKER);
+    }
+
     private void testContribution(boolean propertyEnabled, boolean passkeyAdminRequired, List<String> expectedReportFeatures) {
         for (String key : modulePropertyNames) {
             mockProperty(key, propertyEnabled);

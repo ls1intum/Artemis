@@ -138,11 +138,12 @@ provider accounting is required. Content telemetry stays off unless explicitly a
 ## Capacity and administration
 
 Open **Administration → AI Generation**. The page is available when either
-`artemis.aiworker.enabled` or whole-exercise generation is enabled on core. AI
-Worker coordination is a separate module feature: turning Hyperion off does not
-turn worker monitoring off. The **Administration → Features** page reports the
-AI Worker, Hyperion, and whole-exercise generation settings separately. These
-are startup settings, not runtime switches.
+whole-exercise generation is enabled or `artemis.aiworker.enabled=true` starts
+worker coordination for another workload. For Hyperion, there is no third
+enablement switch: an eligible generation core starts worker coordination
+automatically. The **Administration → Features** page shows the Hyperion and
+whole-exercise generation settings. The AI Generation page shows worker
+capacity. These are startup settings, not runtime switches.
 If coordination is disabled, the status endpoint returns 404 and the view reports that
 status is unavailable rather than claiming an empty healthy pool.
 

@@ -272,6 +272,12 @@ mutation guard does not load a model or connect to the worker broker. All writer
 must run this version and use the same distributed provider. Do not mix guarded
 and unguarded nodes while generation is enabled.
 
+On an eligible generation core, these two Hyperion settings also start AI Worker
+coordination. Do not set `artemis.aiworker.enabled=true` just for Hyperion. That
+setting is optional and reserved for a core that must coordinate workers while
+Hyperion generation is off. Broker credentials and worker IDs are still required
+on a generation core.
+
 When the generation setting is absent or false throughout a deployment, ordinary
 writes do not load the generation mutation service or require its coordination
 checks. This is a deployment setting, not automatic cluster discovery. Drain

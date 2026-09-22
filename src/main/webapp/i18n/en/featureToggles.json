@@ -61,10 +61,6 @@
                     "name": "Hyperion Exercise Generation",
                     "description": "Enables whole-exercise generation on a core node with LocalCI and LocalVC. Requires Hyperion and an available AI Worker."
                 },
-                "aiworker": {
-                    "name": "AI Worker Coordination",
-                    "description": "Connects this core node to isolated AI Workers. Independent of Hyperion."
-                },
                 "deimos": {
                     "name": "Deimos (Malicious Participation Analysis)",
                     "description": "Enables the Deimos module that lets instructors screen programming-exercise participations for malicious behavior using an LLM."
