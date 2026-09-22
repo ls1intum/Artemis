@@ -544,9 +544,11 @@ public class ProgrammingExerciseGradingService {
         // which adds a "Test was not executed." placeholder for every registered test case and would otherwise both keep
         // the stale test case active and count it against the students that are graded next. A container that failed to
         // build reported none of its tests, so their absence says nothing about the solution: the reconciliation is
-        // skipped for such a build, and the registry keeps the state of the last clean solution build.
+        // skipped for such a build, and the registry keeps the state of the last clean solution build. The same holds
+        // for a container whose job did not succeed: one whose result could not be merged, timed out or was cancelled
+        // contributed no feedback either, and only the first of these is also reflected in the build-failed flag.
         if (participation instanceof SolutionProgrammingExerciseParticipation) {
-            if (anyContainerFailedToBuild) {
+            if (anyContainerFailedToBuild || !allJobsSucceeded) {
                 log.info("Skipping the test case reconciliation of exercise {}: a container of the solution build failed, so its test cases are absent without being removed",
                         participation.getProgrammingExercise().getId());
             }

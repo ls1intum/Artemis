@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.test_repository.BuildJobTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -532,7 +533,49 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         buildJobRepository.save(buildJob);
     }
 
-    private BuildJobQueueItem buildJobFor(String id, String buildGroupId, ProgrammingExerciseStudentParticipation participation, String commitHash, String containerName) {
+    /**
+     * A solution build reconciles the exercise's test cases over the merged feedback: a test case no container reported
+     * is deactivated as removed from the solution. A container whose result could not be merged reported nothing, and
+     * its job is recorded as failed without the submission's build-failed flag being touched, so the reconciliation has
+     * to be skipped on the job status as well. Otherwise the failed container's test cases would be deactivated as if
+     * the solution had lost them, and every student graded afterwards would lose those tests.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSolutionTestCasesAreKeptWhenAContainerJobFailedWithoutFailingTheBuild() {
+        solutionParticipation.setProgrammingExercise(programmingExercise);
+        String commitHash = "000000000000000000000000000000000000000c";
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setCommitHash(commitHash);
+        submission.setSubmissionDate(ZonedDateTime.now());
+        submission.setType(SubmissionType.MANUAL);
+        submission.setSubmitted(true);
+        submission.setParticipation(solutionParticipation);
+        submission = programmingSubmissionRepository.save(submission);
+        testCaseRepository.save(new ProgrammingExerciseTestCase().testName("instructorTest").weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS)
+                .bonusMultiplier(1D).bonusPoints(0D));
+        testCaseRepository.save(new ProgrammingExerciseTestCase().testName("studentTest").weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS)
+                .bonusMultiplier(1D).bonusPoints(0D));
+
+        // the instructor container reports its test; the student container's result could not be merged, so its job is
+        // recorded as failed without a result link, which leaves the build-failed flag untouched
+        var instructorJob = new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO("instructorTest", List.of())));
+        BuildResult instructorResult = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(instructorJob), null, null, false, 0);
+        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(solutionParticipation, instructorResult, true, "instructor_tests", null);
+        buildJobRepository.save(new BuildJob(buildJobFor("recon-0", "recon", solutionParticipation, commitHash, "instructor_tests"), BuildStatus.SUCCESSFUL, aggregatedResult));
+        buildJobRepository.save(new BuildJob(buildJobFor("recon-1", "recon", solutionParticipation, commitHash, "student_tests"), BuildStatus.ERROR, null));
+        assertThat(programmingSubmissionRepository.findById(submission.getId()).orElseThrow().isBuildFailed()).as("a failed merge does not fail the build").isFalse();
+
+        List<String> activeBefore = testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true).stream().map(ProgrammingExerciseTestCase::getTestName).toList();
+
+        Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult.getId(), solutionParticipation, false, ZonedDateTime.now());
+
+        assertThat(finalizedResult.isSuccessful()).isFalse();
+        assertThat(testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true)).extracting(ProgrammingExerciseTestCase::getTestName)
+                .as("no test case is deactivated, the unreported one of the failed container included").containsExactlyInAnyOrderElementsOf(activeBefore).contains("studentTest");
+    }
+
+    private BuildJobQueueItem buildJobFor(String id, String buildGroupId, ProgrammingExerciseParticipation participation, String commitHash, String containerName) {
         BuildAgentDTO buildAgent = new BuildAgentDTO(null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("slug", RepositoryType.USER, RepositoryType.USER, null, null, null, null, null);
         JobTimingInfo jobTimingInfo = new JobTimingInfo(ZonedDateTime.now(), null, null, null, 0);
