@@ -728,6 +728,10 @@
                     "UPCOMING_EXAMS_AND_EXERCISES": {
                         "name": "Upcoming exams and exercises",
                         "description": "An overview of what is coming up across all courses."
+                    },
+                    "SCIENCE_ADMINISTRATION": {
+                        "name": "Research data collection administration",
+                        "description": "Choosing the courses that collect research data, and exporting that data."
                     }
                 }
             }

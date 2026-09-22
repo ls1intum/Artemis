@@ -16,9 +16,13 @@ export enum ScienceEventType {
     LEARNING_PATH__OPEN_GRAPH = 'LEARNING_PATH__OPEN_GRAPH',
     IRIS__ENTRYPOINT_IMPRESSION = 'IRIS__ENTRYPOINT_IMPRESSION',
     IRIS__OPENED_SIDEBAR = 'IRIS__OPENED_SIDEBAR',
+    SCIENCE__OPT_IN = 'SCIENCE__OPT_IN',
+    SCIENCE__OPT_OUT = 'SCIENCE__OPT_OUT',
+    SCIENCE__DATA_DELETED = 'SCIENCE__DATA_DELETED',
 }
 
 export class ScienceEventDTO {
     type?: ScienceEventType;
     resourceId?: number;
+    courseId?: number;
 }
