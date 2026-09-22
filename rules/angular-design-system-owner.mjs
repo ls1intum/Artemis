@@ -194,6 +194,24 @@ function resolveField(owner, name, reportNode) {
     return convert(field.value);
 }
 
+function templateLocals(sourceCode) {
+    const locals = new Set();
+    const visit = (node) => {
+        if (!node) return;
+        if (node.type === 'LetDeclaration') locals.add(node.name);
+        for (const local of [...(node.references ?? []), ...(node.variables ?? []), ...(node.contextVariables ?? [])]) locals.add(local.name);
+        if (node.item) locals.add(node.item.name);
+        if (node.expressionAlias) locals.add(node.expressionAlias.name);
+        for (const key of sourceCode.visitorKeys[node.type] ?? []) {
+            const value = node[key];
+            if (Array.isArray(value)) value.forEach(visit);
+            else visit(value);
+        }
+    };
+    visit(sourceCode.ast);
+    return locals;
+}
+
 /** Resolve only statically owned, same-file class values; imports, calls and inherited members stay unknown. */
 export function createTemplateResolver(sourceRoots) {
     const files = new Map();
@@ -218,7 +236,10 @@ export function createTemplateResolver(sourceRoots) {
     }
     return (context) => {
         let matches;
-        return (name, reportNode) => {
+        const locals = context.sourceCode ? templateLocals(context.sourceCode) : new Set();
+        return (name, reportNode, explicitThis = false) => {
+            // Template-wide reservation is conservative; explicit this.name is unambiguous.
+            if (!explicitThis && locals.has(name)) return undefined;
             if (!matches) {
                 const physical = resolve(context.physicalFilename ?? context.getPhysicalFilename?.() ?? context.filename ?? context.getFilename());
                 matches = owners().filter((owner) => owner.templateUrl === physical || (owner.inline && owner.filename === physical));

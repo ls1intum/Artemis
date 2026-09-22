@@ -5,7 +5,8 @@ import { cwd } from 'node:process';
 import { ESLint, Linter } from 'eslint';
 import tsParser from '@typescript-eslint/parser';
 import { describe, expect, it } from 'vitest';
-import rule from './tum-ui-private-classes.mjs';
+import angular from 'angular-eslint';
+import rule, { createTumUiPrivateClassesRule } from './tum-ui-private-classes.mjs';
 import { createTemplateRuleTester, createTypeScriptRuleTester } from './rule-tester.mjs';
 
 const tester = createTemplateRuleTester();
@@ -79,5 +80,41 @@ describe('ordinary Angular host implementation privacy', () => {
     it('enables host privacy in the actual application TypeScript configuration', async () => {
         const config = await new ESLint().calculateConfigForFile('src/main/webapp/app/privacy-check.component.ts');
         expect(config.rules['localRules/tum-ui-private-classes']).toEqual([2]);
+    });
+});
+
+describe('ordinary Angular template implementation privacy', () => {
+    it.each([
+        ['<div [class]="classes"></div>', 'tum-ui-btn', 1],
+        ['<div [class]="classes"></div>', '[&_.tum-ui-btn]:p-4', 1],
+        ['<div [ngClass]="[classes]"></div>', 'tum-ui-btn', 1],
+        ['<div [class]="classes"></div>', 'page-layout', 0],
+        ['<div [class]="getClasses()"></div>', 'tum-ui-btn', 0],
+        ['@let classes = "page-layout"; <div [class]="classes"></div>', 'tum-ui-btn', 0],
+        ['@let classes = "page-layout"; <div [class]="this.classes"></div>', 'tum-ui-btn', 1],
+    ])('resolves owned class values without confusing locals or dynamic behavior: %s / %s', async (template, classes, count) => {
+        const root = mkdtempSync(join(tmpdir(), 'template-private-classes-'));
+        try {
+            writeFileSync(
+                join(root, 'page.component.ts'),
+                `import {Component} from '@angular/core'; @Component({templateUrl:'./page.html'}) class Page {readonly classes=${JSON.stringify(classes)};}`,
+            );
+            const eslint = new ESLint({
+                cwd: root,
+                overrideConfigFile: true,
+                overrideConfig: [
+                    {
+                        files: ['**/*.html'],
+                        languageOptions: { parser: angular.templateParser },
+                        plugins: { local: { rules: { privacy: createTumUiPrivateClassesRule([root]) } } },
+                        rules: { 'local/privacy': 'error' },
+                    },
+                ],
+            });
+            const [result] = await eslint.lintText(template, { filePath: join(root, 'page.html') });
+            expect(result.messages).toEqual(Array.from({ length: count }, () => expect.objectContaining({ ruleId: 'local/privacy', messageId: 'internal' })));
+        } finally {
+            rmSync(root, { recursive: true, force: true });
+        }
     });
 });

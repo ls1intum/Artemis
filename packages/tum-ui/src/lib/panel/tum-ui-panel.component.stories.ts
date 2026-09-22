@@ -1,6 +1,7 @@
 import { expect } from 'storybook/test';
-import { argsToTemplate } from '@storybook/angular-vite';
+import { argsToTemplate, moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
+import { TumUiButtonDirective } from '../button/tum-ui-button.directive';
 import { TumUiPanelComponent } from './tum-ui-panel.component';
 
 interface PanelStoryArgs {
@@ -116,5 +117,34 @@ export const ScrollableContent: Story = {
         await expect(scroll.scrollWidth).toBeGreaterThan(scroll.clientWidth);
         scroll.scrollLeft = scroll.scrollWidth;
         await expect(scroll.scrollLeft).toBeGreaterThan(0);
+    },
+};
+
+export const ProjectedHeader: Story = {
+    decorators: [moduleMetadata({ imports: [TumUiButtonDirective] })],
+    render: () => ({
+        props: { collapsed: false },
+        template: `
+            <tum-ui-panel density="compact" [toggleable]="true" [(collapsed)]="collapsed" toggleAriaLabel="Toggle exam" style="width: 16rem;" data-testid="panel">
+                <button tumUiPanelHeader tumUiButton type="button" size="small" variant="text" severity="secondary"
+                    class="tum:min-w-0 tum:mr-2 tum:flex-1 tum:justify-start" data-testid="title-button"
+                    [attr.aria-expanded]="!collapsed" aria-controls="exam-navigation-story" (click)="collapsed = !collapsed">
+                    <span class="tum:truncate">An unusually long examination title that must fit the sidebar</span>
+                </button>
+                <div id="exam-navigation-story">Exam navigation</div>
+            </tum-ui-panel>
+        `,
+    }),
+    play: async ({ canvas, userEvent }) => {
+        const title = canvas.getByTestId('title-button');
+        const toggle = canvas.getByRole('button', { name: 'Toggle exam' });
+        await expect(title.getBoundingClientRect().right).toBeLessThanOrEqual(toggle.getBoundingClientRect().left);
+        const panel = canvas.getByTestId('panel');
+        await expect(panel.scrollWidth).toBeLessThanOrEqual(panel.clientWidth);
+        await userEvent.tab();
+        await expect(title).toHaveFocus();
+        await userEvent.keyboard('{Enter}');
+        await expect(title).toHaveAttribute('aria-expanded', 'false');
+        await expect(toggle).toHaveAttribute('aria-expanded', 'false');
     },
 };

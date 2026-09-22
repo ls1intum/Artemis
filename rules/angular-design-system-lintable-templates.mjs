@@ -8,12 +8,22 @@ export const requireLintableTemplates = {
         schema: [],
         messages: {
             unsupported:
-                'Angular ESLint cannot reliably extract this inline template. Use an external templateUrl or canonical @Component({ template: "..." }) with a literal template.',
+                'Angular ESLint cannot reliably extract this inline template. Use an external templateUrl or canonical @Component({ template: "..." }) with a literal template and Component imported directly from @angular/core.',
         },
     },
     create(context) {
         if (context.sourceCode.ast.templateNodes) return {};
         const { angularName, valueOf, property } = createAngularMetadataReader(context.sourceCode.ast, context.sourceCode.parserServices);
+        const directComponentImport = context.sourceCode.ast.body.some(
+            (statement) =>
+                statement.type === 'ImportDeclaration' &&
+                statement.source.value === '@angular/core' &&
+                statement.importKind !== 'type' &&
+                statement.specifiers.some(
+                    (specifier) =>
+                        specifier.type === 'ImportSpecifier' && specifier.importKind !== 'type' && specifier.local.name === 'Component' && specifier.imported.name === 'Component',
+                ),
+        );
         return {
             ClassDeclaration(declaration) {
                 for (const decorator of declaration.decorators ?? []) {
@@ -34,6 +44,7 @@ export const requireLintableTemplates = {
                     const callOpen = context.sourceCode.getTokenAfter(call.callee);
                     const argumentStart = context.sourceCode.getTokenAfter(callOpen);
                     if (
+                        !directComponentImport ||
                         call.callee.type !== 'Identifier' ||
                         call.callee.name !== 'Component' ||
                         call.arguments.length !== 1 ||

@@ -3,6 +3,9 @@
 // See ../../README.md for the native port and its analysis boundaries.
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import postcss from 'postcss';
+import selectorParser from 'postcss-selector-parser';
+import valueParser from 'postcss-value-parser';
 import { normalizeClass, OPACITY_MODIFIER } from '../grammar/classes.mjs';
 import { parseColor } from '../grammar/colors.mjs';
 import { lengthInPx } from '../grammar/lengths.mjs';
@@ -11,35 +14,8 @@ import { projectFor } from './configuration.mjs';
 import { isFile, mtimeOf, TTL } from './fs.mjs';
 import { resolveStylesheet } from '../tailwind/oracle.mjs';
 const cache = new Map();
-// Removes /* */ comments the way a CSS tokenizer would: a "/*" inside a
-// string or an unquoted url() is text, so an @source glob such as
-// "dist/*.js" does not swallow the theme declared after it.
-export function stripComments(css) {
-    const parts = [];
-    let start = 0;
-    let i = 0;
-    while (i < css.length) {
-        const char = css[i];
-        if (char === '/' && css[i + 1] === '*') {
-            parts.push(css.slice(start, i));
-            const end = css.indexOf('*/', i + 2);
-            i = end === -1 ? css.length : end + 2;
-            start = i;
-        } else if (char === '"' || char === "'") {
-            i++;
-            while (i < css.length && css[i] !== char) {
-                i += css[i] === '\\' ? 2 : 1;
-            }
-            i++;
-        } else if (css.startsWith('url(', i)) {
-            const end = css.indexOf(')', i + 4);
-            i = end === -1 ? css.length : end + 1;
-        } else {
-            i++;
-        }
-    }
-    parts.push(css.slice(start));
-    return parts.join('');
+function stylesheet(css) {
+    return typeof css === 'string' ? postcss.parse(css) : css;
 }
 export function parseColorTokens(css) {
     const tokens = new Set();
@@ -104,78 +80,69 @@ export function parseDeclarations(css) {
     const values = new Map();
     const themeNames = new Set();
     const declarations = [];
-    const stripped = stripComments(css);
-    const stack = [];
-    let start = 0;
-    for (let i = 0; i < stripped.length; i++) {
-        const char = stripped[i];
-        if (char === '{') {
-            const prelude = stripped.slice(start, i).trim();
-            const outer = stack[stack.length - 1];
-            stack.push({
-                theme: (outer?.theme ?? false) || /^@theme\b/.test(prelude),
-                dark: (outer?.dark ?? false) || DARK_PRELUDE.test(prelude),
-            });
-            start = i + 1;
-        } else if (char === '}' || char === ';') {
-            const statement = stripped.slice(start, i);
-            const match = statement.match(/^\s*--((?:[\w-]+\*?)|\*)\s*:\s*([\s\S]+?)\s*$/);
-            const scope = stack[stack.length - 1];
-            if (match && !scope?.dark) {
-                values.set(match[1], match[2]);
-                if (scope?.theme) themeNames.add(match[1]);
-                declarations.push({
-                    name: match[1],
-                    value: match[2],
-                    theme: scope?.theme ?? false,
-                });
-            }
-            if (char === '}') stack.pop();
-            start = i + 1;
+    stylesheet(css).walkDecls((declaration) => {
+        if (!declaration.prop.startsWith('--')) return;
+        let theme = false;
+        for (let parent = declaration.parent; parent; parent = parent.parent) {
+            const prelude = parent.type === 'rule' ? parent.selector : parent.type === 'atrule' ? `@${parent.name} ${parent.params}` : '';
+            if (DARK_PRELUDE.test(prelude)) return;
+            if (parent.type === 'atrule' && parent.name === 'theme') theme = true;
         }
-    }
+        const name = declaration.prop.slice(2);
+        const value = declaration.value;
+        values.set(name, value);
+        if (theme) themeNames.add(name);
+        declarations.push({ name, value, theme });
+    });
     return { values, themeNames, declarations };
 }
 // Null when a variable has no value and no fallback.
 export function resolveVariables(value, values, depth = 0) {
-    if (!value.includes('var(')) return value;
     if (depth > 6) return null;
     let failed = false;
-    const out = value.replace(/var\(\s*--([\w-]+)\s*(?:,\s*([^()]*(?:\([^()]*\)[^()]*)*))?\)/g, (_, name, fallback) => {
-        const inner = values.get(name) ?? fallback;
-        if (inner === undefined) {
-            failed = true;
-            return '';
-        }
-        const resolved = resolveVariables(inner.trim(), values, depth + 1);
+    const parsed = valueParser(value);
+    parsed.walk((node) => {
+        if (node.type !== 'function') return;
+        if (node.value === 'url') return false;
+        if (node.value !== 'var') return;
+        const name = node.nodes.find((part) => part.type !== 'space' && part.type !== 'comment');
+        const comma = node.nodes.findIndex((part) => part.type === 'div' && part.value === ',');
+        const fallback = comma === -1 ? undefined : valueParser.stringify(node.nodes.slice(comma + 1));
+        const inner = name?.type === 'word' && name.value.startsWith('--') ? (values.get(name.value.slice(2)) ?? fallback) : undefined;
+        const resolved = inner === undefined ? null : resolveVariables(inner.trim(), values, depth + 1);
         if (resolved === null) failed = true;
-        return resolved ?? '';
+        node.type = 'word';
+        node.value = resolved ?? '';
+        delete node.nodes;
+        return false;
     });
-    return failed ? null : out;
+    return failed ? null : parsed.toString();
 }
-// Comments go first: a partial whose comment spells out the consumer's
-// `@import "tailwindcss"` does not import Tailwind.
 export function parseImports(css) {
     const out = [];
-    const re = /@import\s+(?:url\(\s*)?["']([^"']+)["']\s*\)?[^;]*;/g;
-    for (const match of stripComments(css).matchAll(re)) out.push(match[1]);
+    stylesheet(css).walkAtRules('import', (rule) => {
+        const first = valueParser(rule.params).nodes.find((node) => node.type !== 'space' && node.type !== 'comment');
+        const source = first?.type === 'function' && first.value === 'url' ? first.nodes.find((node) => node.type !== 'space' && node.type !== 'comment') : first;
+        if (source?.type === 'string' || source?.type === 'word') out.push(source.value);
+    });
     return out;
 }
 export function parseUtilities(css) {
     const out = new Set();
-    for (const match of css.matchAll(/@utility\s+([\w-]+\*?)\s*\{/g)) {
-        out.add(match[1]);
-    }
+    stylesheet(css).walkAtRules('utility', (rule) => {
+        const name = rule.params.trim();
+        if (/^[\w-]+\*?$/.test(name)) out.add(name);
+    });
     return out;
 }
-// A class that exists in CSS (.legacy-card) is not an unknown class.
+// Only selector AST class nodes declare classes; URLs, values and comments never do.
 export function parseClassSelectors(css) {
     const out = new Set();
-    // A "dist/*.js" in a string is a glob, not a .js selector.
-    const stripped = stripComments(css).replace(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g, '""');
-    for (const match of stripped.matchAll(/\.(-?[_a-zA-Z][\w-]*)/g)) {
-        out.add(match[1]);
-    }
+    stylesheet(css).walkRules((rule) => {
+        selectorParser()
+            .astSync(rule.selector)
+            .walkClasses((node) => out.add(node.value));
+    });
     return out;
 }
 function isPackageFile(file) {
@@ -196,6 +163,7 @@ function readTheme(cssFile, seen, read, fromPackage = false) {
     } catch {
         return;
     }
+    css = stylesheet(css);
     for (const name of parseUtilities(css)) read.utilities.add(name);
     for (const name of parseClassSelectors(css)) read.classes.add(name);
     // Imports come first in the cascade.

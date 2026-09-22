@@ -236,6 +236,9 @@ catalogs:
     '@storybook/angular-vite':
       specifier: 10.6.0
       version: 10.6.0
+    '@tailwindcss/node':
+      specifier: 4.3.3
+      version: 4.3.3
     '@tailwindcss/postcss':
       specifier: 4.3.3
       version: 4.3.3
@@ -587,6 +590,9 @@ importers:
       '@playwright/test':
         specifier: 'catalog:'
         version: 1.63.0
+      '@tailwindcss/node':
+        specifier: 'catalog:'
+        version: 4.3.3
       '@tailwindcss/postcss':
         specifier: 'catalog:'
         version: 4.3.3
@@ -629,6 +635,9 @@ importers:
       cross-env:
         specifier: 'catalog:'
         version: 10.1.0
+      enhanced-resolve:
+        specifier: 5.24.5
+        version: 5.24.5
       esbuild:
         specifier: 0.28.2
         version: 0.28.2
@@ -680,6 +689,9 @@ importers:
       postcss-selector-parser:
         specifier: 7.1.6
         version: 7.1.6
+      postcss-value-parser:
+        specifier: 4.2.0
+        version: 4.2.0
       prettier:
         specifier: 3.9.8
         version: 3.9.8

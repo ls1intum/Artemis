@@ -1,12 +1,14 @@
 import process from 'node:process';
 // Asks the project's own Tailwind whether a class generates CSS, from a
 // design system built the way Tailwind builds it, imports and plugins
-// included. Runs in a worker thread (worker.ts), reached synchronously
-// through client.ts; everything here is async and thread-agnostic.
+// included. Runs in a worker thread (worker.mjs), reached synchronously
+// through client.mjs; everything here is async and thread-agnostic.
 import * as fs from 'node:fs';
 import { createRequire } from 'node:module';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import enhancedResolve from 'enhanced-resolve';
+import { loadModule } from '@tailwindcss/node';
 import { splitVariants } from '../grammar/classes.mjs';
 import { didYouMean } from '../grammar/similar.mjs';
 const SIGNATURE_TTL = 1000;
@@ -33,89 +35,21 @@ async function loadTailwind(dir) {
     }
     return null;
 }
-function existingFile(candidate) {
+// Match Tailwind's CSS resolution conditions, including package exports and pnpm symlinks.
+const cssResolver = enhancedResolve.ResolverFactory.createResolver({
+    fileSystem: fs,
+    useSyncFileSystemCalls: true,
+    extensions: ['.css'],
+    mainFields: ['style'],
+    conditionNames: ['style'],
+    modules: ['node_modules', ...(process.env.NODE_PATH ? process.env.NODE_PATH.split(path.delimiter) : [])],
+});
+export function resolveStylesheet(base, id) {
     try {
-        return fs.statSync(candidate).isFile() ? candidate : null;
+        return cssResolver.resolveSync({}, base, id) || null;
     } catch {
         return null;
     }
-}
-function stylesheetAt(dir, name) {
-    const base = path.join(dir, name);
-    return existingFile(base) ?? existingFile(`${base}.css`) ?? existingFile(path.join(base, 'index.css'));
-}
-function styleTarget(entry) {
-    if (typeof entry === 'string') return entry;
-    if (!entry || typeof entry !== 'object') return null;
-    const record = entry;
-    for (const key of ['style', 'default']) {
-        const target = styleTarget(record[key]);
-        if (target) return target;
-    }
-    return null;
-}
-// The exports entry for a subpath: the exact key, else the longest
-// pattern key whose `*` matches, expanded the way Node expands it, so
-// `"./*.css": "./dist/*.css"` serves `demo-widgets/styles.css`.
-function exportedStyle(exports, subpath) {
-    const exact = styleTarget(exports[`./${subpath}`]);
-    if (exact) return exact;
-    const patterns = Object.keys(exports)
-        .filter((key) => key.startsWith('./') && key.includes('*'))
-        .sort((a, b) => b.length - a.length);
-    for (const key of patterns) {
-        const star = key.indexOf('*');
-        const prefix = key.slice(2, star);
-        const suffix = key.slice(star + 1);
-        if (subpath.length < prefix.length + suffix.length || !subpath.startsWith(prefix) || !subpath.endsWith(suffix)) continue;
-        const target = styleTarget(exports[key]);
-        if (!target) continue;
-        return target.replace('*', subpath.slice(prefix.length, subpath.length - suffix.length));
-    }
-    return null;
-}
-function packageDirectory(base, name) {
-    let dir = base;
-    for (let depth = 0; depth < 32; depth++) {
-        const candidate = path.join(dir, 'node_modules', name);
-        if (existingFile(path.join(candidate, 'package.json'))) return candidate;
-        const parent = path.dirname(dir);
-        if (parent === dir) break;
-        dir = parent;
-    }
-    return null;
-}
-// Resolves an @import the way Tailwind's bundler does. Node's own
-// resolver cannot: tw-animate-css exports only a style condition.
-export function resolveStylesheet(base, id) {
-    if (id === 'tailwindcss') return resolveStylesheet(base, 'tailwindcss/index.css');
-    if (id.startsWith('.') || path.isAbsolute(id)) {
-        return stylesheetAt(path.dirname(path.resolve(base, id)), path.basename(id));
-    }
-    const match = id.match(/^(@[^/]+\/[^/]+|[^/]+)(?:\/(.*))?$/);
-    if (!match) return null;
-    const [, name, subpath] = match;
-    const pkgDir = packageDirectory(base, name);
-    if (!pkgDir) return null;
-    let pkg = {};
-    try {
-        pkg = JSON.parse(fs.readFileSync(path.join(pkgDir, 'package.json'), 'utf-8'));
-    } catch {
-        // A package without a readable manifest still has files.
-    }
-    const exports = pkg.exports;
-    if (subpath) {
-        const target = exports && typeof exports === 'object' ? exportedStyle(exports, subpath) : null;
-        if (target) return existingFile(path.join(pkgDir, target));
-        return stylesheetAt(path.dirname(path.join(pkgDir, subpath)), path.basename(subpath));
-    }
-    const root = typeof exports === 'string' ? exports : exports && typeof exports === 'object' ? styleTarget(exports['.'] ?? exports) : null;
-    for (const target of [root, pkg.style, pkg.main]) {
-        if (typeof target !== 'string') continue;
-        const file = existingFile(path.join(pkgDir, target));
-        if (file) return file;
-    }
-    return stylesheetAt(pkgDir, 'index');
 }
 // The real path of a file reached through a symlink: what its own
 // imports resolve from.
@@ -165,14 +99,10 @@ async function build(cssFile) {
             };
         },
         async loadModule(id, base) {
-            const resolved = resolveFrom(base, id);
-            files.push(resolved);
+            const loaded = await loadModule(id, base, (file) => files.push(file));
+            files.push(loaded.path);
             modules++;
-            // The module cache never forgets: key the URL by mtime.
-            const url = pathToFileURL(resolved);
-            url.searchParams.set('mtime', String(mtimeOf(resolved)));
-            const mod = await import(url.href);
-            return { base: path.dirname(resolved), module: mod.default ?? mod };
+            return loaded;
         },
     });
     const variants = ds.getVariants();

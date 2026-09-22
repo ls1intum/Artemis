@@ -28,24 +28,6 @@ function attributeName(attribute) {
     return ['class', 'style'].includes(lower) ? lower : attribute.name;
 }
 
-function templateLocals(sourceCode) {
-    const locals = new Set();
-    const visit = (node) => {
-        if (!node) return;
-        if (node.type === 'LetDeclaration') locals.add(node.name);
-        for (const local of [...(node.references ?? []), ...(node.variables ?? []), ...(node.contextVariables ?? [])]) locals.add(local.name);
-        if (node.item) locals.add(node.item.name);
-        if (node.expressionAlias) locals.add(node.expressionAlias.name);
-        for (const key of sourceCode.visitorKeys[node.type] ?? []) {
-            const value = node[key];
-            if (Array.isArray(value)) value.forEach(visit);
-            else visit(value);
-        }
-    };
-    visit(sourceCode.ast);
-    return locals;
-}
-
 /** A syntax adapter: the six adapted policies consume Angular source sites. */
 export function createAngularDesignSystemPlugin({ root = process.cwd(), components, sources = components, theme, scope = 'all' }) {
     root = path.resolve(root);
@@ -54,10 +36,7 @@ export function createAngularDesignSystemPlugin({ root = process.cwd(), componen
     const resolveTemplate = createTemplateResolver(resolveRoots(root, sources));
     const adapterFor = (context) => {
         if (!context.sourceCode.ast.templateNodes) return createAngularHostAdapter(context, getIndex());
-        const resolveOwner = resolveTemplate(context);
-        const locals = templateLocals(context.sourceCode);
-        // Conservatively reserve locals across the template; explicit this.name is unambiguous.
-        const resolve = (name, at, explicitThis) => (explicitThis || !locals.has(name) ? resolveOwner(name, at) : undefined);
+        const resolve = resolveTemplate(context);
         const index = getIndex();
         const componentOf = (element) => index.match(element).find((entry) => entry.ownsAppearance);
         const styleExpression = (attribute) => {

@@ -69,7 +69,8 @@ Readonly resolution is conservative about mutation and escape. Imported values, 
 class names are reported on protected hosts rather than evaluated. Template-local names remain
 unresolved; `this.field` explicitly addresses the component. Owner metadata comes from saved
 TypeScript files. Use literal `@Component` metadata or an external template when the extraction
-guard rejects an unsupported inline form, including aliased decorators or indirect metadata.
+guard rejects an unsupported inline form, including aliased or barrel-imported decorators and indirect metadata. Inline templates use a
+direct `Component` import from `@angular/core`; external templates do not have this restriction.
 
 Generic selectors, inheritance, runtime DOM changes, and selectors manufactured entirely by Sass
 outside a statically protected context are not completely modeled. Within known protected contexts,

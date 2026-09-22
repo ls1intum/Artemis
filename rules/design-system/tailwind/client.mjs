@@ -13,11 +13,11 @@ const FIRST_TIMEOUT = 15_000;
 const TIMEOUT = 5_000;
 const RETRY_AFTER = 5_000;
 const REFRESH_AFTER = 1_000;
-function workerFile() {
-    return new URL('./worker.mjs', import.meta.url);
-}
 function stop() {
-    if (bridge) bridge.worker.terminate().catch(() => {});
+    if (bridge) {
+        bridge.port.close();
+        bridge.worker.terminate().catch(() => {});
+    }
     bridge = null;
     // A new worker numbers its generations from one again.
     memos.clear();
@@ -34,15 +34,9 @@ function transportFailed(reason) {
 function start() {
     if (bridge) return bridge;
     if (bridge === false) return null;
-    const file = workerFile();
-    if (!file) {
-        bridge = false;
-        warnOnce('tailwind:off', 'The Tailwind worker script was not found in the Angular design-system linter; class verification is unavailable.');
-        return null;
-    }
     try {
         const channel = new MessageChannel();
-        const worker = new Worker(file, {
+        const worker = new Worker(new URL('./worker.mjs', import.meta.url), {
             workerData: { port: channel.port2 },
             transferList: [channel.port2],
         });

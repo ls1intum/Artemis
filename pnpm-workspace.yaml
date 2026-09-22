@@ -32,6 +32,7 @@ catalog:
   '@storybook/addon-themes': 10.6.0
   '@storybook/addon-vitest': 10.6.0
   '@storybook/angular-vite': 10.6.0
+  '@tailwindcss/node': 4.3.3
   '@tailwindcss/postcss': 4.3.3
   '@types/node': 24.13.4
   '@types/react': 19.2.18
