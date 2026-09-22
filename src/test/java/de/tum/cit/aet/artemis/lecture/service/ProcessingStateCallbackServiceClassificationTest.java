@@ -13,56 +13,56 @@ class ProcessingStateCallbackServiceClassificationTest {
 
     @Test
     void nullCodeMapsToGenericKeyAndRetryable() {
-        var result = ProcessingStateCallbackService.classifyIngestionFailure(null);
+        var result = LectureIngestionFailureClassifier.classifyIngestionFailure(null);
         assertThat(result.errorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
         assertThat(result.retryable()).isTrue();
     }
 
     @Test
     void blankCodeMapsToGenericKeyAndRetryable() {
-        var result = ProcessingStateCallbackService.classifyIngestionFailure("   ");
+        var result = LectureIngestionFailureClassifier.classifyIngestionFailure("   ");
         assertThat(result.errorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
         assertThat(result.retryable()).isTrue();
     }
 
     @Test
     void unknownCodeMapsToGenericKeyAndRetryable() {
-        var result = ProcessingStateCallbackService.classifyIngestionFailure("SOMETHING_NEW_FROM_PYRIS");
+        var result = LectureIngestionFailureClassifier.classifyIngestionFailure("SOMETHING_NEW_FROM_PYRIS");
         assertThat(result.errorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
         assertThat(result.retryable()).isTrue();
     }
 
     @Test
     void youtubePrivateIsPermanent() {
-        var result = ProcessingStateCallbackService.classifyIngestionFailure("YOUTUBE_PRIVATE");
+        var result = LectureIngestionFailureClassifier.classifyIngestionFailure("YOUTUBE_PRIVATE");
         assertThat(result.errorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.youtubePrivate");
         assertThat(result.retryable()).isFalse();
     }
 
     @Test
     void youtubeLiveIsPermanent() {
-        var result = ProcessingStateCallbackService.classifyIngestionFailure("YOUTUBE_LIVE");
+        var result = LectureIngestionFailureClassifier.classifyIngestionFailure("YOUTUBE_LIVE");
         assertThat(result.errorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.youtubeLive");
         assertThat(result.retryable()).isFalse();
     }
 
     @Test
     void youtubeTooLongIsPermanent() {
-        var result = ProcessingStateCallbackService.classifyIngestionFailure("YOUTUBE_TOO_LONG");
+        var result = LectureIngestionFailureClassifier.classifyIngestionFailure("YOUTUBE_TOO_LONG");
         assertThat(result.errorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.youtubeTooLong");
         assertThat(result.retryable()).isFalse();
     }
 
     @Test
     void youtubeUnavailableIsPermanent() {
-        var result = ProcessingStateCallbackService.classifyIngestionFailure("YOUTUBE_UNAVAILABLE");
+        var result = LectureIngestionFailureClassifier.classifyIngestionFailure("YOUTUBE_UNAVAILABLE");
         assertThat(result.errorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.youtubeUnavailable");
         assertThat(result.retryable()).isFalse();
     }
 
     @Test
     void youtubeDownloadFailedIsTransient() {
-        var result = ProcessingStateCallbackService.classifyIngestionFailure("YOUTUBE_DOWNLOAD_FAILED");
+        var result = LectureIngestionFailureClassifier.classifyIngestionFailure("YOUTUBE_DOWNLOAD_FAILED");
         assertThat(result.errorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.youtubeDownloadFailed");
         assertThat(result.retryable()).isTrue();
     }
