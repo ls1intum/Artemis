@@ -100,37 +100,40 @@ export class ExamExerciseImportComponent implements OnInit {
     /**
      * Method to update the Maps after a rejected import due to invalid project key(s) of programming exercise(s)
      * Called by the parent component
+     * @param exerciseGroups the returned groups, which may not have reached the exam input yet
      */
-    updateMapsAfterRejectedImportDueToInvalidProjectKey() {
+    updateMapsAfterRejectedImportDueToInvalidProjectKey(exerciseGroups = this.exam().exerciseGroups) {
         this.titleAndShortNameOfProgrammingExercises.clear();
         this.initializeTitleAndShortNameMap();
         this.selectedExercises.clear();
         this.containsProgrammingExercises.clear();
-        this.initializeSelectedExercisesAndContainsProgrammingExercisesMaps();
+        this.initializeSelectedExercisesAndContainsProgrammingExercisesMaps(exerciseGroups);
     }
 
     /**
      * Method to update the Maps after a rejected import due to duplicated short name or title
      * Called by the parent component
+     * @param exerciseGroups the returned groups, which may not have reached the exam input yet
      */
-    updateMapsAfterRejectedImportDueToDuplicatedShortNameOrTitle() {
+    updateMapsAfterRejectedImportDueToDuplicatedShortNameOrTitle(exerciseGroups = this.exam().exerciseGroups) {
         this.titleAndShortNameOfProgrammingExercises.clear();
         this.selectedExercises.clear();
         this.containsProgrammingExercises.clear();
-        this.initializeSelectedExercisesAndContainsProgrammingExercisesMaps();
+        this.initializeSelectedExercisesAndContainsProgrammingExercisesMaps(exerciseGroups);
     }
 
     /**
      * Method to initialize the Maps selectedExercises and containsProgrammingExercises
+     * @param exerciseGroups the groups to select and display
      */
-    initializeSelectedExercisesAndContainsProgrammingExercisesMaps() {
+    initializeSelectedExercisesAndContainsProgrammingExercisesMaps(exerciseGroups = this.exam().exerciseGroups) {
         // Initialize selectedExercises
-        this.exam().exerciseGroups?.forEach((exerciseGroup) => {
+        exerciseGroups?.forEach((exerciseGroup) => {
             this.selectedExercises.set(exerciseGroup, new Set<Exercise>(exerciseGroup.exercises?.filter((exercise) => this.isExerciseTypeEnabled(exercise.type))));
         });
         const duplicated = new Set<string>();
         // Initialize containsProgrammingExercises
-        this.exam().exerciseGroups!.forEach((exerciseGroup) => {
+        exerciseGroups?.forEach((exerciseGroup) => {
             const hasProgrammingExercises = !!exerciseGroup.exercises?.some((value) => value.type === ExerciseType.PROGRAMMING);
             this.containsProgrammingExercises.set(exerciseGroup, hasProgrammingExercises);
             // In case of a rejected import, we can delete programming exercises with a title from the Map / blocklist, as those were not rejected by the server.

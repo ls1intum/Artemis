@@ -160,6 +160,8 @@ public class ExamResource {
 
     private static final String ENTITY_NAME = "exam";
 
+    private static final int MAX_WORKING_TIME_SECONDS = 2_592_000;
+
     private final ChannelRepository channelRepository;
 
     @Value("${jhipster.clientApp.name}")
@@ -413,11 +415,39 @@ public class ExamResource {
         // We also need all student exams for updateStudentExamsAndRescheduleExercises.
         Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
         var originalExamDuration = exam.getDuration();
+        int originalWorkingTime = exam.getWorkingTime();
         final ZonedDateTime originalLatestExamEndDateWithGrace = automaticAfterDueDateService.map(service -> service.getLatestExamEndDateWithGrace(exam)).orElse(null);
+
+        // Validate before mutating, using long arithmetic so extreme deltas cannot wrap around.
+        long newWorkingTime = (long) originalWorkingTime + workingTimeChange;
+        long newDuration = (long) originalExamDuration + workingTimeChange;
+        if (newWorkingTime <= 0 || newDuration <= 0 || (exam.isTestExam() && newWorkingTime > newDuration)) {
+            throw new BadRequestAlertException("The working time must be positive and fit within the exam's working window.", ENTITY_NAME, "examTimes");
+        }
+        if (newDuration > Integer.MAX_VALUE) {
+            throw new BadRequestAlertException("The exam's working window exceeds the supported duration.", ENTITY_NAME, "examTimes");
+        }
+        checkExamWorkingTimeLimitElseThrow(newWorkingTime);
+        if (!exam.isTestExam()) {
+            checkExamWorkingTimeLimitElseThrow(newDuration);
+        }
+
+        // Test exams have an availability window independent of their regular working time.
+        int originalRegularWorkingTime = exam.isTestExam() ? originalWorkingTime : originalExamDuration;
+        // Validate every student projection before saving the exam, so overflow cannot leave a partial update.
+        try {
+            for (StudentExam studentExam : exam.getStudentExams()) {
+                ExamDateService.projectWorkingTimeAfterDurationChange(studentExam.getWorkingTime(), originalRegularWorkingTime, workingTimeChange);
+            }
+        }
+        catch (ArithmeticException exception) {
+            throw new BadRequestAlertException("The resulting student working time exceeds the supported range.", ENTITY_NAME, "examTimes");
+        }
 
         // 1. Update the end date & working time of the exam
         exam.setEndDate(exam.getEndDate().plusSeconds(workingTimeChange));
-        exam.setWorkingTime(exam.getWorkingTime() + workingTimeChange);
+        exam.setWorkingTime((int) newWorkingTime);
+
         // The submission overview must never become visible while a student is still writing, so validate against the
         // PROJECTED latest individual end date: step 2 rescales the existing individual extensions by the same duration
         // change, so checking only the new nominal end date would miss an extended student crossing the publication
@@ -426,7 +456,7 @@ public class ExamResource {
         examRepository.save(exam);
 
         // 2. Re-calculate the working times of all student exams
-        examService.updateStudentExamsAndRescheduleExercises(exam, originalExamDuration, workingTimeChange);
+        examService.updateStudentExamsAndRescheduleExercises(exam, originalRegularWorkingTime, workingTimeChange);
         if (automaticAfterDueDateService.isPresent()) {
             automaticAfterDueDateService.orElseThrow().updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam(exam, originalLatestExamEndDateWithGrace)
                     .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
@@ -586,12 +616,7 @@ public class ExamResource {
      * @param exam the exam to be checked
      */
     private void checkExamNumericFieldLimitsElseThrow(Exam exam) {
-        // Max working time: 30 days = 2592000 seconds
-        final int maxWorkingTimeSeconds = 2_592_000;
-        final int workingTimeToCheck = exam.isTestExam() ? exam.getWorkingTime() : exam.getDuration();
-        if (workingTimeToCheck > maxWorkingTimeSeconds) {
-            throw new BadRequestAlertException("The working time is too long. Maximum allowed is 30 days (43200 minutes).", ENTITY_NAME, "examWorkingTimeTooHigh");
-        }
+        checkExamWorkingTimeLimitElseThrow(exam.isTestExam() ? exam.getWorkingTime() : exam.getDuration());
 
         // Grace period: max 1 hour = 3600 seconds
         if (exam.getGracePeriod() != null && exam.getGracePeriod() > 3600) {
@@ -607,6 +632,12 @@ public class ExamResource {
         // Number of exercises: max 100
         if (exam.getNumberOfExercisesInExam() != null && exam.getNumberOfExercisesInExam() > 100) {
             throw new BadRequestAlertException("The number of exercises is too high. Maximum allowed is 100.", ENTITY_NAME, "examNumberOfExercisesTooHigh");
+        }
+    }
+
+    private void checkExamWorkingTimeLimitElseThrow(long workingTime) {
+        if (workingTime > MAX_WORKING_TIME_SECONDS) {
+            throw new BadRequestAlertException("The working time is too long. Maximum allowed is 30 days (43200 minutes).", ENTITY_NAME, "examWorkingTimeTooHigh");
         }
     }
 

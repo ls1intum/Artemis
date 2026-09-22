@@ -82,10 +82,9 @@ class BuildPhasesTemplateServiceTest {
         var exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         exercise.setProjectType(ProjectType.PLAIN_MAVEN);
-        exercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
 
         // The exercise keeps its own configuration rather than the request failing.
-        assertThat(service.getDefaultBuildPlanPhasesFor(exercise)).isNull();
+        assertThat(service.getDefaultBuildPlanPhasesFor(exercise, new ProgrammingExerciseBuildConfig())).isNull();
     }
 
     @Test

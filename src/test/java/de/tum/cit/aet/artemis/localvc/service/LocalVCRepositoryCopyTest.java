@@ -53,12 +53,12 @@ class LocalVCRepositoryCopyTest {
 
     @BeforeEach
     void setUp() {
-        GitService gitService = new GitService();
-        ReflectionTestUtils.setField(gitService, "localVCBasePath", baseDir);
+        BareGitRepositoryService bareGitRepositoryService = new BareGitRepositoryService();
+        ReflectionTestUtils.setField(bareGitRepositoryService, "localVCBasePath", baseDir);
         // Spring injects this in production, and the copy writes the repository configuration and HEAD from it.
-        ReflectionTestUtils.setField(gitService, "defaultBranch", DEFAULT_BRANCH);
+        ReflectionTestUtils.setField(bareGitRepositoryService, "defaultBranch", DEFAULT_BRANCH);
         // The copy under test touches neither the URI service nor any repository, so passing null for them keeps the test free of a Spring context.
-        localVCService = new LocalVCService(null, gitService, null, null, null, null);
+        localVCService = new LocalVCService(null, bareGitRepositoryService, null, null, null, null);
         ReflectionTestUtils.setField(localVCService, "localVCBasePath", baseDir);
         ReflectionTestUtils.setField(localVCService, "localVCBaseUri", BASE_URI);
         executor = Executors.newFixedThreadPool(2);

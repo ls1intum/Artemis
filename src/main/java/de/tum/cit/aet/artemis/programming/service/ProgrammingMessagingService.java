@@ -134,7 +134,7 @@ public class ProgrammingMessagingService {
      * @param participationId the ID of the participation associated with the submission
      */
     public void notifyUserAboutSubmissionProcessing(SubmissionProcessingDTO submission, long exerciseId, long participationId) {
-        Participation participation = participationRepository.findWithProgrammingExerciseWithBuildConfigById(participationId).orElseThrow();
+        Participation participation = participationRepository.findWithProgrammingExerciseById(participationId).orElseThrow();
         if (participation instanceof StudentParticipation studentParticipation) {
             if (studentParticipation.getParticipant() instanceof Team team) {
                 // Eagerly load the team with students so their information can be used for the messages below

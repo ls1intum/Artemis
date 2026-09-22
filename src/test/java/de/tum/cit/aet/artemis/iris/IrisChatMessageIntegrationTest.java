@@ -84,6 +84,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisJsonMessageContentDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionFactory;
@@ -240,6 +241,29 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         await().until(pipelineDone::get);
         // the toggle suppresses Memiris for this request without touching what the account itself chose
         assertThat(userAiPreferenceService.isMemirisEnabled(user.getId())).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendMessage_forwardsCommandMarkerInChatHistoryToPyris() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+        String markerJson = "{\"type\":\"pointOut\",\"parameters\":{\"lectureUnitId\":42,\"lectureUnitName\":\"Intro\",\"page\":3}}";
+        IrisMessage marker = new IrisMessage();
+        IrisJsonMessageContent markerContent = new IrisJsonMessageContent();
+        markerContent.setJsonContent(markerJson);
+        marker.addContent(markerContent);
+        irisMessageService.saveMessage(marker, session, IrisMessageSender.COMMAND);
+
+        mockChatResponse(dto -> {
+            var commandMessage = dto.chatHistory().stream().filter(message -> message.sender() == IrisMessageSender.COMMAND).findFirst().orElseThrow();
+            assertThat(commandMessage.contents()).hasSize(1);
+            // COMMAND markers travel as the JSON they are stored as; Pyris builds the note the LLM reads from it.
+            assertThat(((PyrisJsonMessageContentDTO) commandMessage.contents().getFirst()).jsonContent()).contains("\"type\":\"pointOut\"", "\"lectureUnitId\":42", "\"page\":3");
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED);
+        await().until(pipelineDone::get);
     }
 
     @ParameterizedTest
@@ -576,6 +600,15 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(session.getId()), statusDTO(RUNNING), messageDTO("Hello World"));
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void resendMessage_rejectsOversizedClientId() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        IrisMessage userMessage = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
+
+        request.postWithoutResponseBody(messagesUrl(session) + "/" + userMessage.getId() + "/resend?clientId=" + "x".repeat(65), null, HttpStatus.BAD_REQUEST);
+    }
+
     @ParameterizedTest
     @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -823,7 +856,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
                 }
             });
 
-            irisSessionService.requestMessageFromIris(session, uncommittedFiles, List.of());
+            irisSessionService.requestMessageFromIris(session, uncommittedFiles, List.of(), null);
 
             assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().anyMatch(m -> m.getSender() == IrisMessageSender.USER)).isTrue();
         }
@@ -865,9 +898,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             String projectKey = exercise.getProjectKey();
             exercise.setProjectType(ProjectType.PLAIN_GRADLE);
             exercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase(Locale.ROOT) + "-tests.git");
-            programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
             programmingExerciseRepository.save(exercise);
-            ProgrammingExercise reloaded = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exercise.getId()).orElseThrow();
+            ProgrammingExercise reloaded = programmingExerciseRepository.findWithAllParticipationsById(exercise.getId()).orElseThrow();
 
             String templateSlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
             TemplateProgrammingExerciseParticipation templateParticipation = reloaded.getTemplateParticipation();
@@ -901,9 +933,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             String projectKey = exercise.getProjectKey();
             exercise.setProjectType(ProjectType.PLAIN_GRADLE);
             exercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase(Locale.ROOT) + "-tests.git");
-            programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
             programmingExerciseRepository.save(exercise);
-            ProgrammingExercise reloaded = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exercise.getId()).orElseThrow();
+            ProgrammingExercise reloaded = programmingExerciseRepository.findWithAllParticipationsById(exercise.getId()).orElseThrow();
 
             String templateSlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
             TemplateProgrammingExerciseParticipation templateParticipation = reloaded.getTemplateParticipation();

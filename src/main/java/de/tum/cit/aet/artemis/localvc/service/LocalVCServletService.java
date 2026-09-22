@@ -77,6 +77,7 @@ import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingServ
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.Commit;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -86,6 +87,7 @@ import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.RepositoryVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
@@ -121,6 +123,8 @@ public class LocalVCServletService {
     private final UserRepository userRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     private final RepositoryAccessService repositoryAccessService;
 
@@ -217,8 +221,10 @@ public class LocalVCServletService {
             Optional<VcsAccessLogService> vcsAccessLogService, AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService,
             ExerciseVersionService exerciseVersionService, UserVcsAccessTokenService userVcsAccessTokenService, Optional<DistributedDataAccessService> distributedDataAccessService,
             Optional<BuildAgentAddressRegistryService> buildAgentAddressRegistryService, Optional<BuildJobCloneTokenService> buildJobCloneTokenService,
-            BuildAgentNetworkPolicy buildAgentNetworkPolicy, MailSendingService mailSendingService, DistributedDataProvider distributedDataProvider) {
+            BuildAgentNetworkPolicy buildAgentNetworkPolicy, MailSendingService mailSendingService, DistributedDataProvider distributedDataProvider,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.authenticationManager = authenticationManager;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.repositoryAccessService = repositoryAccessService;
@@ -949,8 +955,7 @@ public class LocalVCServletService {
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(repository.getDirectory().toPath());
         String projectKey = localVCRepositoryUri.getProjectKey();
 
-        ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey, true);
-        return exercise.getBuildConfig().isAllowBranching();
+        return getBuildConfigOrThrow(projectKey).isAllowBranching();
     }
 
     public static enum BranchingStatus {
@@ -968,15 +973,15 @@ public class LocalVCServletService {
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(repository.getDirectory().toPath());
         String projectKey = localVCRepositoryUri.getProjectKey();
 
-        ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey, true);
+        ProgrammingExerciseBuildConfig buildConfig = getBuildConfigOrThrow(projectKey);
 
-        if (!exercise.getBuildConfig().isAllowBranching() || exercise.getBuildConfig().getBranchRegex() == null) {
+        if (!buildConfig.isAllowBranching() || buildConfig.getBranchRegex() == null) {
             return BranchingStatus.BRANCHING_DISABLED;
         }
 
         Pattern pattern;
         try {
-            pattern = Pattern.compile(exercise.getBuildConfig().getBranchRegex());
+            pattern = Pattern.compile(buildConfig.getBranchRegex());
         }
         catch (PatternSyntaxException e) {
             return BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
@@ -995,17 +1000,28 @@ public class LocalVCServletService {
         return new LocalVCRepositoryUri(localVCBaseUri, repositoryPath);
     }
 
-    private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey, boolean withBuildConfig) {
+    private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {
         try {
-            return programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, true, withBuildConfig);
+            return programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, false);
         }
         catch (EntityNotFoundException e) {
             throw new LocalVCInternalException("Could not find single programming exercise with project key " + projectKey, e);
         }
     }
 
-    private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {
-        return getProgrammingExerciseOrThrow(projectKey, false);
+    /**
+     * Reads the build configuration of the single exercise in a project, without loading the exercise itself: the
+     * configuration is a row of its own that names the exercise.
+     *
+     * @param projectKey the project key taken from the repository URI
+     * @return the build configuration of the exercise in that project
+     */
+    private ProgrammingExerciseBuildConfig getBuildConfigOrThrow(String projectKey) {
+        List<ProgrammingExerciseBuildConfig> buildConfigs = programmingExerciseBuildConfigRepository.findAllByProjectKey(projectKey);
+        if (buildConfigs.size() != 1) {
+            throw new LocalVCInternalException("Could not find single programming exercise with project key " + projectKey);
+        }
+        return buildConfigs.getFirst();
     }
 
     /**
@@ -1757,13 +1773,25 @@ public class LocalVCServletService {
             User user = userRepository.findOneByLogin(usernameAndPassword.username()).orElseThrow(LocalVCAuthException::new);
             AuthenticationMechanism mechanism = usernameAndPassword.password().startsWith("vcpat-") ? AuthenticationMechanism.VCS_ACCESS_TOKEN : AuthenticationMechanism.PASSWORD;
             LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(servletRequest);
-            var participation = programmingExerciseParticipationService.fetchParticipationWithSubmissionsByRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(),
-                    localVCRepositoryUri.toString(), null);
+            // One id, no entity. The log stores the participation as a foreign key and reads nothing from it, so
+            // nothing more is loaded: the previous call fetched the participation with its submissions, and reached
+            // them through an exercise that was passed as null, which is what threw the NullPointerException.
+            var participation = programmingExerciseParticipationService.getParticipationReferenceForRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(),
+                    localVCRepositoryUri.toString(), localVCRepositoryUri.getProjectKey());
+            if (participation.isEmpty()) {
+                return;
+            }
             var ipAddress = servletRequest.getRemoteAddr();
-            vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, RepositoryActionType.CLONE_FAIL, mechanism, "", ipAddress));
+            vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation.get(), RepositoryActionType.CLONE_FAIL, mechanism, "", ipAddress));
         }
         catch (LocalVCAuthException | EntityNotFoundException ignored) {
-            // Caught when: 1) no user, or 2) no participation was found. In both cases it does not make sense to write a log
+            // Caught when: 1) no user, or 2) no exercise or participation was found. In none of these cases does it make sense to write a log
+        }
+        catch (RuntimeException e) {
+            // This runs while a failed authentication is being answered, so nothing that happens here may replace the
+            // 401 the caller is about to send. Writing the access log is best effort by nature: it describes an attempt
+            // that was already rejected.
+            log.warn("Could not write the VCS access log for a failed authentication on {}", servletRequest.getRequestURI(), e);
         }
     }
 

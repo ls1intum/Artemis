@@ -304,9 +304,22 @@ describe('TutorialGroupsManagementComponent', () => {
         expect(renderedRows().map((row) => row[0])).toEqual(['Group']);
     });
 
-    it('should label the tutor column with "you" for the groups the current user tutors', async () => {
-        await setUp([generateExampleTutorialGroup({ id: 3, title: 'Own', isUserTutor: true })]);
-        expect(renderedRows()[0][1]).toBe('global.generic.you');
+    it('should display the full tutor name for the groups the current user tutors', async () => {
+        await setUp([generateExampleTutorialGroup({ id: 3, title: 'Own', isUserTutor: true, teachingAssistantName: 'Ada Lovelace' })]);
+        expect(renderedRows()[0][1]).toBe('Ada Lovelace');
+    });
+
+    it('should highlight the row of a group the current user tutors, and leave the others alone', async () => {
+        const own = generateExampleTutorialGroup({ id: 12, title: 'Own', isUserTutor: true, teachingAssistantName: 'Ada Lovelace' });
+        const other = generateExampleTutorialGroup({ id: 13, title: 'Other', teachingAssistantName: 'Grace Hopper' });
+        await setUp([own, other]);
+
+        const highlighted = fixture.debugElement
+            .queryAll(By.css('tr[cdk-row]'))
+            .map((row) => (row.nativeElement as HTMLElement).classList.contains('tum-ui-table-row-highlighted'));
+
+        expect(renderedRows().map((row) => row[0])).toEqual(['Other', 'Own']);
+        expect(highlighted).toEqual([false, true]);
     });
 
     it('should filter the rows by the search term', () => {

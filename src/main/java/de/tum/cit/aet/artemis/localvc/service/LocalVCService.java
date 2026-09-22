@@ -57,10 +57,11 @@ public class LocalVCService extends AbstractVersionControlService {
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCBasePath;
 
-    public LocalVCService(UriService uriService, GitService gitService, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+    public LocalVCService(UriService uriService, BareGitRepositoryService bareGitRepositoryService,
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
-        super(gitService, uriService, studentParticipationRepository, programmingExerciseRepository, templateProgrammingExerciseParticipationRepository,
+        super(bareGitRepositoryService, uriService, studentParticipationRepository, programmingExerciseRepository, templateProgrammingExerciseParticipationRepository,
                 programmingExerciseBuildConfigRepository);
     }
 

@@ -6,10 +6,15 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPENDENT;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.parallel.ResourceLock;
+import org.mockito.Mockito;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+
+import de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService;
 
 /**
  * Second independent integration-test bucket. It uses the same Spring profiles as {@link AbstractSpringIntegrationIndependentTest}, but separate filesystem paths so it can
@@ -20,8 +25,8 @@ import org.springframework.test.context.TestPropertySource;
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_TEST_INDEPENDENT, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.sharing.enabled=true", "artemis.user-management.passkey.enabled=true",
         "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent_batch", "artemis.iris.enabled=true", "artemis.deimos.enabled=true",
-        "artemis.lti.enabled=true", "artemis.atlas.enabled=true", "artemis.atlas.atlasml.enabled=true", "artemis.athena.enabled=true", "artemis.apollon.enabled=true",
-        "artemis.continuous-integration.build-job.retention-period=30",
+        "artemis.lti.enabled=true", "artemis.atlas.enabled=true", "artemis.atlas.atlasml.enabled=true", "artemis.atlas.atlasllm.enabled=true", "artemis.athena.enabled=true",
+        "artemis.apollon.enabled=true", "artemis.continuous-integration.build-job.retention-period=30",
         // Use separate paths for parallel bucket execution.
         "artemis.course-archives-path=./local/server-integration-test-independent-batch/exports/courses",
         "artemis.legal-path=./local/server-integration-test-independent-batch/legal", "artemis.repo-clone-path=./local/server-integration-test-independent-batch/repos",
@@ -35,4 +40,12 @@ import org.springframework.test.context.TestPropertySource;
         "artemis.version-control.ssh-private-key-folder-path=./local/server-integration-test-independent-batch/ssh-keys",
         "artemis.temp-path=./local/server-integration-test-independent-batch/temp" })
 public abstract class AbstractSpringIntegrationIndependentBatchTest extends AbstractSpringIntegrationIndependentTestBase {
+
+    @MockitoSpyBean
+    protected CompetencyOrchestrationService orchestrationService;
+
+    @AfterEach
+    void resetOrchestrationService() {
+        Mockito.reset(orchestrationService);
+    }
 }
