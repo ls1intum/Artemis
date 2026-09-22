@@ -355,8 +355,10 @@ public class GenerationJobService {
             }
             publishExerciseState(exercise.getId(), jobId, true);
             publicStatePublished = true;
-            dispatch.accept(new GenerationStartedEvent(jobId, user, exercise, userPrompt, mode, exercise.getProblemStatement(), exercise.getTitle(), deadlineAt,
-                    budgetReservationId, sourceBrief, settings, preparation));
+            var event = new GenerationStartedEvent(jobId, user, exercise, userPrompt, mode, exercise.getProblemStatement(), exercise.getTitle(), deadlineAt, budgetReservationId,
+                    sourceBrief, settings, preparation);
+            eventPublisher.publishEvent(new GenerationAdmittedEvent(event));
+            dispatch.accept(event);
         }
         catch (RejectedExecutionException e) {
             rollbackUnpublishedStart(exercise.getId(), key, newJob, startedReplay);

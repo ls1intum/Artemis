@@ -65,8 +65,10 @@ class GenerationRunJournalServicePersistenceTest extends AbstractSpringIntegrati
         var data = new de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService();
         var rejectedJob = new java.util.concurrent.atomic.AtomicReference<String>();
         org.springframework.context.ApplicationEventPublisher publisher = event -> {
+            if (event instanceof de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationAdmittedEvent admitted) {
+                journal.admitted(admitted);
+            }
             if (event instanceof GenerationStartedEvent started) {
-                journal.started(started);
                 rejectedJob.set(started.jobId());
                 if (executorRejected) {
                     throw new org.springframework.core.task.TaskRejectedException("Queue full");

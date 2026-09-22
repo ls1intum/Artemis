@@ -451,18 +451,19 @@ This view contains no prompts, generated artifacts, or credentials. It cannot
 execute commands, terminate a worker, or release an exercise mutation slot.
 Ordinary LocalCI monitoring continues to report ordinary build agents separately.
 
-The **Configured workers** count includes offline identities. **Free / total
-slots** includes only workers with a current heartbeat; an offline row displays
-an unknown capacity, not a usable zero-slot worker. **Toolchain** identifies the
-advertised language/build adapter. Free capacity is not necessarily compatible
-with every exercise. **Technical details** contains every active execution with
-its one-based slot number, the core reservation, worker instance and sandbox
-image digest. These identifiers support incident diagnosis, not host control.
+The unified **AI Generation** page shows worker state, free/total slots, last
+contact and running jobs. Offline capacity is unknown, not a usable zero-slot
+worker. Compatibility and ownership identifiers remain internal safeguards rather
+than instructor-facing configuration. See [AI Worker operations](/admin/aiworker)
+for the column definitions and live-update behavior.
 
 ### Save, cancellation, and recovery
 
 Cancellation before persistence saves no generated candidate. A variant can
 already have an imported destination draft, which remains available for inspection.
+Activity admission is synchronous and precedes the variant draft transaction's
+commit. If recording that identity fails, draft preparation rolls back and no
+worker is dispatched; a later executor rejection retains an inspectable failed run.
 Read-only retained artifacts and job transcripts are temporary inspection data,
 not saved exercises. A worker disconnect cannot authorize a replacement to save
 under the old execution identity. Inspect incomplete accounting as unknown usage,

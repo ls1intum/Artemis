@@ -202,7 +202,10 @@ public final class AuthoringRun implements Serializable {
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof AuthoringRun run && Objects.equals(id, run.id) && Objects.equals(jobId, run.jobId) && Objects.equals(exerciseId, run.exerciseId)
+        if (this == other) {
+            return true;
+        }
+        return id != null && other instanceof AuthoringRun run && Objects.equals(id, run.id) && Objects.equals(jobId, run.jobId) && Objects.equals(exerciseId, run.exerciseId)
                 && Objects.equals(sourceExerciseId, run.sourceExerciseId) && Objects.equals(ownerId, run.ownerId) && Objects.equals(kind, run.kind)
                 && Objects.equals(status, run.status) && Objects.equals(startedAt, run.startedAt) && Objects.equals(finishedAt, run.finishedAt)
                 && Objects.equals(mutationStartedAt, run.mutationStartedAt) && Objects.equals(beforeVersionId, run.beforeVersionId)

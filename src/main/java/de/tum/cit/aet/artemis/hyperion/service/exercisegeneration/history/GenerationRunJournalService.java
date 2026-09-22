@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.domain.AuthoringRun;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationAdmittedEvent;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationCancellationEvent;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationDispatchFailedEvent;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationStartedEvent;
@@ -56,6 +57,11 @@ public class GenerationRunJournalService {
      */
     @EventListener
     @Order(Ordered.HIGHEST_PRECEDENCE)
+    public void admitted(GenerationAdmittedEvent event) {
+        started(event.run());
+    }
+
+    /** Records the admitted run before any asynchronous execution or variant draft commit. */
     public void started(GenerationStartedEvent event) {
         var run = new AuthoringRun();
         run.setJobId(event.jobId());

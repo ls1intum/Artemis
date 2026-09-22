@@ -77,6 +77,38 @@ class GenerationVariantDraftServicePersistenceTest extends AbstractSpringIntegra
     }
 
     @Test
+    void activityStoreFailureAbortsAdmissionBeforeTheDraftCommits() {
+        var destinationId = new AtomicLong();
+        var rejected = new java.util.concurrent.atomic.AtomicReference<String>();
+        var storeFailure = new IllegalStateException("activity store unavailable");
+        var jobs = new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService(
+                new de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService(), event -> {
+                    if (event instanceof de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationAdmittedEvent admitted) {
+                        rejected.set(admitted.run().jobId());
+                        throw storeFailure;
+                    }
+                    if (event instanceof de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationStartedEvent) {
+                        throw new AssertionError("An untracked variant must never dispatch");
+                    }
+                }, org.mockito.Mockito.mock(de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService.class), null, java.time.Duration.ofMinutes(35),
+                java.time.Duration.ofMinutes(30), Runnable::run);
+        jobs.init();
+        var user = userTestRepository.findOneByLogin("hypvariantdraftinstructor1").orElseThrow();
+
+        assertThatThrownBy(() -> drafts.prepare(source.getId(), request, destination -> {
+            destinationId.set(destination.getId());
+            return jobs.prepareVariantJob(user, destination, "Variant", null, null, null,
+                    new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationVariantPreparation(source.getId(), "source", request));
+        })).isInstanceOf(org.springframework.dao.InvalidDataAccessApiUsageException.class).hasRootCauseMessage("activity store unavailable");
+
+        assertThat(rejected.get()).isNotBlank();
+        assertThat(destinationId.get()).isPositive();
+        assertThat(programmingExerciseRepository.existsById(destinationId.get())).isFalse();
+        assertThat(configurations.findById(destinationId.get())).isEmpty();
+        assertThat(jobs.hasActiveJob(destinationId.get())).isFalse();
+    }
+
+    @Test
     void reservationFailureRollsBackTheEntireImportedDatabaseGraph() {
         var destinationId = new AtomicLong();
         var rejection = new RuntimeException("reservation rejected");
