@@ -230,6 +230,17 @@
                     "title": "Workers holding leases",
                     "runs": "{{ count }} active"
                 }
+            },
+            "logs": {
+                "title": "Live log",
+                "subtitle": "Everything the indexing pipelines logged, from Artemis and Iris, newest first.",
+                "refresh": "Refresh the log",
+                "error": "The log could not be loaded.",
+                "empty": "Nothing has been logged yet. Records appear here as the indexing pipelines run.",
+                "search": "Filter by message or logger",
+                "showTrace": "Show stack trace",
+                "hideTrace": "Hide stack trace",
+                "scopeNote": "Kept in memory and lost on restart. On a clustered deployment the Artemis records are those of the node that answered this request."
             }
         }
     }

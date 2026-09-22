@@ -7,6 +7,7 @@ import { CourseIngestionCoverageTableComponent } from 'app/admin/course-ingestio
 import { CourseIngestionBrowserComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-browser/course-ingestion-browser.component';
 import { CourseIngestionActivityComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-activity/course-ingestion-activity.component';
 import { CourseIngestionQueuesComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-queues/course-ingestion-queues.component';
+import { CourseIngestionLogsComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-logs/course-ingestion-logs.component';
 import { IngestionCoverage } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
 
 /**
@@ -25,6 +26,7 @@ import { IngestionCoverage } from 'app/admin/course-ingestion-dashboard/course-i
         CourseIngestionBrowserComponent,
         CourseIngestionQueuesComponent,
         CourseIngestionActivityComponent,
+        CourseIngestionLogsComponent,
     ],
     templateUrl: './course-ingestion-dashboard.component.html',
 })

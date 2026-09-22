@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryWithRelationsDTO;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisLogEntryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqDeletionExecutionDTO;
@@ -546,4 +547,33 @@ public class PyrisConnectorService {
         }
 
     }
+
+    /**
+     * Reads Iris's recent ingestion log records, for the admin ingestion dashboard.
+     * <p>
+     * Iris logs to stdout like Artemis does, so when the log collector is unavailable the reason an ingestion run
+     * failed is unreadable without shell access to its host - Artemis only receives the error key the run ended
+     * with. This reads the small in-memory buffer Iris keeps for exactly that, and the dashboard merges it with
+     * Artemis's own records.
+     *
+     * @param limit how many records to ask for, newest first
+     * @param level return only records at exactly this level, or null for every level
+     * @return the records as Iris reported them, or an empty list when Iris is unreachable - an unavailable log
+     *         view must not fail the page it sits on
+     */
+    public List<PyrisLogEntryDTO> getRecentLogs(int limit, @Nullable String level) {
+        String endpoint = "/api/v1/internal/logs/recent?limit=" + limit + (level == null ? "" : "&level=" + URLEncoder.encode(level, StandardCharsets.UTF_8));
+        try {
+            var response = restTemplate.getForEntity(pyrisUrl + endpoint, PyrisLogEntryDTO[].class);
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                return List.of();
+            }
+            return Arrays.asList(response.getBody());
+        }
+        catch (RestClientException | IllegalArgumentException exception) {
+            log.warn("Could not read recent logs from Pyris: {}", exception.getMessage());
+            return List.of();
+        }
+    }
+
 }

@@ -355,3 +355,24 @@ export interface QueueOverview {
     reconcilePasses?: ReconcilePassStatus[];
     workers?: IngestionWorker[];
 }
+
+/** Which service produced a log record. */
+export type IngestionLogSource = 'ARTEMIS' | 'IRIS';
+
+/**
+ * One captured ingestion log record. Artemis and Iris each keep a bounded in-memory buffer of their own
+ * ingestion records; the server merges both into one time-ordered list, so a reader follows a single story
+ * across the two services instead of correlating two lists by timestamp.
+ */
+export interface IngestionLogEntry {
+    source: IngestionLogSource;
+    /** When it was logged, as an ISO timestamp. */
+    occurredAt: string;
+    /** Level name, e.g. `DEBUG`. */
+    level: string;
+    /** The logger that emitted it. */
+    logger: string;
+    message: string;
+    /** The rendered throwable or traceback, absent when the record carried none. */
+    stackTrace?: string;
+}

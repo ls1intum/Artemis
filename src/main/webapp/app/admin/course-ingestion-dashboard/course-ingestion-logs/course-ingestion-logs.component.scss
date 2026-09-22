@@ -1,0 +1,11 @@
+// The log is read as a stream, so it scrolls within a fixed height rather than pushing the rest of the
+// dashboard off the page. Monospace and preserved whitespace keep a stack trace readable as it was written.
+.ingestion-log-scroll {
+    max-height: 30rem;
+    overflow-y: auto;
+}
+
+.ingestion-log-trace {
+    white-space: pre-wrap;
+    word-break: break-word;
+}

@@ -13,6 +13,9 @@
 
     <jhi-course-ingestion-activity class="block mb-4" />
 
+    <!-- The raw log last: it is the deepest level of detail, reached after the summaries above have said where to look. -->
+    <jhi-course-ingestion-logs class="block mb-4" />
+
     <jhi-course-ingestion-coverage-table class="block" (courseSelected)="openBrowser($event)" />
 
     <!-- Rendered only once a course has been chosen, so the modal never loads for a course nobody opened. -->

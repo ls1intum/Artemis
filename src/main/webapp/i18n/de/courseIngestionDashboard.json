@@ -230,6 +230,17 @@
                     "title": "Worker mit Leases",
                     "runs": "{{ count }} aktiv"
                 }
+            },
+            "logs": {
+                "title": "Live-Log",
+                "subtitle": "Alles, was die Indexierungs-Pipelines protokolliert haben, aus Artemis und Iris, neueste zuerst.",
+                "refresh": "Log aktualisieren",
+                "error": "Das Log konnte nicht geladen werden.",
+                "empty": "Bisher wurde nichts protokolliert. Einträge erscheinen hier, sobald die Indexierungs-Pipelines laufen.",
+                "search": "Nach Nachricht oder Logger filtern",
+                "showTrace": "Stacktrace anzeigen",
+                "hideTrace": "Stacktrace ausblenden",
+                "scopeNote": "Wird im Arbeitsspeicher gehalten und geht bei einem Neustart verloren. In einem Cluster stammen die Artemis-Einträge von dem Knoten, der diese Anfrage beantwortet hat."
             }
         }
     }

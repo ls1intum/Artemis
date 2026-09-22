@@ -12,6 +12,7 @@ import {
     IngestionCoverage,
     IngestionCoverageStatus,
     IngestionEventKind,
+    IngestionLogEntry,
     QueueOverview,
 } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
 
@@ -140,6 +141,20 @@ export class CourseIngestionDashboardService {
     /** GET a point-in-time snapshot of every ingestion queue: what each holds and is currently working on. */
     getQueues(): Observable<QueueOverview> {
         return this.http.get<QueueOverview>(`${this.baseUrl}/queues`);
+    }
+
+    /**
+     * GET the merged ingestion log of both services, newest first.
+     *
+     * Both Artemis and Iris log only to the console, so when the log collector is unavailable this is the only
+     * way to see what the indexing pipelines are doing without shell access to either host.
+     */
+    getIngestionLogs(level?: string, limit = 500): Observable<IngestionLogEntry[]> {
+        let params = new HttpParams().set('limit', limit);
+        if (level) {
+            params = params.set('level', level);
+        }
+        return this.http.get<IngestionLogEntry[]>('api/admin/logs/ingestion', { params });
     }
 
     /** POST to force a background recompute of the whole projection (no-op if one is already running). */
