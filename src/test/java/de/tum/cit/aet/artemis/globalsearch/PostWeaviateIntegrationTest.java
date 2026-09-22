@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityResolver;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
@@ -144,6 +145,9 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
     @Nested
     class UpsertTests {
 
+        @Autowired
+        private SearchableEntitySyncStateRepository syncStateRepository;
+
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testUpsertPost_indexesInWeaviate() throws Exception {
@@ -153,6 +157,29 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
             searchableEntityWeaviateService.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, channel));
 
             assertPostExistsInWeaviate(weaviateService, post.getId());
+        }
+
+        /**
+         * Regression test for a ledger that only ever grows: post and answer post are excluded from every
+         * reconcile pass, so nothing reads their ledger rows back, and a bulk delete has no entity id to clean
+         * one up with. The dispatcher must never write a row for them at all, confirmed live against real
+         * Postgres, even though the entity is correctly indexed in Weaviate.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testUpsertPostAndAnswerPost_neverWriteALedgerRow() throws Exception {
+            Channel channel = createPublicChannel("no-ledger-test");
+            Post post = createAndSavePost(channel);
+            AnswerPost answer = createAndSaveAnswerPost(post);
+
+            searchableEntityWeaviateService.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, channel));
+            searchableEntityWeaviateService.upsertAnswerPostAsync(AnswerPostSearchableEntityDTO.fromAnswerPost(answer, channel));
+
+            assertPostExistsInWeaviate(weaviateService, post.getId());
+            assertAnswerPostExistsInWeaviate(weaviateService, answer.getId());
+            assertThat(syncStateRepository.findByEntityTypeAndEntityId(SearchableEntitySchema.TypeValues.POST, post.getId())).as("no ledger row for a post, ever").isEmpty();
+            assertThat(syncStateRepository.findByEntityTypeAndEntityId(SearchableEntitySchema.TypeValues.ANSWER_POST, answer.getId())).as("no ledger row for an answer post, ever")
+                    .isEmpty();
         }
 
         @Test

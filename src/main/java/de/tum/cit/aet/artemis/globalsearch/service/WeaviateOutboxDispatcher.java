@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateOutboxProperties;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateReconcileProperties;
 import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntitySyncState;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
@@ -84,17 +85,20 @@ public class WeaviateOutboxDispatcher {
 
     private final SearchableEntityWeaviateService searchableEntityWeaviateService;
 
+    private final WeaviateReconcileProperties reconcileProperties;
+
     /**
      * Serializes drains on this node so the scheduled tick and the after-commit nudge never overlap.
      */
     private final ReentrantLock drainLock = new ReentrantLock();
 
     public WeaviateOutboxDispatcher(WeaviateOutboxRepository outboxRepository, SearchableEntitySyncStateRepository syncStateRepository,
-            SearchableEntityWeaviateService searchableEntityWeaviateService, WeaviateOutboxProperties outboxProperties) {
+            SearchableEntityWeaviateService searchableEntityWeaviateService, WeaviateOutboxProperties outboxProperties, WeaviateReconcileProperties reconcileProperties) {
         this.outboxRepository = outboxRepository;
         this.syncStateRepository = syncStateRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
         this.outboxProperties = outboxProperties;
+        this.reconcileProperties = reconcileProperties;
     }
 
     /**
@@ -249,8 +253,18 @@ public class WeaviateOutboxDispatcher {
      * upserted records its written content hash; a per-entity entry that resolved to a delete (an explicit delete,
      * or an upsert whose entity is gone or no longer indexable) removes the ledger row so a later reconcile does
      * not treat it as still synced. Bulk deletes (null entity id) leave the ledger to a later reconcile pass.
+     * <p>
+     * A type no reconcile pass manages ({@link WeaviateReconcileProperties#entityTypes()}) never gets a ledger row
+     * at all: the ledger exists only so a reconcile pass can detect a never-indexed or drifted entity, and nothing
+     * reads it back for a type reconcile does not cover. Writing one anyway would only grow the table forever,
+     * since a bulk delete has no entity id to clean a specific row up with, and no reconcile pass ever revisits an
+     * unmanaged type to notice and remove a stale one either. Post and answer post are the only unmanaged types
+     * today (see the property's own javadoc for why).
      */
     private void refreshSyncLedger(WeaviateOutboxEntry entry, ZonedDateTime now, Optional<String> writtenContentHash) {
+        if (!reconcileProperties.managesEntityType(entry.getEntityType())) {
+            return;
+        }
         if (writtenContentHash.isPresent()) {
             String hash = writtenContentHash.get();
             syncStateRepository.findByEntityTypeAndEntityId(entry.getEntityType(), entry.getEntityId()).ifPresentOrElse(state -> {

@@ -28,6 +28,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateOutboxProperties;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateReconcileProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntitySyncState;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
@@ -48,6 +49,8 @@ class WeaviateOutboxDispatcherTest {
 
     private static final String COURSE = SearchableEntitySchema.TypeValues.COURSE;
 
+    private static final String POST = SearchableEntitySchema.TypeValues.POST;
+
     /** Stand-in content hash returned by the mocked service for a successful upsert (a real hash is 64 hex chars). */
     private static final String HASH = "a".repeat(64);
 
@@ -63,7 +66,9 @@ class WeaviateOutboxDispatcherTest {
     void setUp() {
         // Construct with the production default tuning values.
         var outboxProperties = new WeaviateOutboxProperties(5, 100, 10, 300);
-        dispatcher = new WeaviateOutboxDispatcher(outboxRepository, syncStateRepository, searchableEntityWeaviateService, outboxProperties);
+        var reconcileProperties = new WeaviateReconcileProperties(false, false, false, List.of(COURSE, "lecture", "lecture_unit", "exam", "exercise", "faq", "channel"), 500, 100,
+                200, 1000, 5, 100, 100, 0.25);
+        dispatcher = new WeaviateOutboxDispatcher(outboxRepository, syncStateRepository, searchableEntityWeaviateService, outboxProperties, reconcileProperties);
     }
 
     @Test
@@ -136,6 +141,38 @@ class WeaviateOutboxDispatcherTest {
         verify(searchableEntityWeaviateService).applyOutboxEntry(entry);
         verify(syncStateRepository).deleteByEntityTypeAndEntityId(COURSE, 1L);
         verify(syncStateRepository, never()).save(any());
+        verify(outboxRepository).delete(entry);
+    }
+
+    /**
+     * Regression test for a ledger that only ever grows: post and answer post are excluded from every reconcile
+     * pass ({@code WeaviateReconcileProperties.entityTypes}), so nothing reads their ledger rows back, and a bulk
+     * delete has no entity id to clean one up with. The dispatcher must not write a row for them at all, rather
+     * than writing one a bulk delete then permanently fails to remove.
+     */
+    @Test
+    void testDrainUpsertOfAnUnmanagedType_neverTouchesTheLedger() {
+        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(POST, 1L, WeaviateOutboxOrigin.LIVE);
+        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
+        when(searchableEntityWeaviateService.applyOutboxEntry(entry)).thenReturn(Optional.of(HASH));
+
+        dispatcher.drain();
+
+        verify(searchableEntityWeaviateService).applyOutboxEntry(entry);
+        verify(syncStateRepository, never()).findByEntityTypeAndEntityId(anyString(), anyLong());
+        verify(syncStateRepository, never()).save(any());
+        verify(outboxRepository).delete(entry);
+    }
+
+    @Test
+    void testDrainDeleteEntityOfAnUnmanagedType_neverTouchesTheLedger() {
+        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forDeleteEntity(POST, 1L, WeaviateOutboxOrigin.LIVE);
+        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
+
+        dispatcher.drain();
+
+        verify(searchableEntityWeaviateService).applyOutboxEntry(entry);
+        verify(syncStateRepository, never()).deleteByEntityTypeAndEntityId(anyString(), anyLong());
         verify(outboxRepository).delete(entry);
     }
 

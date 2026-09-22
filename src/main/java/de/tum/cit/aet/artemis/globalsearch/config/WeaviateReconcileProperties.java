@@ -58,10 +58,11 @@ public record WeaviateReconcileProperties(@DefaultValue("false") boolean missing
     /**
      * Returns whether a type is managed by the reconcile passes.
      *
-     * @param entityType the {@code SearchableEntitySchema.TypeValues} discriminator
+     * @param entityType the {@code SearchableEntitySchema.TypeValues} discriminator, or {@code null} (a bulk
+     *                       delete's outbox entry carries no single type), which is never managed
      * @return true if the passes may repair and remove rows of this type
      */
     public boolean managesEntityType(String entityType) {
-        return entityTypes.contains(entityType);
+        return entityType != null && entityTypes.contains(entityType);
     }
 }
