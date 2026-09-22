@@ -277,29 +277,35 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
-     * The participation a repository belongs to, loaded as a single row for callers that only need to refer to it.
+     * A reference to the participation a repository belongs to, read as one id and nothing else.
      *
      * <p>
-     * Unlike {@link #fetchParticipationWithSubmissionsByRepository}, this joins nothing: no submissions, no results and
-     * no exercise. It exists for the access log, which records who touched which repository and therefore needs the
-     * participation only as a reference. Fetching the submissions of a participation, or the exercise behind it, to
-     * write one log row is work that never pays for itself.
+     * Unlike {@link #fetchParticipationWithSubmissionsByRepository}, this loads no entity at all: the query returns the
+     * primary key, and the participation is handed back unloaded. It exists for the access log, which records that a
+     * repository was touched and therefore stores the participation as a foreign key without reading anything from it.
+     * Loading the entity instead would pull the exercise and its course along, because a participation holds those as
+     * eager associations and the exercise of a solution participation cannot even be proxied, and this runs on every
+     * rejected authentication, which is traffic whose volume an attacker chooses.
+     *
+     * <p>
+     * The returned participation carries its id and nothing more. Reading any other field initialises it, which fails
+     * outside a transaction, so it is only good for writing the association.
      *
      * @param repositoryTypeOrUserName the repository type, or the login of the student the repository belongs to
      * @param repositoryUri            the uri of the repository
-     * @param projectKey               the project key of the exercise, which is how the shared solution and test
-     *                                     participation is found
-     * @return the participation behind the repository, or empty if there is none
+     * @param projectKey               the project key of the exercise, which is how the solution participation shared
+     *                                     with the test repository is found
+     * @return a reference to the participation behind the repository, or empty if there is none
      */
-    public Optional<ProgrammingExerciseParticipation> findParticipationForRepository(String repositoryTypeOrUserName, String repositoryUri, String projectKey) {
+    public Optional<ProgrammingExerciseParticipation> getParticipationReferenceForRepository(String repositoryTypeOrUserName, String repositoryUri, String projectKey) {
         String repositoryUriWithoutService = repositoryUri.replace("/git-upload-pack", "").replace("/git-receive-pack", "");
         if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
-            return solutionParticipationRepository.findByProjectKey(projectKey).map(ProgrammingExerciseParticipation.class::cast);
+            return solutionParticipationRepository.findIdByProjectKey(projectKey).map(solutionParticipationRepository::getReferenceById);
         }
         if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
-            return templateParticipationRepository.findByRepositoryUri(repositoryUriWithoutService).map(ProgrammingExerciseParticipation.class::cast);
+            return templateParticipationRepository.findIdByRepositoryUri(repositoryUriWithoutService).map(templateParticipationRepository::getReferenceById);
         }
-        return studentParticipationRepository.findByRepositoryUri(repositoryUriWithoutService).map(ProgrammingExerciseParticipation.class::cast);
+        return studentParticipationRepository.findIdByRepositoryUri(repositoryUriWithoutService).map(studentParticipationRepository::getReferenceById);
     }
 
     public ProgrammingExerciseParticipation retrieveSolutionParticipation(Exercise exercise) {

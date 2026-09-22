@@ -182,7 +182,7 @@ class LocalVCServletServiceTest {
     void writesTheAccessLogWhenAFetchAuthenticationFails() {
         HttpServletRequest request = failedFetchRequest();
         when(userRepository.findOneByLogin("testuser")).thenReturn(Optional.of(testUser));
-        when(programmingExerciseParticipationService.findParticipationForRepository(anyString(), anyString(), eq(testExercise.getProjectKey())))
+        when(programmingExerciseParticipationService.getParticipationReferenceForRepository(anyString(), anyString(), eq(testExercise.getProjectKey())))
                 .thenReturn(Optional.of(testParticipation));
 
         localVCServletService.createVCSAccessLogForFailedAuthenticationAttempt(request);
@@ -197,7 +197,7 @@ class LocalVCServletServiceTest {
     void doesNotLetAFailedAccessLogReplaceTheAuthenticationFailure() {
         HttpServletRequest request = failedFetchRequest();
         when(userRepository.findOneByLogin("testuser")).thenReturn(Optional.of(testUser));
-        when(programmingExerciseParticipationService.findParticipationForRepository(anyString(), anyString(), anyString()))
+        when(programmingExerciseParticipationService.getParticipationReferenceForRepository(anyString(), anyString(), anyString()))
                 .thenThrow(new IllegalStateException("the database is away"));
 
         // The caller is in the middle of answering a rejected authentication with 401. An exception escaping here

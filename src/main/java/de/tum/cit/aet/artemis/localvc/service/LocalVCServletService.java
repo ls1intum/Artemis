@@ -1773,10 +1773,10 @@ public class LocalVCServletService {
             User user = userRepository.findOneByLogin(usernameAndPassword.username()).orElseThrow(LocalVCAuthException::new);
             AuthenticationMechanism mechanism = usernameAndPassword.password().startsWith("vcpat-") ? AuthenticationMechanism.VCS_ACCESS_TOKEN : AuthenticationMechanism.PASSWORD;
             LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(servletRequest);
-            // One row, joining nothing. The log records that this repository was touched, so the participation is
-            // needed only as a reference: the previous call fetched it with its submissions, and reached them through
-            // an exercise that was passed as null, which is what threw the NullPointerException.
-            var participation = programmingExerciseParticipationService.findParticipationForRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(),
+            // One id, no entity. The log stores the participation as a foreign key and reads nothing from it, so
+            // nothing more is loaded: the previous call fetched the participation with its submissions, and reached
+            // them through an exercise that was passed as null, which is what threw the NullPointerException.
+            var participation = programmingExerciseParticipationService.getParticipationReferenceForRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(),
                     localVCRepositoryUri.toString(), localVCRepositoryUri.getProjectKey());
             if (participation.isEmpty()) {
                 return;
