@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Min;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Rate limit overrides stored alongside the course settings.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record IrisRateLimitConfiguration(@Nullable @Min(0) Integer requests, @Nullable @Min(1) Integer timeframeHours) implements Serializable {
 
     private static final IrisRateLimitConfiguration EMPTY = new IrisRateLimitConfiguration(null, null);
