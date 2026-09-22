@@ -66,6 +66,7 @@
                     [participation]="participation()!"
                     [showUngradedResults]="!isTmpOrSolutionProgrParticipation()"
                     [showBadge]="!isTmpOrSolutionProgrParticipation()"
+                    [isOwnParticipation]="false"
                 />
                 @if (exercise()?.isAtLeastInstructor) {
                     <span
