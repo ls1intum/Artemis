@@ -5,7 +5,7 @@ import { cwd } from 'node:process';
 import { setTimeout } from 'node:timers/promises';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { resolveStylesheet } from './oracle.mjs';
-import { stopOracleForTests, unknownClasses } from './client.mjs';
+import { stopOracleForTests, unknownClasses, compiledClasses } from './client.mjs';
 
 let root;
 beforeEach(() => {
@@ -51,10 +51,12 @@ describe('Tailwind dependency resolution', () => {
 export default ({addUtilities}: {addUtilities: Function}) => addUtilities({['.' + name]: {display: 'block'}});`,
         );
         expect(unknownClasses(theme, ['initial-control'])).toEqual([]);
+        expect(compiledClasses(theme, ['initial-control'])[0]).toContain('display: block');
         writeFileSync(helper, 'export default "updated-control";');
         // Cross the production compiler's filesystem refresh interval, not an increased test timeout.
         await setTimeout(1100);
         expect(unknownClasses(theme, ['updated-control'])).toEqual([]);
+        expect(compiledClasses(theme, ['initial-control', 'updated-control'])).toEqual([null, expect.stringContaining('.updated-control')]);
         expect(unknownClasses(theme, ['initial-control'])).toEqual([expect.objectContaining({ token: 'initial-control' })]);
     });
 });

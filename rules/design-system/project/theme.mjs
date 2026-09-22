@@ -163,7 +163,7 @@ function readTheme(cssFile, seen, read, fromPackage = false) {
     } catch {
         return;
     }
-    css = stylesheet(css);
+    css = postcss.parse(css, { from: cssFile });
     for (const name of parseUtilities(css)) read.utilities.add(name);
     for (const name of parseClassSelectors(css)) read.classes.add(name);
     // Imports come first in the cascade.

@@ -15,7 +15,7 @@ export function createTumUiPrivateClassesRule(sources) {
         create(context) {
             const check = (value, node) => {
                 for (const token of value.split(/\s+/).filter(Boolean)) {
-                    if (/^tum-ui-/.test(token) || (token.includes('[') && /(?:\.tum-ui-|\[tumUi[A-Z]|\[class[^\]]*tum-ui-)/.test(token))) {
+                    if (token.startsWith('tum-ui-')) {
                         context.report({ node, messageId: 'internal', data: { value: token } });
                     }
                 }

@@ -56,5 +56,6 @@ export const tumUiDesignSystemRules = {
     'design-system/no-raw-colors': 'error',
     'design-system/no-arbitrary-values': ['error', { allow: ['layout'] }],
     'design-system/no-inline-styles': ['error', inlineStyleOptions],
+    'design-system/no-restyle-class-selectors': ['error', { propertyOptions: inlineStyleOptions, privateClassPrefix: 'tum-ui-' }],
     'design-system/no-restyle-stylesheets': ['error', { propertyOptions: inlineStyleOptions, privateClassPrefix: 'tum-ui-' }],
 };

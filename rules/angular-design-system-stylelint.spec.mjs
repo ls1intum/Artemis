@@ -1,11 +1,14 @@
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import process from 'node:process';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import stylelint from 'stylelint';
 import { compileString } from 'sass';
+import { compile } from '@tailwindcss/node';
 import { createDesignSystemStyleRule } from './angular-design-system-stylelint.mjs';
 import { inlineStyleOptions } from './tum-ui-design-system.mjs';
+import { stopOracleForTests } from './design-system/tailwind/client.mjs';
 
 let root;
 let plugin;
@@ -13,17 +16,30 @@ let plugin;
 beforeAll(() => {
     root = mkdtempSync(path.join(tmpdir(), 'artemis-style-policy-'));
     mkdirSync(path.join(root, 'components'));
+    symlinkSync(path.resolve('node_modules'), path.join(root, 'node_modules'), 'dir');
+    writeFileSync(path.join(root, 'theme.css'), '@import "tailwindcss";');
     writeFileSync(
         path.join(root, 'components', 'controls.ts'),
-        `import { Component, Directive } from '@angular/core';
+        `import { Component, Directive, input } from '@angular/core';
 @Component({ selector: 'ds-panel', template: '' }) export class Panel {}
-@Component({ selector: 'button[dsButton], a[dsButton]', template: '' }) export class Button {}
+@Component({ selector: 'button[dsButton], a[dsButton]', template: '' }) export class Button {
+    readonly size = input<'small' | 'large'>('small');
+    readonly variant = input<'solid' | 'outlined'>('solid');
+}
 @Directive({ selector: 'input[dsInput]:not([plain])', host: { class: 'control' } }) export class Input {}
 @Directive({ selector: '[behavior]' }) export class Behavior {}`,
     );
-    plugin = createDesignSystemStyleRule({ components: [path.join(root, 'components')], propertyOptions: inlineStyleOptions });
+    plugin = createDesignSystemStyleRule({
+        components: [path.join(root, 'components')],
+        propertyOptions: inlineStyleOptions,
+        theme: path.join(root, 'theme.css'),
+        privateClassPrefix: 'ds-private-',
+    });
 });
-afterAll(() => rmSync(root, { recursive: true, force: true }));
+afterAll(() => {
+    stopOracleForTests();
+    rmSync(root, { recursive: true, force: true });
+});
 
 async function lint(code, selectedPlugin = plugin) {
     const result = await stylelint.lint({
@@ -163,7 +179,7 @@ describe('Angular design-system stylesheet adapter', () => {
         const compiled = compileString(source).css;
         expect(compiled).toContain('button[dsButton].compact');
         expect(await lint(source)).toEqual([expect.objectContaining({ text: expect.stringContaining('Cannot verify an interpolated selector') })]);
-        expect(await lint(compiled)).toEqual([expect.objectContaining({ text: expect.stringContaining('Inline style sets padding') })]);
+        expect(await lint(compiled)).toEqual([expect.objectContaining({ text: expect.stringContaining('Stylesheet property "padding" overrides <Button>') })]);
     });
 
     it('still protects real functional alternatives and package-owned pseudo-elements', async () => {
@@ -176,6 +192,26 @@ describe('Angular design-system stylesheet adapter', () => {
     it('applies upstream raw-color policy to custom properties while accepting theme references', async () => {
         expect(await lint('ds-panel { --control-color: #ff0000; }')).toEqual([expect.objectContaining({ text: expect.stringContaining('hardcodes a color') })]);
         expect(await lint('ds-panel { --control-color: var(--color-brand); }')).toEqual([]);
+    });
+
+    it('names the stylesheet property, component and only existing public appearance inputs', async () => {
+        const [warning] = await lint('button[dsButton] { padding: 1rem; }');
+        expect(warning.text).toContain('Stylesheet property "padding" overrides <Button>.');
+        expect(warning.text).toContain('size (small, large)');
+        expect(warning.text).toContain('variant (solid, outlined)');
+        expect(warning.text).toContain(path.relative(process.cwd(), path.join(root, 'components', 'controls.ts')));
+        expect(warning.text).not.toContain('Inline style');
+        expect(warning.text).not.toContain('severity');
+    });
+
+    it('does not invent a variant or size API for controls without those inputs', async () => {
+        const [warning] = await lint('ds-panel { font: { size: 2rem; } }');
+        expect(warning.text).toBe(
+            `Stylesheet property "font-size" overrides <Panel>. Update ${path.relative(process.cwd(), path.join(root, 'components', 'controls.ts'))} for this treatment. (design-system/no-restyle)`,
+        );
+        const [color] = await lint('ds-panel { --control-color: red; }');
+        expect(color.text).toContain('Custom property "--control-color" on <Panel> hardcodes a color.');
+        expect(color.text).toContain('Reference an existing theme token');
     });
 
     it('uses upstream component contracts instead of a duplicate CSS property allowlist', async () => {
@@ -196,5 +232,51 @@ describe('Angular design-system stylesheet adapter', () => {
         expect(result).toHaveLength(2);
         expect(result[0]).toMatchObject({ line: 2, column: 3, endLine: 2, endColumn: 10 });
         expect(result[1]).toMatchObject({ line: 3, column: 13 });
+    });
+
+    it.each(['.page { @apply [&_ds-panel]:p-4; }', '.page { @apply [&_button[dsButton]]:rounded-none; }', '.page { @media (width < 40rem) { @apply [&_ds-panel]:opacity-50; } }'])(
+        'checks actual selectors generated by @apply on ordinary wrappers: %s',
+        async (code) => {
+            expect(await lint(code)).toEqual([expect.objectContaining({ text: expect.stringContaining('generates a forbidden selector. Stylesheet property') })]);
+        },
+    );
+
+    it('agrees with actual Tailwind @apply expansion, not only candidate compilation', async () => {
+        const source = '.page { @apply [&_ds-panel]:p-4; }';
+        const compiler = await compile(`@import "tailwindcss"; ${source}`, { base: root, onDependency() {} });
+        const output = compiler.build([]);
+        expect(output).toContain('ds-panel');
+        expect(await lint(source)).toEqual([expect.objectContaining({ text: expect.stringContaining('Stylesheet property "padding"') })]);
+        expect(await lint(output)).toEqual([expect.objectContaining({ text: expect.stringContaining('Stylesheet property "padding"') })]);
+    });
+
+    it('checks private selectors generated by @apply and points at the original token', async () => {
+        const [warning] = await lint('.page {\n  @apply [&_.ds-private-header]:p-4;\n}');
+        expect(warning.text).toContain('Do not select private ds-private- classes');
+        expect(warning).toMatchObject({ line: 2, column: 10 });
+    });
+
+    it.each([
+        '.page { @apply [&_ds-panel]:m-4; }',
+        '.page { @apply [&_button]:p-4; }',
+        '.page { @apply hover:p-4; }',
+        '.page { @apply p-4; }',
+        '.page { @apply has-[ds-panel]:p-4; }',
+    ])('keeps layout and ordinary generated subjects allowed: %s', async (code) => {
+        expect(await lint(code)).toEqual([]);
+    });
+
+    it.each(['ds-panel { @apply [&_ds-panel]:p-4; }', '.page { @at-root ds-panel { @apply [&_ds-panel]:p-4; } }'])(
+        'does not duplicate the existing opaque protected-host @apply diagnostic: %s',
+        async (code) => {
+            expect(await lint(code)).toEqual([expect.objectContaining({ text: expect.stringContaining('Cannot verify @apply') })]);
+        },
+    );
+
+    it('reports a missing compiler theme rather than silently accepting @apply selectors', async () => {
+        const unconfigured = createDesignSystemStyleRule({ components: [path.join(root, 'components')] });
+        expect(await lint('.page { @apply [&_ds-panel]:p-4; }', unconfigured)).toEqual([
+            expect.objectContaining({ text: expect.stringContaining('No Tailwind theme is configured') }),
+        ]);
     });
 });

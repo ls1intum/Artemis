@@ -21,7 +21,12 @@ patch its package, load its bundle, or translate Angular templates into JSX.
 - `angular-design-system-host.mjs` reads Angular host metadata and `@HostBinding`, sharing records
   between appearance checks and the private-class guard.
 - `angular-design-system-stylelint.mjs` checks stylesheet subjects and nested selectors against
-  discovered components. Inline `@Component.styles` uses the same evaluator.
+  discovered components. Inline `@Component.styles` uses the same evaluator. Variant `@apply`
+  declarations on ordinary wrappers are checked through the configured Tailwind compiler too.
+- `angular-design-system-class-styles.mjs` checks Tailwind variant classes on ordinary ancestors
+  as well as protected controls. It reuses the compiler's generated CSS and the stylesheet/private
+  namespace checks, including custom variants and escaped selectors; it does not parse variant
+  selector strings with a separate grammar.
 - `angular-design-system-lintable-templates.mjs` rejects inline templates Angular ESLint cannot
   extract, rather than silently skipping them.
 - `tum-ui-design-system.mjs` supplies Artemis's roots, theme, and layout policy.
@@ -31,6 +36,12 @@ are relative to `root`; `sources` defaults to `components`. `scope` defaults to 
 `components` while legacy application classes remain outside design-system hosts. CSS/SCSS checks
 cover all application styles, including global styles outside `app/`. Package implementation files
 are excluded by ESLint/Stylelint configuration, not component-specific rule exemptions.
+
+Diagnostics identify the authored class or property and the protected component. Stylesheet
+appearance errors list discovered public appearance inputs and the component source to change
+when no suitable input exists. Inline styles include CSS coordinates while ESLint retains the
+actual TypeScript string location. Unknown bindings report once per source site; compiler failures
+remain errors, not permission to skip verification.
 
 ## Source and maintenance
 
@@ -72,7 +83,8 @@ TypeScript files. Use literal `@Component` metadata or an external template when
 guard rejects an unsupported inline form, including aliased or barrel-imported decorators and indirect metadata. Inline templates use a
 direct `Component` import from `@angular/core`; external templates do not have this restriction.
 
-Generic selectors, inheritance, runtime DOM changes, and selectors manufactured entirely by Sass
+Generated variant selectors are checked when their CSS explicitly identifies a protected control
+or private class. Generic selectors, inheritance, runtime DOM changes, and selectors manufactured entirely by Sass
 outside a statically protected context are not completely modeled. Within known protected contexts,
 unreadable mixins, extension, and interpolation are errors rather than passes. Keep browser coverage;
 do not solve findings with blanket allowlists, selector rewrites, or inline-style migration.

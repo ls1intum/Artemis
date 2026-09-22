@@ -271,8 +271,32 @@ export class ConsumerComponent {}`;
         expect(result.messages).toEqual([expect.objectContaining({ ruleId: 'design/no-restyle', line: 3, column: 33, endLine: 3, endColumn: 44 })]);
     });
 
-    it.each(referenceVerdicts.cases)('matches the captured upstream $rule verdict', ({ rule, htmlAttribute, options, messages: expected }) => {
-        const actual = messages(`<ds-button ${htmlAttribute} />`, rule, options);
-        expect(actual.map(({ message, severity }) => ({ message, severity }))).toEqual(expected);
+    it('reports one actionable finding per unresolved binding, not one per expression branch', () => {
+        const result = messages('<button dsButton [ngClass]="[first(), second()]"></button>', 'require-static-classes');
+        expect(result).toEqual([
+            expect.objectContaining({
+                messageId: 'dynamicClasses',
+                message:
+                    'Class binding "ngClass" on <DsButton> cannot be statically checked. Use complete class strings in literals, arrays, or conditional branches instead of calls or concatenation.',
+                line: 1,
+                column: 18,
+            }),
+        ]);
+    });
+
+    it.each(referenceVerdicts.cases.filter(({ rule }) => rule !== 'require-static-classes'))(
+        'matches the captured upstream $rule verdict',
+        ({ rule, htmlAttribute, options, messages: expected }) => {
+            const actual = messages(`<ds-button ${htmlAttribute} />`, rule, options);
+            expect(actual.map(({ message, severity }) => ({ message, severity }))).toEqual(expected);
+        },
+    );
+    it('preserves the upstream dynamic-class verdict while deliberately adapting its React wording', () => {
+        const reference = referenceVerdicts.cases.find(({ rule }) => rule === 'require-static-classes');
+        expect(reference.messages[0].message).toContain('className');
+        const actual = messages(`<ds-button ${reference.htmlAttribute} />`, reference.rule, reference.options);
+        expect(actual).toEqual([expect.objectContaining({ messageId: 'dynamicClasses', severity: reference.messages[0].severity })]);
+        expect(actual[0].message).toContain('Class binding "class"');
+        expect(actual[0].message).not.toContain('className');
     });
 });

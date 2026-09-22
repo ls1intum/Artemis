@@ -89,8 +89,11 @@ describe('TUM UI consumer policy wiring', () => {
         expect(ts.processor).toBe(angular.processInlineTemplates);
         const html = await eslint.calculateConfigForFile('src/main/webapp/app/example/example.component.html');
         expect(html.rules['design-system/no-restyle'][0]).toBe(2);
+        expect(html.rules['design-system/no-restyle-class-selectors'][0]).toBe(2);
+        expect(ts.rules['design-system/no-restyle-class-selectors'][0]).toBe(2);
         const kit = await eslint.calculateConfigForFile('packages/tum-ui/src/lib/button/tum-ui-button.component.html');
         expect(kit.rules['design-system/no-restyle']).toBeUndefined();
+        expect(kit.rules['design-system/no-restyle-class-selectors']).toBeUndefined();
     });
 
     it('reports inline templates at the original TypeScript location using the framework processor', async () => {

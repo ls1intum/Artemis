@@ -7,13 +7,14 @@ import { didYouMean } from '../grammar/similar.mjs';
 import { projectClassifierFor } from '../project/namespaces.mjs';
 import { colorTokensFor, knownClassesFor, tailwindEntryFor, themeFileFor, utilityPrefixesOf } from '../project/theme.mjs';
 import { classSiteVisitors } from '../expressions.mjs';
-import { unknownClasses } from '../tailwind/client.mjs';
+import { TailwindVerificationError, unknownClasses } from '../tailwind/client.mjs';
 import { compileVocabularyPolicy, configErrorVisitors } from './contracts.mjs';
 import { classSuggestions } from './fixes.mjs';
 import { displayPath, fileOf, reporter } from './messages.mjs';
 import { colorValueOf } from './no-raw-colors.mjs';
 import { policySchema } from './policy-schema.mjs';
 const MESSAGES = {
+    compilerUnavailable: '{{reason}}. Fix the configured Tailwind theme or compiler availability, then rerun lint; class verification has not completed.',
     unknownClass: '"{{className}}" is not a class this project\'s Tailwind knows, so no CSS is generated for it. Fix the spelling, or declare it with @utility in {{file}}.',
     unknownClassSuggest: '"{{className}}" is not a class this project\'s Tailwind knows, so no CSS is generated for it. Did you mean "{{suggestion}}"?',
     unknownVariant:
@@ -104,7 +105,9 @@ export const noUnknownClasses = {
             declared ??= colorTokensFor(filename);
             return !declared || !didYouMean(value, declared);
         };
+        let compilerUnavailable = false;
         return classSiteVisitors(context, options, (site) => {
+            if (compilerUnavailable) return;
             for (const { value, node } of site.vocabularyStrings) {
                 const wordsFor = new Map();
                 const tokens = splitClasses(value).filter((token) => {
@@ -117,7 +120,15 @@ export const noUnknownClasses = {
                 if (!tokens.length) continue;
                 // The worker tells a misspelled variant on a real color from a
                 // utility that only looks like one, prefix and all.
-                const asked = entry ? unknownClasses(entry, tokens) : null;
+                let asked;
+                try {
+                    asked = entry ? unknownClasses(entry, tokens) : null;
+                } catch (error) {
+                    if (!(error instanceof TailwindVerificationError)) throw error;
+                    compilerUnavailable = true;
+                    context.report({ node, messageId: 'compilerUnavailable', data: { reason: error.message } });
+                    return;
+                }
                 if (asked) {
                     for (const { token, suggestion, baseKnown } of asked) {
                         if (isColor(token) && !baseKnown && !ownsColorTypo(token, suggestion)) continue;

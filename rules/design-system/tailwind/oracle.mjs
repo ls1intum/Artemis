@@ -201,5 +201,6 @@ export async function query(cssFile, candidates) {
         generation: system.generation,
         hasModules: system.modules > 0,
         unknown,
+        css,
     };
 }

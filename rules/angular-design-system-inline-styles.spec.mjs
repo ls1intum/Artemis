@@ -71,12 +71,33 @@ describe('Angular component inline stylesheets', () => {
         expect(lint(code)).toEqual([expect.objectContaining({ messageId: 'stylesheet' })]);
     });
 
-    it.each(['stylesFromService()', 'IMPORTED_STYLES', '`ds-button { color: ${color} }`', '[...unknownStyles]', '42', '["broken {"]'])(
-        'reports unverifiable inline styles: %s',
-        (styles) => {
-            expect(lint(component(styles))).toEqual([expect.objectContaining({ messageId: 'unreadable' })]);
-        },
-    );
+    it.each(['stylesFromService()', 'IMPORTED_STYLES', '`ds-button { color: ${color} }`', '[...unknownStyles]', '42'])('reports unverifiable inline styles: %s', (styles) => {
+        expect(lint(component(styles))).toEqual([expect.objectContaining({ messageId: 'unreadable' })]);
+    });
+
+    it('identifies malformed CSS separately from an unreadable expression at the original string', () => {
+        const code = component(JSON.stringify('ds-button {\n  color red;\n}'));
+        expect(lint(code)).toEqual([
+            expect.objectContaining({
+                messageId: 'invalidSyntax',
+                message: 'Cannot parse inline CSS/SCSS: Unknown word color (stylesheet line 2, column 3). Fix the syntax before design-system checks can run.',
+                line: 2,
+                column: code.split('\n')[1].indexOf('"ds-button') + 1,
+            }),
+        ]);
+    });
+
+    it('distinguishes declaration positions inside an escaped multiline stylesheet without inventing TS columns', () => {
+        const code = component(JSON.stringify('ds-button {\n  color: red;\n  padding: 1rem;\n}'));
+        const result = lint(code);
+        expect(result).toHaveLength(2);
+        expect(result.map(({ line, column }) => ({ line, column }))).toEqual([
+            { line: 2, column: code.split('\n')[1].indexOf('"ds-button') + 1 },
+            { line: 2, column: code.split('\n')[1].indexOf('"ds-button') + 1 },
+        ]);
+        expect(result[0].message).toContain('inline stylesheet line 2, column 3');
+        expect(result[1].message).toContain('inline stylesheet line 3, column 3');
+    });
 
     it('handles recursive constant style arrays without recursing forever', () => {
         expect(lint(`const CSS = [CSS]; ${component('CSS')}`)).toEqual([expect.objectContaining({ messageId: 'unreadable' })]);
@@ -98,7 +119,9 @@ describe('Angular component inline stylesheets', () => {
     it.each(['@Component(META) class Widget {}', '@Component({...META}) class Widget {}', '@Component({[KEY]: []}) class Widget {}'])(
         'reports metadata whose absence of inline styles cannot be established: %s',
         (body) => {
-            expect(lint(`import {Component} from '@angular/core'; import {META,KEY} from './shared'; ${body}`)).toEqual([expect.objectContaining({ messageId: 'unreadable' })]);
+            expect(lint(`import {Component} from '@angular/core'; import {META,KEY} from './shared'; ${body}`)).toEqual([
+                expect.objectContaining({ messageId: 'unreadableMetadata' }),
+            ]);
         },
     );
 
@@ -145,4 +168,11 @@ describe('typed Angular decorator identity', () => {
         expect(check('host.ts')).toEqual([expect.objectContaining({ ruleId: 'design/no-restyle' })]);
         expect(check('fake.component.ts')).toEqual([]);
     });
+});
+
+it('checks variant @apply selectors inside inline component styles using the configured compiler', () => {
+    const messages = lint(component(JSON.stringify('.wrapper { @apply [&_ds-button]:p-4; }')));
+    expect(messages).toEqual([expect.objectContaining({ messageId: 'stylesheet', message: expect.stringContaining('@apply "[&_ds-button]:p-4"') })]);
+    expect(messages[0].message).toContain('stylesheet line 1, column 12');
+    expect(lint(component(JSON.stringify('.wrapper { @apply [&_ds-button]:w-full; }')))).toEqual([]);
 });

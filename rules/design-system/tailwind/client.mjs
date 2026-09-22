@@ -97,7 +97,7 @@ function readUnknownClasses(cssFile, candidates) {
     const now = Date.now();
     let memo = memos.get(cssFile);
     const stale = !memo || now - memo.checkedAt >= REFRESH_AFTER;
-    let unseen = candidates.filter((c) => !memo?.verdicts.has(c));
+    let unseen = [...new Set(candidates.filter((c) => !memo?.verdicts.has(c)))];
     if (unseen.length || stale) {
         let answer = ask(cssFile, [...new Set(unseen)]);
         if (!answer) return null;
@@ -121,11 +121,15 @@ function readUnknownClasses(cssFile, candidates) {
                 checkedAt: now,
                 hasModules: answer.hasModules,
                 verdicts: new Map(),
+                styles: new Map(),
             };
             memos.set(cssFile, memo);
         }
         memo.checkedAt = now;
-        for (const token of unseen) memo.verdicts.set(token, true);
+        for (const [index, token] of unseen.entries()) {
+            memo.verdicts.set(token, true);
+            memo.styles.set(token, answer.css[index]);
+        }
         for (const entry of answer.unknown) memo.verdicts.set(entry.token, entry);
     }
     const out = [];
@@ -135,11 +139,19 @@ function readUnknownClasses(cssFile, candidates) {
     }
     return out;
 }
+export class TailwindVerificationError extends Error {}
+
 // A configured Angular theme must be verified by its compiler, never silently downgraded to grammar guesses.
 export function unknownClasses(cssFile, candidates) {
     const result = readUnknownClasses(cssFile, candidates);
-    if (result === null) throw new Error(`Cannot verify design-system classes in ${cssFile}: ${failed.get(cssFile)?.reason ?? 'Tailwind worker unavailable'}`);
+    if (result === null) throw new TailwindVerificationError(`Cannot verify design-system classes in ${cssFile}: ${failed.get(cssFile)?.reason ?? 'Tailwind worker unavailable'}`);
     return result;
+}
+
+/** Reuse the same compiler generation and dependency invalidation as class verification. */
+export function compiledClasses(cssFile, candidates) {
+    unknownClasses(cssFile, candidates);
+    return candidates.map((token) => memos.get(cssFile).styles.get(token));
 }
 
 export function stopOracleForTests() {

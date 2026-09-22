@@ -3,13 +3,14 @@
 import { classSiteVisitors } from '../expressions.mjs';
 import { reporter } from './messages.mjs';
 const MESSAGES = {
-    dynamicClasses: 'Dynamically built className on <{{component}}> cannot be checked. Use static class strings.',
+    dynamicClasses:
+        'Class binding "{{attribute}}" on <{{component}}> cannot be statically checked. Use complete class strings in literals, arrays, or conditional branches instead of calls or concatenation.',
 };
 export const requireStaticClasses = {
     meta: {
         type: 'problem',
         docs: {
-            description: 'Require statically analyzable className values on design-system components.',
+            description: 'Require statically analyzable class bindings on design-system components.',
             url: 'https://github.com/shadcn-ui/lint/blob/main/docs/rules/require-static-classes.md',
         },
         schema: [
@@ -31,11 +32,11 @@ export const requireStaticClasses = {
         });
         return classSiteVisitors(context, options, (site) => {
             if (!site.component) return;
-            for (const node of site.unresolved) {
+            for (const node of new Set(site.unresolved)) {
                 emit({
                     node,
                     messageId: 'dynamicClasses',
-                    data: { component: site.component },
+                    data: { component: site.component, attribute: site.attribute ?? 'class' },
                 });
             }
         });

@@ -24,8 +24,6 @@ describe('TUM UI implementation privacy', () => {
             invalid: [
                 '<div class="tum-ui-btn"></div>',
                 '<div CLASS="tum-ui-btn"></div>',
-                '<div class="[&_.tum-ui-panel-header]:hidden"></div>',
-                '<div class="[&_[class*=tum-ui-panel]]:hidden"></div>',
                 '<div [class.tum-ui-btn]="active()"></div>',
                 '<div [className]="\'tum-ui-btn\'"></div>',
                 '<div [ngClass]="{\'tum-ui-btn\': active()}"></div>',
@@ -98,7 +96,6 @@ describe('ordinary Angular host implementation privacy', () => {
 describe('ordinary Angular template implementation privacy', () => {
     it.each([
         ['<div [class]="classes"></div>', 'tum-ui-btn', 1],
-        ['<div [class]="classes"></div>', '[&_.tum-ui-btn]:p-4', 1],
         ['<div [ngClass]="[classes]"></div>', 'tum-ui-btn', 1],
         ['<div [className]="classes"></div>', 'tum-ui-btn', 1],
         ['<div [class]="classes"></div>', 'page-layout', 0],

@@ -145,10 +145,10 @@ export function createAngularHostReader(context) {
 /** Adapt actual Angular host metadata on protected selectors, not arbitrary application hosts. */
 export function createAngularHostAdapter(context, index) {
     const readHosts = createAngularHostReader(context);
-    function hosts(declaration) {
+    function hosts(declaration, includeUnprotected = false) {
         const matchesBySelector = new Map();
         const hosts = readHosts(declaration, (selector) => {
-            if (typeof selector !== 'string') return false;
+            if (typeof selector !== 'string') return includeUnprotected;
             const matches = new Set();
             for (const selected of CssSelector.parse(selector)) {
                 const attributes = [];
@@ -157,9 +157,9 @@ export function createAngularHostAdapter(context, index) {
                 for (const component of index.match({ name: selected.element, attributes, inputs: [] })) if (component.ownsAppearance) matches.add(component);
             }
             matchesBySelector.set(selector, matches);
-            return matches.size > 0;
+            return includeUnprotected || matches.size > 0;
         });
-        return hosts.map(({ selector, records }) => ({ matches: matchesBySelector.get(selector), records }));
+        return hosts.map(({ selector, records }) => ({ matches: matchesBySelector.get(selector) ?? new Set(), records }));
     }
     function normalized(name) {
         const value = name.replace(/^attr\./, '');
@@ -184,10 +184,10 @@ export function createAngularHostAdapter(context, index) {
     }
 
     return {
-        classSiteVisitors(_context, _options, emit) {
+        classSiteVisitors(_context, options, emit) {
             return {
                 ClassDeclaration(declaration) {
-                    for (const { matches, records } of hosts(declaration))
+                    for (const { matches, records } of hosts(declaration, options.includeUnprotected))
                         for (const record of records) {
                             const name = normalized(record.name);
                             if (!isClassAttribute(name) && !name.startsWith('class.')) continue;
@@ -196,15 +196,15 @@ export function createAngularHostAdapter(context, index) {
                             const collect = (value, node) => strings.push({ value, node });
                             if (name.startsWith('class.')) collect(name.slice(6), record.at);
                             else classExpressionValues(record.expression, record.at, collect, (node) => unresolved.push(node));
-                            for (const component of matches)
+                            for (const component of matches.size ? matches : [undefined])
                                 emit({
                                     contextualStrings: strings,
                                     vocabularyStrings: strings,
                                     unresolved,
-                                    component: component.name,
-                                    componentFile: component.file,
-                                    variants: component.inputs.get('variant') ?? [],
-                                    sizes: component.inputs.get('size') ?? [],
+                                    component: component?.name ?? null,
+                                    componentFile: component?.file ?? null,
+                                    variants: component?.inputs.get('variant') ?? [],
+                                    sizes: component?.inputs.get('size') ?? [],
                                     attribute: record.name,
                                     node: record.at,
                                     enclosingContainer: () => null,

@@ -7,6 +7,7 @@ import { registerProject } from './design-system/project/configuration.mjs';
 import { isClassAttribute } from './design-system/expressions.mjs';
 import { createComponentIndex, resolveRoots } from './angular-design-system-project.mjs';
 import { requireLintableTemplates } from './angular-design-system-lintable-templates.mjs';
+import { createClassStylesRule } from './angular-design-system-class-styles.mjs';
 import { createInlineStylesRule } from './angular-design-system-inline-styles.mjs';
 import { createAngularHostAdapter } from './angular-design-system-host.mjs';
 import { createTemplateResolver } from './angular-design-system-owner.mjs';
@@ -80,11 +81,11 @@ export function createAngularDesignSystemPlugin({ root = process.cwd(), componen
             }
         };
         return {
-            classSiteVisitors(_context, _options, emit) {
+            classSiteVisitors(_context, options, emit) {
                 return {
                     Element(element) {
                         const matches = index.match(element).filter((entry) => entry.ownsAppearance);
-                        if (scope === 'components' && !matches.length) return;
+                        if (scope === 'components' && !matches.length && !options.includeUnprotected) return;
                         const parents = context.sourceCode
                             .getAncestors(element)
                             .filter((node) => node.type === 'Element')
@@ -186,12 +187,26 @@ export function createAngularDesignSystemPlugin({ root = process.cwd(), componen
                     );
                     const adapted = Object.create(context);
                     Object.defineProperty(adapted, 'sourceCode', { value: sourceCode });
-                    return rule.create(adapted);
+                    try {
+                        return rule.create(adapted);
+                    } catch (error) {
+                        if (!(error instanceof postcss.CssSyntaxError)) throw error;
+                        const file = error.file ? path.relative(context.cwd ?? root, error.file) : theme;
+                        return {
+                            Program(node) {
+                                context.report({
+                                    node,
+                                    message: `Cannot parse design-system theme CSS at ${file}:${error.line}:${error.column}: ${error.reason}. Fix that stylesheet before class verification can run.`,
+                                });
+                            },
+                        };
+                    }
                 },
             },
         ]),
     );
-    rules['no-restyle-stylesheets'] = createInlineStylesRule(getIndex);
+    rules['no-restyle-class-selectors'] = createClassStylesRule(adapterFor, getIndex, path.resolve(root, theme));
+    rules['no-restyle-stylesheets'] = createInlineStylesRule(getIndex, path.resolve(root, theme));
     rules['require-lintable-templates'] = requireLintableTemplates;
     return { meta: { name: 'angular-design-system' }, rules };
 }

@@ -6,7 +6,7 @@ import { isNamedColor, parseColor } from '../grammar/colors.mjs';
 import { projectClassifierFor } from '../project/namespaces.mjs';
 import { colorTokensFor, colorValuesFor, declaresUtility, scopedColorTokensFor, tailwindEntryFor, themeFileFor } from '../project/theme.mjs';
 import { classSiteVisitors } from '../expressions.mjs';
-import { unknownClasses } from '../tailwind/client.mjs';
+import { TailwindVerificationError, unknownClasses } from '../tailwind/client.mjs';
 import { compileVocabularyPolicy, configErrorVisitors } from './contracts.mjs';
 import { classSuggestions } from './fixes.mjs';
 import { displayPath, fileOf, listTokens, reporter } from './messages.mjs';
@@ -80,6 +80,7 @@ function verdictMemo(theme, key) {
     return memo;
 }
 const MESSAGES = {
+    compilerUnavailable: '{{reason}}. Fix the configured Tailwind theme or compiler availability, then rerun lint; class verification has not completed.',
     paletteClass: '"{{className}}" uses the raw Tailwind palette. Use a theme token, or define one for this color.',
     paletteClassNear:
         '"{{className}}" uses the raw Tailwind palette. Nearest theme tokens: {{suggestions}}. Use one of those, or declare --color-<name> in {{file}} for a new color.',
@@ -245,10 +246,20 @@ export const noRawColors = {
             }
             return verdict;
         };
+        let compilerUnavailable = false;
         const visitors = classSiteVisitors(context, options, (site) => {
+            if (compilerUnavailable) return;
             for (const { value, node } of site.vocabularyStrings) {
                 for (const token of splitClasses(value)) {
-                    const verdict = verdictOf(token);
+                    let verdict;
+                    try {
+                        verdict = verdictOf(token);
+                    } catch (error) {
+                        if (!(error instanceof TailwindVerificationError)) throw error;
+                        compilerUnavailable = true;
+                        context.report({ node, messageId: 'compilerUnavailable', data: { reason: error.message } });
+                        return;
+                    }
                     if (!verdict) continue;
                     const exemption = policy.decide(site.component, token);
                     if (exemption.kind === 'ok') continue;
