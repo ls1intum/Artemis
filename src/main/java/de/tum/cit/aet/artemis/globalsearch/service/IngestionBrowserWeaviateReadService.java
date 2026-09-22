@@ -12,6 +12,8 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.StringUtils;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedContentObjectDTO;
@@ -84,8 +86,11 @@ public class IngestionBrowserWeaviateReadService {
 
     private final WeaviateService weaviateService;
 
-    public IngestionBrowserWeaviateReadService(WeaviateService weaviateService) {
+    private final String artemisBaseUrl;
+
+    public IngestionBrowserWeaviateReadService(WeaviateService weaviateService, @Value("${server.url:}") String artemisBaseUrl) {
         this.weaviateService = weaviateService;
+        this.artemisBaseUrl = artemisBaseUrl;
     }
 
     /**
@@ -223,7 +228,12 @@ public class IngestionBrowserWeaviateReadService {
         }
         try {
             CollectionHandle<Map<String, Object>> collection = weaviateService.getExternalCollection(collectionName);
-            Filter filter = Filter.and(Filter.property(CONTENT_COURSE_ID_PROPERTY).eq(courseId), Filter.property(CONTENT_LECTURE_UNIT_ID_PROPERTY).eq(unitId));
+            // Scoped to this installation as well as the unit: the Iris content collections are shared across every
+            // Artemis pointing at this Weaviate, and their course and unit ids collide freely.
+            Filter unitFilter = Filter.and(Filter.property(CONTENT_COURSE_ID_PROPERTY).eq(courseId), Filter.property(CONTENT_LECTURE_UNIT_ID_PROPERTY).eq(unitId));
+            Filter filter = StringUtils.hasText(artemisBaseUrl)
+                    ? Filter.and(unitFilter, Filter.property(IngestionCoverageWeaviateReadService.CONTENT_BASE_URL_PROPERTY).eq(artemisBaseUrl))
+                    : unitFilter;
 
             var response = collection.query.fetchObjects(builder -> builder.filters(filter).limit(UNIT_CONTENT_READ_LIMIT).returnMetadata(Metadata.CREATION_TIME_UNIX));
             List<WeaviateObject<Map<String, Object>>> objects = response.objects();

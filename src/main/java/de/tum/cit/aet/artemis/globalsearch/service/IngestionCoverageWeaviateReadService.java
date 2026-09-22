@@ -18,6 +18,9 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.StringUtils;
+import org.jspecify.annotations.Nullable;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
@@ -73,6 +76,17 @@ public class IngestionCoverageWeaviateReadService {
     /** The Iris content collections carry the course id and lecture-unit id under these property names. */
     private static final String CONTENT_COURSE_ID_PROPERTY = "course_id";
 
+    /**
+     * The Iris content collections stamp the Artemis installation that produced each row under this property.
+     * <p>
+     * Several installations can share one Weaviate cluster, and course ids collide freely between them, so a
+     * course-id filter alone also matches another installation's rows - which is how a course with no lecture units
+     * of its own came to be reported as holding (and orphaning) another server's slides. Unlike Artemis's own
+     * collections, these are addressed by their exact name and so are not separated by the Artemis collection
+     * prefix; this property is what separates them instead.
+     */
+    public static final String CONTENT_BASE_URL_PROPERTY = "base_url";
+
     private static final String CONTENT_LECTURE_UNIT_ID_PROPERTY = "lecture_unit_id";
 
     /** Courses per filtered metadata read; sized so a chunk's objects stay well under {@link #QUERY_MAXIMUM_RESULTS}. */
@@ -86,8 +100,27 @@ public class IngestionCoverageWeaviateReadService {
 
     private final WeaviateService weaviateService;
 
-    public IngestionCoverageWeaviateReadService(WeaviateService weaviateService) {
+    private final String artemisBaseUrl;
+
+    public IngestionCoverageWeaviateReadService(WeaviateService weaviateService, @Value("${server.url:}") String artemisBaseUrl) {
         this.weaviateService = weaviateService;
+        this.artemisBaseUrl = artemisBaseUrl;
+    }
+
+    /**
+     * Narrows a read of an Iris content collection to the rows this installation produced.
+     *
+     * @param filter the filter to narrow, or null to scope by installation alone
+     * @return the narrowed filter, or the original one when this installation has no configured address (an
+     *         unchanged, cluster-wide read rather than one filtered down to nothing)
+     */
+    @Nullable
+    private Filter scopedToThisInstance(@Nullable Filter filter) {
+        if (!StringUtils.hasText(artemisBaseUrl)) {
+            return filter;
+        }
+        Filter instanceFilter = Filter.property(CONTENT_BASE_URL_PROPERTY).eq(artemisBaseUrl);
+        return filter == null ? instanceFilter : Filter.and(filter, instanceFilter);
     }
 
     /**
@@ -128,7 +161,11 @@ public class IngestionCoverageWeaviateReadService {
     }
 
     private long countObjects(CollectionHandle<Map<String, Object>> collection) {
-        Long total = collection.aggregate.overAll(aggregation -> aggregation.includeTotalCount(true)).totalCount();
+        // Scoped to this installation: the overview reports what this Artemis holds in the shared cluster, not
+        // the cluster's total across every installation writing into the same collection.
+        Filter instanceFilter = scopedToThisInstance(null);
+        Long total = instanceFilter == null ? collection.aggregate.overAll(aggregation -> aggregation.includeTotalCount(true)).totalCount()
+                : collection.aggregate.overAll(aggregation -> aggregation.includeTotalCount(true).filters(instanceFilter)).totalCount();
         return total == null ? 0 : total;
     }
 
@@ -228,7 +265,7 @@ public class IngestionCoverageWeaviateReadService {
         Set<Long> holdingContent = new LinkedHashSet<>();
         for (List<Long> courseChunk : chunk(courseIds, COURSE_CHUNK_SIZE)) {
             try {
-                Filter courseFilter = Filter.property(CONTENT_COURSE_ID_PROPERTY).containsAny(courseChunk.toArray(new Long[0]));
+                Filter courseFilter = scopedToThisInstance(Filter.property(CONTENT_COURSE_ID_PROPERTY).containsAny(courseChunk.toArray(new Long[0])));
                 var grouped = collection.aggregate.overAll(aggregation -> aggregation.filters(courseFilter), new GroupBy(CONTENT_COURSE_ID_PROPERTY, CONTENT_GROUP_LIMIT));
                 for (var group : grouped.groups()) {
                     Long courseId = readGroupLong(group.groupedBy());
@@ -257,7 +294,7 @@ public class IngestionCoverageWeaviateReadService {
 
     private Set<Long> readDistinctContentUnitIdsForCourse(CollectionHandle<Map<String, Object>> collection, String collectionName, long courseId) {
         try {
-            Filter courseFilter = Filter.property(CONTENT_COURSE_ID_PROPERTY).eq(courseId);
+            Filter courseFilter = scopedToThisInstance(Filter.property(CONTENT_COURSE_ID_PROPERTY).eq(courseId));
             var grouped = collection.aggregate.overAll(aggregation -> aggregation.filters(courseFilter), new GroupBy(CONTENT_LECTURE_UNIT_ID_PROPERTY, CONTENT_GROUP_LIMIT));
             Set<Long> unitIds = new HashSet<>();
             for (var group : grouped.groups()) {
