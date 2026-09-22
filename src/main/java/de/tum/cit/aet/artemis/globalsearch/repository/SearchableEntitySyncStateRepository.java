@@ -121,4 +121,38 @@ public interface SearchableEntitySyncStateRepository extends ArtemisJpaRepositor
     @Modifying(flushAutomatically = true)
     @Query("UPDATE SearchableEntitySyncState s SET s.verifiedAt = :verifiedAt WHERE s.entityType = :entityType AND s.entityId = :entityId")
     void markVerified(@Param("entityType") String entityType, @Param("entityId") Long entityId, @Param("verifiedAt") ZonedDateTime verifiedAt);
+
+    /**
+     * Deletes ledger rows of the given type whose post no longer exists in the database.
+     * <p>
+     * Post and answer post are excluded from every reconcile pass (see {@code WeaviateReconcileProperties}), so
+     * nothing else ever revisits their ledger rows once a bulk delete removes them from the index without an
+     * entity id to clean up after itself. Called by the dispatcher when such a bulk delete is confirmed; by then
+     * the entity is already gone from the database (see the dispatcher's javadoc for why), so a leaked row cannot
+     * be told apart from a legitimate one except by this existence check.
+     *
+     * @param entityType {@code SearchableEntitySchema.TypeValues.POST}
+     */
+    @Transactional // ok because of the modifying delete
+    @Modifying(flushAutomatically = true)
+    @Query("""
+            DELETE FROM SearchableEntitySyncState state
+            WHERE state.entityType = :entityType
+                AND state.entityId NOT IN (SELECT post.id FROM Post post)
+            """)
+    void deleteStalePostEntries(@Param("entityType") String entityType);
+
+    /**
+     * Same as {@link #deleteStalePostEntries}, for answer posts.
+     *
+     * @param entityType {@code SearchableEntitySchema.TypeValues.ANSWER_POST}
+     */
+    @Transactional // ok because of the modifying delete
+    @Modifying(flushAutomatically = true)
+    @Query("""
+            DELETE FROM SearchableEntitySyncState state
+            WHERE state.entityType = :entityType
+                AND state.entityId NOT IN (SELECT answerPost.id FROM AnswerPost answerPost)
+            """)
+    void deleteStaleAnswerPostEntries(@Param("entityType") String entityType);
 }

@@ -21,8 +21,10 @@ import org.springframework.stereotype.Component;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateOutboxProperties;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntitySyncState;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
+import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOperation;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
 
@@ -248,7 +250,8 @@ public class WeaviateOutboxDispatcher {
      * Refreshes the {@code searchable_entity_sync_state} ledger from what the write actually did. A row that was
      * upserted records its written content hash; a per-entity entry that resolved to a delete (an explicit delete,
      * or an upsert whose entity is gone or no longer indexable) removes the ledger row so a later reconcile does
-     * not treat it as still synced. Bulk deletes (null entity id) leave the ledger to a later reconcile pass.
+     * not treat it as still synced. A bulk delete (null entity id) carries no single row to clean up after, so it
+     * is handled separately by {@link #pruneLedgerAfterBulkDelete}.
      */
     private void refreshSyncLedger(WeaviateOutboxEntry entry, ZonedDateTime now, Optional<String> writtenContentHash) {
         if (writtenContentHash.isPresent()) {
@@ -263,6 +266,41 @@ public class WeaviateOutboxDispatcher {
         }
         else if (entry.getEntityId() != null) {
             syncStateRepository.deleteByEntityTypeAndEntityId(entry.getEntityType(), entry.getEntityId());
+        }
+        else {
+            pruneLedgerAfterBulkDelete(entry.getOperation());
+        }
+    }
+
+    /**
+     * Prunes ledger rows a bulk delete just orphaned, for the two types nothing else ever revisits.
+     * <p>
+     * A bulk delete's Weaviate-side filter has no entity id to hand back, so unlike a per-entity write it cannot
+     * name the rows it just removed. For a type a reconcile pass manages that gap is harmless: the drift pass
+     * walks the ledger directly, ordered by how long ago each row was checked, and re-derives every row it reaches
+     * regardless of why it might be stale — including one left behind by a bulk delete, not just an ordinary
+     * missed enqueue. Post and answer post are excluded from every pass ({@code WeaviateReconcileProperties}), so
+     * their ledger rows are never revisited that way; left alone, a bulk delete that removes their Weaviate rows
+     * leaks the matching ledger rows permanently.
+     * <p>
+     * By the time a bulk delete confirms, the entities its filter targeted are essentially always already gone
+     * from the database too: the enqueue happens before the caller's own delete (see, for example,
+     * {@code CourseDeletionService}), and the two are not the same transaction. That rules out re-deriving which
+     * rows this specific bulk delete affected, but not a plain existence check: a row for a post or answer post
+     * that no longer exists is stale regardless of which deletion caused it, so the check below also sweeps up
+     * any earlier leak the same way, not only the one from this confirm.
+     */
+    private void pruneLedgerAfterBulkDelete(WeaviateOutboxOperation operation) {
+        switch (operation) {
+            case DELETE_POSTS_FOR_CHANNEL, DELETE_POSTS_FOR_COURSE, DELETE_ALL_FOR_COURSE -> {
+                syncStateRepository.deleteStalePostEntries(SearchableEntitySchema.TypeValues.POST);
+                syncStateRepository.deleteStaleAnswerPostEntries(SearchableEntitySchema.TypeValues.ANSWER_POST);
+            }
+            case DELETE_ANSWER_POSTS_FOR_POST -> syncStateRepository.deleteStaleAnswerPostEntries(SearchableEntitySchema.TypeValues.ANSWER_POST);
+            case DELETE_LECTURE_UNITS_FOR_LECTURE -> {
+                // lecture_unit is managed by the reconcile passes; the drift sweep already prunes its stale rows.
+            }
+            case UPSERT, DELETE_ENTITY -> throw new IllegalStateException("Not a bulk delete: " + operation);
         }
     }
 
