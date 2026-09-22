@@ -3,26 +3,19 @@
 Angular components and precompiled styles for the TUM UI design system. See the
 [component reference](https://docs.artemis.tum.de/developer/tum-ui-reference) for examples and APIs.
 
-## Consumer setup
+## Getting started
 
-Install the package in your Angular application:
+Install in an Angular application whose dependencies satisfy the package's `peerDependencies`:
 
 ```sh
 npm install @tumaet/ui-angular
 ```
 
-The published `package.json` defines supported peer versions. Use the Angular CLI or another
-build that runs Angular's linker. Zone.js is not required. Server-side rendering is not supported.
+Use the Angular CLI or another build that runs Angular's linker. Zone.js is not required.
+Server-side rendering is not supported.
 
-Import supported symbols from the package entry point:
-
-```ts
-import { TumUiButtonComponent, TumUiDialogComponent } from '@tumaet/ui-angular';
-```
-
-Deep imports are not supported.
-
-Load the precompiled stylesheet once, globally, after resets and framework styles:
+In `angular.json`, add the stylesheet to `projects.<app>.architect.build.options.styles`, after
+existing global styles. Keep your application's current `.css` or `.scss` path:
 
 ```json
 {
@@ -30,11 +23,45 @@ Load the precompiled stylesheet once, globally, after resets and framework style
 }
 ```
 
-Theme defaults use a low-priority cascade layer. Set `data-theme="dark"` on the document element
-to activate dark mode. The theme also sets the matching `color-scheme` and a system font stack.
-No Tailwind dependency, configuration, or package source scanning is required.
+The package includes precompiled styles and overlay styles. No Tailwind setup or icon registration
+is required for built-in controls.
+
+For a minimal standalone application, use this `src/main.ts` with `<app-root></app-root>` in
+`src/index.html`:
+
+```ts
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { bootstrapApplication } from '@angular/platform-browser';
+import { TumUiButtonComponent, TumUiDialogComponent } from '@tumaet/ui-angular';
+
+@Component({
+    selector: 'app-root',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TumUiButtonComponent, TumUiDialogComponent],
+    template: `
+        <tum-ui-button (clicked)="dialogOpen.set(true)">Open dialog</tum-ui-button>
+        <tum-ui-dialog header="Welcome" [(visible)]="dialogOpen">
+            <p>Your first TUM UI dialog.</p>
+        </tum-ui-dialog>
+    `,
+})
+class App {
+    readonly dialogOpen = signal(false);
+}
+
+void bootstrapApplication(App);
+```
+
+In an existing application, add the components to the consuming component's `imports` instead of
+replacing its bootstrap. Import supported symbols from `@tumaet/ui-angular`; deep imports are
+not supported. See the [component reference](https://docs.artemis.tum.de/developer/tum-ui-reference)
+for forms, tables, charts, and keyboard interactions.
 
 ## Host theme integration
+
+Theme defaults use a low-priority cascade layer. Set `data-theme="dark"` on `<html>` to activate
+dark mode, or remove it to return to light mode. The theme sets the matching CSS `color-scheme`
+and a system font stack.
 
 Override semantic custom properties in an unlayered stylesheet on the document element so
 components and overlays inherit them. Unlayered declarations take precedence over the package's
@@ -78,19 +105,37 @@ configuration does not change them.
 Apply host-owned layout classes with the native `class` attribute on a package component. These
 classes style the host element. Use component inputs and theme tokens to customize its contents.
 
-Package text defaults to English. A translated host can replace it with an adapter:
+## Icons
 
-```ts
-import { provideTumUiTranslator } from '@tumaet/ui-angular';
+Built-in controls import individual solid icons through the official Font Awesome Angular
+component. Applications do not need to register these icons or load an icon font.
 
-bootstrapApplication(AppComponent, {
-    providers: [provideTumUiTranslator(ApplicationTranslator)],
-});
-```
+For an `icon` input, prefer an explicit icon definition such as `faDownload` from
+`@fortawesome/free-solid-svg-icons`, passed through `[icon]`. Declare any icon pack your own
+application imports as its dependency. Explicit references support tree shaking and avoid
+string-name lookup; see
+[Font Awesome's explicit-reference guide](https://github.com/FortAwesome/angular-fontawesome/blob/main/docs/usage/explicit-reference.md).
 
-`ApplicationTranslator` must implement `TumUiTranslator`. Its optional `translationChanges` and
-`locale` signals keep translations and locale-sensitive formatting reactive. Register one
-translator adapter when the application starts.
+## Translations
+
+Package-owned text defaults to English. To connect an application's translation service,
+implement `TumUiTranslator` and register `provideTumUiTranslator(YourTranslator)` in the
+application's providers.
+
+The adapter replaces the default translator. Its `translate(key, params)` method must resolve
+package `tumUi.*` keys, application-owned keys passed to components, and supplied interpolation
+parameters. Optional `translationChanges` and `locale` signals update translated text and
+locale-sensitive formatting. See the
+[translation contract](https://docs.artemis.tum.de/developer/guidelines/tum-ui-kit#translation-contract).
+
+## Releases and support
+
+[GitHub release notes](https://github.com/ls1intum/Artemis/releases) use
+`@tumaet/ui-angular@<version>` tags and include migration instructions. Before 1.0, incompatible
+changes increment the minor version; compatible changes increment the patch version.
+
+[Report an issue](https://github.com/ls1intum/Artemis/issues) with the package and Angular versions,
+expected behavior, and a minimal reproduction.
 
 ## Contributing
 
@@ -100,4 +145,4 @@ contribution, testing, and publishing.
 
 ## License
 
-MIT
+[MIT](https://github.com/ls1intum/Artemis/blob/develop/packages/tum-ui/LICENSE).
