@@ -599,19 +599,20 @@ public class ProcessingStateCallbackService {
         }
 
         if (success) {
+            // Reopens the Iris synchronization before the terminal claim below, not after: nothing here shares a transaction, so completeIngestionIfLive commits
+            // independently the moment it runs. Doing that first and reopening synchronization second would mean a synchronization-update failure lands after the run is
+            // already durably DONE with its token cleared -- non-replayable, since a retried callback would then see a token mismatch and be dropped, leaving the
+            // synchronization row un-reopened for good. Running this first instead means such a failure leaves nothing committed for this callback: the run is still
+            // live under the same token, so a retried delivery reaches this exact code path again. Deliberately unguarded for the same reason -- swallowing a failure
+            // here would strand the unit just as silently.
+            irisLectureUnitSyncStateRepository.updateWithLectureUnitLock(lectureUnitId, ProcessingStateCallbackService::reopenSynchronization);
+
             // Atomic claim + terminal write in one statement: see completeIngestionIfLive.
             if (processingStateRepository.completeIngestionIfLive(state.getId(), jobToken, ZonedDateTime.now()) == 0) {
                 log.info("Ignoring completion callback for unit {}: the run is no longer in flight under this token", lectureUnitId);
                 return;
             }
             log.info("Processing completed successfully for unit {}", lectureUnitId);
-
-            // Pyris now holds the unit, so a sync settled or in flight because it did not is worth retrying (the
-            // transaction and lock come from the repository method, hence passing the transition into it). Runs
-            // first and deliberately unguarded: a settled row is unreachable afterwards (no retry time, and the
-            // backfill skips a unit that already has a row), so swallowing a failure here would strand the unit for
-            // good — letting it propagate before anything else in this callback runs keeps that visible, not silent.
-            irisLectureUnitSyncStateRepository.updateWithLectureUnitLock(lectureUnitId, ProcessingStateCallbackService::reopenSynchronization);
 
             // Written only once ownership is confirmed; see saveDisplayPageNumbers for the version guard.
             saveDisplayPageNumbers(state, displayPageNumbers);

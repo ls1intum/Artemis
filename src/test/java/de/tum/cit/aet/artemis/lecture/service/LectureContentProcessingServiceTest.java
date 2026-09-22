@@ -851,6 +851,10 @@ class LectureContentProcessingServiceTest {
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
             assertThat(testState.getIngestionJobToken()).isEqualTo(TEST_JOB_TOKEN);
             verify(processingStateRepository, never()).save(any());
+            // The synchronization update runs before the terminal claim precisely so that a failure here leaves the
+            // claim untouched: reaching completeIngestionIfLive first would already have committed DONE with the
+            // token cleared, making this callback non-replayable even though the exception below is visible.
+            verify(processingStateRepository, never()).completeIngestionIfLive(anyLong(), anyString(), any());
         }
 
         @Test
