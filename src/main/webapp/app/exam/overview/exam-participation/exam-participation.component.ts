@@ -805,15 +805,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         return startDate ? startDate.isBefore(this.serverDateService.now()) : false;
     }
 
-    checkVerticalOverflow(): boolean {
-        // Get the sidebar-content element
-        const sidebarContent = document.querySelector('.content-exam-height');
-        if (sidebarContent) {
-            return sidebarContent.scrollHeight > sidebarContent.clientHeight;
-        }
-        return false;
-    }
-
     ngOnDestroy(): void {
         this.programmingSubmissionSubscriptions.forEach((subscription) => {
             subscription.unsubscribe();
