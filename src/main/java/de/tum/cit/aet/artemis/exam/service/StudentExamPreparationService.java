@@ -1,17 +1,26 @@
 package de.tum.cit.aet.artemis.exam.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_EXERCISE_START_STATUS;
+
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -22,11 +31,19 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
-/** Reserves programming exercises while student exam assignments are saved. */
+/** Owns student exam assignment reservations and preparation progress. */
 @Service
 @Lazy
 @Conditional(ExamEnabled.class)
-public class StudentExamAssignmentService {
+public class StudentExamPreparationService {
+
+    private static final Logger log = LoggerFactory.getLogger(StudentExamPreparationService.class);
+
+    private static final String EXAM_EXERCISE_START_STATUS_TOPIC = "/topic/exams/%s/exercise-start-status";
+
+    private final CacheManager cacheManager;
+
+    private final WebsocketMessagingService websocketMessagingService;
 
     private final ExamRepository examRepository;
 
@@ -36,12 +53,14 @@ public class StudentExamAssignmentService {
 
     private final Optional<HyperionExerciseMutationApi> mutationApi;
 
-    public StudentExamAssignmentService(ExamRepository examRepository, ExamUserRepository examUserRepository, StudentExamRepository studentExamRepository,
-            Optional<HyperionExerciseMutationApi> mutationApi) {
+    public StudentExamPreparationService(ExamRepository examRepository, ExamUserRepository examUserRepository, StudentExamRepository studentExamRepository,
+            Optional<HyperionExerciseMutationApi> mutationApi, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService) {
         this.examRepository = examRepository;
         this.examUserRepository = examUserRepository;
         this.studentExamRepository = studentExamRepository;
         this.mutationApi = mutationApi;
+        this.cacheManager = cacheManager;
+        this.websocketMessagingService = websocketMessagingService;
     }
 
     /**
@@ -122,4 +141,51 @@ public class StudentExamAssignmentService {
             throw failure;
         }
     }
+
+    void sendAndCacheExercisePreparationStatus(Long examId, int finished, int failed, int overall, int participations, ZonedDateTime startTime, ReentrantLock lock) {
+        // Synchronizing and comparing to avoid race conditions here
+        // Otherwise it can happen that a status with less completed exams is sent after one with a higher value
+        try {
+            lock.lock();
+            ExamExerciseStartPreparationStatus status = null;
+            var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
+            if (cache != null) {
+                var oldValue = cache.get(examId);
+                if (oldValue != null) {
+                    var oldStatus = (ExamExerciseStartPreparationStatus) oldValue.get();
+                    if (oldStatus != null) {
+                        status = new ExamExerciseStartPreparationStatus(Math.max(finished, oldStatus.finished()), Math.max(failed, oldStatus.failed()),
+                                Math.max(overall, oldStatus.overall()), Math.max(participations, oldStatus.participationCount()), startTime);
+                    }
+                }
+                if (status == null) {
+                    status = new ExamExerciseStartPreparationStatus(finished, failed, overall, participations, startTime);
+                }
+                cache.put(examId, status);
+            }
+            else {
+                log.warn("Unable to add exam exercise start status to distributed cache because it is null");
+            }
+            websocketMessagingService.sendMessage(EXAM_EXERCISE_START_STATUS_TOPIC.formatted(examId), status);
+        }
+        catch (Exception e) {
+            log.warn("Failed to send exercise preparation status", e);
+        }
+        finally {
+            lock.unlock();
+        }
+    }
+
+    public Optional<ExamExerciseStartPreparationStatus> getExerciseStartStatusOfExam(Long examId) {
+        return Optional.ofNullable(cacheManager.getCache(EXAM_EXERCISE_START_STATUS)).map(cache -> cache.get(examId))
+                .map(wrapper -> (ExamExerciseStartPreparationStatus) wrapper.get());
+    }
+
+    public void invalidateExerciseStartStatus(Long examId) {
+        var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
+        if (cache != null) {
+            cache.evict(examId);
+        }
+    }
+
 }

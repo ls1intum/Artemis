@@ -44,7 +44,7 @@ import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Observable, Subject, finalize, take, takeUntil, tap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
+import { ProblemStatementAiOperationsHelper } from 'app/hyperion/problem-statement/problem-statement-ai-operations.helper';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TumUiButtonDirective, TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiDialogComponent } from '@tumaet/ui-angular';

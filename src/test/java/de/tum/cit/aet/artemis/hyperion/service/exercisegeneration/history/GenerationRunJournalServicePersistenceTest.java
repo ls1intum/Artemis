@@ -80,8 +80,8 @@ class GenerationRunJournalServicePersistenceTest extends AbstractSpringIntegrati
             }
         };
         var jobs = new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService(data, publisher,
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService.class), null, java.time.Duration.ofMinutes(35), java.time.Duration.ofMinutes(30),
-                Runnable::run);
+                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationTokenUsageService.class), null,
+                java.time.Duration.ofMinutes(35), java.time.Duration.ofMinutes(30), Runnable::run);
         jobs.init();
         if (prepared) {
             var event = jobs.prepareVariantJob(user, exercise, "Variant", null, null, null,

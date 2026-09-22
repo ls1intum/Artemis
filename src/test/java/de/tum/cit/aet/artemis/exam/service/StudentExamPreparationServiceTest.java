@@ -9,14 +9,20 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -27,7 +33,7 @@ import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
-class StudentExamAssignmentServiceTest {
+class StudentExamPreparationServiceTest {
 
     private final ExamTestRepository exams = mock();
 
@@ -37,11 +43,28 @@ class StudentExamAssignmentServiceTest {
 
     private final HyperionExerciseMutationApi mutations = mock();
 
-    private final StudentExamAssignmentService service = new StudentExamAssignmentService(exams, users, studentExams, Optional.of(mutations));
+    private final StudentExamPreparationService service = new StudentExamPreparationService(exams, users, studentExams, Optional.of(mutations), mock(), mock());
 
     private final Exam exam = new Exam();
 
     private final List<String> calls = new ArrayList<>();
+
+    @Test
+    void preparationProgressDoesNotRegressAndCanBeInvalidated() {
+        var cache = new ConcurrentMapCacheManager(Constants.EXAM_EXERCISE_START_STATUS);
+        WebsocketMessagingService messages = mock();
+        var preparation = new StudentExamPreparationService(exams, users, studentExams, Optional.empty(), cache, messages);
+        var start = ZonedDateTime.now();
+        var lock = new ReentrantLock();
+        preparation.sendAndCacheExercisePreparationStatus(42L, 5, 2, 10, 20, start, lock);
+        preparation.sendAndCacheExercisePreparationStatus(42L, 3, 1, 8, 12, start, lock);
+        var expected = new ExamExerciseStartPreparationStatus(5, 2, 10, 20, start);
+        assertThat(preparation.getExerciseStartStatusOfExam(42L)).contains(expected);
+        verify(messages, org.mockito.Mockito.times(2)).sendMessage("/topic/exams/42/exercise-start-status", expected);
+        assertThat(lock.isLocked()).isFalse();
+        preparation.invalidateExerciseStartStatus(42L);
+        assertThat(preparation.getExerciseStartStatusOfExam(42L)).isEmpty();
+    }
 
     @BeforeEach
     void setup() {
@@ -126,7 +149,7 @@ class StudentExamAssignmentServiceTest {
 
     @Test
     void absentHyperionApiPreservesAssignment() {
-        var withoutHyperion = new StudentExamAssignmentService(exams, users, studentExams, Optional.empty());
+        var withoutHyperion = new StudentExamPreparationService(exams, users, studentExams, Optional.empty(), mock(), mock());
         withoutHyperion.assignRegisteredStudents(10L, false);
         verifyNoInteractions(mutations);
         assertThat(calls).containsExactly("save");

@@ -22,3 +22,4 @@ export interface SubmittedAnswerAfterEvaluation {
     mappings?: Array<DragAndDropMapping>;
     submittedTexts?: Array<ShortAnswerSubmittedText>;
 }
+

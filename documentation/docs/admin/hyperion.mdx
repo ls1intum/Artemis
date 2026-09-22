@@ -102,7 +102,7 @@ Add entries for each model you use. The key must match the model name returned b
 
 Cache pricing and cache usage are separate inputs. When the provider explicitly reports **zero cache-read tokens**, configured input and output rates suffice for a complete estimate. When cache reads are positive, also configure `cached-input-cost-per-million-eur`. An omitted cache count means **unknown**, not zero: without a reported split, a complete estimate is possible only when the configured cached and uncached input rates are equal. Artemis does not silently substitute the uncached rate for a missing cache price.
 
-The shared usage ledger stores the effective input rate in `cost_per_million_input_tokens`. When a provider reports a cache split, this is the token-weighted blend of the configured cached and uncached rates, not the model's catalogue input price. This applies to all LLM services using the ledger, including Iris, Athena and Atlas. Administrative queries can use the stored rate to reproduce the recorded estimate; use deployment configuration to inspect catalogue rates. Incomplete estimates remain incomplete even if the ledger has a numeric value.
+For whole-exercise generation, the shared usage ledger stores the effective input rate in `cost_per_million_input_tokens`. When a provider reports a cache split, this is the token-weighted blend of the configured cached and uncached rates, not the model's catalogue input price. Other LLM services keep their existing accounting rules and default prices. Hyperion reads explicitly configured prices from the same `artemis.llm.model-costs` keys, without inheriting those defaults. Administrative queries can use the stored rate to reproduce the recorded estimate; use deployment configuration to inspect catalogue rates. Generation activity reports estimate completeness; the existing ledger does not persist that flag. A numeric ledger entry alone does not prove that all prices were known.
 
 When using catalogue prices as a reference for another provider, retain the catalogue retrieval date and currency conversion with the deployment configuration. A reference estimate is not an invoice or evidence of provider billing.
 
@@ -265,11 +265,19 @@ not supported. The worker receives a frozen, bounded repository snapshot, not cr
 against that snapshot before persisting them, and checks repository heads and
 exercise metadata again before writing.
 
-Use identical generation settings on generation-capable core nodes. The
-exercise-mutation guard also runs on `core` and `localvc` writer nodes where
-Hyperion is disabled; it does not load a model or connect to the worker broker.
-Every writer must run this version of Artemis and use the same distributed data
-provider. Do not mix guarded and older, unguarded nodes while generation is enabled.
+Set `artemis.hyperion.exercise-generation.enabled=true` on **every `core` and
+`localvc` writer node** in a generation-enabled deployment. Writer-only nodes may
+keep `artemis.hyperion.enabled=false` and `artemis.aiworker.enabled=false`: their
+mutation guard does not load a model or connect to the worker broker. All writers
+must run this version and use the same distributed provider. Do not mix guarded
+and unguarded nodes while generation is enabled.
+
+When the generation setting is absent or false throughout a deployment, ordinary
+writes do not load the generation mutation service or require its coordination
+checks. This is a deployment setting, not automatic cluster discovery. Drain
+active runs and stop all writers before enabling or disabling it across the
+cluster, then restart with consistent values. Never disable it to bypass an
+interrupted save; reconcile that save first.
 
 Coordination follows the selected provider rather than assuming every store is a
 Hazelcast cluster:
@@ -316,7 +324,7 @@ Programming Create, Adapt, and Variant share the worker lifecycle. Variant
 preparation copies a protected source to a separately reserved destination;
 quiz generation remains separate. Programming exam authoring is available only
 before student exams or test runs exist. Assignment and authoring use the same
-exercise guards and exam-row coordination.
+exercise guards and the existing draft-creation transaction.
 
 Hyperion introduces no database schema changes. Saved exercise content and
 before/after snapshots use the existing exercise version history. Existing

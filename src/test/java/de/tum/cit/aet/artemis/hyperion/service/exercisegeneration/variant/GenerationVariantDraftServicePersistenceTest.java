@@ -90,8 +90,8 @@ class GenerationVariantDraftServicePersistenceTest extends AbstractSpringIntegra
                     if (event instanceof de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationStartedEvent) {
                         throw new AssertionError("An untracked variant must never dispatch");
                     }
-                }, org.mockito.Mockito.mock(de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService.class), null, java.time.Duration.ofMinutes(35),
-                java.time.Duration.ofMinutes(30), Runnable::run);
+                }, org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationTokenUsageService.class), null,
+                java.time.Duration.ofMinutes(35), java.time.Duration.ofMinutes(30), Runnable::run);
         jobs.init();
         var user = userTestRepository.findOneByLogin("hypvariantdraftinstructor1").orElseThrow();
 

@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.exam.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_EXERCISE_START_STATUS;
 import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 import static de.tum.cit.aet.artemis.exam.service.ExamSubmissionService.isContentEqualTo;
 
@@ -27,7 +26,6 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.TaskScheduler;
@@ -35,7 +33,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -88,8 +85,6 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @Service
 public class StudentExamService {
 
-    private static final String EXAM_EXERCISE_START_STATUS_TOPIC = "/topic/exams/%s/exercise-start-status";
-
     private static final Logger log = LoggerFactory.getLogger(StudentExamService.class);
 
     private final ParticipationService participationService;
@@ -126,11 +121,7 @@ public class StudentExamService {
 
     private final ExamRepository examRepository;
 
-    private final StudentExamAssignmentService assignmentService;
-
-    private final CacheManager cacheManager;
-
-    private final WebsocketMessagingService websocketMessagingService;
+    private final StudentExamPreparationService preparationService;
 
     private final TaskScheduler scheduler;
 
@@ -143,9 +134,9 @@ public class StudentExamService {
             Optional<ModelingSubmissionApi> modelingSubmissionApi, SubmissionVersionService submissionVersionService, SubmissionService submissionService,
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingTriggerService programmingTriggerService, ExerciseRepository exerciseRepository, ExamRepository examRepository,
-            StudentExamAssignmentService assignmentService, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService,
-            @Qualifier("taskScheduler") TaskScheduler scheduler, ExamService examService, StudentExamSubmitMapper studentExamSubmitMapper,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, CourseAthenaConfigRepository courseAthenaConfigRepository) {
+            StudentExamPreparationService preparationService, @Qualifier("taskScheduler") TaskScheduler scheduler, ExamService examService,
+            StudentExamSubmitMapper studentExamSubmitMapper, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            CourseAthenaConfigRepository courseAthenaConfigRepository) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -162,9 +153,7 @@ public class StudentExamService {
         this.programmingTriggerService = programmingTriggerService;
         this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
-        this.assignmentService = assignmentService;
-        this.cacheManager = cacheManager;
-        this.websocketMessagingService = websocketMessagingService;
+        this.preparationService = preparationService;
         this.scheduler = scheduler;
         this.examService = examService;
         this.studentExamSubmitMapper = studentExamSubmitMapper;
@@ -573,7 +562,7 @@ public class StudentExamService {
         testRun.setUser(userRepository.getUser());
         testRun.setTestRun(true);
         testRun.setSubmitted(false);
-        testRun = assignmentService.assignTestRun(testRun);
+        testRun = preparationService.assignTestRun(testRun);
         return testRun;
     }
 
@@ -806,49 +795,15 @@ public class StudentExamService {
     }
 
     private void sendAndCacheExercisePreparationStatus(Long examId, int finished, int failed, int overall, int participations, ZonedDateTime startTime, ReentrantLock lock) {
-        // Synchronizing and comparing to avoid race conditions here
-        // Otherwise it can happen that a status with less completed exams is sent after one with a higher value
-        try {
-            lock.lock();
-            ExamExerciseStartPreparationStatus status = null;
-            var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
-            if (cache != null) {
-                var oldValue = cache.get(examId);
-                if (oldValue != null) {
-                    var oldStatus = (ExamExerciseStartPreparationStatus) oldValue.get();
-                    if (oldStatus != null) {
-                        status = new ExamExerciseStartPreparationStatus(Math.max(finished, oldStatus.finished()), Math.max(failed, oldStatus.failed()),
-                                Math.max(overall, oldStatus.overall()), Math.max(participations, oldStatus.participationCount()), startTime);
-                    }
-                }
-                if (status == null) {
-                    status = new ExamExerciseStartPreparationStatus(finished, failed, overall, participations, startTime);
-                }
-                cache.put(examId, status);
-            }
-            else {
-                log.warn("Unable to add exam exercise start status to distributed cache because it is null");
-            }
-            websocketMessagingService.sendMessage(EXAM_EXERCISE_START_STATUS_TOPIC.formatted(examId), status);
-        }
-        catch (Exception e) {
-            log.warn("Failed to send exercise preparation status", e);
-        }
-        finally {
-            lock.unlock();
-        }
+        preparationService.sendAndCacheExercisePreparationStatus(examId, finished, failed, overall, participations, startTime, lock);
     }
 
     public Optional<ExamExerciseStartPreparationStatus> getExerciseStartStatusOfExam(Long examId) {
-        return Optional.ofNullable(cacheManager.getCache(EXAM_EXERCISE_START_STATUS)).map(cache -> cache.get(examId))
-                .map(wrapper -> (ExamExerciseStartPreparationStatus) wrapper.get());
+        return preparationService.getExerciseStartStatusOfExam(examId);
     }
 
     public void invalidateExerciseStartStatus(Long examId) {
-        var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
-        if (cache != null) {
-            cache.evict(examId);
-        }
+        preparationService.invalidateExerciseStartStatus(examId);
     }
 
     /**
@@ -861,7 +816,7 @@ public class StudentExamService {
      */
     public StudentExam generateIndividualStudentExam(Exam exam, User student) {
         long start = System.nanoTime();
-        StudentExam studentExam = assignmentService.assignStudent(exam.getId(), student.getId());
+        StudentExam studentExam = preparationService.assignStudent(exam.getId(), student.getId());
         // The bulk paths never read the user back, so creation only writes the foreign key and leaves a stub behind.
         // This one hands its student exam to a caller that returns it to the client, so it gets the real user it
         // already holds. Safe to set here: the save ran in its own transaction, so this entity is detached and no
@@ -883,7 +838,7 @@ public class StudentExamService {
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateStudentExams(final Exam exam) {
-        return assignmentService.assignRegisteredStudents(exam.getId(), false);
+        return preparationService.assignRegisteredStudents(exam.getId(), false);
     }
 
     /**
@@ -903,6 +858,6 @@ public class StudentExamService {
      */
     public List<StudentExam> generateMissingStudentExams(Exam exam) {
         this.invalidateExerciseStartStatus(exam.getId());
-        return assignmentService.assignRegisteredStudents(exam.getId(), true);
+        return preparationService.assignRegisteredStudents(exam.getId(), true);
     }
 }

@@ -36,7 +36,6 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationActivityDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationArtifactCompleteness;
@@ -50,6 +49,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDT
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationUsageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationTokenUsageService.GenerationUsage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -495,8 +495,8 @@ class GenerationJobReplayStoreTest {
         await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> assertThat(usageMap().get("orphan")).isNull());
     }
 
-    private static LLMRequest llmRequest() {
-        return new LLMRequest("model", 100, 1f, 50, 2f, "pipeline", "provider-id", 20L, 0.1f, true);
+    private static GenerationUsage llmRequest() {
+        return new GenerationUsage("model", 100, 1f, 50, 2f, "pipeline", "provider-id", 20L, 0.1f, true);
     }
 
     private static GenerationJobService.JobInfo jobInfo(String jobId, long exerciseId) {

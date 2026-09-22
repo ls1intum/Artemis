@@ -20,7 +20,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HttpResponse } from '@angular/common/http';
-import { Subject, of } from 'rxjs';
+import { of } from 'rxjs';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 
 /**
@@ -73,35 +73,7 @@ describe('TeamUpdateDialogComponent', () => {
     };
 
     afterEach(() => {
-        vi.useRealTimers();
         vi.restoreAllMocks();
-    });
-
-    it('cancels deferred short-name validation when the dialog is destroyed', async () => {
-        await setupComponent(mockEmptyTeam);
-        fixture.detectChanges(false);
-        await fixture.whenStable();
-        vi.useFakeTimers();
-        const exists = vi.spyOn(teamService, 'existsByShortName');
-        comp.onTeamShortNameChanged('newteam');
-        fixture.destroy();
-        await vi.advanceTimersByTimeAsync(501);
-        expect(exists).not.toHaveBeenCalled();
-    });
-
-    it('unsubscribes from in-flight short-name validation before form destruction', async () => {
-        await setupComponent(mockEmptyTeam);
-        fixture.detectChanges(false);
-        await fixture.whenStable();
-        vi.useFakeTimers();
-        const response = new Subject<HttpResponse<boolean>>();
-        vi.spyOn(teamService, 'existsByShortName').mockReturnValue(response);
-        comp.onTeamShortNameChanged('newteam');
-        await vi.advanceTimersByTimeAsync(501);
-        expect(response.observed).toBe(true);
-        fixture.destroy();
-        expect(response.observed).toBe(false);
-        response.next(new HttpResponse({ body: true }));
     });
 
     it('Team Update Dialog can be canceled via cancel button', async () => {

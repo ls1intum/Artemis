@@ -143,42 +143,27 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    void testSynchronizationSendUsesWebsocketAuthentication() {
-        userUtilService.addAdmin(TEST_PREFIX);
-        String adminLogin = TEST_PREFIX + "admin";
-        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-        var course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);
-        var exercise = course.getExercises().stream().findFirst().orElseThrow();
+    void aiTopicsRejectDirectPublicationWithoutChangingOtherDestinations() {
         var interceptor = websocketConfiguration.new TopicSubscriptionInterceptor();
         var channel = mock(MessageChannel.class);
-        var previousContext = SecurityContextHolder.getContext();
-        SecurityContextHolder.clearContext();
-        try {
-            var headers = StompHeaderAccessor.create(StompCommand.SEND);
-            headers.setLeaveMutable(true);
-            headers.setDestination("/topic/exercises/" + exercise.getId() + "/synchronization");
-            headers.setUser(authenticationFor(adminLogin, Role.ADMIN));
-            var message = MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
-            assertThat(interceptor.preSend(message, channel)).as("elevated session without thread authentication").isSameAs(message);
-
-            SecurityContextHolder.getContext().setAuthentication(authenticationFor(adminLogin, Role.ADMIN));
-            headers.setUser(authenticationFor(adminLogin, Role.STUDENT));
-            message = MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
-            assertThat(interceptor.preSend(message, channel)).as("thread elevation must not authorize a different session").isNull();
-
-            headers.setUser(authenticationFor(TEST_PREFIX + "instructor1", Role.INSTRUCTOR));
-            message = MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
-            assertThat(interceptor.preSend(message, channel)).as("course instructor can synchronize").isSameAs(message);
-
-            headers.setUser(authenticationFor(adminLogin, Role.ADMIN));
-            for (String destination : List.of("/topic/admin/queued-jobs", "/topic/hyperion/exercise-generation/exercises/" + exercise.getId() + "/state")) {
+        for (Role role : List.of(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN)) {
+            for (String destination : List.of("/topic/hyperion", "/topic/hyperion/exercise-generation/exercises/1/state", "/user/topic/hyperion/jobs/1",
+                    "/user/victim/topic/hyperion/jobs/1", "/user/victim/queue/hyperion/jobs/1", "/topic/admin/ai-workers", "/topic/admin/ai-generations", "/topic/user-registry",
+                    "/topic/unresolved-user")) {
+                var headers = StompHeaderAccessor.create(StompCommand.SEND);
+                headers.setUser(authenticationFor("caller", role));
                 headers.setDestination(destination);
-                message = MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
-                assertThat(interceptor.preSend(message, channel)).as("even an administrator cannot publish server events: %s", destination).isNull();
+                assertThat(interceptor.preSend(MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders()), channel))
+                        .as("%s cannot publish AI server events to %s", role, destination).isNull();
             }
         }
-        finally {
-            SecurityContextHolder.setContext(previousContext);
+        for (String destination : List.of("/topic/exercises/1/synchronization", "/topic/participations/1/team", "/topic/admin/queued-jobs", "/topic/other-feature",
+                "/user/topic/other-feature", "/app/other-feature")) {
+            var headers = StompHeaderAccessor.create(StompCommand.SEND);
+            headers.setUser(authenticationFor("caller", Role.STUDENT));
+            headers.setDestination(destination);
+            var message = MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
+            assertThat(interceptor.preSend(message, channel)).as("existing security handling is unchanged for %s", destination).isSameAs(message);
         }
     }
 

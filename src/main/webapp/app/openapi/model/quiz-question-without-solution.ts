@@ -44,3 +44,4 @@ export const QuizQuestionWithoutSolutionScoringTypeEnum = {
 } as const;
 
 export const QuizQuestionWithoutSolutionScoringTypeEnumValues = ['ALL_OR_NOTHING', 'PROPORTIONAL_WITH_PENALTY', 'PROPORTIONAL_WITHOUT_PENALTY'] as const;
+

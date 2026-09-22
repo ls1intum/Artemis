@@ -93,6 +93,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private static final Pattern HYPERION_EXERCISE_STATE_TOPIC_PATTERN = Pattern.compile("^/topic/hyperion/exercise-generation/exercises/(\\d+)/state$");
 
+    private static final Pattern HYPERION_USER_DESTINATION_PATTERN = Pattern.compile("/user/(?:[^/]+/)?(?:topic|queue)/hyperion(?:/.*)?");
+
     public static final String IP_ADDRESS = "IP_ADDRESS";
 
     private final JsonMapper jsonMapper;
@@ -350,7 +352,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             StompCommand command = headerAccessor.getCommand();
             if (StompCommand.SUBSCRIBE.equals(command) || StompCommand.SEND.equals(command)) {
                 try {
-                    boolean allowed = StompCommand.SUBSCRIBE.equals(command) ? allowSubscription(principal, destination) : allowSend(principal, destination);
+                    boolean allowed = StompCommand.SUBSCRIBE.equals(command) ? allowSubscription(principal, destination) : allowSend(destination);
                     if (!allowed) {
                         logUnauthorizedDestinationAccess(principal, destination);
                         return null;
@@ -456,30 +458,12 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             return principal instanceof Authentication authentication && elevatedAccessService.getObject().isAdminElevationActive(authentication);
         }
 
-        /**
-         * Clients may publish directly to collaboration topics after the same authorization checks used for subscriptions. Application destinations retain their existing Spring
-         * Security handling. Direct publication to user destinations or any other broker topic is rejected.
-         */
-        private boolean allowSend(@Nullable Principal principal, @Nullable String destination) {
-            if (destination == null) {
-                return true;
-            }
-            if (destination.startsWith("/user/")) {
-                return false;
-            }
-            if (!destination.startsWith("/topic/")) {
-                return true;
-            }
-            if (principal == null) {
-                return false;
-            }
-
-            if (isParticipationTeamDestination(destination)) {
-                return isParticipationOwnedByUser(principal, getParticipationIdFromDestination(destination));
-            }
-
-            return getExerciseIdFromSynchronizationDestination(destination)
-                    .map(exerciseId -> userRepository.isAtLeastEditorInExercise(principal.getName(), exerciseId) || hasAdministratorAccess(principal)).orElse(false);
+        /** AI activity and monitoring are server-published; other destinations retain their existing security handling. */
+        private boolean allowSend(@Nullable String destination) {
+            return destination == null
+                    || !(destination.equals("/topic/hyperion") || destination.startsWith("/topic/hyperion/") || HYPERION_USER_DESTINATION_PATTERN.matcher(destination).matches()
+                            || WorkerMonitoringService.TOPIC.equals(destination) || GenerationMonitoringWebsocketService.TOPIC.equals(destination)
+                            || destination.equals("/topic/user-registry") || destination.equals("/topic/unresolved-user"));
         }
 
         private void logUnauthorizedDestinationAccess(Principal principal, String destination) {

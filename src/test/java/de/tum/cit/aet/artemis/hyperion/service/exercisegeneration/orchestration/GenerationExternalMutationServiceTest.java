@@ -11,6 +11,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.test.context.support.TestPropertySourceUtils;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
@@ -46,9 +47,10 @@ class GenerationExternalMutationServiceTest {
     }
 
     @Test
-    void disabledWriterNodeStillProtectsGenerationWithoutInstantiatingEngine() {
+    void optedInWriterProtectsGenerationWithoutInstantiatingEngine() {
         try (var context = new AnnotationConfigApplicationContext()) {
             context.getEnvironment().setActiveProfiles("localvc");
+            TestPropertySourceUtils.addInlinedPropertiesToEnvironment(context, "artemis.hyperion.exercise-generation.enabled=true", "artemis.hyperion.enabled=false");
             context.registerBean(DistributedDataProvider.class, GenerationExternalMutationServiceTest::initializedProvider);
             context.register(GenerationExternalMutationService.class, HyperionExerciseMutationApi.class);
             context.refresh();

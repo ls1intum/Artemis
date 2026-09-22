@@ -1,5 +1,3 @@
-import { hydrate } from 'app/foundation/util/deep-clone.util';
-import { TutorialGroupSummary } from 'app/openapi/model/tutorial-group-summary';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
@@ -50,7 +48,11 @@ export function convertTutorialGroupDatesFromServer(tutorialGroup: TutorialGroup
     return tutorialGroup;
 }
 
-/** Hydrate the transport projection before converting its nested date strings to client dates. */
-export function convertTutorialGroupArrayDatesFromServer(tutorialGroups: (TutorialGroupSummary | TutorialGroup)[]): TutorialGroup[] {
-    return tutorialGroups.map((tutorialGroup) => convertTutorialGroupDatesFromServer(hydrate(new TutorialGroup(), tutorialGroup)));
+export function convertTutorialGroupArrayDatesFromServer(tutorialGroups: TutorialGroup[]): TutorialGroup[] {
+    if (tutorialGroups) {
+        tutorialGroups.forEach((tutorialGroup: TutorialGroup) => {
+            convertTutorialGroupDatesFromServer(tutorialGroup);
+        });
+    }
+    return tutorialGroups;
 }

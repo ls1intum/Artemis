@@ -29,7 +29,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH } from 'app/foundation/constants/input.constants';
 
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
-import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
+import { ProblemStatementAiOperationsHelper } from 'app/hyperion/problem-statement/problem-statement-ai-operations.helper';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 
 @Component({

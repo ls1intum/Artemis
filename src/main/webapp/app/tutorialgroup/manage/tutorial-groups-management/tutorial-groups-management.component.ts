@@ -264,7 +264,7 @@ export class TutorialGroupsManagementComponent {
         this.tutorialGroupApiService
             .getTutorialGroupsForCourse(courseId)
             .pipe(
-                map(convertTutorialGroupArrayDatesFromServer),
+                map((tutorialGroups: TutorialGroup[]) => convertTutorialGroupArrayDatesFromServer(tutorialGroups)),
                 finalize(() => this.isLoading.set(false)),
                 takeUntilDestroyed(this.destroyRef),
             )

@@ -18,8 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
-import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
@@ -31,6 +29,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationUsageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationFileUpdate;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationTokenUsageService.GenerationUsage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /** Stores the bounded reconnect replay for an exercise generation job. */
@@ -181,7 +180,7 @@ final class GenerationJobReplayStore {
     }
 
     /** Adds durably recorded provider usage to the fail-soft transient aggregate. A missing accumulator is recreated as permanently incomplete. */
-    void recordUsage(String jobId, LLMRequest request) {
+    void recordUsage(String jobId, GenerationUsage request) {
         recordIntoUsage(jobId, usage -> usage.add(request));
     }
 
@@ -776,9 +775,9 @@ final class GenerationJobReplayStore {
             return accountingState == ExerciseGenerationAccountingState.INCOMPLETE ? accountingState : ExerciseGenerationAccountingState.PENDING;
         }
 
-        JobUsage add(LLMRequest request) {
+        JobUsage add(GenerationUsage request) {
             long cached = request.numCachedInputTokens() == null ? 0 : request.numCachedInputTokens();
-            double cost = LLMTokenUsageService.estimatedCostEur(request);
+            double cost = GenerationTokenUsageService.estimatedCostEur(request);
             LinkedHashSet<String> nextModels = new LinkedHashSet<>(models);
             if (request.model() != null && !request.model().isBlank()) {
                 nextModels.add(request.model());

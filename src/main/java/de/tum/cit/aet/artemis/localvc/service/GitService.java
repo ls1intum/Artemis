@@ -92,8 +92,7 @@ public class GitService extends AbstractGitService {
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
 
     /**
-     * Returns the checked-out repository's current local HEAD. Unlike {@link #getLastCommitHash(LocalVCRepositoryUri)}, this reads the exact working copy after checkout/pull and
-     * after a local commit, avoiding a second remote read that could observe an unrelated concurrent push.
+     * Returns the working copy's HEAD rather than reading the remote repository.
      *
      * @param repository the checked-out repository
      * @return the local HEAD commit hash, or {@code null} when the repository has no HEAD yet
@@ -531,11 +530,7 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * Hard-resets the working copy to a previous commit hash and force-pushes that state onto the given branch only if the remote branch still points at the expected current
-     * commit. This is the compensation primitive for Hyperion's multi-repository persist and adaptation revert paths.
-     * <p>
-     * A force push is required because moving a branch back to an ancestor commit is a non-fast-forward update. The ref lease is the repository-level compare-and-swap guard: if
-     * another editor pushed to the branch after the caller captured {@code expectedCurrentHash}, the remote rejects the update instead of clobbering that work.
+     * Restores a previous commit with a leased force-push. A changed remote head rejects the update, preserving concurrent edits.
      *
      * @param repo                the local repository whose default branch is reverted
      * @param commitHash          the pre-persist/pre-adaptation commit hash to reset the branch back to

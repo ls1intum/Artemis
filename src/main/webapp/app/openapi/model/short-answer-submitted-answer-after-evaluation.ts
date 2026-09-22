@@ -26,3 +26,4 @@ export const ShortAnswerSubmittedAnswerAfterEvaluationTypeEnum = {
 } as const;
 
 export const ShortAnswerSubmittedAnswerAfterEvaluationTypeEnumValues = ['short-answer'] as const;
+

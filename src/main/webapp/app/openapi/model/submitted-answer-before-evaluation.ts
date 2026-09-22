@@ -11,3 +11,4 @@ export interface SubmittedAnswerBeforeEvaluation {
     mappings?: Array<DragAndDropMapping>;
     submittedTexts?: Array<ShortAnswerSubmittedText>;
 }
+

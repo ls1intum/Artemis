@@ -138,16 +138,4 @@ describe('convertTutorialGroupEntityDates', () => {
         expect(dayjs.isDayjs(result[0].nextSession?.start)).toBe(true);
         expect(dayjs.isDayjs(result[0].nextSession?.end)).toBe(true);
     });
-    it('hydrates generated summaries without mutating transport date strings', () => {
-        const source = {
-            id: 7,
-            tutorialGroupSchedule: { validFromInclusive: '2026-09-21', validToInclusive: '2026-12-21' },
-            nextSession: { start: '2026-09-21T10:00:00Z', end: '2026-09-21T11:00:00Z' },
-        };
-        const result = convertTutorialGroupArrayDatesFromServer([source]);
-        expect(dayjs.isDayjs(result[0].tutorialGroupSchedule?.validFromInclusive)).toBe(true);
-        expect(dayjs.isDayjs(result[0].nextSession?.start)).toBe(true);
-        expect(source.tutorialGroupSchedule.validFromInclusive).toBe('2026-09-21');
-        expect(source.nextSession.start).toBe('2026-09-21T10:00:00Z');
-    });
 });

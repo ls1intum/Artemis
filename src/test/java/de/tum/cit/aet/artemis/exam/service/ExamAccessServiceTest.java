@@ -81,7 +81,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     private StudentExamService studentExamService;
 
     @Autowired
-    private StudentExamAssignmentService assignmentService;
+    private StudentExamPreparationService assignmentService;
 
     private Course course1;
 

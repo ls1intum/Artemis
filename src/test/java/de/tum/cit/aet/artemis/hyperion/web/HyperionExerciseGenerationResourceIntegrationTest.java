@@ -60,7 +60,7 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     private de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository studentExamRepository;
 
     @Autowired
-    private de.tum.cit.aet.artemis.exam.service.StudentExamAssignmentService assignmentService;
+    private de.tum.cit.aet.artemis.exam.service.StudentExamPreparationService assignmentService;
 
     @Autowired
     private de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi mutationApi;
