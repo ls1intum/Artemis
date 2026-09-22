@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
 import static de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.LECTURES_COLLECTION;
+import static de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.LECTURE_TRANSCRIPTIONS_COLLECTION;
 import static de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.LECTURE_UNITS_COLLECTION;
 import static de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.LECTURE_UNIT_SEGMENTS_COLLECTION;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -225,6 +226,29 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
 
             assertThat(typeCount(entry, CoverageRecomputeService.TYPE_SLIDES)).isEqualTo(new IngestionTypeCountDTO(CoverageRecomputeService.TYPE_SLIDES, 0, 0, 0, 0));
             assertThat(typeCount(entry, CoverageRecomputeService.TYPE_TRANSCRIPT)).isEqualTo(new IngestionTypeCountDTO(CoverageRecomputeService.TYPE_TRANSCRIPT, 0, 0, 0, 0));
+        });
+    }
+
+    @Test
+    void reportsContentLeftBehindByACourseWhoseUnitsAreAllGone() throws Exception {
+        // The course keeps no lecture unit at all, which is what deleting the last one leaves. Its slides stay in the
+        // Iris collection, and those are precisely the stale objects this dashboard exists to surface. While the
+        // content reads were narrowed to courses that still had units, this course was skipped entirely and reported
+        // no orphans, so nothing ever pointed at the data still sitting in the index.
+        Course noUnitsLeft = courseUtilService.createCourse();
+        long courseId = noUnitsLeft.getId();
+        insertMetadata(courseId, SearchableEntitySchema.TypeValues.COURSE, courseId);
+        insertContent(LECTURES_COLLECTION, courseId, 777_001L);
+        insertContent(LECTURE_TRANSCRIPTIONS_COLLECTION, courseId, 777_002L);
+
+        await().atMost(TIMEOUT).untilAsserted(() -> {
+            coverageRecomputeService.recomputeAllCourses();
+            IngestionCoverageEntry entry = coverageRepository.findByCourseId(courseId).orElseThrow();
+
+            assertThat(typeCount(entry, CoverageRecomputeService.TYPE_SLIDES)).isEqualTo(new IngestionTypeCountDTO(CoverageRecomputeService.TYPE_SLIDES, 0, 1, 0, 1));
+            assertThat(typeCount(entry, CoverageRecomputeService.TYPE_TRANSCRIPT)).isEqualTo(new IngestionTypeCountDTO(CoverageRecomputeService.TYPE_TRANSCRIPT, 0, 1, 0, 1));
+            assertThat(entry.getStatus()).isEqualTo(IngestionCoverageStatus.INCOMPLETE);
+            assertThat(entry.getCoverageGapScore()).isEqualTo(2);
         });
     }
 

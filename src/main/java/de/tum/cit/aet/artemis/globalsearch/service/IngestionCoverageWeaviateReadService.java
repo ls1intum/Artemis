@@ -186,6 +186,10 @@ public class IngestionCoverageWeaviateReadService {
      * per course, via a per-course server-side {@code groupBy(lecture_unit_id)} aggregation. Bounded by unit count, not
      * chunk count, so it is exact without shipping bodies or hitting the offset cap. A collection that does not exist on
      * this instance yields an empty result (not an error), so coverage still reports the metadata side.
+     * <p>
+     * Pass every course being reported on. Which of them actually hold content is discovered here, in one grouped
+     * aggregation per chunk, so asking about a course that holds nothing costs a share of that query rather than one of
+     * its own.
      *
      * @param collectionName the exact, unprefixed Iris collection name ({@link #LECTURES_COLLECTION} /
      *                           {@link #LECTURE_TRANSCRIPTIONS_COLLECTION})
@@ -198,13 +202,47 @@ public class IngestionCoverageWeaviateReadService {
             return presentUnitsByCourse;
         }
         CollectionHandle<Map<String, Object>> collection = weaviateService.getExternalCollection(collectionName);
-        for (Long courseId : new LinkedHashSet<>(courseIds)) {
+        for (Long courseId : readCourseIdsHoldingContent(collection, collectionName, courseIds)) {
             Set<Long> unitIds = readDistinctContentUnitIdsForCourse(collection, collectionName, courseId);
             if (!unitIds.isEmpty()) {
                 presentUnitsByCourse.put(courseId, unitIds);
             }
         }
         return presentUnitsByCourse;
+    }
+
+    /**
+     * Which of the requested courses hold anything at all in this collection, read as one grouped aggregation per chunk
+     * rather than a query per course.
+     * <p>
+     * This is what lets the caller ask about every course it is reporting on. Narrowing by what the database still
+     * expects instead would hide the one case worth reading for: a course whose last lecture unit was deleted expects no
+     * content, so it would be skipped, and the objects its deleted units left behind are exactly the stale data this
+     * dashboard exists to surface.
+     * <p>
+     * A discovery failure falls back to the full chunk. Reading a course that turns out to hold nothing costs one
+     * aggregation; skipping one that holds something reports its leftovers as absent, which is the more expensive
+     * mistake.
+     */
+    private Set<Long> readCourseIdsHoldingContent(CollectionHandle<Map<String, Object>> collection, String collectionName, Collection<Long> courseIds) {
+        Set<Long> holdingContent = new LinkedHashSet<>();
+        for (List<Long> courseChunk : chunk(courseIds, COURSE_CHUNK_SIZE)) {
+            try {
+                Filter courseFilter = Filter.property(CONTENT_COURSE_ID_PROPERTY).containsAny(courseChunk.toArray(new Long[0]));
+                var grouped = collection.aggregate.overAll(aggregation -> aggregation.filters(courseFilter), new GroupBy(CONTENT_COURSE_ID_PROPERTY, CONTENT_GROUP_LIMIT));
+                for (var group : grouped.groups()) {
+                    Long courseId = readGroupLong(group.groupedBy());
+                    if (courseId != null) {
+                        holdingContent.add(courseId);
+                    }
+                }
+            }
+            catch (Exception exception) {
+                log.warn("Could not discover which courses hold content in '{}' (reading all {} of them): {}", collectionName, courseChunk.size(), exception.getMessage());
+                holdingContent.addAll(courseChunk);
+            }
+        }
+        return holdingContent;
     }
 
     private boolean contentCollectionReadable(String collectionName) {

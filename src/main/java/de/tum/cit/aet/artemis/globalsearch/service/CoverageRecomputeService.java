@@ -168,10 +168,7 @@ public class CoverageRecomputeService {
         Map<Long, IngestionCoverageEntry> existingByCourseId = existingRows.stream().collect(Collectors.toMap(IngestionCoverageEntry::getCourseId, entry -> entry));
 
         ExpectedSets expected = setLoader.loadExpected(courseIds);
-        // Content only exists for courses that have lecture units, so the (heavier) per-course content aggregations are
-        // read only for those courses; the rest cannot have slides, transcript, or summaries.
-        Set<Long> contentCourseIds = expected.lectureUnits().keySet();
-        PresentSets present = setLoader.loadPresent(courseIds, contentCourseIds);
+        PresentSets present = setLoader.loadPresent(courseIds);
         Instant computedAt = Instant.now();
 
         for (Course course : courses) {
@@ -206,8 +203,7 @@ public class CoverageRecomputeService {
         }
         List<Long> courseIds = courses.stream().map(Course::getId).toList();
         ExpectedSets expected = setLoader.loadExpected(courseIds);
-        Set<Long> contentCourseIds = expected.lectureUnits().keySet();
-        PresentSets present = setLoader.loadPresent(courseIds, contentCourseIds);
+        PresentSets present = setLoader.loadPresent(courseIds);
         ZonedDateTime computedAt = ZonedDateTime.now();
 
         List<IngestionCoverageDTO> result = new ArrayList<>();

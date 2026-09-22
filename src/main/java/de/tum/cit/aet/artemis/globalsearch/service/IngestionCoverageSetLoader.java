@@ -141,19 +141,21 @@ public class IngestionCoverageSetLoader {
 
     /**
      * Reads what the index actually holds for the given courses.
+     * <p>
+     * Content is read for every course asked about, not only for those that still have lecture units. A course whose
+     * last unit was deleted expects no content and would be skipped by that narrowing, yet the objects those units left
+     * behind are precisely the orphans this data is diffed to find. The read service discovers which courses hold
+     * content in one grouped aggregation per collection, so covering them all is not the per-course cost it looks like.
      *
-     * @param courseIds        the courses to read metadata for
-     * @param contentCourseIds the courses to read Iris content for, normally only those that have lecture units at all,
-     *                             since the content aggregations are the heavier read and a course without units cannot
-     *                             have content
+     * @param courseIds the courses to read
      * @return the present id-sets, bucketed per course
      */
-    public PresentSets loadPresent(Collection<Long> courseIds, Collection<Long> contentCourseIds) {
+    public PresentSets loadPresent(Collection<Long> courseIds) {
         PresentMetadata metadata = weaviateReadService.readPresentMetadata(courseIds);
-        Map<Long, Set<Long>> slides = weaviateReadService.readPresentContentUnitIds(LECTURES_COLLECTION, contentCourseIds);
-        Map<Long, Set<Long>> transcript = weaviateReadService.readPresentContentUnitIds(LECTURE_TRANSCRIPTIONS_COLLECTION, contentCourseIds);
-        Map<Long, Set<Long>> segmentSummaries = weaviateReadService.readPresentContentUnitIds(LECTURE_UNIT_SEGMENTS_COLLECTION, contentCourseIds);
-        Map<Long, Set<Long>> unitSummaries = weaviateReadService.readPresentContentUnitIds(LECTURE_UNITS_COLLECTION, contentCourseIds);
+        Map<Long, Set<Long>> slides = weaviateReadService.readPresentContentUnitIds(LECTURES_COLLECTION, courseIds);
+        Map<Long, Set<Long>> transcript = weaviateReadService.readPresentContentUnitIds(LECTURE_TRANSCRIPTIONS_COLLECTION, courseIds);
+        Map<Long, Set<Long>> segmentSummaries = weaviateReadService.readPresentContentUnitIds(LECTURE_UNIT_SEGMENTS_COLLECTION, courseIds);
+        Map<Long, Set<Long>> unitSummaries = weaviateReadService.readPresentContentUnitIds(LECTURE_UNITS_COLLECTION, courseIds);
         return new PresentSets(metadata.presentIdsByCourseAndType(), metadata.lastIngestedAtByCourse(), slides, transcript, segmentSummaries, unitSummaries);
     }
 
