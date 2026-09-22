@@ -6,9 +6,10 @@ children + one required status check**.
 ## Entry point — `ci.yml`
 
 `ci.yml` is the single CI entry point. It registers every trigger that should run the main
-CI pipeline (pull requests, pushes to `develop` / `main` / `release/*`, published
+CI pipeline (pull requests, pushes to `develop` / `main` / `release/*`, published Artemis
 releases, merge-queue runs, and a manual `workflow_dispatch`) so that the answer to "what
-runs on event X?" is in exactly one file.
+runs on event X?" is in exactly one file. TUM UI releases (`tum-ui-v*`) use
+`release-tum-ui.yml`; their GitHub release events do not run Artemis builds or Android tests.
 
 ```text
 ci.yml                                                            (single entry workflow)

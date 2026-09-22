@@ -13,8 +13,7 @@
         "types",
         "styles.css",
         "README.md",
-        "LICENSE",
-        "CHANGELOG.md"
+        "LICENSE"
     ],
     "scripts": {
         "build": "pnpm run build:styles && pnpm run build:package && pnpm run check:styles",

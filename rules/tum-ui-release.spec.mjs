@@ -46,11 +46,9 @@ describe('TUM UI release validation', () => {
         { name: 'rejects a noncanonical version', version: 'v1.2.3' },
         { name: 'rejects a prerelease', version: '1.2.3-rc.0' },
         { name: 'rejects build metadata', version: '1.2.3+build' },
-        { name: 'requires a changelog entry for this version', changelog: '\n## 1.2.2\nOlder release\n' },
         { name: 'rejects an unmerged release commit', unmerged: true },
-    ])('$name', ({ version = '1.2.3', tag = `tum-ui-v${version}`, event = 'push', changelog = `\n## ${version}\nRelease notes\n`, unmerged = false, accepted = false }) => {
+    ])('$name', ({ version = '1.2.3', tag = `tum-ui-v${version}`, event = 'push', unmerged = false, accepted = false }) => {
         writeFileSync(resolve(directory, 'packages/tum-ui/package.json'), JSON.stringify({ version }));
-        writeFileSync(resolve(directory, 'packages/tum-ui/CHANGELOG.md'), changelog);
         if (unmerged) {
             git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '--quiet', '--allow-empty', '-m', 'Unreviewed commit');
         }

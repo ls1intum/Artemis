@@ -33,7 +33,7 @@ Package code:
 Artemis-specific adapters live in `src/main/webapp/app/shared-ui/tum-ui-integration`. Artemis
 imports package symbols from `@tumaet/ui-angular`; ESLint rejects deep imports.
 
-The package has its own version and changelog. Repository code owners review its public contract;
+The package has its own version and GitHub release notes. Repository code owners review its public contract;
 npm organization maintainers approve releases.
 
 ## Adding or changing a component
@@ -179,18 +179,35 @@ TUM UI uses independent versions and the **Release TUM UI** workflow (`release-t
 A manual run validates without publishing. A `tum-ui-v<version>` tag stages a release when it
 matches the package version and its commit is reachable from `develop`.
 
+The external consumer installs the tarball outside the workspace. Artemis tests integration, but
+its local aliases and shared dependencies can hide missing published files or dependencies.
 The workflow validates the package and both external consumer configurations before staging the
 tested tarball. npm publication requires a maintainer's 2FA approval.
 
 ### One-time setup and first release
 
+Merge the workflow into `develop` before setup; GitHub enables manual dispatch only after it
+exists on the default branch.
+
 1. Give the release maintainers access to the `@tumaet` npm organization and require 2FA.
 2. Protect `develop` with required CI and code-owner review. Restrict creation of `tum-ui-v*` tags
    to release maintainers and prevent tag updates and deletion.
 3. Create the GitHub environment **npm-tum-ui**, restricted to `tum-ui-v*` tags.
-4. Run **Release TUM UI** manually on the reviewed commit on `develop`. After all jobs pass, download its
-   `tum-ui-package` artifact. Extract it and replace `<version>` below with the version in its
-   `package.json`. Compute the tarball's SHA-512:
+4. Create the first annotated `tum-ui-v<version>` tag at the reviewed commit on `develop`.
+   Temporarily [disable the workflow](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/disable-and-enable-workflows)
+   while pushing this first tag: npm cannot authenticate the publisher until the package exists.
+   Replace `<version>` with the version in `packages/tum-ui/package.json`.
+
+    ```bash
+    gh workflow disable release-tum-ui.yml
+    git push origin tum-ui-v<version>
+    gh workflow enable release-tum-ui.yml
+    gh workflow run release-tum-ui.yml --ref tum-ui-v<version>
+    ```
+
+    Re-enable the workflow even if the tag push fails. The manual run validates the tagged commit
+    without staging. After all jobs pass, download its `tum-ui-package` artifact and extract it.
+    Compute the tarball's SHA-512:
 
     ```bash
     openssl dgst -sha512 -binary ./tumaet-ui-angular-<version>.tgz | openssl base64 -A
@@ -211,6 +228,7 @@ tested tarball. npm publication requires a maintainer's 2FA approval.
    repository **Artemis**, workflow **release-tum-ui.yml**, and environment **npm-tum-ui**.
    Allow **stage publish** only. Select **Require two-factor authentication and disallow tokens**
    under publishing access. Do not add an npm publishing token to GitHub secrets.
+6. Create GitHub release notes for the existing tag as described below.
 
 [Trusted publishing](https://docs.npmjs.com/trusted-publishers/) generates provenance for the
 public package and repository. [Staged publishing](https://docs.npmjs.com/staged-publishing/)
@@ -220,8 +238,7 @@ publication. Trusted-publisher fields are case-sensitive.
 ### Subsequent releases
 
 Update the version from `packages/tum-ui` with `npm version <version> --no-git-tag-version --ignore-scripts`.
-Add consumer-visible changes under `## <version>` in `packages/tum-ui/CHANGELOG.md`. Before 1.0,
-incompatible API, token, or peer-minimum changes increment the minor; compatible fixes and additions
+Before 1.0, incompatible API, token, or peer-minimum changes increment the minor; compatible fixes and additions
 increment the patch. After 1.0, breaking changes increment the major.
 Document migrations instead of adding compatibility aliases.
 
@@ -231,9 +248,12 @@ commit. All releases target `latest`. Omit an explicit `--tag` so npm retains it
 
 After the workflow succeeds, inspect the staged package's version, content, and provenance commit
 on npm, then approve with 2FA using the website or `npm stage approve <stage-id>`. Confirm the
-published version, then create a GitHub release for its tag using the package changelog. Use
-[`gh release create --latest=false`](https://cli.github.com/manual/gh_release_create) so it does not
-displace the latest Artemis release.
+published version, then create a GitHub release for its existing tag. Write TUM UI-specific notes
+covering consumer-visible changes and any migration steps; repository-wide generated notes also
+include unrelated Artemis changes. Use
+[`gh release create tum-ui-v<version> --verify-tag --latest=false`](https://cli.github.com/manual/gh_release_create)
+so release creation requires the existing tag and preserves the latest Artemis release. TUM UI
+release events are excluded from Artemis's application release and Android test workflows.
 
 Staging success does not mean the package is public. Before retrying an interrupted run, inspect
 `npm stage list @tumaet/ui-angular`; the upload may already have succeeded. Published versions are
