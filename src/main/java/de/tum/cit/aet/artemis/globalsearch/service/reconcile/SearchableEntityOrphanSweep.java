@@ -17,6 +17,10 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
+
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateReconcileProperties;
 import de.tum.cit.aet.artemis.globalsearch.domain.ReconcilePass;
@@ -29,9 +33,6 @@ import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateR
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityIndexScanService;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityIndexScanService.IndexedRow;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityResolver;
-import tools.jackson.core.JacksonException;
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Walks the index itself and repairs what it finds there, which is the only check that reads what is actually

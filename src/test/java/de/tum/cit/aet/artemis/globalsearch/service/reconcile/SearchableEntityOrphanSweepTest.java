@@ -25,6 +25,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import tools.jackson.databind.json.JsonMapper;
+
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateReconcileProperties;
 import de.tum.cit.aet.artemis.globalsearch.domain.ReconcilePass;
@@ -37,7 +39,6 @@ import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityIndexScanServ
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityIndexScanService.IndexScanSlice;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityIndexScanService.IndexedRow;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityResolver;
-import tools.jackson.databind.json.JsonMapper;
 
 class SearchableEntityOrphanSweepTest {
 
