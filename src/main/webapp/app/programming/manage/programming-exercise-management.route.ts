@@ -88,7 +88,7 @@ export const routes: Routes = [
     },
     {
         path: 'programming-exercises/:exerciseId/generation/runs/:runId',
-        redirectTo: ({ params }) => `programming-exercises/${params['exerciseId']}/generation?run=${encodeURIComponent(params['runId'])}`,
+        redirectTo: ({ params }) => `/course-management/${params['courseId']}/programming-exercises/${params['exerciseId']}/generation?run=${encodeURIComponent(params['runId'])}`,
         pathMatch: 'full',
     },
     {
