@@ -351,6 +351,9 @@ public class ProcessingStateCallbackService {
      * The instant a claim is stamped with, on both transports. Truncated to whole seconds because {@code started_at}
      * and {@code retry_eligible_at} are legacy DATETIME columns keeping only whole seconds on MySQL: an untruncated
      * value is rounded on write and then matches nothing in the guards that compare it for exact equality.
+     * Known gap, tracked for a follow-up: two claims of the same row taken in the same second are indistinguishable,
+     * so a requeue between two concurrent pull claims lets the earlier one activate the newer. Closing it needs a
+     * persisted per-claim identity, matched by every guard and cleared by every release path.
      *
      * @return the claim marker to write and later match on
      */
