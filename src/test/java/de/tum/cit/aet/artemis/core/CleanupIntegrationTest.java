@@ -553,6 +553,16 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testDeleteOldSubmissionVersions() throws Exception {
 
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("deleteFrom", ZonedDateTime.now().minusMonths(1).toString());
+        params.add("deleteTo", ZonedDateTime.now().plusMonths(1).toString());
+
+        // The submission version count aggregates over the whole window rather than over this test's own rows, so
+        // capture the baseline and assert the delta this test introduces, keeping it robust against versions left
+        // over by other tests in the same run.
+        int initialSubmissionVersionCount = request.get("/api/admin/cleanup/old-submission-versions/count", HttpStatus.OK, SubmissionVersionsCleanupCountDTO.class, params)
+                .submissionVersions();
+
         TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
         submission = submissionRepository.save(submission);
         SubmissionVersion submissionVersion1 = ParticipationFactory.generateSubmissionVersion("test1", submission, student);
@@ -562,14 +572,10 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         SubmissionVersion submissionVersion3 = ParticipationFactory.generateSubmissionVersion("test2", submission, student);
         submissionVersion3 = submissionVersionRepository.save(submissionVersion3);
 
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("deleteFrom", ZonedDateTime.now().minusMonths(1).toString());
-        params.add("deleteTo", ZonedDateTime.now().plusMonths(1).toString());
-
         var counts = request.get("/api/admin/cleanup/old-submission-versions/count", HttpStatus.OK, SubmissionVersionsCleanupCountDTO.class, params);
 
         assertThat(counts).isNotNull();
-        assertThat(counts.submissionVersions()).isEqualTo(3);
+        assertThat(counts.submissionVersions()).isEqualTo(initialSubmissionVersionCount + 3);
 
         var responseBody = request.delete("/api/admin/cleanup/old-submission-versions", params, null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
 

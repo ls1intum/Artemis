@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.hasWorkerMutationError;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.isWorkerCompletionTerminal;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.tryReserveDelegationSlot;
 
@@ -26,7 +27,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
@@ -37,7 +38,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 /** Main-orchestrator tools that synchronously delegate semantic action batches to isolated workers. */
 @Lazy
 @Service
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 public class OrchestratorDelegationToolsService {
 
     private static final Logger log = LoggerFactory.getLogger(OrchestratorDelegationToolsService.class);
@@ -136,6 +137,8 @@ public class OrchestratorDelegationToolsService {
         workerContext.put(OrchestratorToolContextKeys.WORKER_COMPLETION_KEY, completionHolder);
         workerContext.put(OrchestratorToolContextKeys.TOOL_SEQUENCE_KEY, OrchestratorToolContextKeys.newSequenceMarker());
         workerContext.put(OrchestratorToolContextKeys.WORKER_COMPLETION_SEQUENCE_KEY, OrchestratorToolContextKeys.newSequenceMarker());
+        workerContext.put(OrchestratorToolContextKeys.WORKER_MUTATION_OUTCOME_COUNT_KEY, new AtomicInteger());
+        workerContext.put(OrchestratorToolContextKeys.WORKER_MUTATION_ERROR_KEY, OrchestratorToolContextKeys.newWorkerMutationErrorMarker());
         workerContext.put(OrchestratorToolContextKeys.WORKER_READ_COUNT_KEY, new AtomicInteger());
         workerContext.put(OrchestratorToolContextKeys.WORKER_ACTION_START_KEY, actionStart);
         copyContextValue(parentContext, workerContext, OrchestratorToolContextKeys.LEARNING_OBJECT_ID_KEY);
@@ -155,9 +158,13 @@ public class OrchestratorDelegationToolsService {
             if (completion == null) {
                 return new WorkerResultDTO(false, role.displayName + " worker returned without calling completeWorkerTask.", actionSlice(buffer, actionStart));
             }
-            if (!isWorkerCompletionTerminal(new ToolContext(workerContext))) {
+            ToolContext finalWorkerToolContext = new ToolContext(workerContext);
+            if (!isWorkerCompletionTerminal(finalWorkerToolContext)) {
                 return new WorkerResultDTO(false, role.displayName + " worker called another tool after completeWorkerTask, so its batch result is stale.",
                         actionSlice(buffer, actionStart));
+            }
+            if (completion.success() && hasWorkerMutationError(finalWorkerToolContext)) {
+                return new WorkerResultDTO(false, role.displayName + " worker reported success after a mutation tool error.", actionSlice(buffer, actionStart));
             }
             return new WorkerResultDTO(completion.success(), completion.message(), actionSlice(buffer, actionStart));
         }

@@ -214,13 +214,15 @@ public class ProgrammingExerciseRepositoryExportResource {
         var studentParticipation = programmingExercise.getStudentParticipations().stream().filter(p -> p.getId().equals(participationId))
                 .map(p -> (ProgrammingExerciseStudentParticipation) p).findFirst()
                 .orElseThrow(() -> new EntityNotFoundException("No student participation with id " + participationId + " was found for programming exercise " + exerciseId));
-        if (!authCheckService.isOwnerOfParticipation(studentParticipation)) {
+        boolean isOwner = authCheckService.isOwnerOfParticipation(studentParticipation);
+        if (!isOwner) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
         }
         var exportErrors = new ArrayList<String>();
         long start = System.nanoTime();
 
-        InputStreamResource resource = gitRepositoryExportService.exportStudentRepositoryInMemory(programmingExercise, studentParticipation, exportErrors);
+        boolean hideStudentName = !isOwner && !authCheckService.isAtLeastInstructorForExercise(programmingExercise, null);
+        InputStreamResource resource = gitRepositoryExportService.exportStudentRepositoryInMemory(programmingExercise, studentParticipation, hideStudentName, exportErrors);
 
         if (resource == null) {
             throw new de.tum.cit.aet.artemis.core.exception.InternalServerErrorException(

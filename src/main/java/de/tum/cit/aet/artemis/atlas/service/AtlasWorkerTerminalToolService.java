@@ -20,13 +20,13 @@ import org.springframework.stereotype.Service;
 
 import tools.jackson.databind.json.JsonMapper;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.WorkerCompletionDTO;
 
 /** One-shot terminal tool shared by the stateless Creator, Assigner, and Editor workers. */
 @Lazy
 @Service
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 public class AtlasWorkerTerminalToolService {
 
     private final JsonMapper objectMapper;
@@ -36,7 +36,7 @@ public class AtlasWorkerTerminalToolService {
     }
 
     /**
-     * Completes a worker request after it has inspected course state or applied an action.
+     * Completes a worker request after it has inspected course state or received a mutation outcome.
      *
      * @param success     whether the assigned semantic batch was completed
      * @param message     concise outcome or actionable failure reason
@@ -55,7 +55,7 @@ public class AtlasWorkerTerminalToolService {
             return errorJson(objectMapper, "No worker completion context available.");
         }
         if (!hasWorkerEvidence(toolContext)) {
-            return errorJson(objectMapper, "Inspect course state or apply an action before completing the worker task.");
+            return errorJson(objectMapper, "Inspect course state or receive a mutation outcome before completing the worker task.");
         }
         WorkerCompletionDTO completion = new WorkerCompletionDTO(success, message);
         if (!holder.compareAndSet(null, completion)) {
@@ -74,7 +74,9 @@ public class AtlasWorkerTerminalToolService {
         OrchestratorToolContextKeys.AppliedActionsBuffer buffer = OrchestratorToolHelpers.appliedActionsBufferFromContext(toolContext);
         Object startValue = toolContext.getContext().get(OrchestratorToolContextKeys.WORKER_ACTION_START_KEY);
         int start = startValue instanceof Number number ? number.intValue() : 0;
-        return hasRead || buffer != null && buffer.actions().size() > start;
+        Object mutationValue = toolContext.getContext().get(OrchestratorToolContextKeys.WORKER_MUTATION_OUTCOME_COUNT_KEY);
+        boolean hasMutationOutcome = mutationValue instanceof AtomicInteger count && count.get() > 0;
+        return hasRead || hasMutationOutcome || buffer != null && buffer.actions().size() > start;
     }
 
     @Nullable

@@ -33,7 +33,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
@@ -66,7 +66,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  * Course context is injected via {@code ToolContext} (see {@link OrchestratorToolContextKeys}) so the
  * LLM cannot forge the course id through tool arguments.
  */
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 @Lazy
 @Service
 public class CompetencyOrchestrationService {
@@ -755,11 +755,17 @@ public class CompetencyOrchestrationService {
                 .append(")\n");
         String childIndent = lastCompetency ? "    " : "│   ";
         boolean hasLectureUnits = !entry.lectureUnits().isEmpty();
+        boolean hasRelations = !entry.relations().isEmpty();
         List<String> exerciseLines = entry.exercises().stream().map(CompetencyOrchestrationService::formatExerciseLine).toList();
-        appendLeafGroup(sb, childIndent, "exercises", exerciseLines, !hasLectureUnits);
+        appendLeafGroup(sb, childIndent, "exercises", exerciseLines, !hasLectureUnits && !hasRelations);
         if (hasLectureUnits) {
             List<String> lectureUnitLines = entry.lectureUnits().stream().map(CompetencyOrchestrationService::formatLectureUnitLine).toList();
-            appendLeafGroup(sb, childIndent, "lecture units", lectureUnitLines, true);
+            appendLeafGroup(sb, childIndent, "lecture units", lectureUnitLines, !hasRelations);
+        }
+        if (hasRelations) {
+            List<String> relationLines = entry.relations().stream()
+                    .map(relation -> relation.tailCompetencyId() + " --" + relation.relationType() + "--> " + relation.headCompetencyId()).toList();
+            appendLeafGroup(sb, childIndent, "relations", relationLines, true);
         }
     }
 

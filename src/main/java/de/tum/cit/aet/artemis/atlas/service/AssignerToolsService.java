@@ -3,12 +3,13 @@ package de.tum.cit.aet.artemis.atlas.service;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.appendAction;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.belongsToCourse;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.courseIdFromContext;
-import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.errorJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.exerciseBelongsToCourse;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.formatWeight;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.markWorkerToolActivity;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.matchAllowedBand;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.missingCourseContextError;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.mutationErrorJson;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.mutationNoOpJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.toJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.tryReserveWriteSlot;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.validateJustification;
@@ -27,7 +28,7 @@ import org.springframework.stereotype.Service;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
@@ -51,7 +52,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  */
 @Lazy
 @Service
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 public class AssignerToolsService {
 
     private final JsonMapper objectMapper;
@@ -103,23 +104,23 @@ public class AssignerToolsService {
         markWorkerToolActivity(toolContext);
         Long courseId = courseIdFromContext(toolContext);
         if (courseId == null) {
-            return missingCourseContextError(objectMapper);
+            return missingCourseContextError(objectMapper, toolContext);
         }
         if (!tryReserveWriteSlot(toolContext)) {
-            return writeQuotaError(objectMapper);
+            return writeQuotaError(objectMapper, toolContext);
         }
         if (competencyId == null || exerciseId == null) {
-            return errorJson(objectMapper, "competencyId and exerciseId are required.");
+            return mutationErrorJson(objectMapper, "competencyId and exerciseId are required.", toolContext);
         }
         if (weight == null) {
-            return errorJson(objectMapper, "weight is required: pick 1.0 (stand-alone), 0.5 (partial), or 0.3 (incidental).");
+            return mutationErrorJson(objectMapper, "weight is required: pick 1.0 (stand-alone), 0.5 (partial), or 0.3 (incidental).", toolContext);
         }
         Double matchedBand = matchAllowedBand(weight);
         if (matchedBand == null) {
-            return errorJson(objectMapper,
-                    "weight must be one of 1.0 (stand-alone), 0.5 (partial), or 0.3 (incidental). If the evidence is too weak to link, do not call this tool.");
+            return mutationErrorJson(objectMapper,
+                    "weight must be one of 1.0 (stand-alone), 0.5 (partial), or 0.3 (incidental). If the evidence is too weak to link, do not call this tool.", toolContext);
         }
-        String justificationError = validateJustification(objectMapper, justification);
+        String justificationError = validateJustification(objectMapper, justification, toolContext);
         if (justificationError != null) {
             return justificationError;
         }
@@ -128,11 +129,11 @@ public class AssignerToolsService {
         // See editCompetency: scalar-only mutation, no fetch-join needed.
         Optional<CourseCompetency> competencyOpt = courseCompetencyRepository.findById(competencyId);
         if (competencyOpt.isEmpty()) {
-            return errorJson(objectMapper, "Competency not found: " + competencyId);
+            return mutationErrorJson(objectMapper, "Competency not found: " + competencyId, toolContext);
         }
         CourseCompetency competency = competencyOpt.get();
         if (!belongsToCourse(competency, courseId)) {
-            return errorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.");
+            return mutationErrorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.", toolContext);
         }
 
         Exercise exercise;
@@ -140,10 +141,10 @@ public class AssignerToolsService {
             exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         }
         catch (EntityNotFoundException ex) {
-            return errorJson(objectMapper, "Exercise not found: " + exerciseId);
+            return mutationErrorJson(objectMapper, "Exercise not found: " + exerciseId, toolContext);
         }
         if (!exerciseBelongsToCourse(exercise, courseId)) {
-            return errorJson(objectMapper, "Exercise " + exerciseId + " does not belong to the current course.");
+            return mutationErrorJson(objectMapper, "Exercise " + exerciseId + " does not belong to the current course.", toolContext);
         }
 
         CompetencyExerciseLink existingLink = competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(exerciseId, competencyId).orElse(null);
@@ -151,8 +152,8 @@ public class AssignerToolsService {
         String detail;
         if (existingLink != null) {
             if (Double.compare(existingLink.getWeight(), effectiveWeight) == 0) {
-                return toJson(objectMapper, Map.of("status", "noop", "message",
-                        "Exercise " + exerciseId + " is already linked to competency " + competencyId + " with weight " + formatWeight(effectiveWeight) + "."));
+                return mutationNoOpJson(objectMapper,
+                        "Exercise " + exerciseId + " is already linked to competency " + competencyId + " with weight " + formatWeight(effectiveWeight) + ".", toolContext);
             }
             existingLink.setWeight(effectiveWeight);
             competencyExerciseLinkRepository.save(existingLink);
@@ -187,31 +188,31 @@ public class AssignerToolsService {
         markWorkerToolActivity(toolContext);
         Long courseId = courseIdFromContext(toolContext);
         if (courseId == null) {
-            return missingCourseContextError(objectMapper);
+            return missingCourseContextError(objectMapper, toolContext);
         }
         if (!tryReserveWriteSlot(toolContext)) {
-            return writeQuotaError(objectMapper);
+            return writeQuotaError(objectMapper, toolContext);
         }
         if (competencyId == null || exerciseId == null) {
-            return errorJson(objectMapper, "competencyId and exerciseId are required.");
+            return mutationErrorJson(objectMapper, "competencyId and exerciseId are required.", toolContext);
         }
-        String justificationError = validateJustification(objectMapper, justification);
+        String justificationError = validateJustification(objectMapper, justification, toolContext);
         if (justificationError != null) {
             return justificationError;
         }
         // See editCompetency: scalar-only mutation, no fetch-join needed.
         Optional<CourseCompetency> competencyOpt = courseCompetencyRepository.findById(competencyId);
         if (competencyOpt.isEmpty()) {
-            return errorJson(objectMapper, "Competency not found: " + competencyId);
+            return mutationErrorJson(objectMapper, "Competency not found: " + competencyId, toolContext);
         }
         CourseCompetency competency = competencyOpt.get();
         if (!belongsToCourse(competency, courseId)) {
-            return errorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.");
+            return mutationErrorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.", toolContext);
         }
 
         CompetencyExerciseLink existingLink = competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(exerciseId, competencyId).orElse(null);
         if (existingLink == null) {
-            return toJson(objectMapper, Map.of("status", "noop", "message", "Exercise " + exerciseId + " is not linked to competency " + competencyId + "."));
+            return mutationNoOpJson(objectMapper, "Exercise " + exerciseId + " is not linked to competency " + competencyId + ".", toolContext);
         }
 
         Exercise exercise = existingLink.getExercise();
@@ -219,7 +220,7 @@ public class AssignerToolsService {
         // out-of-band link could still exist; refuse to delete it here so an LLM cannot cross
         // course boundaries via a forged exerciseId.
         if (exercise == null || !exerciseBelongsToCourse(exercise, courseId)) {
-            return errorJson(objectMapper, "Exercise " + exerciseId + " does not belong to the current course.");
+            return mutationErrorJson(objectMapper, "Exercise " + exerciseId + " does not belong to the current course.", toolContext);
         }
         competencyExerciseLinkRepository.delete(existingLink);
         String exerciseTitle = exercise.getTitle() != null ? exercise.getTitle() : "exercise " + exerciseId;

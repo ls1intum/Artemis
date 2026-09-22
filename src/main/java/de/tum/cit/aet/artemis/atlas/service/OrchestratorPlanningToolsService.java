@@ -5,8 +5,11 @@ import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.exerc
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.missingCourseContextError;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.toJson;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -18,12 +21,13 @@ import org.springframework.stereotype.Service;
 
 import tools.jackson.databind.json.JsonMapper;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexResponseDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -42,7 +46,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
  */
 @Lazy
 @Service
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 public class OrchestratorPlanningToolsService {
 
     private final JsonMapper objectMapper;
@@ -51,17 +55,22 @@ public class OrchestratorPlanningToolsService {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final CompetencyRelationRepository competencyRelationRepository;
+
     /**
      * Creates the planning tools service.
      *
-     * @param objectMapper               JSON serialiser for tool responses
-     * @param courseCompetencyRepository repository for competency lookups
-     * @param exerciseRepository         repository for exercise lookups
+     * @param objectMapper                 JSON serialiser for tool responses
+     * @param courseCompetencyRepository   repository for competency lookups
+     * @param exerciseRepository           repository for exercise lookups
+     * @param competencyRelationRepository repository for course-scoped relations
      */
-    public OrchestratorPlanningToolsService(JsonMapper objectMapper, CourseCompetencyRepository courseCompetencyRepository, ExerciseRepository exerciseRepository) {
+    public OrchestratorPlanningToolsService(JsonMapper objectMapper, CourseCompetencyRepository courseCompetencyRepository, ExerciseRepository exerciseRepository,
+            CompetencyRelationRepository competencyRelationRepository) {
         this.objectMapper = objectMapper;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.exerciseRepository = exerciseRepository;
+        this.competencyRelationRepository = competencyRelationRepository;
     }
 
     /**
@@ -71,7 +80,7 @@ public class OrchestratorPlanningToolsService {
      * @return the JSON-serialized index, or a JSON error
      */
     @Tool(description = "List the competency index for the current course. Returns two sections: (1) competencies — id, title, taxonomy, type (competency or prerequisite), "
-            + "linked exercises (with title, exercise type, and the current link weight — 1.0 / 0.5 / 0.3) and linked lecture units (with name and lecture-unit type); "
+            + "linked exercises (with title, exercise type, and the current link weight — 1.0 / 0.5 / 0.3) and linked lecture units (with name and lecture-unit type), plus directed relations (tailCompetencyId, headCompetencyId, relationType); "
             + "(2) unassignedExercises — exercises in the course that are currently not linked to any competency (id, title, type), provided as background only; act on the changed batch, not unrelated coverage gaps. "
             + "The initial index is already provided in the system prompt; call this again after any CREATE / DELETE so subsequent actions reference up-to-date ids.")
     public String listCompetencyIndex(ToolContext toolContext) {
@@ -90,7 +99,20 @@ public class OrchestratorPlanningToolsService {
      */
     public CompetencyIndexResponseDTO listCompetencyIndex(long courseId) {
         Set<CourseCompetency> competencies = courseCompetencyRepository.findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(courseId);
-        List<CompetencyIndexDTO> entries = competencies.stream().map(OrchestratorPlanningToolsService::toIndexEntry).sorted(Comparator.comparing(CompetencyIndexDTO::id)).toList();
+        // Fetch both endpoints within the active course and group once, avoiding a query or scan per competency.
+        Map<Long, List<CompetencyIndexDTO.RelationRefDTO>> relationsByCompetency = new HashMap<>();
+        competencyRelationRepository.findAllWithHeadAndTailByCourseId(courseId).stream()
+                .map(relation -> new CompetencyIndexDTO.RelationRefDTO(relation.getTailCompetency().getId(), relation.getHeadCompetency().getId(), relation.getType()))
+                .sorted(Comparator.comparingLong(CompetencyIndexDTO.RelationRefDTO::tailCompetencyId).thenComparingLong(CompetencyIndexDTO.RelationRefDTO::headCompetencyId)
+                        .thenComparing(CompetencyIndexDTO.RelationRefDTO::relationType))
+                .forEach(relation -> {
+                    relationsByCompetency.computeIfAbsent(relation.tailCompetencyId(), ignored -> new ArrayList<>()).add(relation);
+                    if (relation.headCompetencyId() != relation.tailCompetencyId()) {
+                        relationsByCompetency.computeIfAbsent(relation.headCompetencyId(), ignored -> new ArrayList<>()).add(relation);
+                    }
+                });
+        List<CompetencyIndexDTO> entries = competencies.stream().map(competency -> toIndexEntry(competency, relationsByCompetency.getOrDefault(competency.getId(), List.of())))
+                .sorted(Comparator.comparing(CompetencyIndexDTO::id)).toList();
         Set<Long> linkedExerciseIds = competencies.stream().flatMap(c -> c.getExerciseLinks().stream()).map(CompetencyExerciseLink::getExercise).map(Exercise::getId)
                 .collect(Collectors.toSet());
         // findAllExercisesByCourseId already filters by `e.course.id`, so exam exercises are excluded.
@@ -108,9 +130,10 @@ public class OrchestratorPlanningToolsService {
      * the equivalent projection in {@link OrchestratorReadToolsService} so both tools expose the same set.
      *
      * @param competency the competency to project, with exercise and lecture-unit links already fetched
+     * @param relations  the ordered incoming and outgoing relations within the active course
      * @return the index entry for this competency
      */
-    private static CompetencyIndexDTO toIndexEntry(CourseCompetency competency) {
+    private static CompetencyIndexDTO toIndexEntry(CourseCompetency competency, List<CompetencyIndexDTO.RelationRefDTO> relations) {
         List<CompetencyIndexDTO.ExerciseLinkRefDTO> exercises = competency.getExerciseLinks().stream()
                 .sorted(Comparator.comparing((CompetencyExerciseLink link) -> link.getExercise().getId()))
                 .map(link -> new CompetencyIndexDTO.ExerciseLinkRefDTO(link.getExercise().getTitle(), exerciseType(link.getExercise()), link.getWeight())).toList();
@@ -120,6 +143,6 @@ public class OrchestratorPlanningToolsService {
                 // not stable, so the id breaks ties and keeps the rendered index identical across runs.
                 .sorted(Comparator.comparing(LectureUnit::getName).thenComparing(LectureUnit::getId))
                 .map(lu -> new CompetencyIndexDTO.LectureUnitRefDTO(lu.getName(), lu.getType())).toList();
-        return new CompetencyIndexDTO(competency.getId(), competency.getTitle(), competency.getTaxonomy(), competency.getType(), exercises, lectureUnits);
+        return new CompetencyIndexDTO(competency.getId(), competency.getTitle(), competency.getTaxonomy(), competency.getType(), exercises, lectureUnits, relations);
     }
 }

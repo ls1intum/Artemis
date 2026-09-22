@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.account.repository;
 
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Set;
 
 import jakarta.persistence.criteria.Join;
@@ -30,10 +31,12 @@ public class UserSpecs {
      */
     @NonNull
     public static Specification<User> getSearchTermSpecification(String searchTerm) {
-        String extendedSearchTerm = "%" + searchTerm + "%";
+        // Lower case on both sides: PostgreSQL compares case sensitively, so a term the user typed in any other case would match nothing.
+        String extendedSearchTerm = "%" + searchTerm.toLowerCase(Locale.ROOT) + "%";
         return (root, query, criteriaBuilder) -> {
             String[] columns = { User_.LOGIN, User_.EMAIL, User_.FIRST_NAME, User_.LAST_NAME };
-            Predicate[] predicates = Arrays.stream(columns).map(column -> criteriaBuilder.like(root.get(column), extendedSearchTerm)).toArray(Predicate[]::new);
+            Predicate[] predicates = Arrays.stream(columns).map(column -> criteriaBuilder.like(criteriaBuilder.lower(root.get(column)), extendedSearchTerm))
+                    .toArray(Predicate[]::new);
 
             return criteriaBuilder.or(predicates);
         };
