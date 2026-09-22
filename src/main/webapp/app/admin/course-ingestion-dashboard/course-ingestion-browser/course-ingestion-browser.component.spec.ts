@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideTranslateService } from '@ngx-translate/core';
@@ -161,6 +161,33 @@ describe('CourseIngestionBrowserComponent', () => {
 
         expect(component.visible()).toBe(false);
         expect(component.data()).toBeUndefined();
+    });
+
+    it('should not let a superseded course load overwrite the course now on screen', async () => {
+        const forFirstCourse = new Subject<CourseBrowserData>();
+        const forSecondCourse = new Subject<CourseBrowserData>();
+        const spy = vi.spyOn(service, 'getCourseBrowserData');
+        spy.mockReturnValueOnce(forFirstCourse.asObservable()).mockReturnValueOnce(forSecondCourse.asObservable());
+
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        // The administrator opens one course and switches to another before the first read comes back.
+        fixture.componentRef.setInput('course', { ...course, courseId: 8 });
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const newer: CourseBrowserData = { ...browserData, entities: [{ type: 'lecture', entityId: 1, title: 'Course 8 lecture' }] };
+        const stale: CourseBrowserData = { ...browserData, entities: [{ type: 'lecture', entityId: 2, title: 'Course 7 lecture' }] };
+        forSecondCourse.next(newer);
+        forFirstCourse.next(stale);
+        fixture.detectChanges();
+
+        // Without cancellation the stale read wins, and it also rewinds loadedCourseId to the course no longer shown,
+        // so the modal displays one course's content under another course's heading.
+        expect(component.data()?.entities[0].title).toBe('Course 8 lecture');
+        expect(component['loadedCourseId']).toBe(8);
     });
 
     it('should render the master-detail shell once loaded', async () => {

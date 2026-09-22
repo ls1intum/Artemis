@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, model, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subscription } from 'rxjs';
 import { TumUiDialogComponent, TumUiMessageComponent } from '@tumaet/ui-angular';
 import { CourseIngestionBrowserTreeComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-browser-tree/course-ingestion-browser-tree.component';
 import { CourseIngestionBrowserDetailComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-browser-detail/course-ingestion-browser-detail.component';
@@ -58,6 +59,15 @@ export class CourseIngestionBrowserComponent {
     /** The course the current data was loaded for, so a re-render of the same course does not refetch it. */
     private loadedCourseId?: number;
 
+    /**
+     * The in-flight course load, if any. Selecting another course, or closing and reopening, starts a new one, and
+     * takeUntilDestroyed only ends a subscription when the component is destroyed. Without cancelling here an older
+     * response can land last and overwrite the data, the loaded course id and the loading and error state; one
+     * arriving after close() would also repopulate the modal that close() just emptied, defeating the guarantee that
+     * reopening shows current data.
+     */
+    private pendingRequest?: Subscription;
+
     constructor() {
         // Load when the modal opens, and again if it is reopened on a different course. Loading on the course input
         // alone would fetch for every row the matrix renders, which is the cost this modal exists to avoid. The course
@@ -73,6 +83,7 @@ export class CourseIngestionBrowserComponent {
 
     /** Closes the modal and drops the loaded data, so reopening always shows current state rather than a stale view. */
     close(): void {
+        this.pendingRequest?.unsubscribe();
         this.visible.set(false);
         this.loadedCourseId = undefined;
         this.data.set(undefined);
@@ -80,9 +91,10 @@ export class CourseIngestionBrowserComponent {
     }
 
     private load(courseId: number): void {
+        this.pendingRequest?.unsubscribe();
         this.loading.set(true);
         this.error.set(false);
-        this.dashboardService
+        this.pendingRequest = this.dashboardService
             .getCourseBrowserData(courseId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
