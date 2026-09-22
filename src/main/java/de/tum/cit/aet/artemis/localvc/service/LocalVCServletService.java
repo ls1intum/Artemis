@@ -1788,7 +1788,7 @@ public class LocalVCServletService {
             // This runs while a failed authentication is being answered, so nothing that happens here may replace the
             // 401 the caller is about to send. Writing the access log is best effort by nature: it describes an attempt
             // that was already rejected.
-            log.warn("Could not write the VCS access log for a failed authentication on {}: {}", servletRequest.getRequestURI(), e.getMessage());
+            log.warn("Could not write the VCS access log for a failed authentication on {}", servletRequest.getRequestURI(), e);
         }
     }
 
