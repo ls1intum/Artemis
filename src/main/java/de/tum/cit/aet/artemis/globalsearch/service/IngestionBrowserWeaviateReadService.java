@@ -179,11 +179,21 @@ public class IngestionBrowserWeaviateReadService {
             List<IndexedEntityRecordDTO> records = new ArrayList<>(objects.size());
             for (WeaviateObject<Map<String, Object>> object : objects) {
                 Map<String, Object> properties = object.properties();
+                // The TYPE property is word-tokenized text, so eq(type) also matches an object whose type CONTAINS
+                // that word as one of its own tokens: a "lecture_unit" row's tokens are "lecture" and "unit", so a
+                // filter for "lecture" returns it too. Verifying the object's own type here is what stops a unit's
+                // stored record from being shown as if it were the record of the lecture that holds it; the coverage
+                // read service is immune to the same filter because it buckets by this same value rather than trusting
+                // the query.
+                String actualType = asString(properties.get(SearchableEntitySchema.Properties.TYPE));
+                if (!type.equals(actualType)) {
+                    continue;
+                }
                 Long entityId = asLong(properties.get(SearchableEntitySchema.Properties.ENTITY_ID));
                 if (entityId == null) {
                     continue;
                 }
-                records.add(new IndexedEntityRecordDTO(type, entityId, asString(properties.get(SearchableEntitySchema.Properties.TITLE)), creationTime(object),
+                records.add(new IndexedEntityRecordDTO(actualType, entityId, asString(properties.get(SearchableEntitySchema.Properties.TITLE)), creationTime(object),
                         populatedOnly(properties)));
             }
             return records;

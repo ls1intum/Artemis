@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedContentObjectDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.IndexedEntityRecordDTO;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import io.weaviate.client6.v1.api.WeaviateClient;
 import io.weaviate.client6.v1.api.collections.Property;
@@ -124,6 +125,38 @@ class IngestionBrowserWeaviateReadServiceTest extends AbstractProgrammingIntegra
             // A lecture has no parent lecture; the field is only set on units.
             assertThat(lecture.lectureId()).isNull();
         });
+    }
+
+    @Test
+    void readsRecordsOfTheRequestedTypeWithTheirStoredProperties() throws Exception {
+        insertMetadata(COURSE_A, SearchableEntitySchema.TypeValues.LECTURE, 20L, "Week 1");
+
+        await().atMost(TIMEOUT).untilAsserted(() -> {
+            List<IndexedEntityRecordDTO> records = browserReadService.listIndexedEntityRecords(COURSE_A, SearchableEntitySchema.TypeValues.LECTURE);
+
+            assertThat(records).hasSize(1);
+            IndexedEntityRecordDTO record = records.getFirst();
+            assertThat(record.type()).isEqualTo(SearchableEntitySchema.TypeValues.LECTURE);
+            assertThat(record.entityId()).isEqualTo(20L);
+            assertThat(record.title()).isEqualTo("Week 1");
+            assertThat(record.properties()).containsEntry(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.LECTURE);
+        });
+    }
+
+    /**
+     * The TYPE property is word-tokenized text, so Weaviate's equality filter for "lecture" also matches a
+     * "lecture_unit" row, whose tokens are "lecture" and "unit". Before this was guarded, selecting a lecture that was
+     * not itself indexed but had an indexed unit under it showed that unit's stored record in the lecture's own detail
+     * pane, mislabelled with the lecture's type.
+     */
+    @Test
+    void excludesAnObjectWhoseTypeOnlyContainsTheRequestedTypeAsAToken() throws Exception {
+        insertMetadata(COURSE_A, SearchableEntitySchema.TypeValues.LECTURE_UNIT, 2L, "Tutorial Slides");
+
+        await().atMost(TIMEOUT).untilAsserted(() -> assertThat(browserReadService.listIndexedEntitiesForCourse(COURSE_A)).isNotEmpty());
+
+        List<IndexedEntityRecordDTO> records = browserReadService.listIndexedEntityRecords(COURSE_A, SearchableEntitySchema.TypeValues.LECTURE);
+        assertThat(records).as("a lecture_unit row must never be returned for a query asking for lecture records").isEmpty();
     }
 
     @Test
