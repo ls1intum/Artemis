@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
@@ -57,6 +58,9 @@ class IngestionCoverageExpectedSetTest extends AbstractSpringIntegrationIndepend
 
     @Autowired
     private AttachmentRepository attachmentRepository;
+
+    @Autowired
+    private LectureRepository lectureRepository;
 
     @Autowired
     private CourseUtilService courseUtilService;
@@ -96,6 +100,18 @@ class IngestionCoverageExpectedSetTest extends AbstractSpringIntegrationIndepend
 
     private Exercise courseExerciseB;
 
+    // Course C entities: the eligibility cases where the expected set and the ingestion path can drift apart. Kept on
+    // their own course so the sets asserted for course A stay the plain, readable ones.
+    private long courseCId;
+
+    private AttachmentVideoUnit upperCasePdfUnit;
+
+    private AttachmentVideoUnit urlAttachmentPdfUnit;
+
+    private AttachmentVideoUnit tutorialPdfUnit;
+
+    private AttachmentVideoUnit tutorialVideoUnit;
+
     @BeforeEach
     void setUp() {
         ZonedDateTime past = ZonedDateTime.now().minusDays(1);
@@ -128,6 +144,15 @@ class IngestionCoverageExpectedSetTest extends AbstractSpringIntegrationIndepend
         Lecture lectureB = lectureUtilService.createLecture(courseB);
         textUnitB = lectureUtilService.createTextUnit(lectureB);
         courseExerciseB = exerciseRepository.save(TextExerciseFactory.generateTextExercise(past, future, farFuture, courseB));
+
+        Course courseC = courseUtilService.createCourse();
+        courseCId = courseC.getId();
+        Lecture lectureC = lectureUtilService.createLecture(courseC);
+        upperCasePdfUnit = seedUnitWithAttachment(lectureC, "attachments/attachment-unit/slides.PDF", AttachmentType.FILE);
+        urlAttachmentPdfUnit = seedUnitWithAttachment(lectureC, "https://example.org/slides.pdf", AttachmentType.URL);
+        Lecture tutorialLectureC = createTutorialLecture(courseC);
+        tutorialPdfUnit = seedUnitWithAttachment(tutorialLectureC, "attachments/attachment-unit/tutorial.pdf", AttachmentType.FILE);
+        tutorialVideoUnit = seedUnitWithVideoSource(tutorialLectureC, "https://video.example/tutorial");
     }
 
     @Test
@@ -159,6 +184,38 @@ class IngestionCoverageExpectedSetTest extends AbstractSpringIntegrationIndepend
         assertThat(result).doesNotContain(new CourseEntityIdDTO(courseAId, blankVideoUnit.getId()), new CourseEntityIdDTO(courseAId, pdfUnit.getId()));
     }
 
+    /**
+     * The ingestion path lowercases the link before testing the suffix, so an uppercase {@code .PDF} is ingested and has
+     * to be expected. A bare {@code LIKE '%.pdf'} would decide this differently per database, since the column collation
+     * is case-insensitive on MySQL and case-sensitive on PostgreSQL; on PostgreSQL the ingested object would then be
+     * reported orphaned on every recompute.
+     */
+    @Test
+    void findsPdfAttachmentsWhoseSuffixIsUppercase() {
+        List<CourseEntityIdDTO> result = lectureUnitRepository.findUnitIdCourseIdPairsWithPdfAttachmentForCourses(List.of(courseCId));
+
+        assertThat(result).contains(new CourseEntityIdDTO(courseCId, upperCasePdfUnit.getId()));
+    }
+
+    /**
+     * Slides are only ingested for a FILE attachment on a lecture that is not a tutorial lecture. Expecting either of
+     * these would report a unit missing that the ingestion path deliberately never processes.
+     */
+    @Test
+    void excludesNonFileAttachmentsAndTutorialLecturesFromPdfExpectations() {
+        List<CourseEntityIdDTO> result = lectureUnitRepository.findUnitIdCourseIdPairsWithPdfAttachmentForCourses(List.of(courseCId));
+
+        assertThat(result).doesNotContain(new CourseEntityIdDTO(courseCId, urlAttachmentPdfUnit.getId()), new CourseEntityIdDTO(courseCId, tutorialPdfUnit.getId()));
+    }
+
+    /** A tutorial lecture's video is not ingested either, so its unit must not be expected to have a transcript. */
+    @Test
+    void excludesTutorialLectureVideosFromVideoExpectations() {
+        List<CourseEntityIdDTO> result = lectureUnitRepository.findUnitIdCourseIdPairsWithVideoForCourses(List.of(courseCId));
+
+        assertThat(result).doesNotContain(new CourseEntityIdDTO(courseCId, tutorialVideoUnit.getId()));
+    }
+
     @Test
     void findsCourseAndExamExercisesAttributedToTheirCourse() {
         List<CourseEntityIdDTO> result = expectedIdsRepository.findExerciseIdCourseIdPairsForCourses(List.of(courseAId));
@@ -187,14 +244,24 @@ class IngestionCoverageExpectedSetTest extends AbstractSpringIntegrationIndepend
         return attachmentVideoUnitRepository.save(unit);
     }
 
+    private Lecture createTutorialLecture(Course course) {
+        Lecture lecture = lectureUtilService.createLecture(course);
+        lecture.setIsTutorialLecture(true);
+        return lectureRepository.save(lecture);
+    }
+
     private AttachmentVideoUnit seedUnitWithAttachmentLink(Lecture lecture, String link) {
+        return seedUnitWithAttachment(lecture, link, AttachmentType.FILE);
+    }
+
+    private AttachmentVideoUnit seedUnitWithAttachment(Lecture lecture, String link, AttachmentType attachmentType) {
         AttachmentVideoUnit unit = new AttachmentVideoUnit();
         unit.setDescription("Test");
         unit.setLecture(lecture);
         unit = attachmentVideoUnitRepository.save(unit);
 
         Attachment attachment = new Attachment();
-        attachment.setAttachmentType(AttachmentType.FILE);
+        attachment.setAttachmentType(attachmentType);
         attachment.setName("Attachment");
         attachment.setVersion(1);
         attachment.setReleaseDate(ZonedDateTime.now().minusDays(1));

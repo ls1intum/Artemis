@@ -31,6 +31,11 @@ import de.tum.cit.aet.artemis.globalsearch.domain.IngestionCoverageEntry;
 import de.tum.cit.aet.artemis.globalsearch.domain.IngestionCoverageStatus;
 import de.tum.cit.aet.artemis.globalsearch.dto.IngestionTypeCountDTO;
 import de.tum.cit.aet.artemis.globalsearch.repository.IngestionCoverageRepository;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettingsEntity;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisSupportLevel;
+import de.tum.cit.aet.artemis.iris.repository.IrisCourseSettingsRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -66,6 +71,9 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
 
     @Autowired
     private WeaviateClient weaviateClient;
+
+    @Autowired
+    private IrisCourseSettingsRepository irisCourseSettingsRepository;
 
     @Autowired
     private CourseUtilService courseUtilService;
@@ -106,6 +114,14 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
 
     static boolean isWeaviateEnabled() {
         return weaviateContainer != null && weaviateContainer.isRunning();
+    }
+
+    /** Writes the course an explicitly disabled Iris settings row; without one a course counts as enabled. */
+    private void disableIrisForCourse(long courseId) {
+        IrisCourseSettingsEntity settings = new IrisCourseSettingsEntity();
+        settings.setCourseId(courseId);
+        settings.setSettings(new IrisCourseSettings(false, null, IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null, null, null));
+        irisCourseSettingsRepository.save(settings);
     }
 
     @BeforeEach
@@ -189,6 +205,26 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
             // cell was red. Status, severity and the cell have to agree.
             assertThat(entry.getStatus()).isEqualTo(IngestionCoverageStatus.INCOMPLETE);
             assertThat(entry.getCoverageGapScore()).isEqualTo(1);
+        });
+    }
+
+    @Test
+    void aCourseWithIrisDisabledExpectsNoLectureContent() {
+        // Slides and transcript live in the Iris collections, which are only written for a course that has Iris
+        // enabled. Before the expected sets applied that rule, this course reported its PDF and its video missing on
+        // every recompute: a gap that no amount of re-ingesting could ever close.
+        Course irisDisabled = courseUtilService.createCourse();
+        Lecture lecture = lectureUtilService.createLecture(irisDisabled);
+        seedUnitWithAttachmentLink(lecture, "attachments/attachment-unit/slides.pdf");
+        seedUnitWithVideoSource(lecture, "https://video.example/iris-disabled");
+        disableIrisForCourse(irisDisabled.getId());
+
+        await().atMost(TIMEOUT).untilAsserted(() -> {
+            coverageRecomputeService.recomputeAllCourses();
+            IngestionCoverageEntry entry = coverageRepository.findByCourseId(irisDisabled.getId()).orElseThrow();
+
+            assertThat(typeCount(entry, CoverageRecomputeService.TYPE_SLIDES)).isEqualTo(new IngestionTypeCountDTO(CoverageRecomputeService.TYPE_SLIDES, 0, 0, 0, 0));
+            assertThat(typeCount(entry, CoverageRecomputeService.TYPE_TRANSCRIPT)).isEqualTo(new IngestionTypeCountDTO(CoverageRecomputeService.TYPE_TRANSCRIPT, 0, 0, 0, 0));
         });
     }
 

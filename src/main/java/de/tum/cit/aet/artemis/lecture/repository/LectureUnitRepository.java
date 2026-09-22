@@ -50,9 +50,16 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
     List<CourseEntityIdDTO> findIndexableUnitIdCourseIdPairsForCourses(@Param("courseIds") Collection<Long> courseIds);
 
     /**
-     * Returns the (courseId, unitId) pairs of the attachment/video units in the given courses whose attachment link ends
-     * in {@code .pdf}. The comparison is a case-sensitive {@code LIKE '%.pdf'} (no {@code LOWER()}) so the query stays
-     * engine-agnostic and matches only the lowercase {@code .pdf} suffix. Bulk: all requested courses in a single query.
+     * Returns the (courseId, unitId) pairs of the attachment/video units in the given courses whose attachment is a PDF
+     * the ingestion path would process: a {@code FILE} attachment whose link ends in {@code .pdf} in any case, on a
+     * lecture that is not a tutorial lecture. These are the conditions {@code PyrisLectureUnitEligibility} applies, and
+     * this query has to stay equivalent to it: the result is what slide coverage expects to find, so a unit counted here
+     * that the ingestion path never processes is reported missing for as long as it exists.
+     * <p>
+     * The suffix is compared through {@code LOWER(...)}, the same case-insensitive check the ingestion path makes. A
+     * bare {@code LIKE '%.pdf'} is not engine-agnostic: the column is {@code utf8mb4_unicode_ci} on MySQL, which matches
+     * {@code .PDF} as well, while PostgreSQL compares case-sensitively and does not, so the same data would report
+     * different coverage on the two supported databases. Bulk: all requested courses in a single query.
      *
      * @param courseIds the ids of the courses
      * @return the (courseId, unitId) pairs of units whose attachment is a PDF
@@ -61,16 +68,22 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
             SELECT new de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO(avu.lecture.course.id, avu.id)
             FROM AttachmentVideoUnit avu
             WHERE avu.lecture.course.id IN :courseIds
+                AND avu.lecture.isTutorialLecture = FALSE
                 AND avu.attachment IS NOT NULL
-                AND avu.attachment.link LIKE '%.pdf'
+                AND avu.attachment.attachmentType = de.tum.cit.aet.artemis.lecture.domain.AttachmentType.FILE
+                AND LOWER(avu.attachment.link) LIKE '%.pdf'
             """)
     List<CourseEntityIdDTO> findUnitIdCourseIdPairsWithPdfAttachmentForCourses(@Param("courseIds") Collection<Long> courseIds);
 
     /**
      * Returns the (courseId, unitId) pairs of the attachment/video units in the given courses that have a non-blank
-     * video source. The {@code TRIM(...) <> ''} check treats an empty or space-only source as absent; it approximates
-     * the trigger's {@code String.isBlank()} rather than matching it exactly, since JPQL {@code TRIM} strips only spaces
-     * (not tabs or newlines), a gap that is moot for URL video sources. Bulk: all requested courses in a single query.
+     * video source on a lecture that is not a tutorial lecture, the conditions under which the ingestion path processes
+     * a video (see {@code PyrisLectureUnitEligibility}). Transcript coverage expects exactly this set, so a tutorial
+     * lecture's video counted here would be reported missing permanently.
+     * <p>
+     * The {@code TRIM(...) <> ''} check treats an empty or space-only source as absent; it approximates the trigger's
+     * {@code String.isBlank()} rather than matching it exactly, since JPQL {@code TRIM} strips only spaces (not tabs or
+     * newlines), a gap that is moot for URL video sources. Bulk: all requested courses in a single query.
      *
      * @param courseIds the ids of the courses
      * @return the (courseId, unitId) pairs of units with a video source
@@ -79,6 +92,7 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
             SELECT new de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO(avu.lecture.course.id, avu.id)
             FROM AttachmentVideoUnit avu
             WHERE avu.lecture.course.id IN :courseIds
+                AND avu.lecture.isTutorialLecture = FALSE
                 AND avu.videoSource IS NOT NULL
                 AND TRIM(avu.videoSource) <> ''
             """)
