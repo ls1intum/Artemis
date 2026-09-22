@@ -2,15 +2,22 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PROCESSING_RETRIES;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.UUID;
+import java.util.function.Consumer;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -19,8 +26,14 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
-import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.globalsearch.api.IngestionEventLogApi;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -28,11 +41,12 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegmentConverter;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
-import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
+import de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
@@ -41,8 +55,8 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepos
 /**
  * Service that handles callbacks, capacity-aware dispatch, and state transitions for the lecture content processing pipeline.
  * <p>
- * The {@code lecture_unit_processing_state} table acts as a database-backed job queue using PostgreSQL's
- * {@code FOR UPDATE SKIP LOCKED} pattern for safe concurrent dispatch in clustered Artemis deployments.
+ * The {@code lecture_unit_processing_state} table acts as a database-backed job queue, dispatched via conditional atomic UPDATEs (see
+ * {@link LectureUnitProcessingStateRepository#claimIdleForDispatch}) rather than row locks, for safe concurrent dispatch in clustered Artemis deployments.
  * <p>
  * This service handles:
  * <ul>
@@ -62,27 +76,26 @@ public class ProcessingStateCallbackService {
     /**
      * Maximum number of concurrent processing jobs (TRANSCRIBING or INGESTING).
      * Prevents overwhelming Iris with too many simultaneous jobs.
+     * Configurable via {@code artemis.iris.ingestion.max-concurrent-jobs}; defaults to 2.
      */
-    static final int MAX_CONCURRENT_PROCESSING = 2;
+    private final int maxConcurrentJobs;
 
     /**
      * How long a retry claim keeps a row out of the candidate list. It has to outlast the dispatch the claim belongs
      * to, and it doubles as the recovery window: a node killed mid-dispatch leaves the claim in place until it lapses,
-     * after which the row is eligible again. Matches the scheduler's no-callback timeout, which is the point at which
-     * a dispatch is no longer considered in flight.
+     * after which the row is eligible again. Intended to match the scheduler's no-callback timeout
+     * ({@code artemis.iris.ingestion.no-callback-timeout-minutes}), which is the point at which a dispatch is no
+     * longer considered in flight — keep the two in sync if either is overridden.
      */
-    private static final int RETRY_CLAIM_LEASE_MINUTES = 20;
+    private final int retryClaimLeaseMinutes;
 
     /**
-     * Lock to serialize dispatch so the count check + dispatch are atomic.
-     * Without this, concurrent calls to dispatchPendingJobs() can each see the
-     * same activeCount and over-dispatch beyond MAX_CONCURRENT_PROCESSING.
+     * Name of the cluster-wide lock that serializes push dispatch, so that count + claim + send is atomic across
+     * all nodes and two nodes cannot both fill the same free capacity.
      */
-    private final ReentrantLock dispatchLock = new ReentrantLock();
+    private static final String DISPATCH_LOCK_NAME = "lecture-ingestion-dispatch";
 
     private static final JsonMapper objectMapper = JsonObjectMapper.get();
-
-    private static final String PROCESSING_STATE_TOPIC = "/topic/lectures/%d/unit-processing-state";
 
     private final LectureUnitProcessingStateRepository processingStateRepository;
 
@@ -92,32 +105,81 @@ public class ProcessingStateCallbackService {
 
     private final Optional<IrisLectureApi> irisLectureApi;
 
-    private final WebsocketMessagingService websocketMessagingService;
+    private final Optional<IngestionEventLogApi> ingestionEventLogApi;
+
+    private final ProcessingStateNotificationService notificationService;
+
+    private final LectureUnitContentFingerprintService contentFingerprintService;
+
+    private final DistributedDataProvider distributedDataProvider;
+
+    private final FeatureToggleService featureToggleService;
+
+    /**
+     * How long after the last claim or heartbeat call a pulling Pyris worker still counts as present.
+     * While a worker is present, the legacy push dispatch is suppressed and IDLE jobs simply wait in
+     * the queue for the next claim; when the worker disappears past this grace (an old Iris without
+     * worker support, or the worker gone for good), push dispatch resumes automatically. Sized as a
+     * generous multiple of the worker's heartbeat interval so one lost heartbeat never flips modes.
+     */
+    private final Duration workerModeGrace;
+
+    /** Upper bound on jobs handed out per single worker claim call, purely as a sanity clamp. */
+    private final int maxJobsPerClaim;
 
     private final IrisLectureUnitSyncStateRepository irisLectureUnitSyncStateRepository;
 
+    private static final String WORKER_MAP_NAME = "pyris-ingestion-worker";
+
+    private static final String WORKER_LAST_SEEN_KEY = "lastSeenAt";
+
+    @Nullable
+    private DistributedMap<String, String> workerMap;
+
     public ProcessingStateCallbackService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            AttachmentRepository attachmentRepository, Optional<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService,
-            IrisLectureUnitSyncStateRepository irisLectureUnitSyncStateRepository) {
+            AttachmentRepository attachmentRepository, Optional<IrisLectureApi> irisLectureApi, ProcessingStateNotificationService notificationService,
+            LectureUnitContentFingerprintService contentFingerprintService, DistributedDataProvider distributedDataProvider, FeatureToggleService featureToggleService,
+            @Value("${artemis.iris.ingestion.max-concurrent-jobs:2}") int maxConcurrentJobs,
+            @Value("${artemis.iris.ingestion.retry-claim-lease-minutes:20}") int retryClaimLeaseMinutes,
+            @Value("${artemis.iris.ingestion.worker-mode-grace:PT90S}") Duration workerModeGrace, @Value("${artemis.iris.ingestion.max-jobs-per-claim:8}") int maxJobsPerClaim,
+            IrisLectureUnitSyncStateRepository irisLectureUnitSyncStateRepository, Optional<IngestionEventLogApi> ingestionEventLogApi) {
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
         this.attachmentRepository = attachmentRepository;
         this.irisLectureApi = irisLectureApi;
-        this.websocketMessagingService = websocketMessagingService;
+        this.notificationService = notificationService;
+        this.contentFingerprintService = contentFingerprintService;
+        this.distributedDataProvider = distributedDataProvider;
+        this.featureToggleService = featureToggleService;
+        this.maxConcurrentJobs = maxConcurrentJobs;
+        this.retryClaimLeaseMinutes = retryClaimLeaseMinutes;
+        this.workerModeGrace = workerModeGrace;
+        this.maxJobsPerClaim = maxJobsPerClaim;
         this.irisLectureUnitSyncStateRepository = irisLectureUnitSyncStateRepository;
+        this.ingestionEventLogApi = ingestionEventLogApi;
+    }
+
+    private DistributedMap<String, String> getWorkerMap() {
+        if (workerMap == null) {
+            workerMap = distributedDataProvider.getMap(WORKER_MAP_NAME);
+        }
+        return workerMap;
     }
 
     /**
-     * Returns a synchronization state to the retry pass now that Pyris holds the lecture unit.
+     * The configured maximum number of concurrent processing jobs.
+     * Exposed for the scheduler, whose backfill applies the same cap.
      *
-     * <p>
-     * A row settled as {@link IrisLectureUnitSyncState#STATUS_NOT_INGESTED} or {@link IrisLectureUnitSyncState#STATUS_FAILED} is skipped by the retry query, and the backfill
-     * does not recreate it because a row already exists. Ingestion completing is the event that makes it worth trying again, so that is what reopens it.
-     *
-     * <p>
-     * A row that is {@link IrisLectureUnitSyncState#STATUS_IN_PROGRESS} is reopened as well, because the claim commits before the Pyris request leaves. Such a request was
-     * issued while the unit was not ingested and can still answer "not ingested" after this transition; reopening here is what tells the listener that its answer describes a
-     * state of the world that no longer holds.
+     * @return the maximum number of jobs that may be TRANSCRIBING or INGESTING at once
+     */
+    int getMaxConcurrentJobs() {
+        return maxConcurrentJobs;
+    }
+
+    /**
+     * Returns a synchronization state to the retry pass now that Pyris holds the lecture unit: a row settled as {@link IrisLectureUnitSyncState#STATUS_NOT_INGESTED} or
+     * {@link IrisLectureUnitSyncState#STATUS_FAILED} is skipped by the retry query and not recreated by the backfill, so ingestion completing is what reopens it; a row that is
+     * {@link IrisLectureUnitSyncState#STATUS_IN_PROGRESS} is reopened too, since its in-flight request can still answer "not ingested" and reopening tells the listener that.
      *
      * @param state the current synchronization state of the lecture unit
      */
@@ -138,18 +200,15 @@ public class ProcessingStateCallbackService {
     /**
      * Dispatch pending IDLE jobs to Iris, respecting capacity limits.
      * <p>
-     * Uses PostgreSQL {@code FOR UPDATE SKIP LOCKED} to safely claim jobs in clustered deployments.
-     * Called from three places:
-     * <ol>
-     * <li>{@link LectureContentProcessingService#triggerProcessing} — immediately after creating IDLE state</li>
-     * <li>{@link #handleIngestionComplete} — when a job finishes, filling the freed slot</li>
-     * <li>{@link LectureContentProcessingScheduler#processScheduledRetries} — periodic backup every 5 minutes</li>
-     * </ol>
+     * Claim-commit-then-send: the repository atomically claims rows (marking {@code startedAt}) in its own committed transaction before any HTTP request leaves this node, so a
+     * crash between claim and send never spawns a duplicate pipeline — it just leaves a claimed row the scheduler's claim-expiry release requeues, with no database row locks
+     * held across the calls to Pyris. Claim order implements queue priority: fresh work first, retries second, backlog last. Called from
+     * {@link LectureContentProcessingService#triggerProcessing} (right after creating IDLE state), {@link #handleIngestionComplete} (filling a freed slot), and
+     * {@link LectureContentProcessingScheduler#processScheduledRetries} (periodic backup every 5 minutes).
      * <p>
-     * Cluster safety comes from the conditional claim on each candidate rather than from a transaction spanning the
-     * read and the write: see {@link LectureUnitProcessingStateRepository#claimIdleForDispatch}. The local
-     * {@code dispatchLock} still serializes dispatch within this node so the capacity check cannot be raced by two of
-     * its own threads.
+     * Cluster safety comes from the conditional claim on each candidate, not a transaction spanning the read and write (see
+     * {@link LectureUnitProcessingStateRepository#claimIdleForDispatch}); the cluster-wide dispatch lock serializes the capacity check with the claims so two nodes cannot both
+     * see the same free slots and together exceed the configured maximum.
      */
     public void dispatchPendingJobs() {
         if (irisLectureApi.isEmpty()) {
@@ -157,62 +216,81 @@ public class ProcessingStateCallbackService {
             return;
         }
 
-        // Serialize dispatch so count + claim + dispatch are atomic.
-        // Without this lock, concurrent @Async calls can each see the same
-        // activeCount and dispatch beyond MAX_CONCURRENT_PROCESSING.
+        // Pull mode: a worker claims its own capacity, so jobs wait as IDLE for its next claim; the push below survives as the fallback for an Iris without worker support.
+        if (isWorkerModeActive()) {
+            log.debug("Pyris worker active, leaving pending jobs for pull-based claim");
+            return;
+        }
+
+        // Serialize dispatch cluster-wide: without this lock, concurrent callers can each see the same activeCount and together exceed the max.
+        DistributedLock dispatchLock = distributedDataProvider.getLock(DISPATCH_LOCK_NAME);
         dispatchLock.lock();
         try {
             long activeCount = processingStateRepository.countByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING));
-            int availableSlots = (int) (MAX_CONCURRENT_PROCESSING - activeCount);
+            int availableSlots = (int) (maxConcurrentJobs - activeCount);
 
             if (availableSlots <= 0) {
-                log.debug("No available slots for dispatch ({} active, max {})", activeCount, MAX_CONCURRENT_PROCESSING);
+                log.debug("No available slots for dispatch ({} active, max {})", activeCount, maxConcurrentJobs);
                 return;
             }
 
-            ZonedDateTime now = ZonedDateTime.now();
+            ZonedDateTime now = claimTimestamp();
 
-            // Pick up FAILED jobs that are eligible for retry (backoff expired)
             List<LectureUnitProcessingState> retryJobs = processingStateRepository.findStatesReadyForRetry(ProcessingPhase.FAILED.name(), now, availableSlots);
 
             for (LectureUnitProcessingState state : retryJobs) {
                 if (availableSlots <= 0) {
                     break;
                 }
-                ZonedDateTime leaseExpiry = now.plusMinutes(RETRY_CLAIM_LEASE_MINUTES);
-                if (processingStateRepository.claimRetryEligible(state.getId(), now, leaseExpiry) == 0) {
+                ZonedDateTime leaseExpiry = now.plusMinutes(retryClaimLeaseMinutes);
+                String claimToken = newClaimToken();
+                if (processingStateRepository.claimRetryEligible(state.getId(), claimToken, now, leaseExpiry) == 0) {
                     log.debug("Another node claimed the retry of unit {}", state.getLectureUnit().getId());
                     continue;
                 }
                 log.info("Re-dispatching retry-eligible unit {} (attempt {}/{})", state.getLectureUnit().getId(), state.getRetryCount(), MAX_PROCESSING_RETRIES);
-                // Mirror the claim onto the loaded entity: it is saved again further down, and writing back the stale
-                // value would put the row back into the candidate list. A successful dispatch clears the lease when it
-                // transitions out of FAILED; a failed one leaves it, which is what makes the claim lapse on its own.
+                // Mirror the claim onto the loaded entity, saved again further down: writing back the stale
+                // value would re-list this row. A failed dispatch leaves the lease, so the claim lapses on its own.
                 state.setRetryEligibleAt(leaseExpiry);
-                dispatchSingleJob(state);
+                // Isolate each dispatch: one claimed unit's failure must not abort the remaining claims.
+                try {
+                    dispatchSingleJob(state, claimToken);
+                }
+                catch (Exception e) {
+                    log.error("Unexpected failure dispatching unit {}, marking as failed: {}", state.getLectureUnit() != null ? state.getLectureUnit().getId() : "null",
+                            e.getMessage());
+                    failDispatchIfStillClaimed(state, claimToken);
+                }
                 availableSlots--;
             }
 
-            // Then pick up new IDLE jobs
             List<LectureUnitProcessingState> idleJobs = processingStateRepository.findIdleForDispatch(now, availableSlots);
 
             if (idleJobs.isEmpty() && retryJobs.isEmpty()) {
                 log.debug("No jobs ready for dispatch");
                 return;
             }
-
             if (!idleJobs.isEmpty()) {
                 log.info("Dispatching {} IDLE jobs to Iris ({} slots available)", idleJobs.size(), availableSlots);
             }
 
             for (LectureUnitProcessingState state : idleJobs) {
-                if (processingStateRepository.claimIdleForDispatch(state.getId(), now) == 0) {
+                String claimToken = newClaimToken();
+                if (processingStateRepository.claimIdleForDispatch(state.getId(), claimToken, now) == 0) {
                     log.debug("Another node claimed the dispatch of unit {}", state.getLectureUnit().getId());
                     continue;
                 }
                 // Mirror the claim onto the loaded entity, for the reason given on the retry loop above.
                 state.setStartedAt(now);
-                dispatchSingleJob(state);
+                // Isolate each dispatch: one bad unit must not strand the rest of this pass's claims.
+                try {
+                    dispatchSingleJob(state, claimToken);
+                }
+                catch (Exception e) {
+                    log.error("Unexpected failure dispatching unit {}, marking as failed: {}", state.getLectureUnit() != null ? state.getLectureUnit().getId() : "null",
+                            e.getMessage());
+                    failDispatchIfStillClaimed(state, claimToken);
+                }
             }
         }
         finally {
@@ -221,16 +299,128 @@ public class ProcessingStateCallbackService {
     }
 
     /**
-     * Dispatch a single IDLE job to Iris.
-     * Determines whether to start as TRANSCRIBING or INGESTING based on existing transcription data.
+     * Dispatch a single claimed job to Iris, starting as TRANSCRIBING or INGESTING based on existing transcription data.
+     *
+     * @param state      the claimed processing state
+     * @param claimToken identity of the claim that produced this dispatch; every outcome here is committed through an atomic update matching it, so a content update
+     *                       requeueing this row while the Pyris call is in flight cannot be lost to a stale write.
      */
-    private void dispatchSingleJob(LectureUnitProcessingState state) {
+    private void dispatchSingleJob(LectureUnitProcessingState state, String claimToken) {
+        PreparedDispatch prepared = prepareClaimedState(state, claimToken);
+        if (prepared == null) {
+            return;
+        }
+        AttachmentVideoUnit attachmentUnit = prepared.unit();
+        LectureUnit unit = attachmentUnit;
+        ProcessingPhase targetPhase = prepared.targetPhase();
+        String contentFingerprint = prepared.contentFingerprint();
+
+        try {
+            String jobToken = irisLectureApi.get().addLectureUnitToPyrisDB(attachmentUnit, contentFingerprint, state.isForceReingest());
+
+            if (jobToken == null) {
+                boolean applied = processingStateRepository.markSkippedIfStillClaimed(unit.getId(), claimToken, ZonedDateTime.now()) == 1;
+                log.info("Unit {} not applicable for Iris (course settings or content type){}", unit.getId(),
+                        applied ? ", marked SKIPPED" : "; claim moved on, dropping the outcome");
+                return;
+            }
+
+            if (processingStateRepository.activatePushDispatch(unit.getId(), targetPhase, jobToken, contentFingerprint, claimToken, ZonedDateTime.now()) == 0) {
+                // The claim moved on while the call above was in flight. Pyris now runs a job for content this row
+                // no longer reflects; its eventual callback fails the current token match and is dropped there,
+                // exactly like any other stale callback, so nothing further is needed beyond not touching the row.
+                log.info("Unit {} no longer holds the claim that produced this dispatch; the now-orphaned Pyris job {} will be dropped by its own stale-token check", unit.getId(),
+                        maskToken(jobToken));
+                return;
+            }
+            log.info("Dispatched unit {} as {} with token {}", unit.getId(), targetPhase, maskToken(jobToken));
+        }
+        catch (Exception e) {
+            log.error("Failed to dispatch unit {} to Iris: {}", unit.getId(), e.getMessage());
+            failDispatchIfStillClaimed(state, claimToken);
+            return;
+        }
+
+        // Outside the try above: the run is live from here on, so a notification failure must not reach
+        // dispatch-failure handling and fail a unit Pyris is working on.
+        try {
+            processingStateRepository.findByLectureUnit_Id(unit.getId()).ifPresent(notificationService::notifyWithTranscriptionStatus);
+        }
+        catch (Exception e) {
+            log.warn("Dispatched unit {} but could not push the state change to clients: {}", unit.getId(), e.getMessage());
+        }
+    }
+
+    /**
+     * The instant a claim is stamped with, on both transports. Truncated to whole seconds so the value held in memory
+     * matches what {@code started_at} and {@code retry_eligible_at} can store: they are legacy DATETIME columns
+     * keeping only whole seconds on MySQL, which rounds anything finer on write.
+     *
+     * @return the claim's timestamp, used for lease expiry and sweep cutoffs
+     */
+    static ZonedDateTime claimTimestamp() {
+        return ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+    }
+
+    /**
+     * A fresh identity for one claim. Every claim gets its own, so a superseded claim can never be mistaken for the
+     * one that replaced it however close together they were taken -- which whole-second timestamps cannot guarantee.
+     *
+     * @return the claim identity to write and later match on
+     */
+    private static String newClaimToken() {
+        return UUID.randomUUID().toString();
+    }
+
+    // Fail a dispatch that never reached Pyris, bound to the claim that produced it: the caller holds the
+    // pre-dispatch snapshot, so committing it wholesale would overwrite a requeue or newer claim landed since.
+    private void failDispatchIfStillClaimed(LectureUnitProcessingState state, String claimToken) {
+        LectureIngestionFailureClassifier.FailureComputation computation = LectureIngestionFailureClassifier.computeFailure(state, null);
+        int updated = processingStateRepository.failDispatchIfStillClaimed(state.getId(), claimToken, computation.retryCount(), computation.errorKey(),
+                computation.retryEligibleAt(), computation.now());
+        if (updated == 0) {
+            log.info("Not failing processing state {}: its dispatch claim is no longer current (requeued, re-claimed, or already activated)", state.getId());
+            return;
+        }
+        notificationService.notifyWithTranscriptionStatus(state);
+    }
+
+    // Terminally fail a claimed state during preparation, bound to its claim like failDispatchIfStillClaimed.
+    // These are local problems Pyris cannot fix, so no retry is scheduled. Returns false if the claim moved on.
+    private boolean failPreparationIfStillClaimed(LectureUnitProcessingState state, String claimToken, String errorKey) {
+        if (processingStateRepository.failPreparationIfStillClaimed(state.getId(), claimToken, errorKey, ZonedDateTime.now()) == 0) {
+            log.info("Not failing processing state {} during preparation: its dispatch claim is no longer current", state.getId());
+            return false;
+        }
+        // Mirror the committed outcome onto the in-memory entity so any notification below describes the row as it now is.
+        state.markFailed(errorKey);
+        return true;
+    }
+
+    /**
+     * The dispatch-ready description of a claimed IDLE state, shared by both transports: the legacy
+     * push posts it to Iris, the pull-based worker claim returns it to the worker.
+     */
+    private record PreparedDispatch(LectureUnitProcessingState state, AttachmentVideoUnit unit, ProcessingPhase targetPhase, String contentFingerprint) {
+    }
+
+    /**
+     * Run the transport-independent front half of a dispatch on a claimed state: unit type check,
+     * target phase determination, and content fingerprinting. States that cannot be dispatched are
+     * terminally handled here (FAILED with a specific key) and reported as {@code null}.
+     *
+     * @param state      a state freshly claimed for dispatch
+     * @param claimToken identity of the claim that produced it; every terminal outcome here is committed through an atomic update matching it, so fingerprinting (which
+     *                       reads the attachment from disk and can be slow) cannot end up overwriting a requeue that landed while it ran
+     * @return the prepared dispatch, or {@code null} when the state was failed here instead
+     */
+    @Nullable
+    private PreparedDispatch prepareClaimedState(LectureUnitProcessingState state, String claimToken) {
         LectureUnit unit = state.getLectureUnit();
         if (!(unit instanceof AttachmentVideoUnit attachmentUnit)) {
             log.warn("Cannot dispatch non-AttachmentVideoUnit (id={})", unit != null ? unit.getId() : "null");
-            state.markFailed("artemisApp.attachmentVideoUnit.processing.error.invalidUnitType");
-            processingStateRepository.save(state);
-            return;
+            failPreparationIfStillClaimed(state, claimToken, "artemisApp.attachmentVideoUnit.processing.error.invalidUnitType");
+            return null;
         }
 
         boolean hasVideo = attachmentUnit.getVideoSource() != null && !attachmentUnit.getVideoSource().isBlank();
@@ -239,53 +429,214 @@ public class ProcessingStateCallbackService {
         Optional<LectureTranscription> existingTranscription = transcriptionRepository.findByLectureUnit_Id(unit.getId());
         boolean hasCompletedTranscription = existingTranscription.isPresent() && existingTranscription.get().getTranscriptionStatus() == TranscriptionStatus.COMPLETED;
 
-        // Determine target phase
-        ProcessingPhase targetPhase;
-        if (hasVideo && !hasCompletedTranscription) {
-            targetPhase = ProcessingPhase.TRANSCRIBING;
-        }
-        else {
-            targetPhase = ProcessingPhase.INGESTING;
-        }
+        ProcessingPhase targetPhase = hasVideo && !hasCompletedTranscription ? ProcessingPhase.TRANSCRIBING : ProcessingPhase.INGESTING;
 
+        String contentFingerprint;
         try {
-            String jobToken = irisLectureApi.get().addLectureUnitToPyrisDB(attachmentUnit);
-
-            if (jobToken == null) {
-                log.debug("Processing not applicable for unit {} (course settings or content type)", unit.getId());
-                state.transitionTo(ProcessingPhase.DONE);
-                processingStateRepository.save(state);
-                return;
-            }
-
-            state.transitionTo(targetPhase);
-            state.setIngestionJobToken(jobToken);
-            processingStateRepository.save(state);
-            log.info("Dispatched unit {} as {} with token {}", unit.getId(), targetPhase, maskToken(jobToken));
-
-            // Notify UI via WebSocket
-            TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(unit.getId()).map(LectureTranscription::getTranscriptionStatus).orElse(null);
-            notifyProcessingStateChange(state, txStatus);
+            contentFingerprint = contentFingerprintService.computeFingerprint(attachmentUnit);
         }
-        catch (Exception e) {
-            log.error("Failed to dispatch unit {} to Iris: {}", unit.getId(), e.getMessage());
-            handleProcessingFailure(state);
+        catch (RuntimeException e) {
+            if (FilePathConverter.getFileUploadPath() == null) {
+                // Startup raced this claim before FilePathConverter was configured (transient, not unreadable),
+                // so requeue for re-dispatch rather than failing a healthy unit with a key the reconciler never revives.
+                log.warn("File store not initialized yet; requeuing unit {} for re-dispatch instead of failing it", unit.getId());
+                if (processingStateRepository.requeueIfStillClaimed(state.getId(), claimToken, ZonedDateTime.now()) == 0) {
+                    log.info("Not requeuing unit {}: its dispatch claim is no longer current", unit.getId());
+                }
+                return null;
+            }
+            // A genuinely unreadable file or malformed link is a local problem Pyris cannot fix, so retrying would
+            // burn the retry budget uselessly — fail with a specific key instead of aborting the whole claimed batch.
+            log.error("Cannot read attachment for unit {}, marking as FAILED without dispatch: {}", unit.getId(), e.getMessage());
+            if (failPreparationIfStillClaimed(state, claimToken, "artemisApp.attachmentVideoUnit.processing.error.attachmentUnreadable")) {
+                notificationService.notifyProcessingStateChange(state, null);
+            }
+            return null;
+        }
+        return new PreparedDispatch(state, attachmentUnit, targetPhase, contentFingerprint);
+    }
+
+    // -------------------- Pull-Based Worker Dispatch --------------------
+
+    /**
+     * Claim up to {@code maxJobs} pending jobs for a pulling Pyris worker: expired retries first, then IDLE work in priority order (fresh uploads before backlog), the same
+     * order as the push path. Each candidate goes through the same per-row conditional claims as the push path, so no row locks span the loop. A claim whose activation never
+     * arrives (worker died between claim and execution) recovers on its own: an IDLE claim is released by the abandoned-claim sweep, a retry claim lapses with its lease. No
+     * capacity check happens here — in pull mode capacity belongs to the worker, which only claims what it can run.
+     *
+     * @param workerBootId boot id of the claiming Pyris worker process
+     * @param maxJobs      how many jobs the worker can take right now
+     * @return the claimed units, described by scalars for the iris module to prepare and activate
+     */
+    public List<ClaimedIngestionUnitDTO> claimUnitsForWorker(String workerBootId, int maxJobs) {
+        markWorkerSeen(workerBootId);
+        if (!featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)) {
+            // The toggle is the operator's kill switch for new work; the push path, retries, backfill and reconcile
+            // all honor it, so a pulling worker must not become a way around it.
+            log.debug("LectureContentProcessing feature is disabled, handing out no jobs to worker {}", workerBootId);
+            return List.of();
+        }
+        int jobs = Math.clamp(maxJobs, 0, maxJobsPerClaim);
+        if (jobs == 0) {
+            return List.of();
+        }
+        ZonedDateTime now = claimTimestamp();
+        List<LectureUnitProcessingState> claimed = new ArrayList<>();
+
+        for (LectureUnitProcessingState state : processingStateRepository.findStatesReadyForRetry(ProcessingPhase.FAILED.name(), now, jobs)) {
+            ZonedDateTime leaseExpiry = now.plusMinutes(retryClaimLeaseMinutes);
+            String claimToken = newClaimToken();
+            if (processingStateRepository.claimRetryEligible(state.getId(), claimToken, now, leaseExpiry) == 0) {
+                continue;
+            }
+            // Mirror the claim onto the loaded entity so a later save cannot write back the stale value.
+            state.setRetryEligibleAt(leaseExpiry);
+            state.setClaimToken(claimToken);
+            log.info("Worker re-claiming retry-eligible unit {} (attempt {}/{})", state.getLectureUnit().getId(), state.getRetryCount(), MAX_PROCESSING_RETRIES);
+            claimed.add(state);
+        }
+
+        int remaining = jobs - claimed.size();
+        if (remaining > 0) {
+            for (LectureUnitProcessingState state : processingStateRepository.findIdleForDispatch(now, remaining)) {
+                String claimToken = newClaimToken();
+                if (processingStateRepository.claimIdleForDispatch(state.getId(), claimToken, now) == 0) {
+                    continue;
+                }
+                state.setStartedAt(now);
+                state.setClaimToken(claimToken);
+                claimed.add(state);
+            }
+        }
+
+        List<ClaimedIngestionUnitDTO> result = new ArrayList<>();
+        for (LectureUnitProcessingState state : claimed) {
+            // Exactly one of these is set at claim time: startedAt for an IDLE claim, retryEligibleAt for a
+            // retry claim (mirrors activateClaimedJob's own claim-shape check just above). Read before preparing,
+            // since preparation commits its own terminal outcomes against this same marker.
+            String claimToken = state.getClaimToken();
+            PreparedDispatch prepared = prepareClaimedState(state, claimToken);
+            if (prepared != null) {
+                result.add(new ClaimedIngestionUnitDTO(prepared.unit().getId(), prepared.contentFingerprint(), state.isForceReingest(), prepared.targetPhase(), claimToken));
+            }
+        }
+        if (!result.isEmpty()) {
+            log.info("Worker {} claimed {} jobs", workerBootId, result.size());
+        }
+        return result;
+    }
+
+    /**
+     * Activate a claim once the iris side registered the job token and handed the payload to the worker: transition into the target phase, record token/fingerprint, and open
+     * the worker lease — from here the run is alive exactly as long as the worker keeps renewing it. Bound to the exact claim that produced it by {@code claimToken}: an
+     * activation arriving after the claim was released and re-claimed by a newer, still-unactivated claim matches nothing instead of activating that newer claim with this
+     * stale job token.
+     *
+     * @param lectureUnitId      the claimed unit
+     * @param jobToken           the registered Pyris job token
+     * @param targetPhase        the in-flight phase determined at claim time
+     * @param contentFingerprint the fingerprint computed at claim time
+     * @param workerBootId       boot id of the worker executing the run
+     * @param claimToken         identity of the claim being activated, from {@link ClaimedIngestionUnitDTO#claimToken()}
+     * @return whether the claim was activated; false when the unit no longer holds this exact claim
+     */
+    public boolean activateClaimedJob(long lectureUnitId, String jobToken, ProcessingPhase targetPhase, String contentFingerprint, String workerBootId, String claimToken) {
+        int activated = processingStateRepository.activateClaimedJob(lectureUnitId, targetPhase, jobToken, contentFingerprint, workerBootId, claimToken, ZonedDateTime.now());
+        if (activated == 0) {
+            log.warn("Ignoring activation of unit {} by worker {}: the unit no longer holds the claim (released, re-claimed, or already activated)", lectureUnitId, workerBootId);
+            return false;
+        }
+        log.info("Worker {} activated unit {} as {} with token {}", workerBootId, lectureUnitId, targetPhase, maskToken(jobToken));
+
+        processingStateRepository.findByLectureUnit_Id(lectureUnitId).ifPresent(notificationService::notifyWithTranscriptionStatus);
+        return true;
+    }
+
+    /**
+     * Mark a claimed unit SKIPPED (not processable), bound like {@link #activateClaimedJob} to the claim that
+     * produced it: a stale result from a lapsed, re-claimed claim matches nothing instead of cancelling the newer run.
+     *
+     * @param lectureUnitId the claimed unit
+     * @param claimToken    identity of the claim, from {@link de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO#claimToken()}
+     * @return true when marked SKIPPED, false when the claim was no longer current
+     */
+    public boolean markClaimedUnitSkipped(long lectureUnitId, String claimToken) {
+        int updated = processingStateRepository.markSkippedIfStillClaimed(lectureUnitId, claimToken, ZonedDateTime.now());
+        if (updated == 0) {
+            log.info("Not marking unit {} SKIPPED: its claim is no longer current (released, re-claimed, or already activated)", lectureUnitId);
+            return false;
+        }
+        log.info("Processing not applicable for claimed unit {} (course settings or content type), marking as SKIPPED", lectureUnitId);
+        return true;
+    }
+
+    /**
+     * Renew the worker lease of every listed run and report back the tokens Artemis no longer recognizes as in flight, so the worker can stop executing runs whose lease was
+     * reclaimed. Each renewal is also pushed to the client: the badge derives liveness from renewal freshness, so a stopped stream visibly loses contact.
+     *
+     * @param workerBootId    boot id of the heartbeating worker process
+     * @param activeJobTokens the job tokens of every run the worker is currently executing
+     * @return the subset of tokens that no longer belong to an in-flight run
+     */
+    public List<String> renewWorkerLeases(String workerBootId, List<String> activeJobTokens) {
+        markWorkerSeen(workerBootId);
+        List<String> revoked = new ArrayList<>();
+        ZonedDateTime now = ZonedDateTime.now();
+        for (String token : activeJobTokens) {
+            Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByIngestionJobToken(token);
+            if (stateOpt.isEmpty() || !stateOpt.get().isProcessing()) {
+                revoked.add(token);
+                continue;
+            }
+            LectureUnitProcessingState state = stateOpt.get();
+            int updated = processingStateRepository.renewLease(state.getId(), token, now, workerBootId);
+            if (updated == 0) {
+                // A terminal callback cleared the token first; report revoked, not stale reality.
+                revoked.add(token);
+                continue;
+            }
+            // Reflects the just-persisted renewal for the notification only; never saved itself.
+            state.renewLease(workerBootId);
+            notificationService.notifyWithTranscriptionStatus(state);
+        }
+        if (!revoked.isEmpty()) {
+            log.warn("Worker {} heartbeat listed {} run(s) Artemis no longer tracks, reporting them revoked", workerBootId, revoked.size());
+        }
+        return revoked;
+    }
+
+    private void markWorkerSeen(String workerBootId) {
+        getWorkerMap().put(WORKER_LAST_SEEN_KEY, Instant.now().toString());
+        getWorkerMap().put("bootId", workerBootId);
+    }
+
+    /**
+     * Whether a pulling Pyris worker has claimed or heartbeated within {@link #workerModeGrace}.
+     */
+    boolean isWorkerModeActive() {
+        String lastSeen = getWorkerMap().get(WORKER_LAST_SEEN_KEY);
+        if (lastSeen == null) {
+            return false;
+        }
+        try {
+            return Instant.parse(lastSeen).isAfter(Instant.now().minus(workerModeGrace));
+        }
+        catch (DateTimeParseException e) {
+            return false;
         }
     }
 
     // -------------------- Callback Handlers --------------------
 
     /**
-     * Called when the entire processing pipeline completes (from the Iris webhook callback).
-     * Validates the job token to reject stale callbacks from old jobs.
-     * After completion, dispatches the next pending job to fill the freed slot.
+     * Called when the entire processing pipeline completes (from the Iris webhook callback). Validates the job token to reject stale callbacks from old jobs, and after
+     * completion dispatches the next pending job to fill the freed slot.
      *
      * @param lectureUnitId      the ID of the lecture unit
      * @param jobToken           the job token from the callback
      * @param success            whether processing succeeded
      * @param errorCode          machine-readable error code (e.g. {@code YOUTUBE_PRIVATE}); {@code null} on success or unknown failure
-     * @param displayPageNumbers list of displayed page numbers indexed by slide number (0-based: index 0 = slide 1);
-     *                               {@code null} if not applicable or unavailable
+     * @param displayPageNumbers displayed page numbers indexed by slide number (0-based); {@code null} if unavailable
      */
     public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success, @Nullable String errorCode, @Nullable List<Integer> displayPageNumbers) {
         Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByLectureUnit_Id(lectureUnitId);
@@ -309,52 +660,49 @@ public class ProcessingStateCallbackService {
         }
 
         if (success) {
-            log.info("Processing completed successfully for unit {}", lectureUnitId);
-
-            // Pyris now holds the unit, so a synchronization settled or in flight because it did not is worth trying
-            // again. The transaction and the lock come from the repository method, which is why the transition is
-            // passed into it.
-            //
-            // First, and deliberately not guarded. It takes a row lock, so it is the step most likely to fail, and a
-            // settled row is unreachable afterwards: it carries no retry time and the backfill skips a lecture unit
-            // that already has a row. Swallowing the failure would therefore strand the unit for good. Letting it
-            // propagate before anything is persisted leaves the phase and the job token untouched, so the callback
-            // stays replayable and the recovery pass can pick the unit up, which is a visible stall rather than a
-            // silent one. The completion bookkeeping below cannot be replayed once the token is cleared, so nothing
-            // that can fail belongs after it.
+            // Reopens the Iris synchronization before the terminal claim below, not after: nothing here shares a transaction, so completeIngestionIfLive commits
+            // independently the moment it runs. Doing that first and reopening synchronization second would mean a synchronization-update failure lands after the run is
+            // already durably DONE with its token cleared -- non-replayable, since a retried callback would then see a token mismatch and be dropped, leaving the
+            // synchronization row un-reopened for good. Running this first instead means such a failure leaves nothing committed for this callback: the run is still
+            // live under the same token, so a retried delivery reaches this exact code path again. Deliberately unguarded for the same reason -- swallowing a failure
+            // here would strand the unit just as silently.
             irisLectureUnitSyncStateRepository.updateWithLectureUnitLock(lectureUnitId, ProcessingStateCallbackService::reopenSynchronization);
 
+            // Atomic claim + terminal write in one statement: see completeIngestionIfLive.
+            if (processingStateRepository.completeIngestionIfLive(state.getId(), jobToken, ZonedDateTime.now()) == 0) {
+                log.info("Ignoring completion callback for unit {}: the run is no longer in flight under this token", lectureUnitId);
+                return;
+            }
+            log.info("Processing completed successfully for unit {}", lectureUnitId);
+
+            // Written only once ownership is confirmed; see saveDisplayPageNumbers for the version guard.
+            saveDisplayPageNumbers(state, displayPageNumbers);
+            // Mirror the just-persisted transition for an accurate notification, without a second read.
             state.transitionTo(ProcessingPhase.DONE);
             state.setIngestionJobToken(null);
-            processingStateRepository.save(state);
-            saveDisplayPageNumbers(state, displayPageNumbers);
+            state.setConfirmedFingerprint(state.getContentFingerprint());
+            state.setForceReingest(null);
 
-            // Notify UI via WebSocket
-            TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
-            notifyProcessingStateChange(state, txStatus);
+            notificationService.notifyWithTranscriptionStatus(state);
+            recordIngestionEvent(api -> api.recordIngested(lectureUnitId, null, "completed after " + state.getRetryCount() + " retries"));
         }
         else {
             log.warn("Processing failed for unit {} (errorCode={})", lectureUnitId, errorCode);
-            // handleProcessingFailure saves the state and sends WebSocket notification internally
-            handleProcessingFailure(state, errorCode);
+            // Same atomic-claim reasoning as the success branch, via failIfStillLive.
+            if (!handleProcessingFailureIfStillLive(state, errorCode, null, null)) {
+                log.info("Ignoring completion callback for unit {}: the run is no longer in flight under this token", lectureUnitId);
+                return;
+            }
+            recordIngestionEvent(api -> api.recordFailed(lectureUnitId, null, errorCode == null ? "no error code reported" : errorCode));
         }
 
-        // Fill the freed slot with the next pending job
         dispatchPendingJobs();
     }
 
     /**
-     * Handle checkpoint data from Iris callbacks (e.g., transcription results).
-     * <p>
-     * Iris sends transcription data in the {@code result} field of status callbacks.
-     * This method parses the transcript JSON, saves it to the database, and transitions
-     * from TRANSCRIBING to INGESTING when the enriched transcript arrives.
-     * <p>
-     * Checkpoint types (distinguished by segment content):
-     * <ul>
-     * <li>Raw transcript (all slideNumber=0): saved as PENDING, stay in TRANSCRIBING</li>
-     * <li>Enriched transcript (some slideNumber≠0): saved as COMPLETED, transition to INGESTING</li>
-     * </ul>
+     * Handle checkpoint data from Iris callbacks (e.g., transcription results). Iris sends transcription data in the {@code result} field of status callbacks; this parses the
+     * transcript JSON, saves it, and transitions TRANSCRIBING → INGESTING once the enriched transcript arrives. Checkpoint types, distinguished by segment content: raw (all
+     * slideNumber=0) saved as PENDING, staying in TRANSCRIBING; enriched (some slideNumber≠0) saved as COMPLETED, transitioning to INGESTING.
      *
      * @param lectureUnitId the ID of the lecture unit
      * @param jobToken      the job token for validation
@@ -373,7 +721,6 @@ public class ProcessingStateCallbackService {
 
         LectureUnitProcessingState state = stateOpt.get();
 
-        // Validate token
         if (!Objects.equals(jobToken, state.getIngestionJobToken())) {
             log.info("Ignoring stale checkpoint for unit {} (token mismatch)", lectureUnitId);
             return;
@@ -398,16 +745,16 @@ public class ProcessingStateCallbackService {
     }
 
     /**
-     * Handle a heartbeat from a running Iris pipeline.
-     * Updates {@code lastUpdated} so stuck detection can use "time since last callback"
-     * instead of "time since phase started".
-     * <p>
-     * Called on every non-terminal callback that does NOT carry checkpoint data.
+     * Handle a heartbeat from a running Iris pipeline: updates {@code lastUpdated} (so stuck detection can use "time since last callback" rather than "time since phase started")
+     * and records optional stage/progress (so stalled runs become detectable). Called on every non-terminal callback that does NOT carry checkpoint data.
      *
      * @param lectureUnitId the ID of the lecture unit
      * @param jobToken      the job token for validation
+     * @param stageName     name of the stage the run is currently in; may be null (older Iris versions)
+     * @param stageProgress progress counter within the stage; may be null
+     * @param stageTotal    total work items of the stage; may be null
      */
-    public void handleHeartbeat(long lectureUnitId, String jobToken) {
+    public void handleHeartbeat(long lectureUnitId, String jobToken, @Nullable String stageName, @Nullable Integer stageProgress, @Nullable Integer stageTotal) {
         Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByLectureUnit_Id(lectureUnitId);
         if (stateOpt.isEmpty()) {
             return;
@@ -422,16 +769,27 @@ public class ProcessingStateCallbackService {
             return;
         }
 
-        state.setLastUpdated(ZonedDateTime.now());
-        processingStateRepository.save(state);
+        ZonedDateTime now = ZonedDateTime.now();
+        state.setLastUpdated(now);
+        boolean stageAdvanced = state.recordStageProgress(stageName, stageProgress, stageTotal);
+        // Conditional on token/phase: a terminal callback clearing the token first stops this from reviving a finished run.
+        int applied = processingStateRepository.applyHeartbeat(state.getId(), jobToken, now, state.getCurrentStage(), state.getStageStartedAt(), state.getStageProgress(),
+                state.getStageTotal(), state.getLastProgressAt());
+        if (applied == 0) {
+            log.debug("Ignoring heartbeat for unit {}: the run is no longer in flight under this token", lectureUnitId);
+            return;
+        }
+
+        // Only push when the stage/number moved; bare heartbeats refresh liveness without spamming.
+        if (stageAdvanced) {
+            TranscriptionStatus transcriptionStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
+            notificationService.notifyProcessingStateChange(state, transcriptionStatus);
+        }
     }
 
     // -------------------- Checkpoint Processing --------------------
 
-    /**
-     * Parse transcription checkpoint data from JSON.
-     * Expected format: {@code {"language": "en", "segments": [...]}}
-     */
+    /** Parse transcription checkpoint data from JSON, expected format {@code {"language": "en", "segments": [...]}}. */
     private TranscriptionCheckpoint parseTranscriptionCheckpoint(String resultJson) {
         var tree = objectMapper.readTree(resultJson);
 
@@ -455,165 +813,127 @@ public class ProcessingStateCallbackService {
     private void saveTranscription(long lectureUnitId, LectureUnitProcessingState state, TranscriptionCheckpoint checkpoint) {
         LectureUnit unit = state.getLectureUnit();
 
-        // Find or create transcription entity
-        LectureTranscription transcription = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).orElseGet(() -> {
+        // An existing row is updated conditionally on its own id below, not saved blindly.
+        Optional<LectureTranscription> existing = transcriptionRepository.findByLectureUnit_Id(lectureUnitId);
+        LectureTranscription transcription = existing.orElseGet(() -> {
             var newTranscription = new LectureTranscription(checkpoint.language(), checkpoint.segments(), unit);
             newTranscription.setTranscriptionStatus(TranscriptionStatus.PENDING);
             return newTranscription;
         });
 
-        // Update with latest data
         transcription.setLanguage(checkpoint.language());
         transcription.setSegments(checkpoint.segments());
 
         if (checkpoint.isEnriched()) {
+            // TRANSCRIBING → INGESTING, proven before the write below: a checkpoint that lost ownership
+            // must never persist content a requeue may have already deleted the transcription for.
+            String jobToken = state.getIngestionJobToken();
+            ZonedDateTime now = ZonedDateTime.now();
+            if (processingStateRepository.transitionToIngestingIfTranscribing(state.getId(), jobToken, now) == 0) {
+                log.debug("Ignoring enriched checkpoint for unit {}: the run is no longer TRANSCRIBING under this token", lectureUnitId);
+                return;
+            }
+
             transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
             log.info("Enriched transcription saved for unit {}, transitioning to INGESTING", lectureUnitId);
+            persistTranscription(lectureUnitId, jobToken, existing, transcription);
 
-            transcriptionRepository.save(transcription);
-
-            // Transition: TRANSCRIBING → INGESTING (keep same job token — Iris continues the pipeline)
+            // Notify UI via WebSocket, mirroring the just-persisted transition without a second read.
             state.resetRetryCount();
             state.transitionTo(ProcessingPhase.INGESTING);
-            processingStateRepository.save(state);
-
-            // Notify UI via WebSocket
-            notifyProcessingStateChange(state, TranscriptionStatus.COMPLETED);
+            notificationService.notifyProcessingStateChange(state, TranscriptionStatus.COMPLETED);
         }
         else {
+            // Same reasoning as the enriched branch above.
+            String jobToken = state.getIngestionJobToken();
+            if (processingStateRepository.touchLastUpdated(state.getId(), jobToken, ZonedDateTime.now()) == 0) {
+                log.debug("Ignoring raw checkpoint for unit {}: the run is no longer in flight under this token", lectureUnitId);
+                return;
+            }
+
             transcription.setTranscriptionStatus(TranscriptionStatus.PENDING);
             log.info("Raw transcription checkpoint saved for unit {}, staying in TRANSCRIBING", lectureUnitId);
-            transcriptionRepository.save(transcription);
+            persistTranscription(lectureUnitId, jobToken, existing, transcription);
+        }
+    }
 
-            // Update lastUpdated as heartbeat (prevents stuck detection)
-            state.setLastUpdated(ZonedDateTime.now());
-            processingStateRepository.save(state);
+    /**
+     * Conditional update keyed on the row's own id when it existed. A first checkpoint has no id to
+     * guard an update on, so it inserts through {@link LectureTranscriptionRepository#insertIfTokenMatches},
+     * which folds the ownership check into the insert itself instead of a separate read before it.
+     */
+    private void persistTranscription(long lectureUnitId, String expectedToken, Optional<LectureTranscription> existing, LectureTranscription transcription) {
+        if (existing.isEmpty()) {
+            String segmentsJson = new LectureTranscriptionSegmentConverter().convertToDatabaseColumn(transcription.getSegments());
+            if (transcriptionRepository.insertIfTokenMatches(lectureUnitId, transcription.getLanguage(), segmentsJson, transcription.getTranscriptionStatus().name(),
+                    expectedToken) == 0) {
+                log.debug("Skipping transcription insert for unit {}: ownership token changed since it was proven", lectureUnitId);
+            }
+            return;
+        }
+        if (transcriptionRepository.updateContentIfExists(transcription.getId(), transcription.getLanguage(), transcription.getSegments(),
+                transcription.getTranscriptionStatus()) == 0) {
+            log.debug("Skipping transcription write for unit {}: the stored transcription was deleted since this checkpoint's earlier read", lectureUnitId);
         }
     }
 
     // -------------------- Failure Handling --------------------
 
     /**
-     * Handle processing failure with retry logic.
-     * <p>
-     * Transitions to FAILED immediately so the UI reflects the error.
-     * If retries remain, schedules a backoff — the dispatcher will pick it up
-     * and transition back to TRANSCRIBING/INGESTING when re-dispatched.
+     * Fail a stalled/stuck run atomically, matching id/phase/token observed at read time, plus (optionally) the liveness signal that justified failing it: a heartbeat can
+     * advance lastProgressAt/lastUpdated without touching phase or token, so pinning one of them (see {@link LectureUnitProcessingStateRepository#failIfStillLive}) stops a
+     * heartbeat landing between the caller's re-fetch and this write from still failing a run that just became live again. Pass {@code null} for whichever the caller has no
+     * observed value for; both are {@code null} for an ordinary dispatch-failure call, which has no staleness decision to protect. Callers never pin both at once, so each pin
+     * gets its own repository method with an always-non-null parameter.
      *
-     * @param state the processing state that failed
+     * @param state                  the state read just before this call decided to fail it
+     * @param errorCode              machine-readable error code from Pyris; may be {@code null}
+     * @param expectedLastProgressAt the stall detector's observed value, or {@code null} not to pin it
+     * @param expectedLastUpdated    the stuck detector's observed value, or {@code null} not to pin it
+     * @return true when the failure was applied, false when the run had already moved on since the read
      */
-    void handleProcessingFailure(LectureUnitProcessingState state) {
-        handleProcessingFailure(state, null);
-    }
+    boolean handleProcessingFailureIfStillLive(LectureUnitProcessingState state, @Nullable String errorCode, @Nullable ZonedDateTime expectedLastProgressAt,
+            @Nullable ZonedDateTime expectedLastUpdated) {
+        ProcessingPhase phaseAtRead = state.getPhase();
+        String tokenAtRead = state.getIngestionJobToken();
 
-    /**
-     * Handle processing failure with retry logic, forwarding an optional machine-readable error code.
-     * <p>
-     * Transitions to FAILED immediately so the UI reflects the error. The raw Pyris {@code errorCode}
-     * is translated to a specific, instructor-readable i18n key at this state-write boundary (the sole
-     * place where classification happens).
-     * <p>
-     * Permanent input failures (e.g. private/live videos) skip {@code scheduleRetry} entirely — the state
-     * is left with {@code retryEligibleAt == null}, which the dispatcher treats as terminal for auto-retries.
-     * Transient failures follow the existing exponential backoff until {@code MAX_PROCESSING_RETRIES}.
-     *
-     * @param state     the processing state that failed
-     * @param errorCode machine-readable error code from Pyris (e.g. {@code YOUTUBE_PRIVATE}); may be {@code null}
-     */
-    void handleProcessingFailure(LectureUnitProcessingState state, @Nullable String errorCode) {
-        state.incrementRetryCount();
-        state.setIngestionJobToken(null);
-        // Undo the dispatch attempt, including the claim that started it: startedAt is what marks a job as taken, so
-        // leaving it set would keep this unit out of the idle queue for good.
-        state.setStartedAt(null);
+        LectureIngestionFailureClassifier.FailureComputation computation = LectureIngestionFailureClassifier.computeFailure(state, errorCode);
 
-        // Preserve existing transcription status in the WebSocket notification so the UI
-        // does not lose it when a failure occurs after transcription already completed.
-        TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(state.getLectureUnit().getId()).map(LectureTranscription::getTranscriptionStatus).orElse(null);
-
-        ProcessingErrorClassification classification = classifyIngestionFailure(errorCode);
-        state.markFailed(classification.errorKey());
-
-        boolean maxRetriesReached = state.getRetryCount() >= MAX_PROCESSING_RETRIES;
-        if (maxRetriesReached || !classification.retryable()) {
-            if (!classification.retryable()) {
-                log.warn("Unit {} failed with permanent error code '{}', no retry scheduled", state.getLectureUnit().getId(), errorCode);
-            }
-            else {
-                log.warn("Max retries reached for unit {}, marking as permanently failed", state.getLectureUnit().getId());
-            }
-            processingStateRepository.save(state);
-            notifyProcessingStateChange(state, txStatus);
-            return;
+        int updated;
+        if (expectedLastProgressAt != null) {
+            updated = processingStateRepository.failIfStillLiveWithProgressPin(state.getId(), phaseAtRead, tokenAtRead, expectedLastProgressAt, computation.retryCount(),
+                    computation.errorKey(), computation.retryEligibleAt(), computation.now());
+        }
+        else if (expectedLastUpdated != null) {
+            updated = processingStateRepository.failIfStillLiveWithUpdatedPin(state.getId(), phaseAtRead, tokenAtRead, expectedLastUpdated, computation.retryCount(),
+                    computation.errorKey(), computation.retryEligibleAt(), computation.now());
+        }
+        else {
+            updated = processingStateRepository.failIfStillLive(state.getId(), phaseAtRead, tokenAtRead, computation.retryCount(), computation.errorKey(),
+                    computation.retryEligibleAt(), computation.now());
+        }
+        if (updated == 0) {
+            log.debug("Unit {} already moved on since it was read as stalled/stuck (phase {}), dropping the stale failure", state.getLectureUnit().getId(), phaseAtRead);
+            return false;
         }
 
-        long backoffMinutes = calculateBackoffMinutes(state.getRetryCount());
-        state.scheduleRetry(backoffMinutes);
-        processingStateRepository.save(state);
-        notifyProcessingStateChange(state, txStatus);
-
-        log.info("Unit {} failed, scheduled for retry in {} minutes (attempt {}/{})", state.getLectureUnit().getId(), backoffMinutes, state.getRetryCount(),
-                MAX_PROCESSING_RETRIES);
-    }
-
-    /**
-     * Translate a raw Pyris {@code error_code} into a specific, instructor-readable i18n key plus a
-     * retryability flag. Unknown and blank codes fall back to the generic key with retryable = true.
-     */
-    static ProcessingErrorClassification classifyIngestionFailure(@Nullable String rawCode) {
-        if (rawCode == null || rawCode.isBlank()) {
-            return new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.processingFailed", true);
+        notificationService.notifyWithTranscriptionStatus(state);
+        if (computation.backoffMinutes() != null) {
+            log.info("Unit {} failed, scheduled for retry in {} minutes (attempt {}/{})", state.getLectureUnit().getId(), computation.backoffMinutes(), computation.retryCount(),
+                    MAX_PROCESSING_RETRIES);
         }
-        return switch (rawCode) {
-            case "YOUTUBE_PRIVATE" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.youtubePrivate", false);
-            case "YOUTUBE_LIVE" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.youtubeLive", false);
-            case "YOUTUBE_TOO_LONG" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.youtubeTooLong", false);
-            case "YOUTUBE_UNAVAILABLE" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.youtubeUnavailable", false);
-            case "YOUTUBE_DOWNLOAD_FAILED" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.youtubeDownloadFailed", true);
-            default -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.processingFailed", true);
-        };
-    }
-
-    /**
-     * Result of classifying a raw Pyris failure code at the state-write boundary.
-     *
-     * @param errorKey  i18n key stored on the processing state; shown to instructors via the status tooltip
-     * @param retryable whether the failure is eligible for automatic retry (permanent input errors are not)
-     */
-    record ProcessingErrorClassification(String errorKey, boolean retryable) {
-    }
-
-    /**
-     * Calculate exponential backoff delay in minutes.
-     * Formula: 2^retryCount minutes (2, 4, 8, 16, 32 minutes for retries 1-5).
-     *
-     * @param retryCount current retry attempt number
-     * @return backoff delay in minutes
-     */
-    static long calculateBackoffMinutes(int retryCount) {
-        return (long) Math.pow(2, retryCount);
+        return true;
     }
 
     // -------------------- Utility --------------------
 
     /**
-     * Send a WebSocket notification about a processing state change.
-     * Broadcasts the updated status to all subscribers of the lecture's processing state topic in the UI.
+     * Broadcasts a processing state change to all subscribers of the lecture's processing state topic.
      *
      * @param state               the updated processing state
      * @param transcriptionStatus the current transcription status (may be null)
      */
-    private void notifyProcessingStateChange(LectureUnitProcessingState state, TranscriptionStatus transcriptionStatus) {
-        LectureUnit unit = state.getLectureUnit();
-        if (unit == null || unit.getLecture() == null) {
-            return;
-        }
-        long lectureId = unit.getLecture().getId();
-        var dto = LectureUnitCombinedStatusDTO.of(unit.getId(), state, transcriptionStatus);
-        String topic = PROCESSING_STATE_TOPIC.formatted(lectureId);
-        websocketMessagingService.sendMessage(topic, dto);
-        log.debug("Sent processing state WebSocket update for unit {} on topic {}", unit.getId(), topic);
-    }
+    /** Push a state change to clients, carrying the unit's current transcription status so the badge never loses it. */
 
     /**
      * Masks a token for safe logging by showing only the first and last 3 characters.
@@ -633,11 +953,9 @@ public class ProcessingStateCallbackService {
     }
 
     /**
-     * Delete the stored transcription for a lecture unit so stale text is not re-ingested.
-     * <p>
-     * Called when the unit's video source changes. Without this, {@link #dispatchPendingJobs()}
-     * would find the old {@code COMPLETED} transcription and dispatch the job as {@code INGESTING},
-     * ingesting text from the previous video into the vector database.
+     * Delete the stored transcription for a lecture unit so stale text is not re-ingested. Called when the unit's video source changes: without this,
+     * {@link #dispatchPendingJobs()}
+     * would find the old {@code COMPLETED} transcription and dispatch the job as {@code INGESTING}, ingesting text from the previous video into the vector database.
      *
      * @param unitId the ID of the lecture unit whose transcription should be removed
      */
@@ -651,10 +969,9 @@ public class ProcessingStateCallbackService {
     // -------------------- Display Page Number Mapping --------------------
 
     /**
-     * Saves the display page numbers received from PyRIS to the attachment.
-     * The list maps slide numbers to the displayed page numbers detected in the PDF.
-     * A {@code null} payload is treated as "no update" so retries or legacy callbacks
-     * cannot erase an already persisted mapping.
+     * Saves the display page numbers received from PyRIS to the attachment (mapping slide numbers to the
+     * displayed page numbers detected in the PDF). A {@code null} payload means "no update", so retries or
+     * legacy callbacks cannot erase an already persisted mapping.
      */
     private void saveDisplayPageNumbers(LectureUnitProcessingState state, @Nullable List<Integer> displayPageNumbers) {
         if (displayPageNumbers == null) {
@@ -667,13 +984,31 @@ public class ProcessingStateCallbackService {
         if (attachment == null) {
             return;
         }
-        attachment.setDisplayPageNumbers(displayPageNumbers);
-        attachmentRepository.save(attachment);
+        // Conditional on the recorded version when there is one to guard with; a run whose processing
+        // state never recorded a version (no PDF was ever detected for it) has nothing to compare against.
+        Integer expectedVersion = state.getAttachmentVersion();
+        if (expectedVersion == null) {
+            attachmentRepository.updateDisplayPageNumbers(attachment.getId(), displayPageNumbers);
+        }
+        else if (attachmentRepository.updateDisplayPageNumbersIfVersionMatches(attachment.getId(), displayPageNumbers, expectedVersion) == 0) {
+            log.info("Skipping display page number write for unit {}: attachment version changed since this run started", state.getLectureUnit().getId());
+        }
+    }
+
+    /** Internal DTO for parsed transcription checkpoint data. */
+    private record TranscriptionCheckpoint(String language, List<LectureTranscriptionSegment> segments, boolean isEnriched) {
     }
 
     /**
-     * Internal DTO for parsed transcription checkpoint data.
+     * Records one ingestion outcome in the global-search activity log, when that module is present.
+     * <p>
+     * Optional because the log lives in the global-search module, which is switched off wherever Weaviate
+     * is not configured; ingestion itself runs regardless. The write is best-effort by contract, so this
+     * never affects the run it describes.
+     *
+     * @param recorder what to record, given the API
      */
-    private record TranscriptionCheckpoint(String language, List<LectureTranscriptionSegment> segments, boolean isEnriched) {
+    private void recordIngestionEvent(Consumer<IngestionEventLogApi> recorder) {
+        ingestionEventLogApi.ifPresent(recorder);
     }
 }

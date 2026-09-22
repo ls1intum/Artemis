@@ -1,0 +1,247 @@
+{
+    "artemisApp": {
+        "courseIngestionDashboard": {
+            "title": "Index-Dashboard",
+            "subtitle": "Pro Kurs, wie vollständig der Global-Search-Index im Vergleich zu den Erwartungen der Datenbank ist. Schreibgeschützt.",
+            "loading": "Wird geladen...",
+            "overview": {
+                "title": "Übersicht des Suchindex",
+                "refresh": "Übersicht neu laden",
+                "error": "Die Index-Übersicht konnte nicht geladen werden. Bitte versuche es erneut."
+            },
+            "services": {
+                "title": "Dienste",
+                "reachable": "Weaviate erreichbar",
+                "unreachable": "Weaviate nicht erreichbar",
+                "address": "Adresse",
+                "irisReachable": "Iris erreichbar",
+                "irisUnreachable": "Iris nicht erreichbar",
+                "irisDisabled": "Iris deaktiviert",
+                "collectionPrefix": "Collection-Präfix",
+                "noCollectionPrefix": "nicht gesetzt — wird mit allen anderen Installationen auf diesem Weaviate geteilt",
+                "baseUrl": "Diese Installation",
+                "noBaseUrl": "nicht gesetzt — Inhalte lassen sich nicht von anderen Installationen unterscheiden"
+            },
+            "collections": {
+                "title": "Indexierte Collections",
+                "collection": "Collection",
+                "objects": "Objekte",
+                "unavailable": "Nicht verfügbar",
+                "contents": {
+                    "slides": "Folien",
+                    "transcript": "Transkript",
+                    "segments": "Ausgerichtete Segmente",
+                    "unitSummary": "Einheit-Zusammenfassung"
+                }
+            },
+            "matrix": {
+                "title": "Abdeckung nach Kurs",
+                "lastUpdatedLabel": "Zuletzt aktualisiert",
+                "refresh": "Daten aktualisieren",
+                "refreshHint": "Berechnet die Abdeckung über alle Kurse neu; kann eine Weile dauern und Weaviate belasten.",
+                "search": "Kurse suchen",
+                "sortBy": "Sortieren nach",
+                "filterByStatus": "Nach Status filtern",
+                "filterByActive": "Nach Aktivität filtern",
+                "empty": "Keine Kurse vorhanden.",
+                "error": "Die Kursabdeckung konnte nicht geladen werden. Bitte versuche es erneut.",
+                "courseFallback": "Kurs",
+                "legend": "Jede Zelle zeigt indexiert / erwartet pro Typ. Grün = vollständig, rot = fehlend oder verwaist, grau = nichts erwartet.",
+                "sort": {
+                    "name": "Name",
+                    "release": "Startdatum",
+                    "worstFirst": "Schlechteste zuerst",
+                    "lastIngested": "Zuletzt indexiert"
+                },
+                "status": {
+                    "all": "Alle"
+                },
+                "active": {
+                    "all": "Alle",
+                    "active": "Aktiv",
+                    "inactive": "Inaktiv"
+                },
+                "group": {
+                    "metadata": "Entitäts-Metadaten",
+                    "content": "Vorlesungsinhalte"
+                },
+                "column": {
+                    "course": "Kurs",
+                    "release": "Startdatum",
+                    "status": "Status",
+                    "lastIngested": "Zuletzt indexiert am"
+                },
+                "type": {
+                    "exercise": "Aufgabe",
+                    "lecture": "Vorlesung",
+                    "lecture_unit": "Einheit",
+                    "exam": "Klausur",
+                    "faq": "FAQ",
+                    "channel": "Kanal",
+                    "course": "Kurs",
+                    "slides": "Folien",
+                    "transcript": "Transkript",
+                    "segment_summary": "Segm.-Zusammenf.",
+                    "unit_summary": "Einheit-Zusammenf."
+                },
+                "openBrowser": "Indexierte Inhalte dieses Kurses anzeigen"
+            },
+            "browser": {
+                "ariaLabel": "Indexierte Inhalte dieses Kurses",
+                "subtitle": "Alle indexierten Inhalte dieses Kurses durchsuchen: von der Vorlesung über die Einheit bis zur Sammlung, oder einen Metadaten-Typ wählen, um zu sehen, was fehlt.",
+                "typesIncomplete": "Typen unvollständig",
+                "selectPrompt": "Wähle links einen Eintrag aus, um zu sehen, was in Weaviate gespeichert ist.",
+                "empty": "Für diesen Kurs ist in Weaviate noch nichts indexiert.",
+                "error": "Die indexierten Inhalte dieses Kurses konnten nicht geladen werden. Bitte versuche es erneut.",
+                "navigationLabel": "Navigation der indexierten Inhalte",
+                "entityMetadata": "Entitäts-Metadaten",
+                "browseLectures": "Vorlesungen durchsuchen",
+                "toggleLecture": "Einheiten dieser Vorlesung ein- oder ausblenden",
+                "toggleUnit": "Inhalte dieser Einheit ein- oder ausblenden",
+                "untitledLecture": "Vorlesung ohne Titel",
+                "untitledUnit": "Einheit ohne Titel",
+                "orphanedContent": "Verwaiste Inhalte",
+                "orphanedUnit": "Lerneinheit {{ id }}, gelöscht",
+                "contentLabel": {
+                    "page": "Seite {{ page }}",
+                    "segment": "Segment @ {{ seconds }}s",
+                    "position": "#{{ position }}"
+                },
+                "lectureNotIndexed": "nicht indexiert",
+                "content_slides": "Folien",
+                "content_transcript": "Transkript",
+                "content_unit_summary": "Einheit-Zusammenfassung",
+                "content_segments": "Ausgerichtete Segmente",
+                "typeIncomplete": "Typ unvollständig",
+                "detailError": "Der gespeicherte Inhalt konnte nicht geladen werden. Bitte versuche es erneut.",
+                "storedObjects": "Gespeicherte Objekte",
+                "noObjects": "Hier sind noch keine Objekte gespeichert.",
+                "noContentUnit": "Für diese Einheit sind noch keine Inhalte gespeichert.",
+                "noFields": "Keine befüllten Felder.",
+                "notIngested": "Erwartet, aber nicht indexiert:",
+                "notIndexedRecord": "Nicht indexiert, daher gibt es keinen gespeicherten Datensatz.",
+                "statIndexed": "Indexiert",
+                "statExpected": "Erwartet",
+                "statMissing": "Fehlend",
+                "statOrphaned": "Verwaist",
+                "breadcrumb": "Navigationspfad",
+                "unitCount": "{{count}} Lerneinheiten",
+                "storedIn": "Gespeichert in",
+                "dotComplete": "Vollständig",
+                "dotIncomplete": "Unvollständig",
+                "missingContent": "Fehlende Inhalte:",
+                "openLecture": "Vorlesung öffnen",
+                "openUnit": "Einheit öffnen",
+                "openCourse": "Kurs öffnen"
+            },
+            "status": {
+                "COMPLETE": "Vollständig",
+                "INCOMPLETE": "Unvollständig",
+                "EMPTY": "Leer"
+            },
+            "activity": {
+                "title": "Pipeline-Aktivität",
+                "subtitle": "Was die Ingestion- und Searchable-Entity-Pipelines tatsächlich getan haben, neueste zuerst.",
+                "refresh": "Aktivitätsverlauf aktualisieren",
+                "error": "Der Aktivitätsverlauf konnte nicht geladen werden.",
+                "empty": "Bisher ist nichts passiert. Ereignisse erscheinen hier, sobald Einheiten indexiert werden und die Abgleichläufe laufen.",
+                "window": "Die Zählungen umfassen die letzten {{ hours }} Stunden.",
+                "courseRef": "Kurs {{ id }}",
+                "column": {
+                    "when": "Wann",
+                    "what": "Was ist passiert",
+                    "entity": "Entität",
+                    "detail": "Detail"
+                },
+                "kind": {
+                    "INGESTED": "Indexiert",
+                    "FAILED": "Fehlgeschlagen",
+                    "CLAIMED": "Übernommen",
+                    "REQUEUED": "Erneut eingereiht",
+                    "STALLED": "Hängt fest",
+                    "QUALITY_FLAGGED": "Schlechte Qualität",
+                    "DRIFT_DETECTED": "Abweichung gefunden",
+                    "MISSING_DETECTED": "Fehlend gefunden",
+                    "ORPHAN_DETECTED": "Verwaist gefunden",
+                    "INDEX_REPAIRED": "Repariert"
+                }
+            },
+            "queues": {
+                "title": "Warteschlangen",
+                "subtitle": "Woran jede Warteschlange gerade arbeitet und was dahinter wartet.",
+                "refresh": "Momentaufnahme der Warteschlangen aktualisieren",
+                "error": "Die Momentaufnahme der Warteschlangen konnte nicht geladen werden.",
+                "idle": "Alle Warteschlangen sind leer. Derzeit wird nichts indexiert oder geschrieben.",
+                "retryWaiting": "warten auf Wiederholung",
+                "wedged": "kein Fortschritt",
+                "forced": "erzwungen",
+                "phase": {
+                    "IDLE": "eingereiht",
+                    "TRANSCRIBING": "transkribiert",
+                    "INGESTING": "indexiert",
+                    "DONE": "fertig",
+                    "FAILED": "fehlgeschlagen",
+                    "SKIPPED": "übersprungen"
+                },
+                "priority": {
+                    "fresh": "Neu",
+                    "backlog": "Rückstand"
+                },
+                "pass": {
+                    "MISSING": "Fehlend",
+                    "DRIFT": "Abweichung",
+                    "ORPHAN": "Verwaist"
+                },
+                "column": {
+                    "unit": "Lerneinheit",
+                    "stage": "Phase",
+                    "worker": "Worker",
+                    "progressed": "Letzter Fortschritt",
+                    "priority": "Priorität",
+                    "attempts": "Versuche",
+                    "operation": "Operation",
+                    "entity": "Entität",
+                    "origin": "Ursprung",
+                    "pass": "Lauf",
+                    "lastRun": "Letzter Lauf",
+                    "checked": "Geprüft",
+                    "queued": "Eingereiht"
+                },
+                "running": {
+                    "title": "Wird gerade bearbeitet",
+                    "none": "Derzeit wird keine Einheit bearbeitet."
+                },
+                "nextUp": {
+                    "title": "Als Nächstes",
+                    "none": "Nichts wartet auf Übernahme."
+                },
+                "outbox": {
+                    "title": "Weaviate-Schreibwarteschlange",
+                    "waiting": "wartend",
+                    "dueNow": "jetzt fällig",
+                    "maxAttempts": "max. Versuche",
+                    "oldest": "Ältester Eintrag seit"
+                },
+                "reconcile": {
+                    "title": "Abgleichläufe",
+                    "none": "Es wurde noch kein Abgleichlauf ausgeführt."
+                },
+                "workers": {
+                    "title": "Worker mit Leases",
+                    "runs": "{{ count }} aktiv"
+                }
+            },
+            "logs": {
+                "title": "Live-Log",
+                "subtitle": "Alles, was die Indexierungs-Pipelines protokolliert haben, aus Artemis und Iris, neueste zuerst.",
+                "refresh": "Log aktualisieren",
+                "error": "Das Log konnte nicht geladen werden.",
+                "empty": "Bisher wurde nichts protokolliert. Einträge erscheinen hier, sobald die Indexierungs-Pipelines laufen.",
+                "search": "Nach Nachricht oder Logger filtern",
+                "showTrace": "Stacktrace anzeigen",
+                "hideTrace": "Stacktrace ausblenden",
+                "scopeNote": "Wird im Arbeitsspeicher gehalten und geht bei einem Neustart verloren. In einem Cluster stammen die Artemis-Einträge von dem Knoten, der diese Anfrage beantwortet hat."
+            }
+        }
+    }
+}

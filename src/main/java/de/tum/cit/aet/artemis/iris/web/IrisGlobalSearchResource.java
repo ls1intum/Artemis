@@ -2,10 +2,13 @@ package de.tum.cit.aet.artemis.iris.web;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.validation.Valid;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
@@ -22,6 +26,8 @@ import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.globalsearch.api.SearchableEntityPrefetchApi;
+import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.IrisAccessContextService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
@@ -29,6 +35,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchAskRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchLectureRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisAccessContextDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisEntityCandidateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
@@ -47,6 +54,8 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 @RequestMapping("api/iris/")
 public class IrisGlobalSearchResource {
 
+    private static final Logger log = LoggerFactory.getLogger(IrisGlobalSearchResource.class);
+
     private static final String ENTITY_NAME = "iris";
 
     private final PyrisConnectorService pyrisConnectorService;
@@ -59,15 +68,22 @@ public class IrisGlobalSearchResource {
 
     private final IrisAccessContextService irisAccessContextService;
 
+    private final Optional<SearchableEntityPrefetchApi> searchableEntityPrefetchApi;
+
     private final IrisSettingsService irisSettingsService;
 
+    /** Entity candidates handed to the answer pipeline; recall is deliberately deep, the reranker judges. */
+    private static final int ENTITY_CANDIDATE_LIMIT = 25;
+
     public IrisGlobalSearchResource(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, UserRepository userRepository,
-            UserAiPreferenceService userAiPreferenceService, IrisAccessContextService irisAccessContextService, IrisSettingsService irisSettingsService) {
+            UserAiPreferenceService userAiPreferenceService, IrisAccessContextService irisAccessContextService, Optional<SearchableEntityPrefetchApi> searchableEntityPrefetchApi,
+            IrisSettingsService irisSettingsService) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.userAiPreferenceService = userAiPreferenceService;
         this.pyrisJobService = pyrisJobService;
         this.userRepository = userRepository;
         this.irisAccessContextService = irisAccessContextService;
+        this.searchableEntityPrefetchApi = searchableEntityPrefetchApi;
         this.irisSettingsService = irisSettingsService;
     }
 
@@ -169,12 +185,48 @@ public class IrisGlobalSearchResource {
         userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
         var selectedLlmUsage = userAiPreferenceService.findDecision(user.getId());
         var accessContext = irisAccessContextService.resolveAccessContext(user);
+        // Resolved BEFORE the job token is registered: an all-courses-Iris-disabled request is a
+        // genuine rejection (AccessForbiddenAlertException from lectureSearchScope), not a transient
+        // failure, and must never leave an orphaned job token behind for that case.
+        var excludedCourseIds = requestDTO.excludeCourseIds() == null ? List.<Long>of() : requestDTO.excludeCourseIds();
+        var scope = lectureSearchScope(requestDTO.courseIds(), excludedCourseIds, accessContext);
+        // Entity candidates are pre-fetched with the palette's access filtering, because channel
+        // membership, exam registrations and role-dependent release rules only exist in the Artemis
+        // database; Pyris renders them into cards and reranks them against the lecture content.
+        // Pre-fetched BEFORE the job token is registered, same reasoning as scope above: its strict
+        // access-filter path can throw synchronously on a stale or inaccessible course ID, and a
+        // repository or mapping failure can escape too, none of it a transport-level ambiguity, so
+        // none of it may leave an orphaned token behind either. A genuine Weaviate hiccup is still
+        // swallowed below rather than failing the whole answer, since the lecture-content-only
+        // answer could still succeed.
+        // searchesNothing (every requested course excluded) still answers rather than short-circuiting
+        // like /lecture-search does, but "search nothing" means nothing: entity candidates are skipped
+        // entirely rather than falling back to an unscoped candidate search (an empty, non-null
+        // courseIds list is read as "unscoped" by the access filter, not "scoped to nothing").
+        List<PyrisEntityCandidateDTO> entityCandidates = scope.searchesNothing() ? List.of() : fetchEntityCandidates(user, requestDTO, scope.courseIds(), scope.excludeCourseIds());
         pyrisJobService.addGlobalSearchAnswerJob(principal.getName(), requestDTO.runId().toString());
         // Note: do NOT remove the job on exception here. Transport-level failures are ambiguous —
         // Pyris may have received the request and already started the pipeline. Removing the token
         // would break WebSocket routing for any callbacks that arrive later.
         // Jobs expire automatically via the Hazelcast TTL (default 5 minutes).
-        pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), selectedLlmUsage, accessContext);
+        pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), selectedLlmUsage, accessContext,
+                entityCandidates, scope.courseIds(), scope.excludeCourseIds(), scope.searchesNothing());
         return ResponseEntity.accepted().build();
+    }
+
+    private List<PyrisEntityCandidateDTO> fetchEntityCandidates(User user, GlobalSearchAskRequestDTO requestDTO, @Nullable List<Long> courseIds,
+            @Nullable List<Long> excludeCourseIds) {
+        if (searchableEntityPrefetchApi.isEmpty()) {
+            return List.of();
+        }
+        try {
+            var excludedIds = excludeCourseIds == null ? List.<Long>of() : excludeCourseIds;
+            return searchableEntityPrefetchApi.get().prefetchCandidates(user, requestDTO.query(), ENTITY_CANDIDATE_LIMIT, courseIds, excludedIds).stream()
+                    .map(PyrisEntityCandidateDTO::of).toList();
+        }
+        catch (WeaviateException e) {
+            log.warn("Entity candidate prefetch failed for global search run {}; answering from lecture content only: {}", requestDTO.runId(), e.getMessage());
+            return List.of();
+        }
     }
 }

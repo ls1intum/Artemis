@@ -40,6 +40,31 @@
     </root>
     -->
 
+    <!--
+        Ingestion records are additionally kept in a small in-memory ring buffer that the admin ingestion
+        dashboard reads, merged with the matching records from Iris. Artemis logs only to the console (the FILE
+        appender above is deliberately left commented out), so without this there is no way to see why an
+        ingestion run failed except wherever the container's stdout happens to be collected.
+
+        Scoped to the ingestion loggers at DEBUG rather than attached to the root logger: rooting it would bury
+        the ingestion story in unrelated request traffic and capture records from every other part of Artemis,
+        which is both noisier and a wider exposure than the question needs. additivity stays on, so these
+        records still reach the console exactly as before.
+    -->
+    <appender name="RECENT_INGESTION_LOGS" class="de.tum.cit.aet.artemis.core.config.RecentLogsAppender">
+        <capacity>2000</capacity>
+    </appender>
+
+    <logger name="de.tum.cit.aet.artemis.globalsearch" level="DEBUG">
+        <appender-ref ref="RECENT_INGESTION_LOGS"/>
+    </logger>
+    <logger name="de.tum.cit.aet.artemis.lecture" level="DEBUG">
+        <appender-ref ref="RECENT_INGESTION_LOGS"/>
+    </logger>
+    <logger name="de.tum.cit.aet.artemis.iris" level="DEBUG">
+        <appender-ref ref="RECENT_INGESTION_LOGS"/>
+    </logger>
+
     <logger name="de.tum.cit.aet.artemis" level="INFO"/>
     <logger name="tech.jhipster" level="WARN"/>
 

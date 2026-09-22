@@ -1,0 +1,88 @@
+<div class="course-ingestion-logs" data-testid="course-ingestion-logs">
+    <div class="flex justify-between items-center mb-3">
+        <div class="flex flex-col">
+            <h4 class="mb-0" jhiTranslate="artemisApp.courseIngestionDashboard.logs.title"></h4>
+            <span class="text-sm text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.logs.subtitle"></span>
+        </div>
+        <tum-ui-button
+            severity="secondary"
+            variant="outlined"
+            size="small"
+            [icon]="faSync"
+            [loading]="loading()"
+            (clicked)="reload()"
+            [ariaLabel]="'artemisApp.courseIngestionDashboard.logs.refresh' | artemisTranslate"
+            [title]="'artemisApp.courseIngestionDashboard.logs.refresh' | artemisTranslate"
+        />
+    </div>
+
+    @if (error()) {
+        <tum-ui-message severity="error" class="w-full">{{ 'artemisApp.courseIngestionDashboard.logs.error' | artemisTranslate }}</tum-ui-message>
+    }
+
+    <div class="flex flex-wrap items-center gap-2 mb-2">
+        @for (level of levels; track level) {
+            <tum-ui-button
+                severity="secondary"
+                size="small"
+                [variant]="selectedLevel() === level ? 'solid' : 'outlined'"
+                [ariaPressed]="selectedLevel() === level"
+                (clicked)="selectLevel(level)"
+                [attr.data-testid]="'log-level-' + level"
+            >
+                <span class="{{ levelClass(level) }}">{{ level }}</span>
+            </tum-ui-button>
+        }
+        <input
+            type="search"
+            class="ms-2 px-2 py-1 text-sm border rounded"
+            data-testid="log-search"
+            [value]="search()"
+            (input)="onSearch($any($event.target).value)"
+            [attr.aria-label]="'artemisApp.courseIngestionDashboard.logs.search' | artemisTranslate"
+            [attr.placeholder]="'artemisApp.courseIngestionDashboard.logs.search' | artemisTranslate"
+        />
+    </div>
+
+    <!-- Both buffers are bounded and lost on restart, and the Artemis half holds only the node that answered
+         this request. Saying so beats letting an incomplete view read as the whole truth. -->
+    <div class="text-xs text-muted-color mb-2" jhiTranslate="artemisApp.courseIngestionDashboard.logs.scopeNote"></div>
+
+    @if (isEmpty()) {
+        <tum-ui-message severity="info" class="w-full" data-testid="logs-empty">
+            {{ 'artemisApp.courseIngestionDashboard.logs.empty' | artemisTranslate }}
+        </tum-ui-message>
+    } @else {
+        <tum-ui-card>
+            <div class="ingestion-log-scroll" data-testid="logs-stream">
+                @for (entry of visibleEntries(); track $index) {
+                    <div class="border-b py-1 text-sm" [attr.data-testid]="'log-row-' + $index" [attr.data-source]="entry.source">
+                        <div class="flex flex-wrap items-baseline gap-2">
+                            <span class="text-muted-color whitespace-nowrap">{{ entry.occurredAt | artemisDate: 'long' }}</span>
+                            <span class="font-semibold {{ levelClass(entry.level) }}">{{ entry.level }}</span>
+                            <span class="text-xs px-1 rounded border" [attr.data-testid]="'log-source-' + entry.source">{{ entry.source }}</span>
+                            <span class="font-mono text-xs text-muted-color">{{ entry.logger }}</span>
+                        </div>
+                        <div class="ingestion-log-trace font-mono text-xs">{{ entry.message }}</div>
+                        @if (entry.stackTrace) {
+                            <button type="button" class="text-xs underline" [attr.data-testid]="'log-trace-toggle-' + $index" (click)="toggleStackTrace($index)">
+                                <span
+                                    [jhiTranslate]="
+                                        isExpanded($index) ? 'artemisApp.courseIngestionDashboard.logs.hideTrace' : 'artemisApp.courseIngestionDashboard.logs.showTrace'
+                                    "
+                                ></span>
+                            </button>
+                            @if (isExpanded($index)) {
+                                <pre class="ingestion-log-trace font-mono text-xs text-state-danger" [attr.data-testid]="'log-trace-' + $index">{{ entry.stackTrace }}</pre>
+                            }
+                        }
+                    </div>
+                }
+            </div>
+        </tum-ui-card>
+    }
+
+    @if (loading() && entries().length === 0) {
+        <div class="text-muted-color py-4" jhiTranslate="artemisApp.courseIngestionDashboard.loading"></div>
+    }
+</div>

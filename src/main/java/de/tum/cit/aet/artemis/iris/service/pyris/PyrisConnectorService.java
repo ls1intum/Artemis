@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryWithRelationsDTO;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisLogEntryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqDeletionExecutionDTO;
@@ -50,10 +51,12 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryConnecti
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryWithRelationsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisAccessContextDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisEntityCandidateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
 import de.tum.cit.aet.artemis.iris.web.internal.PyrisInternalStatusUpdateResource;
+import de.tum.cit.aet.artemis.lecture.dto.IngestionCensusDTO;
 
 /**
  * This service connects to the Python implementation of Iris (called Pyris).
@@ -90,6 +93,43 @@ public class PyrisConnectorService {
     public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, JsonMapper objectMapper) {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
+    }
+
+    /**
+     * Fetch the per-course ingestion census from Pyris: the aggregated vector index state of every
+     * lecture unit of the course, including the stamped content fingerprints.
+     * <p>
+     * The census is a read-only capability introduced together with the fingerprint stamping. An older
+     * Pyris without the endpoint answers 404; that case and every transport failure return {@code null}
+     * so callers treat the census as unavailable instead of failing their reconcile pass.
+     *
+     * @param courseId the id of the course to take the census for
+     * @return the census, or {@code null} when Pyris does not offer or cannot answer the endpoint
+     */
+    @Nullable
+    public IngestionCensusDTO getIngestionCensus(long courseId) {
+        String url = pyrisUrl + "/api/v1/courses/" + courseId + "/ingestion-census?base_url=" + URLEncoder.encode(artemisBaseUrl, StandardCharsets.UTF_8);
+        try {
+            var response = restTemplate.getForEntity(url, IngestionCensusDTO.class);
+            if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
+                log.warn("Ingestion census for course {} returned status {} without a usable body", courseId, response.getStatusCode());
+                return null;
+            }
+            return response.getBody();
+        }
+        catch (HttpStatusCodeException e) {
+            if (e.getStatusCode().value() == 404) {
+                log.debug("Pyris does not offer the ingestion census endpoint (404), skipping census for course {}", courseId);
+            }
+            else {
+                log.warn("Ingestion census for course {} failed with status {}", courseId, e.getStatusCode());
+            }
+            return null;
+        }
+        catch (RestClientException | IllegalArgumentException e) {
+            log.warn("Ingestion census for course {} failed: {}", courseId, e.getMessage());
+            return null;
+        }
     }
 
     /**
@@ -238,7 +278,7 @@ public class PyrisConnectorService {
             @Nullable PyrisAccessContextDTO accessContext) {
         var endpoint = "/api/v1/search/lectures";
         try {
-            var requestDTO = new PyrisLectureSearchRequestDTO(query, limit, courseIds, excludeCourseIds, accessContext);
+            var requestDTO = new PyrisLectureSearchRequestDTO(query, limit, courseIds, excludeCourseIds, accessContext, artemisBaseUrl);
             var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, PyrisLectureSearchResultDTO[].class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody() || response.getBody() == null) {
                 return List.of();
@@ -260,17 +300,28 @@ public class PyrisConnectorService {
      * 1. A "thinking" update (~2 ms after this call) when the query is classified as a real question.
      * 2. A "result" update when the LLM finishes, containing the answer (or null for navigation queries).
      *
-     * @param query         the user's question
-     * @param limit         the maximum number of source segments to retrieve
-     * @param jobToken      the Hazelcast job token used for callback authentication and WebSocket routing
-     * @param aiSelection   the user's LLM selection (LOCAL_AI or CLOUD_AI)
-     * @param accessContext the requesting user's role-grouped course access, applied by Pyris as an opaque filter (may be null)
+     * @param query            the user's question
+     * @param limit            the maximum number of source segments to retrieve
+     * @param jobToken         the Hazelcast job token used for callback authentication and WebSocket routing
+     * @param aiSelection      the user's LLM selection (LOCAL_AI or CLOUD_AI)
+     * @param accessContext    the requesting user's role-grouped course access, applied by Pyris as an opaque filter (may be null)
+     * @param entityCandidates pre-fetched, access-filtered entity candidates for the answer pipeline (may be null or empty)
+     * @param courseIds        optional course scope from the search UI's active course filter, {@code null} for unscoped
+     *                             (search everything the access context permits)
+     * @param excludeCourseIds course ids to hide regardless of {@code courseIds}; only needed for a caller with no
+     *                             {@code courseIds} ceiling to narrow itself (unrestricted access)
+     * @param searchesNothing  whether the caller already resolved the scope to nothing (e.g. every requested course
+     *                             was excluded); distinct from an unscoped {@code courseIds}, and passed as its own
+     *                             field since an empty {@code courseIds} list does not survive the wire
      */
-    public void executeGlobalSearchIrisAnswer(String query, int limit, String jobToken, AiSelectionDecision aiSelection, @Nullable PyrisAccessContextDTO accessContext) {
+    public void executeGlobalSearchIrisAnswer(String query, int limit, String jobToken, AiSelectionDecision aiSelection, @Nullable PyrisAccessContextDTO accessContext,
+            @Nullable List<PyrisEntityCandidateDTO> entityCandidates, @Nullable List<Long> courseIds, @Nullable List<Long> excludeCourseIds, boolean searchesNothing) {
         var endpoint = "/api/v1/pipelines/global-search/run";
         try {
-            var settings = new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, null, IrisSupportLevel.MODERATE.jsonValue());
-            var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, accessContext);
+            // streamResponse: Pyris posts throttled partial-answer snapshots while the LLM generates,
+            // which this service forwards to the client as partial WebSocket updates.
+            var settings = new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, null, IrisSupportLevel.MODERATE.jsonValue(), Boolean.TRUE);
+            var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, accessContext, entityCandidates, courseIds, excludeCourseIds, searchesNothing);
             var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, Void.class);
             if (response.getStatusCode().value() != HttpStatus.ACCEPTED.value()) {
                 log.warn("Unexpected status {} from Pyris search/ask async", response.getStatusCode().value());
@@ -496,4 +547,33 @@ public class PyrisConnectorService {
         }
 
     }
+
+    /**
+     * Reads Iris's recent ingestion log records, for the admin ingestion dashboard.
+     * <p>
+     * Iris logs to stdout like Artemis does, so when the log collector is unavailable the reason an ingestion run
+     * failed is unreadable without shell access to its host - Artemis only receives the error key the run ended
+     * with. This reads the small in-memory buffer Iris keeps for exactly that, and the dashboard merges it with
+     * Artemis's own records.
+     *
+     * @param limit how many records to ask for, newest first
+     * @param level return only records at exactly this level, or null for every level
+     * @return the records as Iris reported them, or an empty list when Iris is unreachable - an unavailable log
+     *         view must not fail the page it sits on
+     */
+    public List<PyrisLogEntryDTO> getRecentLogs(int limit, @Nullable String level) {
+        String endpoint = "/api/v1/internal/logs/recent?limit=" + limit + (level == null ? "" : "&level=" + URLEncoder.encode(level, StandardCharsets.UTF_8));
+        try {
+            var response = restTemplate.getForEntity(pyrisUrl + endpoint, PyrisLogEntryDTO[].class);
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                return List.of();
+            }
+            return Arrays.asList(response.getBody());
+        }
+        catch (RestClientException | IllegalArgumentException exception) {
+            log.warn("Could not read recent logs from Pyris: {}", exception.getMessage());
+            return List.of();
+        }
+    }
+
 }

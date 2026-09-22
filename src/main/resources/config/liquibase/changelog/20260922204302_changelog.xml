@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Append-only activity log for the ingestion and searchable-entity pipelines.
+
+        Every other table in this area is a current-state snapshot that is overwritten in place:
+        searchable_entity_sync_state keeps one row per entity, weaviate_outbox deletes its row once the
+        write is confirmed, and searchable_entity_reconcile_state keeps cycle counters that reset when a
+        sweep wraps. None of them can answer what a pass actually did, so a drift repair or an orphan
+        removal leaves no trace seconds after it happens. This table records those outcomes.
+
+        It is observability data, not a source of truth. Nothing reads it back to make a decision, so a
+        missing row costs visibility and nothing else; rows are pruned by age rather than archived.
+
+        occurred_at is datetime(3) rather than datetime because the feed is ordered by it and a sweep
+        writes many rows inside one second - whole-second precision would leave their order undefined.
+
+        detail is varchar(512) rather than text: it is one short human-readable line rendered verbatim,
+        and keeping it off-row would cost a second fetch per feed row for no benefit.
+    -->
+    <changeSet id="20260922204302-01-ingestion-event-log" author="nayerkotry">
+        <createTable tableName="ingestion_event_log">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="kind" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="occurred_at" type="datetime(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entity_type" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entity_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="course_id" type="bigint"/>
+            <column name="detail" type="varchar(512)"/>
+        </createTable>
+        <!-- The feed reads newest-first over the whole table, and narrows by course. -->
+        <createIndex indexName="idx_ingestion_event_log_occurred_at" tableName="ingestion_event_log">
+            <column name="occurred_at"/>
+        </createIndex>
+        <createIndex indexName="idx_ingestion_event_log_course_id" tableName="ingestion_event_log">
+            <column name="course_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -248,6 +249,28 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 fixture.detectChanges();
                 const items = fixture.nativeElement.querySelectorAll('jhi-global-search-result-item');
                 expect(items.length).toBe(1);
+            });
+
+            it('should not add top margin to the results list when the iris card is not occupying space', () => {
+                // The mocked iris-answer child's default occupiesSpace() reports nothing to show.
+                fixture.componentRef.setInput('showResults', true);
+                fixture.componentRef.setInput('results', [{ id: '1', type: 'exercise' }] as GlobalSearchResult[]);
+                fixture.detectChanges();
+                const list = fixture.nativeElement.querySelector('.search-results-list');
+                expect(list.classList).not.toContain('mt-3');
+            });
+
+            it('should add top margin to the results list only while the iris card actually occupies space', () => {
+                // A margin conditioned on `irisEnabled` alone would stay reserved even after a dismissed
+                // "nothing relevant" card has collapsed to nothing, leaving exactly the gap collapsing
+                // the card was meant to give back.
+                fixture.componentRef.setInput('showResults', true);
+                fixture.componentRef.setInput('results', [{ id: '1', type: 'exercise' }] as GlobalSearchResult[]);
+                const irisChild = fixture.debugElement.query(By.directive(GlobalSearchIrisAnswerComponent)).componentInstance;
+                (irisChild as unknown as { occupiesSpace: () => boolean }).occupiesSpace = () => true;
+                fixture.detectChanges();
+                const list = fixture.nativeElement.querySelector('.search-results-list');
+                expect(list.classList).toContain('mt-3');
             });
 
             it('should render no results state', () => {

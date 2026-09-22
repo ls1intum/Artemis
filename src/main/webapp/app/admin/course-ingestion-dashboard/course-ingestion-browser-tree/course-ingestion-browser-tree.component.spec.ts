@@ -1,0 +1,244 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideTranslateService } from '@ngx-translate/core';
+
+import { CourseIngestionBrowserTreeComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-browser-tree/course-ingestion-browser-tree.component';
+import { IndexedContentPresence, IndexedEntity, IngestionTypeCount, MissingEntity } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+
+describe('CourseIngestionBrowserTreeComponent', () => {
+    let component: CourseIngestionBrowserTreeComponent;
+    let fixture: ComponentFixture<CourseIngestionBrowserTreeComponent>;
+
+    const entity = (type: string, entityId: number, title: string, lectureId?: number): IndexedEntity => ({
+        type,
+        entityId,
+        title,
+        lectureId,
+        ingestedAt: '2026-08-26T09:00:00Z',
+    });
+
+    // Lecture 20 holds units 10 and 11. Unit 12 belongs to lecture 21, which is itself NOT indexed.
+    const entities: IndexedEntity[] = [
+        entity('lecture', 20, 'Week 1'),
+        entity('lecture_unit', 11, 'Intro slides', 20),
+        entity('lecture_unit', 10, 'A recap', 20),
+        entity('lecture_unit', 12, 'Orphaned unit', 21),
+        entity('exercise', 1, 'Sorting'),
+    ];
+
+    const contentPresence: IndexedContentPresence[] = [
+        { key: 'slides', unitIds: [11] },
+        { key: 'transcript', unitIds: [11, 12] },
+    ];
+
+    const typeCounts: IngestionTypeCount[] = [
+        { type: 'exercise', expected: 2, indexed: 1, missing: 1, orphaned: 0 },
+        { type: 'lecture', expected: 1, indexed: 1, missing: 0, orphaned: 0 },
+    ];
+
+    // Lecture 21 (unit 12's parent) is not indexed, but the database still knows its title.
+    const missingEntities: MissingEntity[] = [{ type: 'lecture', entityId: 21, title: 'Week 2 (draft)' }];
+
+    const query = (testId: string): HTMLElement | null => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
+    const click = (testId: string): void => {
+        const element = query(testId);
+        expect(element).toBeTruthy();
+        (element as HTMLButtonElement).click();
+        fixture.detectChanges();
+    };
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [CourseIngestionBrowserTreeComponent],
+            providers: [provideTranslateService()],
+        });
+        fixture = TestBed.createComponent(CourseIngestionBrowserTreeComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('entities', entities);
+        fixture.componentRef.setInput('contentPresence', contentPresence);
+        fixture.componentRef.setInput('typeCounts', typeCounts);
+        // Unit 12 never had its transcript ingested, so its branch should read incomplete.
+        fixture.componentRef.setInput('contentGaps', [{ lectureUnitId: 12, title: 'Orphaned unit', kind: 'transcript' }]);
+        fixture.componentRef.setInput('missingEntities', missingEntities);
+        fixture.detectChanges();
+    });
+
+    it('should create', () => {
+        expect(component).toBeTruthy();
+    });
+
+    it('should list every measured type in fixed order, including types the course has none of', () => {
+        // Exams, FAQs, channels and the course have no counts here, but the scoreboard still lists them.
+        ['exercise', 'lecture', 'lecture_unit', 'exam', 'faq', 'channel', 'course'].forEach((type) => {
+            expect(query(`tree-node-type:${type}`)).toBeTruthy();
+        });
+    });
+
+    it('should keep the course row whether or not the course itself is indexed', () => {
+        fixture.componentRef.setInput('typeCounts', [...typeCounts, { type: 'course', expected: 1, indexed: 1, missing: 0, orphaned: 0 }]);
+        fixture.detectChanges();
+        expect(query('tree-node-type:course')).toBeTruthy();
+
+        fixture.componentRef.setInput('typeCounts', [...typeCounts, { type: 'course', expected: 1, indexed: 0, missing: 1, orphaned: 0 }]);
+        fixture.detectChanges();
+        expect(query('tree-node-type:course')).toBeTruthy();
+    });
+
+    it('should build the lecture tree from the loaded payloads', () => {
+        expect(query('tree-node-lecture:20')).toBeTruthy();
+        // Units are nested, so they are not rendered until their lecture is expanded.
+        expect(query('tree-node-unit:11')).toBeFalsy();
+
+        click('tree-toggle-lecture:20');
+
+        expect(query('tree-node-unit:10')).toBeTruthy();
+        expect(query('tree-node-unit:11')).toBeTruthy();
+    });
+
+    it('should keep a unit whose lecture is not indexed, and mark that lecture', () => {
+        // Dropping the unit would hide exactly the gap this tool exists to surface.
+        expect(query('tree-node-lecture:21')).toBeTruthy();
+        expect(query('lecture-not-indexed')).toBeTruthy();
+
+        click('tree-toggle-lecture:21');
+
+        expect(query('tree-node-unit:12')).toBeTruthy();
+    });
+
+    it('should name a not-indexed lecture from the database title rather than reading untitled', () => {
+        // Lecture 21 has no row in `entities` (it is not indexed), only in `missingEntities`. Losing that title would
+        // read as "Untitled lecture" and hide which lecture the red badge next to it is even about.
+        expect(query('tree-node-lecture:21')?.textContent).toContain('Week 2 (draft)');
+        // The fallback must not flip the lecture's own indexed status, only supply its name.
+        expect(query('lecture-not-indexed')).toBeTruthy();
+    });
+
+    it('should prefer the indexed title over the missing-entities fallback when a lecture has both', () => {
+        fixture.componentRef.setInput('missingEntities', [...missingEntities, { type: 'lecture', entityId: 20, title: 'Stale draft title' }]);
+        fixture.detectChanges();
+
+        // Lecture 20 is indexed as "Week 1"; a stale missing-entities row for the same id must not override it.
+        expect(query('tree-node-lecture:20')?.textContent).toContain('Week 1');
+        expect(query('tree-node-lecture:20')?.textContent).not.toContain('Stale draft title');
+    });
+
+    it('should group content whose lecture unit is gone, so orphans can still be opened', () => {
+        // Unit 99 holds slides in Iris but has no lecture_unit entity: its database row and its indexed record are both
+        // gone. The coverage row counts those objects as orphaned, so dropping them from the tree would name a number
+        // with nothing behind it.
+        fixture.componentRef.setInput('contentPresence', [...contentPresence, { key: 'slides', unitIds: [11, 99] }]);
+        fixture.detectChanges();
+
+        expect(query('tree-node-orphaned:99')).toBeTruthy();
+        // Not a button: the unit itself has nothing left to show, only the content underneath it.
+        expect(query('tree-node-orphaned:99')?.tagName).toBe('SPAN');
+
+        click('tree-toggle-orphaned:99');
+
+        const collection = query('tree-node-coll:99:slides');
+        expect(collection).toBeTruthy();
+        (collection as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        expect(component.selection()).toEqual({ kind: 'collection', unitId: 99, key: 'slides' });
+    });
+
+    it('should not group a unit that still has a node of its own', () => {
+        // Unit 11 is indexed and nested under lecture 20, so it is reachable there and must not be repeated as orphaned.
+        expect(query('tree-node-orphaned:11')).toBeFalsy();
+    });
+
+    it('should place a unit the database still has under its lecture rather than calling it deleted', () => {
+        // Unit 30 exists in the database but its metadata never reached the index, while its slides did. Absence from
+        // `entities` alone must not be read as deletion: the unit is live and its content is valid, not stale.
+        fixture.componentRef.setInput('missingEntities', [...missingEntities, { type: 'lecture_unit', entityId: 30, title: 'Late slides', lectureId: 20 }]);
+        fixture.componentRef.setInput('contentPresence', [...contentPresence, { key: 'slides', unitIds: [30] }]);
+        fixture.detectChanges();
+
+        expect(query('tree-node-orphaned:30')).toBeFalsy();
+
+        click('tree-toggle-lecture:20');
+        expect(query('tree-node-unit:30')?.textContent).toContain('Late slides');
+
+        click('tree-toggle-unit:30');
+        expect(query('tree-node-coll:30:slides')).toBeTruthy();
+    });
+
+    it('should leave a unit the database still has out of the tree when nothing is stored for it', () => {
+        // Its metadata gap is already counted in the scoreboard, and there is nothing under it to open.
+        fixture.componentRef.setInput('missingEntities', [...missingEntities, { type: 'lecture_unit', entityId: 31, title: 'Nothing stored', lectureId: 20 }]);
+        fixture.detectChanges();
+
+        click('tree-toggle-lecture:20');
+        expect(query('tree-node-unit:31')).toBeFalsy();
+    });
+
+    it('should give a unit a node only for the collections that actually hold content for it', () => {
+        click('tree-toggle-lecture:20');
+        click('tree-toggle-unit:11');
+
+        expect(query('tree-node-coll:11:slides')).toBeTruthy();
+        expect(query('tree-node-coll:11:transcript')).toBeTruthy();
+        expect(query('tree-node-coll:11:unit_summary')).toBeFalsy();
+
+        // Unit 10 holds nothing, so it has no collections to open at all.
+        click('tree-toggle-unit:10');
+        expect(query('tree-node-coll:10:slides')).toBeFalsy();
+    });
+
+    it('should select a type when its scoreboard row is chosen', () => {
+        click('tree-node-type:exercise');
+
+        expect(component.selection()).toEqual({ kind: 'type', type: 'exercise' });
+    });
+
+    it('should expand a lecture when it is selected, since that is what opening one is for', () => {
+        click('tree-node-lecture:20');
+
+        expect(component.selection()).toEqual({ kind: 'lecture', lectureId: 20 });
+        expect(query('tree-node-unit:11')).toBeTruthy();
+    });
+
+    it('should reveal a selection made from outside the tree by opening its ancestors', () => {
+        // This is how a breadcrumb or a contextual jump arrives: the parent sets the selection and the tree has to open
+        // the path to it. Nothing is expanded to begin with, so the node is not even rendered yet.
+        expect(query('tree-node-coll:11:slides')).toBeFalsy();
+
+        component.selection.set({ kind: 'collection', unitId: 11, key: 'slides' });
+        fixture.detectChanges();
+
+        expect(query('tree-node-lecture:20')).toBeTruthy();
+        expect(query('tree-node-unit:11')).toBeTruthy();
+        expect(query('tree-node-coll:11:slides')).toBeTruthy();
+    });
+
+    it('should reveal a unit selected from outside the tree', () => {
+        component.selection.set({ kind: 'unit', unitId: 12 });
+        fixture.detectChanges();
+
+        // Unit 12 sits under the lecture that is not itself indexed; that branch must open too.
+        expect(query('tree-node-unit:12')).toBeTruthy();
+    });
+
+    it('should toggle a node closed again', () => {
+        click('tree-toggle-lecture:20');
+        expect(query('tree-node-unit:11')).toBeTruthy();
+
+        click('tree-toggle-lecture:20');
+        expect(query('tree-node-unit:11')).toBeFalsy();
+    });
+
+    it('should mark a unit whose content was never ingested, and leave a complete one alone', () => {
+        click('tree-toggle-lecture:20');
+        click('tree-toggle-lecture:21');
+
+        expect(query('tree-dot-unit:11')?.className).toContain('text-state-success');
+        expect(query('tree-dot-unit:12')?.className).toContain('text-state-danger');
+    });
+
+    it('should carry a unit gap up to its lecture, so a collapsed branch still shows it', () => {
+        // Lecture 21 holds the unit with the gap; lecture 20's units are all complete.
+        expect(query('tree-dot-lecture:21')?.className).toContain('text-state-danger');
+        expect(query('tree-dot-lecture:20')?.className).toContain('text-state-success');
+    });
+});
