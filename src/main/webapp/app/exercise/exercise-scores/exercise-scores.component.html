@@ -130,7 +130,7 @@
 
 <ng-template #lastResultTemplate let-cell>
     @if (toResult(cell.data); as result) {
-        <jhi-result [exercise]="exercise()!" [result]="result" [participation]="toParticipation(cell.data)" />
+        <jhi-result [exercise]="exercise()!" [result]="result" [participation]="toParticipation(cell.data)" [isOwnParticipation]="false" />
     }
 </ng-template>
 
