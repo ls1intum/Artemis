@@ -421,6 +421,38 @@ class WorkerSupervisorTest {
     }
 
     @Test
+    void rejectionDuringPublicationIsDeliveredWithoutAnotherCommandOrHeartbeat() throws InterruptedException {
+        var events = new LinkedBlockingQueue<WorkerEventDTO>();
+        var publishing = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        var errors = new AtomicInteger();
+        try (var worker = new WorkerSupervisorService(settings(), event -> {
+            if (event.type() == WorkerEventType.ERROR && errors.incrementAndGet() == 1) {
+                publishing.countDown();
+                await(release);
+            }
+            events.add(event);
+        }, () -> null, () -> {
+        }, () -> IMAGE, System::nanoTime)) {
+            worker.heartbeat();
+            var heartbeat = take(events, WorkerEventType.HEARTBEAT);
+            var first = new ExecutionIdentityDTO("first", "resource-1", UUID.randomUUID(), heartbeat.workerId(), heartbeat.incarnation(), 0);
+            var second = new ExecutionIdentityDTO("second", "resource-2", UUID.randomUUID(), heartbeat.workerId(), heartbeat.incarnation(), 0);
+            worker.accept(new WorkerCommandDTO(WorkerCommandDTO.PROTOCOL_VERSION, WorkerCommandType.START, first,
+                    new ExecutionAssignmentDTO(first, CAPABILITY, Instant.now().plusSeconds(300), IMAGE, "input")));
+            assertThat(publishing.await(5, TimeUnit.SECONDS)).isTrue();
+            worker.accept(new WorkerCommandDTO(WorkerCommandDTO.PROTOCOL_VERSION, WorkerCommandType.START, second,
+                    new ExecutionAssignmentDTO(second, CAPABILITY, Instant.now().plusSeconds(300), IMAGE, "input")));
+            release.countDown();
+            assertThat(take(events, WorkerEventType.ERROR).identity()).isEqualTo(first);
+            assertThat(take(events, WorkerEventType.ERROR).identity()).isEqualTo(second);
+        }
+        finally {
+            release.countDown();
+        }
+    }
+
+    @Test
     void rejectedAssignmentCannotStartAfterCapacityBecomesAvailable() throws InterruptedException {
         var events = new LinkedBlockingQueue<WorkerEventDTO>();
         CountDownLatch entered = new CountDownLatch(1);

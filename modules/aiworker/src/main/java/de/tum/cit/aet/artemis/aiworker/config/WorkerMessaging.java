@@ -60,7 +60,7 @@ public class WorkerMessaging {
             if (event.identity() != null) {
                 message.setStringProperty("executionId", event.identity().executionId().toString());
             }
-            long lifetime = event.type() == WorkerEventType.HEARTBEAT ? Duration.ofSeconds(10).toMillis() : Duration.ofHours(12).toMillis();
+            long lifetime = event.type() == WorkerEventType.HEARTBEAT ? Duration.ofSeconds(10).toMillis() : 0;
             try (var producer = session.createProducer(session.createQueue("aiworker." + settings.id() + ".events"))) {
                 producer.send(message, DeliveryMode.PERSISTENT, Message.DEFAULT_PRIORITY, lifetime);
             }

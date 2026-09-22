@@ -63,7 +63,9 @@ public class WorkerSupervisorService implements AutoCloseable {
 
     private final ExecutorService deliveryExecutor = Executors.newSingleThreadExecutor(Thread.ofPlatform().name("aiworker-delivery").factory());
 
-    private final AtomicBoolean deliveryScheduled = new AtomicBoolean();
+    private boolean deliveryScheduled;
+
+    private boolean deliveryRequested;
 
     private final LongSupplier nanoTime;
 
@@ -149,20 +151,28 @@ public class WorkerSupervisorService implements AutoCloseable {
      *
      * @param command the validated job-level command
      */
-    public void accept(WorkerCommandDTO command) {
-        synchronized (this) {
-            acceptCommand(command);
+    public synchronized void accept(WorkerCommandDTO command) {
+        acceptCommand(command);
+        if (!pendingRejections.isEmpty()) {
+            deliveryRequested = true;
+            if (!deliveryScheduled) {
+                deliveryScheduled = true;
+                deliveryExecutor.submit(this::deliverRejections);
+            }
         }
-        // Broker publication must never hold the sole command listener: renewals and cancellation are time-critical.
-        if (deliveryScheduled.compareAndSet(false, true)) {
-            deliveryExecutor.submit(() -> {
-                try {
-                    flushPending(pendingRejections);
+    }
+
+    private void deliverRejections() {
+        while (true) {
+            synchronized (this) {
+                if (!deliveryRequested) {
+                    deliveryScheduled = false;
+                    return;
                 }
-                finally {
-                    deliveryScheduled.set(false);
-                }
-            });
+                deliveryRequested = false;
+            }
+            // Publish outside the admission lock. Requests received during this batch require another pass.
+            flushPending(pendingRejections);
         }
     }
 

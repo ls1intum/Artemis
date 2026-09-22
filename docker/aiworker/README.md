@@ -18,8 +18,11 @@ properties are `aiworker.keyStorePath` and `aiworker.keyStorePassword`. Supply t
 through the deployment secret mechanism. Add worker addresses and roles explicitly,
 never through wildcard worker permissions.
 
-See [AI Worker operations](../../documentation/docs/admin/aiworker.mdx) for complete
-configuration, topology, storage durability, capacity, maintenance and canary checks.
-See [module boundaries](../../documentation/docs/developer/hyperion/worker-modules.mdx)
-for workload integration. Hyperion's qualified Java/Gradle sandbox recipe remains in
-[`docker/hyperion`](../hyperion/README.md).
+The generic worker has no workload implementation. A workload distribution must
+supply a `WorkloadApi` bean and its dependencies. The contracts are in
+[`modules/aiworker/api`](../../modules/aiworker/api), and the supervisor configuration
+is in [`modules/aiworker`](../../modules/aiworker). Set broker credentials through
+`SPRING_ARTEMIS_USER` and `SPRING_ARTEMIS_PASSWORD`, and configure verified TLS through
+`SPRING_ARTEMIS_BROKERURL`. Worker settings use the `artemis.aiworker` namespace.
+
+Hyperion's sandbox recipe is in [`docker/hyperion`](../hyperion/README.md).
