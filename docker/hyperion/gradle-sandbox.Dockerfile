@@ -3,9 +3,9 @@ ARG JAVA_IMAGE=eclipse-temurin:17-jdk@sha256:a27c79d44326d5f689668df5fedfee48765
 FROM ${JAVA_IMAGE}
 
 COPY src/main/resources/templates/java/test/gradle/projectTemplate/ /opt/cache-fixture/
-COPY modules/aiworker/src/main/resources/templates/hyperion/readiness/java/solution/ /opt/cache-fixture/assignment/
-COPY modules/aiworker/src/main/resources/templates/hyperion/readiness/java/tests/behavior/ /opt/cache-fixture/test/
-COPY modules/aiworker/src/main/resources/templates/hyperion/readiness/java/tests/structural/ /opt/cache-fixture/test/
+COPY modules/hyperion/worker/src/main/resources/templates/hyperion/readiness/java/solution/ /opt/cache-fixture/assignment/
+COPY modules/hyperion/worker/src/main/resources/templates/hyperion/readiness/java/tests/behavior/ /opt/cache-fixture/test/
+COPY modules/hyperion/worker/src/main/resources/templates/hyperion/readiness/java/tests/structural/ /opt/cache-fixture/test/
 WORKDIR /opt/cache-fixture
 ENV JAVA_TOOL_OPTIONS="-Djava.security.manager=allow"
 
