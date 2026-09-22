@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
+import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
@@ -546,7 +547,7 @@ class LectureContentProcessingSchedulerTest {
 
             ProcessingStateCallbackService realCallbackService = new ProcessingStateCallbackService(raceRepository, transcriptionRepository, mock(AttachmentRepository.class),
                     Optional.empty(), mock(WebsocketMessagingService.class), mock(LectureUnitContentFingerprintService.class), mock(DistributedDataProvider.class),
-                    mock(FeatureToggleService.class), MAX_CONCURRENT_JOBS, 20, Duration.ofSeconds(90), 8);
+                    mock(FeatureToggleService.class), MAX_CONCURRENT_JOBS, 20, Duration.ofSeconds(90), 8, mock(IrisLectureUnitSyncStateRepository.class));
 
             FeatureToggleService raceFeatureToggleService = mock(FeatureToggleService.class);
             when(raceFeatureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);

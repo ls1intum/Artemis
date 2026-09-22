@@ -362,6 +362,61 @@ describe('ResultComponent', () => {
         ]);
     });
 
+    describe('a result the viewer does not own', () => {
+        // #13921: the tutor and instructor pages render the badge for a participation that is not the viewer's. The
+        // text/modeling deep link is the student exercise page, which 403s for an exam exercise and swaps in the
+        // viewer's own participation in a course, so the badge must not offer it there.
+        // Without a due date the result is simply graded; with `mockExercise`'s past one it would render as LATE,
+        // which is a different, never-clickable branch of the template.
+        const gradedExercise = (type: ExerciseType) => ({ ...mockExercise, type, dueDate: undefined });
+
+        it.each([ExerciseType.TEXT, ExerciseType.MODELING])('does not link a %s result to the student submission view', (type) => {
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            fixture.componentRef.setInput('exercise', gradedExercise(type));
+            fixture.componentRef.setInput('participation', mockParticipation);
+            fixture.componentRef.setInput('result', mockResult);
+            fixture.componentRef.setInput('isOwnParticipation', false);
+            fixture.detectChanges();
+
+            expect(comp.templateStatus()).toEqual(ResultTemplateStatus.HAS_RESULT);
+            expect(comp.canShowDetails()).toBe(false);
+            const badge = fixture.debugElement.nativeElement.querySelector('#result-score');
+            expect(badge.classList).not.toContain('clickable-result');
+
+            badge.dispatchEvent(new Event('click'));
+
+            expect(navigateSpy).not.toHaveBeenCalled();
+        });
+
+        it.each([ExerciseType.TEXT, ExerciseType.MODELING])('still links a %s result to it for the participation owner', (type) => {
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            fixture.componentRef.setInput('exercise', gradedExercise(type));
+            fixture.componentRef.setInput('participation', mockParticipation);
+            fixture.componentRef.setInput('result', mockResult);
+            fixture.detectChanges();
+
+            expect(comp.canShowDetails()).toBe(true);
+            fixture.debugElement.nativeElement.querySelector('#result-score').dispatchEvent(new Event('click'));
+
+            expect(navigateSpy).toHaveBeenCalledOnce();
+        });
+
+        it('still opens the feedback dialog for a programming result, which renders any participation', () => {
+            const openModalSpy = vi.spyOn(dialogService, 'open');
+            vi.spyOn(utils, 'prepareFeedbackComponentParameters').mockReturnValue(preparedFeedback);
+            fixture.componentRef.setInput('exercise', mockExercise);
+            fixture.componentRef.setInput('participation', mockParticipation);
+            fixture.componentRef.setInput('result', mockResult);
+            fixture.componentRef.setInput('isOwnParticipation', false);
+            fixture.detectChanges();
+
+            expect(comp.canShowDetails()).toBe(true);
+            fixture.debugElement.nativeElement.querySelector('#result-score').dispatchEvent(new Event('click'));
+
+            expect(openModalSpy).toHaveBeenCalledOnce();
+        });
+    });
+
     it('should open the details only when isInSidebarCard is false', () => {
         const openModalSpy = vi.spyOn(dialogService, 'open');
 
