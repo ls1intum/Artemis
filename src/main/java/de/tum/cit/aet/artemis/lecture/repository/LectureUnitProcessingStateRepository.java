@@ -781,4 +781,82 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             """)
     int markSkippedIfStillClaimed(@Param("lectureUnitId") long lectureUnitId, @Param("claimedAt") ZonedDateTime claimedAt, @Param("now") ZonedDateTime now);
 
+    /**
+     * Fail a dispatch that never reached Pyris, bound to its claim exactly like {@link #markSkippedIfStillClaimed}.
+     * {@link #failIfStillLive} cannot serve this case: it pins {@code ingestionJobToken = :token}, and a dispatch that
+     * failed before activation has no token, so that predicate is never true under SQL NULL semantics.
+     *
+     * @param id              the claimed row's own id
+     * @param claimedAt       the claim marker observed at claim time
+     * @param retryCount      the incremented attempt count
+     * @param errorKey        the i18n key describing the failure
+     * @param retryEligibleAt when the unit becomes eligible again, or {@code null} for a terminal failure
+     * @param now             recorded as the new {@code lastUpdated}
+     * @return 1 when the failure was applied, 0 when the row no longer holds this exact claim
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED, ps.errorKey = :errorKey,
+                ps.ingestionJobToken = NULL, ps.startedAt = NULL, ps.retryCount = :retryCount,
+                ps.retryEligibleAt = :retryEligibleAt, ps.lastUpdated = :now
+            WHERE ps.id = :id
+            AND ps.ingestionJobToken IS NULL
+            AND ((ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE AND ps.startedAt = :claimedAt)
+                OR (ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED AND ps.retryEligibleAt = :claimedAt))
+            """)
+    int failDispatchIfStillClaimed(@Param("id") long id, @Param("claimedAt") ZonedDateTime claimedAt, @Param("retryCount") int retryCount, @Param("errorKey") String errorKey,
+            @Param("retryEligibleAt") ZonedDateTime retryEligibleAt, @Param("now") ZonedDateTime now);
+
+    /**
+     * Terminally fail a claimed unit that cannot be prepared for dispatch at all (wrong unit type, unreadable
+     * attachment), bound to its claim. No retry is scheduled and the attempt count is untouched, matching the
+     * {@code markFailed} this replaces: these are local problems a retry cannot fix.
+     *
+     * @param id        the claimed row's own id
+     * @param claimedAt the claim marker observed at claim time
+     * @param errorKey  the i18n key describing why it cannot be dispatched
+     * @param now       recorded as the new {@code lastUpdated}
+     * @return 1 when the failure was applied, 0 when the row no longer holds this exact claim
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED, ps.errorKey = :errorKey,
+                ps.retryEligibleAt = NULL, ps.lastUpdated = :now
+            WHERE ps.id = :id
+            AND ps.ingestionJobToken IS NULL
+            AND ((ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE AND ps.startedAt = :claimedAt)
+                OR (ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED AND ps.retryEligibleAt = :claimedAt))
+            """)
+    int failPreparationIfStillClaimed(@Param("id") long id, @Param("claimedAt") ZonedDateTime claimedAt, @Param("errorKey") String errorKey, @Param("now") ZonedDateTime now);
+
+    /**
+     * Release a claim back into the IDLE queue, bound to that claim. Mirrors
+     * {@link de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState#requeue()} field for field, including
+     * the run-scoped ledger it clears, so a requeue committed here and one committed through the entity leave the
+     * same row. Used when preparation hits a transient local condition rather than a real fault.
+     *
+     * @param id        the claimed row's own id
+     * @param claimedAt the claim marker observed at claim time
+     * @param now       recorded as the new {@code lastUpdated}
+     * @return 1 when the claim was released, 0 when the row no longer holds this exact claim
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, ps.startedAt = NULL, ps.ingestionJobToken = NULL,
+                ps.retryEligibleAt = NULL, ps.errorKey = NULL, ps.lastUpdated = :now,
+                ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL, ps.currentStage = NULL, ps.stageStartedAt = NULL,
+                ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL
+            WHERE ps.id = :id
+            AND ps.ingestionJobToken IS NULL
+            AND ((ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE AND ps.startedAt = :claimedAt)
+                OR (ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED AND ps.retryEligibleAt = :claimedAt))
+            """)
+    int requeueIfStillClaimed(@Param("id") long id, @Param("claimedAt") ZonedDateTime claimedAt, @Param("now") ZonedDateTime now);
+
 }

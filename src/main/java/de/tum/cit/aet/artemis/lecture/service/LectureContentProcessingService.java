@@ -315,7 +315,7 @@ public class LectureContentProcessingService {
 
     // -------------------- Retry (no longer phase-specific) --------------------
     // Retries are handled by resetting to IDLE and going through dispatchPendingJobs().
-    // See ProcessingStateCallbackService.handleProcessingFailure().
+    // See ProcessingStateCallbackService.handleProcessingFailureIfStillLive().
 
     // -------------------- Helper Methods --------------------
 

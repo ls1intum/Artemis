@@ -276,4 +276,23 @@ class ProcessingStateWorkerDispatchTest {
 
         assertThat(callbackService.markClaimedUnitSkipped(100L, staleClaimedAt)).isFalse();
     }
+
+    /**
+     * The claim marker is written to {@code started_at} / {@code retry_eligible_at} and then compared for exact
+     * equality by every activation and failure guard. Those are legacy DATETIME columns keeping only whole seconds on
+     * MySQL, so a marker carrying a sub-second component is rounded on write and matches nothing on the way back out
+     * — orphaning every job the push path dispatches and leaving the row claimed until the abandoned-claim sweep.
+     * <p>
+     * Asserted as a plain invariant rather than through the database, deliberately: the server suite runs on embedded
+     * PostgreSQL, whose {@code timestamp} keeps microseconds, so a round-trip test passes there whether or not the
+     * truncation exists and cannot guard this at all. The invariant holds on every engine and fails the moment the
+     * truncation is dropped, which is what makes it worth asserting.
+     */
+    @Test
+    void claimTimestampCarriesNoSubSecondComponent() {
+        for (int attempt = 0; attempt < 100; attempt++) {
+            assertThat(ProcessingStateCallbackService.claimTimestamp().getNano())
+                    .as("a claim marker must be whole seconds: started_at/retry_eligible_at cannot store more, and the activation guards match it exactly").isZero();
+        }
+    }
 }

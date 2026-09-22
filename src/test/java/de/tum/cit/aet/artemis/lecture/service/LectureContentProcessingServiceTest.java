@@ -379,7 +379,9 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.claimIdleForDispatch(anyLong(), any())).thenReturn(1);
             when(processingStateRepository.findStatesReadyForRetry(anyString(), any(), anyInt())).thenReturn(List.of());
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(0L);
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            // Committed through the claim-guarded update rather than a whole-entity save, so a content requeue landing
+            // during fingerprinting is not overwritten; 1 means this claim is still the current one.
+            when(processingStateRepository.failPreparationIfStillClaimed(anyLong(), any(), anyString(), any())).thenReturn(1);
             when(contentFingerprintService.computeFingerprint(any())).thenThrow(new IllegalStateException("Cannot read attachment file"));
 
             // When: the file store is initialized, so the failure is judged permanent, not a startup race
@@ -440,7 +442,8 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(poison, healthy));
             when(processingStateRepository.claimIdleForDispatch(anyLong(), any())).thenReturn(1);
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(0L);
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            // As above: the poison unit's failure goes through the claim-guarded update, not a whole-entity save.
+            when(processingStateRepository.failPreparationIfStillClaimed(anyLong(), any(), anyString(), any())).thenReturn(1);
             when(contentFingerprintService.computeFingerprint(testUnit)).thenThrow(new IllegalArgumentException("Illegal character in path"));
             when(contentFingerprintService.computeFingerprint(healthyUnit)).thenReturn("v1:ok");
             when(transcriptionRepository.findByLectureUnit_Id(healthyUnit.getId())).thenReturn(Optional.empty());

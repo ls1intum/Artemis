@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lecture.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -129,6 +130,63 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
     }
 
     /**
+     * The claim marker is written to {@code started_at} and read back by an exact-equality guard, so the activation
+     * can only ever match if the column returns the value the claim put in. On MySQL those are legacy DATETIME
+     * columns holding whole seconds, so a marker carrying sub-second precision is rounded on write and matches
+     * nothing afterwards, leaving every dispatched job orphaned and the row claimed. The mock-based dispatch tests
+     * cannot show this: a mocked modifying query never round-trips the value through a column at all.
+     */
+    @Test
+    void testIdleClaimMarkerSurvivesTheColumnAndActivatesTheRun() {
+        // Whole seconds, as the dispatcher stamps its claims; that the dispatcher really truncates is guarded by
+        // ProcessingStateWorkerDispatchTest#claimTimestampCarriesNoSubSecondComponent, which this cannot show on PostgreSQL.
+        ZonedDateTime claimedAt = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+        LectureUnitProcessingState idle = new LectureUnitProcessingState(unit);
+        idle.setPhase(ProcessingPhase.IDLE);
+        processingStateRepository.save(idle);
+
+        assertThat(processingStateRepository.claimIdleForDispatch(idle.getId(), claimedAt)).as("the dispatcher claims the idle row").isEqualTo(1);
+        assertThat(startedAtOf(idle).toInstant()).as("the claim marker must come back out of the column unchanged, or no activation can ever match it")
+                .isEqualTo(claimedAt.toInstant());
+
+        assertThat(
+                processingStateRepository.activatePushDispatch(unit.getId(), ProcessingPhase.INGESTING, "job-token", "fingerprint", claimedAt.minusSeconds(1), ZonedDateTime.now()))
+                .as("an activation quoting a different claim must match nothing").isZero();
+
+        assertThat(processingStateRepository.activatePushDispatch(unit.getId(), ProcessingPhase.INGESTING, "job-token", "fingerprint", claimedAt, ZonedDateTime.now()))
+                .as("the activation must match the claim that produced it").isEqualTo(1);
+
+        LectureUnitProcessingState activated = processingStateRepository.findById(idle.getId()).orElseThrow();
+        assertThat(activated.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+        assertThat(activated.getIngestionJobToken()).isEqualTo("job-token");
+    }
+
+    /**
+     * The same round trip for the other claim shape: a retry claim is marked by the lease it writes to
+     * {@code retry_eligible_at}, which is the same legacy DATETIME column type.
+     */
+    @Test
+    void testRetryClaimMarkerSurvivesTheColumnAndActivatesTheRun() {
+        ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+        LectureUnitProcessingState retryable = new LectureUnitProcessingState(unit);
+        retryable.setPhase(ProcessingPhase.FAILED);
+        retryable.setRetryCount(1);
+        retryable.setRetryEligibleAt(now.minusMinutes(5));
+        processingStateRepository.save(retryable);
+
+        ZonedDateTime leaseExpiry = now.plusMinutes(20);
+        assertThat(processingStateRepository.claimRetryEligible(retryable.getId(), now, leaseExpiry)).as("the dispatcher claims the retry").isEqualTo(1);
+        assertThat(retryEligibleAtOf(retryable).toInstant()).as("the lease is the retry claim's marker and must survive the column unchanged").isEqualTo(leaseExpiry.toInstant());
+
+        assertThat(processingStateRepository.activatePushDispatch(unit.getId(), ProcessingPhase.TRANSCRIBING, "retry-token", "fingerprint", leaseExpiry, ZonedDateTime.now()))
+                .as("the activation must match the retry claim that produced it").isEqualTo(1);
+
+        LectureUnitProcessingState activated = processingStateRepository.findById(retryable.getId()).orElseThrow();
+        assertThat(activated.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
+        assertThat(activated.getIngestionJobToken()).isEqualTo("retry-token");
+    }
+
+    /**
      * A generous limit, because the candidate list is shared with the rest of the suite and these tests only care
      * whether their own row is in it.
      */
@@ -142,5 +200,9 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
 
     private ZonedDateTime startedAtOf(LectureUnitProcessingState state) {
         return processingStateRepository.findById(state.getId()).orElseThrow().getStartedAt();
+    }
+
+    private ZonedDateTime retryEligibleAtOf(LectureUnitProcessingState state) {
+        return processingStateRepository.findById(state.getId()).orElseThrow().getRetryEligibleAt();
     }
 }
