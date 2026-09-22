@@ -40,9 +40,6 @@ export class TumUiTabListComponent implements OnDestroy {
         effect(() => {
             const tabs = this.tabs();
             if (!this.allValuesPublished(tabs)) {
-                // A tab created by @if or @for is reported by the content query before its `value` binding has been
-                // applied. Acting now would select the wrong tab, or overwrite the value the host bound with undefined;
-                // this effect re-runs as soon as the missing tab publishes its value.
                 return;
             }
             const activeValue = this.tabsService.active();
@@ -81,10 +78,6 @@ export class TumUiTabListComponent implements OnDestroy {
         this.keyManager.destroy();
     }
 
-    /**
-     * Whether every tab currently in the query has published its value, i.e. whether Angular has applied the `value`
-     * binding of each of them. Only then does the list know which tab is which.
-     */
     private allValuesPublished(tabs: readonly TumUiTabComponent[]): boolean {
         return tabs.every((tab) => this.tabsService.valueFor(tab) !== undefined);
     }
