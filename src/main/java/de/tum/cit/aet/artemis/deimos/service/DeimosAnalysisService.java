@@ -405,19 +405,21 @@ public class DeimosAnalysisService {
         int sectionBudget = Math.max(0, budgetInBytes - DIFF_OMISSION_NOTICE_RESERVED_BYTES);
 
         for (String path : allPaths) {
-            // A per-file cap alone does not bound the payload: many individually capped diffs still add up. Stop once
-            // the budget for this section is spent, and say how many files were dropped.
-            if (usedBytes >= sectionBudget) {
-                omittedFiles++;
-                omissionsOccurred = true;
-                continue;
-            }
             String baseContent = baseFiles.get(path);
             String targetContent = targetFiles.get(path);
             if (baseContent == null && targetContent == null) {
                 continue;
             }
             if (baseContent != null && baseContent.equals(targetContent)) {
+                continue;
+            }
+
+            // A per-file cap alone does not bound the payload: many individually capped diffs still add up. Stop once
+            // the budget for this section is spent, and say how many files were dropped. Placed after the identity
+            // checks above so files unchanged between the two snapshots are never counted as omitted.
+            if (usedBytes >= sectionBudget) {
+                omittedFiles++;
+                omissionsOccurred = true;
                 continue;
             }
 
@@ -462,6 +464,14 @@ public class DeimosAnalysisService {
             }
 
             String section = headers + unifiedDiff + System.lineSeparator();
+            // Even a fully truncated diff still carries the headers, and a long student-controlled path can make those
+            // headers alone exceed the remaining budget. Omit the file rather than append an over-budget section, so the
+            // payload stays bounded regardless of path length.
+            if (usedBytes + utf8Length(section) > sectionBudget) {
+                omittedFiles++;
+                omissionsOccurred = true;
+                continue;
+            }
             sb.append(section);
             usedBytes += utf8Length(section);
         }

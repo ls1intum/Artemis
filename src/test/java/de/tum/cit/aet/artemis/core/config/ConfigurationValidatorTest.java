@@ -122,7 +122,10 @@ class ConfigurationValidatorTest {
         }
 
         @ParameterizedTest
-        @ValueSource(strings = { "/api/completions", "/api/chat/completions/", "" })
+        // Beyond the wrong suffix and empty cases: a relative path (no leading slash) is concatenated straight onto the
+        // host, and a value carrying a scheme, authority or query is not a bare path and must be rejected as well.
+        @ValueSource(strings = { "/api/completions", "/api/chat/completions/", "", "api/chat/completions", "http://evil.example.com/api/chat/completions",
+                "//evil.example.com/api/chat/completions", "/api/chat/completions?inject=1" })
         void testInvalidCompletionsPathShouldFailValidation(String completionsPath) {
             ConfigurationValidator validator = createDeimosValidator(true, VALID_DEIMOS_BASE_URL, VALID_DEIMOS_MODEL, completionsPath, 90, 3);
 

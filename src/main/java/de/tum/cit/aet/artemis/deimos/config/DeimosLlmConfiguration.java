@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.deimos.config;
 
+import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 
@@ -108,12 +109,38 @@ public class DeimosLlmConfiguration {
      * @throws DeimosConfigurationException if the completions path cannot be mapped
      */
     public static String toOpenAiCompatibleBaseUrl(String baseUrl, String completionsPath) {
-        if (completionsPath == null || !completionsPath.endsWith(CHAT_COMPLETIONS_SUFFIX)) {
-            String message = "artemis.deimos.llm.completions-path '%s' must end with '%s'".formatted(completionsPath, CHAT_COMPLETIONS_SUFFIX);
+        if (!isValidCompletionsPath(completionsPath)) {
+            String message = "artemis.deimos.llm.completions-path '%s' must be an absolute path (starting with '/') ending with '%s'".formatted(completionsPath,
+                    CHAT_COMPLETIONS_SUFFIX);
             throw new DeimosConfigurationException(message, List.of("artemis.deimos.llm.completions-path"));
         }
         String normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
         String pathPrefix = completionsPath.substring(0, completionsPath.length() - CHAT_COMPLETIONS_SUFFIX.length());
         return normalizedBaseUrl + pathPrefix;
+    }
+
+    /**
+     * Checks whether the configured completions path can be safely combined with the base URL.
+     * <p>
+     * The value is concatenated onto the base URL, so a relative value such as {@code api/chat/completions} would turn
+     * {@code https://llm.example.com} into {@code https://llm.example.comapi}, silently targeting an unintended host.
+     * The path must therefore be absolute (start with {@code /}) and be a bare path: no scheme, authority, query or
+     * fragment. It must still end with {@code /chat/completions}, since the OpenAI SDK appends that suffix itself.
+     *
+     * @param completionsPath the configured completions path
+     * @return {@code true} if the path is an absolute, path-only value ending with {@link #CHAT_COMPLETIONS_SUFFIX}
+     */
+    public static boolean isValidCompletionsPath(String completionsPath) {
+        if (completionsPath == null || completionsPath.isBlank() || !completionsPath.startsWith("/") || !completionsPath.endsWith(CHAT_COMPLETIONS_SUFFIX)) {
+            return false;
+        }
+        try {
+            URI uri = URI.create(completionsPath);
+            return uri.getScheme() == null && uri.getRawAuthority() == null && uri.getRawQuery() == null && uri.getRawFragment() == null
+                    && completionsPath.equals(uri.getRawPath());
+        }
+        catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 }

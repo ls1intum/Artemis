@@ -267,17 +267,21 @@ artemis:
         minimum-user-messages: 20
         recipients: []
 
-  # Deimos uses its own LLM config (not spring.ai.openai.*) to isolate student code from the shared Atlas/Hyperion endpoint
+  # Deimos uses its own LLM config (not spring.ai.openai.*) to isolate student code from the shared Atlas/Hyperion endpoint.
+  # Deimos sends student source code to this endpoint, so there is deliberately NO default endpoint: base-url and model
+  # must be set explicitly (e.g. in the git-ignored application-local.yml) to an endpoint you operate and are permitted to
+  # send student data to. Enabling Deimos without them fails fast at startup (see ConfigurationValidator).
   deimos:
-    enabled: true
+    enabled: false
     executor:
       core-pool-size: 2
       max-pool-size: 4
       queue-capacity: 25
     llm:
-      base-url: https://gpu.aet.cit.tum.de
-      api-key: dummy-key
-      model: openai/gpt-oss-120b
+      # Must be https: student source code and the api-key below travel to this endpoint on every analysis.
+      base-url: # required when enabled, e.g. https://llm.example.com
+      api-key: # optional; leave empty for an unauthenticated self-hosted endpoint
+      model: # required when enabled, e.g. openai/gpt-oss-120b
       # The SDK appends /chat/completions itself; this path is stripped down to the prefix (e.g. /api)
       completions-path: /api/chat/completions
       temperature: 0

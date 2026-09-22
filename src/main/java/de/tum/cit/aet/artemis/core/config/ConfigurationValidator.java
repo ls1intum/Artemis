@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
 import static de.tum.cit.aet.artemis.deimos.config.DeimosLlmConfiguration.CHAT_COMPLETIONS_SUFFIX;
 import static de.tum.cit.aet.artemis.deimos.config.DeimosLlmConfiguration.DEFAULT_COMPLETIONS_PATH;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLlmConfiguration.isValidCompletionsPath;
 import static de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer.TEXT2VEC_OPENAI;
 
 import java.net.URI;
@@ -252,9 +253,11 @@ public class ConfigurationValidator {
             missingOrInvalidProperties.add("artemis.deimos.llm.model (must be set)");
         }
 
-        // The OpenAI SDK appends /chat/completions itself, so only a path ending in that suffix can be mapped to a base URL prefix.
-        if (!StringUtils.hasText(deimosLlmCompletionsPath) || !deimosLlmCompletionsPath.endsWith(CHAT_COMPLETIONS_SUFFIX)) {
-            missingOrInvalidProperties.add("artemis.deimos.llm.completions-path (must end with '%s', got '%s')".formatted(CHAT_COMPLETIONS_SUFFIX, deimosLlmCompletionsPath));
+        // The OpenAI SDK appends /chat/completions itself, so only an absolute path ending in that suffix can be mapped to a base URL prefix.
+        // A relative value (no leading slash) would be concatenated straight onto the host, e.g. https://llm.example.com + api -> https://llm.example.comapi.
+        if (!isValidCompletionsPath(deimosLlmCompletionsPath)) {
+            missingOrInvalidProperties.add("artemis.deimos.llm.completions-path (must be an absolute path starting with '/' and ending with '%s', got '%s')"
+                    .formatted(CHAT_COMPLETIONS_SUFFIX, deimosLlmCompletionsPath));
         }
 
         if (deimosLlmTimeoutSeconds <= 0) {
