@@ -37,7 +37,8 @@ final class RepositoryCheckoutLocks {
             return new Lease(key, entry);
         }
         catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+            // This API reports cancellation as a GitAPIException. Batch callers handle it per repository and continue on
+            // the same pool thread; retaining the interrupt would make subsequent JGit NIO operations fail as well.
             throw new CanceledException("Waiting for the local repository got interrupted");
         }
         finally {

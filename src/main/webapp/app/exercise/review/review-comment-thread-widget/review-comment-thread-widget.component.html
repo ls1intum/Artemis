@@ -214,7 +214,7 @@
                         class="monaco-review-comment-feedback-selection-button"
                         [class.monaco-review-comment-feedback-selection-button--selected]="isSelectedAsFeedback()"
                         [attr.aria-pressed]="isSelectedAsFeedback()"
-                        [tumUiDisabledReason]="adaptBlockedReason() ? (adaptBlockedReason()! | artemisTranslate) : ''"
+                        [disabled]="!!adaptBlockedReason()"
                         (click)="toggleFeedbackSelection()"
                     >
                         <fa-icon [icon]="facArtemisIntelligence" />
@@ -224,6 +224,9 @@
                             {{ 'artemisApp.review.selectThreadAsFeedback' | artemisTranslate }}
                         }
                     </button>
+                    @if (adaptBlockedReason(); as reason) {
+                        <span class="text-sm text-muted-color">{{ reason | artemisTranslate }}</span>
+                    }
                 }
                 <div class="monaco-review-comment-resolve-controls">
                     <button pButton type="button" severity="secondary" size="small" class="monaco-review-comment-resolve-main-button" (click)="toggleResolved()">

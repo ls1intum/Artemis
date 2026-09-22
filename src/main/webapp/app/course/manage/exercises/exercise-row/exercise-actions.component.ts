@@ -24,8 +24,8 @@ import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-togg
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ExerciseActionBarComponent } from 'app/exercise/exercise-action-bar/exercise-action-bar.component';
 import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar.model';
-import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
-import { supportsAiVariantGeneration } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal.utils';
+import { ExerciseVariantAiModalWizardComponent } from 'app/hyperion/variants/exercise-variant-ai-modal-wizard.component';
+import { supportsAiVariantGeneration } from 'app/hyperion/variants/exercise-variant-ai-modal.utils';
 
 /**
  * Builds the course-exercise `ActionItem[]` (course-scoped routes, role and feature-toggle gates, delete wiring) and

@@ -37,7 +37,7 @@
                             the message's own foreground - three reds were visible at once in dark. The dot resolves the
                             design system's corrected colours, and its label carries the state as a word.
                         -->
-                        <tum-ui-status-dot class="shrink-0" [state]="check.dotState" [label]="check.stateKey | artemisTranslate" [showLabel]="false" />
+                        <jhi-hyperion-status class="shrink-0" [state]="check.dotState" [label]="check.stateKey | artemisTranslate" [showLabel]="false" />
                         <span [jhiTranslate]="check.labelKey"></span>
                     </li>
                 }

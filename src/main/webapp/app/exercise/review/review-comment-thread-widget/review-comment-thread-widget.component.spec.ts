@@ -235,25 +235,16 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(fixture.nativeElement.textContent).toContain('artemisApp.review.removeThreadFromFeedback');
     });
 
-    it('should show the blocked reason as a tooltip when the feedback selection receives focus', () => {
-        vi.useFakeTimers();
-        try {
-            reviewCommentService.adaptationOffered.set(true);
-            reviewCommentService.adaptationBlockedReason.set('artemisApp.review.adaptExercise.runInProgress');
-            fixture.detectChanges();
+    it('shows the blocked reason next to the disabled feedback action without requiring focus', () => {
+        reviewCommentService.adaptationOffered.set(true);
+        reviewCommentService.adaptationBlockedReason.set('artemisApp.review.adaptExercise.runInProgress');
+        fixture.detectChanges();
 
-            const adaptButton: HTMLButtonElement = fixture.nativeElement.querySelector('.monaco-review-comment-feedback-selection-button');
-            adaptButton.dispatchEvent(new Event('focusin', { bubbles: true }));
-            vi.advanceTimersByTime(200);
-            fixture.detectChanges();
-
-            expect(document.querySelector('.tum-ui-tooltip-bubble')?.textContent).toContain('artemisApp.review.adaptExercise.runInProgress');
-            adaptButton.dispatchEvent(new Event('focusout', { bubbles: true }));
-            vi.advanceTimersByTime(200);
-        } finally {
-            vi.runOnlyPendingTimers();
-            vi.useRealTimers();
-        }
+        const adaptButton: HTMLButtonElement = fixture.nativeElement.querySelector('.monaco-review-comment-feedback-selection-button');
+        expect(adaptButton.disabled).toBe(true);
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.review.adaptExercise.runInProgress');
+        adaptButton.click();
+        expect(fixture.componentInstance.isSelectedAsFeedback()).toBe(false);
     });
 
     it('should hide the feedback action for outdated threads', () => {

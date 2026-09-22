@@ -89,7 +89,7 @@ class DockerGradleBuildTest {
                 ```
                 """);
         SeededStructuralTests seeded = new StructuralOracleSeeder(workspace, specifications).seedIfStructuralDiff(sandbox, session, exercise);
-        assertThat(seeded.testNames()).contains("testGenericApi[Box]");
+        assertThat(seeded.testNames()).contains("testClass[GenericApi:Box]");
         String path = "solution/src/de/tum/cit/aet/reference/Box.java";
         sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, """
                 package de.tum.cit.aet.reference;
@@ -102,7 +102,7 @@ class DockerGradleBuildTest {
                 """), Map.of()));
         var correct = build(session, "solution");
         assertThat(correct.exitCode()).as(correct.buildDiagnostic()).isZero();
-        assertThat(correct.testNames()).contains("testGenericApi[Box]");
+        assertThat(correct.testNames()).contains("testClass[GenericApi:Box]");
 
         sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, """
                 package de.tum.cit.aet.reference;
@@ -115,7 +115,7 @@ class DockerGradleBuildTest {
                 """), Map.of()));
         var erased = build(session, "solution");
         assertThat(erased.exitCode()).isNotZero();
-        assertThat(erased.testFailedNames()).contains("testGenericApi[Box]");
+        assertThat(erased.testFailedNames()).contains("testClass[GenericApi:Box]");
         assertThat(erased.testFailedNames()).doesNotContain("testMethods[Box]", "testConstructors[Box]");
 
         sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, """
@@ -129,7 +129,7 @@ class DockerGradleBuildTest {
                 """), Map.of()));
         var shadowed = build(session, "solution");
         assertThat(shadowed.exitCode()).isNotZero();
-        assertThat(shadowed.testFailedNames()).contains("testGenericApi[Box]");
+        assertThat(shadowed.testFailedNames()).contains("testClass[GenericApi:Box]");
         assertThat(shadowed.testFailedNames()).doesNotContain("testMethods[Box]", "testConstructors[Box]");
     }
 

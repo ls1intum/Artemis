@@ -26,7 +26,7 @@
             }
         </div>
 
-        <tum-ui-status-dot class="shrink-0" [state]="statusState()" [label]="statusLabelKey() | artemisTranslate" data-testid="hyperion-run-status" />
+        <jhi-hyperion-status class="shrink-0" [state]="statusState()" [label]="statusLabelKey() | artemisTranslate" data-testid="hyperion-run-status" />
     </div>
 
     @if (facts().length) {
@@ -73,7 +73,7 @@
                 severity="primary"
                 size="small"
                 [loading]="startPending()"
-                [disabledReason]="startBlockedReasonText()"
+                [disabled]="!!startBlockedReasonText()"
                 (clicked)="startRequested.emit()"
                 data-testid="hyperion-run-start"
             >
@@ -85,7 +85,7 @@
                 severity="secondary"
                 variant="outlined"
                 size="small"
-                [disabledReason]="startBlockedReasonText()"
+                [disabled]="!!startBlockedReasonText()"
                 (clicked)="startRequested.emit()"
                 data-testid="hyperion-run-run-again"
             >
@@ -113,3 +113,7 @@
 </tum-ui-card>
 
 <tum-ui-confirm-dialog [key]="cancelConfirmationKey" />
+
+@if ((startAvailable() || runAgainAvailable()) && startBlockedReasonText(); as reason) {
+    <p class="mt-2 text-sm text-muted-color">{{ reason }}</p>
+}

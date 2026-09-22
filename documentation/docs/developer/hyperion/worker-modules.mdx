@@ -126,3 +126,43 @@ require explicitly configured immutable images; skipped tests do not qualify an 
 
 See [AI Worker operations](/admin/aiworker) for configuration, deployment, administrator
 columns, failure handling and the protocol upgrade procedure.
+
+## Core integration boundaries
+
+The standalone worker does not own course authorization, exercise persistence or student grading.
+The following integrations remain in their existing modules because those modules own the operation being protected.
+Generation being disabled does not disable all of these integrations.
+
+| Owner                                  | Required integration                                                                                                                 | Scope and cost                                                                                                                                                                                                                  |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Programming and LocalVC                | Reserve an exercise before an authoring write or HTTP/SSH push; release the exact reservation afterwards.                            | Prevents an instructor push or ordinary update from interleaving with a generated save. Writer nodes need a complete coordination view even when generation is disabled locally. A crashed writer can require manual recovery.  |
+| LocalVC                                | Serialize preparation of the same checkout and expose branch-specific, expected-head Git operations.                                 | Prevents concurrent reads/pulls from deleting another operation's checkout. Locks are per working directory, not global. Cancellation must not leave an interrupt that breaks the next repository on a batch thread.            |
+| LocalCI                                | Execute post-save synchronization builds without networking or exercise-provided environment variables; retain this policy on retry. | The restricted entry point is separate. Ordinary builds retain their existing configuration. CI implementations without this capability reject the restricted request.                                                          |
+| LocalCI                                | Resolve wrapper assignment types to the existing test-repository build template.                                                     | A wrapper in the assignment does not change the test harness. Plain Maven/Gradle and black-box template names remain unchanged.                                                                                                 |
+| Build agent                            | Adapt the shared JUnit parser result into ordinary grading DTOs.                                                                     | Generation verification and grading must agree on test names, skips and failures. The dependency is on the isolated parser library, not a worker process, broker or model service. This is an intentional shared-code boundary. |
+| Exercise and exam                      | Reserve programming templates during participation creation and serialize exam exercise selection in repository-owned transactions.  | Prevents assignment from observing a partially saved exercise. These operations also run without AI generation; lock contention and student-start availability are part of their operational contract.                          |
+| Core distributed data                  | Provide conditional writes, expiry renewal and process identities through all supported providers.                                   | Callers must not assume that local, Hazelcast and Redis membership or expiry events are identical. Unknown coordination state rejects protected writes.                                                                         |
+| Core WebSocket security                | Authorize protected subscriptions and direct collaboration sends.                                                                    | Team collaboration remains permitted for participation owners; unrelated direct broker publication is rejected. This is a shared security rule, not a feature toggle.                                                           |
+| Exercise versioning and LLM accounting | Use existing storage for version snapshots and usage.                                                                                | No schema migration is required, but snapshot contents and cost-estimate semantics change. Model prices are operator supplied and missing prices remain unknown.                                                                |
+
+Hyperion's generic-API oracle uses the existing `testClass[...]` structural-test naming convention.
+LocalCI does not need a Hyperion-specific test-name exception.
+
+## Client ownership
+
+The client follows the same feature-folder and standalone-component convention as Iris. There is no additional Angular NgModule.
+
+- `app/hyperion/variants` owns the AI variant wizard and entry button.
+- `app/hyperion/code-editor` owns the editor's AI action controls.
+- `app/hyperion/review` owns the adaptation dialog.
+- `app/hyperion/exercise-generation`, `activity-tray` and `admin` own generation progress, activity and administration.
+- `app/hyperion/shared` contains generation-specific stage and status views, not application-wide design-system APIs.
+
+Course pages, the navbar and the ordinary editor compose these components. They do not own the AI dialogs.
+Generated-document typography is scoped to the sanitized Hyperion markdown view; it does not change global code or prose colors.
+Blocked actions use native disabled controls and a visible explanation rather than a new shared button-disabling API.
+
+The shared TUM UI extension is limited to opt-in tab-content preservation. Artifact review uses it to retain
+file expansion and scroll state across tab changes. Its default remains to destroy inactive content;
+preserved inactive panels are hidden and inert. No generation-specific stepper, status, empty-state,
+skeleton or prose API is added to TUM UI.

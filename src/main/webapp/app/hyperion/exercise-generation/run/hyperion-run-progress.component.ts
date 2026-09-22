@@ -1,5 +1,6 @@
+import { HyperionStepState } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { TumUiStepComponent, TumUiStepState, TumUiStepperComponent } from '@tumaet/ui-angular';
+import { HyperionStageComponent } from 'app/hyperion/shared/stage/hyperion-stage.component';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { HyperionActivityView, formatElapsed } from 'app/hyperion/exercise-generation/model/hyperion-generation-activity';
@@ -10,14 +11,14 @@ import { ExerciseGenerationRepairRound } from 'app/openapi/model/exercise-genera
 
 interface ProgressSubstep {
     key: HyperionSubstepKey;
-    state: TumUiStepState;
+    state: HyperionStepState;
     labelKey: string;
 }
 
 /** One rung of the ladder with every binding resolved, so no template binding calls a method. */
 interface ProgressStep {
     key: HyperionStageKey;
-    state: TumUiStepState;
+    state: HyperionStepState;
     labelKey: string;
     substeps?: ProgressSubstep[];
     summaryKey?: string;
@@ -42,7 +43,7 @@ interface StageTiming {
     templateUrl: './hyperion-run-progress.component.html',
     styleUrl: './hyperion-run-progress.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ArtemisTranslatePipe, HyperionRunActivityComponent, TumUiStepComponent, TumUiStepperComponent],
+    imports: [ArtemisTranslatePipe, HyperionRunActivityComponent, HyperionStageComponent],
 })
 export class HyperionRunProgressComponent {
     readonly stages = input.required<readonly HyperionStage[]>();

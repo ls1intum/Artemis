@@ -26,7 +26,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
-import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
+import { ExerciseVariantAiModalWizardComponent } from 'app/hyperion/variants/exercise-variant-ai-modal-wizard.component';
 import { HyperionActivityRow, authoringActivity, variantActivity } from './hyperion-activity.model';
 
 /** One header entry for AI work. Dismissal affects presentation, never the running job or recovery state. */

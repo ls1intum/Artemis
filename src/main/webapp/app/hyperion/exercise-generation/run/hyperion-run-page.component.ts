@@ -1,3 +1,4 @@
+import { HyperionStatusState } from 'app/hyperion/shared/status/hyperion-status.component';
 import { generationCapabilityBlocker, injectGenerationCapabilities } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
 import { HyperionRunInputComponent } from './hyperion-run-input.component';
 import { filter, merge } from 'rxjs';
@@ -17,7 +18,6 @@ import {
     TumUiMessageComponent,
     TumUiMessageSeverity,
     TumUiPanelComponent,
-    TumUiStatusDotState,
 } from '@tumaet/ui-angular';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -43,7 +43,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 /** The status word shown next to the dot, and the dot state that goes with it. */
 type RunStatus = 'queued' | 'running' | 'cancelling' | 'saved' | 'needsReview' | 'partial' | 'failed' | 'cancelled' | 'notStarted' | 'unknown' | 'reverted';
 
-const STATUS_DOT_STATE: Record<RunStatus, TumUiStatusDotState> = {
+const STATUS_DOT_STATE: Record<RunStatus, HyperionStatusState> = {
     reverted: 'success',
     queued: 'queued',
     running: 'running',

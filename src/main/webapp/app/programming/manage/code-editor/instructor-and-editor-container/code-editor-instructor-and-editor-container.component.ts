@@ -53,7 +53,7 @@ import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actio
 import { ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { ReviewAdaptExerciseDialogComponent, ReviewAdaptExerciseDialogResult } from 'app/exercise/review/adapt-exercise-dialog/review-adapt-exercise-dialog.component';
+import { ReviewAdaptExerciseDialogComponent, ReviewAdaptExerciseDialogResult } from 'app/hyperion/review/adapt-exercise-dialog/review-adapt-exercise-dialog.component';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
@@ -71,7 +71,7 @@ import { HyperionGenerationActivityFacade, HyperionGenerationCompletedEvent } fr
 import { Router } from '@angular/router';
 import { HYPERION_GENERATION_BLOCKER_KEY, hyperionGenerationBlocker, supportsHyperionExerciseGeneration } from 'app/hyperion/exercise-generation/hyperion-generation-support';
 import { serverTimeSignal } from 'app/hyperion/exercise-generation/hyperion-server-time.util';
-import { CodeEditorAiActionsComponent } from 'app/programming/manage/code-editor/ai-actions/code-editor-ai-actions.component';
+import { CodeEditorAiActionsComponent } from 'app/hyperion/code-editor/ai-actions/code-editor-ai-actions.component';
 
 const SEVERITY_ORDER: Record<ConsistencyIssueSeverityEnum, number> = {
     ['HIGH']: 0,

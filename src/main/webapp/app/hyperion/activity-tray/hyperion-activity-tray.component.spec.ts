@@ -15,7 +15,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { HyperionJobEntry, HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
-import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
+import { ExerciseVariantAiModalWizardComponent } from 'app/hyperion/variants/exercise-variant-ai-modal-wizard.component';
 import { VariantJob } from 'app/openapi/model/variant-job';
 import { HyperionActivityTrayComponent } from './hyperion-activity-tray.component';
 

@@ -10,7 +10,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowUpRightFromSquare, faChevronDown, faEllipsisVertical, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { TumUiButtonDirective, TumUiDisabledReasonDirective } from '@tumaet/ui-angular';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, InlineCodeChange } from 'app/exercise/shared/entities/review/comment-content.model';
 import { Subject } from 'rxjs';
@@ -44,7 +44,6 @@ interface RelatedThreadLocation {
         FaIconComponent,
         MonacoDiffEditorComponent,
         TumUiButtonDirective,
-        TumUiDisabledReasonDirective,
     ],
     providers: [ConfirmationService],
 })

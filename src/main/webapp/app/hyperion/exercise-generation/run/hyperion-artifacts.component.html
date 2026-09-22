@@ -15,7 +15,7 @@
                 </span>
             </tum-ui-tab>
         </tum-ui-tab-list>
-        <tum-ui-tab-panels [padded]="false">
+        <tum-ui-tab-panels class="p-0!">
             <tum-ui-tab-panel value="spec" class="block pt-3" preserveContent>
                 @if (hasSpec()) {
                     <jhi-hyperion-markdown [markdown]="specDocument()" data-testid="hyperion-artifacts-spec" />

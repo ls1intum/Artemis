@@ -1,6 +1,8 @@
+import { HyperionStatusState } from 'app/hyperion/shared/status/hyperion-status.component';
+import { HyperionStatusComponent } from 'app/hyperion/shared/status/hyperion-status.component';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { TumUiMessageComponent, TumUiMessageSeverity, TumUiPanelComponent, TumUiStatusDotComponent, TumUiStatusDotState } from '@tumaet/ui-angular';
+import { TumUiMessageComponent, TumUiMessageSeverity, TumUiPanelComponent } from '@tumaet/ui-angular';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -38,7 +40,7 @@ export interface HyperionRunOutcomeView {
 /** A check reads as a state word and a sentence; the dot is what makes the state visible without being the only signal. */
 interface OutcomeCheckLine {
     labelKey: string;
-    dotState: TumUiStatusDotState;
+    dotState: HyperionStatusState;
     stateKey: string;
 }
 
@@ -57,7 +59,7 @@ interface OutcomeCheckLine {
     templateUrl: './hyperion-run-outcome.component.html',
     styleUrl: './hyperion-run-outcome.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ArtemisTranslatePipe, TranslateDirective, TumUiMessageComponent, TumUiPanelComponent, TumUiStatusDotComponent],
+    imports: [ArtemisTranslatePipe, TranslateDirective, TumUiMessageComponent, TumUiPanelComponent, HyperionStatusComponent],
 })
 export class HyperionRunOutcomeComponent {
     private readonly translateService = inject(TranslateService);

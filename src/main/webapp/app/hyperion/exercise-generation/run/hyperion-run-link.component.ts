@@ -1,8 +1,10 @@
+import { HyperionStatusState } from 'app/hyperion/shared/status/hyperion-status.component';
+import { HyperionStatusComponent } from 'app/hyperion/shared/status/hyperion-status.component';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { catchError, exhaustMap, merge, of, startWith, switchMap, timer } from 'rxjs';
-import { TumUiButtonDirective, TumUiStatusDotComponent, TumUiStatusDotState } from '@tumaet/ui-angular';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 import { MODULE_FEATURE_HYPERION_EXERCISE_GENERATION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -17,7 +19,7 @@ import { runOutcome } from '../model/hyperion-generation-stages';
 @Component({
     selector: 'jhi-hyperion-run-link',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [RouterLink, TumUiButtonDirective, TumUiStatusDotComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [RouterLink, TumUiButtonDirective, HyperionStatusComponent, TranslateDirective, ArtemisTranslatePipe],
     template: `
         @if (status()?.jobId) {
             <a
@@ -30,7 +32,7 @@ import { runOutcome } from '../model/hyperion-generation-stages';
                 queryParamsHandling="merge"
                 data-testid="hyperion-exercise-open-generation"
             >
-                <tum-ui-status-dot [state]="dotState()" [label]="statusLabelKey() | artemisTranslate" />
+                <jhi-hyperion-status [state]="dotState()" [label]="statusLabelKey() | artemisTranslate" />
                 <span [jhiTranslate]="labelKey()"></span>
             </a>
         }
@@ -62,7 +64,7 @@ export class HyperionRunLinkComponent {
         ),
     );
     protected readonly runStatus = computed(() => (this.status()?.running ? 'running' : (runOutcome(this.status()?.events ?? []) ?? 'unknown')));
-    protected readonly dotState = computed<TumUiStatusDotState>(() => {
+    protected readonly dotState = computed<HyperionStatusState>(() => {
         switch (this.runStatus()) {
             case 'running':
                 return 'running';

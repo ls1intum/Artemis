@@ -268,8 +268,8 @@ describe('HyperionRunPageComponent', () => {
         expect(fixture.componentInstance['startAvailable']()).toBe(true);
         expect(fixture.componentInstance['startBlockedReason']()).toBe('artemisApp.hyperion.generation.blocker.released');
         const startButton = testId('hyperion-run-start')!.querySelector('button')!;
-        expect(startButton.getAttribute('aria-disabled')).toBe('true');
-        expect(startButton.hasAttribute('disabled')).toBe(false);
+        expect(startButton.hasAttribute('disabled')).toBe(true);
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.hyperion.generation.blocker.released');
 
         startButton.click();
         fixture.detectChanges();
@@ -291,7 +291,7 @@ describe('HyperionRunPageComponent', () => {
         fixture.detectChanges();
 
         const runAgain = testId('hyperion-run-run-again')!.querySelector('button')!;
-        expect(runAgain.getAttribute('aria-disabled')).toBe('true');
+        expect(runAgain.hasAttribute('disabled')).toBe(true);
         runAgain.click();
         fixture.detectChanges();
 

@@ -25,8 +25,8 @@ import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
-import { supportsAiVariantGeneration } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal.utils';
+import { ExerciseVariantAiModalWizardComponent } from 'app/hyperion/variants/exercise-variant-ai-modal-wizard.component';
+import { supportsAiVariantGeneration } from 'app/hyperion/variants/exercise-variant-ai-modal.utils';
 
 /** setTimeout truncates delays beyond a signed 32-bit millisecond value. */
 const MAX_TIMEOUT_MS = 2 ** 31 - 1;
