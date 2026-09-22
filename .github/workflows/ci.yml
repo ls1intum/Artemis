@@ -124,6 +124,7 @@ jobs:
               - 'pnpm-workspace.yaml'
               - 'supporting_scripts/generate-tum-ui-reference-page.mjs'
             has_tum_ui:
+              - '.github/workflows/release-tum-ui.yml'
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-quality.yml'
               - 'angular.json'
@@ -136,6 +137,7 @@ jobs:
               - 'pnpm-workspace.yaml'
               - 'prebuild.mjs'
               - 'rules/tum-ui-package.spec.mjs'
+              - 'rules/tum-ui-release.spec.mjs'
               - 'src/main/webapp/app/shared-ui/tum-ui-integration/**'
               - 'src/main/webapp/tailwind.css'
               - 'tsconfig.json'

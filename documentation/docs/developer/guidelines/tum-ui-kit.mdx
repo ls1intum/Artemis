@@ -13,7 +13,7 @@ Artemis production builds consume its compiled public entry point and stylesheet
 
 <Callout variant={CalloutVariant.info}>
     TUM UI is the target component system for Artemis. Bootstrap, ng-bootstrap, and PrimeNG are migration-only dependencies. Use an existing TUM UI component whenever it covers the
-    requirement. A new package contract needs a reusable design-system responsibility and a concrete Artemis consumer; adoption by another application is not an entry requirement.
+    requirement.
 </Callout>
 
 Use the [TUM UI component reference](/developer/tum-ui-reference) to inspect
@@ -31,19 +31,16 @@ Package code:
   request models.
 
 Artemis-specific adapters live in `src/main/webapp/app/shared-ui/tum-ui-integration`. Artemis
-imports package symbols from `@tumaet/ui-angular`; deep imports and imports from the former
-in-application path are rejected by ESLint.
+imports package symbols from `@tumaet/ui-angular`; ESLint rejects deep imports.
 
-The package is private. Removing `private: true` requires release ownership, a versioning policy,
-and compatibility testing against supported consumers.
+The package has its own version and changelog. Repository code owners review its public contract;
+npm organization maintainers approve releases.
 
 ## Adding or changing a component
 
 Follow the [component decision order](/developer/guidelines/client-development#ui-components). A
 new package API needs a reusable design-system responsibility and a concrete Artemis consumer;
-generic-looking application policy is not sufficient. Keep feature translations, requests, routes,
-authorization, and domain models in Artemis. Build reusable behavior on native HTML or stable
-Angular CDK primitives, and state intentionally unsupported behavior in the pull request.
+keep application policy in Artemis. Document unsupported public behavior beside the API declaration.
 
 Package components use standalone declarations, signal APIs, `ChangeDetectionStrategy.OnPush`,
 native input coercion, and semantic Tailwind utilities. Prefer stable native controls and CDK
@@ -103,21 +100,12 @@ reload cycle.
 The [package README](https://github.com/ls1intum/Artemis/blob/develop/packages/tum-ui/README.md)
 documents stylesheet loading, token semantics, dark mode, and host styling.
 
-The package build emits and validates `styles.css` as its only global stylesheet. Consumers do not
-compile package sources or need Tailwind. The stylesheet includes complete light and dark defaults
-in a low-priority cascade layer, so unlayered host declarations can override intentional semantic
-roles without duplicating the complete contract.
+Artemis loads `@tumaet/ui-angular/styles.css` after application styles. Its unlayered stylesheet
+overrides the package's font family, brand, application surfaces, and status roles. Its Tailwind
+configuration owns application utilities. Set `data-theme="dark"` on the document element for dark
+mode; the package theme also sets the matching CSS `color-scheme` for browser controls.
 
-Artemis loads the package stylesheet after application styles. It inherits the package's type
-scale, spacing, shape, elevation, and surface hierarchy while its unlayered Tailwind stylesheet
-overrides the Artemis font family, brand, application surfaces, and status roles.
-Artemis does not import the package's internal Tailwind build theme, so its unprefixed utilities
-remain owned by the Artemis Tailwind configuration. Artemis sets `data-theme="dark"` on the
-document element when dark mode is active and advertises the corresponding CSS `color-scheme` so
-browser-owned controls use the same light or dark appearance.
-
-Treat package token names and the fixed responsive thresholds at 40rem, 48rem, 64rem, 80rem, and
-96rem as public styling contracts. Add a token only when a host needs a supported customization
+Treat package token names and responsive thresholds as public styling contracts. Add a token only when a host needs a supported customization
 axis; do not expose Tailwind's full primitive theme.
 
 Apply application layout classes directly to the component host with the native `class` attribute.
@@ -138,6 +126,13 @@ controls locale-sensitive formatting. Artemis registers `provideArtemisTumUiTran
 `app.config.ts`; its key mapping belongs in `app/shared-ui/tum-ui-integration`, not in the package.
 
 ## Local workflow
+
+After installing workspace dependencies, install Chromium for browser tests. Repeat this after
+upgrading Playwright:
+
+```bash
+pnpm --dir packages/tum-ui exec playwright install --with-deps --only-shell chromium
+```
 
 Run focused commands while developing:
 
@@ -162,8 +157,85 @@ editor resolution, then serve package sources. Restart the client after changing
 manifest or build configuration. Production builds consume `packages/tum-ui/dist`; package
 validation writes to `packages/tum-ui/dist-pack`.
 
-The workspace catalog pins the exact versions installed and supported by this private package.
-Package and peer dependencies match those versions; `pnpm run test:rules` prevents drift. Widen a
-peer range only after another application provides a concrete compatibility target and CI verifies
-it. The same rule verifies that development and production package configurations remain equivalent
-apart from incremental-output cleanup.
+Published peer ranges start at the workspace catalog versions; `pnpm run test:rules` checks this
+alignment. External consumer tests install the tarball outside the workspace with strict peer
+resolution, build an Angular production application, and exercise forms, icons, dialog focus, and
+theme overrides in Chromium. CI tests minimum and latest compatible peers. Server-side rendering
+is not supported.
+
+```bash
+pnpm run tum-ui:pack:check
+pnpm run tum-ui:test:consumer minimum
+pnpm run tum-ui:test:consumer latest
+```
+
+`pack:check` writes the validated tarball and its integrity metadata to `build/tum-ui-package`.
+Consumer failures retain the npm manifest, resolved lockfile, and browser diagnostics under
+`build/test-results/tum-ui-consumer`; CI uploads these as artifacts.
+
+## Publishing to npm
+
+TUM UI uses independent versions and the **Release TUM UI** workflow (`release-tum-ui.yml`).
+A manual run validates without publishing. A `tum-ui-v<version>` tag stages a release when it
+matches the package version and its commit is reachable from `develop`.
+
+The workflow validates the package and both external consumer configurations before staging the
+tested tarball. npm publication requires a maintainer's 2FA approval.
+
+### One-time setup and first release
+
+1. Give the release maintainers access to the `@tumaet` npm organization and require 2FA.
+2. Protect `develop` with required CI and code-owner review. Restrict creation of `tum-ui-v*` tags
+   to release maintainers and prevent tag updates and deletion.
+3. Create the GitHub environment **npm-tum-ui**, restricted to `tum-ui-v*` tags.
+4. Run **Release TUM UI** manually on the reviewed commit on `develop`. After all jobs pass, download its
+   `tum-ui-package` artifact. Extract it and replace `<version>` below with the version in its
+   `package.json`. Compute the tarball's SHA-512:
+
+    ```bash
+    openssl dgst -sha512 -binary ./tumaet-ui-angular-<version>.tgz | openssl base64 -A
+    ```
+
+    Compare this with the value after `sha512-` in the `pnpm run tum-ui:pack:check` step log.
+    Publish that tarball using interactive authentication:
+
+    ```bash
+    npm login
+    npm publish ./tumaet-ui-angular-<version>.tgz --ignore-scripts --access public
+    ```
+
+    npm requires an existing package for staging. The first local publication has no CI-generated
+    provenance.
+
+5. In npm's package settings, add a GitHub trusted publisher with organization **ls1intum**,
+   repository **Artemis**, workflow **release-tum-ui.yml**, and environment **npm-tum-ui**.
+   Allow **stage publish** only. Select **Require two-factor authentication and disallow tokens**
+   under publishing access. Do not add an npm publishing token to GitHub secrets.
+
+[Trusted publishing](https://docs.npmjs.com/trusted-publishers/) generates provenance for the
+public package and repository. [Staged publishing](https://docs.npmjs.com/staged-publishing/)
+requires npm 11.15 or newer. Use the Node version in `.nvmrc`, including for the first local
+publication. Trusted-publisher fields are case-sensitive.
+
+### Subsequent releases
+
+Update the version from `packages/tum-ui` with `npm version <version> --no-git-tag-version --ignore-scripts`.
+Add consumer-visible changes under `## <version>` in `packages/tum-ui/CHANGELOG.md`. Before 1.0,
+incompatible API, token, or peer-minimum changes increment the minor; compatible fixes and additions
+increment the patch. After 1.0, breaking changes increment the major.
+Document migrations instead of adding compatibility aliases.
+
+Merge the validated change into `develop`, then push an annotated `tum-ui-v<version>` tag at that
+commit. All releases target `latest`. Omit an explicit `--tag` so npm retains its built-in
+[protection against staging older versions](https://docs.npmjs.com/cli/v11/commands/npm-stage/#tag-behavior).
+
+After the workflow succeeds, inspect the staged package's version, content, and provenance commit
+on npm, then approve with 2FA using the website or `npm stage approve <stage-id>`. Confirm the
+published version, then create a GitHub release for its tag using the package changelog. Use
+[`gh release create --latest=false`](https://cli.github.com/manual/gh_release_create) so it does not
+displace the latest Artemis release.
+
+Staging success does not mean the package is public. Before retrying an interrupted run, inspect
+`npm stage list @tumaet/ui-angular`; the upload may already have succeeded. Published versions are
+immutable. Fix a bad release with a new version, deprecate the affected version, and restore the
+previous dist-tag if necessary. Do not move release tags or overwrite versions.
